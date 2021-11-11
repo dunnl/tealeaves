@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.LN.Atom</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Util.Prelude.html#"><span class="id" title="library">Util.Prelude</span></a> <a class="idref" href="Tealeaves.Util.EqDec_eq.html#"><span class="id" title="library">Util.EqDec_eq</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#"><span class="id" title="library">Singlesorted.Functors.List</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">SetlikeFunctor.Notations</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">tealeaves_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This type has been borrowed from Metalib and lightly adapted for Tealeaves.
+    https://github.com/plclub/metalib/blob/master/Metalib/MetatheoryAtom.v
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="ATOM" class="idref" href="#ATOM"><span class="id" title="module">ATOM</span></a> &lt;: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Structures.Equalities.html#UsualDecidableType"><span class="id" title="module">UsualDecidableType</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="ATOM.atom" class="idref" href="#ATOM.atom"><span class="id" title="axiom">atom</span></a> : <span class="id" title="keyword">Set</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ATOM.t" class="idref" href="#ATOM.t"><span class="id" title="definition">t</span></a> := <a class="idref" href="Tealeaves.LN.Atom.html#ATOM.atom"><span class="id" title="axiom">atom</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="ATOM.eq_dec" class="idref" href="#ATOM.eq_dec"><span class="id" title="axiom">eq_dec</span></a> : <span class="id" title="keyword">forall</span> <a id="x:2" class="idref" href="#x:2"><span class="id" title="binder">x</span></a> <a id="y:3" class="idref" href="#y:3"><span class="id" title="binder">y</span></a> : <a class="idref" href="Tealeaves.LN.Atom.html#ATOM.atom"><span class="id" title="axiom">atom</span></a>, <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#87727981cdc1579fef00b9d9c1d3b9da"><span class="id" title="notation">{</span></a><a class="idref" href="Tealeaves.LN.Atom.html#x:2"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#y:3"><span class="id" title="variable">y</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#87727981cdc1579fef00b9d9c1d3b9da"><span class="id" title="notation">}</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#87727981cdc1579fef00b9d9c1d3b9da"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#87727981cdc1579fef00b9d9c1d3b9da"><span class="id" title="notation">{</span></a><a class="idref" href="Tealeaves.LN.Atom.html#x:2"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#y:3"><span class="id" title="variable">y</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#87727981cdc1579fef00b9d9c1d3b9da"><span class="id" title="notation">}</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="ATOM.atom_fresh_for_list" class="idref" href="#ATOM.atom_fresh_for_list"><span class="id" title="axiom">atom_fresh_for_list</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">forall</span> (<a id="xs:5" class="idref" href="#xs:5"><span class="id" title="binder">xs</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#ATOM.t"><span class="id" title="definition">t</span></a>), <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#6556914db359db999889decec6a4a562"><span class="id" title="notation">{</span></a><a id="x:6" class="idref" href="#x:6"><span class="id" title="binder">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#6556914db359db999889decec6a4a562"><span class="id" title="notation">:</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#ATOM.atom"><span class="id" title="axiom">atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#6556914db359db999889decec6a4a562"><span class="id" title="notation">|</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#x:6"><span class="id" title="variable">x</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.SetlikeFunctor.html#11eb2861ea16289dd627ef9d8c2d6322"><span class="id" title="notation">∈</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#xs:5"><span class="id" title="variable">xs</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#6556914db359db999889decec6a4a562"><span class="id" title="notation">}</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="ATOM.fresh" class="idref" href="#ATOM.fresh"><span class="id" title="axiom">fresh</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#ATOM.atom"><span class="id" title="axiom">atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#ATOM.atom"><span class="id" title="axiom">atom</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="ATOM.fresh_not_in" class="idref" href="#ATOM.fresh_not_in"><span class="id" title="axiom">fresh_not_in</span></a> : <span class="id" title="keyword">forall</span> <a id="l:9" class="idref" href="#l:9"><span class="id" title="binder">l</span></a>, <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#ATOM.fresh"><span class="id" title="axiom">fresh</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#l:9"><span class="id" title="variable">l</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.SetlikeFunctor.html#11eb2861ea16289dd627ef9d8c2d6322"><span class="id" title="notation">∈</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#l:9"><span class="id" title="variable">l</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="ATOM.nat_of" class="idref" href="#ATOM.nat_of"><span class="id" title="axiom">nat_of</span></a> : <a class="idref" href="Tealeaves.LN.Atom.html#ATOM.atom"><span class="id" title="axiom">atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Resolve</span> <span class="id" title="var">eq_dec</span> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Structures.Equalities.html#HasUsualEq"><span class="id" title="module">HasUsualEq</span></a> &lt;+ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Structures.Equalities.html#UsualIsEq"><span class="id" title="module">UsualIsEq</span></a> &lt;+ <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Structures.Equalities.html#UsualIsEqOrig"><span class="id" title="module">UsualIsEqOrig</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.LN.Atom.html#ATOM"><span class="id" title="module">ATOM</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The implementation of the above interface is hidden for
+    documentation purposes. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Atom" class="idref" href="#Atom"><span class="id" title="module">Atom</span></a> : <a class="idref" href="Tealeaves.LN.Atom.html#ATOM"><span class="id" title="module">ATOM</span></a>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.LN.Atom.html#Atom"><span class="id" title="module">Atom</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="atom" class="idref" href="#atom"><span class="id" title="abbreviation">atom</span></a> := <a class="idref" href="Tealeaves.LN.Atom.html#atom"><span class="id" title="axiom">Atom.atom</span></a>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="fresh" class="idref" href="#fresh"><span class="id" title="abbreviation">fresh</span></a> := <a class="idref" href="Tealeaves.LN.Atom.html#fresh"><span class="id" title="axiom">Atom.fresh</span></a>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="fresh_not_in" class="idref" href="#fresh_not_in"><span class="id" title="abbreviation">fresh_not_in</span></a> := <a class="idref" href="Tealeaves.LN.Atom.html#fresh_not_in"><span class="id" title="axiom">Atom.fresh_not_in</span></a>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="atom_fresh_for_list" class="idref" href="#atom_fresh_for_list"><span class="id" title="abbreviation">atom_fresh_for_list</span></a> := <a class="idref" href="Tealeaves.LN.Atom.html#atom_fresh_for_list"><span class="id" title="axiom">Atom.atom_fresh_for_list</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Automatically&nbsp;unfold&nbsp;Atom.eq&nbsp;*)</span><br/>
+<span class="id" title="keyword">Global</span> <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.LN.Atom.html#eq"><span class="id" title="definition">Atom.eq</span></a> /.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+It is trivial to declare an instance of <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Classes.EquivDec.html#EqDec"><span class="id" title="class">EqDec</span></a></span> for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.Atom.html#atom"><span class="id" title="abbreviation">atom</span></a></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Instance</span> <a id="EqDec_atom" class="idref" href="#EqDec_atom"><span class="id" title="instance">EqDec_atom</span></a> : @<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Classes.EquivDec.html#EqDec"><span class="id" title="class">EqDec</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#atom"><span class="id" title="abbreviation">atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#eq"><span class="id" title="inductive">eq</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Classes.RelationClasses.html#eq_equivalence"><span class="id" title="instance">eq_equivalence</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">exact</span> <a class="idref" href="Tealeaves.LN.Atom.html#eq_dec"><span class="id" title="axiom">Atom.eq_dec</span></a>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
