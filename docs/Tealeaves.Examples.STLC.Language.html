@@ -50,7 +50,7 @@
 </div>
 
 <div class="doc">
-<a id="lab446"></a><h1 class="section">Language definition</h1>
+<a id="lab455"></a><h1 class="section">Language definition</h1>
 
 </div>
 <div class="code">
@@ -76,7 +76,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab447"></a><h2 class="section">Notations and automation</h2>
+<a id="lab456"></a><h2 class="section">Notations and automation</h2>
 
 </div>
 <div class="code">
@@ -97,7 +97,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab448"></a><h1 class="section">Functor instance</h1>
+<a id="lab457"></a><h1 class="section">Functor instance</h1>
 
 </div>
 <div class="code">
@@ -132,6 +132,13 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 &nbsp;&nbsp;|}.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab458"></a><h2 class="section">Rewriting rules for <code>fmap</code></h2>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Section</span> <a id="fmap_term_rewrite" class="idref" href="#fmap_term_rewrite"><span class="id" title="section">fmap_term_rewrite</span></a>.<br/>
 
 <br/>
@@ -152,7 +159,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab449"></a><h1 class="section">Monad instance</h1>
+<a id="lab459"></a><h1 class="section">Monad instance</h1>
 
 </div>
 <div class="code">
@@ -236,7 +243,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab450"></a><h1 class="section">Decorated instance</h1>
+<a id="lab460"></a><h1 class="section">Decorated instance</h1>
 
 </div>
 <div class="code">
@@ -333,7 +340,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab451"></a><h2 class="section">Rewriting rules for <code>dec</code></h2>
+<a id="lab461"></a><h2 class="section">Rewriting rules for <code>dec</code></h2>
 
 </div>
 <div class="code">
@@ -364,7 +371,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab452"></a><h1 class="section">Traversable instance</h1>
+<a id="lab462"></a><h1 class="section">Traversable instance</h1>
 
 </div>
 <div class="code">
@@ -388,7 +395,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab453"></a><h2 class="section">Rewriting lemmas for <code>dist</code></h2>
+<a id="lab463"></a><h2 class="section">Rewriting lemmas for <code>dist</code></h2>
 
 </div>
 <div class="code">
@@ -396,7 +403,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:71" class="idref" href="#H0:71"><span class="id" title="binder">Applicative</span></a> <a id="H0:71" class="idref" href="#H0:71"><span class="id" title="binder">G</span></a>}.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H2:71" class="idref" href="#H2:71"><span class="id" title="binder">Applicative</span></a> <a id="H2:71" class="idref" href="#H2:71"><span class="id" title="binder">G</span></a>}.<br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Variable</span> (<a id="term_dist_rewrite.A" class="idref" href="#term_dist_rewrite.A"><span class="id" title="variable">A</span></a> : <span class="id" title="keyword">Type</span>).<br/>
@@ -457,7 +464,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:87" class="idref" href="#H0:87"><span class="id" title="binder">Applicative</span></a> <a id="H0:87" class="idref" href="#H0:87"><span class="id" title="binder">G</span></a>}.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H2:87" class="idref" href="#H2:87"><span class="id" title="binder">Applicative</span></a> <a id="H2:87" class="idref" href="#H2:87"><span class="id" title="binder">G</span></a>}.<br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="dist_natural_term" class="idref" href="#dist_natural_term"><span class="id" title="lemma">dist_natural_term</span></a> : <span class="id" title="keyword">forall</span> `(<a id="f:90" class="idref" href="#f:90"><span class="id" title="binder">f</span></a> : <a id="A:88" class="idref" href="#A:88"><span class="id" title="binder">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a id="B:89" class="idref" href="#B:89"><span class="id" title="binder">B</span></a>),<br/>
@@ -595,7 +602,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab454"></a><h1 class="section">Listable instance (redundant)</h1>
+<a id="lab464"></a><h1 class="section">Listable instance (redundant)</h1>
 
 </div>
 <div class="code">
@@ -631,7 +638,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab455"></a><h2 class="section">Shapeliness</h2>
+<a id="lab465"></a><h2 class="section">Shapeliness</h2>
 
 </div>
 <div class="code">
@@ -697,13 +704,11 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab456"></a><h1 class="section">DecoratedTraversableModule instance</h1>
+<a id="lab466"></a><h1 class="section">Compatibility between decoration and traversal</h1>
 
 </div>
 <div class="code">
-
-<br/>
-<span class="id" title="keyword">Lemma</span> <a id="dtfun_compat_term1" class="idref" href="#dtfun_compat_term1"><span class="id" title="lemma">dtfun_compat_term1</span></a> : <span class="id" title="keyword">forall</span> `{<a id="H0:142" class="idref" href="#H0:142"><span class="id" title="binder">Applicative</span></a> <a id="H0:142" class="idref" href="#H0:142"><span class="id" title="binder">G</span></a>} (<a id="X:143" class="idref" href="#X:143"><span class="id" title="binder">X</span></a> : <a class="idref" href="Tealeaves.Examples.STLC.Language.html#typ"><span class="id" title="inductive">typ</span></a>) {<a id="A:144" class="idref" href="#A:144"><span class="id" title="binder">A</span></a>},<br/>
+<span class="id" title="keyword">Lemma</span> <a id="dtfun_compat_term1" class="idref" href="#dtfun_compat_term1"><span class="id" title="lemma">dtfun_compat_term1</span></a> : <span class="id" title="keyword">forall</span> `{<a id="H2:142" class="idref" href="#H2:142"><span class="id" title="binder">Applicative</span></a> <a id="H2:142" class="idref" href="#H2:142"><span class="id" title="binder">G</span></a>} (<a id="X:143" class="idref" href="#X:143"><span class="id" title="binder">X</span></a> : <a class="idref" href="Tealeaves.Examples.STLC.Language.html#typ"><span class="id" title="inductive">typ</span></a>) {<a id="A:144" class="idref" href="#A:144"><span class="id" title="binder">A</span></a>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#G:138"><span class="id" title="variable">G</span></a> (<a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#dec"><span class="id" title="definition">dec</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#term"><span class="id" title="inductive">term</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#Lam"><span class="id" title="constructor">Lam</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#X:143"><span class="id" title="variable">X</span></a>) <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">δ</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">term</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">G</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">A</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">:=</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">A</span></a><a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#G:138"><span class="id" title="variable">G</span></a> (<a class="idref" href="Tealeaves.Singlesorted.Theory.Product.html#curry"><span class="id" title="definition">curry</span></a> (<a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#shift"><span class="id" title="definition">shift</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#term"><span class="id" title="inductive">term</span></a>) 1 <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#Lam"><span class="id" title="constructor">Lam</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#X:143"><span class="id" title="variable">X</span></a>) <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#G:138"><span class="id" title="variable">G</span></a> (<a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#dec"><span class="id" title="definition">dec</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#term"><span class="id" title="inductive">term</span></a>) <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">δ</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">term</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#9263a77e734c94f2b051f8ed56661316"><span class="id" title="notation">G</span></a>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
@@ -712,7 +717,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 
 <br/>
 <span class="id" title="keyword">Theorem</span> <a id="dtfun_compat_term" class="idref" href="#dtfun_compat_term"><span class="id" title="lemma">dtfun_compat_term</span></a> :<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<span class="id" title="keyword">forall</span> {<a id="A:145" class="idref" href="#A:145"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>} `{<a id="H0:150" class="idref" href="#H0:150"><span class="id" title="binder">Applicative</span></a> <a id="H0:150" class="idref" href="#H0:150"><span class="id" title="binder">G</span></a>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<span class="id" title="keyword">forall</span> {<a id="A:145" class="idref" href="#A:145"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>} `{<a id="H2:150" class="idref" href="#H2:150"><span class="id" title="binder">Applicative</span></a> <a id="H2:150" class="idref" href="#H2:150"><span class="id" title="binder">G</span></a>},<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#term"><span class="id" title="inductive">term</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#G:146"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#term"><span class="id" title="inductive">term</span></a> (<a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#strength"><span class="id" title="definition">strength</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#G:146"><span class="id" title="variable">G</span></a>) <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#dec"><span class="id" title="definition">dec</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#term"><span class="id" title="inductive">term</span></a> (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Examples.STLC.Language.html#G:146"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#A:145"><span class="id" title="variable">A</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#G:146"><span class="id" title="variable">G</span></a> (<a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#dec"><span class="id" title="definition">dec</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#term"><span class="id" title="inductive">term</span></a>) <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#term"><span class="id" title="inductive">term</span></a> <a class="idref" href="Tealeaves.Examples.STLC.Language.html#G:146"><span class="id" title="variable">G</span></a>).<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
@@ -754,7 +759,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab457"></a><h1 class="section">Locally nameless operations</h1>
+<a id="lab467"></a><h1 class="section">Locally nameless operations</h1>
 
 </div>
 <div class="code">
@@ -838,7 +843,7 @@ than&nbsp;Coq&nbsp;otherwise&nbsp;infers&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab458"></a><h1 class="section">Typing judgments</h1>
+<a id="lab468"></a><h1 class="section">Typing judgments for STLC</h1>
 
 </div>
 <div class="code">

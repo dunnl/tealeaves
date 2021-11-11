@@ -19,8 +19,7 @@ Instance Fmap_prod {X} : Fmap (X ×) := (fun A B => map_snd).
 
 Solve All Obligations with (introv; now ext [? ?]).
 
-
-(** ** Tensorial strength and monad operations *)
+(** ** Properties of <<strength>> w.r.t. monad operations *)
 (******************************************************************************)
 Section Monad_strength_laws.
 
@@ -66,11 +65,12 @@ Section Monad_strength_laws.
 
 End Monad_strength_laws.
 
-(** * Coreader comonad *)
+(** * Product comonad (a/k/a "reader" comonad) *)
 (** The properties of Cartesian products imply the product functor (by
-    any type <<W>>) forms a comonad. This comonad is called "coreader"
+    any type <<W>>) forms a comonad. This comonad is sometimes called
+    "Reader" in the Haskell community (or sometimes "co-Reader")
     because it is the comonad formed by taking the so-called Reader
-    monad across the exponential adjunction. It is also sometimes
+    monad across the product/exponent adjunction. It is also sometimes
     called the Writer comonad because it shares the same underlying
     object-map as the Writer monad, although its semantics are a form
     of reading rather than writing.
@@ -113,7 +113,8 @@ Section reader_comonad_instance.
 
 End reader_comonad_instance.
 
-(** ** Miscellaneous properties of coreader *)
+(** ** Miscellaneous properties *)
+(******************************************************************************)
 Section miscellaneous.
 
   Theorem strength_extract `{Functor F} :
@@ -168,7 +169,12 @@ Section writer_monad.
 
 End writer_monad.
 
-(** * <<T ∘ prod W>> is a monad via tensor strength *)
+(** * Writer bimonad *)
+(******************************************************************************)
+Instance BeckDistribution_strength (W : Type) (T : Type -> Type) `{Fmap T}:
+  BeckDistribution (W ×) T := (fun A => strength T).
+
+(** ** <<T ∘ prod W>> is a monad via tensor strength *)
 (******************************************************************************)
 Instance Natural_strength `{Functor F} {A} : Natural (F := prod A ∘ F) (@strength F _ A).
 Proof.
@@ -203,11 +209,8 @@ Section strength_as_writer_distributive_law.
     reflexivity.
   Qed.
 
-  #[global] Instance BeckDistribution_strength :
-    BeckDistribution (W ×) T := (fun A => strength T).
-
   #[global] Instance BeckDistributiveLaw_strength :
-    BeckDistributiveLaw (W ×) T (@BeckDistribution_strength) :=
+    BeckDistributiveLaw (W ×) T (@BeckDistribution_strength W T _) :=
     {| dist_join_l := writer_strength_join_l;
        dist_join_r := strength_join_r T;
        dist_unit_l := writer_strength_ret_l;
@@ -218,26 +221,7 @@ Section strength_as_writer_distributive_law.
 
 End strength_as_writer_distributive_law.
 
-(** * Other useful laws *)
-(******************************************************************************)
-Section writer_useful_laws.
-
-  Context
-    `{Monoid W}.
-
-  (* This rewrite is useful when proving decoration-traversal compatibility
-     in the binder case. *)
-  Theorem strength_shift_1 : forall `{Functor F} (w : W) (A : Type),
-      σ F ∘ μ (W ×) ∘ pair w = fmap F (μ (W ×) ∘ pair w) ∘ σ F (B := A).
-  Proof.
-    intros. ext [w' x]. unfold compose; cbn.
-    compose near x. now rewrite (fun_fmap_fmap F).
-  Qed.
-
-End writer_useful_laws.
-
-(** * Writer bimonad *)
-(******************************************************************************)
+(** ** <<prod W>> bimonad instance *)
 Section writer_bimonad_instance.
 
   Context
@@ -302,3 +286,21 @@ Section writer_bimonad_instance.
   Qed.
 
 End writer_bimonad_instance.
+
+(** * Other useful laws *)
+(******************************************************************************)
+Section writer_useful_laws.
+
+  Context
+    `{Monoid W}.
+
+  (* This rewrite is useful when proving decoration-traversal compatibility
+     in the binder case. *)
+  Theorem strength_shift_1 : forall `{Functor F} (w : W) (A : Type),
+      σ F ∘ μ (W ×) ∘ pair w = fmap F (μ (W ×) ∘ pair w) ∘ σ F (B := A).
+  Proof.
+    intros. ext [w' x]. unfold compose; cbn.
+    compose near x. now rewrite (fun_fmap_fmap F).
+  Qed.
+
+End writer_useful_laws.

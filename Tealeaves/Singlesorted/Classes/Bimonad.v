@@ -18,7 +18,7 @@ Import Monad.Notations.
 Import Comonad.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** * Bimonad *)
+(** * Bimonad typeclass *)
 (******************************************************************************)
 Section Bimonad.
 
@@ -52,7 +52,7 @@ Section Bimonad.
 
 End Bimonad.
 
-(** * Bimonadic Kleisli operation *)
+(** * Kleisli lifting operation <<bisub>> *)
 (******************************************************************************)
 Section Bimonad_kleisli_operations.
 
@@ -61,7 +61,7 @@ Section Bimonad_kleisli_operations.
     `{Fmap W} `{Join W} `{Cojoin W}
     `{BeckDistribution W W}.
 
-  Definition bindbi {A B} : (W A -> W B) -> (W A -> W B) :=
+  Definition bisub {A B} : (W A -> W B) -> (W A -> W B) :=
     fun f => join W ∘ fmap W f ∘ cojoin W.
 
   Definition twist : W ∘ W ⇒ W ∘ W
@@ -81,34 +81,34 @@ End Notations.
 
 Import Notations.
 
-(** ** Suboperations *)
+(** ** Specifications for suboperations *)
 (******************************************************************************)
 Section Bimonad_suboperations.
 
   Context
     `{Bimonad W}.
 
-  Lemma cobind_to_bindbi {A B} : forall (f : W A -> B),
-      cobind W f = bindbi W (ret W ∘ f).
+  Lemma cobind_to_bisub {A B} : forall (f : W A -> B),
+      cobind W f = bisub W (ret W ∘ f).
   Proof.
-    intros. unfold bindbi. unfold_ops @Cobind_Cojoin.
+    intros. unfold bisub. unfold_ops @Cobind_Cojoin.
     rewrite <- (fun_fmap_fmap W). reassociate <-.
     now rewrite (mon_join_fmap_ret W).
   Qed.
 
-  Lemma bind_to_bindbi {A B} : forall (f : A -> W B),
-      bind W f = bindbi W (f ∘ extract W).
+  Lemma bind_to_bisub {A B} : forall (f : A -> W B),
+      bind W f = bisub W (f ∘ extract W).
   Proof.
-    intros. unfold bindbi. unfold_ops @Bind_Join.
+    intros. unfold bisub. unfold_ops @Bind_Join.
     rewrite <- (fun_fmap_fmap W).
     reassociate <-. reassociate ->.
     now rewrite (com_fmap_extr_cojoin W).
   Qed.
 
-  Lemma fmap_to_bindbi {A B} : forall (f : A -> B),
-      fmap W f = bindbi W (ret W ∘ f ∘ extract W).
+  Lemma fmap_to_bisub {A B} : forall (f : A -> B),
+      fmap W f = bisub W (ret W ∘ f ∘ extract W).
   Proof.
-    intros. unfold bindbi.
+    intros. unfold bisub.
     do 2 rewrite <- (fun_fmap_fmap W).
     repeat reassociate <-.
     rewrite (mon_join_fmap_ret W).
@@ -118,7 +118,7 @@ Section Bimonad_suboperations.
 
 End Bimonad_suboperations.
 
-(** ** Properties of Kleisli composition *)
+(** ** Bimonad Kleisli composition *)
 (******************************************************************************)
 Section Bimonad_kleisli_composition.
 
@@ -173,9 +173,9 @@ Section Bimonad_kleisli_composition.
 
 End Bimonad_kleisli_composition.
 
-(** ** Functoriality of [bindbi] *)
+(** ** Functoriality of [bisub] *)
 (******************************************************************************)
-Section Bimonad_bindbi.
+Section Bimonad_bisub.
 
   Context
     `{Bimonad W}.
@@ -193,9 +193,9 @@ Section Bimonad_bindbi.
   Qed.
 
   Definition bind_functorial {A B C} : forall (g : W B -> W C) (f : W A -> W B),
-      bindbi W (g ⋆bi f) = bindbi W g ∘ bindbi W f.
+      bisub W (g ⋆bi f) = bisub W g ∘ bisub W f.
   Proof.
-    intros. unfold bindbi. unfold kcomposebi.
+    intros. unfold bisub. unfold kcomposebi.
     (** *)
     repeat reassociate -> on left.
     rewrite <- (fun_fmap_fmap W).
@@ -242,4 +242,4 @@ Section Bimonad_bindbi.
     now repeat rewrite <- (fun_fmap_fmap W).
   Qed.
 
-End Bimonad_bindbi.
+End Bimonad_bisub.

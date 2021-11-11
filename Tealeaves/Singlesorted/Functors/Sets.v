@@ -6,7 +6,7 @@ Import Product.Notations.
 Import Applicative.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** * Set Monoid *)
+(** * Set monoid *)
 (******************************************************************************)
 #[local] Notation "( -> B )" := (fun A => A -> B) (at level 50).
 #[local] Notation "'set'" := ((-> Prop)).
@@ -69,7 +69,10 @@ End set_monoid.
 Hint Rewrite @set_add_nil_l @set_add_nil_r
      @set_add_assoc @set_in_empty @set_in_add : tea_set.
 
-(** ** Set Functor *)
+(** * Set monad *)
+(******************************************************************************)
+
+(** ** Functor instance *)
 (******************************************************************************)
 
 (** [fmap f s] is the image of a set [s] under a morphism [f] *)
@@ -99,7 +102,7 @@ Definition fun_fmap_fmap_set {A B C} : forall (f : A -> B) (g : B -> C),
 Instance Functor_set : Functor set :=
   ltac:(constructor; solve_basic_set).
 
-(** * Set Monad *)
+(** ** Monad operations *)
 (******************************************************************************)
 Instance Return_set : Return set := fun A a b => a = b.
 
@@ -149,7 +152,7 @@ Qed.
 Hint Rewrite @set_in_ret @join_set_nil @join_set_one @join_set_add
      @fmap_set_add @fmap_set_one : tea_set.
 
-(** ** Monad instance *)
+(** ** Monad laws *)
 (******************************************************************************)
 Theorem join_ret {A} :
   join set ∘ ret set = @id (A -> Prop).
@@ -202,7 +205,7 @@ Instance Monad_set : Monad set :=
      mon_join_join := @join_join;
   |}.
 
-(** * [set]/[set] Module *)
+(** ** [set]/[set] Module *)
 (******************************************************************************)
 Instance RightAction_set : RightAction set set := RightAction_Join set.
 Instance Module_set : RightModule set set := RightModule_Monad set.
@@ -240,7 +243,7 @@ Qed.
 
 Hint Rewrite @bind_set_nil @bind_set_one @bind_set_add : tea_set.
 
-(** * Set functor as an applicative *)
+(** * Set as an applicative functor *)
 (******************************************************************************)
 Instance Pure_set : Pure set := @eq.
 
@@ -301,10 +304,10 @@ Proof.
 Qed.
 
 Instance Applicative_set : Applicative set :=
-  { app_mult_pure := app_mult_pure_set;
-    app_pure_natural := app_pure_natural_set;
-    app_mult_natural := app_mult_natural_set;
-    app_assoc := app_assoc_set;
-    app_unital_l := app_unital_l_set;
-    app_unital_r := app_unital_r_set;
-  }.
+  {| app_mult_pure := app_mult_pure_set;
+     app_pure_natural := app_pure_natural_set;
+     app_mult_natural := app_mult_natural_set;
+     app_assoc := app_assoc_set;
+     app_unital_l := app_unital_l_set;
+     app_unital_r := app_unital_r_set;
+  |}.

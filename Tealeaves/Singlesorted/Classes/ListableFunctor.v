@@ -17,7 +17,7 @@ Import List.Notations.
 Definition shape F `{Fmap F} {A} : F A -> F unit :=
   fmap F (const tt).
 
-(** ** Basic reasoning principles for [shape] *)
+(** ** Basic reasoning principles for <<shape>> *)
 (******************************************************************************)
 Theorem shape_fmap `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
     shape F (fmap F f t) = shape F t.
@@ -71,7 +71,7 @@ Section ListableFunctor.
 
 End ListableFunctor.
 
-(** ** [tolist]-preserving natural transformations *)
+(** ** <<tolist>>-preserving natural transformations *)
 (** A [ListPreservingTransformation] is a natural transformation
     between two listable functors that commutes with [tolist]. This is
     an operation that modifies the shape and type of a container without
@@ -86,7 +86,30 @@ Class ListPreservingTransformation
     ltrans_natural : Natural η;
   }.
 
-(** * Properties of [shape] *)
+(** ** Instance for [list] *)
+(** As a reasonability check, we prove that [list] is a listable functor. *)
+(******************************************************************************)
+Instance Tolist_list : Tolist list := fun A l => l.
+
+Section ListableFunctor_list.
+
+  Instance: Natural (@tolist list _).
+  Proof.
+    constructor; try typeclasses eauto.
+    reflexivity.
+  Qed.
+
+  Theorem shapeliness_list : shapeliness list.
+  Proof.
+    intros A t1 t2. intuition.
+  Qed.
+
+  #[program] Instance: ListableFunctor list :=
+    {| lfun_shapeliness := shapeliness_list; |}.
+
+End ListableFunctor_list.
+
+(** * Properties of <<shape>> *)
 (******************************************************************************)
 
 (** ** Rewriting [shape] on lists *)
@@ -128,7 +151,7 @@ End list_shape_rewrite.
 
 Hint Rewrite @shape_nil @shape_cons @shape_one @shape_app : tea_rw_list.
 
-(** ** Reasoning princples for [shape] on lists *)
+(** ** Reasoning princples for <<shape>> on lists *)
 (******************************************************************************)
 Section list_shape_lemmas.
 
@@ -246,7 +269,7 @@ Section list_shape_lemmas.
 
 End list_shape_lemmas.
 
-(** ** Reasoning principles for [shape] on listable functors *)
+(** ** Reasoning principles for <<shape>> on listable functors *)
 (** These principles are predicated just on <<tolist>> being a natural
     transformation and can be used to prove [shapeliness] for a given
     functor. *)
@@ -449,7 +472,7 @@ Ltac unfold_list_properness :=
   tolist_fmap_respectful,
   tolist_fmap_respectful_iff in *.
 
-(** ** Equivalence with shapliness *)
+(** ** Equivalence with shapeliness *)
 (******************************************************************************)
 Section tolist_respectfulness_characterizations.
 
@@ -496,7 +519,10 @@ Section tolist_respectfulness_characterizations.
 
 End tolist_respectfulness_characterizations.
 
-(** * Listable functors are set-like *)
+(** * Properties of listable functors *)
+(******************************************************************************)
+
+(** ** Listable functors are set-like *)
 (******************************************************************************)
 Instance Toset_Tolist `{Tolist F} : Toset F :=
   fun A => toset list ∘ tolist F.
@@ -515,7 +541,7 @@ Proof.
   reflexivity.
 Qed.
 
-Section Listable_setlike.
+Section ListableFunctor_setlike.
 
   Context
     `{ListableFunctor F}.
@@ -563,9 +589,9 @@ Section Listable_setlike.
   #[global] Instance SetlikeFunctor_Listable : SetlikeFunctor F :=
     {| xfun_respectful := listable_respectful; |}.
 
-End Listable_setlike.
+End ListableFunctor_setlike.
 
-(** * Properties of listable functors *)
+(** ** Miscellaneous properties of listable functors *)
 (******************************************************************************)
 Section ListableFunctor_theory.
 
@@ -644,40 +670,17 @@ Section fold_monoidal_structure.
 
 End fold_monoidal_structure.
 
-(** * Listable instances for [list] *)
-(** As a reasonability check, we prove that [list] is a listable functor. *)
-(******************************************************************************)
-Instance Tolist_list : Tolist list := fun A l => l.
-
-Section ListableFunctor_list.
-
-  Instance: Natural (@tolist list _).
-  Proof.
-    constructor; try typeclasses eauto.
-    reflexivity.
-  Qed.
-
-  Theorem shapeliness_list : shapeliness list.
-  Proof.
-    intros A t1 t2. intuition.
-  Qed.
-
-  #[program] Instance: ListableFunctor list :=
-    {| lfun_shapeliness := shapeliness_list; |}.
-
-End ListableFunctor_list.
-
 (** * Decorated listable functors *)
 (******************************************************************************)
 
-(** ** Derived operation [tolistr] *)
+(** ** Derived operation [tolistd] *)
 (******************************************************************************)
-Definition tolistr F `{Decorate W F} `{Tolist F} {A} : F A -> list (W * A)
+Definition tolistd F `{Decorate W F} `{Tolist F} {A} : F A -> list (W * A)
   := tolist F ∘ dec F.
 
-(** * Properties of decorated shapely functors *)
+(** ** General properties *)
 (******************************************************************************)
-Section decorated_shapely.
+Section ListableFunctor_decorated_theory.
 
   Context
     `{Monoid W}
@@ -687,12 +690,12 @@ Section decorated_shapely.
 
   #[local] Set Keyed Unification.
 
-  (** ** Interaction between [tolistr] and [fmapd] *)
+  (** ** Interaction between [tolistd] and [fmapd] *)
   (******************************************************************************)
-  Theorem tolistr_fmapd {A B} : forall (f : W * A -> B),
-      tolistr F ∘ fmapd F f = fmap list (cobind (prod W) f) ∘ tolistr F.
+  Theorem tolistd_fmapd {A B} : forall (f : W * A -> B),
+      tolistd F ∘ fmapd F f = fmap list (cobind (prod W) f) ∘ tolistd F.
   Proof.
-    intros. unfold fmapd, tolistr.
+    intros. unfold fmapd, tolistd.
     reassociate <- on left; reassociate <- on right.
     change_left (tolist F ∘ (dec F ∘ fmap F f ∘ dec F)).
     rewrite <- (natural (G := F ∘ prod W)).
@@ -708,19 +711,19 @@ Section decorated_shapely.
   (** ** Corollaries: [tolist] and [fmapd] *)
   (******************************************************************************)
   Theorem tolist_fmapd {A B} : forall (f : W * A -> B),
-      tolist F ∘ fmapd F f = fmap list f ∘ tolistr F.
+      tolist F ∘ fmapd F f = fmap list f ∘ tolistd F.
   Proof.
-    intros. unfold fmapd, tolistr.
+    intros. unfold fmapd, tolistd.
     reassociate <- on left; reassociate <- on right.
     now rewrite <- natural.
   Qed.
 
-  (** ** Corollaries: [tolistr] and [fmap] *)
+  (** ** Corollaries: [tolistd] and [fmap] *)
   (******************************************************************************)
-  Theorem tolistr_fmap {A B} : forall (f : W * A -> B),
-      tolistr F ∘ fmap F f = fmap list (fmap (prod W) f) ∘ tolistr F.
+  Theorem tolistd_fmap {A B} : forall (f : W * A -> B),
+      tolistd F ∘ fmap F f = fmap list (fmap (prod W) f) ∘ tolistd F.
   Proof.
-    intros. unfold fmapd, tolistr.
+    intros. unfold fmapd, tolistd.
     reassociate -> on left. rewrite <- (natural (G := F ∘ prod W)).
     reassociate <- on left. unfold_ops @Fmap_compose.
     now rewrite <- (natural (F := F) (G := list)).
@@ -728,4 +731,4 @@ Section decorated_shapely.
 
   #[local] Unset Keyed Unification.
 
-End decorated_shapely.
+End ListableFunctor_decorated_theory.

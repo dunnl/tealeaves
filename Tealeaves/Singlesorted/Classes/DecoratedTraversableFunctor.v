@@ -76,6 +76,9 @@ End DecoratedTraversableFunctor_monoid.
 
 (** * Kleisli presentation *)
 (******************************************************************************)
+
+(** ** Lifting operation <<fmapdt>> *)
+(******************************************************************************)
 Definition fmapdt F `{Fmap F} `{Decorate W F} `{Dist F}
            `{Fmap G} `{Pure G} `{Mult G}
            {A B : Type} (f : W * A -> G B) : F A -> G (F B) :=
@@ -137,7 +140,7 @@ Section DecoratedTraversableFunctor_suboperations.
 
 End DecoratedTraversableFunctor_suboperations.
 
-(** ** Functoriality of [fmapd] *)
+(** ** Functoriality of <<fmapdt>> *)
 (******************************************************************************)
 Section DecoratedTraversableFunctor_fmapdt.
 
@@ -182,7 +185,7 @@ Section DecoratedTraversableFunctor_fmapdt.
 
 End DecoratedTraversableFunctor_fmapdt.
 
-(** ** Purity laws for [fmapd] *)
+(** ** Purity laws for <<fmapdt>> *)
 (******************************************************************************)
 Section DecoratedTraversableFunctor_purity.
 
@@ -363,7 +366,7 @@ Section DecoratedTraversableFunctor_composition.
 
 End DecoratedTraversableFunctor_composition.
 
-(** * Respectfulness properties *)
+(** ** Respectfulness properties *)
 (******************************************************************************)
 Section DecoratedTraversableFunctor_respectfulness.
 

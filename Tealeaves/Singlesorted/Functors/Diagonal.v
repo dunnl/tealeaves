@@ -1,9 +1,7 @@
 From Tealeaves Require Export
      Singlesorted.Classes.Applicative.
 
-#[local] Open Scope tealeaves_scope.
-
-(** * Diagonal (duplication) functor *)
+(** * Diagonal (duplication) applicative functor *)
 (******************************************************************************)
 Definition dup (A : Type) : Type := A * A.
 

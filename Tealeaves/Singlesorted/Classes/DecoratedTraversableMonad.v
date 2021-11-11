@@ -8,7 +8,7 @@ Import Comonad.Notations.
 Import DecoratedTraversableFunctor.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** ** Decorated-traversable Monads *)
+(** * Decorated-traversable monads *)
 (******************************************************************************)
 Section DecoratedTraverableMonad.
 
@@ -50,7 +50,10 @@ Section test_typeclasses.
 
 End test_typeclasses.
 
-(** * Kleisli presentation *)
+(** * Kleisli presentation of D-T monads *)
+(******************************************************************************)
+
+(** ** Lifting operation <<binddt>> and Kleisli composition  *)
 (******************************************************************************)
 Definition binddt T `{Fmap T} `{Decorate W T} `{Dist T} `{Join T}
            `{Fmap G} `{Pure G} `{Mult G}
@@ -450,7 +453,7 @@ Section DecoratedTraversableFunctor_purity.
 
 End DecoratedTraversableFunctor_purity.
 
-(** * Respectfulness properties *)
+(** ** Respectfulness properties *)
 (******************************************************************************)
 Section DecoratedTraversableMonad_respectfulness.
 

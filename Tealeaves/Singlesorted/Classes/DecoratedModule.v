@@ -39,7 +39,7 @@ Section shift_module_lemmas.
 
 End shift_module_lemmas.
 
-(** * Decorated Right Modules *)
+(** * Decorated right modules *)
 (******************************************************************************)
 Section DecoratedModule_class.
 

@@ -39,12 +39,20 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.MSets.MSets.html#"><span class="id" title="library">MSets.MSets</span></a>.<br/>
 
 <br/>
+<span class="comment">(*&nbsp;set&nbsp;up&nbsp;notations&nbsp;*)</span><br/>
 <span class="id" title="keyword">Import</span> <span class="id" title="var">List.ListNotations</span>.<br/>
 <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">list_scope</span>.<br/>
 <span class="id" title="keyword">Import</span> <span class="id" title="var">SetlikeFunctor.Notations</span>.<br/>
 <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">tealeaves_scope</span>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab379"></a><h1 class="section">Defining <code>AtomSet</code> via Coq MSets library</h1>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Module</span> <a id="AtomSet" class="idref" href="#AtomSet"><span class="id" title="module">AtomSet</span></a> &lt;: <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.MSets.MSetInterface.html#WSets"><span class="id" title="module">Coq.MSets.MSetInterface.WSets</span></a> :=<br/>
 &nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.MSets.MSetWeakList.html#Make"><span class="id" title="module">Coq.MSets.MSetWeakList.Make</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#Atom"><span class="id" title="module">Atom</span></a>.<br/>
 
@@ -58,6 +66,13 @@
 <span class="id" title="keyword">Local Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">set_scope</span>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab380"></a><h2 class="section">Notations for operations on <code>AtomSet</code></h2>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Module</span> <a id="Notations" class="idref" href="#Notations"><span class="id" title="module">Notations</span></a>.<br/>
 
 <br/>
@@ -96,6 +111,13 @@
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab381"></a><h2 class="section">The <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AtomSet.html#atoms"><span class="id" title="definition">atoms</span></a></span> operation</h2>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Fixpoint</span> <a id="atoms" class="idref" href="#atoms"><span class="id" title="definition">atoms</span></a> (<a id="l:3" class="idref" href="#l:3"><span class="id" title="binder">l</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#atom"><span class="id" title="abbreviation">atom</span></a>) : <a class="idref" href="Tealeaves.LN.AtomSet.html#t"><span class="id" title="definition">AtomSet.t</span></a> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Tealeaves.LN.AtomSet.html#l:3"><span class="id" title="variable">l</span></a> <span class="id" title="keyword">with</span><br/>
 &nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> =&gt; <a class="idref" href="Tealeaves.LN.AtomSet.html#4a91b65bb26d214acd2b333a39322320"><span class="id" title="notation">∅</span></a><br/>
@@ -106,7 +128,7 @@
 </div>
 
 <div class="doc">
-<a id="lab369"></a><h2 class="section">Interaction between <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AtomSet.html#atoms"><span class="id" title="definition">atoms</span></a></span> and list operations</h2>
+<a id="lab382"></a><h2 class="section">Rewriting rules</h2>
 
 </div>
 <div class="code">

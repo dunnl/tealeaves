@@ -59,7 +59,7 @@ End KleisliTraversableMonad_operations.
 
 #[local] Notation "g ⋆tm f" := (kcomposetm _ g f) (at level 40) : tealeaves_scope.
 
-(** ** Suboperations *)
+(** ** Specifications for sub-operations *)
 (******************************************************************************)
 Section KleisliTraversableMonad_suboperations.
 
@@ -475,7 +475,7 @@ Section TraversableMonad_list.
 
 End TraversableMonad_list.
 
-(** * Traversability implies listability *)
+(** * Traversable monads are listable *)
 (******************************************************************************)
 Section TraversableMonad_listable.
 

@@ -65,21 +65,10 @@ Section monad_homomorphism.
 
 End monad_homomorphism.
 
-(** * The identity functor is a monad *)
-(******************************************************************************)
-Instance Return_I : Return (fun A => A) := (fun A (a : A) => a).
-
-Instance Join_I : Join (fun A => A) := (fun A (a : A) => a).
-
-#[program] Instance Monad_I : Monad (fun A => A).
-
-Solve All Obligations with
-    (constructor; try typeclasses eauto; intros; now ext t).
-
 (** * Kleisli presentation of monads *)
 (******************************************************************************)
 
-(** ** Kleisli operations *)
+(** ** Kleisli lifting operation <<bind>> *)
 (******************************************************************************)
 Class Bind (T : Type -> Type) :=
   bind : forall {A B}, (A -> T B) -> T A -> T B.
@@ -94,16 +83,16 @@ Definition kcompose T `{Bind T} `(g : B -> T C) `(f : A -> T B) : (A -> T C) :=
 
 #[local] Notation "g ⋆ f" := (kcompose _ g f) (at level 60) : tealeaves_scope.
 
-(** ** Specifications for sub-operations  *)
+(** ** Specification for <<fmap>>  *)
 (******************************************************************************)
-Section monad_suboperations.
+Section Monad_suboperations.
 
   Context
     (T : Type -> Type)
     `{Monad T}.
 
   (** *** [fmap] as a special case of [bind]. *)
-  Corollary fmap_to_bind : forall `(f : A -> B),
+  Lemma fmap_to_bind : forall `(f : A -> B),
       fmap T f = bind T (ret T ∘ f).
   Proof.
     intros. unfold transparent tcs.
@@ -112,11 +101,11 @@ Section monad_suboperations.
     now rewrite (mon_join_fmap_ret T).
   Qed.
 
-End monad_suboperations.
+End Monad_suboperations.
 
-(** ** Kleisli laws for [bind] *)
+(** ** Functor laws for <<bind>> *)
 (******************************************************************************)
-Section monad_kleisli_laws.
+Section Monad_kleisli_laws.
 
   Context
     (T : Type -> Type)
@@ -158,28 +147,31 @@ Section monad_kleisli_laws.
     now rewrite (mon_join_ret T).
   Qed.
 
-End monad_kleisli_laws.
+End Monad_kleisli_laws.
 
 (** ** Kleisli category laws *)
 (******************************************************************************)
-Section monad_kleisli_category.
+Section Monad_kleisli_category.
 
   Context
     `{Monad T}
     {A B C D : Type}.
 
-  Theorem kleisli_id_r : forall (g : B -> T C),
-      g ⋆ (@ret T _ B) = g.
-  Proof.
-    intros. unfold kcompose. now rewrite (bind_comp_ret T).
-  Qed.
-
+  (** *** Left identity law *)
   Theorem kleisli_id_l : forall (f : A -> T B),
       (@ret T _ B) ⋆ f = f.
   Proof.
     intros. unfold kcompose. now rewrite (bind_id T).
   Qed.
 
+  (** *** Right identity law *)
+  Theorem kleisli_id_r : forall (g : B -> T C),
+      g ⋆ (@ret T _ B) = g.
+  Proof.
+    intros. unfold kcompose. now rewrite (bind_comp_ret T).
+  Qed.
+
+  (** *** Associativity law *)
   Theorem kleisli_comp : forall (h : C -> T D) (g : B -> T C) (f : A -> T B),
       h ⋆ (g ⋆ f) = (h ⋆ g) ⋆ f.
   Proof.
@@ -187,9 +179,9 @@ Section monad_kleisli_category.
     now rewrite <- (bind_bind T).
   Qed.
 
-End monad_kleisli_category.
+End Monad_kleisli_category.
 
-(** ** Composition laws for suboperations *)
+(** ** Composition laws for <<bind>>/<<fmap>>*)
 (******************************************************************************)
 Section monad_suboperation_composition.
 
@@ -215,7 +207,18 @@ Section monad_suboperation_composition.
 
 End monad_suboperation_composition.
 
-(** ** Miscellaneous properties *)
+(** * The identity monad *)
+(******************************************************************************)
+Instance Return_I : Return (fun A => A) := (fun A (a : A) => a).
+
+Instance Join_I : Join (fun A => A) := (fun A (a : A) => a).
+
+#[program] Instance Monad_I : Monad (fun A => A).
+
+Solve All Obligations with
+    (constructor; try typeclasses eauto; intros; now ext t).
+
+(** * Miscellaneous properties *)
 (******************************************************************************)
 Section tensor_laws.
 
@@ -233,7 +236,7 @@ Section tensor_laws.
 
 End tensor_laws.
 
-(** ** Equivalence between monads and Kleisli triples *)
+(** * Equivalence between monads and Kleisli triples *)
 (******************************************************************************)
 Class KleisliMonad T `{Return T} `{Bind T} :=
   { kmon_bind_ret_r : forall `(f : A -> T B),

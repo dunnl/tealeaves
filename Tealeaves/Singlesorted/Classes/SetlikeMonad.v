@@ -8,9 +8,9 @@ Import SetlikeFunctor.Notations.
 Import Monoid.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** * Setlike monads *)
+(** * Set-like monads *)
 (******************************************************************************)
-Section setlike_monad_class.
+Section SetlikeMonad.
 
   Context
     (T : Type -> Type).
@@ -29,9 +29,9 @@ Section setlike_monad_class.
           join set ∘ toset T ∘ fmap T (toset T));
     }.
 
-End setlike_monad_class.
+End SetlikeMonad.
 
-(** ** [set] is a setlike monad *)
+(** ** Instance for [set] *)
 (******************************************************************************)
 Section SetlikeMonad_set_instance.
 
@@ -52,7 +52,7 @@ Section SetlikeMonad_set_instance.
 
 End SetlikeMonad_set_instance.
 
-(** ** Basic properties *)
+(** ** Basic properties of set-like monads *)
 (******************************************************************************)
 Section setlike_monad_properties.
 
@@ -119,61 +119,6 @@ End setlike_monad_properties.
 
 (** * Decorated set-like monads *)
 (******************************************************************************)
-
-(** ** Respectfulness properties *)
-(******************************************************************************)
-Section decorated_setlike_respectfulness.
-
-  Context
-    (T : Type -> Type)
-    `{Monoid W}
-    `{Fmap T} `{Return T} `{Join T} `{Decorate W T} `{Toset T}
-    `{! DecoratedMonad W T}
-    `{! SetlikeMonad T}.
-
-    Theorem bindd_respectful {A B} : forall (t : T A) (f g : W * A -> T B),
-        (forall w a, (w, a) ∈d t -> f (w, a) = g (w, a)) ->
-        bindd T f t = bindd T g t.
-    Proof.
-      intros. unfold bindd, compose.
-      eapply (SetlikeMonad.bind_respectful T); auto.
-      intros [? ?]; eauto.
-    Qed.
-
-    Corollary bindd_respectful_id {A} : forall (t : T A) (f : W * A -> T A),
-        (forall w a, (w, a) ∈d t -> f (w, a) = ret T a) ->
-        bindd T f t = t.
-    Proof.
-      intros. replace t with (bindd T (ret T ∘ extract (prod W)) t) at 2
-        by (now rewrite (bindd_id T)).
-      now apply bindd_respectful.
-    Qed.
-
-    Corollary bindd_respectful_fmapd {A B} : forall (t : T A) (f : W * A -> T B) (g : W * A -> B),
-        (forall w a, (w, a) ∈d t -> f (w, a) = ret T (g (w, a))) ->
-        bindd T f t = fmapd T g t.
-    Proof.
-      introv. rewrite (fmapd_to_bindd T).
-      intros ?. now apply bindd_respectful.
-    Qed.
-
-    Corollary bindd_respectful_bind {A B} : forall (t : T A) (f : W * A -> T B) (g : A -> T B),
-        (forall w a, (w, a) ∈d t -> f (w, a) = g a) ->
-        bindd T f t = bind T g t.
-    Proof.
-      introv. rewrite (bind_to_bindd T).
-      intros ?. now apply bindd_respectful.
-    Qed.
-
-    Corollary bindd_respectful_fmap {A B} : forall (t : T A) (f : W * A -> T B) (g : A -> B),
-        (forall w a, (w, a) ∈d t -> f (w, a) = ret T (g a)) ->
-        bindd T f t = fmap T g t.
-    Proof.
-      introv. rewrite (fmap_to_bindd T).
-      intros; now apply bindd_respectful.
-    Qed.
-
-End decorated_setlike_respectfulness.
 
 (** ** Basic properties *)
 (******************************************************************************)
@@ -244,3 +189,58 @@ Section decorated_setlike_properties.
   Qed.
 
 End decorated_setlike_properties.
+
+(** ** Respectfulness properties *)
+(******************************************************************************)
+Section decorated_setlike_respectfulness.
+
+  Context
+    (T : Type -> Type)
+    `{Monoid W}
+    `{Fmap T} `{Return T} `{Join T} `{Decorate W T} `{Toset T}
+    `{! DecoratedMonad W T}
+    `{! SetlikeMonad T}.
+
+    Theorem bindd_respectful {A B} : forall (t : T A) (f g : W * A -> T B),
+        (forall w a, (w, a) ∈d t -> f (w, a) = g (w, a)) ->
+        bindd T f t = bindd T g t.
+    Proof.
+      intros. unfold bindd, compose.
+      eapply (SetlikeMonad.bind_respectful T); auto.
+      intros [? ?]; eauto.
+    Qed.
+
+    Corollary bindd_respectful_id {A} : forall (t : T A) (f : W * A -> T A),
+        (forall w a, (w, a) ∈d t -> f (w, a) = ret T a) ->
+        bindd T f t = t.
+    Proof.
+      intros. replace t with (bindd T (ret T ∘ extract (prod W)) t) at 2
+        by (now rewrite (bindd_id T)).
+      now apply bindd_respectful.
+    Qed.
+
+    Corollary bindd_respectful_fmapd {A B} : forall (t : T A) (f : W * A -> T B) (g : W * A -> B),
+        (forall w a, (w, a) ∈d t -> f (w, a) = ret T (g (w, a))) ->
+        bindd T f t = fmapd T g t.
+    Proof.
+      introv. rewrite (fmapd_to_bindd T).
+      intros ?. now apply bindd_respectful.
+    Qed.
+
+    Corollary bindd_respectful_bind {A B} : forall (t : T A) (f : W * A -> T B) (g : A -> T B),
+        (forall w a, (w, a) ∈d t -> f (w, a) = g a) ->
+        bindd T f t = bind T g t.
+    Proof.
+      introv. rewrite (bind_to_bindd T).
+      intros ?. now apply bindd_respectful.
+    Qed.
+
+    Corollary bindd_respectful_fmap {A B} : forall (t : T A) (f : W * A -> T B) (g : A -> B),
+        (forall w a, (w, a) ∈d t -> f (w, a) = ret T (g a)) ->
+        bindd T f t = fmap T g t.
+    Proof.
+      introv. rewrite (fmap_to_bindd T).
+      intros; now apply bindd_respectful.
+    Qed.
+
+End decorated_setlike_respectfulness.

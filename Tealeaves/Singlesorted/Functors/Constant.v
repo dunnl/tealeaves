@@ -61,7 +61,7 @@ Proof.
   ext [?]. cbn. apply mapConst_1.
 Qed.
 
-(** ** Constant monoidal applicative functor *)
+(** * Constant applicative functors *)
 (******************************************************************************)
 Section const_ops.
 

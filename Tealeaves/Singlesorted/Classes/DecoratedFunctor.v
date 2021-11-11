@@ -13,7 +13,7 @@ Import Comonad.Notations.
 Import Monoid.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** * Decorated Functor *)
+(** * Decorated functors *)
 (******************************************************************************)
 Section DecoratedFunctor_operations.
 
@@ -578,7 +578,7 @@ Section Decoratedfunctor_composition.
 
 End Decoratedfunctor_composition.
 
-(** * Composition with zero-decorated functors *)
+(** ** Composition with zero-decorated functors *)
 (******************************************************************************)
 Section DecoratedFunctor_zero_composition.
 
@@ -607,7 +607,7 @@ Section DecoratedFunctor_zero_composition.
 
 End DecoratedFunctor_zero_composition.
 
-(** * Instances for prod/Writer *)
+(** * Decorated functor instance for Writer *)
 (******************************************************************************)
 Section DecoratedFunctor_writer.
 
@@ -622,12 +622,15 @@ Section DecoratedFunctor_writer.
 
 End DecoratedFunctor_writer.
 
-(** * Kleisli presentation *)
+(** * Kleisli presentation of decorated functors *)
+(******************************************************************************)
+
+(** ** Kleisli lifting operation <<fmapd>>  *)
 (******************************************************************************)
 Definition fmapd F `{Fmap F} `{Decorate W F} {A B} (f : W * A -> B) : F A -> F B :=
   fmap F f ∘ dec F.
 
-(** ** Specifications for sub-operations  *)
+(** ** Specification for <<fmap>>  *)
 (******************************************************************************)
 Section decoratedfunctor_suboperations.
 
@@ -709,7 +712,7 @@ Section fmapd_functoriality.
 
 End fmapd_functoriality.
 
-(** ** Composition laws for suboperations *)
+(** ** Composition laws for <<fmapd>>/<<fmap>> *)
 (******************************************************************************)
 Section fmapd_suboperation_composition.
 

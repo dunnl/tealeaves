@@ -6,7 +6,7 @@ From Tealeaves Require Export
 
 #[local] Open Scope tealeaves_scope.
 
-(** * Pathspace functor *)
+(** * Pathspace applicative functor *)
 (******************************************************************************)
 Inductive PathSpace (A : Type) : Type :=
 | path : forall (x y : A), x = y -> PathSpace A.

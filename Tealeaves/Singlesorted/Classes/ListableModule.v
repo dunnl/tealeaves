@@ -43,7 +43,7 @@ End ListableModule_monad.
 
 (** ** Listable modules compose with functors *)
 (******************************************************************************)
-Section functor_module_composition.
+Section ListableModule_composition.
 
   Context
     `{ListableFunctor F}
@@ -71,9 +71,9 @@ Section functor_module_composition.
     now rewrite <- (mon_join_join list).
   Qed.
 
-End functor_module_composition.
+End ListableModule_composition.
 
-(** * Properties of listable modules *)
+(** ** Basic properties *)
 (******************************************************************************)
 Section ListableModule_theory.
 
@@ -91,7 +91,7 @@ Section ListableModule_theory.
 
   Theorem tolist_right_action_2 A : forall (t : F (T A)),
     tolist F (right_action F (A:=A) t) =
-    sub list (tolist T) (tolist F t).
+    bind list (tolist T) (tolist F t).
   Proof.
     intros. compose near t.
     rewrite (lrmod_action F T).
@@ -101,7 +101,7 @@ Section ListableModule_theory.
   Qed.
 
   Theorem tolist_sub `{f : A -> T B} :
-    tolist F ∘ sub F f = sub list (tolist T ∘ f) ∘ tolist F.
+    tolist F ∘ sub F f = bind list (tolist T ∘ f) ∘ tolist F.
   Proof.
     intros. unfold sub, Sub_RightAction.
     reassociate <- on left. rewrite (lrmod_action F T).
@@ -115,7 +115,7 @@ End ListableModule_theory.
 
 (** * Listable right modules are set-like *)
 (******************************************************************************)
-Section ShapelyModule_setlike.
+Section ListableModule_setlike.
 
   Context
     `{ListableModule F T}.
@@ -139,7 +139,7 @@ Section ShapelyModule_setlike.
     {| xrmod_action := toset_right_action_Listable;
     |}.
 
-End ShapelyModule_setlike.
+End ListableModule_setlike.
 
 (** * Respectfulness conditions for listable modules *)
 (******************************************************************************)

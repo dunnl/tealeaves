@@ -8,10 +8,7 @@ Import Sets.Notations.
 Import SetlikeFunctor.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** * Set-like monads *)
-(******************************************************************************)
-
-(** ** Set-like modules *)
+(** * Set-like right modules *)
 (******************************************************************************)
 Section setlike_module_class.
 
@@ -47,7 +44,7 @@ Section setlike_module_of_monad.
 
 End setlike_module_of_monad.
 
-(** * Properties of setlike modules *)
+(** ** Basic properties of set-like modules *)
 (******************************************************************************)
 Section setlike_module_theory.
 
@@ -160,62 +157,6 @@ End toset_fmap_injective_of_sub.
 (** * Decorated set-like right modules *)
 (******************************************************************************)
 
-(** ** Respectfulness properties *)
-(******************************************************************************)
-Section decorated_setlike_respectfulness.
-
-  Context
-    (F : Type -> Type)
-    `{Monoid W}
-    `{Fmap F}  `{RightAction F T} `{Decorate W F} `{Toset F}
-    `{Fmap T} `{Return T} `{Join T} `{Decorate W T} `{Toset T}
-    `{! DecoratedModule W F T}
-    `{! SetlikeModule F T}.
-
-    Theorem subd_respectful {A B} : forall (t : F A) (f g : W * A -> T B),
-        (forall w a, (w, a) ∈d t -> f (w, a) = g (w, a)) ->
-        subd F f t = subd F g t.
-    Proof.
-      intros. unfold subd, compose.
-      eapply (SetlikeModule.sub_respectful F T); auto.
-      intros [? ?]; eauto.
-    Qed.
-
-    Corollary subd_respectful_id {A} : forall (t : F A) (f : W * A -> T A),
-        (forall w a, (w, a) ∈d t -> f (w, a) = ret T a) ->
-        subd F f t = t.
-    Proof.
-      intros. replace t with (subd F (ret T ∘ extract (prod W)) t) at 2
-        by (now rewrite (DecoratedModule.subd_id F T)).
-      now apply subd_respectful.
-    Qed.
-
-    Corollary subd_respectful_fmapd {A B} : forall (t : F A) (f : W * A -> T B) (g : W * A -> B),
-        (forall w a, (w, a) ∈d t -> f (w, a) = ret T (g (w, a))) ->
-        subd F f t = fmapd F g t.
-    Proof.
-      introv. rewrite (DecoratedModule.fmapd_to_subd F T).
-      intros ?. now apply subd_respectful.
-    Qed.
-
-    Corollary subd_respectful_sub {A B} : forall (t : F A) (f : W * A -> T B) (g : A -> T B),
-        (forall w a, (w, a) ∈d t -> f (w, a) = g a) ->
-        subd F f t = sub F g t.
-    Proof.
-      introv. rewrite (DecoratedModule.sub_to_subd F T).
-      intros ?. now apply subd_respectful.
-    Qed.
-
-    Corollary subd_respectful_fmap {A B} : forall (t : F A) (f : W * A -> T B) (g : A -> B),
-        (forall w a, (w, a) ∈d t -> f (w, a) = ret T (g a)) ->
-        subd F f t = fmap F g t.
-    Proof.
-      introv. rewrite (DecoratedModule.fmap_to_subd F T).
-      intros; now apply subd_respectful.
-    Qed.
-
-End decorated_setlike_respectfulness.
-
 (** ** Basic properties *)
 (******************************************************************************)
 Section decorated_setlike_properties.
@@ -277,3 +218,59 @@ Section decorated_setlike_properties.
   Qed.
 
 End decorated_setlike_properties.
+
+(** ** Respectfulness properties *)
+(******************************************************************************)
+Section decorated_setlike_respectfulness.
+
+  Context
+    (F : Type -> Type)
+    `{Monoid W}
+    `{Fmap F}  `{RightAction F T} `{Decorate W F} `{Toset F}
+    `{Fmap T} `{Return T} `{Join T} `{Decorate W T} `{Toset T}
+    `{! DecoratedModule W F T}
+    `{! SetlikeModule F T}.
+
+    Theorem subd_respectful {A B} : forall (t : F A) (f g : W * A -> T B),
+        (forall w a, (w, a) ∈d t -> f (w, a) = g (w, a)) ->
+        subd F f t = subd F g t.
+    Proof.
+      intros. unfold subd, compose.
+      eapply (SetlikeModule.sub_respectful F T); auto.
+      intros [? ?]; eauto.
+    Qed.
+
+    Corollary subd_respectful_id {A} : forall (t : F A) (f : W * A -> T A),
+        (forall w a, (w, a) ∈d t -> f (w, a) = ret T a) ->
+        subd F f t = t.
+    Proof.
+      intros. replace t with (subd F (ret T ∘ extract (prod W)) t) at 2
+        by (now rewrite (DecoratedModule.subd_id F T)).
+      now apply subd_respectful.
+    Qed.
+
+    Corollary subd_respectful_fmapd {A B} : forall (t : F A) (f : W * A -> T B) (g : W * A -> B),
+        (forall w a, (w, a) ∈d t -> f (w, a) = ret T (g (w, a))) ->
+        subd F f t = fmapd F g t.
+    Proof.
+      introv. rewrite (DecoratedModule.fmapd_to_subd F T).
+      intros ?. now apply subd_respectful.
+    Qed.
+
+    Corollary subd_respectful_sub {A B} : forall (t : F A) (f : W * A -> T B) (g : A -> T B),
+        (forall w a, (w, a) ∈d t -> f (w, a) = g a) ->
+        subd F f t = sub F g t.
+    Proof.
+      introv. rewrite (DecoratedModule.sub_to_subd F T).
+      intros ?. now apply subd_respectful.
+    Qed.
+
+    Corollary subd_respectful_fmap {A B} : forall (t : F A) (f : W * A -> T B) (g : A -> B),
+        (forall w a, (w, a) ∈d t -> f (w, a) = ret T (g a)) ->
+        subd F f t = fmap F g t.
+    Proof.
+      introv. rewrite (DecoratedModule.fmap_to_subd F T).
+      intros; now apply subd_respectful.
+    Qed.
+
+End decorated_setlike_respectfulness.

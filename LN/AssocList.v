@@ -19,7 +19,9 @@ Local Open Scope set_scope.
 
 Create HintDb tea_alist.
 
-(** * Miscellaneous tactics *)
+(** * Miscellaneous *)
+(** TODO : Put this somewhere useful *)
+(******************************************************************************)
 Lemma nin_app_iff : forall X (x : X) (l1 l2 : list X),
     ~ x ∈ (l1 ++ l2) <-> ~ x ∈ l1 /\ ~ x ∈ l2.
 Proof.
@@ -33,10 +35,10 @@ Proof.
   firstorder.
 Qed.
 
-(** TODO : Put this somewhere useful *)
 Hint Rewrite push_not : tea_rw_dom.
 
-(** * The [alist] functor *)
+(** * The <<alist>> functor *)
+(******************************************************************************)
 (* An association list is a list of pairs of type <<atom * A>>.  A
 functor instance is provided by mapping over <<A>>, leaving atoms
 alone.  Technically the functor is the composition of [list] and
@@ -49,7 +51,8 @@ End Notations.
 
 Import Notations.
 
-(** ** Functor instance for [alist] *)
+(** ** Functor instance for <<alist>> *)
+(******************************************************************************)
 Instance Fmap_alist : Fmap (fun A => alist A) :=
   fun (A B : Type) => fmap (list ∘ prod atom).
 
@@ -96,6 +99,7 @@ Definition disjoint {A B} (E : alist A) (F : alist B) :=
     alists. Note that we prefer <<one x ++ l>> to <<cons x l>>.  These
     rules are put into a rewrite hint database that can be invoked as
     <<simpl_alist>>. *)
+(******************************************************************************)
 Section alist_simpl_lemmas.
 
   Variable  X : Type.
@@ -162,6 +166,7 @@ Tactic Notation "change_alist" constr(E) "in" hyp(H) :=
 alists. The difference between this and ordinary induction on lists is
 that the induction hypothesis is stated in terms of <<one>> and <<++>>
 rather than <<cons>>.*)
+(******************************************************************************)
 Lemma alist_ind : forall (A : Type) (P : alist A -> Type),
     P nil ->
     (forall x a xs, P xs -> P (x ~ a ++ xs)) ->
@@ -188,7 +193,11 @@ Tactic Notation "alist" "induction" ident(E) "as" simple_intropattern(P) :=
       | list (?key * ?A) => induction E as P using (alist_ind A)
       end.
 
-(** ** Specifications for [∈] and [dom], [domset], [range], [envmap]  *)
+(** * Specifications for operations on association lists *)
+(******************************************************************************)
+
+(** ** Specifications for <<∈>> on various operations *)
+(******************************************************************************)
 Section in_operations_lemmas.
 
   Context
@@ -262,6 +271,7 @@ Section in_envmap_lemmas.
 End in_envmap_lemmas.
 
 (** ** Rewriting principles for [envmap] *)
+(******************************************************************************)
 Section envmap_lemmas.
 
   Variables A B   : Type.
@@ -303,6 +313,7 @@ Hint Rewrite envmap_nil envmap_one envmap_cons envmap_app :
   tea_rw_envmap.
 
 (** ** Rewriting lemmas for [dom] *)
+(******************************************************************************)
 Section dom_lemmas.
 
   Context
@@ -387,6 +398,7 @@ Hint Rewrite in_dom_nil in_dom_one in_dom_cons
      in_dom_app in_dom_fmap : tea_rw_dom.
 
 (** ** Rewriting lemmas for [domset] *)
+(******************************************************************************)
 Section domset_lemmas.
 
   Context
@@ -480,6 +492,7 @@ Hint Rewrite in_domset_nil in_domset_one
      in_domset_cons in_domset_app in_domset_fmap : tea_rw_dom.
 
 (** ** Rewriting lemmas for [range] *)
+(******************************************************************************)
 Section range_lemmas.
 
   Context
@@ -567,6 +580,7 @@ Hint Rewrite in_range_nil in_range_one
      in_range_cons in_range_app in_range_fmap : tea_rw_range.
 
 (** ** Rewriting principles for [∈] *)
+(******************************************************************************)
 Section binds_rewriting_lemmas.
 
   Context
@@ -613,9 +627,8 @@ Create HintDb tea_rw_binds.
 Hint Rewrite @binds_nil_iff @binds_cons_iff
      @binds_one_iff @binds_app_iff @binds_envmap_iff : tea_rw_binds.
 
-(* *********************************************************************** *)
 (** ** Tactical lemmas for [binds] *)
-
+(* *********************************************************************** *)
 Section binds_theorems.
 
   Context
@@ -719,6 +732,7 @@ End binds_theorems.
  binds_in_domset binds_in_range : tea_alist.
 
 (** ** Rewriting principles for [disjoint] *)
+(* *********************************************************************** *)
 Section disjoint_rewriting_lemmas.
 
   Lemma disjoint_sym {A B} : forall (E : alist A) (F : alist B),
@@ -808,6 +822,7 @@ Hint Rewrite @disjoint_nil_l @disjoint_nil_r @disjoint_cons_l @disjoint_cons_r
   @disjoint_fmap_l @disjoint_fmap_r : tea_rw_disj.
 
 (** ** Tactical lemmas for [disjoint] *)
+(* *********************************************************************** *)
 Section disjoint_auto_lemmas.
 
   Context
@@ -942,6 +957,7 @@ apply them if they immediately solve the goal. *)
 (** For automating proofs about uniqueness, it is typically easier to
 work with (one-way) lemmas rather than rewriting principles, in
 contrast to most of the other parts of Tealeaves internals. *)
+(* *********************************************************************** *)
 Section uniq_auto_lemmas.
 
   Context
@@ -1078,6 +1094,7 @@ End uniq_auto_lemmas.
  uniq_app_5 uniq_envmap_1 : tea_alist.
 
 (** ** Rewriting principles for [uniq] *)
+(* *********************************************************************** *)
 Section uniq_rewriting_lemmas.
 
   Context
@@ -1125,6 +1142,7 @@ Hint Rewrite uniq_nil_iff uniq_cons_iff
      uniq_one_iff uniq_app_iff uniq_fmap_iff : tea_rw_uniq.
 
 (** ** Stronger theorems about unique lists *)
+(* ********************************************************************** *)
 Section binds_theorems_uniq.
 
   Context
@@ -1165,7 +1183,8 @@ Section binds_theorems_uniq.
 
 End binds_theorems_uniq.
 
-(** ** Permutation lemmas for [dom], [range], [domset], [disjoint], [uniq], [binds]. *)
+(** ** Permutation lemmas *)
+(*******************************************************************************)
 Section permute_lemmas.
 
   Context
@@ -1234,527 +1253,6 @@ Create HintDb tea_rw_perm.
 Hint Rewrite @perm_dom @perm_range @perm_domset @perm_disjoint_l @perm_disjoint_r
      @uniq_perm using (auto; try symmetry; auto) : tea_rw_perm.
 
-
-(* *********************************************************************** *)
-(** * List properties *)
-
-(** The following properties are an assortment of structural
-    properties about association lists. *)
-
-(* TODO : Investigate where these came from and what they are used for
-Section AssortedListProperties.
-  Variable  X : Type.
-  Variables x : X.
-  Variables xs ys zs : list X.
-
-  Lemma one_eq_app :
-    one x ++ xs = ys ++ zs ->
-    (exists qs, ys = x :: qs /\ xs = qs ++ zs) \/
-    (ys = nil /\ zs = x :: xs).
-  Proof. clear. Search "cons" "eq".
-         auto using CoqListFacts.cons_eq_app. Qed.
-
-  Lemma app_eq_one :
-    ys ++ zs = one x ++ xs ->
-    (exists qs, ys = x :: qs /\ xs = qs ++ zs) \/
-    (ys = nil /\ zs = x :: xs).
-  Proof. clear. auto using CoqListFacts.app_eq_cons. Qed.
-
-  Lemma nil_neq_one_mid :
-    nil <> xs ++ one x ++ ys.
-  Proof. clear. induction xs; simpl_alist; intros J; inversion J. Qed.
-
-  Lemma one_mid_neq_nil :
-    xs ++ one x ++ ys <> nil.
-  Proof. clear. intros H. symmetry in H. auto using nil_neq_one_mid. Qed.
-
-End AssortedListProperties.
- *)
-
-(* *********************************************************************** *)
-(** * Tactic support for [disjoint] and [uniq] *)
-
-(** [destruct_uniq] decomposes all [uniq] and [disjoint] hypotheses. *)
-
-(*
-Ltac destruct_uniq :=
-  match goal with
-    | H : uniq nil |- _ =>
-      clear H;
-      destruct_uniq
-    | H : uniq (?x ~ ?a) |- _ =>
-      clear H;
-      destruct_uniq
-    | H : uniq ((?x, ?a) :: ?E) |- _ =>
-      let J := fresh "UniqTac" in
-      pose proof H as J;
-      apply uniq_cons_1 in H;
-      apply uniq_cons_2 in J;
-      autorewrite with tea_alist in J;
-      destruct_uniq
-    | H : uniq (?E ++ ?F) |- _ =>
-      let J1 := fresh "UniqTac" in
-      let J2 := fresh "UniqTac" in
-      pose proof H as J1;
-      pose proof H as J2;
-      apply uniq_app_1 in H;
-      apply uniq_app_2 in J1;
-      apply uniq_app_3 in J2;
-      destruct_uniq
-    | H : uniq (envmap ?f ?E) |- _ =>
-      apply uniq_fmap_1 in H;
-      destruct_uniq
-    | H : disjoint nil ?E |- _ =>
-      clear H;
-      destruct_uniq
-    | H : disjoint (?x ~ ?a) ?F |- _ =>
-      apply disjoint_one_1 in H;
-      autorewrite with tea_alist in H;
-      destruct_uniq
-    | H : disjoint ((?x, ?a) :: ?E) ?F |- _ =>
-      let J := fresh "UniqTac" in
-      pose proof H as J;
-      apply disjoint_cons_1 in H;
-      apply disjoint_cons_2 in J;
-      autorewrite with tea_alist in H;
-      destruct_uniq
-    | H : disjoint (?E ++ ?F) ?G |- _ =>
-      let J := fresh "UniqTac" in
-      pose proof H as J;
-      apply disjoint_app_1 in H;
-      apply disjoint_app_2 in J;
-      destruct_uniq
-    | H : disjoint (envmap ?f ?E) ?F |- _ =>
-      apply disjoint_fmap_1 in H;
-      destruct_uniq
-    | H : disjoint ?E nil |- _ =>
-      clear H;
-      destruct_uniq
-    | H : disjoint ?F (?x ~ ?a) |- _ =>
-      apply disjoint_sym_1 in H;
-      destruct_uniq
-    | H : disjoint ?F ((?x, ?a) :: ?E) |- _ =>
-      apply disjoint_sym_1 in H;
-      destruct_uniq
-    | H : disjoint ?G (?E ++ ?F) |- _ =>
-      apply disjoint_sym_1 in H;
-      destruct_uniq
-    | H : disjoint ?F (envmap ?f ?E) |- _ =>
-      apply disjoint_sym_1 in H;
-      destruct_uniq
-    | _ =>
-      idtac
-  end.
-(** [solve_uniq] attempts to solve goals by first decomposing
-    hypotheses about [disjoint] and [uniq] and then trying some
-    simple, if perhaps slow, heuristics. *)
-
-Ltac solve_uniq :=
-  intros;
-  destruct_uniq;
-  repeat first [ apply uniq_push
-               | apply uniq_cons_3
-               | apply uniq_app_4
-               | apply uniq_one_1
-               | apply uniq_nil ];
-  auto;
-  try tauto;
-  unfold disjoint in *;
-  try fsetdec;
-  fail "Not solvable by [solve_uniq]; try [destruct_uniq]".
-
-*)
-
-(* *********************************************************************** *)
-(** * More facts about [uniq] *)
-
-(*
-Section uniq_theorems.
-
-  Variable  A     : Type.
-  Variables x y   : atom.
-  Variables a b   : A.
-  Variables E F G : alist A.
-
-  Lemma uniq_insert_mid :
-    uniq (G ++ E) ->
-    ~ x ∈@ domset G ->
-    ~ x ∈@ domset E ->
-    uniq (G ++ x ~ a ++ E).
-  Proof.
-    clear. autorewrite with tea_rw_uniq tea_rw_disj.
-    unfold disjoint. intuition fsetdec.
-  Qed.
-
-  Lemma uniq_remove_mid :
-    uniq (E ++ F ++ G) ->
-    uniq (E ++ G).
-  Proof.
-    clear.
-    autorewrite with tea_rw_uniq tea_rw_disj.
-    unfold disjoint. intuition fsetdec.
-  Qed.
-
-  Lemma uniq_reorder_1 :
-    uniq (E ++ F) ->
-    uniq (F ++ E).
-  Proof.
-    autorewrite with tea_rw_uniq tea_rw_disj.
-    unfold disjoint. intuition fsetdec.
-  Qed.
-
-  Lemma uniq_reorder_2 :
-    uniq (E ++ F ++ G) ->
-    uniq (F ++ E ++ G).
-  Proof.
-    autorewrite with tea_rw_uniq tea_rw_disj.
-    unfold disjoint. intuition fsetdec.
-  Qed.
-
-  Lemma uniq_fmap_app_l : forall (f : A -> A),
-    uniq (F ++ E) ->
-    uniq (envmap f F ++ E).
-  Proof.
-    intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
-    tauto.
-  Qed.
-
-  Lemma fresh_mid_tail :
-    uniq (F ++ x ~ a ++ E) ->
-    ~ x ∈@ domset E.
-  Proof.
-    intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
-    tauto.
-  Qed.
-
-  Lemma fresh_mid_head :
-    uniq (F ++ x ~ a ++ E) ->
-    ~ x ∈@ domset F.
-  Proof.
-    intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
-    tauto.
-  Qed.
-
-End uniq_theorems.
-*)
-
-(* *********************************************************************** *)
-(*
-(** * Tactic support for [binds] *)
-
-(** [destruct_binds_hyp] and [destruct_binds_hyp_uniq] tactics
-    decompose a hypotheses of the form [binds x a E], with the latter
-    tactic assuming that [uniq E] holds.  The tactic [solve_uniq] is
-    used for discharging any [uniq] obligations that arise.
-    Implementation note (BEA, XXX): No support for [fmap].  I'm not
-    sure what to do about the "injectivity" side condition on
-    [binds_fmap_inv].  Perhaps just generate the extra subgoal, on the
-    assumption that the condition is usually provable?  It's not as
-    if I want to implement even more tactics here... *)
-
-Ltac destruct_binds_hyp H :=
-  match type of H with
-    | binds ?x ?a nil =>
-      inversion H
-    | binds ?x ?a (?y ~ ?b) =>
-      let J1 := fresh "BindsTacKey" in
-      let J2 := fresh "BindsTacVal" in
-      rename H into J1;
-      pose proof J1 as J2;
-      apply binds_one_1 in J1;
-      apply binds_one_2 in J2;
-      try (subst x);
-      try (subst a);
-      try (subst y);
-      try (subst b)
-    | binds ?x ?a ((?y, ?b) :: ?E) =>
-      change (binds x a (y ~ b ++ E)) in H;
-      destruct_binds_hyp H
-    | binds ?x ?a (?E ++ ?F) =>
-      let J := fresh "BindsTac" in
-      apply binds_app_1 in H;
-      destruct H as [J | J];
-      destruct_binds_hyp J
-    | _ =>
-      idtac
-  end.
-
-Ltac destruct_binds_hyp_uniq H :=
-  match type of H with
-    | binds ?x ?a nil =>
-      inversion H
-    | binds ?x ?a (?y ~ ?b) =>
-      let J1 := fresh "BindsTacKey" in
-      let J2 := fresh "BindsTacVal" in
-      rename H into J1;
-      pose proof J1 as J2;
-      apply binds_one_1 in J1;
-      apply binds_one_2 in J2;
-      try (subst x);
-      try (subst a);
-      try (subst y);
-      try (subst b)
-    | binds ?x ?a ((?y, ?b) :: ?E) =>
-      change (binds x a (y ~ b ++ E)) in H;
-      destruct_binds_hyp_uniq H
-    | binds ?x ?a (?E ++ ?F) =>
-      let J1 := fresh "BindsTacSideCond" in
-      assert (J1 : uniq (E ++ F));
-        [ destruct_uniq; auto
-        | match type of J1 with
-            | @uniq ?A _ =>
-              let J2 := fresh "BindsTac" in
-              destruct (@binds_app_uniq_1 A x a E F J1 H)
-                as [[J2 ?] | [J2 ?]];
-              clear H;
-              destruct_binds_hyp_uniq J2
-          end
-        ]
-    | _ =>
-      idtac
-  end.
-
-(** An auxiliary tactic.  Not intended for use on its own. *)
-Ltac analyze_binds_cleanup :=
-  auto;
-  try tauto;
-  try discriminate;
-  try match goal with
-        | J : ~ AtomSet.In ?x ?E |- _ =>
-          match E with
-            | context [x] => elim J; clear; simpl_alist; simpl_alist; auto with set
-          end
-      end.
-
-(** The [analyze_binds] and [analyze_binds_uniq] tactics decompose a
-    hypothesis of the form [binds x a E], with the latter assuming
-    that [uniq E] holds, and then try some simple heuristics for
-    solving the resulting goals. *)
-
-Ltac analyze_binds H :=
-  destruct_binds_hyp H;
-  analyze_binds_cleanup.
-
-Ltac analyze_binds_uniq H :=
-  destruct_binds_hyp_uniq H;
-  analyze_binds_cleanup.
-*)
-
-(* *********************************************************************** *)
-(** * Facts about [binds] *)
-
-(*
-Section binds_theorems.
-
-  Variables A B   : Type.
-  Variables f     : A -> B.
-  Variables x y   : atom.
-  Variables a b   : A.
-  Variables E F G : alist A.
-
-  Lemma binds_dec :
-    (forall a b : A, {a = b} + {a <> b}) ->
-    {binds x a E} + {~ binds x a E}.
-  Proof.
-    clear. intros. unfold binds.
-    alist induction E.
-    - right. auto.
-    - destruct IHl.
-      + left. rewrite List.in_list_app. right; auto.
-      + assert (tmp : {x = x0} + {x <> x0}).
-        { apply EqDec_eq_of_EqDec. typeclasses eauto. }
-        destruct tmp; destruct (X a a0).
-        * left; left. subst. reflexivity.
-        * right. rewrite List.in_list_app.
-          intuition.  apply n0. inversion H0.
-          inversion H. auto. contradiction.
-        * right. rewrite List.in_list_app.
-          intuition.  apply n0. inversion H0.
-          inversion H. auto. contradiction.
-        * right.  rewrite List.in_list_app.
-          intuition.  apply n0. inversion H0.
-          inversion H. auto. contradiction.
-  Defined.
-
-  Lemma binds_lookup :
-    {a : A | binds x a E} + (forall a, ~ binds x a E).
-  Proof with intuition eauto.
-    clear. intros. alist induction E as [ | x1 a1 ? [[a' J] | J] ]...
-    destruct (eq_dec x x1)...
-    right. unfold binds. intros ? [K | ?]...
-    injection K...
-  Defined.
-
-  Lemma binds_lookup_dec :
-    decidable (exists a, binds x a E).
-  Proof with intuition eauto.
-    clear. intros. unfold decidable.
-    destruct binds_lookup as [[? ?] | ?]...
-    right. intros [? ?]...
-  Defined.
-
-  Lemma binds_weaken :
-    binds x a (E ++ G) ->
-    binds x a (E ++ F ++ G).
-  Proof. clear. intros H. analyze_binds H. Qed.
-
-  Lemma binds_mid_eq :
-    binds x a (F ++ (x ~ b) ++ E) ->
-    uniq (F ++ (x ~ b) ++ E) ->
-    a = b.
-  Proof.
-    clear. intros J ?. analyze_binds_uniq J.
-  Qed.
-
-  Lemma binds_remove_mid :
-    binds x a (F ++ (y ~ b) ++ G) ->
-    x <> y ->
-    binds x a (F ++ G).
-  Proof. clear. intros H. analyze_binds H. Qed.
-
-  Lemma binds_In : forall x a (E : alist A),
-    binds x a E -> AtomSet.In x (domset E).
-  Proof.
-    clear. alist induction E as [ | y ? F ]; intros J; simpl_alist.
-      analyze_binds J.
-      analyze_binds J. simpl_alist. auto. simpl_alist. auto.
-  Qed.
-
-  Lemma binds_In_inv : forall x (E : alist A),
-     x ∈@ domset E -> exists a, binds x a E.
-  Proof.
-    clear. introv H. now rewrite in_domset_iff_ in H.
-  Qed.
-
-  Lemma binds_unique :
-    binds x a E ->
-    binds x b E ->
-    uniq E ->
-    a = b.
-  Proof.
-    clear. alist induction E as [ | ? ? F IH ].
-    inversion 1.
-    unfold binds. simpl. intros [J1 | J1] [J2 | J2] J3.
-  Admitted.
-
-  Lemma fresh_app_l :
-    uniq (F ++ E) ->
-    binds x a E ->
-    ~ AtomSet.In x (domset F).
-  Proof.
-    clear. intros.
-    assert (AtomSet.In x (domset E)) by eauto using binds_In.
-    solve_uniq.
-  Qed.
-
-  Lemma fresh_app_r :
-    uniq (F ++ E) ->
-    binds x a F ->
-    ~ AtomSet.In x (domset E).
-  Proof.
-    clear. intros.
-    assert (AtomSet.In x (domset F)) by eauto using binds_In.
-    solve_uniq.
-  Qed.
-
-  (* If x is in an alist, it is either in the front half or
-   the back half. *)
-  Lemma binds_split : binds x a G -> exists G1 G2, G = G2 ++ one (x, a) ++ G1.
-  Proof.
-    clear. intro HB. induction G.
-    + inversion HB.
-    + destruct a0 as [y b].
-      apply binds_cons_1 in HB.
-      destruct HB as [[E1 E2]|E]. subst.
-      ++ exists l. exists (@nil (atom * A)). simpl_alist. auto.
-      ++ destruct (IHl E) as [G1 [G2 E2]].
-         subst.
-         eexists. exists ((y ~ b) ++ G2). simpl_alist.
-         eauto.
-  Qed.
-End BindsDerived.
-*)
-
-
-(*
-Hint Resolve @nil_neq_one_mid @one_mid_neq_nil : core.
-
-#[export] Hint Resolve uniq_insert_mid uniq_fmap_app_l : core.
-
-#[export] Hint Immediate uniq_remove_mid : core.
-
-#[export] Hint Resolve binds_weaken : core.
-
-#[export] Hint Immediate binds_remove_mid binds_In : core.
-*)
-
-
-(** * Facts about <<uniq>> lists of a particular form *)
-(*
-(* Facts about uniq alists of the form <<E ++ (x ~ a) ++ F.>> *)
-Section UniqMid.
-
-  Variables A B   : Type.
-  Variables f     : A -> B.
-  Variables x y   : atom.
-  Variables a     : A.
-  Variables E F   : alist A.
-
-  (* If we have identified a variable in the middle of a uniq alistironment,
-   it fixes the front and back. *)
-  Lemma uniq_mid : forall b E' F',
-      uniq (E ++ (x ~ a) ++ F) ->
-      (E ++ x ~ a ++ F) = (E' ++ x ~ b ++ F') ->
-      E = E' /\ a = b /\ F = F'.
-  Proof.
-    generalize F a. clear.
-    induction E.
-    + intros; destruct E'; inversion H0; simpl_alist in *. auto.
-      subst. destruct_uniq. fsetdec.
-    + intros.
-      destruct a as [y b0].
-      simpl_alist in *.
-      destruct_uniq.
-      assert (NE: not (y = x)). fsetdec.
-      destruct E' as [|[z c]]. simpl_alist in H0. inversion H0. subst. contradiction.
-      inversion H0. subst.
-      simpl_alist in *.
-      specialize (IHl F a0 b E' F').
-      destruct IHl as [E1 [E2 E3]]; auto.
-      subst. auto.
-  Qed.
-
-  (* If we divide up an alist containing a variable, it either appears in the
-     front half or the back half *)
-  Lemma uniq_align_eq : forall E' F',
-    uniq (E ++ x ~ a ++ F) ->
-    E ++ x ~ a ++ F = E' ++ F' ->
-    (exists E1 E2, E' = E1 ++ x ~ a ++ E2 /\ E = E1 /\ F = E2 ++ F') \/
-    (exists F1 F2, F' = F1 ++ x ~ a ++ F2 /\ E = E' ++ F1 /\ F = F2).
-   Proof.
-     clear.
-     intros E' F' U Eq.
-     assert (HB: binds x a (E' ++ F')). { rewrite <- Eq. auto. }
-     rewrite -> binds_app_iff in HB.
-     destruct HB as [h1|h1].
-     + left.
-       destruct (binds_split _ _ _ _ h1) as [G0'' [E1 E2]].
-       eexists. eexists. split. eauto.
-       subst.
-       simpl_alist in Eq.
-       edestruct (uniq_mid _ _ _ U Eq); eauto. tauto.
-     + right.
-       destruct (binds_split _ _ _ _ h1) as [G0'' [G0' E2]].
-       eexists. eexists. split. eauto.
-       subst.
-       rewrite <- (app_assoc _ E') in Eq.
-       edestruct (uniq_mid _ _ _ U Eq); eauto.
-       tauto.
-   Qed.
-
-End UniqMid.
-*)
-
 (** For any given finite set of atoms, we can generate an atom fresh
     for it. *)
 Lemma atom_fresh : forall L : AtomSet.t, { x : atom | ~ x ∈@ L }.
@@ -1764,8 +1262,8 @@ Proof.
   now exists a.
 Qed.
 
-(* ********************************************************************** *)
 (** * Tactic support for picking fresh atoms *)
+(* ********************************************************************** *)
 
 (* begin hide *)
 

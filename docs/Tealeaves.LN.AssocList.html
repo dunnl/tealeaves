@@ -56,8 +56,8 @@
 </div>
 
 <div class="doc">
-<a id="lab370"></a><h1 class="section">Miscellaneous tactics</h1>
-
+<a id="lab383"></a><h1 class="section">Miscellaneous</h1>
+ TODO : Put this somewhere useful 
 </div>
 <div class="code">
 <span class="id" title="keyword">Lemma</span> <a id="nin_app_iff" class="idref" href="#nin_app_iff"><span class="id" title="lemma">nin_app_iff</span></a> : <span class="id" title="keyword">forall</span> <a id="X:1" class="idref" href="#X:1"><span class="id" title="binder">X</span></a> (<a id="x:2" class="idref" href="#x:2"><span class="id" title="binder">x</span></a> : <a class="idref" href="Tealeaves.LN.AssocList.html#X:1"><span class="id" title="variable">X</span></a>) (<a id="l1:3" class="idref" href="#l1:3"><span class="id" title="binder">l1</span></a> <a id="l2:4" class="idref" href="#l2:4"><span class="id" title="binder">l2</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#X:1"><span class="id" title="variable">X</span></a>),<br/>
@@ -75,19 +75,13 @@
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-</div>
-
-<div class="doc">
-TODO : Put this somewhere useful 
-</div>
-<div class="code">
 <span class="id" title="keyword">Hint Rewrite</span> <a class="idref" href="Tealeaves.LN.AssocList.html#push_not"><span class="id" title="lemma">push_not</span></a> : <span class="id" title="var">tea_rw_dom</span>.<br/>
 
 <br/>
 </div>
 
 <div class="doc">
-<a id="lab371"></a><h1 class="section">The <span class="inlinecode"><span class="id" title="var">alist</span></span> functor</h1>
+<a id="lab384"></a><h1 class="section">The <code>alist</code> functor</h1>
 
 </div>
 <div class="code">
@@ -108,7 +102,7 @@ alone.&nbsp;&nbsp;Technically&nbsp;the&nbsp;functor&nbsp;is&nbsp;the&nbsp;compos
 </div>
 
 <div class="doc">
-<a id="lab372"></a><h2 class="section">Functor instance for <span class="inlinecode"><span class="id" title="var">alist</span></span></h2>
+<a id="lab385"></a><h2 class="section">Functor instance for <code>alist</code></h2>
 
 </div>
 <div class="code">
@@ -139,7 +133,7 @@ writing <code>fun A =&gt; alist A</code> all the time.
 </div>
 
 <div class="doc">
-<a id="lab373"></a><h2 class="section">Operations on association lists</h2>
+<a id="lab386"></a><h2 class="section">Operations on association lists</h2>
 
 <div class="paragraph"> </div>
 
@@ -196,7 +190,7 @@ common elements.
 </div>
 
 <div class="doc">
-<a id="lab374"></a><h2 class="section">Support for prettifying association lists</h2>
+<a id="lab387"></a><h2 class="section">Support for prettifying association lists</h2>
  The following rewrite rules can be used for normalizing
     alists. Note that we prefer <code>one x ++ l</code> to <code>cons x l</code>.  These
     rules are put into a rewrite hint database that can be invoked as
@@ -255,7 +249,7 @@ common elements.
 </div>
 
 <div class="doc">
-<a id="lab375"></a><h3 class="section">Rewriting alists</h3>
+<a id="lab388"></a><h3 class="section">Rewriting alists</h3>
  The tactic <code>change_alist</code> can be used to replace an alist with
     an equivalent form, as long as the two forms are equal after
     normalizing with <code>simpl_alist</code>. 
@@ -284,7 +278,7 @@ common elements.
 </div>
 
 <div class="doc">
-<a id="lab376"></a><h2 class="section">Induction principles for association lists</h2>
+<a id="lab389"></a><h2 class="section">Induction principles for association lists</h2>
  The tactic <code>alist induction</code> can be used for induction on
 alists. The difference between this and ordinary induction on lists is
 that the induction hypothesis is stated in terms of <code>one</code> and <code>++</code>
@@ -323,7 +317,11 @@ rather than <code>cons</code>.
 </div>
 
 <div class="doc">
-<a id="lab377"></a><h2 class="section">Specifications for <span class="inlinecode">∈</span> and <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#domset"><span class="id" title="definition">domset</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#envmap"><span class="id" title="definition">envmap</span></a></span></h2>
+<a id="lab390"></a><h1 class="section">Specifications for operations on association lists</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab391"></a><h2 class="section">Specifications for <code>∈</code> on various operations</h2>
 
 </div>
 <div class="code">
@@ -416,7 +414,7 @@ rather than <code>cons</code>.
 </div>
 
 <div class="doc">
-<a id="lab378"></a><h2 class="section">Rewriting principles for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#envmap"><span class="id" title="definition">envmap</span></a></span></h2>
+<a id="lab392"></a><h2 class="section">Rewriting principles for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#envmap"><span class="id" title="definition">envmap</span></a></span></h2>
 
 </div>
 <div class="code">
@@ -471,7 +469,7 @@ rather than <code>cons</code>.
 </div>
 
 <div class="doc">
-<a id="lab379"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span></h2>
+<a id="lab393"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span></h2>
 
 </div>
 <div class="code">
@@ -529,7 +527,7 @@ rather than <code>cons</code>.
 </div>
 
 <div class="doc">
-<a id="lab380"></a><h3 class="section">Elements of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span></h3>
+<a id="lab394"></a><h3 class="section">Elements of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span></h3>
 
 </div>
 <div class="code">
@@ -585,7 +583,7 @@ rather than <code>cons</code>.
 </div>
 
 <div class="doc">
-<a id="lab381"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#domset"><span class="id" title="definition">domset</span></a></span></h2>
+<a id="lab395"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#domset"><span class="id" title="definition">domset</span></a></span></h2>
 
 </div>
 <div class="code">
@@ -708,7 +706,7 @@ Elements of domset
 </div>
 
 <div class="doc">
-<a id="lab382"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span></h2>
+<a id="lab396"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span></h2>
 
 </div>
 <div class="code">
@@ -769,7 +767,7 @@ Elements of domset
 </div>
 
 <div class="doc">
-<a id="lab383"></a><h3 class="section">Elements of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span></h3>
+<a id="lab397"></a><h3 class="section">Elements of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span></h3>
 
 </div>
 <div class="code">
@@ -825,7 +823,7 @@ Elements of domset
 </div>
 
 <div class="doc">
-<a id="lab384"></a><h2 class="section">Rewriting principles for <span class="inlinecode">∈</span></h2>
+<a id="lab398"></a><h2 class="section">Rewriting principles for <span class="inlinecode">∈</span></h2>
 
 </div>
 <div class="code">
@@ -885,16 +883,14 @@ Elements of domset
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<a class="idref" href="Tealeaves.LN.AssocList.html#binds_one_iff"><span class="id" title="lemma">binds_one_iff</span></a> @<a class="idref" href="Tealeaves.LN.AssocList.html#binds_app_iff"><span class="id" title="lemma">binds_app_iff</span></a> @<a class="idref" href="Tealeaves.LN.AssocList.html#binds_envmap_iff"><span class="id" title="lemma">binds_envmap_iff</span></a> : <span class="id" title="var">tea_rw_binds</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab385"></a><h2 class="section">Tactical lemmas for <span class="inlinecode"><span class="id" title="var">binds</span></span></h2>
+<a id="lab399"></a><h2 class="section">Tactical lemmas for <span class="inlinecode"><span class="id" title="var">binds</span></span></h2>
 
 </div>
 <div class="code">
-
-<br/>
+<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
 <span class="id" title="keyword">Section</span> <a id="binds_theorems" class="idref" href="#binds_theorems"><span class="id" title="section">binds_theorems</span></a>.<br/>
 
 <br/>
@@ -1017,10 +1013,11 @@ Elements of domset
 </div>
 
 <div class="doc">
-<a id="lab386"></a><h2 class="section">Rewriting principles for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#disjoint"><span class="id" title="definition">disjoint</span></a></span></h2>
+<a id="lab400"></a><h2 class="section">Rewriting principles for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#disjoint"><span class="id" title="definition">disjoint</span></a></span></h2>
 
 </div>
 <div class="code">
+<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
 <span class="id" title="keyword">Section</span> <a id="disjoint_rewriting_lemmas" class="idref" href="#disjoint_rewriting_lemmas"><span class="id" title="section">disjoint_rewriting_lemmas</span></a>.<br/>
 
 <br/>
@@ -1127,10 +1124,11 @@ Elements of domset
 </div>
 
 <div class="doc">
-<a id="lab387"></a><h2 class="section">Tactical lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#disjoint"><span class="id" title="definition">disjoint</span></a></span></h2>
+<a id="lab401"></a><h2 class="section">Tactical lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#disjoint"><span class="id" title="definition">disjoint</span></a></span></h2>
 
 </div>
 <div class="code">
+<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
 <span class="id" title="keyword">Section</span> <a id="disjoint_auto_lemmas" class="idref" href="#disjoint_auto_lemmas"><span class="id" title="section">disjoint_auto_lemmas</span></a>.<br/>
 
 <br/>
@@ -1290,12 +1288,13 @@ apply them if they immediately solve the goal.
 </div>
 
 <div class="doc">
-<a id="lab388"></a><h2 class="section">Tactical lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span></h2>
+<a id="lab402"></a><h2 class="section">Tactical lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span></h2>
  For automating proofs about uniqueness, it is typically easier to
 work with (one-way) lemmas rather than rewriting principles, in
 contrast to most of the other parts of Tealeaves internals. 
 </div>
 <div class="code">
+<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
 <span class="id" title="keyword">Section</span> <a id="uniq_auto_lemmas" class="idref" href="#uniq_auto_lemmas"><span class="id" title="section">uniq_auto_lemmas</span></a>.<br/>
 
 <br/>
@@ -1457,10 +1456,11 @@ These introduce existential variables
 </div>
 
 <div class="doc">
-<a id="lab389"></a><h2 class="section">Rewriting principles for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span></h2>
+<a id="lab403"></a><h2 class="section">Rewriting principles for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span></h2>
 
 </div>
 <div class="code">
+<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
 <span class="id" title="keyword">Section</span> <a id="uniq_rewriting_lemmas" class="idref" href="#uniq_rewriting_lemmas"><span class="id" title="section">uniq_rewriting_lemmas</span></a>.<br/>
 
 <br/>
@@ -1520,10 +1520,11 @@ These introduce existential variables
 </div>
 
 <div class="doc">
-<a id="lab390"></a><h2 class="section">Stronger theorems about unique lists</h2>
+<a id="lab404"></a><h2 class="section">Stronger theorems about unique lists</h2>
 
 </div>
 <div class="code">
+<span class="comment">(*&nbsp;**********************************************************************&nbsp;*)</span><br/>
 <span class="id" title="keyword">Section</span> <a id="binds_theorems_uniq" class="idref" href="#binds_theorems_uniq"><span class="id" title="section">binds_theorems_uniq</span></a>.<br/>
 
 <br/>
@@ -1573,7 +1574,7 @@ These introduce existential variables
 </div>
 
 <div class="doc">
-<a id="lab391"></a><h2 class="section">Permutation lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#domset"><span class="id" title="definition">domset</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#disjoint"><span class="id" title="definition">disjoint</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span>, <span class="inlinecode"><span class="id" title="var">binds</span></span>.</h2>
+<a id="lab405"></a><h2 class="section">Permutation lemmas</h2>
 
 </div>
 <div class="code">
@@ -1656,567 +1657,6 @@ These introduce existential variables
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<a class="idref" href="Tealeaves.LN.AssocList.html#uniq_perm"><span class="id" title="lemma">uniq_perm</span></a> <span class="id" title="keyword">using</span> (<span class="id" title="tactic">auto</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">symmetry</span>; <span class="id" title="tactic">auto</span>) : <span class="id" title="var">tea_rw_perm</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
-</div>
-
-<div class="doc">
-<a id="lab392"></a><h1 class="section">List properties</h1>
-
-<div class="paragraph"> </div>
-
- The following properties are an assortment of structural
-    properties about association lists. 
-</div>
-<div class="code">
-
-<br/>
-<span class="comment">(*&nbsp;TODO&nbsp;:&nbsp;Investigate&nbsp;where&nbsp;these&nbsp;came&nbsp;from&nbsp;and&nbsp;what&nbsp;they&nbsp;are&nbsp;used&nbsp;for<br/>
-Section&nbsp;AssortedListProperties.<br/>
-&nbsp;&nbsp;Variable&nbsp;&nbsp;X&nbsp;:&nbsp;Type.<br/>
-&nbsp;&nbsp;Variables&nbsp;x&nbsp;:&nbsp;X.<br/>
-&nbsp;&nbsp;Variables&nbsp;xs&nbsp;ys&nbsp;zs&nbsp;:&nbsp;list&nbsp;X.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;one_eq_app&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;one&nbsp;x&nbsp;++&nbsp;xs&nbsp;=&nbsp;ys&nbsp;++&nbsp;zs&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(exists&nbsp;qs,&nbsp;ys&nbsp;=&nbsp;x&nbsp;::&nbsp;qs&nbsp;/\&nbsp;xs&nbsp;=&nbsp;qs&nbsp;++&nbsp;zs)&nbsp;\/<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(ys&nbsp;=&nbsp;nil&nbsp;/\&nbsp;zs&nbsp;=&nbsp;x&nbsp;::&nbsp;xs).<br/>
-&nbsp;&nbsp;Proof.&nbsp;clear.&nbsp;Search&nbsp;"cons"&nbsp;"eq".<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;auto&nbsp;using&nbsp;CoqListFacts.cons_eq_app.&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;app_eq_one&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;ys&nbsp;++&nbsp;zs&nbsp;=&nbsp;one&nbsp;x&nbsp;++&nbsp;xs&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(exists&nbsp;qs,&nbsp;ys&nbsp;=&nbsp;x&nbsp;::&nbsp;qs&nbsp;/\&nbsp;xs&nbsp;=&nbsp;qs&nbsp;++&nbsp;zs)&nbsp;\/<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(ys&nbsp;=&nbsp;nil&nbsp;/\&nbsp;zs&nbsp;=&nbsp;x&nbsp;::&nbsp;xs).<br/>
-&nbsp;&nbsp;Proof.&nbsp;clear.&nbsp;auto&nbsp;using&nbsp;CoqListFacts.app_eq_cons.&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;nil_neq_one_mid&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;nil&nbsp;&lt;&gt;&nbsp;xs&nbsp;++&nbsp;one&nbsp;x&nbsp;++&nbsp;ys.<br/>
-&nbsp;&nbsp;Proof.&nbsp;clear.&nbsp;induction&nbsp;xs;&nbsp;simpl_alist;&nbsp;intros&nbsp;J;&nbsp;inversion&nbsp;J.&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;one_mid_neq_nil&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;xs&nbsp;++&nbsp;one&nbsp;x&nbsp;++&nbsp;ys&nbsp;&lt;&gt;&nbsp;nil.<br/>
-&nbsp;&nbsp;Proof.&nbsp;clear.&nbsp;intros&nbsp;H.&nbsp;symmetry&nbsp;in&nbsp;H.&nbsp;auto&nbsp;using&nbsp;nil_neq_one_mid.&nbsp;Qed.<br/>
-<br/>
-End&nbsp;AssortedListProperties.<br/>
-&nbsp;*)</span><br/>
-
-<br/>
-<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
-</div>
-
-<div class="doc">
-<a id="lab393"></a><h1 class="section">Tactic support for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#disjoint"><span class="id" title="definition">disjoint</span></a></span> and <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span></h1>
-
-<div class="paragraph"> </div>
-
- <span class="inlinecode"><span class="id" title="var">destruct_uniq</span></span> decomposes all <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span> and <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#disjoint"><span class="id" title="definition">disjoint</span></a></span> hypotheses. 
-</div>
-<div class="code">
-
-<br/>
-<span class="comment">(*<br/>
-Ltac&nbsp;destruct_uniq&nbsp;:=<br/>
-&nbsp;&nbsp;match&nbsp;goal&nbsp;with<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;uniq&nbsp;nil&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;uniq&nbsp;(?x&nbsp;~&nbsp;?a)&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;uniq&nbsp;((?x,&nbsp;?a)&nbsp;::&nbsp;?E)&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J&nbsp;:=&nbsp;fresh&nbsp;"UniqTac"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose&nbsp;proof&nbsp;H&nbsp;as&nbsp;J;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;uniq_cons_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;uniq_cons_2&nbsp;in&nbsp;J;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite&nbsp;with&nbsp;tea_alist&nbsp;in&nbsp;J;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;uniq&nbsp;(?E&nbsp;++&nbsp;?F)&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J1&nbsp;:=&nbsp;fresh&nbsp;"UniqTac"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J2&nbsp;:=&nbsp;fresh&nbsp;"UniqTac"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose&nbsp;proof&nbsp;H&nbsp;as&nbsp;J1;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose&nbsp;proof&nbsp;H&nbsp;as&nbsp;J2;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;uniq_app_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;uniq_app_2&nbsp;in&nbsp;J1;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;uniq_app_3&nbsp;in&nbsp;J2;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;uniq&nbsp;(envmap&nbsp;?f&nbsp;?E)&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;uniq_fmap_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;nil&nbsp;?E&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;(?x&nbsp;~&nbsp;?a)&nbsp;?F&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_one_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite&nbsp;with&nbsp;tea_alist&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;((?x,&nbsp;?a)&nbsp;::&nbsp;?E)&nbsp;?F&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J&nbsp;:=&nbsp;fresh&nbsp;"UniqTac"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose&nbsp;proof&nbsp;H&nbsp;as&nbsp;J;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_cons_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_cons_2&nbsp;in&nbsp;J;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite&nbsp;with&nbsp;tea_alist&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;(?E&nbsp;++&nbsp;?F)&nbsp;?G&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J&nbsp;:=&nbsp;fresh&nbsp;"UniqTac"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose&nbsp;proof&nbsp;H&nbsp;as&nbsp;J;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_app_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_app_2&nbsp;in&nbsp;J;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;(envmap&nbsp;?f&nbsp;?E)&nbsp;?F&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_fmap_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;?E&nbsp;nil&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;?F&nbsp;(?x&nbsp;~&nbsp;?a)&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_sym_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;?F&nbsp;((?x,&nbsp;?a)&nbsp;::&nbsp;?E)&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_sym_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;?G&nbsp;(?E&nbsp;++&nbsp;?F)&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_sym_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;H&nbsp;:&nbsp;disjoint&nbsp;?F&nbsp;(envmap&nbsp;?f&nbsp;?E)&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;disjoint_sym_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idtac<br/>
-&nbsp;&nbsp;end.<br/>
-<span class="comment">(**&nbsp;<span class="inlinecode"><span class="id" title="var">solve_uniq</span></span>&nbsp;attempts&nbsp;to&nbsp;solve&nbsp;goals&nbsp;by&nbsp;first&nbsp;decomposing<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;hypotheses&nbsp;about&nbsp;<span class="inlinecode"><span class="id" title="var">disjoint</span></span>&nbsp;and&nbsp;<span class="inlinecode"><span class="id" title="var">uniq</span></span>&nbsp;and&nbsp;then&nbsp;trying&nbsp;some<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;simple,&nbsp;if&nbsp;perhaps&nbsp;slow,&nbsp;heuristics.&nbsp;*)</span><br/>
-<br/>
-Ltac&nbsp;solve_uniq&nbsp;:=<br/>
-&nbsp;&nbsp;intros;<br/>
-&nbsp;&nbsp;destruct_uniq;<br/>
-&nbsp;&nbsp;repeat&nbsp;first&nbsp;<span class="inlinecode"></span> <span class="inlinecode"><span class="id" title="tactic">apply</span></span> <span class="inlinecode"><span class="id" title="var">uniq_push</span></span>
-               <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">apply</span></span> <span class="inlinecode"><span class="id" title="var">uniq_cons_3</span></span>
-               <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">apply</span></span> <span class="inlinecode"><span class="id" title="var">uniq_app_4</span></span>
-               <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">apply</span></span> <span class="inlinecode"><span class="id" title="var">uniq_one_1</span></span>
-               <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">apply</span></span> <span class="inlinecode"><span class="id" title="var">uniq_nil</span></span> <span class="inlinecode"></span>;<br/>
-&nbsp;&nbsp;auto;<br/>
-&nbsp;&nbsp;try&nbsp;tauto;<br/>
-&nbsp;&nbsp;unfold&nbsp;disjoint&nbsp;in&nbsp;*;<br/>
-&nbsp;&nbsp;try&nbsp;fsetdec;<br/>
-&nbsp;&nbsp;fail&nbsp;"Not&nbsp;solvable&nbsp;by&nbsp;<span class="inlinecode"><span class="id" title="var">solve_uniq</span></span>;&nbsp;try&nbsp;<span class="inlinecode"><span class="id" title="var">destruct_uniq</span></span>".<br/>
-<br/>
-*)</span><br/>
-
-<br/>
-<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
-</div>
-
-<div class="doc">
-<a id="lab394"></a><h1 class="section">More facts about <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span></h1>
-
-</div>
-<div class="code">
-
-<br/>
-<span class="comment">(*<br/>
-Section&nbsp;uniq_theorems.<br/>
-<br/>
-&nbsp;&nbsp;Variable&nbsp;&nbsp;A&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;Type.<br/>
-&nbsp;&nbsp;Variables&nbsp;x&nbsp;y&nbsp;&nbsp;&nbsp;:&nbsp;atom.<br/>
-&nbsp;&nbsp;Variables&nbsp;a&nbsp;b&nbsp;&nbsp;&nbsp;:&nbsp;A.<br/>
-&nbsp;&nbsp;Variables&nbsp;E&nbsp;F&nbsp;G&nbsp;:&nbsp;alist&nbsp;A.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;uniq_insert_mid&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(G&nbsp;++&nbsp;E)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;~&nbsp;x&nbsp;∈@&nbsp;domset&nbsp;G&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;~&nbsp;x&nbsp;∈@&nbsp;domset&nbsp;E&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(G&nbsp;++&nbsp;x&nbsp;~&nbsp;a&nbsp;++&nbsp;E).<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;autorewrite&nbsp;with&nbsp;tea_rw_uniq&nbsp;tea_rw_disj.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;disjoint.&nbsp;intuition&nbsp;fsetdec.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;uniq_remove_mid&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(E&nbsp;++&nbsp;F&nbsp;++&nbsp;G)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(E&nbsp;++&nbsp;G).<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;autorewrite&nbsp;with&nbsp;tea_rw_uniq&nbsp;tea_rw_disj.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;disjoint.&nbsp;intuition&nbsp;fsetdec.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;uniq_reorder_1&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(E&nbsp;++&nbsp;F)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(F&nbsp;++&nbsp;E).<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;autorewrite&nbsp;with&nbsp;tea_rw_uniq&nbsp;tea_rw_disj.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;disjoint.&nbsp;intuition&nbsp;fsetdec.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;uniq_reorder_2&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(E&nbsp;++&nbsp;F&nbsp;++&nbsp;G)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(F&nbsp;++&nbsp;E&nbsp;++&nbsp;G).<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;autorewrite&nbsp;with&nbsp;tea_rw_uniq&nbsp;tea_rw_disj.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;disjoint.&nbsp;intuition&nbsp;fsetdec.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;uniq_fmap_app_l&nbsp;:&nbsp;forall&nbsp;(f&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;A),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(F&nbsp;++&nbsp;E)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(envmap&nbsp;f&nbsp;F&nbsp;++&nbsp;E).<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;autorewrite&nbsp;with&nbsp;tea_rw_uniq&nbsp;tea_rw_disj&nbsp;in&nbsp;*.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;tauto.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;fresh_mid_tail&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(F&nbsp;++&nbsp;x&nbsp;~&nbsp;a&nbsp;++&nbsp;E)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;~&nbsp;x&nbsp;∈@&nbsp;domset&nbsp;E.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;autorewrite&nbsp;with&nbsp;tea_rw_uniq&nbsp;tea_rw_disj&nbsp;in&nbsp;*.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;tauto.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;fresh_mid_head&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(F&nbsp;++&nbsp;x&nbsp;~&nbsp;a&nbsp;++&nbsp;E)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;~&nbsp;x&nbsp;∈@&nbsp;domset&nbsp;F.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;autorewrite&nbsp;with&nbsp;tea_rw_uniq&nbsp;tea_rw_disj&nbsp;in&nbsp;*.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;tauto.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-End&nbsp;uniq_theorems.<br/>
-*)</span><br/>
-
-<br/>
-<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
-<span class="comment">(*<br/>
-<span class="comment">(**&nbsp;*&nbsp;Tactic&nbsp;support&nbsp;for&nbsp;<span class="inlinecode"><span class="id" title="var">binds</span></span>&nbsp;*)</span><br/>
-<br/>
-<span class="comment">(**&nbsp;<span class="inlinecode"><span class="id" title="var">destruct_binds_hyp</span></span>&nbsp;and&nbsp;<span class="inlinecode"><span class="id" title="var">destruct_binds_hyp_uniq</span></span>&nbsp;tactics<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;decompose&nbsp;a&nbsp;hypotheses&nbsp;of&nbsp;the&nbsp;form&nbsp;<span class="inlinecode"><span class="id" title="var">binds</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode"><span class="id" title="var">a</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span>,&nbsp;with&nbsp;the&nbsp;latter<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;tactic&nbsp;assuming&nbsp;that&nbsp;<span class="inlinecode"><span class="id" title="var">uniq</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span>&nbsp;holds.&nbsp;&nbsp;The&nbsp;tactic&nbsp;<span class="inlinecode"><span class="id" title="var">solve_uniq</span></span>&nbsp;is<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;used&nbsp;for&nbsp;discharging&nbsp;any&nbsp;<span class="inlinecode"><span class="id" title="var">uniq</span></span>&nbsp;obligations&nbsp;that&nbsp;arise.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;Implementation&nbsp;note&nbsp;(BEA,&nbsp;XXX):&nbsp;No&nbsp;support&nbsp;for&nbsp;<span class="inlinecode"><span class="id" title="var">fmap</span></span>.&nbsp;&nbsp;I'm&nbsp;not<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;sure&nbsp;what&nbsp;to&nbsp;do&nbsp;about&nbsp;the&nbsp;"injectivity"&nbsp;side&nbsp;condition&nbsp;on<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">binds_fmap_inv</span></span>.&nbsp;&nbsp;Perhaps&nbsp;just&nbsp;generate&nbsp;the&nbsp;extra&nbsp;subgoal,&nbsp;on&nbsp;the<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;assumption&nbsp;that&nbsp;the&nbsp;condition&nbsp;is&nbsp;usually&nbsp;provable?&nbsp;&nbsp;It's&nbsp;not&nbsp;as<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;I&nbsp;want&nbsp;to&nbsp;implement&nbsp;even&nbsp;more&nbsp;tactics&nbsp;here...&nbsp;*)</span><br/>
-<br/>
-Ltac&nbsp;destruct_binds_hyp&nbsp;H&nbsp;:=<br/>
-&nbsp;&nbsp;match&nbsp;type&nbsp;of&nbsp;H&nbsp;with<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;binds&nbsp;?x&nbsp;?a&nbsp;nil&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;H<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;binds&nbsp;?x&nbsp;?a&nbsp;(?y&nbsp;~&nbsp;?b)&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J1&nbsp;:=&nbsp;fresh&nbsp;"BindsTacKey"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J2&nbsp;:=&nbsp;fresh&nbsp;"BindsTacVal"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rename&nbsp;H&nbsp;into&nbsp;J1;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose&nbsp;proof&nbsp;J1&nbsp;as&nbsp;J2;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;binds_one_1&nbsp;in&nbsp;J1;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;binds_one_2&nbsp;in&nbsp;J2;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(subst&nbsp;x);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(subst&nbsp;a);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(subst&nbsp;y);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(subst&nbsp;b)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;binds&nbsp;?x&nbsp;?a&nbsp;((?y,&nbsp;?b)&nbsp;::&nbsp;?E)&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;(binds&nbsp;x&nbsp;a&nbsp;(y&nbsp;~&nbsp;b&nbsp;++&nbsp;E))&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_binds_hyp&nbsp;H<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;binds&nbsp;?x&nbsp;?a&nbsp;(?E&nbsp;++&nbsp;?F)&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J&nbsp;:=&nbsp;fresh&nbsp;"BindsTac"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;binds_app_1&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;H&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">J</span></span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">J</span></span>;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_binds_hyp&nbsp;J<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idtac<br/>
-&nbsp;&nbsp;end.<br/>
-<br/>
-Ltac&nbsp;destruct_binds_hyp_uniq&nbsp;H&nbsp;:=<br/>
-&nbsp;&nbsp;match&nbsp;type&nbsp;of&nbsp;H&nbsp;with<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;binds&nbsp;?x&nbsp;?a&nbsp;nil&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;H<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;binds&nbsp;?x&nbsp;?a&nbsp;(?y&nbsp;~&nbsp;?b)&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J1&nbsp;:=&nbsp;fresh&nbsp;"BindsTacKey"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J2&nbsp;:=&nbsp;fresh&nbsp;"BindsTacVal"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rename&nbsp;H&nbsp;into&nbsp;J1;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pose&nbsp;proof&nbsp;J1&nbsp;as&nbsp;J2;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;binds_one_1&nbsp;in&nbsp;J1;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;binds_one_2&nbsp;in&nbsp;J2;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(subst&nbsp;x);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(subst&nbsp;a);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(subst&nbsp;y);<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try&nbsp;(subst&nbsp;b)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;binds&nbsp;?x&nbsp;?a&nbsp;((?y,&nbsp;?b)&nbsp;::&nbsp;?E)&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;(binds&nbsp;x&nbsp;a&nbsp;(y&nbsp;~&nbsp;b&nbsp;++&nbsp;E))&nbsp;in&nbsp;H;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_binds_hyp_uniq&nbsp;H<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;binds&nbsp;?x&nbsp;?a&nbsp;(?E&nbsp;++&nbsp;?F)&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;let&nbsp;J1&nbsp;:=&nbsp;fresh&nbsp;"BindsTacSideCond"&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(J1&nbsp;:&nbsp;uniq&nbsp;(E&nbsp;++&nbsp;F));<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"></span> <span class="inlinecode"><span class="id" title="var">destruct_uniq</span>;</span> <span class="inlinecode"><span class="id" title="tactic">auto</span></span>
-        <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="keyword">match</span></span> <span class="inlinecode"><span class="id" title="keyword">type</span></span> <span class="inlinecode"><span class="id" title="keyword">of</span></span> <span class="inlinecode"><span class="id" title="var">J1</span></span> <span class="inlinecode"><span class="id" title="keyword">with</span></span>
-            <span class="inlinecode">|</span> <span class="inlinecode">@<span class="id" title="var">uniq</span></span> <span class="inlinecode">?<span class="id" title="var">A</span></span> <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">=&gt;</span>
-              <span class="inlinecode"><span class="id" title="keyword">let</span></span> <span class="inlinecode"><span class="id" title="var">J2</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="tactic">fresh</span></span> <span class="inlinecode">&quot;<span class="id" title="var">BindsTac</span>&quot;</span> <span class="inlinecode"><span class="id" title="tactic">in</span></span>
-              <span class="inlinecode"><span class="id" title="tactic">destruct</span></span> <span class="inlinecode">(@<span class="id" title="var">binds_app_uniq_1</span></span> <span class="inlinecode"><span class="id" title="var">A</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode"><span class="id" title="var">a</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span> <span class="inlinecode"><span class="id" title="var">F</span></span> <span class="inlinecode"><span class="id" title="var">J1</span></span> <span class="inlinecode"><span class="id" title="var">H</span>)</span>
-                <span class="inlinecode"><span class="id" title="keyword">as</span></span> <span class="inlinecode">[[<span class="id" title="var">J2</span></span> <span class="inlinecode">?]</span> <span class="inlinecode">|</span> <span class="inlinecode">[<span class="id" title="var">J2</span></span> <span class="inlinecode">?]];</span>
-              <span class="inlinecode"><span class="id" title="tactic">clear</span></span> <span class="inlinecode"><span class="id" title="var">H</span>;</span>
-              <span class="inlinecode"><span class="id" title="var">destruct_binds_hyp_uniq</span></span> <span class="inlinecode"><span class="id" title="var">J2</span></span>
-          <span class="inlinecode"><span class="id" title="keyword">end</span></span>
-        <span class="inlinecode"></span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;idtac<br/>
-&nbsp;&nbsp;end.<br/>
-<br/>
-<span class="comment">(**&nbsp;An&nbsp;auxiliary&nbsp;tactic.&nbsp;&nbsp;Not&nbsp;intended&nbsp;for&nbsp;use&nbsp;on&nbsp;its&nbsp;own.&nbsp;*)</span><br/>
-Ltac&nbsp;analyze_binds_cleanup&nbsp;:=<br/>
-&nbsp;&nbsp;auto;<br/>
-&nbsp;&nbsp;try&nbsp;tauto;<br/>
-&nbsp;&nbsp;try&nbsp;discriminate;<br/>
-&nbsp;&nbsp;try&nbsp;match&nbsp;goal&nbsp;with<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;J&nbsp;:&nbsp;~&nbsp;AtomSet.In&nbsp;?x&nbsp;?E&nbsp;|-&nbsp;_&nbsp;=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;match&nbsp;E&nbsp;with<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;context&nbsp;<span class="inlinecode"><span class="id" title="var">x</span></span>&nbsp;=&gt;&nbsp;elim&nbsp;J;&nbsp;clear;&nbsp;simpl_alist;&nbsp;simpl_alist;&nbsp;auto&nbsp;with&nbsp;set<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end.<br/>
-<br/>
-<span class="comment">(**&nbsp;The&nbsp;<span class="inlinecode"><span class="id" title="var">analyze_binds</span></span>&nbsp;and&nbsp;<span class="inlinecode"><span class="id" title="var">analyze_binds_uniq</span></span>&nbsp;tactics&nbsp;decompose&nbsp;a<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;hypothesis&nbsp;of&nbsp;the&nbsp;form&nbsp;<span class="inlinecode"><span class="id" title="var">binds</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode"><span class="id" title="var">a</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span>,&nbsp;with&nbsp;the&nbsp;latter&nbsp;assuming<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;that&nbsp;<span class="inlinecode"><span class="id" title="var">uniq</span></span> <span class="inlinecode"><span class="id" title="var">E</span></span>&nbsp;holds,&nbsp;and&nbsp;then&nbsp;try&nbsp;some&nbsp;simple&nbsp;heuristics&nbsp;for<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;solving&nbsp;the&nbsp;resulting&nbsp;goals.&nbsp;*)</span><br/>
-<br/>
-Ltac&nbsp;analyze_binds&nbsp;H&nbsp;:=<br/>
-&nbsp;&nbsp;destruct_binds_hyp&nbsp;H;<br/>
-&nbsp;&nbsp;analyze_binds_cleanup.<br/>
-<br/>
-Ltac&nbsp;analyze_binds_uniq&nbsp;H&nbsp;:=<br/>
-&nbsp;&nbsp;destruct_binds_hyp_uniq&nbsp;H;<br/>
-&nbsp;&nbsp;analyze_binds_cleanup.<br/>
-*)</span><br/>
-
-<br/>
-<span class="comment">(*&nbsp;***********************************************************************&nbsp;*)</span><br/>
-</div>
-
-<div class="doc">
-<a id="lab395"></a><h1 class="section">Facts about <span class="inlinecode"><span class="id" title="var">binds</span></span></h1>
-
-</div>
-<div class="code">
-
-<br/>
-<span class="comment">(*<br/>
-Section&nbsp;binds_theorems.<br/>
-<br/>
-&nbsp;&nbsp;Variables&nbsp;A&nbsp;B&nbsp;&nbsp;&nbsp;:&nbsp;Type.<br/>
-&nbsp;&nbsp;Variables&nbsp;f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;B.<br/>
-&nbsp;&nbsp;Variables&nbsp;x&nbsp;y&nbsp;&nbsp;&nbsp;:&nbsp;atom.<br/>
-&nbsp;&nbsp;Variables&nbsp;a&nbsp;b&nbsp;&nbsp;&nbsp;:&nbsp;A.<br/>
-&nbsp;&nbsp;Variables&nbsp;E&nbsp;F&nbsp;G&nbsp;:&nbsp;alist&nbsp;A.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_dec&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(forall&nbsp;a&nbsp;b&nbsp;:&nbsp;A,&nbsp;{a&nbsp;=&nbsp;b}&nbsp;+&nbsp;{a&nbsp;&lt;&gt;&nbsp;b})&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;{binds&nbsp;x&nbsp;a&nbsp;E}&nbsp;+&nbsp;{~&nbsp;binds&nbsp;x&nbsp;a&nbsp;E}.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;intros.&nbsp;unfold&nbsp;binds.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;alist&nbsp;induction&nbsp;E.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;right.&nbsp;auto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;destruct&nbsp;IHl.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;left.&nbsp;rewrite&nbsp;List.in_list_app.&nbsp;right;&nbsp;auto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;assert&nbsp;(tmp&nbsp;:&nbsp;{x&nbsp;=&nbsp;x0}&nbsp;+&nbsp;{x&nbsp;&lt;&gt;&nbsp;x0}).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;apply&nbsp;EqDec_eq_of_EqDec.&nbsp;typeclasses&nbsp;eauto.&nbsp;}<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;tmp;&nbsp;destruct&nbsp;(X&nbsp;a&nbsp;a0).<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;left;&nbsp;left.&nbsp;subst.&nbsp;reflexivity.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;right.&nbsp;rewrite&nbsp;List.in_list_app.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition.&nbsp;&nbsp;apply&nbsp;n0.&nbsp;inversion&nbsp;H0.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;H.&nbsp;auto.&nbsp;contradiction.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;right.&nbsp;rewrite&nbsp;List.in_list_app.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition.&nbsp;&nbsp;apply&nbsp;n0.&nbsp;inversion&nbsp;H0.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;H.&nbsp;auto.&nbsp;contradiction.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*&nbsp;right.&nbsp;&nbsp;rewrite&nbsp;List.in_list_app.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intuition.&nbsp;&nbsp;apply&nbsp;n0.&nbsp;inversion&nbsp;H0.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;H.&nbsp;auto.&nbsp;contradiction.<br/>
-&nbsp;&nbsp;Defined.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_lookup&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;{a&nbsp;:&nbsp;A&nbsp;|&nbsp;binds&nbsp;x&nbsp;a&nbsp;E}&nbsp;+&nbsp;(forall&nbsp;a,&nbsp;~&nbsp;binds&nbsp;x&nbsp;a&nbsp;E).<br/>
-&nbsp;&nbsp;Proof&nbsp;with&nbsp;intuition&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;intros.&nbsp;alist&nbsp;induction&nbsp;E&nbsp;as&nbsp;<span class="inlinecode"></span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">x1</span></span> <span class="inlinecode"><span class="id" title="var">a1</span></span> <span class="inlinecode">?</span> <span class="inlinecode">[[<span class="id" title="var">a'</span></span> <span class="inlinecode"><span class="id" title="var">J</span>]</span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">J</span>]</span> <span class="inlinecode"></span>...<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;(eq_dec&nbsp;x&nbsp;x1)...<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;right.&nbsp;unfold&nbsp;binds.&nbsp;intros&nbsp;?&nbsp;<span class="inlinecode"><span class="id" title="var">K</span></span> <span class="inlinecode">|</span> <span class="inlinecode">?</span>...<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;injection&nbsp;K...<br/>
-&nbsp;&nbsp;Defined.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_lookup_dec&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;decidable&nbsp;(exists&nbsp;a,&nbsp;binds&nbsp;x&nbsp;a&nbsp;E).<br/>
-&nbsp;&nbsp;Proof&nbsp;with&nbsp;intuition&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;intros.&nbsp;unfold&nbsp;decidable.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;binds_lookup&nbsp;as&nbsp;<span class="inlinecode">[?</span> <span class="inlinecode">?]</span> <span class="inlinecode">|</span> <span class="inlinecode">?</span>...<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;right.&nbsp;intros&nbsp;<span class="inlinecode">?</span> <span class="inlinecode">?</span>...<br/>
-&nbsp;&nbsp;Defined.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_weaken&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;(E&nbsp;++&nbsp;G)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;(E&nbsp;++&nbsp;F&nbsp;++&nbsp;G).<br/>
-&nbsp;&nbsp;Proof.&nbsp;clear.&nbsp;intros&nbsp;H.&nbsp;analyze_binds&nbsp;H.&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_mid_eq&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;(F&nbsp;++&nbsp;(x&nbsp;~&nbsp;b)&nbsp;++&nbsp;E)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(F&nbsp;++&nbsp;(x&nbsp;~&nbsp;b)&nbsp;++&nbsp;E)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;=&nbsp;b.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;intros&nbsp;J&nbsp;?.&nbsp;analyze_binds_uniq&nbsp;J.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_remove_mid&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;(F&nbsp;++&nbsp;(y&nbsp;~&nbsp;b)&nbsp;++&nbsp;G)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;x&nbsp;&lt;&gt;&nbsp;y&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;(F&nbsp;++&nbsp;G).<br/>
-&nbsp;&nbsp;Proof.&nbsp;clear.&nbsp;intros&nbsp;H.&nbsp;analyze_binds&nbsp;H.&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_In&nbsp;:&nbsp;forall&nbsp;x&nbsp;a&nbsp;(E&nbsp;:&nbsp;alist&nbsp;A),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;E&nbsp;-&gt;&nbsp;AtomSet.In&nbsp;x&nbsp;(domset&nbsp;E).<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;alist&nbsp;induction&nbsp;E&nbsp;as&nbsp;<span class="inlinecode"></span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">y</span></span> <span class="inlinecode">?</span> <span class="inlinecode"><span class="id" title="var">F</span></span> <span class="inlinecode"></span>;&nbsp;intros&nbsp;J;&nbsp;simpl_alist.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;analyze_binds&nbsp;J.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;analyze_binds&nbsp;J.&nbsp;simpl_alist.&nbsp;auto.&nbsp;simpl_alist.&nbsp;auto.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_In_inv&nbsp;:&nbsp;forall&nbsp;x&nbsp;(E&nbsp;:&nbsp;alist&nbsp;A),<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x&nbsp;∈@&nbsp;domset&nbsp;E&nbsp;-&gt;&nbsp;exists&nbsp;a,&nbsp;binds&nbsp;x&nbsp;a&nbsp;E.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;introv&nbsp;H.&nbsp;now&nbsp;rewrite&nbsp;in_domset_iff_&nbsp;in&nbsp;H.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_unique&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;E&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;b&nbsp;E&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;E&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;=&nbsp;b.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;alist&nbsp;induction&nbsp;E&nbsp;as&nbsp;<span class="inlinecode"></span> <span class="inlinecode">|</span> <span class="inlinecode">?</span> <span class="inlinecode">?</span> <span class="inlinecode"><span class="id" title="var">F</span></span> <span class="inlinecode"><span class="id" title="var">IH</span></span> <span class="inlinecode"></span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;1.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;binds.&nbsp;simpl.&nbsp;intros&nbsp;<span class="inlinecode"><span class="id" title="var">J1</span></span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">J1</span></span>&nbsp;<span class="inlinecode"><span class="id" title="var">J2</span></span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">J2</span></span>&nbsp;J3.<br/>
-&nbsp;&nbsp;Admitted.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;fresh_app_l&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(F&nbsp;++&nbsp;E)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;E&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;~&nbsp;AtomSet.In&nbsp;x&nbsp;(domset&nbsp;F).<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;intros.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(AtomSet.In&nbsp;x&nbsp;(domset&nbsp;E))&nbsp;by&nbsp;eauto&nbsp;using&nbsp;binds_In.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;solve_uniq.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;Lemma&nbsp;fresh_app_r&nbsp;:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(F&nbsp;++&nbsp;E)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;binds&nbsp;x&nbsp;a&nbsp;F&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;~&nbsp;AtomSet.In&nbsp;x&nbsp;(domset&nbsp;E).<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;intros.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(AtomSet.In&nbsp;x&nbsp;(domset&nbsp;F))&nbsp;by&nbsp;eauto&nbsp;using&nbsp;binds_In.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;solve_uniq.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;If&nbsp;x&nbsp;is&nbsp;in&nbsp;an&nbsp;alist,&nbsp;it&nbsp;is&nbsp;either&nbsp;in&nbsp;the&nbsp;front&nbsp;half&nbsp;or<br/>
-&nbsp;&nbsp;&nbsp;the&nbsp;back&nbsp;half.&nbsp;*)</span><br/>
-&nbsp;&nbsp;Lemma&nbsp;binds_split&nbsp;:&nbsp;binds&nbsp;x&nbsp;a&nbsp;G&nbsp;-&gt;&nbsp;exists&nbsp;G1&nbsp;G2,&nbsp;G&nbsp;=&nbsp;G2&nbsp;++&nbsp;one&nbsp;(x,&nbsp;a)&nbsp;++&nbsp;G1.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;clear.&nbsp;intro&nbsp;HB.&nbsp;induction&nbsp;G.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;inversion&nbsp;HB.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;destruct&nbsp;a0&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">y</span></span> <span class="inlinecode"><span class="id" title="var">b</span></span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;binds_cons_1&nbsp;in&nbsp;HB.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;HB&nbsp;as&nbsp;<span class="inlinecode">[<span class="id" title="var">E1</span></span> <span class="inlinecode"><span class="id" title="var">E2</span>]|<span class="id" title="var">E</span></span>.&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++&nbsp;exists&nbsp;l.&nbsp;exists&nbsp;(@nil&nbsp;(atom&nbsp;*&nbsp;A)).&nbsp;simpl_alist.&nbsp;auto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;++&nbsp;destruct&nbsp;(IHl&nbsp;E)&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">G1</span></span> <span class="inlinecode">[<span class="id" title="var">G2</span></span> <span class="inlinecode"><span class="id" title="var">E2</span>]</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eexists.&nbsp;exists&nbsp;((y&nbsp;~&nbsp;b)&nbsp;++&nbsp;G2).&nbsp;simpl_alist.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eauto.<br/>
-&nbsp;&nbsp;Qed.<br/>
-End&nbsp;BindsDerived.<br/>
-*)</span><br/>
-
-<br/>
-<span class="comment">(*<br/>
-Hint&nbsp;Resolve&nbsp;@nil_neq_one_mid&nbsp;@one_mid_neq_nil&nbsp;:&nbsp;core.<br/>
-<br/>
-[export] Hint Resolve uniq_insert_mid uniq_fmap_app_l : core.
-
-<span class="inlinecode"><span class="id" title="var">export</span></span>&nbsp;Hint&nbsp;Immediate&nbsp;uniq_remove_mid&nbsp;:&nbsp;core.<br/>
-<br/>
-[export] Hint Resolve binds_weaken : core.
-
-<span class="inlinecode"><span class="id" title="var">export</span></span>&nbsp;Hint&nbsp;Immediate&nbsp;binds_remove_mid&nbsp;binds_In&nbsp;:&nbsp;core.<br/>
-*)</span><br/>
-
-<br/>
-</div>
-
-<div class="doc">
-<a id="lab396"></a><h1 class="section">Facts about <code>uniq</code> lists of a particular form</h1>
-
-</div>
-<div class="code">
-<span class="comment">(*<br/>
-<span class="comment">(*&nbsp;Facts&nbsp;about&nbsp;uniq&nbsp;alists&nbsp;of&nbsp;the&nbsp;form&nbsp;&lt;&lt;E&nbsp;++&nbsp;(x&nbsp;~&nbsp;a)&nbsp;++&nbsp;F.&gt;&gt;&nbsp;*)</span><br/>
-Section&nbsp;UniqMid.<br/>
-<br/>
-&nbsp;&nbsp;Variables&nbsp;A&nbsp;B&nbsp;&nbsp;&nbsp;:&nbsp;Type.<br/>
-&nbsp;&nbsp;Variables&nbsp;f&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;B.<br/>
-&nbsp;&nbsp;Variables&nbsp;x&nbsp;y&nbsp;&nbsp;&nbsp;:&nbsp;atom.<br/>
-&nbsp;&nbsp;Variables&nbsp;a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:&nbsp;A.<br/>
-&nbsp;&nbsp;Variables&nbsp;E&nbsp;F&nbsp;&nbsp;&nbsp;:&nbsp;alist&nbsp;A.<br/>
-<br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;If&nbsp;we&nbsp;have&nbsp;identified&nbsp;a&nbsp;variable&nbsp;in&nbsp;the&nbsp;middle&nbsp;of&nbsp;a&nbsp;uniq&nbsp;alistironment,<br/>
-&nbsp;&nbsp;&nbsp;it&nbsp;fixes&nbsp;the&nbsp;front&nbsp;and&nbsp;back.&nbsp;*)</span><br/>
-&nbsp;&nbsp;Lemma&nbsp;uniq_mid&nbsp;:&nbsp;forall&nbsp;b&nbsp;E'&nbsp;F',<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(E&nbsp;++&nbsp;(x&nbsp;~&nbsp;a)&nbsp;++&nbsp;F)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(E&nbsp;++&nbsp;x&nbsp;~&nbsp;a&nbsp;++&nbsp;F)&nbsp;=&nbsp;(E'&nbsp;++&nbsp;x&nbsp;~&nbsp;b&nbsp;++&nbsp;F')&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E&nbsp;=&nbsp;E'&nbsp;/\&nbsp;a&nbsp;=&nbsp;b&nbsp;/\&nbsp;F&nbsp;=&nbsp;F'.<br/>
-&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;generalize&nbsp;F&nbsp;a.&nbsp;clear.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;induction&nbsp;E.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;intros;&nbsp;destruct&nbsp;E';&nbsp;inversion&nbsp;H0;&nbsp;simpl_alist&nbsp;in&nbsp;*.&nbsp;auto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst.&nbsp;destruct_uniq.&nbsp;fsetdec.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;intros.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;a&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">y</span></span> <span class="inlinecode"><span class="id" title="var">b0</span></span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_alist&nbsp;in&nbsp;*.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct_uniq.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(NE:&nbsp;not&nbsp;(y&nbsp;=&nbsp;x)).&nbsp;fsetdec.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;E'&nbsp;as&nbsp;<span class="inlinecode">|[<span class="id" title="var">z</span></span> <span class="inlinecode"><span class="id" title="var">c</span>]</span>.&nbsp;simpl_alist&nbsp;in&nbsp;H0.&nbsp;inversion&nbsp;H0.&nbsp;subst.&nbsp;contradiction.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;inversion&nbsp;H0.&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_alist&nbsp;in&nbsp;*.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;specialize&nbsp;(IHl&nbsp;F&nbsp;a0&nbsp;b&nbsp;E'&nbsp;F').<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;IHl&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">E1</span></span> <span class="inlinecode">[<span class="id" title="var">E2</span></span> <span class="inlinecode"><span class="id" title="var">E3</span>]</span>;&nbsp;auto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst.&nbsp;auto.<br/>
-&nbsp;&nbsp;Qed.<br/>
-<br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;If&nbsp;we&nbsp;divide&nbsp;up&nbsp;an&nbsp;alist&nbsp;containing&nbsp;a&nbsp;variable,&nbsp;it&nbsp;either&nbsp;appears&nbsp;in&nbsp;the<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;front&nbsp;half&nbsp;or&nbsp;the&nbsp;back&nbsp;half&nbsp;*)</span><br/>
-&nbsp;&nbsp;Lemma&nbsp;uniq_align_eq&nbsp;:&nbsp;forall&nbsp;E'&nbsp;F',<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;uniq&nbsp;(E&nbsp;++&nbsp;x&nbsp;~&nbsp;a&nbsp;++&nbsp;F)&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;E&nbsp;++&nbsp;x&nbsp;~&nbsp;a&nbsp;++&nbsp;F&nbsp;=&nbsp;E'&nbsp;++&nbsp;F'&nbsp;-&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(exists&nbsp;E1&nbsp;E2,&nbsp;E'&nbsp;=&nbsp;E1&nbsp;++&nbsp;x&nbsp;~&nbsp;a&nbsp;++&nbsp;E2&nbsp;/\&nbsp;E&nbsp;=&nbsp;E1&nbsp;/\&nbsp;F&nbsp;=&nbsp;E2&nbsp;++&nbsp;F')&nbsp;\/<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(exists&nbsp;F1&nbsp;F2,&nbsp;F'&nbsp;=&nbsp;F1&nbsp;++&nbsp;x&nbsp;~&nbsp;a&nbsp;++&nbsp;F2&nbsp;/\&nbsp;E&nbsp;=&nbsp;E'&nbsp;++&nbsp;F1&nbsp;/\&nbsp;F&nbsp;=&nbsp;F2).<br/>
-&nbsp;&nbsp;&nbsp;Proof.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;clear.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;intros&nbsp;E'&nbsp;F'&nbsp;U&nbsp;Eq.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assert&nbsp;(HB:&nbsp;binds&nbsp;x&nbsp;a&nbsp;(E'&nbsp;++&nbsp;F')).&nbsp;{&nbsp;rewrite&nbsp;&lt;-&nbsp;Eq.&nbsp;auto.&nbsp;}<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;-&gt;&nbsp;binds_app_iff&nbsp;in&nbsp;HB.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;HB&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">h1</span>|<span class="id" title="var">h1</span></span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;left.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;(binds_split&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;h1)&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">G0''</span></span> <span class="inlinecode">[<span class="id" title="var">E1</span></span> <span class="inlinecode"><span class="id" title="var">E2</span>]</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eexists.&nbsp;eexists.&nbsp;split.&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;simpl_alist&nbsp;in&nbsp;Eq.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;edestruct&nbsp;(uniq_mid&nbsp;_&nbsp;_&nbsp;_&nbsp;U&nbsp;Eq);&nbsp;eauto.&nbsp;tauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;right.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;destruct&nbsp;(binds_split&nbsp;_&nbsp;_&nbsp;_&nbsp;_&nbsp;h1)&nbsp;as&nbsp;<span class="inlinecode"><span class="id" title="var">G0''</span></span> <span class="inlinecode">[<span class="id" title="var">G0'</span></span> <span class="inlinecode"><span class="id" title="var">E2</span>]</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;eexists.&nbsp;eexists.&nbsp;split.&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;subst.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(app_assoc&nbsp;_&nbsp;E')&nbsp;in&nbsp;Eq.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;edestruct&nbsp;(uniq_mid&nbsp;_&nbsp;_&nbsp;_&nbsp;U&nbsp;Eq);&nbsp;eauto.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tauto.<br/>
-&nbsp;&nbsp;&nbsp;Qed.<br/>
-<br/>
-End&nbsp;UniqMid.<br/>
-*)</span><br/>
-
-<br/>
 </div>
 
 <div class="doc">
@@ -2232,14 +1672,14 @@ For any given finite set of atoms, we can generate an atom fresh
 <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;**********************************************************************&nbsp;*)</span><br/>
 </div>
 
 <div class="doc">
-<a id="lab397"></a><h1 class="section">Tactic support for picking fresh atoms</h1>
+<a id="lab406"></a><h1 class="section">Tactic support for picking fresh atoms</h1>
 
 </div>
 <div class="code">
+<span class="comment">(*&nbsp;**********************************************************************&nbsp;*)</span><br/>
 
 <br/>
 

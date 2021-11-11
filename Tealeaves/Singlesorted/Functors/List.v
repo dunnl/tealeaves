@@ -16,25 +16,21 @@ Import SetlikeFunctor.Notations.
 
 Create HintDb tea_list.
 
-(** * [list] Monoid *)
+(** * [list] monoid *)
 (******************************************************************************)
 Instance Monoid_op_app {A} : Monoid_op (list A) := @app A.
 
 Instance Monoid_op_nil {A} : Monoid_unit (list A) := nil.
-
-#[export] Hint Unfold Monoid_op_app Monoid_op_nil : tea_tc_unfold.
 
 #[program] Instance Monoid_list {A} :
   @Monoid (list A) (@Monoid_op_app A) (@Monoid_op_nil A).
 
 Solve Obligations with (intros; unfold transparent tcs; auto with datatypes).
 
-(** * [list] Functor *)
+(** * [list] functor *)
 (******************************************************************************)
 Instance Fmap_list : Fmap list :=
   fun A B f => List.map f.
-
-#[export] Hint Unfold Fmap_list : tea_tc_unfold.
 
 (** ** Rewriting lemmas for <<fmap>> *)
 (******************************************************************************)
@@ -93,13 +89,11 @@ Instance Functor_list : Functor list :=
      fun_fmap_fmap := @fmap_fmap_list;
   |}.
 
-(** * [list] Monad *)
+(** * [list] monad *)
 (******************************************************************************)
 Instance Return_list : Return list := fun A a => cons a nil.
 
 Instance Join_list : Join list := @List.concat.
-
-#[export] Hint Unfold Return_list Join_list : tea_tc_unfold.
 
 (** ** Notations **)
 (** We reincorporate Coq's standard notations into our own scope. This
@@ -213,11 +207,13 @@ Instance Monad_list : Monad list :=
      mon_join_join := @join_join_list;
   |}.
 
-(** * [list]/[list] Module *)
+(** ** [list]/[list] right module *)
 (******************************************************************************)
+(*
 Instance RightAction_list : RightAction list list := RightAction_Join list.
 
 Instance RightModule_list : RightModule list list := RightModule_Monad list.
+*)
 
 (** ** Rewriting lemmas for <<bind>> *)
 (******************************************************************************)
@@ -263,7 +259,7 @@ Instance Monmor_bind {A B f} : Monoid_Morphism (bind list f) :=
      monmor_op := bind_list_app A B f;
   |}.
 
-(** * [list] is quantifiable *)
+(** * [list] is set-like *)
 (** A [list] can be reduced to a [set] by discarding the ordering, or more
     concretely by applying [List.In]. This makes [list] into a quantifiable
     monad. The lemmas involved in proving this fact form a key step in proving
@@ -272,9 +268,8 @@ Instance Monmor_bind {A B f} : Monoid_Morphism (bind list f) :=
 Instance Toset_list : Toset list :=
   fun _ l a => List.In a l.
 
-#[export] Hint Unfold Toset_list : tea_tc_unfold.
-
-(** ** Rewriting lemmas for [Toset_list] *)
+(** ** Rewriting lemmas for <<toset>>\<<∈>>*)
+(******************************************************************************)
 Lemma toset_list_nil : forall A, toset list (@nil A) = ∅.
 Proof.
   reflexivity.
@@ -306,7 +301,6 @@ Qed.
 Hint Rewrite toset_list_nil toset_list_cons
      toset_list_one toset_list_ret toset_list_app : tea_list.
 
-(* TODO : simpl_set *)
 Lemma in_list_nil {A} : forall (p : A), p ∈ @nil A <-> False.
 Proof.
   reflexivity.
@@ -343,7 +337,7 @@ Proof.
   introv perm. induction perm; firstorder.
 Qed.
 
-(** ** List is set-like *)
+(** ** Respectfulness conditions *)
 (******************************************************************************)
 Instance Natural_toset_list: Natural (@toset list _).
 Proof.
@@ -374,7 +368,8 @@ Qed.
 Instance SetlikeFunctor_list : SetlikeFunctor list :=
   {| xfun_respectful := fmap_respectful_list; |}.
 
-(** ** Quantifiable monad/module instances *)
+(** ** Set-like monad instance *)
+(******************************************************************************)
 Theorem toset_ret_list :
   `(toset list ∘ ret list (A:=A) = ret set).
 Proof.
@@ -402,10 +397,12 @@ Instance SetlikeMonad_list : SetlikeMonad list :=
      xmon_ret_injective := return_injective_list;
   |}.
 
+(*
 Instance SetlikeModule_list : SetlikeModule list list :=
    SetlikeModule_Monad.
+*)
 
-(** * Fold *)
+(** * Folding over lists *)
 (******************************************************************************)
 Fixpoint fold `{op : Monoid_op M} `{unit : Monoid_unit M} (l : list M) : M :=
   match l with
@@ -414,6 +411,7 @@ Fixpoint fold `{op : Monoid_op M} `{unit : Monoid_unit M} (l : list M) : M :=
   end.
 
 (** ** Rewriting lemmas for [fold] *)
+(******************************************************************************)
 Section fold_rewriting_lemmas.
 
   Context
@@ -446,13 +444,15 @@ Section fold_rewriting_lemmas.
 End fold_rewriting_lemmas.
 
 (** ** Folding a list is a monoid homomorphism *)
-(** [fold : list M -> M] is homomorphism of monoids. *)
+(** <<fold : list M -> M>> is homomorphism of monoids. *)
 (******************************************************************************)
 Instance Monmor_fold `{Monoid M} : Monoid_Morphism fold :=
   {| monmor_unit := fold_nil;
      monmor_op := fold_app |}.
 
-(** ** Other lemmas for [fold] *)
+(** ** Other properties of <<fold>> *)
+(******************************************************************************)
+
 (** In the special case that we fold a list of lists, the result is equivalent
     to joining the list of lists. *)
 Lemma fold_equal_join : forall {A},
@@ -480,8 +480,8 @@ Proof.
   now rewrite (fold_mon_hom (fmap list f)).
 Qed.
 
-(** ** Monoids form list monad-algebras *)
-(** In fact, list algebras are exactly monoids. *)
+(** ** Monoids form list (monad-)algebras *)
+(** In fact, list algebras are precisely monoids. *)
 (******************************************************************************)
 Section foldable_list.
 
@@ -512,7 +512,7 @@ Section foldable_list.
 
 End foldable_list.
 
-(** * Map equality inversion lemmas *)
+(** * <<fmap>> equality inversion lemmas *)
 (** Some lemmas for reasoning backwards from equality between two
     similarly-concatenated lists.  *)
 (******************************************************************************)

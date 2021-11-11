@@ -96,7 +96,7 @@ Section Functor_composition.
 
 End Functor_composition.
 
-(** * Tensor strength *)
+(** * Tensorial strength *)
 (** All endofunctors in the CoC have a tensorial strength with respect
     to the Cartesian product of types. This is just the operation
     that distributes a pairing over an endofunctor. See *)

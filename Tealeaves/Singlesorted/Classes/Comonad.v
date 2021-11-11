@@ -6,7 +6,7 @@ Import Functor.Notations.
 
 (** * Comonads *)
 (******************************************************************************)
-Section comonad_operations.
+Section Comonad_operations.
 
   Context
     (W : Type -> Type).
@@ -17,7 +17,7 @@ Section comonad_operations.
   Class Extract :=
     extract : W ⇒ (fun A => A).
 
-End comonad_operations.
+End Comonad_operations.
 
 Section Comonad.
 
@@ -44,7 +44,10 @@ End Comonad.
 Arguments cojoin _%function_scope {Cojoin} {A}%type_scope.
 Arguments extract _%function_scope {Extract} {A}%type_scope.
 
-(** * Kleisli presentation *)
+(** * Kleisli presentation of comonads *)
+(******************************************************************************)
+
+(** ** Lifting operation <<cobind>> *)
 (******************************************************************************)
 Class Cobind W := cobind : forall {A B : Type} (f : W A -> B), W A -> W B.
 
@@ -58,7 +61,7 @@ Definition cokcompose `{Cojoin W} `{Fmap W} {A B C}
 
 #[local] Notation "g 'co⋆' f" := (cokcompose g f) (at level 60) : tealeaves_scope.
 
-(** ** Suboperations *)
+(** ** Specification for <<fmap>> *)
 (******************************************************************************)
 Section comonad_kleisli_suboperations.
 
@@ -78,7 +81,7 @@ Section comonad_kleisli_suboperations.
 
 End comonad_kleisli_suboperations.
 
-(** ** [cobind] laws *)
+(** ** Functor laws for <<cobind>> *)
 (******************************************************************************)
 Section comodule_cobind.
 
@@ -120,7 +123,7 @@ Section comodule_cobind.
 
 End comodule_cobind.
 
-(** ** Cokleisli category laws *)
+(** ** Co-kleisli category laws *)
 (******************************************************************************)
 Section comonad_cokleisli_category.
 
@@ -149,7 +152,7 @@ Section comonad_cokleisli_category.
 
 End comonad_cokleisli_category.
 
-(** ** Composition with suboperations *)
+(** ** Composition laws for <<cobind>>/<<fmap>>*)
 (******************************************************************************)
 Section comodule_cobind.
 

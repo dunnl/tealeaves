@@ -110,6 +110,9 @@ End test_typeclasses.
 
 (** * Kleisli presentation *)
 (******************************************************************************)
+
+(** ** Lifting operation <<subdt>> *)
+(******************************************************************************)
 Definition subdt F
            `{Fmap F} `{Decorate W F} `{Dist F} `{RightAction F T}
            `{Fmap T} `{Decorate W T} `{Dist T} `{Join T}
@@ -194,7 +197,7 @@ Section DecoratedTraversableModule_suboperations.
 
 End DecoratedTraversableModule_suboperations.
 
-(** ** Functoriality of [subdt] *)
+(** ** Functoriality of <<subdt>> *)
 (******************************************************************************)
 Section DecoratedTraversableMonad_subdt.
 
@@ -221,57 +224,3 @@ End DecoratedTraversableMonad_subdt.
 Section DecoratedTraversableMonad_composition.
 
 End DecoratedTraversableMonad_composition.
-
-(*
-(** * Substitution in syntax modules *)
-(******************************************************************************)
-Section syntax_module_theory.
-
-  Context
-    {W : Type}
-    (F : Type -> Type)
-    `{SyntaxModule W F T}.
-
-  (** ** Interaction between [tolistr] and [ret], [subr] *)
-  (******************************************************************************)
-  Section with_types.
-
-    Context
-      {A B : Type}.
-
-    Implicit Types (w : W) (a : A) (b : B) (t : F A).
-
-    Theorem tolistr_ret : forall a,
-        tolistr T (ret T a) = [ (Ƶ, a) ].
-    Proof.
-      introv. unfold tolistr, compose.
-      compose near a on left. rewrite (rmon_ret W T).
-      unfold compose. compose near (Ƶ, a) on left.
-      now rewrite (lmon_ret T).
-    Qed.
-
-    Theorem tolistr_right_action : forall (t : F (T A)),
-        tolistr F (right_action F t) = join list (fmap list (shift list) (tolistr F (fmap F (tolistr T) t))).
-    Proof.
-      introv. unfold tolistr, compose.
-      compose near t on left. rewrite (rrmod_action W F T).
-      unfold compose. compose near (fmap F (shift T) (read F (fmap F (read T) t))) on left.
-      rewrite (lrmod_action F T). unfold compose.
-      compose near ((read F (fmap F (fun a : T A => tolist T (read T a)) t))) on right.
-      rewrite (natural (η := @tolist F _)). unfold compose.
-      change ((fun a : T A => tolist T (read T a))) with (tolist T ∘ read (A:=A) T).
-      rewrite <- (fun_fmap_fmap F). unfold compose.
-      compose near ((fmap F (read T) t)) on right.
-      rewrite <- (natural (η := @read W F _)). unfold compose.
-      unfold_ops @Fmap_compose.
-      compose near (read F (fmap F (read T) t)) on right.
-      rewrite (fun_fmap_fmap F). unfold shift at 2.
-    Abort.
-
-    (** TODO <<tolistr_sub>>, <<tolistr_join>> *)
-
-
-  End with_types.
-
-End syntax_module_theory.
-*)

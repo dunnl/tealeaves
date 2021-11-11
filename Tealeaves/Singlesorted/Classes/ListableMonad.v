@@ -2,7 +2,10 @@ From Tealeaves Require Export
      Singlesorted.Classes.ListableFunctor
      Singlesorted.Classes.SetlikeMonad.
 
+Import List.ListNotations.
 Import Sets.Notations.
+Import Monoid.Notations.
+#[local] Open Scope list_scope.
 #[local] Open Scope tealeaves_scope.
 
 (** * Listable monads *)
@@ -24,7 +27,7 @@ Section ListableMonad.
 
 End ListableMonad.
 
-(** * Instance for [list] *)
+(** ** Instance for [list] *)
 (******************************************************************************)
 Section Listable_list.
 
@@ -70,7 +73,7 @@ Section ListableMonad_theory.
 
 End ListableMonad_theory.
 
-(** * Listable monads are set-like *)
+(** ** Listable monads are set-like *)
 (******************************************************************************)
 Section ListableMonad_setlike.
 
@@ -109,42 +112,47 @@ Section ListableMonad_setlike.
 
 End ListableMonad_setlike.
 
-(*
-  (** ** Interaction between [tolistr] and [ret], [bindr] *)
-  (******************************************************************************)
-  Section with_types.
+(** * Decorated listable monads *)
+(******************************************************************************)
 
-    Context
-      {A B : Type}.
+(** ** Interaction between [tolistd] and [ret], [bindr] *)
+(******************************************************************************)
+Section ListableMonad_tolistd.
 
-    Implicit Types (w : W) (a : A) (b : B) (t : F A).
+  Context
+    (T : Type -> Type)
+    `{Monoid W}
+    `{Fmap T} `{Decorate W T} `{Tolist T}
+    `{Return T} `{Join T}
+    `{! DecoratedMonad W T}
+    `{! ListableMonad T}
+    {A B : Type}.
 
-    Theorem tolistr_ret : forall a,
-        tolistr T (ret T a) = [ (Ƶ, a) ].
-    Proof.
-      introv. unfold tolistr, compose.
-      compose near a on left. rewrite (rmon_ret W T).
-      unfold compose. compose near (Ƶ, a) on left.
-      now rewrite (lmon_ret T).
-    Qed.
+  Implicit Types (w : W) (a : A) (b : B) (t : T A).
 
-    Theorem tolistr_right_action : forall (t : F (T A)),
-        tolistr F (right_action F t) = join list (fmap list (shift list) (tolistr F (fmap F (tolistr T) t))).
-    Proof.
-      introv. unfold tolistr, compose.
-      compose near t on left. rewrite (rrmod_action W F T).
-      unfold compose. compose near (fmap F (shift T) (read F (fmap F (read T) t))) on left.
-      rewrite (lrmod_action F T). unfold compose.
-      compose near ((read F (fmap F (fun a : T A => tolist T (read T a)) t))) on right.
-      rewrite (natural (η := @tolist F _)). unfold compose.
-      change ((fun a : T A => tolist T (read T a))) with (tolist T ∘ read (A:=A) T).
-      rewrite <- (fun_fmap_fmap F). unfold compose.
-      compose near ((fmap F (read T) t)) on right.
-      rewrite <- (natural (η := @read W F _)). unfold compose.
-      unfold_ops @Fmap_compose.
-      compose near (read F (fmap F (read T) t)) on right.
-      rewrite (fun_fmap_fmap F). unfold shift at 2.
-    Abort.
+  Theorem tolistd_ret : forall a,
+      tolistd T (ret T a) = [ (Ƶ, a) ].
+  Proof.
+    introv. unfold tolistd, compose.
+    compose near a on left. rewrite (dmon_ret W T).
+    unfold compose. compose near (Ƶ, a) on left.
+    now rewrite (lmon_ret T).
+  Qed.
 
- (** TODO <<tolistr_bind>>, <<tolistr_join>> *)
- *)
+  Theorem tolistd_join : forall (t : T (T A)),
+      tolistd T (join T t) = join list (fmap list (shift list) (tolistd T (fmap T (tolistd T) t))).
+  Proof.
+    introv. unfold tolistd, compose.
+    compose near t on left. rewrite (dmon_join W T).
+    unfold compose. compose near (fmap T (shift T) (dec T (fmap T (dec T) t))) on left.
+    rewrite (lmon_join T). unfold compose.
+    compose near (dec T (fmap T (tolist T ○ dec T) t)) on right.
+    change (tolist T ○ dec T) with (tolist T ∘ dec T (A:=A)).
+    rewrite <- (fun_fmap_fmap T). unfold compose.
+    compose near (fmap T (dec T) t) on right.
+    rewrite <- (natural (ϕ := @dec W T _)). unfold compose.
+    unfold_ops @Fmap_compose. fequal. compose near (dec T (fmap T (dec T) t)).
+    rewrite (fun_fmap_fmap T).
+  Admitted.
+
+End ListableMonad_tolistd.

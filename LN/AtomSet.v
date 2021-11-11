@@ -7,11 +7,14 @@ From Tealeaves Require Import
 From Coq Require
      MSets.MSets.
 
+(* set up notations *)
 Import List.ListNotations.
 Open Scope list_scope.
 Import SetlikeFunctor.Notations.
 Open Scope tealeaves_scope.
 
+(** * Defining <<AtomSet>> via Coq MSets library *)
+(******************************************************************************)
 Module AtomSet <: Coq.MSets.MSetInterface.WSets :=
   Coq.MSets.MSetWeakList.Make Atom.
 
@@ -22,6 +25,8 @@ Declare Scope set_scope.
 Delimit Scope set_scope with set.
 Local Open Scope set_scope.
 
+(** ** Notations for operations on <<AtomSet>> *)
+(******************************************************************************)
 Module Notations.
 
   Notation "x ∈@ S" := (AtomSet.In x S) (at level 40) : set_scope.
@@ -54,13 +59,16 @@ Proof.
     + right. now rewrite IHl.
 Qed.
 
+(** ** The [atoms] operation *)
+(******************************************************************************)
 Fixpoint atoms (l : list atom) : AtomSet.t :=
   match l with
   | nil => ∅
   | x :: xs => AtomSet.add x (atoms xs)
   end.
 
-(** ** Interaction between [atoms] and list operations *)
+(** ** Rewriting rules *)
+(******************************************************************************)
 Lemma atoms_nil : atoms nil = ∅.
 Proof.
   reflexivity.

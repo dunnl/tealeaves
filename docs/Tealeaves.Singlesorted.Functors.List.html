@@ -54,7 +54,7 @@
 </div>
 
 <div class="doc">
-<a id="lab209"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> Monoid</h1>
+<a id="lab213"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> monoid</h1>
 
 </div>
 <div class="code">
@@ -62,9 +62,6 @@
 
 <br/>
 <span class="id" title="keyword">Instance</span> <a id="Monoid_op_nil" class="idref" href="#Monoid_op_nil"><span class="id" title="instance">Monoid_op_nil</span></a> {<a id="A:2" class="idref" href="#A:2"><span class="id" title="binder">A</span></a>} : <a class="idref" href="Tealeaves.Singlesorted.Classes.Monoid.html#Monoid_unit"><span class="id" title="class">Monoid_unit</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#A:2"><span class="id" title="variable">A</span></a>) := <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>.<br/>
-
-<br/>
-#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Unfold</span> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#Monoid_op_app"><span class="id" title="instance">Monoid_op_app</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#Monoid_op_nil"><span class="id" title="instance">Monoid_op_nil</span></a> : <span class="id" title="var">tea_tc_unfold</span>.<br/>
 
 <br/>
 #[<span class="id" title="var">program</span>] <span class="id" title="keyword">Instance</span> <a id="Monoid_list" class="idref" href="#Monoid_list"><span class="id" title="instance">Monoid_list</span></a> {<a id="A:3" class="idref" href="#A:3"><span class="id" title="binder">A</span></a>} :<br/>
@@ -77,7 +74,7 @@
 </div>
 
 <div class="doc">
-<a id="lab210"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> Functor</h1>
+<a id="lab214"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> functor</h1>
 
 </div>
 <div class="code">
@@ -85,13 +82,10 @@
 &nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a> <a id="B:5" class="idref" href="#B:5"><span class="id" title="binder">B</span></a> <a id="f:6" class="idref" href="#f:6"><span class="id" title="binder">f</span></a> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#map"><span class="id" title="definition">List.map</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#f:6"><span class="id" title="variable">f</span></a>.<br/>
 
 <br/>
-#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Unfold</span> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#Fmap_list"><span class="id" title="instance">Fmap_list</span></a> : <span class="id" title="var">tea_tc_unfold</span>.<br/>
-
-<br/>
 </div>
 
 <div class="doc">
-<a id="lab211"></a><h2 class="section">Rewriting lemmas for <code>fmap</code></h2>
+<a id="lab215"></a><h2 class="section">Rewriting lemmas for <code>fmap</code></h2>
 
 </div>
 <div class="code">
@@ -133,7 +127,7 @@
 </div>
 
 <div class="doc">
-<a id="lab212"></a><h2 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="projection">fmap</span></a></span> is a monoid homomorphism</h2>
+<a id="lab216"></a><h2 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="projection">fmap</span></a></span> is a monoid homomorphism</h2>
 
 </div>
 <div class="code">
@@ -145,7 +139,7 @@
 </div>
 
 <div class="doc">
-<a id="lab213"></a><h2 class="section">Functor instance</h2>
+<a id="lab217"></a><h2 class="section">Functor instance</h2>
 
 </div>
 <div class="code">
@@ -173,7 +167,7 @@
 </div>
 
 <div class="doc">
-<a id="lab214"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> Monad</h1>
+<a id="lab218"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> monad</h1>
 
 </div>
 <div class="code">
@@ -183,13 +177,10 @@
 <span class="id" title="keyword">Instance</span> <a id="Join_list" class="idref" href="#Join_list"><span class="id" title="instance">Join_list</span></a> : <a class="idref" href="Tealeaves.Singlesorted.Classes.Monad.html#Join"><span class="id" title="class">Join</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> := @<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#concat"><span class="id" title="definition">List.concat</span></a>.<br/>
 
 <br/>
-#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Unfold</span> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#Return_list"><span class="id" title="instance">Return_list</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#Join_list"><span class="id" title="instance">Join_list</span></a> : <span class="id" title="var">tea_tc_unfold</span>.<br/>
-
-<br/>
 </div>
 
 <div class="doc">
-<a id="lab215"></a><h2 class="section">Notations</h2>
+<a id="lab219"></a><h2 class="section">Notations</h2>
  We reincorporate Coq's standard notations into our own scope. This
   obviates users needing to either import a module from outside
   Tealeaves (<code>Coq.Lists.List.ListNotations</code>) or open <code>list_scope</code>
@@ -223,7 +214,7 @@
 </div>
 
 <div class="doc">
-<a id="lab216"></a><h2 class="section">Rewriting lemmas for <code>join</code></h2>
+<a id="lab220"></a><h2 class="section">Rewriting lemmas for <code>join</code></h2>
 
 </div>
 <div class="code">
@@ -262,7 +253,7 @@
 </div>
 
 <div class="doc">
-<a id="lab217"></a><h2 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.Monad.html#join"><span class="id" title="projection">join</span></a></span> is a monoid homomorphism</h2>
+<a id="lab221"></a><h2 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.Monad.html#join"><span class="id" title="projection">join</span></a></span> is a monoid homomorphism</h2>
  The <code>join</code> operation is a monoid homomorphism from <code>list (list A)</code> to
     <code>list A</code>. This is just a special case of the fact that monoid homomorphisms
     on free monoids are precisely of the form <code>foldMap f</code> for any <code>f : A -&gt; M</code>,
@@ -278,7 +269,7 @@
 </div>
 
 <div class="doc">
-<a id="lab218"></a><h2 class="section">Monad instance</h2>
+<a id="lab222"></a><h2 class="section">Monad instance</h2>
 
 </div>
 <div class="code">
@@ -336,20 +327,21 @@
 </div>
 
 <div class="doc">
-<a id="lab219"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span>/<span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> Module</h1>
+<a id="lab223"></a><h2 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span>/<span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> right module</h2>
 
 </div>
 <div class="code">
-<span class="id" title="keyword">Instance</span> <a id="RightAction_list" class="idref" href="#RightAction_list"><span class="id" title="instance">RightAction_list</span></a> : <a class="idref" href="Tealeaves.Singlesorted.Classes.RightModule.html#RightAction"><span class="id" title="class">RightAction</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> := <a class="idref" href="Tealeaves.Singlesorted.Classes.RightModule.html#RightAction_Join"><span class="id" title="instance">RightAction_Join</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a>.<br/>
-
+<span class="comment">(*<br/>
+Instance&nbsp;RightAction_list&nbsp;:&nbsp;RightAction&nbsp;list&nbsp;list&nbsp;:=&nbsp;RightAction_Join&nbsp;list.<br/>
 <br/>
-<span class="id" title="keyword">Instance</span> <a id="RightModule_list" class="idref" href="#RightModule_list"><span class="id" title="instance">RightModule_list</span></a> : <a class="idref" href="Tealeaves.Singlesorted.Classes.RightModule.html#RightModule"><span class="id" title="class">RightModule</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> := <a class="idref" href="Tealeaves.Singlesorted.Classes.RightModule.html#RightModule_Monad"><span class="id" title="instance">RightModule_Monad</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a>.<br/>
+Instance&nbsp;RightModule_list&nbsp;:&nbsp;RightModule&nbsp;list&nbsp;list&nbsp;:=&nbsp;RightModule_Monad&nbsp;list.<br/>
+*)</span><br/>
 
 <br/>
 </div>
 
 <div class="doc">
-<a id="lab220"></a><h2 class="section">Rewriting lemmas for <code>bind</code></h2>
+<a id="lab224"></a><h2 class="section">Rewriting lemmas for <code>bind</code></h2>
 
 </div>
 <div class="code">
@@ -399,7 +391,7 @@
 </div>
 
 <div class="doc">
-<a id="lab221"></a><h2 class="section"><code>bind</code> is a monoid homomorphism</h2>
+<a id="lab225"></a><h2 class="section"><code>bind</code> is a monoid homomorphism</h2>
 
 </div>
 <div class="code">
@@ -412,7 +404,7 @@
 </div>
 
 <div class="doc">
-<a id="lab222"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> is quantifiable</h1>
+<a id="lab226"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> is set-like</h1>
  A <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> can be reduced to a <span class="inlinecode"><span class="id" title="tactic">set</span></span> by discarding the ordering, or more
     concretely by applying <span class="inlinecode"><span class="id" title="var">List.In</span></span>. This makes <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> into a quantifiable
     monad. The lemmas involved in proving this fact form a key step in proving
@@ -423,13 +415,10 @@
 &nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="l:59" class="idref" href="#l:59"><span class="id" title="binder">l</span></a> <a id="a:60" class="idref" href="#a:60"><span class="id" title="binder">a</span></a> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#In"><span class="id" title="definition">List.In</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#a:60"><span class="id" title="variable">a</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#l:59"><span class="id" title="variable">l</span></a>.<br/>
 
 <br/>
-#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Unfold</span> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#Toset_list"><span class="id" title="instance">Toset_list</span></a> : <span class="id" title="var">tea_tc_unfold</span>.<br/>
-
-<br/>
 </div>
 
 <div class="doc">
-<a id="lab223"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#Toset_list"><span class="id" title="instance">Toset_list</span></a></span></h2>
+<a id="lab227"></a><h2 class="section">Rewriting lemmas for <code>toset</code>\<code>∈</code></h2>
 
 </div>
 <div class="code">
@@ -470,7 +459,6 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#toset_list_one"><span class="id" title="lemma">toset_list_one</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#toset_list_ret"><span class="id" title="lemma">toset_list_ret</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#toset_list_app"><span class="id" title="lemma">toset_list_app</span></a> : <span class="id" title="var">tea_list</span>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;TODO&nbsp;:&nbsp;simpl_set&nbsp;*)</span><br/>
 <span class="id" title="keyword">Lemma</span> <a id="in_list_nil" class="idref" href="#in_list_nil"><span class="id" title="lemma">in_list_nil</span></a> {<a id="A:72" class="idref" href="#A:72"><span class="id" title="binder">A</span></a>} : <span class="id" title="keyword">forall</span> (<a id="p:73" class="idref" href="#p:73"><span class="id" title="binder">p</span></a> : <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#A:72"><span class="id" title="variable">A</span></a>), <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#p:73"><span class="id" title="variable">p</span></a> <a class="idref" href="Tealeaves.Singlesorted.Classes.SetlikeFunctor.html#11eb2861ea16289dd627ef9d8c2d6322"><span class="id" title="notation">∈</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#A:72"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#False"><span class="id" title="inductive">False</span></a>.<br/>
 <span class="id" title="keyword">Proof</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
@@ -517,7 +505,7 @@
 </div>
 
 <div class="doc">
-<a id="lab224"></a><h2 class="section">List is set-like</h2>
+<a id="lab228"></a><h2 class="section">Respectfulness conditions</h2>
 
 </div>
 <div class="code">
@@ -557,7 +545,7 @@
 </div>
 
 <div class="doc">
-<a id="lab225"></a><h2 class="section">Quantifiable monad/module instances</h2>
+<a id="lab229"></a><h2 class="section">Set-like monad instance</h2>
 
 </div>
 <div class="code">
@@ -592,14 +580,16 @@
 &nbsp;&nbsp;|}.<br/>
 
 <br/>
-<span class="id" title="keyword">Instance</span> <a id="SetlikeModule_list" class="idref" href="#SetlikeModule_list"><span class="id" title="instance">SetlikeModule_list</span></a> : <a class="idref" href="Tealeaves.Singlesorted.Classes.SetlikeModule.html#SetlikeModule"><span class="id" title="class">SetlikeModule</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> :=<br/>
-&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Singlesorted.Classes.SetlikeModule.html#SetlikeModule_Monad"><span class="id" title="instance">SetlikeModule_Monad</span></a>.<br/>
+<span class="comment">(*<br/>
+Instance&nbsp;SetlikeModule_list&nbsp;:&nbsp;SetlikeModule&nbsp;list&nbsp;list&nbsp;:=<br/>
+&nbsp;&nbsp;&nbsp;SetlikeModule_Monad.<br/>
+*)</span><br/>
 
 <br/>
 </div>
 
 <div class="doc">
-<a id="lab226"></a><h1 class="section">Fold</h1>
+<a id="lab230"></a><h1 class="section">Folding over lists</h1>
 
 </div>
 <div class="code">
@@ -613,7 +603,7 @@
 </div>
 
 <div class="doc">
-<a id="lab227"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><span class="id" title="tactic">fold</span></span></h2>
+<a id="lab231"></a><h2 class="section">Rewriting lemmas for <span class="inlinecode"><span class="id" title="tactic">fold</span></span></h2>
 
 </div>
 <div class="code">
@@ -658,8 +648,8 @@
 </div>
 
 <div class="doc">
-<a id="lab228"></a><h2 class="section">Folding a list is a monoid homomorphism</h2>
- <span class="inlinecode"><span class="id" title="tactic">fold</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> <span class="inlinecode"><span class="id" title="var">M</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="var">M</span></span> is homomorphism of monoids. 
+<a id="lab232"></a><h2 class="section">Folding a list is a monoid homomorphism</h2>
+ <code>fold : list M -&gt; M</code> is homomorphism of monoids. 
 </div>
 <div class="code">
 <span class="id" title="keyword">Instance</span> <a id="Monmor_fold" class="idref" href="#Monmor_fold"><span class="id" title="instance">Monmor_fold</span></a> `{<a id="H:127" class="idref" href="#H:127"><span class="id" title="binder">Monoid</span></a> <a id="H:127" class="idref" href="#H:127"><span class="id" title="binder">M</span></a>} : <a class="idref" href="Tealeaves.Singlesorted.Classes.Monoid.html#Monoid_Morphism"><span class="id" title="class">Monoid_Morphism</span></a> <a class="idref" href="Tealeaves.Singlesorted.Functors.List.html#fold"><span class="id" title="definition">fold</span></a> :=<br/>
@@ -670,7 +660,10 @@
 </div>
 
 <div class="doc">
-<a id="lab229"></a><h2 class="section">Other lemmas for <span class="inlinecode"><span class="id" title="tactic">fold</span></span></h2>
+<a id="lab233"></a><h2 class="section">Other properties of <code>fold</code></h2>
+
+<div class="paragraph"> </div>
+
  In the special case that we fold a list of lists, the result is equivalent
     to joining the list of lists. 
 </div>
@@ -711,8 +704,8 @@ Folding across a list of monoidal values commutes with applying a monoid
 </div>
 
 <div class="doc">
-<a id="lab230"></a><h2 class="section">Monoids form list monad-algebras</h2>
- In fact, list algebras are exactly monoids. 
+<a id="lab234"></a><h2 class="section">Monoids form list (monad-)algebras</h2>
+ In fact, list algebras are precisely monoids. 
 </div>
 <div class="code">
 <span class="id" title="keyword">Section</span> <a id="foldable_list" class="idref" href="#foldable_list"><span class="id" title="section">foldable_list</span></a>.<br/>
@@ -753,7 +746,7 @@ Folding across a list of monoidal values commutes with applying a monoid
 </div>
 
 <div class="doc">
-<a id="lab231"></a><h1 class="section">Map equality inversion lemmas</h1>
+<a id="lab235"></a><h1 class="section"><code>fmap</code> equality inversion lemmas</h1>
  Some lemmas for reasoning backwards from equality between two
     similarly-concatenated lists.  
 </div>

@@ -27,7 +27,7 @@ Class Monoid (M : Type) {op : Monoid_op M} {unit : Monoid_unit M} :=
     monoid_id_l : `(x ● Ƶ = x);
     monoid_id_r : `(Ƶ ● x = x); }.
 
-(** ** Moniod Homomorphisms *)
+(** ** Monoid homomorphisms *)
 Section monoid_morphism.
 
   Context

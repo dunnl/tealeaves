@@ -73,6 +73,8 @@ Instance Functor_term : Functor term :=
      fun_fmap_fmap := @fmap_fmap;
   |}.
 
+(** ** Rewriting rules for <<fmap>> *)
+(******************************************************************************)
 Section fmap_term_rewrite.
 
   Context
@@ -535,9 +537,8 @@ Instance ListableMonad_term : ListableMonad term :=
   {| lmon_ret := tolist_ret;
      lmon_join := tolist_join; |}.
 
-(** * DecoratedTraversableModule instance *)
+(** * Compatibility between decoration and traversal *)
 (******************************************************************************)
-
 Lemma dtfun_compat_term1 : forall `{Applicative G} (X : typ) {A},
     fmap G (dec term ∘ Lam X) ∘ δ term G (A := A) =
     fmap G (curry (shift term) 1 ∘ Lam X) ∘ fmap G (dec term) ∘ δ term G.
@@ -650,7 +651,7 @@ Section test_notations.
 
 End test_notations.
 
-(** * Typing judgments *)
+(** * Typing judgments for STLC *)
 (******************************************************************************)
 Definition ctx := list (atom * typ).
 

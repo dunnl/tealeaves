@@ -91,7 +91,7 @@ End KleisliTraversableModule_operations.
 
 Import TraversableMonad.Notations.
 
-(** ** Suboperations *)
+(** ** Specifications for sub-operations *)
 (******************************************************************************)
 Section KleisliTraversableMonad_suboperations.
 
@@ -229,7 +229,7 @@ Section TraversableModule_respectfulness.
 
 End TraversableModule_respectfulness.
 
-(** * Traversability implies listability *)
+(** * Traversable modules are listable *)
 (******************************************************************************)
 Section TraversableModule_listable.
 

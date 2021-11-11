@@ -54,7 +54,7 @@ This file implements "functors decorated by monoid <code>W</code>" and
 </div>
 
 <div class="doc">
-<a id="lab118"></a><h1 class="section">Decorated Functor</h1>
+<a id="lab123"></a><h1 class="section">Decorated functors</h1>
 
 </div>
 <div class="code">
@@ -105,7 +105,7 @@ This file implements "functors decorated by monoid <code>W</code>" and
 </div>
 
 <div class="doc">
-<a id="lab119"></a><h2 class="section">Decoration-preserving natural transformations</h2>
+<a id="lab124"></a><h2 class="section">Decoration-preserving natural transformations</h2>
 
 </div>
 <div class="code">
@@ -122,7 +122,7 @@ This file implements "functors decorated by monoid <code>W</code>" and
 </div>
 
 <div class="doc">
-<a id="lab120"></a><h2 class="section">The <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#shift"><span class="id" title="definition">shift</span></a></span> operation</h2>
+<a id="lab125"></a><h2 class="section">The <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#shift"><span class="id" title="definition">shift</span></a></span> operation</h2>
  The theory of decorated functors makes frequent use of an
     operation <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#shift"><span class="id" title="definition">shift</span></a></span> that uniformly increments the annotations of a
     W-annotated term (i.e., something of type <code>F (prod W A)</code> by some
@@ -238,7 +238,7 @@ The definition of <span class="inlinecode"><a class="idref" href="Tealeaves.Sing
 </div>
 
 <div class="doc">
-<a id="lab121"></a><h2 class="section">Helper lemmas for proving typeclass instances</h2>
+<a id="lab126"></a><h2 class="section">Helper lemmas for proving typeclass instances</h2>
  Each of the following lemmas is useful for proving one of the laws
     of decorated functors in the binder case(s) of proofs that proceed
     by induction on terms. 
@@ -358,7 +358,7 @@ This lemmas is useful for proving the decoration-join law.
 </div>
 
 <div class="doc">
-<a id="lab122"></a><h1 class="section">Zero-decorated functors</h1>
+<a id="lab127"></a><h1 class="section">Zero-decorated functors</h1>
  Every functor is trivially decorated using the operation that
     pairs each leaf with the unit of the monoid. We call such functors
     zero-decorated. This allows us to see <i>all</i> functors as (maybe
@@ -418,11 +418,11 @@ This lemmas is useful for proving the decoration-join law.
 </div>
 
 <div class="doc">
-<a id="lab123"></a><h1 class="section">Decorated functors form a monoidal category</h1>
+<a id="lab128"></a><h1 class="section">Decorated functors form a monoidal category</h1>
 
 <div class="paragraph"> </div>
 
-<a id="lab124"></a><h2 class="section">The identity (zero-)decorated functor</h2>
+<a id="lab129"></a><h2 class="section">The identity (zero-)decorated functor</h2>
 
 </div>
 <div class="code">
@@ -477,7 +477,7 @@ This lemmas is useful for proving the decoration-join law.
 </div>
 
 <div class="doc">
-<a id="lab125"></a><h2 class="section">Decorated functors are closed under composition</h2>
+<a id="lab130"></a><h2 class="section">Decorated functors are closed under composition</h2>
 
 </div>
 <div class="code">
@@ -768,7 +768,7 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab126"></a><h1 class="section">Composition with zero-decorated functors</h1>
+<a id="lab131"></a><h2 class="section">Composition with zero-decorated functors</h2>
 
 </div>
 <div class="code">
@@ -808,7 +808,7 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab127"></a><h1 class="section">Instances for prod/Writer</h1>
+<a id="lab132"></a><h1 class="section">Decorated functor instance for Writer</h1>
 
 </div>
 <div class="code">
@@ -834,7 +834,11 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab128"></a><h1 class="section">Kleisli presentation</h1>
+<a id="lab133"></a><h1 class="section">Kleisli presentation of decorated functors</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab134"></a><h2 class="section">Kleisli lifting operation <code>fmapd</code></h2>
 
 </div>
 <div class="code">
@@ -845,7 +849,7 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab129"></a><h2 class="section">Specifications for sub-operations</h2>
+<a id="lab135"></a><h2 class="section">Specification for <code>fmap</code></h2>
 
 </div>
 <div class="code">
@@ -860,7 +864,7 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab130"></a><h3 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="projection">fmap</span></a></span> as a special case of <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#fmapd"><span class="id" title="definition">fmapd</span></a></span></h3>
+<a id="lab136"></a><h3 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="projection">fmap</span></a></span> as a special case of <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#fmapd"><span class="id" title="definition">fmapd</span></a></span></h3>
 
 </div>
 <div class="code">
@@ -880,7 +884,7 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab131"></a><h2 class="section">Interaction of <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#dec"><span class="id" title="projection">dec</span></a></span> and <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#fmapd"><span class="id" title="definition">fmapd</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="projection">fmap</span></a></span></h2>
+<a id="lab137"></a><h2 class="section">Interaction of <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#dec"><span class="id" title="projection">dec</span></a></span> and <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#fmapd"><span class="id" title="definition">fmapd</span></a></span>, <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.Functor.html#fmap"><span class="id" title="projection">fmap</span></a></span></h2>
 
 </div>
 <div class="code">
@@ -919,7 +923,7 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab132"></a><h2 class="section">Functoriality of <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#fmapd"><span class="id" title="definition">fmapd</span></a></span></h2>
+<a id="lab138"></a><h2 class="section">Functoriality of <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#fmapd"><span class="id" title="definition">fmapd</span></a></span></h2>
 
 </div>
 <div class="code">
@@ -934,7 +938,7 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab133"></a><h2 class="section">Functor laws for <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#fmapd"><span class="id" title="definition">fmapd</span></a></span></h2>
+<a id="lab139"></a><h2 class="section">Functor laws for <span class="inlinecode"><a class="idref" href="Tealeaves.Singlesorted.Classes.DecoratedFunctor.html#fmapd"><span class="id" title="definition">fmapd</span></a></span></h2>
 
 </div>
 <div class="code">
@@ -968,7 +972,7 @@ Re-arrange using naturality
 </div>
 
 <div class="doc">
-<a id="lab134"></a><h2 class="section">Composition laws for suboperations</h2>
+<a id="lab140"></a><h2 class="section">Composition laws for <code>fmapd</code>/<code>fmap</code></h2>
 
 </div>
 <div class="code">

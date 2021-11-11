@@ -9,7 +9,7 @@ Import Comonad.Notations.
 Import Monoid.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** ** Basic properties of [shift] on monads *)
+(** * Basic properties of [shift] on monads *)
 (******************************************************************************)
 Section shift_monad_lemmas.
 
@@ -46,7 +46,7 @@ Section shift_monad_lemmas.
 
 End shift_monad_lemmas.
 
-(** * Decorated Monad *)
+(** * Decorated monads *)
 (** A decorated monad is a decorated functor whose monad operations
     are compatible with decorated structure. *)
 (******************************************************************************)
@@ -74,7 +74,7 @@ End DecoratedMonad.
 (** * Kleisli presentation of decorated monads *)
 (******************************************************************************)
 
-(** ** Operations *)
+(** ** Lifting operation <<bindd>> *)
 (******************************************************************************)
 Section decorated_monad_kleisli_operations.
 
@@ -119,7 +119,7 @@ End decorated_monad_kleisli_operations.
 
 #[local] Notation "g ⋆d f" := (kcomposed g f) (at level 40) : tealeaves_scope.
 
-(** ** Suboperations *)
+(** ** Specification for sub-operations *)
 (******************************************************************************)
 Section decoratedmonad_suboperations.
 
@@ -196,7 +196,7 @@ Section dec_bindd.
 
 End dec_bindd.
 
-(** ** Kleisli laws for [bindd] *)
+(** ** Functor laws for [bindd] *)
 (******************************************************************************)
 Section decoratedmonad_kleisli_laws.
 
@@ -309,7 +309,7 @@ Section decoratedmonad_kleisli_category.
 
 End decoratedmonad_kleisli_category.
 
-(** ** Composition with suboperations *)
+(** ** Composition laws for sub-operations *)
 (******************************************************************************)
 Section decoratedmonad_suboperation_composition.
 

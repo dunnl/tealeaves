@@ -648,11 +648,13 @@ Section dist_list_properties.
   Proof.
     intros. ext l. unfold compose. induction l.
     - cbn. now rewrite (appmor_pure G1 G2).
-    - inversion H0. (* get Applicative instances *)
+    - specialize (appmor_app_F G1 G2);
+        specialize (appmor_app_G G1 G2);
+        intros.
       rewrite fmap_list_cons, dist_list_cons_2.
       rewrite dist_list_cons_2.
       rewrite IHl. rewrite ap_morphism_1.
-      fequal. now rewrite (appmor_natural A).
+      fequal. now rewrite (appmor_natural G1 G2 A).
   Qed.
 
   Lemma dist_unit_list : forall (A : Type),
@@ -716,7 +718,10 @@ Section TraversableFunctor_prod.
       dist (prod X) G2 ∘ fmap (prod X) (ϕ A) = ϕ (X * A) ∘ dist (prod X) G1.
   Proof.
     intros; unfold compose; cbn. ext [x a]; cbn.
-    inversion H0. now rewrite appmor_natural.
+    specialize (appmor_app_F G1 G2);
+        specialize (appmor_app_G G1 G2);
+        intros.
+    now rewrite (appmor_natural G1 G2).
   Qed.
 
   Lemma dist_unit_prod : forall (A : Type),

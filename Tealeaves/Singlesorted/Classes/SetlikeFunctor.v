@@ -12,7 +12,7 @@ Import Functor.Notations.
 Import Sets.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** * Setlike functors *)
+(** * Set-like functors *)
 (******************************************************************************)
 Section SetlikeFunctor_operations.
 
@@ -28,7 +28,7 @@ End SetlikeFunctor_operations.
 Arguments toset F%function_scope {Toset} {A}%type_scope.
 
 #[local] Notation "x ∈ t" :=
-    (toset _ t x) (at level 50) : tealeaves_scope.
+  (toset _ t x) (at level 50) : tealeaves_scope.
 
 Section SetlikeFunctor.
 
@@ -45,6 +45,7 @@ Section SetlikeFunctor.
 
 End SetlikeFunctor.
 
+
 (** ** [toset]-preserving natural transformations *)
 (******************************************************************************)
 Class SetPreservingTransformation
@@ -56,7 +57,7 @@ Class SetPreservingTransformation
     xtrans_commute : forall A, toset F = toset G ∘ η A;
   }.
 
-(** ** [set] is a setlike functor *)
+(** ** Instance for <<set>> *)
 (******************************************************************************)
 Section SetlikeFunctor_set_instance.
 
@@ -83,7 +84,7 @@ Section SetlikeFunctor_set_instance.
 
 End SetlikeFunctor_set_instance.
 
-(** * Properties of setlike functors *)
+(** ** Basic properties of set-like functors *)
 (******************************************************************************)
 Section setlike_functor_theory.
 
@@ -128,6 +129,7 @@ Section setlike_functor_theory.
 
 End setlike_functor_theory.
 
+(*
 (** * Formalization as properness conditions *)
 (******************************************************************************)
 
@@ -148,6 +150,7 @@ Definition rigid {A B} (R : relation A) (R' : relation B) : relation (A -> B) :=
   fun f g => forall a1 a2 : A, R' (f a1) (g a2) <-> R a1 a2.
 
 Infix "<++>" := rigid (at level 55).
+ *)
 
 (** * Decorated set-like functors *)
 (******************************************************************************)

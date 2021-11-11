@@ -11,36 +11,41 @@ Create HintDb tea_applicative discriminated.
 
 (** * Applicative functors *)
 (******************************************************************************)
-Section applicative.
+Section Applicative_operations.
 
   Context
-    (F : Type -> Type)
-    `{Functor F}.
+    (F : Type -> Type).
 
   Class Pure := pure : forall {A}, A -> F A.
   Class Mult := mult : forall {A B : Type}, F A * F B -> F (A * B).
 
-  #[local] Notation "x ⊗ y" := (mult (x, y)) (at level 50, left associativity).
-
-  Class Applicative `{Pure} `{Mult} :=
-    { app_functor :> `{Functor F};
-      app_pure_natural : forall (A B : Type) (f : A -> B) (x : A),
-          fmap F f (pure x) = pure (f x);
-      app_mult_natural : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : F A) (y : F B),
-          fmap F f x ⊗ fmap F g y = fmap F (map_tensor f g) (x ⊗ y);
-      app_assoc : forall (A B C : Type) (x : F A) (y : F B) (z : F C),
-          fmap F α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z);
-      app_unital_l : forall (A : Type) (x : F A),
-          fmap F left_unitor (pure tt ⊗ x) = x;
-      app_unital_r : forall (A : Type) (x : F A),
-          fmap F right_unitor (x ⊗ pure tt) = x;
-      app_mult_pure : forall (A B : Type) (a : A) (b : B),
-          pure a ⊗ pure b = pure (a, b);
-    }.
-
-End applicative.
+End Applicative_operations.
 
 #[local] Notation "x ⊗ y" := (mult _ (x, y)) (at level 50, left associativity).
+
+Section Applicative.
+
+  Context
+    (G : Type -> Type)
+    `{Fmap G} `{Pure G} `{Mult G}.
+
+  Class Applicative :=
+    { app_functor :> Functor G;
+      app_pure_natural : forall (A B : Type) (f : A -> B) (x : A),
+          fmap G f (pure G x) = pure G (f x);
+      app_mult_natural : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : G A) (y : G B),
+          fmap G f x ⊗ fmap G g y = fmap G (map_tensor f g) (x ⊗ y);
+      app_assoc : forall (A B C : Type) (x : G A) (y : G B) (z : G C),
+          fmap G α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z);
+      app_unital_l : forall (A : Type) (x : G A),
+          fmap G left_unitor (pure G tt ⊗ x) = x;
+      app_unital_r : forall (A : Type) (x : G A),
+          fmap G right_unitor (x ⊗ pure G tt) = x;
+      app_mult_pure : forall (A B : Type) (a : A) (b : B),
+          pure G a ⊗ pure G b = pure G (a, b);
+    }.
+
+End Applicative.
 
 (** ** Homomorphisms between applicative functors *)
 (******************************************************************************)
@@ -64,7 +69,7 @@ Section applicative_morphism.
 
 End applicative_morphism.
 
-(** ** Coherence properties *)
+(** ** Other coherence properties *)
 (******************************************************************************)
 Lemma triangle_1 `{Applicative F} : forall A (t : F A),
     pure F tt ⊗ t = fmap F (left_unitor_inv) t.
@@ -128,7 +133,7 @@ Proof.
   now rewrite (fun_fmap_id F).
 Qed.
 
-(** ** Basic consequences of the axioms *)
+(** ** Other basic consequences *)
 (******************************************************************************)
 Section Applicative_corollaries.
 
@@ -186,7 +191,7 @@ Definition ap (G : Type -> Type) `{Fmap G} `{Mult G} {A B : Type} :
 
 #[local] Notation "Gf <⋆> Ga" := (ap _ Gf Ga) (at level 50, left associativity).
 
-(** * The "ap" combinator *)
+(** * The "ap" combinator << <⋆> >> *)
 (******************************************************************************)
 Section ApplicativeFunctor_ap.
 

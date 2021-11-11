@@ -7,8 +7,6 @@ Import Comonad.Notations.
 
 (** * Right Comodules *)
 (******************************************************************************)
-
-(** The sole operation of a right comodule is a right coaction: *)
 Section RightComodule_operations.
 
   Context
@@ -18,27 +16,27 @@ Section RightComodule_operations.
 
 End RightComodule_operations.
 
-Arguments right_coaction F {W}%function_scope {RightCoaction} {A}%type_scope.
-
 Section RightComodule_class.
 
   Context
     (F W : Type -> Type)
-    `{Comonad W}
-    `{Functor F}.
+    `{Fmap W} `{Cojoin W} `{Extract W}
+    `{Fmap F} `{RightCoaction F W}.
 
-  Class RightComodule `{RightCoaction F W} :=
+  Class RightComodule :=
     { rcom_comonad :> Comonad W;
       rcom_functor :> Functor F;
       rcom_coaction_natural :> Natural (@right_coaction F W _);
       rcom_fmap_extr_coaction :
-        `(fmap F (extract W) ∘ right_coaction F = @id (F A));
+        `(fmap F (extract W) ∘ right_coaction F W A = @id (F A));
       rcom_coaction_coaction :
-        `(right_coaction F (A := W A) ∘ right_coaction F =
-          fmap F (cojoin W (A := A)) ∘ right_coaction F);
+        `(right_coaction F W (W A) ∘ right_coaction F W A =
+          fmap F (cojoin W) ∘ right_coaction F W A);
     }.
 
 End RightComodule_class.
+
+Arguments right_coaction F {W}%function_scope {RightCoaction} {A}%type_scope.
 
 (** ** Homomorphisms of right comodules *)
 (******************************************************************************)
@@ -63,10 +61,23 @@ Section RightComoduleHomomorphism.
 
 End RightComoduleHomomorphism.
 
+(** ** Comonads form right co-modules *)
+(******************************************************************************)
+Section RightComodule_Comonad.
+
+  Instance RightCoaction_Cojoin `{Cojoin W} : RightCoaction W W := @cojoin W _.
+
+  #[program] Instance RightComodule_Comonad `{Comonad W} : RightComodule W W :=
+  {| rcom_fmap_extr_coaction := com_fmap_extr_cojoin W;
+     rcom_coaction_coaction := com_cojoin_cojoin W;
+  |}.
+
+End RightComodule_Comonad.
+
 (** * Kleisli presentation of right modules *)
 (******************************************************************************)
 
-(** ** Kleisli operations *)
+(** ** Lifting operation <<co-sub>> *)
 (******************************************************************************)
 Class Cosub (F W : Type -> Type) :=
   cosub : forall {A B}, (W A -> B) -> F A -> F B.
@@ -76,7 +87,7 @@ Arguments cosub F {W}%function_scope {Cosub} {A B}%type_scope _%function_scope.
 Instance Cosub_RightCoaction `{Fmap F} `{RightCoaction F W} : Cosub F W :=
   fun `(f : W A -> B) => fmap F f ∘ right_coaction F.
 
-(** ** Specifications for sub-operations  *)
+(** ** Specification for <<fmap>> *)
 (******************************************************************************)
 Section RightComodule_suboperations.
 
@@ -85,7 +96,7 @@ Section RightComodule_suboperations.
     `{RightComodule F W}
     {A B C : Type}.
 
-  (** *** [fmap] as a special case of [cosub] *)
+  (** *** [fmap] as a special case of <<cosub>> *)
   Corollary fmap_to_cosub : forall (f : A -> B),
       fmap F f = cosub F (f ∘ extract W).
   Proof.
@@ -97,7 +108,7 @@ Section RightComodule_suboperations.
 
 End RightComodule_suboperations.
 
-(** ** Functoriality of [cosub] *)
+(** ** Functoriality of <<cosub>> *)
 (******************************************************************************)
 Section RightComodule_cosub.
 
@@ -106,7 +117,7 @@ Section RightComodule_cosub.
     `{RightComodule F W}
     {A B C : Type}.
 
-  (** *** [cosub] identity *)
+  (** *** <<cosub>> identity *)
   Theorem cosub_id :
       cosub F (extract W) = @id (F A).
   Proof.
@@ -114,7 +125,7 @@ Section RightComodule_cosub.
     now rewrite (rcom_fmap_extr_coaction F W).
   Qed.
 
-  (** *** [cosub] composition *)
+  (** *** <<cosub>> composition *)
   Theorem cosub_cosub : forall (g : W B -> C) (f : W A -> B),
       cosub F g ∘ cosub F f = cosub F (g co⋆ f).
   Proof.
@@ -131,7 +142,7 @@ Section RightComodule_cosub.
 
 End RightComodule_cosub.
 
-(** ** Other composition laws for [cosub] *)
+(** ** Composition laws for <<cosub>>/<<fmap>> *)
 (******************************************************************************)
 Section RightComodule_composition.
 
@@ -158,16 +169,3 @@ Section RightComodule_composition.
   Qed.
 
 End RightComodule_composition.
-
-(** ** Comonad self-actions from the right *)
-(******************************************************************************)
-Section RightComodule_Comonad.
-
-  Instance RightCoaction_Cojoin `{Cojoin W} : RightCoaction W W := @cojoin W _.
-
-  #[program] Instance RightComodule_Comonad `{Comonad W} : RightComodule W W :=
-  {| rcom_fmap_extr_coaction := com_fmap_extr_cojoin W;
-     rcom_coaction_coaction := com_cojoin_cojoin W;
-  |}.
-
-End RightComodule_Comonad.
