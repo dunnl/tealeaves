@@ -13,6 +13,8 @@ possible to use these polymorphic operations and theorems with any
 concrete syntax by providing a certain typeclass instance, that of a
 decorated traversable monad.
 
+[![Generalized Kleisli composition](http://comono.id/tealeaves/tealeaves_kleisli_composition.png)](http://comono.id/tealeaves/Tealeaves.Singlesorted.Classes.DecoratedTraversableMonad.html#kcomposedtm)
+
 ## Technical publications
 Tealeaves is a work-in-progress and has no associated publications
 yet. At the moment it would be a bad idea to rely on anything in this
