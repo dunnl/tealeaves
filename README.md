@@ -8,9 +8,9 @@ computer-formalized proofs), you can use Tealeaves to define the
 operations of this representation, such as capture-avoiding
 substitution or a well-formedness predicate and prove theorems about
 these operations abstractly. By "abstractly" we mean that these
-theorems are definitions are polymorphic over syntax. It is then
+theorems and definitions are polymorphic over syntax. It is then
 possible to use these polymorphic operations and theorems with any
-concrete syntax by providing a certain typeclass instance, that of a
+concrete syntax by providing a certain typeclass instance for the syntax, that of a
 decorated traversable monad.
 
 [![Generalized Kleisli composition](http://comono.id/tealeaves/tealeaves_kleisli_composition.png)](http://comono.id/tealeaves/Tealeaves.Singlesorted.Classes.DecoratedTraversableMonad.html#kcomposedtm)
