@@ -103,7 +103,7 @@ Section with_index.
     Context
       `{ConstantMultisortedMonad T}.
 
-    #[global] Instance CMM_MM : MultisortedMonad (const T) :=
+    #[global] Instance MultisortedMonad_CMM : MultisortedMonad (const T) :=
       {| mmon_mbind_mret := fun A k => @cmmon_mbind_mret T _ _ _ A;
          mmon_mbind_mbind := fun A B C f g k => @cmmon_mbind_mbind T _ _ _ A B C f g;
          mmon_mbind_comp_mret := fun A B => @cmmon_mbind_comp_mret T _ _ _ A B;
@@ -118,7 +118,7 @@ Section with_index.
     Context
       `{MultisortedMonad T}.
 
-    Instance Module_MMonad (k : K) : MultisortedRightModule (T k) T :=
+    Instance MultisortedRightModule_Monad (k : K) : MultisortedRightModule (T k) T :=
       {| rmod_mret := fun A => mmon_mbind_mret T _ k;
          rmod_mbind_mbind := fun A B C f g => mmon_mbind_mbind T A B C f g k;
       |}.
@@ -126,7 +126,7 @@ Section with_index.
     Context
       `{ConstantMultisortedMonad U}.
 
-    Instance Module_CMMonad : MultisortedRightModule U (const U) :=
+    Instance MultisortedRightModule_CMM : MultisortedRightModule U (const U) :=
       {| rmod_mret := cmmon_mbind_mret U;
          rmod_mbind_mbind := cmmon_mbind_mbind U;
       |}.
@@ -160,7 +160,7 @@ Section with_index.
       now rewrite (mmon_mbind_comp_mret T).
     Qed.
 
-    #[global] Instance MFunctor_rmod : MultisortedFunctor F :=
+    #[global] Instance MultisortedFunctor_Module : MultisortedFunctor F :=
       {| mfun_mfmap_id := @fmap_id_rmod;
          mfun_mfmap_mfmap := @fmap_fmap_rmod;
       |}.
@@ -504,7 +504,7 @@ Section with_index.
       (F : Type -> Type)
       `{MultisortedRightModule F T}.
 
-    Existing Instance Module_MMonad.
+    Existing Instance MultisortedRightModule_Monad.
 
     (** The next three theorems are the left and right identity laws and the
       associativity law for Kleisli composition. *)

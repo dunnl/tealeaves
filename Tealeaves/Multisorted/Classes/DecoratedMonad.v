@@ -101,11 +101,11 @@ Section decorated_monad_to_module.
   Context
     `{DecoratedMultisortedMonad W T}.
 
-  Instance Decorated_Module_MMonad {k} : DecoratedModule W (T k) T :=
+  Instance DecoratedModule_Monad {k} : DecoratedModule W (T k) T :=
     {| drmod_mbind := fun A B f => dmmon_mbind W T f k;
        drmod_dec_dec := fun A => dmmon_dec_dec W T k;
        drmod_dec_extract := fun A => dmmon_dec_extract W T k;
-       drmod_module := Module_MMonad k;
+       drmod_module := MultisortedRightModule_Monad k;
     |}.
 
 End decorated_monad_to_module.
@@ -167,7 +167,7 @@ Section decorated_module_parallel_substitution.
     intros. unfold mkcompr. ext k [w a].
     unfold mbindd, compose, shift; cbn.
     compose near (decorate (T k) (f k (w, a))) on left.
-    assert (MultisortedRightModule (T k) T) by apply Module_MMonad.
+    assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
     rewrite (mbind_mfmap (T k)).
     fequal. now ext j [? ?].
   Qed.
@@ -305,7 +305,7 @@ Section decorated_module_parallel_substitution.
     Proof.
       introv. unfold strength. ext [? t].
       unfold compose; cbn. compose near t on left.
-      assert (MultisortedRightModule (T k) T) by apply Module_MMonad.
+      assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
       now rewrite (mbind_mfmap (T k)).
     Qed.
 
@@ -323,7 +323,7 @@ Section decorated_module_parallel_substitution.
         mfmap (T k) (const (extract (W ×))) ∘ shift ∘ cobind (prod W) (decorate (T k) ∘ f) = f.
     Proof.
       intros k ?.
-      assert (MultisortedRightModule (T k) T) by apply Module_MMonad.
+      assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
       rewrite shift_extract.
       reassociate -> on left.
       rewrite (extract_cobind (prod W)).
@@ -391,7 +391,7 @@ Section decorated_module_parallel_substitution.
       rewrite (mbindd_mbindd F).
       f_equal. ext k [w a].
       unfold mkcompr.
-      assert (MultisortedRightModule (T k) T) by apply Module_MMonad.
+      assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
       rewrite <- (mbind_mfmap (T k)).
       reassociate <- on left.
       (* this next reassociation is difficult to achieve with current tactic support *)
@@ -439,7 +439,7 @@ Section decorated_module_parallel_substitution.
         (fun k => mret T k ∘ extract (W ×)) ∗mr f = f.
     Proof.
       introv. unfold mkcompr. ext k.
-      assert (MultisortedRightModule (T k) T) by apply Module_MMonad.
+      assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
       change ((fun k => mret T k ∘ extract (W ×) (A := ?A)))
         with ((fun k => mret T k ∘ (const (extract (W ×) (A := A)) k))).
       rewrite <- (mbind_mfmap (T k)).
@@ -517,7 +517,7 @@ Proof.
   intros. unfold kcompkr. ext [w a].
   unfold bindkd, mbindd, compose, shift; cbn.
   compose near (decorate (T k) (f (w, a))) on left.
-  assert (MultisortedRightModule (T k) T) by apply Module_MMonad.
+  assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
   rewrite (mbind_mfmap (T k)).
   unfold compose at 1; cbn.
   fequal. ext k' [? ?].
@@ -602,7 +602,7 @@ Section decorated_module_targeted_substitution.
     change (btgd T k (mret T k ∘ extract (W ×)) (fun k0 : K => mret T k0 ∘ extract (W ×)))
       with (btgd T k (((fun k0 : K => mret T k0 ∘ @snd W A) k)) (fun k0 : K => mret T k0 ∘ extract (W ×))).
     rewrite btgd_same.
-    assert (MultisortedRightModule (T k) T) by apply Module_MMonad.
+    assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
     rewrite <- (mbind_mfmap (T k)).
     change (fun _ => extract (W ×)) with (@const K _ (@snd W A)).
     rewrite (mmon_mbind_mret T).

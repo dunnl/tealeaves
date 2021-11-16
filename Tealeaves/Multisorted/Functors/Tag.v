@@ -77,29 +77,30 @@ Section MultisortedMonad_monad.
 
   Context
     `{ix : Index}
+    (T : Type -> Type)
     `{Monad T}.
 
   Implicit Types (k : K) (A B : Type).
 
   Local Notation "'T'' A" := (T (Tag A)) (at level 10).
 
-  Instance Mreturn_T_Tag : MReturn (const (fun A => T' A)) :=
+  Instance MReturn_T_Tag : MReturn (const (fun A => T' A)) :=
     fun A => curry (Monad.ret T).
 
-  Instance Mbind_T_Tag : MBind (fun A => T' A) (const (fun A => T' A)) :=
+  Instance MBind_T_Tag : MBind (fun A => T' A) (const (fun A => T' A)) :=
     fun A B f => Monad.bind (B:=Tag B) T (uncurry f).
 
   Theorem mon_mbind_mret_T_Tag : forall {A},
       mbind (fun A => T' A) (mret (const (fun A => T' A))) = @id (T' A).
   Proof.
-    intros. unfold mbind, Mbind_T_Tag, mret, Mreturn_T_Tag.
+    intros. unfold mbind, MBind_T_Tag, mret, MReturn_T_Tag.
     now rewrite <- curry_iso_inv, (Monad.bind_id T).
   Qed.
 
   Theorem mon_mbind_comp_mret_T_Tag : forall {A B} (f : A -k-> T' B) k,
       mbind (fun A => T' A) f ∘ mret (const (fun A => T' A)) k = f k.
   Proof.
-    intros. unfold mbind, Mbind_T_Tag, mret, Mreturn_T_Tag.
+    intros. unfold mbind, MBind_T_Tag, mret, MReturn_T_Tag.
     ext a. unfold curry, compose.
     compose near (k, a). now rewrite (Monad.bind_comp_ret T).
   Qed.
@@ -108,7 +109,7 @@ Section MultisortedMonad_monad.
       mbind (fun A => T' A) g ∘ mbind (fun A => T' A) f =
       mbind (fun A => T' A) (fun k => mbind (fun A => T' A) g ∘ f k).
   Proof.
-    introv. unfold mbind, Mbind_T_Tag.
+    introv. unfold mbind, MBind_T_Tag.
     rewrite (Monad.bind_bind T).
     fequal. now ext [k a].
   Qed.
@@ -133,7 +134,7 @@ Section MultisortedMonad_monad.
   Theorem Monad_T_Tag_mfmap_spec : forall {A B} (f : A -k-> B),
       mfmap (fun A => T' A) f = fmap T (fun '(k, a) => (k, f k a)).
   Proof.
-    intros. unfold mfmap, MFmap_rmod, mbind, Mbind_T_Tag.
+    intros. unfold mfmap, MFmap_rmod, mbind, MBind_T_Tag.
     rewrite (Monad.fmap_to_bind T). fequal. ext [k a].
     reflexivity.
   Qed.
