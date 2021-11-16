@@ -1,12 +1,12 @@
 From Tealeaves Require Import
-     Sets
-     Multisorted.Functors.
+     Singlesorted.Functors.Sets
+     Multisorted.Classes.Monad
+     Multisorted.Functors.Tag.
 
 Import Sets.Notations.
 Import Multisorted.Category.Notations.
-Local Open Scope tealeaves_scope.
-Local Open Scope tealeaves_multi_scope.
-
+#[local] Open Scope tealeaves_scope.
+#[local] Open Scope tealeaves_multi_scope.
 
 (** * The monad of multisorted sets *)
 (** Since "tagged" sets are merely sets of pairs, we try to utilize the existing
@@ -23,10 +23,14 @@ Section multisorted_sets.
   Definition mset : Type -> Type :=
     fun A => Tag A -> Prop.
 
-  #[global] Instance Mreturn_mset : Mreturn (const mset) := Mreturn_T_Tag.
-  #[global] Instance Mbind_mset : Mbind mset (const mset) := Mbind_T_Tag.
-  #[global] Instance Monadp_mset : CMMonad mset := CMMonad_T_Tag.
-  #[global] Instance Modulep_mset : RightModule mset (const mset) := Module_T_Tag.
+  #[global] Instance MReturn_mset :
+    MReturn (const mset) := MReturn_T_Tag set.
+  #[global] Instance MBind_mset :
+    MBind mset (const mset) := MBind_T_Tag set.
+  #[global] Instance Monadp_mset :
+    ConstantMultisortedMonad mset := CMMonad_T_Tag set.
+  #[global] Instance Modulep_mset :
+    MultisortedRightModule mset (const mset) := Module_T_Tag set.
 
   (** [bindt_mset_spec] provides a more convenient definition of
       <<bind mset f>> than its definition. *)
@@ -50,7 +54,7 @@ Section multisorted_sets.
   Lemma preimage_fmap : forall {A B} {s : mset A} {f : A -k-> B} {k : K} {b : B},
       mfmap mset f s (k, b) <-> exists a, s (k, a) /\ f k a = b.
   Proof.
-    introv. unfold_mfmap @Mfmap_rmod. rewrite mbind_mset_spec. split.
+    introv. unfold_ops @MFmap_rmod. rewrite mbind_mset_spec. split.
     - destruct 1 as [k' [a [in1 in2]]].
       inverts in2. now (exists a).
     - intros [a [? heq]]. inverts heq. now (exists k a).
@@ -128,7 +132,6 @@ Hint Rewrite @mset_add_nil_l @mset_add_nil_r
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
-  Notation "'set__p'" := (mset) : tealeaves_subscript_scope.
   Notation "∅" := mset_empty : tealeaves_multi_scope.
   Notation "{{ ( k , x ) }}" := (mret (const mset) k x) : tealeaves_multi_scope.
   Infix "∪" := mset_add (at level 61, left associativity) : tealeaves_multi_scope.
