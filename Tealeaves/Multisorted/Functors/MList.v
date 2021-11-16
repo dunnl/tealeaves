@@ -1,33 +1,33 @@
 From Tealeaves Require Import
-     List
-     Multisorted.Functors
-     Multisorted.MSets
-     Multisorted.Quantifiable.
+     Singlesorted.Classes.SetlikeFunctor
+     Singlesorted.Functors.List
+     Multisorted.Functors.Tag
+     Multisorted.Classes.SetlikeMonad.
 
 Import Sets.Notations.
 Import List.Notations.
-Import Multisorted.Quantifiable.Notations.
+Import Multisorted.Classes.SetlikeFunctor.Notations.
 Import Multisorted.Category.Notations.
-Local Open Scope list_scope.
-Local Open Scope tealeaves_scope.
-Local Open Scope tealeaves_multi_scope.
+#[local] Open Scope list_scope.
+#[local] Open Scope tealeaves_scope.
+#[local] Open Scope tealeaves_multi_scope.
 
-(** * The monad of tagged lists *)
+(** * The monad of multisorted lists *)
 (******************************************************************************)
 Section mlist.
 
   Context
     `{ix : Index}.
 
-  Implicit Types (k : K) (A B : Type).
+  Implicit Types (k : K).
 
   Definition mlist : Type -> Type :=
     fun A => list (Tag A).
 
-  #[global] Instance Mreturn_mlist : Mreturn (const mlist) := Mreturn_T_Tag.
-  #[global] Instance Mbind_mlist : Mbind mlist (const mlist) := Mbind_T_Tag.
-  #[global] Instance TaggedMonad_mlist : CMMonad mlist := CMMonad_T_Tag.
-  #[global] Instance Modulep_mlist : RightModule mlist (const mlist) := Module_T_Tag.
+  #[global] Instance MReturn_mlist : MReturn (const mlist) := MReturn_T_Tag list.
+  #[global] Instance MBind_mlist : MBind mlist (const mlist) := MBind_T_Tag list.
+  #[global] Instance TaggedMonad_mlist : ConstantMultisortedMonad mlist := CMMonad_T_Tag list.
+  #[global] Instance Modulep_mlist : MultisortedRightModule mlist (const mlist) := Module_T_Tag list.
 
   (** ** Rewriting lemmas for [mfmap] *)
   Lemma mfmap_mlist_nil `{f : A -k-> B} :
@@ -51,8 +51,10 @@ Section mlist.
   Lemma mfmap_mlist_app `{f : A -k-> B} : forall (xs ys : mlist A),
       mfmap mlist f (xs ++ ys) = mfmap mlist f xs ++ mfmap mlist f ys.
   Proof.
-    intros. unfold mlist, Mreturn_mlist, Mbind_mlist. (** TODO <-- these are hidden *)
-    rewrite Monad_T_Tag_mfmap_spec. now rewrite fmap_list_app.
+    intros. unfold mlist.
+    unfold MReturn_mlist, MBind_mlist.
+    rewrite (Monad_T_Tag_mfmap_spec list).
+    now rewrite fmap_list_app.
   Qed.
 
   (** ** Rewriting lemmas for [mbind] *)
@@ -77,7 +79,7 @@ Section mlist.
   Lemma mbind_mlist_app {A B} : forall (f : A ~k~> (const mlist) B) (xs ys : mlist A),
       mbind mlist f (xs ++ ys) = mbind mlist f xs ++ mbind mlist f ys.
   Proof.
-    introv. unfold mbind, Mbind_mlist, Mbind_T_Tag.
+    introv. unfold mbind, MBind_mlist, MBind_T_Tag.
     now rewrite bind_list_app.
   Qed.
 
@@ -157,7 +159,7 @@ Section mlist.
     now simpl_tgt_fallback.
   Qed.
 
-  Lemma bindk_mlist_app {A B} : forall k (f : A -> mlist A) (xs ys : mlist A),
+  Lemma bindk_mlist_app {A} : forall k (f : A -> mlist A) (xs ys : mlist A),
       bindk mlist k f (xs ++ ys) = bindk mlist k f xs ++ bindk mlist k f ys.
   Proof.
     introv. unfold bindk. now rewrite mbind_mlist_app.
@@ -187,7 +189,7 @@ Hint Rewrite @bindk_mlist_cons_neq @bindk_mlist_one_neq
     [mlist], and then transfer these to listables by the compatibility
     properties of [tomlist]. *)
 #[global] Instance tomset_mlist `{Index} : Tomset mlist :=
-  fun A => Quantifiable.toset list.
+  fun A => toset list.
 
 (** ** Rewriting lemmas for [tomset] and [mlist] *)
 Section tomset_mlist.
@@ -278,39 +280,39 @@ Section mlist_is_quantifiable.
   Context
     `{ix : Index}.
 
-  #[global] Instance: Natural (tomset_mlist).
+  #[global] Instance: MultisortedNatural (tomset_mlist).
   Proof.
     change (@tomset_mlist _) with (@tomset _ mlist _).
     intros A B f.
-    unfold mset, Mreturn_mset, Mbind_mset. (** TODO <-- these are hidden *)
-    rewrite (Monad_T_Tag_mfmap_spec (T:=fun A => A -> Prop)).
-    unfold mlist, Mreturn_mlist, Mbind_mlist. (** TODO <-- these are hidden *)
-    rewrite (Monad_T_Tag_mfmap_spec (T:=list)).
+    unfold mset, MReturn_mset, MBind_mset. (** TODO <-- these are hidden *)
+    rewrite (Monad_T_Tag_mfmap_spec set).
+    unfold mlist, MReturn_mlist, MBind_mlist. (** TODO <-- these are hidden *)
+    rewrite (Monad_T_Tag_mfmap_spec list).
     unfold tomset, tomset_mlist.
-    now rewrite (Tealeaves.Functors.natural (G := set)).
+    now rewrite (natural (G := set)).
   Qed.
 
-  Theorem qmmon_mret_mlist : forall {A k},
+  Theorem qmmon_mret_mlist : forall (k : K) (A : Type),
       tomset mlist ∘ mret (const mlist) k (A:=A) = mret (const mset) k.
   Proof.
     introv. ext a. ext p. destruct p as [kp ap].
     propext; firstorder.
   Qed.
 
-  Theorem qmmon_mbind_mlist : forall {A B} (f : forall k, A -> mlist B),
+  Theorem qmmon_mbind_mlist : forall `(f : forall k, A -> list (Tag B)),
       tomset mlist ∘ mbind mlist f = mbind mset (fun k => tomset mlist ∘ f k) ∘ tomset mlist.
   Proof.
     intros. ext l [k b]. unfold tomset, tomset_mlist.
-    unfold mbind, Mbind_mlist, Mbind_mset, Mbind_T_Tag.
+    unfold mbind, MBind_mlist, MBind_mset, MBind_T_Tag.
     unfold compose. apply propositional_extensionality.
-    rewrite (Quantifiable.in_bind_iff list).
+    rewrite (SetlikeMonad.in_bind_iff list).
     rewrite Sets.bind_set_spec.
     split; intros [[k' a] ?]; now exists (k', a).
   Qed.
 
-  #[global] Instance: QuantifiableMMonad (const mlist) :=
+  #[global] Instance: SetlikeMultisortedMonad (const mlist) :=
     {| qmmon_mret := @qmmon_mret_mlist;
-       qmmon_mbind := fun A B k => @qmmon_mbind_mlist A B; |}.
+       qmmon_mbind := fun A B f k => @qmmon_mbind_mlist A B f; |}.
 
 End mlist_is_quantifiable.
 
