@@ -16,7 +16,7 @@ Section row_functor.
 
   Definition Row A := K -> A.
 
-  #[global] Instance Mfmap_Row : Mfmap Row :=
+  #[global] Instance MFmap_Row : MFmap Row :=
     fun `(f : A -k-> B) xs k => f k (xs k).
 
   Lemma mfmap_id_Row {A} : mfmap Row kid = @id (Row A).
@@ -32,8 +32,8 @@ Section row_functor.
   Qed.
 
   #[global] Instance MFunctor_Row : MultisortedFunctor Row :=
-    {| mfmap_id := @mfmap_id_Row;
-       mfmap_mfmap := @mfmap_mfmap_Row;
+    {| mfun_mfmap_id := @mfmap_id_Row;
+       mfun_mfmap_mfmap := @mfmap_mfmap_Row;
     |}.
 
 End row_functor.

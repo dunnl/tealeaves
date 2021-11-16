@@ -1,41 +1,43 @@
 From Tealeaves Require Export
      Util.Prelude
-     Singlesorted.Theory.Product
+     Singlesorted.Functors.Writer (* for results about tensorial strength *)
      Singlesorted.Classes.Functor
      Multisorted.Category.
 
+Import Product.Notations.
 Import Multisorted.Category.Notations.
+#[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 
-Section assume_index.
+Section assume_some_index_type.
 
   Context
     `{ix : Index}.
 
-  Implicit Types (k : K) (A B : Type).
+  Implicit Type (k : K).
 
   (** * K-partitioned functors *)
   (******************************************************************************)
-  Section Multifunctor_operation.
+  Section MultisortedFunctor_operation.
 
     Context
       (F : Type -> Type).
 
-    Class Mfmap : Type :=
+    Class MFmap : Type :=
       mfmap : forall {A B}, (A -k-> B) -> F A -> F B.
 
-  End Multifunctor_operation.
+  End MultisortedFunctor_operation.
 
   Section Multifunctor.
 
     Context
       (F : Type -> Type)
-      `{Mfmap F}.
+      `{MFmap F}.
 
     Class MultisortedFunctor :=
-      { mfmap_id :
+      { mfun_mfmap_id :
           `(mfmap F kid = @id (F A));
-        mfmap_mfmap : forall `(f : A -k-> B) `(g : B -k-> C),
+        mfun_mfmap_mfmap : forall `(f : A -k-> B) `(g : B -k-> C),
             mfmap F g ∘ mfmap F f = mfmap F (g ⊙ f);
       }.
 
@@ -43,31 +45,40 @@ Section assume_index.
 
   (** ** Natural transformations *)
   (******************************************************************************)
-  Section natural_transformation_class.
+  Section MultisortedNatural.
 
     Context
       `{MultisortedFunctor F}
       `{MultisortedFunctor G}.
 
-    Class Natural (η : F ⇒ G) :=
-      naturality : forall {A B} (f : K -> A -> B),
+    Class MultisortedNatural (η : F ⇒ G) :=
+      mnaturality : forall {A B} (f : K -> A -> B),
         mfmap G f ∘ η A = η B ∘ mfmap F f.
 
-  End natural_transformation_class.
+  End MultisortedNatural.
 
-  (** ** Identity functors *)
+  (** ** Identity functors at some <<k : K>> *)
+  (** For each <<k : K>> one obtains a K-sorted functor whose object map is the
+        identity operation and whose <<mfmap>> treats values <<a : A>> as if
+        tagged by <<k : K>>. *)
   (******************************************************************************)
-  (** For each [k : K] one obtains a K-tagged functor whose object map is the
-  identity. Values of this functor are treated as if tagged by <<k>>. *)
-  #[global] Instance Mfmap_id_k k : Mfmap (fun A => A) :=
-    fun `(f : A -k-> B) => f k.
+  Section MultisortedFunctor_identity.
 
-  #[global, program] Instance MultisortedFunctor_id_k k :
-    @MultisortedFunctor (fun A => A) (Mfmap_id_k k).
+    Context
+      (k : K).
+
+    #[global] Instance MFmap_I_k : MFmap (fun A => A) :=
+      fun `(f : A -k-> B) => f k.
+
+    #[global, program] Instance MultisortedFunctor_I_k :
+      @MultisortedFunctor (fun A => A) MFmap_I_k.
+
+  End MultisortedFunctor_identity.
 
   (** ** Composition with ordinary functors *)
   (******************************************************************************)
-  #[global] Instance Mfmap_compose_Fmap `{Mfmap F2} `{Fmap F1} : Mfmap (F2 ∘ F1) :=
+  #[global] Instance MFmap_compose_Fmap
+   `{MFmap F2} `{Fmap F1} : MFmap (F2 ∘ F1) :=
     fun A B f => mfmap F2 (fun (k : K) (a : F1 A) => fmap F1 (f k) a).
 
   Section MultisortedFunctor_compose_Functor.
@@ -79,24 +90,25 @@ Section assume_index.
         mfmap (F ∘ G) kid = @id (F (G A)).
     Proof.
       intros. ext x. cbv in x.
-      unfold_ops @Mfmap_compose_Fmap.
+      unfold_ops @MFmap_compose_Fmap.
       change (fun (k : K) (a : G A) => fmap G (kid k) a)
         with (fun (_ : K) (a : G A) => fmap G id a).
-      rewrite (fun_fmap_id G). now rewrite (mfmap_id F).
+      now rewrite (fun_fmap_id G), (mfun_mfmap_id F).
     Qed.
 
     Lemma mfmap_mfmap_compose_fmap : forall `(f : A -k-> B) `(g : B -k-> C),
         mfmap (F ∘ G) g ∘ mfmap (F ∘ G) f = mfmap (F ∘ G) (g ⊙ f).
     Proof.
-      introv. ext t. unfold compose. unfold_ops @Mfmap_compose_Fmap.
-      compose near t on left. rewrite (mfmap_mfmap F).
+      introv. ext t. unfold compose. unfold_ops @MFmap_compose_Fmap.
+      compose near t on left. rewrite (mfun_mfmap_mfmap F).
       fequal. ext k x. unfold Classes.comp, kconst_comp, compose.
       compose near x on left. now rewrite (fun_fmap_fmap G).
     Qed.
 
-    #[global] Instance MultisortedFunctor_compose_Fmap : MultisortedFunctor (F ∘ G) :=
-      {| mfmap_id := mfmap_id_compose_fmap;
-         mfmap_mfmap := @mfmap_mfmap_compose_fmap;
+    #[global] Instance MultisortedFunctor_compose_Functor :
+      MultisortedFunctor (F ∘ G) :=
+      {| mfun_mfmap_id := mfmap_id_compose_fmap;
+         mfun_mfmap_mfmap := @mfmap_mfmap_compose_fmap;
       |}.
 
   End MultisortedFunctor_compose_Functor.
@@ -111,6 +123,15 @@ Section assume_index.
 
     Definition multistrength {B A} : B * F A -> F (B * A) :=
       fun '(b, x) => mfmap F (fun k => pair b) x.
+
+    Lemma strength_discard {W : Type} {A : Type} :
+      mfmap F (const (extract (W ×))) ∘ multistrength (B:=W) (A:=A) =
+      extract (prod W) (A := F A).
+    Proof.
+      unfold multistrength. ext [w t].
+      unfold compose; cbn. compose near t on left.
+      now rewrite (mfun_mfmap_mfmap F), (mfun_mfmap_id F).
+    Qed.
 
   End tensorial_strength.
 
@@ -211,7 +232,7 @@ Section assume_index.
 
   (** ** Identity and composition laws for [fmapk] *)
   (******************************************************************************)
-  Definition fmapk {A} F `{! Mfmap F} : K -> (A -> A) -> F A -> F A :=
+  Definition fmapk {A} F `{! MFmap F} : K -> (A -> A) -> F A -> F A :=
     fun k f => mfmap F (tgt k f).
 
   Context
@@ -222,26 +243,26 @@ Section assume_index.
       fmapk F k id = @id (F A).
   Proof.
     introv. unfold fmapk.
-    now rewrite tgt_id, (mfmap_id F).
+    now rewrite tgt_id, (mfun_mfmap_id F).
   Qed.
 
   Lemma fmapk_fmapk_eq : forall k `(f : A -> A) `(g : A -> A),
       fmapk F k g ∘ fmapk F k f = fmapk F k (g ∘ f).
   Proof.
     introv. unfold fmapk.
-    now rewrite (mfmap_mfmap F), tgt_tgt_eq.
+    now rewrite (mfun_mfmap_mfmap F), tgt_tgt_eq.
   Qed.
 
   Lemma fmapk_fmapk_neq : forall k1 k2 `(f : A -> A) `(g : A -> A),
       k1 <> k2 -> fmapk F k2 g ∘ fmapk F k1 f = fmapk F k1 f ∘ fmapk F k2 g.
   Proof.
-    introv p. unfold fmapk. rewrite 2(mfmap_mfmap F).
+    introv p. unfold fmapk. rewrite 2(mfun_mfmap_mfmap F).
     rewrite tgt_tgt_neq; auto.
   Qed.
 
-End assume_index.
+End assume_some_index_type.
 
-(** ** Rewrite hint registration *)
+(** ** Automation support *)
 Hint Rewrite @tgt_eq @tgtd_eq @tgtd_same : tea_tgt.
 Hint Rewrite @tgt_eq @tgtd_eq @tgtd_same : tea_tgt_eq.
 Hint Rewrite @tgt_neq @tgtd_neq using auto : tea_tgt.

@@ -30,25 +30,16 @@ Section shift.
     intros. ext [w t].
     unfold shift, join, Join_writer, compose.
     cbn. compose near t on right.
-    rewrite (mfmap_mfmap F). fequal.
+    rewrite (mfun_mfmap_mfmap F). fequal.
     ext k [w' a]. cbn. reflexivity.
   Qed.
 
-  Lemma strength_discard {A} :
-    mfmap F (const (extract (W ×))) ∘ multistrength F (B:=W) (A:=A) =
-    extract (prod W) (A := F A).
-  Proof.
-    unfold strength. ext [w t].
-    unfold compose; cbn. compose near t on left.
-    now rewrite (mfmap_mfmap F), (mfmap_id F).
-  Qed.
-
-  Lemma shift_discard {A} :
-    mfmap F (const snd) ∘ shift (A:=A) = mfmap F (const snd) ∘ snd.
+  Lemma shift_extract {A} :
+    mfmap F (const (extract (W ×))) ∘ shift (A:=A) = mfmap F (const (extract (W ×))) ∘ extract (W ×).
   Proof.
     ext [w t]. unfold shift, compose. cbn.
     compose near t on left.
-    rewrite (mfmap_mfmap F). fequal.
+    rewrite (mfun_mfmap_mfmap F). fequal.
     now ext k [? ?].
   Qed.
 
@@ -80,14 +71,14 @@ Section typeclasses.
       (W : Type)
       (F : Type -> Type)
       `{Decorate W F}
-      `{Mfmap (ix:=ix) F}.
+      `{MFmap (ix:=ix) F}.
 
     Class DecoratedMultisortedFunctor :=
       { decf_functor :> MultisortedFunctor F;
-        decf_natural :> Natural (@decorate W F _);
+        decf_natural :> MultisortedNatural (@decorate W F _);
         decf_dec_dec : forall {A},
             decorate W F (W * A) ∘ decorate W F A =
-            mfmap F (fun k => cojoin (W ×)) ∘ decorate W F A;
+            mfmap F (const (cojoin (W ×))) ∘ decorate W F A;
         decf_dec_extract : forall {A},
             mfmap F (const (extract (W ×))) ∘ decorate W F A = @id (F A);
       }.
@@ -99,10 +90,10 @@ Section typeclasses.
   Class DecoratedTransformation
         {W : Type}
         {F G : Type -> Type}
-        `{Mfmap (ix:=ix) F} `{Decorate W F}
-        `{Mfmap (ix:=ix) G} `{Decorate W G}
+        `{MFmap (ix:=ix) F} `{Decorate W F}
+        `{MFmap (ix:=ix) G} `{Decorate W G}
         (η : F ⇒ G) :=
-    { dectrans_natural : Natural η;
+    { dectrans_natural : MultisortedNatural η;
       dectrans_commute : forall A,
           η (W * A) ∘ decorate F = decorate G ∘ η A;
     }.
@@ -111,7 +102,7 @@ End typeclasses.
 
 (** * Context-sensitive parallel maps, [mfmapd] *)
 (******************************************************************************)
-Definition mfmapd F {A B} `{Mfmap F} `{Decorate W F}
+Definition mfmapd F {A B} `{MFmap F} `{Decorate W F}
            (f : W * A -k-> B) : F A -> F B := mfmap F f ∘ decorate F.
 
 Section decorated_functor_parallel.
@@ -126,7 +117,7 @@ Section decorated_functor_parallel.
   Lemma mfmap_to_mfmapd {A B} (f : K -> A -> B) :
     mfmap F f = mfmapd F (f ⊙ const snd).
   Proof.
-    unfold mfmapd. rewrite <- (mfmap_mfmap F).
+    unfold mfmapd. rewrite <- (mfun_mfmap_mfmap F).
     reassociate -> on right. now rewrite (decf_dec_extract W).
   Qed.
 
@@ -137,11 +128,11 @@ Section decorated_functor_parallel.
   Proof.
     introv. unfold mfmapd.
     reassociate <- on left.
-    rewrite <- (naturality (η := @decorate W F _)).
+    rewrite <- (mnaturality (η := @decorate W F _)).
     reassociate -> on left.
     rewrite (decf_dec_dec W F).
     reassociate <- on left.
-    unfold_ops @Mfmap_compose_Fmap. rewrite (mfmap_mfmap F).
+    unfold_ops @MFmap_compose_Fmap. rewrite (mfun_mfmap_mfmap F).
     reflexivity.
   Qed.
 
@@ -161,7 +152,7 @@ Section decorated_functor_parallel.
     reassociate -> on left.
     rewrite (dec_mfmapd). unfold mfmapd.
     reassociate <- on left.
-    now rewrite (mfmap_mfmap F).
+    now rewrite (mfun_mfmap_mfmap F).
   Qed.
 
   (** *** Corollaries *)
@@ -177,7 +168,7 @@ End decorated_functor_parallel.
 
 (** * Context-sensitive targeted maps, [fmapkd] *)
 (******************************************************************************)
-Definition fmapkd F {A} `{Mfmap F} `{Decorate W F} (k : K) (f : W * A -> A)
+Definition fmapkd F {A} `{MFmap F} `{Decorate W F} (k : K) (f : W * A -> A)
   : F A -> F A := mfmapd F (tgtd k f snd).
 
 Section decorated_functor_targeted.
@@ -197,7 +188,7 @@ Section decorated_functor_targeted.
     2: now rewrite (decf_dec_extract W).
     compose near t on left.
     reassociate <- on left.
-    rewrite (mfmap_mfmap F).
+    rewrite (mfun_mfmap_mfmap F).
     do 2 fequal. ext k' [w a].
     unfold Classes.comp, kconst_comp.
     compare values k and k'; now simpl_tgt.
