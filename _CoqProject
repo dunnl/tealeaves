@@ -45,8 +45,14 @@ Tealeaves/Multisorted/Classes/Functor.v
 Tealeaves/Multisorted/Classes/Monad.v
 Tealeaves/Multisorted/Functors/Tag.v
 Tealeaves/Multisorted/Functors/Row.v
+Tealeaves/Multisorted/Functors/MSets.v
 Tealeaves/Multisorted/Classes/DecoratedFunctor.v
 Tealeaves/Multisorted/Classes/DecoratedMonad.v
+Tealeaves/Multisorted/Classes/SetlikeFunctor.v
+Tealeaves/Multisorted/Classes/SetlikeMonad.v
+Tealeaves/Multisorted/Functors/MList.v
+Tealeaves/Multisorted/Classes/ListableFunctor.v
+Tealeaves/Multisorted/Classes/ListableMonad.v
 LN/Atom.v
 LN/Leaf.v
 LN/AtomSet.v
