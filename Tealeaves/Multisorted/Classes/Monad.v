@@ -13,17 +13,24 @@ Section with_index.
   Context
     `{ix : Index}.
 
-  (** * K-partitioned Monads *)
+  (** * K-sorted Monads *)
   (**************************************************************)
-  Class Mreturn (G : K -> Type -> Type) : Type :=
-    mret : forall {A}, A ~k~> G A.
+  Section MultisortedMonad_operations.
 
-  Class Mbind (F : Type -> Type) (G : K -> Type -> Type) : Type :=
-    mbind : forall {A B : Type},  A ~k~> G B -> F A -> F B.
+    Context
+      (F : Type -> Type)
+      (G : K -> Type -> Type).
 
-  #[global] Arguments mret G%function_scope {Mreturn} {A}%type_scope.
+    Class MReturn :=
+      mret : forall {A}, A ~k~> G A.
 
-  #[global] Arguments mbind F%function_scope {G}%function_scope {Mbind}
+    Class MBind :=
+      mbind : forall (A B : Type),  A ~k~> G B -> F A -> F B.
+
+  End MultisortedMonad_operations.
+
+  #[global] Arguments mret G%function_scope {MReturn} {A}%type_scope.
+  #[global] Arguments mbind F%function_scope {G}%function_scope {MBind}
    {A B}%type_scope (_)%tea_multi.
 
   (** ** Constant multisorted monads *)
@@ -32,8 +39,8 @@ Section with_index.
 
     Context
       (T : Type -> Type)
-      `{Mreturn (const T)}
-      `{Mbind T (const T)}.
+      `{MReturn (const T)}
+      `{MBind T (const T)}.
 
     Class ConstantMultisortedMonad : Prop :=
       { cmmon_mbind_mret : forall A,
@@ -52,8 +59,8 @@ Section with_index.
 
     Context
       (T : K -> Type -> Type)
-      `{Mreturn T}
-      `{forall k, Mbind (T k) T}.
+      `{MReturn T}
+      `{forall k, MBind (T k) T}.
 
     Class MultisortedMonad : Prop :=
       { mmon_mbind_mret :
@@ -69,14 +76,14 @@ Section with_index.
 
   End MultisortedMonad.
 
-  (** ** K-partitioned Modules *)
+  (** ** Multisorted Right Modules *)
   (******************************************************************************)
   Section MultisortedModule.
 
     Context
       (F : Type -> Type)
       (T : K -> Type -> Type)
-      `{Mbind F T}
+      `{MBind F T}
       `{MultisortedMonad T}.
 
     Class MultisortedRightModule :=
@@ -130,7 +137,7 @@ Section with_index.
   (******************************************************************************)
   Section MultisortedFunctor_module_carrier.
 
-    #[global] Instance Mfmap_rmod `{Mreturn T} `{Mbind F T} : Mfmap F :=
+    #[global] Instance MFmap_rmod `{MReturn T} `{MBind F T} : MFmap F :=
       fun A B f => mbind F (mret T ◻ f).
 
     Context
@@ -139,14 +146,14 @@ Section with_index.
     Lemma fmap_id_rmod : forall A,
         mfmap F kid = @id (F A).
     Proof.
-      introv. unfold_ops @Mfmap_rmod.
+      introv. unfold_ops @MFmap_rmod.
       unfold compose. now rewrite (rmod_mret F T).
     Qed.
 
     Lemma fmap_fmap_rmod : forall `(f : A -k-> B) `(g : B -k-> C),
         mfmap F g ∘ mfmap F f = mfmap F (g ⊙ f).
     Proof.
-      introv. unfold_ops @Mfmap_rmod.
+      introv. unfold_ops @MFmap_rmod.
       rewrite (rmod_mbind_mbind F T).
       f_equal. ext k.
       reassociate <- on left.
@@ -154,8 +161,8 @@ Section with_index.
     Qed.
 
     #[global] Instance MFunctor_rmod : MultisortedFunctor F :=
-      {| mfmap_id := @fmap_id_rmod;
-         mfmap_mfmap := @fmap_fmap_rmod;
+      {| mfun_mfmap_id := @fmap_id_rmod;
+         mfun_mfmap_mfmap := @fmap_fmap_rmod;
       |}.
 
   End MultisortedFunctor_module_carrier.
@@ -168,9 +175,9 @@ Section with_index.
       `{MultisortedMonad T}.
 
     #[global] Instance Natural_mret {k} :
-      Natural (fun A => @mret T _ A k) (H := Mfmap_id_k k).
+      MultisortedNatural (fun A => @mret T _ A k) (H := MFmap_I_k k).
     Proof.
-      introv. unfold_ops @Mfmap_rmod.
+      introv. unfold_ops @MFmap_rmod.
       now rewrite (mmon_mbind_comp_mret T).
     Qed.
 
@@ -179,11 +186,10 @@ Section with_index.
   (** * Properties of right modules *)
   (******************************************************************************)
 
-
   (** ** Parallel substitution, [mbind] and [mkcomp] *)
   (******************************************************************************)
   Definition mkcomp  {A B C : Type} (T : K -> Type -> Type)
-             `{forall k, Mbind (T k) T} `{Mreturn T}
+             `{forall k, MBind (T k) T} `{MReturn T}
              (g : B ~k~> T C) (f : forall k, A -> T k B)
     : forall k, A -> T k C := fun k => mbind (T k) g ∘ f k.
 
@@ -216,7 +222,7 @@ Section with_index.
     Corollary mbind_mfmap {A B C} : forall (g : B ~k~> T C) (f : K -> A -> B),
         mbind F g ∘ mfmap F f = mbind F (fun k => g k ∘ f k).
     Proof.
-      introv. unfold_ops @Mfmap_rmod.
+      introv. unfold_ops @MFmap_rmod.
       rewrite mbind_mbind. f_equal.
       unfold mkcomp. ext k.
       rewrite Prelude.compose_assoc.
@@ -226,7 +232,7 @@ Section with_index.
     Corollary mfmap_mbind {A B C} : forall (g : K -> B -> C) (f : A ~k~> T B),
         mfmap F g ∘ mbind F f = mbind F (fun k => mfmap (T k) g ∘ f k).
     Proof.
-      introv. unfold_ops @Mfmap_rmod.
+      introv. unfold_ops @MFmap_rmod.
       now rewrite mbind_mbind.
     Qed.
 
@@ -256,6 +262,20 @@ Section with_index.
 
   End MultisortedModule_theory.
 
+  Section MultisortedMonad_misc.
+
+    Context
+      `{MultisortedMonad T}.
+
+    Lemma strength_return {A B} (k : K) (a : A) (b : B) :
+      multistrength (T k) (b, mret T k a) = mret T k (b, a).
+    Proof.
+      unfold multistrength. compose near a on left.
+      now rewrite Natural_mret.
+    Qed.
+
+  End MultisortedMonad_misc.
+
   (** * Targeted substitution, [bindk] and [kcompk] *)
   (******************************************************************************)
 
@@ -263,19 +283,19 @@ Section with_index.
   (******************************************************************************)
   (** Build a k-substitution that targets only the leaves belonging to a partition
     [k]. This must be restricted to morphisms that do not change the leaf type. *)
-  #[program] Definition btg T `{! Mreturn T} {A} (k : K) (f : A -> T k A) :
+  #[program] Definition btg T `{! MReturn T} {A} (k : K) (f : A -> T k A) :
     A ~k~> T A := fun j => if k == j then f else mret T j.
 
-  #[program] Definition btgd T `{! Mreturn T} {A B} (k : K) (f : A -> T k B)
+  #[program] Definition btgd T `{! MReturn T} {A B} (k : K) (f : A -> T k B)
    (def : A ~k~> T B) : A ~k~> T B :=
     fun j => if k == j then f else def j.
 
   (** ** Operations [bindk] and [kcompk] *)
   (******************************************************************************)
-  Definition bindk F `{! Mbind F T} `{! Mreturn T} k {A} : (A -> T k A) -> F A -> F A :=
+  Definition bindk F `{! MBind F T} `{! MReturn T} k {A} : (A -> T k A) -> F A -> F A :=
     fun f => mbind F (btg T k f).
 
-  Definition kcompk {A} k `{forall k, Mbind (T k) T} `{! Mreturn T}
+  Definition kcompk {A} k `{forall k, MBind (T k) T} `{! MReturn T}
              (g : A -> T k A) (f : A -> T k A) :
     A -> T k A := bindk (T k) k g ∘ f.
 
@@ -384,7 +404,7 @@ Section with_index.
         fmapk F k f = bindk F k (mret T k ∘ f).
     Proof.
       intros. unfold fmapk, bindk.
-      unfold_ops @Mfmap_rmod. fequal.
+      unfold_ops @MFmap_rmod. fequal.
       ext j. destruct_eq_args k j.
       all : now repeat first
                 [ rewrite tgt_eq | rewrite tgt_neq |
