@@ -26,7 +26,35 @@ Section pack.
 
 End pack.
 
-(** * Listable multisorted monads *)
+(** * Listable multisorted monad typeclasses *)
+(******************************************************************************)
+
+(** ** Listable multisorted pre-modules *)
+(******************************************************************************)
+Section ListableMultisortedPreModule.
+
+  Context
+    `{ix : Index}
+    (F : Type -> Type)
+    (T : K -> Type -> Type)
+    `{! MReturn T}
+    `{! forall k, MBind (T k) T}
+    `{ forall k, Tomlist (T k)}
+    `{! Tomlist F} `{! MBind F T}.
+
+  Class ListableMultisortedPreModule : Prop :=
+    { lpmod_rmod :> MultisortedPreModule F T;
+      lpmod_mbind : forall `(f : A ~k~> T B),
+          tomlist F ∘ mbind F f = mbind mlist (fun k => tomlist (T k) ∘ f k) ∘ tomlist F;
+      lpmod_respectful : forall A B (x y : F A) (f g : A ~k~> T B),
+          mshape F x = mshape F y ->
+          mfmap mlist (pack T f) (tomlist F x) = mfmap mlist (pack T g) (tomlist F y) ->
+          mbind F f x = mbind F g y
+    }.
+
+End ListableMultisortedPreModule.
+
+(** ** Listable multisorted monads *)
 (******************************************************************************)
 Section ListableMultisortedMonad.
 
@@ -39,20 +67,14 @@ Section ListableMultisortedMonad.
 
   Class ListableMultisortedMonad : Prop :=
     { lmmon_monad :> MultisortedMonad T;
+      lmmon_premodule :> forall k , ListableMultisortedPreModule (T k) T;
       lmmon_mret : forall {A k},
           tomlist (T k) ∘ mret T k (A:=A) = mret (const mlist) k;
-      lmmon_mbind : forall k {A B} (f : forall k, A -> T k B),
-          tomlist (T k) ∘ mbind (T k) f =
-          mbind mlist (fun k => tomlist (T k) ∘ f k) ∘ tomlist (T k);
-      lmmon_respectful : forall k A B (x y : T k A) (f g : A ~k~> T B),
-          mshape (T k) x = mshape (T k) y ->
-          mfmap mlist (pack T f) (tomlist (T k) x) = mfmap mlist (pack T g) (tomlist (T k) y) ->
-          mbind (T k) f x = mbind (T k) g y
     }.
 
 End ListableMultisortedMonad.
 
-(** * Listable multisorted modules *)
+(** ** Listable multisorted modules *)
 (******************************************************************************)
 Section ListableMultisortedModule.
 
@@ -68,17 +90,12 @@ Section ListableMultisortedModule.
   Class ListableMultisortedModule : Prop :=
     { lrmod_rmod :> MultisortedRightModule F T;
       lrmod_monad :> ListableMultisortedMonad T;
-      lrmod_mbind : forall `(f : A ~k~> T B),
-          tomlist F ∘ mbind F f = mbind mlist (fun k => tomlist (T k) ∘ f k) ∘ tomlist F;
-      lrmod_respectful : forall A B (x y : F A) (f g : A ~k~> T B),
-          mshape F x = mshape F y ->
-          mfmap mlist (pack T f) (tomlist F x) = mfmap mlist (pack T g) (tomlist F y) ->
-          mbind F f x = mbind F g y
+      lrmod_premodule :> ListableMultisortedPreModule F T;
     }.
 
 End ListableMultisortedModule.
 
-(** * [mlist] is a listable monad *)
+(** ** [mlist] is a listable monad *)
 (** For good measure, we prove here that [mlist] is indeed a listable monad. We
 do not expose this instance globally because it is probably not useful and may
 be annoying when one infers quantifiable instances from generic listable
@@ -117,7 +134,7 @@ Section ListableMonad_respectfulness.
   Lemma setlike_respectful_listable_monad : forall k A B (t : T k A) (f g : A ~k~> T B),
       (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind (T k) f t = mbind (T k) g t.
   Proof.
-    introv hyp. apply (lmmon_respectful T).
+    introv hyp. apply (lpmod_respectful (T k) T).
     - reflexivity.
     - setoid_rewrite in_iff_in_mlist in hyp. induction (tomlist (T k) t).
       + reflexivity.
@@ -133,10 +150,10 @@ Section ListableMonad_respectfulness.
       x = y.
   Proof.
     intros. replace x with (mbind (T k) (mret T) x)
-      by now (rewrite (mmon_mbind_mret T)).
+      by now (rewrite (pmod_mbind_mret (T k) T)).
     replace y with (mbind (T k) (mret T) y)
-      by now (rewrite (mmon_mbind_mret T)).
-    apply (lmmon_respectful T).
+      by now (rewrite (pmod_mbind_mret (T k) T)).
+    apply (lpmod_respectful (T k) T).
     - auto.
     - generalize dependent (tomlist (T k) y). induction (tomlist (T k) x).
       + introv hyp. cbn. rewrite <- hyp. reflexivity.
@@ -154,7 +171,7 @@ Section ListableModule_respectfulness.
   Lemma setlike_respectful_listable_module : forall A B (t : F A) (f g : A ~k~> T B),
       (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind F f t = mbind F g t.
     Proof.
-      introv hyp. apply (lrmod_respectful F T).
+      introv hyp. apply (lpmod_respectful F T).
       - reflexivity.
       - setoid_rewrite in_iff_in_mlist in hyp. induction (tomlist F t).
         + reflexivity.
@@ -170,10 +187,10 @@ Section ListableModule_respectfulness.
         x = y.
     Proof.
       intros. replace x with (mbind F (mret T) x)
-        by now (rewrite (rmod_mret F T)).
+        by now (rewrite (pmod_mbind_mret F T)).
       replace y with (mbind F (mret T) y)
-        by now (rewrite (rmod_mret F T)).
-      apply (lrmod_respectful F T).
+        by now (rewrite (pmod_mbind_mret F T)).
+      apply (lpmod_respectful F T).
       - auto.
       - generalize dependent (tomlist F y). induction (tomlist F x).
         + introv hyp. cbn. rewrite <- hyp. reflexivity.
@@ -183,7 +200,7 @@ Section ListableModule_respectfulness.
 
 End ListableModule_respectfulness.
 
-(** * Listable monads  are set-like *)
+(** * Listable monads are set-like *)
 (******************************************************************************)
 Section SetlikeMonad_Listable.
 
@@ -199,21 +216,25 @@ Section SetlikeMonad_Listable.
     reflexivity.
   Qed.
 
-  Theorem qmmon_mbind_Listable : forall A B (f : A ~k~> T B) (k : K),
+  Theorem qmmon_mbind_Listable : forall (k : K) `(f : A ~k~> T B),
       tomset (T k) ∘ mbind (T k) f =
       mbind mset (fun k => tomset (T k) ∘ f k) ∘ tomset (T k).
   Proof.
     intros. unfold tomset, tomset_Listable, compose. ext t.
-    compose near t on left. rewrite (lmmon_mbind T). unfold compose.
+    compose near t on left. rewrite (lpmod_mbind (T k) T). unfold compose.
     compose near (tomlist (T k) t). rewrite (qmmon_mbind_mlist). unfold compose.
     reflexivity.
   Qed.
 
-  #[global] Instance SetlikeMultisortedMonad_Listable : SetlikeMultisortedMonad T :=
-    {| qmmon_mret := qmmon_mret_Listable;
-       qmmon_mbind := qmmon_mbind_Listable;
-       qmmon_respectful := setlike_respectful_listable_monad;
+  #[global] Instance SetlikeMultisortedPreModule_Listable (k : K) :
+    SetlikeMultisortedPreModule (T k) T :=
+    {| qpmod_mbind := @qmmon_mbind_Listable k;
+       qpmod_respectful := setlike_respectful_listable_monad k;
     |}.
+
+  #[global] Instance SetlikeMultisortedMonad_Listable :
+    SetlikeMultisortedMonad T :=
+    {| qmmon_mret := qmmon_mret_Listable; |}.
 
 End SetlikeMonad_Listable.
 
@@ -228,15 +249,17 @@ Section quantifiable_of_listable_module.
       tomset F ∘ mbind F f = mbind mset (fun k => tomset (T k) ∘ f k) ∘ tomset F.
   Proof.
     intros. unfold tomset, tomset_Listable, compose. ext t.
-    compose near t on left. rewrite (lrmod_mbind F T). unfold compose.
+    compose near t on left. rewrite (lpmod_mbind F T). unfold compose.
     compose near (tomlist F t). rewrite (qmmon_mbind_mlist). unfold compose.
     reflexivity.
   Qed.
 
-  #[global] Instance SetlikeMultisortedModule_Listable : SetlikeMultisortedModule F T :=
-    {| qrmod_mbind := qrmod_mbind_Listable;
-       qrmod_respectful := setlike_respectful_listable_module;
+  #[global] Instance SetlikeMultisortedPreModule_Listable2 : SetlikeMultisortedPreModule F T :=
+    {| qpmod_mbind := qrmod_mbind_Listable;
+       qpmod_respectful := setlike_respectful_listable_module;
     |}.
+
+  #[global] Instance SetlikeMultisortedModule_Listable : SetlikeMultisortedModule F T := {}.
 
 End quantifiable_of_listable_module.
 
@@ -250,11 +273,13 @@ Section listable_module_of_monad.
   Context
     `{ListableMultisortedMonad T}.
 
+  (*
   Instance ListableMultisortedModule_Monad {k} : ListableMultisortedModule (T k) T :=
     {| lrmod_mbind := fun A B => lmmon_mbind T k;
        lrmod_rmod := MultisortedRightModule_Monad k;
        lrmod_respectful := lmmon_respectful T k;
     |}.
+   *)
 
 End listable_module_of_monad.
 
@@ -271,7 +296,7 @@ Section listable_functor_of_module.
   #[global] Instance Natural_module_tomlist : MultisortedNatural (@tomlist ix F _).
   Proof.
     introv. unfold_ops @MFmap_rmod.
-    rewrite (lrmod_mbind F T). do 2 fequal.
+    rewrite (lpmod_mbind F T). do 2 fequal.
     ext k. reassociate <- on right.
     now rewrite (lmmon_mret T).
   Qed.
@@ -294,17 +319,15 @@ Section listable_module_global.
   Theorem tomlist_mbind {A B} : forall (f : A ~k~> T B),
       tomlist F ∘ mbind F f = mbind mlist (fun k => tomlist (T k) ∘ f k) ∘ tomlist F.
   Proof.
-    introv. now rewrite <- (lrmod_mbind F T).
+    introv. now rewrite <- (lpmod_mbind F T).
   Qed.
-
-  Existing Instance lrmod_monad.
 
   (** ** Interaction between [tomlist] and [bindk] *)
   (******************************************************************************)
   Theorem tomlist_bindk {A} k : forall (f : A -> T k A),
       tomlist F ∘ bindk F k f = bindk mlist k (tomlist (T k) ∘ f) ∘ tomlist F.
   Proof.
-    introv. unfold bindk. rewrite (lrmod_mbind F T).
+    introv. unfold bindk. rewrite (lpmod_mbind F T).
     fequal. fequal. ext k'. destruct_eq_args k k'.
     - now do 2 rewrite btg_eq.
     - do 2 (rewrite btg_neq; auto).

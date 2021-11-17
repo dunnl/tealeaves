@@ -122,9 +122,7 @@ Section MultisortedMonad_monad.
 
   Instance Module_T_Tag : MultisortedRightModule (fun A => T' A) (const (fun A => T' A)).
   Proof.
-    constructor. all: try typeclasses eauto.
-    - intros. apply mon_mbind_mret_T_Tag.
-    - intros. apply mon_mbind_mbind_T_Tag.
+    constructor; typeclasses eauto.
   Qed.
 
   (** The [fmap] for the resulting [Monad] has a complicated definition because

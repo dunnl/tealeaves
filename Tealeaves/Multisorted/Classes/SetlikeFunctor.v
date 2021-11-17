@@ -310,7 +310,7 @@ Section DecoratedSetlikeMultisortedFunctor_theory.
         (k, (w, a)) ∈m shift (w1, t) <->
         exists w2, (k, (w2, a)) ∈m t /\ w = w1 ● w2.
     Proof.
-      intros ? ? w1 a ?. unfold shift, compose, multistrength.
+      intros ? ? w1 a ?. unfold shift, compose, mstrength.
       setoid_rewrite (in_mfmap_iff F). split.
       - intros [[? ?] [? ?]].
         preprocess. cbn in *. eauto.

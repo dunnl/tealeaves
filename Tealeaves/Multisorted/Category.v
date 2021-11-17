@@ -52,7 +52,6 @@ Proof.
   reflexivity.
 Qed.
 
-
 (** * Notations *)
 (******************************************************************************)
 Declare Scope tealeaves_multi_scope.

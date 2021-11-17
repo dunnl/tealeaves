@@ -121,14 +121,14 @@ Section assume_some_index_type.
       (F : Type -> Type)
       `{MultisortedFunctor F}.
 
-    Definition multistrength {B A} : B * F A -> F (B * A) :=
+    Definition mstrength {B A} : B * F A -> F (B * A) :=
       fun '(b, x) => mfmap F (fun k => pair b) x.
 
-    Lemma strength_discard {W : Type} {A : Type} :
-      mfmap F (const (extract (W ×))) ∘ multistrength (B:=W) (A:=A) =
+    Lemma strength_extract {W : Type} {A : Type} :
+      mfmap F (const (extract (W ×))) ∘ mstrength (B:=W) (A:=A) =
       extract (prod W) (A := F A).
     Proof.
-      unfold multistrength. ext [w t].
+      unfold mstrength. ext [w t].
       unfold compose; cbn. compose near t on left.
       now rewrite (mfun_mfmap_mfmap F), (mfun_mfmap_id F).
     Qed.

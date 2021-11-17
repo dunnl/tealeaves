@@ -10,6 +10,7 @@ Import Monoid.Notations.
 Import LN.AtomSet.Notations.
 Import Singlesorted.Classes.SetlikeFunctor.Notations.
 Import Multisorted.Classes.SetlikeFunctor.Notations.
+Import Operations.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope set_scope.
@@ -67,13 +68,9 @@ Section locally_nameless_utilities.
   Lemma ind_mret_iff {A} : forall k j w (a a' : A),
       (j, (w, a')) ∈md mret T k a <-> k = j /\ w = Ƶ /\ a = a'.
   Proof.
-    intros.
-    Set Printing Implicit.
-    About ind_mret_iff.
+    intros. change ((@tomset_Listable ix ix (T k) (H2 k))) with
+                ((fun k => @tomset_Listable ix ix (T k) (H2 k)) k).
     now rewrite (ind_mret_iff T w j k a a').
-    change ((@tomset_Listable ix ix (T k) (H5 k))) with
-        ((fun k => @tomset_Listable ix ix (T k) (H5 k)) k).
-    now rewrite (ind_mret_iff F T w j k a a').
   Qed.
 
   Lemma ind_mret_iff_eq {A} : forall k w (a a' : A),
@@ -130,14 +127,11 @@ Section locally_nameless_utilities.
     destruct l as [a|?]; [compare values x and a | reflexivity ].
   Qed.
 
-  Existing Instance DecoratedMultisortedModule_Monad.
-  Import Operations.Notations.
-
   Lemma subst_in_mret_eq : forall k x l (u : T k leaf),
       (mret T k l) '{k | x ~> u} = subst_loc x u l.
   Proof.
     intros. unfold subst. compose near l on left.
-    now rewrite (bindk_comp_mret_eq (T k)).
+    now rewrite (bindk_comp_mret_eq k).
   Qed.
 
   Lemma subst_in_mret_neq : forall k j x l (u : T j leaf),
@@ -145,7 +139,7 @@ Section locally_nameless_utilities.
       (mret T k l) '{j | x ~> u} = mret T k l.
   Proof.
     intros. unfold subst. compose near l on left.
-    now rewrite (bindk_comp_mret_neq (T k)).
+    now rewrite (bindk_comp_mret_neq j).
   Qed.
 
   (** ** [open_loc] *)

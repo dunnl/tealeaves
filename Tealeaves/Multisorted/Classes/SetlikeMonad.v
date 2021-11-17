@@ -10,30 +10,49 @@ Import Multisorted.Category.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 
-(** * Set-like multisorted monads *)
+(** * Set-like multisorted monad typeclasses *)
+(******************************************************************************)
+
+(** ** Set-like multisorted pre-modules *)
+(******************************************************************************)
+Section SetlikeMultisortedMonad.
+
+  Context
+    `{ix : Index}
+    (F : Type -> Type)
+    (T : K -> Type -> Type)
+    `{! MFmap F} `{! Tomset F} `{! MBind F T}
+    `{! MReturn T} `{! forall k, MBind (T k) T} `{forall k, Tomset (T k)}.
+
+  Class SetlikeMultisortedPreModule :=
+    { qpmod_premodule :> MultisortedPreModule F T;
+      qpmod_mbind : forall `(f : A ~k~> T B),
+          tomset F ∘ mbind F f = mbind mset (fun k => tomset (T k) ∘ f k) ∘ tomset F;
+      qpmod_respectful : forall A B (t : F A) (f g : A ~k~> T B),
+          (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind F f t = mbind F g t;
+    }.
+
+End SetlikeMultisortedMonad.
+
+(** ** Set-like multisorted monads *)
 (******************************************************************************)
 Section SetlikeMultisortedMonad.
 
   Context
     `{ix : Index}
     (T : K -> Type -> Type)
-    `{! MReturn T}
-    `{forall k, MBind (T k) T}
-    `{forall k, Tomset (T k)}.
+    `{! MReturn T} `{forall k, MBind (T k) T}  `{forall k, Tomset (T k)}.
 
   Class SetlikeMultisortedMonad :=
     { qmmon_monad :> MultisortedMonad T;
+      qmmon_premodule :> forall k, SetlikeMultisortedPreModule (T k) T;
       qmmon_mret :
         `(tomset (T k) ∘ mret T k = mret (const mset) k (A := A));
-      qmmon_mbind : forall `(f : A ~k~> T B) (k : K),
-          tomset (T k) ∘ mbind (T k) f = mbind mset (fun k => tomset (T k) ∘ f k) ∘ tomset (T k);
-      qmmon_respectful : forall k A B (t : T k A) (f g : A ~k~> T B),
-          (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind (T k) f t = mbind (T k) g t;
     }.
 
 End SetlikeMultisortedMonad.
 
-(** * Set-like multisorted modules *)
+(** ** Set-like multisorted modules *)
 (******************************************************************************)
 Section SetlikeMultisortedModule.
 
@@ -45,12 +64,9 @@ Section SetlikeMultisortedModule.
     `{! MReturn T} `{! forall k, MBind (T k) T} `{forall k, Tomset (T k)}.
 
   Class SetlikeMultisortedModule :=
-    { qrmod_module :> MultisortedRightModule F T;
-      qrmod_monad :> SetlikeMultisortedMonad T;
-      qrmod_mbind : forall `(f : A ~k~> T B),
-          tomset F ∘ mbind F f = mbind mset (fun k => tomset (T k) ∘ f k) ∘ tomset F;
-      qrmod_respectful : forall A B (t : F A) (f g : A ~k~> T B),
-          (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind F f t = mbind F g t;
+    { qrmod_monad :> SetlikeMultisortedMonad T;
+      qrmod_premodule :> SetlikeMultisortedPreModule F T;
+      qrmod_module :> MultisortedRightModule F T;
     }.
 
 End SetlikeMultisortedModule.
@@ -63,15 +79,11 @@ End SetlikeMultisortedModule.
 Section SetlikeMultisortedModule_Monad.
 
   Context
-    `{SetlikeMultisortedMonad T}
-    (k : K).
+    `{SetlikeMultisortedMonad T}.
 
-  Instance SetlikeMultisortedModule_Monad :
+  Instance SetlikeMultisortedModule_Monad (k : K) :
     SetlikeMultisortedModule (T k) T :=
-    {| qrmod_mbind := fun A B f => qmmon_mbind T f k;
-       qrmod_module := MultisortedRightModule_Monad k;
-       qrmod_respectful := qmmon_respectful T k;
-    |}.
+    {| qrmod_module := MultisortedRightModule_Monad k; |}.
 
 End SetlikeMultisortedModule_Monad.
 
@@ -83,12 +95,13 @@ Section SetlikeMultisortedFunctor_Module.
     `{ix : Index}
     (F : Type -> Type)
     (T : K -> Type -> Type)
-    `{SetlikeMultisortedModule (ix := ix) F T}.
+    `{SetlikeMultisortedPreModule (ix := ix) F T}
+    `{! SetlikeMultisortedMonad (ix := ix) T}.
 
   #[global] Instance Natural_module_tomset : MultisortedNatural (@tomset _ F _).
   Proof.
     introv. unfold_ops @MFmap_rmod. ext t b.
-    rewrite (qrmod_mbind F T).
+    rewrite (qpmod_mbind F T).
     do 2 fequal. ext k.
     reassociate <- on right.
     now rewrite (qmmon_mret T).
@@ -98,7 +111,7 @@ Section SetlikeMultisortedFunctor_Module.
     (forall A B (t : F A) (f g : A -k-> B),
           (forall k a, (k, a) ∈m t -> f k a = g k a) -> mfmap F f t = mfmap F g t).
   Proof.
-    unfold_ops @MFmap_rmod. introv heq. apply (qrmod_respectful F T).
+    unfold_ops @MFmap_rmod. introv heq. apply (qpmod_respectful F T).
     intros. unfold compose. now rewrite heq.
   Qed.
 
@@ -108,7 +121,7 @@ Section SetlikeMultisortedFunctor_Module.
 
 End SetlikeMultisortedFunctor_Module.
 
-(** * Properties of multisorted set-like modules *)
+(** * Properties of multisorted set-like right modules *)
 (******************************************************************************)
 Section SetlikeMultisortedModule_theory.
 
@@ -116,7 +129,8 @@ Section SetlikeMultisortedModule_theory.
     `{ix : Index}
     (F : Type -> Type)
     (T : K -> Type -> Type)
-    `{SetlikeMultisortedModule (ix:=ix) F T}.
+    `{SetlikeMultisortedPreModule (ix := ix) F T}
+    `{! SetlikeMultisortedMonad (ix := ix) T}.
 
   (** ** Respectfulness conditions for <<mbind>> *)
   (******************************************************************************)
@@ -124,8 +138,8 @@ Section SetlikeMultisortedModule_theory.
       (forall k a, (k, a) ∈m t -> f k a = mret T k a) -> mbind F f t = t.
   Proof.
     intros. replace t with (mbind F (mret T) t) at 2
-      by (now rewrite (mbind_id F)).
-    now apply (qrmod_respectful F T).
+      by (now rewrite (mbind_mret F)).
+    now apply (qpmod_respectful F T).
   Qed.
 
   Corollary setlike_mbind_respectful_mfmap {A B} :
@@ -133,7 +147,7 @@ Section SetlikeMultisortedModule_theory.
       (forall k a, (k, a) ∈m t -> f k a = mret T k (g k a)) -> mbind F f t = mfmap F g t.
   Proof.
     intros. unfold mfmap, MFmap_rmod.
-    now apply (qrmod_respectful F T).
+    now apply (qpmod_respectful F T).
   Qed.
 
   (** ** Respectfulness conditions for <<bindk>> *)
@@ -141,7 +155,7 @@ Section SetlikeMultisortedModule_theory.
   Theorem setlike_bindk_respectful : forall {A} k (t : F A) (f g : A -> T k A),
       (forall a, (k, a) ∈m t -> f a = g a) -> bindk F k f t = bindk F k g t.
   Proof.
-    intros. apply (qrmod_respectful F T).
+    intros. apply (qpmod_respectful F T).
     intros j ? ?. compare values k and j; simpl_tgt_fallback; auto.
   Qed.
 
@@ -188,7 +202,7 @@ Section SetlikeMultisortedModule_theory.
       exists (k1 : K) (a : A), (k1, a) ∈m t /\ (k, b) ∈m f k1 a.
   Proof.
     introv. compose near t on left.
-    now rewrite (qrmod_mbind F T), mbind_mset_spec.
+    now rewrite (qpmod_mbind F T), mbind_mset_spec.
   Qed.
 
   (** ** Interaction between [tomset] and [bindk] *)
@@ -226,7 +240,10 @@ Section SetlikeMultisortedModule_theory.
 
 End SetlikeMultisortedModule_theory.
 
-(** * Interaction between [tomsetd] and [ret] *)
+(** * Properties of decorated set-like modules *)
+(******************************************************************************)
+
+(** ** Interaction between [tomsetd] and [ret] *)
 (******************************************************************************)
 Section SetlikeMultisortedMonad_ret.
 
@@ -246,8 +263,8 @@ Section SetlikeMultisortedMonad_ret.
   Proof.
     introv. unfold tomsetd, compose.
     compose near a on left.
-    rewrite (dec_mret (T k')). unfold compose.
-    rewrite (in_mret_iff F T). split.
+    rewrite (dec_mret T). unfold compose.
+    rewrite (in_mret_iff T). split.
     - intros [? hyp]; now inverts hyp.
     - intros [? [? ?]]; now subst.
   Qed.
@@ -267,52 +284,6 @@ Section SetlikeMultisortedMonad_ret.
 
 End SetlikeMultisortedMonad_ret.
 
-(** * Properties of decorated set-like modules *)
-(******************************************************************************)
-Section DecoratedSetlikeMultisortedModule_theory.
-
-  Context
-    `{ix : Index}
-    (F : Type -> Type)
-    (T : K -> Type -> Type)
-    `{Monoid_op W} `{Monoid_unit W}
-    `{SetlikeMultisortedModule (ix:=ix) F T}
-    `{! Decorate W F}  `{! forall k, Decorate W (T k)}
-    `{! DecoratedMultisortedModule W F T}.
-
-  Context
-    {A B : Type}.
-
-  Implicit Types (k : K) (w : W) (a : A) (b : B) (t : F A).
-
-  Theorem ind_mret_iff : forall w k k' a a',
-      (k, (w, a')) ∈md mret T k' a <-> k = k' /\ w = Ƶ /\ a' = a.
-  Proof.
-    introv. unfold tomsetd, compose.
-    compose near a on left.
-    rewrite (dec_mret F). unfold compose.
-    rewrite (in_mret_iff F T). split.
-    - intros [? hyp]; now inverts hyp.
-    - intros [? [? ?]]; now subst.
-  Qed.
-
-  Corollary ind_mret_iff_eq : forall w k a a',
-      (k, (w, a')) ∈md mret T k a <-> w = Ƶ /\ a' = a.
-  Proof.
-    intros. rewrite ind_mret_iff. intuition.
-  Qed.
-
-  Corollary ind_mret_iff_neq : forall w k j a a',
-      k <> j ->
-      (j, (w, a')) ∈md mret T k a <-> False.
-  Proof.
-    intros. rewrite ind_mret_iff. intuition.
-  Qed.
-
-End SetlikeMultisortedMonad_ret.
-
-(** * Properties of decorated set-like modules *)
-(******************************************************************************)
 Section DecoratedSetlikeMultisortedModule_theory.
 
   Context
@@ -330,7 +301,7 @@ Section DecoratedSetlikeMultisortedModule_theory.
       (forall k w a, (k, (w, a)) ∈md t -> f k (w, a) = g k (w, a)) ->
       mbindd F f t = mbindd F g t.
   Proof.
-    intros. apply (qrmod_respectful F T).
+    intros. apply (qpmod_respectful F T).
     intros ? [? ?]; auto.
   Qed.
 
@@ -339,7 +310,7 @@ Section DecoratedSetlikeMultisortedModule_theory.
       mbindd F f t = t.
   Proof.
     intros. replace t with (mbindd F (mret T ◻ const snd) t) at 2
-      by (now rewrite (mbindd_id F)).
+      by (now rewrite (mbindd_mret F)).
     now apply mbindd_respectful.
   Qed.
 
@@ -365,7 +336,7 @@ Section DecoratedSetlikeMultisortedModule_theory.
       (forall w a, (k, (w, a)) ∈md t -> f (w, a) = g (w, a)) ->
       bindkd F k f t = bindkd F k g t.
   Proof.
-    intros. apply (qrmod_respectful F T).
+    intros. apply (qpmod_respectful F T).
     intros j [? ?] ?. destruct_eq_args k j.
     autorewrite with tea_tgt_eq using auto.
     autorewrite with tea_tgt_neq using auto.
@@ -376,7 +347,7 @@ Section DecoratedSetlikeMultisortedModule_theory.
       bindkd F k f t = t.
   Proof.
     intros. replace t with (bindkd F k (mret T k ∘ extract (prod W)) t) at 2
-      by (now rewrite (bindkd_id F)).
+      by (now rewrite (bindkd_mret F)).
     now apply bindkd_respectful.
   Qed.
 
@@ -405,33 +376,6 @@ Section DecoratedSetlikeMultisortedModule_theory.
 
     Implicit Types (k : K) (w : W) (a : A) (b : B) (t : F A).
 
-    Theorem ind_mret_iff : forall w k k' a a',
-        (k, (w, a')) ∈md mret T k' a <-> k = k' /\ w = Ƶ /\ a' = a.
-    Proof.
-      introv. unfold tomsetd, compose.
-      compose near a on left.
-      rewrite (dec_mret F). unfold compose.
-      rewrite (in_mret_iff F T). split.
-      - intros [? hyp]; now inverts hyp.
-      - intros [? [? ?]]; now subst.
-    Qed.
-
-    Corollary ind_mret_iff_eq : forall w k a a',
-        (k, (w, a')) ∈md mret T k a <-> w = Ƶ /\ a' = a.
-    Proof.
-      intros. rewrite ind_mret_iff. intuition.
-    Qed.
-
-    Corollary ind_mret_iff_neq : forall w k j a a',
-        k <> j ->
-        (j, (w, a')) ∈md mret T k a <-> False.
-    Proof.
-      intros. rewrite ind_mret_iff. intuition.
-    Qed.
-
-    Existing Instance SetlikeMultisortedModule_Monad.
-    Existing Instance DecoratedMultisortedModule_Monad.
-
     Theorem ind_mbindd_iff : forall t k w b (f : W * A ~k~> T B),
         (k, (w, b)) ∈md mbindd F f t <->
         exists (k1 : K) (a : A) (w1 w2 : W),
@@ -444,6 +388,7 @@ Section DecoratedSetlikeMultisortedModule_theory.
       unfold compose. rewrite (in_mbind_iff F T).
       split.
       - intros [k1 rest].
+        destruct rest as [[? ?] rest].
         setoid_rewrite (in_shift_cobind_iff (T k1)) in rest.
         preprocess. repeat eexists; eauto.
       - intros [k1 rest].
@@ -489,7 +434,6 @@ Section DecoratedSetlikeMultisortedModule_theory.
 
   (** ** Interaction between [tomsetd] and [bindkd] *)
   (******************************************************************************)
-
   Theorem ind_bindkd_iff_eq : forall k w a f (t : F A),
       (k, (w, a)) ∈md bindkd F k f t <->
       exists a' w1 w2,
@@ -502,7 +446,7 @@ Section DecoratedSetlikeMultisortedModule_theory.
       + simpl_tgt in *. assumption.
       + simpl_tgt in *. false.
         { preprocess. unfold compose in *; cbn in *.
-          rewrite (ind_mret_iff_neq) in H6; auto. }
+          rewrite (ind_mret_iff_neq T) in H6; auto. }
     - intros. exists k. now simpl_tgt.
   Qed.
 
@@ -519,20 +463,17 @@ Section DecoratedSetlikeMultisortedModule_theory.
       + simpl_tgt in *. right; assumption.
       + simpl_tgt in *. compare values k2 and j.
         { preprocess. unfold compose in *; cbn in *.
-          rewrite (ind_mret_iff_eq) in H7.
+          rewrite (ind_mret_iff_eq T) in H7.
           destruct H7; subst. rewrite monoid_id_l.
           left; assumption. }
         { false. preprocess. unfold compose in *; cbn in *.
-          rewrite (ind_mret_iff_neq) in H7; auto. }
+          rewrite (ind_mret_iff_neq T) in H7; auto. }
     - intros [hyp | hyp].
       + exists j a w (Ƶ : W). simpl_monoid. simpl_tgt.
-        unfold compose; cbn. rewrite (ind_mret_iff_eq).
+        unfold compose; cbn. rewrite (ind_mret_iff_eq T).
         splits; auto.
       + exists k. simpl_tgt. assumption.
   Qed.
-
-    Existing Instance SetlikeMultisortedModule_Monad.
-    Existing Instance DecoratedMultisortedModule_Monad.
 
   (** ** Interaction between [tomset] and [bindkd] *)
   (******************************************************************************)

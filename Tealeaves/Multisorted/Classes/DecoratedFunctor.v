@@ -25,7 +25,7 @@ Section shift.
     fun '(w, t) => mfmap F (fun k '(w', a) => (w ● w',  a)) t.
 
   Definition shift_spec : forall (A : Type),
-      shift (A:=A) = mfmap F (fun k => join (W ×)) ∘ multistrength F.
+      shift (A:=A) = mfmap F (fun k => join (W ×)) ∘ mstrength F.
   Proof.
     intros. ext [w t].
     unfold shift, join, Join_writer, compose.

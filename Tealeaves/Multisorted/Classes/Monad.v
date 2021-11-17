@@ -8,12 +8,14 @@ Require Import Coq.Program.Equality.
 Import Multisorted.Category.Notations.
 #[local] Open Scope tealeaves_multi_scope.
 
-Section with_index.
+(** * Multisorted monads and right modules *)
+(**************************************************************)
+Section MultisortedMonad_typeclasses.
 
   Context
     `{ix : Index}.
 
-  (** * K-sorted Monads *)
+  (** ** Multisorted monad operations *)
   (**************************************************************)
   Section MultisortedMonad_operations.
 
@@ -55,7 +57,7 @@ Section with_index.
 
   (** ** Multisorted pre-modules *)
   (******************************************************************************)
-  Section MultisortedModule.
+  Section MultisortedPreModule.
 
     Context
       (F : Type -> Type)
@@ -64,13 +66,13 @@ Section with_index.
       `{MBind F T}.
 
     Class MultisortedPreModule :=
-      { pmod_mret : forall A,
-            mbind F (mret T) = @id (F A);
+      { pmod_mbind_mret : forall A,
+          mbind F (mret T) = @id (F A);
         pmod_mbind_mbind : forall A B C (f : A ~k~> T B) (g : B ~k~> T C),
             mbind F g ∘ mbind F f = mbind F (fun k => mbind (T k) g ∘ f k);
       }.
 
-  End MultisortedModule.
+  End MultisortedPreModule.
 
   (** ** Multisorted monads *)
   (******************************************************************************)
@@ -78,26 +80,20 @@ Section with_index.
 
     Context
       (T : K -> Type -> Type)
-      `{MReturn T}
-      `{forall k, MBind (T k) T}.
+      `{MReturn T} `{forall k, MBind (T k) T}.
 
     Class MultisortedMonad : Prop :=
-      { mmon_mbind_mret :
-          forall A k, mbind (T k) (mret T) = @id (T k A);
+      { mmon_premodule :> forall k, MultisortedPreModule (T k) T;
         mmon_mbind_comp_mret :
           forall A B (f : A ~k~> T B) k,
             mbind (T k) f ∘ mret T k (A:=A) = f k;
-        mmon_mbind_mbind :
-          forall A B C (f : A ~k~> T B) (g : B ~k~> T C) k,
-            mbind (T k) g ∘ mbind (T k) f =
-            mbind (T k) (fun k => mbind (T k) g ∘ f k);
       }.
 
   End MultisortedMonad.
 
   (** ** Multisorted Right Modules *)
   (******************************************************************************)
-  Section MultisortedModule.
+  Section MultisortedRightModule.
 
     Context
       (F : Type -> Type)
@@ -107,52 +103,47 @@ Section with_index.
 
     Class MultisortedRightModule :=
       { rmod_monad :> MultisortedMonad T;
-        rmod_mret : forall A,
-            mbind F (mret T) = @id (F A);
-        rmod_mbind_mbind : forall A B C (f : A ~k~> T B) (g : B ~k~> T C),
-            mbind F g ∘ mbind F f = mbind F (fun k => mbind (T k) g ∘ f k);
+        rmod_premodule :> MultisortedPreModule F T;
       }.
 
-  End MultisortedModule.
+  End MultisortedRightModule.
 
-  (** ** ???? *)
+  (** ** Basic inclusions *)
+  (******************************************************************************)
+
+  (** *** Constant multisorted monads are monads *)
   (******************************************************************************)
   Section monad_system_of_monad.
 
     Context
       `{ConstantMultisortedMonad T}.
 
+    #[global] Instance MultisortedPreModule_CMM : MultisortedPreModule T (const T) :=
+      {| pmod_mbind_mret := fun A => @cmmon_mbind_mret T _ _ _ A;
+         pmod_mbind_mbind := fun A B C f g => @cmmon_mbind_mbind T _ _ _ A B C f g;
+      |}.
+
     #[global] Instance MultisortedMonad_CMM : MultisortedMonad (const T) :=
-      {| mmon_mbind_mret := fun A k => @cmmon_mbind_mret T _ _ _ A;
-         mmon_mbind_mbind := fun A B C f g k => @cmmon_mbind_mbind T _ _ _ A B C f g;
-         mmon_mbind_comp_mret := fun A B => @cmmon_mbind_comp_mret T _ _ _ A B;
+      {| mmon_mbind_comp_mret := fun A B => @cmmon_mbind_comp_mret T _ _ _ A B;
       |}.
 
   End monad_system_of_monad.
 
-  (** ** Every component of a partitioned monad system forms a module *)
+  (** *** Each component of a monad is a right module *)
   (******************************************************************************)
   Section MultisortedModule_monad_component.
 
     Context
       `{MultisortedMonad T}.
 
-    Instance MultisortedRightModule_Monad (k : K) : MultisortedRightModule (T k) T :=
-      {| rmod_mret := fun A => mmon_mbind_mret T _ k;
-         rmod_mbind_mbind := fun A B C f g => mmon_mbind_mbind T A B C f g k;
-      |}.
-
-    Context
-      `{ConstantMultisortedMonad U}.
-
-    Instance MultisortedRightModule_CMM : MultisortedRightModule U (const U) :=
-      {| rmod_mret := cmmon_mbind_mret U;
-         rmod_mbind_mbind := cmmon_mbind_mbind U;
-      |}.
+    Instance MultisortedRightModule_Monad (k : K) :
+      MultisortedRightModule (T k) T := {}.
 
   End MultisortedModule_monad_component.
 
   (** ** The carrier of a module is a functor *)
+  (* This specifically requires the right module structure, not just
+  the pre-module structure *)
   (******************************************************************************)
   Section MultisortedFunctor_module_carrier.
 
@@ -160,20 +151,23 @@ Section with_index.
       fun A B f => mbind F (mret T ◻ f).
 
     Context
-      `{MultisortedRightModule F T}.
+      (F : Type -> Type)
+      `{MBind F T}
+      `{MultisortedPreModule F T}
+      `{! MultisortedMonad T}.
 
     Lemma fmap_id_rmod : forall A,
         mfmap F kid = @id (F A).
     Proof.
       introv. unfold_ops @MFmap_rmod.
-      unfold compose. now rewrite (rmod_mret F T).
+      unfold compose. now rewrite (pmod_mbind_mret F T).
     Qed.
 
     Lemma fmap_fmap_rmod : forall `(f : A -k-> B) `(g : B -k-> C),
         mfmap F g ∘ mfmap F f = mfmap F (g ⊙ f).
     Proof.
       introv. unfold_ops @MFmap_rmod.
-      rewrite (rmod_mbind_mbind F T).
+      rewrite (pmod_mbind_mbind F T).
       f_equal. ext k.
       reassociate <- on left.
       now rewrite (mmon_mbind_comp_mret T).
@@ -187,6 +181,7 @@ Section with_index.
   End MultisortedFunctor_module_carrier.
 
   (** ** [ret] is a natural transformation *)
+  (* This requires the monad structure, not just the pre-module structure *)
   (******************************************************************************)
   Section naturality.
 
@@ -202,384 +197,378 @@ Section with_index.
 
   End naturality.
 
-  (** * Properties of right modules *)
+End MultisortedMonad_typeclasses.
+
+(** * Properties of right modules *)
+(******************************************************************************)
+
+(** ** Multisorted Kleisli operations: [mbind] and [mkcompose] *)
+(******************************************************************************)
+Definition mkcompose `{ix : Index} {A B C : Type} (T : K -> Type -> Type)
+           `{forall k, MBind (T k) T} `{! MReturn T}
+           (g : B ~k~> T C) (f : A ~k~> T B)
+  : forall k, A -> T k C := fun k => mbind (T k) g ∘ f k.
+
+#[local] Notation "g ⋆m f" := (mkcompose _ g f) (at level 60) : tealeaves_multi_scope.
+
+Section MultisortedModule_theory.
+
+  Context
+    (F : Type -> Type)
+    `{MultisortedMonad T}
+    `{! MBind F T}
+    `{! MultisortedPreModule F T}.
+
+  (** ** Identity and composition laws for [mbind] *)
   (******************************************************************************)
-
-  (** ** Parallel substitution, [mbind] and [mkcomp] *)
-  (******************************************************************************)
-  Definition mkcomp  {A B C : Type} (T : K -> Type -> Type)
-             `{forall k, MBind (T k) T} `{MReturn T}
-             (g : B ~k~> T C) (f : forall k, A -> T k B)
-    : forall k, A -> T k C := fun k => mbind (T k) g ∘ f k.
-
-  #[local] Notation "g ⋆m f" := (mkcomp _ g f) (at level 60) : tealeaves_multi_scope.
-
-  Section MultisortedModule_theory.
-
-    Context
-      (F : Type -> Type)
-      `{MultisortedRightModule F T}.
-
-    (** ** Identity and composition laws for [mbind] *)
-    (******************************************************************************)
-    (** The next two theorems state that the [mbind] operation represents the
+  (** The next two theorems state that the [mbind] operation represents the
       morphism part of a functor from the Kleisli category to the category of
       F-morphisms (i.e., arrows of the form [F A -> F B].)*)
-    Theorem mbind_id : forall {A},
-        mbind F (mret T) = @id (F A).
-    Proof.
-      exact (rmod_mret F T).
-    Qed.
+  Theorem mbind_mret : forall {A},
+      mbind F (mret T) = @id (F A).
+  Proof.
+    exact (pmod_mbind_mret F T).
+  Qed.
 
-    Theorem mbind_mbind :
-      forall A B C (g : B ~k~> T C) (f : A ~k~> T B),
-        mbind F g ∘ mbind F f = mbind F (g ⋆m f).
-    Proof.
-      introv. now rewrite (rmod_mbind_mbind F T).
-    Qed.
+  Theorem mbind_mbind :
+    forall A B C (g : B ~k~> T C) (f : A ~k~> T B),
+      mbind F g ∘ mbind F f = mbind F (g ⋆m f).
+  Proof.
+    introv. now rewrite (pmod_mbind_mbind F T).
+  Qed.
 
-    Corollary mbind_mfmap {A B C} : forall (g : B ~k~> T C) (f : K -> A -> B),
-        mbind F g ∘ mfmap F f = mbind F (fun k => g k ∘ f k).
-    Proof.
-      introv. unfold_ops @MFmap_rmod.
-      rewrite mbind_mbind. f_equal.
-      unfold mkcomp. ext k.
-      rewrite Prelude.compose_assoc.
-      now rewrite (mmon_mbind_comp_mret T).
-    Qed.
+  (** ** Composition with [mfmap] *)
+  (******************************************************************************)
+  Corollary mbind_mfmap {A B C} : forall (g : B ~k~> T C) (f : K -> A -> B),
+      mbind F g ∘ mfmap F f = mbind F (fun k => g k ∘ f k).
+  Proof.
+    introv. unfold_ops @MFmap_rmod.
+    rewrite mbind_mbind. f_equal.
+    unfold mkcompose. ext k. reassociate <-.
+    now rewrite (mmon_mbind_comp_mret T).
+  Qed.
 
-    Corollary mfmap_mbind {A B C} : forall (g : K -> B -> C) (f : A ~k~> T B),
-        mfmap F g ∘ mbind F f = mbind F (fun k => mfmap (T k) g ∘ f k).
-    Proof.
-      introv. unfold_ops @MFmap_rmod.
-      now rewrite mbind_mbind.
-    Qed.
+  Corollary mfmap_mbind {A B C} : forall (g : K -> B -> C) (f : A ~k~> T B),
+      mfmap F g ∘ mbind F f = mbind F (fun k => mfmap (T k) g ∘ f k).
+  Proof.
+    introv. unfold_ops @MFmap_rmod.
+    now rewrite mbind_mbind.
+  Qed.
 
-    (** ** Kleisli laws for [mbind] *)
-    (******************************************************************************)
-    (** The next three theorems are the left and right identity laws and the
+  (** ** Kleisli composition laws *)
+  (******************************************************************************)
+  (** The next three theorems are the left and right identity laws and the
       associativity law for Kleisli composition. *)
-    Theorem kcomp_id_l {A B} : forall f : A ~k~> T B,
-        (fun k => mret T k) ⋆m f = f.
-    Proof.
-      introv. unfold mkcomp. ext k. now rewrite (mmon_mbind_mret T).
-    Qed.
+  Theorem kcomp_id_l {A B} : forall f : A ~k~> T B,
+      (fun k => mret T k) ⋆m f = f.
+  Proof.
+    introv. unfold mkcompose. ext k. now rewrite (pmod_mbind_mret (T k) T).
+  Qed.
 
-    Theorem kcomp_id_r {A B} : forall f : A ~k~> T B,
-        f ⋆m (fun k => mret T k) = f.
-    Proof.
-      introv. unfold mkcomp. ext k. now rewrite (mmon_mbind_comp_mret T).
-    Qed.
+  Theorem kcomp_id_r {A B} : forall f : A ~k~> T B,
+      f ⋆m (fun k => mret T k) = f.
+  Proof.
+    introv. unfold mkcompose. ext k. now rewrite (mmon_mbind_comp_mret T).
+  Qed.
 
-    Lemma kcomp_assoc :
-      forall A B C D (h : C ~k~> T D)
-        (g : B ~k~> T C) (f : A ~k~> T B),
-        h ⋆m (g ⋆m f) = h ⋆m (g ⋆m f).
-    Proof.
-      reflexivity.
-    Qed.
+  Lemma kcomp_assoc :
+    forall A B C D (h : C ~k~> T D)
+      (g : B ~k~> T C) (f : A ~k~> T B),
+      h ⋆m (g ⋆m f) = h ⋆m (g ⋆m f).
+  Proof.
+    reflexivity.
+  Qed.
 
-  End MultisortedModule_theory.
+End MultisortedModule_theory.
 
-  Section MultisortedMonad_misc.
+(** * Targeted substitution, [bindk] and [kcomposek] *)
+(******************************************************************************)
 
-    Context
-      `{MultisortedMonad T}.
+(** ** Substitution-building combinators: [btg], [btgd]. *)
+(******************************************************************************)
 
-    Lemma strength_return {A B} (k : K) (a : A) (b : B) :
-      multistrength (T k) (b, mret T k a) = mret T k (b, a).
-    Proof.
-      unfold multistrength. compose near a on left.
-      now rewrite Natural_mret.
-    Qed.
-
-    Corollary mbind_strength_T {M X Y k} : forall (g : M * X ~k~> T Y),
-        mbind (T k) g ∘ multistrength (T k) = fun '(w, t) => mbind (T k) (fun k a => g k (w, a)) t.
-    Proof.
-      introv. unfold strength. ext [? t].
-      unfold compose; cbn. compose near t on left.
-      assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
-      now rewrite (mbind_mfmap (T k)).
-    Qed.
-
-    Context
-      `{MultisortedRightModule F T}.
-
-    Corollary mbind_strength {M X Y} : forall (g : M * X ~k~> T Y),
-        mbind F g ∘ multistrength F = fun '(w, t) => mbind F (fun k a => g k (w, a)) t.
-    Proof.
-      introv. unfold strength. ext [? t].
-      unfold compose; cbn. compose near t on left.
-      now rewrite (mbind_mfmap F).
-    Qed.
-
-  End MultisortedMonad_misc.
-
-  (** * Targeted substitution, [bindk] and [kcompk] *)
-  (******************************************************************************)
-
-  (** ** Substitution-building combinators: [btg], [btgd]. *)
-  (******************************************************************************)
-  (** Build a k-substitution that targets only the leaves belonging to a partition
+(** Build a k-substitution that targets only the leaves belonging to a partition
     [k]. This must be restricted to morphisms that do not change the leaf type. *)
-  #[program] Definition btg T `{! MReturn T} {A} (k : K) (f : A -> T k A) :
-    A ~k~> T A := fun j => if k == j then f else mret T j.
+#[program] Definition btg `{ix : Index} (T : K -> Type -> Type) `{! MReturn T}
+ {A} (k : K) (f : A -> T k A) :
+  A ~k~> T A := fun j => if k == j then f else mret T j.
 
-  #[program] Definition btgd T `{! MReturn T} {A B} (k : K) (f : A -> T k B)
-   (def : A ~k~> T B) : A ~k~> T B :=
-    fun j => if k == j then f else def j.
+(** Build a k-substitution that targets the leaves belonging to a
+    partition [k] with a particular operation, applying a default
+    operation to leaves of other sorts. *)
+#[program] Definition btgd `{ix : Index} (T : K -> Type -> Type) `{! MReturn T}
+ {A B} (k : K) (f : A -> T k B) (def : A ~k~> T B) : A ~k~> T B
+  := fun j => if k == j then f else def j.
 
-  (** ** Operations [bindk] and [kcompk] *)
+(** ** Operations [bindk] and [kcomposek] *)
+(******************************************************************************)
+Definition bindk `{ix : Index} (F : Type -> Type) `{! MBind F T} `{! MReturn T}
+           (k : K) {A} : (A -> T k A) -> F A -> F A :=
+  fun f => mbind F (btg T k f).
+
+Definition kcomposek `{ix : Index} {A} (k : K) `{forall k, MBind (T k) T} `{! MReturn T}
+           (g : A -> T k A) (f : A -> T k A) :
+  A -> T k A := bindk (T k) k g ∘ f.
+
+#[local] Notation "g ⋆k f" := (kcomposek _ g f) (at level 60).
+
+(** ** Lemmas for [btg], [btgd] *)
+(******************************************************************************)
+Section btg_lemmas.
+
+  Context
+    (F : Type -> Type)
+    `{MultisortedMonad T}
+    `{! MBind F T}
+    `{! MultisortedPreModule F T}.
+
+  Lemma btg_eq {A} : forall k (f : A -> T k A),
+      btg T k f k = f.
+  Proof.
+    introv. unfold btg. compare values k and k.
+    dependent destruction DESTR_EQ.
+    cbn. reflexivity.
+  Qed.
+
+  Lemma btg_neq {A} : forall {k j} (f : A -> T k A),
+      k <> j -> btg T k f j = mret T j.
+  Proof.
+    introv. unfold btg. compare values k and j.
+  Qed.
+
+  Lemma btg_id {A} (k : K) :
+    btg T k (mret T k) = mret T (A:=A).
+  Proof.
+    unfold btg. ext j. compare values k and j.
+  Qed.
+
+  Lemma btgd_eq {A B} (k : K) (f : A -> T k B) (def : A ~k~> T B) :
+    btgd T k f def k = f.
+  Proof.
+    unfold btgd. compare values k and k. dependent destruction DESTR_EQ.
+    cbn. reflexivity.
+  Qed.
+
+  Lemma btgd_neq  {A B} (k j : K) (p : k <> j) (f : A -> T k B)
+        (def : A ~k~> T B) : btgd T k f def j = def j.
+  Proof.
+    unfold btgd. compare values k and j.
+  Qed.
+
+  Lemma btgd_same {A B} (k : K) (f : A ~k~> T B) :
+    btgd T k (f k) f = f.
+  Proof.
+    unfold btgd. ext j. compare values k and j.
+  Qed.
+
+  Lemma btgd_mret {A} (k : K) (f : A -> T k A) :
+    btgd T k f (mret T) = btg T k f.
+  Proof.
+    ext j. compare values k and j.
+  Qed.
+
+  (** *** Composing [btg] *)
   (******************************************************************************)
-  Definition bindk F `{! MBind F T} `{! MReturn T} k {A} : (A -> T k A) -> F A -> F A :=
-    fun f => mbind F (btg T k f).
+  Theorem btg_btg_eq {A} (k : K) (f g : A -> T k A) :
+    (btg T k g ⋆m btg T k f) = (btg T k (g ⋆k f)).
+  Proof.
+    unfold mkcompose, kcomposek. ext j. compare values k and j.
+    - subst. now do 2 rewrite btg_eq.
+    - do 2 (rewrite btg_neq; auto).
+      rewrite (mmon_mbind_comp_mret T).
+      now rewrite btg_neq.
+  Qed.
 
-  Definition kcompk {A} k `{forall k, MBind (T k) T} `{! MReturn T}
-             (g : A -> T k A) (f : A -> T k A) :
-    A -> T k A := bindk (T k) k g ∘ f.
+  Theorem btg_btg_neq {A} (k j : K) (f : A -> T k A) (g : A -> T j A) :
+    k <> j ->
+    (forall a, mbind (T k) (btg T j g) (f a) = f a) ->
+    (forall a, mbind (T j) (btg T k f) (g a) = g a) ->
+    (btg T j g ⋆m btg T k f) =
+    (btg T k f ⋆m btg T j g).
+  Proof.
+    intros neq hyp1 hyp2.
+    unfold mkcompose, kcomposek. ext i. compare i to both of {k j}.
+    - rewrite btg_eq. rewrite btg_neq; [| assumption].
+      rewrite (mmon_mbind_comp_mret T). rewrite btg_eq.
+      ext a. unfold compose. now rewrite hyp1.
+    - rewrite btg_eq. rewrite btg_neq; [| assumption].
+      rewrite (mmon_mbind_comp_mret T). rewrite btg_eq.
+      ext a. unfold compose. now rewrite hyp2.
+    - rewrite btg_neq; [| assumption].
+      rewrite btg_neq; [| assumption].
+      rewrite (mmon_mbind_comp_mret T).
+      rewrite (mmon_mbind_comp_mret T).
+      rewrite btg_neq; [| assumption].
+      rewrite btg_neq; [| assumption].
+      trivial.
+  Qed.
 
-  Notation "g ⋆k f" := (kcompk _ g f) (at level 60).
+End btg_lemmas.
 
-  (** ** Lemmas for [btg], [btgd] *)
-  (******************************************************************************)
-  Section btg_lemmas.
+Section MultisortedRightModule_bindk.
 
-    Context
-      (F : Type -> Type)
-      `{MultisortedRightModule F T}.
-
-    Lemma btg_eq {A} : forall k (f : A -> T k A),
-        btg T k f k = f.
-    Proof.
-      introv. unfold btg. compare values k and k.
-      dependent destruction DESTR_EQ.
-      cbn. reflexivity.
-    Qed.
-
-    Lemma btg_neq {A} : forall {k j} (f : A -> T k A),
-        k <> j -> btg T k f j = mret T j.
-    Proof.
-      introv. unfold btg. compare values k and j.
-    Qed.
-
-    Lemma btg_id {A} (k : K) :
-      btg T k (mret T k) = mret T (A:=A).
-    Proof.
-      unfold btg. ext j. compare values k and j.
-    Qed.
-
-    Lemma btgd_eq {A B} (k : K) (f : A -> T k B) (def : A ~k~> T B) :
-      btgd T k f def k = f.
-    Proof.
-      unfold btgd. compare values k and k. dependent destruction DESTR_EQ.
-      cbn. reflexivity.
-    Qed.
-
-    Lemma btgd_neq  {A B} (k j : K) (p : k <> j) (f : A -> T k B)
-          (def : A ~k~> T B) : btgd T k f def j = def j.
-    Proof.
-      unfold btgd. compare values k and j.
-    Qed.
-
-    Lemma btgd_same {A B} (k : K) (f : A ~k~> T B) :
-      btgd T k (f k) f = f.
-    Proof.
-      unfold btgd. ext j. compare values k and j.
-    Qed.
-
-    Lemma btgd_mret {A} (k : K) (f : A -> T k A) :
-      btgd T k f (mret T) = btg T k f.
-    Proof.
-      ext j. compare values k and j.
-    Qed.
-
-    (** *** Composing [btg] *)
-    (******************************************************************************)
-    Theorem btg_btg_eq {A} (k : K) (f g : A -> T k A) :
-      (btg T k g ⋆m btg T k f) = (btg T k (g ⋆k f)).
-    Proof.
-      unfold mkcomp, kcompk. ext j. compare values k and j.
-      - subst. now do 2 rewrite btg_eq.
-      - do 2 (rewrite btg_neq; auto).
-        rewrite (mmon_mbind_comp_mret T).
-        now rewrite btg_neq.
-    Qed.
-
-    Theorem btg_btg_neq {A} (k j : K) (f : A -> T k A) (g : A -> T j A) :
-      k <> j ->
-      (forall a, mbind (T k) (btg T j g) (f a) = f a) ->
-      (forall a, mbind (T j) (btg T k f) (g a) = g a) ->
-      (btg T j g ⋆m btg T k f) =
-      (btg T k f ⋆m btg T j g).
-    Proof.
-      intros neq hyp1 hyp2.
-      unfold mkcomp, kcompk. ext i. compare i to both of {k j}.
-      - rewrite btg_eq. rewrite btg_neq; [| assumption].
-        rewrite (mmon_mbind_comp_mret T). rewrite btg_eq.
-        ext a. unfold compose. now rewrite hyp1.
-      - rewrite btg_eq. rewrite btg_neq; [| assumption].
-        rewrite (mmon_mbind_comp_mret T). rewrite btg_eq.
-        ext a. unfold compose. now rewrite hyp2.
-      - rewrite btg_neq; [| assumption].
-        rewrite btg_neq; [| assumption].
-        rewrite (mmon_mbind_comp_mret T).
-        rewrite (mmon_mbind_comp_mret T).
-        rewrite btg_neq; [| assumption].
-        rewrite btg_neq; [| assumption].
-        trivial.
-    Qed.
-
-  End btg_lemmas.
+  Context
+    (F : Type -> Type)
+    `{MultisortedMonad T}
+    `{! MBind F T}
+    `{! MultisortedPreModule F T}.
 
   (** ** [fmapk] as a special case of [bindk] *)
   (******************************************************************************)
-  Section bindk_lemmas.
+  Lemma fmapk_to_bindk {A} : forall (f : A -> A) k,
+      fmapk F k f = bindk F k (mret T k ∘ f).
+  Proof.
+    intros. unfold fmapk, bindk.
+    unfold_ops @MFmap_rmod. fequal.
+    ext j. destruct_eq_args k j.
+    all : now repeat first
+              [ rewrite tgt_eq | rewrite tgt_neq |
+                rewrite btg_eq | rewrite btg_neq ].
+  Qed.
 
-    Context
-      (F : Type -> Type)
-      `{MultisortedRightModule F T}.
+  (** ** Composition with [mret] *)
+  (******************************************************************************)
+  Lemma bindk_comp_mret_eq k {A} : forall (f : A -> T k A),
+      bindk (T k) k f ∘ mret T k = f.
+  Proof.
+    introv. unfold bindk.
+    rewrite (mmon_mbind_comp_mret T).
+    ext a. now rewrite btg_eq.
+  Qed.
 
-    Lemma fmapk_to_bindk {A} : forall (f : A -> A) k,
-        fmapk F k f = bindk F k (mret T k ∘ f).
-    Proof.
-      intros. unfold fmapk, bindk.
-      unfold_ops @MFmap_rmod. fequal.
-      ext j. destruct_eq_args k j.
-      all : now repeat first
-                [ rewrite tgt_eq | rewrite tgt_neq |
-                  rewrite btg_eq | rewrite btg_neq ].
-    Qed.
-
-  End bindk_lemmas.
+  Lemma bindk_comp_mret_neq k2 k1 {A} : forall (f : A -> T k2 A),
+      k2 <> k1 ->
+      bindk (T k1) k2 f ∘ mret T k1 = mret T k1.
+  Proof.
+    introv neq. unfold bindk.
+    rewrite (mmon_mbind_comp_mret T).
+    now rewrite btg_neq.
+  Qed.
 
   (** ** Composition and identity laws for [bindk] *)
   (******************************************************************************)
-  Section bindk_lemmas.
+  Lemma bindk_mret k {A} :
+    bindk F k (mret T k) = @id (F A).
+  Proof.
+    introv. unfold bindk. rewrite btg_id.
+    now rewrite (pmod_mbind_mret F T).
+  Qed.
 
-    Context
-      (F : Type -> Type)
-      `{MultisortedRightModule F T}.
+  Lemma bindk_bindk_eq k {A}: forall (f : A -> T k A) (g : A -> T k A),
+      bindk F k g ∘ bindk F k f = bindk F k (g ⋆k f).
+  Proof.
+    intros. unfold bindk. rewrite (pmod_mbind_mbind F T).
+    fequal. ext j a. unfold compose.
+    destruct_eq_args k j.
+    all: repeat first [rewrite btg_eq | rewrite btg_neq ]; auto.
+    change left ((bindk (T j) k g ∘ mret T j) a).
+    now rewrite bindk_comp_mret_neq.
+  Qed.
 
-    Lemma bindk_mret k {A} :
-      bindk F k (mret T k) = @id (F A).
-    Proof.
-      introv. unfold bindk.
-      rewrite btg_id.
-      now rewrite (rmod_mret F T).
-    Qed.
-
-    Lemma bindk_comp_mret_eq k {A} : forall (f : A -> T k A),
-        bindk (T k) k f ∘ mret T k = f.
-    Proof.
-      introv. unfold bindk.
+  Theorem bindk_bindk_neq_simple {A} (k j : K) (f : A -> T k A) (g : A -> T j A) :
+    k <> j ->
+    bindk (T k) j g ∘ f = f ->
+    bindk (T j) k f ∘ g = g ->
+    bindk F j g ∘ bindk F k f =
+    bindk F k f ∘ bindk F j g.
+  Proof.
+    intros neq hyp1 hyp2. unfold bindk.
+    do 2 rewrite (pmod_mbind_mbind F T).
+    f_equal. ext i. compare i to both of {k j}.
+    - rewrite btg_eq. rewrite btg_neq; [| assumption].
       rewrite (mmon_mbind_comp_mret T).
-      ext a. now rewrite btg_eq.
-    Qed.
-
-    Lemma bindk_comp_mret_neq k2 k1 {A} : forall (f : A -> T k2 A),
-        k2 <> k1 ->
-        bindk (T k1) k2 f ∘ mret T k1 = mret T k1.
-    Proof.
-      introv neq. unfold bindk.
+      rewrite btg_eq. apply hyp1.
+    - rewrite btg_eq. rewrite btg_neq; [| assumption].
       rewrite (mmon_mbind_comp_mret T).
-      now rewrite btg_neq.
-    Qed.
+      rewrite btg_eq. symmetry. apply hyp2.
+    - rewrite btg_neq; [| assumption].
+      rewrite btg_neq; [| assumption].
+      rewrite (mmon_mbind_comp_mret T).
+      rewrite (mmon_mbind_comp_mret T).
+      rewrite btg_neq; [| assumption].
+      rewrite btg_neq; [| assumption].
+      trivial.
+  Qed.
 
-    Lemma bindk_bindk_eq k {A}: forall (f : A -> T k A) (g : A -> T k A),
-        bindk F k g ∘ bindk F k f = bindk F k (g ⋆k f).
-    Proof.
-      intros. unfold bindk. rewrite (rmod_mbind_mbind F T).
-      fequal. ext j a. unfold compose.
-      destruct_eq_args k j.
-      all: repeat first [rewrite btg_eq | rewrite btg_neq ]; auto.
-      change left ((bindk (T j) k g ∘ mret T j) a).
-      now rewrite bindk_comp_mret_neq.
-    Qed.
-
-    Theorem bindk_bindk_neq_simple {A} (k j : K) (f : A -> T k A) (g : A -> T j A) :
-      k <> j ->
-      bindk (T k) j g ∘ f = f ->
-      bindk (T j) k f ∘ g = g ->
-      bindk F j g ∘ bindk F k f =
-      bindk F k f ∘ bindk F j g.
-    Proof.
-      intros neq hyp1 hyp2. unfold bindk.
-      do 2 rewrite (rmod_mbind_mbind F T).
-      f_equal. ext i. compare i to both of {k j}.
-      - rewrite btg_eq. rewrite btg_neq; [| assumption].
-        rewrite (mmon_mbind_comp_mret T).
-        rewrite btg_eq. apply hyp1.
-      - rewrite btg_eq. rewrite btg_neq; [| assumption].
-        rewrite (mmon_mbind_comp_mret T).
-        rewrite btg_eq. symmetry. apply hyp2.
-      - rewrite btg_neq; [| assumption].
-        rewrite btg_neq; [| assumption].
-        rewrite (mmon_mbind_comp_mret T).
-        rewrite (mmon_mbind_comp_mret T).
-        rewrite btg_neq; [| assumption].
-        rewrite btg_neq; [| assumption].
-        trivial.
-    Qed.
-
-    Lemma bindk_fmapk_eq k {A} : forall (g : A -> T k A) (f : A -> A),
-        bindk F k g ∘ fmapk F k f = bindk F k (g ∘ f).
-    Proof.
-      introv. unfold bindk. unfold fmapk.
-      rewrite (mbind_mfmap F). fequal. ext j a.
-      destruct_eq_args k j.
-      - do 2 rewrite btg_eq.
-        now rewrite tgt_eq.
-      - do 2 (rewrite btg_neq; auto).
-        now rewrite tgt_neq.
-    Qed.
-
-  End bindk_lemmas.
+  (** ** Composition with [fmapk] *)
+  (******************************************************************************)
+  Lemma bindk_fmapk_eq k {A} : forall (g : A -> T k A) (f : A -> A),
+      bindk F k g ∘ fmapk F k f = bindk F k (g ∘ f).
+  Proof.
+    introv. unfold bindk. unfold fmapk.
+    rewrite (mbind_mfmap F). fequal. ext j a.
+    destruct_eq_args k j.
+    - do 2 rewrite btg_eq.
+      now rewrite tgt_eq.
+    - do 2 (rewrite btg_neq; auto).
+      now rewrite tgt_neq.
+  Qed.
 
   (** ** Kleisli laws for [bindk] *)
-  (******************************************************************************)
-  Section bindk_kleisli.
-
-    Context
-      (F : Type -> Type)
-      `{MultisortedRightModule F T}.
-
-    Existing Instance MultisortedRightModule_Monad.
-
-    (** The next three theorems are the left and right identity laws and the
+  (** The next three theorems are the left and right identity laws and the
       associativity law for Kleisli composition. *)
-    Theorem kcompk_id_l {A k} : forall f : A -> T k A,
-        mret T k ⋆k f = f.
-    Proof.
-      introv. unfold kcompk. now rewrite (bindk_mret (T k)).
-    Qed.
+  (******************************************************************************)
+  Theorem kcomposek_id_l {A k} : forall f : A -> T k A,
+      mret T k ⋆k f = f.
+  Proof.
+    introv. unfold kcomposek.
+    (* now rewrite (bindk_mret (T k)). *)
+    unfold bindk. rewrite btg_id.
+    now rewrite (pmod_mbind_mret (T k) T).
+  Qed.
 
-    Theorem kcompk_id_r {A k} : forall f : A -> T k A,
-        f ⋆k mret T k = f.
-    Proof.
-      introv. unfold kcompk. now rewrite (bindk_comp_mret_eq (T k)).
-    Qed.
+  Theorem kcomposek_id_r {A k} : forall f : A -> T k A,
+      f ⋆k mret T k = f.
+  Proof.
+    introv. unfold kcomposek. now rewrite (bindk_comp_mret_eq k).
+  Qed.
 
-    Lemma kcompk_assoc :
-      forall A k (h : A -> T k A)
-             (g : A -> T k A) (f : A -> T k A),
-        h ⋆k (g ⋆k f) = h ⋆k (g ⋆k f).
-    Proof.
-      introv. unfold kcompk. reflexivity.
-    Qed.
+  Lemma kcomposek_assoc :
+    forall A k (h : A -> T k A)
+      (g : A -> T k A) (f : A -> T k A),
+      h ⋆k (g ⋆k f) = h ⋆k (g ⋆k f).
+  Proof.
+    introv. unfold kcomposek. reflexivity.
+  Qed.
 
-  End bindk_kleisli.
-
-End with_index.
+End MultisortedRightModule_bindk.
 
 (** ** Rewrite Hint registration *)
+(******************************************************************************)
 Hint Rewrite @btg_eq @btgd_eq @btg_id @btgd_same : tea_tgt.
 Hint Rewrite @btg_eq @btgd_eq @btg_id @btgd_same : tea_tgt_eq.
 Hint Rewrite @btg_neq @btgd_neq using auto : tea_tgt.
 Hint Rewrite @btg_neq @btgd_neq using auto : tea_tgt_neq.
 
+(** * Miscellaneous lemmas *)
+(******************************************************************************)
+Section MultisortedMonad_misc.
+
+  Context
+    `{MultisortedMonad T}
+    `{! MBind F T}
+    `{! MultisortedPreModule F T}.
+
+  Lemma mstrength_return {A B} (k : K) (a : A) (b : B) :
+    mstrength (T k) (b, mret T k a) = mret T k (b, a).
+  Proof.
+    unfold mstrength. compose near a on left.
+    now rewrite Natural_mret.
+  Qed.
+
+  Lemma mbind_mstrength {M X Y} : forall (g : M * X ~k~> T Y),
+      mbind F g ∘ mstrength F = fun '(w, t) => mbind F (fun k a => g k (w, a)) t.
+  Proof.
+    introv. unfold strength. ext [? t].
+    unfold compose; cbn. compose near t on left.
+    now rewrite (mbind_mfmap F).
+  Qed.
+
+End MultisortedMonad_misc.
+
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
-  Notation "g ⋆m f" := (mkcomp _ g f) (at level 60) : tealeaves_multi_scope.
-  Notation "g ⋆k f" := (kcompk _ g f) (at level 60) : tealeaves_multi_scope.
+  Notation "g ⋆m f" := (mkcompose _ g f) (at level 60) : tealeaves_multi_scope.
+  Notation "g ⋆k f" := (kcomposek _ g f) (at level 60) : tealeaves_multi_scope.
 End Notations.
