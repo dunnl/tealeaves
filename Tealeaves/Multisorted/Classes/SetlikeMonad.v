@@ -108,7 +108,7 @@ Section SetlikeMultisortedFunctor_Module.
 
 End SetlikeMultisortedFunctor_Module.
 
-(** * Properties of set-like modules *)
+(** * Properties of multisorted set-like modules *)
 (******************************************************************************)
 Section SetlikeMultisortedModule_theory.
 
@@ -225,6 +225,91 @@ Section SetlikeMultisortedModule_theory.
   Qed.
 
 End SetlikeMultisortedModule_theory.
+
+(** * Interaction between [tomsetd] and [ret] *)
+(******************************************************************************)
+Section SetlikeMultisortedMonad_ret.
+
+  Context
+    `{ix : Index}
+    (T : K -> Type -> Type)
+    `{Monoid_op W} `{Monoid_unit W}
+    `{SetlikeMultisortedMonad (ix:=ix) T}
+    `{! forall k, Decorate W (T k)}
+    `{! DecoratedMultisortedMonad W T}
+    {A B : Type}.
+
+  Implicit Types (k : K) (w : W) (a : A) (b : B).
+
+  Theorem ind_mret_iff : forall w k k' a a',
+      (k, (w, a')) ∈md mret T k' a <-> k = k' /\ w = Ƶ /\ a' = a.
+  Proof.
+    introv. unfold tomsetd, compose.
+    compose near a on left.
+    rewrite (dec_mret (T k')). unfold compose.
+    rewrite (in_mret_iff F T). split.
+    - intros [? hyp]; now inverts hyp.
+    - intros [? [? ?]]; now subst.
+  Qed.
+
+  Corollary ind_mret_iff_eq : forall w k a a',
+      (k, (w, a')) ∈md mret T k a <-> w = Ƶ /\ a' = a.
+  Proof.
+    intros. rewrite ind_mret_iff. intuition.
+  Qed.
+
+  Corollary ind_mret_iff_neq : forall w k j a a',
+      k <> j ->
+      (j, (w, a')) ∈md mret T k a <-> False.
+  Proof.
+    intros. rewrite ind_mret_iff. intuition.
+  Qed.
+
+End SetlikeMultisortedMonad_ret.
+
+(** * Properties of decorated set-like modules *)
+(******************************************************************************)
+Section DecoratedSetlikeMultisortedModule_theory.
+
+  Context
+    `{ix : Index}
+    (F : Type -> Type)
+    (T : K -> Type -> Type)
+    `{Monoid_op W} `{Monoid_unit W}
+    `{SetlikeMultisortedModule (ix:=ix) F T}
+    `{! Decorate W F}  `{! forall k, Decorate W (T k)}
+    `{! DecoratedMultisortedModule W F T}.
+
+  Context
+    {A B : Type}.
+
+  Implicit Types (k : K) (w : W) (a : A) (b : B) (t : F A).
+
+  Theorem ind_mret_iff : forall w k k' a a',
+      (k, (w, a')) ∈md mret T k' a <-> k = k' /\ w = Ƶ /\ a' = a.
+  Proof.
+    introv. unfold tomsetd, compose.
+    compose near a on left.
+    rewrite (dec_mret F). unfold compose.
+    rewrite (in_mret_iff F T). split.
+    - intros [? hyp]; now inverts hyp.
+    - intros [? [? ?]]; now subst.
+  Qed.
+
+  Corollary ind_mret_iff_eq : forall w k a a',
+      (k, (w, a')) ∈md mret T k a <-> w = Ƶ /\ a' = a.
+  Proof.
+    intros. rewrite ind_mret_iff. intuition.
+  Qed.
+
+  Corollary ind_mret_iff_neq : forall w k j a a',
+      k <> j ->
+      (j, (w, a')) ∈md mret T k a <-> False.
+  Proof.
+    intros. rewrite ind_mret_iff. intuition.
+  Qed.
+
+End SetlikeMultisortedMonad_ret.
 
 (** * Properties of decorated set-like modules *)
 (******************************************************************************)

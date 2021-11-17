@@ -53,6 +53,25 @@ Section with_index.
 
   End ConstantMultisortedMonad.
 
+  (** ** Multisorted pre-modules *)
+  (******************************************************************************)
+  Section MultisortedModule.
+
+    Context
+      (F : Type -> Type)
+      (T : K -> Type -> Type)
+      `{MReturn T} `{! forall k, MBind (T k) T}
+      `{MBind F T}.
+
+    Class MultisortedPreModule :=
+      { pmod_mret : forall A,
+            mbind F (mret T) = @id (F A);
+        pmod_mbind_mbind : forall A B C (f : A ~k~> T B) (g : B ~k~> T C),
+            mbind F g ∘ mbind F f = mbind F (fun k => mbind (T k) g ∘ f k);
+      }.
+
+  End MultisortedModule.
+
   (** ** Multisorted monads *)
   (******************************************************************************)
   Section MultisortedMonad.
@@ -272,6 +291,26 @@ Section with_index.
     Proof.
       unfold multistrength. compose near a on left.
       now rewrite Natural_mret.
+    Qed.
+
+    Corollary mbind_strength_T {M X Y k} : forall (g : M * X ~k~> T Y),
+        mbind (T k) g ∘ multistrength (T k) = fun '(w, t) => mbind (T k) (fun k a => g k (w, a)) t.
+    Proof.
+      introv. unfold strength. ext [? t].
+      unfold compose; cbn. compose near t on left.
+      assert (MultisortedRightModule (T k) T) by apply MultisortedRightModule_Monad.
+      now rewrite (mbind_mfmap (T k)).
+    Qed.
+
+    Context
+      `{MultisortedRightModule F T}.
+
+    Corollary mbind_strength {M X Y} : forall (g : M * X ~k~> T Y),
+        mbind F g ∘ multistrength F = fun '(w, t) => mbind F (fun k a => g k (w, a)) t.
+    Proof.
+      introv. unfold strength. ext [? t].
+      unfold compose; cbn. compose near t on left.
+      now rewrite (mbind_mfmap F).
     Qed.
 
   End MultisortedMonad_misc.

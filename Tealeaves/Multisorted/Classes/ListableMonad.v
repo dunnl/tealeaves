@@ -1,4 +1,4 @@
-From Tealeaves Require Import
+From Tealeaves Require Export
      Multisorted.Classes.Monad
      Multisorted.Functors.MSets
      Multisorted.Functors.Tag
