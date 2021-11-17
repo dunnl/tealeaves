@@ -75,7 +75,7 @@ Section SetlikeMultisortedModule_Monad.
 
 End SetlikeMultisortedModule_Monad.
 
-(** ** Carriers of quantifiable modules form quantifiable functors *)
+(** ** Carriers of set-like modules form set-like functors *)
 (******************************************************************************)
 Section SetlikeMultisortedFunctor_Module.
 
@@ -118,12 +118,9 @@ Section SetlikeMultisortedModule_theory.
     (T : K -> Type -> Type)
     `{SetlikeMultisortedModule (ix:=ix) F T}.
 
-  (** ** Respectfulness conditions *)
+  (** ** Respectfulness conditions for <<mbind>> *)
   (******************************************************************************)
-
-  (** *** Parallel substitutions *)
-  (******************************************************************************)
-  Theorem tomset_mbind_proper_id {A} : forall (t : F A) (f : A ~k~> T A),
+  Theorem setlike_mbind_respectful_id {A} : forall (t : F A) (f : A ~k~> T A),
       (forall k a, (k, a) ∈m t -> f k a = mret T k a) -> mbind F f t = t.
   Proof.
     intros. replace t with (mbind F (mret T) t) at 2
@@ -131,7 +128,7 @@ Section SetlikeMultisortedModule_theory.
     now apply (qrmod_respectful F T).
   Qed.
 
-  Corollary tomset_mbind_proper_mfmap {A B} :
+  Corollary setlike_mbind_respectful_mfmap {A B} :
     forall (t : F A) (f : A ~k~> T B) (g : A -k-> B),
       (forall k a, (k, a) ∈m t -> f k a = mret T k (g k a)) -> mbind F f t = mfmap F g t.
   Proof.
@@ -139,29 +136,29 @@ Section SetlikeMultisortedModule_theory.
     now apply (qrmod_respectful F T).
   Qed.
 
-  (** *** Targeted substitutions *)
+  (** ** Respectfulness conditions for <<bindk>> *)
   (******************************************************************************)
-  Theorem tomset_bindk_proper : forall {A} k (t : F A) (f g : A -> T k A),
+  Theorem setlike_bindk_respectful : forall {A} k (t : F A) (f g : A -> T k A),
       (forall a, (k, a) ∈m t -> f a = g a) -> bindk F k f t = bindk F k g t.
   Proof.
     intros. apply (qrmod_respectful F T).
     intros j ? ?. compare values k and j; simpl_tgt_fallback; auto.
   Qed.
 
-  Corollary tomset_bindk_proper_id : forall {A} k (t : F A) (f : A -> T k A),
+  Corollary setlike_bindk_respectful_id : forall {A} k (t : F A) (f : A -> T k A),
       (forall a, (k, a) ∈m t -> f a = mret T k a) -> bindk F k f t = t.
   Proof.
     intros. replace t with (bindk F k (mret T k) t) at 2
       by (now rewrite (bindk_mret F k)).
-    now apply tomset_bindk_proper.
+    now apply setlike_bindk_respectful.
   Qed.
 
-  Corollary tomset_bindk_proper_fmapk {A} k :
+  Corollary setlike_bindk_respectful_fmapk {A} k :
     forall (t : F A) (f : A -> T k A) (g : A -> A),
       (forall a, (k, a) ∈m t -> f a = mret T k (g a)) -> bindk F k f t = fmapk F k g t.
   Proof.
     intros. rewrite fmapk_to_bindk.
-    now apply tomset_bindk_proper.
+    now apply setlike_bindk_respectful.
   Qed.
 
   (** ** Interaction between [tomset] and [ret], [mbind] *)
@@ -242,7 +239,79 @@ Section DecoratedSetlikeMultisortedModule_theory.
     `{! Decorate W F}  `{! forall k, Decorate W (T k)}
     `{! DecoratedMultisortedModule W F T}.
 
-  (** ** Interaction between [tomsetr] and [ret], [bindd] *)
+  (** ** Respectfulness conditions for <<mbindd>> *)
+  (******************************************************************************)
+  Theorem mbindd_respectful {A B} : forall (t : F A) (f g : forall k, W * A -> T k B),
+      (forall k w a, (k, (w, a)) ∈md t -> f k (w, a) = g k (w, a)) ->
+      mbindd F f t = mbindd F g t.
+  Proof.
+    intros. apply (qrmod_respectful F T).
+    intros ? [? ?]; auto.
+  Qed.
+
+  Corollary mbindd_respectful_id {A} : forall (t : F A) (f : forall k, W * A -> T k A),
+      (forall k w a, (k, (w, a)) ∈md t -> f k (w, a) = mret T k a) ->
+      mbindd F f t = t.
+  Proof.
+    intros. replace t with (mbindd F (mret T ◻ const snd) t) at 2
+      by (now rewrite (mbindd_id F)).
+    now apply mbindd_respectful.
+  Qed.
+
+  Corollary mbindd_respectful_mfmapr {A B} : forall (t : F A) (f : forall k, W * A -> T k B) (g : W * A -k-> B),
+      (forall k w a, (k, (w, a)) ∈md t -> f k (w, a) = mret T k (g k (w, a))) ->
+      mbindd F f t = mfmapd F g t.
+  Proof.
+    introv. rewrite mfmapd_to_mbindd.
+    now apply (mbindd_respectful _ _ (mret T ◻ g)).
+  Qed.
+
+  Corollary mbindd_respectful_mbind {A B} : forall (t : F A) (f : forall k, W * A -> T k B) (g : forall k, A -> T k B),
+      (forall k w a, (k, (w, a)) ∈md t -> f k (w, a) = g k a) ->
+      mbindd F f t = mbind F g t.
+  Proof.
+    introv. rewrite (mbind_to_mbindd F).
+    now apply (mbindd_respectful _ _ (g ◻ const snd)).
+  Qed.
+
+  (** ** Respectfulness conditions for <<bindkd>> *)
+  (******************************************************************************)
+  Lemma bindkd_respectful {A} : forall k (t : F A) (f g : W * A -> T k A),
+      (forall w a, (k, (w, a)) ∈md t -> f (w, a) = g (w, a)) ->
+      bindkd F k f t = bindkd F k g t.
+  Proof.
+    intros. apply (qrmod_respectful F T).
+    intros j [? ?] ?. destruct_eq_args k j.
+    autorewrite with tea_tgt_eq using auto.
+    autorewrite with tea_tgt_neq using auto.
+  Qed.
+
+  Lemma bindkd_respectful_id {A} : forall k (t : F A) (f : W * A -> T k A),
+      (forall w a, (k, (w, a)) ∈md t -> f (w, a) = mret T k a) ->
+      bindkd F k f t = t.
+  Proof.
+    intros. replace t with (bindkd F k (mret T k ∘ extract (prod W)) t) at 2
+      by (now rewrite (bindkd_id F)).
+    now apply bindkd_respectful.
+  Qed.
+
+  Corollary bindkd_respectful_fmapkr {A} : forall k (t : F A) (f : W * A -> T k A) (g : W * A -> A),
+      (forall w a, (k, (w, a)) ∈md t -> f (w, a) = mret T k (g (w, a))) ->
+      bindkd F k f t = fmapkd F k g t.
+  Proof.
+    intros. rewrite fmapkd_to_bindkd.
+    now apply (bindkd_respectful).
+  Qed.
+
+  Corollary bindkd_respectful_bindk {A} : forall k (t : F A) (f : W * A -> T k A) (g : A -> T k A),
+      (forall w a, (k, (w, a)) ∈md t -> f (w, a) = g a) ->
+      bindkd F k f t = bindk F k g t.
+  Proof.
+    intros. rewrite (bindk_to_bindkd F).
+    now apply bindkd_respectful.
+  Qed.
+
+  (** ** Interaction between [tomsetd] and [ret], [bindd] *)
   (******************************************************************************)
   Section with_types.
 
@@ -413,7 +482,7 @@ Section DecoratedSetlikeMultisortedModule_theory.
         right. exists x x0 w. splits; auto.
   Qed.
 
-  (** ** Interaction between [tomsetkr] and [bindk] *)
+  (** ** Interaction between [tomsetkd] and [bindk] *)
   (******************************************************************************)
   Theorem ind_bindk_iff_eq : forall k w a (t : F A) (f : A -> T k A),
       (k, (w, a)) ∈md bindk F k f t <->

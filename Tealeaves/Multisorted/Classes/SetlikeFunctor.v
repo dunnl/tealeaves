@@ -65,10 +65,8 @@ Section SetlikeMultisortedFunctor_theory.
     (F : Type -> Type)
     `{SetlikeMultisortedFunctor F}.
 
-  (** ** Corollaries of respectfulness *)
+  (** ** Respectfulness conditions for <<mfmap>> *)
   (******************************************************************************)
-
-  (** *** Parallel maps *)
   Corollary mfmap_proper_id : forall A (t : F A) (f : A -k-> A),
       (forall k a, (k, a) ∈m t -> f k a = a) -> mfmap F f t = t.
   Proof.
@@ -77,7 +75,8 @@ Section SetlikeMultisortedFunctor_theory.
     now apply (qmfun_respectful F).
   Qed.
 
-  (** *** Targeted maps *)
+  (** ** Respectfulness conditions for <<fmapk>> *)
+  (******************************************************************************)
   Corollary fmapk_respectful : forall A (t : F A) k (f g : A -> A),
       (forall a, (k, a) ∈m t -> f a = g a) -> fmapk F k f t = fmapk F k g t.
   Proof.
