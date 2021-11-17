@@ -1,4 +1,4 @@
-From Tealeaves Require Import
+From Tealeaves Require Export
      Singlesorted.Classes.Monoid
      Singlesorted.Classes.Monad
      Singlesorted.Functors.Writer
@@ -79,7 +79,7 @@ Section DecoratedMultisortedModule.
     `{Decorate W F}
     `{DecoratedMultisortedMonad W (ix := ix) (mn_op:=mn_op) (mn_unit:=mn_unit) T}.
 
-  Class DecoratedModule : Prop :=
+  Class DecoratedMultisortedModule : Prop :=
     { drmod_monad :> DecoratedMultisortedMonad W T;
       drmod_module :> MultisortedRightModule F T;
       drmod_mbind : forall {A B} (f : A ~k~> T B),
@@ -96,26 +96,26 @@ End DecoratedMultisortedModule.
 (** ** Typeclass inclusions *)
 (** *** A monad acts on itself as a module *)
 (******************************************************************************)
-Section decorated_monad_to_module.
+Section DecoratedMultisortedModule.
 
   Context
     `{DecoratedMultisortedMonad W T}.
 
-  Instance DecoratedModule_Monad {k} : DecoratedModule W (T k) T :=
+  Instance DecoratedMultisortedModule_Monad {k} : DecoratedMultisortedModule W (T k) T :=
     {| drmod_mbind := fun A B f => dmmon_mbind W T f k;
        drmod_dec_dec := fun A => dmmon_dec_dec W T k;
        drmod_dec_extract := fun A => dmmon_dec_extract W T k;
        drmod_module := MultisortedRightModule_Monad k;
     |}.
 
-End decorated_monad_to_module.
+End DecoratedMultisortedModule.
 
 (** *** The carrier of a dec. module is a dec. functor *)
 (******************************************************************************)
-Section decorated_module_to_functor.
+Section DecoratedMultisortedModule_Functor.
 
   Context
-    `{DecoratedModule W F G}.
+    `{DecoratedMultisortedModule W F G}.
 
   Theorem decorate_natural : MultisortedNatural (fun A => decorate (W:=W) F (A:=A)).
   Proof.
@@ -133,7 +133,7 @@ Section decorated_module_to_functor.
     unfold compose; cbn. now rewrite monoid_id_l.
   Qed.
 
-  #[global] Instance DecoratedMFunctor_rmod : DecoratedMultisortedFunctor W F.
+  #[global] Instance DecoratedMultisortedFunctor_Module : DecoratedMultisortedFunctor W F.
   Proof.
     constructor; try typeclasses eauto.
     - apply decorate_natural.
@@ -141,7 +141,7 @@ Section decorated_module_to_functor.
     - intros. apply (drmod_dec_extract W F G).
   Qed.
 
-End decorated_module_to_functor.
+End DecoratedMultisortedModule_Functor.
 
 (** * Parallel substitution in decorated modules, [mbindd] *)
 (******************************************************************************)
@@ -158,7 +158,7 @@ Section decorated_module_parallel_substitution.
              (f : forall k, W * A -> T k B) : forall k, W * A -> T k C
     := fun k => mbind (T k) g ∘ (shift ∘ cobind (prod W) (decorate (T k) ∘ f k)).
 
-  Theorem mkcompr_spec `{DecoratedModule W F T} A B C
+  Theorem mkcompr_spec `{DecoratedMultisortedModule W F T} A B C
           (g : forall k, W * B -> T k C)
           (f : forall k, W * A -> T k B) :
     mkcompr T g f =
@@ -179,7 +179,7 @@ Section decorated_module_parallel_substitution.
   Section mbindd_special_cases.
 
     Context
-      F `{DecoratedModule W F T}.
+      F `{DecoratedMultisortedModule W F T}.
 
     Lemma mbind_to_mbindd {A B} (f : forall k, A -> T k B) :
       mbind F f = mbindd F (fun k => f k ∘ const snd k).
@@ -207,7 +207,7 @@ Section decorated_module_parallel_substitution.
   Section decorate_bind.
 
     Context
-      F `{DecoratedModule W F T}.
+      F `{DecoratedMultisortedModule W F T}.
 
     Theorem dec_mret : forall A k,
         decorate (T k) ∘ mret T k = mret T k ∘ pair Ƶ (B:=A).
@@ -245,7 +245,7 @@ Section decorated_module_parallel_substitution.
   Section id_composition_mbindd.
 
     Context
-      F `{DecoratedModule W F T}.
+      F `{DecoratedMultisortedModule W F T}.
 
     Theorem mbindd_id {A} :
       mbindd F (mret T ◻ const snd) = @id (F A).
@@ -275,7 +275,7 @@ Section decorated_module_parallel_substitution.
   Section composition_utility.
 
     Context
-      F `{DecoratedModule W F T}.
+      F `{DecoratedMultisortedModule W F T}.
 
     (** TODO: Document why this is an important lemma *)
     Lemma mkcompr_1 : forall A B (f : W * A -> B) k,
@@ -339,7 +339,7 @@ Section decorated_module_parallel_substitution.
 
     Context
       (F : Type -> Type)
-      `{DecoratedModule W F T}.
+      `{DecoratedMultisortedModule W F T}.
 
     Corollary mbindd_mbind {A B C} : forall (g : W * B ~k~> T C) (f : A ~k~> T B),
         mbindd F g ∘ mbind F f = mbindd F (g ∗mr (fun k => f k ∘ extract (W ×))).
@@ -432,7 +432,7 @@ Section decorated_module_parallel_substitution.
   Section kleisli_mbindd.
 
     Context
-      F `{DecoratedModule W F T}
+      F `{DecoratedMultisortedModule W F T}
       {A B C D : Type}.
 
     Theorem kcompr_id_l : forall f : W * A ~k~> T B,
@@ -509,7 +509,7 @@ Hint Rewrite @btgr_eq : tea_tgt_eq.
 Hint Rewrite @btgr_neq using auto : tea_tgt.
 Hint Rewrite @btgr_neq using auto : tea_tgt_neq.
 
-Theorem kcompkr_spec `{DecoratedModule W F T} A k
+Theorem kcompkr_spec `{DecoratedMultisortedModule W F T} A k
         (g : W * A -> T k A) (f : W * A -> T k A) :
   kcompkr k g f =
   fun '(w, a) => (bindkd (T k) k (fun '(w', a) => g (w ● w', a)) ∘ f) (w, a).
@@ -524,7 +524,7 @@ Proof.
   compare values k and k'; now simpl_tgt_fallback.
 Qed.
 
-Section decorated_module_targeted_substitution.
+Section DecoratedMultisortedModule_theory.
 
   Context
     `{ix : Index}.
@@ -536,7 +536,7 @@ Section decorated_module_targeted_substitution.
   (******************************************************************************)
   Context
     (F : Type -> Type)
-    `{DecoratedModule (ix:=ix) W F T}.
+    `{DecoratedMultisortedModule (ix:=ix) W F T}.
 
   Lemma btgr_btgr_eq {A} (k : K) (g f : W * A -> T k A) :
     btgr T k (g ∗kr f) = btgr T k g ∗mr btgr T k f.
@@ -735,7 +735,7 @@ Section decorated_module_targeted_substitution.
     now simpl_tgt.
   Qed.
 
-End decorated_module_targeted_substitution.
+End DecoratedMultisortedModule_theory.
 
 (** ** Rewrite Hint registration *)
 Hint Rewrite @btgr_eq : tea_tgt.

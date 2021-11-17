@@ -33,8 +33,7 @@ Section definitions.
     `{ix : Index}.
 
   Definition tomset_mfmap_proper F `{! Mfmap F} `{! Tomset F} :=
-    forall A B (t : F A) (f g : A -k-> B),
-      (forall k a, (k, a) ∈m t -> f k a = g k a) -> mfmap F f t = mfmap F g t.
+
 
   Definition tomset_mfmap_proper_inv F `{! Mfmap F} `{! Tomset F} :=
     forall A B (t : F A) (f g : A -k-> B),
@@ -45,8 +44,7 @@ Section definitions.
       (forall k a, (k, a) ∈m t -> f k a = g k a) <-> mfmap F f t = mfmap F g t.
 
   Definition tomset_mbind_proper F G `{! Mbind F G} `{! Tomset F} :=
-    forall A B (t : F A) (f g : forall k, A -> G k B),
-      (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind F f t = mbind F g t.
+
 
   Definition tomset_mbind_proper_inv F G `{! Mbind F G} `{! Tomset F} :=
     forall A B (t : F A) (f g : forall k, A -> G k B),
@@ -112,14 +110,6 @@ Section mfmap_strong_of_mbind_strong.
   Context
     `{RightModule F T} `{! Tomset F}.
 
-  Theorem tomset_mfmap_proper_mbind :
-    tomset_mbind_proper F T -> tomset_mfmap_proper F.
-  Proof.
-    unfold_properness. unfold_mfmap @Mfmap_rmod.
-    introv hproper. introv heq. apply hproper.
-    intros. unfold compose.
-    now rewrite heq.
-  Qed.
 
   #[global] Instance tomset_mfmap_proper_mbind_TC : `{Mbind_proper F} -> `{Mfmap_proper F}.
   Proof.
@@ -163,31 +153,6 @@ Section tomset_mfmap_properness_theorems.
     Context
       `{Hproper : ! Mfmap_proper F}.
 
-    (** **** Parallel maps *)
-    Corollary tomset_mfmap_proper_id : forall A (t : F A) (f : A -k-> A),
-        (forall k a, (k, a) ∈m t -> f k a = a) -> mfmap F f t = t.
-    Proof.
-      intros. replace t with (mfmap F kid t) at 2
-        by now rewrite mfmap_id.
-      now apply Hproper.
-    Qed.
-
-    (** **** Targeted maps *)
-    Corollary tomset_fmapk_proper : forall A (t : F A) k (f g : A -> A),
-        (forall a, (k, a) ∈m t -> f a = g a) -> fmapk F k f t = fmapk F k g t.
-    Proof.
-      intros. unfold fmapk. apply Hproper.
-      intros j ? ?. compare values k and j;
-      simpl_tgt_fallback; auto.
-    Qed.
-
-    Corollary tomset_fmapk_proper_id : forall A k (t : F A) (f : A -> A),
-        (forall a, (k, a) ∈m t -> f a = a) -> fmapk F k f t = t.
-    Proof.
-      intros. replace t with (fmapk F k id t) at 2
-        by now rewrite (fmapk_id F).
-      now apply tomset_fmapk_proper.
-    Qed.
 
   End tomset_mfmap_proper.
 
@@ -228,116 +193,6 @@ Section tomset_mfmap_properness_theorems.
 
 End tomset_mfmap_properness_theorems.
 
-(** ** Reasoning principles for proper [mbind], [bindk] *)
-(******************************************************************************)
-Section tomset_mbind_properness_theorems.
-
-  Context
-    F `{RightModule F T} `{! Tomset F}.
-
-  (** *** Corollaries of [tomset_mbind_proper] *)
-  (******************************************************************************)
-  Section tomset_mbind_proper.
-
-    Context
-      `{Hproper : ! Mbind_proper F}.
-
-    (** **** Parallel substitutions *)
-    Theorem tomset_mbind_proper_id {A} : forall (t : F A) (f : A ~k~> T A),
-        (forall k a, (k, a) ∈m t -> f k a = mret T k a) -> mbind F f t = t.
-    Proof.
-      intros. replace t with (mbind F (mret T) t) at 2
-        by (now rewrite (mbind_id F)).
-      now apply Hproper.
-    Qed.
-
-    Corollary tomset_mbind_proper_mfmap {A B} :
-      forall (t : F A) (f : A ~k~> T B) (g : A -k-> B),
-        (forall k a, (k, a) ∈m t -> f k a = mret T k (g k a)) -> mbind F f t = mfmap F g t.
-    Proof.
-      intros. unfold mfmap, Mfmap_rmod.
-      now apply Hproper.
-    Qed.
-
-    (** **** Targeted substitutions *)
-    Theorem tomset_bindk_proper : forall {A} k (t : F A) (f g : A -> T k A),
-        (forall a, (k, a) ∈m t -> f a = g a) -> bindk F k f t = bindk F k g t.
-    Proof.
-      intros. apply Hproper.
-      intros j ? ?. compare values k and j; simpl_tgt_fallback; auto.
-    Qed.
-
-    Corollary tomset_bindk_proper_id : forall {A} k (t : F A) (f : A -> T k A),
-        (forall a, (k, a) ∈m t -> f a = mret T k a) -> bindk F k f t = t.
-    Proof.
-      intros. replace t with (bindk F k (mret T k) t) at 2
-        by (now rewrite (bindk_mret F k)).
-      now apply tomset_bindk_proper.
-    Qed.
-
-    Corollary tomset_bindk_proper_fmapk {A} k :
-      forall (t : F A) (f : A -> T k A) (g : A -> A),
-        (forall a, (k, a) ∈m t -> f a = mret T k (g a)) -> bindk F k f t = fmapk F k g t.
-    Proof.
-      intros. rewrite fmapk_to_bindk.
-      now apply tomset_bindk_proper.
-    Qed.
-
-  End tomset_mbind_proper.
-
-  (** *** Corollaries of [tomset_mbind_proper_iff] *)
-  Section tomset_mbind_proper_iff.
-
-    Context
-      `{Hproper : ! Mbind_proper_iff F}.
-
-    (** **** Parallel substitutions *)
-    Theorem tomset_mbind_proper_id_iff {A} : forall (t : F A) (f : A ~k~> T A),
-        (forall k a, (k, a) ∈m t -> f k a = mret T k a) <-> mbind F f t = t.
-    Proof.
-      intros. replace t with (mbind F (fun k => mret T k) t) at 2
-        by (now rewrite (mbind_id F)).
-      apply Hproper.
-    Qed.
-
-    Corollary tomset_mbind_proper_mfmap_iff {A B} :
-      forall (t : F A) (f : A ~k~> T B) (g : A -k-> B),
-        (forall k a, (k, a) ∈m t -> f k a = mret T k (g k a)) <->
-        mbind F f t = mfmap F g t.
-    Proof.
-      intros. unfold mfmap.
-      apply Hproper.
-    Qed.
-
-    (** **** Targeted substitutions *)
-    Theorem tomset_bindk_proper_iff : forall {A} k (t : F A) (f g : A -> T k A),
-        (forall a, (k, a) ∈m t -> f a = g a) <-> bindk F k f t = bindk F k g t.
-    Proof.
-      intros. unfold bindk. unfold_properness. rewrite <- Hproper. split.
-      - intros heq j a ain. compare values k and j; simpl_tgt_fallback; auto.
-      - intros heq a ain. specialize (heq k).
-        simpl_tgt_fallback in heq; auto.
-    Qed.
-
-    Corollary tomset_bindk_proper_id_iff : forall {A} k (t : F A) (f : A -> T k A),
-        (forall a, (k, a) ∈m t -> f a = mret T k a) <-> bindk F k f t = t.
-    Proof.
-      intros. replace t with (bindk F k (mret T k) t) at 2
-        by (now rewrite (bindk_mret F k)).
-      now rewrite tomset_bindk_proper_iff.
-    Qed.
-
-    Corollary tomset_bindk_proper_fmapk_iff {A} k :
-      forall (t : F A) (f : A -> T k A) (g : A -> A),
-        (forall a, (k, a) ∈m t -> f a = mret T k (g a)) <-> bindk F k f t = fmapk F k g t.
-    Proof.
-      intros. rewrite fmapk_to_bindk.
-      now rewrite tomset_bindk_proper_iff.
-    Qed.
-
-  End tomset_mbind_proper_iff.
-
-End tomset_mbind_properness_theorems.
 
 
 (** * Derived operations [totsetr, totsetkr] *)
@@ -345,65 +200,12 @@ End tomset_mbind_properness_theorems.
 Definition tomlistr F `{Tomlist F} `{Decorate W F} {A} :
   F A -> mlist (W * A) := tomlist F ∘ decorate F.
 
-Definition tomsetr F `{Tomset F} `{Decorate W F} {A} :
-  F A -> mset (W * A) := tomset F ∘ decorate F.
-
 Local Notation "x ∈mr t" :=
   (tomsetr _ t x) (at level 50) : tealeaves_multi_scope.
 
 Local Notation "x @ k ∈mr t" :=
   (tomsetr _ t (k, x)) (k at level 5, at level 50) : tealeaves_multi_scope.
 
-(** ** Corollaries of properness for context-sensitive maps *)
-(******************************************************************************)
-Section tomsetr_mfmap_properness_theorems.
-
-  Context
-    F `{MFunctor F} `{! Tomset F} `{! Decorate W F} `{! DecoratedMFunctor W F}.
-
-  (** *** Corollaries of [tomset_mfmap_proper] *)
-  Section tomsetr_mfmap_proper.
-
-    Context
-      `{Hproper : ! Mfmap_proper F}.
-
-    (** **** Parallel context-sensitive maps *)
-    Lemma mfmapr_proper {A B} : forall (t : F A) (f g : W * A -k-> B),
-        (forall k w a, (k, (w, a)) ∈mr t -> f k (w, a) = g k (w, a)) ->
-        mfmapr F f t = mfmapr F g t.
-    Proof.
-      intros. unfold fmapkr, compose.
-      apply Hproper. intros ? [? ?]; auto.
-    Qed.
-
-    Corollary mfmapr_proper_id {A} : forall (t : F A) (f : W * A -k-> A),
-        (forall k w a, (k, (w, a)) ∈mr t -> f k (w, a) = a) ->
-        mfmapr F f t = t.
-    Proof.
-      intros. replace t with (mfmapr F (const snd) t) at 2
-        by (now rewrite (mfmapr_id F)).
-      now apply mfmapr_proper.
-    Qed.
-
-    (** **** Targeted context-sensitive maps *)
-    Lemma fmapkr_proper {A} : forall k (t : F A) (f g : W * A -> A),
-        (forall w a, (k, (w, a)) ∈mr t -> f (w, a) = g (w, a)) ->
-        fmapkr F k f t = fmapkr F k g t.
-    Proof.
-      intros. unfold fmapkr. apply mfmapr_proper.
-      intros j ? ? ?. compare values k and j;
-                        simpl_tgt_fallback; auto.
-    Qed.
-
-    Corollary fmapkr_proper_id {A} : forall k (t : F A) (f : W * A -> A),
-        (forall w a, (k, (w, a)) ∈mr t -> f (w, a) = a) -> fmapkr F k f t = t.
-    Proof.
-      intros. replace t with (fmapkr F k snd t) at 2
-        by (now rewrite (fmapkr_id F)).
-      now apply fmapkr_proper.
-    Qed.
-
-  End tomsetr_mfmap_proper.
 
   (** *** Corollaries of [tomset_mfmap_strong_proper] *)
   Section tomsetr_mfmap_strong_proper.
@@ -658,9 +460,8 @@ Section properness.
   Definition shapeliness := forall A (x y : F A),
       shape F x = shape F y /\ tomlist F x = tomlist F y -> x = y.
 
-  Definition tomlist_mfmap_proper := forall A B (x y : F A) (f g : A -k-> B),
-      shape F x = shape F y /\ mfmap mlist f (tomlist F x) = mfmap mlist g (tomlist F y) ->
-      mfmap F f x = mfmap F g y.
+  Definition tomlist_mfmap_proper :=
+
 
   Definition tomlist_mfmap_proper_inv := forall A B (x y : F A) (f g : A -k-> B),
       mfmap F f x = mfmap F g y ->

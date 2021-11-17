@@ -310,9 +310,24 @@ Section mlist_is_quantifiable.
     split; intros [[k' a] ?]; now exists (k', a).
   Qed.
 
+  Theorem qmmon_respectful_mlist : forall (k : K) A B (t : (const mlist) k A) (f g : A ~k~> (const mlist) B),
+      (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind ((const mlist) k) f t = mbind ((const mlist) k) g t.
+  Proof.
+    intros. cbv in t. induction t.
+    - reflexivity.
+    - change (const mlist k) with (mlist).
+      destruct a as [k' a].
+      rewrite (mbind_mlist_cons f).
+      rewrite (mbind_mlist_cons g). fequal.
+      + apply H. now left.
+      + apply IHt. intros. apply H. now right.
+  Qed.
+
   #[global] Instance: SetlikeMultisortedMonad (const mlist) :=
     {| qmmon_mret := @qmmon_mret_mlist;
-       qmmon_mbind := fun A B f k => @qmmon_mbind_mlist A B f; |}.
+       qmmon_mbind := fun A B f k => @qmmon_mbind_mlist A B f;
+       qmmon_respectful := qmmon_respectful_mlist;
+    |}.
 
 End mlist_is_quantifiable.
 

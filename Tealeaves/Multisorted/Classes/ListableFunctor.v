@@ -222,6 +222,10 @@ Section ListableMultisortedFunctor.
     Class ListableMultisortedFunctor :=
       { lfun_natural :> MultisortedNatural (@tomlist F _);
         lfun_functor :> MultisortedFunctor F;
+        lfun_shapeliness : forall A B (x y : F A) (f g : A -k-> B),
+          shape F x = shape F y ->
+          mfmap mlist f (tomlist F A x) = mfmap mlist g (tomlist F A y) ->
+          mfmap F f x = mfmap F g y;
       }.
 
   End ListableMultisortedFunctor.
