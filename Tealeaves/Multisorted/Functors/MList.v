@@ -447,3 +447,42 @@ Hint Rewrite @filterk_nil @filterk_cons_eq @filterk_one_eq
      @filterk_app : tea_list.
 Hint Rewrite @filterk_cons_neq @filterk_one_neq @filterk_fmapk_neq
      using (discriminate + auto) : tea_list.
+
+
+(** * Miscellaneous inversion lemmas for equality between [mlist] *)
+(******************************************************************************)
+Section mlist_inversion_principles.
+
+  Context
+    `{Index}.
+
+  Lemma mlist_inv_cons : forall A (k1 k2 : K) (a1 a2 : A) (l1 l2 : mlist A),
+      (k1, a1) :: l1 = (k2, a2) :: l2 -> k1 = k2 /\ a1 = a2 /\ l1 = l2.
+  Proof.
+    introv heq. inversion heq. subst. auto.
+  Qed.
+
+  Lemma mfmap_inv_cons : forall  {A B} {f g : A -k-> B} (k1 k2 : K) (a1 a2 : A) (l1 l2 : mlist A),
+      mfmap mlist f ((k1, a1) :: l1) = mfmap mlist g ((k2, a2) :: l2) ->
+      f k1 a1 = g k2 a2 /\ mfmap mlist f l1 = mfmap mlist g l2.
+  Proof.
+    introv hyp. rewrite mfmap_mlist_cons in hyp.
+    cbn in hyp. apply mlist_inv_cons in hyp.
+    intuition.
+  Qed.
+
+  Lemma mfmap_inv_cons_hd : forall  {A B} {f g : A -k-> B} (k1 k2 : K) (a1 a2 : A) (l1 l2 : mlist A),
+      mfmap mlist f ((k1, a1) :: l1) = mfmap mlist g ((k2, a2) :: l2) ->
+      f k1 a1 = g k2 a2.
+  Proof.
+    introv hyp. now apply mfmap_inv_cons in hyp.
+  Qed.
+
+  Lemma mfmap_inv_cons_tl : forall  {A B} {f g : A -k-> B} (k1 k2 : K) (a1 a2 : A) (l1 l2 : mlist A),
+      mfmap mlist f ((k1, a1) :: l1) = mfmap mlist g ((k2, a2) :: l2) ->
+      mfmap mlist f l1 = mfmap mlist g l2.
+  Proof.
+    introv hyp. now apply mfmap_inv_cons in hyp.
+  Qed.
+
+End mlist_inversion_principles.

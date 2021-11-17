@@ -140,60 +140,6 @@ Section mfmap_strong_of_mbind_strong.
 
 End mfmap_strong_of_mbind_strong.
 
-(** ** Reasoning principles for proper [mfmap], [fmapk] *)
-(******************************************************************************)
-Section tomset_mfmap_properness_theorems.
-
-  Context
-    F `{MFunctor F} `{! Tomset F}.
-
-  (** *** Corollaries of [tomset_mfmap_proper] *)
-  Section tomset_mfmap_proper.
-
-    Context
-      `{Hproper : ! Mfmap_proper F}.
-
-
-  End tomset_mfmap_proper.
-
-  (** *** Corollaries of [tomset_mfmap_proper_iff] *)
-  Section tomset_mfmap_proper_iff.
-
-    Context
-      `{Hproper : ! Mfmap_proper_iff F}.
-
-    (** **** Parallel maps *)
-    Corollary tomset_mfmap_proper_id_iff : forall A (t : F A) (f : A -k-> A),
-        (forall k a, (k, a) ∈m t -> f k a = a) <-> mfmap F f t = t.
-    Proof.
-      intros. replace t with (mfmap F kid t) at 2 by now rewrite (mfmap_id F).
-      apply Hproper.
-    Qed.
-
-    (** **** Targeted maps *)
-    Corollary tomset_fmapk_proper_iff : forall A (t : F A) k (f g : A -> A),
-        (forall a, (k, a) ∈m t -> f a = g a) <-> fmapk F k f t = fmapk F k g t.
-    Proof.
-      introv. unfold fmapk. unfold_properness; rewrite <- Hproper. split.
-      - intros ? j ? ?. compare values k and j;
-        simpl_tgt_fallback; auto.
-      - intros heq ? ?. specialize (heq k).
-        simpl_tgt_fallback in heq. auto.
-    Qed.
-
-    Corollary tomset_fmapk_proper_id_iff : forall A k (t : F A) (f : A -> A),
-        (forall a, (k, a) ∈m t -> f a = a) <-> fmapk F k f t = t.
-    Proof.
-      intros. replace t with (fmapk F k id t) at 2
-        by now rewrite (fmapk_id F).
-      now rewrite tomset_fmapk_proper_iff.
-    Qed.
-
-  End tomset_mfmap_proper_iff.
-
-End tomset_mfmap_properness_theorems.
-
-
 
 (** * Derived operations [totsetr, totsetkr] *)
 (******************************************************************************)
@@ -272,75 +218,8 @@ Section tomset_mbind_properness_theorems.
     Context
       `{Hproper : ! Mbind_proper F}.
 
-    (** **** Parallel context-sensitive substitutions *)
-    Theorem mbindr_proper {A B} : forall (t : F A) (f g : forall k, W * A -> T k B),
-        (forall k w a, (k, (w, a)) ∈mr t -> f k (w, a) = g k (w, a)) ->
-        mbindr F f t = mbindr F g t.
-    Proof.
-      intros. apply Hproper.
-      intros ? [? ?]; auto.
-    Qed.
-
-    Corollary mbindr_proper_id {A} : forall (t : F A) (f : forall k, W * A -> T k A),
-        (forall k w a, (k, (w, a)) ∈mr t -> f k (w, a) = mret T k a) ->
-        mbindr F f t = t.
-    Proof.
-      intros. replace t with (mbindr F (mret T ◻ const snd) t) at 2
-        by (now rewrite (mbindr_id F)).
-      now apply mbindr_proper.
-    Qed.
-
-    Corollary mbindr_proper_mfmapr {A B} : forall (t : F A) (f : forall k, W * A -> T k B) (g : W * A -k-> B),
-        (forall k w a, (k, (w, a)) ∈mr t -> f k (w, a) = mret T k (g k (w, a))) ->
-        mbindr F f t = mfmapr F g t.
-    Proof.
-      introv. rewrite mfmapr_to_mbindr.
-      now apply (mbindr_proper _ _ (mret T ◻ g)).
-    Qed.
-
-    Corollary mbindr_proper_mbind {A B} : forall (t : F A) (f : forall k, W * A -> T k B) (g : forall k, A -> T k B),
-        (forall k w a, (k, (w, a)) ∈mr t -> f k (w, a) = g k a) ->
-        mbindr F f t = mbind F g t.
-    Proof.
-      introv. rewrite (mbind_to_mbindr F).
-      now apply (mbindr_proper _ _ (g ◻ const snd)).
-    Qed.
 
     (** **** Targeted context-sensitive substitutions *)
-    Lemma bindkr_proper {A} : forall k (t : F A) (f g : W * A -> T k A),
-        (forall w a, (k, (w, a)) ∈mr t -> f (w, a) = g (w, a)) ->
-        bindkr F k f t = bindkr F k g t.
-    Proof.
-      intros. apply mbindr_proper.
-      intros j ? ? ?. destruct_eq_args k j.
-      autorewrite with tea_tgt_eq using auto.
-      autorewrite with tea_tgt_neq using auto.
-    Qed.
-
-    Lemma bindkr_proper_id {A} : forall k (t : F A) (f : W * A -> T k A),
-        (forall w a, (k, (w, a)) ∈mr t -> f (w, a) = mret T k a) ->
-        bindkr F k f t = t.
-    Proof.
-      intros. replace t with (bindkr F k (mret T k ∘ snd) t) at 2
-        by (now rewrite (bindkr_id F)).
-      now apply bindkr_proper.
-    Qed.
-
-    Corollary bindkr_proper_fmapkr {A} : forall k (t : F A) (f : W * A -> T k A) (g : W * A -> A),
-        (forall w a, (k, (w, a)) ∈mr t -> f (w, a) = mret T k (g (w, a))) ->
-        bindkr F k f t = fmapkr F k g t.
-    Proof.
-      intros. rewrite fmapkr_to_bindkr.
-      now apply (bindkr_proper).
-    Qed.
-
-    Corollary bindkr_proper_bindk {A} : forall k (t : F A) (f : W * A -> T k A) (g : A -> T k A),
-        (forall w a, (k, (w, a)) ∈mr t -> f (w, a) = g a) ->
-        bindkr F k f t = bindk F k g t.
-    Proof.
-      intros. rewrite (bindk_to_bindkr F).
-      now apply bindkr_proper.
-    Qed.
 
   End tomset_mbind_proper.
 
@@ -457,11 +336,15 @@ Section properness.
   Context
     F `{MFunctor F} `{! Tomlist F}.
 
-  Definition shapeliness := forall A (x y : F A),
-      shape F x = shape F y /\ tomlist F x = tomlist F y -> x = y.
+  Definition shapeliness :=
 
   Definition tomlist_mfmap_proper :=
 
+        forall A B (x y : F A) (f g : A -k-> B),
+          mshape F x = mshape F y ->
+          mfmap mlist f (tomlist F A x) = mfmap mlist g (tomlist F A y) ->
+          mfmap F f x = mfmap F g y;
+      }.
 
   Definition tomlist_mfmap_proper_inv := forall A B (x y : F A) (f g : A -k-> B),
       mfmap F f x = mfmap F g y ->
@@ -474,9 +357,7 @@ Section properness.
   Context
     `{! Mbind F T}.
 
-  Definition tomlist_mbind_proper := forall A B (x y : F A) (f g : A ~k~> T B),
-      shape F x = shape F y /\ mfmap mlist (pack T f) (tomlist F x) = mfmap mlist (pack T g) (tomlist F y) ->
-      mbind F f x = mbind F g y.
+  Definition tomlist_mbind_proper :=
 
   Definition tomlist_mbind_proper_inv := forall A B (x y : F A) (f g : A ~k~> T B),
       shape F x = shape F y ->
@@ -511,19 +392,6 @@ Section properness_inclusions.
 
     Context
       F `{MFunctor F} `{! Tomlist F} `{! Natural (@tomlist _ F _)}.
-
-    (** The inversion principle for <<mfmap>> is simply always
-      true. This shaprly contrasts with the situation for sets.  *)
-    Lemma shapeliness_0 : tomlist_mfmap_proper_inv F.
-    Proof.
-      unfold_properness. introv hyp. split.
-      assert (lemma : (shape F (mfmap F f x) = shape F (mfmap F g y)))
-        by (now rewrite hyp).
-      now rewrite 2(shape_mfmap) in lemma.
-      assert (lemma : ((tomlist F ∘ mfmap F f) x) = (tomlist F ∘ mfmap F g) y)
-        by (unfold compose; now rewrite hyp).
-      now rewrite <- 2(naturality) in lemma.
-    Qed.
 
     Lemma shapeliness_1 : shapeliness F -> tomlist_mfmap_proper F.
     Proof.
@@ -576,28 +444,6 @@ Section properness_inclusions.
       unfold tomlist_mfmap_proper, tomlist_mbind_proper. introv hyp [? ?].
     Abort.
 
-    Lemma shapeliness_4 : tomlist_mbind_proper F -> tomlist_mfmap_proper F.
-    Proof.
-      unfold_properness. introv hyp [? ?].
-      unfold mfmap, Mfmap_rmod. rewrite <- 2(mbind_mfmap F).
-      unfold compose; fequal. apply hyp. split.
-      - assumption.
-      - generalize dependent (tomlist F y).
-        induction (tomlist F x).
-        + intros l hl; destruct l.
-          reflexivity. rewrite (mfmap_mlist_cons) in hl. inversion hl.
-        + intros l' hl'; destruct l'.
-          * rewrite (mfmap_mlist_cons) in hl'. inversion hl'.
-          * rewrite 2(mfmap_mlist_cons). fequal.
-            { rewrite 2(mfmap_mlist_cons) in hl'.
-              inversion hl'. fequal. destruct p; destruct a.
-              cbn in *. subst. unfold pack. fequal.
-              unfold compose. fequal. auto. }
-            { rewrite 2(mfmap_mlist_cons) in hl'.
-              destruct p; destruct a. inverts hl'.
-              auto. }
-    Qed.
-
   End with_module.
 
 End properness_inclusions.
@@ -610,34 +456,6 @@ Section todo_rename_me.
     Context
       F `{MFunctor F} `{! Tomlist F} `{! Natural (@tomlist _ F _)}.
 
-    #[global] Instance: Mfmap_proper_inv F.
-    Proof.
-      pose (shapeliness_0 F) as hyp.
-      unfold_properness. introv heq hin.
-      specialize (hyp A B t t f g heq). destruct hyp as [hshape hcontents].
-      setoid_rewrite in_iff_in_mlist in hin. induction (tomlist F t).
-      - inversion hin.
-      - destruct hin as [hin|hin].
-        + destruct a0; inverts hin. eauto using mfmap_inv_cons_hd.
-        + destruct a0; apply mfmap_inv_cons_tl in hcontents. auto.
-    Qed.
-
-    #[global] Instance: tomlist_mfmap_proper F -> Mfmap_proper F.
-    Proof.
-      unfold_properness. introv hyp heq.
-      specialize (hyp A B t t f g).
-      assert (hyp2 : mfmap mlist f (tomlist F t) = mfmap mlist g (tomlist F t) ->
-              mfmap F f t = mfmap F g t).
-      { intros. apply hyp. split; auto. } clear hyp.
-      assert (mfmap mlist f (tomlist F t) = mfmap mlist g (tomlist F t)).
-      { clear hyp2. setoid_rewrite in_iff_in_mlist in heq. induction (tomlist F t).
-        - reflexivity.
-        - rewrite 2(mfmap_mlist_cons). destruct a as [k a].
-          cbn. fequal.
-          + fequal. apply heq. left; auto.
-          + apply IHm. intros. apply heq. right; auto. }
-      auto.
-    Qed.
 
   End with_functor.
 

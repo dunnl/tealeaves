@@ -15,7 +15,18 @@ Import Multisorted.Classes.SetlikeFunctor.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 
-(** * Listable monad *)
+(** The statements for <<mbind>> involve an auxiliary function
+    <<pack>> to wrap subtrees in existentials, as lists of type
+    <<mlist>> cannot be heterogenous. *)
+Section pack.
+
+  Context `{Index} (T : K -> Type -> Type) {A B} (f : A ~k~> T B).
+
+  Definition pack := fun k : K => fun a : A => existT (fun k => T k B) k (f k a).
+
+End pack.
+
+(** * Listable multisorted monads *)
 (******************************************************************************)
 Section ListableMultisortedMonad.
 
@@ -33,11 +44,15 @@ Section ListableMultisortedMonad.
       lmmon_mbind : forall k {A B} (f : forall k, A -> T k B),
           tomlist (T k) ∘ mbind (T k) f =
           mbind mlist (fun k => tomlist (T k) ∘ f k) ∘ tomlist (T k);
+      lmmon_respectful : forall k A B (x y : T k A) (f g : A ~k~> T B),
+          mshape (T k) x = mshape (T k) y ->
+          mfmap mlist (pack T f) (tomlist (T k) x) = mfmap mlist (pack T g) (tomlist (T k) y) ->
+          mbind (T k) f x = mbind (T k) g y
     }.
 
 End ListableMultisortedMonad.
 
-(** ** Listable modules *)
+(** * Listable multisorted modules *)
 (******************************************************************************)
 Section ListableMultisortedModule.
 
@@ -55,49 +70,13 @@ Section ListableMultisortedModule.
       lrmod_monad :> ListableMultisortedMonad T;
       lrmod_mbind : forall `(f : A ~k~> T B),
           tomlist F ∘ mbind F f = mbind mlist (fun k => tomlist (T k) ∘ f k) ∘ tomlist F;
+      lrmod_respectful : forall A B (x y : F A) (f g : A ~k~> T B),
+          mshape F x = mshape F y ->
+          mfmap mlist (pack T f) (tomlist F x) = mfmap mlist (pack T g) (tomlist F y) ->
+          mbind F f x = mbind F g y
     }.
 
 End ListableMultisortedModule.
-
-(** * Typeclass inclusions *)
-(******************************************************************************)
-
-(** ** Listable monads are listable modules *)
-(******************************************************************************)
-Section listable_module_of_monad.
-
-  Context
-    `{ListableMultisortedMonad T}.
-
-  Instance ListableMultisortedModule_Monad {k} : ListableMultisortedModule (T k) T :=
-    {| lrmod_mbind := fun A B => lmmon_mbind T k;
-       lrmod_rmod := MultisortedRightModule_Monad k;
-    |}.
-
-End listable_module_of_monad.
-
-(** ** Carriers of listable modules form listable functors *)
-(******************************************************************************)
-Section listable_functor_of_module.
-
-  Context
-    `{ix : Index}
-    (F : Type -> Type)
-    (T : K -> Type -> Type)
-    `{ListableMultisortedModule (ix:=ix) F T}.
-
-  #[global] Instance Natural_module_tomlist : MultisortedNatural (@tomlist ix F _).
-  Proof.
-    introv. unfold_ops @MFmap_rmod.
-    rewrite (lrmod_mbind F T). do 2 fequal.
-    ext k. reassociate <- on right.
-    now rewrite (lmmon_mret T).
-  Qed.
-
-  #[global] Instance Listable_Functor_Module : ListableMultisortedFunctor F := {}.
-
-End listable_functor_of_module.
-
 
 (** * [mlist] is a listable monad *)
 (** For good measure, we prove here that [mlist] is indeed a listable monad. We
@@ -128,10 +107,85 @@ Section mlist_is_listable.
 
 End mlist_is_listable.
 
+(** * Respectfulness conditions *)
+(******************************************************************************)
+Section ListableMonad_respectfulness.
 
+  Context
+    `{ListableMultisortedMonad T}.
 
-(** ** Listable monads are quantifiable *)
-Section quantifiable_of_listable_monad.
+  Lemma setlike_respectful_listable_monad : forall k A B (t : T k A) (f g : A ~k~> T B),
+      (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind (T k) f t = mbind (T k) g t.
+  Proof.
+    introv hyp. apply (lmmon_respectful T).
+    - reflexivity.
+    - setoid_rewrite in_iff_in_mlist in hyp. induction (tomlist (T k) t).
+      + reflexivity.
+      + destruct a as [k' a]. rewrite mfmap_mlist_cons; cbn.
+        fequal.
+        { fequal. cbv. fequal. apply hyp. now left. }
+        { apply IHm. intros. apply hyp. now right. }
+  Qed.
+
+  Lemma shapeliness_listable_monad : forall k A (x y : T k A),
+      mshape (T k) x = mshape (T k) y ->
+      tomlist (T k) x = tomlist (T k) y ->
+      x = y.
+  Proof.
+    intros. replace x with (mbind (T k) (mret T) x)
+      by now (rewrite (mmon_mbind_mret T)).
+    replace y with (mbind (T k) (mret T) y)
+      by now (rewrite (mmon_mbind_mret T)).
+    apply (lmmon_respectful T).
+    - auto.
+    - generalize dependent (tomlist (T k) y). induction (tomlist (T k) x).
+      + introv hyp. cbn. rewrite <- hyp. reflexivity.
+      + introv hyp. destruct a as [j a]. rewrite <- hyp.
+        rewrite mfmap_mlist_cons; cbn. fequal.
+  Qed.
+
+End ListableMonad_respectfulness.
+
+Section ListableModule_respectfulness.
+
+  Context
+    `{ListableMultisortedModule F T}.
+
+  Lemma setlike_respectful_listable_module : forall A B (t : F A) (f g : A ~k~> T B),
+      (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind F f t = mbind F g t.
+    Proof.
+      introv hyp. apply (lrmod_respectful F T).
+      - reflexivity.
+      - setoid_rewrite in_iff_in_mlist in hyp. induction (tomlist F t).
+        + reflexivity.
+        + destruct a as [k' a]. rewrite mfmap_mlist_cons; cbn.
+          fequal.
+          { fequal. cbv. fequal. apply hyp. now left. }
+          { apply IHm. intros. apply hyp. now right. }
+    Qed.
+
+    Lemma shapeliness_listable_module : forall A (x y : F A),
+        mshape F x = mshape F y ->
+        tomlist F x = tomlist F y ->
+        x = y.
+    Proof.
+      intros. replace x with (mbind F (mret T) x)
+        by now (rewrite (rmod_mret F T)).
+      replace y with (mbind F (mret T) y)
+        by now (rewrite (rmod_mret F T)).
+      apply (lrmod_respectful F T).
+      - auto.
+      - generalize dependent (tomlist F y). induction (tomlist F x).
+        + introv hyp. cbn. rewrite <- hyp. reflexivity.
+        + introv hyp. destruct a as [k a]. rewrite <- hyp.
+          rewrite mfmap_mlist_cons; cbn. fequal.
+    Qed.
+
+End ListableModule_respectfulness.
+
+(** * Listable monads  are set-like *)
+(******************************************************************************)
+Section SetlikeMonad_Listable.
 
   Context
     `{ListableMultisortedMonad T}.
@@ -157,11 +211,14 @@ Section quantifiable_of_listable_monad.
 
   #[global] Instance SetlikeMultisortedMonad_Listable : SetlikeMultisortedMonad T :=
     {| qmmon_mret := qmmon_mret_Listable;
-       qmmon_mbind := qmmon_mbind_Listable; |}.
+       qmmon_mbind := qmmon_mbind_Listable;
+       qmmon_respectful := setlike_respectful_listable_monad;
+    |}.
 
-End quantifiable_of_listable_monad.
+End SetlikeMonad_Listable.
 
-(** ** Listable modules are quantifiable *)
+(** * Listable modules are set-like *)
+(******************************************************************************)
 Section quantifiable_of_listable_module.
 
   Context
@@ -176,13 +233,53 @@ Section quantifiable_of_listable_module.
     reflexivity.
   Qed.
 
-  #[global] Instance Quantifiable_Listable_Module : SetlikeMultisortedModule F T :=
+  #[global] Instance SetlikeMultisortedModule_Listable : SetlikeMultisortedModule F T :=
     {| qrmod_mbind := qrmod_mbind_Listable;
+       qrmod_respectful := setlike_respectful_listable_module;
     |}.
 
 End quantifiable_of_listable_module.
 
+(** * Typeclass inclusions *)
+(******************************************************************************)
 
+(** ** Listable monads are listable modules *)
+(******************************************************************************)
+Section listable_module_of_monad.
+
+  Context
+    `{ListableMultisortedMonad T}.
+
+  Instance ListableMultisortedModule_Monad {k} : ListableMultisortedModule (T k) T :=
+    {| lrmod_mbind := fun A B => lmmon_mbind T k;
+       lrmod_rmod := MultisortedRightModule_Monad k;
+       lrmod_respectful := lmmon_respectful T k;
+    |}.
+
+End listable_module_of_monad.
+
+(** ** Carriers of listable modules form listable functors *)
+(******************************************************************************)
+Section listable_functor_of_module.
+
+  Context
+    `{ix : Index}
+    (F : Type -> Type)
+    (T : K -> Type -> Type)
+    `{ListableMultisortedModule (ix:=ix) F T}.
+
+  #[global] Instance Natural_module_tomlist : MultisortedNatural (@tomlist ix F _).
+  Proof.
+    introv. unfold_ops @MFmap_rmod.
+    rewrite (lrmod_mbind F T). do 2 fequal.
+    ext k. reassociate <- on right.
+    now rewrite (lmmon_mret T).
+  Qed.
+
+  #[global] Instance ListableFunctor_Module : ListableMultisortedFunctor F :=
+    {| lfun_shapeliness := shapeliness_listable_module; |}.
+
+End listable_functor_of_module.
 
 (** * Properties of global [mbind] over listable functors *)
 (******************************************************************************)
@@ -202,7 +299,8 @@ Section listable_module_global.
 
   Existing Instance lrmod_monad.
 
-  (** Interaction between [tomlist] and [bindk] *)
+  (** ** Interaction between [tomlist] and [bindk] *)
+  (******************************************************************************)
   Theorem tomlist_bindk {A} k : forall (f : A -> T k A),
       tomlist F ∘ bindk F k f = bindk mlist k (tomlist (T k) ∘ f) ∘ tomlist F.
   Proof.
