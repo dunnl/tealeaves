@@ -280,14 +280,18 @@ Section TraversableMonad_kleisli_category.
     now rewrite (fun_fmap_id G).
   Qed.
 
-  Theorem kleisli_comp {A B C D} :
+  Theorem kleisli_assoc {A B C D} :
     forall (h : C -> G3 (T D)) (g : B -> G2 (T C)) (f : A -> G1 (T B)),
        h ⋆tm (g ⋆tm f : A -> (G1 ∘ G2) (T C)) =
        (h ⋆tm g : B -> (G2 ∘ G3) (T D)) ⋆tm f.
   Proof.
-    intros. unfold kcomposetm, bindt.
-    unfold_ops @Fmap_compose. repeat reassociate <-. fequal.
-  Admitted.
+    intros. unfold kcomposetm.
+    repeat reassociate <-. fequal.
+    unfold fmap at 1, Fmap_compose.
+    unfold_compose_in_compose.
+    rewrite (fun_fmap_fmap G1 (f := bindt T g)). fequal.
+    now rewrite <- (bindt_bindt T).
+  Qed.
 
 End TraversableMonad_kleisli_category.
 
