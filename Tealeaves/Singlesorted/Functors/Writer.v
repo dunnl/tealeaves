@@ -189,7 +189,7 @@ Qed.
 Section strength_as_writer_distributive_law.
 
   Context
-    `{Monad T}
+    `{Functor T}
     `{Monoid W}.
 
   Lemma writer_strength_join_l : forall A : Type,
@@ -208,6 +208,9 @@ Section strength_as_writer_distributive_law.
   Proof.
     reflexivity.
   Qed.
+
+  Context
+    `{Return T} `{Join T} `{! Monad T}.
 
   #[global] Instance BeckDistributiveLaw_strength :
     BeckDistributiveLaw (W ×) T (@BeckDistribution_strength W T _) :=

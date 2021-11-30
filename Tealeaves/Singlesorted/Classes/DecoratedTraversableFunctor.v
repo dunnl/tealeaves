@@ -59,12 +59,32 @@ Section DecoratedTraversableFunctor_monoid.
       `{DecoratedTraversableFunctor W (op := op) (unit := zero) T}
       `{DecoratedTraversableFunctor W (op := op) (unit := zero) U}.
 
+    #[local] Set Keyed Unification.
     Theorem dtfun_compat_compose :
       forall (A : Type) `{Applicative G},
         dist (U ∘ T) G ∘ fmap (U ∘ T) (strength G) ∘ dec (U ∘ T) (A := G A) =
         fmap G (dec (U ∘ T)) ∘ dist (U ∘ T) G.
     Proof.
+      intros.
+      reassociate -> on left. unfold dec at 1, Decorate_compose.
+      do 3 reassociate <- on left. reassociate -> near (fmap U (shift T)).
+      rewrite (fun_fmap_fmap U).
+      unfold shift. reassociate <- on left. rewrite (fun_fmap_fmap T).
+      rewrite <- (fun_fmap_fmap U). reassociate <- on left.
+      rewrite (writer_strength_join_l).
+      change (fmap U (fmap T ?f)) with (fmap (U ∘ T) f).
+      do 2 rewrite <- (fun_fmap_fmap (U ∘ T)).
+      change (fmap (U ∘ T) (fmap G ?f)) with (fmap (U ∘ T ∘ G) f).
+      do 2 reassociate <-.
+      rewrite <- (dist_natural (U ∘ T)).
+      reassociate -> near (fmap (U ∘ T) (fmap (prod W) (strength G))).
+      rewrite (fun_fmap_fmap (U ∘ T)).
+      unfold dist at 1, Dist_compose.
+      reassociate -> near (fmap (U ∘ T) (strength G ∘ fmap (prod W) (strength G))).
+      reassociate -> near (fmap (U ∘ T) (strength G ∘ fmap (prod W) (strength G))).
+      rewrite (fun_fmap_fmap U).
     Admitted.
+    #[local] Unset Keyed Unification.
 
     #[global] Instance DecoratedTraversableFunctor_compose :
       DecoratedTraversableFunctor W (U ∘ T) :=
