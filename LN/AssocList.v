@@ -1083,6 +1083,20 @@ Section uniq_auto_lemmas.
       + now autorewrite with tea_rw_dom in *.
   Qed.
 
+  Lemma uniq_fmap_1 : forall E (f : A -> B),
+      uniq (fmap (list ∘ prod atom) f E) ->
+      uniq E.
+  Proof.
+    intros. eapply uniq_envmap_1. exact H.
+  Qed.
+
+  Lemma uniq_fmap_2 : forall E (f : A -> B),
+      uniq E ->
+      uniq (fmap (list ∘ prod atom) f E).
+  Proof.
+    intros. now apply uniq_envmap_2.
+  Qed.
+
 End uniq_auto_lemmas.
 
 #[export] Hint Resolve uniq_nil uniq_push uniq_one
@@ -1129,20 +1143,26 @@ Section uniq_rewriting_lemmas.
     intuition eauto with tea_alist.
   Qed.
 
-  Lemma uniq_fmap_iff : forall E (f : A -> B),
+  Lemma uniq_envmap_iff : forall E (f : A -> B),
       uniq (envmap f E) <-> uniq E.
   Proof.
     intuition eauto with tea_alist.
+  Qed.
+
+  Lemma uniq_fmap_iff : forall E (f : A -> B),
+      uniq (fmap (list ∘ prod atom) f E) <-> uniq E.
+  Proof.
+    intros. now rewrite uniq_envmap_iff.
   Qed.
 
 End uniq_rewriting_lemmas.
 
 Create HintDb tea_rw_uniq.
 Hint Rewrite uniq_nil_iff uniq_cons_iff
-     uniq_one_iff uniq_app_iff uniq_fmap_iff : tea_rw_uniq.
+     uniq_one_iff uniq_app_iff uniq_envmap_iff uniq_fmap_iff : tea_rw_uniq.
 
 (** ** Stronger theorems about unique lists *)
-(* ********************************************************************** *)
+(******************************************************************************)
 Section binds_theorems_uniq.
 
   Context
@@ -1182,6 +1202,210 @@ Section binds_theorems_uniq.
   Qed.
 
 End binds_theorems_uniq.
+
+(** ** More facts about [uniq] *)
+(* *********************************************************************** *)
+Section uniq_theorems.
+
+  Variable  A     : Type.
+  Variables x y   : atom.
+  Variables a b   : A.
+  Variables E F G : alist A.
+
+  Lemma uniq_insert_mid :
+    uniq (G ++ E) ->
+    ~ x ∈@ domset G ->
+    ~ x ∈@ domset E ->
+    uniq (G ++ x ~ a ++ E).
+  Proof.
+    clear. autorewrite with tea_rw_uniq tea_rw_disj.
+    unfold disjoint. intuition fsetdec.
+  Qed.
+
+  Lemma uniq_remove_mid :
+    uniq (E ++ F ++ G) ->
+    uniq (E ++ G).
+  Proof.
+    clear.
+    autorewrite with tea_rw_uniq tea_rw_disj.
+    unfold disjoint. intuition fsetdec.
+  Qed.
+
+  Lemma uniq_reorder_1 :
+    uniq (E ++ F) ->
+    uniq (F ++ E).
+  Proof.
+    autorewrite with tea_rw_uniq tea_rw_disj.
+    unfold disjoint. intuition fsetdec.
+  Qed.
+
+  Lemma uniq_reorder_2 :
+    uniq (E ++ F ++ G) ->
+    uniq (F ++ E ++ G).
+  Proof.
+    autorewrite with tea_rw_uniq tea_rw_disj.
+    unfold disjoint. intuition fsetdec.
+  Qed.
+
+  Lemma uniq_fmap_app_l : forall (f : A -> A),
+    uniq (F ++ E) ->
+    uniq (envmap f F ++ E).
+  Proof.
+    intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
+    tauto.
+  Qed.
+
+  Lemma fresh_mid_tail :
+    uniq (F ++ x ~ a ++ E) ->
+    ~ x ∈@ domset E.
+  Proof.
+    intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
+    tauto.
+  Qed.
+
+  Lemma fresh_mid_head :
+    uniq (F ++ x ~ a ++ E) ->
+    ~ x ∈@ domset F.
+  Proof.
+    intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
+    tauto.
+  Qed.
+
+End uniq_theorems.
+
+(** * Facts about [binds] *)
+(* *********************************************************************** *)
+Section binds_theorems.
+  Variables A B   : Type.
+  Variables f     : A -> B.
+  Variables x y   : atom.
+  Variables a b   : A.
+  Variables E F G : alist A.
+
+  Lemma binds_dec :
+    (forall a b : A, {a = b} + {a <> b}) ->
+    {(x, a) ∈ E} + {~ (x, a) ∈ E}.
+  Proof.
+    clear. intros. alist induction E.
+    - right. auto.
+    - destruct IHl.
+      + left. simpl_list. now right.
+      + assert (tmp : {x = x0} + {x <> x0}).
+        { apply EqDec_eq_of_EqDec. typeclasses eauto. }
+        destruct tmp; destruct (X a a0).
+        * left; left. now subst.
+        * right. simpl_list. intuition.
+          apply n0. now inversion H0.
+        * right. simpl_list. intuition.
+          apply n0. now inversion H0.
+        * right. simpl_list. intuition.
+          apply n0. now inversion H0.
+  Defined.
+
+  Lemma binds_lookup :
+    {a : A | (x, a) ∈ E} + (forall a, ~ (x, a) ∈ E).
+  Proof.
+    clear. intros. induction E.
+    - simpl_list; cbn; now right.
+    - destruct a as [y a']. destruct IHl.
+      + destruct s. left. eexists. right. eauto.
+      + compare values x and y.
+        { left. exists a'. now left. }
+        { right. introv. simpl_list.
+          intros [contra|contra].
+          - inversion contra; subst. contradiction.
+          - eapply n; eauto.
+        }
+  Defined.
+
+  Lemma binds_lookup_dec :
+    decidable (exists a, (x, a) ∈ E).
+  Proof with intuition eauto.
+    clear. intros. unfold decidable.
+    destruct binds_lookup as [[? ?] | ?]...
+    right. intros [? ?]...
+  Defined.
+
+  Lemma binds_weaken :
+    (x, a) ∈ (E ++ G) ->
+    (x, a) ∈ (E ++ F ++ G).
+  Proof.
+    clear. intros H. simpl_list in *. intuition.
+  Qed.
+
+  Lemma binds_mid_eq :
+    (x, a) ∈ (F ++ (x ~ b) ++ E) ->
+    uniq (F ++ (x ~ b) ++ E) ->
+    a = b.
+  Proof.
+    clear. intros J ?.
+    autorewrite with tea_rw_uniq tea_rw_disj in *.
+    simpl_list in *. destruct J.
+    - intuition. contradiction H. rewrite in_domset_iff. eauto.
+    - destruct H0; subst.
+      + now inversion H0.
+      + intuition. contradiction H6. rewrite in_domset_iff. eauto.
+  Qed.
+
+  Lemma binds_remove_mid :
+    (x, a) ∈ (F ++ (y ~ b) ++ G) ->
+    x <> y ->
+    (x, a) ∈ (F ++ G).
+  Proof. clear. intros H.
+  Admitted.
+
+  Lemma binds_In : forall x a (E : alist A),
+    (x, a) ∈ E -> AtomSet.In x (domset E).
+  Proof.
+  Admitted.
+
+  Lemma binds_In_inv : forall x (E : alist A),
+     x ∈@ domset E -> exists a, (x, a) ∈ E.
+  Proof.
+    clear. introv H.
+  Admitted.
+
+  Lemma binds_unique :
+    (x, a) ∈ E ->
+    (x, b) ∈ E ->
+    uniq E ->
+    a = b.
+  Proof.
+    clear. alist induction E as [ | ? ? F IH ].
+    inversion 1.
+  Admitted.
+
+  Lemma fresh_app_l :
+    uniq (F ++ E) ->
+    (x, a) ∈ E ->
+    ~ AtomSet.In x (domset F).
+  Proof.
+  Admitted.
+
+  Lemma fresh_app_r :
+    uniq (F ++ E) ->
+    (x, a) ∈ F ->
+    ~ AtomSet.In x (domset E).
+  Proof.
+  Admitted.
+
+  (* If x is in an alist, it is either in the front half or
+   the back half. *)
+  Lemma binds_split : (x, a) ∈ G -> exists G1 G2, G = G2 ++ one (x, a) ++ G1.
+  Proof.
+    clear. intro HB. induction G.
+    + inversion HB.
+    + destruct a0 as [y b].
+      apply binds_cons_1 in HB.
+      destruct HB as [[E1 E2]|E]. subst.
+      ++ exists l. exists (@nil (atom * A)). simpl_alist. auto.
+      ++ destruct (IHl E) as [G1 [G2 E2]].
+         subst.
+         eexists. exists ((y ~ b) ++ G2). simpl_alist.
+         eauto.
+  Qed.
+
+End binds_theorems.
 
 (** ** Permutation lemmas *)
 (*******************************************************************************)
@@ -1351,7 +1575,7 @@ Ltac gather_atoms :=
   constr:(AtomSet.empty).
 
 Tactic Notation "pick" "fresh" ident(Y) "for" constr(L) :=
-  let Fr := fresh "Fr" in
+  let Fr := fresh "Hfresh" in
   let L := beautify_fset L in
   (destruct (atom_fresh L) as [Y Fr]).
 

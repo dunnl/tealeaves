@@ -2,6 +2,7 @@ From Tealeaves Require Export
      Singlesorted.Theory.Product
      LN.Leaf LN.Atom LN.AtomSet LN.AssocList
      LN.Singlesorted.Operations
+     LN.Singlesorted.Theory
      Singlesorted.Classes.DecoratedTraversableModule.
 
 Export List.ListNotations.
@@ -244,14 +245,26 @@ Section dec_term_rewrite.
   Context
     `{f : A -> B}.
 
-  Lemma dec_term_lam1 : forall (X : typ) (t : term A),
+  Lemma dec_term1 : forall (x : A),
+      dec term (Var x) = Var (0, x).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma dec_term21 : forall (X : typ) (t : term A),
       dec term (Lam X t) = shift term (1, Lam X (dec term t)).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dec_term_lam2 : forall (X : typ) (t : term A),
+  Lemma dec_term22 : forall (X : typ) (t : term A),
       dec term (Lam X t) = Lam X (shift term (1, dec term t)).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma dec_term3 : forall (t1 t2 : term A),
+      dec term (Ap t1 t2) = Ap (dec term t1) (dec term t2).
   Proof.
     reflexivity.
   Qed.
@@ -457,85 +470,145 @@ Instance TraversableMonad_term : TraversableMonad term :=
 
 (** * Listable instance (redundant) *)
 (******************************************************************************)
-Fixpoint tolist_term {A} (t : term A) : list A :=
-  match t with
-  | Var a => [ a ]
-  | Lam X t => tolist_term t
-  | Ap t1 t2 => tolist_term t1 ++ tolist_term t2
-  end.
+Section term_listable_instance.
 
-Instance Tolist_term : Tolist term := @tolist_term.
+  Fixpoint tolist_term {A} (t : term A) : list A :=
+    match t with
+    | Var a => [ a ]
+    | Lam X t => tolist_term t
+    | Ap t1 t2 => tolist_term t1 ++ tolist_term t2
+    end.
 
-Theorem tolist_natural : forall (A B : Type) (f : A -> B),
-    fmap list f ∘ tolist term = tolist term ∘ fmap term f.
-Proof.
-  intros. unfold compose. ext t. induction t.
-  - reflexivity.
-  - cbn. now rewrite IHt.
-  - cbn. rewrite <- IHt1, <- IHt2.
-    now autorewrite with tea_list.
-Qed.
+  Instance Tolist_term : Tolist term := @tolist_term.
 
-Instance: Natural (@tolist _ _).
-Proof.
-  constructor; try typeclasses eauto.
-  apply tolist_natural.
-Qed.
+  Theorem tolist_natural : forall (A B : Type) (f : A -> B),
+      fmap list f ∘ tolist term = tolist term ∘ fmap term f.
+  Proof.
+    intros. unfold compose. ext t. induction t.
+    - reflexivity.
+    - cbn. now rewrite IHt.
+    - cbn. rewrite <- IHt1, <- IHt2.
+      now autorewrite with tea_list.
+  Qed.
 
-(** ** Shapeliness *)
+  Instance: Natural (@tolist _ _).
+  Proof.
+    constructor; try typeclasses eauto.
+    apply tolist_natural.
+  Qed.
+
+  (** ** Shapeliness *)
+  (******************************************************************************)
+  Theorem tolist_equal : forall {A B : Type} {f g : A -> B} (t : term A),
+      List.map f (tolist term t) = List.map g (tolist term t) ->
+      fmap term f t = fmap term g t.
+  Proof.
+    intros.
+    induction t.
+    - cbn in *. inversion H. reflexivity.
+    - cbn in *. f_equal; auto.
+    - cbn in *. apply List.fmap_app_inv in H. destruct H.
+      f_equal; auto.
+  Qed.
+
+  Theorem shapeliness_term : forall {A : Type} (t1 t2 : term A),
+      shape term t1 = shape term t2 /\
+      tolist term t1 = tolist term t2 ->
+      t1 = t2.
+  Proof.
+    introv [Hyp1 Hyp2]. generalize dependent t2.
+    induction t1; intros t2; destruct t2; try discriminate; intros.
+    - now preprocess.
+    - preprocess. erewrite IHt1; eauto.
+    - preprocess. cbn in *.
+      assert (t1_1 = t2_1).
+      { apply IHt1_1; auto. eauto using (shape_l term). }
+      assert (t1_2 = t2_2).
+      { apply IHt1_2; auto. eauto using (shape_r term). }
+      now subst.
+  Qed.
+
+  Instance ListableFunctor_term : ListableFunctor term :=
+    {| lfun_shapeliness := @shapeliness_term; |}.
+
+  Theorem tolist_ret : forall (A : Type),
+      tolist term ∘ ret term (A := A) = one.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Theorem tolist_join : forall (A : Type),
+      tolist term ∘ join term =
+      join list (A := A) ∘ tolist term ∘ fmap term (tolist term).
+  Proof.
+    intros. unfold compose. ext t. induction t.
+    - cbn. auto with datatypes.
+    - cbn. now rewrite IHt.
+    - cbn. rewrite IHt1, IHt2.
+      now autorewrite with tea_list.
+  Qed.
+
+  Instance ListableMonad_term : ListableMonad term :=
+    {| lmon_ret := tolist_ret;
+       lmon_join := tolist_join; |}.
+
+End term_listable_instance.
+
+(** ** Rewriting lemmas for <<tolist>>, <<toset>> *)
 (******************************************************************************)
-Theorem tolist_equal : forall {A B : Type} {f g : A -> B} (t : term A),
-    List.map f (tolist term t) = List.map g (tolist term t) ->
-    fmap term f t = fmap term g t.
-Proof.
-  intros.
-  induction t.
-  - cbn in *. inversion H. reflexivity.
-  - cbn in *. f_equal; auto.
-  - cbn in *. apply List.fmap_app_inv in H. destruct H.
-    f_equal; auto.
-Qed.
+Section term_list_rewrite.
 
-Theorem shapeliness_term : forall {A : Type} (t1 t2 : term A),
-    shape term t1 = shape term t2 /\
-    tolist term t1 = tolist term t2 ->
-    t1 = t2.
-Proof.
-  introv [Hyp1 Hyp2]. generalize dependent t2.
-  induction t1; intros t2; destruct t2; try discriminate; intros.
-  - now preprocess.
-  - preprocess. erewrite IHt1; eauto.
-  - preprocess. cbn in *.
-    assert (t1_1 = t2_1).
-    { apply IHt1_1; auto. eauto using (shape_l term). }
-    assert (t1_2 = t2_2).
-    { apply IHt1_2; auto. eauto using (shape_r term). }
-    now subst.
-Qed.
+  Variable (A : Type).
 
-Instance ListableFunctor_term : ListableFunctor term :=
-  {| lfun_shapeliness := @shapeliness_term; |}.
+  Lemma tolist_term_spec : forall (t : term A),
+      tolist term t = tolist_term t.
+  Proof.
+    intros. induction t.
+    + reflexivity.
+    + cbn. rewrite <- IHt.
+      reflexivity.
+    + cbn. rewrite <- IHt1, <- IHt2. reflexivity.
+  Qed.
 
-Theorem tolist_ret : forall (A : Type),
-    tolist term ∘ ret term (A := A) = one.
-Proof.
-  reflexivity.
-Qed.
+  Lemma tolist_term_1 : forall (x : A),
+    tolist_term (Var x) = [x].
+  Proof.
+    reflexivity.
+  Qed.
 
-Theorem tolist_join : forall (A : Type),
-    tolist term ∘ join term =
-    join list (A := A) ∘ tolist term ∘ fmap term (tolist term).
-Proof.
-  intros. unfold compose. ext t. induction t.
-  - cbn. auto with datatypes.
-  - cbn. now rewrite IHt.
-  - cbn. rewrite IHt1, IHt2.
-    now autorewrite with tea_list.
-Qed.
+  Lemma tolist_term_2 : forall (X : typ) (t : term A),
+    tolist_term (Lam X t) = tolist_term t.
+  Proof.
+    reflexivity.
+  Qed.
 
-Instance ListableMonad_term : ListableMonad term :=
-  {| lmon_ret := tolist_ret;
-     lmon_join := tolist_join; |}.
+  Lemma tolist_term_3 : forall (t1 t2 : term A),
+      tolist_term (Ap t1 t2) = tolist_term t1 ++ tolist_term t2.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma in_term_1 : forall (x y : A),
+      x ∈ Var y <-> x = y.
+  Proof.
+    intros; cbn. intuition.
+  Qed.
+
+  Lemma in_term_2 : forall (y : A) (X : typ) (t : term A),
+    y ∈ (Lam X t) = y ∈ t.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma in_term_3 : forall (t1 t2 : term A) (y : A),
+      y ∈ (Ap t1 t2) <-> y ∈ t1 \/ y ∈ t2.
+  Proof.
+    intros. unfold_ops @Toset_Tolist.
+    unfold compose. rewrite 3(tolist_term_spec).
+    rewrite tolist_term_3. now simpl_list.
+  Qed.
+
+End term_list_rewrite.
 
 (** * Compatibility between decoration and traversal *)
 (******************************************************************************)
@@ -650,6 +723,196 @@ Section test_notations.
   Proof. intro. cbn. unfold compose. simpl. compare values x and y. Qed.
 
 End test_notations.
+
+(** * Rewriting lemmas for high-level operations *)
+(******************************************************************************)
+
+(** ** Rewriting lemmas for <<free>>, <<freeset>> *)
+(******************************************************************************)
+Section term_free_rewrite.
+
+  Variable (A : Type).
+
+  Lemma term_free11 : forall (b : nat) (x : atom),
+      x ∈ free term (Var (Bd b)) <-> False.
+  Proof.
+    intros. reflexivity.
+  Qed.
+
+  Lemma term_free12 : forall (y : atom) (x : atom),
+      x ∈ free term (Var (Fr y)) <-> x = y.
+  Proof.
+    intros. cbn. intuition.
+  Qed.
+
+  Lemma term_free2 : forall (x : atom) (t : term leaf) (X : typ),
+      x ∈ free term (Lam X t) <-> x ∈ free term t.
+  Proof.
+    intros. rewrite in_free_iff. rewrite in_term_2.
+    now rewrite <- in_free_iff.
+  Qed.
+
+  Lemma term_free3 : forall (x : atom) (t1 t2 : term leaf),
+      x ∈ free term (Ap t1 t2) <-> x ∈ free term t1 \/ x ∈ free term t2.
+  Proof.
+    intros. rewrite in_free_iff. rewrite in_term_3.
+    now rewrite <- 2(in_free_iff).
+  Qed.
+
+  Lemma term_in_freeset11 : forall (b : nat) (x : atom),
+      AtomSet.In x (freeset term (Var (Bd b))) <-> False.
+  Proof.
+    intros. rewrite <- free_iff_freeset.
+    now rewrite term_free11.
+  Qed.
+
+  Lemma term_in_freeset12 : forall (y : atom) (x : atom),
+      AtomSet.In x (freeset term (Var (Fr y))) <-> x = y.
+  Proof.
+    intros. rewrite <- free_iff_freeset.
+    now rewrite term_free12.
+  Qed.
+
+  Lemma term_in_freeset2 : forall (x : atom) (t : term leaf) (X : typ),
+      AtomSet.In x (freeset term (Lam X t)) <-> AtomSet.In x (freeset term t).
+  Proof.
+    intros. rewrite <- 2(free_iff_freeset). now rewrite term_free2.
+  Qed.
+
+  Lemma term_in_freeset3 : forall (x : atom) (t1 t2 : term leaf),
+      AtomSet.In x (freeset term (Ap t1 t2)) <-> AtomSet.In x (freeset term t1) \/ AtomSet.In x (freeset term t2).
+  Proof.
+    intros. rewrite <- 3(free_iff_freeset). now rewrite term_free3.
+  Qed.
+
+  Lemma term_freeset11 : forall (b : nat) (x : atom),
+      freeset term (Var (Bd b)) [=] ∅.
+  Proof.
+    intros. fsetdec.
+  Qed.
+
+  Lemma term_freeset12 : forall (y : atom),
+      freeset term (Var (Fr y)) [=] {{ y }}.
+  Proof.
+    intros. cbn. fsetdec.
+  Qed.
+
+  Lemma term_freeset2 : forall (t : term leaf) (X : typ),
+      freeset term (Lam X t) [=] freeset term t.
+  Proof.
+    intros. cbn. fsetdec.
+  Qed.
+
+  Lemma term_freeset3 : forall (t1 t2 : term leaf),
+      freeset term (Ap t1 t2) [=] freeset term t1 ∪ freeset term t2.
+  Proof.
+    intros. unfold AtomSet.Equal; intro x.
+    rewrite term_in_freeset3. fsetdec.
+  Qed.
+
+End term_free_rewrite.
+
+(** ** Rewriting lemmas for <<∈d>> *)
+(******************************************************************************)
+Section term_ind_rewrite.
+
+  Lemma term_ind1 : forall (l1 l2 : leaf) (n : nat),
+      (n, l1) ∈d (Var l2) <-> n = Ƶ /\ l1 = l2.
+  Proof.
+    introv. unfold tosetd, compose. rewrite dec_term1.
+    rewrite in_term_1. split; intros; now preprocess.
+  Qed.
+
+  Lemma term_ind21 : forall (t : term leaf) (l : leaf) (n : nat) (X : typ),
+      (n, l) ∈d (λ X ⋅ t) <-> (n - 1, l) ∈d t /\ n <> 0.
+  Proof.
+    introv. unfold tosetd, compose.
+    rewrite dec_term22. rewrite in_term_2.
+    rewrite (in_shift_iff term). unfold_ops @Monoid_op_plus.
+    split.
+    + intros [w2 [hyp1 hyp2]]. subst.
+      now replace (1 + w2 - 1) with w2 by lia.
+    + intros [hyp1 hyp2]. exists (n - 1). split; now try lia.
+  Qed.
+
+  Lemma term_ind22 : forall (t : term leaf) (l : leaf) (n : nat) (X : typ),
+      (n, l) ∈d (λ X ⋅ t) <-> exists m, (m, l) ∈d t /\ n = S m.
+  Proof.
+    introv. rewrite term_ind21. split.
+    + introv [hyp1 hyp2]. exists (n - 1). split; now try lia.
+    + intros [m [hyp1 hyp2]]. split; try lia. subst.
+      now replace (S m - 1) with m by lia.
+  Qed.
+
+  Lemma term_ind3 : forall (t1 t2 : term leaf) (n : nat) (l : leaf),
+      (n, l) ∈d ([t1][t2]) <-> (n, l) ∈d t1 \/ (n, l) ∈d t2.
+  Proof.
+    introv. unfold tosetd, compose. rewrite dec_term3.
+    now rewrite in_term_3.
+  Qed.
+
+End term_ind_rewrite.
+
+(** ** Rewriting lemmas for <<open>>, <<∈ open>> *)
+(******************************************************************************)
+Section term_open_rewrite.
+
+  Lemma term_in_open11 : forall (n : nat) (l : leaf) (x : atom) (t : term leaf),
+    (n, l) ∈d (t '(Var (Fr x))) <-> exists (n1 : nat) (l1 : leaf),
+      (n1, l1) ∈d t /\ ( (is_opened (n1, l1) /\ l1 = Fr x)
+                        \/ (~ is_opened (n1, l1) /\ n = n1) ).
+  Proof.
+    intros. rewrite ind_open_iff. split.
+    - intros [l1 [n1 [n2 [G1 [G2 G3]]]]].
+      exists n1 l1. subst. splits; auto.
+      right. split.
+      + cbn in G2. destruct l1. cbn. auto.
+        compare naturals n and n1.
+  Abort.
+
+End term_open_rewrite.
+
+(** ** Rewriting lemmas for <<subst>> *)
+(******************************************************************************)
+
+(** ** Rewriting lemmas for <<locally_closed>> *)
+(******************************************************************************)
+Theorem term_lc11 : forall (n : nat),
+    locally_closed term (Var (Bd n)) <-> False.
+Proof.
+  intros. unfold locally_closed, locally_closed_gap.
+  setoid_rewrite term_ind1. intuition. specialize (H 0 (Bd n) ltac:(auto)).
+  cbn in H. lia.
+Qed.
+
+Theorem term_lc12 : forall (x : atom),
+    locally_closed term (Var (Fr x)) <-> True.
+Proof.
+  intros. unfold locally_closed, locally_closed_gap.
+  setoid_rewrite term_ind1. intuition.
+  now subst.
+Qed.
+
+Theorem term_lc2 : forall (X : typ) (t : term leaf),
+    locally_closed term (Lam X t) <-> locally_closed_gap term 1 t.
+Proof.
+  intros. unfold locally_closed, locally_closed_gap.
+  setoid_rewrite term_ind22. split.
+  - intros. destruct l; cbn; auto.
+    cbn. specialize (H (S w) (Bd n)). cbn in H.
+    assert (exists m : nat, (m, Bd n) ∈d t /\ S w = S m) by
+        (now exists w).
+    specialize (H H1). unfold_monoid. lia.
+  - introv hyp1 [m [hyp2 hyp3]]. destruct l; subst; cbn. auto.
+    specialize (hyp1 m (Bd n) hyp2). cbn in hyp1. unfold_monoid. lia.
+Qed.
+
+Theorem term_lc3 : forall (t1 t2 : term leaf),
+    locally_closed term ([t1][t2]) <-> locally_closed term t1 /\ locally_closed term t2.
+Proof.
+  intros. unfold locally_closed, locally_closed_gap.
+  setoid_rewrite term_ind3. intuition.
+Qed.
 
 (** * Typing judgments for STLC *)
 (******************************************************************************)

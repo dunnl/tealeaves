@@ -220,7 +220,7 @@ Section tosetd_utility_lemmas.
     introv hyp. apply (in_fmap_iff F). now exists (w, a).
   Qed.
 
-  Theorem in_of_inr : forall w a t,
+  Theorem in_of_ind : forall w a t,
       (w, a) ∈d t -> a ∈ t.
   Proof.
     introv hyp. replace t with (fmap F (extract (prod W)) (dec F t)).
@@ -229,7 +229,7 @@ Section tosetd_utility_lemmas.
     now rewrite (dfun_dec_extract W F).
   Qed.
 
-  Theorem inr_of_in : forall t a,
+  Theorem ind_of_in : forall t a,
       a ∈ t <-> exists w, (w, a) ∈d t.
   Proof.
     introv. split; intro hyp.
@@ -237,7 +237,7 @@ Section tosetd_utility_lemmas.
         by (now compose near t on left; rewrite (dfun_dec_extract W F)).
       rewrite (in_fmap_iff F) in hyp. destruct hyp as [[w ?] [? heq]].
       inverts heq. now (exists w).
-    - destruct hyp as [? hyp]. now apply in_of_inr in hyp.
+    - destruct hyp as [? hyp]. now apply in_of_ind in hyp.
   Qed.
 
 End tosetd_utility_lemmas.
@@ -286,7 +286,7 @@ Section decorated_setlike_properties.
 
   (** *** Interaction between [tosetd] and [fmapd] *)
   (******************************************************************************)
-  Theorem inr_fmapd_iff {A B} : forall w b t (f : W * A -> B),
+  Theorem ind_fmapd_iff {A B} : forall w b t (f : W * A -> B),
       (w, b) ∈d fmapd F f t <->
       exists (a : A), (w, a) ∈d t /\ f (w, a) = b.
   Proof.
@@ -299,7 +299,7 @@ Section decorated_setlike_properties.
     - destruct hyp as [a [? heq]]. inverts heq. now exists (w, a).
   Qed.
 
-  Theorem inr_fmapd_mono {A B} : forall w a t (f : W * A -> B),
+  Theorem ind_fmapd_mono {A B} : forall w a t (f : W * A -> B),
       (w, a) ∈d t ->
       (w, f (w, a)) ∈d fmapd F f t.
   Proof.
@@ -318,23 +318,23 @@ Section decorated_setlike_properties.
 
     (** *** Corollaries: [tosetd] and [fmap] *)
     (******************************************************************************)
-    Corollary inr_fmap_iff : forall w b t f,
+    Corollary ind_fmap_iff : forall w b t f,
         (w, b) ∈d fmap F f t <->
         exists a, (w, a) ∈d t /\ f a = b.
     Proof.
       introv. rewrite (fmap_to_fmapd F).
       assert (rw : forall a, f a = (f ∘ snd) (w, a))
         by now introv.
-      setoid_rewrite rw. apply inr_fmapd_iff.
+      setoid_rewrite rw. apply ind_fmapd_iff.
     Qed.
 
-    Corollary inr_fmap_mono : forall w a t (f : A -> B),
+    Corollary ind_fmap_mono : forall w a t (f : A -> B),
         (w, a) ∈d t ->
         (w, f a) ∈d fmap F f t.
     Proof.
       introv. rewrite (fmap_to_fmapd F).
       change (f a) with ((f ∘ snd) (w, a)).
-      apply inr_fmapd_mono.
+      apply ind_fmapd_mono.
     Qed.
 
     (** *** Corollaries: [toset] and [fmapd] *)

@@ -169,7 +169,7 @@ Section decorated_setlike_properties.
     `{! DecoratedModule W F T}
     `{! SetlikeModule F T}.
 
-  Theorem inr_subd_iff {A B} : forall t w b (f : W * A -> T B),
+  Theorem ind_subd_iff {A B} : forall t w b (f : W * A -> T B),
       (w, b) ∈d subd F f t <->
       exists (a : A) (w1 w2 : W),
         (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a) /\ w = w1 ● w2.
@@ -192,13 +192,13 @@ Section decorated_setlike_properties.
 
   (** *** Corollaries: [tosetd] and [sub] *)
   (******************************************************************************)
-  Theorem inr_sub_iff {A B} : forall t w b (f : A -> T B),
+  Theorem ind_sub_iff {A B} : forall t w b (f : A -> T B),
       (w, b) ∈d sub F f t <->
       exists (a : A) (w1 w2 : W),
         (w1, a) ∈d t /\ (w2, b) ∈d f a /\ w = w1 ● w2.
   Proof.
     introv. rewrite (DecoratedModule.sub_to_subd F T).
-    now rewrite inr_subd_iff.
+    now rewrite ind_subd_iff.
   Qed.
 
   (** *** Corollaries: [toset] and [subd] *)
@@ -208,11 +208,11 @@ Section decorated_setlike_properties.
       exists (a : A) (w1 : W),
         (w1, a) ∈d t /\ b ∈ f (w1, a).
   Proof.
-    introv. rewrite (inr_of_in F).
-    setoid_rewrite inr_subd_iff. split.
+    introv. rewrite (ind_of_in F).
+    setoid_rewrite ind_subd_iff. split.
     - intros. preprocess. do 2 eexists.
-      split; eauto. eapply (in_of_inr T); eauto.
-    - intros [a [w [in1 in2]]]. rewrite (inr_of_in T) in in2.
+      split; eauto. eapply (in_of_ind T); eauto.
+    - intros [a [w [in1 in2]]]. rewrite (ind_of_in T) in in2.
       destruct in2 as [w2 ?]. exists (w ● w2) a w w2.
       auto.
   Qed.

@@ -211,32 +211,32 @@ Section locally_nameless_basic_principles.
 
   (** *** Opening *)
   (******************************************************************************)
-  Lemma inr_open_iff : forall l n u t,
+  Lemma ind_open_iff : forall l n u t,
       (n, l) ∈d t '(u) <-> exists l1 n1 n2,
         (n1, l1) ∈d t /\ (n2, l) ∈d open_loc u (n1, l1) /\ n = n1 ● n2.
   Proof.
     intros. unfold open.
-    now rewrite (SetlikeModule.inr_subd_iff F).
+    now rewrite (SetlikeModule.ind_subd_iff F).
   Qed.
 
   (** *** Closing *)
   (******************************************************************************)
-  Lemma inr_close_iff : forall l n x t,
+  Lemma ind_close_iff : forall l n x t,
       (n, l) ∈d '[x] t <-> exists l1,
         (n, l1) ∈d t /\ close_loc x (n, l1) = l.
   Proof.
     intros. unfold close.
-    now rewrite (inr_fmapd_iff F).
+    now rewrite (ind_fmapd_iff F).
   Qed.
 
   (** *** Substitution *)
   (******************************************************************************)
-  Lemma inr_subst_iff : forall n l u t x,
+  Lemma ind_subst_iff : forall n l u t x,
       (n, l) ∈d t '{x ~> u} <-> exists l1 n1 n2,
         (n1, l1) ∈d t /\ (n2, l) ∈d subst_loc x u l1 /\ n = n1 ● n2.
   Proof.
     intros. unfold subst.
-    now rewrite (SetlikeModule.inr_sub_iff F).
+    now rewrite (SetlikeModule.ind_sub_iff F).
   Qed.
 
   (** ** Context-agnostic leaf analysis of operations *)
@@ -442,7 +442,7 @@ Section locally_nameless_utilities.
 
 End locally_nameless_utilities.
 
-Hint Rewrite @in_ret_iff @inr_ret_iff
+Hint Rewrite @in_ret_iff @ind_ret_iff
      using typeclasses eauto : tea_local.
 
 Hint Rewrite Fr_injective Fr_injective_not_iff Bd_neq_Fr : tea_local.

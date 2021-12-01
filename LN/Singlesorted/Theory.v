@@ -41,8 +41,9 @@ Section locally_nameless_metatheory.
       (ret T l) '{x ~> u} = subst_loc x u l.
   Proof.
     intros. unfold subst. compose near l on left.
-    Fail now rewrite (bind_comp_ret T).
-  Admitted.
+    change_left ((bind T (subst_loc x u) ∘ η T) l).
+    now rewrite (bind_comp_ret T).
+  Qed.
 
   Implicit Types
            (l : leaf) (p : leaf)
@@ -50,7 +51,7 @@ Section locally_nameless_metatheory.
            (w : nat) (n : nat).
 
   (** ** Leaf analysis: substitution with contexts *)
-  Lemma inr_subst_loc_iff : forall l w p (u : T leaf) x,
+  Lemma ind_subst_loc_iff : forall l w p (u : T leaf) x,
       (w, p) ∈d subst_loc x u l <->
       l <> Fr x /\ w = Ƶ /\ l = p \/ (* l is not replaced *)
       l = Fr x /\ (w, p) ∈d u. (* l is replaced *)
@@ -58,13 +59,13 @@ Section locally_nameless_metatheory.
     introv. compare l to atom x; simpl_local; intuition.
   Qed.
 
-  Theorem inr_subst_iff : forall w t u l x,
+  Theorem ind_subst_iff : forall w t u l x,
       (w, l) ∈d t '{x ~> u} <->
       (w, l) ∈d t /\ l <> Fr x \/
       exists w1 w2 : nat, (w1, Fr x) ∈d t /\ (w2, l) ∈d u /\ w = w1 ● w2.
   Proof.
-    intros. rewrite inr_subst_iff.
-    setoid_rewrite inr_subst_loc_iff. split.
+    intros. rewrite ind_subst_iff.
+    setoid_rewrite ind_subst_loc_iff. split.
     - intros [l' [n1 [n2 conditions]]].
       destruct conditions as [c1 [[c2|c2] c3]]; subst.
       + left. destructs c2; subst. now rewrite monoid_id_l.
@@ -255,7 +256,7 @@ Section locally_nameless_metatheory.
       locally_closed F (subst F x u t).
   Proof.
     unfold locally_closed. introv lct lcu hin.
-    rewrite inr_subst_iff in hin.
+    rewrite ind_subst_iff in hin.
     destruct hin as [[? ?] | [n1 [n2 [h1 [h2 h3]]]]].
     - auto.
     - subst. specialize (lcu n2 l h2).
@@ -321,7 +322,7 @@ Section locally_nameless_metatheory.
     introv lin heq. destruct l as [la | ln].
     - cbn in heq. destruct_eq_args x la.
       inverts heq.
-      (* apply (in_of_inr F) in lin.*)skip.
+      (* apply (in_of_ind F) in lin.*)skip.
     - cbn in heq. compare_nats_args ln w; discriminate.
   Qed.
 
@@ -330,7 +331,7 @@ Section locally_nameless_metatheory.
       Fr y ∈ t ->
       exists w l, (w, l) ∈d t /\ close_loc x (w, l) = Fr y.
   Proof.
-    introv neq yin. rewrite (inr_of_in F) in yin. destruct yin as [w yin].
+    introv neq yin. rewrite (ind_of_in F) in yin. destruct yin as [w yin].
     exists w. exists (Fr y). cbn. compare values x and y.
   Qed.
 
@@ -376,7 +377,7 @@ Section locally_nameless_metatheory.
       locally_closed_gap F 1 (close F x t).
   Proof.
     unfold locally_closed. introv lct hin.
-    rewrite inr_close_iff in hin.
+    rewrite ind_close_iff in hin.
     destruct hin as [l1 [? ?]]. compare l1 to atom x; subst.
     - cbn. compare values x and x. unfold_lia.
     - cbn. compare values x and a.
@@ -412,7 +413,7 @@ Section locally_nameless_metatheory.
     introv xin.
     rewrite free_open_iff in xin.
     destruct xin as [l [w [hin ?]]].
-    apply (in_of_inr F) in hin.
+    apply (in_of_ind F) in hin.
     enough ((l = Fr x /\ x ∈ free F t) \/ x ∈ free T u) by intuition.
     eauto using free_open_upper_local.
   Qed.
@@ -431,7 +432,7 @@ Section locally_nameless_metatheory.
   Proof.
     introv xin.
     rewrite (in_free_iff) in xin.
-    rewrite (inr_of_in F) in xin.
+    rewrite (ind_of_in F) in xin.
     destruct xin as [w xin].
     rewrite (free_open_iff).
     setoid_rewrite (in_free_iff).
@@ -543,7 +544,7 @@ Section locally_nameless_metatheory.
     rewrite (sub_subd F).
     apply (subd_respectful F). introv hin.
     assert (a <> Fr x).
-    { apply (in_of_inr F) in hin.
+    { apply (in_of_ind F) in hin.
       rewrite <- free_iff_freeset in fresh.
       eapply ninf_in_neq in fresh; eauto. }
     now rewrite <- (open_spec_local u x).
@@ -647,7 +648,7 @@ Section locally_nameless_metatheory.
     apply (fmapd_respectful_id F).
     intros w l lin.
     assert (l <> Fr x).
-    { rewrite neq_symmetry. apply (in_of_inr F) in lin.
+    { rewrite neq_symmetry. apply (in_of_ind F) in lin.
       eauto using (ninf_in_neq (F := F)). }
     auto using close_open_local.
   Qed.
@@ -660,17 +661,17 @@ Section locally_nameless_metatheory.
       locally_closed_gap F(n - 1) (t '(u)).
   Proof.
     unfold locally_closed_gap.
-    introv lcu lct Hin. rewrite inr_open_iff in Hin.
+    introv lcu lct Hin. rewrite ind_open_iff in Hin.
     destruct Hin as [l1 [n1 [n2 [h1 [h2 h3]]]]].
     destruct l1.
-    - cbn in h2. rewrite (inr_ret_iff T) in h2.
+    - cbn in h2. rewrite (ind_ret_iff T) in h2.
       destruct h2; subst. cbn. trivial.
     - specialize (lct _ _ h1). cbn in h2. compare naturals n0 and n1.
-      + rewrite (inr_ret_iff T) in h2; destruct h2; subst.
+      + rewrite (ind_ret_iff T) in h2; destruct h2; subst.
         cbn. unfold_monoid. lia.
       + specialize (lcu n2 l h2). unfold is_bound_or_free in *.
         destruct l; [trivial|]. unfold_monoid. lia.
-      + rewrite (inr_ret_iff T) in h2. destruct h2; subst.
+      + rewrite (ind_ret_iff T) in h2. destruct h2; subst.
         unfold is_bound_or_free in *. unfold_lia.
   Qed.
 
@@ -681,7 +682,7 @@ Section locally_nameless_metatheory.
       locally_closed_gap F n t.
   Proof.
     unfold locally_closed_gap.
-    introv ngt lcu lct Hin. setoid_rewrite (inr_open_iff) in lct.
+    introv ngt lcu lct Hin. setoid_rewrite (ind_open_iff) in lct.
     destruct l.
     - cbv. trivial.
     - compare naturals n0 and w.
@@ -690,14 +691,14 @@ Section locally_nameless_metatheory.
         { cbn; unfold_lia. }
         { exists (Bd n0) w (Ƶ : nat).
           split; auto. cbn. compare naturals n0 and w.
-          rewrite (inr_ret_iff T). now simpl_monoid. }
+          rewrite (ind_ret_iff T). now simpl_monoid. }
       + cbn. unfold_lia.
       + cbn. specialize (lct w (Bd (n0 - 1))).
         lapply lct.
         { cbn; unfold_lia. }
         { exists (Bd n0) w (Ƶ : nat).
           split; auto. cbn. compare naturals n0 and w.
-          rewrite (inr_ret_iff T). now simpl_monoid. }
+          rewrite (ind_ret_iff T). now simpl_monoid. }
   Qed.
 
   Theorem open_lc_gap_eq_iff : forall n t u,
@@ -715,7 +716,7 @@ Section locally_nameless_metatheory.
       locally_closed_gap F (n - 1) (t '(ret T (Fr x))).
   Proof.
     intros. apply open_lc_gap_eq_iff. auto.
-    intros w l hin. rewrite (inr_ret_iff T) in hin.
+    intros w l hin. rewrite (ind_ret_iff T) in hin.
     destruct hin; subst. cbv. trivial.
   Qed.
 

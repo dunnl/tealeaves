@@ -46,6 +46,6 @@ LN/AtomSet.v
 LN/AssocList.v
 LN/Singlesorted/Operations.v
 LN/Singlesorted/Theory.v
-#LN/Singlesorted/Environment.v
+LN/Singlesorted/Environment.v
 STLC/Language.v
 #STLC/Theory.v
