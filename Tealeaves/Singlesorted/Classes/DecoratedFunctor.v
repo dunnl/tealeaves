@@ -247,7 +247,7 @@ Section DecoratedFunctor_Zero.
     `{Functor F}.
 
   Instance Decorate_zero : Decorate W F :=
-    fun A => fmap F (fun a => (Ƶ, a)).
+    fun A => fmap F (pair Ƶ).
 
   Instance Natural_dec_zero :
     Natural (@dec W F _).
@@ -577,6 +577,85 @@ Section Decoratedfunctor_composition.
     |}.
 
 End Decoratedfunctor_composition.
+
+(** ** Composition monoid laws *)
+(******************************************************************************)
+Section DecoratedFunctor_composition_laws.
+
+  Section identity_laws.
+
+    Context
+      `{Functor T}
+      `{dec_T : Decorate W T}
+      `{op : Monoid_op W}
+      `{unit : Monoid_unit W}
+      `{! DecoratedFunctor W T}
+      `{! Monoid W}
+      `{Functor F}.
+
+    Theorem decorate_compose_l : forall (A : Type),
+        @dec W (F ∘ T) (@Decorate_compose W op F _ T _ Decorate_zero dec_T) A =
+        fmap F (dec T).
+    Proof.
+      intros. unfold_ops @Decorate_compose. unfold_ops @Decorate_zero.
+      do 2 rewrite (fun_fmap_fmap F).
+      fequal. unfold shift.
+      reassociate -> near (pair Ƶ). rewrite (strength_2).
+      rewrite (fun_fmap_fmap T). rewrite (join_zero).
+      rewrite (fun_fmap_id T).
+      reflexivity.
+    Qed.
+
+    Theorem decorate_compose_r : forall (A : Type),
+        @dec W (T ∘ F) (@Decorate_compose W op T _ F _ dec_T Decorate_zero) A =
+        fmap T (σ F) ∘ dec T.
+    Proof.
+      intros. unfold_ops @Decorate_compose. unfold_ops @Decorate_zero.
+      reassociate -> on left.
+      rewrite <- (natural (ϕ := @dec W T _)).
+      reassociate <-. fequal. unfold_ops @Fmap_compose.
+      rewrite (fun_fmap_fmap T). fequal.
+      ext [w t]; unfold compose; cbn. unfold id.
+      rewrite shift_spec. compose near t on left.
+      rewrite (fun_fmap_fmap F). fequal. ext a; cbn.
+      now simpl_monoid.
+    Qed.
+
+  End identity_laws.
+
+  Section associativity_law.
+
+    Context
+      `{op : Monoid_op W}
+      `{unit : Monoid_unit W}
+      `{Fmap T1} `{Fmap T2} `{Fmap T3}
+      `{dec_T1 : Decorate W T1}
+      `{dec_T2 : Decorate W T2}
+      `{dec_T3 : Decorate W T3}
+      `{! DecoratedFunctor W T1}
+      `{! DecoratedFunctor W T2}
+      `{! DecoratedFunctor W T3}.
+
+    Theorem decorate_compose_assoc : forall (A : Type),
+        @dec W (T3 ∘ T2 ∘ T1)
+             (@Decorate_compose W op (T3 ∘ T2) _ T1 _ _ dec_T1) A =
+        @dec W (T3 ∘ T2 ∘ T1)
+             (@Decorate_compose W op T3 _ (T2 ∘ T1) _ dec_T3 _) A.
+    Proof.
+      intros. unfold_ops @Decorate_compose.
+      unfold dec at 1 6.
+      - rewrite <- (fun_fmap_fmap T3). repeat reassociate <-.
+        fequal.
+        rewrite <- (fun_fmap_fmap T3). repeat reassociate <-.
+        fequal.
+        reassociate -> on right.
+        rewrite <- (natural (ϕ := @dec W T3 _)). reassociate <-.
+        fequal.
+    Abort.
+
+  End associativity_law.
+
+End DecoratedFunctor_composition_laws.
 
 (** ** Composition with zero-decorated functors *)
 (******************************************************************************)
