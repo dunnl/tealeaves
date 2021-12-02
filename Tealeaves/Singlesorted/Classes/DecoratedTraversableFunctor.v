@@ -1,8 +1,10 @@
- From Tealeaves Require Export
+From Tealeaves Require Export
      Singlesorted.Classes.Monoid
      Singlesorted.Classes.DecoratedFunctor
      Singlesorted.Classes.TraversableFunctor.
 
+Import Monoid.Notations.
+Import TraversableFunctor.Notations.
 Import SetlikeFunctor.Notations.
 #[local] Open Scope tealeaves_scope.
 
@@ -56,6 +58,7 @@ Section DecoratedTraversableFunctor_monoid.
   Section compose.
 
     Context
+      (U T : Type -> Type)
       `{DecoratedTraversableFunctor W (op := op) (unit := zero) T}
       `{DecoratedTraversableFunctor W (op := op) (unit := zero) U}.
 
@@ -98,6 +101,35 @@ Section DecoratedTraversableFunctor_monoid.
   End compose.
 
 End DecoratedTraversableFunctor_monoid.
+
+(** ** Zero-decorated traversable functors are decorated-traversable *)
+(******************************************************************************)
+Section TraversableFunctor_zero_DT.
+
+  Context
+    (T : Type -> Type)
+    `{TraversableFunctor T}
+    `{Monoid W}.
+
+  Existing Instance Decorate_zero.
+  Existing Instance DecoratedFunctor_zero.
+
+  Theorem dtfun_compat_zero : forall (A : Type) `{Applicative G},
+      dist T G ∘ fmap T (strength G) ∘ dec T =
+      fmap G (dec T) ∘ dist T G (A := A).
+  Proof.
+    intros. unfold_ops @Decorate_zero.
+    reassociate -> on left. rewrite (fun_fmap_fmap T).
+    change_right (fmap (G ∘ T) (pair Ƶ) ∘ δ T G (A := A)).
+    rewrite (dist_natural T).
+    now unfold_ops @Fmap_compose.
+  Qed.
+
+  Instance DecoratedTraversableFunctor_zero :
+    DecoratedTraversableFunctor W T :=
+    {| dtfun_compat := dtfun_compat_zero |}.
+
+End TraversableFunctor_zero_DT.
 
 (** * Kleisli presentation *)
 (******************************************************************************)
