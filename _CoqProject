@@ -5,8 +5,8 @@
 Tealeaves/Util/LibTactics.v
 Tealeaves/Util/EqDec_eq.v
 Tealeaves/Util/Prelude.v
-Tealeaves/Cats/Classes.v
 Tealeaves/Util/Product.v
+Tealeaves/Classes/Category.v
 Tealeaves/Classes/Monoid.v
 Tealeaves/Classes/Functor.v
 Tealeaves/Classes/Applicative.v
@@ -40,6 +40,7 @@ Tealeaves/Functors/Maybe.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Diagonal.v
 Tealeaves/Functors/Pathspace.v
+Tealeaves/Theory/Category.v
 LN/Atom.v
 LN/Leaf.v
 LN/AtomSet.v

@@ -20,6 +20,7 @@ endif
 all: html
 
 clean: $(COQMAKEFILE)
+	rm -fr html
 	@$(MAKE) -f $(COQMAKEFILE) $@
 	rm -f $(COQMAKEFILE)
 

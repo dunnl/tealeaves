@@ -1,7 +1,7 @@
 (** This file contains typeclasses for abstract categories and type
     constructor classes (functors, monads, etc.). These are not the
-    specialized definitions used by Tealeaves but can be used for
-    general abstract nonsense. *)
+    specialized definitions used by most of Tealeaves but can be used
+    for general abstract nonsense. *)
 
 (** The implementation here closely resembles that of math-classes, see *)
 (** # <a href="https://github.com/coq-community/math-classes"> https://github.com/coq-community/math-classes</a># *)
