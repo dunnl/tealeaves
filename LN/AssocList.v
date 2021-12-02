@@ -2,10 +2,10 @@ From Tealeaves Require Import
      Util.Prelude
      Util.LibTactics
      LN.Atom LN.AtomSet
-     Singlesorted.Theory.Product
-     Singlesorted.Classes.SetlikeFunctor
-     Singlesorted.Classes.ListableFunctor
-     Singlesorted.Functors.Writer.
+     Util.Product
+     Classes.SetlikeFunctor
+     Classes.ListableFunctor
+     Functors.Writer.
 
 From Coq Require Import
      Logic.Decidable

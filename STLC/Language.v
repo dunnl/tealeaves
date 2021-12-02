@@ -1,9 +1,9 @@
 From Tealeaves Require Export
-     Singlesorted.Theory.Product
+     Util.Product
      LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Singlesorted.Operations
-     LN.Singlesorted.Theory
-     Singlesorted.Classes.DecoratedTraversableModule.
+     LN.Operations
+     LN.Theory
+     Classes.DecoratedTraversableModule.
 
 Export List.ListNotations.
 Open Scope list_scope.
@@ -658,7 +658,7 @@ Instance : DecoratedTraversableModule nat term term
 (** * Locally nameless operations *)
 (******************************************************************************)
 Import Notations.
-Import LN.Singlesorted.Operations.Notations.
+Import LN.Operations.Notations.
 
 Definition Vb x := Var (Bd x) : term leaf.
 Definition Vf n := Var (Fr n) : term leaf.

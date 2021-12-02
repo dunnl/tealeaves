@@ -1,9 +1,9 @@
 From Tealeaves Require Export
-     Singlesorted.Theory.Product
+     Util.Product
      LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Singlesorted.Environment
-     LN.Singlesorted.Operations
-     Singlesorted.Classes.DecoratedTraversableModule
+     LN.Environment
+     LN.Operations
+     Classes.DecoratedTraversableModule
      STLC.Language.
 
 Export List.ListNotations.
