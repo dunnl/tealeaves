@@ -3,9 +3,11 @@ From Tealeaves Require Export
      Classes.DecoratedFunctor
      Classes.TraversableFunctor.
 
+Import Product.Notations.
 Import Monoid.Notations.
 Import TraversableFunctor.Notations.
 Import SetlikeFunctor.Notations.
+Import Functor.Notations.
 #[local] Open Scope tealeaves_scope.
 
 (** * Decorated-traversable functors *)
@@ -22,7 +24,7 @@ Section DecoratedTraversableFunctor.
     { dtfun_decorated :> DecoratedFunctor W F;
       dtfun_traversable :> TraversableFunctor F;
       dtfun_compat : forall (A : Type) `{Applicative G},
-             dist F G ∘ fmap F (strength G) ∘ dec F (A := G A) =
+             dist F G ∘ fmap F (σ G) ∘ dec F (A := G A) =
              fmap G (dec F) ∘ dist F G;
     }.
 
@@ -57,41 +59,98 @@ Section DecoratedTraversableFunctor_monoid.
   (******************************************************************************)
   Section compose.
 
+    #[local] Set Keyed Unification.
+
     Context
       (U T : Type -> Type)
       `{DecoratedTraversableFunctor W (op := op) (unit := zero) T}
       `{DecoratedTraversableFunctor W (op := op) (unit := zero) U}.
 
-    #[local] Set Keyed Unification.
-    Theorem dtfun_compat_compose :
-      forall (A : Type) `{Applicative G},
-        dist (U ∘ T) G ∘ fmap (U ∘ T) (strength G) ∘ dec (U ∘ T) (A := G A) =
+    (** Push the applicative wire underneath a <<shift>> operation *)
+    Lemma strength_shift : forall (A : Type) `{Applicative G},
+        δ T G ∘ fmap T (σ G) ∘ shift T (A := G A) =
+          fmap G (shift T) ∘ σ G ∘ fmap (W ×) (δ T G ∘ fmap T (σ G)).
+    Proof.
+      intros. unfold shift. ext [w t].
+      unfold compose; cbn; unfold id.
+      compose near t on left. rewrite (fun_fmap_fmap T).
+      compose near t on left. rewrite (fun_fmap_fmap T).
+      compose near ((δ T G (fmap T (σ G) t))) on right;
+        rewrite (fun_fmap_fmap G).
+      reassociate <- on left.
+      rewrite (strength_join_l (T := G) (W := W)).
+      do 2 reassociate -> on left;
+      rewrite <- (fun_fmap_fmap T);
+      reassociate <- on left.
+      change (fmap T (fmap G ?f)) with (fmap (T ∘ G) f).
+      change (δ T G ((fmap (T ∘ G) (join (prod W)) ∘ ?f) t))
+        with ((δ T G ∘ fmap (T ∘ G) (join (prod W))) (f t)).
+      rewrite <- (dist_natural T).
+      (* now focus on the RHS *)
+      unfold id.
+      change (fmap T (join (prod W) (A := ?A)) ○ σ T ∘ pair w)
+        with  (fmap T (join (prod W) (A := A)) ∘ (σ T ∘ pair w)).
+      rewrite (strength_2).
+      rewrite <- (fun_fmap_fmap G).
+      compose near (fmap T (σ G) t) on right.
+      reassociate -> on right.
+      change (fmap G (fmap T ?f)) with (fmap (G ∘ T) f).
+      rewrite (dist_natural T (pair w)).
+      unfold compose. compose near t on right.
+      now rewrite (fun_fmap_fmap T).
+    Qed.
+
+    (** Push the applicative wire underneath a <<dec (U ∘ T)>> operation *)
+    Lemma strength_shift2 : forall (A : Type) `{Applicative G},
+        δ U G ∘ fmap U (σ G ∘ fmap (prod W) (δ T G ∘ fmap T (σ G)))
+          ∘ (dec U ∘ fmap U (dec T (A := G A))) =
+          fmap G (dec U ∘ fmap U (dec T)) ∘ δ (U ∘ T) G.
+    Proof.
+      intros. rewrite <- (natural (ϕ := @dec W U _)).
+      reassociate <- on left; reassociate -> near (fmap (U ○ prod W) (dec T)).
+      rewrite (fun_fmap_fmap U). do 2 reassociate -> on left.
+      rewrite (fun_fmap_fmap (prod W)).
+      rewrite (dtfun_compat _ T); auto.
+      rewrite <- (fun_fmap_fmap U).
+      change (fmap U (fmap (W ×) ?f)) with (fmap (U ∘ (W ×)) f).
+      reassociate -> on left. rewrite (natural (ϕ := @dec W U _)).
+      do 2 reassociate <- on left.
+      rewrite (dtfun_compat _ U); auto.
+      rewrite <- (fun_fmap_fmap U). reassociate <- on left.
+      change (fmap U (fmap G ?f)) with (fmap (U ∘ G) f).
+      reassociate -> near (fmap (U ∘ G) (dec T)).
+      rewrite <- (dist_natural U). reassociate <- on left.
+      rewrite (fun_fmap_fmap G). reflexivity.
+    Qed.
+
+    Theorem dtfun_compat_compose : forall (A : Type) `{Applicative G},
+        δ (U ∘ T) G ∘ fmap (U ∘ T) (σ G) ∘ dec (U ∘ T) (A := G A) =
         fmap G (dec (U ∘ T)) ∘ dist (U ∘ T) G.
     Proof.
-      intros.
-      reassociate -> on left. unfold dec at 1, Decorate_compose.
+      intros. reassociate -> on left.
+      unfold dec at 1, Decorate_compose.
+      unfold dist at 1, Dist_compose.
       (* bring <<strength G >> and <<shift T>> together*)
       do 3 reassociate <- on left;
         reassociate -> near (fmap U (shift T));
-        rewrite (fun_fmap_fmap U).
-      unfold shift.
-      reassociate <- on left;
-        rewrite (fun_fmap_fmap T).
-      rewrite <- (fun_fmap_fmap U).
-      reassociate <- on left.
-      rewrite (strength_join_l).
-      change (fmap U (fmap T ?f)) with (fmap (U ∘ T) f).
-      do 2 rewrite <- (fun_fmap_fmap (U ∘ T)).
-      change (fmap (U ∘ T) (fmap G ?f)) with (fmap (U ∘ T ∘ G) f).
-      do 2 reassociate <-.
-      rewrite <- (dist_natural (U ∘ T)).
-      reassociate -> near (fmap (U ∘ T) (fmap (prod W) (strength G))).
-      rewrite (fun_fmap_fmap (U ∘ T)).
-      unfold dist at 1, Dist_compose.
-      reassociate -> near (fmap (U ∘ T) (strength G ∘ fmap (prod W) (strength G))).
-      reassociate -> near (fmap (U ∘ T) (strength G ∘ fmap (prod W) (strength G))).
       rewrite (fun_fmap_fmap U).
-    Admitted.
+      reassociate -> near (fmap U (fmap T (σ G) ∘ shift T)).
+      rewrite (fun_fmap_fmap U).
+      reassociate <- on left.
+      rewrite (strength_shift); auto.
+      (* move <<δ U G>> under <<shift>> *)
+      do 3 reassociate -> on left;
+      rewrite <- (fun_fmap_fmap U);
+      do 3 reassociate <- on left.
+      change (fmap U (fmap G ?f)) with (fmap (U ∘ G) f).
+      rewrite <- (dist_natural U (shift T)).
+      do 3 reassociate -> on left.
+      reassociate <- near (δ U G).
+      rewrite strength_shift2; auto.
+      reassociate <- on left.
+      now rewrite (fun_fmap_fmap G).
+    Qed.
+
     #[local] Unset Keyed Unification.
 
     #[global] Instance DecoratedTraversableFunctor_compose :
