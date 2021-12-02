@@ -67,10 +67,15 @@ Section DecoratedTraversableFunctor_monoid.
     Proof.
       intros.
       reassociate -> on left. unfold dec at 1, Decorate_compose.
-      do 3 reassociate <- on left. reassociate -> near (fmap U (shift T)).
-      rewrite (fun_fmap_fmap U).
-      unfold shift. reassociate <- on left. rewrite (fun_fmap_fmap T).
-      rewrite <- (fun_fmap_fmap U). reassociate <- on left.
+      (* bring <<strength G >> and <<shift T>> together*)
+      do 3 reassociate <- on left;
+        reassociate -> near (fmap U (shift T));
+        rewrite (fun_fmap_fmap U).
+      unfold shift.
+      reassociate <- on left;
+        rewrite (fun_fmap_fmap T).
+      rewrite <- (fun_fmap_fmap U).
+      reassociate <- on left.
       rewrite (writer_strength_join_l).
       change (fmap U (fmap T ?f)) with (fmap (U ∘ T) f).
       do 2 rewrite <- (fun_fmap_fmap (U ∘ T)).

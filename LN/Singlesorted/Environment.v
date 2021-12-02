@@ -29,33 +29,33 @@ Section DecoratedTraversableFunctor_alist.
 
   (** ** Traversable instance *)
   (******************************************************************************)
-  #[global] Instance Dist_alist : Dist (fun A => alist A)
+  #[global] Instance Dist_alist : Dist (alist)
     := Dist_compose.
 
-  #[global] Instance Traversable_alist : TraversableFunctor (fun A => alist A)
+  #[global] Instance Traversable_alist : TraversableFunctor (alist)
     := Traversable_compose.
 
   (** ** Decorated instance *)
   (******************************************************************************)
   #[global] Instance Decorate_alist :
-    Decorate W (fun A => alist A)
+    Decorate W (alist)
     := Decorate_zero.
 
   #[global] Instance DecoratedFunctor_alist :
-    DecoratedFunctor W (fun A => alist A)
+    DecoratedFunctor W (alist)
     := DecoratedFunctor_zero.
 
   (** ** DTM instance *)
   (******************************************************************************)
   #[global] Instance DecoratedTraversableFunctor_alist :
-    DecoratedTraversableFunctor W (fun A => alist A).
+    DecoratedTraversableFunctor W (alist).
   Proof.
     constructor.
     typeclasses eauto.
     typeclasses eauto.
     intros.
     unfold_ops @Dist_alist @Dist_compose.
-    unfold_ops @Fmap_alist @Fmap_compose.
+    unfold_ops @Fmap_compose.
     unfold_ops @Decorate_alist @Decorate_zero.
     reassociate <-.
     change (fmap G (fmap (list ○ prod atom) ?f))
@@ -417,17 +417,19 @@ Section env_rewriting_tolist.
   Qed.
 
   Theorem binds_subst_env : forall (e : env leaf) x t y u,
-      (y, u) ∈ (e '{x ~> t} : alist (F leaf)) <->
+      (y, u) ∈ (e '{x ~> t} : list (atom * F leaf)) <->
       exists u_inv : F leaf,
-        (y, u_inv) ∈ (e : alist (F leaf))
+        (y, u_inv) ∈ (e : list (atom * F leaf))
         /\ u_inv '{x ~> t} = u.
   Proof.
     intros. cbn. unfold subst.
     rewrite sub_env_spec.
-  Admitted.
+    change (fmap list (fmap (prod atom) ?f)) with (fmap (list ∘ prod atom) f).
+    now (rewrite in_envmap_iff).
+  Qed.
 
   Corollary binds_subst_env_mono : forall (e : env leaf) x t (y : atom) (u : F leaf),
-      (y, u) ∈ (e : alist (F leaf)) ->
+      (y, u) ∈ (e : list (atom * F leaf)) ->
       (y, u '{x ~> t}) ∈ (e '{x ~> t} : list (atom * F leaf)).
   Proof.
     intros. rewrite binds_subst_env. eauto.
@@ -436,13 +438,15 @@ Section env_rewriting_tolist.
   Theorem in_range_subst : forall (e : env leaf) x t (u : F leaf),
       u ∈ range (e '{x ~> t}) <->
       exists u_inv : F leaf,
-        u_inv ∈ range (e : alist (F leaf))
+        u_inv ∈ range (e : list (atom * F leaf))
         /\ u_inv '{x ~> t} = u.
   Proof.
     intros. cbn. unfold subst. rewrite sub_env_spec.
     rewrite in_range_iff. setoid_rewrite in_range_iff.
-    setoid_rewrite in_envmap_iff.
-  Admitted.
+    setoid_rewrite in_envmap_iff. split.
+    - intros. preprocess. eauto.
+    - intros. preprocess. eauto.
+  Qed.
 
   Theorem in_freeset_iff : forall (Γ : env leaf) (x : atom),
       x ∈@ freeset env Γ  <->

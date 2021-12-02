@@ -3,6 +3,7 @@
 From Tealeaves Require Export
      Singlesorted.Classes.DecoratedFunctor.
 
+Import Product.Notations.
 Import Functor.Notations.
 Import Monad.Notations.
 Import Comonad.Notations.
@@ -86,7 +87,7 @@ Section decorated_monad_kleisli_operations.
     (W * A -> T B) ->
     (W * A -> T C) :=
     fun g f =>
-      bind T g ∘ shift T ∘ fmap (prod W) (dec T) ∘ cobind (prod W) f.
+      bind T g ∘ shift T ∘ cobind (prod W) (dec T ∘ f).
 
   Definition bindd (T : Type -> Type) `{Bind T} `{Decorate W T} {A B}
     : (W * A -> T B) -> T A -> T B := fun f => bind T f ∘ dec T.
@@ -224,9 +225,7 @@ Section decoratedmonad_kleisli_laws.
     rewrite (dec_bindd T).
     unfold bindd at 2.
     reassociate <- on right.
-    rewrite (Monad.bind_bind T).
-    unfold kcomposed; reassociate -> on left.
-    now rewrite (Comonad.fmap_cobind (prod W)).
+    now rewrite (Monad.bind_bind T).
   Qed.
 
   (** *** Unit law *)
@@ -251,7 +250,8 @@ Section decoratedmonad_kleisli_category.
 
   Existing Instance dmon_monoid.
 
-  Theorem kleisli_star_1 {A B C} : forall (g : W * B -> T C) (f : W * A -> B),
+  (** Composition when <<f>> has no substitution *)
+  Theorem dm_kleisli_star1 {A B C} : forall (g : W * B -> T C) (f : W * A -> B),
       g ⋆d (ret T ∘ f) = g co⋆ f.
   Proof.
     intros. unfold kcomposed, cokcompose.
@@ -268,7 +268,26 @@ Section decoratedmonad_kleisli_category.
     now rewrite (bind_comp_ret T).
   Qed.
 
-  Theorem kleisli_star_2 {A B C} : forall (g : B -> T C) (f : W * A -> T B),
+  (** Composition when <<f>> is context-agnostic *)
+  Theorem dm_kleisli_star2 {A B C} : forall (g : W * B -> T C) (f : A -> T B),
+      g ⋆d (f ∘ extract (W ×)) =
+      bind T g ∘ shift T ∘ fmap (W ×) (dec T ∘ f).
+  Proof.
+    intros. unfold kcomposed, cokcompose.
+    reassociate <- on left.
+    now rewrite <- (fmap_to_cobind (prod W)).
+  Qed.
+
+  (** Composition when <<g>> has no substitution *)
+  Theorem dm_kleisli_star3 {A B C} : forall (g : W * B -> C) (f : W * A -> T B),
+      (η T ∘ g) ⋆d f = fmap T g ∘ shift T ∘ cobind (prod W) (dec T ∘ f).
+  Proof.
+    intros. unfold kcomposed, kcompose.
+    now rewrite (fmap_to_bind T).
+  Qed.
+
+  (** Composition when <<g>> is context-agnostic *)
+  Theorem dm_kleisli_star4 {A B C} : forall (g : B -> T C) (f : W * A -> T B),
       (g ∘ extract (prod W)) ⋆d f = g ⋆ f.
   Proof.
     intros. unfold kcomposed, kcompose.
@@ -276,32 +295,26 @@ Section decoratedmonad_kleisli_category.
     change (?f ∘ fmap T (extract (prod W)) ∘ shift T ∘ ?g) with
         (f ∘ (fmap T (extract (prod W)) ∘ shift T) ∘ g).
     rewrite (shift_extract).
-    repeat reassociate <- on left.
-    change (?g ∘ extract (prod W) ∘ fmap (prod W) (dec T) ∘ ?f)
-      with (g ∘ (extract (prod W) ∘ fmap (prod W) (dec T)) ∘ f).
-    rewrite <- (natural (ϕ := @extract (prod W) _ )).
-    unfold_ops @Fmap_I.
-    repeat reassociate -> on left.
-    rewrite (Comonad.extract_cobind (prod W)).
-    reassociate <- near (fmap T (extract (prod W))).
+    repeat reassociate ->. rewrite (extract_cobind (prod W)).
+    fequal. reassociate <- on left.
     now rewrite (dfun_dec_extract W T).
   Qed.
 
-  Theorem kleisli_id_r {B C} : forall (g : W * B -> T C),
+  Theorem dm_kleisli_id_r {B C} : forall (g : W * B -> T C),
       g ⋆d (ret T ∘ extract (prod W)) = g.
   Proof.
-    intros. rewrite kleisli_star_1.
+    intros. rewrite dm_kleisli_star1.
     now rewrite (Comonad.cokleisli_id_r).
   Qed.
 
-  Theorem kleisli_id_l {A B} : forall (f : W * A -> T B),
+  Theorem dm_kleisli_id_l {A B} : forall (f : W * A -> T B),
       (ret T ∘ extract (prod W)) ⋆d f = f.
   Proof.
-    intros. rewrite kleisli_star_2.
+    intros. rewrite dm_kleisli_star4.
     now rewrite (Monad.kleisli_id_l).
   Qed.
 
-  Theorem kleisli_comp {A B C D} : forall (h : W * C -> T D) (g : W * B -> T C) (f : W * A -> T B),
+  Theorem dm_kleisli_assoc {A B C D} : forall (h : W * C -> T D) (g : W * B -> T C) (f : W * A -> T B),
       h ⋆d (g ⋆d f) = (h ⋆d g) ⋆d f.
   Proof.
     intros. unfold kcomposed at 3.
@@ -322,7 +335,7 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     introv. rewrite (fmapd_to_bindd T).
     rewrite <- (bindd_bindd T).
-    now rewrite (kleisli_star_1).
+    now rewrite (dm_kleisli_star1).
   Qed.
 
   Corollary bind_bindd {A B C} : forall (g : B -> T C) (f : W * A -> T B),
@@ -330,7 +343,7 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     intros. rewrite (bind_to_bindd T).
     rewrite <- (bindd_bindd T).
-    now rewrite (kleisli_star_2).
+    now rewrite (dm_kleisli_star4).
   Qed.
 
   Corollary fmapd_bindd {A B C} : forall (g : W * B -> C) (f : W * A -> T B),
@@ -338,8 +351,8 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     intros. rewrite (fmapd_to_bindd T).
     rewrite <- (bindd_bindd T).
-    unfold kcomposed. rewrite <- (Monad.fmap_to_bind T).
-    now rewrite <- (Comonad.fmap_cobind (prod W)).
+    unfold kcomposed. rewrite <- (fmap_to_bind T).
+    now rewrite <- (fmap_cobind (prod W)).
   Qed.
 
   Corollary bindd_bind {A B C} : forall (g : W * B -> T C) (f : A -> T B),
@@ -347,8 +360,7 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     introv. rewrite (bind_to_bindd T).
     rewrite <- (bindd_bindd T).
-    unfold kcomposed. rewrite <- (Comonad.fmap_to_cobind (prod W)).
-    reassociate -> on left. now rewrite (fun_fmap_fmap (prod W)).
+    unfold kcomposed. reassociate <-. now rewrite <- (fmap_to_cobind (prod W)).
   Qed.
 
   Lemma bindd_fmap {A B C} : forall (g : W * B -> T C) (f : A -> B),
@@ -356,8 +368,8 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     intros. rewrite (fmap_to_bindd T).
     rewrite <- (bindd_bindd T).
-    reassociate -> on left. rewrite (kleisli_star_1).
-    unfold cokcompose. now rewrite (Comonad.fmap_to_cobind (prod W)).
+    reassociate -> on left. rewrite (dm_kleisli_star1).
+    unfold cokcompose. now rewrite (fmap_to_cobind (prod W)).
   Qed.
 
   Corollary fmap_bindd {A B C} : forall (g : B -> C) (f : W * A -> T B),
@@ -366,8 +378,8 @@ Section decoratedmonad_suboperation_composition.
     intros. rewrite (fmap_to_bindd T).
     rewrite <- (bindd_bindd T).
     rewrite <- (fmap_to_bindd T).
-    rewrite (kleisli_star_2). unfold kcompose.
-    now rewrite <- (Monad.fmap_to_bind T).
+    rewrite (dm_kleisli_star4). unfold kcompose.
+    now rewrite <- (fmap_to_bind T).
   Qed.
 
 End decoratedmonad_suboperation_composition.

@@ -193,7 +193,8 @@ Section DecoratedTraversableMonad_composition.
     `{DecoratedTraversableMonad W T}
     `{Applicative G}
     `{Applicative G1}
-    `{Applicative G2}.
+    `{Applicative G2}
+    `{! Monoid W}.
 
   (** *** Compositions like <<binddt_xxx>> *)
   (******************************************************************************)
@@ -206,7 +207,11 @@ Section DecoratedTraversableMonad_composition.
                   ∘ strength T
                   ∘ cobind (prod W) f).
   Proof.
-  Admitted.
+    intros. rewrite (bindd_to_binddt T).
+    change (binddt T g) with (fmap (fun A => A) (binddt T g)).
+    rewrite (binddt_binddt T (G1 := fun A => A)).
+    fequal. apply Mult_compose_identity2.
+  Qed.
 
   Corollary binddt_bindt {A B C} : forall (g : W * B -> G2 (T C)) (f : A -> G1 (T B)),
       fmap G1 (binddt T g) ∘ bindt T f =
@@ -215,7 +220,9 @@ Section DecoratedTraversableMonad_composition.
                   ∘ strength (G1 ∘ T)
                   ∘ fmap (prod W) f).
   Proof.
-  Admitted.
+    intros. rewrite (bindt_to_binddt T). rewrite (binddt_binddt T).
+    fequal. unfold kcomposedtm. now rewrite <- (fmap_to_cobind (prod W)).
+  Qed.
 
   Corollary binddt_fmapdt {A B C} : forall (g : W * B -> G2 (T C)) (f : W * A -> G1 B),
       fmap G1 (binddt T g) ∘ fmapdt T f =
@@ -224,7 +231,39 @@ Section DecoratedTraversableMonad_composition.
                 ∘ strength G1
                 ∘ cobind (prod W) f).
   Proof.
-  Admitted.
+    intros.
+    rewrite (fmapdt_to_binddt T).
+    rewrite (binddt_binddt T).
+    fequal. unfold kcomposedtm.
+    rewrite <- (fmap_cobind (prod W)).
+    reassociate <-. fequal.
+    rewrite (fun_fmap_fmap G1). ext [w t].
+    unfold compose; cbn.
+    compose near t;
+      rewrite (fun_fmap_fmap G1).
+    Set Keyed Unification.
+    rewrite (fun_fmap_fmap G1).
+    Unset Keyed Unification.
+    compose near t on left.
+    rewrite (fun_fmap_fmap G1).
+    fequal. ext b; unfold compose; cbn.
+    compose near b on left.
+    rewrite (natural (ϕ := @ret T _)).
+    unfold_ops @Fmap_I. unfold compose.
+    unfold id. compose near (w, b) on left.
+    rewrite (dmon_ret W T). unfold compose.
+    compose near (Ƶ, (w, b)) on left.
+    rewrite (natural (ϕ := @ret T _)).
+    unfold_ops @Fmap_I. unfold compose.
+    unfold_ops @Join_writer. cbn.
+    rewrite monoid_id_r. unfold id.
+    compose near (g (w, b)) on left.
+    rewrite (trvmon_ret T).
+    compose near (g (w, b)) on left.
+    rewrite (fun_fmap_fmap G2).
+    rewrite (mon_join_ret T).
+    now rewrite (fun_fmap_id G2).
+  Qed.
 
   Corollary binddt_bind {A B C} : forall (g : W * B -> G (T C)) (f : A -> T B),
       binddt T g ∘ bind T f =
@@ -290,6 +329,8 @@ Section DecoratedTraversableMonad_composition.
                           ∘ fmap T g))
                 ∘ f).
   Proof.
+    intros. rewrite (bindt_to_binddt T). rewrite (binddt_binddt T).
+    fequal.
   Admitted.
 
   Corollary fmapdt_binddt {A B C} : forall (g : W * B -> G2 C) (f : W * A -> G1 (T B)),
@@ -303,10 +344,10 @@ Section DecoratedTraversableMonad_composition.
   Admitted.
 
 
-  Corollary bind_binddt {A B C} : forall (g : B -> T C) (f : W * A -> G (T B)),
-      fmap G (bind T g) ∘ binddt T f =
-      binddt T ((fmap G (join T))
-                  ∘ fmap G (fmap T g)
+  Corollary bind_binddt {A B C} : forall (g : B -> T C) (f : W * A -> G1 (T B)),
+      fmap G1 (bind T g) ∘ binddt T f =
+      binddt T ((fmap G1 (join T))
+                  ∘ fmap G1 (fmap T g)
                   ∘ f).
   Proof.
     intros. rewrite (bind_to_bindt T).

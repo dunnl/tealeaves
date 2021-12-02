@@ -300,9 +300,9 @@ Section decoratedmodule_kleisli_laws.
     rewrite (dec_subd F).
     unfold subd at 2.
     reassociate <- on right.
-    rewrite (RightModule.sub_sub F T).
+    rewrite (sub_sub F T).
     unfold kcomposed; reassociate -> on left.
-    now rewrite (Comonad.fmap_cobind (prod W)).
+    reflexivity.
   Qed.
 
 End decoratedmodule_kleisli_laws.
@@ -320,7 +320,7 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     introv. rewrite (fmapd_to_subd F T).
     rewrite <- (subd_subd F T).
-    now rewrite (kleisli_star_1).
+    now rewrite (dm_kleisli_star1).
   Qed.
 
   Corollary sub_subd {A B C} : forall (g : B -> T C) (f : W * A -> T B),
@@ -328,7 +328,7 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     intros. rewrite (sub_to_subd F T).
     rewrite <- (subd_subd F T).
-    now rewrite (kleisli_star_2).
+    now rewrite (dm_kleisli_star4).
   Qed.
 
   Corollary fmapd_subd {A B C} : forall (g : W * B -> C) (f : W * A -> T B),
@@ -337,7 +337,7 @@ Section decoratedmonad_suboperation_composition.
     intros. rewrite (fmapd_to_subd F T).
     rewrite <- (subd_subd F T).
     unfold kcomposed. rewrite <- (fmap_to_bind T).
-    now rewrite <- (Comonad.fmap_cobind (prod W)).
+    now rewrite <- (fmap_cobind (prod W)).
   Qed.
 
   Corollary subd_sub {A B C} : forall (g : W * B -> T C) (f : A -> T B),
@@ -345,8 +345,8 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     introv. rewrite (sub_to_subd F T).
     rewrite <- (subd_subd F T).
-    unfold kcomposed. rewrite <- (fmap_to_cobind (prod W)).
-    reassociate -> on left. now rewrite (fun_fmap_fmap (prod W)).
+    unfold kcomposed. reassociate <-.
+    now rewrite <- (fmap_to_cobind (prod W)).
   Qed.
 
   Lemma subd_fmap {A B C} : forall (g : W * B -> T C) (f : A -> B),
@@ -354,8 +354,8 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     intros. rewrite (fmap_to_subd F T).
     rewrite <- (subd_subd F T).
-    reassociate -> on left. rewrite (kleisli_star_1).
-    unfold cokcompose. now rewrite (Comonad.fmap_to_cobind (prod W)).
+    reassociate -> on left. rewrite (dm_kleisli_star1).
+    unfold cokcompose. now rewrite (fmap_to_cobind (prod W)).
   Qed.
 
   Corollary fmap_subd {A B C} : forall (g : B -> C) (f : W * A -> T B),
@@ -363,7 +363,7 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     intros. rewrite (fmap_to_subd F T).
     rewrite <- (subd_subd F T).
-    rewrite (kleisli_star_2). unfold kcompose.
+    rewrite (dm_kleisli_star4). unfold kcompose.
     now rewrite <- (fmap_to_bind T).
   Qed.
 

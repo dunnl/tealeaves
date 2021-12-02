@@ -48,4 +48,4 @@ LN/Singlesorted/Operations.v
 LN/Singlesorted/Theory.v
 LN/Singlesorted/Environment.v
 STLC/Language.v
-#STLC/Theory.v
+STLC/Theory.v

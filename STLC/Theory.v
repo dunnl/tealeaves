@@ -84,17 +84,16 @@ Theorem j_wf : forall Γ (t : term leaf) (A : typ),
 Proof.
   introv J. induction J.
   - unfold scoped. rewrite term_freeset12.
-    unfold AtomSet.Subset; intro.
-    rewrite AtomSet.in_singleton_iff; intro; subst.
+    intro y. rewrite in_singleton_iff; intro; subst.
     rewrite in_domset_iff. eauto.
   - rename H0 into IH;
       rename H into premise.
     specialize_freshly IH. unfold scoped in *.
     rewrite term_freeset2.
-    assert (step1 : freeset term t ⊆ freeset term (t '(Var (Fr e)))).
-    { apply Theory.freeset_open_lower. }
-    assert (step2 : forall x, x ∈@ (freeset term t) -> x ∈@ (domset (Γ ++ e ~ A))).
-    { fsetdec. }
+    assert (step1 : freeset term t ⊆ freeset term (t '(Var (Fr e))))
+      by apply Theory.freeset_open_lower.
+    assert (step2 : forall x, x ∈@ (freeset term t) -> x ∈@ (domset (Γ ++ e ~ A)))
+      by fsetdec.
     intros x xin. assert (x <> e) by fsetdec.
     specialize (step2 x xin). rewrite domset_app in step2.
     cbn in step2. fsetdec.
@@ -116,18 +115,10 @@ Theorem lc_lam : forall (L : AtomSet.t) (t : term leaf) (X : typ),
     (forall x : atom, ~ x ∈@ L -> locally_closed term (t '(Var (Fr x)))) ->
     locally_closed term (λ X ⋅ t).
 Proof.
-  introv hyp1. unfold locally_closed, locally_closed_gap in *.
-  introv hyp2. rewrite term_ind22 in hyp2. destruct hyp2 as [m [hyp3 hyp4]].
-  subst. specialize_freshly hyp1.
-  destruct l.
-  - specialize (hyp1 m (Fr a)).
-    assert (lemma : (m, Fr a) ∈d t '( Var (Fr e))).
-    { admit. }
-    specialize (hyp1 lemma).
-    apply is_bound_or_free_monotone with (w1 := m). lia. auto.
-  - cbn in *. unfold_monoid.
-    specialize (hyp1 m (open_loc (Fr e) (m, (Bd n)))).
-Admitted.
+  introv hyp1. unfold locally_closed in *.
+  rewrite term_lc_gap2. specialize_freshly hyp1.
+  rewrite (open_lc_gap_eq_var_1). eauto.
+Qed.
 
 Theorem j_lc : forall Γ t A,
     Γ ⊢ t : A -> locally_closed term t.
@@ -181,19 +172,19 @@ Proof.
   remember (Γ1 ++ x ~ A ++ Γ2) as Γrem. generalize dependent Γ2.
   induction Jt; intros.
   - cbn. compare values x and x0.
-    + assert (A0 = A) by eauto using binds_mid_eq.
-      subst; apply weakening_r; auto.
-      autorewrite with tea_rw_uniq in *. intuition.
+    + assert (A0 = A) by eauto using binds_mid_eq; subst.
       autorewrite with tea_rw_uniq tea_rw_disj in *.
-      intuition.
-    + subst. constructor. eauto using uniq_remove_mid.
-      eauto using binds_remove_mid.
+      apply weakening_r.
+      * easy.
+      * easy.
+      * intuition (auto with tea_alist).
+    + constructor; eauto using uniq_remove_mid, binds_remove_mid.
   - cbn. apply j_abs with (L := L ∪ domset Γ ∪ {{x}}).
     intros_cof H1. change (right_action term (fmap term (subst_loc x u) t)) with (t '{x ~> u}).
     change (Var (A := leaf)) with (η term (A := leaf)).
     rewrite <- subst_open_var.
     + simpl_alist in *. eapply H1.
-      * intros. subst. apply j_ctx_wf in H2. auto.
+      * eauto using j_ctx_wf.
       * subst. now simpl_alist.
     + fsetdec.
     + auto.

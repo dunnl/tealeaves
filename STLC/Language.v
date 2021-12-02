@@ -877,24 +877,27 @@ End term_open_rewrite.
 
 (** ** Rewriting lemmas for <<locally_closed>> *)
 (******************************************************************************)
-Theorem term_lc11 : forall (n : nat),
-    locally_closed term (Var (Bd n)) <-> False.
+Theorem term_lc_gap11 : forall (n : nat) (m : nat),
+    locally_closed_gap term m (Var (Bd n)) <-> n < m.
 Proof.
-  intros. unfold locally_closed, locally_closed_gap.
-  setoid_rewrite term_ind1. intuition. specialize (H 0 (Bd n) ltac:(auto)).
-  cbn in H. lia.
+  intros. unfold locally_closed_gap. split.
+  - intros. specialize (H 0 (Bd n)).
+    rewrite term_ind1 in H. specialize (H (ltac:(intuition))).
+    apply H.
+  - intros. cbn. rewrite term_ind1 in H0. destruct H0; subst.
+    now simpl_monoid.
 Qed.
 
-Theorem term_lc12 : forall (x : atom),
-    locally_closed term (Var (Fr x)) <-> True.
+Theorem term_lc_gap12 : forall (x : atom) (m : nat),
+    locally_closed_gap term m (Var (Fr x)) <-> True.
 Proof.
   intros. unfold locally_closed, locally_closed_gap.
   setoid_rewrite term_ind1. intuition.
   now subst.
 Qed.
 
-Theorem term_lc2 : forall (X : typ) (t : term leaf),
-    locally_closed term (Lam X t) <-> locally_closed_gap term 1 t.
+Theorem term_lc_gap2 : forall (X : typ) (t : term leaf) (m : nat),
+    locally_closed_gap term m (Lam X t) <-> locally_closed_gap term (S m) t.
 Proof.
   intros. unfold locally_closed, locally_closed_gap.
   setoid_rewrite term_ind22. split.
@@ -903,15 +906,40 @@ Proof.
     assert (exists m : nat, (m, Bd n) ∈d t /\ S w = S m) by
         (now exists w).
     specialize (H H1). unfold_monoid. lia.
-  - introv hyp1 [m [hyp2 hyp3]]. destruct l; subst; cbn. auto.
-    specialize (hyp1 m (Bd n) hyp2). cbn in hyp1. unfold_monoid. lia.
+  - introv hyp1 [m' [hyp2 hyp3]]. destruct l; subst; cbn. auto.
+    specialize (hyp1 m' (Bd n) hyp2). cbn in hyp1. unfold_monoid. lia.
+Qed.
+
+Theorem term_lc_gap3 : forall (t1 t2 : term leaf) (m : nat),
+    locally_closed_gap term m ([t1][t2]) <-> locally_closed_gap term m t1 /\ locally_closed_gap term m t2.
+Proof.
+  intros. unfold locally_closed, locally_closed_gap.
+  setoid_rewrite term_ind3. intuition.
+Qed.
+
+Theorem term_lc11 : forall (n : nat),
+    locally_closed term (Var (Bd n)) <-> False.
+Proof.
+  intros. unfold locally_closed. now (rewrite term_lc_gap11).
+Qed.
+
+Theorem term_lc12 : forall (x : atom),
+    locally_closed term (Var (Fr x)) <-> True.
+Proof.
+  intros. unfold locally_closed. now (rewrite term_lc_gap12).
+Qed.
+
+Theorem term_lc2 : forall (X : typ) (t : term leaf),
+    locally_closed term (Lam X t) <-> locally_closed_gap term 1 t.
+Proof.
+  intros. unfold locally_closed. now (rewrite term_lc_gap2).
 Qed.
 
 Theorem term_lc3 : forall (t1 t2 : term leaf),
     locally_closed term ([t1][t2]) <-> locally_closed term t1 /\ locally_closed term t2.
 Proof.
-  intros. unfold locally_closed, locally_closed_gap.
-  setoid_rewrite term_ind3. intuition.
+  intros. unfold locally_closed.
+  now setoid_rewrite term_lc_gap3.
 Qed.
 
 (** * Typing judgments for STLC *)
