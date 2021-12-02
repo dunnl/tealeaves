@@ -122,7 +122,7 @@ Section DecoratedModule_compose.
     reassociate -> near (fmap (G ∘ F) (join (prod W))).
     rewrite (fun_fmap_fmap (G ∘ F)).
     reassociate -> near (join (prod W)).
-    rewrite (writer_strength_join_l).
+    rewrite (strength_join_l).
     repeat reassociate <-.
     rewrite (fun_fmap_fmap T).
     rewrite (mon_join_join (prod W)).
@@ -164,7 +164,7 @@ Section DecoratedModule_compose.
     reassociate <-.
     change (?x ∘ right_action F ∘ fmap F (strength T) ∘ strength F ∘ ?y)
       with (x ∘ (right_action F ∘ fmap F (strength T) ∘ strength F) ∘ y).
-    rewrite <- (strength_right_action_r T F).
+    rewrite <- (strength_right_action T F).
     reassociate -> on right.
     rewrite <- (fun_fmap_fmap G).
     rewrite <- (fun_fmap_fmap G).

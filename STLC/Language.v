@@ -628,7 +628,7 @@ Proof.
   - cbn. compose near a. now rewrite 2(fun_fmap_fmap G).
   - cbn. do 2 (compose near (dec term t) on left;
                rewrite (fun_fmap_fmap term)).
-    reassociate <-. rewrite (strength_shift_1).
+    reassociate <-. rewrite (strength_shift1).
     rewrite <- (fun_fmap_fmap term); unfold compose.
     change (fmap term (fmap G ?f)) with (fmap (term ∘ G) f).
     compose near ((fmap term (σ G) (dec term t))).

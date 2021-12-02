@@ -234,7 +234,7 @@ Section helper_lemmas.
 
 End helper_lemmas.
 
-(** * Zero-decorated functors *)
+(** ** Zero-decorated functors *)
 (** Every functor is trivially decorated using the operation that
     pairs each leaf with the unit of the monoid. We call such functors
     zero-decorated. This allows us to see _all_ functors as (maybe
@@ -431,7 +431,7 @@ Section Decoratedfunctor_composition.
     (fmap F (strength G))
       ∘ dec F
       ∘ fmap F (dec G) =
-    (fmap (F ∘ G) (dist (prod W) (prod W)))
+    (fmap (F ∘ G) (bdist (prod W) (prod W)))
       ∘ fmap F (dec G)
       ∘ fmap F (strength G)
       ∘ dec F (A := G A).
@@ -525,20 +525,20 @@ Section Decoratedfunctor_composition.
     rewrite (fun_fmap_fmap (F ∘ G)). unfold shift.
     rewrite (fun_fmap_fmap F (f := @strength G _ W (W * (W * (W * A))))).
     rewrite <- (fun_fmap_fmap G).
-    change (fmap G (fmap (prod W) (dist (prod W) (prod W))))
-      with (fmap (G ○ prod W) (dist (A := W * A) (prod W) (prod W))).
+    change (fmap G (fmap (prod W) (bdist (prod W) (prod W))))
+      with (fmap (G ○ prod W) (bdist (A := W * A) (prod W) (prod W))).
     reassociate -> near (@strength G _ W _).
     rewrite (natural (ϕ := @strength G _ W)).
     do 4 reassociate <-.
-    rewrite <- (fun_fmap_fmap F (f := fmap (prod W ○ G) (dist (prod W) (prod W)))).
-    change (fmap F (fmap (prod W ○ G) (dist (A:=?A) (prod W) (prod W))))
-      with (fmap (F ∘ prod W) (fmap G (dist (A:=A) (prod W) (prod W)))).
+    rewrite <- (fun_fmap_fmap F (f := fmap (prod W ○ G) (bdist (prod W) (prod W)))).
+    change (fmap F (fmap (prod W ○ G) (bdist (A:=?A) (prod W) (prod W))))
+      with (fmap (F ∘ prod W) (fmap G (bdist (A:=A) (prod W) (prod W)))).
     reassociate -> near (dec F (A := (G (W * (W * (W * A)))))).
     rewrite (natural (ϕ := @dec W F _)).
     reassociate <-.
-    change (fmap F (fmap G (dist (A:=?A) (prod W) (prod W))))
-      with (fmap (F ∘ G) (dist (A:=A) (prod W) (prod W))).
-    reassociate -> near (fmap (F ∘ G) (dist (prod W) (prod W))).
+    change (fmap F (fmap G (bdist (A:=?A) (prod W) (prod W))))
+      with (fmap (F ∘ G) (bdist (A:=A) (prod W) (prod W))).
+    reassociate -> near (fmap (F ∘ G) (bdist (prod W) (prod W))).
     rewrite (fun_fmap_fmap (F ∘ G)).
     rewrite (writer_dist_involution).
     rewrite (fun_fmap_id (F ∘ G)).
@@ -601,9 +601,10 @@ Section DecoratedFunctor_composition_laws.
       do 2 rewrite (fun_fmap_fmap F).
       fequal. unfold shift.
       reassociate -> near (pair Ƶ). rewrite (strength_2).
-      rewrite (fun_fmap_fmap T). rewrite (join_zero).
-      rewrite (fun_fmap_id T).
-      reflexivity.
+      rewrite (fun_fmap_fmap T).
+      change (pair Ƶ) with (ret (W ×) (A := W * A)).
+      rewrite (mon_join_ret (prod W)).
+      now rewrite (fun_fmap_id T).
     Qed.
 
     Theorem decorate_compose_r : forall (A : Type),
@@ -650,7 +651,9 @@ Section DecoratedFunctor_composition_laws.
         fequal.
         reassociate -> on right.
         rewrite <- (natural (ϕ := @dec W T3 _)). reassociate <-.
-        fequal.
+        fequal. Set Keyed Unification.
+        rewrite (fun_fmap_fmap T3).
+        rewrite (fun_fmap_fmap T3). fequal.
     Abort.
 
   End associativity_law.
@@ -766,7 +769,6 @@ Section fmapd_functoriality.
     (F : Type -> Type)
     `{DecoratedFunctor W F}.
 
-  (** ** Functor laws for [fmapd] *)
   Theorem fmapd_id {A} : fmapd F (extract _) = @id (F A).
   Proof.
     introv. apply (dfun_dec_extract W F).

@@ -123,7 +123,7 @@ Section DecoratedFunctor_monoid_homomorphism.
       unfold_ops @Fmap_compose.
       reassociate <- on left.
       rewrite (fun_fmap_fmap F).
-      rewrite (reader1).
+      rewrite (product_fmap_commute).
       rewrite <- (fun_fmap_fmap F).
       reassociate -> on left.
       change (fmap F (fmap (prod Wsrc) f)) with

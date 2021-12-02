@@ -79,7 +79,7 @@ Section DecoratedTraversableFunctor_monoid.
         rewrite (fun_fmap_fmap T).
       rewrite <- (fun_fmap_fmap U).
       reassociate <- on left.
-      rewrite (writer_strength_join_l).
+      rewrite (strength_join_l).
       change (fmap U (fmap T ?f)) with (fmap (U ∘ T) f).
       do 2 rewrite <- (fun_fmap_fmap (U ∘ T)).
       change (fmap (U ∘ T) (fmap G ?f)) with (fmap (U ∘ T ∘ G) f).

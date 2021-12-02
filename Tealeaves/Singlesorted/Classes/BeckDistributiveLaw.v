@@ -7,41 +7,42 @@
 From Tealeaves Require Export
      Singlesorted.Classes.Monad.
 
-(** * Beck distributive law typeclass  *)
-
+(** * Beck distribution laws *)
+(******************************************************************************)
 Class BeckDistribution (U T : Type -> Type)
-  := dist : forall {A : Type}, U (T A) -> T (U A).
+  := bdist : forall {A : Type}, U (T A) -> T (U A).
 
-(* refer to <<dist>> by <<U> *)
-Arguments dist U T%function_scope {BeckDistribution} {A}%type_scope _.
+Arguments bdist U T%function_scope {BeckDistribution} {A}%type_scope _.
+
+#[local] Notation "'δ'" := (bdist) : tealeaves_scope.
 
 Section BeckDistributiveLaw.
 
   Context
     (U T : Type -> Type)
     `{Monad U}
-    `{Monad T}.
+    `{Monad T}
+    `{BeckDistribution U T}.
 
-  Class BeckDistributiveLaw  `(BeckDistribution U T) :=
+  Class BeckDistributiveLaw :=
     { dist_monad_l : Monad T;
       dist_monad_r : Monad U;
-      dist_natural :> Natural (@dist U T _);
+      dist_natural :> Natural (@bdist U T _);
       dist_join_l :
-        `(dist U T ∘ join U = fmap T (join U) ∘ dist U T ∘ fmap U (dist U T (A := A)));
+        `(bdist U T ∘ join U = fmap T (join U) ∘ bdist U T ∘ fmap U (bdist U T (A := A)));
       dist_join_r :
-        `(dist U T ∘ fmap U (join T) = join T ∘ fmap T (dist U T) ∘ dist U T (A := T A));
+        `(bdist U T ∘ fmap U (join T) = join T ∘ fmap T (bdist U T) ∘ bdist U T (A := T A));
       dist_unit_l :
-        `(dist U T ∘ ret U (A := T A) = fmap T (ret U));
+        `(bdist U T ∘ ret U (A := T A) = fmap T (ret U));
       dist_unit_r :
-        `(dist U T ∘ fmap U (ret T) = ret T (A := U A));
+        `(bdist U T ∘ fmap U (ret T) = ret T (A := U A));
     }.
 
 End BeckDistributiveLaw.
 
-(** * Distributive laws induce a composite monad *)
+(** * Beck distributive laws induce a composite monad *)
+(******************************************************************************)
 Section BeckDistributivelaw_composite_monad.
-
-  Arguments dist U T%function_scope {BeckDistribution} {A}%type_scope _.
 
   Context
     `{BeckDistributiveLaw U T}.
@@ -54,7 +55,7 @@ Section BeckDistributivelaw_composite_monad.
 
   (* we join <<T>> before <<U>> *)
   #[global] Instance Join_Beck : Join (T ∘ U) :=
-    fun A => fmap T (join U) ∘ join T ∘ fmap T (dist U T).
+    fun A => fmap T (join U) ∘ join T ∘ fmap T (bdist U T).
 
   Lemma slide_joins :
     `(fmap T (join U) ∘ join T (A := U (U A))
@@ -79,14 +80,14 @@ Section BeckDistributivelaw_composite_monad.
   Proof.
     constructor; try typeclasses eauto.
     intros A B f. unfold_ops @Fmap_compose @Join_Beck.
-    change_left (fmap T (fmap U f) ∘ fmap T (join U) ∘ join T ∘ fmap T (dist U T)).
+    change_left (fmap T (fmap U f) ∘ fmap T (join U) ∘ join T ∘ fmap T (bdist U T)).
     rewrite (fun_fmap_fmap T).
     rewrite (natural (G := T) (F := T ∘ T)).
     rewrite (natural (G := U) (F := U ∘ U)).
     rewrite <- (fun_fmap_fmap (T ∘ T)).
     unfold_ops @Fmap_compose.
     change_left ((join T ∘ fmap T (fmap T (join U))) ∘
-    (fmap T (fmap T (fmap U (fmap U f))) ∘ fmap T (dist U T))).
+    (fmap T (fmap T (fmap U (fmap U f))) ∘ fmap T (bdist U T))).
     rewrite (natural (G := T)).
     rewrite (fun_fmap_fmap T).
     rewrite (natural (G := T ∘ U) (Natural := dist_natural U T)).
@@ -98,7 +99,7 @@ Section BeckDistributivelaw_composite_monad.
       join (T ∘ U) ∘ ret (T ∘ U) = @id ((T ∘ U) A).
   Proof.
     intros. unfold_ops @Join_Beck @Ret_Beck.
-    reassociate ->. reassociate <- near (fmap T (dist U T)).
+    reassociate ->. reassociate <- near (fmap T (bdist U T)).
     rewrite (natural (F := fun A => A)). unfold_ops @Fmap_I.
     repeat reassociate ->. reassociate <- near (join T).
     rewrite (mon_join_ret T).
@@ -118,7 +119,7 @@ Section BeckDistributivelaw_composite_monad.
     repeat reassociate ->.
     rewrite 2(fun_fmap_fmap T).
     rewrite <- (fun_fmap_fmap U).
-    reassociate <- near (dist U T).
+    reassociate <- near (bdist U T).
     rewrite (dist_unit_r U T).
     reassociate <-. rewrite (natural (G := T) (F := fun A => A)).
     unfold_ops @Fmap_I.
@@ -136,8 +137,8 @@ Section BeckDistributivelaw_composite_monad.
     intros. unfold_ops @Join_Beck @Ret_Beck.
     (* Pull one <<join U>> to the same side as the other *)
     repeat change (?x ∘ (?y ∘ ?z)) with (x ∘ y ∘ z).
-    change (?x ∘ fmap T (dist U T) ∘ fmap T (join U) ∘ ?y)
-      with (x ∘ (fmap T (dist U T) ∘ fmap T (join U)) ∘ y).
+    change (?x ∘ fmap T (bdist U T) ∘ fmap T (join U) ∘ ?y)
+      with (x ∘ (fmap T (bdist U T) ∘ fmap T (join U)) ∘ y).
     rewrite (fun_fmap_fmap T).
     rewrite (dist_join_l U T).
     rewrite <- (fun_fmap_fmap T).
@@ -156,10 +157,10 @@ Section BeckDistributivelaw_composite_monad.
     rewrite (natural (ϕ := @join T _ )).
     repeat reassociate <- on left.
     (* Pull one <<join T>> to next to the other (past distributions) *)
-    change (?x ∘ fmap (T ∘ T) (fmap U (join U)) ∘ fmap T (dist U T) ∘ ?y)
-      with (x ∘ (fmap T (fmap (T ∘ U) (join U)) ∘ fmap T (dist U T)) ∘ y).
+    change (?x ∘ fmap (T ∘ T) (fmap U (join U)) ∘ fmap T (bdist U T) ∘ ?y)
+      with (x ∘ (fmap T (fmap (T ∘ U) (join U)) ∘ fmap T (bdist U T)) ∘ y).
     rewrite (fun_fmap_fmap T).
-    reassociate -> near (fmap T (fmap U (dist U T))).
+    reassociate -> near (fmap T (fmap U (bdist U T))).
     rewrite (fun_fmap_fmap T).
     change (?x ∘ fmap T (?etc) ∘ join T ∘ ?y)
       with (x ∘ (fmap T (etc) ∘ join T) ∘ y).
@@ -189,21 +190,21 @@ Section BeckDistributivelaw_composite_monad.
       with (fmap (T ∘ T) (fmap U (@join U _ A))).
     #[local] Set Keyed Unification.
     rewrite <- (natural (ϕ := @join T _ ) (fmap U (join U))).
-    reassociate -> near (fmap T (dist U T)).
+    reassociate -> near (fmap T (bdist U T)).
     reassociate -> on left.
-    change (fmap T (fmap U (@dist U T _ ?A)))
-      with (fmap (T ∘ U) (@dist U T _ A)).
-    rewrite (natural (ϕ := @dist U T _ ) (dist U T) (G := T ∘ U)).
+    change (fmap T (fmap U (@bdist U T _ ?A)))
+      with (fmap (T ∘ U) (@bdist U T _ A)).
+    rewrite (natural (ϕ := @bdist U T _ ) (bdist U T) (G := T ∘ U)).
     #[local] Unset Keyed Unification.
     unfold_ops @Fmap_compose.
     do 3 reassociate <-.
-    change (?x ∘ join T ∘ fmap T (dist U T) ∘ dist U T ∘ ?y)
-      with (x ∘ (join T ∘ fmap T (dist U T) ∘ dist U T) ∘ y).
+    change (?x ∘ join T ∘ fmap T (bdist U T) ∘ bdist U T ∘ ?y)
+      with (x ∘ (join T ∘ fmap T (bdist U T) ∘ bdist U T) ∘ y).
     rewrite <- (dist_join_r U T).
     (* Make some final naturality pulls *)
     repeat reassociate <-.
     change (fmap T (fmap U ?f)) with (fmap (T ∘ U) f).
-    rewrite (natural (ϕ := @dist U T _ )).
+    rewrite (natural (ϕ := @bdist U T _ )).
     unfold_ops @Fmap_compose.
     reassociate -> on left.
     rewrite (fun_fmap_fmap U).

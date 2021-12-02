@@ -183,5 +183,5 @@ End comodule_cobind.
 Module Notations.
   Notation "g 'co⋆' f" := (cokcompose g f) (at level 60) : tealeaves_scope.
   Notation "'coμ'" := (cojoin) : tealeaves_scope.
-  Notation "'coη'" := (extract) : tealeaves_scope.
+  (*Notation "'coη'" := (extract) : tealeaves_scope.*)
 End Notations.
