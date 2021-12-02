@@ -29,6 +29,7 @@ Tealeaves/Functors/List.v
 Tealeaves/Classes/ListableFunctor.v
 Tealeaves/Classes/ListableMonad.v
 Tealeaves/Classes/ListableModule.v
+#Tealeaves/Theory/Listable.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Classes/TraversableFunctor.v
 Tealeaves/Classes/TraversableMonad.v
