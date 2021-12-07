@@ -816,3 +816,23 @@ Section fmapd_suboperation_composition.
   Qed.
 
 End fmapd_suboperation_composition.
+
+(** * Miscellaneous properties of decorated functors *)
+(******************************************************************************)
+Section DecoratedFunctor_misc.
+
+  Context
+    (T : Type -> Type)
+    `{DecoratedFunctor W T}.
+
+  Theorem cobind_dec : forall `(f : W * A -> B),
+      fmap T (cobind (W ×) f) ∘ dec T = dec T ∘ fmap T f ∘ dec T.
+  Proof.
+    intros. unfold_ops @Cobind_Cojoin. rewrite <- (fun_fmap_fmap T).
+    reassociate ->. rewrite <- (dfun_dec_dec W T).
+    reassociate <-.
+    change (fmap T (fmap (W ×) f)) with (fmap (T ∘ (W ×)) f).
+    now rewrite (natural (ϕ := @dec W T _)).
+  Qed.
+
+End DecoratedFunctor_misc.
