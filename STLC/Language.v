@@ -620,7 +620,7 @@ Proof.
 Qed.
 
 Theorem dtfun_compat_term :
-        `(forall {A : Type} `{Applicative G},
+        `(forall `{Applicative G} {A : Type},
              dist term G ∘ fmap term (strength G) ∘ dec term (A := G A) =
              fmap G (dec term) ∘ dist term G).
 Proof.
