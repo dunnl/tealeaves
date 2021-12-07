@@ -23,9 +23,9 @@ Section DecoratedTraversableFunctor.
   Class DecoratedTraversableFunctor :=
     { dtfun_decorated :> DecoratedFunctor W F;
       dtfun_traversable :> TraversableFunctor F;
-      dtfun_compat : forall (A : Type) `{Applicative G},
-             dist F G ∘ fmap F (σ G) ∘ dec F (A := G A) =
-             fmap G (dec F) ∘ dist F G;
+      dtfun_compat : forall `{Applicative G},
+        `(dist F G ∘ fmap F (σ G) ∘ dec F (A := G A) =
+            fmap G (dec F) ∘ dist F G);
     }.
 
 End DecoratedTraversableFunctor.
@@ -123,7 +123,7 @@ Section DecoratedTraversableFunctor_monoid.
       rewrite (fun_fmap_fmap G). reflexivity.
     Qed.
 
-    Theorem dtfun_compat_compose : forall (A : Type) `{Applicative G},
+    Theorem dtfun_compat_compose : forall `{Applicative G} {A : Type},
         δ (U ∘ T) G ∘ fmap (U ∘ T) (σ G) ∘ dec (U ∘ T) (A := G A) =
         fmap G (dec (U ∘ T)) ∘ dist (U ∘ T) G.
     Proof.
@@ -155,7 +155,7 @@ Section DecoratedTraversableFunctor_monoid.
 
     #[global] Instance DecoratedTraversableFunctor_compose :
       DecoratedTraversableFunctor W (U ∘ T) :=
-      {| dtfun_compat := dtfun_compat_compose; |}.
+      {| dtfun_compat := @dtfun_compat_compose; |}.
 
   End compose.
 
@@ -173,7 +173,7 @@ Section TraversableFunctor_zero_DT.
   Existing Instance Decorate_zero.
   Existing Instance DecoratedFunctor_zero.
 
-  Theorem dtfun_compat_zero : forall (A : Type) `{Applicative G},
+  Theorem dtfun_compat_zero : forall `{Applicative G} {A : Type},
       dist T G ∘ fmap T (strength G) ∘ dec T =
       fmap G (dec T) ∘ dist T G (A := A).
   Proof.
@@ -186,7 +186,7 @@ Section TraversableFunctor_zero_DT.
 
   Instance DecoratedTraversableFunctor_zero :
     DecoratedTraversableFunctor W T :=
-    {| dtfun_compat := dtfun_compat_zero |}.
+    {| dtfun_compat := @dtfun_compat_zero |}.
 
 End TraversableFunctor_zero_DT.
 
