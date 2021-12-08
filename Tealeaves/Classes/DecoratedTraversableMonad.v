@@ -29,6 +29,8 @@ Section DecoratedTraverableMonad.
 
 End DecoratedTraverableMonad.
 
+(** Now we verify that the sub-classes can be inferred as well. *)
+(******************************************************************************)
 Section test_typeclasses.
 
   Context
@@ -36,18 +38,16 @@ Section test_typeclasses.
 
   Goal Functor T. typeclasses eauto. Qed.
   Goal DecoratedFunctor W T. typeclasses eauto. Qed.
-  Goal ListableFunctor T. typeclasses eauto. Qed.
-  Goal TraversableFunctor T. typeclasses eauto. Qed.
   Goal SetlikeFunctor T. typeclasses eauto. Qed.
   Goal ListableFunctor T. typeclasses eauto. Qed.
+  Goal TraversableFunctor T. typeclasses eauto. Qed.
   Goal DecoratedTraversableFunctor W T. typeclasses eauto. Qed.
 
   Goal Monad T. typeclasses eauto. Qed.
   Goal DecoratedMonad W T. typeclasses eauto. Qed.
-  Goal ListableMonad T. typeclasses eauto. Qed.
-  Goal TraversableMonad T. typeclasses eauto. Qed.
   Goal SetlikeMonad T. typeclasses eauto. Qed.
   Goal ListableMonad T. typeclasses eauto. Qed.
+  Goal TraversableMonad T. typeclasses eauto. Qed.
 
 End test_typeclasses.
 
@@ -56,7 +56,8 @@ End test_typeclasses.
 
 (** ** Lifting operation <<binddt>> and Kleisli composition  *)
 (******************************************************************************)
-Definition binddt T `{Fmap T} `{Decorate W T} `{Dist T} `{Join T}
+Definition binddt (T : Type -> Type)
+           `{Fmap T} `{Decorate W T} `{Dist T} `{Join T}
            `{Fmap G} `{Pure G} `{Mult G}
            {A B : Type} (f : W * A -> G (T B)) : T A -> G (T B) :=
   fmap G (join T) ∘ dist T G ∘ fmap T f ∘ dec T.
@@ -79,7 +80,8 @@ Section kleisli_composition.
               ∘ σ G1
               ∘ cobind (W ×) f.
 
-  (* Compare the above definition to this candidate definition:
+(* Compare the above definition to this candidate definition:
+<<
   Definition kcomposedtm {A B C}
              `{Applicative G1}
              `{Applicative G2} :
@@ -92,10 +94,11 @@ Section kleisli_composition.
                         ∘ dec T))
               ∘ strength (G1 ∘ T)
               ∘ cobind (prod W) f.
+>>
    This definition is wrong in the sense that it passes arguments to the monoid operation
    in an unexpected order (which is to say, not the same order as <<shift>>, which we understand as the
    operation used in the definition <<dec T>>. (Alternatively we could probably swap the order for both definitions.)
-   *)
+ *)
 
 End kleisli_composition.
 
@@ -317,9 +320,9 @@ Section DecoratedTraversableMonad_binddt.
 
 End DecoratedTraversableMonad_binddt.
 
-(** ** Composition with sub-operations  *)
+(** ** Kleisli composition laws  *)
 (******************************************************************************)
-Section DecoratedTraversableMonad_composition.
+Section DecoratedTraversableMonad_kleisli.
 
   Context
     (T : Type -> Type)
@@ -329,52 +332,97 @@ Section DecoratedTraversableMonad_composition.
     `{Applicative G2}
     `{! Monoid W}.
 
-  (** *** Compositions like <<binddt_xxx>> *)
+  (** *** Miscellaneous lemmas *)
   (******************************************************************************)
-  Corollary binddt_bindd {A B C} : forall (g : W * B -> G (T C)) (f : W * A -> T B),
-      binddt T g ∘ bindd T f =
-        binddt T ((fmap G (μ T))
-                    ∘ δ T G
-                    ∘ fmap T (g ∘ μ (W ×))
-                    ∘ σ T
-                    ∘ fmap (W ×) (dec T)
-                    ∘ cobind (W ×) f).
+
+  (** If <<g>> is going to discard the decoration, we don't have to compute it. *)
+  Lemma dtm_kleisli_lemma1 : forall A,
+    (fmap T (extract (prod W) ∘ μ (prod W)) ∘ σ T
+          ∘ fmap (W ×) (dec T) : W * T A -> T A) = extract (W ×).
   Proof.
-    intros. rewrite (bindd_to_binddt T).
-    change (binddt T g) with (fmap (fun A => A) (binddt T g)).
-    rewrite (binddt_binddt T (G1 := fun A => A)).
-    fequal.
-    - apply Mult_compose_identity2.
-    - unfold kcomposedtm. unfold_ops @Fmap_I.
-      now rewrite strength_I.
+    intros. ext [w t]. unfold compose; cbn. unfold id.
+    compose near (dec T t). rewrite (fun_fmap_fmap T).
+    replace (extract (W ×) ○ μ (W ×) ∘ pair w (B := W * A))
+      with (extract (W ×) (A := A)).
+    compose near t on left. now rewrite (dfun_dec_extract W T).
+    now ext [? ?].
   Qed.
 
-  Corollary binddt_bindt {A B C} : forall (g : W * B -> G2 (T C)) (f : A -> G1 (T B)),
-      fmap G1 (binddt T g) ∘ bindt T f =
-        binddt (G := G1 ∘ G2) T
-               ((fmap G1 ((fmap G2 (μ T))
-                        ∘ δ T G2
-                        ∘ fmap T (g ∘ μ (W ×))
-                        ∘ σ T
-                        ∘ fmap (W ×) (dec T)))
-              ∘ σ G1
-              ∘ fmap (W ×) f).
+  (** If <<f>> has a trivial <<T>> output, we use its same <<W>> input. *)
+  Lemma dtm_kleisli_lemma2 : forall A,
+    (fmap T (μ (prod W)) ∘ σ T
+          ∘ fmap (W ×) (dec T ∘ ret T) : W * A -> T (W * A)) = ret T (A := W * A).
   Proof.
-    intros. rewrite (bindt_to_binddt T). rewrite (binddt_binddt T).
-    fequal. unfold kcomposedtm. now rewrite <- (fmap_to_cobind (prod W)).
+    intros. ext [w t]. unfold compose; cbn. unfold id.
+    compose near (t). rewrite (dmon_ret W T); unfold compose; cbn.
+    compose near (Ƶ, t). rewrite (natural (ϕ := @ret T _)). unfold_ops @Fmap_I.
+    unfold compose; cbn.
+    compose near (w, (Ƶ, t)). rewrite (natural (ϕ := @ret T _)). unfold_ops @Fmap_I.
+    unfold compose; cbn. now simpl_monoid.
   Qed.
 
-  Corollary binddt_fmapdt {A B C} : forall (g : W * B -> G2 (T C)) (f : W * A -> G1 B),
-      fmap G1 (binddt T g) ∘ fmapdt T f =
-        binddt (G := G1 ∘ G2) T
-               ((fmap G1 g)
-                  ∘ strength G1
-                  ∘ cobind (prod W) f).
+  (** *** Left and right identity laws *)
+  (******************************************************************************)
+  Lemma dtm_kleisli_identity1 :  forall `(f : W * A -> G (T B)),
+      kcomposedtm (G2 := fun A => A) (ret T ∘ extract (W ×)) f = f.
   Proof.
-    intros.
-    rewrite (fmapdt_to_binddt T).
-    rewrite (binddt_binddt T).
-    fequal. unfold kcomposedtm.
+    intros. unfold kcomposedtm. unfold_ops @Fmap_I.
+    rewrite (dist_unit T). reassociate -> near (μ (W ×)).
+    rewrite <- (fun_fmap_fmap T). reassociate <-.
+    change (?foo ∘ fmap T (extract (prod W) ∘ μ (prod W)) ∘ σ T
+     ∘ fmap (prod W) (dec T)) with (foo ∘ (fmap T (extract (prod W) ∘ μ (prod W)) ∘ σ T
+     ∘ fmap (prod W) (dec T))).
+    rewrite dtm_kleisli_lemma1.
+    change (?f ∘ id) with f.
+    rewrite <- (fun_fmap_fmap G).
+    reassociate -> near (σ G).
+    rewrite (strength_extract).
+    reassociate ->.
+    rewrite (extract_cobind (W ×)).
+    rewrite (mon_join_fmap_ret T).
+    rewrite (fun_fmap_id G).
+    easy.
+  Qed.
+
+  Lemma dtm_kleisli_identity2 :  forall `(g : W * A -> G (T B)),
+      kcomposedtm (G1 := fun A => A) g (ret T ∘ extract (W ×)) = g.
+  Proof.
+    intros. unfold kcomposedtm. unfold_ops @Fmap_I.
+    rewrite strength_I. change (?f ∘ id) with f.
+    rewrite <- (fmap_to_cobind (W ×)).
+    reassociate ->. rewrite (fun_fmap_fmap (W ×)).
+    rewrite <- (fun_fmap_fmap T). reassociate <-.
+    change (?foo ∘ fmap T (μ (prod W)) ∘ σ T ∘ fmap (prod W) (dec T ∘ η T))
+      with (foo ∘ (fmap T (μ (prod W)) ∘ σ T ∘ fmap (prod W) (dec T ∘ η T))).
+    rewrite dtm_kleisli_lemma2.
+    reassociate -> on left. rewrite (natural (ϕ := @ret T _)).
+    unfold_ops @Fmap_I. reassociate <-.
+    reassociate -> near (η T). rewrite (trvmon_ret T).
+    rewrite (fun_fmap_fmap G). rewrite (mon_join_ret T).
+    now rewrite (fun_fmap_id G).
+  Qed.
+
+  (** *** Kleisli composition with special cases in <<f>>  *)
+  (******************************************************************************)
+
+  (** Kleisli composition when <<f>> has no applicative effect. *)
+  Lemma dtm_kleisli_star1 :  forall `(g : W * B -> G (T C)) `(f : W * A -> T B),
+      (kcomposedtm (G1 := fun A => A) g f) = (fmap G (μ T))
+                   ∘ δ T G
+                   ∘ fmap T (g ∘ μ (W ×))
+                   ∘ σ T
+                   ∘ fmap (W ×) (dec T)
+                   ∘ cobind (W ×) f.
+  Proof.
+    intros. unfold kcomposedtm.
+    now rewrite strength_I.
+  Qed.
+
+  (** Kleisli composition when <<f>> has no substitution. *)
+  Lemma dtm_kleisli_star2 {A B C} : forall (g : W * B -> G2 (T C)) (f : W * A -> G1 B),
+      g ⋆dtm (fmap G1 (ret T) ∘ f) = fmap G1 g ∘ σ G1 ∘ cobind (W ×) f.
+  Proof.
+    intros. fequal. unfold kcomposedtm.
     rewrite <- (fmap_cobind (prod W)).
     reassociate <-. fequal. ext [w t].
     unfold compose; cbn.
@@ -405,6 +453,155 @@ Section DecoratedTraversableMonad_composition.
     now rewrite (fun_fmap_id G2).
   Qed.
 
+  (** Kleisli composition when <<f>> discards the decoration. *)
+  Lemma dtm_kleisli_star3 {A B C} : forall (g : W * B -> G2 (T C)) (f : A -> G1 (T B)),
+      g ⋆dtm (f ∘ extract (W ×)) = fmap G1 ((fmap G2 (μ T))
+                                              ∘ δ T G2
+                                              ∘ fmap T (g ∘ μ (prod W))
+                                              ∘ σ T
+                                              ∘ fmap (W ×) (dec T))
+                                        ∘ σ G1
+                                        ∘ fmap (W ×) f.
+  Proof.
+    intros. fequal. unfold kcomposedtm. now rewrite <- (fmap_to_cobind (prod W)).
+  Qed.
+
+  (** Kleisli composition when <<f>> discards the decoration and has no applicative effect. *)
+  Lemma dtm_kleisli_star4 {A B C} : forall (g : W * B -> G (T C)) (f : A -> T B),
+      (kcomposedtm (G1 := fun A => A) g (f ∘ extract (W ×)) =
+         (fmap G (μ T))
+           ∘ dist T G
+           ∘ fmap T (g ∘ μ (prod W))
+           ∘ σ T
+           ∘ fmap (W ×) (dec T ∘ f)).
+  Proof.
+    intros. unfold kcomposedtm. rewrite strength_I. unfold_ops @Fmap_I.
+    rewrite <- (fmap_to_cobind (W ×)).
+    change (?f ∘ id) with f.
+    reassociate -> on left. now rewrite (fun_fmap_fmap (W ×)).
+  Qed.
+
+  (** Kleisli composition when <<f>> has no effects. *)
+  Lemma dtm_kleisli_star5 {A B C} : forall (g : W * B -> G (T C)) (f : A -> B),
+      kcomposedtm (G1 := fun A => A) g (η T ∘ f ∘ extract (W ×)) = (g ∘ fmap (W ×) f).
+  Proof.
+    intros. unfold kcomposedtm. rewrite strength_I. unfold_ops @Fmap_I.
+    change (?f ∘ id) with f.
+    change (η T ∘ f ∘ extract (prod W)) with (η T ∘ (f ∘ extract (prod W))).
+    rewrite <- (fmap_cobind (W ×)).
+    rewrite <- (fmap_to_cobind (W ×)).
+    reassociate <- on left.
+    reassociate -> near (fmap (W ×) (η T)).
+    rewrite (fun_fmap_fmap (W ×)).
+    change (?g ∘ σ T ∘ fmap (prod W) (dec T ∘ η T) ∘ fmap (prod W) f)
+      with (g ∘ (σ T ∘ fmap (prod W) (dec T ∘ η T)) ∘ fmap (prod W) f).
+    rewrite (dmon_ret W T).
+    replace (σ T ∘ fmap (W ×) (η T ∘ pair (Ƶ : W)) (A := B))
+      with (fmap T (fmap (W ×) (pair (Ƶ : W))) ∘ η T (A := W * B)).
+    2:{ ext [w a]. unfold compose. cbn.
+        compose near (w, a). compose near (Ƶ, a).
+        rewrite (natural (ϕ := @ret T _)).
+        rewrite (natural (ϕ := @ret T _)).
+        reflexivity. }
+    reassociate <- on left.
+    reassociate -> near (fmap T (fmap (prod W) (pair Ƶ))).
+    rewrite (fun_fmap_fmap T).
+    reassociate -> near (fmap (prod W) (pair Ƶ)).
+    change (fmap (prod W) (pair Ƶ (B := ?A))) with (fmap (prod W) (η (W ×) (A := A))).
+    rewrite (mon_join_fmap_ret (W ×)).
+    reassociate -> near (η T).
+    rewrite (natural (ϕ := @ret T _)).
+    unfold_ops @Fmap_I. reassociate <- on left.
+    reassociate -> near (η T). rewrite (trvmon_ret T).
+    rewrite (fun_fmap_fmap G). rewrite (mon_join_ret T).
+    now rewrite (fun_fmap_id G).
+  Qed.
+
+  (** *** Kleisli composition with special cases in <<g>>  *)
+  (******************************************************************************)
+
+  (** Composition with <<g>> discards the decoration. *)
+  Lemma dtm_kleisli_star6  {A B C} : forall (g : B -> G2 (T C)) (f : W * A -> G1 (T B)),
+      (g ∘ extract (prod W)) ⋆dtm f = fmap G1 (fmap G2 (μ T) ∘ δ T G2 ∘ fmap T g) ∘ f.
+  Proof.
+    intros. unfold kcomposedtm.
+    reassociate -> near (μ (prod W)).
+    rewrite <- (fun_fmap_fmap T).
+    reassociate <- on left.
+    change (?foo ∘ fmap T (extract (prod W) ∘ μ (prod W)) ∘ σ T ∘ fmap (prod W) (dec T))
+      with (foo ∘ (fmap T (extract (prod W) ∘ μ (prod W)) ∘ σ T ∘ fmap (prod W) (dec T))).
+    rewrite dtm_kleisli_lemma1.
+    rewrite <- (fun_fmap_fmap G1).
+    change (?foo ∘ fmap G1 (extract (prod W)) ∘ σ G1 ∘ cobind (prod W) f)
+      with (foo ∘ (fmap G1 (extract (prod W)) ∘ σ G1 ∘ cobind (prod W) f)).
+    rewrite strength_extract.
+    now rewrite (extract_cobind (W ×)).
+  Qed.
+
+End DecoratedTraversableMonad_kleisli.
+
+(** ** Composition with sub-operations  *)
+(******************************************************************************)
+Section DecoratedTraversableMonad_composition.
+
+  Context
+    (T : Type -> Type)
+    `{DecoratedTraversableMonad W T}
+    `{Applicative G}
+    `{Applicative G1}
+    `{Applicative G2}
+    `{! Monoid W}.
+
+  (** *** Composition laws when <<f>> is trivial in a certain effect. *)
+  (******************************************************************************)
+
+  (** Composition when <<f>> has no applicative effect. *)
+  Corollary binddt_bindd {A B C} : forall (g : W * B -> G (T C)) (f : W * A -> T B),
+      binddt T g ∘ bindd T f =
+        binddt T ((fmap G (μ T))
+                    ∘ δ T G
+                    ∘ fmap T (g ∘ μ (W ×))
+                    ∘ σ T
+                    ∘ fmap (W ×) (dec T)
+                    ∘ cobind (W ×) f).
+  Proof.
+    intros. rewrite (bindd_to_binddt T).
+    change (binddt T g) with (fmap (fun A => A) (binddt T g)).
+    rewrite (binddt_binddt T (G1 := fun A => A)).
+    rewrite dtm_kleisli_star1.
+    fequal. apply Mult_compose_identity2.
+  Qed.
+
+  (** Composition when <<f>> does not use the decoration structure. *)
+  Corollary binddt_bindt {A B C} : forall (g : W * B -> G2 (T C)) (f : A -> G1 (T B)),
+      fmap G1 (binddt T g) ∘ bindt T f =
+        binddt (G := G1 ∘ G2) T
+               ((fmap G1 ((fmap G2 (μ T))
+                        ∘ δ T G2
+                        ∘ fmap T (g ∘ μ (W ×))
+                        ∘ σ T
+                        ∘ fmap (W ×) (dec T)))
+              ∘ σ G1
+              ∘ fmap (W ×) f).
+  Proof.
+    intros. rewrite (bindt_to_binddt T). rewrite (binddt_binddt T).
+    now rewrite dtm_kleisli_star3.
+  Qed.
+
+  (** Composition when <<f>> has no substitution. *)
+  Corollary binddt_fmapdt {A B C} : forall (g : W * B -> G2 (T C)) (f : W * A -> G1 B),
+      fmap G1 (binddt T g) ∘ fmapdt T f =
+        binddt (G := G1 ∘ G2) T ((fmap G1 g)
+                                   ∘ σ G1
+                                   ∘ cobind (prod W) f).
+  Proof.
+    intros.
+    rewrite (fmapdt_to_binddt T).
+    rewrite (binddt_binddt T).
+    now rewrite (dtm_kleisli_star2 T).
+  Qed.
+
+  (** Composition when <<f>> has no decoration or applicative effect. *)
   Corollary binddt_bind {A B C} : forall (g : W * B -> G (T C)) (f : A -> T B),
       binddt T g ∘ bind T f =
         binddt T ((fmap G (μ T))
@@ -413,12 +610,14 @@ Section DecoratedTraversableMonad_composition.
                     ∘ σ T
                     ∘ fmap (W ×) (dec T ∘ f)).
   Proof.
-    intros. rewrite (bind_to_bindd T). rewrite (binddt_bindd).
-    rewrite <- (fmap_to_cobind (prod W)).
-    repeat reassociate -> on left.
-    now rewrite (fun_fmap_fmap (W ×)).
+    intros. rewrite (bind_to_binddt T).
+    change (binddt T g) with (fmap (fun A => A) (binddt T g)).
+    rewrite (binddt_binddt T (G1 := fun A => A)).
+    rewrite (dtm_kleisli_star4).
+    fequal; apply Mult_compose_identity2.
   Qed.
 
+  (** Composition when <<f>> has no decoration or substitution effect. *)
   Corollary binddt_fmapt {A B C} : forall (g : W * B -> G2 (T C)) (f : A -> G1 B),
       fmap G1 (binddt T g) ∘ traverse T G1 f =
         binddt (G := G1 ∘ G2) T
@@ -426,12 +625,7 @@ Section DecoratedTraversableMonad_composition.
                      ∘ σ G1
                      ∘ fmap (W ×) f).
   Proof.
-    intros. unfold binddt.
-    repeat fequal.
-    repeat reassociate <-.
-    fequal.
-    fequal. fequal.
-    rewrite (traverse_to_bindt T). unfold binddt, bindt.
+    intros. rewrite (traverse_to_bindt T). unfold binddt, bindt.
     repeat reassociate <-. rewrite (fun_fmap_fmap G1).
     rewrite (dist_linear T). reassociate <-.
     unfold_ops @Fmap_compose.
@@ -473,6 +667,7 @@ Section DecoratedTraversableMonad_composition.
     now rewrite (fun_fmap_fmap G1).
   Qed.
 
+  (** Composition when <<f>> has no substitution or applicative effect. *)
   Corollary binddt_fmapd {A B C} : forall (g : W * B -> G2 (T C)) (f : W * A -> B),
       binddt T g ∘ fmapd T f =
       binddt T (g ∘ cobind (prod W) f).
@@ -483,21 +678,30 @@ Section DecoratedTraversableMonad_composition.
     reflexivity.
   Qed.
 
+  (** Composition when <<f>> has no special effect. *)
   Corollary binddt_fmap {A B C} : forall (g : W * B -> G2 (T C)) (f : A -> B),
       binddt T g ∘ fmap T f =
       binddt T (g ∘ fmap (prod W) f).
   Proof.
-    intros. rewrite (fmap_to_cobind (prod W)).
-    rewrite <- binddt_fmapd. now rewrite (fmap_to_fmapd T).
+    intros. rewrite (fmap_to_binddt T).
+    change (binddt T g) with (fmap (fun A => A) (binddt T g)).
+    rewrite (binddt_binddt T (G1 := fun A => A)).
+    rewrite (dtm_kleisli_star5 T g f).
+    fequal; apply Mult_compose_identity2.
   Qed.
 
-  (** *** Compositions like <<xxx_binddt>> *)
+  (** *** Composition laws when <<g>> is trivial in a certain effect. *)
+  (******************************************************************************)
+
+  (** Composition with g has no applicative effect. *)
   Corollary bindd_binddt {A B C} : forall (g : W * B -> T C) (f : W * A -> G (T B)),
       fmap G (bindd T g) ∘ binddt T f =
-      binddt T ((fmap G (join T))
-                  ∘ fmap G (fmap T (g ∘ join (prod W)) ∘ dec T)
-                  ∘ strength (G ∘ T)
-                  ∘ cobind (prod W) f).
+        binddt T ((fmap G (μ T
+                             ∘ fmap T (g ∘ μ (prod W))
+                             ∘ σ T
+                             ∘ fmap (W ×) (dec T)))
+                    ∘ σ G
+                    ∘ cobind (prod W) f).
   Proof.
     intros. rewrite (bindd_to_binddt T).
     rewrite (binddt_binddt T (G2 := fun A => A)).
@@ -506,64 +710,125 @@ Section DecoratedTraversableMonad_composition.
     change (?f ∘ id) with f. fequal.
     + ext X Y x. change (G ∘ (fun A => A)) with G in x.
       destruct x. unfold Mult_compose.
-      unfold_ops @Mult_I. rewrite (fun_fmap_id G).
-      reflexivity.
-    + rewrite (fun_fmap_fmap G).
-  Admitted.
+      unfold_ops @Mult_I. now rewrite (fun_fmap_id G).
+  Qed.
 
+  (** Composition with g discards the decoration. *)
   Corollary bindt_binddt {A B C} : forall (g : B -> G2 (T C)) (f : W * A -> G1 (T B)),
       fmap G1 (bindt T g) ∘ binddt T f =
         binddt T (G := G1 ∘ G2)
-               ((fmap G1 ((fmap G2 (join T))
-                            ∘ dist T G2
+               ((fmap G1 ((fmap G2 (μ T))
+                            ∘ δ T G2
                             ∘ fmap T g))
                   ∘ f).
   Proof.
     intros. rewrite (bindt_to_binddt T). rewrite (binddt_binddt T).
-    fequal.
-  Admitted.
+    fequal. now rewrite (dtm_kleisli_star6 T).
+  Qed.
 
+  (** Composition with g has no substitution. *)
   Corollary fmapdt_binddt {A B C} : forall (g : W * B -> G2 C) (f : W * A -> G1 (T B)),
       fmap G1 (fmapdt T g) ∘ binddt T f =
-        binddt T (G := G1 ∘ G2)
-               ((fmap G1 (dist T G2))
-                  ∘ fmap G1 (fmap T (g ∘ join (prod W)) ∘ dec T)
-                  ∘ strength (G1 ∘ T)
-                  ∘ cobind (prod W) f).
+      binddt T (G := G1 ∘ G2)
+             (fmap G1 (δ T G2
+                         ∘ fmap T (g ∘ μ (W ×))
+                         ∘ σ T
+                         ∘ fmap (W ×) (dec T))
+             ∘ σ G1
+             ∘ cobind (W ×) f).
   Proof.
-  Admitted.
+    intros. rewrite (fmapdt_to_binddt T).
+    rewrite (binddt_binddt T). fequal. unfold kcomposedtm.
+    change (fmap G2 (η T) ∘ g ∘ μ (prod W)) with
+        (fmap G2 (η T) ∘ (g ∘ μ (prod W))).
+    rewrite <- (fun_fmap_fmap T).
+    reassociate <- on left. reassociate -> near (fmap T (fmap G2 (η T))).
+    change (fmap T (fmap G2 (η T (A := ?A)))) with (fmap (T ∘ G2) (η T (A := A))).
+    Set Keyed Unification.
+    rewrite <- (dist_natural T (G := G2) (η T)).
+    reassociate <-. rewrite (fun_fmap_fmap G2).
+    rewrite (mon_join_fmap_ret T).
+    now rewrite (fun_fmap_id G2).
+    Unset Keyed Unification.
+  Qed.
 
-
+  (** Composition with g has no decoration or applicative effect. *)
   Corollary bind_binddt {A B C} : forall (g : B -> T C) (f : W * A -> G1 (T B)),
       fmap G1 (bind T g) ∘ binddt T f =
         binddt T ((fmap G1 (join T))
                     ∘ fmap G1 (fmap T g)
                     ∘ f).
   Proof.
-    intros. rewrite (bind_to_bindt T).
-  Admitted.
+    intros. rewrite (bind_to_binddt T).
+    rewrite (binddt_binddt (G2 := fun A => A) T).
+    fequal.
+    - apply Mult_compose_identity1.
+    - Set Keyed Unification.
+      rewrite (dtm_kleisli_star6 T).
+      unfold_ops @Fmap_I. rewrite (dist_unit T).
+      now rewrite (fun_fmap_fmap G1).
+      Unset Keyed Unification.
+  Qed.
 
+  (** Composition with g has no decoration effect or substitution. *)
   Corollary fmapt_binddt {A B C} : forall (g : B -> G2 C) (f : W * A -> G1 (T B)),
       fmap G1 (traverse T G2 g) ∘ binddt T f =
         binddt T (G := G1 ∘ G2) ((fmap G1 (dist T G2 ∘ fmap T g)) ∘ f).
   Proof.
-  Admitted.
+    intros. rewrite (fmapt_to_binddt T). rewrite (binddt_binddt T).
+    fequal.
+    Set Keyed Unification.
+    rewrite (dtm_kleisli_star6 T).
+    rewrite <- (fun_fmap_fmap T).
+    reassociate <-. change (fmap T (fmap G2 (?f))) with (fmap (T ∘ G2) f).
+    reassociate -> near (fmap (T ∘ G2) (η T)).
+    rewrite <- (dist_natural T).
+    reassociate <-. rewrite (fun_fmap_fmap G2).
+    rewrite (mon_join_fmap_ret T).
+    now rewrite (fun_fmap_id G2).
+    Unset Keyed Unification.
+  Qed.
 
+  (** Composition with g has no substitution or applicative effect. *)
   Corollary fmapd_binddt {A B C} : forall (g : W * B -> C) (f : W * A -> G1 (T B)),
       fmap G1 (fmapd T g) ∘ binddt T f =
-        binddt T (fmap G1 (fmap T (g ∘ join (prod W)) ∘ dec T)
-                       ∘ strength (G1 ∘ T)
-                       ∘ cobind (prod W) f).
+        binddt T (fmap G1 (fmap T (g ∘ μ (W ×))
+                                ∘ σ T
+                                ∘ fmap (W ×) (dec T))
+                       ∘ σ G1
+                       ∘ cobind (W ×) f).
   Proof.
-  Admitted.
+    intros. rewrite (fmapd_to_binddt T).
+    rewrite (binddt_binddt T (G2 := (fun A => A))).
+    fequal.
+    - apply Mult_compose_identity1.
+    - unfold kcomposedtm. unfold_ops @Fmap_I.
+      rewrite (dist_unit T). change (?f ∘ id) with f.
+      reassociate -> near (μ (W ×)). rewrite <- (fun_fmap_fmap T).
+      reassociate <-. rewrite (mon_join_fmap_ret T).
+      now change (id ∘ ?f) with f.
+  Qed.
 
+  (** Composition with g has no special effects. *)
   Corollary fmap_binddt {A B C} : forall (g : B -> C) (f : W * A -> G1 (T B)),
       fmap G1 (fmap T g) ∘ binddt T f =
         binddt T (fmap (G1 ∘ T) g ∘ f).
   Proof.
-  Admitted.
+    intros. unfold binddt.
+    repeat reassociate <-. rewrite (fun_fmap_fmap G1).
+    rewrite (natural (ϕ := @join T _)).
+    unfold_ops @Fmap_compose.
+    rewrite <- (fun_fmap_fmap G1).
+    change (fmap G1 (fmap T ?g)) with (fmap (G1 ∘ T) g) at 1.
+    reassociate -> near (δ T G1).
+    rewrite (dist_natural T).
+    unfold_ops @Fmap_compose.
+    reassociate <-. reassociate -> near (fmap T f).
+    now rewrite (fun_fmap_fmap T).
+  Qed.
 
   (** ** Re-statement of inherited composition properties for [bindd] *)
+  (******************************************************************************)
   Corollary bindd_fmapd {A B C} : forall (g : W * B -> T C) (f : W * A -> B),
       bindd T g ∘ fmapd T f = bindd T (g co⋆ f).
   Proof.
@@ -601,6 +866,7 @@ Section DecoratedTraversableMonad_composition.
   Qed.
 
   (** ** Re-statement of inherited composition properties for [bindt] *)
+  (******************************************************************************)
   Corollary bindt_fmapt {A B C} : forall (g : B -> G2 (T C)) (f : A -> G1 B),
       fmap G1 (bindt T g) ∘ traverse T G1 f = bindt T (G := G1 ∘ G2) (fmap G1 g ∘ f).
   Proof.
@@ -678,7 +944,10 @@ Section DecoratedTraversableFunctor_purity.
     reassociate ->.
     pose (binddt_purity1 (G2 := G) (G1 := fun A => A) (A := A) (B := A)).
     specialize (e (ret T ∘ extract (prod W))).
-  Admitted.
+    rewrite Mult_compose_identity1 in e.
+    rewrite e.
+    now rewrite (binddt_id T).
+  Qed.
 
   #[local] Unset Keyed Unification.
 
