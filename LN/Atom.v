@@ -1,6 +1,6 @@
 From Tealeaves Require Import
      Util.Prelude Util.EqDec_eq
-     Singlesorted.Functors.List.
+     Functors.List.
 
 Import SetlikeFunctor.Notations.
 #[local] Open Scope tealeaves_scope.

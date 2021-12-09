@@ -1,7 +1,7 @@
 From Tealeaves Require Import
      Util.Prelude
-     Singlesorted.Classes.Monoid
-     Singlesorted.Classes.SetlikeFunctor
+     Classes.Monoid
+     Classes.SetlikeFunctor
      LN.Atom.
 
 From Coq Require

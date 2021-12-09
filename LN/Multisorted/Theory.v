@@ -8,7 +8,7 @@ From Tealeaves Require Import
 
 Import Monoid.Notations.
 Import LN.AtomSet.Notations.
-Import Singlesorted.Classes.SetlikeFunctor.Notations.
+Import Classes.SetlikeFunctor.Notations.
 Import Multisorted.Classes.SetlikeFunctor.Notations.
 Import Operations.Notations.
 #[local] Open Scope tealeaves_scope.
