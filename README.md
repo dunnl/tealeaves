@@ -22,7 +22,9 @@ TODO
 
 ## Decorated and traversable monads
 
-[![Generalized Kleisli composition](https://raw.githubusercontent.com/dunnl/tealeaves/master/docs/tealeaves_kleisli_composition.png)](http://comono.id/tealeaves/Tealeaves.Classes.DecoratedTraversableMonad.html#kcomposedtm)
+The most fundamental idea in Tealeaves is that a decorated-traversable monad has a generalized Kleisli operation `binddt` whose composition law is expressed by the following string diagram. Click the image to see the accompanying theorem formalized in Coq.
+
+[![Generalized Kleisli composition](https://raw.githubusercontent.com/dunnl/tealeaves/master/docs/tealeaves_kleisli_composition.png)](http://comono.id/tealeaves/Tealeaves.Classes.DecoratedTraversableMonad.html#binddt_binddt)
 
 ## Technical publications
 Tealeaves is a work-in-progress and has no associated publications
