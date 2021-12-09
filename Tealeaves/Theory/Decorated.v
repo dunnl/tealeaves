@@ -1,3 +1,6 @@
+(** This file contains additional abstract theory for decorated functors,
+    such as their characterization as certain kinds of co-modules. *)
+
 From Tealeaves Require Import
      Classes.DecoratedModule
      Classes.RightComodule
