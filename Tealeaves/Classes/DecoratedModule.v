@@ -21,10 +21,10 @@ Section shift_module_lemmas.
     shift F (w, right_action F t) =
     right_action F (fmap F (fun t => shift T (w, t)) t).
   Proof.
-    rewrite shift_spec. compose near t on left.
+    rewrite (shift_spec F). compose near t on left.
     rewrite natural. unfold compose; cbn.
     fequal. unfold_ops @Fmap_compose.
-    fequal. ext x. now rewrite shift_spec.
+    fequal. ext x. now rewrite (shift_spec T).
   Qed.
 
   Lemma shift_sub `(t : F (W * A)) (w : W) `(f : W * A -> T (W * B)) :

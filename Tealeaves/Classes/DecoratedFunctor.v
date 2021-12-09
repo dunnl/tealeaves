@@ -9,6 +9,7 @@ From Tealeaves Require Export
 
 Import Product.Notations.
 Import Functor.Notations.
+Import Monad.Notations.
 Import Comonad.Notations.
 Import Monoid.Notations.
 #[local] Open Scope tealeaves_scope.
@@ -61,179 +62,6 @@ Class DecoratePreservingTransformation
     dectrans_natural : Natural ϕ;
   }.
 
-(** ** The [shift] operation *)
-(** The theory of decorated functors makes frequent use of an
-    operation [shift] that uniformly increments the annotations of a
-    W-annotated term (i.e., something of type <<F (prod W A)>> by some
-    value <<w : W>>. This is used in concrete definitions of <<dec>>,
-    where it is applied to recursive subcalls of <<dec>> on the bodies
-    of abstractions to add the current binder to the front of the
-    contexts. *)
-(******************************************************************************)
-Definition shift F `{Fmap F} `{Monoid_op W} {A} : W * F (W * A) -> F (W * A) :=
-  fmap F (join (prod W)) ∘ strength F.
-
-Definition map_then_shift `{Monoid_op W} T `{Fmap T} `{Decorate W T} {A B}
-           (f : A -> T B) : W * A -> T (W * B) :=
-  shift T ∘ fmap (prod W) (dec T ∘ f).
-
-Section shift_functor_lemmas.
-
-  Context
-    `{Monoid W}.
-
-  (** The definition of [shift] is convenient for theorizing, but [shift_spec]
-      offers an intuitive characterization that is more convenient for
-      practical reasoning. *)
-  Corollary shift_spec `{Functor F} {A} : forall (w : W) (x : F (W * A)),
-      shift F (w, x) = fmap F (map_fst (fun m => w ● m)) x.
-  Proof.
-    intros ? x. unfold shift. unfold_ops @Join_writer.
-    unfold compose; cbn. compose near x on left.
-    rewrite (fun_fmap_fmap F). f_equal. now ext [? ?].
-  Qed.
-
-  Lemma shift_fmap1 `{Functor F} {A B} (t : F (W * A)) (w : W) (f : A -> B) :
-    shift F (w, fmap (F ∘ prod W) f t) = fmap (F ∘ prod W) f (shift F (w, t)).
-  Proof.
-    unfold_ops @Fmap_compose. rewrite (shift_spec).
-    unfold compose; rewrite shift_spec.
-    compose near t. rewrite 2(fun_fmap_fmap F).
-    fequal. now ext [w' a].
-  Qed.
-
-  Lemma shift_fmap2 {A B} `{Functor F} : forall (f : A -> B),
-      fmap (F ∘ prod W) f ∘ shift F =
-      shift F ∘ fmap (prod W ∘ F ∘ prod W) f.
-  Proof.
-    intros. ext [w t]. unfold compose at 2.
-    now rewrite <- shift_fmap1.
-  Qed.
-
-  Lemma shift_fmap3 {A B} `{Functor F} : forall (f : A -> B),
-      fmap F (fmap (prod W) f) ∘ shift F =
-      shift F ∘ fmap (prod W) (fmap F (fmap (prod W) f)).
-  Proof.
-    apply shift_fmap2.
-  Qed.
-
-  (* This is used in the binding case of the decorate-join law. *)
-  Lemma shift_increment `{Functor F} {A} : forall (w : W),
-      shift F (A := A) ∘ map_fst (fun m : W => w ● m) =
-      fmap F (map_fst (fun m : W => w ● m)) ∘ shift F.
-  Proof.
-    intros. ext [w' a]. unfold compose. cbn. rewrite 2(shift_spec).
-    compose near a on right. rewrite (fun_fmap_fmap F).
-    fequal. ext [w'' a']; cbn. now rewrite monoid_assoc.
-  Qed.
-
-  (** [shift] followed by discarding annotations ([extract] i.e. [snd]) is
-      equivalent to simply discarding the original annotations. *)
-  Lemma shift_extract `{Functor F} {A} :
-    fmap F (extract (prod W)) ∘ shift F =
-    fmap F (extract (prod W)) ∘ extract (prod W) (A := F (W * A)).
-  Proof.
-    unfold shift. reassociate <- on left.
-    ext [w t]. unfold compose; cbn.
-    do 2 compose near t on left.
-    do 2 rewrite (fun_fmap_fmap F).
-    fequal. now ext [w' a].
-  Qed.
-
-  Lemma shift_zero `{Functor F} {A} : forall (t : F (W * A)),
-    shift F (Ƶ, t) = t.
-  Proof.
-    intros. rewrite shift_spec.
-    cut (map_fst (Y := A) (fun w => Ƶ ● w) = id).
-    intros rw; rewrite rw. now rewrite (fun_fmap_id F).
-    ext [w a]. cbn. now simpl_monoid.
-  Qed.
-
-End shift_functor_lemmas.
-
-(** ** Helper lemmas for proving typeclass instances *)
-(** Each of the following lemmas is useful for proving one of the laws
-    of decorated functors in the binder case(s) of proofs that proceed
-    by induction on terms. *)
-(******************************************************************************)
-Section helper_lemmas.
-
-  Context
-    `{Functor F}
-    `{Decorate W F}
-    `{Monoid W}.
-
-  (** This lemmasis useful for proving naturality of <<dec>>. *)
-  Lemma dec_helper_1 {A B} : forall (f : A -> B) (t : F A) (w : W),
-      fmap F (fmap (prod W) f) (dec F t) =
-      dec F (fmap F f t) ->
-      fmap F (fmap (prod W) f) (shift F (w, dec F t)) =
-      shift F (w, dec F (fmap F f t)).
-  Proof.
-    introv IH. (* there is a hidden compose to unfold *)
-    unfold compose; rewrite 2(shift_spec).
-    compose near (dec F t) on left. rewrite (fun_fmap_fmap F).
-    rewrite <- IH.
-    compose near (dec F t) on right. rewrite (fun_fmap_fmap F).
-    fequal. now ext [w' a].
-  Qed.
-
-  (** Now we can assume that <<dec>> is a natural transformation,
-      which is needed for the following. *)
-  Context
-    `{! Natural (@dec W F _)}.
-
-  (** This lemmas is useful for proving the dec-extract law. *)
-  Lemma dec_helper_2 {A} : forall (t : F A) (w : W),
-      fmap F (extract (prod W)) (dec F t) = t ->
-      fmap F (extract (prod W)) (shift F (w, dec F t)) = t.
-  Proof.
-    intros.
-    compose near (w, dec F t).
-    rewrite (shift_extract). unfold compose; cbn.
-    auto.
-  Qed.
-
-  (** This lemmas is useful for proving the double decoration law. *)
-  Lemma dec_helper_3 {A} : forall (t : F A) (w : W),
-      dec F (dec F t) = fmap F (cojoin (prod W)) (dec F t) ->
-      shift F (w, dec F (shift F (w, dec F t))) =
-      fmap F (cojoin (prod W)) (shift F (w, dec F t)).
-  Proof.
-    introv IH. unfold compose. rewrite 2(shift_spec).
-    compose near (dec F t).
-    rewrite <- (natural (F := F) (G := F ○ prod W)).
-    unfold compose. compose near (dec F (dec F t)).
-    rewrite IH. unfold_ops @Fmap_compose.
-    rewrite (fun_fmap_fmap F).
-    compose near (dec F t).
-    rewrite (fun_fmap_fmap F).
-    rewrite (fun_fmap_fmap F).
-    unfold compose. fequal.
-    now ext [w' a].
-  Qed.
-
-  (** This lemmas is useful for proving the decoration-join law. *)
-  Lemma dec_helper_4 `{Monad T} `{Decorate W T} {A} : forall (t : T (T A)) (w : W),
-      dec T (join T t) =
-      join T (fmap T (shift T) (dec T (fmap T (dec T) t))) ->
-      shift T (w, dec T (join T t)) =
-      join T (fmap T (shift T) (shift T (w, dec T (fmap T (dec T) t)))).
-  Proof.
-    introv IH. rewrite !(shift_spec) in *. rewrite IH.
-    compose near (dec T (fmap T (dec T) t)) on right.
-    rewrite (fun_fmap_fmap T). rewrite (shift_increment).
-    rewrite <- (fun_fmap_fmap T).
-    change (fmap T (fmap T ?f)) with (fmap (T ∘ T) f).
-    compose near (dec T (fmap T (dec T) t)).
-    reassociate <-.
-    #[local] Set Keyed Unification.
-    now rewrite <- (natural (ϕ := @join T _)).
-    #[local] Unset Keyed Unification.
-  Qed.
-
-End helper_lemmas.
-
 (** ** Zero-decorated functors *)
 (** Every functor is trivially decorated using the operation that
     pairs each leaf with the unit of the monoid. We call such functors
@@ -281,6 +109,192 @@ Section DecoratedFunctor_Zero.
     |}.
 
 End DecoratedFunctor_Zero.
+
+(** * The [shift] operation *)
+(** The theory of decorated functors makes frequent use of an
+    operation <<shift>> that uniformly increments each of the
+    annotations of a <<W>>-annotated term (i.e., something of type <<F
+    (W * A)>>) by some increment <<w : W>>. This operation is used to
+    define concrete instances of [dec], specially to handle binders in
+    sub-cases of the recursion.  A subcase of the form <<dec (λ b . t)>>
+    is defined <<λ b . (shift ([b], dec t)>>. That is, <<shift>> is applied to
+    a recursive subcall to <<dec>> on the _body_ of an abstraction to
+    <<cons>> the current binder on the front of each binder context. *)
+(******************************************************************************)
+Definition shift F `{Fmap F} `{Monoid_op W} {A} : W * F (W * A) -> F (W * A) :=
+  fmap F (join (prod W)) ∘ strength F.
+
+(** We define a convenience function for operations of a certain form.  *)
+Definition map_then_shift `{Monoid_op W} T `{Fmap T} `{Decorate W T} {A B}
+           (f : A -> T B) : W * A -> T (W * B) :=
+  shift T ∘ fmap (prod W) (dec T ∘ f).
+
+(** ** Basic properties of <<shift>> *)
+(******************************************************************************)
+Section shift_functor_lemmas.
+
+  Context
+    (F : Type -> Type)
+    `{Monoid W}
+    `{Functor F}.
+
+  (** The definition of [shift] is convenient for theorizing, but [shift_spec]
+      offers an intuitive characterization that is more convenient for
+      practical reasoning. *)
+  Corollary shift_spec {A} : forall (w : W) (x : F (W * A)),
+      shift F (w, x) = fmap F (map_fst (fun m => w ● m)) x.
+  Proof.
+    intros ? x. unfold shift. unfold_ops @Join_writer.
+    unfold compose; cbn. compose near x on left.
+    rewrite (fun_fmap_fmap F). f_equal. now ext [? ?].
+  Qed.
+
+  (** If we think of <<shift>> as a function of two arguments,
+      then it is natural in its second argument. *)
+  Lemma shift_fmap1 {A B} (t : F (W * A)) (w : W) (f : A -> B) :
+    shift F (w, fmap (F ∘ prod W) f t) = fmap (F ∘ prod W) f (shift F (w, t)).
+  Proof.
+    unfold_ops @Fmap_compose. rewrite (shift_spec).
+    unfold compose; rewrite shift_spec.
+    compose near t. rewrite 2(fun_fmap_fmap F).
+    fequal. now ext [w' a].
+  Qed.
+
+  (** We can also say <<shift>> is a natural transformation
+   of type <<(W ×) ∘ F ∘ (W ×) \to F ∘ (W ×)>>. *)
+  Lemma shift_fmap2 {A B} : forall (f : A -> B),
+      fmap (F ∘ prod W) f ∘ shift F =
+      shift F ∘ fmap (prod W ∘ F ∘ prod W) f.
+  Proof.
+    intros. ext [w t]. unfold compose at 2.
+    now rewrite <- shift_fmap1.
+  Qed.
+
+  Corollary shift_natural : Natural (@shift F _ W _).
+  Proof.
+    constructor; try typeclasses eauto.
+    intros. apply shift_fmap2.
+  Qed.
+
+  (** We can increment the first argument before applying <<shift>>,
+      or we can <<shift>> and then increment. This lemma is used
+      e.g. in the binding case of the decorate-join law. *)
+  Lemma shift_increment {A} : forall (w : W),
+      shift F (A := A) ∘ map_fst (fun m : W => w ● m) =
+      fmap F (map_fst (fun m : W => w ● m)) ∘ shift F.
+  Proof.
+    intros. ext [w' a]. unfold compose. cbn. rewrite 2(shift_spec).
+    compose near a on right. rewrite (fun_fmap_fmap F).
+    fequal. ext [w'' a']; cbn. now rewrite monoid_assoc.
+  Qed.
+
+  (** Applying <<shift>>, followed by discarding annotations at the
+      leaves, is equivalent to simply discarding the original
+      annotations and the argument to <<shift>>. *)
+  Lemma shift_extract {A} :
+    fmap F (extract (prod W)) ∘ shift F =
+    fmap F (extract (prod W)) ∘ extract (prod W) (A := F (W * A)).
+  Proof.
+    unfold shift. reassociate <- on left.
+    ext [w t]. unfold compose; cbn.
+    do 2 compose near t on left.
+    do 2 rewrite (fun_fmap_fmap F).
+    fequal. now ext [w' a].
+  Qed.
+
+  Lemma shift_zero {A} : forall (t : F (W * A)),
+    shift F (Ƶ, t) = t.
+  Proof.
+    intros. rewrite shift_spec.
+    cut (map_fst (Y := A) (fun w => Ƶ ● w) = id).
+    intros rw; rewrite rw. now rewrite (fun_fmap_id F).
+    ext [w a]. cbn. now simpl_monoid.
+  Qed.
+
+End shift_functor_lemmas.
+
+(** ** Helper lemmas for implementing typeclass instances *)
+(** Each of the following lemmas is useful for proving one of the laws
+    of decorated functors in the binder case(s) of proofs that proceed
+    by induction on terms. *)
+(******************************************************************************)
+Section helper_lemmas.
+
+  Context
+    `{Functor F}
+    `{Decorate W F}
+    `{Monoid W}.
+
+  (** This lemmasis useful for proving naturality of <<dec>>. *)
+  Lemma dec_helper_1 {A B} : forall (f : A -> B) (t : F A) (w : W),
+      fmap F (fmap (prod W) f) (dec F t) =
+      dec F (fmap F f t) ->
+      fmap F (fmap (prod W) f) (shift F (w, dec F t)) =
+      shift F (w, dec F (fmap F f t)).
+  Proof.
+    introv IH. (* there is a hidden compose to unfold *)
+    unfold compose; rewrite 2(shift_spec F).
+    compose near (dec F t) on left. rewrite (fun_fmap_fmap F).
+    rewrite <- IH.
+    compose near (dec F t) on right. rewrite (fun_fmap_fmap F).
+    fequal. now ext [w' a].
+  Qed.
+
+  (** Now we can assume that <<dec>> is a natural transformation,
+      which is needed for the following. *)
+  Context
+    `{! Natural (@dec W F _)}.
+
+  (** This lemmas is useful for proving the dec-extract law. *)
+  Lemma dec_helper_2 {A} : forall (t : F A) (w : W),
+      fmap F (extract (prod W)) (dec F t) = t ->
+      fmap F (extract (prod W)) (shift F (w, dec F t)) = t.
+  Proof.
+    intros.
+    compose near (w, dec F t).
+    rewrite (shift_extract F). unfold compose; cbn.
+    auto.
+  Qed.
+
+  (** This lemmas is useful for proving the double decoration law. *)
+  Lemma dec_helper_3 {A} : forall (t : F A) (w : W),
+      dec F (dec F t) = fmap F (cojoin (prod W)) (dec F t) ->
+      shift F (w, dec F (shift F (w, dec F t))) =
+      fmap F (cojoin (prod W)) (shift F (w, dec F t)).
+  Proof.
+    introv IH. unfold compose. rewrite 2(shift_spec F).
+    compose near (dec F t).
+    rewrite <- (natural (F := F) (G := F ○ prod W)).
+    unfold compose. compose near (dec F (dec F t)).
+    rewrite IH. unfold_ops @Fmap_compose.
+    rewrite (fun_fmap_fmap F).
+    compose near (dec F t).
+    rewrite (fun_fmap_fmap F).
+    rewrite (fun_fmap_fmap F).
+    unfold compose. fequal.
+    now ext [w' a].
+  Qed.
+
+  (** This lemmas is useful for proving the decoration-join law. *)
+  Lemma dec_helper_4 `{Monad T} `{Decorate W T} {A} : forall (t : T (T A)) (w : W),
+      dec T (join T t) =
+      join T (fmap T (shift T) (dec T (fmap T (dec T) t))) ->
+      shift T (w, dec T (join T t)) =
+      join T (fmap T (shift T) (shift T (w, dec T (fmap T (dec T) t)))).
+  Proof.
+    introv IH. rewrite !(shift_spec T) in *. rewrite IH.
+    compose near (dec T (fmap T (dec T) t)) on right.
+    rewrite (fun_fmap_fmap T). rewrite (shift_increment T).
+    rewrite <- (fun_fmap_fmap T).
+    change (fmap T (fmap T ?f)) with (fmap (T ∘ T) f).
+    compose near (dec T (fmap T (dec T) t)).
+    reassociate <-.
+    #[local] Set Keyed Unification.
+    now rewrite <- (natural (ϕ := @join T _)).
+    #[local] Unset Keyed Unification.
+  Qed.
+
+End helper_lemmas.
 
 (** * Decorated functors form a monoidal category *)
 (******************************************************************************)
@@ -349,11 +363,14 @@ Section Decoratedfunctor_composition.
     (* Move << F (shift G)>> past <<F (G ∘ F) f>>. *)
     repeat reassociate <- on left.
     unfold_compose_in_compose; rewrite (fun_fmap_fmap F).
-    rewrite shift_fmap3.
+    change (fmap G (fmap (W ×) f)) with (fmap (G ∘ (W ×)) f).
+    #[local] Set Keyed Unification.
+    rewrite (shift_fmap2 G).
+    #[local] Unset Keyed Unification.
     rewrite <- (fun_fmap_fmap F).
     (* mov <<dec F>> past <<F ∘ W ∘ G ∘ W f>> *)
-    change (fmap G (fmap (prod W) ?f)) with (fmap (G ∘ prod W) f).
-    change (fmap F (fmap (prod W) ?f)) with (fmap (F ∘ prod W) f).
+    change (fmap F (fmap (prod W ∘ G ∘ prod W) f))
+      with (fmap (F ∘ prod W) (fmap (G ∘ prod W) f)).
     repeat reassociate ->;
            reassociate <- near (fmap (F ∘ prod W) (fmap (G ∘ prod W) f)).
     rewrite (natural (G := F ∘ prod W) (ϕ := @dec W F _)).
@@ -363,8 +380,7 @@ Section Decoratedfunctor_composition.
     #[local] Set Keyed Unification.
     rewrite (natural (G := G ∘ prod W) (ϕ := @dec W G _)).
     #[local] Unset Keyed Unification.
-    rewrite <- (fun_fmap_fmap F).
-    reflexivity.
+    now rewrite <- (fun_fmap_fmap F).
   Qed.
 
   (** The next few lemmas are used to build up a proof of the
@@ -558,7 +574,7 @@ Section Decoratedfunctor_composition.
     intros. unfold_ops @Fmap_compose @Decorate_compose.
     repeat reassociate <-. unfold_compose_in_compose.
     rewrite (fun_fmap_fmap F).
-    rewrite shift_extract.
+    rewrite (shift_extract G).
     rewrite <- (fun_fmap_fmap F).
     do 2 reassociate -> on left.
     reassociate <- near (fmap (A:=W * G (W * A)) F (extract (prod W))).
@@ -578,48 +594,86 @@ Section Decoratedfunctor_composition.
 
 End Decoratedfunctor_composition.
 
-(** ** Composition monoid laws *)
+(** ** Category laws for composition of decorated functors *)
+(** Next we prove that composition of decorated functors satisfies the
+    laws of a category, i.e. that composition with the identity
+    decorated functor on the left or is the identity, and that
+    composition is associative. This is not immediately obvious
+    because in each case we must verify that the <<dec>> operation is
+    the same for both sides. *)
 (******************************************************************************)
 Section DecoratedFunctor_composition_laws.
 
   Section identity_laws.
 
+    (** Let <<T>> be a decorated functor. *)
     Context
       `{Functor T}
       `{dec_T : Decorate W T}
       `{op : Monoid_op W}
       `{unit : Monoid_unit W}
       `{! DecoratedFunctor W T}
-      `{! Monoid W}
-      `{Functor F}.
+      `{! Monoid W}.
 
-    Theorem decorate_compose_l : forall (A : Type),
-        @dec W (F ∘ T) (@Decorate_compose W op F _ T _ Decorate_zero dec_T) A =
-        fmap F (dec T).
+    (** *** Composition with a zero-decorated functor *)
+    (** When <<F>> has a trivial decoration,
+        <<dec (F ∘T)>> and <<dec (T ∘ F)>> have a special form. *)
+    (******************************************************************************)
+    Section zero_decorated_composition.
+
+      (** Let <<F>> be a functor, which we will treat as zero-decorated. *)
+      Context
+        (F : Type -> Type)
+        `{Functor F}.
+
+      (** Composition with a zero-decorated functor on the left returns <<T>>. *)
+      Theorem decorate_zero_compose_l : forall (A : Type),
+          @dec W (F ∘ T) (@Decorate_compose W op F _ T _ Decorate_zero dec_T) A =
+          fmap F (dec T).
+      Proof.
+        intros. unfold_ops @Decorate_compose. unfold_ops @Decorate_zero.
+        do 2 rewrite (fun_fmap_fmap F).
+        fequal. unfold shift.
+        reassociate -> near (pair Ƶ). rewrite (strength_2).
+        rewrite (fun_fmap_fmap T).
+        change (pair Ƶ) with (ret (W ×) (A := W * A)).
+        rewrite (mon_join_ret (prod W)).
+        now rewrite (fun_fmap_id T).
+      Qed.
+
+      (** Composition with the identity functor on the left returns <<T>>. *)
+      Theorem decorate_zero_compose_r : forall (A : Type),
+          @dec W (T ∘ F) (@Decorate_compose W op T _ F _ dec_T Decorate_zero) A =
+          fmap T (σ F) ∘ dec T.
+      Proof.
+        intros. unfold_ops @Decorate_compose. unfold_ops @Decorate_zero.
+        reassociate -> on left.
+        rewrite <- (natural (ϕ := @dec W T _)).
+        reassociate <-. fequal. unfold_ops @Fmap_compose.
+        rewrite (fun_fmap_fmap T). fequal.
+        ext [w t]; unfold compose; cbn. unfold id.
+        rewrite (shift_spec F). compose near t on left.
+        rewrite (fun_fmap_fmap F). fequal. ext a; cbn.
+        now simpl_monoid.
+      Qed.
+
+    End zero_decorated_composition.
+
+    (** *** Composition with the identity decorated functor *)
+    (******************************************************************************)
+    Theorem decorate_identity_compose_l : forall (A : Type),
+        @dec W ((fun A => A) ∘ T) (@Decorate_compose W op (fun A => A) _ T _ Decorate_zero dec_T) A =
+        dec T.
     Proof.
-      intros. unfold_ops @Decorate_compose. unfold_ops @Decorate_zero.
-      do 2 rewrite (fun_fmap_fmap F).
-      fequal. unfold shift.
-      reassociate -> near (pair Ƶ). rewrite (strength_2).
-      rewrite (fun_fmap_fmap T).
-      change (pair Ƶ) with (ret (W ×) (A := W * A)).
-      rewrite (mon_join_ret (prod W)).
-      now rewrite (fun_fmap_id T).
+      intros. now rewrite (decorate_zero_compose_l (fun A => A)).
     Qed.
 
-    Theorem decorate_compose_r : forall (A : Type),
-        @dec W (T ∘ F) (@Decorate_compose W op T _ F _ dec_T Decorate_zero) A =
-        fmap T (σ F) ∘ dec T.
+    Theorem decorate_identity_compose_r : forall (A : Type),
+        @dec W (T ∘ (fun A => A)) (@Decorate_compose W op T _ (fun A => A) _ dec_T Decorate_zero) A =
+        dec T.
     Proof.
-      intros. unfold_ops @Decorate_compose. unfold_ops @Decorate_zero.
-      reassociate -> on left.
-      rewrite <- (natural (ϕ := @dec W T _)).
-      reassociate <-. fequal. unfold_ops @Fmap_compose.
-      rewrite (fun_fmap_fmap T). fequal.
-      ext [w t]; unfold compose; cbn. unfold id.
-      rewrite shift_spec. compose near t on left.
-      rewrite (fun_fmap_fmap F). fequal. ext a; cbn.
-      now simpl_monoid.
+      intros. rewrite (decorate_zero_compose_r (fun A => A)).
+      rewrite strength_I. now rewrite (fun_fmap_id T).
     Qed.
 
   End identity_laws.
@@ -629,6 +683,7 @@ Section DecoratedFunctor_composition_laws.
     Context
       `{op : Monoid_op W}
       `{unit : Monoid_unit W}
+      `{! Monoid W}
       `{Fmap T1} `{Fmap T2} `{Fmap T3}
       `{dec_T1 : Decorate W T1}
       `{dec_T2 : Decorate W T2}
@@ -637,24 +692,51 @@ Section DecoratedFunctor_composition_laws.
       `{! DecoratedFunctor W T2}
       `{! DecoratedFunctor W T3}.
 
+    Lemma decorate_compose_assoc1 : forall (A : Type),
+        (fmap T2 (fmap T1 (μ (A:=A) (prod W)) ∘ σ T1 ∘ μ (prod W)) ∘ σ T2) =
+        (fmap T2 (fmap T1 (μ (W ×)) ∘ σ T1) ∘ σ T2) ∘ fmap ((W ×) ∘ T2) (fmap T1 (μ (W ×)) ∘ σ T1).
+    Proof.
+      intros. ext [w1 t]. unfold compose; cbn.
+      compose near t. unfold id.
+      rewrite 2(fun_fmap_fmap T2).
+      compose near t on right.
+      rewrite (fun_fmap_fmap T2). fequal.
+      ext [w2 t2]. unfold compose; cbn. unfold id.
+      compose near t2. rewrite 2(fun_fmap_fmap T1).
+      do 2 (compose near t2 on right; rewrite 1(fun_fmap_fmap T1)).
+      fequal. ext [w3 a]. cbn. fequal. now rewrite (monoid_assoc).
+    Qed.
+
+    Set Keyed Unification.
     Theorem decorate_compose_assoc : forall (A : Type),
         @dec W (T3 ∘ T2 ∘ T1)
              (@Decorate_compose W op (T3 ∘ T2) _ T1 _ _ dec_T1) A =
         @dec W (T3 ∘ T2 ∘ T1)
              (@Decorate_compose W op T3 _ (T2 ∘ T1) _ dec_T3 _) A.
     Proof.
-      intros. unfold_ops @Decorate_compose.
-      unfold dec at 1 6.
-      - rewrite <- (fun_fmap_fmap T3). repeat reassociate <-.
-        fequal.
-        rewrite <- (fun_fmap_fmap T3). repeat reassociate <-.
-        fequal.
-        reassociate -> on right.
-        rewrite <- (natural (ϕ := @dec W T3 _)). reassociate <-.
-        fequal. Set Keyed Unification.
+      intros. unfold_ops @Decorate_compose; unfold dec at 1 6.
+      do 2 reassociate <- on left.
+      rewrite (fun_fmap_fmap T3).
+      reassociate -> near (fmap (T3 ∘ T2) (dec T1));
         rewrite (fun_fmap_fmap T3).
-        rewrite (fun_fmap_fmap T3). fequal.
-    Abort.
+      unfold shift at 1 2.
+      reassociate <- on left.
+      rewrite (fun_fmap_fmap T2).
+      rewrite decorate_compose_assoc1.
+      unfold shift at 1 2.
+      change (fmap T2 (fmap T1 (μ (A:=?A) (prod W)) ∘ σ T1) ∘ dec T2 ∘ fmap T2 (dec T1))
+        with (fmap T2 (fmap T1 (μ (A:=A) (prod W)) ∘ σ T1) ∘ (dec T2 ∘ fmap T2 (dec T1))).
+      rewrite <- (fun_fmap_fmap T3 (f := dec T2 ∘ fmap T2 (dec T1))).
+      reassociate <- on right.
+      reassociate -> near (fmap T3 (fmap T2 (fmap T1 (μ (prod W)) ∘ σ T1))).
+      rewrite <- (natural (ϕ := @dec W T3 _)).
+      reassociate <- on right. fequal. fequal.
+      rewrite (fun_fmap_fmap T3). fequal.
+      rewrite (strength_compose).
+      reassociate <- on right.
+      now rewrite (fun_fmap_fmap T2).
+    Qed.
+    Unset Keyed Unification.
 
   End associativity_law.
 
@@ -684,7 +766,7 @@ Section DecoratedFunctor_zero_composition.
     replace (shift G ∘ (fun a : G (W * A) => (Ƶ, a))) with (@id (G (W * A))).
     now reflexivity.
     ext g. unfold compose; cbn.
-    now rewrite (shift_zero).
+    now rewrite (shift_zero G).
   Qed.
 
 End DecoratedFunctor_zero_composition.

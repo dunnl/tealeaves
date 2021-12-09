@@ -30,10 +30,10 @@ Section shift_monad_lemmas.
   Lemma shift_join `(t : T (T (W * A))) (w : W) :
     shift T (w, join T t) = join T (fmap T (fun t => shift T (w, t)) t).
   Proof.
-    rewrite shift_spec. compose near t on left.
+    rewrite (shift_spec T). compose near t on left.
     rewrite natural. unfold compose; cbn.
     fequal. unfold_ops @Fmap_compose.
-    fequal. ext x. now rewrite shift_spec.
+    fequal. ext x. now rewrite (shift_spec T).
   Qed.
 
   Lemma shift_bind `(t : T (W * A)) (w : W) `(f : W * A -> T (W * B)) :
@@ -294,7 +294,7 @@ Section decoratedmonad_kleisli_category.
     rewrite <- (Monad.bind_fmap T).
     change (?f ∘ fmap T (extract (prod W)) ∘ shift T ∘ ?g) with
         (f ∘ (fmap T (extract (prod W)) ∘ shift T) ∘ g).
-    rewrite (shift_extract).
+    rewrite (shift_extract T).
     repeat reassociate ->. rewrite (extract_cobind (prod W)).
     fequal. reassociate <- on left.
     now rewrite (dfun_dec_extract W T).

@@ -112,6 +112,14 @@ Section tensor_strength.
     intros. now ext [a b].
   Qed.
 
+  Lemma strength_compose `{Functor F} `{Functor G} : forall (A B : Type),
+      strength (A := A) (B := B) (F ∘ G) = fmap F (strength G) ∘ strength F.
+  Proof.
+    intros. ext [x y]. unfold strength, compose; cbn.
+    compose near y.
+    now rewrite (fun_fmap_fmap F).
+  Qed.
+
   Context
     (F : Type -> Type)
     `{Functor F}.
