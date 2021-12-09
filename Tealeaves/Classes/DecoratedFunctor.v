@@ -113,8 +113,8 @@ End DecoratedFunctor_Zero.
 (** * The [shift] operation *)
 (** The theory of decorated functors makes frequent use of an
     operation <<shift>> that uniformly increments each of the
-    annotations of a <<W>>-annotated term (i.e., something of type <<F
-    (W * A)>>) by some increment <<w : W>>. This operation is used to
+    annotations of a <<W>>-annotated term (i.e., something of type
+    <<F (W * A)>>) by some increment <<w : W>>. This operation is used to
     define concrete instances of [dec], specially to handle binders in
     sub-cases of the recursion.  A subcase of the form <<dec (λ b . t)>>
     is defined <<λ b . (shift ([b], dec t)>>. That is, <<shift>> is applied to
