@@ -1,3 +1,14 @@
+From Tealeaves Require Import
+     Classes.SetlikeFunctor
+     Classes.ListableMonad.
+
+Import Functor.Notations.
+Import SetlikeFunctor.Notations.
+Import Monad.Notations.
+Import List.ListNotations.
+#[local] Open Scope tealeaves_scope.
+#[local] Open Scope list_scope.
+
 (** * Characterizations of listable monad compatibility conditions *)
 (******************************************************************************)
 Section listable_monad_compatibility_conditions.
@@ -5,10 +16,11 @@ Section listable_monad_compatibility_conditions.
   Context
     `{Monad T} `{Tolist T} `{! ListableFunctor T}.
 
-  (** The left-hand condition states that the natural transformation [ret T]
-      commutes with taking [tolist], i.e. that [ret T] is a list-preserving
-      natural transformation. The right-hand condition is one half of the
-      statement that [tolist] forms a monad homomorphism. *)
+  (** The left-hand condition states that the natural transformation
+      <<ret T>> commutes with taking <<tolist>>, i.e. that <<ret T>> is a
+      list-preserving natural transformation. The right-hand condition
+      is one half of the statement that <<tolist>> forms a monad
+      homomorphism. *)
   Lemma tolist_ret_iff {A} :
     (tolist T ∘ ret T = tolist (fun x => x) (A:=A)) <->
     (tolist T ∘ ret T = ret list (A:=A)).
@@ -16,9 +28,10 @@ Section listable_monad_compatibility_conditions.
     split...
   Qed.
 
-  (** The left-hand condition states that the natural transformation [join T] is
-      [tolist]-preserving. The right-hand condition is one half of the statement
-      that [tolist] forms a monad homomorphism. *)
+  (** The left-hand condition states that the natural transformation
+      <<join T>> is <<tolist>>-preserving. The right-hand condition is
+      one half of the statement that <<tolist>> forms a monad
+      homomorphism. *)
   Lemma tolist_join_iff {A} :
     `(tolist T ∘ join T (A:=A) = tolist (T ∘ T)) <->
     `(tolist T ∘ join T (A:=A) = join list ∘ tolist T ∘ fmap T (tolist T)).
@@ -43,9 +56,24 @@ Section listable_monad_compatibility_conditions.
       + introv. rewrite <- tolist_join_iff...
   Qed.
 
+  Theorem listable_monad_compatibility_spec2 :
+    Monad_Hom T list (@tolist T _) <->
+    ListableMonad T.
+  Proof.
+    rewrite listable_monad_compatibility_spec.
+    split.
+    - intros [[] []]. constructor; try typeclasses eauto; eauto.
+    - intros []. split.
+      + constructor; try typeclasses eauto; eauto.
+      + constructor; try typeclasses eauto; eauto.
+  Qed.
+
 End listable_monad_compatibility_conditions.
 
-(* Proof that lists lack the strongly faithful [bind] property *)
+(** * A counter-example of a respectfulness property. *)
+(******************************************************************************)
+
+(** [list] is a counterexample to the strong respectfulness condition for <<bind>>. *)
 Example f1 : nat -> list nat :=
   fun n => match n with
         | 0 => [4 ; 5]
@@ -62,11 +90,11 @@ Example f2 : nat -> list nat :=
 
 Definition l := [ 0 ; 1 ].
 
-Goal bind list f1 l = bind list f2 l.
+Lemma bind_f1_f2_equal : bind list f1 l = bind list f2 l.
   reflexivity.
 Qed.
 
-Goal not (forall x, x ∈ l -> f1 x = f2 x).
+Lemma f1_f2_not_equal : ~(forall x, x ∈ l -> f1 x = f2 x).
 Proof.
   intro hyp.
   assert (0 ∈ l) by (cbn; now left).
@@ -75,73 +103,9 @@ Proof.
   now inverts hyp.
 Qed.
 
-
-
-
-
-(*
-Section TolisterableRightModule.
-
-  Context
-    `{module : TolisterableRightModule F T}.
-
-  Lemma tolistm_ret_mhom : forall A (a : A), tolist (ret a) = ret a.
-  Proof.
-    inversion module.
-    inversion tolistrmod_monad0.
-    rewrite tolisterable_monad_compatibility_spec in tolistm_mhom0.
-    destructs_all.
-    rewrite <- tolisterable_ret_iff.
-    rewrite <- tolisterable_ret_unpack.
-    auto.
-  Qed.
-
-  Lemma tolistm_join_mhom : forall A (t : T (T A)), tolist (join t) = join (tolist (fmap (F := T) tolist t)).
-  Proof.
-    inversion module.
-    inversion tolistrmod_monad0.
-    rewrite tolisterable_monad_compatibility_spec in tolistm_mhom0.
-    destructs_all.
-    rewrite <- tolisterable_join_iff.
-    rewrite <- tolisterable_join_unpack.
-    auto.
-  Qed.
-
-  Lemma tolisterable_action_12 :
-    TolisterableTransformation (fun A (x : F (T A)) => right_action x) ->
-    (forall A (x : F (T A)), tolist (right_action x) = join (tolist (fmap tolist x))).
-  Proof.
-    introv hyp A x.
-    rewrite tolistrmod_action.
-    reflexivity.
-  Qed.
-
-  Lemma tolisterable_action_23 :
-    (forall A (x : F (T A)), tolist (right_action x) = join (tolist (fmap tolist x))) ->
-    (forall A (x : F (T A)), tolist (right_action x) = tolist x).
-  Proof.
-    introv hyp A x.
-    rewrite tolistrmod_action.
-    reflexivity.
-  Qed.
-
-  Lemma tolisterable_action_31 :
-    (forall A (x : F (T A)), tolist (right_action x) = tolist x) ->
-    TolisterableTransformation (fun A (x : F (T A)) => right_action x).
-  Proof.
-    intros hyp. constructor.
-    - intros; eauto.
-    - inversion module.
-      inversion tolistrmod_module0.
-      auto.
-  Qed.
-
-  Lemma tolistrmod_action_alt : forall A (x : F (T A)), enum (right_action x) = join (enum (fmap (F := F) enum x)).
-  Proof.
-    inversion module.
-    intros. rewrite enumrmod_action0.
-    reflexivity.
-  Qed.
-
-End EnumerableRightModule.
-*)
+Lemma list_not_free :
+  ~ (forall (l : list nat), bind list f1 l = bind list f2 l -> (forall x, x ∈ l -> f1 x = f2 x)).
+Proof.
+  intro H. specialize (H l bind_f1_f2_equal).
+  apply f1_f2_not_equal. apply H.
+Qed.
