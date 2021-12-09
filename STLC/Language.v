@@ -223,7 +223,7 @@ Theorem dec_join : forall A,
     join term ∘ fmap term (shift term) ∘ dec term ∘ fmap term (dec term).
 Proof.
   intros. unfold compose. ext t. induction t.
-  - cbn -[shift]. now rewrite shift_zero.
+  - cbn -[shift]. now rewrite (shift_zero term).
   - cbn -[shift]. fequal. now rewrite (dec_helper_4).
   - cbn. fequal; auto.
 Qed.
