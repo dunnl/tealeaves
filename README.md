@@ -1,24 +1,40 @@
 # Tealeaves
 
-Tealeaves is a Coq framework for proving theorems about syntax abstractly, i.e. independently of a concrete grammar. This independence makes syntactical theory reusable between developments, and is achieved by separating a choice of grammar from a choice of variable representation. To formalize generic syntactical reasoning in Coq, it is enough to fix the choice of variable representation and find an appropriate substitute for structural recursion on the grammar of terms. This sort of abstract recursion principle, for purposes of defining operations and reasoning about them, is subsumed by the assumption that the grammar forms a "structured" kind of monad that we call *decorated-traversable.* Tealeaves "core" is a Coq implementation of the equational theory of such monads, as well as higher-level principles built on top of this theory.
+Tealeaves is a Coq framework for proving theorems about syntax abstractly, i.e. independently of a concrete grammar. This independence makes syntactical theory reusable between developments, and is achieved by separating a choice of grammar from a choice of variable representation. Our central abstraction is a "structured" kind of monad that we call *decorated traversable,* which is an abstract of abstract syntax trees. Tealeaves "core" is a Coq implementation of the equational theory of such monads, as well as higher-level principles built on top of this theory.
 
+## How to build Tealeaves
+System requirements:
+- `make` (see [GNU Make](https://www.gnu.org/software/make/))
+- An installation of Coq >= 8.13 (see the Coq [downloads page](https://coq.inria.fr/download))
 
-## Tealeaves workflow
-Typically one formalizes a formal system (e.g. a lambda calculus or a logic) by first defining an inductive type `T : Type` of expressions, where the structure of the inductive type essentially corresponds to a context-free grammar. In Tealeaves  we view `T` as parameterized by the concrete representation of variables. To a first approximation, this means `T` is a *functor* of type `T : Type -> Type`.
+Compilation instructions:
+- Run `make` in the top-level directory
+- Run `make clean` to remove all build artifacts (including compiled files) and start over
+ 
+On multicore systems you may want to use the `-j` flag to use several build threads. We have sometimes observed that `-j` leads to cryptic build errors. The solution to these is simply to re-run the build command again.
+ 
+Tealeaves is built with the [coq_makefile](https://coq.inria.fr/refman/practical-tools/utilities.html#building-a-coq-project-with-coq-makefile), which is distributed with Coq itself. This utility generates a customized Makefile to build a Coq project. For simplicity, we provide a top-level `Makefile` which will call `coq_makefile` for you, and then recursively call `make` on the generated Makefile, so that you should not have to do anything except call `make` once in the top-level directory.
 
-Any method of representing variables (e.g. as names like with paper-and-pencil proofs, or as de Bruijn indices like with many formalized implementations) is realized by a concrete type `leaf` to represent variables, accompanied by operations on type `T leaf` as well as theorems about these operations. Tealeaves *backends* formalize the theory of a given variable representation in Coq *abstractly* over `T` (but concretely in `leaf`). To remain abstract over `T`, clearly we must have a mechanism taking the place of recursion on the structure of `T`, as well as mechanisms replacing the need for proofs by induction on `T`. To achieve this, a backend must stipulate that `T` is a *decorated traversable monad*, whose central operation `binddt` can be seen as a kind of combinator that lifts operations on `leaf` to operations over `T leaf`. (`binddt` is a high-level generalization of Haskell's `fold`, as well as `bind`, among other higher-order operations). The equational theory of `binddt` is used in lieu of induction on `T`, permitting a style of reasoning about syntax that we find very natural.
+## Axioms used in Tealeaves
+To be completely clear, Tealeaves currently admits three modest propositions without proof. Two are commonly taken for convenience in Coq, and one is an non-trivial `Admitted` proposition from the literature on traversable functors. Accordingly, none of them threaten the soundness of Coq. The admitted propositions are the following:
+- [Propositional extensionality](https://coq.github.io/doc/v8.12/stdlib/Coq.Logic.PropExtensionality.html#propositional_extensionality), which says that equivalent propositions (`P <-> Q`) are computationally equal (`P = Q`)
+- [Functional extensionality](https://coq.inria.fr/library/Coq.Logic.FunctionalExtensionality.html#functional_extensionality), which is the statement `forall x, f x = g x -> f = g`.
+- The shapeliness of traversable functors: `t = u <-> tolist t = tolist u /\ shape t = shape u` for all `t, u : T A` and `T` a traversable functor ([admitted here](https://github.com/dunnl/tealeaves/blob/1e69a99b9376506c5c28c243112e74c9282535aa/Tealeaves/Classes/TraversableFunctor.v#L524))
 
-The role of Tealeaves "core" is to provide high-level reasoning principles for decorated-traversable monads, to be used by backends. This theory includes the raw equational theory of `binddt`, as well as convenient reasoning principles that can be used, e.g., to prove that two operations defined with `binddt` are equivalent when applied to some subset of expressions (which could be all expressions, or just well-formed or locally-closed expressions, etc.) To role of a Tealeaves "backend" (each of which corresponds to a choice of variable representation) is to define `leaf` and theorize about `T leaf` where `T` is a parameter. A backend uses the reasoning principles provided by Tealeaves to reason about operations defined on `T leaf`.
+The first two axioms, both assumed [here](https://github.com/dunnl/tealeaves/blob/1e69a99b9376506c5c28c243112e74c9282535aa/Tealeaves/Util/Prelude.v#L6), are a convenience to use Coq's rewriting features. In principle one can eliminate these at the cost of ``setoid hell'' (see [this question](https://stackoverflow.com/questions/65493694/why-do-calculus-of-construction-based-languages-use-setoids-so-much) on StackOverflow). These axioms have been proved on paper to be equi-consistent with Coq itself and are commonly assumed for convenience' sake.
 
-To use Tealeaves in your own development, you must provide a concrete definition of `T` and an accompanying instance for the `DecoratedTraversableMonad` typeclass (actually we replace `Monad` with `RightModule`, but that's just a detail). Then one can merely import any backend to have access to the operations and theorems of a variable representation. Coq's typeclass mechanism will specialize the backend definitions and theorems to one's instance automatically.
+The shapeliness of traversable functors is a non-trivial (but non-surprising) theorem from the literature ([see this paper](https://arxiv.org/abs/1402.1699)). It is generally proved as a corollary of the representation theorem for traversable functors, which roughly states that traversing over a general data structure is equivalent to traversing over its contents as a list, then re-assembling the structure. For a standalone formalization of the representation theorem in Coq, see [here](https://r6.ca/blog/20121209T182914Z.html). To avoid formalizing our own version of this theorem while we develop Tealeaves, we currently admit the shapeliness property without proof. In the future we intend to formalize a generalization of representation theorem for DTMs.
 
-## How to build
+## Basic layout
 
-Run `make` here in the top-level directory. On multicore systems you may want to use the `-j` flag to use several build threads. We have sometimes observed that `-j` leads to cryptic build errors. The solution to these is simply to re-run the build command again.
+### Typeclasses
+Classes of "structured" functors (like monads, decorated monads, traversable functors, etc.) are found in under `Tealeaves/Classes`. The internal implementation of Tealeaves uses an *algebraic* rather than *Kleisli-style* implementation of our typeclasses, so that operations like `bind` are derived rather than taken as primitive. For example, decorated monads are defined [here](https://github.com/dunnl/tealeaves/blob/master/Tealeaves/Classes/DecoratedMonad.v) as monads equipped with a "decoration" operation. Their equivalent Kleisli presentation is derived [here](https://github.com/dunnl/tealeaves/blob/master/Tealeaves/Classes/DecoratedMonad.v#L200) in the same file. A characterization of decorated functors as comodules of the reader/writer bimonad is found [here](https://github.com/dunnl/tealeaves/blob/master/Tealeaves/Theory/Decorated.v).
 
-## File layout
+### The locally nameless backend 
+Our locally nameless backend library is formalized under the `LN/` directory. The operations (opening, closing, local closure, etc) are defined [here](https://github.com/dunnl/tealeaves/blob/master/LN/Operations.v). Various lemmas about these operations, proved polymorphically over a decorated traversable monad `T`, are proved [here](https://github.com/dunnl/tealeaves/blob/master/LN/Theory.v).
 
-TODO
+### Simply typed lambda calculus
+Our formalization of STLC is under the `STLC/` directory. A formalization of STLC's syntax as a DTM is found [here](https://github.com/dunnl/tealeaves/blob/master/STLC/Language.v). Basic metatheory such as a progress theorem are proved [here](https://github.com/dunnl/tealeaves/blob/master/STLC/Theory.v).
 
 ## Decorated and traversable monads
 
