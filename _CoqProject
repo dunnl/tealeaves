@@ -13,6 +13,7 @@ Tealeaves/Classes/Applicative.v
 Tealeaves/Functors/Backwards.v
 Tealeaves/Classes/Monad.v
 Tealeaves/Classes/Comonad.v
+Tealeaves/Classes/ParamComonad.v
 Tealeaves/Classes/RightModule.v
 Tealeaves/Classes/RightComodule.v
 Tealeaves/Classes/BeckDistributiveLaw.v
