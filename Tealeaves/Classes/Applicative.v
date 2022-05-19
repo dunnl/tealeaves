@@ -69,6 +69,14 @@ Section applicative_morphism.
 
 End applicative_morphism.
 
+(** *** The identity transformation on any <<F>> is a homomorphism *)
+(******************************************************************************)
+Instance ApplicativeMorphism_id `{Applicative F} :
+  ApplicativeMorphism F F (fun A => @id (F A)).
+Proof.
+  constructor; now try typeclasses eauto.
+Qed.
+
 (** ** Other coherence properties *)
 (******************************************************************************)
 Lemma triangle_1 `{Applicative F} : forall A (t : F A),
