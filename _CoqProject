@@ -17,6 +17,7 @@ Tealeaves/Classes/RightComodule.v
 Tealeaves/Classes/BeckDistributiveLaw.v
 Tealeaves/Classes/Bimonad.v
 Tealeaves/Functors/Writer.v
+Tealeaves/Functors/Store.v
 Tealeaves/Classes/DecoratedFunctor.v
 Tealeaves/Classes/DecoratedMonad.v
 Tealeaves/Classes/DecoratedModule.v
