@@ -1,13 +1,16 @@
 From Tealeaves Require Export
      Util.Prelude
      Util.EqDec_eq LN.Atom LN.AtomSet LN.Leaf
-     Classes.SetlikeMonad
-     Multisorted.Classes.DecoratedMonad
-     Multisorted.Classes.ListableMonad.
+     Classes.SetlikeMonad.
+
+From Multisorted Require Export
+     Classes.DecoratedMonad
+     Classes.ListableMonad.
 
 Import Monoid.Notations.
 Import LN.AtomSet.Notations.
 Import Classes.SetlikeFunctor.Notations.
+Import Tealeaves.Classes.SetlikeFunctor.Notations.
 Import Multisorted.Classes.SetlikeFunctor.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
