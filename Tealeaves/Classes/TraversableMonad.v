@@ -502,10 +502,10 @@ End TraversableMonad_list.
 (******************************************************************************)
 Section TraversableMonad_listable.
 
-  Existing Instance Fmap_list_const.
-  Existing Instance Pure_list_const.
-  Existing Instance Mult_list_monoid.
-  Existing Instance Applicative_list_monoid.
+  Existing Instance Fmap_const.
+  Existing Instance Pure_const.
+  Existing Instance Mult_const.
+  Existing Instance Applicative_const.
   Existing Instance ApplicativeMorphism_unconst.
 
   Context
@@ -519,8 +519,8 @@ Section TraversableMonad_listable.
   Proof.
     intros. constructor; try typeclasses eauto.
     - intros X Y f x. cbv in x.
-      rewrite (@fmap_list_const_spec (list A) X Y f).
-      rewrite (@fmap_list_const_spec A X Y f).
+      rewrite (@fmap_const_spec (list A) X Y f).
+      rewrite (@fmap_const_spec (list (list A)) X Y f).
       reflexivity.
     - intros X x. cbn. reflexivity.
     - intros X Y x y. cbv in x, y.
@@ -549,20 +549,21 @@ Section TraversableMonad_listable.
   Theorem tolist_join : forall A : Type,
       tolist T ∘ join T = join list ∘ tolist T ∘ fmap T (tolist T) (A := T A).
   Proof.
-    intros. rewrite (tolist_spec T). reassociate ->.
+    intros. rewrite (traversable_tolist_spec T False). reassociate ->.
+    unfold traverse. reassociate -> on left.
     rewrite (natural (ϕ := @join T _)).
-    reassociate <-. rewrite (trvmon_join T (G := const (list A))).
+    reassociate <- on left. rewrite (trvmon_join T (G := const (list A))).
     change (fmap (const (list A)) (join T) ∘ ?f) with f.
     rewrite <- (fun_fmap_fmap T).
     repeat reassociate <-. fequal.
     unfold_ops @Dist_compose. fequal.
-    rewrite (tolist_spec T).
+    rewrite (traversable_tolist_spec T False). unfold traverse.
     reassociate <- on right.
     rewrite <- (dist_morph T (ϕ := (fun X : Type => @join list Join_list A))).
     reassociate -> on right. rewrite (fun_fmap_fmap T).
     rewrite (mon_join_ret list). rewrite (fun_fmap_id T).
     change (?f ∘ id) with f.
-    now rewrite (traversable_tolist1).
+    now rewrite (dist_const1 T (T False)).
   Qed.
 
   #[global] Instance ListableMonad_TraversableMonad : ListableMonad T :=

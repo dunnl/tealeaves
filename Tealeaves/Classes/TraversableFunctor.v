@@ -2,12 +2,14 @@ From Tealeaves Require Export
      Classes.Functor
      Classes.Applicative
      Classes.ListableFunctor
-     Functors.Constant.
+     Functors.Constant
+     Functors.Batch.
 
 Import List.ListNotations.
 #[local] Open Scope list_scope.
 
 Import Functor.Notations.
+Import Batch.Notations.
 Import SetlikeFunctor.Notations.
 Import Monoid.Notations.
 Import Applicative.Notations.
@@ -402,131 +404,389 @@ Section traversable_product.
 
 End traversable_product.
 
-(** * Traversable functors are listable *)
+(** * Operations involving constant applicative functors *)
+(******************************************************************************)
+(** To distributive over constant applicative functors, i.e. to fold
+    over monoidal values, we can use the <<Const>> applicative
+    functor. Unfortunately this tends to clutter operations with
+    <<unconst>> operations which get in the way of convenient
+    rewriting. We provide a lighter-weight alternative in this section
+    and some specifications proving equivalence with the <<Const>>
+    versions. *)
+Section TraversableFunctor_const.
+
+  Context
+    (T : Type -> Type)
+    `{TraversableFunctor T}.
+
+  (* TODO Move me *)
+  Definition exfalso {X : Type} : False -> X.
+    intuition.
+  Defined.
+
+  (* TODO Move me *)
+  Existing Instance Fmap_const.
+  Existing Instance Pure_const.
+  Existing Instance Mult_const.
+  Existing Instance Applicative_const.
+  Existing Instance ApplicativeMorphism_unconst.
+  Existing Instance ApplicativeMorphism_monoid_hom.
+
+  (** *** Distribution over <<const>> is agnostic about the tag. *)
+  (** Distribution over a constant applicative functor is agnostic
+      about the type argument ("tag") to the constant functor. On
+      paper it is easy to ignore this, but in Coq this must be
+      proved. Observe this equality is ill-typed if [Const] is used instead. *)
+  (******************************************************************************)
+  Lemma dist_const1 : forall (X : Type) `{Monoid M},
+      (@dist T _ (const M)
+             (Fmap_const) (Pure_const) (Mult_const) X)
+      =
+      (@dist T _ (const M)
+             (Fmap_const) (Pure_const) (Mult_const) False).
+  Proof.
+    intros. symmetry. change (?f = ?g) with (f = g ∘ (@id (T M))).
+    rewrite <- (fun_fmap_id T).
+    change (@id M) with
+        (fmap (A := False) (B:=X) (const M) exfalso).
+    change (fmap T (fmap (const M) ?f))
+      with (fmap (T ∘ const M) f).
+    rewrite <- (dist_natural T (B := X) (A := False) (G := const M)).
+    reflexivity.
+  Qed.
+
+  Lemma dist_const2 : forall (X Y : Type) `{Monoid M},
+      (@dist T _ (const M)
+             (Fmap_const) (Pure_const) (Mult_const) X)
+      =
+      (@dist T _ (const M)
+             (Fmap_const) (Pure_const) (Mult_const) Y).
+  Proof.
+    intros. now rewrite (dist_const1 X), (dist_const1 Y).
+  Qed.
+
+  (** *** Distribution over [Const] vs <<const>> *)
+  (******************************************************************************)
+  Theorem traversable_const_spec (tag : Type) `{Monoid M} :
+    unconst ∘ @dist T _ (Const M)
+            (Fmap_Const)
+            (Pure_Const)
+            (Mult_Const) tag ∘ fmap T (mkConst)
+    = @dist T _ (const M)
+            (Fmap_const)
+            (Pure_const)
+            (Mult_const) tag.
+  Proof.
+    intros. rewrite <- (dist_morph T (ϕ := @unconst _)).
+    reassociate -> on left. rewrite (fun_fmap_fmap T).
+    change (unconst ∘ mkConst) with (@id M).
+    now rewrite (fun_fmap_id T).
+  Qed.
+
+End TraversableFunctor_const.
+
+(** ** The [tolist] operation *)
+(** We only define this operation and prove it forms a natural
+transformation. This does not immediately give a [ListableFunctor]
+instance until we prove the shapeliness property in another section
+below. *)
 (******************************************************************************)
 (* set <<tag := False>> to emphasize this type is arbitrary *)
 #[global] Instance Tolist_Traversable `{Fmap T} `{Dist T} : Tolist T :=
   fun A => unconst ∘ dist T (Const (list A)) ∘
                 fmap T (mkConst (tag := False) ∘ ret list (A := A)).
 
-Section TraversableFunctor_tolist_spec.
+Instance Natural_tolist_Traversable
+         `{TraversableFunctor T} : Natural (@tolist T Tolist_Traversable).
+Proof.
+  constructor; try typeclasses eauto.
+  intros. unfold_ops @Tolist_Traversable.
+  repeat reassociate <-.
+  rewrite (mapConst_2 (fmap list f)).
+  repeat reassociate -> on left;
+    reassociate <- near (mapConst (fmap list f)).
+  rewrite <- (dist_morph T).
+  repeat reassociate ->.
+  repeat rewrite (fun_fmap_fmap T).
+  reflexivity.
+Qed.
+
+(** ** Specifications for <<tolist>> and <<foldMap>> *)
+(******************************************************************************)
+Section TraversableFunctor_fold_spec.
 
   Context
-    {A : Type}.
+    (T : Type -> Type)
+    `{Monoid M}
+    `{TraversableFunctor T}.
 
-  Instance Fmap_list_const : Fmap (const (list A)) :=
-    fun X Y f t => t.
+  Existing Instance Fmap_const.
+  Existing Instance Pure_const.
+  Existing Instance Mult_const.
+  Existing Instance Applicative_const.
+  Existing Instance ApplicativeMorphism_unconst.
+  Existing Instance ApplicativeMorphism_monoid_hom.
 
-  Theorem fmap_list_const_spec : forall (X Y : Type) (f : X -> Y),
-      fmap (const (list A)) f = id.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Instance Pure_list_const : Pure (const (list A)) :=
-    fun X x => nil.
-
-  Instance Mult_list_monoid : Mult (const (list A)) :=
-    fun X Y '(x, y) => List.app x y.
-
-  Instance Applicative_list_monoid :
-    Applicative (const (list A)).
-  Proof.
-    constructor; intros; try reflexivity.
-    - constructor; reflexivity.
-    - cbn. now rewrite List.app_assoc.
-    - cbn. now List.simpl_list.
-  Qed.
-
-  Instance ApplicativeMorphism_unconst :
-    ApplicativeMorphism
-      (Const (list A)) (const (list A))
-      (fun X => unconst).
-  Proof.
-    constructor; try typeclasses eauto; reflexivity.
-  Qed.
-
-  Theorem tolist_spec (T : Type -> Type)
-          `{TraversableFunctor T} :
+  (** *** Specification for <<Tolist_Traversable>> *)
+  (******************************************************************************)
+  Theorem traversable_tolist_spec {A : Type} (tag : Type) :
     @tolist T Tolist_Traversable A
-    = @dist T _ (const (list A))
-            (Fmap_list_const)
-            (Pure_list_const)
-            (Mult_list_monoid) False
-            ∘ fmap T (ret list).
+    = @traverse T (const (list A)) _ _
+            (Fmap_const)
+            (Pure_const)
+            (Mult_const) A tag (ret list).
   Proof.
-    intros. unfold tolist, Tolist_Traversable.
-    rewrite <- (fun_fmap_fmap T). reassociate <-.
-    fequal. rewrite <- (dist_morph T (ϕ := @unconst _)).
-    reassociate -> on left. rewrite (fun_fmap_fmap T).
-    change (unconst ∘ mkConst) with (@id (list A)).
-    now rewrite (fun_fmap_id T).
+    intros. unfold tolist, Tolist_Traversable, traverse.
+    rewrite <- (fun_fmap_fmap T). reassociate <- on left.
+    rewrite (traversable_const_spec T (M := list A) False).
+    now rewrite (dist_const1 T tag).
   Qed.
 
-  Definition retag {A X Y : Type} :
-    const (list A) X -> const (list A) Y := @id (list A).
-
-  Instance ApplicativeMorphism_id
-           `{Applicative G} :
-    ApplicativeMorphism G G (fun A => @id (G A)).
+  (** *** Specification for folding over traversables *)
+  (******************************************************************************)
+  Theorem traversable_fold_spec (tag : Type) `{Monoid M} :
+    @fold T Tolist_Traversable M _ _
+    = @dist T _ (const M)
+            (Fmap_const)
+            (Pure_const)
+            (Mult_const) tag.
   Proof.
-    constructor; try typeclasses eauto; reflexivity.
+    unfold fold. rewrite (traversable_tolist_spec tag). unfold traverse.
+    reassociate <- on left.
+    change (@List.fold M _ _) with (const (@List.fold M _ _) (T tag)).
+    rewrite <- (dist_morph T (ϕ := const (@List.fold M _ _))).
+    reassociate -> on left.
+    rewrite (fun_fmap_fmap T).
+    replace (const List.fold tag ∘ ret list) with (@id M).
+    - now rewrite (fun_fmap_id T).
+    - ext m. cbn. now simpl_monoid.
   Qed.
 
-  Definition exfalso {X : Type} : False -> X.
-    intuition.
-  Defined.
+  Theorem traversable_foldMap_spec (tag : Type) `{Monoid M} `{f : A -> M} :
+    @foldMap T _ Tolist_Traversable A M _ _  f =
+    @traverse T (const M) _ _ (Fmap_const) (Pure_const) (Mult_const) A tag f.
+  Proof.
+    unfold foldMap. now rewrite (traversable_fold_spec tag).
+  Qed.
+
+  (* TODO polish me *)
+  Theorem traversable_tolist_spec2 {A : Type} :
+    @tolist T Tolist_Traversable A
+    = foldMap (ret list).
+  Proof.
+    intros. unfold foldMap. unfold fold.
+    reassociate -> on right. rewrite <- (natural (ϕ := @tolist T _)).
+    reassociate <- on right.
+    ext t. unfold compose.
+    induction (tolist T t).
+    - easy.
+    - cbn. now rewrite <- IHl.
+  Qed.
+
+End TraversableFunctor_fold_spec.
+
+(** * Traversals as <<Batch>> coalgebras *)
+(******************************************************************************)
+Section traversals_coalgebras.
 
   Context
     `{TraversableFunctor T}.
 
-  #[local] Set Keyed Unification.
-  Theorem traversable_tolist1 : forall (X : Type),
-      (@dist T _ (@const Type Type (list A))
-             (Fmap_list_const) (Pure_list_const)
-             (Mult_list_monoid) X)
-      =
-      (@dist T _ (fun _ : Type => list A)
-             (Fmap_list_const) (Pure_list_const)
-             (Mult_list_monoid) False).
-  Proof.
-    intros. symmetry. change (?f = ?g) with (f = g ∘ (@id (T (list A)))).
-    rewrite <- (fun_fmap_id T).
-    change (@id (list A)) with
-        (fmap (A := False) (B:=X) (const (list A)) exfalso).
-    change (fmap T (fmap (const (list A)) ?f))
-      with (fmap (T ∘ const (list A)) f).
-    rewrite <- (dist_natural T (B := X) (A := False) (G := const (list A))).
-    reflexivity.
-  Qed.
+  Definition batch {A : Type} (B : Type) : A -> @Batch A B B :=
+    fun a => (Go (@id B)) ⧆ a.
+  Definition iterate {A : Type} (B : Type) : T A -> @Batch A B (T B) :=
+    traverse T Batch (batch B).
 
-End TraversableFunctor_tolist_spec.
+End traversals_coalgebras.
 
-Section ListableFunctor_of_TraversableFunctor.
+Lemma extract_to_runBatch : forall (A X : Type) (j : @Batch A A X),
+    extract_Batch j = runBatch (@id A) j.
+Proof.
+  intros. induction j.
+  - reflexivity.
+  - cbn. now rewrite <- IHj.
+Qed.
+
+(** ** Decomposing <<traverse>> in terms of <<iterate>> *)
+(******************************************************************************)
+Section traversal_iterate.
 
   Context
     `{TraversableFunctor T}.
 
-  Instance Natural_tolist_Traversable : Natural (@tolist T Tolist_Traversable).
+  (** ** Identities for <<traverse>> *)
+  (******************************************************************************)
+  Lemma traverse_to_runBatch `{Applicative F} `(f : A -> F B) (t : T A) :
+    traverse T F f t = runBatch f (iterate B t).
   Proof.
-    constructor; try typeclasses eauto.
-    intros. unfold_ops @Tolist_Traversable.
-    repeat reassociate <-.
-    rewrite (mapConst_2 (fmap list f)).
-    repeat reassociate -> on left;
-      reassociate <- near (mapConst (fmap list f)).
-    rewrite <- (dist_morph T).
-    repeat reassociate ->.
-    repeat rewrite (fun_fmap_fmap T).
-    reflexivity.
+    unfold iterate. compose near t on right.
+    rewrite (traverse_morphism T (ϕ := @runBatch A F B f _ _ _)).
+    fequal. ext a. cbn. now rewrite ap1.
   Qed.
 
-  Axiom traversable_functors_are_shapely : shapeliness T.
+  Lemma dist_to_runBatch `{Applicative F} {A : Type} (t : T (F A)) :
+    dist T F t = runBatch (@id (F A)) (iterate A t).
+  Proof.
+    replace (dist T F t) with (traverse T F id t).
+    2:{ unfold traverse. unfold compose. now rewrite (fun_fmap_id T). }
+    now rewrite traverse_to_runBatch.
+  Qed.
 
-  #[global] Instance ListableFunctor_Traversable : ListableFunctor T :=
-    {| lfun_shapeliness := traversable_functors_are_shapely |}.
+  Lemma traverse_to_runBatch'  `{Applicative F} `(f : A -> F B) :
+    traverse T F f = runBatch f ∘ iterate B.
+  Proof.
+    ext t. now rewrite traverse_to_runBatch.
+  Qed.
 
-End ListableFunctor_of_TraversableFunctor.
+  Lemma dist_to_runBatch' `{Applicative F} {A : Type} :
+    dist T F (A := A) = runBatch (@id (F A)) ∘ iterate A.
+  Proof.
+    ext t. now rewrite dist_to_runBatch.
+  Qed.
+
+  (** ** Identities for <<fmap>> *)
+  (******************************************************************************)
+  Lemma fmap_to_runBatch `(f : A -> B) (t : T A) :
+    fmap T f t = runBatch f (iterate B t).
+  Proof.
+    rewrite (fmap_to_traverse T).
+    now rewrite traverse_to_runBatch.
+  Qed.
+
+  (** ** Identity for all <<t>> *)
+  (******************************************************************************)
+  Lemma id_to_runBatch `(t : T A) :
+    t = runBatch (@id A) (iterate A t).
+  Proof.
+    change t with (id t) at 1.
+    rewrite <- (traverse_id T).
+    now rewrite traverse_to_runBatch.
+  Qed.
+
+  (** ** Mapping over <<Batch>> and <<iterate>> *)
+  (******************************************************************************)
+  Lemma iterate_mapfst `(f : A -> B) {C : Type} (t : T A) :
+    iterate C (fmap T f t) = mapfst_Batch f (iterate C t).
+  Proof.
+    unfold iterate. compose near t on left.
+    rewrite (traverse_fmap T).
+    do 2 rewrite traverse_to_runBatch. induction (iterate C t).
+    - cbv. reflexivity.
+    - do 2 rewrite runBatch_rw2. rewrite IHb.
+      now rewrite mapfst_Batch3.
+  Qed.
+
+  (** ** Identities for <<tolist>> and <<foldMap>> *)
+  (******************************************************************************)
+  Existing Instance Fmap_const.
+  Existing Instance Pure_const.
+  Existing Instance Mult_const.
+  Existing Instance Applicative_const.
+  Existing Instance ApplicativeMorphism_unconst.
+
+  Lemma tolist_to_runBatch `{Applicative F} `(t : T A) :
+    tolist T t = runBatch (ret list : A -> const (list A) A) (iterate A t).
+  Proof.
+    unfold iterate. compose near t on right.
+    rewrite (traverse_morphism T (ϕ := @runBatch A (const (list A)) _ (ret list) _ _ _)).
+    rewrite (traversable_tolist_spec T A).
+    fequal.
+  Qed.
+
+  Lemma foldMap_to_runBatch
+        `{Monoid M} `(f : A -> M) (t : T A) (B : Type) :
+    foldMap f t = runBatch_monoid f (iterate B t).
+  Proof.
+    rewrite runBatch_monoid1.
+    rewrite (traversable_foldMap_spec T B).
+    unfold traverse. rewrite dist_to_runBatch'.
+    unfold compose. rewrite iterate_mapfst.
+    induction (iterate B t).
+    - reflexivity.
+    - cbn. fequal. now rewrite IHb.
+  Qed.
+
+  Lemma tolist_to_runBatch2 `(t : T A) (B : Type) :
+    tolist T t = runBatch_monoid (ret list) (iterate B t).
+  Proof.
+    rewrite (traversable_tolist_spec2 T).
+    now rewrite <- (foldMap_to_runBatch (ret list)).
+  Qed.
+
+End traversal_iterate.
+
+(** ** Reassembly operation *)
+(******************************************************************************)
+Section traversal_reassemble.
+
+  Existing Instance Fmap_const.
+  Existing Instance Pure_const.
+  Existing Instance Mult_const.
+  Existing Instance Applicative_const.
+  Existing Instance ApplicativeMorphism_unconst.
+
+  Context
+    `{TraversableFunctor T}.
+  Fixpoint add_elements `(s : @Batch i1 o X) `(l : list i2) : @Batch (Maybe i2) o X :=
+    match s with
+    | Go t' => Go t'
+    | Ap rest a =>
+      match l with
+      | nil => Ap (add_elements rest nil) None
+      | cons a l' => Ap (add_elements rest l') (Just a)
+      end
+    end.
+
+  Definition reassemble `(t : T X) `(l : list A) : Maybe (T A) :=
+    runBatch id (add_elements (iterate _ t) l).
+
+End traversal_reassemble.
+
+(** * Shapeliness *)
+(******************************************************************************)
+Section traversal_shapeliness.
+
+  Context
+    `{TraversableFunctor T}.
+
+  Lemma shapeliness_tactical : forall A (b1 b2 : @Batch A A (T A)),
+      runBatch_monoid (ret list) b1 = runBatch_monoid (ret list) b2 ->
+      mapfst_Batch (const tt) b1 = mapfst_Batch (const tt) b2 ->
+      runBatch id b1 = runBatch id b2.
+  Proof.
+    intros. induction b1, b2; cbn in *.
+    - now inversion H3.
+    - now inversion H2.
+    - now inversion H2.
+    - specialize (list_app_inv_l2 _ _ _ _ _ H2).
+      specialize (list_app_inv_r2 _ _ _ _ _ H2).
+      introv hyp1 hyp2. subst.
+      erewrite IHb1. eauto. eauto.
+      now inversion H3.
+  Qed.
+
+  Theorem shapeliness : forall A (t1 t2 : T A),
+      shape T t1 = shape T t2 /\
+      tolist T t1 = tolist T t2 ->
+      t1 = t2.
+  Proof.
+    introv [hyp1 hyp2].
+    assert (hyp1' : iterate A (shape T t1) = iterate A (shape T t2)).
+    { unfold shape in *. now rewrite hyp1. }
+    clear hyp1; rename hyp1' into hyp1.
+    unfold shape in hyp1.
+    do 2 rewrite iterate_mapfst in hyp1.
+    rewrite (tolist_to_runBatch2 t1 A) in hyp2.
+    rewrite (tolist_to_runBatch2 t2 A) in hyp2.
+    rewrite (id_to_runBatch t1).
+    rewrite (id_to_runBatch t2).
+    auto using shapeliness_tactical.
+  Qed.
+
+End traversal_shapeliness.
+
+Instance ListableFunctor_Traversable `{TraversableFunctor T} : ListableFunctor T :=
+  {| lfun_shapeliness := shapeliness (T := T) |}.
 
 (** * Traversable instance for [list] *)
 (******************************************************************************)
