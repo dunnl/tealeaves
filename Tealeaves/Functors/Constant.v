@@ -5,7 +5,7 @@ From Tealeaves Require Export
 Import Monoid.Notations.
 #[local] Open Scope tealeaves_scope.
 
-(** * Constant functor *)
+(** * Inductive definition of the constant functor *)
 (******************************************************************************)
 Inductive Const V (tag : Type) : Type :=
 | mkConst : V -> Const V tag.
@@ -92,3 +92,67 @@ Proof.
   - intros. cbn. rewrite (monmor_unit). reflexivity.
   - intros. destruct x, y. cbn. rewrite (monmor_op). reflexivity.
 Qed.
+
+
+(** * Computational definition of the constant functor *)
+(******************************************************************************)
+Section constant_functor.
+
+  Definition retag_const {A X Y : Type} :
+    const A X -> const A Y := @id A.
+
+  (** First we establish that (const M) is an applicative functor. *)
+  Section with_monoid.
+
+    Context
+      `{Monoid M}.
+
+    Instance Fmap_const : Fmap (const M) :=
+      fun X Y f t => t.
+
+    Theorem fmap_const_spec : forall (X Y : Type) (f : X -> Y),
+        fmap (const M) f = id.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Instance Pure_const : Pure (const M) :=
+      fun X x => Ƶ.
+
+    Instance Mult_const : Mult (const M) :=
+      fun X Y '(x, y) => x ● y.
+
+    Instance Applicative_const :
+      Applicative (const M).
+    Proof.
+      constructor; intros; try reflexivity.
+      - constructor; reflexivity.
+      - cbn. now Monoid.simpl_monoid.
+      - cbn. now Monoid.simpl_monoid.
+      - cbn. now Monoid.simpl_monoid.
+      - cbn. now Monoid.simpl_monoid.
+    Qed.
+
+    Instance ApplicativeMorphism_unconst :
+      ApplicativeMorphism (Const M) (const M)
+        (fun X => unconst).
+    Proof.
+      constructor; try typeclasses eauto; reflexivity.
+    Qed.
+
+  End with_monoid.
+
+  Existing Instance Fmap_const.
+  Existing Instance Pure_const.
+  Existing Instance Mult_const.
+  Existing Instance Applicative_const.
+  Existing Instance ApplicativeMorphism_unconst.
+
+  Instance ApplicativeMorphism_monoid_hom `{hom : Monoid_Morphism ϕ (A := M) (B := N)} :
+    ApplicativeMorphism (const M) (const N) (const ϕ).
+  Proof.
+    inversion hom.
+    constructor; now try typeclasses eauto.
+  Qed.
+
+End constant_functor.
