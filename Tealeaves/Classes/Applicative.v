@@ -230,7 +230,7 @@ Section ApplicativeFunctor_ap.
   Qed.
 
   Theorem ap4 : forall `(f : G (B -> C)) `(g : G (A -> B)) (a : G A),
-      pure G (compose) <⋆> f <⋆> g <⋆> a =
+      (pure G compose) <⋆> f <⋆> g <⋆> a =
       f <⋆> (g <⋆> a).
   Proof.
     intros. unfold ap; cbn.
@@ -264,6 +264,7 @@ Section ApplicativeFunctor_ap.
     rewrite <- ap4. now rewrite <- ap2.
   Qed.
 
+  (* TODO Move me *)
   Definition precompose {A B C } := (fun (f : A -> B) (g : B -> C)  => g ○ f).
 
   Corollary ap7 : forall {A B C} (x : G (A -> B)) (y : G C) (f : C -> A),
@@ -275,7 +276,7 @@ Section ApplicativeFunctor_ap.
   Qed.
 
   Corollary ap8 : forall `(f : G (B -> C)) `(g : G (A -> B)) (a : G A),
-      fmap G compose f <⋆> g <⋆> a =
+      (fmap G compose f) <⋆> g <⋆> a =
       f <⋆> (g <⋆> a).
   Proof.
     intros. rewrite <- ap4. now rewrite fmap_to_ap.
@@ -415,20 +416,12 @@ Section applicative_compose.
   Qed.
 
   Theorem ap_compose_2 {A B} : forall (x : G2 (G1 (A -> B))) (y : G2 (G1 A)),
-      (ap (G2 ○ G1) x y) = fmap G2 (uncurry (ap G1)) (x ⊗ y).
+      ap (G2 ∘ G1) x y = fmap G2 (ap G1) x <⋆> y.
   Proof.
-    apply ap_compose_1.
-  Qed.
-
-  Theorem ap_compose_3 {A B} : forall (x : G2 (G1 (A -> B))) (y : G2 (G1 A)),
-      (ap (G2 ○ G1) x y) = ap G2 (fmap G2 (ap G1) x) y.
-  Proof.
-    intros. rewrite ap_compose_2.
-    unfold ap at 2.
-    rewrite (app_mult_natural_l G2).
-    compose near (x ⊗ y) on right.
-    rewrite (fun_fmap_fmap G2). fequal.
-    now ext [? ?].
+    intros. rewrite ap_compose_1.
+    unfold ap at 2. rewrite (app_mult_natural_l G2).
+    compose near (x ⊗ y) on right. rewrite (fun_fmap_fmap G2).
+    fequal. now ext [f a].
   Qed.
 
 End applicative_compose.

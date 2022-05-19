@@ -68,7 +68,7 @@ Module Notations.
   (** This notation is similar to but more general than <<⊙>> because it works even
   when <<g>> or <<f>> are dependently-typed (and hence not morphisms in the
   category of constant K-families). This is particularly intended for composition with Kleisli morphisms. *)
-  Notation "g ◻ f" := (fun k => g k ∘ f k) (at level 40).
+  Notation "g ◻ f" := (fun k => g k ∘ f k) (at level 50).
 
   Infix "⊙":= (@comp Type _ kconst_comp _ _ _)
                 (at level 40, left associativity) : tealeaves_multi_scope.
