@@ -10,6 +10,7 @@ Tealeaves/Classes/Category.v
 Tealeaves/Classes/Monoid.v
 Tealeaves/Classes/Functor.v
 Tealeaves/Classes/Applicative.v
+Tealeaves/Functors/Backwards.v
 Tealeaves/Classes/Monad.v
 Tealeaves/Classes/Comonad.v
 Tealeaves/Classes/RightModule.v
