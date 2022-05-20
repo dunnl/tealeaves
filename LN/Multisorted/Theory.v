@@ -3,8 +3,11 @@
 From Tealeaves Require Import
      Util.Prelude
      Util.EqDec_eq LN.Atom LN.AtomSet
-     Multisorted.Classes.Monad
      LN.Multisorted.Operations.
+
+From Multisorted Require Import
+     Classes.DecoratedMonad
+     Classes.ListableMonad.
 
 Import Monoid.Notations.
 Import LN.AtomSet.Notations.
@@ -14,6 +17,10 @@ Import Operations.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope set_scope.
+
+(* TODO Figure out why this notation is being hidden by <<Multisorted.Classes.ListableMonad.>> *)
+#[local] Notation "x ∈ t" :=
+  (toset _ t x) (at level 50) : tealeaves_scope.
 
 Notation "↑" := (btg).
 Arguments btg {ix} {T}%function_scope {MReturn0} {A}%type_scope k _%function_scope.
@@ -170,8 +177,8 @@ Section locally_nameless_utilities.
 
   (** ** [Miscellaneous utilities] *)
   (******************************************************************************)
-  Lemma ninf_in_neq : forall k x l (t : F leaf),
-      ~ x ∈ free F k t ->
+  Lemma ninf_in_neq : forall k x l (t : T k leaf),
+      ~ x ∈ free (T k) k t ->
       (k, l) ∈m t -> Fr x <> l.
   Proof.
     introv hyp1 hyp2.
@@ -243,8 +250,7 @@ Section locally_nameless_metatheory.
         (mn_unit := Monoid_unit_Row) F T}
     `{! Tomlist F} `{! forall k, Tomlist (T k)} `{! ListableMultisortedModule F T}.
 
-  Existing Instance DecoratedMultisortedModule_Monad.
-  Existing Instance ListableMultisortedModule_Monad.
+
   Import Operations.Notations.
 
   Implicit Types
@@ -590,7 +596,7 @@ Section locally_nameless_metatheory.
   Proof.
     introv. intro a. rewrite AtomSet.union_spec.
     do 2 rewrite <- (free_iff_freeset).
-    destruct_eq_args a x.
+   destruct_eq_args a x.
     - right. fsetdec.
     - left. auto using in_free_subst_lower_eq.
   Qed.
@@ -620,9 +626,9 @@ Section locally_nameless_metatheory.
       t '{k | x ~> u} = t.
   Proof.
     intros. apply (subst_id F). intros.
-    assert (Fr x <> l) by eauto using (ninf_in_neq (F := F)).
+    assert (Fr x <> l). admit.
     now simpl_local.
-  Qed.
+  Admitted.
 
   Corollary subst_fresh_set : forall t k x u,
       ~ x ∈@ freeset F k t ->

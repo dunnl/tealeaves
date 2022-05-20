@@ -103,7 +103,7 @@ Section assume_some_index_type.
     Proof.
       introv. ext t. unfold compose. unfold_ops @MFmap_compose_Fmap.
       compose near t on left. rewrite (mfun_mfmap_mfmap F).
-      fequal. ext k x. unfold Classes.comp, kconst_comp, compose.
+      fequal. ext k x. unfold Category.comp, kconst_comp, compose.
       compose near x on left. now rewrite (fun_fmap_fmap G).
     Qed.
 
@@ -185,7 +185,7 @@ Section assume_some_index_type.
     k1 <> k2 -> tgt k2 g ⊙ tgt k1 f = tgt k1 f ⊙ tgt k2 g.
   Proof.
     introv neq. unfold tgt. ext k.
-    unfold Classes.comp, kconst_comp.
+    unfold Category.comp, kconst_comp.
     compare k to both of {k1 k2}.
   Qed.
 

@@ -267,6 +267,22 @@ Section list_shape_lemmas.
     2: eauto. reflexivity.
   Qed.
 
+  Lemma list_app_inv_l2 : forall A (l1 l2 : list A) (a1 a2 : A),
+      l1 ++ ret list a1 = l2 ++ ret list a2 ->
+      l1 = l2.
+  Proof.
+    intros. eapply inv_app_eq_rl; [|eauto]; auto.
+  Qed.
+
+  Lemma list_app_inv_r2 : forall A (l1 l2 : list A) (a1 a2 : A),
+      l1 ++ [a1] = l2 ++ [a2] ->
+      a1 = a2.
+  Proof.
+    introv. introv hyp.
+    apply inv_app_eq_rr in hyp.
+    now inversion hyp. easy.
+  Qed.
+
 End list_shape_lemmas.
 
 (** ** Reasoning principles for <<shape>> on listable functors *)

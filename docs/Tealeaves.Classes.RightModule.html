@@ -1,0 +1,328 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="https://comono.id/tealeaves">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.RightModule</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Monad.html#"><span class="id" title="library">Classes.Monad</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">Functor.Notations</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">Monad.Notations</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">tealeaves_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab84"></a><h1 class="section">Right Modules</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="rightmodule_operations" class="idref" href="#rightmodule_operations"><span class="id" title="section">rightmodule_operations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="F:1" class="idref" href="#F:1"><span class="id" title="binder">F</span></a> <a id="T:2" class="idref" href="#T:2"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="RightAction" class="idref" href="#RightAction"><span class="id" title="record">RightAction</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="right_action" class="idref" href="#right_action"><span class="id" title="projection">right_action</span></a> : <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_operations.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_operations.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#278ce2a34b83a8295656f6eff2db54a7"><span class="id" title="notation">⇒</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_operations.F"><span class="id" title="variable">F</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_operations"><span class="id" title="section">rightmodule_operations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="RightModule" class="idref" href="#RightModule"><span class="id" title="section">RightModule</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="F:5" class="idref" href="#F:5"><span class="id" title="binder">F</span></a> <a id="T:6" class="idref" href="#T:6"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="RightModule" class="idref" href="#RightModule"><span class="id" title="record">RightModule</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">Fmap</span></a> <a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">T</span></a>} `{<a id="H0:8" class="idref" href="#H0:8"><span class="id" title="binder">Return</span></a> <a id="H0:8" class="idref" href="#H0:8"><span class="id" title="binder">T</span></a>} `{<a id="H1:9" class="idref" href="#H1:9"><span class="id" title="binder">Join</span></a> <a id="H1:9" class="idref" href="#H1:9"><span class="id" title="binder">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H2:10" class="idref" href="#H2:10"><span class="id" title="binder">Fmap</span></a> <a id="H2:10" class="idref" href="#H2:10"><span class="id" title="binder">F</span></a>} `{<a id="H3:11" class="idref" href="#H3:11"><span class="id" title="binder">RightAction</span></a> <a id="H3:11" class="idref" href="#H3:11"><span class="id" title="binder">F</span></a> <a id="H3:11" class="idref" href="#H3:11"><span class="id" title="binder">T</span></a>} :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <a id="rmod_monad" class="idref" href="#rmod_monad"><span class="id" title="projection">rmod_monad</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Monad.html#Monad"><span class="id" title="class">Monad</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="rmod_object" class="idref" href="#rmod_object"><span class="id" title="projection">rmod_object</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Functor.html#Functor"><span class="id" title="class">Functor</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="rmod_natural" class="idref" href="#rmod_natural"><span class="id" title="projection">rmod_natural</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Functor.html#Natural"><span class="id" title="class">Natural</span></a> (@<a class="idref" href="Tealeaves.Classes.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">_</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="rmod_action_fmap_ret" class="idref" href="#rmod_action_fmap_ret"><span class="id" title="projection">rmod_action_fmap_ret</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">A</span> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a> <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="rmod_action_action" class="idref" href="#rmod_action_action"><span class="id" title="projection">rmod_action_action</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">A</span> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">A</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">A</span> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule.T"><span class="id" title="variable">T</span></a>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule"><span class="id" title="section">RightModule</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <span class="id" title="var">F</span> {<span class="id" title="var">T</span>}%<span class="id" title="var">function_scope</span> {<span class="id" title="var">RightAction</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab85"></a><h2 class="section">Right modules compose with functors</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="functor_module_composition" class="idref" href="#functor_module_composition"><span class="id" title="section">functor_module_composition</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:22" class="idref" href="#H0:22"><span class="id" title="binder">Functor</span></a> <a id="H0:22" class="idref" href="#H0:22"><span class="id" title="binder">F</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H6:30" class="idref" href="#H6:30"><span class="id" title="binder">RightModule</span></a> <a id="H6:30" class="idref" href="#H6:30"><span class="id" title="binder">G</span></a> <a id="H6:30" class="idref" href="#H6:30"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="RightAction_compose" class="idref" href="#RightAction_compose"><span class="id" title="instance">RightAction_compose</span></a> : <a class="idref" href="Tealeaves.Classes.RightModule.html#RightAction"><span class="id" title="class">RightAction</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.G"><span class="id" title="variable">G</span></a>) <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.T"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="A:31" class="idref" href="#A:31"><span class="id" title="binder">A</span></a> =&gt; <a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.G"><span class="id" title="variable">G</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="var">Keyed</span> <span class="id" title="var">Unification</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+It does not seem to be a good idea to add this globally. It is
+      better to use it explicitly. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="RightModule_compose" class="idref" href="#RightModule_compose"><span class="id" title="instance">RightModule_compose</span></a> : <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule"><span class="id" title="class">RightModule</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.G"><span class="id" title="variable">G</span></a>) <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.T"><span class="id" title="variable">T</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">introv</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_compose_in_compose</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> 2(<a class="idref" href="Tealeaves.Classes.Functor.html#fun_fmap_fmap"><span class="id" title="method">fun_fmap_fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.F"><span class="id" title="variable">F</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a> (<span class="id" title="var">G</span> := <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.G"><span class="id" title="variable">G</span></a>) (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.G"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.T"><span class="id" title="variable">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Classes.RightModule.html#RightAction_compose"><span class="id" title="instance">RightAction_compose</span></a> @<a class="idref" href="Tealeaves.Classes.Functor.html#Fmap_compose"><span class="id" title="instance">Fmap_compose</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_fmap_fmap"><span class="id" title="method">fun_fmap_fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.F"><span class="id" title="variable">F</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_fmap_ret"><span class="id" title="method">rmod_action_fmap_ret</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.G"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.T"><span class="id" title="variable">T</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_fmap_id"><span class="id" title="method">fun_fmap_id</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.F"><span class="id" title="variable">F</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Classes.RightModule.html#RightAction_compose"><span class="id" title="instance">RightAction_compose</span></a> @<a class="idref" href="Tealeaves.Classes.Functor.html#Fmap_compose"><span class="id" title="instance">Fmap_compose</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> 2(<a class="idref" href="Tealeaves.Classes.Functor.html#fun_fmap_fmap"><span class="id" title="method">fun_fmap_fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.F"><span class="id" title="variable">F</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_action"><span class="id" title="method">rmod_action_action</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.G"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition.T"><span class="id" title="variable">T</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#functor_module_composition"><span class="id" title="section">functor_module_composition</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab86"></a><h2 class="section">Monads form right modules</h2>
+ Monads form modules. To avoid cycles in the typeclass hierarchy (causing
+    typeclass resolution to diverge) we do not expose these instances globally.
+    To generate module instances for a particular monad (e.g. <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span>), it is
+    best to apply the instances explicitly. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="module_of_monad" class="idref" href="#module_of_monad"><span class="id" title="section">module_of_monad</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="T:32" class="idref" href="#T:32"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="RightAction_Join" class="idref" href="#RightAction_Join"><span class="id" title="instance">RightAction_Join</span></a> `{<a id="H:33" class="idref" href="#H:33"><span class="id" title="binder">Join</span></a> <a id="H:33" class="idref" href="#H:33"><span class="id" title="binder">T</span></a>} : <a class="idref" href="Tealeaves.Classes.RightModule.html#RightAction"><span class="id" title="class">RightAction</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">_</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="RightModule_Monad" class="idref" href="#RightModule_Monad"><span class="id" title="instance">RightModule_Monad</span></a> `{<a id="H2:37" class="idref" href="#H2:37"><span class="id" title="binder">Monad</span></a> <a id="H2:37" class="idref" href="#H2:37"><span class="id" title="binder">T</span></a>} : <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule"><span class="id" title="class">RightModule</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_fmap_ret"><span class="id" title="method">rmod_action_fmap_ret</span></a> := <a class="idref" href="Tealeaves.Classes.Monad.html#mon_join_fmap_ret"><span class="id" title="method">mon_join_fmap_ret</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_action"><span class="id" title="method">rmod_action_action</span></a> := <a class="idref" href="Tealeaves.Classes.Monad.html#mon_join_join"><span class="id" title="method">mon_join_join</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Instance</span> <a id="RightModule_Monad_2" class="idref" href="#RightModule_Monad_2"><span class="id" title="instance">RightModule_Monad_2</span></a> `{<a id="H4:44" class="idref" href="#H4:44"><span class="id" title="binder">RightModule</span></a> <a id="H4:44" class="idref" href="#H4:44"><span class="id" title="binder">F</span></a> <a id="H4:44" class="idref" href="#H4:44"><span class="id" title="binder">T</span></a>} : <a class="idref" href="Tealeaves.Classes.RightModule.html#RightModule"><span class="id" title="class">RightModule</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_fmap_ret"><span class="id" title="method">rmod_action_fmap_ret</span></a> := <a class="idref" href="Tealeaves.Classes.Monad.html#mon_join_fmap_ret"><span class="id" title="method">mon_join_fmap_ret</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_action"><span class="id" title="method">rmod_action_action</span></a> := <a class="idref" href="Tealeaves.Classes.Monad.html#mon_join_join"><span class="id" title="method">mon_join_join</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad.T"><span class="id" title="variable">T</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#module_of_monad"><span class="id" title="section">module_of_monad</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab87"></a><h1 class="section">Kleisli presentation of right modules</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab88"></a><h2 class="section">Lifting operation <code>sub</code></h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="Sub" class="idref" href="#Sub"><span class="id" title="record">Sub</span></a> (<a id="F:45" class="idref" href="#F:45"><span class="id" title="binder">F</span></a> <a id="T:46" class="idref" href="#T:46"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>) :=<br/>
+&nbsp;&nbsp;<a id="sub" class="idref" href="#sub"><span class="id" title="projection">sub</span></a> : <span class="id" title="keyword">forall</span> {<a id="A:48" class="idref" href="#A:48"><span class="id" title="binder">A</span></a> <a id="B:49" class="idref" href="#B:49"><span class="id" title="binder">B</span></a>}, <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.RightModule.html#A:48"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#T:46"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#B:49"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#F:45"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#A:48"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#F:45"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#B:49"><span class="id" title="variable">B</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <span class="id" title="var">F</span> {<span class="id" title="var">T</span>}%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Sub</span>} {<span class="id" title="var">A</span> <span class="id" title="var">B</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>%<span class="id" title="var">function_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Instance</span> <a id="Sub_RightAction" class="idref" href="#Sub_RightAction"><span class="id" title="instance">Sub_RightAction</span></a> `{<a id="H:52" class="idref" href="#H:52"><span class="id" title="binder">Fmap</span></a> <a id="H:52" class="idref" href="#H:52"><span class="id" title="binder">F</span></a>} `{<a id="H0:54" class="idref" href="#H0:54"><span class="id" title="binder">RightAction</span></a> <a id="H0:54" class="idref" href="#H0:54"><span class="id" title="binder">F</span></a> <a id="H0:54" class="idref" href="#H0:54"><span class="id" title="binder">T</span></a>} : <a class="idref" href="Tealeaves.Classes.RightModule.html#Sub"><span class="id" title="class">Sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#F:51"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#T:53"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> `(<a id="f:57" class="idref" href="#f:57"><span class="id" title="binder">f</span></a> : <a id="A:55" class="idref" href="#A:55"><span class="id" title="binder">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="var">T</span> <a id="B:56" class="idref" href="#B:56"><span class="id" title="binder">B</span></a>) =&gt; <a class="idref" href="Tealeaves.Classes.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <span class="id" title="var">F</span> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <span class="id" title="var">F</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:57"><span class="id" title="variable">f</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab89"></a><h2 class="section">Specifications for <code>fmap</code></h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="rightmodule_suboperations" class="idref" href="#rightmodule_suboperations"><span class="id" title="section">rightmodule_suboperations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="F:58" class="idref" href="#F:58"><span class="id" title="binder">F</span></a> <a id="T:59" class="idref" href="#T:59"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H4:65" class="idref" href="#H4:65"><span class="id" title="binder">RightModule</span></a> <a id="H4:65" class="idref" href="#H4:65"><span class="id" title="binder">F</span></a> <a id="H4:65" class="idref" href="#H4:65"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab90"></a><h3 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="projection">fmap</span></a></span> as a special case of <span class="inlinecode"><a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="projection">sub</span></a></span>.</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Corollary</span> <a id="fmap_to_sub" class="idref" href="#fmap_to_sub"><span class="id" title="lemma">fmap_to_sub</span></a> : <span class="id" title="keyword">forall</span> `(<a id="f:68" class="idref" href="#f:68"><span class="id" title="binder">f</span></a> : <a id="A:66" class="idref" href="#A:66"><span class="id" title="binder">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a id="B:67" class="idref" href="#B:67"><span class="id" title="binder">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperations.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:68"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperations.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperations.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:68"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_fmap_fmap"><span class="id" title="method">fun_fmap_fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperations.F"><span class="id" title="variable">F</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_fmap_ret"><span class="id" title="method">rmod_action_fmap_ret</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperations.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperations.T"><span class="id" title="variable">T</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperations"><span class="id" title="section">rightmodule_suboperations</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab91"></a><h2 class="section">Functor laws for <span class="inlinecode"><a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="projection">sub</span></a></span></h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="rightmodule_kleisli" class="idref" href="#rightmodule_kleisli"><span class="id" title="section">rightmodule_kleisli</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="F:69" class="idref" href="#F:69"><span class="id" title="binder">F</span></a> <a id="T:70" class="idref" href="#T:70"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H4:76" class="idref" href="#H4:76"><span class="id" title="binder">RightModule</span></a> <a id="H4:76" class="idref" href="#H4:76"><span class="id" title="binder">F</span></a> <a id="H4:76" class="idref" href="#H4:76"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab92"></a><h3 class="section">Identity law</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="sub_id" class="idref" href="#sub_id"><span class="id" title="lemma">sub_id</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.T"><span class="id" title="variable">T</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> <span class="id" title="var">A</span>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_fmap_ret"><span class="id" title="method">rmod_action_fmap_ret</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.T"><span class="id" title="variable">T</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab93"></a><h3 class="section">Composition law</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="sub_sub" class="idref" href="#sub_sub"><span class="id" title="lemma">sub_sub</span></a> : <span class="id" title="keyword">forall</span> `(<a id="g:80" class="idref" href="#g:80"><span class="id" title="binder">g</span></a> : <a id="B:78" class="idref" href="#B:78"><span class="id" title="binder">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.T"><span class="id" title="variable">T</span></a> <a id="C:79" class="idref" href="#C:79"><span class="id" title="binder">C</span></a>) `(<a id="f:82" class="idref" href="#f:82"><span class="id" title="binder">f</span></a> : <a id="A:81" class="idref" href="#A:81"><span class="id" title="binder">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#B:78"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#g:80"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:82"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#g:80"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Monad.html#1126f41fa6f670fb25d3c94ada7ffb9f"><span class="id" title="notation">⋆</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:82"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">introv</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Monad.html#kcompose"><span class="id" title="definition">kcompose</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- 2(<a class="idref" href="Tealeaves.Classes.Functor.html#fun_fmap_fmap"><span class="id" title="method">fun_fmap_fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> ?<span class="id" title="var">F</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> ?<span class="id" title="var">T</span> <span class="id" title="var">g</span>)) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.T"><span class="id" title="variable">T</span></a>) <span class="id" title="var">g</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.RightModule.html#rmod_action_action"><span class="id" title="method">rmod_action_action</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.T"><span class="id" title="variable">T</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> -&gt; <span class="id" title="var">near</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli.T"><span class="id" title="variable">T</span></a>) <span class="id" title="var">g</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> &lt;- <a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_kleisli"><span class="id" title="section">rightmodule_kleisli</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab94"></a><h2 class="section">Composition laws for <code>sub</code>/<code>fmap</code></h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="rightmodule_suboperation_composition" class="idref" href="#rightmodule_suboperation_composition"><span class="id" title="section">rightmodule_suboperation_composition</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="F:83" class="idref" href="#F:83"><span class="id" title="binder">F</span></a> <a id="T:84" class="idref" href="#T:84"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H4:90" class="idref" href="#H4:90"><span class="id" title="binder">RightModule</span></a> <a id="H4:90" class="idref" href="#H4:90"><span class="id" title="binder">F</span></a> <a id="H4:90" class="idref" href="#H4:90"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Corollary</span> <a id="sub_fmap" class="idref" href="#sub_fmap"><span class="id" title="lemma">sub_fmap</span></a> : <span class="id" title="keyword">forall</span> `(<a id="g:93" class="idref" href="#g:93"><span class="id" title="binder">g</span></a> : <a id="B:91" class="idref" href="#B:91"><span class="id" title="binder">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.T"><span class="id" title="variable">T</span></a> <a id="C:92" class="idref" href="#C:92"><span class="id" title="binder">C</span></a>) `(<a id="f:95" class="idref" href="#f:95"><span class="id" title="binder">f</span></a> : <a id="A:94" class="idref" href="#A:94"><span class="id" title="binder">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#B:91"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#g:93"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:95"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.RightModule.html#g:93"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:95"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_fmap_fmap"><span class="id" title="method">fun_fmap_fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.F"><span class="id" title="variable">F</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Corollary</span> <a id="fmap_sub" class="idref" href="#fmap_sub"><span class="id" title="lemma">fmap_sub</span></a> : <span class="id" title="keyword">forall</span> `(<a id="g:98" class="idref" href="#g:98"><span class="id" title="binder">g</span></a> : <a id="B:96" class="idref" href="#B:96"><span class="id" title="binder">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a id="C:97" class="idref" href="#C:97"><span class="id" title="binder">C</span></a>) `(<a id="f:100" class="idref" href="#f:100"><span class="id" title="binder">f</span></a> : <a id="A:99" class="idref" href="#A:99"><span class="id" title="binder">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#B:96"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#g:98"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:100"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#sub"><span class="id" title="definition">sub</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="definition">fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#g:98"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Util.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#f:100"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a>). <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Classes.Functor.html#Fmap_compose"><span class="id" title="instance">Fmap_compose</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_fmap_fmap"><span class="id" title="method">fun_fmap_fmap</span></a> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition.F"><span class="id" title="variable">F</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.RightModule.html#rightmodule_suboperation_composition"><span class="id" title="section">rightmodule_suboperation_composition</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

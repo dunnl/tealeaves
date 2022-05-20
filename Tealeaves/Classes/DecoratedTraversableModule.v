@@ -215,7 +215,7 @@ Section DecoratedTraversableMonad_subdt.
           (f : W * A -> G1 (T B)) (g : W * B -> G2 (T C)) :
     fmap G1 (subdt F g) ∘ subdt F f = subdt (G := G1 ∘ G2) F (g ⋆dtm f).
   Proof.
-  Admitted.
+  Abort.
 
 End DecoratedTraversableMonad_subdt.
 

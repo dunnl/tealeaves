@@ -2,9 +2,9 @@ From Tealeaves Require Export
      Util.Prelude.
 
 From Tealeaves Require Import
-     Cats.Classes.
+     Classes.Category.
 
-Import Cats.Classes.Notations.
+Import Category.Notations.
 #[local] Open Scope category_scope.
 
 Class Index : Type :=

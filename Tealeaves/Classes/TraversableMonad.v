@@ -209,20 +209,23 @@ Section TraversableMonad_kleisli_category.
 
   Notation "'1'" := (fun A => A).
 
-  Theorem kleisli_star_1 {A B C} : forall (g : B -> G (T C)) (f : A -> T B),
+  (** Composition when <<f>> has no applicative effect *)
+  Theorem tm_kleisli_star1 {A B C} : forall (g : B -> G (T C)) (f : A -> T B),
       g ⋆tm (f : A -> 1 (T B)) = bindt T g ∘ f.
   Proof.
     easy.
   Qed.
 
-  Theorem kleisli_star_2 {A B C} : forall (g : B -> G (T C)) (f : A -> T B),
+  (** Composition when <<f>> has a pure applicative effect *)
+  Theorem tm_kleisli_star2 {A B C} : forall (g : B -> G (T C)) (f : A -> T B),
       g ⋆tm (pure G ∘ f) = pure G ∘ bindt T g ∘ f.
   Proof.
     intros. unfold kcomposetm. reassociate <-.
     fequal. unfold compose; ext t. now apply (app_pure_natural G).
   Qed.
 
-  Theorem kleisli_star_3 {A B C} : forall (g : B -> T C) (f : A -> G (T B)),
+  (** Composition when <<g>> has no applicative effect *)
+  Theorem tm_kleisli_star3 {A B C} : forall (g : B -> T C) (f : A -> G (T B)),
       (g : B -> 1 (T C)) ⋆tm f =
       fmap G (bind T g) ∘ f.
   Proof.
@@ -230,7 +233,8 @@ Section TraversableMonad_kleisli_category.
     now rewrite (dist_unit T).
   Qed.
 
-  Theorem kleisli_star_4 {A B C} : forall (g : B -> T C) (f : A -> G1 (T B)),
+  (** Composition when <<g>> has a pure applicative effect *)
+  Theorem tm_kleisli_star4 {A B C} : forall (g : B -> T C) (f : A -> G1 (T B)),
       (pure G2 ∘ g) ⋆tm f =
       fmap G1 (pure G2 ∘ bind T g) ∘ f.
   Proof.
@@ -240,7 +244,8 @@ Section TraversableMonad_kleisli_category.
     fequal. now rewrite Mult_compose_identity1.
   Qed.
 
-  Theorem kleisli_star_5 {A B C} : forall (g : B -> G2 (T C)) (f : A -> G1 B),
+  (** Composition when <<f>> does not perform a substitution *)
+  Theorem tm_kleisli_star5 {A B C} : forall (g : B -> G2 (T C)) (f : A -> G1 B),
       g ⋆tm (fmap G1 (ret T) ∘ f) =
       fmap G1 g ∘ f.
   Proof.
@@ -249,7 +254,8 @@ Section TraversableMonad_kleisli_category.
     now rewrite (bindt_comp_ret T).
   Qed.
 
-  Theorem kleisli_star_6 {A B C} : forall (g : B -> G2 C) (f : A -> G1 (T B)),
+  (** Composition when <<g>> does not perform a substitution *)
+  Theorem tm_kleisli_star6 {A B C} : forall (g : B -> G2 C) (f : A -> G1 (T B)),
       (fmap G2 (ret T) ∘ g) ⋆tm f =
       fmap G1 (traverse T G2 g) ∘ f.
   Proof.
@@ -257,7 +263,17 @@ Section TraversableMonad_kleisli_category.
     now rewrite (traverse_to_bindt T).
   Qed.
 
-  Theorem kleisli_star_7 {A B C} : forall (g : B -> C) (f : A -> G (T B)),
+  (** Composition when <<f>> is just a map *)
+  Theorem tm_kleisli_star7 {A B C} : forall (g : B -> G (T C)) (f : A -> B),
+      g ⋆tm (ret T ∘ f : A -> 1 (T B)) = g ∘ f.
+  Proof.
+    intros. unfold kcomposetm. fequal.
+    unfold_ops @Fmap_compose. change (fmap 1 ?f) with f.
+    reassociate <-. now rewrite (bindt_comp_ret T).
+  Qed.
+
+  (** Composition when <<g>> is just a map *)
+  Theorem tm_kleisli_star8 {A B C} : forall (g : B -> C) (f : A -> G (T B)),
       (ret T ∘ g : B -> 1 (T C)) ⋆tm f =
       (fmap (G ∘ T) g ∘ f : A -> G (T C)).
   Proof.
@@ -265,29 +281,36 @@ Section TraversableMonad_kleisli_category.
     unfold_ops @Fmap_compose. now rewrite (fmap_to_bindt T).
   Qed.
 
-  Theorem kleisli_id_r {B C} : forall (g : B -> G (T C)),
+  (** Right identity for <<kcomposetm>> *)
+  Theorem tm_kleisli_id_r {B C} : forall (g : B -> G (T C)),
       g ⋆tm (ret T : B -> 1 (T B)) = g.
   Proof.
-    intros. rewrite kleisli_star_1.
+    intros. rewrite tm_kleisli_star1.
     now rewrite (bindt_comp_ret T).
   Qed.
 
-  Theorem kleisli_id_l {A B} : forall (f : A -> G (T B)),
+  (** Left identity for <<kcomposetm>> *)
+  Theorem tm_kleisli_id_l {A B} : forall (f : A -> G (T B)),
       (ret T : B -> (fun A => A)(T B)) ⋆tm f = f.
   Proof.
-    intros. rewrite kleisli_star_3.
+    intros. rewrite tm_kleisli_star3.
     rewrite (Monad.bind_id T).
     now rewrite (fun_fmap_id G).
   Qed.
 
-  Theorem kleisli_comp {A B C D} :
+  (** Associativity law for <<kcomposetm>> *)
+  Theorem tm_kleisli_assoc {A B C D} :
     forall (h : C -> G3 (T D)) (g : B -> G2 (T C)) (f : A -> G1 (T B)),
        h ⋆tm (g ⋆tm f : A -> (G1 ∘ G2) (T C)) =
        (h ⋆tm g : B -> (G2 ∘ G3) (T D)) ⋆tm f.
   Proof.
-    intros. unfold kcomposetm, bindt.
-    unfold_ops @Fmap_compose. repeat reassociate <-. fequal.
-  Admitted.
+    intros. unfold kcomposetm.
+    repeat reassociate <-. fequal.
+    unfold fmap at 1, Fmap_compose.
+    unfold_compose_in_compose.
+    rewrite (fun_fmap_fmap G1 (f := bindt T g)). fequal.
+    now rewrite <- (bindt_bindt T).
+  Qed.
 
 End TraversableMonad_kleisli_category.
 
@@ -307,7 +330,7 @@ Section TraversableMonad_suboperation_composition.
   Proof.
     intros. rewrite (traverse_to_bindt T).
     rewrite <- (bindt_bindt T). fequal.
-    now rewrite (kleisli_star_5).
+    now rewrite (tm_kleisli_star5).
   Qed.
 
   Corollary bind_bindt {A B C} : forall (g : B -> T C) (f : A -> G (T B)),
@@ -349,7 +372,7 @@ Section TraversableMonad_suboperation_composition.
     fequal.
      (* todo *) ext X Y [? ?]; cbn. unfold_ops @Mult_compose.
     unfold_ops @Mult_I. now rewrite (fun_fmap_id G).
-    now rewrite (kleisli_star_7).
+    now rewrite (tm_kleisli_star8).
   Qed.
 
 End TraversableMonad_suboperation_composition.
@@ -479,10 +502,10 @@ End TraversableMonad_list.
 (******************************************************************************)
 Section TraversableMonad_listable.
 
-  Existing Instance Fmap_list_const.
-  Existing Instance Pure_list_const.
-  Existing Instance Mult_list_monoid.
-  Existing Instance Applicative_list_monoid.
+  Existing Instance Fmap_const.
+  Existing Instance Pure_const.
+  Existing Instance Mult_const.
+  Existing Instance Applicative_const.
   Existing Instance ApplicativeMorphism_unconst.
 
   Context
@@ -496,8 +519,8 @@ Section TraversableMonad_listable.
   Proof.
     intros. constructor; try typeclasses eauto.
     - intros X Y f x. cbv in x.
-      rewrite (@fmap_list_const_spec (list A) X Y f).
-      rewrite (@fmap_list_const_spec A X Y f).
+      rewrite (@fmap_const_spec (list A) X Y f).
+      rewrite (@fmap_const_spec (list (list A)) X Y f).
       reflexivity.
     - intros X x. cbn. reflexivity.
     - intros X Y x y. cbv in x, y.
@@ -526,20 +549,21 @@ Section TraversableMonad_listable.
   Theorem tolist_join : forall A : Type,
       tolist T ∘ join T = join list ∘ tolist T ∘ fmap T (tolist T) (A := T A).
   Proof.
-    intros. rewrite (tolist_spec T). reassociate ->.
+    intros. rewrite (traversable_tolist_spec T False). reassociate ->.
+    unfold traverse. reassociate -> on left.
     rewrite (natural (ϕ := @join T _)).
-    reassociate <-. rewrite (trvmon_join T (G := const (list A))).
+    reassociate <- on left. rewrite (trvmon_join T (G := const (list A))).
     change (fmap (const (list A)) (join T) ∘ ?f) with f.
     rewrite <- (fun_fmap_fmap T).
     repeat reassociate <-. fequal.
     unfold_ops @Dist_compose. fequal.
-    rewrite (tolist_spec T).
+    rewrite (traversable_tolist_spec T False). unfold traverse.
     reassociate <- on right.
     rewrite <- (dist_morph T (ϕ := (fun X : Type => @join list Join_list A))).
     reassociate -> on right. rewrite (fun_fmap_fmap T).
     rewrite (mon_join_ret list). rewrite (fun_fmap_id T).
     change (?f ∘ id) with f.
-    now rewrite (traversable_tolist1).
+    now rewrite (dist_const1 T (T False)).
   Qed.
 
   #[global] Instance ListableMonad_TraversableMonad : ListableMonad T :=

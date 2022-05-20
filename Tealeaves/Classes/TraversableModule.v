@@ -233,10 +233,10 @@ End TraversableModule_respectfulness.
 (******************************************************************************)
 Section TraversableModule_listable.
 
-  Existing Instance Fmap_list_const.
-  Existing Instance Pure_list_const.
-  Existing Instance Mult_list_monoid.
-  Existing Instance Applicative_list_monoid.
+  Existing Instance Fmap_const.
+  Existing Instance Pure_const.
+  Existing Instance Mult_const.
+  Existing Instance Applicative_const.
   Existing Instance ApplicativeMorphism_unconst.
   Existing Instance ApplicativeMorphism_join_list.
 
@@ -247,9 +247,11 @@ Section TraversableModule_listable.
       tolist F ∘ right_action F =
       join list ∘ tolist F ∘ fmap F (tolist T) (A := T A).
   Proof.
-    intros. rewrite 2(tolist_spec F), (tolist_spec T). reassociate ->.
+    intros. rewrite 2(traversable_tolist_spec F False).
+    rewrite (traversable_tolist_spec T False).
+    unfold traverse. reassociate -> on left.
     rewrite (natural (ϕ := @right_action F T _)).
-    reassociate <-. rewrite (trvmod_action F T (G := const (list A))).
+    reassociate <- on left. rewrite (trvmod_action F T (G := const (list A))).
     change (fmap (const (list A)) (right_action F) ∘ ?f) with f.
     rewrite <- (fun_fmap_fmap F).
     repeat reassociate <-. fequal.
@@ -258,7 +260,7 @@ Section TraversableModule_listable.
     reassociate -> on right. rewrite (fun_fmap_fmap F).
     rewrite (mon_join_ret list). rewrite (fun_fmap_id F).
     change (?f ∘ id) with f.
-    now rewrite (traversable_tolist1 (T := F)).
+    now rewrite (dist_const1 F (T False) (M := list A)).
   Qed.
 
   #[global] Instance ListableModule_Traversable : ListableModule F T.

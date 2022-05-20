@@ -192,7 +192,7 @@ Section decorated_functor_targeted.
     reassociate <- on left.
     rewrite (mfun_mfmap_mfmap F).
     do 2 fequal. ext k' [w a].
-    unfold Classes.comp, kconst_comp.
+    unfold Category.comp, kconst_comp.
     compare values k and k'; now simpl_tgt.
   Qed.
 

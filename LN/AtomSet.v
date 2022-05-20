@@ -45,6 +45,12 @@ Import Notations.
 
 Tactic Notation "fsetdec" := AtomSetProperties.Dec.fsetdec.
 
+Lemma in_singleton_iff : forall (x : atom) (y : atom),
+    y ∈@ {{ x }} <-> y = x.
+Proof.
+  intros. fsetdec.
+Qed.
+
 Lemma in_elements_iff : forall (s : AtomSet.t) (x : atom),
     x ∈@ s <-> x ∈ elements s.
 Proof.

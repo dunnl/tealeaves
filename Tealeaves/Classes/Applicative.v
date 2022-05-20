@@ -69,6 +69,14 @@ Section applicative_morphism.
 
 End applicative_morphism.
 
+(** *** The identity transformation on any <<F>> is a homomorphism *)
+(******************************************************************************)
+Instance ApplicativeMorphism_id `{Applicative F} :
+  ApplicativeMorphism F F (fun A => @id (F A)).
+Proof.
+  constructor; now try typeclasses eauto.
+Qed.
+
 (** ** Other coherence properties *)
 (******************************************************************************)
 Lemma triangle_1 `{Applicative F} : forall A (t : F A),
@@ -430,6 +438,18 @@ Section applicative_compose_laws.
 
   Context
     `{Applicative G}.
+
+  Theorem Pure_compose_identity1 :
+    Pure_compose (fun A => A) G = @pure G _.
+  Proof.
+    easy.
+  Qed.
+
+  Theorem Pure_compose_identity2 :
+    Pure_compose G (fun A => A) = @pure G _.
+  Proof.
+    easy.
+  Qed.
 
   Theorem Mult_compose_identity1 :
     Mult_compose (fun A => A) G = @mult G _.

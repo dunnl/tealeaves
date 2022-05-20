@@ -1,6 +1,7 @@
 (** This files defines [Monoid] and [Comonoid] and proves basic instances for these. *)
 From Tealeaves Require Import
-     Util.Prelude Product.
+     Util.Prelude
+     Theory.Product.
 
 #[local] Open Scope tealeaves_scope.
 

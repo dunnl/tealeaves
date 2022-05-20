@@ -131,7 +131,7 @@ Section decorated_setlike_properties.
     `{! DecoratedMonad W T}
     `{! SetlikeMonad T}.
 
-  Theorem inr_ret_iff {A} : forall w (a a' : A),
+  Theorem ind_ret_iff {A} : forall w (a a' : A),
       (w, a') ∈d ret T a <-> w = Ƶ /\ a' = a.
   Proof.
     introv. unfold tosetd, compose.
@@ -140,7 +140,7 @@ Section decorated_setlike_properties.
     rewrite (in_ret_iff T). now rewrite pair_equal_spec.
   Qed.
 
-  Theorem inr_bindd_iff {A B} : forall t w b (f : W * A -> T B),
+  Theorem ind_bindd_iff {A B} : forall t w b (f : W * A -> T B),
       (w, b) ∈d bindd T f t <->
       exists (a : A) (w1 w2 : W),
         (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a) /\ w = w1 ● w2.
@@ -163,13 +163,13 @@ Section decorated_setlike_properties.
 
   (** *** Corollaries: [tosetd] and [bind] *)
   (******************************************************************************)
-  Theorem inr_bind_iff {A B} : forall t w b (f : A -> T B),
+  Theorem ind_bind_iff {A B} : forall t w b (f : A -> T B),
       (w, b) ∈d bind T f t <->
       exists (a : A) (w1 w2 : W),
         (w1, a) ∈d t /\ (w2, b) ∈d f a /\ w = w1 ● w2.
   Proof.
     introv. rewrite (bind_to_bindd T).
-    now rewrite inr_bindd_iff.
+    now rewrite ind_bindd_iff.
   Qed.
 
   (** *** Corollaries: [toset] and [bindd] *)
@@ -179,11 +179,11 @@ Section decorated_setlike_properties.
       exists (a : A) (w1 : W),
         (w1, a) ∈d t /\ b ∈ f (w1, a).
   Proof.
-    introv. rewrite (inr_of_in T).
-    setoid_rewrite inr_bindd_iff. split.
+    introv. rewrite (ind_of_in T).
+    setoid_rewrite ind_bindd_iff. split.
     - intros. preprocess. do 2 eexists.
-      split; eauto. eapply (in_of_inr T); eauto.
-    - intros [a [w [in1 in2]]]. rewrite (inr_of_in T) in in2.
+      split; eauto. eapply (in_of_ind T); eauto.
+    - intros [a [w [in1 in2]]]. rewrite (ind_of_in T) in in2.
       destruct in2 as [w2 ?]. exists (w ● w2) a w w2.
       auto.
   Qed.

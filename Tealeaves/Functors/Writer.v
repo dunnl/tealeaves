@@ -5,9 +5,8 @@ From Tealeaves Require Export
 Import Product.Notations.
 Import Functor.Notations.
 Import Monoid.Notations.
+Import Monad.Notations.
 #[local] Open Scope tealeaves_scope.
-
-Import Notations.
 
 (** * Product functor *)
 (** For any type [A], there is an endofunctor whose object map is
@@ -20,30 +19,34 @@ Instance Fmap_prod {X} : Fmap (X ×) := (fun A B => map_snd).
 Solve All Obligations with (introv; now ext [? ?]).
 
 (** ** Properties of <<strength>> w.r.t. monad operations *)
+(** Formalizing the product functor allows expressing some general
+    properties about how the monad operations interact with the
+    tensorial strength operation. These laws play a role in reasoning
+    about decorated monads in particular. *)
 (******************************************************************************)
 Section Monad_strength_laws.
 
   Context
     (T : Type -> Type)
-    `{Monad T}
-    {W : Type}.
+    {W : Type}
+    `{Monad T}.
 
-  Lemma strength_ret_r : forall (A : Type),
-    strength T ∘ fmap (W ×) (ret T) = ret T (A := W * A).
+  Lemma strength_ret : forall (A : Type),
+      σ T ∘ fmap (W ×) (ret T) = ret T (A := W * A).
   Proof.
     intros. ext [w a]. unfold compose; cbn. compose near a on left.
     now rewrite (natural (G := T) (F := fun A => A)).
   Qed.
 
-  Lemma strength_join_r : forall (A : Type),
-      strength T ∘ fmap (W ×) (join T) =
-      join T (A := W * A) ∘ fmap T (strength T) ∘ strength T.
+  Lemma strength_join : forall (A : Type),
+      σ T ∘ fmap (W ×) (μ T) =
+      μ T (A := W * A) ∘ fmap T (σ T) ∘ σ T.
   Proof.
-    intros. ext [w t]. change_left (strength T (w, join T t)).
+    intros. ext [w t]. change_left (σ T (w, μ T t)).
     unfold strength, compose.
     compose near t on right.
     rewrite (fun_fmap_fmap T).
-    unfold compose. change_right (join T (fmap (T ∘ T) (pair w) t)).
+    unfold compose. change_right (μ T (fmap (T ∘ T) (pair w) t)).
     compose near t on right. now rewrite <- (natural (F := T ∘ T)).
   Qed.
 
@@ -51,11 +54,11 @@ Section Monad_strength_laws.
     (F : Type -> Type)
     `{RightModule F T}.
 
-  Lemma strength_right_action_r : forall (A : Type),
-      strength F ∘ fmap (W ×) (right_action F) =
-      right_action F (A := W * A) ∘ fmap F (strength T) ∘ strength F.
+  Lemma strength_right_action : forall (A : Type),
+      σ F ∘ fmap (W ×) (right_action F) =
+      right_action F (A := W * A) ∘ fmap F (σ T) ∘ σ F.
   Proof.
-    intros. ext [w t]. change_left (strength F (w, right_action F t)).
+    intros. ext [w t]. change_left (σ F (w, right_action F t)).
     unfold strength, compose.
     compose near t on right.
     rewrite (fun_fmap_fmap F).
@@ -65,7 +68,7 @@ Section Monad_strength_laws.
 
 End Monad_strength_laws.
 
-(** * Product comonad (a/k/a "reader" comonad) *)
+(** * Product comonad (a/k/a the"Reader" comonad) *)
 (** The properties of Cartesian products imply the product functor (by
     any type <<W>>) forms a comonad. This comonad is sometimes called
     "Reader" in the Haskell community (or sometimes "co-Reader")
@@ -117,14 +120,24 @@ End reader_comonad_instance.
 (******************************************************************************)
 Section miscellaneous.
 
+  Context
+    {W : Type}.
+
   Theorem strength_extract `{Functor F} :
-    `(fmap F (extract (W ×)) ∘ strength F = extract (W ×) (A := F A)).
+    `(fmap F (extract (W ×)) ∘ σ F = extract (W ×) (A := F A)).
   Proof.
     intros. unfold strength, compose. ext [w a]. cbn.
     compose_near a. now rewrite (fun_fmap_fmap F), (fun_fmap_id F).
   Qed.
 
-  Theorem reader1 {W1 W2 A B : Type} (g : W1 -> W2) (f : A -> B) :
+  Theorem strength_cojoin `{Functor F} :
+    `(fmap F (cojoin (W ×)) ∘ σ F = σ F ∘ cobind (W ×) (σ F) (A := F A)).
+  Proof.
+    intros. unfold strength, compose. ext [w a]. cbn.
+    compose_near a. now rewrite 2(fun_fmap_fmap F).
+  Qed.
+
+  Theorem product_fmap_commute {W1 W2 A B : Type} (g : W1 -> W2) (f : A -> B) :
     fmap (W2 ×) f ∘ map_fst g = map_fst g ∘ fmap (W1 ×) f.
   Proof.
     now ext [w a].
@@ -172,11 +185,11 @@ End writer_monad.
 (** * Writer bimonad *)
 (******************************************************************************)
 Instance BeckDistribution_strength (W : Type) (T : Type -> Type) `{Fmap T}:
-  BeckDistribution (W ×) T := (fun A => strength T).
+  BeckDistribution (W ×) T := (fun A => σ T).
 
-(** ** <<T ∘ prod W>> is a monad via tensor strength *)
+(** ** <<T ∘ (W ×)>> is a monad *)
 (******************************************************************************)
-Instance Natural_strength `{Functor F} {A} : Natural (F := prod A ∘ F) (@strength F _ A).
+Instance Natural_strength `{Functor F} {W : Type} : Natural (F := prod W ∘ F) (@strength F _ W).
 Proof.
   constructor; try typeclasses eauto.
   intros. unfold_ops @Fmap_compose. ext [a t].
@@ -189,12 +202,18 @@ Qed.
 Section strength_as_writer_distributive_law.
 
   Context
-    `{Monad T}
     `{Monoid W}.
 
-  Lemma writer_strength_join_l : forall A : Type,
-      strength T ∘ join (W ×) (A := T A) =
-      fmap T (join (W ×)) ∘ strength T ∘ fmap (W ×) (strength T).
+  Lemma strength_ret_l `{Functor T} : forall A : Type,
+      σ T ∘ ret (W ×) (A := T A) =
+      fmap T (ret (W ×)).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma strength_join_l `{Functor T} : forall A : Type,
+      σ T ∘ join (W ×) (A := T A) =
+      fmap T (join (W ×)) ∘ σ T ∘ fmap (W ×) (σ T).
   Proof.
     intros. ext [w1 [w2 t]]. unfold compose; cbn.
     compose near t. rewrite (fun_fmap_fmap T).
@@ -202,40 +221,43 @@ Section strength_as_writer_distributive_law.
     reflexivity.
   Qed.
 
-  Lemma writer_strength_ret_l : forall A : Type,
-      strength T ∘ ret (W ×) (A := T A) =
-      fmap T (ret (W ×)).
-  Proof.
-    reflexivity.
-  Qed.
+  Context
+    `{Monad T}.
 
   #[global] Instance BeckDistributiveLaw_strength :
-    BeckDistributiveLaw (W ×) T (@BeckDistribution_strength W T _) :=
-    {| dist_join_l := writer_strength_join_l;
-       dist_join_r := strength_join_r T;
-       dist_unit_l := writer_strength_ret_l;
-       dist_unit_r := strength_ret_r T;
+    BeckDistributiveLaw (W ×) T :=
+    {| dist_join_r := strength_join T;
+       dist_unit_r := strength_ret T;
+       dist_join_l := strength_join_l;
+       dist_unit_l := strength_ret_l;
     |}.
 
   #[global] Instance: Monad (T ∘ (W ×)) := Monad_Beck.
 
 End strength_as_writer_distributive_law.
 
-(** ** <<prod W>> bimonad instance *)
+(** ** <<(W ×)>> is a bimonad *)
+(******************************************************************************)
 Section writer_bimonad_instance.
 
   Context
     `{Monoid W}.
 
+  Lemma writer_dist_involution : forall (A : Type),
+      bdist (prod W) (prod W) ∘ bdist (prod W) (prod W) = @id (W * (W * A)).
+  Proof.
+    intros. now ext [? [? ?]].
+  Qed.
+
   Lemma bimonad_dist_counit_l : forall A,
-      extract (W ×) ∘ dist (W ×) (W ×) =
+      extract (W ×) ∘ bdist (W ×) (W ×) =
       fmap (W ×) (extract (W ×) (A := A)).
   Proof.
     intros. now ext [w1 [w2 a]].
   Qed.
 
   Lemma bimonad_dist_counit_r : forall A,
-      fmap (W ×) (extract (W ×)) ∘ dist (W ×) (W ×) =
+      fmap (W ×) (extract (W ×)) ∘ bdist (W ×) (W ×) =
       extract (W ×) (A := W * A).
   Proof.
     intros. now ext [w1 [w2 a]].
@@ -261,7 +283,7 @@ Section writer_bimonad_instance.
 
   Lemma bimonad_butterfly : forall A,
       cojoin (W ×) ∘ join (W ×) (A := A) =
-      fmap (W ×) (join (W ×)) ∘ join (W ×) ∘ fmap (W ×) (dist (W ×) (W ×))
+      fmap (W ×) (join (W ×)) ∘ join (W ×) ∘ fmap (W ×) (bdist (W ×) (W ×))
            ∘ cojoin (W ×) ∘ fmap (W ×) (cojoin (W ×)).
   Proof.
     intros. now ext [w1 [w2 a]].
@@ -279,28 +301,22 @@ Section writer_bimonad_instance.
        Bimonad.bimonad_butterfly := @bimonad_butterfly;
     |}.
 
-  Lemma writer_dist_involution : forall (A : Type),
-      dist (prod W) (prod W) ∘ dist (prod W) (prod W) = @id (W * (W * A)).
-  Proof.
-    intros. now ext [? [? ?]].
-  Qed.
-
 End writer_bimonad_instance.
 
-(** * Other useful laws *)
+(** ** Miscellaneous properties *)
 (******************************************************************************)
-Section writer_useful_laws.
+Section Writer_miscellaneous.
 
   Context
     `{Monoid W}.
 
   (* This rewrite is useful when proving decoration-traversal compatibility
      in the binder case. *)
-  Theorem strength_shift_1 : forall `{Functor F} (w : W) (A : Type),
+  Theorem strength_shift1 : forall `{Functor F} (w : W) (A : Type),
       σ F ∘ μ (W ×) ∘ pair w = fmap F (μ (W ×) ∘ pair w) ∘ σ F (B := A).
   Proof.
     intros. ext [w' x]. unfold compose; cbn.
     compose near x. now rewrite (fun_fmap_fmap F).
   Qed.
 
-End writer_useful_laws.
+End Writer_miscellaneous.

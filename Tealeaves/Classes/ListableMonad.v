@@ -139,6 +139,28 @@ Section ListableMonad_tolistd.
     now rewrite (lmon_ret T).
   Qed.
 
+  Lemma tolistd_join1 :
+    tolist T ∘ fmap T (tolist T ∘ shift T (A := A)) =
+    fmap list (shift list) ∘ tolist T ∘ fmap T (fmap (prod W) (tolist T)).
+  Proof.
+    unfold shift. reassociate <-.
+    rewrite <- (fun_fmap_fmap list).
+    reassociate -> near (tolist T).
+    rewrite (natural (ϕ := @tolist T _)).
+    reassociate <-. reassociate -> near (fmap T (fmap (prod W) (tolist T))).
+    rewrite (fun_fmap_fmap T).
+    replace (strength list ∘ fmap (prod W) (tolist T))
+      with (tolist T ∘ strength T (A := W) (B := W * A)).
+    rewrite <- (fun_fmap_fmap T).
+    rewrite <- (fun_fmap_fmap T (f := strength T)).
+    do 2 reassociate <-. fequal.
+    rewrite (natural (ϕ := @tolist T _)).
+    reassociate -> on right; rewrite (fun_fmap_fmap T). fequal.
+    fequal. now rewrite (natural (ϕ := @tolist T _)).
+    ext [w t]; unfold compose; cbn. compose near t.
+    now rewrite (natural (ϕ := @tolist T _)).
+  Qed.
+
   Theorem tolistd_join : forall (t : T (T A)),
       tolistd T (join T t) = join list (fmap list (shift list) (tolistd T (fmap T (tolistd T) t))).
   Proof.
@@ -153,6 +175,8 @@ Section ListableMonad_tolistd.
     rewrite <- (natural (ϕ := @dec W T _)). unfold compose.
     unfold_ops @Fmap_compose. fequal. compose near (dec T (fmap T (dec T) t)).
     rewrite (fun_fmap_fmap T).
-  Admitted.
+    compose near (dec T (fmap T (dec T) t)).
+    now rewrite tolistd_join1.
+  Qed.
 
 End ListableMonad_tolistd.

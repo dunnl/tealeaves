@@ -172,7 +172,7 @@ Section Monad_kleisli_category.
   Qed.
 
   (** *** Associativity law *)
-  Theorem kleisli_comp : forall (h : C -> T D) (g : B -> T C) (f : A -> T B),
+  Theorem kleisli_assoc : forall (h : C -> T D) (g : B -> T C) (f : A -> T B),
       h ⋆ (g ⋆ f) = (h ⋆ g) ⋆ f.
   Proof.
     intros. unfold kcompose at 3.
