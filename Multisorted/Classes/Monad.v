@@ -5,9 +5,10 @@ From Multisorted Require Export
      Classes.Functor.
 
 (* to use [dependent destruction] for component-wise reasoning about [bind] *)
+(* TODO Can I get rid of this? *)
 Require Import Coq.Program.Equality.
 
-Import Multisorted.Category.Notations.
+Import Multisorted.Theory.Category.Notations.
 #[local] Open Scope tealeaves_multi_scope.
 
 (** * Multisorted monads and right modules *)
@@ -110,7 +111,7 @@ Section MultisortedMonad_typeclasses.
 
   End MultisortedRightModule.
 
-  (** ** Basic inclusions *)
+  (** ** Basic typeclass inclusions *)
   (******************************************************************************)
 
   (** *** Constant multisorted monads are monads *)
@@ -143,9 +144,9 @@ Section MultisortedMonad_typeclasses.
 
   End MultisortedModule_monad_component.
 
-  (** ** The carrier of a module is a functor *)
-  (* This specifically requires the right module structure, not just
-  the pre-module structure *)
+  (** *** The carrier of a module is a functor *)
+  (** This specifically requires the right module structure, not just
+  the pre-module structure. *)
   (******************************************************************************)
   Section MultisortedFunctor_module_carrier.
 
@@ -182,8 +183,8 @@ Section MultisortedMonad_typeclasses.
 
   End MultisortedFunctor_module_carrier.
 
-  (** ** [ret] is a natural transformation *)
-  (* This requires the monad structure, not just the pre-module structure *)
+  (** ** [mret] is a natural transformation *)
+  (** This requires the monad structure, not just the pre-module structure *)
   (******************************************************************************)
   Section naturality.
 
@@ -283,36 +284,22 @@ Section MultisortedModule_theory.
 
 End MultisortedModule_theory.
 
-(** * Targeted substitution, [bindk] and [kcomposek] *)
+(** * Targetted substitution-building combinators: [btg] and [btgd] *)
 (******************************************************************************)
 
-(** ** Substitution-building combinators: [btg], [btgd]. *)
-(******************************************************************************)
-
-(** Build a k-substitution that targets only the leaves belonging to a partition
-    [k]. This must be restricted to morphisms that do not change the leaf type. *)
+(** Build a multisorted substitution that targets only the leaves
+    tagged with some <<k>>. Of course this must be restricted to
+    morphisms that do not change the leaf type. *)
 #[program] Definition btg `{ix : Index} (T : K -> Type -> Type) `{! MReturn T}
  {A} (k : K) (f : A -> T k A) :
   A ~k~> T A := fun j => if k == j then f else mret T j.
 
-(** Build a k-substitution that targets the leaves belonging to a
-    partition [k] with a particular operation, applying a default
-    operation to leaves of other sorts. *)
+(** Build a multisoted substitution that targets the leaves of a
+    particular <<k>>, but apply a default operation to leaves of other
+    sorts. Unlike <<bdt>> this may change the leaf type. *)
 #[program] Definition btgd `{ix : Index} (T : K -> Type -> Type) `{! MReturn T}
  {A B} (k : K) (f : A -> T k B) (def : A ~k~> T B) : A ~k~> T B
   := fun j => if k == j then f else def j.
-
-(** ** Operations [bindk] and [kcomposek] *)
-(******************************************************************************)
-Definition bindk `{ix : Index} (F : Type -> Type) `{! MBind F T} `{! MReturn T}
-           (k : K) {A} : (A -> T k A) -> F A -> F A :=
-  fun f => mbind F (btg T k f).
-
-Definition kcomposek `{ix : Index} {A} (k : K) `{forall k, MBind (T k) T} `{! MReturn T}
-           (g : A -> T k A) (f : A -> T k A) :
-  A -> T k A := bindk (T k) k g ∘ f.
-
-#[local] Notation "g ⋆k f" := (kcomposek _ g f) (at level 60).
 
 (** ** Lemmas for [btg], [btgd] *)
 (******************************************************************************)
@@ -369,7 +356,37 @@ Section btg_lemmas.
     ext j. compare values k and j.
   Qed.
 
-  (** *** Composing [btg] *)
+End btg_lemmas.
+
+(** ** Rewrite Hint registration *)
+(******************************************************************************)
+Hint Rewrite @btg_eq @btgd_eq @btg_id @btgd_same : tea_tgt.
+Hint Rewrite @btg_eq @btgd_eq @btg_id @btgd_same : tea_tgt_eq.
+Hint Rewrite @btg_neq @btgd_neq using auto : tea_tgt.
+Hint Rewrite @btg_neq @btgd_neq using auto : tea_tgt_neq.
+
+
+(** ** Operations [bindk] and [kcomposek] *)
+(******************************************************************************)
+Definition bindk `{ix : Index} (F : Type -> Type) `{! MBind F T} `{! MReturn T}
+           (k : K) {A} : (A -> T k A) -> F A -> F A :=
+  fun f => mbind F (btg T k f).
+
+Definition kcomposek `{ix : Index} {A} (k : K) `{forall k, MBind (T k) T} `{! MReturn T}
+           (g : A -> T k A) (f : A -> T k A) :
+  A -> T k A := bindk (T k) k g ∘ f.
+
+#[local] Notation "g ⋆k f" := (kcomposek _ g f) (at level 60).
+
+Section MultisortedRightModule_bindk.
+
+  Context
+    (F : Type -> Type)
+    `{MultisortedMonad T}
+    `{! MBind F T}
+    `{! MultisortedPreModule F T}.
+
+  (** ** Composing [btg] *)
   (******************************************************************************)
   Theorem btg_btg_eq {A} (k : K) (f g : A -> T k A) :
     (btg T k g ⋆m btg T k f) = (btg T k (g ⋆k f)).
@@ -404,16 +421,6 @@ Section btg_lemmas.
       rewrite btg_neq; [| assumption].
       trivial.
   Qed.
-
-End btg_lemmas.
-
-Section MultisortedRightModule_bindk.
-
-  Context
-    (F : Type -> Type)
-    `{MultisortedMonad T}
-    `{! MBind F T}
-    `{! MultisortedPreModule F T}.
 
   (** ** [fmapk] as a special case of [bindk] *)
   (******************************************************************************)
@@ -534,13 +541,6 @@ Section MultisortedRightModule_bindk.
   Qed.
 
 End MultisortedRightModule_bindk.
-
-(** ** Rewrite Hint registration *)
-(******************************************************************************)
-Hint Rewrite @btg_eq @btgd_eq @btg_id @btgd_same : tea_tgt.
-Hint Rewrite @btg_eq @btgd_eq @btg_id @btgd_same : tea_tgt_eq.
-Hint Rewrite @btg_neq @btgd_neq using auto : tea_tgt.
-Hint Rewrite @btg_neq @btgd_neq using auto : tea_tgt_neq.
 
 (** * Miscellaneous lemmas *)
 (******************************************************************************)

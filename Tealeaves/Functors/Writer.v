@@ -310,6 +310,10 @@ Section Writer_miscellaneous.
   Context
     `{Monoid W}.
 
+  (* It sometimes useful to have this curried operation. *)
+  Definition incr {A : Type} : W -> W * A -> W * A :=
+    fun w '(w2, a) => (w ● w2, a).
+
   (* This rewrite is useful when proving decoration-traversal compatibility
      in the binder case. *)
   Theorem strength_shift1 : forall `{Functor F} (w : W) (A : Type),

@@ -6,12 +6,12 @@ From Multisorted Require Import
      Functors.Tag.
 
 Import Sets.Notations.
-Import Multisorted.Category.Notations.
+Import Multisorted.Theory.Category.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 
 (** * The monad of multisorted sets *)
-(** Since "tagged" sets are merely sets of pairs, we try to utilize the existing
+(** Since "multisorted" sets are defined merely as sets of pairs, we try to utilize the existing
     structure in <<Ordinary.Sets>> as much as possible rather than rebuild the
     multi-sorted interface from scratch. *)
 (******************************************************************************)

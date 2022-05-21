@@ -467,6 +467,40 @@ Section applicative_compose_laws.
 
 End applicative_compose_laws.
 
+(** *** <<pure F>> is a homomorphism from the identity functor *)
+(******************************************************************************)
+Section pure_as_applicative_transformation.
+
+  Context
+    `{Applicative G}.
+
+  Lemma pure_appmor_1 : forall A B (f : A -> B) (t : A),
+      pure G (fmap (fun A : Type => A) f t) = fmap G f (pure G t).
+  Proof.
+    intros. now rewrite (app_pure_natural G).
+  Qed.
+
+  Lemma pure_appmor_2 : forall (A : Type) (a : A),
+      pure G (pure (fun A => A) a) = pure G a.
+  Proof.
+    intros. reflexivity.
+  Qed.
+
+  Lemma pure_appmor_3 : forall (A B : Type) (a : A) (b : B),
+      pure G (mult (fun A => A) (a, b)) = mult G (pure G a, pure G b).
+  Proof.
+    unfold transparent tcs. intros. now rewrite (app_mult_pure G).
+  Qed.
+
+  #[global] Instance ApplicativeMorphism_pure :
+    ApplicativeMorphism (fun A => A) G (@pure G _) :=
+    {| appmor_natural := pure_appmor_1;
+       appmor_pure := pure_appmor_2;
+       appmor_mult := pure_appmor_3;
+    |}.
+
+End pure_as_applicative_transformation.
+
 (** * Cartesian product of applicative functors *)
 (******************************************************************************)
 Inductive ProductFunctor (G1 G2 : Type -> Type) (A : Type) :=

@@ -5,7 +5,7 @@ From Multisorted Require Import
      Classes.Functor.
 
 Import Monoid.Notations.
-Import Multisorted.Category.Notations.
+Import Multisorted.Theory.Category.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 

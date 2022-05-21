@@ -4,10 +4,10 @@ From Tealeaves Require Import
 From Multisorted Require Import
      Classes.Monad.
 
-Import Multisorted.Category.Notations.
+Import Multisorted.Theory.Category.Notations.
 #[local] Open Scope tealeaves_multi_scope.
 
-(** * The "tag" multisorted functor *)
+(** * The "tag" functor *)
 (******************************************************************************)
 Notation "'Tag'" := (prod K).
 

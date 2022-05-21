@@ -163,43 +163,8 @@ Section TraversableFunctor_compose.
 
 End TraversableFunctor_compose.
 
-(** * Basic properties of traversable functors *)
+(** * Purity laws *)
 (******************************************************************************)
-
-(** ** Purity laws *)
-(******************************************************************************)
-Section pure_as_applicative_transformation.
-
-  Context
-    `{Applicative G}.
-
-  Lemma pure_appmor_1 : forall A B (f : A -> B) (t : A),
-      pure G (fmap (fun A : Type => A) f t) = fmap G f (pure G t).
-  Proof.
-    intros. now rewrite (app_pure_natural G).
-  Qed.
-
-  Lemma pure_appmor_2 : forall (A : Type) (a : A),
-      pure G (pure (fun A => A) a) = pure G a.
-  Proof.
-    intros. reflexivity.
-  Qed.
-
-  Lemma pure_appmor_3 : forall (A B : Type) (a : A) (b : B),
-      pure G (mult (fun A => A) (a, b)) = mult G (pure G a, pure G b).
-  Proof.
-    unfold transparent tcs. intros. now rewrite (app_mult_pure G).
-  Qed.
-
-  #[global] Instance ApplicativeMorphism_pure :
-    ApplicativeMorphism (fun A => A) G (@pure G _) :=
-    {| appmor_natural := pure_appmor_1;
-       appmor_pure := pure_appmor_2;
-       appmor_mult := pure_appmor_3;
-    |}.
-
-End pure_as_applicative_transformation.
-
 Section purity_law.
 
   Context
@@ -423,14 +388,6 @@ Section TraversableFunctor_const.
   Definition exfalso {X : Type} : False -> X.
     intuition.
   Defined.
-
-  (* TODO Move me *)
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-  Existing Instance ApplicativeMorphism_monoid_hom.
 
   (** *** Distribution over <<const>> is agnostic about the tag. *)
   (** Distribution over a constant applicative functor is agnostic
@@ -678,12 +635,6 @@ Section traversal_iterate.
 
   (** ** Identities for <<tolist>> and <<foldMap>> *)
   (******************************************************************************)
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-
   Lemma tolist_to_runBatch `{Applicative F} `(t : T A) :
     tolist T t = runBatch (ret list : A -> const (list A) A) (iterate A t).
   Proof.
@@ -719,14 +670,9 @@ End traversal_iterate.
 (******************************************************************************)
 Section traversal_reassemble.
 
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-
   Context
     `{TraversableFunctor T}.
+
   Fixpoint add_elements `(s : @Batch i1 o X) `(l : list i2) : @Batch (Maybe i2) o X :=
     match s with
     | Go t' => Go t'

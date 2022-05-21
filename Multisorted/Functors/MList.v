@@ -3,13 +3,12 @@ From Tealeaves Require Import
      Functors.List.
 
 From Multisorted Require Import
-     Functors.Tag
-     Classes.SetlikeMonad.
+     Classes.Monad
+     Functors.Tag.
 
 Import Sets.Notations.
 Import List.Notations.
-Import Multisorted.Classes.SetlikeFunctor.Notations.
-Import Multisorted.Category.Notations.
+Import Multisorted.Theory.Category.Notations.
 #[local] Open Scope list_scope.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
@@ -185,6 +184,7 @@ Hint Rewrite @bindk_mlist_nil @bindk_mlist_cons_eq
 Hint Rewrite @bindk_mlist_cons_neq @bindk_mlist_one_neq
      using (discriminate + auto) : tea_list.
 
+(*
 (** * [mlist] is a quantifiable monad *)
 (** This is a key step to showing that all listable (functors, monads, modules)
     are quantifiable. The idea is to prove the relevant properties for
@@ -333,6 +333,7 @@ Section mlist_is_quantifiable.
     {| qmmon_mret := @qmmon_mret_mlist; |}.
 
 End mlist_is_quantifiable.
+*)
 
 (** ** Filtering *)
 Fixpoint filterk `{Index} {A} (k : K) (l : mlist A) : list A :=
@@ -450,7 +451,6 @@ Hint Rewrite @filterk_nil @filterk_cons_eq @filterk_one_eq
      @filterk_app : tea_list.
 Hint Rewrite @filterk_cons_neq @filterk_one_neq @filterk_fmapk_neq
      using (discriminate + auto) : tea_list.
-
 
 (** * Miscellaneous inversion lemmas for equality between [mlist] *)
 (******************************************************************************)
