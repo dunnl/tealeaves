@@ -649,6 +649,7 @@ Section DecoratedMonad.
 
 End DecoratedMonad.
 
+(*
 (** ** Laws for functor structure (<<mfmap>>) *)
 (******************************************************************************)
 Section Functor.
@@ -702,3 +703,4 @@ Section Functor.
   Qed.
 
 End Functor.
+*)

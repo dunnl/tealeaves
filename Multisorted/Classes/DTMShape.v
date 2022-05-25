@@ -8,6 +8,7 @@ From Multisorted Require Import
      Functors.Tag
      Functors.MList2.
 
+Import Functors.Sets.Notations.
 Import Product.Notations. (* for (W ×) *)
 Import Monoid.Notations.
 Import Multisorted.Theory.Category.Notations.
@@ -121,7 +122,7 @@ Section lemmas.
 
 End lemmas.
 
-(** ** Interaction between <tomlistd>> and <<mbindd>> *)
+(** ** Interaction between <<tomlistd>> and <<mret>>/<<mbindd>> *)
 (******************************************************************************)
 Section DTM_tolist.
 
@@ -130,21 +131,55 @@ Section DTM_tolist.
     `{DTPreModule W S T}
     `{! DTM W T}.
 
-  Lemma tomlistd_gen_mbindd : forall
+  Lemma tomlistd_gen_mret : forall (A B : Type) (a : A) (k : K),
+      tomlistd_gen (T k) B (mret T k a) = [ (Ƶ, (k, a)) ].
+  Proof.
+    intros. unfold tomlistd_gen.
+    now rewrite mfmapdt_comp_mret.
+  Qed.
+
+  Corollary tomlistd_mret : forall (A : Type) (a : A) (k : K),
+      tomlistd (T k) (mret T k a) = [ (Ƶ, (k, a)) ].
+  Proof.
+    intros. unfold tomlistd. apply tomlistd_gen_mret.
+  Qed.
+
+  Corollary tomsetd_mret : forall (A : Type) (a : A) (k : K),
+      tomsetd (T k) (mret T k a) = {{ (Ƶ, (k, a)) }}.
+  Proof.
+    intros. unfold tomsetd, compose. rewrite tomlistd_mret.
+    solve_basic_set.
+  Qed.
+
+  Corollary tomlist_mret : forall (A : Type) (a : A) (k : K),
+      tomlist (T k) (mret T k a) = [ (k, a) ].
+  Proof.
+    intros. unfold tomlist, compose.
+    rewrite tomlistd_mret. easy.
+  Qed.
+
+  Corollary tomset_mret : forall (A : Type) (a : A) (k : K),
+      tomset (T k) (mret T k a) = {{ (k, a) }}.
+  Proof.
+    intros. unfold tomset, compose.
+    rewrite tomlist_mret. solve_basic_set.
+  Qed.
+
+  Lemma tomlistd_gen_mbindd : forall (fake : Type)
       `(f : forall k, W * A -> T k B) (t : S A),
-      tomlistd_gen S B (mbindd S f t) =
-      mbinddt_list (fun k '(w, a) => tomlistd_gen (T k) B (f k (w, a))) (tomlistd_gen S B t).
+      tomlistd_gen S fake (mbindd S f t) =
+      mbinddt_list (fun k '(w, a) => tomlistd_gen (T k) fake (f k (w, a))) (tomlistd_gen S fake t).
   Proof.
     intros. unfold tomlistd_gen, mfmapdt.
     compose near t on left.
     rewrite (mbinddt_mbindd S).
     compose near t on right.
-    change (mbinddt_list ?f) with (const (mbinddt_list f) (S B)).
+    change (mbinddt_list ?f) with (const (mbinddt_list f) (S fake)).
     #[local] Set Keyed Unification. (* TODO figure out why this is here. *)
     rewrite (dtp_mbinddt_morphism W S T
                                   (const (list (W * Tag A)))
                                   (const (list (W * Tag B)))
-                                  (A := A) (B := B)).
+                                  (A := A) (B := fake)).
     #[local] Unset Keyed Unification.
     fequal. ext k [w a].
     cbn.
@@ -157,8 +192,16 @@ Section DTM_tolist.
                   (const (list (W * Tag B)))
                   (const (list (W * Tag B)))
                   (ϕ := (const (fmap list (incr w))))
-                  (A := B) (B := B)).
+                  (A := B) (B := fake)).
     rewrite rw. fequal. now ext k2 [w2 b].
+  Qed.
+
+  Corollary tomlistd_mbindd : forall
+      `(f : forall k, W * A -> T k B) (t : S A),
+      tomlistd S (mbindd S f t) =
+      mbinddt_list (fun k '(w, a) => tomlistd (T k) (f k (w, a))) (tomlistd S t).
+  Proof.
+    intros. unfold tomlistd. apply tomlistd_gen_mbindd.
   Qed.
 
 End DTM_tolist.
@@ -351,13 +394,16 @@ Section traversal_iterate.
   Lemma tomlistd_gen_to_runBatch `{Applicative F} `(t : S A) (fake : Type) :
     tomlistd_gen S fake t = runBatch (ret list : _ -> const (list (W * Tag A)) _) (iterated fake t).
   Proof.
-  Admitted.
+    unfold tomlistd_gen. rewrite mfmapdt_to_runBatch.
+    fequal. now ext [w [k a]].
+  Qed.
 
   Lemma tomlistd_to_runBatch `{Applicative F} `(t : S A) :
     tomlistd S t = runBatch (ret list : _ -> const (list (W * Tag A)) _) (iterated (W * Tag A) t).
   Proof.
     unfold iterate. unfold tomlistd, tomlistd_gen.
-    rewrite mfmapdt_to_runBatch. admit.
+    rewrite mfmapdt_to_runBatch. unfold iterated.
+    admit.
   Admitted.
 
   Lemma tomlist_to_runBatch `{Applicative F} `(t : S A) :
@@ -381,7 +427,7 @@ End traversal_iterate.
 
 (** * Shapeliness *)
 (******************************************************************************)
-Section shapeliness.
+Section DTM_shapeliness.
 
   Context
     {S : Type -> Type}
@@ -403,27 +449,50 @@ Section shapeliness.
     rewrite (tomlistd_gen_to_runBatch t2 unit) in hyp2.
     rewrite (id_to_runBatch t1 unit).
     rewrite (id_to_runBatch t2 unit).
+  Admitted.
 
-  Qed.
+End DTM_shapeliness.
 
+(** ** <<ret>> is always injective *)
+(******************************************************************************)
+Section DTM_unit_injective.
 
-  Lemma shapeliness_tactical : forall A (b1 b2 : @Batch A A (T A)),
-      runBatch_monoid (ret list) b1 = runBatch_monoid (ret list) b2 ->
-      mapfst_Batch (const tt) b1 = mapfst_Batch (const tt) b2 ->
-      runBatch id b1 = runBatch id b2.
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  Lemma DTM_unit_injective : forall (A : Type) (a1 a2 : A) (k : K),
+      mret T k a1 = mret T k a2 -> a1 = a2.
   Proof.
-    intros. induction b1, b2; cbn in *.
-    - now inversion H3.
-    - now inversion H2.
-    - now inversion H2.
-    - specialize (list_app_inv_l2 _ _ _ _ _ H2).
-      specialize (list_app_inv_r2 _ _ _ _ _ H2).
-      introv hyp1 hyp2. subst.
-      erewrite IHb1. eauto. eauto.
-      now inversion H3.
+    introv heq.
+    cut (tomlist (T k) (mret T k a1) = tomlist (T k) (mret T k a2)).
+    { do 2 rewrite tomlist_mret. now inversion 1. }
+    now rewrite heq.
   Qed.
 
-End traversal_shapeliness.
+End DTM_unit_injective.
+
+(** ** Respectfulness for <<mbindd>> *)
+(******************************************************************************)
+Section DTM_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  Theorem mbindd_respectful : forall A B (t : S A) (f g : forall k, W * A -> T k B),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k (w, a))
+      -> mbindd S f t = mbindd S g t.
+  Proof.
+    introv hyp. unfold tomsetd, compose in hyp.
+    unfold tomlistd, tomlistd_gen in hyp.
+    unfold mfmapdt in hyp.
+    setoid_rewrite tomlistd_to_runBatch in hyp.
+  Abort.
+
+End DTM_respectful.
 
 (*
 (** * Multisorted variation of [Batch] idiom *)

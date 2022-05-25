@@ -315,35 +315,36 @@ Proof.
   reflexivity.
 Qed.
 
-(** * <<Batch>> as a free applicative functor *)
+(** * <<Batch>> as a free applicative functor (<<runBatch>>) *)
 (******************************************************************************)
-Section free_alternate.
+Fixpoint runBatch `(ϕ : A -> F B) `{Fmap F}`{Mult F} `{Pure F}
+         `(j : @Batch A B X) : F X :=
+  match j with
+  | Go a => pure F a
+  | Ap rest i => runBatch ϕ rest <⋆> ϕ i
+  end.
 
-  Fixpoint runBatch `(ϕ : A -> F B) `{Fmap F}
-           `{Mult F} `{Pure F}  {X : Type} (j : @Batch A B X) : F X :=
-    match j with
-    | Go a => pure F a
-    | Ap rest i => runBatch ϕ rest <⋆> ϕ i
-    end.
+Lemma runBatch_rw1 `{Applicative F} `(ϕ : A -> F B) (X : Type) (x : X) :
+  runBatch ϕ (Go x) = pure F x.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma runBatch_rw2 `{Applicative F} `(ϕ : A -> F B)
+      (a : A) (X : Type) (rest : @Batch A B (B -> X)) :
+  runBatch ϕ (rest ⧆ a) = runBatch ϕ rest <⋆> ϕ a.
+Proof.
+  reflexivity.
+Qed.
+
+(** ** Naturality of of <<runBatch>> *)
+(******************************************************************************)
+Section runBatch_naturality.
 
   Context
-    `{Applicative F}
-    `{A : Type, B : Type}
-    (ϕ : A -> F B).
+    `{Applicative F}.
 
-  Lemma runBatch_rw1 (X : Type) (x : X) :
-    runBatch ϕ (Go x) = pure F x.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma runBatch_rw2 (a : A) (X : Type) (rest : @Batch A B (B -> X)) :
-    runBatch ϕ (rest ⧆ a) = runBatch ϕ rest <⋆> ϕ a.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma natural_runBatch `(f : X -> Y) (j : @Batch A B X) :
+  Lemma natural_runBatch `(ϕ : A -> F B) `(f : X -> Y) (j : @Batch A B X) :
     fmap F f (runBatch ϕ j) = runBatch ϕ (fmap Batch f j).
   Proof.
     generalize dependent Y. induction j; intros.
@@ -351,11 +352,41 @@ Section free_alternate.
     - cbn. rewrite ap6. fequal. now rewrite IHj.
   Qed.
 
-  #[global] Instance Natural_runBatch : Natural (@runBatch _ _ _ ϕ _ _ _).
+  #[global] Instance Natural_runBatch `(ϕ : A -> F B) :
+    Natural (@runBatch _ _ _ ϕ _ _ _).
   Proof.
     constructor; try typeclasses eauto.
     introv. ext j. unfold compose. apply natural_runBatch.
   Qed.
+
+  Lemma runBatch_mapfst : forall `(s : @Batch A1 B C) `(ϕ : A2 -> F B) (f : A1 -> A2),
+      runBatch (ϕ ∘ f) s = runBatch ϕ (mapfst_Batch f s).
+  Proof.
+    intros; induction s.
+    - easy.
+    - cbn. now rewrite IHs.
+  Qed.
+
+  Lemma runBatch_mapsnd : forall `(s : @Batch A B2 C) `(ϕ : A -> F B1) (f : B1 -> B2),
+      runBatch (fmap F f ∘ ϕ) s = runBatch ϕ (mapsnd_Batch f s).
+  Proof.
+    intros. induction s.
+    - easy.
+    - intros. cbn. unfold compose at 2.
+      rewrite <- ap7. fequal.
+      rewrite IHs.
+      now rewrite natural_runBatch.
+  Qed.
+
+End runBatch_naturality.
+
+(** ** <<runBatch>> is an applicative morphism **)
+(******************************************************************************)
+Section runBatch_morphism.
+
+  Context
+    `{Applicative F}
+    `{ϕ : A -> F B}.
 
   Lemma appmor_pure_runBatch : forall (A : Type) (a : A),
       runBatch ϕ (pure Batch a) = pure F a.
@@ -390,7 +421,7 @@ Section free_alternate.
     - intros. apply appmor_mult_runBatch.
   Qed.
 
-End free_alternate.
+End runBatch_morphism.
 
 (** ** <<runBatch>> with monoidal values *)
 (******************************************************************************)
@@ -398,17 +429,24 @@ Section runBatch_monoid.
 
   Context
     `{Monoid M}
-    {A B : Type}
-    (ϕ : A -> M).
+    {A B : Type}.
 
-  Fixpoint runBatch_monoid {C} (s : @Batch A B C) : M :=
+  Fixpoint runBatch_monoid `(ϕ : A -> M) `(s : @Batch A B C) : M :=
     match s with
     | Go x => monoid_unit M
-    | Ap rest i1 => runBatch_monoid rest ● ϕ i1
+    | Ap rest i1 => runBatch_monoid (ϕ : A -> M) rest ● ϕ i1
     end.
 
-  Lemma runBatch_monoid1 : forall `(s : @Batch A B C),
-      runBatch_monoid s = unconst (runBatch (mkConst (tag := B) ∘ ϕ) s).
+  Lemma runBatch_monoid1 : forall (ϕ : A -> M) `(s : @Batch A B C),
+      runBatch_monoid ϕ s = unconst (runBatch (mkConst (tag := B) ∘ ϕ) s).
+  Proof.
+    intros. induction s.
+    - easy.
+    - cbn. now rewrite IHs.
+  Qed.
+
+  Lemma runBatch_monoid2 : forall (ϕ : A -> M) `(s : @Batch A B C),
+      runBatch_monoid ϕ s = runBatch (F := const M) (ϕ : A -> const M B) s.
   Proof.
     intros. induction s.
     - easy.
@@ -416,6 +454,13 @@ Section runBatch_monoid.
   Qed.
 
 End runBatch_monoid.
+
+(** ** Auxiliary lemmas for runBatch and constant applicative functors. *)
+(******************************************************************************)
+Section runBatch_aux.
+
+
+End runBatch_aux.
 
 (** * <<Batch>> as a parameterized comonad *)
 (******************************************************************************)
