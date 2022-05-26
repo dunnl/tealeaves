@@ -1,20 +1,16 @@
 From Tealeaves Require Export
      Util.Prelude
-     Util.EqDec_eq LN.Atom LN.AtomSet LN.Leaf
-     Classes.SetlikeMonad.
+     Util.EqDec_eq LN.Atom LN.AtomSet LN.Leaf.
 
 From Multisorted Require Import
-     Classes.DecoratedMonad
-     Classes.ListableMonad.
+     Classes.DTM
+     Theory.DTMContainer
+     Theory.DTMSchedule.
 
 Import Monoid.Notations.
 Import LN.AtomSet.Notations.
 Import Classes.SetlikeFunctor.Notations.
-Import Multisorted.Classes.SetlikeFunctor.Notations.
-
-(* TODO Figure out why this notation is being hidden by <<Multisorted.Classes.ListableMonad.>> *)
-#[local] Notation "x ∈ t" :=
-  (toset _ t x) (at level 50) : tealeaves_scope.
+Import Multisorted.Theory.DTMContainer.Notations.
 
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
@@ -45,12 +41,19 @@ Section local_operations.
           | Bd n => mret T k (Bd n)
           end.
 
-  Definition open_loc k (u : T k leaf) : Row nat * leaf -> T k leaf :=
+  Fixpoint countk (j : K) (l : list K) : nat :=
+    match l with
+    | nil => 0
+    | cons k rest =>
+      (if j == k then 0 else 1) + countk j rest
+    end.
+
+  Definition open_loc k (u : T k leaf) : list K * leaf -> T k leaf :=
     fun p => match p with
           | (w, l) =>
             match l with
             | Fr x => mret T k (Fr x)
-            | Bd n => match Nat.compare n (w k) with
+            | Bd n => match Nat.compare n (countk k w) with
                      | Gt => mret T k (Bd (n - 1))
                      | Eq => u
                      | Lt => mret T k (Bd n)
@@ -68,12 +71,12 @@ Section local_operations.
         end
       end.
 
-  Definition close_loc k x : Row nat * leaf -> leaf :=
+  Definition close_loc k x : list K * leaf -> leaf :=
     fun p => match p with
           | (w, l) =>
             match l with
-            | Fr y => if x == y then Bd (w k) else Fr y
-            | Bd n => match Nat.compare n (w k) with
+            | Fr y => if x == y then Bd (countk k w) else Fr y
+            | Bd n => match Nat.compare n (countk k w) with
                     | Gt => Bd (S n)
                     | Eq => Bd (S n)
                     | Lt => Bd n
@@ -85,12 +88,12 @@ Section local_operations.
       closure we will take <<n = 0>>, but we can also consider more
       notions like ``local closure within a gap of 1 binder,'' which
       is useful for backend reasoning. **)
-  Definition is_bound_or_free k (gap : nat) : Row nat * leaf -> Prop :=
+  Definition is_bound_or_free k (gap : nat) : list K * leaf -> Prop :=
     fun p => match p with
           | (w, l) =>
             match l with
             | Fr x => True
-            | Bd n => n < w k ● gap
+            | Bd n => n < (countk k w) + gap
             end
           end.
 
@@ -101,35 +104,34 @@ End local_operations.
 Section LocallyNamelessOperations.
 
   Context
-    (F : Type -> Type)
-    `{DecoratedMultisortedModule
-        (Row nat) (mn_op := Monoid_op_Row) (mn_unit := Monoid_unit_Row)
-        F T}
-  `{! Tomlist F} `{! forall k, Tomlist (T k)} `{! ListableMultisortedModule F T}.
+    (S : Type -> Type)
+    `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    `{! DTM (list K) T}.
 
-  Definition open k (u : T k leaf) : F leaf -> F leaf  :=
-    bindkd F k (open_loc k u).
+  Definition open k (u : T k leaf) : S leaf -> S leaf  :=
+    kbindd S k (open_loc k u).
 
-  Definition close k x : F leaf -> F leaf :=
-    fmapkd F k (close_loc k x).
+  Definition close k x : S leaf -> S leaf :=
+    kfmapd S k (close_loc k x).
 
-  Definition subst k x (u : T k leaf) : F leaf -> F leaf :=
-    bindk F k (subst_loc k x u).
+  Definition subst k x (u : T k leaf) : S leaf -> S leaf :=
+    kbind S k (subst_loc k x u).
 
-  Definition free : K -> F leaf -> list atom :=
-    fun k t => bind list free_loc (tolistk F k t).
+  Definition free : K -> S leaf -> list atom :=
+    fun k t => bind list free_loc (toklist S k t).
 
-  (** Derived operation *)
-  Definition freeset : K -> F leaf -> AtomSet.t :=
+  (** Derived operations *)
+  Definition freeset : K -> S leaf -> AtomSet.t :=
     fun k t => LN.AtomSet.atoms (free k t).
 
-  Definition locally_closed_gap k (gap : nat) : F leaf -> Prop :=
-    fun t => forall w l, (k, (w, l)) ∈md t -> is_bound_or_free k gap (w, l).
+  Definition locally_closed_gap k (gap : nat) : S leaf -> Prop :=
+    fun t => forall (w : list K) (l : leaf),
+        (w, (k, l)) ∈md t -> is_bound_or_free k gap (w, l).
 
-  Definition locally_closed k : F leaf -> Prop :=
+  Definition locally_closed k : S leaf -> Prop :=
     locally_closed_gap k 0.
 
-  Definition scoped : K -> F leaf -> AtomSet.t -> Prop :=
+  Definition scoped : K -> S leaf -> AtomSet.t -> Prop :=
     fun k t γ => freeset k t ⊆ γ.
 
 End LocallyNamelessOperations.
@@ -152,17 +154,15 @@ Section LocallyNameless.
     Import Notations.
 
     Context
-    (F : Type -> Type)
-    `{DecoratedMultisortedModule
-        (Row nat) (mn_op := Monoid_op_Row) (mn_unit := Monoid_unit_Row)
-        F T}
-    `{! Tomlist F} `{! forall k, Tomlist (T k)} `{! ListableMultisortedModule F T}.
+      (S : Type -> Type)
+      `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+      `{! DTM (list K) T}.
 
     Context
       (k j : K)
       (t1 : T k leaf)
       (t2 : T j leaf)
-      (u : F leaf)
+      (u : S leaf)
       (x : atom)
       (n : nat).
 
@@ -182,24 +182,30 @@ Section LocallyNameless.
   Import Notations.
 
   Context
-    (F : Type -> Type)
-    `{DecoratedMultisortedModule
-        (Row nat) (mn_op := Monoid_op_Row) (mn_unit := Monoid_unit_Row)
-        F T}
-  `{! Tomlist F} `{! forall k, Tomlist (T k)} `{! ListableMultisortedModule F T}.
+    (S : Type -> Type)
+    `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    `{! DTM (list K) T}.
 
-  Implicit Types (l : leaf) (n : Row nat) (t : F leaf) (x : atom).
+  Implicit Types (l : leaf) (n : list K) (t : S leaf) (x : atom).
 
   (** ** Identity and equality lemmas for operations *)
   (******************************************************************************)
-  Lemma open_eq : forall k t u1 u2,
-      (forall w l, (k, (w, l)) ∈md t -> open_loc k u1 (w, l) = open_loc k u2 (w, l)) ->
+  Lemma open_eq : forall k t (u1 u2 : T k leaf),
+      (forall (w : list K) (l : leaf), (w, (k, l)) ∈md t -> open_loc k u1 (w, l) = open_loc k u2 (w, l)) ->
       t '(k | u1) = t '(k | u2).
   Proof.
-    intros. unfold open.
-    now apply (bindkd_respectful F T).
+    introv hyp. unfold open.
+    unfold kbindd.
+    apply (mbindd_respectful).
+    intros ? ? [? | ?].
+    - compare values k and k0.
+    - introv hin. compare values k and k0.
+      + do 2 rewrite btgd_eq. now apply hyp.
+      + rewrite btgd_neq; auto. unfold compose; cbn.
+        compare values k0 and k.
   Qed.
 
+  Print Assumptions open_eq.
   Lemma open_id : forall k t u,
       (forall w l, (k, (w, l)) ∈md t -> open_loc k u (w, l) = mret T k l) ->
       t '(k | u) = t.

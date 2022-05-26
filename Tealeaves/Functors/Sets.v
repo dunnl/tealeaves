@@ -2,6 +2,7 @@ From Tealeaves Require Import
      Classes.RightModule
      Classes.Applicative.
 
+Import Monoid.Notations.
 Import Product.Notations.
 Import Applicative.Notations.
 #[local] Open Scope tealeaves_scope.
@@ -54,11 +55,10 @@ Section set_monoid.
     ltac:(solve_basic_set).
   Definition set_add_nil_r : forall s, ∅ ∪ s = s :=
     ltac:(solve_basic_set).
-  Definition set_add_assoc : forall s t u, s ∪ (t ∪ u) = s ∪ t ∪ u :=
+  Definition set_add_assoc : forall s t u, s ∪ t ∪ u = s ∪ (t ∪ u) :=
     ltac:(solve_basic_set).
   Definition set_add_comm : forall s t, s ∪ t = t ∪ s :=
     ltac:(solve_basic_set).
-
   Definition set_in_empty : forall a, ∅ a = False
     := ltac:(solve_basic_set).
   Definition set_in_add : forall s t a, (s ∪ t) a = (s a \/ t a)
@@ -68,6 +68,15 @@ End set_monoid.
 
 Hint Rewrite @set_add_nil_l @set_add_nil_r
      @set_add_assoc @set_in_empty @set_in_add : tea_set.
+
+Instance Monoid_op_set {A} : Monoid_op (set A) := @set_add A.
+
+Instance Monoid_unit_set {A} : Monoid_unit (set A) := set_empty.
+
+#[program] Instance Monoid_set {A} :
+  @Monoid (set A) (@Monoid_op_set A) (@Monoid_unit_set A).
+
+Solve Obligations with (intros; unfold transparent tcs; solve_basic_set).
 
 (** * Set monad *)
 (******************************************************************************)

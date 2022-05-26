@@ -65,6 +65,9 @@ Multisorted/Functors/Row.v
 Multisorted/Functors/MSets.v
 Multisorted/Functors/MList.v
 Multisorted/Functors/MList2.v
+Multisorted/Functors/Schedule.v
+Multisorted/Theory/DTMContainer.v
+Multisorted/Theory/DTMSchedule.v
 #Multisorted/Classes/DecoratedFunctor.v
 #Multisorted/Classes/DecoratedMonad.v
 #Multisorted/Classes/SetlikeFunctor.v

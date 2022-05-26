@@ -138,6 +138,61 @@ Section derived_operations.
   Definition mfmap `(f : forall k, A -> B) : S A -> S B :=
     mfmapd (f ◻ const (extract (W ×))).
 
+  Context
+    {A B : Type}
+    `{Fmap F} `{Mult F} `{Pure F}.
+
+  Lemma mbindt_to_mbinddt :
+    forall (f : forall k, A -> F (T k B)),
+      mbindt F f = mbinddt S F (f ◻ const (extract (W ×))).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mbindd_to_mbinddt :
+    forall (f : forall k, W * A -> T k B),
+      mbindd f = mbinddt S (fun A => A) f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mfmapdt_to_mbinddt :
+    forall (f : K -> W * A -> F B),
+      mfmapdt F f = mbinddt S F (fun k '(w, a) => fmap F (mret T k) (f k (w, a))).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mbind_to_mbinddt :
+    forall (f : forall k, A -> T k B),
+      mbind f = mbinddt S (fun A => A) (f ◻ const (extract (W ×))).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mfmapd_to_mbinddt :
+    forall (f : K -> W * A -> B),
+      mfmapd f = mbinddt S (fun A => A) (mret T ◻ f).
+  Proof.
+    intros. unfold mfmapd.
+    unfold mfmapdt. fequal. now ext k [w a].
+  Qed.
+
+  Lemma mfmapt_to_mbinddt :
+    forall (f : K -> A -> F B),
+      mfmapt F f = mbinddt S F (fun k '(w, a) => fmap F (mret T k) (f k a)).
+  Proof.
+    intros. unfold mfmapt.
+    unfold mbindt. fequal. now ext k [w a].
+  Qed.
+
+  Lemma mfmap_to_mbinddt :
+    forall (f : K -> A -> B),
+      mfmap f = mbinddt S (fun A => A) (mret T ◻ f ◻ const (extract (W ×))).
+  Proof.
+    intros. unfold mfmap. now rewrite mfmapd_to_mbinddt.
+  Qed.
+
 End derived_operations.
 
 (** ** Useful laws for DTMs *)
@@ -241,7 +296,7 @@ Section DecoratedMonad.
   Qed.
 
   Lemma mfmap_to_mbindd {A B} (f : A -k-> B) :
-    mfmap S f = mbindd S (fun k => mret T k ∘ f k ∘ snd).
+    mfmap S f = mbindd S (fun k => mret T k ∘ f k ∘ extract (W ×)).
   Proof.
     unfold mfmap, mfmapd, mfmapdt, mbindd.
     fequal. now ext k [w a].
@@ -308,6 +363,24 @@ Section DecoratedTraversable.
 
   (** *** Lesser operations as special cases *)
   (******************************************************************************)
+  Lemma mfmapd_to_mfmapdt {A B} (f : K -> W * A -> B) :
+    mfmapd S f = mfmapdt S (fun A => A) f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mfmap_to_mfmapdt {A B} (f : K -> A -> B) :
+    mfmap S f = mfmapdt S (fun A => A) (fun k '(w, a) => f k a).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mfmapt_to_mfmapdt {A B} `{Applicative F} (f : K -> A -> F B) :
+    mfmapt S F f = mfmapdt S F (fun k '(w, a) => f k a).
+  Proof.
+    unfold mfmapt, mfmapdt. unfold mbindt.
+    fequal. now ext k [w a].
+  Qed.
 
 End DecoratedTraversable.
 
@@ -375,12 +448,7 @@ Section Functor.
       (g : K -> B -> C) (f : K -> A -> B),
       mfmap S g ∘ mfmap S f = mfmap S (g ⊙ f).
   Proof.
-    intros. change_left (fmap (fun x => x) (mfmap S g) ∘ mfmap S f).
-    unfold mfmap, mfmapd, mfmapdt.
-    rewrite (dtp_mbinddt_mbinddt W S T (fun x => x) (fun x => x)).
-    fequal.
-    - ext X Y [x y]. easy.
-    -
+    intros.
   Abort.
 
   (** *** Naturality w.r.t. <<ret>> *)
@@ -408,7 +476,10 @@ Section Functor.
 
 End Functor.
 
-(** * Targetted substitution-building combinators: [btg] and [btgd] *)
+(** * Targetted operations *)
+(******************************************************************************)
+
+(** ** Targetted substitution-building combinators: [btg] and [btgd] *)
 (******************************************************************************)
 (* TODO : Define a version that works for applicative effects. *)
 (*

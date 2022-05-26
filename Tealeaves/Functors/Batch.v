@@ -97,9 +97,9 @@ Section Applicative_Batch.
   Proof.
     induction jb.
     - easy.
-    - intros. cbn in *; change (mult_Batch ?x ?y) with (x ⊗ y) in *.
-      fequal. cbn in IHjb; change (mult_Batch ?x ?y) with (x ⊗ y) in *.
-      rewrite IHjb. compose near jb on left. now rewrite (fun_fmap_fmap Batch).
+    - intros. cbn; change (mult_Batch ?x ?y) with (x ⊗ y).
+      fequal. rewrite IHjb. compose near jb on left.
+      now rewrite (fun_fmap_fmap Batch).
   Qed.
 
   Lemma mult_Batch_rw4 : forall (x : X) `(ja : @Batch X Y (Y -> A)) `(b : B),

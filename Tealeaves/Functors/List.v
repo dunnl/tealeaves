@@ -18,12 +18,12 @@ Create HintDb tea_list.
 
 (** * [list] monoid *)
 (******************************************************************************)
-Instance Monoid_op_app {A} : Monoid_op (list A) := @app A.
+Instance Monoid_op_list {A} : Monoid_op (list A) := @app A.
 
-Instance Monoid_op_nil {A} : Monoid_unit (list A) := nil.
+Instance Monoid_unit_list {A} : Monoid_unit (list A) := nil.
 
 #[program] Instance Monoid_list {A} :
-  @Monoid (list A) (@Monoid_op_app A) (@Monoid_op_nil A).
+  @Monoid (list A) (@Monoid_op_list A) (@Monoid_unit_list A).
 
 Solve Obligations with (intros; unfold transparent tcs; auto with datatypes).
 
@@ -397,10 +397,51 @@ Instance SetlikeMonad_list : SetlikeMonad list :=
      xmon_ret_injective := return_injective_list;
   |}.
 
-(*
-Instance SetlikeModule_list : SetlikeModule list list :=
-   SetlikeModule_Monad.
-*)
+(** * Filtering lists *)
+(******************************************************************************)
+Fixpoint filter `(P : A -> bool) (l : list A) : list A :=
+  match l with
+  | nil => nil
+  | cons a rest =>
+    if P a then a :: filter P rest else filter P rest
+  end.
+
+(** ** Rewriting lemmas for [filter] *)
+(******************************************************************************)
+Section filter_lemmas.
+
+  Context
+    `(P : A -> bool).
+
+  Lemma filter_nil :
+    filter P nil = nil.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma filter_cons : forall (a : A) (l : list A),
+      filter P (a :: l) = if P a then a :: filter P l else filter P l.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma filter_one : forall (a : A),
+      filter P [a] = if P a then [a] else nil.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma filter_app : forall (l1 l2 : list A),
+      filter P (l1 ++ l2) = filter P l1 ++ filter P l2.
+  Proof.
+    intros. induction l1.
+    - reflexivity.
+    - cbn. rewrite IHl1. now destruct (P a).
+  Qed.
+
+End filter_lemmas.
+
+Hint Rewrite @filter_nil @filter_cons @filter_app @filter_one : tea_list.
 
 (** * Folding over lists *)
 (******************************************************************************)
