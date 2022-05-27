@@ -51,12 +51,13 @@ Section MultisortedDTM_typeclasses.
                `{Fmap F} `{Mult F} `{Pure F}
                `{Fmap G} `{Mult G} `{Pure G}
                `{forall k, MBind W T (T k)}
+               {A B C}
                `(g : forall k, W * B -> G (T k C))
                `(f : forall k, W * A -> F (T k B)) :
       forall k, W * A -> F (G (T k C)) :=
       fun k '(w, a) => fmap F (mbinddt W T (T k) G (g ◻ const (incr w))) (f k (w, a)).
 
-    Infix "⋆dtm" := compose_dtm (at level 40).
+    Infix "⋆dtm" := compose_dtm (at level 40) : tealeaves_scope.
 
     Class DTPreModule :=
       { dtp_monoid :> Monoid W;
@@ -105,6 +106,16 @@ Section MultisortedDTM_typeclasses.
 End MultisortedDTM_typeclasses.
 
 Arguments mbinddt {ix} {W}%type_scope {T} S%function_scope {MBind} F%function_scope {H H0 H1} {A B}.
+Arguments compose_dtm {ix} {W}%type_scope {T}%function_scope {mn_op} {F}%function_scope {H0 H1 H2}
+          {G}%function_scope {H3 H4 H5} {H6}%function_scope {A B C}%type_scope (_ _)%function_scope _ _.
+
+(** ** Notations **)
+(******************************************************************************)
+Module Notations.
+
+  Infix "⋆dtm" := compose_dtm (at level 40) : tealeaves_scope.
+
+End Notations.
 
 (** ** Derived operations on DTMs *)
 (******************************************************************************)
