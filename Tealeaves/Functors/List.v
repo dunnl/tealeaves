@@ -337,6 +337,13 @@ Proof.
   introv perm. induction perm; firstorder.
 Qed.
 
+(** ** [toset] is a monoid homomorphism *)
+(******************************************************************************)
+Instance Monmor_toset_list (A : Type) : Monoid_Morphism (toset list (A := A)) :=
+  {| monmor_unit := @toset_list_nil A;
+     monmor_op := @toset_list_app A;
+  |}.
+
 (** ** Respectfulness conditions *)
 (******************************************************************************)
 Instance Natural_toset_list: Natural (@toset list _).

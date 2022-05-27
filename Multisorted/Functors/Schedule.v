@@ -483,3 +483,29 @@ Section runSchedule_morphism.
   Qed.
 
 End runSchedule_morphism.
+
+(** ** <<runSchedule>> commuts with applicative morphisms **)
+(******************************************************************************)
+Section runSchedule_morphism.
+
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule W S T}
+    `{! DTM W T}
+    (A B C : Type)
+    `{Applicative F}
+    `{Applicative G}
+    `{! ApplicativeMorphism F G ψ}
+    (f : forall k, W * A -> F (T k B)).
+
+  Lemma runSchedule_morphism `(j : @Schedule _ T W A B C) :
+    @ψ C (runSchedule f j) = runSchedule (fun k => @ψ (T k B) ∘ f k) j.
+  Proof.
+    induction j.
+    - cbn. now rewrite (appmor_pure F G).
+    - destruct p. cbn. rewrite ap_morphism_1.
+      now rewrite IHj.
+  Qed.
+
+End runSchedule_morphism.

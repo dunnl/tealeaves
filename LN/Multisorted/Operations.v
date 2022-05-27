@@ -186,7 +186,7 @@ Section LocallyNameless.
     `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! DTM (list K) T}.
 
-  Implicit Types (l : leaf) (n : list K) (t : S leaf) (x : atom).
+  Implicit Types (l : leaf) (w : list K) (t : S leaf) (x : atom).
 
   (** ** Identity and equality lemmas for operations *)
   (******************************************************************************)
@@ -194,32 +194,22 @@ Section LocallyNameless.
       (forall (w : list K) (l : leaf), (w, (k, l)) ∈md t -> open_loc k u1 (w, l) = open_loc k u2 (w, l)) ->
       t '(k | u1) = t '(k | u2).
   Proof.
-    introv hyp. unfold open.
-    unfold kbindd.
-    apply (mbindd_respectful).
-    intros ? ? [? | ?].
-    - compare values k and k0.
-    - introv hin. compare values k and k0.
-      + do 2 rewrite btgd_eq. now apply hyp.
-      + rewrite btgd_neq; auto. unfold compose; cbn.
-        compare values k0 and k.
+    introv hyp. unfold open. apply kbindd_respectful. auto.
   Qed.
 
-  Print Assumptions open_eq.
   Lemma open_id : forall k t u,
-      (forall w l, (k, (w, l)) ∈md t -> open_loc k u (w, l) = mret T k l) ->
+      (forall w l, (w, (k, l)) ∈md t -> open_loc k u (w, l) = mret T k l) ->
       t '(k | u) = t.
   Proof.
     intros. unfold open.
-    now apply (bindkd_respectful_id F T).
+    now apply (kbindd_respectful_id k).
   Qed.
 
   Lemma subst_eq : forall k t x u1 u2,
       (forall l, (k, l) ∈m t -> subst_loc k x u1 l = subst_loc k x u2 l) ->
       t '{k | x ~> u1} = t '{k | x ~> u2}.
   Proof.
-    intros. unfold subst.
-    now apply (setlike_bindk_respectful F T).
+    introv hyp. unfold subst. apply kbind_respectful. auto.
   Qed.
 
   Lemma subst_id : forall k t x u,
@@ -227,23 +217,23 @@ Section LocallyNameless.
       t '{k | x ~> u} = t.
   Proof.
     intros. unfold subst.
-    now apply (setlike_bindk_respectful_id F T).
+    now apply kbind_respectful_id.
   Qed.
 
   Lemma close_eq : forall k t x y,
-      (forall w l, (k, (w, l)) ∈md t -> close_loc k x (w, l) = close_loc k y (w, l)) ->
+      (forall w l, (w, (k, l)) ∈md t -> close_loc k x (w, l) = close_loc k y (w, l)) ->
       '[k | x] t = '[k | y] t.
   Proof.
     intros. unfold close.
-    now apply (fmapkd_respectful F).
+    now apply (kfmapd_respectful).
   Qed.
 
   Lemma close_id : forall k t x,
-      (forall w l, (k, (w, l)) ∈md t -> close_loc k x (w, l) = l) ->
+      (forall w l, (w, (k, l)) ∈md t -> close_loc k x (w, l) = l) ->
       '[k | x] t = t.
   Proof.
     intros. unfold close.
-    now apply (fmapkd_respectful_id F).
+    now apply (kfmapd_respectful_id).
   Qed.
 
   (** ** Context-sensitive leaf analysis of operations *)
@@ -251,36 +241,36 @@ Section LocallyNameless.
 
   (** *** Opening *)
   (******************************************************************************)
-  Lemma inr_open_iff_eq : forall k l n u t,
-      (k, (n, l)) ∈md t '(k | u) <-> exists l1 n1 n2,
-        (k, (n1, l1)) ∈md t /\ (k, (n2, l)) ∈md open_loc k u (n1, l1) /\ n = n1 ● n2.
+  Lemma ind_open_iff_eq : forall k l w u t,
+      (w, (k, l)) ∈md t '(k | u) <-> exists w1 w2 l1,
+        (w1, (k, l1)) ∈md t /\ (w2, (k, l)) ∈md open_loc k u (w1, l1) /\ w = w1 ● w2.
   Proof.
     intros. unfold open.
-    now rewrite (ind_bindkd_iff_eq F T k).
+    now rewrite (ind_kbindd_eq_iff S).
   Qed.
 
-  Lemma inr_open_iff_neq : forall k j l n u t,
+  Lemma ind_open_iff_neq : forall k j l w u t,
       k <> j ->
-      (k, (n, l)) ∈md t '(j | u) <-> (k, (n, l)) ∈md t \/ exists l1 n1 n2,
-          (j, (n1, l1)) ∈md t /\ (k, (n2, l)) ∈md open_loc j u (n1, l1) /\ n = n1 ● n2.
+      (w, (k, l)) ∈md t '(j | u) <-> (w, (k, l)) ∈md t \/ exists w1 w2 l1,
+          (w1, (j, l1)) ∈md t /\ (w2, (k, l)) ∈md open_loc j u (w1, l1) /\ w = w1 ● w2.
   Proof.
     intros. unfold open.
-    now rewrite (ind_bindkd_iff_neq F T j k).
+    now rewrite (ind_kbindd_neq_iff S); auto.
   Qed.
 
   (** *** Closing *)
   (******************************************************************************)
-  Lemma inr_close_iff_eq : forall k l n x t,
-      (k, (n, l)) ∈md '[k | x] t <-> exists l1,
-        (k, (n, l1)) ∈md t /\ close_loc k x (n, l1) = l.
+  Lemma ind_close_iff_eq : forall k l w x t,
+      (w, (k, l)) ∈md '[k | x] t <-> exists l1,
+        (w, (k, l1)) ∈md t /\ close_loc k x (w, l1) = l.
   Proof.
     intros. unfold close.
-    now rewrite (ind_fmapkd_iff_eq F).
-  Qed.
+    Fail rewrite (ind_kfmapd_eq_iff).
+  Abort.
 
   Lemma ind_close_iff_neq : forall k j l n x t,
       j <> k ->
-      (k, (n, l)) ∈md '[j | x] t <-> (k, (n, l)) ∈md t.
+      (w, (k, l)) ∈md '[j | x] t <-> (w, (k, l)) ∈md t.
   Proof.
     intros. unfold close.
     now rewrite (ind_fmapkd_iff_neq F).
@@ -289,8 +279,8 @@ Section LocallyNameless.
   (** *** Substitution *)
   (******************************************************************************)
   Lemma ind_subst_iff_eq : forall k n l u t x,
-      (k, (n, l)) ∈md t '{k | x ~> u} <-> exists l1 n1 n2,
-        (k, (n1, l1)) ∈md t /\ (k, (n2, l)) ∈md subst_loc k x u l1 /\ n = n1 ● n2.
+      (w, (k, l)) ∈md t '{k | x ~> u} <-> exists l1 w1 w2,
+        (k, (w1, l1)) ∈md t /\ (k, (w2, l)) ∈md subst_loc k x u l1 /\ n = w1 ● w2.
   Proof.
     intros. unfold subst.
     now rewrite (ind_bindk_iff_eq F T k).
@@ -298,8 +288,8 @@ Section LocallyNameless.
 
   Lemma ind_subst_iff_neq : forall k j n l u t x,
       k <> j ->
-      (k, (n, l)) ∈md t '{j | x ~> u} <-> (k, (n, l)) ∈md t \/ exists l1 n1 n2,
-        (j, (n1, l1)) ∈md t /\ (k, (n2, l)) ∈md subst_loc j x u l1 /\ n = n1 ● n2.
+      (w, (k, l)) ∈md t '{j | x ~> u} <-> (w, (k, l)) ∈md t \/ exists l1 w1 w2,
+        (j, (w1, l1)) ∈md t /\ (k, (w2, l)) ∈md subst_loc j x u l1 /\ n = w1 ● w2.
   Proof.
     intros. unfold subst.
     now rewrite (ind_bindk_iff_neq F T).
@@ -311,8 +301,8 @@ Section LocallyNameless.
   (** *** Opening *)
   (******************************************************************************)
   Lemma in_open_iff_eq : forall k l u t,
-      (k, l) ∈m t '(k | u) <-> exists l1 n1,
-        (k, (n1, l1)) ∈md t /\ (k, l) ∈m open_loc k u (n1, l1).
+      (k, l) ∈m t '(k | u) <-> exists l1 w1,
+        (k, (w1, l1)) ∈md t /\ (k, l) ∈m open_loc k u (w1, l1).
   Proof.
     intros. unfold open.
     now rewrite (in_bindkd_iff_eq F T k).
@@ -320,8 +310,8 @@ Section LocallyNameless.
 
   Lemma in_open_iff_neq : forall k j l u t,
       k <> j ->
-      (k, l) ∈m t '(j | u) <-> (k, l) ∈m t \/ exists l1 n1,
-          (j, (n1, l1)) ∈md t /\ (k, l) ∈m open_loc j u (n1, l1).
+      (k, l) ∈m t '(j | u) <-> (k, l) ∈m t \/ exists l1 w1,
+          (j, (w1, l1)) ∈md t /\ (k, l) ∈m open_loc j u (w1, l1).
   Proof.
     intros. unfold open.
     now rewrite (in_bindkd_iff_neq F T k j).
@@ -331,7 +321,7 @@ Section LocallyNameless.
   (******************************************************************************)
   Lemma in_close_iff_eq : forall k l x t,
       (k, l) ∈m '[k | x] t <-> exists n l1,
-        (k, (n, l1)) ∈md t /\ close_loc k x (n, l1) = l.
+        (w, (k, l1)) ∈md t /\ close_loc k x (w, l1) = l.
   Proof.
     intros. unfold close.
     now rewrite (in_fmapkd_iff_eq F).
@@ -414,7 +404,7 @@ Section LocallyNameless.
   (** *** Opening *)
   (******************************************************************************)
   Local Notation "x @ < k , w > ∈ t" :=
-    (tomsetd _ t (k, (w, x))) (k at level 5, w at level 5, at level 50) : tealeaves_multi_scope.
+    (tomsetd _ t (w, (k, x))) (k at level 5, w at level 5, at level 50) : tealeaves_multi_scope.
 
   Lemma free_open_iff_eq : forall k u t x,
       x ∈ free F k (t '(k | u)) <-> exists l1 w,
@@ -427,7 +417,7 @@ Section LocallyNameless.
   Lemma free_open_iff_neq : forall k j u t x,
       k <> j ->
       x ∈ free F j (t '(k | u)) <-> x ∈ free F j t \/ exists l1 w,
-          (k, (w, l1)) ∈md t /\ x ∈ free (T k) j (open_loc k u (w, l1)).
+          (w, (k, l1)) ∈md t /\ x ∈ free (T k) j (open_loc k u (w, l1)).
   Proof.
     intros. rewrite 2(in_free_iff). setoid_rewrite in_free_iff_T.
     now rewrite in_open_iff_neq; auto.

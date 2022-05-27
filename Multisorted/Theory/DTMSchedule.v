@@ -126,16 +126,24 @@ Section iterate.
     tomsetd S t = runSchedule (F := (@const Type Type (set (W * Tag A))))
                               (fun k '(w, a) => {{(w, (k, a))}}) (iterate S fake t).
   Proof.
-  Admitted.
+    unfold tomsetd, compose. rewrite (tomlistd_to_runSchedule fake).
+    change (toset list (A := W * Tag A)) with (const (toset (A := W * Tag A) list) (S fake)).
+    cbn. (* <- needed for implicit arguments. *)
+    rewrite (runSchedule_morphism (F := const (list (W * Tag A))) (G := const (set (W * Tag A)))).
+    unfold compose. fequal. ext k [w a].
+    solve_basic_set.
+  Qed.
 
   Lemma tomlist_to_runSchedule (fake : Type) `(t : S A) :
     tomlist S t = runSchedule (fun k '(w, a) => [(k, a)]) (iterate S fake t).
   Proof.
     unfold tomlist. unfold compose. rewrite (tomlistd_to_runSchedule fake).
-    induction (iterate S fake t).
-    - easy.
-    - destruct p.
-  Admitted.
+    change (fmap list ?f) with (const (fmap list f) (S fake)).
+    rewrite (runSchedule_morphism (F := const (list (W * Tag A)))
+                                  (G := const (list (Tag A)))
+                                  (ψ := const (fmap list (extract (prod W))))).
+    fequal. now ext k [w a].
+  Qed.
 
   (** ** Other identities *)
   (******************************************************************************)
@@ -164,9 +172,7 @@ Section DTM_respectful.
       -> mbindd S f t = mbindd S g t.
   Proof.
     introv hyp.
-    #[local] Set Keyed Unification.
     rewrite (tomsetd_to_runSchedule S B t) in hyp.
-    #[local] Unset Keyed Unification.
     do 2 rewrite (mbindd_to_runSchedule S).
     induction (iterate S B t).
     - easy.
@@ -176,6 +182,157 @@ Section DTM_respectful.
       + apply IHs. intros. apply hyp.
         cbn. now left.
       + apply hyp. now right.
+  Qed.
+
+  Corollary mbindd_respectful_id : forall A (t : S A) (f : forall k, W * A -> T k A),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = mret T k a)
+      -> mbindd S f t = t.
+  Proof.
+    intros. change t with (id t) at 2.
+    rewrite <- (mbindd_id S).
+    eapply mbindd_respectful.
+    unfold compose; cbn. auto.
+  Qed.
+
+  (** *** Corollaries for other operations *)
+  (******************************************************************************)
+  Corollary mbind_respectful : forall A B (t : S A) (f g : forall k, A -> T k B),
+      (forall (k : K) (a : A), (k, a) ∈m t -> f k a = g k a)
+      -> mbind S f t = mbind S g t.
+  Proof.
+    introv hyp. rewrite mbind_to_mbindd.
+    apply mbindd_respectful. introv premise. apply ind_implies_in in premise.
+    unfold compose; cbn. auto.
+  Qed.
+
+  Corollary mbind_respectful_id : forall A (t : S A) (f : forall k, A -> T k A),
+      (forall (k : K) (a : A), (k, a) ∈m t -> f k a = mret T k a)
+      -> mbind S f t = t.
+  Proof.
+    intros. change t with (id t) at 2.
+    rewrite <- (mbind_id S).
+    eapply mbind_respectful.
+    unfold compose; cbn. auto.
+  Qed.
+
+  Corollary mfmapd_respectful : forall A B (t : S A) (f g : K -> W * A -> B),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k (w, a))
+      -> mfmapd S f t = mfmapd S g t.
+  Proof.
+    introv hyp. do 2 rewrite mfmapd_to_mbindd.
+    apply mbindd_respectful. introv premise.
+    unfold compose; cbn. fequal. auto.
+  Qed.
+
+  Corollary mfmapd_respectful_id : forall A (t : S A) (f g : K -> W * A -> A),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = a)
+      -> mfmapd S f t = t.
+  Proof.
+    intros. change t with (id t) at 2.
+    rewrite <- (mfmapd_id S).
+    eapply mfmapd_respectful.
+    cbn. auto.
+  Qed.
+
+  Corollary mfmap_respectful : forall A B (t : S A) (f g : K -> A -> B),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k a = g k a)
+      -> mfmap S f t = mfmap S g t.
+  Proof.
+    introv hyp. do 2 rewrite mfmap_to_mfmapd.
+    now apply mfmapd_respectful.
+  Qed.
+
+  Corollary mfmap_respectful_id : forall A (t : S A) (f : K -> A -> A),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k a = a)
+      -> mfmap S f t = t.
+  Proof.
+    intros. change t with (id t) at 2.
+    rewrite <- (mfmap_id S).
+    eapply mfmap_respectful.
+    auto.
+  Qed.
+
+  (** *** Corollaries for targetted operations *)
+  (******************************************************************************)
+  Context
+    (j : K).
+
+  Corollary kbindd_respectful : forall A (t : S A) (f g : W * A -> T j A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g (w, a))
+      -> kbindd S j f t = kbindd S j g t.
+  Proof.
+    introv hyp. unfold kbindd. apply mbindd_respectful.
+    introv premise. compare values j and k.
+    - do 2 rewrite btgd_eq. auto.
+    - do 2 (rewrite btgd_neq; auto).
+  Qed.
+
+  Corollary kbindd_respectful_id : forall A (t : S A) (f : W * A -> T j A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = mret T j a)
+      -> kbindd S j f t = t.
+  Proof.
+    introv hyp. change t with (id t) at 2.
+    erewrite <- (kbindd_id S).
+    apply kbindd_respectful.
+    auto.
+  Qed.
+
+  Corollary kbind_respectful : forall A (t : S A) (f g : A -> T j A),
+      (forall (a : A), (j, a) ∈m t -> f a = g a)
+      -> kbind S j f t = kbind S j g t.
+  Proof.
+    introv hyp. unfold kbind. apply mbind_respectful.
+    introv premise. compare values j and k.
+    - do 2 rewrite btg_eq. auto.
+    - do 2 (rewrite btg_neq; auto).
+  Qed.
+
+  Corollary kbind_respectful_id : forall A (t : S A) (f : A -> T j A),
+      (forall (a : A), (j, a) ∈m t -> f a = mret T j a)
+      -> kbind S j f t = t.
+  Proof.
+    introv hyp. change t with (id t) at 2.
+    rewrite <- (kbind_id S (j := j)).
+    now apply kbind_respectful.
+  Qed.
+
+  Corollary kfmapd_respectful : forall A (t : S A) (f g : W * A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g (w, a))
+      -> kfmapd S j f t = kfmapd S j g t.
+  Proof.
+    introv hyp. unfold kfmapd.
+    apply mfmapd_respectful. introv premise.
+    compare values j and k.
+    - do 2 rewrite tgtd_eq. auto.
+    - do 2 (rewrite tgtd_neq; auto).
+  Qed.
+
+  Corollary kfmapd_respectful_id : forall A (t : S A) (f : W * A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = a)
+      -> kfmapd S j f t = t.
+  Proof.
+    introv hyp. change t with (id t) at 2.
+    rewrite <- (kfmapd_id (j := j) S).
+    apply kfmapd_respectful. auto.
+  Qed.
+
+  Corollary kfmap_respectful : forall A (t : S A) (f g : A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = g a)
+      -> kfmap S j f t = kfmap S j g t.
+  Proof.
+    introv hyp. unfold kfmap. apply mfmap_respectful.
+    introv premise. compare values j and k.
+    - autorewrite with tea_tgt. eauto.
+    - autorewrite with tea_tgt_neq. auto.
+  Qed.
+
+  Corollary kfmap_respectful_id : forall A (t : S A) (f : A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = a)
+      -> kfmap S j f t = t.
+  Proof.
+    introv hyp. change t with (id t) at 2.
+    rewrite <- (kfmap_id (j := j) S).
+    apply kfmap_respectful. auto.
   Qed.
 
 End DTM_respectful.

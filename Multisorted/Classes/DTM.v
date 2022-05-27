@@ -195,7 +195,7 @@ Section derived_operations.
 
 End derived_operations.
 
-(** ** Useful laws for DTMs *)
+(** ** Purity law *)
 (******************************************************************************)
 Section DTM_laws.
 
@@ -221,7 +221,10 @@ Section DTM_laws.
 
 End DTM_laws.
 
-(** ** Laws for decorated monads (<<mbindd>>) *)
+(** * Derived structures on DTMs *)
+(******************************************************************************)
+
+(** ** Decorated monads (<<mbindd>>) *)
 (******************************************************************************)
 Section DecoratedMonad.
 
@@ -240,7 +243,7 @@ Section DecoratedMonad.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
-  Theorem mbindd_mret : forall A,
+  Theorem mbindd_id : forall A,
       mbindd S (mret T ◻ const (extract (W ×))) = @id (S A).
   Proof.
     intros. unfold mbindd.
@@ -269,8 +272,9 @@ Section DecoratedMonad.
 
   (** *** Composition with other operations *)
   (******************************************************************************)
-  Lemma  mbinddt_mbindd {A B C} : forall `{Applicative G} (g : forall k, W * B -> G (T k C))
-                                     (f : W * A ~k~> T B),
+  Lemma  mbinddt_mbindd {A B C} :
+    forall `{Applicative G} (g : forall k, W * B -> G (T k C))
+      (f : W * A ~k~> T B),
       mbinddt S G g ∘ mbindd S f =
       mbinddt S G (fun (k : K) '(w, a) => mbinddt (T k) G (g ◻ const (incr w)) (f k (w, a))).
   Proof.
@@ -283,7 +287,7 @@ Section DecoratedMonad.
   (** *** Lesser operations as special cases *)
   (******************************************************************************)
   Lemma mbind_to_mbindd {A B} (f : forall k, A -> T k B) :
-    mbind S f = mbindd S (fun k => f k ∘ const snd k).
+    mbind S f = mbindd S (fun k => f k ∘ extract (W ×)).
   Proof.
     reflexivity.
   Qed.
@@ -304,18 +308,18 @@ Section DecoratedMonad.
 
 End DecoratedMonad.
 
-(** ** Laws for decorated-traversable functors (<<mfmapdt>>) *)
+(** ** Decorated traversable functors (<<mfmapdt>>) *)
 (******************************************************************************)
 Section DecoratedTraversable.
 
   Context
-    {S : Type -> Type}
+    (S : Type -> Type)
     `{DTPreModule W S T}
     `{! DTM W T}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
-  Theorem mfmapdt_mret : forall A,
+  Theorem mfmapdt_id : forall A,
       mfmapdt S (fun x => x) (const (extract (W ×))) = @id (S A).
   Proof.
     intros. apply (dtp_mbinddt_mret W S T).
@@ -351,7 +355,7 @@ Section DecoratedTraversable.
     now rewrite (app_pure_natural F).
   Qed.
 
-  (** *** Naturality w.r.t. <<ret>> *)
+  (** *** Naturality w.r.t. <<mret>> *)
   (******************************************************************************)
   Lemma mfmapdt_comp_mret {A B} :
     forall `{Applicative F} (k : K) (f : forall k, W * A -> F B) (a : A),
@@ -384,7 +388,7 @@ Section DecoratedTraversable.
 
 End DecoratedTraversable.
 
-(** ** Laws for traversable monads (<<mbindt>>) *)
+(** ** Traversable monads (<<mbindt>>) *)
 (******************************************************************************)
 Section TraversableMonad.
 
@@ -395,7 +399,7 @@ Section TraversableMonad.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
-    Theorem mbindt_mret : forall A,
+  Theorem mbindt_id : forall A,
       mbindt S (fun x => x) (mret T) = @id (S A).
   Proof.
     intros. unfold mbindt.
@@ -416,7 +420,7 @@ Section TraversableMonad.
     repeat fequal. ext k2 [w2 b]. easy.
   Qed.
 
-  (** *** Composition with <<ret>> *)
+  (** *** Composition with <<mret>> *)
   (******************************************************************************)
   Lemma mbindt_comp_mret {A B} :
     forall `{Applicative F} (k : K) (f : forall k, A -> F (T k B)) (a : A),
@@ -425,9 +429,185 @@ Section TraversableMonad.
     intros. unfold mbindt. compose near a on left.
     now rewrite (dtm_mbinddt_comp_mret W T k F).
   Qed.
+
+  (** *** Lesser operations as special cases *)
+  (******************************************************************************)
+  Lemma mbind_to_mbindt {A B} (f : forall k, A -> T k B) :
+    mbind S f = mbindt S (fun A => A) f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mfmapt_to_mbindt {A B} `{Applicative F} (f : K -> W * A -> F B) :
+    mfmapt S F f = mbindt S F (fun k => fmap F (mret T k) ∘ f k).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mfmap_to_mbindt {A B} (f : A -k-> B) :
+    mfmap S f = mbindt S (fun A => A) (fun k => mret T k ∘ f k).
+  Proof.
+    rewrite mfmap_to_mbinddt.
+    rewrite mbindt_to_mbinddt.
+    reflexivity.
+  Qed.
+
 End TraversableMonad.
 
-(** ** Laws for functor structure (<<mfmap>>) *)
+(** ** Decorated functors (<<mfmapd>>) *)
+(******************************************************************************)
+Section DecoratedFunctor.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  (** *** Composition and identity law *)
+  (******************************************************************************)
+    Theorem mfmapd_id : forall A,
+      mfmapd S (const (extract (W ×))) = @id (S A).
+  Proof.
+    intros. rewrite mfmapd_to_mfmapdt.
+    now rewrite (mfmapdt_id S).
+  Qed.
+
+  Theorem mfmapd_mfmapd {A B C} :
+    forall (g : K -> W * B -> C) (f : K -> W * A -> B),
+      mfmapd S g ∘ mfmapd S f =
+      mfmapd S (fun (k : K) '(w, a) => g k (w, f k (w, a))).
+  Proof.
+    intros. do 3 rewrite mfmapd_to_mfmapdt.
+    change (mfmapdt S (fun A => A) g) with
+        (fmap (fun A => A) (mfmapdt S (fun A => A) g)).
+    rewrite (mfmapdt_mfmapdt S (G := fun A => A) (F := fun A => A)).
+    unfold compose; cbn. fequal.
+    now rewrite Mult_compose_identity1.
+  Qed.
+
+  (** *** Composition with <<mret>> *)
+  (******************************************************************************)
+  Lemma mfmapd_comp_mret {A B} :
+    forall (k : K) (f : K -> W * A -> B) (a : A),
+      mfmapd (T k) f (mret T k a) = mret T k (f k (Ƶ, a)).
+  Proof.
+    intros. rewrite mfmapd_to_mfmapdt. now rewrite mfmapdt_comp_mret.
+  Qed.
+
+  (** *** Lesser operations as special cases *)
+  (******************************************************************************)
+  Lemma mfmap_to_mfmapd {A B} (f : K -> A -> B) :
+    mfmap S f = mfmapd S (fun k '(w, a) => f k a).
+  Proof.
+    reflexivity.
+  Qed.
+
+End DecoratedFunctor.
+
+(** ** Traversable functors (<<mfmapt>>) *)
+(******************************************************************************)
+Section TraversableFunctor.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  (** *** Composition and identity law *)
+  (******************************************************************************)
+    Theorem mfmapt_id : forall A,
+      mfmapt S (fun A => A) (const (@id A)) = @id (S A).
+  Proof.
+    intros. unfold mfmapt.
+    now rewrite <- (mbindt_id S).
+  Qed.
+
+  Theorem mfmapt_mfmapt {A B C} :
+    forall `{Applicative G} `{Applicative F}
+      (g : K -> B -> G C) (f : K -> A -> F B),
+      fmap F (mfmapt S G g) ∘ mfmapt S F f =
+      mfmapt S (F ∘ G) (fun (k : K) (a : A) => fmap F (g k) (f k a)).
+  Proof.
+    intros. rewrite (mfmapt_to_mfmapdt S (F := G)).
+    rewrite (mfmapt_to_mfmapdt S (F := F)).
+    rewrite (mfmapt_to_mfmapdt S (F := F ∘ G)).
+    now rewrite (mfmapdt_mfmapdt S).
+  Qed.
+
+  (** *** Composition with <<mret>> *)
+  (******************************************************************************)
+  Lemma mfmapt_comp_mret {A B} :
+    forall  `{Applicative F} (k : K) (f : K -> A -> F B) (a : A),
+      mfmapt (T k) F f (mret T k a) = fmap F (mret T k) (f k a).
+  Proof.
+    intros. rewrite (mfmapt_to_mfmapdt (T k)). now rewrite mfmapdt_comp_mret.
+  Qed.
+
+  (** *** Lesser operations as special cases *)
+  (******************************************************************************)
+  Lemma mfmap_to_mfmapt {A B} (f : K -> A -> B) :
+    mfmap S f = mfmapt S (fun A => A) f.
+  Proof.
+    rewrite mfmap_to_mfmapdt.
+    rewrite (mfmapt_to_mfmapdt S (F := fun A => A)).
+    reflexivity.
+  Qed.
+
+End TraversableFunctor.
+
+(** ** Monads (<<mbind>>) *)
+(******************************************************************************)
+Section Monad.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  (** *** Composition and identity law *)
+  (******************************************************************************)
+    Theorem mbind_id : forall A,
+      mbind S (fun k => mret T k) = @id (S A).
+  Proof.
+    intros. rewrite mbind_to_mbindd.
+    now rewrite <- (mbindd_id S).
+  Qed.
+
+  Theorem mbind_mbind {A B C} :
+    forall (g : forall (k : K), B -> T k C) (f : forall (k : K), A -> T k B),
+      mbind S g ∘ mbind S f =
+      mbind S (fun (k : K) (a : A) => mbind (T k) g (f k a)).
+  Proof.
+    intros. do 3 rewrite (mbind_to_mbindd S).
+    rewrite (mbindd_mbindd S).
+    unfold compose; cbn. fequal.
+    ext k [w a].
+    rewrite (mbind_to_mbindd (T k)).
+    cbn. fequal. now ext j [w2 b].
+  Qed.
+
+  (** *** Composition with <<mret>> *)
+  (******************************************************************************)
+  Lemma mbind_comp_mret {A B} :
+    forall (k : K) (f : forall (k : K), A -> T k B) (a : A),
+      mbind (T k) f (mret T k a) = f k a.
+  Proof.
+    intros. rewrite mbind_to_mbindd. now rewrite mbindd_comp_mret.
+  Qed.
+
+  (** *** Lesser operations as special cases *)
+  (******************************************************************************)
+  Lemma mfmap_to_mbind {A B} (f : K -> A -> B) :
+    mfmap S f = mbind S (mret T ◻ f).
+  Proof.
+    rewrite mfmap_to_mbindd.
+    rewrite mbind_to_mbindd.
+    reflexivity.
+  Qed.
+
+End Monad.
+
+(** ** Functors (<<mfmap>>) *)
 (******************************************************************************)
 Section Functor.
 
@@ -448,16 +628,19 @@ Section Functor.
       (g : K -> B -> C) (f : K -> A -> B),
       mfmap S g ∘ mfmap S f = mfmap S (g ⊙ f).
   Proof.
-    intros.
-  Abort.
+    intros. do 2 rewrite mfmap_to_mfmapd.
+    now rewrite (mfmapd_mfmapd S).
+  Qed.
 
-  (** *** Naturality w.r.t. <<ret>> *)
+  (** *** Naturality w.r.t. <<mret>> *)
   (******************************************************************************)
   Lemma mfmap_comp_mret {A B} :
     forall (f : K -> A -> B) (a : A) (k : K),
       mfmap (T k) f (mret T k a) = mret T k (f k a).
   Proof.
-  Abort.
+    intros. rewrite mfmap_to_mfmapd.
+    now rewrite mfmapd_comp_mret.
+  Qed.
 
   (** *** Fusion of <<mfmap>> with <<mbinddt>> *)
   (******************************************************************************)
@@ -643,16 +826,15 @@ Section DecoratedMonad.
     (S : Type -> Type)
     `{DTPreModule W S T}
     `{! DTM W T}
-    (j i : K)
-    (Hneq : j <> i)
+    {j : K}
     {A : Type}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
-  Theorem kbindd_mret :
+  Theorem kbindd_id :
       kbindd S j (mret T j ∘ (extract (W ×))) = @id (S A).
   Proof.
-    intros. unfold kbindd. rewrite <- (mbindd_mret S).
+    intros. unfold kbindd. rewrite <- (mbindd_id S).
     fequal. ext k [w a]. cbn. compare values k and j.
   Qed.
 
@@ -666,7 +848,9 @@ Section DecoratedMonad.
     - rewrite mbindd_comp_mret. cbn. compare values k and j.
   Qed.
 
-  Theorem kbindd_kbindd_neq : forall (g : W * A -> T i A) (f : W * A -> T j A),
+  Theorem kbindd_kbindd_neq :
+    forall {i : K} (Hneq : j <> i)
+      (g : W * A -> T i A) (f : W * A -> T j A),
       kbindd S i g ∘ kbindd S j f =
       mbindd S (compose_dm (btgd T i g) (btgd T j f)).
   Proof.
@@ -682,7 +866,9 @@ Section DecoratedMonad.
     now autorewrite with tea_tgt_eq.
   Qed.
 
-  Theorem kbindd_comp_mret_neq : forall (f : W * A -> T j A) (a : A),
+  Theorem kbindd_comp_mret_neq :
+    forall (i : K) (Hneq : j <> i)
+      (f : W * A -> T j A) (a : A),
       kbindd (T i) j f (mret T i a) = mret T i a.
   Proof.
     intros. unfold kbindd. rewrite (mbindd_comp_mret).
@@ -720,58 +906,201 @@ Section DecoratedMonad.
 
 End DecoratedMonad.
 
-(*
-(** ** Laws for functor structure (<<mfmap>>) *)
+(** ** Decorated functors (<<kfmapd>>) *)
+(******************************************************************************)
+Section DecoratedFunctor.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule W S T}
+    `{! DTM W T}
+    {j : K}.
+
+  (** *** Composition and identity law *)
+  (******************************************************************************)
+    Theorem kfmapd_id : forall A,
+      kfmapd S j (extract (W ×)) = @id (S A).
+  Proof.
+    intros. unfold kfmapd.
+    rewrite <- (mfmapd_id S).
+    fequal. ext k. compare values j and k.
+    - now autorewrite with tea_tgt.
+    - now autorewrite with tea_tgt.
+  Qed.
+
+  Theorem kfmapd_kfmapd : forall A,
+    forall (g : W * A -> A) (f : W * A -> A),
+      kfmapd S j g ∘ kfmapd S j f =
+      kfmapd S j (fun '(w, a) => g (w, f (w, a))).
+  Proof.
+    intros. unfold kfmapd.
+    rewrite (mfmapd_mfmapd S). fequal.
+    ext k [w a]. compare values j and k.
+    - now autorewrite with tea_tgt.
+    - now autorewrite with tea_tgt_neq.
+  Qed.
+
+  (** *** Composition with <<mret>> *)
+  (******************************************************************************)
+  Lemma kfmapd_comp_mret_eq : forall A,
+    forall (f : W * A -> A) (a : A),
+      kfmapd (T j) j f (mret T j a) = mret T j (f (Ƶ, a)).
+  Proof.
+    intros. unfold kfmapd. rewrite mfmapd_comp_mret.
+    now autorewrite with tea_tgt.
+  Qed.
+
+  Lemma kfmapd_comp_mret_neq : forall A,
+    forall (k : K) (neq : k <> j) (f : W * A -> A) (a : A),
+      kfmapd (T k) j f (mret T k a) = mret T k a.
+  Proof.
+    intros. unfold kfmapd. rewrite mfmapd_comp_mret.
+    now autorewrite with tea_tgt_neq.
+  Qed.
+
+  (** *** Lesser operations as special cases *)
+  (******************************************************************************)
+  Lemma kfmap_to_kfmapd {A} (f : A -> A) :
+    kfmap S j f = kfmapd S j (fun '(w, a) => f a).
+  Proof.
+    reflexivity.
+  Qed.
+
+End DecoratedFunctor.
+
+(** ** Monads (<<kbind>>) *)
+(******************************************************************************)
+Section Monad.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule W S T}
+    `{! DTM W T}
+    {j : K}.
+
+  (** *** Composition and identity law *)
+  (******************************************************************************)
+    Theorem kbind_id : forall A,
+      kbind S j (mret T j) = @id (S A).
+  Proof.
+    intros. unfold kbind.
+    rewrite <- (mbind_id S). fequal.
+    ext k. compare values j and k.
+    - now autorewrite with tea_tgt_eq.
+    - now autorewrite with tea_tgt_neq.
+  Qed.
+
+  Theorem kbind_kbind : forall A,
+      forall (g f : A -> T j A),
+        kbind S j g ∘ kbind S j f =
+        kbind S j (fun (a : A) => kbind (T j) j g (f a)).
+  Proof.
+    intros. unfold kbind.
+    rewrite (mbind_mbind S). fequal.
+    ext k a. compare values j and k.
+    - now autorewrite with tea_tgt_eq.
+    - autorewrite with tea_tgt_neq.
+      rewrite (mbind_comp_mret k).
+      now autorewrite with tea_tgt_neq.
+  Qed.
+
+  (** *** Composition with <<mret>> *)
+  (******************************************************************************)
+  Lemma kbind_comp_mret_eq : forall A,
+    forall (f : A -> T j A) (a : A),
+      kbind (T j) j f (mret T j a) = f a.
+  Proof.
+    intros. unfold kbind. rewrite mbind_comp_mret.
+    now autorewrite with tea_tgt_eq.
+  Qed.
+
+  Lemma kbind_comp_mret_neq : forall A,
+    forall (i : K) (Hneq : j <> i) (f : A -> T j A) (a : A),
+      kbind (T i) j f (mret T i a) = mret T i a.
+  Proof.
+    intros. unfold kbind. rewrite mbind_comp_mret.
+    now autorewrite with tea_tgt_neq.
+  Qed.
+
+  (** *** Lesser operations as special cases *)
+  (******************************************************************************)
+  Lemma kfmap_to_kbind {A} (f : A -> A) :
+    kfmap S j f = kbind S j (mret T j ∘ f).
+  Proof.
+    unfold kfmap, kbind.
+    rewrite mfmap_to_mbind.
+    fequal. ext k. compare values j and k.
+    now autorewrite with tea_tgt_eq.
+    now autorewrite with tea_tgt_neq.
+  Qed.
+
+End Monad.
+
+(** ** Functors (<<kfmap>>) *)
 (******************************************************************************)
 Section Functor.
 
   Context
     (S : Type -> Type)
     `{DTPreModule W S T}
-    `{! DTM W T}.
+    `{! DTM W T}
+    {j : K}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
-  Theorem mfmap_id : forall A,
-      mfmap S (const (@id A)) = @id (S A).
+  Theorem kfmap_id : forall A,
+      kfmap S j (@id A) = @id (S A).
   Proof.
-    intros. apply (dtp_mbinddt_mret W S T).
+    intros. unfold kfmap.
+    rewrite <- (mfmap_id S).
+    fequal. ext k. compare values k and j.
+    now autorewrite with tea_tgt_eq.
+    now autorewrite with tea_tgt_neq.
   Qed.
 
-  Theorem mfmap_mfmap {A B C} : forall
-      (g : K -> B -> C) (f : K -> A -> B),
-      mfmap S g ∘ mfmap S f = mfmap S (g ⊙ f).
+  Theorem kfmap_kfmap : forall (A : Type) (g f : A -> A),
+      kfmap S j g ∘ kfmap S j f = kfmap S j (g ∘ f).
   Proof.
-    intros. change_left (fmap (fun x => x) (mfmap S g) ∘ mfmap S f).
-    unfold mfmap, mfmapd, mfmapdt.
-    rewrite (dtp_mbinddt_mbinddt W S T (fun x => x) (fun x => x)).
-    fequal.
-    - ext X Y [x y]. easy.
-    -
-  Abort.
+    intros. unfold kfmap.
+    rewrite (mfmap_mfmap S). fequal.
+    ext k. unfold Category.comp, kconst_comp.
+    compare values j and k.
+    - now autorewrite with tea_tgt_eq.
+    - now autorewrite with tea_tgt_neq.
+  Qed.
 
-  (** *** Naturality w.r.t. <<ret>> *)
+  (** *** Naturality w.r.t. <<mret>> *)
   (******************************************************************************)
-  Lemma mfmap_comp_mret {A B} :
-    forall (f : K -> A -> B) (a : A) (k : K),
-      mfmap (T k) f (mret T k a) = mret T k (f k a).
+  Lemma kfmap_comp_kret_eq {A} :
+    forall (f : A -> A) (a : A),
+      kfmap (T j) j f (mret T j a) = mret T j (f a).
   Proof.
-  Abort.
+    intros. unfold kfmap. rewrite mfmap_comp_mret.
+    now rewrite tgt_eq.
+  Qed.
 
-  (** *** Fusion of <<mfmap>> with <<mbinddt>> *)
-  (******************************************************************************)
-  Lemma mfmap_mbinddt {A B C} : forall
-      `{Applicative F}
-      (g : K -> B -> C) (f : forall (k : K), W * A -> F (T k B)),
-      fmap F (mfmap S g) ∘ mbinddt S F f = mbinddt S F (fun k '(w, a) => fmap F (mfmap (T k) g) (f k (w, a))).
+  Lemma kfmap_comp_kret_neq {A} :
+    forall (i : K) (Hneq : j <> i) (f : A -> A) (a : A),
+      kfmap (T i) j f (mret T i a) = mret T i a.
   Proof.
-    intros. unfold mfmap, mfmapd, mfmapdt.
-    rewrite (dtp_mbinddt_mbinddt W S T F (fun x => x)).
-    fequal.
-    - ext X Y [x y]. now rewrite Mult_compose_identity1.
-    - ext k [w a]. cbn. repeat fequal. ext k2 [w2 b].
-      cbn. easy.
+    intros. unfold kfmap. rewrite mfmap_comp_mret.
+    rewrite tgt_neq; auto.
+  Qed.
+
+  (** *** Fusion of <<kfmap>> with <<kbindd>> *)
+  (******************************************************************************)
+  Lemma kfmap_kbindd {A} : forall
+      (g : A -> A) (f : W * A -> T j A),
+      kfmap S j g ∘ kbindd S j f = kbindd S j (fun '(w, a) => kfmap (T j) j g (f (w, a))).
+  Proof.
+    intros. unfold kfmap, kbindd. rewrite mfmap_to_mbindd.
+    rewrite (mbindd_mbindd S). fequal. ext k [w a].
+    compare values j and k.
+    - autorewrite with tea_tgt_eq.
+      rewrite mfmap_to_mbindd. fequal.
+      ext k' [w' a']. unfold compose; cbn. reflexivity.
+    - autorewrite with tea_tgt_neq. unfold compose; cbn.
+      rewrite (mbindd_comp_mret). rewrite tgt_neq; auto.
   Qed.
 
 End Functor.
-*)

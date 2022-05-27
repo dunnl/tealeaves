@@ -378,6 +378,18 @@ Section runBatch_naturality.
       now rewrite natural_runBatch.
   Qed.
 
+  Context
+    `{ApplicativeMorphism F G ψ}.
+
+  Lemma runBatch_morphism `(ϕ : A -> F B) `(j : @Batch A B X) :
+    @ψ X (runBatch ϕ j) = runBatch (@ψ B ∘ ϕ) j.
+  Proof.
+    induction j.
+    - cbn. now rewrite (appmor_pure F G).
+    - cbn. rewrite ap_morphism_1.
+      now rewrite IHj.
+  Qed.
+
 End runBatch_naturality.
 
 (** ** <<runBatch>> is an applicative morphism **)
