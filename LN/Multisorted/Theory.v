@@ -3,29 +3,22 @@
 From Tealeaves Require Import
      Util.Prelude
      Util.EqDec_eq LN.Atom LN.AtomSet
-     LN.Multisorted.Operations.
+     LN.Multisorted.Operations
+     LN.Multisorted.OperationsEq.
 
 From Multisorted Require Import
-     Classes.DecoratedMonad
-     Classes.ListableMonad.
+     Classes.DTM
+     Theory.DTMContainer
+     Theory.DTMSchedule.
 
 Import Monoid.Notations.
 Import LN.AtomSet.Notations.
 Import Classes.SetlikeFunctor.Notations.
-Import Multisorted.Classes.SetlikeFunctor.Notations.
 Import Operations.Notations.
+Import DTMContainer.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope set_scope.
-
-(* TODO Figure out why this notation is being hidden by <<Multisorted.Classes.ListableMonad.>> *)
-#[local] Notation "x ∈ t" :=
-  (toset _ t x) (at level 50) : tealeaves_scope.
-
-Notation "↑" := (btg).
-Arguments btg {ix} {T}%function_scope {MReturn0} {A}%type_scope k _%function_scope.
-Arguments subst_loc {ix} {T}%function_scope {H0} {k}.
-Arguments open_loc {ix} {T}%function_scope {H0} {k}.
 
 (** * Lemmas for local reasoning *)
 (** The following lemmas govern the behavior of the <<*_loc>> operations of
@@ -35,58 +28,21 @@ Arguments open_loc {ix} {T}%function_scope {H0} {k}.
       use <<Hint Rewrite ... using ...>> clauses and typically prefer
       <<autorewrite*>>, which only uses hints whose side conditions are
       discharged by the associated tactic. *)
+(******************************************************************************)
 
 Create HintDb tea_local.
 
 Section locally_nameless_utilities.
 
   Context
-    `{DecoratedMultisortedMonad
-        (Row nat) (mn_op := Monoid_op_Row)
-        (mn_unit := Monoid_unit_Row) T}
-    `{! forall k, Tomlist (T k)} `{! ListableMultisortedMonad T}.
+    (S : Type -> Type)
+    `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    `{! DTM (list K) T}.
 
-  Implicit Types (k j : K).
-
-  (** ** [toset] and [mret] *)
-  (** TODO KLUDGE : These are mostly redundant and should go elsewhere, but
-      there are some typeclass issues that need to be resolved
-      first. *)
-  (******************************************************************************)
-  Lemma in_mret_iff {A} : forall k1 k2 (a a' : A),
-      (k2, a') ∈m mret T k1 a <-> k1 = k2 /\ a = a'.
-  Proof.
-    intros.
-    (* KLUDGE *)
-    (*
-    change ((@tomset_Listable H H (T k1) (H2 k1))) with
-        ((fun k => @tomset_Listable H H (T k) (H2 k)) k1).
-    now rewrite (in_mret_iff F T).
-    *)
-  Admitted.
-
-  Lemma in_mret_iff_eq {A} : forall k (a a' : A),
-      (k, a') ∈m mret T k a <-> a = a'.
-  Proof.
-    intros.
-    now rewrite in_mret_iff.
-  Qed.
-
-  Lemma ind_mret_iff {A} : forall k j w (a a' : A),
-      (j, (w, a')) ∈md mret T k a <-> k = j /\ w = Ƶ /\ a = a'.
-  Proof.
-    intros. change ((@tomset_Listable ix ix (T k) (H2 k))) with
-                ((fun k => @tomset_Listable ix ix (T k) (H2 k)) k).
-    now rewrite (ind_mret_iff T w j k a a').
-  Qed.
-
-  Lemma ind_mret_iff_eq {A} : forall k w (a a' : A),
-      (k, (w, a')) ∈md mret T k a <-> w = Ƶ /\ a = a'.
-  Proof.
-    intros. now rewrite (ind_mret_iff).
-  Qed.
+  Implicit Types (l : leaf) (w : list K) (t : S leaf) (x : atom) (j k : K) (n : nat).
 
   (** ** (In)equalities between leaves *)
+  (******************************************************************************)
   Lemma Fr_injective : forall (x y : atom),
       (Fr x = Fr y) <-> (x = y).
   Proof.
@@ -115,62 +71,62 @@ Section locally_nameless_utilities.
 
   (** ** [subst_loc] *)
   (******************************************************************************)
-  Lemma subst_loc_eq : forall k (u : T k leaf) x,
-      subst_loc x u (Fr x) = u.
+  Lemma subst_loc_eq : forall k u x,
+      subst_loc k x u (Fr x) = u.
   Proof. intros. cbn. now compare values x and x. Qed.
 
-  Lemma subst_loc_neq : forall k (u : T k leaf) x y,
-      y <> x -> subst_loc x u (Fr y) = mret T k (Fr y).
+  Lemma subst_loc_neq : forall k u x y,
+      y <> x -> subst_loc k x u (Fr y) = mret T k (Fr y).
   Proof. intros. cbn. now compare values x and y. Qed.
 
   Lemma subst_loc_b : forall k u x n,
-      subst_loc x u (Bd n) = mret T k (Bd n).
+      subst_loc k x u (Bd n) = mret T k (Bd n).
   Proof. reflexivity. Qed.
 
-  Lemma subst_loc_fr_neq : forall k (u : T k leaf) l x,
-      Fr x <> l -> subst_loc x u l = mret T k l.
+  Lemma subst_loc_fr_neq : forall k u l x,
+      Fr x <> l -> subst_loc k x u l = mret T k l.
   Proof.
     introv neq. unfold subst_loc.
     destruct l as [a|?]; [compare values x and a | reflexivity ].
   Qed.
 
-  Lemma subst_in_mret_eq : forall k x l (u : T k leaf),
-      (mret T k l) '{k | x ~> u} = subst_loc x u l.
+  Lemma subst_in_mret_eq : forall k x l u,
+      (mret T k l) '{k | x ~> u} = subst_loc k x u l.
   Proof.
-    intros. unfold subst. compose near l on left.
-    now rewrite (bindk_comp_mret_eq k).
+    intros. unfold subst.
+    now rewrite kbind_comp_mret_eq.
   Qed.
 
-  Lemma subst_in_mret_neq : forall k j x l (u : T j leaf),
+  Lemma subst_in_mret_neq : forall k j x l u,
       j <> k ->
       (mret T k l) '{j | x ~> u} = mret T k l.
   Proof.
-    intros. unfold subst. compose near l on left.
-    now rewrite (bindk_comp_mret_neq j).
+    intros. unfold subst.
+    now rewrite kbind_comp_mret_neq.
   Qed.
 
   (** ** [open_loc] *)
   (******************************************************************************)
-  Lemma open_loc_lt : forall k (u : T k leaf) w n,
-      n < w k -> open_loc u (w, Bd n) = mret T k (Bd n).
+  Lemma open_loc_lt : forall k u w n,
+      n < countk k w -> open_loc k u (w, Bd n) = mret T k (Bd n).
   Proof.
-    introv ineq. unfold open_loc. compare naturals n and (w k).
+    introv ineq. unfold open_loc. compare naturals n and (countk k w).
   Qed.
 
-  Lemma open_loc_gt : forall k (u : T k leaf) n w,
-      n > w k -> open_loc u (w, Bd n) = mret T k (Bd (n - 1)).
+  Lemma open_loc_gt : forall k u n w,
+      n > countk k w -> open_loc k u (w, Bd n) = mret T k (Bd (n - 1)).
   Proof.
-    introv ineq. unfold open_loc. compare naturals n and (w k).
+    introv ineq. unfold open_loc. compare naturals n and (countk k w).
   Qed.
 
-  Lemma open_loc_eq : forall k w (u : T k leaf),
-      open_loc u (w, Bd (w k)) = u.
+  Lemma open_loc_eq : forall k w u,
+      open_loc k u (w, Bd (countk k w)) = u.
   Proof.
-    introv. unfold open_loc. compare naturals (w k) and (w k).
+    introv. unfold open_loc. compare naturals (countk k w) and (countk k w).
   Qed.
 
-  Lemma open_loc_atom : forall k (u : T k leaf) w x,
-      open_loc u (w, Fr x) = mret T k (Fr x).
+  Lemma open_loc_atom : forall k u w x,
+      open_loc k u (w, Fr x) = mret T k (Fr x).
   Proof.
     reflexivity.
   Qed.
@@ -204,28 +160,17 @@ Section locally_nameless_utilities.
     intros. propext; intro hyp; contradict hyp; congruence.
   Qed.
 
-  (** ** Local closure *)
-(*
-  Lemma is_bound_or_free_op: forall (w1 w2 : Row nat) (l : leaf),
-      is_bound_or_free k (w1, l) ->
-      is_bound_or_free k (w2 ● w1, l).
-  Proof.
-    unfold monoid_op, Monoid_op_Row, monoid_op, Monoid_op_plus.
-    unfold is_bound_or_free. introv hyp.
-    destruct l; [easy |]. lia.
-  Qed.  *)
-
 End locally_nameless_utilities.
 
 Tactic Notation "unfold_monoid" :=
-  repeat unfold monoid_op, Monoid_op_Row, Monoid_op_plus,
-  monoid_unit, Monoid_unit_Row, Monoid_unit_zero in *.
+  repeat unfold monoid_op, Monoid_op_list, Monoid_op_list,
+  monoid_unit, Monoid_unit_list, Monoid_unit_list in *.
 
 Tactic Notation "unfold_lia" :=
   unfold_monoid; lia.
 
-Hint Rewrite @in_mret_iff @in_mret_iff_eq
-     @ind_mret_iff @ind_mret_iff_eq using typeclasses eauto : tea_local.
+Hint Rewrite @in_mret_iff @in_mret_eq_iff
+     @ind_mret_iff @ind_mret_eq_iff using typeclasses eauto : tea_local.
 
 Hint Rewrite Fr_injective Fr_injective_not_iff B_neq_Fr : tea_local.
 #[export] Hint Resolve Fr_injective_not : tea_local.
@@ -245,57 +190,64 @@ Tactic Notation "simpl_local" := (autorewrite* with tea_local).
 Section locally_nameless_metatheory.
 
   Context
-    `{DecoratedMultisortedModule
-        (Row nat) (mn_op := Monoid_op_Row)
-        (mn_unit := Monoid_unit_Row) F T}
-    `{! Tomlist F} `{! forall k, Tomlist (T k)} `{! ListableMultisortedModule F T}.
-
-
-  Import Operations.Notations.
+    (S : Type -> Type)
+    `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    `{! DTM (list K) T}.
 
   Implicit Types
            (k : K) (j : K)
            (l : leaf) (p : leaf)
-           (x : atom) (t : F leaf)
-           (w : Row nat) (n : nat).
+           (x : atom) (t : S leaf)
+           (w : list K) (n : nat).
 
   (** ** Leaf analysis: substitution with contexts *)
-  Lemma ind_subst_loc_iff : forall k l w j p (u : T k leaf) x,
-      (j, (w, p)) ∈md subst_loc x u l <->
+  (******************************************************************************)
+  Lemma ind_subst_loc_iff : forall k l w j p u x,
+      (w, (j, p)) ∈md subst_loc k x u l <->
       l <> Fr x /\ k = j /\ w = Ƶ /\ l = p \/ (* l is not replaced *)
-      l = Fr x /\ (j, (w, p)) ∈md u. (* l is replaced *)
+      l = Fr x /\ (w, (j, p)) ∈md u. (* l is replaced *)
   Proof.
-    introv. compare l to atom x; simpl_local; intuition.
+    introv. compare l to atom x.
+    - rewrite subst_loc_eq.
+      clear; firstorder.
+    - rewrite subst_loc_neq; auto.
+      rewrite ind_mret_iff.
+      rewrite Fr_injective.
+      firstorder.
+    - rewrite subst_loc_b.
+      rewrite ind_mret_iff.
+      rewrite B_neq_Fr.
+      firstorder.
   Qed.
 
-  Corollary ind_subst_loc_iff_eq : forall k l w p (u : T k leaf) x,
-      (k, (w, p)) ∈md subst_loc x u l <->
+  Corollary ind_subst_loc_iff_eq : forall k l w p u x,
+      (w, (k, p)) ∈md subst_loc k x u l <->
       l <> Fr x /\ w = Ƶ /\ l = p \/
-      l = Fr x /\ (k, (w, p)) ∈md u.
+      l = Fr x /\ (w, (k, p)) ∈md u.
   Proof.
-    introv. rewrite ind_subst_loc_iff. intuition.
+    introv. rewrite ind_subst_loc_iff. clear. firstorder.
   Qed.
 
-  Corollary ind_subst_loc_iff_neq : forall k l w j p (u : T k leaf) x,
+  Corollary ind_subst_loc_iff_neq : forall k l w j p u x,
       k <> j ->
-      (j, (w, p)) ∈md subst_loc x u l <->
-      l = Fr x /\ (j, (w, p)) ∈md u.
+      (w, (j, p)) ∈md subst_loc k x u l <->
+      l = Fr x /\ (w, (j, p)) ∈md u.
   Proof.
     introv neq. rewrite ind_subst_loc_iff. intuition.
   Qed.
 
   Theorem ind_subst_iff : forall k j w t u l x,
       (* <<l>> occurs in the result of a <<subst>> IFF *)
-      (j, w, l) ∈md t '{k | x ~> u} <->
+      (w, j, l) ∈md t '{k | x ~> u} <->
       (* <<l>> is an occurrence in <<t>> not of the same sort as the <<subst>> OR *)
-      k <> j /\ (j, w, l) ∈md t \/
+      k <> j /\ (w, j, l) ∈md t \/
       (* <<l>> is an occurrence of the same sort but not an occurrence of <<x>> OR *)
-      k = j /\ (k, w, l) ∈md t /\ l <> Fr x \/
+      k = j /\ (w, k, l) ∈md t /\ l <> Fr x \/
       (* <<x>> occurs and <<l>> is the any leaf in a substituted <<u>> *)
-      exists w1 w2 : Row nat, (k, w1, Fr x) ∈md t /\ (j, w2, l) ∈md u /\ w = w1 ● w2.
+      exists w1 w2 : list K, (w1, k, Fr x) ∈md t /\ (w2, j, l) ∈md u /\ w = w1 ● w2.
   Proof with auto.
     intros. compare values k and j.
-    - rewrite (ind_subst_iff_eq F). setoid_rewrite (ind_subst_loc_iff_eq j).
+    - rewrite (ind_subst_iff_eq S). setoid_rewrite (ind_subst_loc_iff_eq j).
       split.
       + intros [l' [n1 [n2 conditions]]].
         right. destruct conditions as [c1 [[c2|c2] c3]].
@@ -303,39 +255,39 @@ Section locally_nameless_metatheory.
           rewrite monoid_id_l. auto. }
         { subst. right. destructs c2; subst. eauto. }
       + intros [[contra ?] | [ [? [in_t neq]] | hyp ] ].
-        { contradiction.  }
-        { exists l w (Ƶ : Row nat). rewrite monoid_id_l. split... }
-        { destruct hyp as [w1 [w2 ?]]. exists (Fr x) w1 w2. intuition. }
-    - rewrite (ind_subst_iff_neq F)... split.
-      + intros [? | [p [n1 [n2 [in_t in_local]]]]]...
+        { contradiction. }
+        { exists w (Ƶ : list K) l. rewrite monoid_id_l. split... }
+        { destruct hyp as [w1 [w2 ?]]. exists w1 w2 (Fr x). intuition. }
+    - rewrite (ind_subst_neq_iff S)... split.
+      + intros [? | [n1 [n2 [p [in_t in_local]]]]]...
         rewrite (ind_subst_loc_iff_neq k) in in_local...
         right. right. exists n1 n2. destruct in_local as [[? ?] ?]; subst...
-      + intros [[? ?] | [[? ?] | ?]].
+      + intros [[? ?] | [[? ?] | [w1 [w2 rest]]]].
         { auto. }
         { contradiction. }
-        { right. exists (Fr x). simpl_local... }
+        { right. exists w1 w2 (Fr x). simpl_local... }
   Qed.
 
   Corollary ind_subst_iff_eq : forall k w t u l x,
-      (k, w, l) ∈md t '{k | x ~> u} <->
-      (k, w, l) ∈md t /\ l <> Fr x \/
-      exists w1 w2 : Row nat, (k, w1, Fr x) ∈md t /\ (k, w2, l) ∈md u /\ w = w1 ● w2.
+      (w, k, l) ∈md t '{k | x ~> u} <->
+      (w, k, l) ∈md t /\ l <> Fr x \/
+      exists w1 w2 : list K, (w1, k, Fr x) ∈md t /\ (w2, k, l) ∈md u /\ w = w1 ● w2.
   Proof.
     intros. rewrite ind_subst_iff. intuition.
   Qed.
 
   Corollary ind_subst_iff_neq : forall k j w t u l x,
       k <> j ->
-      (j, w, l) ∈md t '{k | x ~> u} <->
-      (j, w, l) ∈md t \/
-      exists w1 w2 : Row nat, (k, w1, Fr x) ∈md t /\ (j, w2, l) ∈md u /\ w = w1 ● w2.
+      (w, j, l) ∈md t '{k | x ~> u} <->
+      (w, j, l) ∈md t \/
+      exists w1 w2 : list K, (w1, k, Fr x) ∈md t /\ (w2, j, l) ∈md u /\ w = w1 ● w2.
   Proof.
     intros. rewrite ind_subst_iff. intuition.
   Qed.
 
   (** ** Leaf analysis: substitution without contexts *)
-  Lemma in_subst_loc_iff : forall k l j p (u : T k leaf) x,
-      (j, p) ∈m subst_loc x u l <->
+  Lemma in_subst_loc_iff : forall k l j p u x,
+      (j, p) ∈m subst_loc k x u l <->
       l <> Fr x /\ k = j /\ l = p \/
       l = Fr x /\ (j, p) ∈m u.
   Proof.
@@ -735,7 +687,7 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
     intros. unfold subst.
     compose near t on left.
     compose near t on right.
-    unfold bindk. rewrite 2(rmod_mbind_mbind F T).
+    unfold kbind. rewrite 2(rmod_mbind_mbind F T).
     fequal. ext j. now apply subst_subst_neq_loc.
   Qed.
 
@@ -763,7 +715,7 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
   Proof with auto.
     intros. unfold subst.
     compose near t.
-    rewrite 2(bindk_bindk_eq F).
+    rewrite 2(kbind_kbind_eq F).
     fequal. now apply subst_subst_eq_local.
   Qed.
 
@@ -839,8 +791,8 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
   Proof.
     intros. compose near t on right.
     unfold open, close, subst.
-    rewrite (bindkr_fmapkr F).
-    symmetry. apply (bindkr_proper_bindk F k t).
+    rewrite (kbindr_kfmapr F).
+    symmetry. apply (kbindr_proper_kbind F k t).
     symmetry. apply subst_spec_local.
   Qed.
 
@@ -852,10 +804,10 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
           end.
 
   Theorem subst_by_leaf_spec : forall k x l,
-      subst F k x (mret T k l) = fmapk F k (subst_loc_leaf k x l).
+      subst F k x (mret T k l) = kfmap F k (subst_loc_leaf k x l).
   Proof.
     intros. unfold subst. ext t.
-    apply (tomset_bindk_proper_fmapk F).
+    apply (tomset_kbind_proper_kfmap F).
     intros l' l'in. destruct l'.
     - cbn. compare values x and a.
     - reflexivity.
@@ -1099,14 +1051,14 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
     introv lcu2. ext [w l]. rewrite kcompkr_spec.
     unfold compose. compare l to atom x.
     - cbn. simpl_local. compare values x and x.
-      symmetry. apply (bindkr_proper_id (T k)). intros ? [?|?] hin.
+      symmetry. apply (kbindr_proper_id (T k)). intros ? [?|?] hin.
       + trivial.
       + specialize (lcu2 _ _ hin). cbn in lcu2. cbn. unfold_monoid.
         compare naturals n and (w k + w0 k).
     - cbn. simpl_local. compare values x and a.
-      now rewrite (bindkr_comp_mret_eq (T k) k).
+      now rewrite (kbindr_comp_mret_eq (T k) k).
       (* <<< TODO standardize this lemma *)
-    - cbn. rewrite (bindkr_comp_mret_eq (T k) k).
+    - cbn. rewrite (kbindr_comp_mret_eq (T k) k).
       compare naturals n and (w k); simpl_local.
       + rewrite monoid_id_l. cbn. compare naturals n and (w k).
       + rewrite monoid_id_l. cbn. compare naturals (w k) and (w k).
@@ -1120,7 +1072,7 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
   Proof.
     introv lc. compose near t.
     unfold open, subst at 1 3.
-    rewrite (bindk_bindkr F), (bindkr_bindk F).
+    rewrite (kbind_kbindr F), (kbindr_kbind F).
     fequal. apply subst_open_eq_loc; auto.
   Qed.
 
@@ -1133,7 +1085,7 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
   Proof.
     introv neq lc. compose near t.
     unfold open, subst at 1 3.
-    rewrite (bindk_bindkr F). (bindkr_bindk F).
+    rewrite (kbind_kbindr F). (kbindr_kbind F).
     fequal. apply subst_open_loc; auto.
   Qed.
    *)
@@ -1186,7 +1138,7 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
   Proof.
     introv neq lc.
     compose near t. unfold subst, open.
-    unfold bindk, bindkr.
+    unfold kbind, kbindr.
     rewrite (mbind_mbindr F), (mbindr_mbind F).
     fequal. now rewrite subst_open_neq_loc.
   Qed.
@@ -1216,8 +1168,8 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
       t '(k | u) = t '(k | mret T k (Fr x)) '{k | x ~> u}.
   Proof.
     introv fresh. compose near t on right.
-    unfold subst, open. rewrite (bindk_bindkr F).
-    apply (bindkr_proper F). intros.
+    unfold subst, open. rewrite (kbind_kbindr F).
+    apply (kbindr_proper F). intros.
     assert (a <> Fr x).
     { apply (in_of_ind F) in H5.
       rewrite <- free_iff_freeset in fresh.
@@ -1245,7 +1197,7 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
   Proof.
     introv neq lc. compose near t.
     unfold open, subst.
-    rewrite (bindk_bindkr F), (bindkr_bindk F).
+    rewrite (kbind_kbindr F), (kbindr_kbind F).
     fequal. apply subst_open_var_loc; auto.
   Qed.
 
@@ -1268,12 +1220,12 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
   Proof.
     intros. compose near t on left.
     unfold open, close.
-    rewrite (bindkr_fmapkr F).
-    apply (bindkr_proper_id F); intros.
+    rewrite (kbindr_kfmapr F).
+    apply (kbindr_proper_id F); intros.
     auto using open_close_loc.
   Qed.
 
-  (** ** Opening by a leaf reduces to an [fmapkr] *)
+  (** ** Opening by a leaf reduces to an [kfmapr] *)
   Definition open_leaf_loc k (u : leaf) : Row nat * leaf -> leaf :=
     fun wl => match wl with
            | (w, l) =>
@@ -1289,10 +1241,10 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
            end.
 
   Lemma open_by_leaf_spec : forall k l,
-      open F k (mret T k l) = fmapkr F k (open_leaf_loc k l).
+      open F k (mret T k l) = kfmapr F k (open_leaf_loc k l).
   Proof.
     intros. unfold open. ext t.
-    apply (bindkr_proper_fmapkr F).
+    apply (kbindr_proper_kfmapr F).
     intros w l' l'in. destruct l'.
     - reflexivity.
     - cbn. compare naturals n and (w k).
@@ -1319,8 +1271,8 @@ Hint Rewrite @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
   Proof.
     introv fresh. compose near t on left.
     rewrite open_by_leaf_spec. unfold close.
-    rewrite (fmapkr_fmapkr_eq F k).
-    apply (fmapkr_proper_id F).
+    rewrite (kfmapr_kfmapr_eq F k).
+    apply (kfmapr_proper_id F).
     intros w l lin.
     assert (l <> Fr x).
     { rewrite neq_symmetry. apply (in_of_ind F) in lin.

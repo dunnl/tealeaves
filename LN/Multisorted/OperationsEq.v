@@ -17,7 +17,7 @@ Import Multisorted.Theory.DTMContainer.Notations.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope set_scope.
 
-Section test_notations.
+Section operation_specifications.
 
   Import Operations.Notations.
 
@@ -89,7 +89,7 @@ Section test_notations.
     now rewrite (ind_kbindd_eq_iff S).
   Qed.
 
-  Lemma ind_open_iff_neq : forall k j l w u t,
+  Lemma ind_open_neq_iff : forall k j l w u t,
       k <> j ->
       (w, (k, l)) ∈md t '(j | u) <-> (w, (k, l)) ∈md t \/ exists w1 w2 l1,
           (w1, (j, l1)) ∈md t /\ (w2, (k, l)) ∈md open_loc j u (w1, l1) /\ w = w1 ● w2.
@@ -102,37 +102,38 @@ Section test_notations.
   (******************************************************************************)
   Lemma ind_close_iff_eq : forall k l w x t,
       (w, (k, l)) ∈md '[k | x] t <-> exists l1,
-        (w, (k, l1)) ∈md t /\ close_loc k x (w, l1) = l.
+        (w, (k, l1)) ∈md t /\ l = close_loc k x (w, l1).
   Proof.
     intros. unfold close.
-    Fail rewrite (ind_kfmapd_eq_iff).
-  Abort.
+    rewrite (ind_kfmapd_eq_iff S).
+    easy.
+  Qed.
 
-  Lemma ind_close_iff_neq : forall k j l w x t,
+  Lemma ind_close_neq_iff : forall k j l w x t,
       j <> k ->
       (w, (k, l)) ∈md '[j | x] t <-> (w, (k, l)) ∈md t.
   Proof.
     intros. unfold close.
-    now rewrite (ind_kfmapd_iff_neq F).
+    now rewrite (ind_kfmapd_neq_iff S).
   Qed.
 
   (** *** Substitution *)
   (******************************************************************************)
   Lemma ind_subst_iff_eq : forall k w l u t x,
-      (w, (k, l)) ∈md t '{k | x ~> u} <-> exists l1 w1 w2,
-        (k, (w1, l1)) ∈md t /\ (k, (w2, l)) ∈md subst_loc k x u l1 /\ w = w1 ● w2.
+      (w, (k, l)) ∈md t '{k | x ~> u} <-> exists w1 w2 l1,
+        (w1, (k, l1)) ∈md t /\ (w2, (k, l)) ∈md subst_loc k x u l1 /\ w = w1 ● w2.
   Proof.
     intros. unfold subst.
-    now rewrite (ind_kbind_iff_eq F T k).
+    now rewrite (ind_kbind_eq_iff S).
   Qed.
 
-  Lemma ind_subst_iff_neq : forall k j w l u t x,
+  Lemma ind_subst_neq_iff : forall k j w l u t x,
       k <> j ->
-      (w, (k, l)) ∈md t '{j | x ~> u} <-> (w, (k, l)) ∈md t \/ exists l1 w1 w2,
-        (j, (w1, l1)) ∈md t /\ (k, (w2, l)) ∈md subst_loc j x u l1 /\ w = w1 ● w2.
+      (w, (k, l)) ∈md t '{j | x ~> u} <-> (w, (k, l)) ∈md t \/ exists w1 w2 l1,
+        (w1, (j, l1)) ∈md t /\ (w2, (k, l)) ∈md subst_loc j x u l1 /\ w = w1 ● w2.
   Proof.
     intros. unfold subst.
-    now rewrite (ind_kbind_iff_neq F T).
+    now rewrite (ind_kbind_neq_iff S); auto.
   Qed.
 
   (** ** Context-agnostic leaf analysis of operations *)
@@ -140,58 +141,58 @@ Section test_notations.
 
   (** *** Opening *)
   (******************************************************************************)
-  Lemma in_open_iff_eq : forall k l u t,
-      (k, l) ∈m t '(k | u) <-> exists l1 w1,
-        (k, (w1, l1)) ∈md t /\ (k, l) ∈m open_loc k u (w1, l1).
+  Lemma in_open_eq_iff : forall k l u t,
+      (k, l) ∈m t '(k | u) <-> exists w1 l1,
+        (w1, (k, l1)) ∈md t /\ (k, l) ∈m open_loc k u (w1, l1).
   Proof.
     intros. unfold open.
-    now rewrite (in_kbindd_iff_eq F T k).
+    now rewrite (in_kbindd_eq_iff S).
   Qed.
 
-  Lemma in_open_iff_neq : forall k j l u t,
+  Lemma in_open_neq_iff : forall k j l u t,
       k <> j ->
-      (k, l) ∈m t '(j | u) <-> (k, l) ∈m t \/ exists l1 w1,
-          (j, (w1, l1)) ∈md t /\ (k, l) ∈m open_loc j u (w1, l1).
+      (k, l) ∈m t '(j | u) <-> (k, l) ∈m t \/ exists w1 l1,
+          (w1, (j, l1)) ∈md t /\ (k, l) ∈m open_loc j u (w1, l1).
   Proof.
     intros. unfold open.
-    now rewrite (in_kbindd_iff_neq F T k j).
+    now rewrite (in_kbindd_neq_iff S); auto.
   Qed.
 
   (** *** Closing *)
   (******************************************************************************)
-  Lemma in_close_iff_eq : forall k l x t,
+  Lemma in_close_eq_iff : forall k l x t,
       (k, l) ∈m '[k | x] t <-> exists w l1,
-        (w, (k, l1)) ∈md t /\ close_loc k x (w, l1) = l.
+        (w, (k, l1)) ∈md t /\ l = close_loc k x (w, l1).
   Proof.
     intros. unfold close.
-    now rewrite (in_kfmapd_iff_eq F).
+    now rewrite (in_kfmapd_eq_iff S).
   Qed.
 
-  Lemma in_close_iff_neq : forall k j l x t,
+  Lemma in_close_neq_iff : forall k j l x t,
       k <> j ->
       (k, l) ∈m '[j | x] t <-> (k, l) ∈m t.
   Proof.
     intros. unfold close.
-    now rewrite (in_kfmapd_iff_neq F).
+    now rewrite (in_kfmapd_neq_iff S); auto.
   Qed.
 
   (** *** Substitution *)
   (******************************************************************************)
-  Lemma in_subst_iff_eq : forall k l u t x,
+  Lemma in_subst_eq_iff : forall k l u t x,
       (k, l) ∈m t '{k | x ~> u} <-> exists l1,
         (k, l1) ∈m t /\ (k, l) ∈m subst_loc k x u l1.
   Proof.
     intros. unfold subst.
-    now rewrite (in_kbind_iff_eq F T t k).
+    now rewrite (in_kbind_eq_iff S).
   Qed.
 
-  Lemma in_subst_iff_neq : forall k j l u t x,
+  Lemma in_subst_neq_iff : forall k j l u t x,
       j <> k ->
       (k, l) ∈m t '{j | x ~> u} <-> (k, l) ∈m t \/ exists l1,
         (j, l1) ∈m t /\ (k, l) ∈m subst_loc j x u l1.
   Proof.
     intros. unfold subst.
-    now rewrite (in_kbind_iff_neq F T).
+    now rewrite (in_kbind_neq_iff S).
   Qed.
 
   (** ** Properties of free variables *)
@@ -199,36 +200,36 @@ Section test_notations.
 
   (** *** Specifications for [free] and [freeset] *)
   (******************************************************************************)
-  Theorem in_free_iff : forall (k : K) (t : F leaf) (x : atom),
-      x ∈ free F k t <-> (k, Fr x) ∈m t.
+  Theorem in_free_iff : forall (k : K) (t : S leaf) (x : atom),
+      x ∈ free S k t <-> (k, Fr x) ∈m t.
   Proof.
-    intros. unfold free. rewrite (in_bind_iff list). split.
-    - intros [l [lin xin]]. rewrite (in_tolistk_iff) in lin.
+    intros. unfold free. rewrite (Tealeaves.Classes.SetlikeMonad.in_bind_iff list). split.
+    - intros [l [lin xin]]. rewrite <- (in_iff_in_toklist) in lin.
       destruct l as [a|n].
       + cbv in xin. destruct xin as [?|[]].
-        subst. now rewrite in_iff_in_mlist.
+        subst. assumption.
       + cbv in xin. destruct xin as [].
-    - intros. exists (Fr x). rewrite (in_tolistk_iff).
-      rewrite <- (in_iff_in_mlist). split; [assumption| ].
+    - intros. exists (Fr x). rewrite <- (in_iff_in_toklist).
+      split; [assumption| ].
       cbv. now left.
   Qed.
 
   Theorem in_free_iff_T : forall (k j : K) (t : T j leaf) (x : atom),
       x ∈ free (T j) k t <-> (k, Fr x) ∈m t.
   Proof.
-    intros. unfold free. rewrite (in_bind_iff list). split.
-    - intros [l [lin xin]]. rewrite (in_tolistk_iff) in lin.
+    intros. unfold free. rewrite (Tealeaves.Classes.SetlikeMonad.in_bind_iff list). split.
+    - intros [l [lin xin]]. rewrite <- (in_iff_in_toklist) in lin.
       destruct l as [a|n].
       + cbv in xin. destruct xin as [?|[]].
-        subst. now rewrite in_iff_in_mlist.
+        subst. assumption.
       + cbv in xin. destruct xin as [].
-    - intros. exists (Fr x). rewrite (in_tolistk_iff).
-      rewrite <- (in_iff_in_mlist). split; [assumption| ].
+    - intros. exists (Fr x). rewrite <- (in_iff_in_toklist).
+      split; [assumption| ].
       cbv. now left.
   Qed.
 
-  Theorem free_iff_freeset : forall (k : K) (t : F leaf) (x : atom),
-      x ∈ free F k t <-> x ∈@ freeset F k t.
+  Theorem free_iff_freeset : forall (k : K) (t : S leaf) (x : atom),
+      x ∈ free S k t <-> x ∈@ freeset S k t.
   Proof.
     intros. unfold freeset. rewrite <- in_atoms_iff.
     reflexivity.
@@ -246,58 +247,58 @@ Section test_notations.
   Local Notation "x @ < k , w > ∈ t" :=
     (tomsetd _ t (w, (k, x))) (k at level 5, w at level 5, at level 50) : tealeaves_multi_scope.
 
-  Lemma free_open_iff_eq : forall k u t x,
-      x ∈ free F k (t '(k | u)) <-> exists l1 w,
+  Lemma free_open_eq_iff : forall k u t x,
+      x ∈ free S k (t '(k | u)) <-> exists w l1,
         l1 @ <k, w> ∈ t /\ x ∈ free (T k) k (open_loc k u (w, l1)).
   Proof.
     intros. rewrite in_free_iff. setoid_rewrite in_free_iff_T.
-    now rewrite in_open_iff_eq.
+    now rewrite in_open_eq_iff.
   Qed.
 
-  Lemma free_open_iff_neq : forall k j u t x,
+  Lemma free_open_neq_iff : forall k j u t x,
       k <> j ->
-      x ∈ free F j (t '(k | u)) <-> x ∈ free F j t \/ exists l1 w,
+      x ∈ free S j (t '(k | u)) <-> x ∈ free S j t \/ exists w l1,
           (w, (k, l1)) ∈md t /\ x ∈ free (T k) j (open_loc k u (w, l1)).
   Proof.
     intros. rewrite 2(in_free_iff). setoid_rewrite in_free_iff_T.
-    now rewrite in_open_iff_neq; auto.
+    now rewrite in_open_neq_iff; auto.
   Qed.
 
   (** *** Closing *)
   (******************************************************************************)
-  Lemma free_close_iff_eq : forall k t x y,
-      y ∈ free F k ('[k | x] t) <-> exists w l1,
-        l1 @ <k, w> ∈ t /\ close_loc k x (w, l1) = Fr y.
+  Lemma free_close_eq_iff : forall k t x y,
+      y ∈ free S k ('[k | x] t) <-> exists w l1,
+        l1 @ <k, w> ∈ t /\ Fr y = close_loc k x (w, l1).
   Proof.
     intros. rewrite in_free_iff.
-    now rewrite in_close_iff_eq.
+    now rewrite in_close_eq_iff.
   Qed.
 
-  Lemma free_close_iff_neq : forall k j t x,
+  Lemma free_close_neq_iff : forall k j t x,
       k <> j ->
-      x ∈ free F j ('[k | x] t) <-> x ∈ free F j t.
+      x ∈ free S j ('[k | x] t) <-> x ∈ free S j t.
   Proof.
     intros. rewrite 2(in_free_iff).
-    now rewrite in_close_iff_neq; auto.
+    now rewrite in_close_neq_iff; auto.
   Qed.
 
   (** *** Substitution *)
   (******************************************************************************)
-  Lemma free_subst_iff_eq : forall k u t x y,
-      y ∈ free F k (t '{k | x ~> u}) <-> exists l1,
+  Lemma free_subst_eq_iff : forall k u t x y,
+      y ∈ free S k (t '{k | x ~> u}) <-> exists l1,
         (k, l1) ∈m t /\ y ∈ free (T k) k (subst_loc k x u l1).
   Proof.
     intros. rewrite (in_free_iff). setoid_rewrite (in_free_iff_T).
-    now rewrite (in_subst_iff_eq).
+    now rewrite (in_subst_eq_iff).
   Qed.
 
-  Lemma free_subst_iff_neq : forall j k u t x y,
+  Lemma free_subst_neq_iff : forall j k u t x y,
       k <> j ->
-      y ∈ free F j (t '{k | x ~> u}) <-> y ∈ free F j t \/ exists l1,
+      y ∈ free S j (t '{k | x ~> u}) <-> y ∈ free S j t \/ exists l1,
         (k, l1) ∈m t /\ y ∈ free (T k) j (subst_loc k x u l1).
   Proof.
     intros. rewrite 2(in_free_iff). setoid_rewrite (in_free_iff_T).
-    now rewrite (in_subst_iff_neq); auto.
+    now rewrite (in_subst_neq_iff); auto.
   Qed.
 
-End LocallyNameless.
+End operation_specifications.

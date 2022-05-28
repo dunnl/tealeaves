@@ -75,4 +75,5 @@ Multisorted/Theory/DTMSchedule.v
 #Multisorted/Classes/ListableFunctor.v
 #Multisorted/Classes/ListableMonad.v
 LN/Multisorted/Operations.v
+LN/Multisorted/OperationsEq.v
 #LN/Multisorted/Theory.v

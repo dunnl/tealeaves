@@ -68,6 +68,21 @@ Section shape_and_contents.
 
 End shape_and_contents.
 
+(** ** Notations *)
+(******************************************************************************)
+Module Notations.
+
+  Notation "x ∈md t" :=
+    (tomsetd _ t x) (at level 50) : tealeaves_multi_scope.
+
+  Notation "x ∈m t" :=
+    (tomset _ t x) (at level 50) : tealeaves_multi_scope.
+
+End Notations.
+
+Import Notations.
+
+
 (** ** Auxiliary lemmas for constant applicative functors *)
 (******************************************************************************)
 Section lemmas.
@@ -116,6 +131,105 @@ Section lemmas.
   Qed.
 
 End lemmas.
+
+(** ** Relating <<∈m>> and <<∈md>> *)
+(******************************************************************************)
+Section DTM_membership_lemmas.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  Lemma ind_iff_in : forall (k : K) (A : Type) (a : A) (t : S A),
+      (k, a) ∈m t <-> exists w, (w, (k, a)) ∈md t.
+  Proof.
+    intros. unfold tomset, tomsetd, tomlist, compose.
+    induction (tomlistd S t).
+    - cbv; split; intros []; easy.
+    - rewrite fmap_list_cons, in_list_cons. rewrite IHl.
+      setoid_rewrite in_list_cons.
+      split; [ intros [Hfst|[w Hrest]] | intros [w [rest1|rest2]]].
+      + destruct a0 as [w [k' a']]. exists w. left.
+        rewrite Hfst. easy.
+      + exists w. now right.
+      + left. now rewrite <- rest1.
+      + right. rewrite <- IHl.
+        rewrite (in_fmap_iff list). now exists (w, (k, a)).
+  Qed.
+
+  Corollary ind_implies_in : forall (k : K) (A : Type) (a : A) (w : W) (t : S A),
+      (w, (k, a)) ∈md t -> (k, a) ∈m t.
+  Proof.
+    intros. rewrite ind_iff_in. eauto.
+  Qed.
+
+End DTM_membership_lemmas.
+
+(** ** Characterizing membership in list operations *)
+(******************************************************************************)
+Section DTM_tolist.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  Lemma in_filterk_iff : forall (A : Type) (l : list (W * Tag A)) (k : K) (a : A) (w : W),
+      (w, a) ∈ filterk k l <-> (w, (k, a)) ∈ l.
+  Proof.
+    intros. induction l.
+    - cbn. easy.
+    - destruct a0 as [w' [j a']]. cbn. compare values k and j.
+      + cbn. rewrite IHl. clear. split.
+        { intros [hyp1 | hyp2].
+          - inverts hyp1. now left.
+          - now right.
+        }
+        { intros [hyp1 | hyp2].
+          - inverts hyp1. now left.
+          - now right. }
+      + rewrite <- IHl. split.
+        { intro hyp. now right. }
+        { intros [hyp1 | hyp2].
+          - inverts hyp1. contradiction.
+          - auto. }
+  Qed.
+
+  Lemma ind_iff_in_tomlistd : forall (A : Type) (k : K) (a : A) (w : W) (t : S A),
+      (w, (k, a)) ∈md t <-> (w, (k, a)) ∈ tomlistd S t.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma in_iff_in_tomlistd : forall (A : Type) (k : K) (a : A) (t : S A),
+      (k, a) ∈m t <-> (k, a) ∈ tomlist S t.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma ind_iff_in_toklistd : forall (A : Type) (k : K) (a : A) (w : W) (t : S A),
+      (w, (k, a)) ∈md t <-> (w, a) ∈ toklistd S k t.
+  Proof.
+    intros. unfold toklistd. unfold compose.
+    rewrite in_filterk_iff. reflexivity.
+  Qed.
+
+  Lemma in_iff_in_toklist : forall (A : Type) (k : K) (a : A) (t : S A),
+      (k, a) ∈m t <-> a ∈ toklist S k t.
+  Proof.
+    intros. unfold toklist. unfold compose.
+    rewrite (in_fmap_iff list). split.
+    - intro hyp. rewrite ind_iff_in in hyp.
+      destruct hyp as [w' hyp].
+      exists (w', a). rewrite ind_iff_in_toklistd in hyp.
+      auto.
+    - intros [[w' a'] [hyp1 hyp2]]. rewrite ind_iff_in.
+      exists w'. rewrite <- ind_iff_in_toklistd in hyp1. cbn in hyp2.
+      now subst.
+  Qed.
+
+End DTM_tolist.
 
 (** ** Interaction between <<tomlistd>> and <<mret>>/<<mbindd>> *)
 (******************************************************************************)
@@ -202,54 +316,6 @@ Section DTM_tolist.
 
 End DTM_tolist.
 
-(** ** Notations *)
-(******************************************************************************)
-Module Notations.
-
-  Notation "x ∈md t" :=
-    (tomsetd _ t x) (at level 50) : tealeaves_multi_scope.
-
-  Notation "x ∈m t" :=
-    (tomset _ t x) (at level 50) : tealeaves_multi_scope.
-
-End Notations.
-
-Import Notations.
-
-(** ** Relating <<∈m>> and <<∈md>> *)
-(******************************************************************************)
-Section DTM_membership_lemmas.
-
-  Context
-    (S : Type -> Type)
-    `{DTPreModule W S T}
-    `{! DTM W T}.
-
-  Lemma ind_iff_in : forall (k : K) (A : Type) (a : A) (t : S A),
-      (k, a) ∈m t <-> exists w, (w, (k, a)) ∈md t.
-  Proof.
-    intros. unfold tomset, tomsetd, tomlist, compose.
-    induction (tomlistd S t).
-    - cbv; split; intros []; easy.
-    - rewrite fmap_list_cons, in_list_cons. rewrite IHl.
-      setoid_rewrite in_list_cons.
-      split; [ intros [Hfst|[w Hrest]] | intros [w [rest1|rest2]]].
-      + destruct a0 as [w [k' a']]. exists w. left.
-        rewrite Hfst. easy.
-      + exists w. now right.
-      + left. now rewrite <- rest1.
-      + right. rewrite <- IHl.
-        rewrite (in_fmap_iff list). now exists (w, (k, a)).
-  Qed.
-
-  Corollary ind_implies_in : forall (k : K) (A : Type) (a : A) (w : W) (t : S A),
-      (w, (k, a)) ∈md t -> (k, a) ∈m t.
-  Proof.
-    intros. rewrite ind_iff_in. eauto.
-  Qed.
-
-End DTM_membership_lemmas.
-
 (** ** Characterizing occurrences post-operation *)
 (******************************************************************************)
 Section DTM_membership.
@@ -272,6 +338,33 @@ Section DTM_membership.
 
   Corollary in_mret_iff : forall (A : Type) (a1 a2 : A) (k1 k2 : K),
       (k2, a2) ∈m mret T k1 a1 <-> k1 = k2 /\ a1 = a2.
+  Proof.
+    intros. rewrite ind_iff_in. setoid_rewrite ind_mret_iff.
+    firstorder.
+  Qed.
+
+  Lemma ind_mret_eq_iff : forall (A : Type) (a1 a2 : A) (k : K) (w : W),
+      (w, (k, a2)) ∈md mret T k a1 <-> w = Ƶ /\ a1 = a2.
+  Proof.
+    intros. rewrite ind_mret_iff. clear. firstorder.
+  Qed.
+
+  Lemma ind_mret_neq_iff : forall (A : Type) (a1 a2 : A) (k j : K) (w : W),
+      k <> j ->
+      (w, (j, a2)) ∈md mret T k a1 <-> False.
+  Proof.
+    intros. rewrite ind_mret_iff. firstorder.
+  Qed.
+
+  Corollary in_mret_eq_iff : forall (A : Type) (a1 a2 : A) (k : K),
+      (k, a2) ∈m mret T k a1 <-> a1 = a2.
+  Proof.
+    intros. rewrite in_mret_iff. firstorder.
+  Qed.
+
+  Corollary in_mret_neq_iff : forall (A : Type) (a1 a2 : A) (k j : K),
+      k <> j ->
+      (j, a2) ∈m mret T k a1 <-> False.
   Proof.
     intros. rewrite ind_iff_in. setoid_rewrite ind_mret_iff.
     firstorder.
@@ -628,10 +721,12 @@ Section DTM_membership_targetted.
  Corollary in_kbind_eq_iff :
     forall `(f : A -> T j A) (t : S A) (a2 : A),
       (j, a2) ∈m kbind S j f t <->
-      exists (w1 : W) (a1 : A),
-        (w1, (j, a1)) ∈md t /\ (j, a2) ∈m f a1.
+      exists (a1 : A),
+        (j, a1) ∈m t /\ (j, a2) ∈m f a1.
   Proof.
-    intros. rewrite kbind_to_kbindd. now rewrite (in_kbindd_eq_iff).
+    intros. rewrite kbind_to_kbindd. rewrite (in_kbindd_eq_iff).
+    setoid_rewrite ind_iff_in at 2.
+    unfold compose. cbn. firstorder.
   Qed.
 
   Corollary in_kbind_neq_iff :
