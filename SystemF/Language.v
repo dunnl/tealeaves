@@ -1,5 +1,7 @@
 From Tealeaves Require Import
-     Functors.List.
+     Functors.List
+     LN.Leaf LN.Atom LN.AtomSet LN.AssocList
+     LN.Multisorted.Operations.
 
 From Multisorted Require Import
      Classes.DTM
@@ -65,8 +67,7 @@ Definition SystemF (k : K)  (v : Type) : Type :=
   | KTerm => term v
   end.
 
-(*
-(** * Testing the syntax *)
+(** ** Example syntax and notations *)
 (******************************************************************************)
 Module examples.
 
@@ -74,17 +75,18 @@ Module examples.
     (x y z : atom)
     (c1 c2 c3 : base_typ).
 
-  (** ** Raw abstract syntax *)
-  (** tm_abstract syntax trees without notations or coercions *)
+  (** *** Raw abstract syntax *)
+  (** Abstract syntax trees without notations or coercions *)
+  (******************************************************************************)
   Module raw.
 
     (** *** Constants and variables *)
     Example typ_1 : typ leaf := ty_v (Fr x).
     Example typ_2 : typ leaf := ty_v (Fr y).
     Example typ_3 : typ leaf := ty_v (Fr z).
-    Example typ_4 : typ leaf := ty_v (B 0).
-    Example typ_5 : typ leaf := ty_v (B 1).
-    Example typ_6 : typ leaf := ty_v (B 2).
+    Example typ_4 : typ leaf := ty_v (Bd 0).
+    Example typ_5 : typ leaf := ty_v (Bd 1).
+    Example typ_6 : typ leaf := ty_v (Bd 2).
     Example typ_7 : typ leaf := ty_c c1.
     Example typ_8 : typ leaf := ty_c c2.
 
@@ -94,49 +96,62 @@ Module examples.
     Example typ_10 : typ leaf := ty_ar (ty_v (Fr x))
                                        (ty_v (Fr y)).
     Example typ_11 : typ leaf := ty_ar (ty_v (Fr x))
-                                       (ty_v (B 1)).
-    Example typ_12 : typ leaf := ty_ar (ty_v (B 1))
+                                       (ty_v (Bd 1)).
+    Example typ_12 : typ leaf := ty_ar (ty_v (Bd 1))
                                        (ty_c c1).
-    Example typ_13 : typ leaf := ty_ar (ty_ar (ty_v (B 0))
+    Example typ_13 : typ leaf := ty_ar (ty_ar (ty_v (Bd 0))
                                               (ty_v (Fr x)))
-                                       (ty_v (B 1)).
+                                       (ty_v (Bd 1)).
     Example typ_14 : typ leaf := ty_ar (ty_c c2)
                                        (ty_ar (ty_v (Fr x))
-                                              (ty_v (B 1))).
-    Example typ_15 : typ leaf := ty_ar (ty_ar (ty_v (B 2))
+                                              (ty_v (Bd 1))).
+    Example typ_15 : typ leaf := ty_ar (ty_ar (ty_v (Bd 2))
                                               (ty_c c1))
                                        (ty_ar (ty_v (Fr y))
                                               (ty_v (Fr x))).
-    Example typ_16 : typ leaf := ty_ar (ty_ar (ty_v (B 2))
-                                              (ty_v (B 1)))
+    Example typ_16 : typ leaf := ty_ar (ty_ar (ty_v (Bd 2))
+                                              (ty_v (Bd 1)))
                                        (ty_ar (ty_v (Fr y))
                                               (ty_v (Fr x))).
 
     (** *** Universal types *)
-    Example typ_17 : typ leaf := ty_univ (ty_ar (ty_v (B 0))
-                                                (ty_v (B 0))).
-    Example typ_18 : typ leaf := ty_univ (ty_ar (ty_ar (ty_v (B 2))
-                                                       (ty_v (B 1)))
+    Example typ_17 : typ leaf := ty_univ (ty_ar (ty_v (Bd 0))
+                                                (ty_v (Bd 0))).
+    Example typ_18 : typ leaf := ty_univ (ty_ar (ty_ar (ty_v (Bd 2))
+                                                       (ty_v (Bd 1)))
                                                 (ty_ar (ty_v (Fr y))
                                                        (ty_v (Fr x)))).
   End raw.
 
+  (** *** Notations and coercions *)
+  (******************************************************************************)
 
   Definition ty_c_ : base_typ -> typ leaf := @ty_c leaf.
   Definition ty_v_ : leaf -> typ leaf := @ty_v leaf.
   Coercion ty_c_ : base_typ >-> typ.
   Coercion ty_v_ : leaf >-> typ.
   Coercion Fr : atom >-> leaf.
-  Coercion B : nat >-> leaf.
+  Coercion Bd : nat >-> leaf.
+
+  Definition tm_var_ : leaf -> term leaf := @tm_var leaf.
+  Coercion tm_var_ : leaf >-> term.
 
   (* ⟹ at 50+1 to avoid assoc. conflict *)
   Notation "A ⟹ B" := (ty_ar A B) (at level 51, right associativity).
   Notation "∀ τ" := (ty_univ τ) (at level 60).
 
-  (** ** Pretyy tm_abstract syntax for types *)
+  Notation "A ⟹ B" := (ty_ar A B) (at level 51, right associativity).
+  Notation "∀ τ" := (ty_univ τ) (at level 60).
+  Notation "'λ' X ⋅ body" := (tm_abs X body) (at level 45).
+  Notation "[ t1 ] [ t2 ]" := (tm_app t1 t2) (at level 40).
+  Notation "'Λ' body" := (tm_tab body) (at level 45).
+  Notation "[ t1 ] @ [ t2 ]" := (tm_tap t1 t2) (at level 40).
+
+  Check (Λ λ (Bd 0) ⋅ (Bd 0)).
+
   Module pretty.
 
-    (** *** Constants and variables *)
+    (** Constants and variables *)
     Example typ_1 : typ leaf := x.
     Example typ_2 : typ leaf := y.
     Example typ_3 : typ leaf := Fr z.
@@ -145,21 +160,21 @@ Module examples.
     Goal (x : typ leaf) = Fr x. reflexivity. Qed.
 
     Example typ_4 : typ leaf := 0.
-    Example typ_5 : typ leaf := B 1.
+    Example typ_5 : typ leaf := Bd 1.
     Example typ_6 : typ leaf := 2.
     Example typ_7 : typ leaf := c1.
     Example typ_8 : typ leaf := c2.
 
-    Goal (0 : typ leaf) = ty_v (B 0). reflexivity. Qed.
-    Goal (0 : typ leaf) = B 0. reflexivity. Qed.
+    Goal (0 : typ leaf) = ty_v (Bd 0). reflexivity. Qed.
+    Goal (0 : typ leaf) = Bd 0. reflexivity. Qed.
     Goal (c1 : typ leaf) = ty_c c1. reflexivity. Qed.
 
-    (** *** Simple types *)
+    (** Simple types *)
     Example typ_9  : typ leaf := x ⟹ x.
     Example typ_10 : typ leaf := x ⟹ y.
 
     Goal ((x ⟹ x : typ leaf) = Fr x ⟹ Fr x). reflexivity. Qed.
-    Goal ((x ⟹ 1 : typ leaf) = Fr x ⟹ B 1). reflexivity. Qed.
+    Goal ((x ⟹ 1 : typ leaf) = Fr x ⟹ Bd 1). reflexivity. Qed.
 
     Example typ_11 : typ leaf := x ⟹ 1.
     Example typ_12 : typ leaf := x ⟹ c1.
@@ -171,7 +186,7 @@ Module examples.
     Example typ_15 : typ leaf := (2 ⟹ c1) ⟹ (y ⟹ x).
     Example typ_16 : typ leaf := (2 ⟹ 1) ⟹ (y ⟹ x).
 
-    (** *** Universal types *)
+    (** Universal types *)
     Example typ_17 : typ leaf := ∀ (0 ⟹ 0).
     Goal ∀ (0 ⟹ 0) = ∀ 0 ⟹ 0. reflexivity. Qed.
 
@@ -183,42 +198,19 @@ Module examples.
 
   End pretty.
 
-  (** ** Demo of opening operation *)
-  Goal open typ KType (Fr x) (B 0) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr x) (B 1) = B 0. reflexivity. Qed.
-  Goal open typ KType (Fr x) (Fr x) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr x) (Fr y) = Fr y. reflexivity. Qed.
-  Goal open typ KType (Fr y) (Fr x) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr y) (Fr y) = Fr y. reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ B 0) = (∀ (B 0)). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ B 1) = (∀ (Fr x)). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ (B 1 ⟹ B 0)) = (∀ Fr x ⟹ B 0). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ B 1 ⟹ B 2) = (∀ Fr x ⟹ B 1). reflexivity. Qed.
-
   Example term_1 : term leaf := tm_var (Fr x).
-  Example term_2 : term leaf := tm_var (B 0).
+  Example term_2 : term leaf := tm_var (Bd 0).
   Example term_3 : term leaf := tm_app term_1 term_2.
   Example term_4 : term leaf := tm_app term_3 term_3.
   (** Identity function on type [c1]. *)
-  Example term_5 : term leaf := tm_abs (ty_c c1) (tm_var (B 0)).
+  Example term_5 : term leaf := tm_abs (ty_c c1) (tm_var (Bd 0)).
   Example term_6 : term leaf := tm_app term_5 term_3.
   (** Polymorphic identity function. *)
-  Example term_7 : term leaf := tm_tab (tm_abs (ty_v (B 0))(tm_var (B 0))).
-  Example term_8 : term leaf := tm_tap (tm_tab (tm_abs (ty_v (B 0))(tm_var (B 0))))
+  Example term_7 : term leaf := tm_tab (tm_abs (ty_v (Bd 0))(tm_var (Bd 0))).
+  Example term_8 : term leaf := tm_tap (tm_tab (tm_abs (ty_v (Bd 0))(tm_var (Bd 0))))
                                        (ty_c c1).
 
-  Notation "'λ' X ⋅ body" := (tm_abs X body) (at level 45).
-  Notation "[ t1 ] [ t2 ]" := (tm_app t1 t2) (at level 40).
-  Notation "'Λ' body" := (tm_tab body) (at level 45).
-  Notation "[ t1 ] @ [ t2 ]" := (tm_tap t1 t2) (at level 40).
-
-  Definition tm_var_ : leaf -> term leaf := @tm_var leaf.
-  Coercion tm_var_ : leaf >-> term.
-
-  Check (Λ λ (B 0) ⋅ (B 0)).
-
 End examples.
-*)
 
 (** ** <<binddt>> operations *)
 (******************************************************************************)
@@ -251,7 +243,7 @@ Section operations.
 
 End operations.
 
-Instance: MReturn SystemF :=
+Instance MReturn_SystemF : MReturn SystemF :=
   fun A k => match k with
           | KType => ty_v
           | KTerm => tm_var
@@ -261,6 +253,46 @@ Instance MBind_type : MBind (list K2) SystemF typ := @bind_type.
 Instance MBind_term : MBind (list K2) SystemF term := @bind_term.
 Instance MBind_SystemF : forall k, MBind (list K2) SystemF (SystemF k) :=
   ltac:(intros [|]; typeclasses eauto).
+
+(** ** Example computations *)
+(******************************************************************************)
+Section example_computations.
+
+  Context
+    (x y z : atom)
+    (c1 c2 c3 : base_typ).
+
+  Definition ty_c_ : base_typ -> typ leaf := @ty_c leaf.
+  Definition ty_v_ : leaf -> typ leaf := @ty_v leaf.
+  Coercion ty_c_ : base_typ >-> typ.
+  Coercion ty_v_ : leaf >-> typ.
+  Coercion Fr : atom >-> leaf.
+  Coercion Bd : nat >-> leaf.
+
+  Definition tm_var_ : leaf -> term leaf := @tm_var leaf.
+  Coercion tm_var_ : leaf >-> term.
+
+  Notation "A ⟹ B" := (ty_ar A B) (at level 51, right associativity).
+  Notation "∀ τ" := (ty_univ τ) (at level 60).
+
+  Notation "A ⟹ B" := (ty_ar A B) (at level 51, right associativity).
+  Notation "∀ τ" := (ty_univ τ) (at level 60).
+  Notation "'λ' X ⋅ body" := (tm_abs X body) (at level 45).
+  Notation "[ t1 ] [ t2 ]" := (tm_app t1 t2) (at level 40).
+  Notation "'Λ' body" := (tm_tab body) (at level 45).
+  Notation "[ t1 ] @ [ t2 ]" := (tm_tap t1 t2) (at level 40).
+
+  (** ** Demo of opening operation *)
+  Goal open (T := SystemF) typ KType (Fr x) (Bd 0) = Fr x. reflexivity. Qed.
+  Goal open typ KType (Fr x) (Bd 1) = Bd 0. reflexivity. Qed.
+  Goal open typ KType (Fr x) (Fr x) = Fr x. reflexivity. Qed.
+  Goal open typ KType (Fr x) (Fr y) = Fr y. reflexivity. Qed.
+  Goal open typ KType (Fr y) (Fr x) = Fr x. reflexivity. Qed.
+  Goal open typ KType (Fr y) (Fr y) = Fr y. reflexivity. Qed.
+  Goal open typ KType (Fr x) (∀ Bd 0) = (∀ (Bd 0)). reflexivity. Qed.
+  Goal open typ KType (Fr x) (∀ Bd 1) = (∀ (Fr x)). reflexivity. Qed.
+  Goal open typ KType (Fr x) (∀ (Bd 1 ⟹ Bd 0)) = (∀ Fr x ⟹ Bd 0). reflexivity. Qed.
+  Goal open typ KType (Fr x) (∀ Bd 1 ⟹ Bd 2) = (∀ Fr x ⟹ Bd 1). reflexivity. Qed.
 
 Section DTM_instance_lemmas.
 
@@ -357,9 +389,8 @@ Proof.
     + now rewrite mbinddt_mret_typ.
 Qed.
 
-Lemma mbinddt_mbinddt_typ_generalized :
-  forall (A : Type)
-    (F : Type -> Type)
+Lemma mbinddt_mbinddt_typ :
+  forall (F : Type -> Type)
     (G : Type -> Type)
     `{Applicative F}
     `{Applicative G}
@@ -419,8 +450,7 @@ Proof.
 Qed.
 
 Lemma mbinddt_mbinddt_term :
-  forall (A : Type)
-    (F : Type -> Type)
+  forall (F : Type -> Type)
     (G : Type -> Type)
     `{Applicative F}
     `{Applicative G}
@@ -431,18 +461,106 @@ Lemma mbinddt_mbinddt_term :
 Proof.
 Admitted.
 
-(*
+Lemma mbinddt_morphism_typ :
+  forall (F : Type -> Type)
+    (G : Type -> Type)
+    `{ApplicativeMorphism F G ϕ}
+    `(f : forall k, list K2 * A -> F (SystemF k B)),
+    ϕ (typ B) ∘ mbinddt typ F f =
+    mbinddt typ G (fun k => ϕ (SystemF k B) ∘ f k).
+Proof.
+  intros. ext t. generalize dependent f. unfold compose. induction t; intro f.
+  - cbn. rewrite (appmor_pure F G). reflexivity.
+  - reflexivity.
+  - cbn.
+    Set Keyed Unification.
+    rewrite <- IHt. clear IHt.
+    Unset Keyed Unification.
+    cbn.
+    rewrite ap_morphism_1.
+    rewrite (appmor_pure F G).
+    reflexivity.
+  - cbn.
+    Set Keyed Unification.
+    rewrite <- IHt1. clear IHt1.
+    rewrite <- IHt2. clear IHt2.
+    Unset Keyed Unification.
+    rewrite ap_morphism_1.
+    rewrite ap_morphism_1.
+    rewrite (appmor_pure F G).
+    reflexivity.
+  - cbn.
+    Set Keyed Unification.
+    rewrite <- IHt. clear IHt.
+    Unset Keyed Unification.
+    rewrite ap_morphism_1.
+    rewrite (appmor_pure F G).
+    reflexivity.
+Qed.
+
+Lemma mbinddt_morphism_term :
+  forall (F : Type -> Type)
+    (G : Type -> Type)
+    `{ApplicativeMorphism F G ϕ}
+    `(f : forall k, list K2 * A -> F (SystemF k B)),
+    ϕ (term B) ∘ mbinddt term F f =
+    mbinddt term G (fun k => ϕ (SystemF k B) ∘ f k).
+Proof.
+  intros. ext t. generalize dependent f. unfold compose. induction t; intro f.
+  - reflexivity.
+  - cbn.
+    Set Keyed Unification.
+    rewrite <- IHt. clear IHt.
+    Unset Keyed Unification.
+    cbn.
+    do 2 rewrite ap_morphism_1.
+    rewrite (appmor_pure F G).
+    change (bind_type ?F ?f) with (mbinddt typ F f).
+    compose near t on left.
+    rewrite (mbinddt_morphism_typ F G).
+    reflexivity.
+  - cbn.
+    Set Keyed Unification.
+    rewrite <- IHt1. clear IHt1.
+    rewrite <- IHt2. clear IHt2.
+    Unset Keyed Unification.
+    rewrite ap_morphism_1.
+    rewrite ap_morphism_1.
+    rewrite (appmor_pure F G).
+    reflexivity.
+  - cbn.
+    Set Keyed Unification.
+    rewrite <- IHt. clear IHt.
+    Unset Keyed Unification.
+    rewrite ap_morphism_1.
+    rewrite (appmor_pure F G).
+    reflexivity.
+  - cbn.
+    Set Keyed Unification.
+    rewrite <- IHt. clear IHt.
+    Unset Keyed Unification.
+    cbn.
+    do 2 rewrite ap_morphism_1.
+    rewrite (appmor_pure F G).
+    change (bind_type ?F ?f) with (mbinddt typ F f).
+    compose near t0 on left.
+    rewrite (mbinddt_morphism_typ F G).
+    reflexivity.
+Qed.
+
 Instance: DTPreModule (list K2) typ SystemF :=
   {| dtp_mbinddt_mret := @mbinddt_mret_typ;
-     dtp_mbinddt_mbinddt := @mbinddt_mbindt_typ;
+     dtp_mbinddt_mbinddt := @mbinddt_mbinddt_typ;
+     dtp_mbinddt_morphism := @mbinddt_morphism_typ;
   |}.
 
 Instance: DTPreModule (list K2) term SystemF :=
   {| dtp_mbinddt_mret := @mbinddt_mret_term;
-     dtp_mbinddt_mbinddt := @mbinddt_mbindt_typ;
+     dtp_mbinddt_mbinddt := @mbinddt_mbinddt_term;
+     dtp_mbinddt_morphism := @mbinddt_morphism_term;
   |}.
-*)
 
+(*
 (** *** Rewriting operations in <<typ>> *)
 Section rw_tomlist_type.
 
@@ -479,7 +597,7 @@ Section rw_toklist_KTerm_type.
   Proof. reflexivity. Qed.
 
   Lemma rw_toklist_KTerm_type3 : forall (body : typ A), toklist typ KTerm (ty_univ body) = toklist typ KTerm body.
-  Proof. rewrite tomlistd. Qed.
+  Proof. Admitted.
 
   Lemma rw_toklist_KTerm_type4 : forall (t1 t2 : typ A), toklist typ KTerm (ty_ar t1 t2) = toklist typ KTerm t1 ++ toklist typ KTerm t2.
   Proof. intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
@@ -1031,3 +1149,4 @@ End rw_freeset_KTerm_term.
 
 Hint Rewrite rw_freeset_KTerm_term11 rw_freeset_KTerm_term12 rw_freeset_KTerm_term2
      rw_freeset_KTerm_term3 rw_freeset_KTerm_term4 rw_freeset_KTerm_term5 : sysf_rw.
+*)

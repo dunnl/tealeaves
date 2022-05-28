@@ -76,7 +76,7 @@ Section iterate.
   Corollary mfmapdt_to_runSchedule  :
     forall `{Applicative F} (A B : Type) (t : S A)
       `(f : K -> W * A -> F B),
-      mfmapdt S F f t = runSchedule (fun k '(w, a) => fmap F (mret T k) (f k (w, a))) (iterate S B t).
+      mfmapdt S F f t = runSchedule (fun k => fmap F (mret T k) ∘ f k) (iterate S B t).
   Proof.
     intros. rewrite mfmapdt_to_mbinddt. now rewrite mbinddt_to_runSchedule.
   Qed.
@@ -96,7 +96,7 @@ Section iterate.
   Qed.
 
   Corollary mfmapt_to_runBatch `{Applicative F} `(f : K -> A -> F B) (t : S A) :
-    mfmapt S F f t = runSchedule (fun k '(w, a) => fmap F (mret T k) (f k a)) (iterate S B t).
+    mfmapt S F f t = runSchedule (fun k => fmap F (mret T k) ∘ f k ∘ extract (W ×)) (iterate S B t).
   Proof.
     rewrite mfmapt_to_mbinddt. now rewrite mbinddt_to_runSchedule.
   Qed.
@@ -152,8 +152,8 @@ Section iterate.
   Proof.
     change t with (id t) at 1.
     rewrite <- (dtp_mbinddt_mret W S T).
-    rewrite mbinddt_to_runSchedule. fequal.
-    now ext k [w a].
+    rewrite mbinddt_to_runSchedule.
+    reflexivity.
   Qed.
 
 End iterate.

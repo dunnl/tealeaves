@@ -2,9 +2,7 @@ From Tealeaves Require Export
      Theory.Product
      Classes.DecoratedTraversableModule
      LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Operations
-     LN.Operations
-     LN.Theory.
+     LN.Operations LN.Theory.
 
 Export List.ListNotations.
 Export LN.AtomSet.Notations.

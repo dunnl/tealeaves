@@ -62,7 +62,7 @@ Section MultisortedDTM_typeclasses.
     Class DTPreModule :=
       { dtp_monoid :> Monoid W;
         dtp_mbinddt_mret : forall A,
-            mbinddt W T S (fun a => a) (fun k '(w, a) => mret T k a) = @id (S A);
+        mbinddt W T S (fun a => a) (mret T ◻ const (extract (W ×))) = @id (S A);
         dtp_mbinddt_mbinddt : forall
             (F : Type -> Type)
             (G : Type -> Type)
@@ -131,14 +131,14 @@ Section derived_operations.
 
   Definition mfmapdt (F : Type -> Type) `{Fmap F} `{Mult F} `{Pure F}
              `(f : forall k, W * A -> F B) : S A -> F (S B) :=
-    mbinddt S F (fun k '(w, a) => fmap F (mret T k) (f k (w, a))).
+    mbinddt S F (fun k => fmap F (mret T k) ∘ f k).
 
   Definition mbindd `(f : forall k, W * A -> T k B) : S A -> S B :=
     mbinddt S (fun x => x) f.
 
   Definition mfmapt (F : Type -> Type) `{Fmap F} `{Mult F} `{Pure F}
              `(f : forall k, A -> F B) : S A -> F (S B) :=
-    mbindt F (fun k a => fmap F (mret T k) (f k a)).
+    mbindt F (fun k => fmap F (mret T k) ∘ f k).
 
   Definition mbind `(f : forall k, A -> T k B) : S A -> S B :=
     mbindd (f ◻ const (extract (W ×))).
@@ -169,7 +169,7 @@ Section derived_operations.
 
   Lemma mfmapdt_to_mbinddt :
     forall (f : K -> W * A -> F B),
-      mfmapdt F f = mbinddt S F (fun k '(w, a) => fmap F (mret T k) (f k (w, a))).
+      mfmapdt F f = mbinddt S F (fun k => fmap F (mret T k) ∘ f k).
   Proof.
     reflexivity.
   Qed.
@@ -185,23 +185,21 @@ Section derived_operations.
     forall (f : K -> W * A -> B),
       mfmapd f = mbinddt S (fun A => A) (mret T ◻ f).
   Proof.
-    intros. unfold mfmapd.
-    unfold mfmapdt. fequal. now ext k [w a].
+    reflexivity.
   Qed.
 
   Lemma mfmapt_to_mbinddt :
     forall (f : K -> A -> F B),
-      mfmapt F f = mbinddt S F (fun k '(w, a) => fmap F (mret T k) (f k a)).
+      mfmapt F f = mbinddt S F (fun k => fmap F (mret T k) ∘ f k ∘ extract (W ×)).
   Proof.
-    intros. unfold mfmapt.
-    unfold mbindt. fequal. now ext k [w a].
+    reflexivity.
   Qed.
 
   Lemma mfmap_to_mbinddt :
     forall (f : K -> A -> B),
       mfmap f = mbinddt S (fun A => A) (mret T ◻ f ◻ const (extract (W ×))).
   Proof.
-    intros. unfold mfmap. now rewrite mfmapd_to_mbinddt.
+    reflexivity.
   Qed.
 
 End derived_operations.
@@ -224,9 +222,6 @@ Section DTM_laws.
               with (fun (k : K) => (pure F ∘ (mret T k ∘ extract (W ×) (A := A)))).
     2:{ ext k [w a]. easy. }
     rewrite <- (dtp_mbinddt_morphism W S T (fun x => x) F (ϕ := @pure F _)).
-    replace (fun k : K => mret T k ∘ extract (prod W))
-      with (fun (k : K) '((w, a) : W * A) => mret T k a).
-    2: { ext k [w a]. easy. }
     now rewrite (dtp_mbinddt_mret W S T).
   Qed.
 
@@ -258,8 +253,7 @@ Section DecoratedMonad.
       mbindd S (mret T ◻ const (extract (W ×))) = @id (S A).
   Proof.
     intros. unfold mbindd.
-    rewrite <- (dtp_mbinddt_mret W S T).
-    fequal. now ext k [w a].
+    now rewrite <- (dtp_mbinddt_mret W S T).
   Qed.
 
   Theorem mbindd_mbindd {A B C} : forall (g : W * B ~k~> T C) (f : W * A ~k~> T B),
@@ -269,7 +263,10 @@ Section DecoratedMonad.
     intros. unfold mbindd.
     change_left (fmap (fun x => x) (mbinddt S (fun x : Type => x) g) ∘ (mbinddt S (fun x : Type => x) f)).
     rewrite (dtp_mbinddt_mbinddt W S T (fun x => x) (fun x => x)).
-    fequal. now ext x y [z w].
+    ext t.
+    change (compose_dtm g f) with
+        (fun (k : K) '(w, a) => mbinddt (T k) (fun x : Type => x) (g ◻ const (incr w)) (f k (w, a))).
+    fequal. now rewrite Mult_compose_identity2.
   Qed.
 
   (** *** Right unit law for monads *)
@@ -306,15 +303,13 @@ Section DecoratedMonad.
   Lemma mfmapd_to_mbindd {A B} (f : W * A -k-> B) :
     mfmapd S f = mbindd S (fun k => mret T k ∘ f k).
   Proof.
-    unfold mfmapd, mfmapdt, mbindd.
-    fequal. now ext k [w a].
+    reflexivity.
   Qed.
 
   Lemma mfmap_to_mbindd {A B} (f : A -k-> B) :
     mfmap S f = mbindd S (fun k => mret T k ∘ f k ∘ extract (W ×)).
   Proof.
-    unfold mfmap, mfmapd, mfmapdt, mbindd.
-    fequal. now ext k [w a].
+    reflexivity.
   Qed.
 
 End DecoratedMonad.
@@ -333,7 +328,7 @@ Section DecoratedTraversable.
   Theorem mfmapdt_id : forall A,
       mfmapdt S (fun x => x) (const (extract (W ×))) = @id (S A).
   Proof.
-    intros. apply (dtp_mbinddt_mret W S T).
+    intros. unfold mfmapdt. apply (dtp_mbinddt_mret W S T).
   Qed.
 
   Theorem mfmapdt_mfmapdt {A B C} :
@@ -343,7 +338,8 @@ Section DecoratedTraversable.
       mfmapdt S (F ∘ G) (fun (k : K) '(w, a) => fmap F (fun b => g k (w, b)) (f k (w, a))).
   Proof.
     intros. unfold mfmapdt. rewrite (dtp_mbinddt_mbinddt W S T F G).
-    fequal. unfold compose_dtm. ext k [w a]. unfold_ops @Fmap_compose.
+    unfold compose_dtm. fequal. ext k [w a].
+    unfold_ops @Fmap_compose.  unfold compose.
     compose near (f k (w, a)).
     do 2 rewrite (fun_fmap_fmap F). rewrite (dtm_mbinddt_comp_mret W T k G).
     fequal. ext b. cbn. now simpl_monoid.
@@ -352,15 +348,12 @@ Section DecoratedTraversable.
   (** *** Purity *)
   (******************************************************************************)
   Lemma mfmapdt_pure : forall (A B : Type) `{Applicative F},
-      mfmapdt S F (fun k '(w, a) => pure F a) = pure F (A := S A).
+      mfmapdt S F (fun k => pure F ∘ extract (W ×)) = pure F (A := S A).
   Proof.
     intros. unfold mfmapdt.
-    replace (fun (k : K) '((w, a) : W * A) => fmap F (mret T k) (pure F a))
+    replace (fun k : K => fmap F (mret T k) ∘ (pure F ∘ extract (prod W)))
       with (fun (k : K) => (pure F ∘ (mret T k ∘ extract (W ×) (A := A)))).
     rewrite <- (dtp_mbinddt_morphism W S T (fun x => x) F (ϕ := @pure F _)).
-    replace (fun k : K => mret T k ∘ extract (prod W))
-      with (fun (k : K) '((w, a) : W * A) => mret T k a).
-    2: { ext k [w a]. easy. }
     now rewrite (dtp_mbinddt_mret W S T).
     ext k [w a]. unfold compose; cbn.
     now rewrite (app_pure_natural F).
@@ -385,16 +378,15 @@ Section DecoratedTraversable.
   Qed.
 
   Lemma mfmap_to_mfmapdt {A B} (f : K -> A -> B) :
-    mfmap S f = mfmapdt S (fun A => A) (fun k '(w, a) => f k a).
+    mfmap S f = mfmapdt S (fun A => A) (fun k => f k ∘ extract (W ×)).
   Proof.
     reflexivity.
   Qed.
 
   Lemma mfmapt_to_mfmapdt {A B} `{Applicative F} (f : K -> A -> F B) :
-    mfmapt S F f = mfmapdt S F (fun k '(w, a) => f k a).
+    mfmapt S F f = mfmapdt S F (fun k => f k ∘ extract (W ×)).
   Proof.
-    unfold mfmapt, mfmapdt. unfold mbindt.
-    fequal. now ext k [w a].
+    reflexivity.
   Qed.
 
 End DecoratedTraversable.
@@ -414,10 +406,7 @@ Section TraversableMonad.
       mbindt S (fun x => x) (mret T) = @id (S A).
   Proof.
     intros. unfold mbindt.
-    replace (mret T ◻ const (extract (prod W)))
-      with (fun k '((w, a) : W * A) => mret T k a).
     now rewrite (dtp_mbinddt_mret W S T).
-    now ext k [w a].
   Qed.
 
   Theorem mbindt_mbindt {A B C} :
@@ -508,7 +497,7 @@ Section DecoratedFunctor.
   (** *** Lesser operations as special cases *)
   (******************************************************************************)
   Lemma mfmap_to_mfmapd {A B} (f : K -> A -> B) :
-    mfmap S f = mfmapd S (fun k '(w, a) => f k a).
+    mfmap S f = mfmapd S (fun k => f k ∘ extract (W ×)).
   Proof.
     reflexivity.
   Qed.
@@ -542,7 +531,8 @@ Section TraversableFunctor.
     intros. rewrite (mfmapt_to_mfmapdt S (F := G)).
     rewrite (mfmapt_to_mfmapdt S (F := F)).
     rewrite (mfmapt_to_mfmapdt S (F := F ∘ G)).
-    now rewrite (mfmapdt_mfmapdt S).
+    rewrite (mfmapdt_mfmapdt S).
+    fequal. now ext k [w a].
   Qed.
 
   (** *** Composition with <<mret>> *)
@@ -639,8 +629,9 @@ Section Functor.
       (g : K -> B -> C) (f : K -> A -> B),
       mfmap S g ∘ mfmap S f = mfmap S (g ⊙ f).
   Proof.
-    intros. do 2 rewrite mfmap_to_mfmapd.
-    now rewrite (mfmapd_mfmapd S).
+    intros. do 3 rewrite mfmap_to_mfmapd.
+    rewrite (mfmapd_mfmapd S).
+    fequal. now ext k [w a].
   Qed.
 
   (** *** Naturality w.r.t. <<mret>> *)
@@ -972,9 +963,12 @@ Section DecoratedFunctor.
   (** *** Lesser operations as special cases *)
   (******************************************************************************)
   Lemma kfmap_to_kfmapd {A} (f : A -> A) :
-    kfmap S j f = kfmapd S j (fun '(w, a) => f a).
+    kfmap S j f = kfmapd S j (f ∘ extract (W ×)).
   Proof.
-    reflexivity.
+    unfold kfmapd, kfmap, mfmap. fequal.
+    ext k [w a]. unfold compose; cbn. compare values k and j.
+    now autorewrite with tea_tgt.
+    now autorewrite with tea_tgt_neq.
   Qed.
 
 End DecoratedFunctor.
