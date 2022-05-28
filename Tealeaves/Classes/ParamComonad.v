@@ -11,31 +11,34 @@ Section ParameterizedComonad_operations.
   Context
     (W : Type -> Type -> Type -> Type).
 
-  Class Extract :=
-    extract : forall A, W A A ⇒ (fun X => X).
+  Class PExtract :=
+    pextract : forall A, W A A ⇒ (fun X => X).
 
-  Class Cojoin :=
-    cojoin : forall A B C, W A C ⇒ W A B ∘ W B C.
+  Class PCojoin :=
+    pcojoin : forall A B C, W A C ⇒ W A B ∘ W B C.
 
 End ParameterizedComonad_operations.
 
-Section Comonad.
+Section ParameterizedComonad_typeclass.
 
   Context
     `(W : Type -> Type -> Type -> Type)
     `{forall A B, Fmap (W A B)}
-    `{Cojoin W}
-    `{Extract W}.
+    `{PCojoin W}
+    `{PExtract W}.
 
   Class ParameterizedComonad :=
-    { com_functor :> forall A B, Functor (W A B);
-      com_extract_cojoin :
-        `((extract W A _) ∘ cojoin W A A B X = @id (W A B X));
-      com_fmap_extract_cojoin :
-        `(fmap (W A B) (extract W B _) ∘ cojoin W A B B X = @id (W A B X));
+    { pcom_functor :> forall A B, Functor (W A B);
+      pcom_extract_cojoin :
+        `((pextract W A _) ∘ pcojoin W A A B X = @id (W A B X));
+      pcom_fmap_extract_cojoin :
+        `(fmap (W A B) (pextract W B X) ∘ pcojoin W A B B X = @id (W A B X));
+      pcom_cojoin_cojoin :
+        `(pcojoin W A B C (W C D X) ∘ pcojoin W A C D X =
+         fmap (W A B) (pcojoin W B C D X) ∘ pcojoin W A B D X);
     }.
 
-End Comonad.
+End ParameterizedComonad_typeclass.
 
-Arguments cojoin _%function_scope {Cojoin} {A}%type_scope.
-Arguments extract _%function_scope {Extract} {A}%type_scope.
+Arguments pcojoin _%function_scope {PCojoin} {A}%type_scope.
+Arguments pextract _%function_scope {PExtract} {A}%type_scope.
