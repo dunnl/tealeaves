@@ -47,10 +47,10 @@ Tealeaves/Classes/DecoratedTraversableFunctor.v
 Tealeaves/Classes/DecoratedTraversableMonad.v
 Tealeaves/Classes/DecoratedTraversableModule.v
 Tealeaves/Theory/Category.v
-#LN/Atom.v
-#LN/Leaf.v
-#LN/AtomSet.v
-#LN/AssocList.v
+LN/Atom.v
+LN/Leaf.v
+LN/AtomSet.v
+LN/AssocList.v
 #LN/Operations.v
 #LN/Theory.v
 #LN/Environment.v
@@ -61,10 +61,7 @@ Multisorted/Classes/Functor.v
 Multisorted/Classes/Monad.v
 Multisorted/Classes/DTM.v
 Multisorted/Functors/Tag.v
-Multisorted/Functors/Row.v
-Multisorted/Functors/MSets.v
 Multisorted/Functors/MList.v
-Multisorted/Functors/MList2.v
 Multisorted/Functors/Schedule.v
 Multisorted/Theory/DTMContainer.v
 Multisorted/Theory/DTMSchedule.v

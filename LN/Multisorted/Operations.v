@@ -6,14 +6,65 @@ From Multisorted Require Import
      Classes.DTM
      Theory.DTMContainer.
 
+Import List.ListNotations.
 Import LN.AtomSet.Notations.
 Import Multisorted.Theory.DTMContainer.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope set_scope.
+#[local] Open Scope nat_scope.
 
 (** * Operations for locally nameless *)
 (******************************************************************************)
+
+(** ** Contexts **)
+(******************************************************************************)
+Section operations_on_context.
+
+  Context
+    `{Index}.
+
+  Fixpoint countk (j : K) (l : list K) : nat :=
+    match l with
+    | nil => 0
+    | cons k rest =>
+      (if j == k then 1 else 0) + countk j rest
+    end.
+
+  Lemma countk_nil : forall j, countk j nil = 0.
+  Proof.
+    easy.
+  Qed.
+
+  Lemma countk_one_eq : forall j, countk j [j] = 1.
+  Proof.
+    intros. cbn. compare values j and j.
+  Qed.
+
+  Lemma countk_one_neq : forall j k, j <> k -> countk j [k] = 0.
+  Proof.
+    intros. cbn. compare values j and k.
+  Qed.
+
+  Lemma countk_cons_eq : forall j l, countk j (j :: l) = S (countk j l).
+  Proof.
+    intros. cbn. compare values j and j.
+  Qed.
+
+  Lemma countk_cons_neq : forall j k l, j <> k -> countk j (k :: l) = countk j l.
+  Proof.
+    intros. cbn. compare values j and k.
+  Qed.
+
+  Lemma countk_app : forall j l1 l2, countk j (l1 ++ l2) = countk j l1 + countk j l2.
+  Proof.
+    intros. induction l1.
+    - easy.
+    - cbn. compare values j and a.
+      now rewrite IHl1.
+  Qed.
+
+End operations_on_context.
 
 (** ** Local operations *)
 (******************************************************************************)
@@ -36,13 +87,6 @@ Section local_operations.
           | Fr y => if x == y then u else mret T k (Fr y)
           | Bd n => mret T k (Bd n)
           end.
-
-  Fixpoint countk (j : K) (l : list K) : nat :=
-    match l with
-    | nil => 0
-    | cons k rest =>
-      (if j == k then 1 else 0) + countk j rest
-    end.
 
   Definition open_loc k (u : T k leaf) : list K * leaf -> T k leaf :=
     fun p => match p with

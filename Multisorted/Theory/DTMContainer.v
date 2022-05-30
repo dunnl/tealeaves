@@ -5,7 +5,7 @@ From Tealeaves Require Export
 From Multisorted Require Import
      Classes.DTM
      Functors.Tag
-     Functors.MList2.
+     Functors.MList.
 
 Import Classes.SetlikeFunctor.Notations.
 Import Functors.Sets.Notations.
@@ -101,7 +101,7 @@ Section lemmas.
     change_right (fmap (B := S B) (const M) (mfmap S (const TraversableFunctor.exfalso))
                        ∘ (mbinddt (B := False) S (const M) (f : forall (k : K), W * A -> const M (T k False)))).
     rewrite (mfmap_mbinddt S (F := const M)).
-    fequal. ext k [w a]. easy.
+    reflexivity.
   Qed.
 
   Lemma mbinddt_constant_applicative2 (fake1 fake2 : Type) `{Monoid M}
@@ -244,6 +244,7 @@ Section DTM_tolist.
       tomlistd_gen (T k) B (mret T k a) = [ (Ƶ, (k, a)) ].
   Proof.
     intros. unfold tomlistd_gen.
+    compose near a on left.
     now rewrite mfmapdt_comp_mret.
   Qed.
 

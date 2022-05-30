@@ -160,14 +160,15 @@ End iterate.
 
 (** ** Respectfulness for <<mbindd>> *)
 (******************************************************************************)
-Section DTM_respectful.
+Section mbindd_respectful.
 
   Context
     {S : Type -> Type}
     `{DTPreModule W S T}
     `{! DTM W T}.
 
-  Theorem mbindd_respectful : forall A B (t : S A) (f g : forall k, W * A -> T k B),
+  Theorem mbindd_respectful :
+    forall A B (t : S A) (f g : forall k, W * A -> T k B),
       (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k (w, a))
       -> mbindd S f t = mbindd S g t.
   Proof.
@@ -184,7 +185,42 @@ Section DTM_respectful.
       + apply hyp. now right.
   Qed.
 
-  Corollary mbindd_respectful_id : forall A (t : S A) (f : forall k, W * A -> T k A),
+  (** *** For equalities with other operations *)
+  (** Corollaries with conclusions of the form <<mbindd t = f t>> for
+  other <<m*>> operations *)
+  (******************************************************************************)
+  Corollary mbindd_respectful_mbind :
+    forall A B (t : S A) (f : forall k, W * A -> T k B) (g : forall k, A -> T k B),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k a)
+      -> mbindd S f t = mbind S g t.
+  Proof.
+    introv hyp. rewrite mbind_to_mbindd.
+    apply mbindd_respectful. introv Hin.
+    unfold compose. cbn. auto.
+  Qed.
+
+  Corollary mbindd_respectful_mfmapd :
+    forall A B (t : S A) (f : forall k, W * A -> T k B) (g : K -> W * A -> B),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = mret T k (g k (w, a)))
+      -> mbindd S f t = mfmapd S g t.
+  Proof.
+    introv hyp. rewrite mfmapd_to_mbindd.
+    apply mbindd_respectful. introv Hin.
+    unfold compose. cbn. auto.
+  Qed.
+
+  Corollary mbindd_respectful_mfmap :
+    forall A B (t : S A) (f : forall k, W * A -> T k B) (g : K -> A -> B),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = mret T k (g k a))
+      -> mbindd S f t = mfmap S g t.
+  Proof.
+    introv hyp. rewrite mfmap_to_mbindd.
+    apply mbindd_respectful. introv Hin.
+    unfold compose. cbn. auto.
+  Qed.
+
+  Corollary mbindd_respectful_id :
+    forall A (t : S A) (f : forall k, W * A -> T k A),
       (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = mret T k a)
       -> mbindd S f t = t.
   Proof.
@@ -194,15 +230,51 @@ Section DTM_respectful.
     unfold compose; cbn. auto.
   Qed.
 
-  (** *** Corollaries for other operations *)
-  (******************************************************************************)
-  Corollary mbind_respectful : forall A B (t : S A) (f g : forall k, A -> T k B),
+End mbindd_respectful.
+
+(** ** Respectfulness for <<mbindd>> *)
+(******************************************************************************)
+Section mbind_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  Lemma mbind_respectful :
+    forall A B (t : S A) (f g : forall k, A -> T k B),
       (forall (k : K) (a : A), (k, a) ∈m t -> f k a = g k a)
       -> mbind S f t = mbind S g t.
   Proof.
     introv hyp. rewrite mbind_to_mbindd.
     apply mbindd_respectful. introv premise. apply ind_implies_in in premise.
     unfold compose; cbn. auto.
+  Qed.
+
+  (** *** For equalities with other operations *)
+  (** Corollaries with conclusions of the form <<mbind t = f t>> for
+  other <<m*>> operations *)
+  (******************************************************************************)
+  Corollary mbind_respectful_mfmapd :
+    forall A B (t : S A) (f : forall k, A -> T k B) (g : K -> W * A -> B),
+      (forall (k : K) (w : W) (a : A), (w, (k, a)) ∈md t -> f k a = mret T k (g k (w, a)))
+      -> mbind S f t = mfmapd S g t.
+  Proof.
+    intros. rewrite mfmapd_to_mbindd.
+    symmetry. apply mbindd_respectful_mbind.
+    introv Hin. symmetry. unfold compose; cbn.
+    auto.
+  Qed.
+
+  Corollary mbind_respectful_mfmap :
+    forall A B (t : S A) (f : forall k, A -> T k B) (g : K -> A -> B),
+      (forall (k : K) (a : A), (k, a) ∈m t -> f k a = mret T k (g k a))
+      -> mbind S f t = mfmap S g t.
+  Proof.
+    intros. rewrite mfmap_to_mbind.
+    symmetry. apply mbind_respectful.
+    introv Hin. symmetry. unfold compose; cbn.
+    auto.
   Qed.
 
   Corollary mbind_respectful_id : forall A (t : S A) (f : forall k, A -> T k A),
@@ -215,13 +287,39 @@ Section DTM_respectful.
     unfold compose; cbn. auto.
   Qed.
 
-  Corollary mfmapd_respectful : forall A B (t : S A) (f g : K -> W * A -> B),
+End mbind_respectful.
+
+(** ** Respectfulness for <<mfmapd>> *)
+(******************************************************************************)
+Section mfmapd_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  Lemma mfmapd_respectful :
+    forall A B (t : S A) (f g : K -> W * A -> B),
       (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k (w, a))
       -> mfmapd S f t = mfmapd S g t.
   Proof.
     introv hyp. do 2 rewrite mfmapd_to_mbindd.
     apply mbindd_respectful. introv premise.
     unfold compose; cbn. fequal. auto.
+  Qed.
+
+  (** *** For equalities with other operations *)
+  (** Corollaries with conclusions of the form <<mfmapd t = f t>> for
+  other <<m*>> operations *)
+  (******************************************************************************)
+  Corollary mfmapd_respectful_mfmap :
+    forall A (t : S A) (f : K -> W * A -> A) (g : K -> A -> A),
+      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k a)
+      -> mfmapd S f t = mfmap S g t.
+  Proof.
+    intros. rewrite mfmap_to_mfmapd.
+    apply mfmapd_respectful. introv Hin.
+    unfold compose; cbn; auto.
   Qed.
 
   Corollary mfmapd_respectful_id : forall A (t : S A) (f g : K -> W * A -> A),
@@ -234,7 +332,19 @@ Section DTM_respectful.
     cbn. auto.
   Qed.
 
-  Corollary mfmap_respectful : forall A B (t : S A) (f g : K -> A -> B),
+End mfmapd_respectful.
+
+(** ** Respectfulness for <<mfmap>> *)
+(******************************************************************************)
+Section mfmap_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T}.
+
+  Lemma mfmap_respectful :
+    forall A B (t : S A) (f g : K -> A -> B),
       (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k a = g k a)
       -> mfmap S f t = mfmap S g t.
   Proof.
@@ -242,7 +352,8 @@ Section DTM_respectful.
     now apply mfmapd_respectful.
   Qed.
 
-  Corollary mfmap_respectful_id : forall A (t : S A) (f : K -> A -> A),
+  Corollary mfmap_respectful_id :
+    forall A (t : S A) (f : K -> A -> A),
       (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k a = a)
       -> mfmap S f t = t.
   Proof.
@@ -252,12 +363,19 @@ Section DTM_respectful.
     auto.
   Qed.
 
-  (** *** Corollaries for targetted operations *)
-  (******************************************************************************)
-  Context
-    (j : K).
+End mfmap_respectful.
 
-  Corollary kbindd_respectful : forall A (t : S A) (f g : W * A -> T j A),
+(** ** Respectfulness for <<kbindd>> *)
+(******************************************************************************)
+Section kbindd_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T} (j : K).
+
+  Lemma kbindd_respectful :
+    forall A (t : S A) (f g : W * A -> T j A),
       (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g (w, a))
       -> kbindd S j f t = kbindd S j g t.
   Proof.
@@ -267,7 +385,30 @@ Section DTM_respectful.
     - do 2 (rewrite btgd_neq; auto).
   Qed.
 
-  Corollary kbindd_respectful_id : forall A (t : S A) (f : W * A -> T j A),
+  (** *** For equalities with other operations *)
+  (******************************************************************************)
+  Corollary kbindd_respectful_kfmapd :
+    forall A (t : S A) (f : W * A -> T j A) (g : W * A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = mret T j (g (w, a)))
+      -> kbindd S j f t = kfmapd S j g t.
+  Proof.
+    introv hyp. rewrite kfmapd_to_kbindd.
+    apply kbindd_respectful. introv Hin.
+    apply hyp. auto.
+  Qed.
+
+  Corollary kbindd_respectful_kfmap :
+    forall A (t : S A) (f : W * A -> T j A) (g : A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = mret T j (g a))
+      -> kbindd S j f t = kfmap S j g t.
+  Proof.
+    introv hyp. rewrite kfmap_to_kfmapd.
+    apply kbindd_respectful_kfmapd.
+    introv Hin. apply hyp. auto.
+  Qed.
+
+  Corollary kbindd_respectful_id :
+    forall A (t : S A) (f : W * A -> T j A),
       (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = mret T j a)
       -> kbindd S j f t = t.
   Proof.
@@ -277,7 +418,19 @@ Section DTM_respectful.
     auto.
   Qed.
 
-  Corollary kbind_respectful : forall A (t : S A) (f g : A -> T j A),
+End kbindd_respectful.
+
+(** ** Respectfulness for <<kbind>> *)
+(******************************************************************************)
+Section kbindd_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T} (j : K).
+
+  Lemma kbind_respectful :
+    forall A (t : S A) (f g : A -> T j A),
       (forall (a : A), (j, a) ∈m t -> f a = g a)
       -> kbind S j f t = kbind S j g t.
   Proof.
@@ -287,7 +440,30 @@ Section DTM_respectful.
     - do 2 (rewrite btg_neq; auto).
   Qed.
 
-  Corollary kbind_respectful_id : forall A (t : S A) (f : A -> T j A),
+  (** *** For equalities with other operations *)
+  (******************************************************************************)
+  Corollary kbind_respectful_kfmapd :
+    forall A (t : S A) (f : A -> T j A) (g : W * A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = mret T j (g (w, a)))
+      -> kbind S j f t = kfmapd S j g t.
+  Proof.
+    introv hyp. rewrite kfmapd_to_kbindd.
+    rewrite kbind_to_kbindd. apply kbindd_respectful.
+    introv Hin. apply hyp. auto.
+  Qed.
+
+  Corollary kbind_respectful_kfmap :
+    forall A (t : S A) (f : A -> T j A) (g : A -> A),
+      (forall (a : A), (j, a) ∈m t -> f a = mret T j (g a))
+      -> kbind S j f t = kfmap S j g t.
+  Proof.
+    introv hyp. rewrite kfmap_to_kbind.
+    apply kbind_respectful.
+    introv Hin. apply hyp. auto.
+  Qed.
+
+  Corollary kbind_respectful_id :
+    forall A (t : S A) (f : A -> T j A),
       (forall (a : A), (j, a) ∈m t -> f a = mret T j a)
       -> kbind S j f t = t.
   Proof.
@@ -296,7 +472,19 @@ Section DTM_respectful.
     now apply kbind_respectful.
   Qed.
 
-  Corollary kfmapd_respectful : forall A (t : S A) (f g : W * A -> A),
+End kbindd_respectful.
+
+(** ** Respectfulness for <<kfmapd>> *)
+(******************************************************************************)
+Section kfmapd_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T} (j : K).
+
+  Lemma kfmapd_respectful :
+    forall A (t : S A) (f g : W * A -> A),
       (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g (w, a))
       -> kfmapd S j f t = kfmapd S j g t.
   Proof.
@@ -305,6 +493,17 @@ Section DTM_respectful.
     compare values j and k.
     - do 2 rewrite tgtd_eq. auto.
     - do 2 (rewrite tgtd_neq; auto).
+  Qed.
+
+  (** *** For equalities with other operations *)
+  (******************************************************************************)
+  Corollary kfmapd_respectful_kfmap :
+    forall A (t : S A) (f : W * A -> A) (g : A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g a)
+      -> kfmapd S j f t = kfmap S j g t.
+  Proof.
+    introv hyp. rewrite kfmap_to_kfmapd.
+    apply kfmapd_respectful. auto.
   Qed.
 
   Corollary kfmapd_respectful_id : forall A (t : S A) (f : W * A -> A),
@@ -316,7 +515,19 @@ Section DTM_respectful.
     apply kfmapd_respectful. auto.
   Qed.
 
-  Corollary kfmap_respectful : forall A (t : S A) (f g : A -> A),
+End kfmapd_respectful.
+
+(** ** Respectfulness for <<kfmap>> *)
+(******************************************************************************)
+Section kfmap_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T} (j : K).
+
+  Lemma kfmap_respectful :
+    forall A (t : S A) (f g : A -> A),
       (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = g a)
       -> kfmap S j f t = kfmap S j g t.
   Proof.
@@ -326,7 +537,8 @@ Section DTM_respectful.
     - autorewrite with tea_tgt_neq. auto.
   Qed.
 
-  Corollary kfmap_respectful_id : forall A (t : S A) (f : A -> A),
+  Corollary kfmap_respectful_id :
+    forall A (t : S A) (f : A -> A),
       (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = a)
       -> kfmap S j f t = t.
   Proof.
@@ -335,4 +547,4 @@ Section DTM_respectful.
     apply kfmap_respectful. auto.
   Qed.
 
-End DTM_respectful.
+End kfmap_respectful.

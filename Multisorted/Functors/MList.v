@@ -1,491 +1,87 @@
-From Tealeaves Require Import
-     Classes.SetlikeFunctor
-     Functors.List.
+From Tealeaves Require Export
+     Classes.Monoid
+     Functors.List
+     Functors.Constant.
 
 From Multisorted Require Import
      Classes.Monad
      Functors.Tag.
 
-Import Sets.Notations.
-Import List.Notations.
-Import Multisorted.Theory.Category.Notations.
-#[local] Open Scope list_scope.
+Import Monoid.Notations.
+Import List.ListNotations.
 #[local] Open Scope tealeaves_scope.
-#[local] Open Scope tealeaves_multi_scope.
+#[local] Open Scope list_scope.
 
-(** * The monad of multisorted lists *)
+(** * Sorted lists with context *)
 (******************************************************************************)
-Section mlist.
+Section list.
 
   Context
-    `{ix : Index}.
+    `{ix : Index}
+    `{Monoid W}.
 
-  Implicit Types (k : K).
+  Instance: MReturn (fun k A => list (W * Tag A)) :=
+    fun A (k : K) (a : A) => [(Ƶ, (k, a))].
 
-  Definition mlist : Type -> Type :=
-    fun A => list (Tag A).
+  (** This operation is a context- and tag-sensitive substitution operation
+   on lists of annotated values. It is used internally to reason about the
+   interaction between <<mbinddt>> and <<tomlistd>>. *)
+  Fixpoint mbinddt_list
+           `(f : forall (k : K), W * A -> list (W * Tag B))
+           (l : list (W * Tag A)) : list (W * Tag B) :=
+    match l with
+    | nil => nil
+    | cons (w, (k, a)) rest =>
+      fmap list (incr w) (f k (w, a)) ++ mbinddt_list f rest
+    end.
 
-  #[global] Instance MReturn_mlist : MReturn (const mlist) := MReturn_T_Tag list.
-  #[global] Instance MBind_mlist : MBind mlist (const mlist) := MBind_T_Tag list.
-  #[global] Instance TaggedMonad_mlist : ConstantMultisortedMonad mlist := CMMonad_T_Tag list.
-  #[global] Instance Modulep_mlist : MultisortedRightModule mlist (const mlist) := Module_T_Tag list.
-
-  (** ** Rewriting lemmas for [mfmap] *)
-  Lemma mfmap_mlist_nil `{f : A -k-> B} :
-    mfmap mlist f (@nil (Tag A)) = @nil (Tag B).
+  Lemma mbinddt_list_nil : forall
+      `(f : forall (k : K), W * A -> list (W * Tag B)),
+      mbinddt_list f nil = nil.
   Proof.
-    reflexivity.
+    intros. easy.
   Qed.
 
-  Lemma mfmap_mlist_cons `{f : A -k-> B} : forall (x : Tag A) (xs : mlist A),
-      mfmap mlist f (x :: xs) = (fst x, f (fst x) (snd x)) :: mfmap mlist f xs.
+  Lemma mbinddt_list_ret : forall
+      `(f : forall (k : K), W * A -> list (W * Tag B)) (k : K) (a : A),
+      mbinddt_list f (mret (fun k A => list (W * Tag A)) k a) = f k (Ƶ, a).
   Proof.
-    now destruct x.
+    intros. cbn. List.simpl_list.
+    replace (incr (Ƶ : W)) with (@id (W * Tag B)).
+    - now rewrite (fun_fmap_id list).
+    - ext [w [k2 b]]. cbn. now simpl_monoid.
   Qed.
 
-  Lemma mfmap_mlist_one `{f : A -k-> B} : forall k a,
-      mfmap mlist f [ (k, a) ] = [(k, f k a)].
+  Lemma mbinddt_list_cons : forall
+      `(f : forall (k : K), W * A -> list (W * Tag B))
+      (w : W) (k : K) (a : A)
+      (l : list (W * Tag A)),
+      mbinddt_list f ((w, (k, a)) :: l) = fmap list (incr w) (f k (w, a)) ++ mbinddt_list f l.
   Proof.
-    reflexivity.
+    intros. easy.
   Qed.
 
-  Lemma mfmap_mlist_app `{f : A -k-> B} : forall (xs ys : mlist A),
-      mfmap mlist f (xs ++ ys) = mfmap mlist f xs ++ mfmap mlist f ys.
-  Proof.
-    intros. unfold mlist.
-    unfold MReturn_mlist, MBind_mlist.
-    rewrite (Monad_T_Tag_mfmap_spec list).
-    now rewrite fmap_list_app.
-  Qed.
-
-  (** ** Rewriting lemmas for [mbind] *)
-  Lemma mbind_mlist_nil `{f : K -> A -> mlist B} :
-    mbind mlist f (@nil (Tag A)) = @nil (Tag B).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma mbind_mlist_cons {A B} : forall (f : A ~k~> (const mlist) B) (k : K) (a : A) (xs : mlist A),
-      mbind mlist f ((k, a) :: xs) = f k a ++ mbind mlist f xs.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma mbind_mlist_one {A B} : forall (f : A ~k~> (const mlist) B) (k : K) (a : A),
-      mbind mlist f [(k, a)] = f k a.
-  Proof.
-    intros. cbn. now List.simpl_list.
-  Qed.
-
-  Lemma mbind_mlist_app {A B} : forall (f : A ~k~> (const mlist) B) (xs ys : mlist A),
-      mbind mlist f (xs ++ ys) = mbind mlist f xs ++ mbind mlist f ys.
-  Proof.
-    introv. unfold mbind, MBind_mlist, MBind_T_Tag.
-    now rewrite bind_list_app.
-  Qed.
-
-  (** ** Rewriting lemmas for [fmapk] *)
-  Lemma fmapk_mlist_nil k `{f : A -> A} :
-    fmapk mlist k f (@nil (Tag A)) = @nil (Tag A).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma fmapk_mlist_one_eq `{f : A -> A} : forall k a,
-      fmapk mlist k f [ (k, a) ] = [(k, f a)].
-  Proof.
-    intros. cbn. now simpl_tgt.
-  Qed.
-
-  Lemma fmapk_mlist_one_neq `{f : A -> A} : forall k j a,
-      k <> j ->
-      fmapk mlist j f [ (k, a) ] = [(k, a)].
-  Proof.
-    intros. cbn. now simpl_tgt.
-  Qed.
-
-  Lemma fmapk_mlist_cons_eq `{f : A -> A} : forall (k : K) (a : A) (xs : mlist A),
-      fmapk mlist k f ((k, a) :: xs) = (k, f a) :: fmapk mlist k f xs.
-  Proof.
-    intros. cbn. now simpl_tgt.
-  Qed.
-
-  Lemma fmapk_mlist_cons_neq `{f : A -> A} : forall (k : K) (j : K) (a : A) (xs : mlist A),
-      k <> j ->
-      fmapk mlist j f ((k, a) :: xs) = (k, a) :: fmapk mlist j f xs.
-  Proof.
-    intros. cbn. now simpl_tgt.
-  Qed.
-
-  Lemma fmapk_mlist_app `{f : A -> A} : forall k (xs ys : mlist A),
-      fmapk mlist k f (xs ++ ys) = fmapk mlist k f xs ++ fmapk mlist k f ys.
-  Proof.
-    intros. unfold fmapk. now rewrite mfmap_mlist_app.
-  Qed.
-
-  (** ** Rewriting lemmas for [bindk] *)
-  Lemma bindk_mlist_nil k `{f : A -> mlist A} :
-    bindk mlist k f (@nil (Tag A)) = @nil (Tag A).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma bindk_mlist_cons_eq `{f : A -> mlist A} : forall (k : K) (a : A) (xs : mlist A),
-      bindk mlist k f ((k, a) :: xs) = f a ++ bindk mlist k f xs.
-  Proof.
-    intros. unfold bindk. rewrite mbind_mlist_cons.
-    now simpl_tgt_fallback.
-  Qed.
-
-  Lemma bindk_mlist_cons_neq `{f : A -> mlist A} : forall (j k : K) (a : A) (xs : mlist A),
-      j <> k ->
-      bindk mlist j f ((k, a) :: xs) = (k, a) :: bindk mlist j f xs.
-  Proof.
-    intros. unfold bindk. rewrite mbind_mlist_cons.
-    now simpl_tgt_fallback.
-  Qed.
-
-  Lemma bindk_mlist_one_eq `{f : A -> mlist A} : forall (k : K) (a : A) (xs : mlist A),
-      bindk mlist k f [ (k, a) ] = f a.
-  Proof.
-    intros. unfold bindk. rewrite mbind_mlist_one.
-    now simpl_tgt_fallback.
-  Qed.
-
-  Lemma bindk_mlist_one_neq `{f : A -> mlist A} : forall (j k : K) (a : A) (xs : mlist A),
-      j <> k ->
-      bindk mlist j f [ (k, a) ] = [ (k, a) ].
-  Proof.
-    intros. unfold bindk. rewrite mbind_mlist_one.
-    now simpl_tgt_fallback.
-  Qed.
-
-  Lemma bindk_mlist_app {A} : forall k (f : A -> mlist A) (xs ys : mlist A),
-      bindk mlist k f (xs ++ ys) = bindk mlist k f xs ++ bindk mlist k f ys.
-  Proof.
-    introv. unfold bindk. now rewrite mbind_mlist_app.
-  Qed.
-
-End mlist.
-
-Hint Rewrite @mfmap_mlist_nil @mfmap_mlist_cons
-     @mfmap_mlist_one @mfmap_mlist_app : tea_list.
-
-Hint Rewrite @fmapk_mlist_nil @fmapk_mlist_cons_eq
-     @fmapk_mlist_one_eq @fmapk_mlist_app: tea_list.
-Hint Rewrite @fmapk_mlist_cons_neq @fmapk_mlist_one_neq
-     using (discriminate + auto) : tea_list.
-
-Hint Rewrite @mbind_mlist_nil @mbind_mlist_cons
-     @mbind_mlist_one @mbind_mlist_app : tea_list.
-
-Hint Rewrite @bindk_mlist_nil @bindk_mlist_cons_eq
-     @bindk_mlist_one_eq @bindk_mlist_app : tea_list.
-Hint Rewrite @bindk_mlist_cons_neq @bindk_mlist_one_neq
-     using (discriminate + auto) : tea_list.
-
-(*
-(** * [mlist] is a quantifiable monad *)
-(** This is a key step to showing that all listable (functors, monads, modules)
-    are quantifiable. The idea is to prove the relevant properties for
-    [mlist], and then transfer these to listables by the compatibility
-    properties of [tomlist]. *)
-#[global] Instance tomset_mlist `{Index} : Tomset mlist :=
-  fun A => toset list.
-
-(** ** Rewriting lemmas for [tomset] and [mlist] *)
-Section tomset_mlist.
-
-  Context
-    `{ix : Index}.
-
-  Lemma tomset_mlist_nil {A} : tomset mlist (@nil (Tag A)) = ∅.
-  Proof.
-    unfold tomset, tomset_mlist.
-    now autorewrite with tea_list.
-  Qed.
-
-  Lemma tomset_mlist_cons {A} : forall (k : K) (a : A) (xs : mlist A),
-      tomset mlist ((k, a) :: xs) = {{ (k, a) }} ∪ tomset mlist xs.
-  Proof.
-    intros. unfold tomset, tomset_mlist.
-    now autorewrite with tea_list.
-  Qed.
-
-  Lemma tomset_mlist_one {A} (k : K) (a : A) :
-    tomset mlist [ (k, a) ] = {{ (k, a) }}.
-  Proof.
-    intros. unfold tomset, tomset_mlist.
-    now autorewrite with tea_list.
-  Qed.
-
-  Lemma tomset_mlist_app {A} : forall (xs ys : mlist A),
-      tomset mlist (xs ++ ys) = tomset mlist xs ∪ tomset mlist ys.
-  Proof.
-    intros. unfold tomset, tomset_mlist.
-    now autorewrite with tea_list.
-  Qed.
-
-  Lemma in_mlist_nil {A} : forall (p : Tag A), p ∈m @nil (Tag A) <-> False.
-  Proof.
-    intros. unfold tomset, tomset_mlist.
-    now autorewrite with tea_list.
-  Qed.
-
-  Lemma in_mlist_cons {A} : forall (k1 k2 : K) (a1 a2 : A) (xs : mlist A),
-      (k1, a1) ∈m ((k2, a2) :: xs) <-> k1 = k2 /\ a1 = a2 \/ (k1, a1) ∈m xs.
-  Proof.
-    intros. unfold tomset, tomset_mlist.
-    autorewrite with tea_list.
-    now rewrite Coq.Init.Datatypes.pair_equal_spec.
-  Qed.
-
-  Lemma in_mlist_cons_eq {A} : forall (k : K) (a1 a2 : A) (xs : mlist A),
-      (k, a1) ∈m ((k, a2) :: xs) <-> a1 = a2 \/ (k, a1) ∈m xs.
-  Proof.
-    intros. unfold tomset, tomset_mlist.
-    autorewrite with tea_list.
-    rewrite Coq.Init.Datatypes.pair_equal_spec.
-    tauto.
-  Qed.
-
-  Lemma in_mlist_one {A} (k1 k2 : K) (a1 a2 : A) :
-    (k1, a1) ∈m [ (k2, a2) ] <-> k1 = k2 /\ a1 = a2.
-  Proof.
-    intros. unfold tomset, tomset_mlist.
-    autorewrite with tea_list.
-    now rewrite pair_equal_spec.
-  Qed.
-
-  Lemma in_mlist_one_eq {A} (k : K) (a1 a2 : A) :
-    (k, a1) ∈m [ (k, a2) ] <-> a1 = a2.
-  Proof.
-    intros. now rewrite in_mlist_one.
-  Qed.
-
-  Lemma in_mlist_app {A} : forall (k : K) (a : A) (xs ys : mlist A),
-      (k, a) ∈m (xs ++ ys) <-> (k, a) ∈m xs \/ (k, a) ∈m ys.
-  Proof.
-    intros. now rewrite tomset_mlist_app.
-  Qed.
-
-End tomset_mlist.
-
-Hint Rewrite @tomset_mlist_nil @tomset_mlist_cons @tomset_mlist_one
-     @tomset_mlist_app : tea_list.
-Hint Rewrite @in_mlist_nil @in_mlist_cons @in_mlist_one
-     @in_mlist_app : tea_list.
-
-(** ** Quantifiable instance *)
-Section mlist_is_quantifiable.
-
-  Context
-    `{ix : Index}.
-
-  #[global] Instance: MultisortedNatural (tomset_mlist).
-  Proof.
-    change (@tomset_mlist _) with (@tomset _ mlist _).
-    intros A B f.
-    unfold mset, MReturn_mset, MBind_mset. (** TODO <-- these are hidden *)
-    rewrite (Monad_T_Tag_mfmap_spec set).
-    unfold mlist, MReturn_mlist, MBind_mlist. (** TODO <-- these are hidden *)
-    rewrite (Monad_T_Tag_mfmap_spec list).
-    unfold tomset, tomset_mlist.
-    now rewrite (natural (G := set)).
-  Qed.
-
-  Theorem qmmon_mret_mlist : forall (k : K) (A : Type),
-      tomset mlist ∘ mret (const mlist) k (A:=A) = mret (const mset) k.
-  Proof.
-    introv. ext a. ext p. destruct p as [kp ap].
-    propext; firstorder.
-  Qed.
-
-  Theorem qmmon_mbind_mlist : forall `(f : forall k, A -> list (Tag B)),
-      tomset mlist ∘ mbind mlist f = mbind mset (fun k => tomset mlist ∘ f k) ∘ tomset mlist.
-  Proof.
-    intros. ext l [k b]. unfold tomset, tomset_mlist.
-    unfold mbind, MBind_mlist, MBind_mset, MBind_T_Tag.
-    unfold compose. apply propositional_extensionality.
-    rewrite (SetlikeMonad.in_bind_iff list).
-    rewrite Sets.bind_set_spec.
-    split; intros [[k' a] ?]; now exists (k', a).
-  Qed.
-
-  Theorem qmmon_respectful_mlist : forall A B (t : mlist A) (f g : A ~k~> (const mlist) B),
-      (forall k a, (k, a) ∈m t -> f k a = g k a) -> mbind mlist f t = mbind mlist g t.
-  Proof.
-    intros. cbv in t. induction t.
-    - reflexivity.
-    - destruct a as [k' a].
-      rewrite (mbind_mlist_cons f).
-      rewrite (mbind_mlist_cons g). fequal.
-      + apply H. now left.
-      + apply IHt. intros. apply H. now right.
-  Qed.
-
-  #[global] Instance: SetlikeMultisortedPreModule mlist (const mlist) :=
-    {| qpmod_mbind := fun A B f => @qmmon_mbind_mlist A B f;
-       qpmod_respectful := qmmon_respectful_mlist;
-    |}.
-
-  #[global] Instance: SetlikeMultisortedMonad (const mlist) :=
-    {| qmmon_mret := @qmmon_mret_mlist; |}.
-
-End mlist_is_quantifiable.
-*)
-
-(** ** Filtering *)
-Fixpoint filterk `{Index} {A} (k : K) (l : mlist A) : list A :=
-  match l with
-  | nil => nil
-  | cons (j, a) ts =>
-    if k == j then a :: filterk k ts else filterk k ts
-  end.
-
-(** ** Rewriting lemmas for [filterk] *)
-Section filterk_lemmas.
-
-  Context
-    `{Index}.
-
-  Lemma filterk_nil : forall A k,
-    filterk k (nil : mlist A) = nil.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma filterk_cons : forall A k j (a : A) (l : mlist A),
-      filterk j ((k, a) :: l) = if k == j then a :: filterk k l else filterk j l.
-  Proof.
-    intros; cbn. compare values k and j.
-  Qed.
-
-  Corollary filterk_cons_eq: forall A k (a : A) (l : mlist A),
-      filterk k ((k, a) :: l) = a :: filterk k l.
-  Proof.
-    intros. rewrite filterk_cons. compare values k and k.
-  Qed.
-
-  Corollary filterk_cons_neq : forall A k j (a : A) (l : mlist A),
-      k <> j ->
-      filterk j ((k, a) :: l) = filterk j l.
-  Proof.
-    intros. rewrite filterk_cons. compare values k and j.
-  Qed.
-
-  Lemma filterk_one : forall A k j (a : A) (l : mlist A),
-      filterk j [(k, a)] = if k == j then [ a ] else nil.
-  Proof.
-    intros; cbn. compare values k and j.
-  Qed.
-
-  Corollary filterk_one_eq : forall A k (a : A) (l : mlist A),
-      filterk k [(k, a)] = [ a ].
-  Proof.
-    intros; cbn. compare values k and k.
-  Qed.
-
-  Corollary filterk_one_neq : forall A k j (a : A) (l : mlist A),
-      k <> j ->
-      filterk j [(k, a)] = nil.
-  Proof.
-    intros; cbn. compare values k and j.
-  Qed.
-
-  Lemma filterk_app : forall A k (l1 l2 : mlist A),
-      filterk k (l1 ++ l2) = filterk k l1 ++ filterk k l2.
+  Lemma mbinddt_list_app : forall
+      `(f : forall (k : K), W * A -> list (W * Tag B))
+      (l1 l2 : list (W * Tag A)),
+      mbinddt_list f (l1 ++ l2) = mbinddt_list f l1 ++ mbinddt_list f l2.
   Proof.
     intros. induction l1.
-    - reflexivity.
-    - cbn. destruct a. compare values k and k0.
-      now rewrite IHl1.
+    - easy.
+    - destruct a as [w [k a]].
+      cbn. rewrite IHl1.
+      now rewrite List.app_assoc.
   Qed.
 
-  Lemma filterk_natural : forall A B k (f : A -k-> B),
-    filterk k ∘ mfmap mlist f = fmap list (f k) ∘ filterk k.
+  #[global] Instance : forall `(f : forall (k : K), W * A -> list (W * Tag B)),
+      ApplicativeMorphism (const (list (W * Tag A)))
+                          (const (list (W * Tag B)))
+                          (const (mbinddt_list f)).
   Proof.
-    intros. unfold compose; ext l. induction l.
-    - reflexivity.
-    - destruct a as [j a].
-      autorewrite with tea_list. rewrite filterk_cons.
-      cbn. compare values k and j.
-      now rewrite IHl.
+    intros. eapply ApplicativeMorphism_monoid_hom.
+    Unshelve. constructor; try typeclasses eauto.
+    - easy.
+    - intros. apply mbinddt_list_app.
   Qed.
 
-  Lemma filterk_fmapk_eq : forall A k (f : A -> A),
-    filterk k ∘ fmapk mlist k f = fmap list f ∘ filterk k.
-  Proof.
-    intros. unfold fmapk. rewrite filterk_natural.
-    now rewrite tgt_eq.
-  Qed.
-
-  Lemma filterk_fmapk_neq : forall A k j (f : A -> A),
-      k <> j ->
-    filterk k ∘ fmapk mlist j f = filterk k.
-  Proof.
-    intros. unfold fmapk. rewrite filterk_natural.
-    rewrite tgt_neq; auto.
-    now rewrite (fun_fmap_id list).
-  Qed.
-
-  Lemma filterk_bindk_eq : forall A k (f : A -> mlist A),
-    filterk k ∘ bindk mlist k f = bind list (filterk k ∘ f) ∘ filterk k.
-  Proof.
-    intros. unfold compose; ext l. induction l.
-    - reflexivity.
-    - destruct a as [j a]. compare values k and j.
-      + autorewrite* with tea_list.
-        rewrite ?(filterk_cons_eq).
-        autorewrite* with tea_list.
-        rewrite bindk_mlist_cons_eq.
-        rewrite filterk_app. now rewrite IHl.
-      + rewrite (bindk_mlist_cons_neq); auto.
-        rewrite filterk_cons_neq; auto.
-        rewrite filterk_cons_neq; auto.
-  Qed.
-
-End filterk_lemmas.
-
-Hint Rewrite @filterk_nil @filterk_cons_eq @filterk_one_eq
-     @filterk_app : tea_list.
-Hint Rewrite @filterk_cons_neq @filterk_one_neq @filterk_fmapk_neq
-     using (discriminate + auto) : tea_list.
-
-(** * Miscellaneous inversion lemmas for equality between [mlist] *)
-(******************************************************************************)
-Section mlist_inversion_principles.
-
-  Context
-    `{Index}.
-
-  Lemma mlist_inv_cons : forall A (k1 k2 : K) (a1 a2 : A) (l1 l2 : mlist A),
-      (k1, a1) :: l1 = (k2, a2) :: l2 -> k1 = k2 /\ a1 = a2 /\ l1 = l2.
-  Proof.
-    introv heq. inversion heq. subst. auto.
-  Qed.
-
-  Lemma mfmap_inv_cons : forall  {A B} {f g : A -k-> B} (k1 k2 : K) (a1 a2 : A) (l1 l2 : mlist A),
-      mfmap mlist f ((k1, a1) :: l1) = mfmap mlist g ((k2, a2) :: l2) ->
-      f k1 a1 = g k2 a2 /\ mfmap mlist f l1 = mfmap mlist g l2.
-  Proof.
-    introv hyp. rewrite mfmap_mlist_cons in hyp.
-    cbn in hyp. apply mlist_inv_cons in hyp.
-    intuition.
-  Qed.
-
-  Lemma mfmap_inv_cons_hd : forall  {A B} {f g : A -k-> B} (k1 k2 : K) (a1 a2 : A) (l1 l2 : mlist A),
-      mfmap mlist f ((k1, a1) :: l1) = mfmap mlist g ((k2, a2) :: l2) ->
-      f k1 a1 = g k2 a2.
-  Proof.
-    introv hyp. now apply mfmap_inv_cons in hyp.
-  Qed.
-
-  Lemma mfmap_inv_cons_tl : forall  {A B} {f g : A -k-> B} (k1 k2 : K) (a1 a2 : A) (l1 l2 : mlist A),
-      mfmap mlist f ((k1, a1) :: l1) = mfmap mlist g ((k2, a2) :: l2) ->
-      mfmap mlist f l1 = mfmap mlist g l2.
-  Proof.
-    introv hyp. now apply mfmap_inv_cons in hyp.
-  Qed.
-
-End mlist_inversion_principles.
+End list.

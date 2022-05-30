@@ -98,7 +98,7 @@ Section traversal_iterate.
     rewrite mfmapdt_to_runBatch. unfold iterated.
     admit.
   Admitted.
-
+bbbbbbbbbb
   Lemma tomlist_to_runBatch `{Applicative F} `(t : S A) :
     tomlist S t = runBatch (ret list : Tag A -> const (list (Tag A)) (Tag A)) (iterate (Tag A) t).
   Proof.
