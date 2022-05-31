@@ -46,7 +46,7 @@ Section MultisortedDTM_typeclasses.
              {A B C : Type}
              (g : forall k, W * B -> G (T k C))
              (f : forall k, W * A -> F (T k B)) : forall k, W * A -> F (G (T k C)) :=
-    fun k '(w, a) => fmap F (mbinddt W T (T k) G (g ◻ const (incr w))) (f k (w, a)).
+    fun (k : K) '(w, a) => fmap F (mbinddt W T (T k) G (g ◻ const (incr w))) (f k (w, a)).
 
   Infix "⋆dtm" := compose_dtm (at level 40) : tealeaves_scope.
 
@@ -114,16 +114,6 @@ End MultisortedDTM_typeclasses.
 
 Arguments mret {ix} _%function_scope {MReturn} {A}%type_scope _ _.
 Arguments mbinddt {ix} {W}%type_scope {T} (S)%function_scope {MBind} F%function_scope {H H0 H1} {A B}.
-
-(** ** Notations **)
-(******************************************************************************)
-Module Notations.
-
-  Infix "⋆dtm" := compose_dtm (at level 40) : tealeaves_scope.
-
-End Notations.
-
-Import Notations.
 
 (** ** Derived operations on DTMs *)
 (******************************************************************************)
@@ -1427,6 +1417,23 @@ End DTM_targeted.
 
 (** ** Decorated monad (<<kbindd>>) *)
 (******************************************************************************)
+
+Definition compose_kdm
+           `{ix : Index}
+           {W : Type}
+           {T : K -> Type -> Type}
+           `{mn_op : Monoid_op W}
+           `{mn_unit : Monoid_unit W}
+           `{forall k, MBind W T (T k)}
+           `{! MReturn T}
+           {j : K}
+           {A : Type}
+           (g : W * A -> T j A)
+           (f : W * A -> T j A) : W * A -> T j A :=
+  fun '(w, a) => kbindd (T j) j (g ∘ incr w) (f (w, a)).
+
+Infix "⋆kdm" := compose_kdm (at level 40).
+
 Section DecoratedMonad.
 
   Context
@@ -1447,11 +1454,12 @@ Section DecoratedMonad.
 
   Theorem kbindd_kbindd_eq : forall (g : W * A -> T j A) (f : W * A -> T j A),
       kbindd S j g ∘ kbindd S j f =
-      kbindd S j (fun '(w, a) => kbindd (T j) j (g ∘ incr w) (f (w, a))).
+      kbindd S j (g ⋆kdm f).
   Proof.
     intros. unfold kbindd. rewrite (mbindd_mbindd S).
     fequal. ext k [w a]. cbn. compare values k and j.
-    - cbn. fequal. ext k [w' a']. compare values k and j.
+    - cbn. unfold kbindd. fequal. ext k [w' a'].
+      compare values k and j.
     - compose near a on left. rewrite mbindd_comp_mret.
       cbn. compare values k and j.
   Qed.
@@ -1460,7 +1468,7 @@ Section DecoratedMonad.
     forall {i : K} (Hneq : j <> i)
       (g : W * A -> T i A) (f : W * A -> T j A),
       kbindd S i g ∘ kbindd S j f =
-      mbindd S (compose_dm (btgd T i g) (btgd T j f)).
+      mbindd S (btgd T i g ⋆dm btgd T j f).
   Proof.
     intros. unfold kbindd. now rewrite (mbindd_mbindd S).
   Qed.
@@ -1485,11 +1493,26 @@ Section DecoratedMonad.
     now autorewrite with tea_tgt_neq.
   Qed.
 
-  (** *** Composition with special cases on the left *)
+  (** *** Composition with special cases *)
   (******************************************************************************)
-  (* TODO <<kfmapd_kbindd>> *)
+  Lemma kfmapd_kbindd : forall
+      (g : W * A -> A) (f : W * A -> T j A),
+      kfmapd S j g ∘ kbindd S j f = kbindd S j (fun '(w, a) => kfmapd (T j) j (g ∘ incr w) (f (w, a))).
+  Proof.
+    intros. rewrite kfmapd_to_kbindd.
+    rewrite kbindd_kbindd_eq. fequal.
+    unfold compose_kdm. ext [w a].
+    now rewrite kfmapd_to_kbindd.
+  Qed.
 
-  (* TODO <<kbind_kbindd>> *)
+  Lemma kbind_kbindd : forall
+      (g : A -> T j A) (f : W * A -> T j A),
+      kbind S j g ∘ kbindd S j f = kbindd S j (kbind (T j) j g ∘ f).
+  Proof.
+    intros. rewrite kbind_to_kbindd. rewrite kbindd_kbindd_eq.
+    fequal. unfold compose_kdm. ext [w a].
+    reassociate ->. rewrite extract_incr. now rewrite kbind_to_kbindd.
+  Qed.
 
   Lemma kfmap_kbindd : forall
       (g : A -> A) (f : W * A -> T j A),
@@ -1506,9 +1529,25 @@ Section DecoratedMonad.
       rewrite (mbindd_comp_mret). rewrite tgt_neq; auto.
   Qed.
 
-  (* TODO <<kbindd_kfmapd>> *)
+  Lemma kbindd_kfmapd : forall
+      (g : W * A -> T j A) (f : W * A -> A),
+      kbindd S j g ∘ kfmapd S j f = kbindd S j (fun '(w, a) => g (w, f (w, a))).
+  Proof.
+    intros. rewrite kfmapd_to_kbindd.
+    rewrite kbindd_kbindd_eq. fequal.
+    ext (w, a). unfold compose; cbn.
+    rewrite kbindd_comp_mret_eq. unfold compose; cbn.
+    now simpl_monoid.
+  Qed.
 
-  (* TODO <<kfmapd_kbindd>> *)
+  Lemma kbindd_kbind : forall
+      (g : W * A -> T j A) (f : A -> T j A),
+      kbindd S j g ∘ kbind S j f = kbindd S j (fun '(w, a) => kbindd (T j) j (g ∘ incr w) (f a)).
+  Proof.
+    intros. rewrite kbind_to_kbindd. now rewrite kbindd_kbindd_eq.
+  Qed.
+
+  (* TODO <<kbindd_kfmap>> *)
 
 End DecoratedMonad.
 
@@ -1580,6 +1619,20 @@ End DecoratedFunctor.
 
 (** ** Monads (<<kbind>>) *)
 (******************************************************************************)
+Definition compose_km
+           `{ix : Index}
+           {W : Type}
+           {T : K -> Type -> Type}
+           `{forall k, MBind W T (T k)}
+           `{! MReturn T}
+           {j : K}
+           {A : Type}
+           (g : A -> T j A)
+           (f : A -> T j A) : A -> T j A :=
+  (kbind (T j) j g ∘ f).
+
+Infix "⋆km" := compose_km (at level 40).
+
 Section Monad.
 
   Context
@@ -1603,7 +1656,7 @@ Section Monad.
   Theorem kbind_kbind : forall A,
       forall (g f : A -> T j A),
         kbind S j g ∘ kbind S j f =
-        kbind S j (fun (a : A) => kbind (T j) j g (f a)).
+        kbind S j (g ⋆km f).
   Proof.
     intros. unfold kbind.
     rewrite (mbind_mbind S). fequal.
@@ -1690,3 +1743,15 @@ Section Functor.
   Qed.
 
 End Functor.
+
+(** ** Notations **)
+(******************************************************************************)
+Module Notations.
+
+  Infix "⋆dtm" := compose_dtm (at level 40) : tealeaves_scope.
+
+  Infix "⋆kdm" := compose_kdm (at level 40) : tealeaves_scope.
+
+  Infix "⋆km" := compose_km (at level 40) : tealeaves_scope.
+
+End Notations.

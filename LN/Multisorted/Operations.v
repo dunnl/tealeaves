@@ -14,10 +14,9 @@ Import Multisorted.Theory.DTMContainer.Notations.
 #[local] Open Scope set_scope.
 #[local] Open Scope nat_scope.
 
-(** * Operations for locally nameless *)
-(******************************************************************************)
-
-(** ** Contexts **)
+(** * Binders contexts **)
+(** We assume that binder contexts are lists of tagged values of type
+    <<unit>>, which are just tags themselves. *)
 (******************************************************************************)
 Section operations_on_context.
 
@@ -66,6 +65,9 @@ Section operations_on_context.
 
 End operations_on_context.
 
+(** * Syntax operations for locally nameless *)
+(******************************************************************************)
+
 (** ** Local operations *)
 (******************************************************************************)
 Section local_operations.
@@ -84,58 +86,53 @@ Section local_operations.
 
   Definition subst_loc k x (u : T k leaf) : leaf -> T k leaf :=
     fun l => match l with
-          | Fr y => if x == y then u else mret T k (Fr y)
-          | Bd n => mret T k (Bd n)
+          | Fr y =>
+            if x == y then u else mret T k (Fr y)
+          | Bd n =>
+            mret T k (Bd n)
           end.
 
   Definition open_loc k (u : T k leaf) : list K * leaf -> T k leaf :=
-    fun p => match p with
-          | (w, l) =>
-            match l with
-            | Fr x => mret T k (Fr x)
-            | Bd n => match Nat.compare n (countk k w) with
-                     | Gt => mret T k (Bd (n - 1))
-                     | Eq => u
-                     | Lt => mret T k (Bd n)
-                     end
-            end
-          end.
-
-  Definition is_opened : nat * leaf -> Prop :=
-    fun p =>
-      match p with
-      | (ctx, l) =>
-        match l with
-        | Fr y => False
-        | Bd n => n = ctx
+    fun '(w, l) =>
+      match l with
+      | Fr x => mret T k (Fr x)
+      | Bd n =>
+        match Nat.compare n (countk k w) with
+        | Gt => mret T k (Bd (n - 1))
+        | Eq => u
+        | Lt => mret T k (Bd n)
         end
       end.
 
-  Definition close_loc k x : list K * leaf -> leaf :=
-    fun p => match p with
-          | (w, l) =>
-            match l with
-            | Fr y => if x == y then Bd (countk k w) else Fr y
-            | Bd n => match Nat.compare n (countk k w) with
-                    | Gt => Bd (S n)
-                    | Eq => Bd (S n)
-                    | Lt => Bd n
-                    end
-            end
-          end.
+  Definition is_opened : list K * (K * leaf) -> Prop :=
+    fun '(w, (k, l)) =>
+      match l with
+      | Fr y => False
+      | Bd n => n = countk k w
+      end.
 
-  (** The argument <<n>> is appended the context---to define local
-      closure we will take <<n = 0>>, but we can also consider more
-      notions like ``local closure within a gap of 1 binder,'' which
-      is useful for backend reasoning. **)
+  Definition close_loc k x : list K * leaf -> leaf :=
+    fun '(w, l) =>
+      match l with
+      | Fr y =>
+        if x == y then Bd (countk k w) else Fr y
+      | Bd n =>
+        match Nat.compare n (countk k w) with
+        | Gt => Bd (S n)
+        | Eq => Bd (S n)
+        | Lt => Bd n
+        end
+      end.
+
+  (** To define local closure we will take <<n = 0>>, but we can also
+      consider more notions like ``local closure within a gap of 1
+      binder,'' which is useful for backend reasoning. **)
   Definition is_bound_or_free k (gap : nat) : list K * leaf -> Prop :=
-    fun p => match p with
-          | (w, l) =>
-            match l with
-            | Fr x => True
-            | Bd n => n < (countk k w) + gap
-            end
-          end.
+    fun '(w, l) =>
+      match l with
+      | Fr x => True
+      | Bd n => n < (countk k w) + gap
+      end.
 
 End local_operations.
 
@@ -160,10 +157,6 @@ Section LocallyNamelessOperations.
   Definition free : K -> S leaf -> list atom :=
     fun k t => bind list free_loc (toklist S k t).
 
-  (** Derived operations *)
-  Definition freeset : K -> S leaf -> AtomSet.t :=
-    fun k t => LN.AtomSet.atoms (free k t).
-
   Definition locally_closed_gap k (gap : nat) : S leaf -> Prop :=
     fun t => forall (w : list K) (l : leaf),
         (w, (k, l)) ∈md t -> is_bound_or_free k gap (w, l).
@@ -171,11 +164,16 @@ Section LocallyNamelessOperations.
   Definition locally_closed k : S leaf -> Prop :=
     locally_closed_gap k 0.
 
+  Definition freeset : K -> S leaf -> AtomSet.t :=
+    fun k t => LN.AtomSet.atoms (free k t).
+
   Definition scoped : K -> S leaf -> AtomSet.t -> Prop :=
     fun k t γ => freeset k t ⊆ γ.
 
 End LocallyNamelessOperations.
 
+(** ** Notations for operations *)
+(******************************************************************************)
 Module Notations.
 
   Notation "t '{ k | x ~> u }" := (subst _ k x u t) (at level 35).

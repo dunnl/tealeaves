@@ -185,7 +185,7 @@ Section mbindd_respectful.
       + apply hyp. now right.
   Qed.
 
-  (** *** For equalities with other operations *)
+  (** *** For equalities with special cases *)
   (** Corollaries with conclusions of the form <<mbindd t = f t>> for
   other <<m*>> operations *)
   (******************************************************************************)
@@ -385,8 +385,18 @@ Section kbindd_respectful.
     - do 2 (rewrite btgd_neq; auto).
   Qed.
 
-  (** *** For equalities with other operations *)
+  (** *** For equalities with special cases *)
   (******************************************************************************)
+  Corollary kbindd_respectful_kbind :
+    forall A (t : S A) (f : W * A -> T j A) (g : A -> T j A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g a)
+      -> kbindd S j f t = kbind S j g t.
+  Proof.
+    introv hyp. rewrite kbind_to_kbindd.
+    apply kbindd_respectful. introv Hin.
+    apply hyp. auto.
+  Qed.
+
   Corollary kbindd_respectful_kfmapd :
     forall A (t : S A) (f : W * A -> T j A) (g : W * A -> A),
       (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = mret T j (g (w, a)))
@@ -420,6 +430,27 @@ Section kbindd_respectful.
 
 End kbindd_respectful.
 
+(** ** Respectfulness for mixed structures *)
+(******************************************************************************)
+Section mixed_respectful.
+
+  Context
+    {S : Type -> Type}
+    `{DTPreModule W S T}
+    `{! DTM W T} (j : K).
+
+  Corollary kbind_respectful_kfmapd :
+    forall A (t : S A) (f : A -> T j A) (g : W * A -> A),
+      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = mret T j (g (w, a)))
+      -> kbind S j f t = kfmapd S j g t.
+  Proof.
+    introv hyp. rewrite kfmapd_to_kbindd.
+    rewrite kbind_to_kbindd. apply kbindd_respectful.
+    introv Hin. apply hyp. auto.
+  Qed.
+
+End mixed_respectful.
+
 (** ** Respectfulness for <<kbind>> *)
 (******************************************************************************)
 Section kbindd_respectful.
@@ -440,18 +471,8 @@ Section kbindd_respectful.
     - do 2 (rewrite btg_neq; auto).
   Qed.
 
-  (** *** For equalities with other operations *)
+  (** *** For equalities with special cases *)
   (******************************************************************************)
-  Corollary kbind_respectful_kfmapd :
-    forall A (t : S A) (f : A -> T j A) (g : W * A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = mret T j (g (w, a)))
-      -> kbind S j f t = kfmapd S j g t.
-  Proof.
-    introv hyp. rewrite kfmapd_to_kbindd.
-    rewrite kbind_to_kbindd. apply kbindd_respectful.
-    introv Hin. apply hyp. auto.
-  Qed.
-
   Corollary kbind_respectful_kfmap :
     forall A (t : S A) (f : A -> T j A) (g : A -> A),
       (forall (a : A), (j, a) ∈m t -> f a = mret T j (g a))
