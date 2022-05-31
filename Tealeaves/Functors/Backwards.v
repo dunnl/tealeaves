@@ -29,7 +29,9 @@ Section Backwards.
   #[global] Instance Mult_Backwards : Mult (Backwards F) :=
     fun A B '(x, y) => mult_Backwards x y.
 
-  (* TODO We do not need this right now
+  (* TODO Finish proving <<Backwards>> is an applicative.
+     We do not need this right now. *)
+  (*
   #[global, program] Instance Applicative_Backwards : Applicative (Backwards F).
    *)
 

@@ -103,31 +103,6 @@ Instance Return_list : Return list := fun A a => cons a nil.
 
 Instance Join_list : Join list := @List.concat.
 
-(** ** Notations **)
-(** We reincorporate Coq's standard notations into our own scope. This
-  obviates users needing to either import a module from outside
-  Tealeaves (<<Coq.Lists.List.ListNotations>>) or open <<list_scope>>
-  in addition to Tealeaves' notation scope before using notations for
-  lists. Also, having <<[ x ]>> desugar to <<@ret list _>> can be
-  slightly more conveient than <<cons x nil>> internally for rewriting
-  purposes. *)
-Module Notations.
-
-  Export List.ListNotations.
-  (* TODO : Revisit this for relevancy
-
-  Infix "::" := cons (at level 60, right associativity) : tealeaves_scope.
-  Infix "++" := app (right associativity, at level 60) : tealeaves_scope.
-
-  Notation "[ ]" := nil (format "[ ]") : tealeaves_scope.
-  Notation "[ x ]" := (ret list x) : tealeaves_scope.
-  Notation "[ x ; y ; .. ; z ]" := (cons x (cons y .. (cons z nil) ..)) : tealeaves_scope.
-*)
-
-End Notations.
-
-Import Notations.
-
 (** ** Rewriting lemmas for <<join>> *)
 (******************************************************************************)
 Lemma join_list_nil :

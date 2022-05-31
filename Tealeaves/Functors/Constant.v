@@ -83,7 +83,7 @@ Section const_ops.
 
 End const_ops.
 
-Instance ApplicativeMorphism_Monoid `(f : M1 -> M2) `{Monoid_Morphism M1 M2 f} :
+Instance ApplicativeMorphism_Monoid_Morphism `(f : M1 -> M2) `{Monoid_Morphism M1 M2 f} :
   ApplicativeMorphism (Const M1) (Const M2) (@mapConst M1 M2 f).
 Proof.
   match goal with H : Monoid_Morphism f |- _ => inversion H end.
@@ -148,7 +148,7 @@ Section constant_functor.
   Existing Instance Applicative_const.
   Existing Instance ApplicativeMorphism_unconst.
 
-  Instance ApplicativeMorphism_monoid_hom `{hom : Monoid_Morphism ϕ (A := M) (B := N)} :
+  Instance ApplicativeMorphism_monoid_morphism `{hom : Monoid_Morphism ϕ (A := M) (B := N)} :
     ApplicativeMorphism (const M) (const N) (const ϕ).
   Proof.
     inversion hom.
@@ -156,3 +156,11 @@ Section constant_functor.
   Qed.
 
 End constant_functor.
+
+(* I'm going to experiment with leaving these exported, to see if it creates problems. *)
+Existing Instance Fmap_const.
+Existing Instance Pure_const.
+Existing Instance Mult_const.
+Existing Instance Applicative_const.
+Existing Instance ApplicativeMorphism_unconst.
+Existing Instance ApplicativeMorphism_monoid_morphism.

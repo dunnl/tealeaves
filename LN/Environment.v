@@ -6,7 +6,7 @@ From Tealeaves Require Import
 
 Require Import Coq.Sorting.Permutation.
 
-Import List.Notations.
+Import List.ListNotations.
 Import LN.AtomSet.Notations.
 Import LN.AssocList.Notations.
 Import Applicative.Notations.

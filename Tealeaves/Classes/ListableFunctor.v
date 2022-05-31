@@ -8,7 +8,7 @@ From Tealeaves Require Export
 Import Functor.Notations.
 Import Sets.Notations.
 Import SetlikeFunctor.Notations.
-Import List.Notations.
+Import List.ListNotations.
 #[local] Open Scope list_scope.
 #[local] Open Scope tealeaves_scope.
 

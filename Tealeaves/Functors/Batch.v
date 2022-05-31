@@ -56,12 +56,6 @@ Import Notations.
 
 (** ** Applicative Instance *)
 (******************************************************************************)
-(* TODO Move me *)
-Definition eval `(a : A) `(f : A -> B) := f a.
-Definition costrength_arr `(p : (A -> B) * C) : A -> B * C := fun a => (fst p a, snd p).
-Definition strength_arr `(p : A * (B -> C)) : B -> A * C := fun b => (fst p, snd p b).
-Definition pair_right {A B} : B -> A -> A * B := fun b a => (a, b).
-
 Section Applicative_Batch.
 
   Context
@@ -74,7 +68,7 @@ Section Applicative_Batch.
     match jb with
     | Go b => fmap Batch (fun (a : A) => (a, b)) ja
     | Ap rest x1 =>
-      Ap (fmap Batch strength_arr (mult_Batch ja rest)) x1
+      Ap (fmap Batch strength_arrow (mult_Batch ja rest)) x1
     end.
 
   #[global] Instance Mult_Batch : Mult (@Batch X Y) :=
@@ -104,13 +98,13 @@ Section Applicative_Batch.
 
   Lemma mult_Batch_rw4 : forall (x : X) `(ja : @Batch X Y (Y -> A)) `(b : B),
       (ja ⧆ x) ⊗ Go b =
-      fmap Batch (costrength_arr ∘ pair_right b) ja ⧆ x.
+      fmap Batch (costrength_arrow ∘ pair_right b) ja ⧆ x.
   Proof.
     easy.
   Qed.
 
   Lemma mult_Batch_rw5 : forall `(jb : @Batch X Y (Y -> B)) `(a : A) (x : X),
-      Go a ⊗ (jb ⧆ x) = fmap Batch (strength_arr ∘ pair a) jb ⧆ x.
+      Go a ⊗ (jb ⧆ x) = fmap Batch (strength_arrow ∘ pair a) jb ⧆ x.
   Proof.
     cbn. change (mult_Batch ?x ?y) with (x ⊗ y) in *. intros.
     fequal. rewrite (mult_Batch_rw3). compose near jb on left.
@@ -119,7 +113,7 @@ Section Applicative_Batch.
 
   Lemma mult_Batch_rw6 : forall (x1 x2 : X) `(ja : Batch (Y -> A)) `(jb : Batch (Y -> B)),
       (ja ⧆ x1) ⊗ (jb ⧆ x2) =
-      fmap Batch strength_arr ((ja ⧆ x1) ⊗ jb) ⧆ x2.
+      fmap Batch strength_arrow ((ja ⧆ x1) ⊗ jb) ⧆ x2.
   Proof.
     reflexivity.
   Qed.

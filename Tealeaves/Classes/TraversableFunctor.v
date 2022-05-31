@@ -419,19 +419,6 @@ Section TraversableFunctor_const.
     (T : Type -> Type)
     `{TraversableFunctor T}.
 
-  (* TODO Move me *)
-  Definition exfalso {X : Type} : False -> X.
-    intuition.
-  Defined.
-
-  (* TODO Move me *)
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-  Existing Instance ApplicativeMorphism_monoid_hom.
-
   (** *** Distribution over <<const>> is agnostic about the tag. *)
   (** Distribution over a constant applicative functor is agnostic
       about the type argument ("tag") to the constant functor. On
@@ -520,13 +507,6 @@ Section TraversableFunctor_fold_spec.
     `{Monoid M}
     `{TraversableFunctor T}.
 
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-  Existing Instance ApplicativeMorphism_monoid_hom.
-
   (** *** Specification for <<Tolist_Traversable>> *)
   (******************************************************************************)
   Theorem traversable_tolist_spec {A : Type} (tag : Type) :
@@ -569,7 +549,6 @@ Section TraversableFunctor_fold_spec.
     unfold foldMap. now rewrite (traversable_fold_spec tag).
   Qed.
 
-  (* TODO polish me *)
   Theorem traversable_tolist_spec2 {A : Type} :
     @tolist T Tolist_Traversable A
     = foldMap (ret list).
@@ -678,12 +657,6 @@ Section traversal_iterate.
 
   (** ** Identities for <<tolist>> and <<foldMap>> *)
   (******************************************************************************)
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-
   Lemma tolist_to_runBatch `{Applicative F} `(t : T A) :
     tolist T t = runBatch (ret list : A -> const (list A) A) (iterate A t).
   Proof.
@@ -719,14 +692,9 @@ End traversal_iterate.
 (******************************************************************************)
 Section traversal_reassemble.
 
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-
   Context
     `{TraversableFunctor T}.
+
   Fixpoint add_elements `(s : @Batch i1 o X) `(l : list i2) : @Batch (Maybe i2) o X :=
     match s with
     | Go t' => Go t'
