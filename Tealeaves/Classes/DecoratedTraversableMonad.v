@@ -687,7 +687,7 @@ Section DecoratedTraversableMonad_composition.
     change (binddt T g) with (fmap (fun A => A) (binddt T g)).
     rewrite (binddt_binddt T (G1 := fun A => A)).
     rewrite (dtm_kleisli_star5 T g f).
-    fequal; apply Mult_compose_identity2.
+    now rewrite Mult_compose_identity2. (* tricky *)
   Qed.
 
   (** *** Composition laws when <<g>> is trivial in a certain effect. *)

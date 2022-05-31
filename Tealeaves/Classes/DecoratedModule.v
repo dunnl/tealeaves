@@ -336,8 +336,8 @@ Section decoratedmonad_suboperation_composition.
   Proof.
     intros. rewrite (fmapd_to_subd F T).
     rewrite <- (subd_subd F T).
-    unfold kcomposed. rewrite <- (fmap_to_bind T).
-    now rewrite <- (fmap_cobind (prod W)).
+    unfold kcomposed.
+    now rewrite <- (fmap_to_bind T).
   Qed.
 
   Corollary subd_sub {A B C} : forall (g : W * B -> T C) (f : A -> T B),

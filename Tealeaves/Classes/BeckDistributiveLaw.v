@@ -109,15 +109,16 @@ Section BeckDistributivelaw_composite_monad.
     now rewrite (fun_fmap_id T).
   Qed.
 
-  #[local] Set Keyed Unification.
   Lemma join_fmap_ret_Beck {A} :
-      join (T ∘ U) ∘ fmap (T ∘ U) (ret (T ∘ U)) = @id (T (U A)).
+    join (T ∘ U) ∘ fmap (T ∘ U) (ret (T ∘ U)) = @id (T (U A)).
   Proof.
     intros. unfold_ops @Join_Beck @Ret_Beck.
     rewrite (natural (G := T) (Natural := mon_join_natural T)).
     unfold_ops @Fmap_compose.
-    repeat reassociate ->.
+    do 2 reassociate ->.
+    #[local] Set Keyed Unification.
     rewrite 2(fun_fmap_fmap T).
+    #[local] Unset Keyed Unification.
     rewrite <- (fun_fmap_fmap U).
     reassociate <- near (bdist U T).
     rewrite (dist_unit_r U T).
@@ -128,7 +129,6 @@ Section BeckDistributivelaw_composite_monad.
     rewrite (mon_join_fmap_ret T).
     now rewrite (fun_fmap_id T).
   Qed.
-  #[local] Unset Keyed Unification.
 
   Lemma join_join_Beck {A} :
     join (T ∘ U) ∘ join (T ∘ U) =

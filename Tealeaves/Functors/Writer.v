@@ -224,7 +224,7 @@ Section strength_as_writer_distributive_law.
   Context
     `{Monad T}.
 
-  #[global] Instance BeckDistributiveLaw_strength :
+  #[global, program] Instance BeckDistributiveLaw_strength :
     BeckDistributiveLaw (W ×) T :=
     {| dist_join_r := strength_join T;
        dist_unit_r := strength_ret T;
@@ -289,7 +289,7 @@ Section writer_bimonad_instance.
     intros. now ext [w1 [w2 a]].
   Qed.
 
-  #[global] Program Instance Bimonad_Writer : Bimonad (W ×) :=
+  #[global] Instance Bimonad_Writer : Bimonad (W ×) :=
     {| bimonad_monad := Monad_writer;
        bimonad_comonad := Comonad_prod;
        Bimonad.bimonad_dist_counit_l := @bimonad_dist_counit_l;

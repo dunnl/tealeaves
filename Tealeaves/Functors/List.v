@@ -34,27 +34,35 @@ Instance Fmap_list : Fmap list :=
 
 (** ** Rewriting lemmas for <<fmap>> *)
 (******************************************************************************)
-Lemma fmap_list_nil `{f : A -> B} : fmap list f (@nil A) = @nil B.
-Proof.
-  reflexivity.
-Qed.
+Section fmap_list_rw.
 
-Lemma fmap_list_cons `{f : A -> B} : forall (x : A) (xs : list A),
-    fmap list f (x :: xs) = f x :: fmap list f xs.
-Proof.
-  reflexivity.
-Qed.
+  Context
+    {A B : Type}
+    (f : A -> B).
 
-Lemma fmap_list_one `{f : A -> B} a : fmap list f [ a ] = [f a].
-Proof.
-  reflexivity.
-Qed.
+  Lemma fmap_list_nil : fmap list f (@nil A) = @nil B.
+  Proof.
+    reflexivity.
+  Qed.
 
-Lemma fmap_list_app : forall `(f : A -> B) (l1 l2 : list A),
-    fmap list f (l1 ++ l2) = fmap list f l1 ++ fmap list f l2.
-Proof.
-  unfold transparent tcs. now rewrites List.map_app.
-Qed.
+  Lemma fmap_list_cons : forall (x : A) (xs : list A),
+      fmap list f (x :: xs) = f x :: fmap list f xs.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma fmap_list_one (a : A) : fmap list f [ a ] = [f a].
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma fmap_list_app : forall (l1 l2 : list A),
+      fmap list f (l1 ++ l2) = fmap list f l1 ++ fmap list f l2.
+  Proof.
+    unfold transparent tcs. now rewrites List.map_app.
+  Qed.
+
+End fmap_list_rw.
 
 Hint Rewrite @fmap_list_nil @fmap_list_cons
      @fmap_list_one @fmap_list_app : tea_list.

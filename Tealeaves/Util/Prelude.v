@@ -19,14 +19,6 @@ Require Export Psatz.
 (** Making all variable names generalizable by default. *)
 #[global] Generalizable All Variables.
 
-(** TODO : This is temporarily necessary but needs to be fixed *)
-#[global] Unset Universe Checking.
-
-(** This has been necessary to get past the error
-    <<Ill-formed template inductive declaration: not polymorphic on any universe.>>
-    for some Inductive definitions. *)
-#[global] Unset Auto Template Polymorphism.
-
 (** Open <<type_scope>> globally because (\*\) should mean [prod] *)
 Open Scope type_scope.
 
@@ -34,7 +26,7 @@ Open Scope type_scope.
 Declare Scope tealeaves_scope.
 Delimit Scope tealeaves_scope with tea.
 
-Definition compose {A B C} (g : B -> C) (f : A -> B) : A -> C := fun a => g (f a).
+Polymorphic Definition compose {A B C} (g : B -> C) (f : A -> B) : A -> C := fun a => g (f a).
 
 Notation "g ∘ f" := (compose g f) (at level 40, left associativity).
 Notation "F ○ G" := (fun X => F (G X)) (at level 40, left associativity).

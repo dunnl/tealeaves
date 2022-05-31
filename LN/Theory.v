@@ -512,7 +512,8 @@ Section locally_nameless_metatheory.
     #[local] Set Keyed Unification.
     rewrite subst_open_local; auto.
     #[local] Unset Keyed Unification.
-    unfold kcomposed. reassociate <-.
+    unfold kcomposed.
+    reassociate <- near (dec T).
     now rewrite <- (fmap_to_cobind (prod nat)).
   Qed.
 
@@ -572,9 +573,13 @@ Section locally_nameless_metatheory.
     introv neq lc. compose near t.
     unfold open, subst.
     rewrite (sub_subd F), (subd_sub F).
-    fequal. change_left (subst T x u ∘ open_loc (ret T (Fr y))).
-    rewrite subst_open_var_loc; auto. unfold kcomposed.
-    reassociate <- on left.
+    fequal.
+    change_left (subst T x u ∘ open_loc (ret T (Fr y))).
+    #[local] Set Keyed Unification.
+    rewrite subst_open_var_loc; auto.
+    #[local] Unset Keyed Unification.
+    unfold kcomposed.
+    reassociate <- near (dec T).
     now rewrite <- (fmap_to_cobind (prod nat)).
   Qed.
 

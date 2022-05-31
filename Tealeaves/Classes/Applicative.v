@@ -1,7 +1,8 @@
 From Tealeaves Require Export
      Util.Product
      Classes.Monoid
-     Classes.Functor.
+     Classes.Functor
+     Util.Prelude.
 
 Import Product.Notations.
 Import Functor.Notations.
