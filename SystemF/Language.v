@@ -622,8 +622,8 @@ Lemma mbinddt_comp_mret_typ :
     `(f : forall k, list K2 * A -> F (SystemF k B)),
     mbinddt typ F f ∘ mret SystemF KType = f KType ∘ pair nil.
 Proof.
-  intros.
-Admitted.
+  reflexivity.
+Qed.
 
 Lemma mbinddt_comp_mret_term :
   forall (F : Type -> Type)
@@ -631,8 +631,8 @@ Lemma mbinddt_comp_mret_term :
     `(f : forall k, list K2 * A -> F (SystemF k B)),
     mbinddt term F f ∘ mret SystemF KTerm = f KTerm ∘ pair nil.
 Proof.
-  intros.
-Admitted.
+  reflexivity.
+Qed.
 
 Corollary mbinddt_comp_mret_F :
   forall k F `{Applicative F}
