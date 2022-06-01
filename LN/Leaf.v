@@ -2,10 +2,12 @@ From Tealeaves Require Import
      Util.Prelude Util.EqDec_eq
      LN.Atom.
 
+#[local] Open Scope tealeaves_scope.
+
 (** * Locally nameless leaves *)
 (******************************************************************************)
 Inductive leaf :=
-| Fr : Atom.atom -> leaf
+| Fr : atom -> leaf
 | Bd : nat -> leaf.
 
 Theorem eq_dec_leaf : forall l1 l2 : leaf, {l1 = l2} + {l1 <> l2}.

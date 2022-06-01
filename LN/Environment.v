@@ -217,11 +217,6 @@ Section env_rewriting_tolist.
 
   (** ** Rewriting principles for <<tolist>> *)
   (******************************************************************************)
-  Lemma tolist_env_spec : forall A (e : env A),
-      tolist env e = join list (fmap list (tolist F ∘ snd) e).
-  Proof.
-  Abort.
-
   Lemma tolist_env_nil : forall A,
       tolist env (nil : env A) = nil.
   Proof.
@@ -250,6 +245,16 @@ Section env_rewriting_tolist.
     intros. unfold_ops @Tolist_Traversable. unfold compose.
     rewrite fmap_env_app.
     now rewrite (dist_env_app).
+  Qed.
+
+  Lemma tolist_env_spec : forall A (e : env A),
+      tolist env e = join list (fmap list (tolist F ∘ snd) e).
+  Proof.
+    intros. induction e.
+    - reflexivity.
+    - simpl_list. rewrite <- IHe.
+      destruct a.
+      now rewrite tolist_env_cons.
   Qed.
 
   (** ** Rewriting principles for <<∈>> *)

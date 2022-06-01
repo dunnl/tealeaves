@@ -1,19 +1,16 @@
 From Tealeaves Require Import
-     Util.Prelude
-     Classes.Monoid
      Classes.SetlikeFunctor
      LN.Atom.
 
 From Coq Require
      MSets.MSets.
 
-(* set up notations *)
 Import List.ListNotations.
-Open Scope list_scope.
 Import SetlikeFunctor.Notations.
-Open Scope tealeaves_scope.
+#[local] Open Scope list_scope.
+#[local] Open Scope tealeaves_scope.
 
-(** * Defining <<AtomSet>> via Coq MSets library *)
+(** * Definition of <<AtomSet>> type *)
 (******************************************************************************)
 Module AtomSet <: Coq.MSets.MSetInterface.WSets :=
   Coq.MSets.MSetWeakList.Make Atom.
@@ -21,12 +18,12 @@ Module AtomSet <: Coq.MSets.MSetInterface.WSets :=
 Module AtomSetProperties :=
   Coq.MSets.MSetProperties.WPropertiesOn Atom AtomSet.
 
-Declare Scope set_scope.
-Delimit Scope set_scope with set.
-Local Open Scope set_scope.
-
 (** ** Notations for operations on <<AtomSet>> *)
 (******************************************************************************)
+Declare Scope set_scope.
+Delimit Scope set_scope with set.
+Open Scope set_scope.
+
 Module Notations.
 
   Notation "x ∈@ S" := (AtomSet.In x S) (at level 40) : set_scope.
@@ -39,33 +36,15 @@ Module Notations.
   Notation "∅" := (AtomSet.empty) : set_scope.
   Notation "{{ x }}" := (AtomSet.singleton x) : set_scope.
 
+  Tactic Notation "fsetdec" := AtomSetProperties.Dec.fsetdec.
+
 End Notations.
 
 Import Notations.
 
-Tactic Notation "fsetdec" := AtomSetProperties.Dec.fsetdec.
-
-Lemma in_singleton_iff : forall (x : atom) (y : atom),
-    y ∈@ {{ x }} <-> y = x.
-Proof.
-  intros. fsetdec.
-Qed.
-
-Lemma in_elements_iff : forall (s : AtomSet.t) (x : atom),
-    x ∈@ s <-> x ∈ elements s.
-Proof.
-  intros. rewrite <- AtomSet.elements_spec1. induction (elements s).
-  - cbv. split; intro H; inversion H.
-  - cbn. split; intro H; inversion H.
-    + subst. now left.
-    + subst. destruct H.
-      subst. rewrite IHl in H1. now right.
-      rewrite IHl in H1. now right.
-    + subst. now left.
-    + right. now rewrite IHl.
-Qed.
-
 (** ** The [atoms] operation *)
+(** <<atoms>> collects a list of atoms into an <<AtomSet>>. It is
+    inverse to [AtomSet.elements] *)
 (******************************************************************************)
 Fixpoint atoms (l : list atom) : AtomSet.t :=
   match l with
@@ -75,6 +54,8 @@ Fixpoint atoms (l : list atom) : AtomSet.t :=
 
 (** ** Rewriting rules *)
 (******************************************************************************)
+Create HintDb tea_rw_atoms.
+
 Lemma atoms_nil : atoms nil = ∅.
 Proof.
   reflexivity.
@@ -100,7 +81,6 @@ Proof.
   - cbn. introv. rewrite (IHl1 l2). fsetdec.
 Qed.
 
-Create HintDb tea_rw_atoms.
 Hint Rewrite atoms_nil atoms_cons atoms_one atoms_app : tea_rw_atoms.
 
 Lemma in_atoms_nil : forall x, x ∈@ atoms nil <-> False.
@@ -126,12 +106,41 @@ Proof.
    intros. autorewrite with tea_rw_atoms. fsetdec.
 Qed.
 
-Hint Rewrite atoms_nil atoms_cons atoms_one atoms_app : tea_rw_atoms.
 Hint Rewrite in_atoms_nil in_atoms_cons in_atoms_one in_atoms_app : tea_rw_atoms.
-
-Lemma in_atoms_iff : forall (l : list atom) (x : atom), x ∈@ atoms l <-> x ∈ l.
+(*
+Lemma in_singleton_iff : forall (x : atom) (y : atom),
+    y ∈@ {{ x }} <-> y = x.
 Proof.
-  intros.
-  induction l; autorewrite with tea_rw_atoms tea_list;
-    try rewrite IHl; easy.
+  intros. fsetdec.
+Qed.
+
+Lemma in_union_iff : forall (x : atom) (s1 s2 : AtomSet.t),
+    x ∈@ (s1 ∪ s2) <-> x ∈@ s1 \/ x ∈@ s2.
+Proof.
+  intros. fsetdec.
+Qed.
+*)
+
+(** ** Relating <<AtomSet.t>> and <<list atom>> *)
+(******************************************************************************)
+Lemma in_elements_iff : forall (s : AtomSet.t) (x : atom),
+    x ∈@ s <-> x ∈ elements s.
+Proof.
+  intros. rewrite <- AtomSet.elements_spec1. induction (elements s).
+  - cbv. split; intro H; inversion H.
+  - cbn. split; intro H; inversion H.
+    + subst. now left.
+    + subst. destruct H.
+      subst. rewrite IHl in H1. now right.
+      rewrite IHl in H1. now right.
+    + subst. now left.
+    + right. now rewrite IHl.
+Qed.
+
+Lemma in_atoms_iff : forall (l : list atom) (x : atom), x ∈ l <-> x ∈@ atoms l.
+Proof.
+  intros. induction l.
+  - easy.
+  - autorewrite with tea_rw_atoms tea_list.
+    now rewrite IHl.
 Qed.

@@ -15,8 +15,9 @@ Import Product.Notations.
 Import List.ListNotations.
 Import LN.AtomSet.Notations.
 Import SetlikeFunctor.Notations.
-#[local] Open Scope tealeaves_scope.
 #[local] Open Scope set_scope.
+#[local] Open Scope list_scope.
+#[local] Open Scope tealeaves_scope.
 
 Create HintDb tea_alist.
 
@@ -221,7 +222,7 @@ Section in_operations_lemmas.
   Lemma in_domset_iff : forall x,
       x ∈@ domset Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
   Proof.
-    unfold domset. setoid_rewrite in_atoms_iff.
+    unfold domset. intro x. rewrite <- in_atoms_iff.
     setoid_rewrite in_dom_iff. easy.
   Qed.
 
@@ -613,6 +614,7 @@ Section in_rewriting_lemmas.
   Qed.
 
 End in_rewriting_lemmas.
+
 Create HintDb tea_rw_in.
 Hint Rewrite @in_nil_iff @in_cons_iff
      @in_one_iff @in_app_iff @in_envmap_iff : tea_rw_in.
@@ -1417,7 +1419,7 @@ Section permute_lemmas.
     domset l1 [=] domset l2.
   Proof.
     unfold domset.
-    intro a; rewrite 2(in_atoms_iff).
+    intro a; rewrite <- 2(in_atoms_iff).
     apply perm_dom.
   Qed.
 
