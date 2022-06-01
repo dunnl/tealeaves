@@ -4863,7 +4863,7 @@ Tactic Notation "clears_last" constr(N) :=
 *)
 
 (** To obtain a safe development, change to [skip_axiom : True] *)
-Axiom skip_axiom : False.
+Axiom skip_axiom : True.
 
 Ltac skip_with_axiom :=
   elimtype False; apply skip_axiom.
