@@ -84,7 +84,7 @@ Theorem j_wf : forall Γ (t : term leaf) (A : typ),
 Proof.
   introv J. induction J.
   - unfold scoped. rewrite term_freeset12.
-    intro y. rewrite in_singleton_iff; intro; subst.
+    intro y. rewrite AtomSet.singleton_spec. intro; subst.
     rewrite in_domset_iff. eauto.
   - rename H0 into IH;
       rename H into premise.

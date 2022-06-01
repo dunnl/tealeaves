@@ -468,122 +468,27 @@ Instance TraversableMonad_term : TraversableMonad term :=
      trvmon_join := @trvmon_join_term;
   |}.
 
-(** * Listable instance (redundant) *)
-(******************************************************************************)
-Section term_listable_instance.
-
-  Fixpoint tolist_term {A} (t : term A) : list A :=
-    match t with
-    | Var a => [ a ]
-    | Lam X t => tolist_term t
-    | Ap t1 t2 => tolist_term t1 ++ tolist_term t2
-    end.
-
-  Instance Tolist_term : Tolist term := @tolist_term.
-
-  Theorem tolist_natural : forall (A B : Type) (f : A -> B),
-      fmap list f ∘ tolist term = tolist term ∘ fmap term f.
-  Proof.
-    intros. unfold compose. ext t. induction t.
-    - reflexivity.
-    - cbn. now rewrite IHt.
-    - cbn. rewrite <- IHt1, <- IHt2.
-      now autorewrite with tea_list.
-  Qed.
-
-  Instance: Natural (@tolist _ _).
-  Proof.
-    constructor; try typeclasses eauto.
-    apply tolist_natural.
-  Qed.
-
-  (** ** Shapeliness *)
-  (******************************************************************************)
-  Theorem tolist_equal : forall {A B : Type} {f g : A -> B} (t : term A),
-      List.map f (tolist term t) = List.map g (tolist term t) ->
-      fmap term f t = fmap term g t.
-  Proof.
-    intros.
-    induction t.
-    - cbn in *. inversion H. reflexivity.
-    - cbn in *. f_equal; auto.
-    - cbn in *. apply List.fmap_app_inv in H. destruct H.
-      f_equal; auto.
-  Qed.
-
-  Theorem shapeliness_term : forall {A : Type} (t1 t2 : term A),
-      shape term t1 = shape term t2 /\
-      tolist term t1 = tolist term t2 ->
-      t1 = t2.
-  Proof.
-    introv [Hyp1 Hyp2]. generalize dependent t2.
-    induction t1; intros t2; destruct t2; try discriminate; intros.
-    - now preprocess.
-    - preprocess. erewrite IHt1; eauto.
-    - preprocess. cbn in *.
-      assert (t1_1 = t2_1).
-      { apply IHt1_1; auto. eauto using (shape_l term). }
-      assert (t1_2 = t2_2).
-      { apply IHt1_2; auto. eauto using (shape_r term). }
-      now subst.
-  Qed.
-
-  Instance ListableFunctor_term : ListableFunctor term :=
-    {| lfun_shapeliness := @shapeliness_term; |}.
-
-  Theorem tolist_ret : forall (A : Type),
-      tolist term ∘ ret term (A := A) = one.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Theorem tolist_join : forall (A : Type),
-      tolist term ∘ join term =
-      join list (A := A) ∘ tolist term ∘ fmap term (tolist term).
-  Proof.
-    intros. unfold compose. ext t. induction t.
-    - cbn. auto with datatypes.
-    - cbn. now rewrite IHt.
-    - cbn. rewrite IHt1, IHt2.
-      now autorewrite with tea_list.
-  Qed.
-
-  Instance ListableMonad_term : ListableMonad term :=
-    {| lmon_ret := tolist_ret;
-       lmon_join := tolist_join; |}.
-
-End term_listable_instance.
-
 (** ** Rewriting lemmas for <<tolist>>, <<toset>> *)
 (******************************************************************************)
 Section term_list_rewrite.
 
-  Variable (A : Type).
-
-  Lemma tolist_term_spec : forall (t : term A),
-      tolist term t = tolist_term t.
-  Proof.
-    intros. induction t.
-    + reflexivity.
-    + cbn. rewrite <- IHt.
-      reflexivity.
-    + cbn. rewrite <- IHt1, <- IHt2. reflexivity.
-  Qed.
+  Variable
+    (A : Type).
 
   Lemma tolist_term_1 : forall (x : A),
-    tolist_term (Var x) = [x].
+    tolist term (Var x) = [x].
   Proof.
     reflexivity.
   Qed.
 
   Lemma tolist_term_2 : forall (X : typ) (t : term A),
-    tolist_term (Lam X t) = tolist_term t.
+    tolist term (Lam X t) = tolist term t.
   Proof.
     reflexivity.
   Qed.
 
   Lemma tolist_term_3 : forall (t1 t2 : term A),
-      tolist_term (Ap t1 t2) = tolist_term t1 ++ tolist_term t2.
+      tolist term (Ap t1 t2) = tolist term t1 ++ tolist term t2.
   Proof.
     reflexivity.
   Qed.
@@ -604,8 +509,8 @@ Section term_list_rewrite.
       y ∈ (Ap t1 t2) <-> y ∈ t1 \/ y ∈ t2.
   Proof.
     intros. unfold_ops @Toset_Tolist.
-    unfold compose. rewrite 3(tolist_term_spec).
-    rewrite tolist_term_3. now simpl_list.
+    unfold compose. rewrite tolist_term_3.
+    now simpl_list.
   Qed.
 
 End term_list_rewrite.
@@ -664,7 +569,7 @@ Definition Vb x := Var (Bd x) : term leaf.
 Definition Vf n := Var (Fr n) : term leaf.
 
 Coercion Vb : nat >-> term.
-Coercion Vf : atom >-> term.
+Coercion Vf : Atom.atom >-> term.
 
 Section test_notations.
 
