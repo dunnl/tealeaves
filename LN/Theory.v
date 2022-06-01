@@ -321,8 +321,7 @@ Section locally_nameless_metatheory.
   Proof.
     introv lin heq. destruct l as [la | ln].
     - cbn in heq. destruct_eq_args x la.
-      inverts heq.
-      (* apply (in_of_ind F) in lin.*)skip.
+      inverts heq. apply (in_of_ind F) in lin. tauto.
     - cbn in heq. compare_nats_args ln w; discriminate.
   Qed.
 
