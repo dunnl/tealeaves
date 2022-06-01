@@ -1,18 +1,18 @@
 (** This files contains metatheorems for the locally nameless variables
- that closely parallel those of Metalib. *)
+ that closely parallel those of LNgen. *)
 From Tealeaves Require Import
-     LN.Leaf LN.Atom LN.AtomSet
-     LN.Operations
+     LN.Leaf LN.Atom LN.AtomSet LN.Operations
      Classes.DecoratedTraversableModule.
 
 Import LN.AtomSet.Notations.
-Local Open Scope set_scope.
-
 Import Operations.Notations.
 Import DecoratedTraversableMonad.Notations.
-Open Scope tealeaves_scope.
+#[local] Open Scope set_scope.
+#[local] Open Scope tealeaves_scope.
+
 
 (** * Lemmas for local reasoning *)
+(******************************************************************************)
 Create HintDb tea_local.
 
 Tactic Notation "unfold_monoid" :=
@@ -22,15 +22,336 @@ Tactic Notation "unfold_monoid" :=
 Tactic Notation "unfold_lia" :=
   unfold_monoid; lia.
 
+(** * Basic principles and lemmas *)
+(******************************************************************************)
+Section locally_nameless_basic_principles.
+
+  Context
+    `{DecoratedTraversableModule nat F T
+                                 (unit := Monoid_unit_zero)
+                                 (op := Monoid_op_plus)}.
+
+  Implicit Types (l : leaf) (n : nat) (t : F leaf) (x : atom).
+
+  (** ** Reasoning principles for proving equalities *)
+  (******************************************************************************)
+
+  (** *** <<open>> *)
+  (******************************************************************************)
+  Lemma open_eq : forall t u1 u2,
+      (forall w l, (w, l) ∈d t -> open_loc u1 (w, l) = open_loc u2 (w, l)) ->
+      t '(u1) = t '(u2).
+  Proof.
+    intros. unfold open.
+    now apply (SetlikeModule.subd_respectful F).
+  Qed.
+
+  Lemma open_id : forall t u,
+      (forall w l, (w, l) ∈d t -> open_loc u (w, l) = ret T l) ->
+      t '(u) = t.
+  Proof.
+    intros. unfold open.
+    now apply (SetlikeModule.subd_respectful_id F).
+  Qed.
+
+  (** *** <<close>> *)
+  (******************************************************************************)
+  Lemma close_eq : forall t x y,
+      (forall w l, (w, l) ∈d t -> close_loc x (w, l) = close_loc y (w, l)) ->
+      '[x] t = '[y] t.
+  Proof.
+    intros. unfold close.
+    now apply (fmapd_respectful F).
+  Qed.
+
+  Lemma close_id : forall t x,
+      (forall w l, (w, l) ∈d t -> close_loc x (w, l) = l) ->
+      '[x] t = t.
+  Proof.
+    intros. unfold close.
+    now apply (fmapd_respectful_id F).
+  Qed.
+
+  (** *** <<subst>> *)
+  (******************************************************************************)
+  Lemma subst_eq : forall t x y u1 u2,
+      (forall l, l ∈ t -> subst_loc x u1 l = subst_loc y u2 l) ->
+      t '{x ~> u1} = t '{y ~> u2}.
+  Proof.
+    intros. unfold subst.
+    now apply (SetlikeModule.sub_respectful F T).
+  Qed.
+
+  Lemma subst_id : forall t x u,
+      (forall l, l ∈ t -> subst_loc x u l = ret T l) ->
+      t '{x ~> u} = t.
+  Proof.
+    intros. unfold subst.
+    now apply (SetlikeModule.sub_respectful_id F T).
+  Qed.
+
+  (** ** Occurrence analysis lemmas *)
+  (******************************************************************************)
+
+  (** *** <<open>> *)
+  (******************************************************************************)
+  Lemma ind_open_iff : forall l n u t,
+      (n, l) ∈d t '(u) <-> exists l1 n1 n2,
+        (n1, l1) ∈d t /\ (n2, l) ∈d open_loc u (n1, l1) /\ n = n1 ● n2.
+  Proof.
+    intros. unfold open.
+    now rewrite (SetlikeModule.ind_subd_iff F).
+  Qed.
+
+  Lemma in_open_iff : forall l u t,
+      l ∈ t '(u) <-> exists l1 n1,
+        (n1, l1) ∈d t /\ l ∈ open_loc u (n1, l1).
+  Proof.
+    intros. unfold open.
+    now rewrite (SetlikeModule.in_subd_iff F).
+  Qed.
+
+  (** *** <<close>> *)
+  (******************************************************************************)
+  Lemma ind_close_iff : forall l n x t,
+      (n, l) ∈d '[x] t <-> exists l1,
+        (n, l1) ∈d t /\ close_loc x (n, l1) = l.
+  Proof.
+    intros. unfold close.
+    now rewrite (ind_fmapd_iff F).
+  Qed.
+
+  Lemma in_close_iff : forall l x t,
+      l ∈ '[x] t <-> exists n l1,
+        (n, l1) ∈d t /\ close_loc x (n, l1) = l.
+  Proof.
+    intros. unfold close.
+    now rewrite (in_fmapd_iff F).
+  Qed.
+
+  (** *** <<subst>> *)
+  (******************************************************************************)
+  Lemma ind_subst_iff : forall n l u t x,
+      (n, l) ∈d t '{x ~> u} <-> exists l1 n1 n2,
+        (n1, l1) ∈d t /\ (n2, l) ∈d subst_loc x u l1 /\ n = n1 ● n2.
+  Proof.
+    intros. unfold subst.
+    now rewrite (SetlikeModule.ind_sub_iff F).
+  Qed.
+
+  Lemma in_subst_iff : forall l u t x,
+      l ∈ t '{x ~> u} <-> exists l1,
+       l1 ∈ t /\ l ∈ subst_loc x u l1.
+  Proof.
+    intros. unfold subst.
+    now rewrite (SetlikeModule.in_sub_iff F T).
+  Qed.
+
+  (** ** Free variables *)
+  (******************************************************************************)
+
+  (** *** Specifications for [free] and [freeset] *)
+  (******************************************************************************)
+  Theorem in_free_iff : forall (t : F leaf) (x : atom),
+      x ∈ free F t <-> Fr x ∈ t.
+  Proof.
+    intros. unfold free. rewrite (in_bind_iff list). split.
+    - intros [l ?]. destruct l.
+      + rewrite in_iff_in_list. cbn in *.
+        cut (a = x). now intro; subst. tauto.
+      + cbn in *. tauto.
+    - exists (Fr x). rewrite <- (in_iff_in_list).
+      cbn. tauto.
+  Qed.
+
+  Theorem in_free_iff_T : forall (t : T leaf) (x : atom),
+      x ∈ free T t <-> Fr x ∈ t.
+  Proof.
+    intros. unfold free. rewrite (in_bind_iff list). split.
+    - intros [l ?]. destruct l.
+      + rewrite in_iff_in_list. cbn in *.
+        cut (a = x). now intro; subst. tauto.
+      + cbn in *. tauto.
+    - exists (Fr x). rewrite <- (in_iff_in_list).
+      cbn. tauto.
+  Qed.
+
+  Theorem free_iff_freeset : forall (t : F leaf) (x : atom),
+      x ∈ free F t <-> x ∈@ freeset F t.
+  Proof.
+    intros. unfold freeset. rewrite <- in_atoms_iff.
+    reflexivity.
+  Qed.
+
+  (** *** Opening *)
+  (******************************************************************************)
+  Lemma free_open_iff : forall u t x,
+      x ∈ free F (t '(u)) <-> exists l1 w,
+        (w, l1) ∈d t /\ x ∈ free T (open_loc u (w, l1)).
+  Proof.
+    intros. rewrite in_free_iff. setoid_rewrite (in_free_iff_T).
+    now rewrite in_open_iff.
+  Qed.
+
+  (** *** Closing *)
+  (******************************************************************************)
+  Lemma free_close_iff : forall t x y,
+      y ∈ free F ('[x] t) <-> exists w l1,
+        (w, l1) ∈d t /\ close_loc x (w, l1) = Fr y.
+  Proof.
+    intros. rewrite in_free_iff.
+    now rewrite in_close_iff.
+  Qed.
+
+  (** *** Substitution *)
+  (******************************************************************************)
+  Lemma free_subst_iff : forall u t x y,
+      y ∈ free F (t '{x ~> u}) <-> exists l1,
+        l1 ∈ t /\ y ∈ free T (subst_loc x u l1).
+  Proof.
+    intros. rewrite (in_free_iff). setoid_rewrite (in_free_iff_T).
+    now rewrite (in_subst_iff).
+  Qed.
+
+End locally_nameless_basic_principles.
+
+(** * Utilities for reasoning at the leaves *)
+(******************************************************************************)
+Section locally_nameless_utilities.
+
+  Context
+    `{DecoratedTraversableModule nat (unit := Monoid_unit_zero) (op := Monoid_op_plus) F T}.
+
+  Import Notations.
+
+  (** ** (In)equalities between leaves *)
+  (******************************************************************************)
+  Lemma Fr_injective : forall (x y : atom),
+      (Fr x = Fr y) <-> (x = y).
+  Proof.
+    intros. split; intro hyp.
+    now injection hyp. now subst.
+  Qed.
+
+  Lemma Fr_injective_not_iff : forall (x y : atom),
+      (Fr x <> Fr y) <-> (x <> y).
+  Proof.
+    intros. split; intro hyp; contradict hyp.
+    now subst. now injection hyp.
+  Qed.
+
+  Lemma Fr_injective_not : forall (x y : atom),
+      x <> y -> ~ (Fr x = Fr y).
+  Proof.
+    intros. now rewrite Fr_injective.
+  Qed.
+
+  Lemma Bd_neq_Fr : forall n x,
+      (Bd n = Fr x) = False.
+  Proof.
+    introv. propext. discriminate. contradiction.
+  Qed.
+
+  (** ** [subst_loc] *)
+  (******************************************************************************)
+  Lemma subst_loc_eq : forall (u : T leaf) x,
+      subst_loc x u (Fr x) = u.
+  Proof. intros. cbn. now compare values x and x. Qed.
+
+  Lemma subst_loc_neq : forall (u : T leaf) x y,
+      y <> x -> subst_loc x u (Fr y) = ret T (Fr y).
+  Proof. intros. cbn. now compare values x and y. Qed.
+
+  Lemma subst_loc_b : forall u x n,
+      subst_loc x u (Bd n) = ret T (Bd n).
+  Proof. reflexivity. Qed.
+
+  Lemma subst_loc_fr_neq : forall (u : T leaf) l x,
+      Fr x <> l -> subst_loc x u l = ret T l.
+  Proof.
+    introv neq. unfold subst_loc.
+    destruct l as [a|?]; [compare values x and a | reflexivity ].
+  Qed.
+
+  (** ** [open_loc] *)
+  (******************************************************************************)
+  Lemma open_loc_lt : forall (u : T leaf) w n,
+      n < w -> open_loc u (w, Bd n) = ret T (Bd n).
+  Proof.
+    introv ineq. unfold open_loc. compare naturals n and w.
+  Qed.
+
+  Lemma open_loc_gt : forall (u : T leaf) n w,
+      n > w -> open_loc u (w, Bd n) = ret T (Bd (n - 1)).
+  Proof.
+    introv ineq. unfold open_loc. compare naturals n and w.
+  Qed.
+
+  Lemma open_loc_eq : forall w (u : T leaf),
+      open_loc u (w, Bd w) = u.
+  Proof.
+    introv. unfold open_loc. compare naturals w and w.
+  Qed.
+
+  Lemma open_loc_atom : forall (u : T leaf) w x,
+      open_loc u (w, Fr x) = ret T (Fr x).
+  Proof.
+    reflexivity.
+  Qed.
+
+  (** ** [Miscellaneous utilities] *)
+  (******************************************************************************)
+  Lemma ninf_in_neq : forall x l (t : F leaf),
+      ~ x ∈ free F t ->
+      l ∈ t ->
+      Fr x <> l.
+  Proof.
+    introv hyp1 hyp2.
+    rewrite in_free_iff in hyp1. destruct l.
+    - injection. intros; subst.
+      contradiction.
+    - discriminate.
+  Qed.
+
+  Lemma neq_symmetry : forall X (x y : X),
+      (x <> y) = (y <> x).
+  Proof.
+    intros. propext; intro hyp; contradict hyp; congruence.
+  Qed.
+
+End locally_nameless_utilities.
+
+Hint Rewrite @in_ret_iff @ind_ret_iff
+     using typeclasses eauto : tea_local.
+
+Hint Rewrite Fr_injective Fr_injective_not_iff Bd_neq_Fr : tea_local.
+#[export] Hint Resolve Fr_injective_not : tea_local.
+
+Hint Rewrite
+     @subst_loc_eq (*@subst_in_ret*)
+     using typeclasses eauto : tea_local.
+Hint Rewrite
+     @subst_loc_neq @subst_loc_b @subst_loc_fr_neq (*@subst_in_ret_neq*)
+     using first [ typeclasses eauto | auto ] : tea_local.
+Hint Rewrite
+     @open_loc_lt @open_loc_gt
+     using first [ typeclasses eauto | auto ] : tea_local.
+Hint Rewrite
+     @open_loc_eq @open_loc_atom
+     using typeclasses eauto : tea_local.
+
+Tactic Notation "simpl_local" := (autorewrite* with tea_local).
+
 (** * Locally nameless metatheory *)
 (******************************************************************************)
 Section locally_nameless_metatheory.
 
-  Existing Instance RightAction_Join.
-
   Context
     `{DecoratedTraversableModule nat (op:=plus) (unit := 0) F T}.
 
+  (** Sometimes we need to specialize lemmas to the case <<F = T>>, so
+      we register <<T>> as a module over itself. *)
+  Existing Instance RightAction_Join.
   Instance: DecoratedTraversableModule nat (op:=plus) (unit := 0) T T.
   Proof.
     apply DecoratedTraversableModule_Monad.
@@ -51,6 +372,7 @@ Section locally_nameless_metatheory.
            (w : nat) (n : nat).
 
   (** ** Leaf analysis: substitution with contexts *)
+  (******************************************************************************)
   Lemma ind_subst_loc_iff : forall l w p (u : T leaf) x,
       (w, p) ∈d subst_loc x u l <->
       l <> Fr x /\ w = Ƶ /\ l = p \/ (* l is not replaced *)
@@ -59,7 +381,7 @@ Section locally_nameless_metatheory.
     introv. compare l to atom x; simpl_local; intuition.
   Qed.
 
-  Theorem ind_subst_iff : forall w t u l x,
+  Theorem ind_subst_iff' : forall w t u l x,
       (w, l) ∈d t '{x ~> u} <->
       (w, l) ∈d t /\ l <> Fr x \/
       exists w1 w2 : nat, (w1, Fr x) ∈d t /\ (w2, l) ∈d u /\ w = w1 ● w2.
@@ -76,6 +398,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Leaf analysis: substitution without contexts *)
+  (******************************************************************************)
   Lemma in_subst_loc_iff : forall l p (u : T leaf) x,
       p ∈ subst_loc x u l <->
       l <> Fr x /\ l = p \/
@@ -84,7 +407,7 @@ Section locally_nameless_metatheory.
     introv. compare l to atom x; autorewrite* with tea_local; intuition.
   Qed.
 
-  Theorem in_subst_iff : forall t u l x,
+  Theorem in_subst_iff' : forall t u l x,
       l ∈ t '{x ~> u} <->
       l ∈ t /\ l <> Fr x \/
       Fr x ∈ t /\ l ∈ u.
@@ -97,12 +420,13 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Free variables after substitution *)
+  (******************************************************************************)
   Corollary in_free_subst_iff : forall t u x y,
       y ∈ free F (t '{x ~> u}) <->
       y ∈ free F t /\ y <> x \/ x ∈ free F t /\ y ∈ free T u.
   Proof.
     intros. repeat rewrite (in_free_iff).
-    rewrite in_subst_iff. now simpl_local.
+    rewrite in_subst_iff'. now simpl_local.
   Qed.
 
   Corollary in_freeset_subst_iff : forall t u x y,
@@ -115,11 +439,12 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Upper and lower bounds for leaves after substitution *)
+  (******************************************************************************)
   Corollary in_subst_upper : forall t u l x,
       l ∈ t '{x ~> u} ->
       (l ∈ t /\ l <> Fr x) \/ l ∈ u.
   Proof.
-    introv hin. rewrite in_subst_iff in hin.
+    introv hin. rewrite in_subst_iff' in hin.
     intuition.
   Qed.
 
@@ -127,7 +452,7 @@ Section locally_nameless_metatheory.
       y ∈ free F (t '{x ~> u}) ->
       (y ∈ free F t /\ y <> x) \/ y ∈ free T u.
   Proof.
-    introv. rewrite ?(in_free_iff). rewrite in_subst_iff.
+    introv. rewrite ?(in_free_iff). rewrite in_subst_iff'.
     rewrite Fr_injective_not_iff. tauto.
   Qed.
 
@@ -146,7 +471,7 @@ Section locally_nameless_metatheory.
       l ∈ t /\ l <> Fr x ->
       l ∈ t '{x ~> u}.
   Proof with auto.
-    intros; rewrite in_subst_iff...
+    intros; rewrite in_subst_iff'...
   Qed.
 
   Corollary in_free_subst_lower : forall t (u : T leaf) x y,
@@ -176,6 +501,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Substitution of fresh variables *)
+  (******************************************************************************)
   Theorem subst_fresh : forall t x u,
       ~ x ∈ free F t ->
       t '{x ~> u} = t.
@@ -209,6 +535,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Composing substitutions *)
+  (******************************************************************************)
   Lemma subst_subst_local : forall (u1 u2 : T leaf) x1 x2,
       ~ x1 ∈ free T u2 ->
       x1 <> x2 ->
@@ -238,6 +565,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Commuting two substitutions *)
+  (******************************************************************************)
   Corollary subst_subst_comm : forall u1 u2 t (x1 x2 : atom),
       x1 <> x2 ->
       ~ x1 ∈ free T u2 ->
@@ -250,13 +578,14 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Local closure is preserved by substitution *)
+  (******************************************************************************)
   Theorem subst_lc : forall u t x,
       locally_closed F t ->
       locally_closed T u ->
       locally_closed F (subst F x u t).
   Proof.
     unfold locally_closed. introv lct lcu hin.
-    rewrite ind_subst_iff in hin.
+    rewrite ind_subst_iff' in hin.
     destruct hin as [[? ?] | [n1 [n2 [h1 [h2 h3]]]]].
     - auto.
     - subst. specialize (lcu n2 l h2).
@@ -265,6 +594,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Decompose substitution into closing/opening *)
+  (******************************************************************************)
   Lemma subst_spec_local : forall (u : T leaf) w l x,
       subst_loc x u l =
       open_loc u (cobind (prod nat) (close_loc x) (w, l)).
@@ -289,6 +619,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Substitution when <<u>> is a leaf **)
+  (******************************************************************************)
   Definition subst_loc_leaf x (u : leaf) : leaf -> leaf :=
     fun l => match l with
           | Fr y => if x == y then u else Fr y
@@ -306,6 +637,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Substitution by the same variable is the identity *)
+  (******************************************************************************)
   Theorem subst_same : forall t x,
       t '{x ~> ret T (Fr x)} = t.
   Proof.
@@ -314,6 +646,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Free variables after variable closing *)
+  (******************************************************************************)
   Lemma in_free_close_iff_loc1 : forall w l t x  y,
       (w, l) ∈d t ->
       close_loc x (w, l) = Fr y ->
@@ -371,6 +704,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Variable closing and local closure *)
+  (******************************************************************************)
   Theorem close_lc_eq : forall t x,
       locally_closed F t ->
       locally_closed_gap F 1 (close F x t).
@@ -390,6 +724,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   (** ** Upper and lower bounds on free variables after opening *)
+  (******************************************************************************)
   Lemma free_open_upper_local : forall t (u : T leaf) w l x,
       l ∈ t ->
       x ∈ free T (open_loc u (w, l)) ->
