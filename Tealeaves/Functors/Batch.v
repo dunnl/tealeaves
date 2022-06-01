@@ -218,11 +218,13 @@ Section demo.
     (a1 a2 : A) (b1 b2 b3 : B) (c1 c2 c3 c4 : C)
     (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
 
+  (*
   Check Go a1 ⊗ Go a2 : @Batch False False (A * A).
   Compute Go a1 ⊗ Go a2.
   Compute Go a1 ⊗ (Go mk1 ⧆ c1).
   Compute (Go mk1 ⧆ c1) ⊗ (Go mk1 ⧆ c2).
   Compute (Go mk2 ⧆ c1 ⧆ c2) ⊗ (Go mk1 ⧆ c3).
+   *)
 
 End demo.
 
@@ -429,17 +431,6 @@ Section parameterized.
     | Ap rest a => Ap (fmap Batch (@Ap B C X) (cojoin_Batch B rest)) a
     end.
 
-  Context
-    (A B C X : Type)
-    (a1 a2 : A) (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
-
-  Check Go (X := A) (Y := C) mk0.
-  Compute cojoin_Batch B (Go (X := A) (Y := C) mk0).
-  Check Ap (Go mk1) a1.
-  Compute cojoin_Batch B (Ap (Go mk1) a1).
-  Check Ap (Ap (Go mk2) a2) a1.
-  Compute cojoin_Batch B (Ap (Ap (Go mk2) a2) a1).
-
   (* TODO Finish rest of the parameterized comonad structure. *)
   Lemma extr_cojoin_Batch : `(extract_Batch ∘ cojoin_Batch A = @id (@Batch A C X)).
   Proof.
@@ -449,3 +440,23 @@ Section parameterized.
   Abort.
 
 End parameterized.
+
+(*
+(** ** Examples of <<cojoin>> *)
+(******************************************************************************)
+Section demo.
+
+  Context
+    (A B C X : Type)
+    (a1 a2 : A) (b1 b2 b3 : B) (c1 c2 c3 c4 : C)
+    (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
+
+  Check @Go A B X mk0.
+  Compute cojoin_Batch B (@Go A B X mk0).
+  Check Go mk1 ⧆ a1.
+  Compute cojoin_Batch B (Go mk1 ⧆ a1).
+  Check Go mk2 ⧆ a2 ⧆ a1.
+  Compute cojoin_Batch B (Go mk2 ⧆ a2 ⧆ a1).
+
+End demo.
+*)
