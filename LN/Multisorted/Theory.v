@@ -1390,47 +1390,6 @@ Section open_metatheory.
     fequal. apply subst_open_eq_loc; auto.
   Qed.
 
-  (*
-  Lemma subst_open_neq_loc k1 k2 (u1 : T k1 leaf) (u2 : T k2 leaf) (x : atom) :
-    k1 <> k2 ->
-    locally_closed (T k2) k1 u2 ->
-    btg k2 (subst_loc x u2) ∗m btgr T k1 (open_loc u1) =
-    btgr T k1 (open_loc (mbind (T k1) (↑ k2 (subst_loc x u2)) u1)) ∗mr
-          (fun k : K => btg k2 (subst_loc x u2) k ∘ snd).
-  Proof.
-    introv neq lcu2. ext j [w l]. compare j to both of { k1 k2 }.
-    - (* j = k1, j <> k2 *)
-      rewrite mkcompr_spec.
-      unfold mkcomp, compose, snd. simpl_tgt.
-      compose near l on right. rewrite (mbindr_comp_mret (T k1)).
-      unfold compose. rewrite (monoid_id_l).
-      simpl_tgt. destruct l. (** TODO Simplify this part *)
-      + cbn. compose near (Fr a) on left.
-        rewrite (mmon_mbind_comp_mret T).
-        now simpl_tgt.
-      + cbn. compare naturals n and (w k1).
-        { compose near (Bd n) on left.
-          rewrite (mmon_mbind_comp_mret T).
-          now simpl_tgt. }
-        { compose near (Bd (n - 1)) on left.
-          rewrite (mmon_mbind_comp_mret T).
-          now simpl_tgt. }
-    - (* j <> k1, j = k2 *)
-      unfold mkcomp, mkcompr, compose, snd.
-      simpl_tgt. unfold compose, snd.
-      compose near l on left. rewrite (mmon_mbind_comp_mret T).
-      simpl_tgt. compare l to atom x.
-      + cbn. compare values x and x. admit.
-      + cbn. compare values x and a. compose near (Fr a) on right.
-        admit.
-      + cbn. admit.
-    - unfold mkcomp, compose, snd. rewrite mkcompr_spec.
-      simpl_tgt. unfold compose, snd. compose near l.
-      rewrite (mmon_mbind_comp_mret T).
-      rewrite (mbindr_comp_mret (T j)).
-      simpl_tgt. reflexivity.
-  Admitted.
-
   Theorem subst_open_neq :  forall k1 k2 (u1 : T k1 leaf) (u2 : T k2 leaf) (x : atom) (t : S leaf),
       k1 <> k2 ->
       locally_closed (T k2) k1 u2 ->
@@ -1439,11 +1398,11 @@ Section open_metatheory.
   Proof.
     introv neq lc.
     compose near t. unfold subst, open.
-    unfold kbind, kbindr.
-    rewrite (mbind_mbindr F), (mbindr_mbind F).
-    fequal. now rewrite subst_open_neq_loc.
-  Qed.
-   *)
+    unfold kbind, kbindd.
+    rewrite (mbind_mbindd S), (mbindd_mbind S).
+    fequal. ext j [w a]. unfold compose.
+    unfold mbind.
+  Admitted.
 
   (** ** Decompose opening into variable opening followed by substitution *)
   (**************************************************************************)

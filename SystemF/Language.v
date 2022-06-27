@@ -44,7 +44,6 @@ Section syntax.
   Inductive typ : Type :=
   | ty_c : base_typ -> typ
   | ty_v : V -> typ
-  | ty_C : typ -> typ
   | ty_ar : typ -> typ -> typ
   | ty_univ : typ -> typ.
 
@@ -72,15 +71,17 @@ Definition SystemF (k : K) (v : Type) : Type :=
 (******************************************************************************)
 Module Notations.
 
+  Declare Scope SystemF_scope.
+
   (** *** Notations for type expressions *)
-  Notation "A ⟹ B" := (ty_ar A B) (at level 51, right associativity).
-  Notation "∀ τ" := (ty_univ τ) (at level 60).
+  Notation "A ⟹ B" := (ty_ar A B) (at level 51, right associativity) : SystemF_scope.
+  Notation "∀ τ" := (ty_univ τ) (at level 60) : SystemF_scope.
 
   (** *** Notations for term expressions *)
-  Notation "'λ' X ⋅ body" := (tm_abs X body) (at level 45).
-  Notation "[ t1 ] [ t2 ]" := (tm_app t1 t2) (at level 40).
-  Notation "'Λ' body" := (tm_tab body) (at level 45).
-  Notation "[ t1 ] @ [ t2 ]" := (tm_tap t1 t2) (at level 40).
+  Notation "'λ' X ⋅ body" := (tm_abs X body) (at level 45) : SystemF_scope.
+  Notation "t1 @ t2" := (tm_app t1 t2) (at level 40) : SystemF_scope.
+  Notation "'Λ' body" := (tm_tab body) (at level 45) : SystemF_scope.
+  Notation "t1 @@ t2" := (tm_tap t1 t2) (at level 40) : SystemF_scope.
 
   (** *** Coercions from variables to leaves *)
   Coercion Fr : atom >-> leaf.
@@ -99,8 +100,6 @@ Module Notations.
 End Notations.
 
 Import Notations.
-
-Check (Λ λ 0 ⋅ 0).
 
 (** ** Example expressions *)
 (******************************************************************************)
@@ -160,6 +159,8 @@ Module examples.
   (******************************************************************************)
   Module pretty.
 
+    #[local] Open Scope SystemF_scope.
+
     Compute (0 : typ leaf).
     Compute (x : typ leaf).
     Compute (c1 : typ leaf).
@@ -218,6 +219,10 @@ Module examples.
   (** Instantiate identity at <<c1>> *)
   Example term_8 : term leaf := tm_tap term_7 c1.
 
+  #[local] Open Scope SystemF_scope.
+
+  Example term_9 : term leaf := (Λ λ 0 ⋅ 0).
+
 End examples.
 
 (** ** <<binddt>> operations *)
@@ -235,8 +240,6 @@ Section operations.
       pure F (ty_c t)
     | ty_v a =>
       f KType (nil, a)
-    | ty_C t =>
-      pure F ty_C <⋆> bind_type f t
     | ty_ar t1 t2 =>
       pure F (ty_ar) <⋆> (bind_type f t1) <⋆> (bind_type f t2)
     | ty_univ body =>
@@ -275,6 +278,8 @@ Instance MBind_SystemF : forall k, MBind (list K2) SystemF (SystemF k) :=
 (** ** Example computations *)
 (******************************************************************************)
 Section example_computations.
+
+  Open Scope SystemF_scope.
 
   Context
     (x y z : atom)
@@ -369,8 +374,6 @@ Proof.
   - cbn. reflexivity.
   - cbn. reflexivity.
   - cbn. fequal.
-    + apply IHt.
-  - cbn. fequal.
     + apply IHt1.
     + apply IHt2.
   - cbn. fequal.
@@ -422,17 +425,6 @@ Proof.
     change [] with (Ƶ : list K2).
     change typ with (SystemF KType).
     rewrite <- (mbinddt_inst_law2_case2 (list K2) SystemF (H := MBind_SystemF )).
-    reflexivity.
-  - cbn.
-    rewrite <- IHt.
-    rewrite (ap_compose3 G F).
-    rewrite <- (ap7 (G := F)).
-    compose near (pure (F ∘ G) (ty_C (V := C))).
-    rewrite (fun_fmap_fmap F).
-    unfold_ops @Pure_compose.
-    rewrite (app_pure_natural F).
-    rewrite ap6.
-    rewrite (app_pure_natural F).
     reflexivity.
   - cbn.
     rewrite <- IHt1.
@@ -553,11 +545,6 @@ Proof.
   intros. ext t. generalize dependent f. unfold compose. induction t; intro f.
   - cbn. rewrite (appmor_pure F G). reflexivity.
   - reflexivity.
-  - cbn.
-    rewrite <- IHt. clear IHt.
-    rewrite ap_morphism_1.
-    rewrite (appmor_pure F G).
-    reflexivity.
   - cbn.
     rewrite <- IHt1. clear IHt1.
     rewrite <- IHt2. clear IHt2.
@@ -680,39 +667,49 @@ Export LN.AssocList.Notations.
 (******************************************************************************)
 
 (** *** Context of type variables *)
-Definition tyv_ctx := alist unit.
+Definition kind_ctx := alist unit.
 
 (** *** Context of term variables *)
-Definition tmv_ctx := alist (typ leaf).
+Definition type_ctx := alist (typ leaf).
 
-(** *** Well-formedness for type variable contexts *)
-Definition ok_tyv : tyv_ctx -> Prop := uniq.
+(** *** Well-formedness for kinding contexts *)
+(** A kinding context is well-formed when its keys, i.e. type
+    variables, are unique. *)
+Definition ok_kind_ctx : kind_ctx -> Prop := uniq.
 
-(** *** Well-formedness of type expressions in a context *)
-Definition ok_type : tyv_ctx -> typ leaf -> Prop :=
-  fun Δ τ => scoped typ KType τ (domset Δ)
-          /\ locally_closed typ KType τ.
+(** *** Well-formedness of type expressions in a kinding context *)
+(** A type is well-formed in a kinding context <<Δ>> when all of its
+    type variables appear in Δ and the type is locally closed. *)
+Definition ok_type : kind_ctx -> typ leaf -> Prop :=
+  fun Δ τ => scoped typ KType τ (domset Δ) /\ locally_closed typ KType τ.
 
-(** *** Well-formedness for term variable contexts *)
-Definition ok_tmv : tyv_ctx -> tmv_ctx -> Prop :=
+(** *** Well-formedness for typing contexts *)
+(** A typing context <<Γ>> is well-formed in kinding context <<Δ>>
+    when the keys of <<Γ>> (i.e. term variables) are unique, and each
+    associated type is itself well-formed in context <<Δ>>. *)
+Definition ok_type_ctx : kind_ctx -> type_ctx -> Prop :=
   fun Δ Γ => uniq Γ /\ forall τ, τ ∈ range Γ -> ok_type Δ τ.
 
-(** *** Well-formedness of term expressions in a context *)
-Definition ok_term : tyv_ctx -> tmv_ctx -> term leaf -> Prop :=
+(** *** Well-formedness of term expressions in context *)
+(** A term <<t>> is well-formed in contexts <<Δ>> and <<Γ>> when its
+    type variables are declared in <<Δ>>, its term variables are
+    declared in <<Γ>>, and it is locally closed with respect to both
+    kinds of variables. *)
+Definition ok_term : kind_ctx -> type_ctx -> term leaf -> Prop :=
   fun Δ Γ t => scoped term KType t (domset Δ) /\
             scoped term KTerm t (domset Γ) /\
             locally_closed term KTerm t /\
             locally_closed term KType t.
 
-Implicit Types (Δ : tyv_ctx) (Γ : tmv_ctx).
-
 (** ** Typing judgments *)
 (******************************************************************************)
-Inductive Judgment : tyv_ctx -> tmv_ctx -> term leaf -> typ leaf -> Prop :=
+Implicit Types (Δ : kind_ctx) (Γ : type_ctx) (τ : typ leaf).
+
+Inductive Judgment : kind_ctx -> type_ctx -> term leaf -> typ leaf -> Prop :=
 | j_var :
     forall Δ Γ x τ,
-      ok_tyv Δ ->
-      ok_tmv Δ Γ ->
+      ok_kind_ctx Δ ->
+      ok_type_ctx Δ Γ ->
       (x, τ) ∈ Γ ->
       (Δ ; Γ ⊢ tm_var (Fr x) : τ)
 | j_abs :
@@ -761,6 +758,18 @@ Inductive red : term leaf -> term leaf -> Prop :=
 | red_tab : forall T t,
     red (tm_tap (tm_tab t) T) (open term KType T t).
 
+From Tealeaves Require Import
+     LN.Multisorted.Theory.
+
+Definition preservation := forall t t' τ,
+    (nil ; nil ⊢ t : τ) ->
+    red t t' ->
+    (nil ; nil ⊢ t' : τ).
+
+Definition progress := forall t τ,
+    (nil ; nil ⊢ t : τ) ->
+    value t \/ exists t', red t t'.
+
 (*
 (** ** Example: Typing the polymorphic identity *)
 (******************************************************************************)
@@ -777,598 +786,4 @@ Proof.
       split; [fsetdec | apply lc_ty_ty_Fr].
     + simpl_alist. now autorewrite with tea_list.
 Qed.
-*)
-
-
-(** * Rewriting rules for operations *)
-(******************************************************************************)
-(*
-(** *** Rewriting operations in <<typ>> *)
-Section rw_tomlist_type.
-
-  Context
-    (A : Type).
-
-  Lemma rw_tomlist_type1 : forall c, tomlist (A:=A) typ (ty_c c) = [].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_tomlist_type2 : forall (a : A), tomlist typ (ty_v a) = [(KType, a)].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_tomlist_type3 : forall (body : typ A), tomlist typ (ty_univ body) = tomlist typ body.
-  Proof. idtac. Admitted.
-
-  Lemma rw_tomlist_type4 : forall (t1 t2 : typ A), tomlist typ (ty_ar t1 t2) = tomlist typ t1 ++ tomlist typ t2.
-  Proof. intros. cbn. unfold_ops @Monoid_op_list. now simpl_list. Qed.
-
-End rw_tomlist_type.
-
-Create HintDb sysf_rw.
-Hint Rewrite @rw_tomlist_type1 @rw_tomlist_type2
-     @rw_tomlist_type3 @rw_tomlist_type4 : sysf_rw.
-
-Section rw_toklist_KTerm_type.
-
-  Context
-    (A : Type).
-
-  Lemma rw_toklist_KTerm_type1 : forall c, toklist (A:=A) typ KTerm (ty_c c) = [].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KTerm_type2 : forall (a : A), toklist typ KTerm (ty_v a) = [].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KTerm_type3 : forall (body : typ A), toklist typ KTerm (ty_univ body) = toklist typ KTerm body.
-  Proof. Admitted.
-
-  Lemma rw_toklist_KTerm_type4 : forall (t1 t2 : typ A), toklist typ KTerm (ty_ar t1 t2) = toklist typ KTerm t1 ++ toklist typ KTerm t2.
-  Proof. intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
-
-End rw_toklist_KTerm_type.
-
-Hint Rewrite @rw_toklist_KTerm_type1 @rw_toklist_KTerm_type2
-     @rw_toklist_KTerm_type3 @rw_toklist_KTerm_type4 : sysf_rw.
-
-Section rw_toklist_KType_type.
-
-  Context
-    (A : Type).
-
-  Lemma rw_toklist_KType_type1 : forall c, toklist (A:=A) typ KType (ty_c c) = [].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KType_type2 : forall (a : A), toklist typ KType (ty_v a) = [a].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KType_type3 : forall (body : typ A), toklist typ KType (ty_univ body) = toklist typ KType body.
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KType_type4 : forall (t1 t2 : typ A), toklist typ KType (ty_ar t1 t2) = toklist typ KType t1 ++ toklist typ KType t2.
-  Proof. intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
-
-End rw_toklist_KType_type.
-
-Hint Rewrite @rw_toklist_KType_type1 @rw_toklist_KType_type2
-     @rw_toklist_KType_type3 @rw_toklist_KType_type4 : sysf_rw.
-
-Section rw_in_KType_type.
-
-  Context
-    (A : Type).
-
-  Lemma rw_in_KType_type1 : forall (c : base_typ) (a : A), (KType, a) ∈m ty_c c <-> False.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder.
-  Qed.
-
-  Lemma rw_in_KType_type2 : forall (a1 a2 : A), (KType, a2) ∈m ty_v a1 <-> a1 = a2.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder.
-  Qed.
-
-  Lemma rw_in_KType_type3 : forall t1 t2 (a : A), (KType, a) ∈m (ty_ar t1 t2) <-> (KType, a) ∈m t1 \/ (KType, a) ∈m t2.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder.
-  Qed.
-
-  Lemma rw_in_KType_type4 : forall (t : typ A) (a : A), (KType, a) ∈m ty_univ t <-> (KType, a) ∈m t.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder.
-  Qed.
-
-End rw_in_KType_type.
-
-Hint Rewrite @rw_in_KType_type1 @rw_in_KType_type2
-     @rw_in_KType_type3 @rw_in_KType_type4 : sysf_rw.
-
-(* This seems necessary to prevent <<autorewrite>> from
-   simplifying too far and unifying with unintended lemmas. *)
-Set Keyed Unification.
-
-Section rw_in_KTerm_type.
-
-  Context
-    (A : Type).
-
-  Lemma rw_in_KTerm_type1 : forall (c : base_typ) (a : A), (KTerm, a) ∈m ty_c c <-> False.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder.
-  Qed.
-
-  Lemma rw_in_KTerm_type2 : forall (a1 a2 : A), (KTerm, a2) ∈m ty_v a1 <-> False.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder (try discriminate).
-  Qed.
-
-  Lemma rw_in_KTerm_type3 : forall t1 t2 (a : A), (KTerm, a) ∈m (ty_ar t1 t2) <-> (KTerm, a) ∈m t1 \/ (KTerm, a) ∈m t2.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder.
-  Qed.
-
-  Lemma rw_in_KTerm_type4 : forall (t : typ A) (a : A), (KTerm, a) ∈m ty_univ t <-> (KTerm, a) ∈m t.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder.
-  Qed.
-
-End rw_in_KTerm_type.
-
-Hint Rewrite @rw_in_KTerm_type1 @rw_in_KTerm_type2
-     @rw_in_KTerm_type3 @rw_in_KTerm_type4 : sysf_rw.
-
-Section rw_free_KType_type.
-
-  Lemma rw_free_KType_type11 : forall (x : atom), free typ KType (ty_v (Fr x)) = [x].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KType_type12 : forall (n : nat), free typ KType (ty_v (B n)) = [].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KType_type2 : forall (c : base_typ), free typ KType (ty_c c) = [].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KType_type3 : forall t1 t2, free typ KType (ty_ar t1 t2) = free typ KType t1 ++ free typ KType t2.
-  Proof.
-    intros. unfold free. autorewrite with sysf_rw tea_list.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KType_type4 : forall t, free typ KType (ty_univ t) = free typ KType t.
-  Proof.
-    intros. unfold free. autorewrite with sysf_rw tea_list.
-    reflexivity.
-  Qed.
-
-End rw_free_KType_type.
-
-Hint Rewrite rw_free_KType_type11 rw_free_KType_type12 rw_free_KType_type2
-     rw_free_KType_type3 rw_free_KType_type4 : sysf_rw.
-
-Section rw_free_KTerm_type.
-
-  Lemma rw_free_KTerm_type11 : forall (x : atom), free typ KTerm (ty_v (Fr x)) = [].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KTerm_type12 : forall (n : nat), free typ KTerm (ty_v (B n)) = [].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KTerm_type2 : forall (c : base_typ), free typ KTerm (ty_c c) = [].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KTerm_type3 : forall t1 t2, free typ KTerm (ty_ar t1 t2) = free typ KTerm t1 ++ free typ KTerm t2.
-  Proof.
-    intros. unfold free. autorewrite with sysf_rw tea_list.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KTerm_type4 : forall t, free typ KTerm (ty_univ t) = free typ KTerm t.
-  Proof.
-    intros. unfold free. autorewrite with sysf_rw tea_list.
-    reflexivity.
-  Qed.
-
-End rw_free_KTerm_type.
-
-Hint Rewrite rw_free_KTerm_type11 rw_free_KTerm_type12 rw_free_KTerm_type2
-     rw_free_KTerm_type3 rw_free_KTerm_type4 : sysf_rw.
-
-Section rw_freeset_KType_type.
-
-  Lemma rw_freeset_KType_type11 : forall (x : atom), freeset typ KType (ty_v (Fr x)) [=] {{ x }}.
-  Proof.
-    unfold freeset. intros. autorewrite with sysf_rw tea_rw_atoms. fsetdec.
-  Qed.
-
-  Lemma rw_freeset_KType_type12 : forall (n : nat), freeset typ KType (ty_v (B n)) [=] ∅.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KType_type2 : forall (c : base_typ), freeset typ KType (ty_c c) [=] ∅.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KType_type3 : forall t1 t2, freeset typ KType (ty_ar t1 t2) [=] freeset typ KType t1 ∪ freeset typ KType t2.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KType_type4 : forall t, freeset typ KType (ty_univ t) [=] freeset typ KType t.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-End rw_freeset_KType_type.
-
-Hint Rewrite rw_freeset_KType_type11 rw_freeset_KType_type12 rw_freeset_KType_type2
-     rw_freeset_KType_type3 rw_freeset_KType_type4 : sysf_rw.
-
-Section rw_freeset_KTerm_type.
-
-  Lemma rw_freeset_KTerm_type11 : forall (x : atom), freeset typ KTerm (ty_v (Fr x)) [=] ∅.
-  Proof.
-    unfold freeset. intros. autorewrite with sysf_rw tea_rw_atoms. fsetdec.
-  Qed.
-
-  Lemma rw_freeset_KTerm_type12 : forall (n : nat), freeset typ KTerm (ty_v (B n)) [=] ∅.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KTerm_type2 : forall (c : base_typ), freeset typ KTerm (ty_c c) [=] ∅.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KTerm_type3 : forall t1 t2, freeset typ KTerm (ty_ar t1 t2) [=] freeset typ KTerm t1 ∪ freeset typ KTerm t2.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KTerm_type4 : forall t, freeset typ KTerm (ty_univ t) [=] freeset typ KTerm t.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-End rw_freeset_KTerm_type.
-
-Hint Rewrite rw_freeset_KTerm_type11 rw_freeset_KTerm_type12 rw_freeset_KTerm_type2
-     rw_freeset_KTerm_type3 rw_freeset_KTerm_type4 : sysf_rw.
-
-(** *** Rewriting operations in <<term>> *)
-Section rw_tomlist_term.
-
-  Context
-    (A : Type).
-
-  Lemma rw_tomlist_term1 : forall (a : A), tomlist term (tm_var a) = [(KTerm, a)].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_tomlist_term2 : forall (ty : typ A) (body : term A), tomlist term (tm_abs ty body) = tomlist typ ty ++ tomlist term body.
-  Proof. reflexivity. Qed.
-
-  Lemma rw_tomlist_term3 : forall (t1 t2 : term A), tomlist term (tm_app t1 t2) = tomlist term t1 ++ tomlist term t2.
-  Proof. reflexivity. Qed.
-
-  Lemma rw_tomlist_term4 : forall (body : term A), tomlist term (tm_tab body) = tomlist term body.
-  Proof. reflexivity. Qed.
-
-  Lemma rw_tomlist_term5 : forall (tm : term A) (ty : typ A), tomlist term (tm_tap tm ty) = tomlist term tm ++ tomlist typ ty.
-  Proof. reflexivity. Qed.
-
-End rw_tomlist_term.
-
-Create HintDb sysf_rw.
-Hint Rewrite @rw_tomlist_term1 @rw_tomlist_term2
-     @rw_tomlist_term3 @rw_tomlist_term4 @rw_tomlist_term5 : sysf_rw.
-
-Section rw_toklist_KType_term.
-
-  Context
-    (A : Type).
-
-  Lemma rw_toklist_KType_term1 : forall (a : A), toklist term KType (tm_var a) = [].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KType_term2 : forall (ty : typ A) (body : term A), toklist term KType (tm_abs ty body) = toklist typ KType ty ++ toklist term KType body.
-  Proof. intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
-
-  Lemma rw_toklist_KType_term3 : forall (t1 t2 : term A), toklist term KType (tm_app t1 t2) = toklist term KType t1 ++ toklist term KType t2.
-  Proof. intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
-
-  Lemma rw_toklist_KType_term4 : forall (body : term A), toklist term KType (tm_tab body) = toklist term KType body.
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KType_term5 : forall (tm : term A) (ty : typ A), toklist term KType (tm_tap tm ty) = toklist term KType tm ++ toklist typ KType ty.
-  Proof.  intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
-
-End rw_toklist_KType_term.
-
-Create HintDb sysf_rw.
-Hint Rewrite @rw_toklist_KType_term1 @rw_toklist_KType_term2
-     @rw_toklist_KType_term3 @rw_toklist_KType_term4 @rw_toklist_KType_term5 : sysf_rw.
-
-Section rw_toklist_KTerm_term.
-
-  Context
-    (A : Type).
-
-  Lemma rw_toklist_KTerm_term1 : forall (a : A), toklist term KTerm (tm_var a) = [ a ].
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KTerm_term2 : forall (ty : typ A) (body : term A), toklist term KTerm (tm_abs ty body) = toklist typ KTerm ty ++ toklist term KTerm body.
-  Proof. intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
-
-  Lemma rw_toklist_KTerm_term3 : forall (t1 t2 : term A), toklist term KTerm (tm_app t1 t2) = toklist term KTerm t1 ++ toklist term KTerm t2.
-  Proof. intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
-
-  Lemma rw_toklist_KTerm_term4 : forall (body : term A), toklist term KTerm (tm_tab body) = toklist term KTerm body.
-  Proof. reflexivity. Qed.
-
-  Lemma rw_toklist_KTerm_term5 : forall (tm : term A) (ty : typ A), toklist term KTerm (tm_tap tm ty) = toklist term KTerm tm ++ toklist typ KTerm ty.
-  Proof. intros. unfold toklist, compose. now autorewrite with sysf_rw tea_list. Qed.
-
-End rw_toklist_KTerm_term.
-
-Hint Rewrite @rw_toklist_KTerm_term1 @rw_toklist_KTerm_term2
-     @rw_toklist_KTerm_term3 @rw_toklist_KTerm_term4 @rw_toklist_KTerm_term5 : sysf_rw.
-
-Section rw_in_KType_term.
-
-  Context
-    (A : Type).
-
-  Lemma rw_in_KType_term1 : forall (a1 a2 : A), (KType, a2) ∈m tm_var a1 <-> False.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. firstorder discriminate.
-  Qed.
-
-  Lemma rw_in_KType_term2 : forall (T : typ A) (t : term A) (a : A), (KType, a) ∈m tm_abs T t <-> (KType, a) ∈m T \/ (KType, a) ∈m t.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_in_KType_term3 : forall t1 t2 (a : A), (KType, a) ∈m (tm_app t1 t2) <-> (KType, a) ∈m t1 \/ (KType, a) ∈m t2.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_in_KType_term4 : forall (t : term A) (a : A), (KType, a) ∈m tm_tab t <-> (KType, a) ∈m t.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_in_KType_term5 : forall t T (a : A), (KType, a) ∈m (tm_tap t T) <-> (KType, a) ∈m t \/ (KType, a) ∈m T.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-End rw_in_KType_term.
-
-Hint Rewrite @rw_in_KType_term1 @rw_in_KType_term2 @rw_in_KType_term3
-     @rw_in_KType_term4 @rw_in_KType_term5 : sysf_rw.
-
-Section rw_in_KTerm_term.
-
-  Context
-    (A : Type).
-
-  Lemma rw_in_KTerm_term1 : forall (a1 a2 : A), (KTerm, a2) ∈m tm_var a1 <-> a1 = a2.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    autorewrite with sysf_rw tea_list. intuition.
-  Qed.
-
-  Lemma rw_in_KTerm_term2 : forall (T : typ A) (t : term A) (a : A), (KTerm, a) ∈m tm_abs T t <-> (KTerm, a) ∈m T \/ (KTerm, a) ∈m t.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_in_KTerm_term3 : forall t1 t2 (a : A), (KTerm, a) ∈m (tm_app t1 t2) <-> (KTerm, a) ∈m t1 \/ (KTerm, a) ∈m t2.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_in_KTerm_term4 : forall (t : term A) (a : A), (KTerm, a) ∈m tm_tab t <-> (KTerm, a) ∈m t.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_in_KTerm_term5 : forall t T (a : A), (KTerm, a) ∈m (tm_tap t T) <-> (KTerm, a) ∈m t \/ (KTerm, a) ∈m T.
-  Proof.
-    intros. unfold tomset, tomset_Listable, compose.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-End rw_in_KTerm_term.
-
-Hint Rewrite @rw_in_KTerm_term1 @rw_in_KTerm_term2 @rw_in_KTerm_term3
-     @rw_in_KTerm_term4 @rw_in_KTerm_term5 : sysf_rw.
-
-Section rw_free_KType_term.
-
-  Lemma rw_free_KType_term11 : forall n : nat, free term KType (tm_var (B n)) = [].
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KType_term12 : forall x : atom, free term KType (tm_var (Fr x)) = [].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma rw_free_KType_term2 : forall τ t, free term KType (tm_abs τ t) = free typ KType τ ++ free term KType t.
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KType_term3 : forall t1 t2, free term KType (tm_app t1 t2) = free term KType t1 ++ free term KType t2.
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KType_term4 : forall t, free term KType (tm_tab t) = free term KType t.
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KType_term5 : forall t τ, free term KType (tm_tap t τ) = free term KType t ++ free typ KType τ.
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-End rw_free_KType_term.
-
-Hint Rewrite rw_free_KType_term11 rw_free_KType_term12 rw_free_KType_term2
-     rw_free_KType_term3 rw_free_KType_term4 rw_free_KType_term5 : sysf_rw.
-
-Section rw_free_KTerm_term.
-
-  Lemma rw_free_KTerm_term11 : forall n : nat, free term KTerm (tm_var (B n)) = [].
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KTerm_term12 : forall x : atom, free term KTerm (tm_var (Fr x)) = [x].
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KTerm_term2 : forall τ t, free term KTerm (tm_abs τ t) = free typ KTerm τ ++ free term KTerm t.
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KTerm_term3 : forall t1 t2, free term KTerm (tm_app t1 t2) = free term KTerm t1 ++ free term KTerm t2.
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KTerm_term4 : forall t, free term KTerm (tm_tab t) = free term KTerm t.
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-  Lemma rw_free_KTerm_term5 : forall t τ, free term KTerm (tm_tap t τ) = free term KTerm t ++ free typ KTerm τ.
-  Proof.
-    intros. unfold free.
-    now autorewrite with sysf_rw tea_list.
-  Qed.
-
-End rw_free_KTerm_term.
-
-Hint Rewrite rw_free_KTerm_term11 rw_free_KTerm_term12 rw_free_KTerm_term2
-     rw_free_KTerm_term3 rw_free_KTerm_term4 rw_free_KTerm_term5 : sysf_rw.
-
-Section rw_freeset_KType_term.
-
-  Lemma rw_freeset_KType_term11 : forall n : nat, freeset term KType (tm_var (B n)) [=] ∅.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KType_term12 : forall x : atom, freeset term KType (tm_var (Fr x)) [=] ∅.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KType_term2 : forall τ t, freeset term KType (tm_abs τ t) [=] freeset typ KType τ ∪ freeset term KType t.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KType_term3 : forall t1 t2, freeset term KType (tm_app t1 t2) [=] freeset term KType t1 ∪ freeset term KType t2.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KType_term4 : forall t, freeset term KType (tm_tab t) [=] freeset term KType t.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KType_term5 : forall t τ, freeset term KType (tm_tap t τ) [=] freeset term KType t ∪ freeset typ KType τ.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-End rw_freeset_KType_term.
-
-Hint Rewrite rw_freeset_KType_term11 rw_freeset_KType_term12 rw_freeset_KType_term2
-     rw_freeset_KType_term3 rw_freeset_KType_term4 rw_freeset_KType_term5 : sysf_rw.
-
-Section rw_freeset_KTerm_term.
-
-  Lemma rw_freeset_KTerm_term11 : forall n : nat, freeset term KTerm (tm_var (B n)) [=] ∅.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KTerm_term12 : forall x : atom, freeset term KTerm (tm_var (Fr x)) [=] {{ x }}.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KTerm_term2 : forall τ t, freeset term KTerm (tm_abs τ t) [=] freeset typ KTerm τ ∪ freeset term KTerm t.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KTerm_term3 : forall t1 t2, freeset term KTerm (tm_app t1 t2) [=] freeset term KTerm t1 ∪ freeset term KTerm t2.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KTerm_term4 : forall t, freeset term KTerm (tm_tab t) [=] freeset term KTerm t.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-  Lemma rw_freeset_KTerm_term5 : forall t τ, freeset term KTerm (tm_tap t τ) [=] freeset term KTerm t ∪ freeset typ KTerm τ.
-  Proof.
-    intros. unfold freeset. autorewrite with sysf_rw tea_rw_atoms. reflexivity.
-  Qed.
-
-End rw_freeset_KTerm_term.
-
-Hint Rewrite rw_freeset_KTerm_term11 rw_freeset_KTerm_term12 rw_freeset_KTerm_term2
-     rw_freeset_KTerm_term3 rw_freeset_KTerm_term4 rw_freeset_KTerm_term5 : sysf_rw.
 *)

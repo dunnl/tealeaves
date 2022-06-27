@@ -82,6 +82,49 @@ End Notations.
 
 Import Notations.
 
+(** ** Rewriting rules for <<filterk>> *)
+(******************************************************************************)
+Section rw_filterk.
+
+  Context
+    `{ix : Index} {W A : Type} (k : K).
+
+  Implicit Types (l : list (W * Tag A)) (w : W) (a : A).
+
+  Lemma filterk_nil : filterk k (nil : list (W * Tag A)) = nil.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma filterk_cons_eq : forall l w a, filterk k (cons (w, (k, a)) l) = (w, a) :: filterk k l.
+  Proof.
+    intros. cbn. compare values k and k.
+  Qed.
+
+  Lemma filterk_cons_neq : forall l w a j, j <> k -> filterk k (cons (w, (j, a)) l) = filterk k l.
+  Proof.
+    intros. cbn. compare values k and j.
+  Qed.
+
+  Lemma filterk_app : forall l1 l2, filterk k (l1 ++ l2) = filterk k l1 ++ filterk k l2.
+  Proof.
+    intros. induction l1.
+    - reflexivity.
+    - destruct a as [w [i a]].
+      compare values i and k.
+      + rewrite <- (List.app_comm_cons l1).
+        rewrite filterk_cons_eq.
+        rewrite filterk_cons_eq.
+        rewrite <- (List.app_comm_cons (filterk k l1)).
+        now rewrite <- IHl1.
+      + rewrite <- (List.app_comm_cons l1).
+        rewrite filterk_cons_neq; auto.
+        rewrite filterk_cons_neq; auto.
+  Qed.
+
+End rw_filterk.
+
+Hint Rewrite @filterk_nil @filterk_cons_eq @filterk_cons_neq @filterk_app : tea_list.
 
 (** ** Auxiliary lemmas for constant applicative functors *)
 (******************************************************************************)

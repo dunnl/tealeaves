@@ -69,4 +69,5 @@ Multisorted/Theory/DTMSchedule.v
 LN/Multisorted/Operations.v
 LN/Multisorted/Theory.v
 SystemF/Language.v
-#SystemF/Contexts.v
+SystemF/Rewriting.v
+SystemF/Contexts.v

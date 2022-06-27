@@ -135,3 +135,15 @@ Proof.
   induction l; autorewrite with tea_rw_atoms tea_list;
     try rewrite IHl; easy.
 Qed.
+
+(** ** Monoid instance for <<AtomSet.t>> *)
+(******************************************************************************)
+Instance Monoid_op_AtomSet : Monoid_op AtomSet.t := AtomSet.union.
+
+Instance Monoid_unit_AtomSet : Monoid_unit AtomSet.t := ∅.
+
+(*
+#[program] Instance Monoid_AtomSet :
+  @Monoid AtomSet.t Monoid_op_AtomSet Monoid_unit_AtomSet.
+ *)
+Definition concatAtoms : list AtomSet.t -> AtomSet.t := List.fold.
