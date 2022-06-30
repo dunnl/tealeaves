@@ -310,6 +310,16 @@ Section Writer_miscellaneous.
   Context
     `{Monoid W}.
 
+  (* It sometimes useful to have this curried operation. *)
+  Definition incr {A : Type} : W -> W * A -> W * A :=
+    fun w '(w2, a) => (w ● w2, a).
+
+  Lemma extract_incr {A : Type} :
+    forall (w : W), extract (W ×) ∘ incr w = extract (W ×) (A := A).
+  Proof.
+    intros. now ext [w' a].
+  Qed.
+
   (* This rewrite is useful when proving decoration-traversal compatibility
      in the binder case. *)
   Theorem strength_shift1 : forall `{Functor F} (w : W) (A : Type),

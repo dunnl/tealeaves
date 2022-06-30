@@ -1,6 +1,8 @@
--Q Tealeaves/ Tealeaves
--Q LN/        Tealeaves.LN
--Q STLC/      Tealeaves.Examples.STLC
+-Q Tealeaves/   Tealeaves
+-Q LN/          Tealeaves.LN
+-Q STLC/        Tealeaves.Examples.STLC
+-Q Multisorted/ Multisorted
+-Q SystemF/     Tealeaves.Examples.SystemF
 
 Tealeaves/Util/LibTactics.v
 Tealeaves/Util/EqDec_eq.v
@@ -56,3 +58,15 @@ LN/Theory.v
 LN/Environment.v
 STLC/Language.v
 STLC/Theory.v
+Multisorted/Theory/Category.v
+Multisorted/Classes/Functor.v
+Multisorted/Classes/DTM.v
+Multisorted/Functors/MList.v
+Multisorted/Functors/Schedule.v
+Multisorted/Theory/DTMContainer.v
+Multisorted/Theory/DTMSchedule.v
+LN/Multisorted/Operations.v
+LN/Multisorted/Theory.v
+SystemF/Language.v
+SystemF/Rewriting.v
+SystemF/Contexts.v

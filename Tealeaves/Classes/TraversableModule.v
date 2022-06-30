@@ -233,13 +233,6 @@ End TraversableModule_respectfulness.
 (******************************************************************************)
 Section TraversableModule_listable.
 
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-  Existing Instance ApplicativeMorphism_join_list.
-
   Context
     `{TraversableModule F T}.
 

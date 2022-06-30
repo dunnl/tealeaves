@@ -239,7 +239,7 @@ Section ApplicativeFunctor_ap.
   Qed.
 
   Theorem ap4 : forall `(f : G (B -> C)) `(g : G (A -> B)) (a : G A),
-      pure G (compose) <⋆> f <⋆> g <⋆> a =
+      (pure G compose) <⋆> f <⋆> g <⋆> a =
       f <⋆> (g <⋆> a).
   Proof.
     intros. unfold ap; cbn.
@@ -288,6 +288,22 @@ Section ApplicativeFunctor_ap.
       f <⋆> (g <⋆> a).
   Proof.
     intros. rewrite <- ap4. now rewrite fmap_to_ap.
+  Qed.
+
+  Corollary ap9 : forall {A B C} (x : G A) (y : G B) (f : A -> B -> C),
+      fmap G (uncurry f) (x ⊗ y) = pure G f <⋆> x <⋆> y.
+  Proof.
+    intros. unfold ap.
+    rewrite (app_mult_natural_l G).
+    compose near (pure G f ⊗ x ⊗ y).
+    rewrite (fun_fmap_fmap G).
+    rewrite <- (app_assoc_inv G).
+    compose near ((pure G f ⊗ (x ⊗ y))).
+    rewrite (fun_fmap_fmap G).
+    rewrite triangle_3. unfold strength.
+    compose near (x ⊗ y) on right.
+    rewrite (fun_fmap_fmap G).
+    fequal. ext [a b]. easy.
   Qed.
 
   Theorem ap_morphism_1 : forall `{ApplicativeMorphism G G2} {A B}
@@ -413,31 +429,37 @@ Section applicative_compose.
        app_unital_r := app_unital_r_compose;
     |}.
 
-  Theorem ap_compose_1 {A B} : forall (x : G2 (G1 (A -> B))) (y : G2 (G1 A)),
-      (x <⋆> (y : (G2 ∘ G1) A)) =
-      fmap G2 (uncurry (ap G1)) (x ⊗ y : G2 (G1 (A -> B) * G1 A)).
+  Theorem ap_compose1 {A B} : forall (f : G2 (G1 (A -> B))) (a : G2 (G1 A)),
+      ap (G2 ∘ G1) f a =
+      pure G2 (ap G1) <⋆> f <⋆> a.
   Proof.
-    intros. unfold ap. unfold_ops @Fmap_compose.
-    unfold_ops @Mult_compose. cbn.
-    compose near (x ⊗ y) on left.
-    rewrite (fun_fmap_fmap G2). fequal. now ext [? ?].
-  Qed.
-
-  Theorem ap_compose_2 {A B} : forall (x : G2 (G1 (A -> B))) (y : G2 (G1 A)),
-      (ap (G2 ○ G1) x y) = fmap G2 (uncurry (ap G1)) (x ⊗ y).
-  Proof.
-    apply ap_compose_1.
-  Qed.
-
-  Theorem ap_compose_3 {A B} : forall (x : G2 (G1 (A -> B))) (y : G2 (G1 A)),
-      (ap (G2 ○ G1) x y) = ap G2 (fmap G2 (ap G1) x) y.
-  Proof.
-    intros. rewrite ap_compose_2.
-    unfold ap at 2.
+    intros. unfold ap at 1.
+    unfold_ops @Fmap_compose.
+    unfold_ops @Mult_compose.
+    cbn. rewrite <- fmap_to_ap.
+    compose near (f ⊗ a).
+    rewrite (fun_fmap_fmap G2).
+    unfold ap at 1.
     rewrite (app_mult_natural_l G2).
-    compose near (x ⊗ y) on right.
-    rewrite (fun_fmap_fmap G2). fequal.
-    now ext [? ?].
+    compose near (f ⊗ a) on right.
+    rewrite (fun_fmap_fmap G2).
+    fequal. now ext [G1f G1a].
+  Qed.
+
+  Theorem ap_compose2 {A B} : forall (f : G2 (G1 (A -> B))) (a : G2 (G1 A)),
+     ap (G2 ∘ G1) f a =
+     fmap G2 (uncurry (ap G1)) (f ⊗ a : G2 (G1 (A -> B) * G1 A)).
+  Proof.
+    intros. rewrite ap_compose1.
+    now rewrite ap9.
+  Qed.
+
+  Theorem ap_compose3 {A B} : forall (x : G2 (G1 (A -> B))) (y : G2 (G1 A)),
+      ap (G2 ∘ G1) x y =
+      fmap G2 (ap G1) x <⋆> y.
+  Proof.
+    intros. rewrite ap_compose1.
+    now rewrite fmap_to_ap.
   Qed.
 
 End applicative_compose.
@@ -474,6 +496,40 @@ Section applicative_compose_laws.
   Qed.
 
 End applicative_compose_laws.
+
+(** ** <<pure F>> is a homomorphism from the identity functor *)
+(******************************************************************************)
+Section pure_as_applicative_transformation.
+
+  Context
+    `{Applicative G}.
+
+  Lemma pure_appmor_1 : forall A B (f : A -> B) (t : A),
+      pure G (fmap (fun A : Type => A) f t) = fmap G f (pure G t).
+  Proof.
+    intros. now rewrite (app_pure_natural G).
+  Qed.
+
+  Lemma pure_appmor_2 : forall (A : Type) (a : A),
+      pure G (pure (fun A => A) a) = pure G a.
+  Proof.
+    intros. reflexivity.
+  Qed.
+
+  Lemma pure_appmor_3 : forall (A B : Type) (a : A) (b : B),
+      pure G (mult (fun A => A) (a, b)) = mult G (pure G a, pure G b).
+  Proof.
+    unfold transparent tcs. intros. now rewrite (app_mult_pure G).
+  Qed.
+
+  #[global] Instance ApplicativeMorphism_pure :
+    ApplicativeMorphism (fun A => A) G (@pure G _) :=
+    {| appmor_natural := pure_appmor_1;
+       appmor_pure := pure_appmor_2;
+       appmor_mult := pure_appmor_3;
+    |}.
+
+End pure_as_applicative_transformation.
 
 (** * Cartesian product of applicative functors *)
 (******************************************************************************)

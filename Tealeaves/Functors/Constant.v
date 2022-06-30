@@ -93,7 +93,6 @@ Proof.
   - intros. destruct x, y. cbn. rewrite (monmor_op). reflexivity.
 Qed.
 
-
 (** * Computational definition of the constant functor *)
 (******************************************************************************)
 Section constant_functor.
@@ -107,7 +106,7 @@ Section constant_functor.
     Context
       `{Monoid M}.
 
-    Instance Fmap_const : Fmap (const M) :=
+    #[global] Instance Fmap_const : Fmap (const M) :=
       fun X Y f t => t.
 
     Theorem fmap_const_spec : forall (X Y : Type) (f : X -> Y),
@@ -116,13 +115,13 @@ Section constant_functor.
       reflexivity.
     Qed.
 
-    Instance Pure_const : Pure (const M) :=
+    #[global] Instance Pure_const : Pure (const M) :=
       fun X x => Ƶ.
 
-    Instance Mult_const : Mult (const M) :=
+    #[global] Instance Mult_const : Mult (const M) :=
       fun X Y '(x, y) => x ● y.
 
-    Instance Applicative_const :
+    #[global] Instance Applicative_const :
       Applicative (const M).
     Proof.
       constructor; intros; try reflexivity.
@@ -133,7 +132,7 @@ Section constant_functor.
       - cbn. now Monoid.simpl_monoid.
     Qed.
 
-    Instance ApplicativeMorphism_unconst :
+    #[global] Instance ApplicativeMorphism_unconst :
       ApplicativeMorphism (Const M) (const M)
         (fun X => unconst).
     Proof.
@@ -142,13 +141,7 @@ Section constant_functor.
 
   End with_monoid.
 
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-
-  Instance ApplicativeMorphism_monoid_morphism `{hom : Monoid_Morphism ϕ (A := M) (B := N)} :
+  #[global] Instance ApplicativeMorphism_monoid_morphism `{hom : Monoid_Morphism ϕ (A := M) (B := N)} :
     ApplicativeMorphism (const M) (const N) (const ϕ).
   Proof.
     inversion hom.
@@ -156,11 +149,3 @@ Section constant_functor.
   Qed.
 
 End constant_functor.
-
-(* I'm going to experiment with leaving these exported, to see if it creates problems. *)
-Existing Instance Fmap_const.
-Existing Instance Pure_const.
-Existing Instance Mult_const.
-Existing Instance Applicative_const.
-Existing Instance ApplicativeMorphism_unconst.
-Existing Instance ApplicativeMorphism_monoid_morphism.

@@ -409,7 +409,7 @@ Section dist_term_properties.
       rewrite ap6.
       compose near ((dist term G1 t1)).
       rewrite (fun_fmap_fmap G1).
-      rewrite (ap_compose_3 G2 G1).
+      rewrite (ap_compose3 G2 G1).
       rewrite IHt1, IHt2.
       rewrite <- ap7. fequal.
       repeat (compose near (dist term G1 t1) on left;

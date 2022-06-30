@@ -56,6 +56,12 @@ Import Notations.
 
 (** ** Applicative Instance *)
 (******************************************************************************)
+(* TODO Move me *)
+Definition eval `(a : A) `(f : A -> B) := f a.
+Definition costrength_arr `(p : (A -> B) * C) : A -> B * C := fun a => (fst p a, snd p).
+Definition strength_arr `(p : A * (B -> C)) : B -> A * C := fun b => (fst p, snd p b).
+Definition pair_right {A B} : B -> A -> A * B := fun b a => (a, b).
+
 Section Applicative_Batch.
 
   Context
@@ -68,7 +74,7 @@ Section Applicative_Batch.
     match jb with
     | Go b => fmap Batch (fun (a : A) => (a, b)) ja
     | Ap rest x1 =>
-      Ap (fmap Batch strength_arrow (mult_Batch ja rest)) x1
+      Ap (fmap Batch strength_arr (mult_Batch ja rest)) x1
     end.
 
   #[global] Instance Mult_Batch : Mult (@Batch X Y) :=
@@ -91,20 +97,20 @@ Section Applicative_Batch.
   Proof.
     induction jb.
     - easy.
-    - intros. cbn in *; change (mult_Batch ?x ?y) with (x ⊗ y) in *.
-      fequal. cbn in IHjb; change (mult_Batch ?x ?y) with (x ⊗ y) in *.
-      rewrite IHjb. compose near jb on left. now rewrite (fun_fmap_fmap Batch).
+    - intros. cbn; change (mult_Batch ?x ?y) with (x ⊗ y).
+      fequal. rewrite IHjb. compose near jb on left.
+      now rewrite (fun_fmap_fmap Batch).
   Qed.
 
   Lemma mult_Batch_rw4 : forall (x : X) `(ja : @Batch X Y (Y -> A)) `(b : B),
       (ja ⧆ x) ⊗ Go b =
-      fmap Batch (costrength_arrow ∘ pair_right b) ja ⧆ x.
+      fmap Batch (costrength_arr ∘ pair_right b) ja ⧆ x.
   Proof.
     easy.
   Qed.
 
   Lemma mult_Batch_rw5 : forall `(jb : @Batch X Y (Y -> B)) `(a : A) (x : X),
-      Go a ⊗ (jb ⧆ x) = fmap Batch (strength_arrow ∘ pair a) jb ⧆ x.
+      Go a ⊗ (jb ⧆ x) = fmap Batch (strength_arr ∘ pair a) jb ⧆ x.
   Proof.
     cbn. change (mult_Batch ?x ?y) with (x ⊗ y) in *. intros.
     fequal. rewrite (mult_Batch_rw3). compose near jb on left.
@@ -113,7 +119,7 @@ Section Applicative_Batch.
 
   Lemma mult_Batch_rw6 : forall (x1 x2 : X) `(ja : Batch (Y -> A)) `(jb : Batch (Y -> B)),
       (ja ⧆ x1) ⊗ (jb ⧆ x2) =
-      fmap Batch strength_arrow ((ja ⧆ x1) ⊗ jb) ⧆ x2.
+      fmap Batch strength_arr ((ja ⧆ x1) ⊗ jb) ⧆ x2.
   Proof.
     reflexivity.
   Qed.
@@ -218,13 +224,11 @@ Section demo.
     (a1 a2 : A) (b1 b2 b3 : B) (c1 c2 c3 c4 : C)
     (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
 
-  (*
   Check Go a1 ⊗ Go a2 : @Batch False False (A * A).
   Compute Go a1 ⊗ Go a2.
   Compute Go a1 ⊗ (Go mk1 ⧆ c1).
   Compute (Go mk1 ⧆ c1) ⊗ (Go mk1 ⧆ c2).
   Compute (Go mk2 ⧆ c1 ⧆ c2) ⊗ (Go mk1 ⧆ c3).
-   *)
 
 End demo.
 
@@ -311,35 +315,36 @@ Proof.
   reflexivity.
 Qed.
 
-(** * <<Batch>> as a free applicative functor *)
+(** * <<Batch>> as a free applicative functor (<<runBatch>>) *)
 (******************************************************************************)
-Section free_alternate.
+Fixpoint runBatch `(ϕ : A -> F B) `{Fmap F}`{Mult F} `{Pure F}
+         `(j : @Batch A B X) : F X :=
+  match j with
+  | Go a => pure F a
+  | Ap rest i => runBatch ϕ rest <⋆> ϕ i
+  end.
 
-  Fixpoint runBatch `(ϕ : A -> F B) `{Fmap F}
-           `{Mult F} `{Pure F}  {X : Type} (j : @Batch A B X) : F X :=
-    match j with
-    | Go a => pure F a
-    | Ap rest i => runBatch ϕ rest <⋆> ϕ i
-    end.
+Lemma runBatch_rw1 `{Applicative F} `(ϕ : A -> F B) (X : Type) (x : X) :
+  runBatch ϕ (Go x) = pure F x.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma runBatch_rw2 `{Applicative F} `(ϕ : A -> F B)
+      (a : A) (X : Type) (rest : @Batch A B (B -> X)) :
+  runBatch ϕ (rest ⧆ a) = runBatch ϕ rest <⋆> ϕ a.
+Proof.
+  reflexivity.
+Qed.
+
+(** ** Naturality of of <<runBatch>> *)
+(******************************************************************************)
+Section runBatch_naturality.
 
   Context
-    `{Applicative F}
-    `{A : Type, B : Type}
-    (ϕ : A -> F B).
+    `{Applicative F}.
 
-  Lemma runBatch_rw1 (X : Type) (x : X) :
-    runBatch ϕ (Go x) = pure F x.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma runBatch_rw2 (a : A) (X : Type) (rest : @Batch A B (B -> X)) :
-    runBatch ϕ (rest ⧆ a) = runBatch ϕ rest <⋆> ϕ a.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma natural_runBatch `(f : X -> Y) (j : @Batch A B X) :
+  Lemma natural_runBatch `(ϕ : A -> F B) `(f : X -> Y) (j : @Batch A B X) :
     fmap F f (runBatch ϕ j) = runBatch ϕ (fmap Batch f j).
   Proof.
     generalize dependent Y. induction j; intros.
@@ -347,11 +352,53 @@ Section free_alternate.
     - cbn. rewrite ap6. fequal. now rewrite IHj.
   Qed.
 
-  #[global] Instance Natural_runBatch : Natural (@runBatch _ _ _ ϕ _ _ _).
+  #[global] Instance Natural_runBatch `(ϕ : A -> F B) :
+    Natural (@runBatch _ _ _ ϕ _ _ _).
   Proof.
     constructor; try typeclasses eauto.
     introv. ext j. unfold compose. apply natural_runBatch.
   Qed.
+
+  Lemma runBatch_mapfst : forall `(s : @Batch A1 B C) `(ϕ : A2 -> F B) (f : A1 -> A2),
+      runBatch (ϕ ∘ f) s = runBatch ϕ (mapfst_Batch f s).
+  Proof.
+    intros; induction s.
+    - easy.
+    - cbn. now rewrite IHs.
+  Qed.
+
+  Lemma runBatch_mapsnd : forall `(s : @Batch A B2 C) `(ϕ : A -> F B1) (f : B1 -> B2),
+      runBatch (fmap F f ∘ ϕ) s = runBatch ϕ (mapsnd_Batch f s).
+  Proof.
+    intros. induction s.
+    - easy.
+    - intros. cbn. unfold compose at 2.
+      rewrite <- ap7. fequal.
+      rewrite IHs.
+      now rewrite natural_runBatch.
+  Qed.
+
+  Context
+    `{ApplicativeMorphism F G ψ}.
+
+  Lemma runBatch_morphism `(ϕ : A -> F B) `(j : @Batch A B X) :
+    @ψ X (runBatch ϕ j) = runBatch (@ψ B ∘ ϕ) j.
+  Proof.
+    induction j.
+    - cbn. now rewrite (appmor_pure F G).
+    - cbn. rewrite ap_morphism_1.
+      now rewrite IHj.
+  Qed.
+
+End runBatch_naturality.
+
+(** ** <<runBatch>> is an applicative morphism **)
+(******************************************************************************)
+Section runBatch_morphism.
+
+  Context
+    `{Applicative F}
+    `{ϕ : A -> F B}.
 
   Lemma appmor_pure_runBatch : forall (A : Type) (a : A),
       runBatch ϕ (pure Batch a) = pure F a.
@@ -386,7 +433,7 @@ Section free_alternate.
     - intros. apply appmor_mult_runBatch.
   Qed.
 
-End free_alternate.
+End runBatch_morphism.
 
 (** ** <<runBatch>> with monoidal values *)
 (******************************************************************************)
@@ -394,17 +441,24 @@ Section runBatch_monoid.
 
   Context
     `{Monoid M}
-    {A B : Type}
-    (ϕ : A -> M).
+    {A B : Type}.
 
-  Fixpoint runBatch_monoid {C} (s : @Batch A B C) : M :=
+  Fixpoint runBatch_monoid `(ϕ : A -> M) `(s : @Batch A B C) : M :=
     match s with
     | Go x => monoid_unit M
-    | Ap rest i1 => runBatch_monoid rest ● ϕ i1
+    | Ap rest i1 => runBatch_monoid (ϕ : A -> M) rest ● ϕ i1
     end.
 
-  Lemma runBatch_monoid1 : forall `(s : @Batch A B C),
-      runBatch_monoid s = unconst (runBatch (mkConst (tag := B) ∘ ϕ) s).
+  Lemma runBatch_monoid1 : forall (ϕ : A -> M) `(s : @Batch A B C),
+      runBatch_monoid ϕ s = unconst (runBatch (mkConst (tag := B) ∘ ϕ) s).
+  Proof.
+    intros. induction s.
+    - easy.
+    - cbn. now rewrite IHs.
+  Qed.
+
+  Lemma runBatch_monoid2 : forall (ϕ : A -> M) `(s : @Batch A B C),
+      runBatch_monoid ϕ s = runBatch (F := const M) (ϕ : A -> const M B) s.
   Proof.
     intros. induction s.
     - easy.
@@ -412,6 +466,13 @@ Section runBatch_monoid.
   Qed.
 
 End runBatch_monoid.
+
+(** ** Auxiliary lemmas for runBatch and constant applicative functors. *)
+(******************************************************************************)
+Section runBatch_aux.
+
+
+End runBatch_aux.
 
 (** * <<Batch>> as a parameterized comonad *)
 (******************************************************************************)
@@ -431,6 +492,17 @@ Section parameterized.
     | Ap rest a => Ap (fmap Batch (@Ap B C X) (cojoin_Batch B rest)) a
     end.
 
+  Context
+    (A B C X : Type)
+    (a1 a2 : A) (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
+
+  Check Go (X := A) (Y := C) mk0.
+  Compute cojoin_Batch B (Go (X := A) (Y := C) mk0).
+  Check Ap (Go mk1) a1.
+  Compute cojoin_Batch B (Ap (Go mk1) a1).
+  Check Ap (Ap (Go mk2) a2) a1.
+  Compute cojoin_Batch B (Ap (Ap (Go mk2) a2) a1).
+
   (* TODO Finish rest of the parameterized comonad structure. *)
   Lemma extr_cojoin_Batch : `(extract_Batch ∘ cojoin_Batch A = @id (@Batch A C X)).
   Proof.
@@ -440,23 +512,3 @@ Section parameterized.
   Abort.
 
 End parameterized.
-
-(*
-(** ** Examples of <<cojoin>> *)
-(******************************************************************************)
-Section demo.
-
-  Context
-    (A B C X : Type)
-    (a1 a2 : A) (b1 b2 b3 : B) (c1 c2 c3 c4 : C)
-    (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
-
-  Check @Go A B X mk0.
-  Compute cojoin_Batch B (@Go A B X mk0).
-  Check Go mk1 ⧆ a1.
-  Compute cojoin_Batch B (Go mk1 ⧆ a1).
-  Check Go mk2 ⧆ a2 ⧆ a1.
-  Compute cojoin_Batch B (Go mk2 ⧆ a2 ⧆ a1).
-
-End demo.
-*)

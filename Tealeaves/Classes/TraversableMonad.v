@@ -502,12 +502,6 @@ End TraversableMonad_list.
 (******************************************************************************)
 Section TraversableMonad_listable.
 
-  Existing Instance Fmap_const.
-  Existing Instance Pure_const.
-  Existing Instance Mult_const.
-  Existing Instance Applicative_const.
-  Existing Instance ApplicativeMorphism_unconst.
-
   Context
     `{TraversableMonad T}.
 

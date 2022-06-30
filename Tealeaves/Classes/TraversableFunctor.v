@@ -906,7 +906,7 @@ Section dist_list_properties.
       rewrite (dist_list_cons_2 (G := G1)).
       rewrite IHl; clear IHl.
       unfold_ops @Mult_compose @Pure_compose @Fmap_compose.
-      rewrite (ap_compose_1 G2 G1).
+      rewrite (ap_compose2 G2 G1).
       rewrite (app_mult_natural G1).
       unfold ap at 2. rewrite (app_mult_natural_1 G1).
       fequal. compose near (a ⊗ dist list G1 (G2 A) l).
