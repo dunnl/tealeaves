@@ -796,6 +796,15 @@ Section subst_metatheory.
       intuition.
     Qed.
 
+    Corollary scoped_subst_eq : forall t k (u : T k leaf) x γ1 γ2,
+        scoped S k t γ1 ->
+        scoped (T k) k u γ2 ->
+        scoped S k (t '{k | x ~> u}) (γ1 \\ {{x}} ∪ γ2).
+    Proof.
+      introv St Su. unfold scoped in *.
+      etransitivity. apply freeset_subst_upper_eq. fsetdec.
+    Qed.
+
     Corollary freeset_subst_upper_neq : forall k j t u x,
         k <> j ->
         freeset S j (t '{k | x ~> u}) ⊆
@@ -803,6 +812,17 @@ Section subst_metatheory.
     Proof.
       intros. intros a hyp. apply freeset_subst_upper in hyp.
       intuition.
+    Qed.
+
+    Corollary scoped_subst_neq : forall t j k u x γ1 γ2,
+        j <> k ->
+        scoped S k t γ1 ->
+        scoped (T j) k u γ2 ->
+        scoped S k (t '{j | x ~> u}) (γ1 ∪ γ2).
+    Proof.
+      introv St Su. unfold scoped in *.
+      etransitivity. apply freeset_subst_upper_neq; assumption.
+      fsetdec.
     Qed.
 
     Corollary in_subst_lower_eq : forall t k u l x,
@@ -1437,7 +1457,7 @@ Section open_metatheory.
           compose near (Bd n) on right. rewrite (mbindd_comp_mret k2).
           now simpl_tgt. }
       { simpl_tgt. unfold compose. cbn. compose near a.
-        do 2 rewrite (mbindd_comp_mret k). now simpl_tgt_fallback.
+        do 2 rewrite (mbindd_comp_mret k). now simpl_tgt_fallback. }
   Qed.
 
   Theorem subst_open_neq :  forall k1 k2 (u1 : T k1 leaf) (u2 : T k2 leaf) (x : atom) (t : S leaf),
@@ -1746,16 +1766,3 @@ Section open_metatheory.
   Qed.
 
 End open_metatheory.
-
-(*
-
-  Corollary scoped_subst_eq : forall t k (u : T k leaf) x γ1 γ2,
-      scoped S k t γ1 ->
-      scoped (T k) k u γ2 ->
-      scoped S k (t '{k | x ~> u}) (γ1 \\ {{x}} ∪ γ2).
-  Proof.
-    introv St Su. unfold scoped in *.
-    etransitivity. apply freeset_subst_upper_eq. fsetdec.
-  Qed.
-
-*)
