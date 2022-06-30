@@ -246,7 +246,7 @@ Section demo.
   Compute (Go mk2 ⧆ (w1, c1) ⧆ (w2, c2)) ⊗ (Go mk1 ⧆ (w3, c3)).
 End demo.
 
-(** ** Functoriality of [Schedule] in all arguments *)
+(** ** Functoriality of [Schedule] *)
 (******************************************************************************)
 Section functoriality_Schedule.
 
@@ -261,79 +261,7 @@ Section functoriality_Schedule.
     | Ap rest p => Ap (mapfst_Schedule f rest) (map_snd f p)
     end.
 
-  (*
-  Fixpoint mapsnd_Schedule (f : A -> B) `(j : @Schedule C B X) : @Schedule C A X :=
-    match j with
-    | Go a => Go a
-    | Ap rest c => Ap (fmap Schedule (precompose f) (mapsnd_Schedule f rest)) c
-    end.
-   *)
-
 End functoriality_Schedule.
-
-(*
-Lemma mapfst_Schedule1 {A B C X Y : Type} (f : A -> B) (g : X -> Y) (j : @Schedule A C X) :
-  mapfst_Schedule f (fmap Schedule g j) = fmap Schedule g (mapfst_Schedule f j).
-Proof.
-  generalize dependent Y.
-  generalize dependent B.
-  induction j.
-  - easy.
-  - intros. cbn. fequal. auto.
-Qed.
-
-Lemma mapsnd_Schedule1 {A B C X Y : Type} (f : B -> C) (g : X -> Y) (j : @Schedule A C X) :
-  mapsnd_Schedule f (fmap Schedule g j) = fmap Schedule g (mapsnd_Schedule f j).
-Proof.
-  generalize dependent B.
-  generalize dependent Y.
-  induction j.
-  - easy.
-  - intros. cbn. fequal.
-    rewrite IHj. compose near (mapsnd_Schedule f j).
-    do 2 rewrite (fun_fmap_fmap Schedule).
-    do 2 rewrite <- IHj.
-    reflexivity.
-Qed.
-
-Lemma mapfst_mapsnd_Schedule : forall {X} `(f : A -> B) `(g : O1 -> O2) `(j : @Schedule A O2 X),
-    mapfst_Schedule f (mapsnd_Schedule g j) = mapsnd_Schedule g (mapfst_Schedule f j).
-Proof.
-  intros. generalize dependent f. generalize dependent g.
-  generalize dependent X. induction j.
-  - reflexivity.
-  - intros. cbn. fequal. rewrite mapfst_Schedule1.
-    now rewrite IHj.
-Qed.
-
-Lemma mapfst_Schedule2 {A B C X Y : Type} (f : A -> B) (x : @Schedule A C X) (y : @Schedule A C Y) :
-  mapfst_Schedule f (x ⊗ y) = mapfst_Schedule f x ⊗ mapfst_Schedule f y.
-Proof.
-  generalize dependent x. induction y.
-  - intros. cbn. now rewrite mapfst_Schedule1.
-  - cbn. fequal. change (mult_Schedule ?x ?y) with (x ⊗ y) in *; intros.
-    rewrite <- IHy. now rewrite mapfst_Schedule1.
-Qed.
-
-Lemma mapfst_Schedule3 {A B C X Y : Type} (f : A -> B) (x : @Schedule A C (X -> Y)) (y : @Schedule A C X) :
-  mapfst_Schedule f (x <⋆> y) = mapfst_Schedule f x <⋆> mapfst_Schedule f y.
-Proof.
-  unfold ap. rewrite mapfst_Schedule1.
-  now rewrite mapfst_Schedule2.
-Qed.
-
-Lemma mapfst_Schedule4 {A B X Y : Type} (f : A -> B) (t : X) :
-  mapfst_Schedule f (Go (Y := Y) t) = Go t.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma mapfst_Schedule5 {A B X : Type} (f : A -> B)  (a : A) (j : @Schedule A B (B -> X)) :
-  mapfst_Schedule f (j ⧆ a) = mapfst_Schedule f j ⧆ f a.
-Proof.
-  reflexivity.
-Qed.
-*)
 
 (** * The <<runSchedule>> operation *)
 (******************************************************************************)
@@ -396,34 +324,6 @@ Section runSchedule_naturality.
     - destruct p. cbn. rewrite ap6. fequal.
       now rewrite IHj.
   Qed.
-
-  (*
-  #[global] Instance Natural_runSchedule :
-    Natural (@runSchedule _ _ _ ϕ _ _ _).
-  Proof.
-    constructor; try typeclasses eauto.
-    introv. ext j. unfold compose. apply natural_runSchedule.
-  Qed.
-
-  Lemma runSchedule_mapfst : forall `(s : @Schedule A1 B C) `(ϕ : A2 -> F B) (f : A1 -> A2),
-      runSchedule (ϕ ∘ f) s = runSchedule ϕ (mapfst_Schedule f s).
-  Proof.
-    intros; induction s.
-    - easy.
-    - cbn. now rewrite IHs.
-  Qed.
-
-  Lemma runSchedule_mapsnd : forall `(s : @Schedule A B2 C) `(ϕ : A -> F B1) (f : B1 -> B2),
-      runSchedule (fmap F f ∘ ϕ) s = runSchedule ϕ (mapsnd_Schedule f s).
-  Proof.
-    intros. induction s.
-    - easy.
-    - intros. cbn. unfold compose at 2.
-      rewrite <- ap7. fequal.
-      rewrite IHs.
-      now rewrite natural_runSchedule.
-  Qed.
-*)
 
 End runSchedule_naturality.
 
