@@ -10,6 +10,7 @@ From Multisorted Require Import
      Theory.DTMContainer
      Theory.DTMSchedule.
 
+Import Multisorted.Theory.Category.Notations.
 Import Monoid.Notations.
 Import LN.AtomSet.Notations.
 Import Classes.SetlikeFunctor.Notations.
@@ -1390,19 +1391,71 @@ Section open_metatheory.
     fequal. apply subst_open_eq_loc; auto.
   Qed.
 
+  Theorem subst_open_neq_loc :  forall k1 k2 (u1 : T k1 leaf) (u2 : T k2 leaf) (x : atom),
+      k1 <> k2 ->
+      locally_closed (T k2) k1 u2 ->
+      (btgd T k2 (subst_loc k2 x u2 ∘ extract (prod (list K)))) ⋆dm btgd T k1 (open_loc k1 u1) =
+      (btgd T k1 (open_loc k1 (mbind (T k1) (btg T k2 (subst_loc k2 x u2)) u1))) ⋆dm (btg T k2 (subst_loc k2 x u2) ◻ const (extract (prod (list K)))).
+  Proof.
+    intros. ext k [w a]. unfold compose_dm.
+    replace (btgd T k2 (subst_loc k2 x u2 ∘ extract (prod (list K))) ◻ const (incr w))
+      with  (btgd T k2 (subst_loc k2 x u2 ∘ extract (prod (list K)))).
+    2:{ ext j [w' a']. cbn. compare values j and k2. }
+    change ((btg T k2 (subst_loc k2 x u2) k ∘ const (extract (prod (list K))) k) (w, a))
+      with (btg T k2 (subst_loc k2 x u2) k a).
+    compare values k and k1.
+    - simpl_tgt. compose near a on right.
+      rewrite (mbindd_comp_mret k1). simpl_tgt.
+      unfold const. destruct a as [y | n].
+      { cbn. compose near (Fr y) on left.
+        rewrite (mbindd_comp_mret k1). now simpl_tgt. }
+      { cbn. simpl_monoid. compare naturals n and (countk k1 w).
+        - compose near (Bd n) on left. rewrite (mbindd_comp_mret k1).
+          simpl_tgt. reflexivity.
+        - rewrite mbind_to_mbindd. fequal. ext j.
+          compare values j and k2; now simpl_tgt.
+        - compose near (Bd (n - 1)) on left.
+          rewrite (mbindd_comp_mret k1). now simpl_tgt. }
+    - compare values k and k2.
+      { simpl_tgt. unfold compose. cbn. compose near a on left.
+        rewrite (mbindd_comp_mret k2). simpl_tgt. compare a to atom x.
+        - { rewrite subst_loc_eq. unfold compose. rewrite subst_loc_eq.
+            symmetry. apply mbindd_respectful_id. introv Hin.
+            compare values k and k1.
+            + simpl_tgt. destruct a.
+              * reflexivity.
+              * cbn. unfold locally_closed, locally_closed_gap, is_bound_or_free in H2.
+                specialize (H2 w0 (Bd n) Hin). cbn in H2.
+                compare naturals n and (countk k1 (w ● w0)).
+                { contradict H2. unfold_monoid. rewrite countk_app. lia. }
+                { contradict ineqp. unfold_monoid. rewrite countk_app. lia. }
+            + now simpl_tgt. }
+        - rewrite subst_loc_fr_neq. 2:{ autorewrite with tea_local; auto. }
+          compose near (Fr a) on right. rewrite (mbindd_comp_mret k2).
+          simpl_tgt. cbn. compare values x and a.
+        - cbn.
+          compose near (Bd n) on right. rewrite (mbindd_comp_mret k2).
+          now simpl_tgt. }
+      { simpl_tgt. unfold compose. cbn. compose near a.
+        do 2 rewrite (mbindd_comp_mret k). now simpl_tgt_fallback.
+  Qed.
+
   Theorem subst_open_neq :  forall k1 k2 (u1 : T k1 leaf) (u2 : T k2 leaf) (x : atom) (t : S leaf),
       k1 <> k2 ->
       locally_closed (T k2) k1 u2 ->
       t '(k1 | u1) '{k2 | x ~> u2} =
       t '{k2 | x ~> u2} '(k1 | u1 '{k2 | x ~> u2}).
   Proof.
-    introv neq lc.
-    compose near t. unfold subst, open.
-    unfold kbind, kbindd.
-    rewrite (mbind_mbindd S), (mbindd_mbind S).
-    fequal. ext j [w a]. unfold compose.
-    unfold mbind.
-  Admitted.
+    introv neq lc. compose near t.
+    unfold subst, open. unfold kbind, kbindd.
+    rewrite (mbind_to_mbindd S), (mbindd_mbindd S).
+    rewrite (mbindd_mbindd S). fequal.
+    pose (lemma := subst_open_neq_loc).
+    unfold compose_dm in lemma. rewrite <- lemma; auto.
+    ext k [w a]. fequal. ext j [w' a']. compare values j and k2.
+    + rewrite btgd_eq, btg_eq. reflexivity.
+    + rewrite btgd_neq, btg_neq; auto.
+  Qed.
 
   (** ** Decompose opening into variable opening followed by substitution *)
   (**************************************************************************)
