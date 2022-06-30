@@ -252,7 +252,7 @@ Section operations.
       f KTerm (nil, a)
     | tm_abs ty body =>
       pure F (tm_abs)
-           <⋆> bind_type (fun k => f k ∘ incr [KTerm]) ty
+           <⋆> bind_type (fun k => f k) ty
            <⋆> bind_term (fun k => f k ∘ incr [KTerm]) body
     | tm_app t1 t2 =>
       pure F tm_app <⋆> bind_term f t1 <⋆> bind_term f t2
@@ -388,7 +388,6 @@ Proof.
   - easy.
   - cbn. fequal.
     + change (bind_type ?F ?f) with (mbinddt typ F f).
-      rewrite <- mbinddt_inst_law1_case12.
       now rewrite mbinddt_mret_typ.
     + rewrite <- mbinddt_inst_law1_case12.
       apply IHt.
@@ -475,15 +474,14 @@ Proof.
     rewrite <- (mbinddt_mbinddt_typ F G).
     unfold compose at 6.
     do 2 rewrite (ap_compose3 G F).
+    unfold compose.
     do 2 rewrite <- (ap7 (G := F)).
-    compose near (pure (F ∘ G) (@tm_abs C)).
-    rewrite (fun_fmap_fmap F).
     unfold_ops @Pure_compose.
     rewrite (app_pure_natural F).
     do 4 rewrite ap6.
-    compose near (pure F ((precompose (mbinddt typ G (fun k : K => g k ∘ incr [KTerm])) ∘ ap G) (pure G tm_abs))).
+    compose near ((pure F (ap G (pure G (@tm_abs C))))).
     rewrite (fun_fmap_fmap F).
-    do 2 rewrite (app_pure_natural F).
+    do 3 rewrite (app_pure_natural F).
     reflexivity.
   - cbn.
     rewrite <- IHt1.

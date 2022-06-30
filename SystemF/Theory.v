@@ -40,6 +40,13 @@ Proof.
   autorewrite with sysf_rw. cbn. compare values x and y.
 Qed.
 
+Lemma rw_subst_term_var {x y} {τ} :
+  x <> y ->
+  subst term KType x τ (tm_var (Fr y)) = tm_var (Fr y).
+Proof.
+  autorewrite with sysf_rw. cbn. compare values x and y.
+Qed.
+
 (** * Properties of the typing judgment <<Δ ; Γ ⊢ t : τ>> *)
 (******************************************************************************)
 
@@ -80,11 +87,9 @@ Proof.
   eauto using j_kind_ctx_perm, permutation_fact.
 Qed.
 
-Hint Resolve ok_kind_ctx_app1 : sysf_ctx.
-
 (** *** Weakening *)
 (******************************************************************************)
-Theorem weak_j_kind_ctx : forall Δ1 Δ2 Γ t τ,
+Theorem j_kind_ctx_weak : forall Δ1 Δ2 Γ t τ,
     ok_kind_ctx Δ2 ->
     disjoint Δ1 Δ2 ->
     (Δ1 ; Γ ⊢ t : τ) ->
@@ -102,17 +107,9 @@ Proof.
   - apply j_inst; auto with sysf_ctx.
 Qed.
 
-
-Lemma rw_subst_term_var {x y} {τ} :
-  x <> y ->
-  subst term KType x τ (tm_var (Fr y)) = tm_var (Fr y).
-Proof.
-  autorewrite with sysf_rw. cbn. compare values x and y.
-Qed.
-
 (** *** Substitution *)
 (******************************************************************************)
-Theorem subst_j_kind_ctx : forall Δ1 x Δ2 Γ t τ τ',
+Theorem j_kind_ctx_subst : forall Δ1 x Δ2 Γ t τ τ',
     ok_type (Δ1 ++ Δ2) τ' ->
     (Δ1 ++ x ~ tt ++ Δ2 ; Γ ⊢ t : τ) ->
     (Δ1 ++ Δ2 ; envmap (subst typ KType x τ') Γ ⊢ subst term KType x τ' t : subst typ KType x τ' τ).
@@ -127,25 +124,16 @@ Proof.
       * eapply ok_type_lc; eauto.
     + rewrite in_envmap_iff. eauto.
   - rename H0 into IH. simpl_F.
-    assert (rw : subst term (KType : K) x τ' (tm_abs τ1 t) =
-                 (tm_abs (subst typ KType x τ' τ1) (subst term (KType : K) x τ' t))) by admit.
-    rewrite rw. clear rw.
     apply j_abs with (L := L ∪ {{ x }}).
     intros_cof IH.
     rewrite (subst_open_neq term) in IH
-      by (discriminate + apply rw_lc_KTerm_type).
+      by (discriminate + apply lc_KTerm_type).
     rewrite rw_subst_term_var in IH; [ |fsetdec].
     rewrite envmap_app in IH. auto.
-  - assert (rw : subst term KType x τ' (tm_app t1 t2) =
-                 tm_app (subst term KType x τ' t1) (subst term KType x τ' t2)) by admit.
-    rewrite rw; clear rw.
-    eapply j_app.
+  - simpl_F. eapply j_app.
     + autorewrite with sysf_rw in IHj1; eauto.
     + eauto.
   - rename H0 into IH. simpl_F.
-    assert (rw : subst term KType x τ' (tm_tab t) =
-                 tm_tab (subst term KType x τ' t)) by admit.
-    rewrite rw; clear rw.
     apply j_univ with (L := L ∪ {{x}}).
     intros_cof IH. simpl_alist in *.
     assert (x <> e) by fsetdec.
@@ -158,10 +146,21 @@ Proof.
     + change_alist ((Δ1 ++ Δ2) ++ e ~ tt).
       auto using ok_type_weak_r.
     + reflexivity.
-  - simpl_F. rewrite (subst_open_eq typ); auto.
+  - autorewrite with sysf_rw in *.
+    rewrite (subst_open_eq typ); auto.
     2:{ clear IHj j. eapply ok_type_lc; eauto. }
-    apply j_inst; auto with sysf_ctx.
-Admitted.
+    auto using j_inst with sysf_ctx.
+Qed.
+
+Theorem j_kind_ctx_subst1 : forall Δ x Γ t τ τ2,
+    ok_type Δ τ2 ->
+    (Δ ++ x ~ tt ; Γ ⊢ t : τ) ->
+    (Δ ; envmap (subst typ KType x τ2) Γ ⊢ subst term KType x τ2 t : subst typ KType x τ2 τ).
+Proof.
+  introv jτ jt. change_alist (Δ ++ x ~ tt ++ []) in jt.
+  change_alist (Δ ++ []) in jτ. change_alist (Δ ++ []).
+  auto using j_kind_ctx_subst.
+Qed.
 
 (** ** Properties of <<Δ ; Γ ⊢ t : τ>> in <<Γ>> *)
 (******************************************************************************)
@@ -175,15 +174,18 @@ Proof.
   introv j. induction j; try assumption.
   - cleanup_cofinite. eauto using ok_type_ctx_inv_app_l.
   - rename H0 into IH.
-    pick fresh e for L.
-    (*
-    pick fresh e for (L ∪ concatAtoms (envmap (freeset typ KType) Γ)).
-     *)
+    pick fresh e for (L ∪ atoms (bind list (fun '(x, t) => free typ KType t) Γ)).
     specialize_cof IH e.
     apply (ok_type_ctx_stren1) with (x := e).
     + assumption.
-    + admit.
-Admitted.
+    + introv Hin.
+      enough (lemma : ~ e ∈ (bind list (fun '(x, t) => free typ KType t) Γ)).
+      { rewrite (SetlikeMonad.in_bind_iff list) in lemma.
+        rewrite in_range_iff in Hin. destruct Hin as [x Hin].
+        contradict lemma. exists (x, t0). split; [assumption|].
+        now apply free_iff_freeset. }
+      { rewrite <- in_atoms_iff. fsetdec. }
+Qed.
 
 (** *** Tactical corollaries *)
 (******************************************************************************)
@@ -205,7 +207,7 @@ Qed.
 
 (** *** Permutation *)
 (******************************************************************************)
-Theorem perm_j_type_ctx : forall Δ Γ1 Γ2 t τ,
+Theorem j_type_ctx_perm : forall Δ Γ1 Γ2 t τ,
     (Δ ; Γ1 ⊢ t : τ) ->
     Permutation Γ1 Γ2 ->
     (Δ ; Γ2 ⊢ t : τ).
@@ -220,26 +222,26 @@ Proof.
   - econstructor; eauto using Permutation_app_tail.
 Qed.
 
-Corollary perm_j_type_ctx_iff : forall Δ Γ1 Γ2 t τ,
+Corollary j_type_ctx_perm_iff : forall Δ Γ1 Γ2 t τ,
     Permutation Γ1 Γ2 ->
     (Δ ; Γ1 ⊢ t : τ) <->
     (Δ ; Γ2 ⊢ t : τ).
 Proof.
   introv Hperm. assert (Permutation Γ2 Γ1) by now symmetry.
-  split; eauto using perm_j_type_ctx.
+  split; eauto using j_type_ctx_perm.
 Qed.
 
-Corollary perm_j_type_ctx_1 : forall Δ Γ1 Γ2 x τ2 t τ1,
+Corollary j_type_ctx_perm1 : forall Δ Γ1 Γ2 x τ2 t τ1,
     (Δ ; (Γ1 ++ x ~ τ2) ++ Γ2 ⊢ t : τ1) <->
     (Δ ; (Γ1 ++ Γ2) ++ x ~ τ2 ⊢ t : τ1).
 Proof.
-  intros. apply perm_j_type_ctx_iff.
+  intros. apply j_type_ctx_perm_iff.
   apply permutation_fact.
 Qed.
 
 (** *** Weakening *)
 (******************************************************************************)
-Theorem weak_j_type_ctx : forall Δ Γ1 Γ2 t τ,
+Theorem j_type_ctx_weak : forall Δ Γ1 Γ2 t τ,
     ok_type_ctx Δ Γ2 ->
     disjoint Γ1 Γ2 ->
     (Δ ; Γ1 ⊢ t : τ) ->
@@ -256,7 +258,7 @@ Proof.
   - apply j_abs with (L := L ∪ domset Γ2).
     +  (* todo need better automation here *)
       rename H0 into IH.
-      intros_cof IH; auto. rewrite <- perm_j_type_ctx_1.
+      intros_cof IH; auto. rewrite <- j_type_ctx_perm1.
       apply IH; auto. autorewrite with tea_rw_disj. intuition fsetdec.
   - apply j_app with (τ1 := τ1); auto.
   - apply j_univ with (L := L ∪ domset Δ). intros_cof H0.
@@ -271,15 +273,6 @@ Qed.
 
 (** *** Substitution *)
 (******************************************************************************)
-Theorem subst_j_kind_ctx_1 : forall Δ x Γ t τ τ2,
-    ok_type Δ τ2 ->
-    (Δ ++ x ~ tt ; Γ ⊢ t : τ) ->
-    (Δ ; envmap (subst typ KType x τ2) Γ ⊢ subst term KType x τ2 t : subst typ KType x τ2 τ).
-Proof.
-  introv jτ jt. change_alist (Δ ++ x ~ tt ++ []) in jt.
-  change_alist (Δ ++ []) in jτ. change_alist (Δ ++ []).
-  auto using subst_j_kind_ctx.
-Qed.
 
 (** ** Properties in τ of <<(Δ ; Γ ⊢ t : τ>> *)
 (******************************************************************************)
@@ -292,17 +285,16 @@ Lemma j_lc_type : forall Δ Γ t τ,
 Proof.
   introv j. induction j.
   - eapply ok_type_ctx_binds; eauto.
-  - cc. autorewrite with sysf_rw. (*split.
-    + eapply in_j_type_ctx2 in H. eapply ok_type_lc; eauto.
+  - cc. autorewrite with sysf_rw. split.
+    + eapply j_type_ctx2 in H. eapply ok_type_lc; eauto.
     + auto.
   - now autorewrite with sysf_rw in IHj1.
   - cc. autorewrite with sysf_rw.
-    rewrite open_lc_gap_eq_var; eauto.
+    rewrite (open_lc_gap_eq_var typ); eauto.
   - autorewrite with sysf_rw in IHj.
-    rewrite <- open_lc_gap_eq_iff_1; eauto.
+    rewrite <- (open_lc_gap_eq_iff_1 typ); eauto.
     eapply ok_type_lc; eauto.
-*)
-Admitted.
+Qed.
 
 (** *** <<τ>> is always well-formed *)
 (******************************************************************************)
@@ -324,8 +316,7 @@ Proof.
       autorewrite with tea_rw_dom in H0. fsetdec.
       rewrite (freeset_open_lower typ); eauto.
     + rewrite (open_lc_gap_eq_iff typ); eauto.
-  (* now autorewrite with sysf_rw. *)
-      admit.
+      autorewrite with sysf_rw. eauto.
   - rewrite ok_type_univ in IHj. destruct IHj.
     unfold ok_type in *; split.
     + unfold scoped in *.
@@ -333,7 +324,7 @@ Proof.
     + unfold locally_closed.
       rewrite (open_lc_gap_eq_iff typ) in H1;
         eauto. tauto.
-Admitted.
+Qed.
 
 (** ** Properties in t of <<(Δ ; Γ ⊢ t : τ>> *)
 (******************************************************************************)
@@ -344,15 +335,15 @@ Lemma j_lc_KTerm_term : forall Δ Γ t τ,
     (Δ ; Γ ⊢ t : τ) ->
     locally_closed term KTerm t.
 Proof.
-  introv j. induction j.
-  - now simpl_F.
+  introv j. induction j; try rename H0 into IH.
+  - apply rw_lc_KTerm_term11.
   - cc. simpl_F.
-    rewrite open_lc_gap_eq_iff_1; eauto.
-    now simpl_F.
+    rewrite (open_lc_gap_eq_iff_1 term); eauto.
+    apply rw_lc_KTerm_term11.
   - now simpl_F.
-  - rename H0 into IH. cc.
+  - cc.
     autorewrite with sysf_rw.
-    rewrite (open_lc_gap_neq_var).
+    rewrite (open_lc_gap_neq_var term).
     + exact IH.
     + discriminate.
   - simpl_F. intuition (auto using lc_term_type).
@@ -365,21 +356,19 @@ Lemma j_lc_KType_term : forall Δ Γ t τ,
     locally_closed term KType t.
 Proof.
   introv j. induction j.
-  - now simpl_F.
+  - apply rw_lc_KType_term1.
   - cc. simpl_F. split.
-    + apply in_j_type_ctx2 in H. eapply ok_type_lc; eauto.
-    + rename Fr into fresh.
-      change (tm_var (Fr e)) with (mret SystemF KTerm (Fr e)) in H0.
-      rewrite <- (open_lc_gap_neq_var (H := I2) _ KTerm) in H0.
-      2:{ discriminate. }
-      auto.
+    + apply j_type_ctx2 in H. eapply ok_type_lc; eauto.
+    + rename H0 into IH.
+      change (tm_var (Fr e)) with (mret SystemF KTerm (Fr e)) in IH.
+      rewrite <- (open_lc_gap_neq_var term) in IH; [auto|discriminate].
   - now simpl_F.
   - rename H0 into IH. cc.
     autorewrite with sysf_rw.
-    rewrite (open_lc_gap_eq_var).
+    rewrite (open_lc_gap_eq_var term).
     + exact IH.
-    + auto.
-  - simpl_F. intuition (auto using lc_term_type).
+    + lia.
+  - simpl_F. intuition (auto using lc_KTerm_type).
     eapply ok_type_lc; eauto.
 Qed.
 
@@ -387,104 +376,119 @@ Qed.
 (******************************************************************************)
 Lemma j_sc_KType_term : forall Δ Γ t τ,
     (Δ ; Γ ⊢ t : τ) ->
-    scoped_env term KType t Δ.
+    scoped term KType t (domset Δ).
 Proof.
-  introv j. induction j; unfold scoped_env, scoped in *.
-  - rewrite rw_freeset_KType_term12. fsetdec.
-  - simpl_F. cc.
+  introv j. induction j; try rename H0 into IH.
+  - unfold scoped. fsetdec.
+  - unfold scoped. simpl_F. cc.
     assert (freeset typ KType τ1 ⊆ domset Δ).
-    { apply in_j_type_ctx2 in H. apply H. }
-    rewrite <- (freeset_open_lower) in H0.
+    { apply j_type_ctx2 in H. apply H. }
+    unfold scoped in IH.
+    rewrite <- (freeset_open_lower term) in IH.
     fsetdec.
-  - simpl_F. fsetdec.
-  - simpl_F. cc. admit.
-  - simpl_F.
+  - unfold scoped in *. simpl_F. fsetdec.
+  - unfold scoped. simpl_F.
+    pick fresh x for (L ∪ freeset term KType t).
+    specialize_cof IH x.
+    unfold scoped in IH.
+    rewrite <- (freeset_open_lower term) in IH.
+    eapply (scoped_stren_r term).
+    + eauto.
+    + fsetdec.
+  - unfold scoped in *. simpl_F.
     assert (freeset typ KType τ1 ⊆ domset Δ) by apply H.
     fsetdec.
-Admitted.
+Qed.
 
 (** *** <<t>> is always well-scoped w.r.t. term variables *)
 (******************************************************************************)
 Lemma j_sc_KTerm_term : forall Δ Γ t τ,
     (Δ ; Γ ⊢ t : τ) ->
-    scoped_env term KTerm t Γ.
+    scoped term KTerm t (domset Γ).
 Proof.
-  introv j. induction j; unfold scoped_env, scoped in *.
-  - rewrite rw_freeset_KTerm_term12. admit.
-  - simpl_F. cc.
-    rewrite rw_freeset_KTerm_type.
-    rewrite <- (freeset_open_lower_eq) in H0.
-    admit.
+  introv j. induction j; try rename H0 into IH; unfold scoped in *.
+  - rename H1 into Hin. simpl_F.
+    apply in_in_domset in Hin. fsetdec.
+  - simpl_F. pick fresh x for (L ∪ freeset term KTerm t).
+    specialize_cof IH x.
+    rewrite <- (freeset_open_lower term) in IH.
+    eapply (scoped_stren_r term).
+    + eauto.
+    + fsetdec.
   - simpl_F. fsetdec.
-  - simpl_F. cc. admit.
-  - simpl_F.
-    rewrite rw_freeset_KTerm_type. fsetdec.
-Admitted.
+  - simpl_F. cc. etransitivity.
+    pose (lemma := freeset_open_lower term t (KType : K) (KTerm : K)).
+    apply lemma. eauto.
+  - simpl_F. fsetdec.
+Qed.
 
 (** *** <<t>> is always well-formed *)
 (******************************************************************************)
-Lemma j_ok_tm_tm : forall Δ Γ t τ,
+Lemma j_ok_term : forall Δ Γ t τ,
     (Δ ; Γ ⊢ t : τ) ->
     ok_term Δ Γ t.
 Proof.
   intros. unfold ok_term.
-  intuition (eauto using j_sc_KTerm_term, j_sc_KType_term,
-             j_lc_KTerm_term, j_lc_KType_term).
+  intuition (eauto using j_sc_KTerm_term, j_sc_KType_term, j_lc_KTerm_term, j_lc_KType_term).
 Qed.
 
 (** *** Substitution *)
 (******************************************************************************)
-Theorem subst_j_type_ctx : forall Δ Γ1 Γ2 x τ2 t u τ1,
+Theorem j_type_ctx_subst : forall Δ Γ1 Γ2 x τ2 t u τ1,
     (Δ ; Γ1 ++ x ~ τ2 ++ Γ2 ⊢ t : τ1) ->
     (Δ ; Γ1 ++ Γ2 ⊢ u : τ2) ->
     (Δ ; Γ1 ++ Γ2 ⊢ subst term KTerm x u t : τ1).
 Proof.
   introv jt ju. remember (Γ1 ++ x ~ τ2 ++ Γ2) as Γ.
   generalize dependent Γ2. induction jt; intros; subst.
-  - simpl_F. unfold subst_loc. compare values x and x0.
-    + enough (τ2 = τ) by congruence.
-      eapply in_uniq_mid_eq.
-      * inverts H0; eauto.
-      * assumption.
-    + constructor; eauto using ok_type_ctx_inv_mid, in_mid_neq.
-  - rename H0 into IH.
-    simpl_F. rewrite subst_KTerm_type.
+  - rename H0 into Hok. rename H1 into Hvar.
+    compare values x and x0.
+    + rewrite rw_subst_KTerm_term11.
+      enough (τ = τ2) by congruence.
+      eapply binds_mid_eq. apply Hvar. apply Hok.
+    + rewrite rw_subst_KTerm_term12; [|assumption].
+      apply j_var.
+      { assumption. }
+      { eauto with sysf_ctx. }
+      { eauto using binds_remove_mid. }
+  - rename H0 into IH. simpl_F.
     apply j_abs with (L := L ∪ {{ x }} ∪ domset Γ1 ∪ domset Γ2).
     intros_cof IH.
-    rewrite subst_open_eq in IH.
+    rewrite (subst_open_eq term) in IH.
     2:{ eapply j_lc_KTerm_term; eauto. }
-    rewrite subst_fresh in IH.
+    rewrite (subst_fresh term) in IH.
     2:{ simpl_F. autorewrite with tea_list. fsetdec. }
     simpl_alist in *. apply IH; auto.
     change_alist ((Γ1 ++ Γ2) ++ e ~ τ1).
-    apply weak_j_type_ctx.
-    * apply ok_type_ctx_tm_one.
-      specialize_cof H e. eapply in_j_type_ctx2; eauto.
-    * autorewrite with tea_rw_disj in *. intuition fsetdec.
-    * assumption.
+    apply j_type_ctx_weak.
+    + apply ok_type_ctx_one.
+      specialize_cof H e. eapply j_type_ctx2; eassumption.
+    + autorewrite with tea_rw_disj in *. intuition fsetdec.
+    + assumption.
   - simpl_F. eapply j_app; eauto.
   - rename H0 into IH.
-    simpl_F. apply j_univ with (L := L).
-    intros_cof IH. rewrite subst_open_neq in IH.
+    simpl_F. apply j_univ with (L := L ∪ domset Δ).
+    intros_cof IH. rewrite (subst_open_neq term) in IH.
     2:{ discriminate. }
-    2:{ eapply j_ok_tm_tm; eauto. }
-    apply IH; eauto.
-    eapply weak_j_kind_ctx.
-    + admit.
-    + admit.
-    + admit.
-  - simpl_F. rewrite subst_KTerm_type. apply j_inst.
-    auto. apply IHjt. admit. auto.
-Admitted.
+    2:{ eapply j_ok_term; eassumption. }
+    apply IH; [reflexivity|].
+    eapply j_kind_ctx_weak.
+    + apply ok_kind_ctx_one.
+    + autorewrite with tea_rw_disj. fsetdec.
+    + assumption.
+  - simpl_F. apply j_inst.
+    + assumption.
+    + auto.
+Qed.
 
-Corollary subst_j_type_ctx_1 : forall Δ Γ x τ2 t u τ1,
+Corollary j_type_ctx_subst1 : forall Δ Γ x τ2 t u τ1,
     (Δ ; Γ ++ x ~ τ2 ⊢ t : τ1) ->
     (Δ ; Γ ⊢ u : τ2) ->
     (Δ ; Γ ⊢ subst term KTerm x u t : τ1).
 Proof.
   introv jt ju. change_alist (Γ ++ x ~ τ2 ++ []) in jt.
   change_alist (Γ ++ []) in ju. change_alist (Γ ++ []).
-  eauto using subst_j_type_ctx.
+  eauto using j_type_ctx_subst.
 Qed.
 
 (** * Progress and preservation *)
@@ -500,21 +504,23 @@ Proof.
   - inversion 1; subst.
     + eauto using Judgment.
     + eauto using Judgment.
-    + inverts j1. pick fresh e for (L ∪ freeset term KTerm t0).
+    + inverts j1. rename H4 into hyp.
+      pick fresh e for (L ∪ freeset term KTerm t0).
       rewrite (open_spec_eq term) with (x := e); [| fsetdec].
-      eapply subst_j_type_ctx_1; eauto.
-      apply H4. fsetdec.
+      eapply j_type_ctx_subst1; eauto.
+      apply hyp. fsetdec.
   - inversion 1.
   - inversion 1; subst.
     + eauto using Judgment.
     + inverts j.
       pick fresh e for (L ∪ freeset term KType t0 ∪ freeset typ KType τ2).
-      rewrite (open_spec_eq) with (x := e); [|fsetdec].
-      rewrite (open_spec_eq (F:=typ)) with (x := e); [|fsetdec].
+      rewrite (open_spec_eq term) with (x := e); [|fsetdec].
+      rewrite (open_spec_eq typ) with (x := e); [|fsetdec].
       change (@nil (atom * typ leaf))
-        with (subst (fun A : Type => alist typ A) KType e τ1 []).
-      apply subst_j_kind_ctx_1; auto.
-      apply H5. fsetdec.
+        with (envmap (subst typ KType e τ1) []).
+      eapply j_kind_ctx_subst1.
+      { assumption. }
+      { apply H5. fsetdec. }
 Qed.
 
 Theorem  progress_theorem : progress.

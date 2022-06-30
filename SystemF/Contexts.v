@@ -60,7 +60,7 @@ Section scope_lemmas.
 
   (** *** Permutation *)
   (******************************************************************************)
-  Theorem scoped_perm1 : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
+  Lemma scoped_perm : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
       Permutation γ1 γ2 ->
       scoped S k t (domset γ1) ->
       scoped S k t (domset γ2).
@@ -68,13 +68,20 @@ Section scope_lemmas.
     introv Hperm. unfold scoped. rewrite (perm_domset); eauto.
   Qed.
 
-  Theorem scoped_perm : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
+  Theorem scoped_perm_iff : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
       Permutation γ1 γ2 ->
       scoped S k t (domset γ1) <->
       scoped S k t (domset γ2).
   Proof.
     intros. assert (Permutation γ2 γ1) by now symmetry.
-    split; eauto using scoped_perm1.
+    split; eauto using scoped_perm.
+  Qed.
+
+  Corollary scoped_perm_comm : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
+      scoped S k t (domset (γ1 ++ γ2)) <->
+      scoped S k t (domset (γ2 ++ γ1)).
+  Proof.
+    intros. apply scoped_perm_iff. apply Permutation_app_comm.
   Qed.
 
   (** *** Weakening *)
@@ -87,6 +94,14 @@ Section scope_lemmas.
     autorewrite with tea_rw_dom. fsetdec.
   Qed.
 
+  Lemma scoped_weak_mid : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 γ : alist X),
+      scoped S k t (domset (γ1 ++ γ2)) ->
+      scoped S k t (domset (γ1 ++ γ ++ γ2)).
+  Proof.
+    intros. unfold scoped in *.
+    autorewrite with tea_rw_dom in *. fsetdec.
+  Qed.
+
   Lemma scoped_weak_r : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
       scoped S k t (domset γ2) ->
       scoped S k t (domset (γ1 ++ γ2)).
@@ -97,7 +112,7 @@ Section scope_lemmas.
 
   (** *** Strengthening *)
   (******************************************************************************)
-  Lemma scoped_stren : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X) (x : atom) (x' : X),
+  Lemma scoped_stren_mid : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X) (x : atom) (x' : X),
       scoped S k t (domset (γ1 ++ x ~ x' ++ γ2)) ->
       ~ x ∈@ (freeset S k t) ->
       scoped S k t (domset (γ1 ++ γ2)).
@@ -106,9 +121,27 @@ Section scope_lemmas.
     autorewrite with tea_rw_dom in *. fsetdec.
   Qed.
 
+  Corollary scoped_stren_l : forall (k : K) (t : S leaf) (X : Type) (γ : alist X) (x : atom) (x' : X),
+      scoped S k t (domset (x ~ x' ++ γ)) ->
+      ~ x ∈@ (freeset S k t) ->
+      scoped S k t (domset γ).
+  Proof.
+    introv Hscope Hnotin. change γ with (nil ++ γ).
+    eapply scoped_stren_mid; [apply Hscope | apply Hnotin].
+  Qed.
+
+  Corollary scoped_stren_r : forall (k : K) (t : S leaf) (X : Type) (γ : alist X) (x : atom) (x' : X),
+      scoped S k t (domset (γ ++ x ~ x')) ->
+      ~ x ∈@ (freeset S k t) ->
+      scoped S k t (domset γ).
+  Proof.
+    introv Hscope Hnotin. replace γ with (γ ++ nil) by (now List.simpl_list).
+    eapply scoped_stren_mid; [apply Hscope | apply Hnotin].
+  Qed.
+
   (** *** Substitution *)
   (******************************************************************************)
-  Lemma scoped_sub_eq :
+  Lemma scoped_sub_eq_mid :
     forall (k : K) (t1 : S leaf) (t2 : T k leaf)
       (X : Type) (γ1 γ2 : alist X) (x : atom) (x' : X),
       scoped S k t1 (domset (γ1 ++ x ~ x' ++ γ2)) ->
@@ -117,6 +150,32 @@ Section scope_lemmas.
   Proof.
     introv hyp1 hyp2. unfold scoped in *. autorewrite with tea_rw_dom in *.
     etransitivity. apply (freeset_subst_upper_eq S). fsetdec.
+  Qed.
+
+  Corollary scoped_sub_eq_r :
+    forall (k : K) (t1 : S leaf) (t2 : T k leaf)
+      (X : Type) (γ1 : alist X) (x : atom) (x' : X),
+      scoped S k t1 (domset (γ1 ++ x ~ x')) ->
+      scoped (T k) k t2 (domset γ1) ->
+      scoped S k (subst S k x t2 t1) (domset γ1).
+  Proof.
+    introv hyp1 hyp2. change_alist (γ1 ++ x ~ x' ++ []) in hyp1.
+    change_alist (γ1 ++ []) in hyp2.
+    change_alist (γ1 ++ []).
+    eapply scoped_sub_eq_mid; eauto.
+  Qed.
+
+  Corollary scoped_sub_eq_l :
+    forall (k : K) (t1 : S leaf) (t2 : T k leaf)
+      (X : Type) (γ1 : alist X) (x : atom) (x' : X),
+      scoped S k t1 (domset (x ~ x' ++ γ1)) ->
+      scoped (T k) k t2 (domset γ1) ->
+      scoped S k (subst S k x t2 t1) (domset γ1).
+  Proof.
+    introv hyp1 hyp2. change_alist ([] ++ x ~ x' ++ γ1) in hyp1.
+    change_alist ([] ++ γ1) in hyp2.
+    change_alist ([] ++ γ1).
+    eapply scoped_sub_eq_mid; eauto.
   Qed.
 
   Lemma scoped_sub_neq :
@@ -128,19 +187,6 @@ Section scope_lemmas.
   Proof.
     introv hyp1 hyp2. unfold scoped in *. autorewrite with tea_rw_dom in *.
     etransitivity. apply (freeset_subst_upper_neq S); auto. fsetdec.
-  Qed.
-
-  Lemma scoped_sub_eq1 :
-    forall (k : K) (t1 : S leaf) (t2 : T k leaf)
-      (X : Type) (γ1 : alist X) (x : atom) (x' : X),
-      scoped S k t1 (domset (γ1 ++ x ~ x')) ->
-      scoped (T k) k t2 (domset γ1) ->
-      scoped S k (subst S k x t2 t1) (domset γ1).
-  Proof.
-    introv hyp1 hyp2. change_alist (γ1 ++ x ~ x' ++ []) in hyp1.
-    change_alist (γ1 ++ []) in hyp2.
-    change_alist (γ1 ++ []).
-    eauto using scoped_sub_eq.
   Qed.
 
   (** *** Other *)
@@ -274,12 +320,13 @@ Qed.
 (******************************************************************************)
 
 (** *** Permutation *)
+(******************************************************************************)
 Lemma ok_type_perm : forall Δ1 Δ2 τ,
     Permutation Δ1 Δ2 ->
     ok_type Δ1 τ <->
     ok_type Δ2 τ.
 Proof.
-  intros. unfold ok_type. now rewrite (scoped_perm); eauto.
+  intros. unfold ok_type. now rewrite (scoped_perm_iff); eauto.
 Qed.
 
 Lemma ok_type_perm1 : forall Δ1 Δ2 τ,
@@ -309,13 +356,14 @@ Proof.
 Qed.
 
 (** *** Strengthening  *)
+(******************************************************************************)
 Lemma ok_type_stren : forall Δ1 Δ2 x τ,
     ok_type (Δ1 ++ x ~ tt ++ Δ2) τ ->
     ~ x ∈@ (freeset typ KType τ) ->
     ok_type (Δ1 ++ Δ2) τ.
 Proof.
   introv [? ?] ?. unfold ok_type.
-  eauto using (scoped_stren typ).
+  eauto using (scoped_stren_mid typ).
 Qed.
 
 Corollary ok_type_stren1 : forall Δ x τ,
@@ -328,13 +376,14 @@ Proof.
 Qed.
 
 (** *** Substitution *)
+(******************************************************************************)
 Lemma ok_type_sub : forall Δ1 Δ2 x τ1 τ2,
     ok_type (Δ1 ++ x ~ tt ++ Δ2) τ1 ->
     ok_type (Δ1 ++ Δ2) τ2 ->
     ok_type (Δ1 ++ Δ2) (subst typ KType x τ2 τ1).
 Proof.
   unfold ok_type. introv [? ?] [? ?]. split.
-  - pose (lemma := scoped_sub_eq typ KType).
+  - pose (lemma := scoped_sub_eq_mid typ KType).
     eapply lemma; eassumption.
   - auto using (subst_lc_eq typ).
 Qed.
@@ -479,6 +528,7 @@ Qed.
 (******************************************************************************)
 
 (** *** Permutation *)
+(******************************************************************************)
 Theorem ok_type_ctx_perm1 : forall Δ1 Δ2 Γ,
     ok_type_ctx Δ1 Γ ->
     Permutation Δ1 Δ2 ->
@@ -502,6 +552,7 @@ Qed.
 #[local] Set Firstorder Depth 4.
 
 (** *** Weakening *)
+(******************************************************************************)
 Lemma ok_type_ctx_weak_r : forall Δ1 Δ2 Γ,
     ok_type_ctx Δ1 Γ ->
     ok_type_ctx (Δ1 ++ Δ2) Γ.
@@ -511,6 +562,7 @@ Proof.
 Qed.
 
 (** *** Strengthening *)
+(******************************************************************************)
 Lemma ok_type_ctx_stren : forall Δ1 Δ2 x Γ,
     ok_type_ctx (Δ1 ++ x ~ tt ++ Δ2) Γ ->
     (forall t : typ leaf, t ∈ range Γ -> ~ x ∈@ freeset typ KType t) ->
@@ -558,16 +610,18 @@ Qed.
 (******************************************************************************)
 
 (** *** Permutation *)
+(******************************************************************************)
 Lemma ok_term_perm_delta : forall Δ1 Δ2 Γ t,
     Permutation Δ1 Δ2 ->
     ok_term Δ1 Γ t <->
     ok_term Δ2 Γ t.
 Proof.
   intros. unfold ok_term.
-  now rewrite scoped_perm.
+  now rewrite scoped_perm_iff.
 Qed.
 
 (** *** Weakening *)
+(******************************************************************************)
 Lemma ok_term_weak_delta_r : forall Δ1 Δ2 Γ t,
     ok_term Δ1 Γ t ->
     ok_term (Δ1 ++ Δ2) Γ t.
@@ -585,16 +639,18 @@ Proof.
 Qed.
 
 (** *** Strengthening  *)
+(******************************************************************************)
 Lemma ok_term_stren_delta : forall Δ1 Δ2 x Γ t,
     ok_term (Δ1 ++ x ~ tt ++ Δ2) Γ t ->
     ~ x ∈@ (freeset term KType t) ->
     ok_term (Δ1 ++ Δ2) Γ t.
 Proof.
   introv Hok Hfresh. unfold ok_term in *.
-  intuition. eapply (scoped_stren term); eauto.
+  intuition. eapply (scoped_stren_mid term); eauto.
 Qed.
 
 (** *** Substitution *)
+(******************************************************************************)
 Lemma ok_term_sub_delta : forall Δ1 Δ2 x τ Γ t,
     ok_term (Δ1 ++ x ~ tt ++ Δ2) Γ t ->
     ok_type (Δ1 ++ Δ2) τ ->
@@ -602,14 +658,14 @@ Lemma ok_term_sub_delta : forall Δ1 Δ2 x τ Γ t,
 Proof.
   introv Hokt Hokτ. unfold ok_term, ok_type in *.
   intuition.
-  - eapply (scoped_sub_eq term); eauto.
+  - eapply (scoped_sub_eq_mid term); eauto.
   - apply scoped_envmap.
     eapply (scoped_sub_neq term); eauto.
     + discriminate.
     + apply rw_scoped_KTerm_type.
   - eapply (subst_lc_neq term); auto.
     + discriminate.
-    + apply rw_lc_KTerm_type.
+    + now apply rw_lc_KTerm_type.
   - eapply (subst_lc_eq term); auto.
 Qed.
 
@@ -617,17 +673,19 @@ Qed.
 (******************************************************************************)
 
 (** *** Permutation *)
+(******************************************************************************)
 Lemma ok_term_perm_gamma : forall Δ Γ1 Γ2 t,
     Permutation Γ1 Γ2 ->
     ok_term Δ Γ1 t <->
     ok_term Δ Γ2 t.
 Proof.
   intros. unfold ok_term.
-  pose (lemma := scoped_perm term (KTerm : K)).
+  pose (lemma := scoped_perm_iff term (KTerm : K)).
   now rewrite lemma; eauto.
 Qed.
 
 (** *** Weakening *)
+(******************************************************************************)
 Lemma ok_term_weak_gamma_r : forall Δ Γ1 Γ2 t,
     ok_term Δ Γ1 t ->
     ok_term Δ (Γ1 ++ Γ2) t.
@@ -645,16 +703,18 @@ Proof.
 Qed.
 
 (** *** Strengthening  *)
+(******************************************************************************)
 Lemma ok_term_stren_gamma : forall Δ Γ1 Γ2 x τ t,
     ok_term Δ (Γ1 ++ x ~ τ ++ Γ2) t ->
     ~ x ∈@ (freeset term KTerm t) ->
     ok_term Δ (Γ1 ++ Γ2) t.
 Proof.
   introv Hok Hfresh. unfold ok_term in *.
-  intuition. eapply (scoped_stren term); eauto.
+  intuition. eapply (scoped_stren_mid term); eauto.
 Qed.
 
 (** *** Substitution *)
+(******************************************************************************)
 Lemma ok_term_sub_gamma : forall Δ Γ1 Γ2 x τ u t,
     ok_term Δ (Γ1 ++ x ~ τ ++ Γ2) t ->
     ok_term Δ (Γ1 ++ Γ2) u ->
@@ -664,7 +724,7 @@ Proof.
   intuition.
   - eapply (scoped_sub_neq term); auto.
     + discriminate.
-  - eapply (scoped_sub_eq term); eauto.
+  - eapply (scoped_sub_eq_mid term); eauto.
   - eapply (subst_lc_eq term); auto.
   - eapply (subst_lc_neq term); auto.
     + discriminate.
