@@ -1,12 +1,17 @@
-From Multisorted Require Export
-     Classes.Functor.
+From Tealeaves Require Import
+     Theory.Product
+     Classes.Monoid
+     Classes.Functor
+     Functors.Writer.
 
-Import Product.Notations. (* for (W ×) *)
-Import Monoid.Notations.
+From Multisorted Require Export
+     Theory.Category.
+
 Import Multisorted.Theory.Category.Notations.
+Import Product.Notations.
+Import Monoid.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
-#[local] Open Scope list_scope.
 
 (** * Multisorted DTM typeclass *)
 (**************************************************************)

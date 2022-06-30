@@ -3,13 +3,13 @@ From Tealeaves Require Export
      Classes.ListableFunctor.
 
 From Multisorted Require Import
+     Theory.Category
      Classes.DTM
-     Functors.Tag
      Functors.MList.
 
 Import Classes.SetlikeFunctor.Notations.
 Import Functors.Sets.Notations.
-Import Product.Notations. (* for (W ×) *)
+Import Product.Notations.
 Import Monoid.Notations.
 Import List.ListNotations.
 Import Multisorted.Theory.Category.Notations.
@@ -35,22 +35,22 @@ Section shape_and_contents.
   Definition shape {A} : S A -> S unit :=
     mfmap S (const (const tt)).
 
-  Definition tomlistd_gen {A} (fake : Type) : S A -> list (W * Tag A) :=
-    mfmapdt (B := fake) S (const (list (W * Tag A))) (fun k '(w, a) => [(w, (k, a))]).
+  Definition tomlistd_gen {A} (fake : Type) : S A -> list (W * (K * A)) :=
+    mfmapdt (B := fake) S (const (list (W * (K * A)))) (fun k '(w, a) => [(w, (k, a))]).
 
-  Definition tomlistd {A} : S A -> list (W * Tag A) :=
+  Definition tomlistd {A} : S A -> list (W * (K * A)) :=
     tomlistd_gen False.
 
-  Definition tomsetd {A} : S A -> W * Tag A -> Prop :=
+  Definition tomsetd {A} : S A -> W * (K * A) -> Prop :=
     toset list ∘ tomlistd.
 
-  Definition tomlist {A} : S A -> list (Tag A) :=
+  Definition tomlist {A} : S A -> list (K * A) :=
     fmap list (extract (W ×)) ∘ tomlistd.
 
-  Definition tomset {A} : S A -> Tag A -> Prop :=
+  Definition tomset {A} : S A -> K * A -> Prop :=
     toset list ∘ tomlist.
 
-  Fixpoint filterk {A} (k : K) (l : list (W * Tag A)) : list (W * A) :=
+  Fixpoint filterk {A} (k : K) (l : list (W * (K * A))) : list (W * A) :=
     match l with
     | nil => nil
     | cons (w, (j, a)) ts =>
@@ -89,9 +89,9 @@ Section rw_filterk.
   Context
     `{ix : Index} {W A : Type} (k : K).
 
-  Implicit Types (l : list (W * Tag A)) (w : W) (a : A).
+  Implicit Types (l : list (W * (K * A))) (w : W) (a : A).
 
-  Lemma filterk_nil : filterk k (nil : list (W * Tag A)) = nil.
+  Lemma filterk_nil : filterk k (nil : list (W * (K * A))) = nil.
   Proof.
     reflexivity.
   Qed.
@@ -218,7 +218,7 @@ Section DTM_tolist.
     `{DTPreModule W S T}
     `{! DTM W T}.
 
-  Lemma in_filterk_iff : forall (A : Type) (l : list (W * Tag A)) (k : K) (a : A) (w : W),
+  Lemma in_filterk_iff : forall (A : Type) (l : list (W * (K * A))) (k : K) (a : A) (w : W),
       (w, a) ∈ filterk k l <-> (w, (k, a)) ∈ l.
   Proof.
     intros. induction l.
@@ -331,8 +331,8 @@ Section DTM_tolist.
     change (mbinddt_list ?f) with (const (mbinddt_list f) (S fake)).
     #[local] Set Keyed Unification. (* TODO figure out why this is here. *)
     rewrite (dtp_mbinddt_morphism W S T
-                                  (const (list (W * Tag A)))
-                                  (const (list (W * Tag B)))
+                                  (const (list (W * (K * A))))
+                                  (const (list (W * (K * B))))
                                   (A := A) (B := fake)).
     #[local] Unset Keyed Unification.
     fequal. ext k [w a].
@@ -343,8 +343,8 @@ Section DTM_tolist.
     (* for some reason I can't rewrite without posing first. *)
     pose (rw := dtp_mbinddt_morphism
                   W (T k) T
-                  (const (list (W * Tag B)))
-                  (const (list (W * Tag B)))
+                  (const (list (W * (K * B))))
+                  (const (list (W * (K * B))))
                   (ϕ := (const (fmap list (incr w))))
                   (A := B) (B := fake)).
     rewrite rw. fequal. now ext k2 [w2 b].

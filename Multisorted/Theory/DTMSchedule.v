@@ -4,7 +4,6 @@ From Tealeaves Require Export
 
 From Multisorted Require Import
      Classes.DTM
-     Functors.Tag
      Functors.Schedule
      Theory.DTMContainer.
 
@@ -123,13 +122,13 @@ Section iterate.
   Qed.
 
   Lemma tomsetd_to_runSchedule  (fake : Type) `(t : S A) :
-    tomsetd S t = runSchedule (F := (@const Type Type (set (W * Tag A))))
+    tomsetd S t = runSchedule (F := (@const Type Type (set (W * (K * A)))))
                               (fun k '(w, a) => {{(w, (k, a))}}) (iterate S fake t).
   Proof.
     unfold tomsetd, compose. rewrite (tomlistd_to_runSchedule fake).
-    change (toset list (A := W * Tag A)) with (const (toset (A := W * Tag A) list) (S fake)).
+    change (toset list (A := W * (K * A))) with (const (toset (A := W * (K * A)) list) (S fake)).
     cbn. (* <- needed for implicit arguments. *)
-    rewrite (runSchedule_morphism (F := const (list (W * Tag A))) (G := const (set (W * Tag A)))).
+    rewrite (runSchedule_morphism (F := const (list (W * (K * A)))) (G := const (set (W * (K * A))))).
     unfold compose. fequal. ext k [w a].
     solve_basic_set.
   Qed.
@@ -139,8 +138,8 @@ Section iterate.
   Proof.
     unfold tomlist. unfold compose. rewrite (tomlistd_to_runSchedule fake).
     change (fmap list ?f) with (const (fmap list f) (S fake)).
-    rewrite (runSchedule_morphism (F := const (list (W * Tag A)))
-                                  (G := const (list (Tag A)))
+    rewrite (runSchedule_morphism (F := const (list (W * (K * A))))
+                                  (G := const (list (K * A)))
                                   (ψ := const (fmap list (extract (prod W))))).
     fequal. now ext k [w a].
   Qed.
