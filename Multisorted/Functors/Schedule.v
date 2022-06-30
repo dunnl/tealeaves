@@ -143,17 +143,16 @@ Section Schedule.
       now ext [? ?].
   Qed.
 
-  (*
   Lemma app_mult_natural_Schedule2 : forall (A B D : Type) (g : B -> D) (x : Schedule A) (y : Schedule B),
       x ⊗ fmap Schedule g y = fmap Schedule (map_snd g) (x ⊗ y).
   Proof.
-    intros. generalize dependent D. induction y as [ANY any | ANY rest IH x'].
+    intros. generalize dependent D. induction y as [ANY any | ANY k rest IH [w a]].
     - intros; cbn. compose near x on right. now rewrite (fun_fmap_fmap Schedule).
     - intros; cbn. fequal.
       change (mult_Schedule ?jx ?jy) with (jx ⊗ jy).
       rewrite IH. compose near (x ⊗ rest).
       do 2 rewrite (fun_fmap_fmap Schedule). fequal.
-      now ext [a mk].
+      now ext [a' mk].
   Qed.
 
   Lemma app_mult_natural_Schedule : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : Schedule A) (y : Schedule B),
@@ -167,16 +166,15 @@ Section Schedule.
   Lemma app_assoc_Schedule : forall (A B C : Type) (x : Schedule A) (y : Schedule B) (z : Schedule C),
       fmap Schedule associator ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z).
   Proof.
-    intros. induction z.
+    intros. induction z as [ANY any | ANY k rest IH [w a]].
     - do 2 rewrite mult_Schedule_rw2.
       rewrite (app_mult_natural_Schedule2). compose near (x ⊗ y) on left.
       now rewrite (fun_fmap_fmap Schedule).
     - cbn. repeat change (mult_Schedule ?jx ?jy) with (jx ⊗ jy).
-      fequal.
-      rewrite (app_mult_natural_Schedule2).
-      rewrite <- IHz. compose near (x ⊗ y ⊗ z).
+      fequal. rewrite (app_mult_natural_Schedule2).
+      rewrite <- IH. compose near (x ⊗ y ⊗ rest).
       do 2 rewrite (fun_fmap_fmap Schedule).
-      compose near (x ⊗ y ⊗ z) on right.
+      compose near (x ⊗ y ⊗ rest) on right.
       rewrite (fun_fmap_fmap Schedule).
       fequal. now ext [[? ?] ?].
   Qed.
@@ -184,21 +182,21 @@ Section Schedule.
   Lemma app_unital_l_Schedule : forall (A : Type) (x : Schedule A),
       fmap Schedule left_unitor (pure Schedule tt ⊗ x) = x.
   Proof.
-    intros. induction x.
+    intros. induction x as [ANY any | ANY k rest IH [w a]].
     - easy.
     - cbn. change (mult_Schedule ?jx ?jy) with (jx ⊗ jy).
-      fequal. compose near (pure Schedule tt ⊗ x).
+      fequal. compose near (pure Schedule tt ⊗ rest).
       rewrite (fun_fmap_fmap Schedule).
-      rewrite <- IHx. repeat fequal. auto.
+      rewrite <- IH. repeat fequal. auto.
   Qed.
 
   Lemma app_unital_r_Schedule : forall (A : Type) (x : Schedule A),
       fmap Schedule right_unitor (x ⊗ pure Schedule tt) = x.
   Proof.
-    intros. induction x.
+    intros. induction x as [ANY any | ANY k rest IH [w a]].
     - easy.
-    - cbn in *. fequal. rewrite <- IHx at 2.
-      compose near x. now do 2 rewrite (fun_fmap_fmap Schedule).
+    - cbn in *. fequal. rewrite <- IH at 2.
+      compose near rest. now do 2 rewrite (fun_fmap_fmap Schedule).
   Qed.
 
   Lemma app_mult_pure_Schedule : forall (A B : Type) (a : A) (b : B),
@@ -206,18 +204,13 @@ Section Schedule.
   Proof.
     intros. easy.
   Qed.
-   *)
 
   #[global, program] Instance App_Path : Applicative Schedule.
 
-  Admit Obligations.
-
-  (*
   Next Obligation. apply app_mult_natural_Schedule. Qed.
   Next Obligation. apply app_assoc_Schedule. Qed.
   Next Obligation. apply app_unital_l_Schedule. Qed.
   Next Obligation. apply app_unital_r_Schedule. Qed.
-   *)
 
 End Schedule.
 
