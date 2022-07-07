@@ -3,7 +3,7 @@ From Tealeaves Require Export
      Classes.Functor
      Functors.Writer. (* for the <<extract>> function *)
 
-From Multisorted Require Export
+From Tealeaves.Multisorted Require Export
      Theory.Category.
 
 Import Product.Notations.

@@ -4,7 +4,7 @@ From Tealeaves Require Export
      Functors.Constant
      Functors.Writer.
 
-From Multisorted Require Export
+From Tealeaves.Multisorted Require Export
      Classes.DTM.
 
 Import Monoid.Notations.

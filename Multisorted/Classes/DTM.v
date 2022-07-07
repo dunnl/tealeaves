@@ -4,7 +4,7 @@ From Tealeaves Require Import
      Classes.Functor
      Functors.Writer.
 
-From Multisorted Require Export
+From Tealeaves.Multisorted Require Export
      Theory.Category.
 
 Import Multisorted.Theory.Category.Notations.

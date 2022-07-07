@@ -5,7 +5,7 @@ From Tealeaves Require Import
      Util.EqDec_eq LN.Atom LN.AtomSet
      LN.Multisorted.Operations.
 
-From Multisorted Require Import
+From Tealeaves.Multisorted Require Import
      Classes.DTM
      Theory.DTMContainer
      Theory.DTMSchedule.

@@ -3,7 +3,7 @@ From Tealeaves Require Export
      Classes.Applicative
      Functors.Constant.
 
-From Multisorted Require Export
+From Tealeaves.Multisorted Require Export
      Classes.Functor
      Classes.DTM.
 

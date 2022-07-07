@@ -3,7 +3,7 @@ From Tealeaves Require Import
      LN.Leaf LN.Atom LN.AtomSet LN.AssocList
      LN.Multisorted.Operations.
 
-From Multisorted Require Import
+From Tealeaves.Multisorted Require Import
      Classes.DTM
      Theory.DTMContainer
      Theory.DTMSchedule.

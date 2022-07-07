@@ -4,7 +4,7 @@ From Tealeaves Require Import
      LN.Multisorted.Operations
      LN.Multisorted.Theory.
 
-From Multisorted Require Import
+From Tealeaves.Multisorted Require Import
      Classes.DTM
      Theory.DTMContainer.
 

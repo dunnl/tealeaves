@@ -2,7 +2,7 @@ From Tealeaves Require Export
      Util.Prelude
      Util.EqDec_eq LN.Atom LN.AtomSet LN.Leaf.
 
-From Multisorted Require Import
+From Tealeaves.Multisorted Require Import
      Classes.DTM
      Theory.DTMContainer.
 

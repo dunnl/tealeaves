@@ -2,7 +2,7 @@ From Tealeaves Require Export
      Classes.Applicative
      Classes.ListableFunctor.
 
-From Multisorted Require Import
+From Tealeaves.Multisorted Require Import
      Theory.Category
      Classes.DTM
      Functors.MList.
