@@ -59,7 +59,7 @@ LN/Environment.v
 STLC/Language.v
 STLC/Theory.v
 Multisorted/Theory/Category.v
-Multisorted/Classes/MultiFunctor.v
+Multisorted/Classes/Multifunctor.v
 Multisorted/Classes/DTM.v
 Multisorted/Functors/MList.v
 Multisorted/Functors/Schedule.v

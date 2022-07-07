@@ -224,11 +224,13 @@ Section demo.
     (a1 a2 : A) (b1 b2 b3 : B) (c1 c2 c3 c4 : C)
     (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
 
+  (*
   Check Go a1 ⊗ Go a2 : @Batch False False (A * A).
   Compute Go a1 ⊗ Go a2.
   Compute Go a1 ⊗ (Go mk1 ⧆ c1).
   Compute (Go mk1 ⧆ c1) ⊗ (Go mk1 ⧆ c2).
   Compute (Go mk2 ⧆ c1 ⧆ c2) ⊗ (Go mk1 ⧆ c3).
+   *)
 
 End demo.
 

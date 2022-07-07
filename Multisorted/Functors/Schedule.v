@@ -4,7 +4,7 @@ From Tealeaves Require Export
      Functors.Constant.
 
 From Tealeaves.Multisorted Require Export
-     Classes.Functor
+     Classes.Multifunctor
      Classes.DTM.
 
 Import Monoid.Notations.
@@ -239,11 +239,14 @@ Section demo.
     (c1 c2 c3 c4 : C)
     (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
 
+  (*
   Check Go a1 ⊗ Go a2 : @Schedule _ T W False False (A * A).
   Compute Go a1 ⊗ Go a2.
   Compute Go a1 ⊗ (Go mk1 ⧆ (w1, c1)).
   Compute (Go mk1 ⧆ (w1, c1)) ⊗ (Go mk1 ⧆ (w2, c2)).
   Compute (Go mk2 ⧆ (w1, c1) ⧆ (w2, c2)) ⊗ (Go mk1 ⧆ (w3, c3)).
+   *)
+
 End demo.
 
 (** ** Functoriality of [Schedule] *)
