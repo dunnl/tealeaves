@@ -494,6 +494,7 @@ Section parameterized.
     | Ap rest a => Ap (fmap Batch (@Ap B C X) (cojoin_Batch B rest)) a
     end.
 
+    (*
   Context
     (A B C X : Type)
     (a1 a2 : A) (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
@@ -504,6 +505,7 @@ Section parameterized.
   Compute cojoin_Batch B (Ap (Go mk1) a1).
   Check Ap (Ap (Go mk2) a2) a1.
   Compute cojoin_Batch B (Ap (Ap (Go mk2) a2) a1).
+     *)
 
   (* TODO Finish rest of the parameterized comonad structure. *)
   Lemma extr_cojoin_Batch : `(extract_Batch ∘ cojoin_Batch A = @id (@Batch A C X)).
