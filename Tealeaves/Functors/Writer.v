@@ -314,6 +314,19 @@ Section Writer_miscellaneous.
   Definition incr {A : Type} : W -> W * A -> W * A :=
     fun w '(w2, a) => (w ● w2, a).
 
+  Lemma incr_zero {A : Type} :
+    incr Ƶ = @id (W * A).
+  Proof.
+    ext [? ?]. cbn. now simpl_monoid.
+  Qed.
+
+  Lemma incr_incr {A : Type} : forall w1 w2,
+    incr (A:=A) w2 ∘ incr w1 = incr (w2 ● w1).
+  Proof.
+    intros. ext [w a].
+    cbn. now simpl_monoid.
+  Qed.
+
   Lemma extract_incr {A : Type} :
     forall (w : W), extract (W ×) ∘ incr w = extract (W ×) (A := A).
   Proof.
