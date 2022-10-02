@@ -1,12 +1,15 @@
 From Tealeaves Require Import
-     Util.Prelude Util.EqDec_eq
-     LN.Atom LN.AtomSet LN.Leaf
-     Classes.DecoratedTraversableModule.
+  LN.Atom LN.AtomSet LN.Leaf
+  Theory.Kleisli.DT.Monad
+  Theory.List.Kleisli
+  Data.Natural.
 
-Import DecoratedTraversableMonad.Notations.
+Import Monoid.Notations.
+Import DT.Monad.Notations.
 Import LN.AtomSet.Notations.
-#[local] Open Scope tealeaves_scope.
-#[local] Open Scope set_scope.
+Import DT.Monad.DerivedInstances.Operations.
+
+#[local] Generalizable Variable T.
 
 (** * Operations for locally nameless *)
 (******************************************************************************)
@@ -88,31 +91,31 @@ End locally_nameless_local_operations.
 Section locally_nameless_operations.
 
   Context
-    (F : Type -> Type)
-    `{DecoratedTraversableModule nat F T}.
+    (T : Type -> Type)
+    `{DT.Monad.Monad nat T}.
 
-  Definition open (u : T leaf) : F leaf -> F leaf  :=
-    subd F (open_loc u).
+  Definition open (u : T leaf) : T leaf -> T leaf  :=
+    bindd T (open_loc u).
 
-  Definition close x : F leaf -> F leaf :=
-    fmapd F (close_loc x).
+  Definition close x : T leaf -> T leaf :=
+    fmapd T (close_loc x).
 
-  Definition subst x (u : T leaf) : F leaf -> F leaf :=
-    sub F (subst_loc x u).
+  Definition subst x (u : T leaf) : T leaf -> T leaf :=
+    bind T (subst_loc x u).
 
-  Definition free : F leaf -> list atom :=
-    fun t => bind list free_loc (tolist F t).
+  Definition free : T leaf -> list atom :=
+    fun t => bind list free_loc (tolist T t).
 
-  Definition freeset : F leaf -> AtomSet.t :=
+  Definition freeset : T leaf -> AtomSet.t :=
     fun t => LN.AtomSet.atoms (free t).
 
-  Definition locally_closed_gap (gap : nat) : F leaf -> Prop :=
+  Definition locally_closed_gap (gap : nat) : T leaf -> Prop :=
     fun t => forall w l, (w, l) ∈d t -> is_bound_or_free gap (w, l).
 
-  Definition locally_closed : F leaf -> Prop :=
+  Definition locally_closed : T leaf -> Prop :=
     locally_closed_gap 0.
 
-  Definition scoped : F leaf -> AtomSet.t -> Prop :=
+  Definition scoped : T leaf -> AtomSet.t -> Prop :=
     fun t γ => freeset t ⊆ γ.
 
 End locally_nameless_operations.
@@ -130,11 +133,11 @@ Section test_notations.
   Import Notations.
 
   Context
-    `{DecoratedTraversableModule nat F T}.
+    `{DT.Monad.Monad nat T}.
 
   Context
     (t : T leaf)
-    (u : F leaf)
+    (u : T leaf)
     (x : atom)
     (n : nat).
 

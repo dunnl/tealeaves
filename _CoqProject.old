@@ -1,0 +1,124 @@
+-R Tealeaves/   Tealeaves
+-Q LN/          Tealeaves.LN
+-Q STLC/        Tealeaves.Examples.STLC
+-Q Multisorted/ Tealeaves.Multisorted
+-Q SystemF/     Tealeaves.Examples.SystemF
+
+Tealeaves/Util/LibTactics.v
+Tealeaves/Util/EqDec_eq.v
+Tealeaves/Util/Unfold.v
+Tealeaves/Util/CompareNats.v
+Tealeaves/Util/Prelude.v
+Tealeaves/Data/Product.v
+Tealeaves/Classes/Category.v
+Tealeaves/Classes/Monoid.v
+Tealeaves/Classes/Comonoid.v
+Tealeaves/Classes/Functor.v
+Tealeaves/Functors/Identity.v
+Tealeaves/Functors/Compose.v
+Tealeaves/Data/Strength.v
+Tealeaves/Data/Natural.v
+Tealeaves/Data/Prop.v
+
+# APPLICATIVES AND (CO)MONADS
+Tealeaves/Classes/Algebraic/Applicative.v
+Tealeaves/Classes/Algebraic/Monad/Monad.v
+Tealeaves/Classes/Algebraic/Monad/Properties.v
+Tealeaves/Classes/Algebraic/Monad.v
+Tealeaves/Classes/Algebraic/Comonad/Comonad.v
+Tealeaves/Classes/Algebraic/BeckDistributiveLaw.v
+Tealeaves/Classes/Algebraic/Bimonad.v
+
+# CONCRETE FUNCTORS
+Tealeaves/Functors/Environment.v
+Tealeaves/Functors/Writer.v
+Tealeaves/Functors/Constant.v
+Tealeaves/Functors/Maybe.v
+Tealeaves/Functors/Store.v
+Tealeaves/Functors/Backwards.v
+Tealeaves/Functors/Batch.v
+Tealeaves/Functors/State.v
+Tealeaves/Functors/Product.v
+Tealeaves/Functors/Diagonal.v
+Tealeaves/Functors/Pathspace.v
+
+# ALGEBRAIC FUNCTORS
+Tealeaves/Functors/Sets.v
+Tealeaves/Classes/Algebraic/Setlike/Functor.v
+Tealeaves/Functors/List.v
+Tealeaves/Classes/Algebraic/Listable/Functor.v
+Tealeaves/Classes/Algebraic/Decorated/Util.v
+Tealeaves/Classes/Algebraic/Decorated/Functor/Functor.v
+Tealeaves/Classes/Algebraic/Decorated/Functor/Helpers.v
+Tealeaves/Classes/Algebraic/Decorated/Functor/Properties.v
+Tealeaves/Classes/Algebraic/Decorated/Functor/Setlike.v
+Tealeaves/Classes/Algebraic/Decorated/Functor/Listable.v
+Tealeaves/Classes/Algebraic/Decorated/Functor/Category.v
+Tealeaves/Classes/Algebraic/Decorated/Functor.v
+Tealeaves/Classes/Algebraic/Decorated/Monad/Monad.v
+Tealeaves/Classes/Algebraic/Decorated/Monad/Helpers.v
+#Tealeaves/Classes/Algebraic/Decorated/Monad/Listable.v
+Tealeaves/Classes/Algebraic/Decorated/Monad.v
+Tealeaves/Classes/Algebraic/Setlike/Monad.v
+Tealeaves/Classes/Algebraic/Setlike/Instances.v
+Tealeaves/Classes/Algebraic/Listable/Monad.v
+Tealeaves/Classes/Algebraic/Traversable/Functor/Functor.v
+Tealeaves/Classes/Algebraic/Traversable/Functor/Instances.v
+Tealeaves/Classes/Algebraic/Traversable/Functor/Category.v
+#Tealeaves/Classes/Algebraic/Traversable/Functor/Coalgebraic.v
+#Tealeaves/Classes/Algebraic/Traversable/Functor/Const.v
+#Tealeaves/Classes/Algebraic/Traversable/Functor/Product.v
+#Tealeaves/Classes/Algebraic/Traversable/Functor/Listable.v
+Tealeaves/Classes/Algebraic/Traversable/Functor.v
+Tealeaves/Classes/Algebraic/Traversable/Monad/Monad.v
+#Tealeaves/Classes/Algebraic/Traversable/Monad/Listable.v
+Tealeaves/Classes/Algebraic/Traversable/Monad.v
+Tealeaves/Classes/Algebraic/DT/Functor/Functor.v
+Tealeaves/Classes/Algebraic/DT/Functor/Category.v
+Tealeaves/Classes/Algebraic/DT/Monad/Monad.v
+
+# KLEISLI FUNCTORS
+Tealeaves/Kleisli/Decorated/Functor/Util.v
+Tealeaves/Kleisli/Decorated/Functor/Functor.v
+Tealeaves/Kleisli/Decorated/Functor.v
+Tealeaves/Kleisli/Traversable/Functor/Functor.v
+Tealeaves/Kleisli/DT/Functor/Functor.v
+Tealeaves/Kleisli/DT/Functor.v
+Tealeaves/Kleisli/Monad/Monad.v
+Tealeaves/Kleisli/Monad/DerivedInstances.v
+Tealeaves/Kleisli/Monad.v
+Tealeaves/Classes/Algebraic/Monad/ToKleisli.v
+Tealeaves/Classes/Algebraic/Monad/ToApplicative.v
+Tealeaves/Kleisli/Monads/Decorated/Monad.v
+Tealeaves/Kleisli/Monads/Decorated/DerivedInstances.v
+Tealeaves/Kleisli/Monads/Decorated.v
+Tealeaves/Kleisli/Monads/Traversable/Monad.v
+Tealeaves/Kleisli/Monads/DT/Monad.v
+Tealeaves/Kleisli/Monads/DT/DerivedInstances.v
+Tealeaves/Schedule.v
+Tealeaves/Kleisli/Monads/DT/Theory.v
+Tealeaves/Kleisli/Monads/DT/Shapeliness.v
+Tealeaves/Kleisli/Monads/DT.v
+
+# TO KLEISLI
+# Tealeaves/Classes/Algebraic/Monads/Decorated/ToKleisli.v
+# Tealeaves/Classes/Algebraic/Monads/Traversable/ToKleisli.v
+# Tealeaves/Algebraic/Traversable/Functor/ToKleisli.v
+
+# TO ALGEBRAIC
+#Tealeaves/Kleisli/Decorated/ToAlgebraic.v
+Tealeaves/Kleisli/Monad/ToAlgebraic.v
+#Tealeaves/Kleisli/Monads/Decorated/ToAlgebraic.v
+#Tealeaves/Kleisli/Monads/DT/ToAlgebraic.v
+
+# EQUIVALENCES
+Tealeaves/Equivalences/Monad.v
+
+# LN
+LN/Atom.v
+LN/Leaf.v
+LN/AtomSet.v
+LN/AssocList.v
+LN/Operations.v
+LN/Theory.v
+LN/Environment.v

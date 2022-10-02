@@ -1,91 +1,24 @@
-From Tealeaves Require Import
-     Classes.RightModule
-     Classes.Applicative.
+From Tealeaves.Classes Require Import
+  Monoid
+  Algebraic.Monad
+  Algebraic.Applicative.
+From Tealeaves Require Export
+  Data.Sets.
 
 Import Product.Notations.
 Import Applicative.Notations.
-#[local] Open Scope tealeaves_scope.
+Import Data.Sets.Notations.
 
-(** * Set monoid *)
-(******************************************************************************)
-#[local] Notation "( -> B )" := (fun A => A -> B) (at level 50).
-#[local] Notation "'set'" := ((-> Prop)).
+#[local] Generalizable Variables A B.
 
-Definition set_empty {A} : set A :=
-  const False.
-
-Definition set_add {A} : set A -> set A -> set A :=
-  fun x y p => x p \/ y p.
-
-(** ** Notations and tactics *)
-(******************************************************************************)
-Module Notations.
-  Notation "∅" := set_empty : tealeaves_scope.
-  Notation "{{ x }}" := (ret set x) : tealeaves_scope.
-  Infix "∪" := set_add (at level 61, left associativity) : tealeaves_scope.
-  Notation "( -> B )" := (fun A => A -> B) (at level 50) : tealeaves_scope.
-  Notation "'set'" := ((-> Prop)) : tealeaves_scope.
-End Notations.
-
-Import Notations.
-
-Create HintDb tea_set.
-Tactic Notation "simpl_set" := (autorewrite with tea_set).
-Tactic Notation "simpl_set" "in" hyp(H) := (autorewrite with tea_set H).
-Tactic Notation "simpl_set" "in" "*" := (autorewrite with tea_set in *).
-
-Ltac unfold_set :=
-  unfold set_empty; unfold set_add; unfold const.
-
-Ltac solve_basic_set :=
-  unfold transparent tcs; unfold_set; unfold compose; try setext;
-  first [tauto | firstorder (subst; (solve auto + eauto)) ].
-
-(** ** Set monoid instance *)
-(******************************************************************************)
-Section set_monoid.
-
-  Context
-    {A : Type}.
-
-  Implicit Types (s t : set A) (a : A).
-
-  Definition set_add_nil_l : forall s, s ∪ ∅ = s :=
-    ltac:(solve_basic_set).
-  Definition set_add_nil_r : forall s, ∅ ∪ s = s :=
-    ltac:(solve_basic_set).
-  Definition set_add_assoc : forall s t u, s ∪ t ∪ u = s ∪ (t ∪ u) :=
-    ltac:(solve_basic_set).
-  Definition set_add_comm : forall s t, s ∪ t = t ∪ s :=
-    ltac:(solve_basic_set).
-
-  Definition set_in_empty : forall a, ∅ a = False
-    := ltac:(solve_basic_set).
-  Definition set_in_add : forall s t a, (s ∪ t) a = (s a \/ t a)
-    := ltac:(solve_basic_set).
-
-End set_monoid.
-
-Hint Rewrite @set_add_nil_l @set_add_nil_r
-     @set_add_assoc @set_in_empty @set_in_add : tea_set.
-
-Instance Monoid_op_set {A} : Monoid_op (set A) := @set_add A.
-
-Instance Monoid_unit_set {A} : Monoid_unit (set A) := set_empty.
-
-#[program] Instance Monoid_set {A} :
-  @Monoid (set A) (@Monoid_op_set A) (@Monoid_unit_set A).
-
-Solve Obligations with (intros; unfold transparent tcs; solve_basic_set).
-
-(** * Set monad *)
+(** * The <<set>> monad *)
 (******************************************************************************)
 
 (** ** Functor instance *)
 (******************************************************************************)
 
 (** [fmap f s] is the image of a set [s] under a morphism [f] *)
-Instance Fmap_set : Fmap set :=
+#[export] Instance Fmap_set : Fmap set :=
   fun A B (f : A -> B) (x : A -> Prop) (b : B) => exists a : A, x a /\ f a = b.
 
 (** *** Rewriting lemmas for [fmap] *)
@@ -97,7 +30,7 @@ Definition fmap_set_add `{f : A -> B} {x y} :
   fmap set f (x ∪ y) = fmap set f x ∪ fmap set f y
   := ltac:(solve_basic_set).
 
-Hint Rewrite @fmap_set_nil @fmap_set_add : tea_set.
+#[export] Hint Rewrite @fmap_set_nil @fmap_set_add : tea_set.
 
 (** *** Functor laws *)
 (******************************************************************************)
@@ -108,14 +41,22 @@ Definition fun_fmap_fmap_set {A B C} : forall (f : A -> B) (g : B -> C),
     fmap set g ∘ fmap set f = fmap set (g ∘ f)
     := ltac:(solve_basic_set).
 
-Instance Functor_set : Functor set :=
+#[export] Instance Functor_set : Functor set :=
   ltac:(constructor; solve_basic_set).
+
+(** ** [fmap] is a monoid homomorphism *)
+(******************************************************************************)
+#[export, program] Instance Monmor_set_fmap `(f : A -> B) :
+  Monoid_Morphism (fmap set f) :=
+  {| monmor_unit := @fmap_set_nil A B f;
+    monmor_op := @fmap_set_add A B f;
+  |}.
 
 (** ** Monad operations *)
 (******************************************************************************)
-Instance Return_set : Return set := fun A a b => a = b.
+#[export] Instance Return_set : Return set := fun A a b => a = b.
 
-Instance Join_set : Join set :=
+#[export] Instance Join_set : Join set :=
   fun A (x : (A -> Prop) -> Prop) => fun a => exists (y : A -> Prop) , x y /\ y a.
 
 #[local] Notation "{{ x }}" := (ret set x).
@@ -158,7 +99,7 @@ Proof.
   solve_basic_set.
 Qed.
 
-Hint Rewrite @set_in_ret @join_set_nil @join_set_one @join_set_add
+#[export] Hint Rewrite @set_in_ret @join_set_nil @join_set_one @join_set_add
      @fmap_set_add @fmap_set_one : tea_set.
 
 (** ** Monad laws *)
@@ -186,11 +127,11 @@ Proof.
   - intros. preprocess. repeat eexists; eauto.
 Qed.
 
-Instance Natural_ret : Natural (@ret set _) :=
+#[export] Instance Natural_ret : Natural (@ret set _) :=
   ltac:(constructor; try typeclasses eauto;
        unfold compose; solve_basic_set).
 
-Instance Natural_join : Natural (@join set _).
+#[export] Instance Natural_join : Natural (@join set _).
 Proof.
   ltac:(constructor; try typeclasses eauto).
   intros. unfold compose. ext SS. ext b.
@@ -208,55 +149,21 @@ Proof.
     subst. exists a. split; auto. now (exists S).
 Qed.
 
-Instance Monad_set : Monad set :=
+#[export] Instance Monad_set : Monad set :=
   {| mon_join_ret := @join_ret;
      mon_join_fmap_ret := @join_fmap_ret;
      mon_join_join := @join_join;
   |}.
 
-(** ** [set]/[set] Module *)
-(******************************************************************************)
-Instance RightAction_set : RightAction set set := RightAction_Join set.
-Instance Module_set : RightModule set set := RightModule_Monad set.
-
-(** ** Rewriting lemmas for <<bind>> *)
-(******************************************************************************)
-Lemma bind_set_nil `{f : A -> set B} :
-  bind set f ∅ = ∅.
-Proof.
-  solve_basic_set.
-Qed.
-
-Lemma bind_set_one `{f : A -> set B} (a : A) :
-  bind set f {{ a }} = f a.
-Proof.
-  solve_basic_set.
-Qed.
-
-Lemma bind_set_add `{f : A -> set B} {x y} :
-  bind set f (x ∪ y) = bind set f x ∪ bind set f y.
-Proof.
-  solve_basic_set.
-Qed.
-
-(** Since [bind] is defined tediously by composing <<join>> and
-    <<fmap>>, we give a characterization of <<set>>'s <<bind>> that is
-    easier to use. N.B. be mindful that this rewriting would have to
-    be done ~before~ calling <<unfold transparent tcs>>, otherwise <<bind set>>
-    will be unfolded to its definition first. *)
-Lemma bind_set_spec : forall `(f : A -> set B) (s : set A) (b : B),
-    bind set f s b = exists (a : A), s a /\ f a b.
-Proof.
-  solve_basic_set.
-Qed.
-
-Hint Rewrite @bind_set_nil @bind_set_one @bind_set_add : tea_set.
-
+(*
+TODO: This isn't really necessary because it is inferred from the monad instance.
+ *)
+(*
 (** * Set as an applicative functor *)
 (******************************************************************************)
 Instance Pure_set : Pure set := @eq.
 
-#[global] Instance Mult_set : Mult set :=
+#[export] Instance Mult_set : Mult set :=
   fun (A B : Type) (p : set A * set B) (v : A * B) =>
     (fst p) (fst v) /\ (snd p) (snd v).
 
@@ -320,3 +227,4 @@ Instance Applicative_set : Applicative set :=
      app_unital_l := app_unital_l_set;
      app_unital_r := app_unital_r_set;
   |}.
+*)

@@ -1,14 +1,13 @@
 From Tealeaves Require Import
-     Classes.SetlikeFunctor
-     LN.Atom.
+  Classes.Algebraic.Setlike.Functor
+  LN.Atom.
 
 From Coq Require
-     MSets.MSets.
+  MSets.MSets.
 
 Import List.ListNotations.
-Import SetlikeFunctor.Notations.
+Import Setlike.Functor.Notations.
 #[local] Open Scope list_scope.
-#[local] Open Scope tealeaves_scope.
 
 (** * Definition of <<AtomSet>> type *)
 (******************************************************************************)
@@ -81,7 +80,7 @@ Proof.
   - cbn. introv. rewrite (IHl1 l2). fsetdec.
 Qed.
 
-Hint Rewrite atoms_nil atoms_cons atoms_one atoms_app : tea_rw_atoms.
+#[global] Hint Rewrite atoms_nil atoms_cons atoms_one atoms_app : tea_rw_atoms.
 
 Lemma in_atoms_nil : forall x, x ∈@ atoms nil <-> False.
 Proof.
@@ -106,7 +105,7 @@ Proof.
    intros. autorewrite with tea_rw_atoms. fsetdec.
 Qed.
 
-Hint Rewrite in_atoms_nil in_atoms_cons in_atoms_one in_atoms_app : tea_rw_atoms.
+#[global] Hint Rewrite in_atoms_nil in_atoms_cons in_atoms_one in_atoms_app : tea_rw_atoms.
 (*
 Lemma in_singleton_iff : forall (x : atom) (y : atom),
     y ∈@ {{ x }} <-> y = x.

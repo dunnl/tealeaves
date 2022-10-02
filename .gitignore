@@ -8,3 +8,9 @@ Makefile.coq
 Makefile.coq.conf
 .Makefile.coq.d
 html
+# Emacs lock files
+.#*
+# Nix files
+result
+# Everything in the ~ignore/~ directory
+ignore/

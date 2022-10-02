@@ -1,7 +1,9 @@
-(** This file contains typeclasses for abstract categories and type
-    constructor classes (functors, monads, etc.). These are not the
-    specialized definitions used by most of Tealeaves but can be used
-    for general abstract nonsense. *)
+(*|
+This file contains typeclasses for categories, categories, and monads.
+In Tealeaves we mostly used definitions specialized to the category of
+Coq types and functors rather than using this typeclass, but it is
+available for future abstract nonsense.
+|*)
 
 (** The implementation here closely resembles that of math-classes, see *)
 (** # <a href="https://github.com/coq-community/math-classes"> https://github.com/coq-community/math-classes</a># *)
@@ -13,6 +15,8 @@ From Tealeaves Require Export
 Declare Scope category_scope.
 Delimit Scope category_scope with cat.
 Open Scope category_scope.
+
+#[local] Generalizable Variables C D E F G T U a.
 
 (** * Categories *)
 (******************************************************************************)
@@ -73,7 +77,7 @@ Section functor.
   Class Fmap : Type  :=
     fmap: forall {a b : C} (f : a ⟶ b), F a ⟶ F b.
 
-  #[global] Arguments fmap {Fmap a b} (_)%cat.
+  #[local] Arguments fmap {Fmap a b} (_)%cat.
 
   (* don't register category fields as coercions to avoid loops *)
   Class Functor `(Fmap) : Prop :=
@@ -91,11 +95,16 @@ End functor.
 (******************************************************************************)
 Section natural_transformation.
 
+
+  Generalizable All Variables.
+
   Context
     `{Category C}
     `{Category D}
-    `{! Functor (F : C -> D) Ffmap}
-    `{! Functor (G : C -> D) Gfmap}.
+    `{! Fmap (C := C) (D := D) F}
+    `{! Fmap (C := C) (D := D) G}
+    `{! Functor (F : C -> D) _}
+    `{! Functor (G : C -> D) _}.
 
   Class Natural (η : forall x, F x ⟶ G x) :=
     naturality : forall {x y} (f : x ⟶ y),
@@ -113,7 +122,7 @@ Section endofunctor_id.
   Context
     `{Category C}.
 
-  #[global] Instance Fmap_one : Fmap (fun x => x) :=
+  #[export] Instance Fmap_one : Fmap (fun x => x) :=
     (fun (a b : C) (f : a ⟶ b) => f).
 
   Definition fmap_id_one : forall (a : C),
@@ -122,7 +131,7 @@ Section endofunctor_id.
   Definition fmap_fmap_one a b c (f : a ⟶ b) (g : b ⟶ c) :
     fmap (fun x => x) g ⊙ fmap (fun x => x) f = fmap (fun x => x) (g ⊙ f) := ltac:(reflexivity).
 
-  #[global] Program Instance Functor_one : Functor (fun x => x) _ :=
+  #[export] Program Instance Functor_one : Functor (fun x => x) _ :=
     {| fmap_id := fmap_id_one;
        fmap_fmap := fmap_fmap_one;
     |}.
@@ -135,13 +144,16 @@ Section endofunctor_composition.
     `{Category C}
     `{Category D}
     `{Category E}
-    `{! Functor (F : C -> D) fmap_F}
-    `{! Functor (G : D -> E) fmap_G}.
+    `{! Fmap (C := C) (D := D) F}
+    `{! Fmap (C := D) (D := E) G}
+    `{! Functor (F : C -> D) _}
+    `{! Functor (G : D -> E) _}.
 
-  #[global] Instance Fmap_compose : Fmap (G ∘ F) :=
+  #[export] Instance Fmap_compose : Fmap (G ∘ F) :=
     fun a b f => fmap G (fmap F f).
 
-  Lemma fmap_id_compose : `(fmap (G ∘ F) (catid a) = catid (G (F a))).
+  Lemma fmap_id_compose : forall (a : C),
+      fmap (G ∘ F) (catid a) = catid (G (F a)).
   Proof.
     intros ?; unfold fmap, Fmap_compose.
     now rewrite (fmap_id F), (fmap_id G).
@@ -154,7 +166,7 @@ Section endofunctor_composition.
     now rewrite (fmap_fmap G), (fmap_fmap F).
   Qed.
 
-  #[global] Instance Functor_compose : Functor (G ∘ F) _ :=
+  #[export] Instance Functor_compose : Functor (G ∘ F) _ :=
     {| fmap_id := fmap_id_compose;
        fmap_fmap := fmap_fmap_compose;
     |}.
@@ -179,12 +191,13 @@ Section monad.
 
   Context
     `{Category C}
-    (T : C -> C)
-    `{! Functor T fmap_T}
+      (T : C -> C)
+    `{! Fmap (C := C) (D := C) T}
+    `{! Functor T _}
     `{! Return T} `{! Join T}.
 
   Class Monad :=
-    { mon_functor :> Functor T fmap_T;
+    { mon_functor :> Functor T _;
       mon_ret_natural :> Natural (ret T);
       mon_join_natural :> Natural (join T);
       mon_join_fmap_ret :
@@ -201,8 +214,10 @@ Section monad_homomorphism.
 
   Context
     `{Category C}
-    `{! Functor (T : C -> C) Tfmap}
-    `{! Functor (U : C -> C) Ufmap}
+    `{! Fmap (C := C) (D := C) T}
+    `{! Fmap (C := C) (D := C) U}
+    `{! Functor (T : C -> C) _}
+    `{! Functor (U : C -> C) _}
     `{! Return T} `{! Join T}
     `{! Return U} `{! Join U}
     `{! Monad T} `{! Monad U}.
@@ -229,18 +244,19 @@ Section RightModule.
     (T : C -> C)
     `{Monad C T}
     `{Category D}
-    `{! Functor F Ffmap }.
+    `{! Fmap (C := C) (D := D) F}
+    `{! Functor F _ }.
 
   Class RightAction := right_action : F ∘ T ⇒ F.
 
   Class RightModule `{RightAction} :=
     { rmod_monad :> Monad T;
-      rmod_object :> Functor F Ffmap;
+      rmod_object :> Functor F _;
       rmod_natural : Natural (right_action);
       rmod_ret :
-        `(right_action x ⊙ fmap F (ret T x) = catid (F x));
+        `(right_action a ⊙ fmap F (ret T a) = catid (F a));
       rmod_join :
-        `(right_action x ⊙ right_action (T x) = right_action x ⊙ fmap F (join T x));
+        `(right_action a ⊙ right_action (T a) = right_action a ⊙ fmap F (join T a));
     }.
 
 End RightModule.
@@ -257,7 +273,7 @@ Section bind.
 
   Class Bind := bind : forall {a b : C} (f : a ⟶ T b), F a ⟶ F b.
 
-  #[global] Arguments bind {Bind a b} (_)%cat.
+  #[local] Arguments bind {Bind a b} (_)%cat.
 
   Definition compose_kleisli {a b c : C} :
     (b ⟶ T c) -> (a ⟶ T b) -> a ⟶ T c :=
@@ -278,7 +294,7 @@ Section module_bind.
     `{! Category C}
     `{! Category D}.
 
-  #[global] Instance Bind_Module : Bind F T :=
+  #[export] Instance Bind_Module : Bind F T :=
     fun {a b} {f : a ⟶ T b} => right_action F T b ⊙ fmap F f.
 
   Context

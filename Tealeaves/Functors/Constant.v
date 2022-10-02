@@ -1,9 +1,10 @@
 From Tealeaves Require Export
-     Classes.Monoid
-     Classes.Applicative.
+  Classes.Monoid
+  Algebraic.Applicative.
 
 Import Monoid.Notations.
-#[local] Open Scope tealeaves_scope.
+
+#[local] Generalizable Variables W M N ϕ.
 
 (** * Inductive definition of the constant functor *)
 (******************************************************************************)
@@ -28,17 +29,17 @@ Qed.
 Definition retag {V A B} : Const V A -> Const V B :=
   mkConst ∘ unconst.
 
-Instance Fmap_Const {V} : Fmap (Const V) :=
+#[global] Instance Fmap_Const {V} : Fmap (Const V) :=
   fun A B f x => mkConst (unconst x).
 
-Program Instance End_Const {V} : Functor (Const V).
+#[global, program] Instance End_Const {V} : Functor (Const V).
 
 Solve All Obligations with
     (intros; now ext [?]).
 
 #[local] Hint Immediate unconst_mkConst mkConst_unconst : tea_applicative.
 
-Hint Rewrite (@unconst_mkConst) (@mkConst_unconst) : tea_applicative.
+#[global] Hint Rewrite (@unconst_mkConst) (@mkConst_unconst) : tea_applicative.
 
 Lemma fmap_Const_1 : forall V (A B : Type) (f : A -> B) (x : Const V A),
     unconst (fmap (Const V) f x) = unconst x.
@@ -83,7 +84,7 @@ Section const_ops.
 
 End const_ops.
 
-Instance ApplicativeMorphism_Monoid_Morphism `(f : M1 -> M2) `{Monoid_Morphism M1 M2 f} :
+#[global] Instance ApplicativeMorphism_Monoid_Morphism `(f : M1 -> M2) `{Monoid_Morphism M1 M2 f} :
   ApplicativeMorphism (Const M1) (Const M2) (@mapConst M1 M2 f).
 Proof.
   match goal with H : Monoid_Morphism f |- _ => inversion H end.

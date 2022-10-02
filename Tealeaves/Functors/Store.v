@@ -1,9 +1,8 @@
 From Tealeaves Require Export
      Classes.Functor.
 
-#[local] Open Scope tealeaves_scope.
-
 #[local] Set Implicit Arguments.
+#[local] Generalizable Variables X Y A B F i o.
 
 (** * The [Store] functor *)
 (******************************************************************************)
@@ -20,9 +19,9 @@ Section fix_parameters.
     | MkStore mk a => MkStore (f ∘ mk) a
     end.
 
-  #[global] Instance Fmap_Batch : Fmap Store := @fmap_Store.
+  #[export] Instance Fmap_Batch : Fmap Store := @fmap_Store.
 
-  #[global, program] Instance Functor_Batch : Functor Store.
+  #[export, program] Instance Functor_Batch : Functor Store.
 
   Solve All Obligations with (intros; now ext [?]).
 

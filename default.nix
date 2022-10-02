@@ -8,6 +8,11 @@ in with mylib; pkgs.coqPackages.mkCoqDerivation {
     pname = "tealeaves";
     owner = "dunnl";
     version = ./.;
+    nativeBuildInputs = [
+      pkgs.python310Packages.alectryon
+      pkgs.coq
+      pkgs.coqPackages.serapi
+    ];
     propagatedBuildInputs =
       [ ];
     meta = {

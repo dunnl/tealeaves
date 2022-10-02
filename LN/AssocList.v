@@ -1,23 +1,20 @@
 From Tealeaves Require Import
-     Util.Prelude
-     Util.LibTactics
-     LN.Atom LN.AtomSet
-     Util.Product
-     Classes.SetlikeFunctor
-     Classes.ListableFunctor
-     Functors.Writer.
+  Util.Prelude
+  LN.Atom
+  LN.AtomSet
+  Classes.Algebraic.Listable.Functor
+  Functors.Writer.
 
 From Coq Require Import
-     Logic.Decidable
-     Sorting.Permutation.
+  Logic.Decidable
+  Sorting.Permutation.
 
 Import Product.Notations.
 Import List.ListNotations.
 Import LN.AtomSet.Notations.
-Import SetlikeFunctor.Notations.
+Import Setlike.Functor.Notations.
 #[local] Open Scope set_scope.
 #[local] Open Scope list_scope.
-#[local] Open Scope tealeaves_scope.
 
 Create HintDb tea_alist.
 
@@ -37,7 +34,7 @@ Proof.
   firstorder.
 Qed.
 
-Hint Rewrite push_not : tea_rw_dom.
+#[export] Hint Rewrite push_not : tea_rw_dom.
 
 (** * The <<alist>> functor *)
 (** An association list is a list of pairs of type <<atom * A>>.  A
@@ -55,7 +52,7 @@ Import Notations.
 
 (** ** Functor instance for <<alist>> *)
 (******************************************************************************)
-Instance Functor_alist : Functor (alist).
+#[export] Instance Functor_alist : Functor (alist).
 Proof.
   constructor; intros; unfold_ops @Fmap_compose.
   - now rewrite 2(fun_fmap_id _).
@@ -128,8 +125,8 @@ Section alist_simpl_lemmas.
 End alist_simpl_lemmas.
 
 Create HintDb tea_simpl_alist.
-Hint Rewrite cons_app_one cons_app_assoc : tea_simpl_alist.
-Hint Rewrite app_assoc app_nil_l app_nil_r : tea_simpl_alist.
+#[export] Hint Rewrite cons_app_one cons_app_assoc : tea_simpl_alist.
+#[export] Hint Rewrite app_assoc app_nil_l app_nil_r : tea_simpl_alist.
 
 Ltac simpl_alist :=
   autorewrite with tea_simpl_alist.
@@ -309,7 +306,7 @@ Section envmap_lemmas.
 End envmap_lemmas.
 
 Create HintDb tea_rw_envmap.
-Hint Rewrite envmap_nil envmap_one envmap_cons envmap_app :
+#[export] Hint Rewrite envmap_nil envmap_one envmap_cons envmap_app :
   tea_rw_envmap.
 
 (** ** Rewriting lemmas for [dom] *)
@@ -354,7 +351,7 @@ Section dom_lemmas.
 End dom_lemmas.
 
 Create HintDb tea_rw_dom.
-Hint Rewrite dom_nil dom_cons dom_app dom_one dom_fmap : tea_rw_dom.
+#[export] Hint Rewrite dom_nil dom_cons dom_app dom_one dom_fmap : tea_rw_dom.
 
 (** *** Elements of [dom] *)
 Section in_dom_lemmas.
@@ -394,7 +391,7 @@ Section in_dom_lemmas.
 
 End in_dom_lemmas.
 
-Hint Rewrite in_dom_nil in_dom_one in_dom_cons
+#[export] Hint Rewrite in_dom_nil in_dom_one in_dom_cons
      in_dom_app in_dom_fmap : tea_rw_dom.
 
 (** ** Rewriting lemmas for [domset] *)
@@ -447,7 +444,7 @@ Section domset_lemmas.
 
 End domset_lemmas.
 
-Hint Rewrite domset_nil domset_cons
+#[export] Hint Rewrite domset_nil domset_cons
      domset_one domset_app domset_fmap : tea_rw_dom.
 
 Section in_domset_lemmas.
@@ -487,7 +484,7 @@ Section in_domset_lemmas.
 
 End in_domset_lemmas.
 
-Hint Rewrite in_domset_nil in_domset_one
+#[export] Hint Rewrite in_domset_nil in_domset_one
      in_domset_cons in_domset_app in_domset_fmap : tea_rw_dom.
 
 (** ** Rewriting lemmas for [range] *)
@@ -534,7 +531,7 @@ Section range_lemmas.
 End range_lemmas.
 
 Create HintDb tea_rw_range.
-Hint Rewrite range_nil range_cons
+#[export] Hint Rewrite range_nil range_cons
      range_one range_app range_fmap : tea_rw_range.
 
 (** Elements of [range] *)
@@ -575,7 +572,7 @@ Section in_range_lemmas.
 
 End in_range_lemmas.
 
-Hint Rewrite in_range_nil in_range_one
+#[export] Hint Rewrite in_range_nil in_range_one
      in_range_cons in_range_app in_range_fmap : tea_rw_range.
 
 (** ** Rewriting principles for [∈] *)
@@ -616,7 +613,7 @@ Section in_rewriting_lemmas.
 End in_rewriting_lemmas.
 
 Create HintDb tea_rw_in.
-Hint Rewrite @in_nil_iff @in_cons_iff
+#[export] Hint Rewrite @in_nil_iff @in_cons_iff
      @in_one_iff @in_app_iff @in_envmap_iff : tea_rw_in.
 
 (** ** Tactical lemmas for [∈] *)
@@ -806,7 +803,7 @@ Section disjoint_rewriting_lemmas.
 End disjoint_rewriting_lemmas.
 
 Create HintDb tea_rw_disj.
-Hint Rewrite @disjoint_nil_l @disjoint_nil_r @disjoint_cons_l @disjoint_cons_r
+#[export] Hint Rewrite @disjoint_nil_l @disjoint_nil_r @disjoint_cons_l @disjoint_cons_r
      @disjoint_one_l @disjoint_one_r @disjoint_app_l @disjoint_app_r
   @disjoint_fmap_l @disjoint_fmap_r : tea_rw_disj.
 
@@ -1145,7 +1142,7 @@ Section uniq_rewriting_lemmas.
 End uniq_rewriting_lemmas.
 
 Create HintDb tea_rw_uniq.
-Hint Rewrite uniq_nil_iff uniq_cons_iff
+#[export] Hint Rewrite uniq_nil_iff uniq_cons_iff
      uniq_one_iff uniq_app_iff uniq_envmap_iff uniq_fmap_iff : tea_rw_uniq.
 
 (** ** More facts about [uniq] *)
@@ -1465,7 +1462,7 @@ Proof.
 Qed.
 
 Create HintDb tea_rw_perm.
-Hint Rewrite @perm_dom @perm_range @perm_domset @perm_disjoint_l @perm_disjoint_r
+#[export] Hint Rewrite @perm_dom @perm_range @perm_domset @perm_disjoint_l @perm_disjoint_r
      @uniq_perm using (auto; try symmetry; auto) : tea_rw_perm.
 
 (** For any given finite set of atoms, we can generate an atom fresh

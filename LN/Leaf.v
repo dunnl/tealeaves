@@ -1,5 +1,4 @@
 From Tealeaves Require Import
-     Util.Prelude Util.EqDec_eq
      LN.Atom.
 
 #[local] Open Scope tealeaves_scope.
@@ -17,7 +16,7 @@ Proof.
   - compare values n and n0; auto.
 Qed.
 
-Instance EqDec_leaf : EquivDec.EqDec leaf eq := eq_dec_leaf.
+#[export] Instance EqDec_leaf : EquivDec.EqDec leaf eq := eq_dec_leaf.
 
 (** [compare_to_atom] is an induction principle for leaves that splits
       the <<Fr x>> case into subcases <<x = y>> and <<x <> y>> for

@@ -1,7 +1,5 @@
 From Tealeaves Require Export
-     Classes.Monad.
-
-#[local] Open Scope tealeaves_scope.
+  Classes.Algebraic.Monad.
 
 (** * State monad *)
 (******************************************************************************)
@@ -26,14 +24,14 @@ Section state_monad.
   Definition runStateState {A} : State S A -> S -> S :=
     fun st s => fst (runState st s).
 
-  #[global] Instance Fmap_State : Fmap (State S) :=
+  #[export] Instance Fmap_State : Fmap (State S) :=
     fun A B (f : A -> B) (st : State S A) =>
       match st with
       | mkState r =>
         mkState (fun s => match (r s) with (s', a) => (s', f a) end)
       end.
 
-  #[global] Instance Functor_State : Functor (State S).
+  #[export] Instance Functor_State : Functor (State S).
   Proof.
     constructor; try typeclasses eauto.
     - intros. ext [st]. unfold id.
@@ -42,10 +40,10 @@ Section state_monad.
       cbn. fequal. ext s. now destruct (st s).
   Qed.
 
-  #[global] Instance Return_State : Return (State S) :=
+  #[export] Instance Return_State : Return (State S) :=
     fun A (a : A) => mkState (fun s => (s, a)).
 
-  #[global] Instance Join_State : Join (State S) :=
+  #[export] Instance Join_State : Join (State S) :=
     fun A (st : State S (State S A)) =>
       match st with
       | mkState r =>
@@ -65,12 +63,12 @@ Section state_monad.
     ext s. destruct (st s); cbn. now (destruct s1).
   Qed.
 
-  #[global] Instance Monad_State : Monad (State S).
+  #[export] Instance Monad_State : Monad (State S).
   Proof.
     constructor; try typeclasses eauto.
+    - intros. now (ext [st]).
     - intros. ext [st]. unfold id.
       cbn. fequal. ext s. now destruct (st s).
-    - intros. now (ext [st]).
     - intros. ext [st]. unfold compose; cbn.
       fequal. ext s. destruct (st s). now (destruct s1).
   Qed.

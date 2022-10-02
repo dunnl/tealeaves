@@ -1,34 +1,64 @@
-(** This file contains various imports, definitions, and tactics that
-    are generally useful for Tealeaves developlment. *)
+(*|
+#######################
+Tealeaves.Util.Prelude
+#######################
 
-(** These two exports bring in two axioms, function extensionality and
-    propositional extensionality. *)
+contains
+  Various imports, definitions, and tactics that
+  are generally useful for Tealeaves developlment.
+
+============================
+Axioms imported by Tealeaves
+============================
+
+These two exports bring in two axioms.
+
+function extensionality
+  .. math::
+     \forall x, f x = g x \to f = g
+
+and
+
+propositional extensionality
+  .. math::
+     \forall \phi \psi, (\phi \iff \psi) \iff \phi = \psi
+|*)
+
 From Coq.Logic Require Export
      FunctionalExtensionality
      PropExtensionality.
 
+(*|
+Import helper tactics and decidable equality.
+|*)
+
 From Tealeaves.Util Require Export
-     LibTactics EqDec_eq.
+  LibTactics
+  EqDec_eq
+  CompareNats
+  Unfold.
 
-From Coq.Arith Require Import
-     PeanoNat Compare_dec.
+(*|
+Declare a scope for Tealeaves' notations.
+|*)
 
-(** This gives access to the [lia] tactic *)
-Require Export Psatz.
-
-(** Making all variable names generalizable by default. *)
-#[global] Generalizable All Variables.
-
-(** Open <<type_scope>> globally because (\*\) should mean [prod] *)
-Open Scope type_scope.
-
-(** Declare a scope for Tealeaves' notations. *)
 Declare Scope tealeaves_scope.
 Delimit Scope tealeaves_scope with tea.
+#[global] Open Scope tealeaves_scope.
+
+(*|
+Open <<type_scope>> globally because (\*\) should mean [prod]
+|*)
+
+#[global] Open Scope type_scope.
 
 (** * Generally useful operations *)
+
 (** General-purpose functions used throughout Tealeaves. *)
 (******************************************************************************)
+
+#[local] Generalizable All Variables.
+
 Polymorphic Definition compose {A B C} (g : B -> C) (f : A -> B) : A -> C := fun a => g (f a).
 
 Notation "g ∘ f" := (compose g f) (at level 40, left associativity).
@@ -45,11 +75,15 @@ Definition const {A B : Type} (b : B) : A -> B := fun _ => b.
 
 Definition evalAt `(a : A) `(f : A -> B) := f a.
 
-Definition costrength_arrow `(p : (A -> B) * C) : A -> B * C := fun a => (fst p a, snd p).
-
 Definition strength_arrow `(p : A * (B -> C)) : B -> A * C := fun b => (fst p, snd p b).
 
+Definition costrength_arrow `(p : (A -> B) * C) : A -> B * C := fun a => (fst p a, snd p).
+
 Definition pair_right {A B} : B -> A -> A * B := fun b a => (a, b).
+
+(*|
+We use this operation to reason about traversable functors.
+|*)
 
 Definition exfalso {A : Type} : False -> A :=
   fun bot => match bot with end.
@@ -172,42 +206,6 @@ Tactic Notation "compose" "near" constr(arg) := compose_near arg.
 Tactic Notation "compose" "near" constr(arg) "on" "left" := compose_near_on_left arg.
 Tactic Notation "compose" "near" constr(arg) "on" "right" := compose_near_on_right arg.
 
-(** ** Support for comparing naturals *)
-(******************************************************************************)
-(** This lemma reduces a goal to three subgoals based on the possible ordering
-    between two natural numbers. Each branch may invoke two hypothesis, one
-    stipulating the ordering and the other stipulating an equation for
-    [Nat.compare]. *)
-Lemma comparison_naturals : forall (n m : nat) (p : Prop),
-    (n ?= m = Lt -> n < m -> p) ->
-    (n ?= m = Eq -> n = m -> p) ->
-    (n ?= m = Gt -> n > m -> p) ->
-    p.
-Proof.
-  intros n m ? ?lt ?eq ?gt.
-  destruct (lt_eq_lt_dec n m) as [[? | ?] |];
-    rewrite ?Nat.compare_eq_iff,
-    ?Nat.compare_lt_iff, ?Nat.compare_gt_iff in *;
-    auto.
-Qed.
-
-(** Compare natural numbers with [comparison_naturals], the try rewriting
-    occurrences in [Nat.compare] and other basic tactics.*)
-Ltac compare_nats_args n k :=
-  apply (@comparison_naturals n k);
-  (let ineq := fresh "ineq"
-    with ineqp := fresh "ineqp"
-    with ineqrw := fresh "ineqrw" in
-    intros ineqrw ineqp;
-    repeat rewrite ineqrw in *;
-    (* In the n = k case, substitute the equality *)
-    try match type of ineqp with
-        | ?x = ?y => subst
-        end; try lia; repeat f_equal; try lia; try reflexivity).
-
-Tactic Notation "compare" "naturals" constr(n) "and" constr(m) :=
-  compare_nats_args n m.
-
 (** ** Support for decidable equalities *)
 (******************************************************************************)
 Ltac destruct_eq_args x y :=
@@ -276,172 +274,3 @@ Ltac preprocess :=
 
 Tactic Notation "pp" tactic(tac) :=
   preprocess; tac.
-
-(** * Support for unfolding operational typeclasses *)
-(******************************************************************************)
-Ltac head_of expr :=
-  match expr with
-  | ?f ?x => head_of f
-  | ?head => head
-  | _ => fail
-  end.
-
-Ltac head_of_matches expr head :=
-  match expr with
-  | ?f ?x =>
-    head_of_matches f head
-  | head => idtac
-  | _ => fail
-  end.
-
-Goal False.
-  Fail head_of_matches 0 S.
-  head_of_matches (S 0) S.
-  head_of_matches 5 S.
-Abort.
-
-(** ** Unfolding specific typeclass methods *)
-(******************************************************************************)
-
-(** Unfold operational typeclasses in the goal *)
-Ltac unfold_operational_tc inst :=
-  repeat (match goal with
-          | |- context[?op ?maybe_inst] =>
-            head_of_matches maybe_inst inst;
-            change (op maybe_inst) with maybe_inst
-          | |- context[?op ?F ?maybe_inst] =>
-            head_of_matches maybe_inst inst;
-            change (op F maybe_inst) with maybe_inst
-          | |- context[?op ?F ?G ?maybe_inst] =>
-            head_of_matches maybe_inst inst;
-            change (op F G inst) with maybe_inst
-          | |- context[?op ?F ?G ?H ?maybe_inst] =>
-            head_of_matches maybe_inst inst;
-            change (op F G H inst) with maybe_inst
-          | |- context[?op ?F ?G ?H ?I ?maybe_inst] =>
-            head_of_matches maybe_inst inst;
-            change (op F G H I inst) with maybe_inst
-          | |- context[?op ?F ?G ?H ?I ?J ?maybe_inst] =>
-            head_of_matches maybe_inst inst;
-            change (op F G H I J inst) with maybe_inst
-          | |- context[?op ?F ?G ?H ?I ?J ?K ?maybe_inst] =>
-            head_of_matches maybe_inst inst;
-            change (op F G H I J K inst) with maybe_inst
-          end); unfold inst.
-
-(** Unfold operational typeclasses in hypotheses *)
-Ltac unfold_operational_tc_hyp :=
-  repeat (match goal with
-          | H : context[?op ?maybe_inst] |- _ =>
-            head_of_matches maybe_inst inst;
-            change (op maybe_inst) with maybe_inst in H
-          | H :context[?op ?F ?maybe_inst] |- _ =>
-            head_of_matches maybe_inst inst;
-            change (op F maybe_inst) with maybe_inst
-          | H :context[?op ?F ?G ?maybe_inst] |- _ =>
-            head_of_matches maybe_inst inst;
-            change (op F G inst) with maybe_inst
-          | H :context[?op ?F ?G ?H ?maybe_inst] |- _ =>
-            head_of_matches maybe_inst inst;
-            change (op F G H inst) with maybe_inst
-          | H :context[?op ?F ?G ?H ?I ?maybe_inst] |- _ =>
-            head_of_matches maybe_inst inst;
-            change (op F G H I inst) with maybe_inst
-          | H :context[?op ?F ?G ?H ?I ?J ?maybe_inst] |- _ =>
-            head_of_matches maybe_inst inst;
-            change (op F G H I J inst) with maybe_inst
-          | H :context[?op ?F ?G ?H ?I ?J ?K ?maybe_inst] |- _ =>
-            head_of_matches maybe_inst inst;
-            change (op F G H I J K inst) with maybe_inst
-          end); unfold inst.
-
-Tactic Notation "unfold_ops" constr(inst) :=
-  unfold_operational_tc inst.
-
-Tactic Notation "unfold_ops" constr(inst) constr(inst1) :=
-  unfold_ops inst; unfold_ops inst1.
-
-Tactic Notation "unfold_ops" constr(inst) constr(inst1) constr(inst2) :=
-  unfold_ops inst; unfold_ops inst1 inst2.
-
-Tactic Notation "unfold_ops" constr(inst) "in" "*" :=
-  unfold_operational_tc inst;
-    unfold_operational_tc_hyp inst.
-
-Tactic Notation "unfold_ops" constr(inst) constr(inst1) "in" "*" :=
-  unfold_ops inst in *; unfold_ops inst1 in *.
-
-Tactic Notation "unfold_ops" constr(inst) constr(inst1) constr(inst2) "in" "*" :=
-  unfold_ops inst in *; unfold_ops inst1 in *; unfold_ops inst2 in *.
-
-(** ** Unfolding all methods with transparent definitions *)
-(******************************************************************************)
-Ltac unfold_all_transparent_tcs :=
-  repeat (match goal with
-          | |- context[?op ?inst] =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op inst) with x
-          | |- context[?op ?F ?inst] =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F inst) with x
-          | |- context[?op ?F ?G ?inst] =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G inst) with x
-          | |- context[?op ?F ?G ?H ?inst] =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G H inst) with x
-          | |- context[?op ?F ?G ?H ?I ?inst] =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G H I inst) with x
-          | |- context[?op ?F ?G ?H ?I ?J ?inst] =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G H I J inst) with x
-          | |- context[?op ?F ?G ?H ?I ?J ?K ?inst] =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G H I J K inst) with x
-          end); cbn beta zeta.
-
-Ltac unfold_all_transparent_tcs_hyp :=
-  repeat (match goal with
-          | H :context[?op ?inst] |- _ =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op inst) with x
-          | H :context[?op ?F ?inst] |- _ =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F inst) with x
-          | H :context[?op ?F ?G ?inst] |- _ =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G inst) with x
-          | H :context[?op ?F ?G ?H ?inst] |- _ =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G H inst) with x
-          | H :context[?op ?F ?G ?H ?I ?inst] |- _ =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G H I inst) with x
-          | H :context[?op ?F ?G ?H ?I ?J ?inst] |- _ =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G H I J inst) with x
-          | H :context[?op ?F ?G ?H ?I ?J ?K ?inst] |- _ =>
-            let hd := get_head inst in
-            let x := eval unfold hd at 1 in inst in
-                change (op F G H I J K inst) with x
-          end); cbn beta zeta.
-
-Tactic Notation "unfold" "transparent" "tcs" :=
-  unfold_all_transparent_tcs.
-
-Tactic Notation "unfold" "transparent" "tcs" "in" "*" :=
-  unfold_all_transparent_tcs; unfold_all_transparent_tcs_hyp.

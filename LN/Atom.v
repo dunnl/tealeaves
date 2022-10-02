@@ -1,9 +1,8 @@
-From Tealeaves Require Import
-     Util.Prelude Util.EqDec_eq
-     Functors.List.
+From Tealeaves Require Export
+  Util.Prelude
+  Functors.List.
 
-Import SetlikeFunctor.Notations.
-#[local] Open Scope tealeaves_scope.
+Import Classes.Algebraic.Setlike.Functor.Notations.
 
 (** * An opaque type of atoms *)
 (******************************************************************************)
@@ -106,4 +105,4 @@ Notation atom_fresh_for_list := Atom.atom_fresh_for_list.
 (* Automatically unfold Atom.eq *)
 #[global] Arguments Atom.eq /.
 
-Instance EqDec_atom : @EqDec atom eq eq_equivalence := Atom.eq_dec.
+#[global] Instance EqDec_atom : @EqDec atom eq eq_equivalence := Atom.eq_dec.

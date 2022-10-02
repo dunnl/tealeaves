@@ -29,6 +29,7 @@ Section schedule_operation.
 
   Definition schedule {A : Type} (B : Type) : forall (k : K), W * A -> @Schedule _ T W A B (T k B) :=
     fun k '(w, a) => Go (@id (T k B)) ⧆ (w, a).
+
   Definition iterate {A : Type} (B : Type) : S A -> @Schedule _ T W A B (S B) :=
     mbinddt S (@Schedule _ T W A B) (schedule B).
 
@@ -321,7 +322,7 @@ Section mfmapd_respectful.
     unfold compose; cbn; auto.
   Qed.
 
-  Corollary mfmapd_respectful_id : forall A (t : S A) (f g : K -> W * A -> A),
+  Corollary mfmapd_respectful_id : forall A (t : S A) (f : K -> W * A -> A),
       (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = a)
       -> mfmapd S f t = t.
   Proof.
