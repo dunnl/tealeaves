@@ -77,7 +77,7 @@ Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/Constant.v
 #Tealeaves/Functors/DecoratedList.v
 Tealeaves/Functors/Diagonal.v
-Tealeaves/Functors/Maybe.v
+Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/Product.v
 Tealeaves/Functors/Schedule.v
