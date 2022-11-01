@@ -10,8 +10,8 @@ Import List.ListNotations.
 
 (** ** [list]/[list] right module *)
 (******************************************************************************)
-#[export] Instance Bind_list : Bind list list := ToKleisli.Operation.Bind_Join list.
-#[export] Instance KleisliMonad_list : Kleisli.Monad.Monad list := ToKleisli.KM_M.
+#[export] Instance Bind_list : Bind list list := ToKleisli.Operation.Bind_alg list.
+#[export] Instance KleisliMonad_list : Kleisli.Monad.Monad list := ToKleisli.Instance.toKleisli list.
 
 (** ** Rewriting lemmas for <<bind>> *)
 (******************************************************************************)

@@ -23,6 +23,7 @@ Section traversable_product.
     `{Applicative G2}.
 
   Import Traversable.Functor.ToKleisli.Operation.
+  Import Traversable.Functor.ToKleisli.Instance.
 
   Variables
     (A B : Type)
@@ -33,7 +34,7 @@ Section traversable_product.
   Proof.
     intros. pose (ApplicativeMorphism_pi1 G1 G2).
     compose near t on left.
-    now rewrite (traverse_morphism T).
+    now rewrite (trf_traverse_morphism T).
   Qed.
 
   Lemma dist_combine2 : forall (t : T A),

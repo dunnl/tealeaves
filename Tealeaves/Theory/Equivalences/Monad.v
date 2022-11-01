@@ -17,7 +17,7 @@ Module AlgebraicRoundtrip.
     `{join1 : Join T}
     `{! Algebraic.Monad.Monad T}.
 
-  #[local] Instance bind_derived: Bind T T := Bind_Join T.
+  #[local] Instance bind_derived: Bind T T := Bind_alg T.
 
   Definition fmap2 := Fmap_Bind T.
   Definition join2 := Join_Bind T.
@@ -26,7 +26,7 @@ Module AlgebraicRoundtrip.
   Proof.
     ext A B f.
     unfold fmap2, Operation.Fmap_Bind,
-      bind, bind_derived, Bind_Join.
+      bind, bind_derived, Bind_alg.
     rewrite <- (fun_fmap_fmap T).
     reassociate <-.
     rewrite (mon_join_fmap_ret T).
@@ -37,7 +37,7 @@ Module AlgebraicRoundtrip.
   Proof.
     ext A t.
     unfold join2, Join_Bind,
-      bind, bind_derived, Bind_Join.
+      bind, bind_derived, Bind_alg.
     rewrite (fun_fmap_id T).
     reflexivity.
   Qed.
@@ -53,12 +53,12 @@ Section KleisliRoundTrip.
 
   Definition fmap_derived := Fmap_Bind.
   Definition join_derived := Join_Bind.
-  Definition bind2 : Bind T T := Bind_Join T.
+  Definition bind2 : Bind T T := Bind_alg T.
 
   Goal bind1 = bind2.
   Proof.
     ext A B f.
-    unfold bind2, Bind_Join.
+    unfold bind2, Bind_alg.
     unfold join, Join_Bind.
     unfold fmap, Fmap_Bind.
     unfold_compose_in_compose.

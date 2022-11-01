@@ -7,12 +7,13 @@ From Tealeaves.Classes Require Export
   Algebraic.Traversable.Monad
   Algebraic.DT.Functor
   Algebraic.DT.Monad
-  Kleisli.DT.Monad.
-
+  Kleisli.DT.Monad
+  Kleisli.Traversable.Functor.
 
 From Tealeaves.Theory Require Import
   Kleisli.Traversable.Monad.DerivedInstances
   Kleisli.Decorated.Monad.DerivedInstances
+  Kleisli.DT.Functor.DerivedInstances
   Kleisli.DT.Monad.DerivedInstances
   Kleisli.DT.Monad.ToFunctor.
 
@@ -55,10 +56,12 @@ Section with_monad.
     `{Kleisli.DT.Monad.Monad W T}.
 
   Import Kleisli.DT.Monad.ToFunctor.Operation.
-  Import Kleisli.DT.Monad.ToFunctor.Instances.
+  Import Kleisli.DT.Monad.ToFunctor.Instance.
   Import Kleisli.DT.Monad.DerivedInstances.Operations.
   Import Kleisli.DT.Monad.DerivedInstances.Instances.
 
+  (** *** Monad instance *)
+  (******************************************************************************)
   Lemma ret_natural : Natural (@ret T _).
   Proof.
     constructor.
@@ -138,6 +141,8 @@ Section with_monad.
        mon_join_join := join_join;
     |}.
 
+  (** *** Decorated functor instance *)
+  (******************************************************************************)
   Lemma dec_dec : forall (A : Type),
       dec T ∘ dec T = fmap T (cojoin (W ×)) ∘ dec T (A := A).
   Proof.
@@ -167,7 +172,7 @@ Section with_monad.
     do 2 change (binddt T (fun A0 : Type => A0) ?f) with (bindd T (T := T) f).
     rewrite (kmond_bindd2 T).
     rewrite dm_kleisli_star2.
-    rewrite Kleisli.Monad.Properties.kcompose01.
+    rewrite Instances.kcompose01.
     change (ret T (A := W * A)) with (ret T ∘ @id (W * A)).
     reassociate <-. change (?g ∘ id) with g.
     rewrite (natural (ϕ := @ret T _ )).
@@ -199,6 +204,8 @@ Section with_monad.
        dfun_dec_extract := dec_extract;
     |}.
 
+  (** *** Decorated monad instance *)
+  (******************************************************************************)
   Lemma dmon_ret_ : forall (A : Type),
       dec T ∘ ret T = ret T ∘ pair Ƶ (B:=A).
   Proof.
@@ -249,6 +256,142 @@ Section with_monad.
     {| dmon_ret := dmon_ret_;
        dmon_join := dmon_join_;
     |}.
+
+  (** *** Traversable functor instance *)
+  (******************************************************************************)
+  Lemma dist_natural_T : forall (G : Type -> Type) (H2 : Fmap G) (H3 : Pure G) (H4 : Mult G),
+      Applicative G -> Natural (@dist T _ G H2 H3 H4).
+  Proof.
+    intros. constructor.
+    - typeclasses eauto.
+    - typeclasses eauto.
+    - intros.
+      unfold_ops @Fmap_compose @Dist_Binddt @Fmap_Binddt.
+      change_left (fmap G (fmap T f) ∘ bindt T G (fmap G (ret T))).
+      change (@Fmap_Binddt T W _ _) with (@Operation.Fmap_Bindt T _ _).
+      rewrite (fmap_bindt T G); [|assumption].
+      rewrite (fun_fmap_fmap G).
+      (* RHS *)
+      change_right (
+          bindt T G (fmap G (ret T)) ∘
+            bind T (ret T ∘ fmap G f)).
+      rewrite (bindt_bind T G).
+      reassociate <- on right.
+      rewrite (ktm_bindt0 T); [|assumption].
+      rewrite (fun_fmap_fmap G).
+      rewrite (natural (ϕ := @ret T _)).
+      reflexivity.
+  Qed.
+
+  Lemma dist_morph_T : forall (G1 G2 : Type -> Type) (H2 : Fmap G1) (H3 : Pure G1) (H4 : Mult G1) (H5 : Fmap G2)
+                         (H6 : Pure G2) (H7 : Mult G2) (ϕ : forall A : Type, G1 A -> G2 A),
+      ApplicativeMorphism G1 G2 ϕ -> forall A : Type, dist T G2 ∘ fmap T (ϕ A) = ϕ (T A) ∘ dist T G1.
+  Proof.
+    introv morph. inversion morph.
+    intros.
+    unfold_ops @Dist_Binddt @Fmap_Binddt.
+    change (fmapdt T G2 (extract (prod W)) ∘ fmap T (ϕ A)
+            = ϕ (T A) ∘ traverse T G1 (@id (G1 A))).
+    About DerivedInstances.Operations.Fmap_Fmapdt.
+    change (@Fmap_Binddt T W H0 H)
+      with (@DerivedInstances.Operations.Fmap_Fmapdt T W _).
+    rewrite (Instances.fmapdt_fmap T G2 _ _ _).
+    rewrite (trf_traverse_morphism T).
+    rewrite <- (natural (ϕ := @extract (W ×) _)).
+    reflexivity.
+  Qed.
+
+  Lemma dist_unit_T : forall A : Type,
+      dist T (fun A0 : Type => A0) = @id (T A).
+  Proof.
+    intros. unfold_ops @Dist_Binddt.
+    apply (kdtm_binddt1 W T).
+  Qed.
+
+  Lemma dist_linear_T : forall (G1 : Type -> Type) (H2 : Fmap G1) (H3 : Pure G1) (H4 : Mult G1),
+      Applicative G1 ->
+      forall (G2 : Type -> Type) (H6 : Fmap G2) (H7 : Pure G2) (H8 : Mult G2),
+        Applicative G2 -> forall A : Type, dist T (G1 ∘ G2) (A := A) = fmap G1 (dist T G2) ∘ dist T G1.
+  Proof.
+    intros. unfold_ops @Dist_Binddt.
+    rewrite (kdtm_binddt2 W T); try typeclasses eauto.
+    fequal.
+    rewrite (kcompose_dtm_33 W T).
+    change (fmap G1 (ret T (A := G2 A))) with (fmap G1 (ret T) ∘ @id (G1 (G2 A))).
+    rewrite (kcompose_tm31 T); try typeclasses eauto.
+    reflexivity.
+  Qed.
+
+  #[export] Instance: Algebraic.Traversable.Functor.TraversableFunctor T :=
+    {| dist_natural := dist_natural_T;
+       dist_morph := dist_morph_T;
+       dist_unit := dist_unit_T;
+       dist_linear := dist_linear_T;
+    |}.
+
+  (** *** Decorated Traversable functor instance *)
+  (******************************************************************************)
+  Lemma dtfun_compat_T : forall (G : Type -> Type) (H2 : Fmap G) (H3 : Pure G) (H4 : Mult G),
+      Applicative G -> forall A : Type,
+        dist T G ∘ fmap T (strength G) ∘ dec (A := G A) T = fmap G (dec T) ∘ dist T G.
+  Proof.
+    intros. unfold_ops @Dist_Binddt @Fmap_Binddt @Decorate_Binddt.
+    change (fmapdt T G (extract (prod W)) ∘ fmapd T (strength G ∘ extract (prod W)) ∘ fmapd T (@id (W * G A)) =
+              fmap G (fmapd T id) ∘ fmapdt T G (extract (prod W))).
+    rewrite (fmapdt_fmapd T G).
+    rewrite (fmapdt_fmapd T G).
+    rewrite (fmapd_fmapdt T G).
+    rewrite (cobind_id (W ×)).
+    rewrite (fun_fmap_id G).
+    fequal. ext [w a].
+    reflexivity.
+  Qed.
+
+  #[export] Instance: Algebraic.DT.Functor.DecoratedTraversableFunctor W T :=
+    {| dtfun_compat := dtfun_compat_T;
+    |}.
+
+  (** *** Traversable monad instance *)
+  (******************************************************************************)
+  Lemma trvmon_ret_T : forall (G : Type -> Type) (H3 : Fmap G) (H4 : Pure G) (H5 : Mult G),
+      Applicative G -> forall A : Type, dist T G ∘ ret T (A := G A) = fmap G (ret T).
+  Proof.
+    intros. unfold_ops @Dist_Binddt @Fmap_Binddt.
+    rewrite (kdtm_binddt0 W T); [|assumption].
+    ext a. reflexivity.
+  Qed.
+
+
+  Lemma trvmon_join_T : forall (G : Type -> Type) (H3 : Fmap G) (H4 : Pure G) (H5 : Mult G),
+      Applicative G -> forall A : Type, dist T G ∘ join T = fmap G (join T) ∘ dist (T ∘ T) G (A := A).
+  Proof.
+    intros.
+    unfold_ops @Dist_compose.
+    unfold_ops @Dist_Binddt @Fmap_Binddt @Join_Binddt.
+    change_left (bindt T G (fmap G (ret T)) ∘ bind T (@id (T (G A)))).
+    change_right (fmap G (bind T (@id (T A)))
+                    ∘ (bindt T G (fmap G (ret T))
+                         ∘ bind T (ret T ∘ bindt T G (fmap G (ret T))))).
+    rewrite (bindt_bind T G).
+    rewrite (bindt_bind T G).
+    reassociate <-. rewrite (ktm_bindt0 T); [|typeclasses eauto].
+    rewrite (bind_bindt T G).
+    reassociate <- on right.
+    rewrite (fun_fmap_fmap G).
+    rewrite (kmon_bind0 T).
+    rewrite (fun_fmap_id G).
+    reflexivity.
+  Qed.
+
+  #[export] Instance: Algebraic.Traversable.Monad.TraversableMonad T :=
+    {| trvmon_ret := trvmon_ret_T;
+      trvmon_join := trvmon_join_T;
+    |}.
+
+  (** *** Decorated Traversable monad instance *)
+  (******************************************************************************)
+  #[export] Instance: Algebraic.DT.Monad.DecoratedTraversableMonad W T :=
+    ltac:(constructor; typeclasses eauto).
 
 End with_monad.
 

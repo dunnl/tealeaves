@@ -17,6 +17,8 @@ Section traversal_iterate.
   Context
     `{Algebraic.Traversable.Functor.TraversableFunctor T}.
 
+  Import ToKleisli.Instance.
+
   Lemma dist_to_runBatch `{Applicative G} {A : Type} :
     dist T G (A := A) = runBatch (@id (G A)) ∘ iterate T A.
   Proof.

@@ -11,8 +11,8 @@ Import Sets.Notations.
 
 (** ** [set]/[set] right module *)
 (******************************************************************************)
-#[export] Instance Bind_set: Bind set set := ToKleisli.Operation.Bind_Join set.
-#[export] Instance KleisliMonad_list : Kleisli.Monad.Monad set := ToKleisli.KM_M.
+#[export] Instance Bind_set: Bind set set := ToKleisli.Operation.Bind_alg set.
+#[export] Instance KleisliMonad_list : Kleisli.Monad.Monad set := ToKleisli.Instance.toKleisli set.
 
 (** ** Rewriting lemmas for <<bind>> *)
 (******************************************************************************)
@@ -26,7 +26,7 @@ Lemma bind_set_one `{f : A -> set B} (a : A) :
   bind set f {{ a }} = f a.
 Proof.
   unfold_ops @Bind_set.
-  unfold_ops @Operation.Bind_Join.
+  unfold_ops @Operation.Bind_alg.
   unfold compose; cbn.
   rewrite fmap_set_one.
   rewrite join_set_one.
@@ -48,7 +48,7 @@ Lemma bind_set_spec : forall `(f : A -> set B) (s : set A) (b : B),
     bind set f s b = exists (a : A), s a /\ f a b.
 Proof.
   unfold_ops @Bind_set.
-  unfold_ops @Operation.Bind_Join.
+  unfold_ops @Operation.Bind_alg.
   solve_basic_set.
 Qed.
 

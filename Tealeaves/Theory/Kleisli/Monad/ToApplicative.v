@@ -17,7 +17,7 @@ Section Applicative_Monad.
     `{Algebraic.Monad.Monad T}.
 
   Import Monad.ToKleisli.Operation.
-  (* Import Monad.ToKleisli.Instance. *)
+  Import Monad.ToKleisli.Instance.
 
   #[global] Instance Pure_Monad : Pure T := @ret T _.
 
@@ -48,7 +48,7 @@ Section Applicative_Monad.
       fmap T α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z).
   Proof.
     intros. unfold_ops @Mult_Monad.
-    compose near x on left. rewrite (mon_bind_bind T).
+    compose near x on left. rewrite (kmon_bind2 T).
     compose near x on left. rewrite (fmap_bind T).
     fequal. ext a; unfold compose; cbn.
     compose near y on right. rewrite (fmap_bind T).

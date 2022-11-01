@@ -232,6 +232,23 @@ Section Kleisli_composition.
     intros. reflexivity.
   Qed.
 
+  Lemma kcompose_tm_lunit : forall `(g : A -> G2 (T B)),
+     kcompose_tm (G1 := fun A => A) g (ret T) = g.
+  Proof.
+    intros. change (ret T) with (ret T ∘ (@id A)).
+    now rewrite (kcompose_tm30).
+  Qed.
+
+  Import ToFunctor.Instance.
+  Lemma kcompose_tm_runit : forall `(f : A -> G1 (T B)),
+     kcompose_tm (G2 := fun A => A) (ret T) f = f.
+  Proof.
+    intros. change (ret T) with (ret T ∘ (@id B)).
+    rewrite (kcompose_tm03).
+    rewrite (fun_fmap_id T).
+    now rewrite (fun_fmap_id G1).
+  Qed.
+
 End Kleisli_composition.
 
 (** ** Composition with lesser Kleisli operations *)

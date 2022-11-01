@@ -7,6 +7,8 @@ From Tealeaves Require Export
   Classes.Kleisli.Decorated.Monad
   Classes.Kleisli.Traversable.Monad
   Theory.Kleisli.Decorated.Prepromote
+  Theory.Kleisli.Traversable.Monad.DerivedInstances
+  Theory.Kleisli.DT.Functor.DerivedInstances
   Theory.Kleisli.DT.Monad.Properties
   Theory.Kleisli.DT.Monad.ToFunctor.
 
@@ -634,6 +636,7 @@ Section derived_operations_composition.
 
     Context
       (T : Type -> Type)
+      (G1 G2 : Type -> Type)
       `{DT.Monad.Monad W T}
       `{Applicative G1}
       `{Applicative G2}
@@ -824,6 +827,7 @@ Section derived_operations_composition.
   (******************************************************************************)
   Context
     (T : Type -> Type)
+     (G1 G2 : Type -> Type)
     `{DT.Monad.Monad W T}
     `{Applicative G1}
     `{Applicative G2}
@@ -840,7 +844,7 @@ Section derived_operations_composition.
       binddt T G1 (fun '(w, a) => fmap G1 (g ∘ pair w) (f (w, a))).
   Proof.
     intros. unfold_ops @Bindd_Binddt.
-    rewrite (binddt_fmapdt T (G2 := fun A => A)).
+    rewrite (binddt_fmapdt T G1 (fun A => A)).
     fequal. now rewrite Mult_compose_identity1.
   Qed.
 
@@ -852,7 +856,7 @@ Section derived_operations_composition.
   Proof.
     intros. unfold_ops @Bindd_Binddt.
     change (fmapdt T G2 g) with (fmap (fun A => A) (fmapdt T G2 g)).
-    rewrite (fmapdt_binddt T (G1 := fun A => A)).
+    rewrite (fmapdt_binddt T (fun A => A) G2).
     fequal. now rewrite Mult_compose_identity2.
   Qed.
 
@@ -863,7 +867,7 @@ Section derived_operations_composition.
       binddt T G2 (bindt T G2 g ∘ f).
   Proof.
     intros. unfold_ops @Bindt_Binddt.
-    rewrite (binddt_bindd T).
+    rewrite (binddt_bindd T G2).
     fequal. ext [w a].
     now rewrite (prepromote_extract).
   Qed.
@@ -875,7 +879,7 @@ Section derived_operations_composition.
         binddt T G1 (fun '(w, a) => fmap G1 (bindd T (prepromote w g)) (f a)).
   Proof.
     intros. unfold_ops @Bindt_Binddt.
-    rewrite (bindd_binddt T (G1 := G1)).
+    rewrite (bindd_binddt T G1).
     reflexivity.
   Qed.
 
@@ -886,7 +890,7 @@ Section derived_operations_composition.
         binddt T (G1 ∘ G2) (fun '(w, a) => fmap G1 (fmapdt T G2 (prepromote w g)) (f a)).
   Proof.
     intros. unfold_ops @Bindt_Binddt.
-    rewrite (fmapdt_binddt T).
+    rewrite (fmapdt_binddt T G1 G2).
     reflexivity.
   Qed.
 
@@ -897,7 +901,7 @@ Section derived_operations_composition.
         binddt T (G1 ∘ G2) (fmap G1 g ∘ f).
   Proof.
     intros. unfold_ops @Bindt_Binddt.
-    rewrite (binddt_fmapdt T).
+    rewrite (binddt_fmapdt T G1 G2).
     fequal. now ext [w a].
   Qed.
 
@@ -962,7 +966,14 @@ Section derived_operations_composition.
   (** ** <<fmapdt>> on the right *)
   (******************************************************************************)
   (* bind_fmapdt *)
-  (* fmapd_fmapdt *)
+  Lemma fmapd_fmapdt : forall (g : W * B -> C) (f : W * A -> G1 B),
+      fmap G1 (fmapd T g) ∘ fmapdt T G1 f = fmapdt T G1 (fmap G1 g ∘ strength G1 ∘ cobind (W ×) f).
+  Proof.
+    introv.
+    change (@Fmapd_Binddt W T H H0) with (@Operations.Fmapd_Fmapdt T W _).
+    rewrite (DT.Functor.DerivedInstances.Instances.fmapd_fmapdt T G1).
+    reflexivity.
+  Qed.
   (* traverse_fmapdt *)
 
   (* fmap_fmapdt *)
@@ -970,10 +981,52 @@ Section derived_operations_composition.
   (** ** <<fmapdt>> on the left *)
   (******************************************************************************)
   (* fmapdt_bind *)
-  (* fmapdt_fmapd *)
+  Lemma fmapdt_fmapd : forall (g : W * B -> G2 C) (f : W * A -> B),
+      fmapdt T G2 g ∘ fmapd T f = fmapdt T G2 (g co⋆ f).
+  Proof.
+    introv.
+    change (@Fmapd_Binddt W T H H0) with (@Operations.Fmapd_Fmapdt T W _).
+    rewrite (DT.Functor.DerivedInstances.Instances.fmapdt_fmapd T G2 G2).
+    reflexivity.
+  Qed.
+
   (* fmapdt_traverse *)
 
   (* fmapdt_fmap *)
+
+  (** ** <<bindt>> on the right *)
+  (******************************************************************************)
+  Lemma bind_bindt : forall (g : B -> T C) (f : A -> G1 (T B)),
+      fmap G1 (bind T g) ∘ bindt T G1 f = bindt T G1 (fmap G1 (bind T g) ∘ f).
+  Proof.
+    introv.
+    change (@Bind_Binddt W T H0) with (@Operations.Bind_Bindt T _).
+    rewrite (Traversable.Monad.DerivedInstances.bind_bindt T G1).
+    reflexivity.
+  Qed.
+
+  Lemma fmapd_bindt : forall (g : W * B -> C) (f : A -> G1 (T B)),
+      fmap G1 (fmapd T g) ∘ bindt T G1 f = binddt T G1 (fun '(w, a) => fmap G1 (fmapd T (prepromote w g)) (f a)).
+  Proof.
+    introv.
+  Abort.
+  (* traverse_bindt *)
+  (* fmap_bindt *)
+
+  (** ** <<binddt>> on the left *)
+  (******************************************************************************)
+  Lemma bindt_bind : forall (g : B -> G2 (T C)) (f : A -> T B),
+      bindt T G2 g ∘ bind T f = bindt T G2 (bindt T G2 g ∘ f).
+  Proof.
+    introv.
+    change (@Bind_Binddt W T H0) with (@Operations.Bind_Bindt T _).
+    rewrite (Traversable.Monad.DerivedInstances.bindt_bind T G2).
+    reflexivity.
+  Qed.
+
+  (* bindt_fmapd *)
+  (* bindt_traverse *)
+  (* bindt_fmap *)
 
   (** ** <<traverse>> on the right *)
   (******************************************************************************)
@@ -1006,6 +1059,14 @@ Section derived_operations_composition.
   (* fmapd_traverse *)
 
   (* fmapd_fmap *)
+
+  (** ** <<bindd>> on the right *)
+  (******************************************************************************)
+
+  (** ** <<bindd>> on the left *)
+  (******************************************************************************)
+
+
 
 End derived_operations_composition.
 

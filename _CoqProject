@@ -104,6 +104,7 @@ Tealeaves/Theory/Algebraic/Decorated/Monad/Characterization.v
 Tealeaves/Theory/Algebraic/Listable/Shape.v
 Tealeaves/Theory/Algebraic/Traversable/Functor/Properties.v
 Tealeaves/Theory/Algebraic/Traversable/Functor/Instances.v
+Tealeaves/Theory/Algebraic/Traversable/Monad/Characterization.v
 Tealeaves/Theory/Algebraic/Listable/Functor/Category.v
 Tealeaves/Theory/Algebraic/Listable/Functor/Properties.v
 Tealeaves/Theory/Algebraic/Listable/Monad/Properties.v
@@ -120,10 +121,13 @@ Tealeaves/Theory/Algebraic/DT/Functor/ToKleisli.v
 Tealeaves/Theory/Algebraic/DT/Monad/ToKleisli.v
 
 # ALGEBRAIC KLEISLI LEMMAS
-Tealeaves/Theory/Algebraic/Traversable/Functor/Theory.v
-#Tealeaves/Theory/Algebraic/Traversable/Monad/Theory.v
-#Tealeaves/Theory/Algebraic/DT/Functor/Theory.v
-#Tealeaves/Theory/Algebraic/DT/Monad/Theory.v
+#Tealeaves/Theory/Algebraic/Monad/KleisliTheory.v
+Tealeaves/Theory/Algebraic/Decorated/Functor/KleisliTheory.v
+#Tealeaves/Theory/Algebraic/Decorated/Monad/KleisliTheory.v
+Tealeaves/Theory/Algebraic/Traversable/Functor/KleisliTheory.v
+#Tealeaves/Theory/Algebraic/Traversable/Monad/KleisliTheory.v
+#Tealeaves/Theory/Algebraic/DT/Functor/KleisliTheory.v
+#Tealeaves/Theory/Algebraic/DT/Monad/KleisliTheory.v
 
 # ADDING KLEISLI TO SET AND LIST
 Tealeaves/Theory/List/Kleisli.v

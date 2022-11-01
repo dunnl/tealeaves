@@ -71,9 +71,7 @@ Section TraversableFunctor_composition.
   Corollary traverse_fmap : forall `(g : B -> G C) `(f : A -> B),
       traverse T G g ∘ fmap T f = traverse T G (g ∘ f).
   Proof.
-    intros. unfold traverse.
-    unfold_ops @Traverse_alg.
-    ext t.
+    intros. unfold_ops @Traverse_alg.
     now rewrite <- (fun_fmap_fmap T).
   Qed.
 
