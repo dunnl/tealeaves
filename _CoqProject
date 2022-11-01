@@ -179,12 +179,12 @@ Tealeaves/Theory/Kleisli/DT/Monad.v
 
 # EQUIVALENCES
 Tealeaves/Theory/Equivalences/Monad.v
-#Tealeaves/Theory/Equivalences/TraversableFunctor.v
-#Tealeaves/Theory/Equivalences/TraversableMonad.v
-#Tealeaves/Theory/Equivalences/DecoratedFunctor.v
+Tealeaves/Theory/Equivalences/TraversableFunctor.v
+Tealeaves/Theory/Equivalences/TraversableMonad.v
+Tealeaves/Theory/Equivalences/DecoratedFunctor.v
 Tealeaves/Theory/Equivalences/DecoratedMonad.v
-#Tealeaves/Theory/Equivalences/DTFunctor.v
-#Tealeaves/Theory/Equivalences/DTMonad.v
+#Tealeaves/Theory/Equivalences/DecoratedTraversableFunctor.v
+#Tealeaves/Theory/Equivalences/DecoratedTraversableMonad.v
 
 # LOCALLY NAMELESS
 LN/Atom.v

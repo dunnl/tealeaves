@@ -147,8 +147,6 @@ Module Instances.
        dist_linear := dist_linear_T;
     |}.
 
-  Print Algebraic.DT.Functor.DecoratedTraversableFunctor.
-
   Lemma dtfun_compat_T : forall (G : Type -> Type) (H2 : Fmap G) (H3 : Pure G) (H4 : Mult G),
       Applicative G -> forall A : Type,
         dist T G ∘ fmap T (strength G) ∘ dec (A := G A) T = fmap G (dec T) ∘ dist T G.
