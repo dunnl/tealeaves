@@ -28,7 +28,7 @@ Section bind_rewriting_lemmas.
 
   Lemma bind_list_one : forall x, bind list f [ x ] = f x.
   Proof.
-    intros. unfold_ops @Bind_list. unfold_ops @Operation.Bind_Join.
+    intros. unfold_ops @Bind_list. unfold_ops @Operation.Bind_alg.
     unfold compose. intros. now autorewrite with tea_list.
   Qed.
 
@@ -41,7 +41,7 @@ Section bind_rewriting_lemmas.
   Lemma bind_list_app : forall (l1 l2 : list A),
       bind list f (l1 ++ l2) = bind list f l1 ++ bind list f l2.
   Proof.
-    intros. unfold_ops @Bind_list. unfold_ops @Operation.Bind_Join.
+    intros. unfold_ops @Bind_list. unfold_ops @Operation.Bind_alg.
     unfold compose. intros. now autorewrite with tea_list.
   Qed.
 

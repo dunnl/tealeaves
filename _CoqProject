@@ -172,7 +172,16 @@ Tealeaves/Theory/Algebraic/Traversable/Functor/Coalgebraic.v
 # OTHER THINGS
 Tealeaves/Theory/Kleisli/Monad/ToApplicative.v
 
-# WRAPPERS
+# ALGEBRAIC WRAPPERS
+Tealeaves/Theory/Algebraic/Monad.v
+Tealeaves/Theory/Algebraic/Decorated/Functor.v
+Tealeaves/Theory/Algebraic/Decorated/Monad.v
+Tealeaves/Theory/Algebraic/Traversable/Functor.v
+Tealeaves/Theory/Algebraic/Traversable/Monad.v
+Tealeaves/Theory/Algebraic/DT/Functor.v
+Tealeaves/Theory/Algebraic/DT/Monad.v
+
+# KLEISLI WRAPPERS
 Tealeaves/Theory/Kleisli/Monad.v
 Tealeaves/Theory/Kleisli/Decorated/Functor.v
 Tealeaves/Theory/Kleisli/Decorated/Monad.v
