@@ -154,7 +154,7 @@ Tealeaves/Theory/Kleisli/Decorated/Functor/ToAlgebraic.v
 Tealeaves/Theory/Kleisli/Decorated/Monad/ToAlgebraic.v
 Tealeaves/Theory/Kleisli/Traversable/Functor/ToAlgebraic.v
 Tealeaves/Theory/Kleisli/Traversable/Monad/ToAlgebraic.v
-#Tealeaves/Theory/Kleisli/DT/Functor/ToAlgebraic.v
+Tealeaves/Theory/Kleisli/DT/Functor/ToAlgebraic.v
 #Tealeaves/Theory/Kleisli/DT/Monad/ToAlgebraic.v
 
 # ALGEBRAIC MODULES THAT DEPEND ON SHAPELINESS VIA KLEISLI

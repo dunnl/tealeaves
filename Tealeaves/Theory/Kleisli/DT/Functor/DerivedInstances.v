@@ -81,6 +81,8 @@ Module Instances.
           `{Applicative G1}
           `{Applicative G2}.
 
+      (** *** <<fmapdt>> on the right *)
+      (******************************************************************************)
       Corollary traverse_fmapdt {A B C} : forall (g : B -> G2 C) (f : W * A -> G1 B),
           fmap G1 (traverse T G2 g) ∘ fmapdt T G1 f = fmapdt T (G1 ∘ G2) (fmap G1 g ∘ f).
       Proof.
@@ -89,6 +91,25 @@ Module Instances.
         admit.
       Admitted.
 
+      Corollary fmapd_fmapdt {A B C} : forall (g : W * B -> C) (f : W * A -> G1 B),
+          fmap G1 (fmapd T g) ∘ fmapdt T G1 f = fmapdt T G1 (fmap G1 g ∘ σ G1 ∘ cobind (W ×) f).
+      Proof.
+        intros. unfold_ops @Fmapd_Fmapdt.
+        rewrite (kdtfun_fmapdt2 W T (G2 := fun A => A)).
+        fequal. now rewrite Mult_compose_identity1.
+      Qed.
+
+      Corollary fmap_fmapdt {A B C} : forall (g : B -> C) (f : W * A -> G1 B),
+          fmap G1 (fmap T g) ∘ fmapdt T G1 f = fmapdt T G1 (fmap G1 g ∘ f).
+      Proof.
+        intros. unfold_ops @Fmap_Fmapdt.
+        rewrite (kdtfun_fmapdt2 W T (G2 := fun A => A)).
+        fequal. now rewrite Mult_compose_identity1.
+        admit.
+      Admitted.
+
+      (** *** <<fmapdt>> on the right *)
+      (******************************************************************************)
       Corollary fmapdt_traverse {A B C} : forall (g : W * B -> G2 C) (f : A -> G1 B),
           fmap G1 (fmapdt T G2 g) ∘ traverse T G1 f = fmapdt T (G1 ∘ G2) (fmap G1 g ∘ σ G1 ∘ fmap (W ×) f).
       Proof.
@@ -107,14 +128,6 @@ Module Instances.
         admit.
       Admitted.
 
-      Corollary fmapd_fmapdt {A B C} : forall (g : W * B -> C) (f : W * A -> G1 B),
-          fmap G1 (fmapd T g) ∘ fmapdt T G1 f = fmapdt T G1 (fmap G1 g ∘ σ G1 ∘ cobind (W ×) f).
-      Proof.
-        intros. unfold_ops @Fmapd_Fmapdt.
-        rewrite (kdtfun_fmapdt2 W T (G2 := fun A => A)).
-        fequal. now rewrite Mult_compose_identity1.
-      Qed.
-
       Lemma fmapdt_fmap {A B C} : forall (g : W * B -> G2 C) (f : A -> B),
           fmapdt T G2 g ∘ fmap T f = fmapdt T G2 (g ∘ fmap (prod W) f).
       Proof.
@@ -124,12 +137,13 @@ Module Instances.
         fequal. now rewrite Mult_compose_identity2. admit.
       Admitted.
 
-      Corollary fmap_fmapdt {A B C} : forall (g : B -> C) (f : W * A -> G1 B),
-          fmap G1 (fmap T g) ∘ fmapdt T G1 f = fmapdt T G1 (fmap G1 g ∘ f).
+      (** *** Mixes *)
+      (******************************************************************************)
+      Corollary fmap_fmapd {A B C} : forall (g : B -> C) (f : W * A -> B),
+          fmap T g ∘ fmapd T f = fmapd T (g ∘ f).
       Proof.
-        intros. unfold_ops @Fmap_Fmapdt.
-        rewrite (kdtfun_fmapdt2 W T (G2 := fun A => A)).
-        fequal. now rewrite Mult_compose_identity1.
+        intros.
+        change_left (fmap (fun A => A) (fmap T g) ∘ fmapd T f).
         admit.
       Admitted.
 
