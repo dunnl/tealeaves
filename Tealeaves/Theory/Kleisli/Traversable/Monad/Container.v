@@ -37,7 +37,7 @@ Section with_functor.
 End with_functor.
 
 Import DerivedInstances.Operations.
-Import DerivedInstances.DerivedInstances.
+Import DerivedInstances.Instances.
 
 (** * <<foldMap>> on monads *)
 (******************************************************************************)
@@ -47,7 +47,7 @@ Section with_monad.
     (T : Type -> Type)
     `{Kleisli.Traversable.Monad.Monad T}.
 
-  Import DerivedInstances.DerivedInstances.
+  Import DerivedInstances.Instances.
 
   (** ** Composition with <<bindt>> *)
   (******************************************************************************)
@@ -143,7 +143,7 @@ Section with_monad.
     (T : Type -> Type)
     `{Kleisli.Traversable.Monad.Monad T}.
 
-  Import DerivedInstances.DerivedInstances.
+  Import DerivedInstances.Instances.
 
   #[export] Instance Monad_Hom_Toset : Kleisli.Monad.Monad_Hom T set (@toset T _).
   Proof.

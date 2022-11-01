@@ -7,7 +7,8 @@ From Tealeaves.Theory Require Import
 
 #[local] Generalizable Variables A B C.
 
-Import ToFunctor.Operation.
+Export Kleisli.Traversable.Functor.ToFunctor.Operation.
+Export Kleisli.Traversable.Functor.ToFunctor.Instances.
 
 (** * Traversable Functors: Kleisli to Algebraic *)
 (******************************************************************************)
@@ -31,15 +32,12 @@ Import Operations.
 
 (** ** Instances *)
 (******************************************************************************)
-Section with_kleisli.
+Module Instances.
 
   Context
     (W : Type)
     (T : Type -> Type)
     `{Kleisli.Traversable.Functor.TraversableFunctor T}.
-
-  Export Kleisli.Traversable.Functor.ToFunctor.Operation.
-  Export Kleisli.Traversable.Functor.ToFunctor.Instances.
 
   (** *** Traversable functor instance *)
   (******************************************************************************)
@@ -95,4 +93,4 @@ Section with_kleisli.
        dist_linear := dist_linear_T;
     |}.
 
-End with_kleisli.
+End Instances.

@@ -31,7 +31,6 @@ Tealeaves/Classes/Algebraic/RightModule.v
 Tealeaves/Classes/Algebraic/RightComodule.v
 Tealeaves/Classes/Algebraic/BeckDistributiveLaw.v
 Tealeaves/Classes/Algebraic/Bimonad.v
-
 Tealeaves/Data/CoqCategory.v
 
 # TEALEAVES MAJOR CLASSES (ALGEBRAIC)
@@ -42,6 +41,7 @@ Tealeaves/Classes/Algebraic/Decorated/Monad.v
 #Tealeaves/Classes/Algebraic/Decorated/Module.v
 Tealeaves/Classes/Algebraic/Traversable/Functor.v
 
+# THIS IS HERE BECAUSE TRAVERSABLEMONAD DEPENDS ON IT
 Tealeaves/Theory/Algebraic/Traversable/Functor/Category.v
 
 Tealeaves/Classes/Algebraic/Traversable/Monad.v
@@ -109,6 +109,26 @@ Tealeaves/Theory/Algebraic/Listable/Functor/Properties.v
 Tealeaves/Theory/Algebraic/Listable/Monad/Properties.v
 Tealeaves/Theory/Algebraic/DT/Functor/Category.v
 
+# ALGEBRAIC TO KLEISLI
+Tealeaves/Theory/Algebraic/Monad/ToKleisli.v
+#Tealeaves/Theory/Algebraic/RightModule/ToKleisli.v
+Tealeaves/Theory/Algebraic/Decorated/Functor/ToKleisli.v
+Tealeaves/Theory/Algebraic/Decorated/Monad/ToKleisli.v
+Tealeaves/Theory/Algebraic/Traversable/Functor/ToKleisli.v
+Tealeaves/Theory/Algebraic/Traversable/Monad/ToKleisli.v
+Tealeaves/Theory/Algebraic/DT/Functor/ToKleisli.v
+Tealeaves/Theory/Algebraic/DT/Monad/ToKleisli.v
+
+# ALGEBRAIC KLEISLI LEMMAS
+Tealeaves/Theory/Algebraic/Traversable/Functor/Theory.v
+#Tealeaves/Theory/Algebraic/Traversable/Monad/Theory.v
+#Tealeaves/Theory/Algebraic/DT/Functor/Theory.v
+#Tealeaves/Theory/Algebraic/DT/Monad/Theory.v
+
+# ADDING KLEISLI TO SET AND LIST
+Tealeaves/Theory/List/Kleisli.v
+Tealeaves/Theory/Sets/Kleisli.v
+
 # THEORY (KLEISLI)
 Tealeaves/Theory/Kleisli/Monad/ToFunctor.v
 Tealeaves/Theory/Kleisli/Monad/Properties.v
@@ -128,20 +148,6 @@ Tealeaves/Theory/Kleisli/DT/Monad/Properties.v
 Tealeaves/Theory/Kleisli/DT/Monad/DerivedInstances.v
 Tealeaves/Theory/Kleisli/DT/Monad/Container.v
 
-# ALGEBRAIC TO KLEISLI
-Tealeaves/Theory/Algebraic/Monad/ToKleisli.v
-#Tealeaves/Theory/Algebraic/RightModule/ToKleisli.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/ToKleisli.v
-Tealeaves/Theory/Algebraic/Decorated/Monad/ToKleisli.v
-Tealeaves/Theory/Algebraic/Traversable/Functor/ToKleisli.v
-Tealeaves/Theory/Algebraic/Traversable/Monad/ToKleisli.v
-Tealeaves/Theory/Algebraic/DT/Functor/ToKleisli.v
-Tealeaves/Theory/Algebraic/DT/Monad/ToKleisli.v
-
-# ADDING KLEISLI TO SET AND LIST
-Tealeaves/Theory/List/Kleisli.v
-Tealeaves/Theory/Sets/Kleisli.v
-
 # KLEISLI TO ALGEBRAIC
 Tealeaves/Theory/Kleisli/Monad/ToAlgebraic.v
 Tealeaves/Theory/Kleisli/Decorated/Functor/ToAlgebraic.v
@@ -150,12 +156,6 @@ Tealeaves/Theory/Kleisli/Traversable/Functor/ToAlgebraic.v
 Tealeaves/Theory/Kleisli/Traversable/Monad/ToAlgebraic.v
 #Tealeaves/Theory/Kleisli/DT/Functor/ToAlgebraic.v
 #Tealeaves/Theory/Kleisli/DT/Monad/ToAlgebraic.v
-
-# ALGEBRAIC KLEISLI LEMMAS
-Tealeaves/Theory/Algebraic/Traversable/Functor/Theory.v
-#Tealeaves/Theory/Algebraic/Traversable/Monad/Theory.v
-#Tealeaves/Theory/Algebraic/DT/Functor/Theory.v
-#Tealeaves/Theory/Algebraic/DT/Monad/Theory.v
 
 # ALGEBRAIC MODULES THAT DEPEND ON SHAPELINESS VIA KLEISLI
 Tealeaves/Theory/Algebraic/Listable/Monad/Characterization.v
@@ -169,6 +169,12 @@ Tealeaves/Theory/Algebraic/Traversable/Functor/Coalgebraic.v
 Tealeaves/Theory/Kleisli/Monad/ToApplicative.v
 
 # WRAPPERS
+Tealeaves/Theory/Kleisli/Monad.v
+Tealeaves/Theory/Kleisli/Decorated/Functor.v
+Tealeaves/Theory/Kleisli/Decorated/Monad.v
+Tealeaves/Theory/Kleisli/Traversable/Functor.v
+Tealeaves/Theory/Kleisli/Traversable/Monad.v
+Tealeaves/Theory/Kleisli/DT/Functor.v
 Tealeaves/Theory/Kleisli/DT/Monad.v
 
 # EQUIVALENCES

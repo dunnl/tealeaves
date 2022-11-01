@@ -28,7 +28,7 @@ End Operations.
 
 Import Operations.
 
-Module DerivedInstances.
+Module Instances.
 
   Section with_functor.
 
@@ -137,4 +137,4 @@ Module DerivedInstances.
 
   End with_functor.
 
-End DerivedInstances.
+End Instances.

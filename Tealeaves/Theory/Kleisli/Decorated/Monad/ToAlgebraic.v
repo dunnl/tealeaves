@@ -35,12 +35,14 @@ Import Operations.
 
 Module Instances.
 
+  Import Theory.Kleisli.Decorated.Monad.DerivedInstances.Instances.
+
   Section with_monad.
 
     Context
       (W : Type)
-        (T : Type -> Type)
-        `{Kleisli.Decorated.Monad.Monad W T}.
+      (T : Type -> Type)
+      `{Kleisli.Decorated.Monad.Monad W T}.
 
     Import DerivedInstances.
 
@@ -157,7 +159,7 @@ Module Instances.
       (* Merge RHS *)
       unfold_ops @Fmap_Bindd.
       rewrite (kmond_bindd2 T).
-      fequal. rewrite (DerivedInstances.dm_kleisli_star2).
+      fequal. rewrite (dm_kleisli_star2).
       rewrite (kleisli_id_r T).
       ext [w a]. cbn.
       compose near (w, a) on left.

@@ -37,7 +37,7 @@ Import Operations.
 
 (** ** Instances *)
 (******************************************************************************)
-Section with_kleisli.
+Module Instances.
 
   Context
     (W : Type)
@@ -47,7 +47,7 @@ Section with_kleisli.
   Import Kleisli.Traversable.Monad.ToFunctor.Operation.
   Import Kleisli.Traversable.Monad.ToFunctor.Instance.
   Import Kleisli.Traversable.Monad.DerivedInstances.Operations.
-  Import Kleisli.Traversable.Monad.DerivedInstances.DerivedInstances.
+  Import Kleisli.Traversable.Monad.DerivedInstances.Instances.
 
   (** *** Traversable functor instance *)
   (******************************************************************************)
@@ -198,4 +198,4 @@ Section with_kleisli.
        trvmon_join := trvmon_join_T;
     |}.
 
-End with_kleisli.
+End Instances.

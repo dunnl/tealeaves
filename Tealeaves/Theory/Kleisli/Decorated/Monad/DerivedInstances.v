@@ -113,7 +113,7 @@ End Kleisli_composition.
 
 (** ** Lessor Kleisli instances *)
 (******************************************************************************)
-Module DerivedInstances.
+Module Instances.
 
   Section with_monad.
 
@@ -141,7 +141,7 @@ Module DerivedInstances.
 
   End with_monad.
 
-End DerivedInstances.
+End Instances.
 
 (** ** Lesser Kleisli composition laws *)
 (******************************************************************************)

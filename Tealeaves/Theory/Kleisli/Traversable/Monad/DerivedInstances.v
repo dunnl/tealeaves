@@ -10,6 +10,8 @@ From Tealeaves Require Export
 Import Kleisli.Monad.Notations.
 Import Traversable.Monad.Notations.
 
+Import Traversable.Monad.ToFunctor.Operation.
+
 #[local] Generalizable Variables W G T A B C.
 
 (** * Kleisli Traversble Monad: Derived Kleisli instances *)
@@ -31,12 +33,11 @@ Module Operations.
   End with_kleisli.
 End Operations.
 
+Import Operations.
+
 (** ** Specifications for lesser Kleisli operations *)
 (******************************************************************************)
 Section special_cases.
-
-  Import Traversable.Monad.ToFunctor.Operation.
-  Import Operations.
 
   Context
     (W : Type)
@@ -91,7 +92,7 @@ End special_cases.
 
 (** ** Lesser Kleisli instances *)
 (******************************************************************************)
-Module DerivedInstances.
+Module Instances.
 
   Import Traversable.Monad.ToFunctor.Operation.
   Import Operations.
@@ -131,14 +132,11 @@ Module DerivedInstances.
 
   End with_monad.
 
-End DerivedInstances.
+End Instances.
 
 (** ** Special cases for Kleisli composition *)
 (******************************************************************************)
 Section Kleisli_composition.
-
-  Import Traversable.Monad.ToFunctor.Operation.
-  Import Operations.
 
   Context
     (T : Type -> Type)
@@ -240,9 +238,7 @@ End Kleisli_composition.
 (******************************************************************************)
 Section Kleisli_composition.
 
-  Import Traversable.Monad.ToFunctor.Operation.
-  Import Operations.
-  Import DerivedInstances.
+  Import Instances.
 
   Context
     (T : Type -> Type)

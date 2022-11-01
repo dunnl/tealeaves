@@ -31,7 +31,7 @@ Section with_functor.
   (******************************************************************************)
 
   Import DT.Functor.DerivedInstances.Operations.
-  Import DT.Functor.DerivedInstances.DerivedInstances.
+  Import DT.Functor.DerivedInstances.Instances.
 
   (** *** <<fmapdt>> *)
   (******************************************************************************)
@@ -93,7 +93,7 @@ Section with_functor.
     `{DT.Functor.DecoratedTraversableFunctor W T}.
 
   Import DT.Functor.DerivedInstances.Operations.
-  Import DT.Functor.DerivedInstances.DerivedInstances.
+  Import DT.Functor.DerivedInstances.Instances.
 
   (** *** Lemmas for <<fmapdt>> with constant applicative functors *)
   (******************************************************************************)
@@ -224,7 +224,7 @@ Section tolistd.
     (tosetd t x) (at level 50) : tealeaves_scope.
 
   Import DT.Functor.DerivedInstances.Operations.
-  Import DT.Functor.DerivedInstances.DerivedInstances.
+  Import DT.Functor.DerivedInstances.Instances.
 
   (** ** Relating <<tosetd>> and <<tolistd>> *)
   (******************************************************************************)
@@ -298,7 +298,7 @@ Section new.
     `{DT.Functor.DecoratedTraversableFunctor W T}.
 
   Import DT.Functor.DerivedInstances.Operations.
-  Import DT.Functor.DerivedInstances.DerivedInstances.
+  Import DT.Functor.DerivedInstances.Instances.
 
   (** ** Expressing <<foldMap>> with <<foldMapd>> *)
   (******************************************************************************)
@@ -390,7 +390,7 @@ Section decorated_setlike_respectfulness.
     `{Kleisli.DT.Functor.DecoratedTraversableFunctor W T}.
 
   Import DT.Functor.DerivedInstances.Operations.
-  Import DT.Functor.DerivedInstances.DerivedInstances.
+  Import DT.Functor.DerivedInstances.Instances.
 
   Lemma fmapd_respectful {A B} : forall (t : T A) (f g : W * A -> B),
       (forall w a, (w, a) ∈d t -> f (w, a) = g (w, a)) ->
