@@ -1,18 +1,23 @@
 From Tealeaves Require Import
-  Algebraic.Applicative
-  Algebraic.Monad.Properties
-  Kleisli.Monad.Monad
-  Algebraic.Monad.ToKleisli.
+  Classes.Algebraic.Applicative
+  Theory.Algebraic.Monad.Properties
+  Classes.Kleisli.Monad
+  Theory.Algebraic.Monad.ToKleisli.
 
 Import Product.Notations.
 Import Applicative.Notations.
+
+#[local] Generalizable Variable T.
 
 (** * Monadic applicative functors *)
 (******************************************************************************)
 Section Applicative_Monad.
 
   Context
-    `{Algebraic.Monad.Monad.Monad T}.
+    `{Algebraic.Monad.Monad T}.
+
+  Import Monad.ToKleisli.Operation.
+  (* Import Monad.ToKleisli.Instance. *)
 
   #[global] Instance Pure_Monad : Pure T := @ret T _.
 

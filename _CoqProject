@@ -165,6 +165,9 @@ Tealeaves/Theory/Algebraic/Traversable/Functor/Coalgebraic.v
 #Tealeaves/Theory/Algebraic/Traversable/Functor/Listable.v
 #Tealeaves/Theory/Algebraic/Traversable/Monad/Listable.v
 
+# OTHER THINGS
+Tealeaves/Theory/Kleisli/Monad/ToApplicative.v
+
 # WRAPPERS
 Tealeaves/Theory/Kleisli/DT/Monad.v
 
