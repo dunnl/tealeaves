@@ -90,10 +90,10 @@ Module KleisliToAlgebraic.
     rewrite (kmond_bindd2 T).
     fequal.
     reassociate -> near (extract (W ×)).
-    rewrite DerivedInstances.dm_kleisli_star1.
+    rewrite (DerivedInstances.dm_kleisli_star1 T).
     rewrite cokleisli_id_l.
     change (@ret T _ (W * A)) with (@ret T _ (W * A) ∘ id).
-    rewrite DerivedInstances.dm_kleisli_star5.
+    rewrite (DerivedInstances.dm_kleisli_star5 T).
     reflexivity.
   Qed.
 

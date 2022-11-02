@@ -61,7 +61,7 @@ Module Instances.
       rewrite (kmond_bindd2 T).
       fequal.
       reassociate -> near (extract (prod W) (A := A)).
-      now rewrite (DerivedInstances.dm_kleisli_star5).
+      now rewrite (DerivedInstances.dm_kleisli_star5 T).
     Qed.
 
     #[local] Instance: Classes.Functor.Functor T :=
@@ -91,9 +91,9 @@ Module Instances.
         unfold_compose_in_compose.
         rewrite (kmond_bindd2 T). (* left *)
         rewrite (kmond_bindd2 T). (* right *)
-        rewrite (DerivedInstances.dm_kleisli_star2).
+        rewrite (DerivedInstances.dm_kleisli_star2 T).
         reassociate -> near (extract (W ×)).
-        rewrite (DerivedInstances.dm_kleisli_star1).
+        rewrite (DerivedInstances.dm_kleisli_star1 T).
         fequal.
         rewrite cokleisli_id_l.
         reflexivity.
@@ -116,7 +116,7 @@ Module Instances.
       unfold_compose_in_compose.
       rewrite (kmond_bindd2 T).
       reassociate -> near (extract (W ×)).
-      rewrite (DerivedInstances.dm_kleisli_star1).
+      rewrite (DerivedInstances.dm_kleisli_star1 T).
       rewrite cokleisli_id_l.
       rewrite (kmond_bindd1 T).
       reflexivity.
@@ -135,7 +135,7 @@ Module Instances.
       rewrite (kmond_bindd2 T).
       fequal.
       reassociate ->.
-      rewrite (DerivedInstances.dm_kleisli_star1).
+      rewrite (DerivedInstances.dm_kleisli_star1 T).
       rewrite (cokcompose_misc1).
       ext [w a]. cbn.
       now rewrite prepromote_extract2.
@@ -159,7 +159,7 @@ Module Instances.
       (* Merge RHS *)
       unfold_ops @Fmap_Bindd.
       rewrite (kmond_bindd2 T).
-      fequal. rewrite (dm_kleisli_star2).
+      fequal. rewrite (dm_kleisli_star2 T).
       rewrite (kleisli_id_r T).
       ext [w a]. cbn.
       compose near (w, a) on left.
@@ -176,7 +176,7 @@ Module Instances.
       unfold_ops @Fmap_Bindd.
       rewrite (kmond_bindd2 T).
       change (ret T (A := W * A)) with (ret T ∘ @id (W * A)).
-      rewrite dm_kleisli_star5.
+      rewrite (dm_kleisli_star5 T).
       apply (kmond_bindd1 T).
     Qed.
 
@@ -192,9 +192,9 @@ Module Instances.
         rewrite (kmond_bindd2 T).
         fequal.
         change (ret T (A := W * A)) with (ret T ∘ @id (W * A)).
-        rewrite dm_kleisli_star5.
+        rewrite (dm_kleisli_star5 T).
         reassociate -> near (extract (W ×)).
-        rewrite dm_kleisli_star1.
+        rewrite (dm_kleisli_star1 T).
         now rewrite cokcompose_misc1.
     Qed.
 
@@ -222,11 +222,11 @@ Module Instances.
       unfold_compose_in_compose.
       repeat rewrite (kmond_bindd2 T).
       fequal. reassociate -> near (extract (W ×)).
-      rewrite dm_kleisli_star1.
-      rewrite dm_kleisli_star1.
+      rewrite (dm_kleisli_star1 T).
+      rewrite (dm_kleisli_star1 T).
       rewrite cokcompose_misc1.
       rewrite cokleisli_id_l.
-      rewrite dm_kleisli_star2.
+      rewrite (dm_kleisli_star2 T).
       ext [w t].
       unfold kcompose.
       rewrite (kmon_bind0 T).

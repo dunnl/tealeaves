@@ -159,7 +159,7 @@ Tealeaves/Theory/Kleisli/Decorated/Monad/ToAlgebraic.v
 Tealeaves/Theory/Kleisli/Traversable/Functor/ToAlgebraic.v
 Tealeaves/Theory/Kleisli/Traversable/Monad/ToAlgebraic.v
 Tealeaves/Theory/Kleisli/DT/Functor/ToAlgebraic.v
-#Tealeaves/Theory/Kleisli/DT/Monad/ToAlgebraic.v
+Tealeaves/Theory/Kleisli/DT/Monad/ToAlgebraic.v
 
 # ALGEBRAIC MODULES THAT DEPEND ON SHAPELINESS VIA KLEISLI
 Tealeaves/Theory/Algebraic/Listable/Monad/Characterization.v
@@ -196,8 +196,8 @@ Tealeaves/Theory/Equivalences/TraversableFunctor.v
 Tealeaves/Theory/Equivalences/TraversableMonad.v
 Tealeaves/Theory/Equivalences/DecoratedFunctor.v
 Tealeaves/Theory/Equivalences/DecoratedMonad.v
-#Tealeaves/Theory/Equivalences/DecoratedTraversableFunctor.v
-#Tealeaves/Theory/Equivalences/DecoratedTraversableMonad.v
+Tealeaves/Theory/Equivalences/DecoratedTraversableFunctor.v
+Tealeaves/Theory/Equivalences/DecoratedTraversableMonad.v
 
 # LOCALLY NAMELESS
 LN/Atom.v

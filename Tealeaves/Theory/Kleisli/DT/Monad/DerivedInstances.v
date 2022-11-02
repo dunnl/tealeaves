@@ -8,6 +8,7 @@ From Tealeaves Require Export
   Classes.Kleisli.Traversable.Monad
   Theory.Kleisli.Decorated.Prepromote
   Theory.Kleisli.Traversable.Monad.DerivedInstances
+  Theory.Kleisli.Decorated.Monad.DerivedInstances
   Theory.Kleisli.DT.Functor.DerivedInstances
   Theory.Kleisli.DT.Monad.Properties
   Theory.Kleisli.DT.Monad.ToFunctor.
@@ -1010,10 +1011,18 @@ Section derived_operations_composition.
   Proof.
     introv.
   Abort.
-  (* traverse_bindt *)
-  (* fmap_bindt *)
 
-  (** ** <<binddt>> on the left *)
+  (* traverse_bindt *)
+  Lemma fmap_bindt : forall (g : B -> C) (f : A -> G1 (T B)),
+      fmap G1 (fmap T g) ∘ bindt T G1 f = bindt T G1 (fmap G1 (fmap T g) ∘ f).
+  Proof.
+    intros.
+    change (@Fmap_Binddt T W H0 H) with (@Operation.Fmap_Bindt T _ _).
+    rewrite (Traversable.Monad.DerivedInstances.fmap_bindt T G1).
+    reflexivity.
+  Qed.
+
+  (** ** <<bindt>> on the left *)
   (******************************************************************************)
   Lemma bindt_bind : forall (g : B -> G2 (T C)) (f : A -> T B),
       bindt T G2 g ∘ bind T f = bindt T G2 (bindt T G2 g ∘ f).
@@ -1027,6 +1036,14 @@ Section derived_operations_composition.
   (* bindt_fmapd *)
   (* bindt_traverse *)
   (* bindt_fmap *)
+  Lemma bindt_fmap : forall `(g : B -> G2 (T C)) `(f : A -> B),
+      bindt T G2 g ∘ fmap T f = bindt T G2 (g ∘ f).
+  Proof.
+    intros.
+    change (@Fmap_Binddt T W H0 H) with (@Operation.Fmap_Bindt T _ _).
+    rewrite (Traversable.Monad.DerivedInstances.bindt_fmap T G2).
+    reflexivity.
+  Qed.
 
   (** ** <<traverse>> on the right *)
   (******************************************************************************)
@@ -1062,6 +1079,14 @@ Section derived_operations_composition.
 
   (** ** <<bindd>> on the right *)
   (******************************************************************************)
+  Lemma fmap_bindd : forall (g : B -> C) (f : W * A -> T B),
+      fmap T g ∘ bindd T f = bindd T (fmap T g ∘ f).
+  Proof.
+    intros.
+    change (@Fmap_Binddt T W H0 H) with (@Operations.Fmap_Bindd T _ W _).
+    rewrite (Decorated.Monad.DerivedInstances.fmap_bindd T).
+    reflexivity.
+  Qed.
 
   (** ** <<bindd>> on the left *)
   (******************************************************************************)

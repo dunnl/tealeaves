@@ -26,11 +26,11 @@ Module Operation.
     Context
       (E : Type)
       (T : Type -> Type)
-      `{Fmap F} `{Decorate E F} `{Dist F}.
+      `{Fmap T} `{Decorate E T} `{Dist T}.
 
-  #[export] Instance Fmapdt_alg : Fmapdt E F :=
-      fun {G : Type -> Type} `{Fmap G} `{Pure G} `{Mult G}
-        `(f : E * A -> G B) => (dist F G ∘ fmap F f ∘ dec F : F A -> G (F B)).
+  #[export] Instance Fmapdt_alg : Fmapdt E T :=
+      fun (G : Type -> Type) `{Fmap G} `{Pure G} `{Mult G}
+        `(f : E * A -> G B) => (dist T G ∘ fmap T f ∘ dec T : T A -> G (T B)).
 
   End with_functor.
 End Operation.

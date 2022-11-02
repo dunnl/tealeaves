@@ -265,6 +265,27 @@ Section Kleisli_composition.
     `{Applicative G2}
     `{Applicative G1}.
 
+  (** ** Composition with <<fmap>> *)
+  (******************************************************************************)
+  Lemma fmap_bindt : forall `(g : B -> C) `(f : A -> G1 (T B)),
+      fmap G1 (fmap T g) ∘ bindt T G1 f = bindt T G1 (fmap G1 (fmap T g) ∘ f).
+  Proof.
+    intros. unfold fmap at 2. unfold_ops @Fmap_Bindt.
+    rewrite (ktm_bindt2 T _ _ _ (G1 := G1) (G2 := fun A => A)).
+    fequal. rewrite Mult_compose_identity1.
+    reflexivity.
+  Qed.
+
+  Lemma bindt_fmap : forall `(g : B -> G2 (T C)) `(f : A -> B),
+      bindt T G2 g ∘ fmap T f = bindt T G2 (g ∘ f).
+  Proof.
+    intros. unfold fmap. unfold_ops @Fmap_Bindt.
+    change_left (fmap (fun A => A) (bindt T G2 g) ∘ bindt T (fun A => A) (ret T ∘ f)).
+    rewrite (ktm_bindt2 T _ _ _ (G1 := fun A => A) (G2 := G2)).
+    fequal. now rewrite Mult_compose_identity2.
+    rewrite kcompose_tm30; auto.
+  Qed.
+
   (** ** Composition with <<traverse>> *)
   (******************************************************************************)
   Lemma traverse_bindt : forall `(g : B -> G2 C) `(f : A -> G1 (T B)),

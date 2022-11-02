@@ -37,6 +37,7 @@ Import Operations.
 Section Kleisli_composition.
 
     Context
+      (T : Type -> Type)
       `{Decorated.Monad.Monad W T}.
 
     (** *** Lifting context-agnostic substitutions *)
@@ -118,6 +119,7 @@ Module Instances.
   Section with_monad.
 
     Context
+      (T : Type -> Type)
       `{Decorated.Monad.Monad W T}.
 
     #[export] Instance: Kleisli.Monad.Monad T.
@@ -126,7 +128,7 @@ Module Instances.
       - intros. now rewrite (kmond_bindd0 T).
       - intros. now rewrite (kmond_bindd1 T).
       - intros. rewrite (kmond_bindd2 T).
-        rewrite kcompose_extract.
+        rewrite (kcompose_extract T).
         reflexivity.
     Qed.
 
@@ -135,7 +137,7 @@ Module Instances.
       constructor; unfold_ops @Fmapd_Bindd.
       - intros. now rewrite (kmond_bindd1 T).
       - intros. rewrite (kmond_bindd2 T).
-        rewrite kcompose_ret.
+        rewrite (kcompose_ret T).
         reflexivity.
     Qed.
 
@@ -147,8 +149,9 @@ End Instances.
 (******************************************************************************)
 Section Kleisli_composition.
 
-    Context
-      `{Decorated.Monad.Monad W T}.
+  Context
+    (T : Type -> Type)
+    `{Decorated.Monad.Monad W T}.
 
   (** *** Composition with <<bind>> *)
   (******************************************************************************)
@@ -157,7 +160,7 @@ Section Kleisli_composition.
   Proof.
     intros. unfold_ops @Bind_Bindd.
     rewrite (kmond_bindd2 T).
-    rewrite dm_kleisli_star2.
+    rewrite (dm_kleisli_star2 T).
     reflexivity.
   Qed.
 
@@ -167,7 +170,7 @@ Section Kleisli_composition.
   Proof.
     introv. unfold_ops @Bind_Bindd.
     rewrite (kmond_bindd2 T).
-    now rewrite dm_kleisli_star3.
+    now rewrite (dm_kleisli_star3 T).
   Qed.
 
   (** *** Composition with <<fmapd>> *)
@@ -177,7 +180,7 @@ Section Kleisli_composition.
   Proof.
     introv. unfold_ops @Fmapd_Bindd.
     rewrite (kmond_bindd2 T).
-    rewrite dm_kleisli_star1.
+    rewrite (dm_kleisli_star1 T).
     reflexivity.
   Qed.
 
@@ -186,7 +189,7 @@ Section Kleisli_composition.
   Proof.
     intros. unfold_ops @Fmapd_Bindd.
     rewrite (kmond_bindd2 T).
-    rewrite dm_kleisli_star4.
+    rewrite (dm_kleisli_star4 T).
     reflexivity.
   Qed.
 
@@ -198,7 +201,7 @@ Section Kleisli_composition.
     intros. unfold_ops @Fmap_Bindd.
     rewrite (kmond_bindd2 T).
     reassociate ->.
-    rewrite dm_kleisli_star1.
+    rewrite (dm_kleisli_star1 T).
     rewrite (fmap_to_cobind (W ×)).
     reflexivity.
   Qed.
@@ -208,7 +211,7 @@ Section Kleisli_composition.
   Proof.
     intros. unfold_ops @Fmap_Bindd.
     rewrite (kmond_bindd2 T).
-    rewrite dm_kleisli_star2.
+    rewrite (dm_kleisli_star2 T).
     reflexivity.
   Qed.
 

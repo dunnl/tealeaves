@@ -85,9 +85,9 @@ Section with_monad.
       unfold_compose_in_compose.
       rewrite (Instances.kmond_bindd2_T W T). (* left *)
       rewrite (Instances.kmond_bindd2_T W T). (* right *)
-      rewrite (Decorated.Monad.DerivedInstances.dm_kleisli_star2).
+      rewrite (Decorated.Monad.DerivedInstances.dm_kleisli_star2 T).
       reassociate -> near (extract (W ×)).
-      rewrite (DerivedInstances.dm_kleisli_star1).
+      rewrite (DerivedInstances.dm_kleisli_star1 T).
       fequal.
       rewrite cokleisli_id_l.
       reflexivity.
@@ -156,7 +156,7 @@ Section with_monad.
     rewrite (kmond_bindd2 T).
     fequal.
     change (ret T) with (ret T ∘ (@id (W * A))) at 2.
-    rewrite dm_kleisli_star1.
+    rewrite (dm_kleisli_star1 T).
     change (fmap (fun A => A) ?f) with f.
     rewrite (natural (ϕ := @ret T _ )).
     change (fmap (fun A => A) ?f) with f.
@@ -171,7 +171,7 @@ Section with_monad.
     unfold_ops @Fmap_Binddt.
     do 2 change (binddt T (fun A0 : Type => A0) ?f) with (bindd T (T := T) f).
     rewrite (kmond_bindd2 T).
-    rewrite dm_kleisli_star2.
+    rewrite (dm_kleisli_star2 T).
     rewrite Instances.kcompose01.
     change (ret T (A := W * A)) with (ret T ∘ @id (W * A)).
     reassociate <-. change (?g ∘ id) with g.
@@ -192,9 +192,9 @@ Section with_monad.
       rewrite (kmond_bindd2 T).
       fequal.
       change (ret T (A := W * A)) with (ret T ∘ @id (W * A)).
-      rewrite dm_kleisli_star5.
+      rewrite (dm_kleisli_star5 T).
       reassociate -> near (extract (W ×)).
-      rewrite dm_kleisli_star1.
+      rewrite (dm_kleisli_star1 T).
       now rewrite cokcompose_misc1.
   Qed.
 
@@ -226,11 +226,11 @@ Section with_monad.
     unfold_compose_in_compose.
     repeat rewrite (kmond_bindd2 T).
     fequal. reassociate -> near (extract (W ×)).
-    rewrite dm_kleisli_star1.
-    rewrite dm_kleisli_star1.
+    rewrite (dm_kleisli_star1 T).
+    rewrite (dm_kleisli_star1 T).
     rewrite cokcompose_misc1.
     rewrite cokleisli_id_l.
-    rewrite dm_kleisli_star2.
+    rewrite (dm_kleisli_star2 T).
     ext [w t].
     unfold kcompose.
     rewrite (kmon_bind0 T).
@@ -268,8 +268,7 @@ Section with_monad.
     - intros.
       unfold_ops @Fmap_compose @Dist_Binddt @Fmap_Binddt.
       change_left (fmap G (fmap T f) ∘ bindt T G (fmap G (ret T))).
-      change (@Fmap_Binddt T W _ _) with (@Operation.Fmap_Bindt T _ _).
-      rewrite (fmap_bindt T G); [|assumption].
+      rewrite (fmap_bindt T G).
       rewrite (fun_fmap_fmap G).
       (* RHS *)
       change_right (
@@ -292,7 +291,6 @@ Section with_monad.
     unfold_ops @Dist_Binddt @Fmap_Binddt.
     change (fmapdt T G2 (extract (prod W)) ∘ fmap T (ϕ A)
             = ϕ (T A) ∘ traverse T G1 (@id (G1 A))).
-    About DerivedInstances.Operations.Fmap_Fmapdt.
     change (@Fmap_Binddt T W H0 H)
       with (@DerivedInstances.Operations.Fmap_Fmapdt T W _).
     rewrite (Instances.fmapdt_fmap T G2 _ _ _).

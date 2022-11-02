@@ -24,8 +24,9 @@ Section operations.
 
   Class Binddt :=
     binddt :
-      forall (G : Type -> Type) (A B : Type)
-        `{Fmap G} `{Pure G} `{Mult G},
+      forall (G : Type -> Type)
+        `{Fmap G} `{Pure G} `{Mult G}
+        (A B : Type),
         (W * A -> G (T B)) -> F A -> G (F B).
 
 End operations.
@@ -69,7 +70,7 @@ Section class.
 End class.
 
 #[global] Arguments binddt {W}%type_scope {T}%function_scope (F)%function_scope
-  {Binddt} G%function_scope {A B}%type_scope {H H0 H1} _%function_scope _.
+  {Binddt} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 
 Module Notations.
 

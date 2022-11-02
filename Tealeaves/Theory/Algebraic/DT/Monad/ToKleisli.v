@@ -37,7 +37,7 @@ Module Operation.
         `{Fmap T} `{Decorate W T} `{Dist T} `{Join T}.
 
     #[export] Instance Binddt_alg : Binddt W T T :=
-      fun G A B `{Fmap G} `{Pure G} `{Mult G}
+      fun G `{Fmap G} `{Pure G} `{Mult G} A B
         (f : W * A -> G (T B)) =>
         fmap G (join T) ∘ dist T G ∘ fmap T f ∘ dec T.
 
