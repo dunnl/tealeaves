@@ -145,6 +145,7 @@ Tealeaves/Theory/Kleisli/Traversable/Monad/Properties.v
 Tealeaves/Theory/Kleisli/Traversable/Monad/ToFunctor.v
 Tealeaves/Theory/Kleisli/Traversable/Monad/DerivedInstances.v
 Tealeaves/Theory/Kleisli/Traversable/Monad/Container.v
+Tealeaves/Theory/Kleisli/DT/Functor/ToFunctor.v
 Tealeaves/Theory/Kleisli/DT/Functor/DerivedInstances.v
 Tealeaves/Theory/Kleisli/DT/Functor/Container.v
 Tealeaves/Theory/Kleisli/DT/Monad/ToFunctor.v

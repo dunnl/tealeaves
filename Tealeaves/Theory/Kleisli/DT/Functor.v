@@ -6,9 +6,11 @@ From Tealeaves Require Export
 
 Module Derived.
   Module Operations.
+    Include Theory.Kleisli.DT.Functor.ToFunctor.Operation.
     Include Theory.Kleisli.DT.Functor.DerivedInstances.Operations.
   End Operations.
   Module Instances.
+    Include Theory.Kleisli.DT.Functor.ToFunctor.Instance.
     Include Theory.Kleisli.DT.Functor.DerivedInstances.Instances.
   End Instances.
   Module ToAlgebraic.
