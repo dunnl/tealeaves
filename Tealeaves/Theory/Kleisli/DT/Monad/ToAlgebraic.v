@@ -292,8 +292,8 @@ Section with_monad.
     change (fmapdt T G2 (extract (prod W)) ∘ fmap T (ϕ A)
             = ϕ (T A) ∘ traverse T G1 (@id (G1 A))).
     change (@Fmap_Binddt T W H0 H)
-      with (@DerivedInstances.Operations.Fmap_Fmapdt T W _).
-    rewrite (Instances.fmapdt_fmap T G2 _ _ _).
+      with (@Operation.Fmap_Fmapdt T W _).
+    rewrite (fmapdt_fmap T G2).
     rewrite (trf_traverse_morphism T).
     rewrite <- (natural (ϕ := @extract (W ×) _)).
     reflexivity.

@@ -30,6 +30,8 @@ Section with_functor.
   (** ** Expressing operations with <<runBatch>> *)
   (******************************************************************************)
 
+  Import DT.Functor.ToFunctor.Operation.
+  Import DT.Functor.ToFunctor.Instance.
   Import DT.Functor.DerivedInstances.Operations.
   Import DT.Functor.DerivedInstances.Instances.
 
@@ -92,6 +94,8 @@ Section with_functor.
     (T : Type -> Type)
     `{DT.Functor.DecoratedTraversableFunctor W T}.
 
+  Import DT.Functor.ToFunctor.Operation.
+  Import DT.Functor.ToFunctor.Instance.
   Import DT.Functor.DerivedInstances.Operations.
   Import DT.Functor.DerivedInstances.Instances.
 
@@ -109,7 +113,8 @@ Section with_functor.
       intros.
       change_right (fmap (B := T B) (const M) (fmap T exfalso)
                       ∘ fmapdt (B := False) T (const M) (f : W * A -> const M False)).
-      rewrite (fmap_fmapdt T (const M) (fun A => A)). fequal.
+      rewrite (fmap_fmapdt T (const M)).
+      reflexivity.
     Qed.
 
     Lemma fmapdt_constant_applicative2 : forall (fake1 fake2 : Type),
@@ -223,6 +228,8 @@ Section tolistd.
   #[local] Notation "x ∈d t" :=
     (tosetd t x) (at level 50) : tealeaves_scope.
 
+  Import DT.Functor.ToFunctor.Operation.
+  Import DT.Functor.ToFunctor.Instance.
   Import DT.Functor.DerivedInstances.Operations.
   Import DT.Functor.DerivedInstances.Instances.
 

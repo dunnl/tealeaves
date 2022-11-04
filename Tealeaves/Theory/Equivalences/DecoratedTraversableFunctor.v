@@ -18,13 +18,13 @@ Module AlgebraicToKleisli.
 
   #[local] Instance fmapdt' : Fmapdt E T := ToKleisli.Operation.Fmapdt_alg E T.
 
-  Definition fmap' : Fmap T := ToAlgebraic.Operations.Fmap_Fmapdt E T.
+  Definition fmap' : Fmap T := Operation.Fmap_Fmapdt T.
   Definition decorate' : Decorate E T := ToAlgebraic.Operations.Decorate_Fmapdt E T.
   Definition dist' : Dist T := ToAlgebraic.Operations.Dist_Fmapdt E T.
 
   Goal fmapT = fmap'.
   Proof.
-    unfold fmap'. unfold_ops @Operations.Fmap_Fmapdt.
+    unfold fmap'. unfold_ops @Operation.Fmap_Fmapdt.
     unfold fmapdt, fmapdt'.
     unfold_ops @Operation.Fmapdt_alg.
     ext A B f.
@@ -65,7 +65,7 @@ Module KleisliToAlgebraic.
     `{fmapdtT : Fmapdt E T}
     `{@Classes.Kleisli.DT.Functor.DecoratedTraversableFunctor E T _}.
 
-  #[local] Instance fmap' : Fmap T := ToAlgebraic.Operations.Fmap_Fmapdt E T.
+  #[local] Instance fmap' : Fmap T := Operation.Fmap_Fmapdt T.
   #[local] Instance dist' : Dist T := ToAlgebraic.Operations.Dist_Fmapdt E T.
   #[local] Instance decorate' : Decorate E T := ToAlgebraic.Operations.Decorate_Fmapdt E T.
 
@@ -80,15 +80,15 @@ Module KleisliToAlgebraic.
     unfold fmap, fmap', dist, dist', dec, decorate'.
     ext A B f.
     unfold_ops @Operations.Dist_Fmapdt.
-    unfold_ops @Operations.Fmap_Fmapdt.
+    unfold_ops @Operation.Fmap_Fmapdt.
     unfold_ops @Operations.Decorate_Fmapdt.
     change_right (fmapdt T G (extract (prod E)) ∘
                     fmap T f ∘
                     fmapd T id).
     unfold fmap'.
-    change (@Operations.Fmap_Fmapdt E T) with (@Fmap_Fmapdt T E).
-    rewrite (Instances.fmapdt_fmap T G _ _ _).
-    rewrite (Instances.fmapdt_fmapd T G _ _ _).
+    change (@Operation.Fmap_Fmapdt T) with (@Operation.Fmap_Fmapdt T).
+    rewrite (fmapdt_fmap T G).
+    rewrite (fmapdt_fmapd T G).
     fequal. ext [e a]. reflexivity.
   Qed.
 

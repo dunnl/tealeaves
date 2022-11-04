@@ -89,7 +89,7 @@ Section with_monad.
       fmap T f = runBatch f ∘ iterate T B.
   Proof.
     intros.
-    change (@Fmap_Binddt T W H0 H) with (@DerivedInstances.Operations.Fmap_Fmapdt T _ _).
+    change (@Fmap_Binddt T W H0 H) with (@Operation.Fmap_Fmapdt T _ _).
     change (@Traverse_Binddt W T H H0) with (@DerivedInstances.Operations.Traverse_Fmapdt T _ _).
     apply (fmap_to_runBatch T).
   Qed.

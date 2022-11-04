@@ -43,10 +43,6 @@ Module Operations.
       := fun A B f => binddt T (fun A => A) (ret T ∘ f).
     #[export] Instance Traverse_Binddt: Traverse T
       := fun G _ _ _ A B f => binddt T G (fmap G (ret T) ∘ f ∘ extract (W ×)).
-    (*
-    #[export] Instance Fmap_Binddt: Fmap T
-      := fun A B f => binddt T (fun A => A) (ret T ∘ f ∘ extract (W ×)).
-     *)
   End with_monad.
 End Operations.
 
@@ -972,7 +968,7 @@ Section derived_operations_composition.
   Proof.
     introv.
     change (@Fmapd_Binddt W T H H0) with (@Operations.Fmapd_Fmapdt T W _).
-    rewrite (DT.Functor.DerivedInstances.Instances.fmapd_fmapdt T G1).
+    rewrite (DT.Functor.DerivedInstances.fmapd_fmapdt T G1).
     reflexivity.
   Qed.
   (* traverse_fmapdt *)
@@ -987,7 +983,7 @@ Section derived_operations_composition.
   Proof.
     introv.
     change (@Fmapd_Binddt W T H H0) with (@Operations.Fmapd_Fmapdt T W _).
-    rewrite (DT.Functor.DerivedInstances.Instances.fmapdt_fmapd T G2 G2).
+    rewrite (DT.Functor.DerivedInstances.fmapdt_fmapd T G2).
     reflexivity.
   Qed.
 

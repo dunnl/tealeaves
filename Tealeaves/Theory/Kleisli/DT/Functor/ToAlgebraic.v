@@ -18,13 +18,14 @@ Module Operations.
       (T : Type -> Type)
       `{Fmapdt E T}.
 
-    #[export] Instance Fmap_Fmapdt: Fmap T := fun A B f => fmapdt T (fun A => A) (f ∘ extract (E ×)).
     #[export] Instance Dist_Fmapdt: Dist T := fun G _ _ _ A => fmapdt T G (extract (E ×)).
     #[export] Instance Decorate_Fmapdt: Decorate E T := fun A => fmapdt T (fun A => A) (@id ((E ×) A)).
 
   End with_kleisli.
 End Operations.
 
+Import ToFunctor.Operation.
+Import ToFunctor.Instance.
 Import Operations.
 
 Module Instances.
@@ -47,7 +48,7 @@ Module Instances.
       change_left (fmapd T (@id (E * (E * A))) ∘ fmapd T id).
       rewrite (dfun_fmapd2 E T).
       change_right (fmap T (coμ (prod E)) ∘ fmapd T (@id (E * A))).
-      rewrite (fmap_fmapd T (fun A => A) (fun A => A)).
+      rewrite (fmap_fmapd T).
       fequal. now ext [e a].
     Qed.
 
@@ -99,7 +100,7 @@ Module Instances.
       change (@fmapdt E T _ (fun A0 : Type => A0) _ _ _)
         with (@fmapd E T _).
       rewrite (fmapd_fmapdt T G).
-      rewrite (fmapdt_fmapd T G _ _ _).
+      rewrite (fmapdt_fmapd T G).
       rewrite (cokleisli_id_l).
       rewrite (cobind_id (E ×)).
       unfold id. fequal.
@@ -117,7 +118,7 @@ Module Instances.
       change (@fmapdt E T _ (fun A0 : Type => A0) _ _ _)
         with (@fmapd E T _).
       inversion H1.
-      rewrite (fmapdt_fmapd T G2 _ _ _).
+      rewrite (fmapdt_fmapd T G2).
       rewrite <- (kdtfun_morph E T).
       rewrite (cokleisli_id_l).
       reflexivity.
@@ -155,8 +156,8 @@ Module Instances.
       change (@fmapdt E T _ (fun A0 : Type => A0) _ _ _)
         with (@fmapd E T _).
       rewrite (fmapd_fmapdt T G).
-      rewrite (fmapdt_fmapd T G _ _ _).
-      rewrite (fmapdt_fmapd T G _ _ _).
+      rewrite (fmapdt_fmapd T G).
+      rewrite (fmapdt_fmapd T G).
       rewrite (cobind_id (E ×)).
       rewrite (fun_fmap_id G).
       fequal. ext [e a].

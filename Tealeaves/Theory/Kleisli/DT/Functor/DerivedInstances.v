@@ -124,7 +124,7 @@ Section composition.
   Context
     (T : Type -> Type)
     `{DecoratedTraversableFunctor W T}
-    {G1 G2 : Type -> Type}
+    (G1 G2 : Type -> Type)
     `{Applicative G1}
     `{Applicative G2}.
 
