@@ -18,7 +18,7 @@ From Tealeaves.Examples Require Import
 
 Implicit Types (x : atom).
 
-Import SetlikeFunctor.Notations.
+Import Classes.Algebraic.Setlike.Functor.Notations.
 Import DTMContainer.Notations.
 Import List.ListNotations.
 Import LN.AssocList.Notations.
@@ -172,7 +172,7 @@ Proof.
     + assumption.
     + introv Hin.
       enough (lemma : ~ e ∈ (bind list (fun '(x, t) => free typ KType t) Γ)).
-      { rewrite (SetlikeMonad.in_bind_iff list) in lemma.
+      { rewrite (in_bind_list_iff) in lemma.
         rewrite in_range_iff in Hin. destruct Hin as [x Hin].
         contradict lemma. exists (x, t0). split; [assumption|].
         now apply free_iff_freeset. }

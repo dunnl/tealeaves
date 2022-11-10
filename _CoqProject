@@ -225,3 +225,7 @@ LN/Multisorted/Operations.v
 LN/Multisorted/Theory.v
 
 # SYSTEM F
+SystemF/Language.v
+SystemF/Rewriting.v
+SystemF/Contexts.v
+SystemF/Theory.v

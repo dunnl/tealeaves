@@ -1,7 +1,8 @@
 From Tealeaves Require Import
      Functors.List
      LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Multisorted.Operations.
+     LN.Multisorted.Operations
+     Classes.Kleisli.Decorated.Monad. (* prepromote *)
 
 From Tealeaves.Multisorted Require Import
      Classes.DTM
@@ -10,8 +11,8 @@ From Tealeaves.Multisorted Require Import
 
 Import AtomSet.Notations.
 Import Tealeaves.Classes.Monoid.Notations.
-Import Tealeaves.Util.Product.Notations.
-Import Tealeaves.Classes.Applicative.Notations.
+Import Tealeaves.Data.Product.Notations.
+Import Tealeaves.Classes.Algebraic.Applicative.Notations.
 Import Multisorted.Classes.DTM.Notations.
 Import List.ListNotations.
 
@@ -20,17 +21,19 @@ Open Scope list_scope.
 Open Scope tealeaves_scope.
 Open Scope tealeaves_multi_scope.
 
+#[local] Generalizable Variables F G A B C ϕ.
+
 (** * The index [K] *)
 (******************************************************************************)
 Inductive K2 : Type := KType | KTerm.
 
-Instance Keq : EqDec K2 eq.
+#[export] Instance Keq : EqDec K2 eq.
 Proof.
   change (forall x y : K2, {x = y} + {x <> y}).
   decide equality.
 Defined.
 
-Instance I2 : Index := {| K := K2 |}.
+#[export] Instance I2 : Index := {| K := K2 |}.
 
 (** * System F syntax and typeclass instances *)
 (******************************************************************************)
@@ -243,7 +246,7 @@ Section operations.
     | ty_ar t1 t2 =>
       pure F (ty_ar) <⋆> (bind_type f t1) <⋆> (bind_type f t2)
     | ty_univ body =>
-      pure F (ty_univ) <⋆> (bind_type (fun k => f k ∘ incr [KType]) body)
+      pure F (ty_univ) <⋆> (bind_type (fun k => prepromote [KType] (f k)) body)
     end.
 
   Fixpoint bind_term (f : forall (k : K), list K2 * A -> F (SystemF k B)) (t : term A) : F (term B) :=
@@ -264,15 +267,15 @@ Section operations.
 
 End operations.
 
-Instance MReturn_SystemF : MReturn SystemF :=
+#[export] Instance MReturn_SystemF : MReturn SystemF :=
   fun A k => match k with
           | KType => ty_v
           | KTerm => tm_var
           end.
 
-Instance MBind_type : MBind (list K2) SystemF typ := @bind_type.
-Instance MBind_term : MBind (list K2) SystemF term := @bind_term.
-Instance MBind_SystemF : forall k, MBind (list K2) SystemF (SystemF k) :=
+#[export] Instance MBind_type : MBind (list K2) SystemF typ := @bind_type.
+#[export] Instance MBind_term : MBind (list K2) SystemF term := @bind_term.
+#[export] Instance MBind_SystemF : forall k, MBind (list K2) SystemF (SystemF k) :=
   ltac:(intros [|]; typeclasses eauto).
 
 (** ** Example computations *)
@@ -377,8 +380,9 @@ Proof.
     + apply IHt1.
     + apply IHt2.
   - cbn. fequal.
-    + rewrite <- mbinddt_inst_law1_case12.
-      apply IHt.
+    unfold prepromote.
+    rewrite <- mbinddt_inst_law1_case12.
+    apply IHt.
 Qed.
 
 Lemma mbinddt_mret_term : forall (A : Type),
@@ -631,25 +635,25 @@ Qed.
 
 (** ** <<DTPreModule>> instances *)
 (******************************************************************************)
-Instance DTP_typ: DTPreModule (list K2) typ SystemF :=
+#[export] Instance DTP_typ: DTPreModule (list K2) typ SystemF :=
   {| dtp_mbinddt_mret := @mbinddt_mret_typ;
      dtp_mbinddt_mbinddt := @mbinddt_mbinddt_typ;
      dtp_mbinddt_morphism := @mbinddt_morphism_typ;
   |}.
 
-Instance DTP_term: DTPreModule (list K2) term SystemF :=
+#[export] Instance DTP_term: DTPreModule (list K2) term SystemF :=
   {| dtp_mbinddt_mret := @mbinddt_mret_term;
      dtp_mbinddt_mbinddt := @mbinddt_mbinddt_term;
      dtp_mbinddt_morphism := @mbinddt_morphism_term;
   |}.
 
-Instance: forall k, DTPreModule (list K2) (SystemF k) SystemF :=
+#[export] Instance: forall k, DTPreModule (list K2) (SystemF k) SystemF :=
   fun k => match k with
         | KType => DTP_typ
         | KTerm => DTP_term
         end.
 
-Instance: DTM (list K2) SystemF :=
+#[export] Instance: DTM (list K2) SystemF :=
   {| dtm_mbinddt_comp_mret := mbinddt_comp_mret_F;
   |}.
 
@@ -657,7 +661,7 @@ Instance: DTM (list K2) SystemF :=
 (******************************************************************************)
 Reserved Notation "Δ ; Γ ⊢ t : τ" (at level 90, t at level 99).
 
-Import Tealeaves.Classes.SetlikeFunctor.Notations.
+Import Tealeaves.Classes.Algebraic.Setlike.Functor.Notations.
 Export LN.AtomSet.Notations.
 Export LN.AssocList.Notations.
 

@@ -1,7 +1,8 @@
 From Tealeaves Require Import
-     Functors.List
-     LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Multisorted.Operations.
+  Functors.List
+  Functors.Writer
+  LN.Leaf LN.Atom LN.AtomSet LN.AssocList
+  LN.Multisorted.Operations.
 
 From Tealeaves.Multisorted Require Import
      Classes.DTM
@@ -14,11 +15,11 @@ From Tealeaves.Examples Require Import
 Import DTMContainer.Notations.
 Import AtomSet.Notations.
 Import Tealeaves.Classes.Monoid.Notations.
-Import Tealeaves.Util.Product.Notations.
-Import Tealeaves.Classes.Applicative.Notations.
+Import Tealeaves.Data.Product.Notations.
+Import Tealeaves.Classes.Algebraic.Applicative.Notations.
 Import Multisorted.Classes.DTM.Notations.
 Import List.ListNotations.
-Import SetlikeFunctor.Notations.
+Import Algebraic.Setlike.Functor.Notations.
 
 Open Scope set_scope.
 Open Scope list_scope.
@@ -27,6 +28,8 @@ Open Scope tealeaves_multi_scope.
 
 Create HintDb sysf_rw.
 Tactic Notation "simpl_F" := autorewrite with sysf_rw.
+
+#[local] Generalizable Variables F G A B C ϕ.
 
 Lemma filterk_incr : forall (A : Type) (k : K) (l : list (list K2 * (K * A))) (inc : list K2),
     filterk k (fmap list (incr inc) l) = fmap list (incr inc) (filterk k l).
@@ -74,7 +77,7 @@ Section rw_mbinddt_type.
 
 End rw_mbinddt_type.
 
-Hint Rewrite @rw_mbinddt_type1 @rw_mbinddt_type2 @rw_mbinddt_type3 @rw_mbinddt_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_mbinddt_type1 @rw_mbinddt_type2 @rw_mbinddt_type3 @rw_mbinddt_type4 : sysf_rw.
 
 (** *** <<mfmapdt>> *)
 (******************************************************************************)
@@ -102,7 +105,7 @@ Section rw_mfmapdt_type.
 
 End rw_mfmapdt_type.
 
-Hint Rewrite @rw_mfmapdt_type1 @rw_mfmapdt_type2 @rw_mfmapdt_type3 @rw_mfmapdt_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_mfmapdt_type1 @rw_mfmapdt_type2 @rw_mfmapdt_type3 @rw_mfmapdt_type4 : sysf_rw.
 
 (** *** <<mbindd>> *)
 (******************************************************************************)
@@ -126,7 +129,7 @@ Section rw_mbindd_type.
 
 End rw_mbindd_type.
 
-Hint Rewrite @rw_mbindd_type1 @rw_mbindd_type2 @rw_mbindd_type3 @rw_mbindd_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_mbindd_type1 @rw_mbindd_type2 @rw_mbindd_type3 @rw_mbindd_type4 : sysf_rw.
 
 (** *** <<mbind>> *)
 (******************************************************************************)
@@ -152,7 +155,7 @@ Section rw_mbind_type.
 
 End rw_mbind_type.
 
-Hint Rewrite @rw_mbind_type1 @rw_mbind_type2 @rw_mbind_type3 @rw_mbind_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_mbind_type1 @rw_mbind_type2 @rw_mbind_type3 @rw_mbind_type4 : sysf_rw.
 
 (** *** <<kbindd>> with <<KType>> *)
 (******************************************************************************)
@@ -179,7 +182,7 @@ Section rw_kbindd_type.
 
 End rw_kbindd_type.
 
-Hint Rewrite @rw_kbindd_KType_type1 @rw_kbindd_KType_type2 @rw_kbindd_KType_type3 @rw_kbindd_KType_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_kbindd_KType_type1 @rw_kbindd_KType_type2 @rw_kbindd_KType_type3 @rw_kbindd_KType_type4 : sysf_rw.
 
 (** *** <<kbindd>> with <<KTerm>> *)
 (******************************************************************************)
@@ -206,7 +209,7 @@ Section rw_kbindd_type.
 
 End rw_kbindd_type.
 
-Hint Rewrite @rw_kbindd_KTerm_type1 @rw_kbindd_KTerm_type2 @rw_kbindd_KTerm_type3 @rw_kbindd_KTerm_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_kbindd_KTerm_type1 @rw_kbindd_KTerm_type2 @rw_kbindd_KTerm_type3 @rw_kbindd_KTerm_type4 : sysf_rw.
 
 (** *** <<kbind>> with <<KType>> *)
 (******************************************************************************)
@@ -232,7 +235,7 @@ Section rw_kbind_type.
 
 End rw_kbind_type.
 
-Hint Rewrite @rw_kbind_KType_type1 @rw_kbind_KType_type2 @rw_kbind_KType_type3 @rw_kbind_KType_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_kbind_KType_type1 @rw_kbind_KType_type2 @rw_kbind_KType_type3 @rw_kbind_KType_type4 : sysf_rw.
 
 (** *** <<kbind>> with <<KTerm>> *)
 (******************************************************************************)
@@ -258,7 +261,7 @@ Section rw_kbind_type.
 
 End rw_kbind_type.
 
-Hint Rewrite @rw_kbind_KTerm_type1 @rw_kbind_KTerm_type2 @rw_kbind_KTerm_type3 @rw_kbind_KTerm_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_kbind_KTerm_type1 @rw_kbind_KTerm_type2 @rw_kbind_KTerm_type3 @rw_kbind_KTerm_type4 : sysf_rw.
 
 (** ** List and occurrence operations *)
 (******************************************************************************)
@@ -292,7 +295,7 @@ Section rw_tomlistd_type.
 
 End rw_tomlistd_type.
 
-Hint Rewrite @rw_tomlistd_type1 @rw_tomlistd_type2 @rw_tomlistd_type3 @rw_tomlistd_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_tomlistd_type1 @rw_tomlistd_type2 @rw_tomlistd_type3 @rw_tomlistd_type4 : sysf_rw.
 
 (** *** <<toklistd>> with <<KType>> *)
 (******************************************************************************)
@@ -315,7 +318,7 @@ Section rw_toklistd_KType_type.
 
 End rw_toklistd_KType_type.
 
-Hint Rewrite @rw_toklistd_KType_type1 @rw_toklistd_KType_type2 @rw_toklistd_KType_type3 @rw_toklistd_KType_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_toklistd_KType_type1 @rw_toklistd_KType_type2 @rw_toklistd_KType_type3 @rw_toklistd_KType_type4 : sysf_rw.
 
 (** *** <<toklistd>> with <<KTerm>> *)
 (******************************************************************************)
@@ -338,7 +341,7 @@ Section rw_toklistd_KTerm_type.
 
 End rw_toklistd_KTerm_type.
 
-Hint Rewrite @rw_toklistd_KTerm_type1 @rw_toklistd_KTerm_type2 @rw_toklistd_KTerm_type3 @rw_toklistd_KTerm_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_toklistd_KTerm_type1 @rw_toklistd_KTerm_type2 @rw_toklistd_KTerm_type3 @rw_toklistd_KTerm_type4 : sysf_rw.
 
 (** *** <<tomlist>> *)
 (******************************************************************************)
@@ -364,7 +367,7 @@ Section rw_tomlist_type.
 
 End rw_tomlist_type.
 
-Hint Rewrite @rw_tomlist_type1 @rw_tomlist_type2 @rw_tomlist_type3 @rw_tomlist_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_tomlist_type1 @rw_tomlist_type2 @rw_tomlist_type3 @rw_tomlist_type4 : sysf_rw.
 
 (** *** <<toklist>> with <<KType>> *)
 (******************************************************************************)
@@ -389,7 +392,7 @@ Section rw_toklist_KType_type.
 
 End rw_toklist_KType_type.
 
-Hint Rewrite @rw_toklist_KType_type1 @rw_toklist_KType_type2 @rw_toklist_KType_type3 @rw_toklist_KType_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_toklist_KType_type1 @rw_toklist_KType_type2 @rw_toklist_KType_type3 @rw_toklist_KType_type4 : sysf_rw.
 
 (** *** <<toklist>> with <<KTerm>> *)
 (******************************************************************************)
@@ -414,7 +417,7 @@ Section rw_toklist_KTerm_type.
 
 End rw_toklist_KTerm_type.
 
-Hint Rewrite @rw_toklist_KTerm_type1 @rw_toklist_KTerm_type2 @rw_toklist_KTerm_type3 @rw_toklist_KTerm_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_toklist_KTerm_type1 @rw_toklist_KTerm_type2 @rw_toklist_KTerm_type3 @rw_toklist_KTerm_type4 : sysf_rw.
 
 Corollary rw_toklist_KTerm_type : forall A (τ : typ A), toklist typ KTerm τ = nil.
 Proof.
@@ -465,7 +468,7 @@ Section rw_tomsetd_type.
 
 End rw_tomsetd_type.
 
-Hint Rewrite @rw_tomsetd_type1 @rw_tomsetd_type2 @rw_tomsetd_type3 @rw_tomsetd_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_tomsetd_type1 @rw_tomsetd_type2 @rw_tomsetd_type3 @rw_tomsetd_type4 : sysf_rw.
 
 Corollary rw_tomsetd_type_KTerm : forall w A a (τ : typ A), (w, (KTerm, a)) ∈md τ <-> False.
 Proof.
@@ -500,7 +503,7 @@ Section rw_tomset_type.
 
 End rw_tomset_type.
 
-Hint Rewrite @rw_tomset_type1 @rw_tomset_type2 @rw_tomset_type3 @rw_tomset_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_tomset_type1 @rw_tomset_type2 @rw_tomset_type3 @rw_tomset_type4 : sysf_rw.
 
 (** ** <<free>> and <<freeset>> *)
 (******************************************************************************)
@@ -536,7 +539,7 @@ Section rw_free_KType_type.
 
 End rw_free_KType_type.
 
-Hint Rewrite rw_free_KType_type11 rw_free_KType_type12 rw_free_KType_type2 rw_free_KType_type3 rw_free_KType_type4 : sysf_rw.
+#[export] Hint Rewrite rw_free_KType_type11 rw_free_KType_type12 rw_free_KType_type2 rw_free_KType_type3 rw_free_KType_type4 : sysf_rw.
 
 (** *** <<freeset>> with <<KType>> *)
 (******************************************************************************)
@@ -569,7 +572,7 @@ Section rw_freeset_KType_type.
 
 End rw_freeset_KType_type.
 
-Hint Rewrite rw_freeset_KType_type11 rw_freeset_KType_type12 rw_freeset_KType_type2 rw_freeset_KType_type3 rw_freeset_KType_type4 : sysf_rw.
+#[export] Hint Rewrite rw_freeset_KType_type11 rw_freeset_KType_type12 rw_freeset_KType_type2 rw_freeset_KType_type3 rw_freeset_KType_type4 : sysf_rw.
 
 (** *** <<free>> with <<KTerm>> *)
 (******************************************************************************)
@@ -598,7 +601,7 @@ Section rw_free_KTerm_type.
 
 End rw_free_KTerm_type.
 
-Hint Rewrite rw_free_KTerm_type11 rw_free_KTerm_type12 rw_free_KTerm_type2 rw_free_KTerm_type3 rw_free_KTerm_type4 : sysf_rw.
+#[export] Hint Rewrite rw_free_KTerm_type11 rw_free_KTerm_type12 rw_free_KTerm_type2 rw_free_KTerm_type3 rw_free_KTerm_type4 : sysf_rw.
 
 Corollary rw_free_KTerm_type : forall (τ : typ leaf), free typ KTerm τ = [].
 Proof.
@@ -639,7 +642,7 @@ Section rw_freeset_KTerm_type.
 
 End rw_freeset_KTerm_type.
 
-Hint Rewrite rw_freeset_KTerm_type11 rw_freeset_KTerm_type12 rw_freeset_KTerm_type2 rw_freeset_KTerm_type3 rw_freeset_KTerm_type4 : sysf_rw.
+#[export] Hint Rewrite rw_freeset_KTerm_type11 rw_freeset_KTerm_type12 rw_freeset_KTerm_type2 rw_freeset_KTerm_type3 rw_freeset_KTerm_type4 : sysf_rw.
 
 Corollary rw_freeset_KTerm_type : forall (τ : typ leaf), freeset typ KTerm τ [=] ∅.
 Proof.
@@ -650,7 +653,7 @@ Proof.
   - autorewrite with sysf_rw. fsetdec.
 Qed.
 
-Hint Rewrite rw_freeset_KTerm_type : sysf_rw.
+#[export] Hint Rewrite rw_freeset_KTerm_type : sysf_rw.
 
 (** ** Locally nameless operations *)
 (******************************************************************************)
@@ -673,7 +676,7 @@ Section rw_open_type.
 
 End rw_open_type.
 
-Hint Rewrite @rw_open_type1 @rw_open_type2 @rw_open_type3 : sysf_rw.
+#[export] Hint Rewrite @rw_open_type1 @rw_open_type2 @rw_open_type3 : sysf_rw.
 
 (** *** <<subst>> with <<KType>> *)
 (******************************************************************************)
@@ -699,7 +702,7 @@ Section rw_subst_KType_type.
 
 End rw_subst_KType_type.
 
-Hint Rewrite @rw_subst_KType_type1 @rw_subst_KType_type2 @rw_subst_KType_type3 @rw_subst_KType_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_subst_KType_type1 @rw_subst_KType_type2 @rw_subst_KType_type3 @rw_subst_KType_type4 : sysf_rw.
 
 (** *** <<subst>> with <<KTerm>> *)
 (******************************************************************************)
@@ -725,7 +728,7 @@ Section rw_subst_KTerm_type.
 
 End rw_subst_KTerm_type.
 
-Hint Rewrite @rw_subst_KTerm_type1 @rw_subst_KTerm_type2 @rw_subst_KTerm_type3 @rw_subst_KTerm_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_subst_KTerm_type1 @rw_subst_KTerm_type2 @rw_subst_KTerm_type3 @rw_subst_KTerm_type4 : sysf_rw.
 
 Corollary rw_subst_KTerm_type : forall (τ : typ leaf) (x : atom) (u : term leaf), subst typ KTerm x u τ = τ.
 Proof.
@@ -734,7 +737,7 @@ Proof.
   - now rewrite IHτ.
 Qed.
 
-Hint Rewrite @rw_subst_KTerm_type : sysf_rw.
+#[export] Hint Rewrite @rw_subst_KTerm_type : sysf_rw.
 
 (** *** <<locally_closed>> with <<KType>> *)
 (******************************************************************************)
@@ -781,7 +784,7 @@ Section rw_lc_KType_type.
 
 End rw_lc_KType_type.
 
-Hint Rewrite @rw_lc_KType_type1 @rw_lc_KType_type2 @rw_lc_KType_type3 @rw_lc_KType_type4 : sysf_rw.
+#[export] Hint Rewrite @rw_lc_KType_type1 @rw_lc_KType_type2 @rw_lc_KType_type3 @rw_lc_KType_type4 : sysf_rw.
 
 (** *** <<locally_closed>> with <<KTerm>> *)
 (******************************************************************************)
@@ -800,7 +803,7 @@ Section rw_lc_KTerm_type.
 
 End rw_lc_KTerm_type.
 
-Hint Rewrite @rw_lc_KTerm_type : sysf_rw.
+#[export] Hint Rewrite @rw_lc_KTerm_type : sysf_rw.
 
 (** *** <<scoped>> with <<KTerm>> *)
 (******************************************************************************)
@@ -867,7 +870,7 @@ Section rw_mbinddt_term.
 
 End rw_mbinddt_term.
 
-Hint Rewrite @rw_mbinddt_term1 @rw_mbinddt_term2 @rw_mbinddt_term3 @rw_mbinddt_term4 @rw_mbinddt_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_mbinddt_term1 @rw_mbinddt_term2 @rw_mbinddt_term3 @rw_mbinddt_term4 @rw_mbinddt_term5 : sysf_rw.
 
 (** *** <<mfmapdt>> *)
 (******************************************************************************)
@@ -895,7 +898,7 @@ Section rw_mfmapdt_term.
 
 End rw_mfmapdt_term.
 
-Hint Rewrite @rw_mfmapdt_term1 @rw_mfmapdt_term2 @rw_mfmapdt_term3 @rw_mfmapdt_term4 @rw_mfmapdt_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_mfmapdt_term1 @rw_mfmapdt_term2 @rw_mfmapdt_term3 @rw_mfmapdt_term4 @rw_mfmapdt_term5 : sysf_rw.
 
 (** *** <<mbindd>> *)
 (******************************************************************************)
@@ -922,7 +925,7 @@ Section rw_mbindd_term.
 
 End rw_mbindd_term.
 
-Hint Rewrite @rw_mbindd_term1 @rw_mbindd_term2 @rw_mbindd_term3 @rw_mbindd_term4 @rw_mbindd_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_mbindd_term1 @rw_mbindd_term2 @rw_mbindd_term3 @rw_mbindd_term4 @rw_mbindd_term5 : sysf_rw.
 
 (** *** <<mbind>> *)
 (******************************************************************************)
@@ -949,7 +952,7 @@ Section rw_mbind_term.
 
 End rw_mbind_term.
 
-Hint Rewrite @rw_mbind_term1 @rw_mbind_term2 @rw_mbind_term3 @rw_mbind_term4 @rw_mbind_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_mbind_term1 @rw_mbind_term2 @rw_mbind_term3 @rw_mbind_term4 @rw_mbind_term5 : sysf_rw.
 
 (** *** <<kbindd>> with <<KType>> *)
 (******************************************************************************)
@@ -976,7 +979,7 @@ Section rw_kbindd_KType_term.
 
 End rw_kbindd_KType_term.
 
-Hint Rewrite @rw_kbindd_KType_term1 @rw_kbindd_KType_term2 @rw_kbindd_KType_term3 @rw_kbindd_KType_term4 @rw_kbindd_KType_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_kbindd_KType_term1 @rw_kbindd_KType_term2 @rw_kbindd_KType_term3 @rw_kbindd_KType_term4 @rw_kbindd_KType_term5 : sysf_rw.
 
 (** *** <<kbindd>> with <<KTerm>> *)
 (******************************************************************************)
@@ -1003,7 +1006,7 @@ Section rw_kbindd_KTerm_term.
 
 End rw_kbindd_KTerm_term.
 
-Hint Rewrite @rw_kbindd_KTerm_term1 @rw_kbindd_KTerm_term2 @rw_kbindd_KTerm_term3 @rw_kbindd_KTerm_term4 @rw_kbindd_KTerm_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_kbindd_KTerm_term1 @rw_kbindd_KTerm_term2 @rw_kbindd_KTerm_term3 @rw_kbindd_KTerm_term4 @rw_kbindd_KTerm_term5 : sysf_rw.
 
 (** *** <<kbind>> with <<KType>> *)
 (******************************************************************************)
@@ -1030,7 +1033,7 @@ Section rw_kbind_KType_term.
 
 End rw_kbind_KType_term.
 
-Hint Rewrite @rw_kbind_KType_term1 @rw_kbind_KType_term2 @rw_kbind_KType_term3 @rw_kbind_KType_term4 @rw_kbind_KType_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_kbind_KType_term1 @rw_kbind_KType_term2 @rw_kbind_KType_term3 @rw_kbind_KType_term4 @rw_kbind_KType_term5 : sysf_rw.
 
 (** *** <<kbind>> with <<KTerm>> *)
 (******************************************************************************)
@@ -1057,7 +1060,7 @@ Section rw_kbind_KTerm_term.
 
 End rw_kbind_KTerm_term.
 
-Hint Rewrite @rw_kbind_KTerm_term1 @rw_kbind_KTerm_term2 @rw_kbind_KTerm_term3 @rw_kbind_KTerm_term4 @rw_kbind_KTerm_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_kbind_KTerm_term1 @rw_kbind_KTerm_term2 @rw_kbind_KTerm_term3 @rw_kbind_KTerm_term4 @rw_kbind_KTerm_term5 : sysf_rw.
 
 (** ** List and occurrence operations *)
 (******************************************************************************)
@@ -1103,7 +1106,7 @@ Section rw_tomlistd_type.
 
 End rw_tomlistd_type.
 
-Hint Rewrite @rw_tomlistd_term1 @rw_tomlistd_term2 @rw_tomlistd_term3 @rw_tomlistd_term4 @rw_tomlistd_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_tomlistd_term1 @rw_tomlistd_term2 @rw_tomlistd_term3 @rw_tomlistd_term4 @rw_tomlistd_term5 : sysf_rw.
 
 (** *** <<toklistd>> with <<KType>> *)
 (******************************************************************************)
@@ -1131,7 +1134,7 @@ Section rw_toklistd_KType_type.
 
 End rw_toklistd_KType_type.
 
-Hint Rewrite @rw_toklistd_KType_term1 @rw_toklistd_KType_term2 @rw_toklistd_KType_term3 @rw_toklistd_KType_term4 @rw_toklistd_KType_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_toklistd_KType_term1 @rw_toklistd_KType_term2 @rw_toklistd_KType_term3 @rw_toklistd_KType_term4 @rw_toklistd_KType_term5 : sysf_rw.
 
 (** *** <<toklistd>> with <<KTerm>> *)
 (******************************************************************************)
@@ -1159,7 +1162,7 @@ Section rw_toklistd_KTerm_term.
 
 End rw_toklistd_KTerm_term.
 
-Hint Rewrite @rw_toklistd_KTerm_term1 @rw_toklistd_KTerm_term2 @rw_toklistd_KTerm_term3 @rw_toklistd_KTerm_term4 @rw_toklistd_KTerm_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_toklistd_KTerm_term1 @rw_toklistd_KTerm_term2 @rw_toklistd_KTerm_term3 @rw_toklistd_KTerm_term4 @rw_toklistd_KTerm_term5 : sysf_rw.
 
 (** *** <<tomlist>> *)
 (******************************************************************************)
@@ -1195,7 +1198,7 @@ Section rw_tomlist_term.
 
 End rw_tomlist_term.
 
-Hint Rewrite @rw_tomlist_term1 @rw_tomlist_term2 @rw_tomlist_term3 @rw_tomlist_term4 @rw_tomlist_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_tomlist_term1 @rw_tomlist_term2 @rw_tomlist_term3 @rw_tomlist_term4 @rw_tomlist_term5 : sysf_rw.
 
 (** *** <<toklist>> with <<KType>> *)
 (******************************************************************************)
@@ -1232,7 +1235,7 @@ Section rw_toklist_KType_term.
 
 End rw_toklist_KType_term.
 
-Hint Rewrite @rw_toklist_KType_term1 @rw_toklist_KType_term2 @rw_toklist_KType_term3 @rw_toklist_KType_term4 @rw_toklist_KType_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_toklist_KType_term1 @rw_toklist_KType_term2 @rw_toklist_KType_term3 @rw_toklist_KType_term4 @rw_toklist_KType_term5 : sysf_rw.
 
 (** *** <<toklist>> with <<KTerm>> *)
 (******************************************************************************)
@@ -1268,7 +1271,7 @@ Section rw_toklist_KTerm_term.
 
 End rw_toklist_KTerm_term.
 
-Hint Rewrite @rw_toklist_KTerm_term1 @rw_toklist_KTerm_term2 @rw_toklist_KTerm_term3 @rw_toklist_KTerm_term4 @rw_toklist_KTerm_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_toklist_KTerm_term1 @rw_toklist_KTerm_term2 @rw_toklist_KTerm_term3 @rw_toklist_KTerm_term4 @rw_toklist_KTerm_term5 : sysf_rw.
 
 (** *** Variable occurrence with context *)
 (******************************************************************************)
@@ -1324,7 +1327,7 @@ Section rw_tomsetd_type.
 
 End rw_tomsetd_type.
 
-Hint Rewrite @rw_tomsetd_term1 @rw_tomsetd_term2 @rw_tomsetd_term3 @rw_tomsetd_term4 @rw_tomsetd_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_tomsetd_term1 @rw_tomsetd_term2 @rw_tomsetd_term3 @rw_tomsetd_term4 @rw_tomsetd_term5 : sysf_rw.
 
 (** *** Variable occurrence without context *)
 (******************************************************************************)
@@ -1364,7 +1367,7 @@ Section rw_tomset_type.
 
 End rw_tomset_type.
 
-Hint Rewrite @rw_tomset_term1 @rw_tomset_term2 @rw_tomset_term3 @rw_tomset_term4 @rw_tomset_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_tomset_term1 @rw_tomset_term2 @rw_tomset_term3 @rw_tomset_term4 @rw_tomset_term5 : sysf_rw.
 
 (** ** <<free>> and <<freeset>> *)
 (******************************************************************************)
@@ -1398,7 +1401,7 @@ Section rw_free_KType_term.
 
 End rw_free_KType_term.
 
-Hint Rewrite rw_free_KType_term1 rw_free_KType_term2 rw_free_KType_term3 rw_free_KType_term4 rw_free_KType_term5 : sysf_rw.
+#[export] Hint Rewrite rw_free_KType_term1 rw_free_KType_term2 rw_free_KType_term3 rw_free_KType_term4 rw_free_KType_term5 : sysf_rw.
 
 (** *** <<freeset>> with <<KType>> *)
 (******************************************************************************)
@@ -1429,7 +1432,7 @@ Section rw_freeset_KType_term.
 
 End rw_freeset_KType_term.
 
-Hint Rewrite rw_freeset_KType_term1 rw_freeset_KType_term2 rw_freeset_KType_term3 rw_freeset_KType_term4 rw_freeset_KType_term5 : sysf_rw.
+#[export] Hint Rewrite rw_freeset_KType_term1 rw_freeset_KType_term2 rw_freeset_KType_term3 rw_freeset_KType_term4 rw_freeset_KType_term5 : sysf_rw.
 
 (** *** <<free>> with <<KTerm>> *)
 (******************************************************************************)
@@ -1463,7 +1466,7 @@ Section rw_free_KTerm_term.
 
 End rw_free_KTerm_term.
 
-Hint Rewrite rw_free_KTerm_term11 rw_free_KTerm_term12 rw_free_KTerm_term2 rw_free_KTerm_term3 rw_free_KTerm_term4 rw_free_KTerm_term5 : sysf_rw.
+#[export] Hint Rewrite rw_free_KTerm_term11 rw_free_KTerm_term12 rw_free_KTerm_term2 rw_free_KTerm_term3 rw_free_KTerm_term4 rw_free_KTerm_term5 : sysf_rw.
 
 (** *** <<freeset>> with <<KTerm>> *)
 (******************************************************************************)
@@ -1499,7 +1502,7 @@ Section rw_freeset_KTerm_term.
 
 End rw_freeset_KTerm_term.
 
-Hint Rewrite rw_freeset_KTerm_term11 rw_freeset_KTerm_term12 rw_freeset_KTerm_term2 rw_freeset_KTerm_term3 rw_freeset_KTerm_term4 rw_freeset_KTerm_term5 : sysf_rw.
+#[export] Hint Rewrite rw_freeset_KTerm_term11 rw_freeset_KTerm_term12 rw_freeset_KTerm_term2 rw_freeset_KTerm_term3 rw_freeset_KTerm_term4 rw_freeset_KTerm_term5 : sysf_rw.
 
 (** ** Locally nameless operations *)
 (******************************************************************************)
@@ -1533,7 +1536,7 @@ Section rw_subst_KType_term.
 
 End rw_subst_KType_term.
 
-Hint Rewrite @rw_subst_KType_term1 @rw_subst_KType_term2 @rw_subst_KType_term3 @rw_subst_KType_term4 @rw_subst_KType_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_subst_KType_term1 @rw_subst_KType_term2 @rw_subst_KType_term3 @rw_subst_KType_term4 @rw_subst_KType_term5 : sysf_rw.
 
 (** *** <<subst>> with <<KTerm>> *)
 (******************************************************************************)
@@ -1570,7 +1573,7 @@ Section rw_subst_KTerm_term.
 
 End rw_subst_KTerm_term.
 
-Hint Rewrite @rw_subst_KTerm_term11 @rw_subst_KTerm_term12 @rw_subst_KTerm_term13 @rw_subst_KTerm_term2 @rw_subst_KTerm_term3 @rw_subst_KTerm_term4 @rw_subst_KTerm_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_subst_KTerm_term11 @rw_subst_KTerm_term12 @rw_subst_KTerm_term13 @rw_subst_KTerm_term2 @rw_subst_KTerm_term3 @rw_subst_KTerm_term4 @rw_subst_KTerm_term5 : sysf_rw.
 
 #[local] Open Scope nat_scope.
 
@@ -1630,7 +1633,7 @@ Section rw_lc_KType_term.
 
 End rw_lc_KType_term.
 
-Hint Rewrite @rw_lc_KType_term1 @rw_lc_KType_term2 @rw_lc_KType_term3 @rw_lc_KType_term4 @rw_lc_KType_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_lc_KType_term1 @rw_lc_KType_term2 @rw_lc_KType_term3 @rw_lc_KType_term4 @rw_lc_KType_term5 : sysf_rw.
 
 (** *** <<locally_closed>> with <<KTerm>> *)
 (******************************************************************************)
@@ -1695,7 +1698,7 @@ Section rw_lc_KTerm_term.
 
 End rw_lc_KTerm_term.
 
-Hint Rewrite @rw_lc_KTerm_term11 @rw_lc_KTerm_term12 @rw_lc_KTerm_term2 @rw_lc_KTerm_term3 @rw_lc_KTerm_term4 @rw_lc_KTerm_term5 : sysf_rw.
+#[export] Hint Rewrite @rw_lc_KTerm_term11 @rw_lc_KTerm_term12 @rw_lc_KTerm_term2 @rw_lc_KTerm_term3 @rw_lc_KTerm_term4 @rw_lc_KTerm_term5 : sysf_rw.
 
 (** * Rewriting principles for <<ok_term>> *)
 (******************************************************************************)

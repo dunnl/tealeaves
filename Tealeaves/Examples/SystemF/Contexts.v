@@ -16,11 +16,13 @@ From Tealeaves.Examples Require Import
 
 Implicit Types (x : atom).
 
-Import SetlikeFunctor.Notations.
+Import Classes.Algebraic.Setlike.Functor.Notations.
 Import List.ListNotations.
 Import LN.AssocList.Notations.
 
 Create HintDb sysf_ctx.
+
+#[local] Generalizable Variables F G A B C ϕ W T.
 
 (** * Tactical support *)
 (******************************************************************************)
