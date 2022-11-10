@@ -172,10 +172,10 @@ Section targeted_morphisms.
 End targeted_morphisms.
 
 (** ** Automation support *)
-Hint Rewrite @tgt_eq @tgtd_eq @tgtd_same : tea_tgt.
-Hint Rewrite @tgt_eq @tgtd_eq @tgtd_same : tea_tgt_eq.
-Hint Rewrite @tgt_neq @tgtd_neq using auto : tea_tgt.
-Hint Rewrite @tgt_neq @tgtd_neq using auto : tea_tgt_neq.
+#[export] Hint Rewrite @tgt_eq @tgtd_eq @tgtd_same : tea_tgt.
+#[export] Hint Rewrite @tgt_eq @tgtd_eq @tgtd_same : tea_tgt_eq.
+#[export] Hint Rewrite @tgt_neq @tgtd_neq using auto : tea_tgt.
+#[export] Hint Rewrite @tgt_neq @tgtd_neq using auto : tea_tgt_neq.
 
 (** <<autorewrite>>* seems to be bit by this bug:
       https://github.com/coq/coq/issues/14344 *)

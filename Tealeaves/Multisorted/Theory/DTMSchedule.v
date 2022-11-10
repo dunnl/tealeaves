@@ -1,6 +1,6 @@
 From Tealeaves Require Export
-     Classes.Applicative
-     Classes.ListableFunctor.
+     Classes.Algebraic.Applicative
+     Classes.Algebraic.Listable.Functor.
 
 From Tealeaves.Multisorted Require Import
      Classes.DTM
@@ -8,7 +8,7 @@ From Tealeaves.Multisorted Require Import
      Theory.DTMContainer.
 
 Import Applicative.Notations.
-Import Functors.Sets.Notations.
+Import Data.Sets.Notations.
 Import List.ListNotations.
 Import Product.Notations.
 Import Multisorted.Theory.Category.Notations.
@@ -17,6 +17,8 @@ Import Multisorted.Theory.DTMContainer.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope list_scope.
+
+#[local] Generalizable Variables W T F A B C.
 
 (** * Iterating over a DTM *)
 (******************************************************************************)

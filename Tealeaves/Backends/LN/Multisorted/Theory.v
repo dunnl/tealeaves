@@ -3,6 +3,8 @@
 From Tealeaves Require Import
      Util.Prelude
      Util.EqDec_eq LN.Atom LN.AtomSet
+     Theory.Kleisli.DT.Monad.Container
+     Theory.List.Kleisli
      LN.Multisorted.Operations.
 
 From Tealeaves.Multisorted Require Import
@@ -13,13 +15,15 @@ From Tealeaves.Multisorted Require Import
 Import Multisorted.Theory.Category.Notations.
 Import Monoid.Notations.
 Import LN.AtomSet.Notations.
-Import Classes.SetlikeFunctor.Notations.
+Import Classes.Algebraic.Setlike.Functor.Notations.
 Import Operations.Notations.
 Import DTMContainer.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope set_scope.
 #[local] Open Scope nat_scope. (* Let <<x + y>> be addition, not sum type. *)
+
+#[local] Generalizable Variables W T M F G A B C.
 
 (** * Basic specifications for <<open>>, <<close>>, and <<subst>> *)
 (******************************************************************************)
@@ -225,7 +229,7 @@ Section operations_specifications.
     Theorem in_free_iff : forall (k : K) (t : S leaf) (x : atom),
         x ∈ free S k t <-> (k, Fr x) ∈m t.
     Proof.
-      intros. unfold free. rewrite (Tealeaves.Classes.SetlikeMonad.in_bind_iff list). split.
+      intros. unfold free. rewrite in_bind_list_iff. split.
       - intros [l [lin xin]]. rewrite <- (in_iff_in_toklist) in lin.
         destruct l as [a|n].
         + cbv in xin. destruct xin as [?|[]].
@@ -463,31 +467,31 @@ Tactic Notation "unfold_monoid" :=
   repeat unfold monoid_op, Monoid_op_list, Monoid_op_list,
   monoid_unit, Monoid_unit_list, Monoid_unit_list in *.
 
-Hint Rewrite @prod_K_not_iff : tea_local.
+#[export] Hint Rewrite @prod_K_not_iff : tea_local.
 
 (** Rewrite rules for expressions of the form <<x ∈ mret T y>> *)
-Hint Rewrite
+#[export] Hint Rewrite
      @in_mret_iff @in_mret_eq_iff
      @ind_mret_iff @ind_mret_eq_iff using typeclasses eauto : tea_local.
 
 (** Rewrite rules for simplifying expressions involving equalities between leaves *)
-Hint Rewrite
+#[export] Hint Rewrite
      Fr_injective Fr_injective_not_iff B_neq_Fr : tea_local.
 
 (** Solve goals of the form <<Fr x <> Fr y>> by using <<x <> y>> *)
 #[export] Hint Resolve
  Fr_injective_not : tea_local.
 
-Hint Rewrite
+#[export] Hint Rewrite
      @subst_loc_eq @subst_in_mret_eq
      using typeclasses eauto : tea_local.
-Hint Rewrite
+#[export] Hint Rewrite
      @subst_loc_neq @subst_loc_b @subst_loc_fr_neq @subst_in_mret_neq
      using first [ typeclasses eauto | auto ] : tea_local.
-Hint Rewrite
+#[export] Hint Rewrite
      @open_loc_lt @open_loc_gt
      using first [ typeclasses eauto | auto ] : tea_local.
-Hint Rewrite
+#[export] Hint Rewrite
      @open_loc_eq @open_loc_atom
      using typeclasses eauto : tea_local.
 

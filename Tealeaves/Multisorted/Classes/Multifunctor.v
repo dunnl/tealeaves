@@ -11,6 +11,8 @@ Import Multisorted.Theory.Category.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
 
+#[local] Generalizable Variables A B C F G.
+
 Section assume_some_index_type.
 
   Context

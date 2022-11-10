@@ -1,6 +1,6 @@
 From Tealeaves Require Export
      Classes.Monoid
-     Classes.Applicative
+     Classes.Algebraic.Applicative
      Functors.Constant.
 
 From Tealeaves.Multisorted Require Export
@@ -11,6 +11,8 @@ Import Monoid.Notations.
 Import Applicative.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Set Implicit Arguments.
+
+#[local] Generalizable Variables A B C D W T F G ψ.
 
 (* TODO Move me *)
 Definition eval `(a : A) `(f : A -> B) := f a.

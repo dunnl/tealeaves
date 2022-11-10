@@ -1,6 +1,7 @@
 From Tealeaves Require Export
      Util.Prelude
-     Util.EqDec_eq LN.Atom LN.AtomSet LN.Leaf.
+     Util.EqDec_eq LN.Atom LN.AtomSet LN.Leaf
+     Theory.List.Kleisli.
 
 From Tealeaves.Multisorted Require Import
      Classes.DTM
@@ -13,6 +14,8 @@ Import Multisorted.Theory.DTMContainer.Notations.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope set_scope.
 #[local] Open Scope nat_scope.
+
+#[local] Generalizable Variables T.
 
 (** * Binders contexts **)
 (** We assume that binder contexts are lists of tagged values of type

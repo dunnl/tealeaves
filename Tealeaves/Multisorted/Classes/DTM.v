@@ -1,17 +1,20 @@
 From Tealeaves Require Import
-     Util.Product
-     Classes.Monoid
-     Classes.Functor
-     Functors.Writer.
+  Data.Product
+  Classes.Monoid
+  Classes.Functor
+  Classes.Algebraic.Applicative
+  Functors.Writer.
 
 From Tealeaves.Multisorted Require Export
-     Theory.Category.
+  Theory.Category.
 
 Import Multisorted.Theory.Category.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope tealeaves_multi_scope.
+
+#[local] Generalizable Variables A B C F G ϕ W T.
 
 (** * Multisorted DTM typeclass *)
 (**************************************************************)
@@ -1325,14 +1328,14 @@ End btgd_lemmas.
 
 (** ** Rewrite Hint registration *)
 (******************************************************************************)
-Hint Rewrite @tgt_eq @tgtd_eq @tgt_id @tgtd_id : tea_tgt.
-Hint Rewrite @btgd_eq @btg_eq @btg_id @btgd_id : tea_tgt.
-Hint Rewrite @btgd_neq @btg_neq using auto : tea_tgt.
+#[export] Hint Rewrite @tgt_eq @tgtd_eq @tgt_id @tgtd_id : tea_tgt.
+#[export] Hint Rewrite @btgd_eq @btg_eq @btg_id @btgd_id : tea_tgt.
+#[export] Hint Rewrite @btgd_neq @btg_neq using auto : tea_tgt.
 
-Hint Rewrite @tgt_eq @tgtd_eq @tgt_id @tgtd_id : tea_tgt_eq.
-Hint Rewrite @btgd_eq @btg_eq @btg_id @btgd_id : tea_tgt_eq.
-Hint Rewrite @tgtd_neq @tgt_neq using auto : tea_tgt_neq.
-Hint Rewrite @btgd_neq @btg_neq using auto : tea_tgt_neq.
+#[export] Hint Rewrite @tgt_eq @tgtd_eq @tgt_id @tgtd_id : tea_tgt_eq.
+#[export] Hint Rewrite @btgd_eq @btg_eq @btg_id @btgd_id : tea_tgt_eq.
+#[export] Hint Rewrite @tgtd_neq @tgt_neq using auto : tea_tgt_neq.
+#[export] Hint Rewrite @btgd_neq @btg_neq using auto : tea_tgt_neq.
 
 (** ** Derived targeted DTM operations *)
 (******************************************************************************)

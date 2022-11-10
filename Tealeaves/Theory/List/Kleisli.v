@@ -6,6 +6,7 @@ From Tealeaves Require Export
   Theory.Algebraic.Traversable.Monad.ToKleisli
   Theory.Kleisli.Traversable.Monad.DerivedInstances.
 
+Import Classes.Algebraic.Setlike.Functor.Notations.
 Import List.ListNotations.
 #[local] Open Scope list_scope.
 
@@ -230,3 +231,28 @@ End bind_rewriting_lemmas.
   {| monmor_unit := bind_list_nil A B f;
      monmor_op := bind_list_app A B f;
   |}.
+
+(** ** Other rewriting lemmas for <<bind>> *)
+(******************************************************************************)
+Section bind_rewriting_lemmas.
+
+  Context
+    (A B : Type)
+    (f : A -> list B).
+
+  Lemma in_bind_list_iff : forall (b : B) (l : list A),
+      b ∈ bind list f l <-> exists a : A, a ∈ l /\ b ∈ f a.
+  Proof.
+    intros. induction l.
+    - cbn. intuition. now destruct H.
+    - destruct IHl as [IHl1 IHl2]. simpl_list. split.
+      + intros [H | H].
+        exists a. split. left; easy. easy.
+        specialize (IHl1 H). destruct IHl1 as [a' rest].
+        exists a'. split. right. easy. easy.
+      + intros [a' [rest1 rest2]]. destruct rest1 as [rest1 | rest1].
+        left. inverts rest1. assumption.
+        right. apply IHl2. exists a'. easy.
+  Qed.
+  
+End bind_rewriting_lemmas.

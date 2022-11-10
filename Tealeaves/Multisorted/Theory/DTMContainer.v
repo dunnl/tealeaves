@@ -1,14 +1,14 @@
 From Tealeaves Require Export
-     Classes.Applicative
-     Classes.ListableFunctor.
+     Classes.Algebraic.Applicative
+     Classes.Algebraic.Listable.Functor.
 
 From Tealeaves.Multisorted Require Import
      Theory.Category
      Classes.DTM
      Functors.MList.
 
-Import Classes.SetlikeFunctor.Notations.
-Import Functors.Sets.Notations.
+Import Classes.Algebraic.Setlike.Functor.Notations.
+Import Data.Sets.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
 Import List.ListNotations.
@@ -17,6 +17,7 @@ Import Multisorted.Theory.Category.Notations.
 #[local] Open Scope tealeaves_multi_scope.
 #[local] Open Scope list_scope.
 
+#[local] Generalizable Variables T W M A B C.
 (** * Shape and contents *)
 (******************************************************************************)
 
@@ -121,7 +122,7 @@ Section rw_filterk.
 
 End rw_filterk.
 
-Hint Rewrite @filterk_nil @filterk_cons_eq @filterk_cons_neq @filterk_app : tea_list.
+#[export] Hint Rewrite @filterk_nil @filterk_cons_eq @filterk_cons_neq @filterk_app : tea_list.
 
 (** ** Auxiliary lemmas for constant applicative functors *)
 (******************************************************************************)

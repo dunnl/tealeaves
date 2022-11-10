@@ -212,7 +212,16 @@ Tealeaves/Examples/STLC/Theory.v
 Tealeaves/Examples/STLC/LanguageAlgebraic.v
 
 # MULTISORTED
+Multisorted/Theory/Category.v
+Multisorted/Classes/Multifunctor.v
+Multisorted/Classes/DTM.v
+Multisorted/Functors/MList.v
+Multisorted/Functors/Schedule.v
+Multisorted/Theory/DTMContainer.v
+Multisorted/Theory/DTMSchedule.v
 
 # MULTISORTED LOCALLY NAMELESS
+LN/Multisorted/Operations.v
+LN/Multisorted/Theory.v
 
 # SYSTEM F

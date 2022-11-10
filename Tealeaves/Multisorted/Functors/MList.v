@@ -12,6 +12,8 @@ Import List.ListNotations.
 #[local] Open Scope tealeaves_scope.
 #[local] Open Scope list_scope.
 
+#[local] Generalizable Variables W A B.
+
 (** * Sorted lists with context *)
 (******************************************************************************)
 Section list.
