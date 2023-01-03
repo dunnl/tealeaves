@@ -1,8 +1,4 @@
--R Tealeaves/   Tealeaves
--Q LN/          Tealeaves.LN
--Q STLC/        Tealeaves.Examples.STLC
--Q Multisorted/ Tealeaves.Multisorted
--Q SystemF/     Tealeaves.Examples.SystemF
+-R Tealeaves/ Tealeaves
 
 # BASIC SETUP
 Tealeaves/Util/LibTactics.v
@@ -201,17 +197,19 @@ Tealeaves/Theory/Equivalences/DecoratedTraversableFunctor.v
 Tealeaves/Theory/Equivalences/DecoratedTraversableMonad.v
 
 # LOCALLY NAMELESS
-LN/Atom.v
-LN/Leaf.v
-LN/AtomSet.v
-LN/AssocList.v
-LN/Operations.v
-LN/Theory.v
-#LN/Environment.v
+Tealeaves/Backends/LN/Atom.v
+Tealeaves/Backends/LN/Leaf.v
+Tealeaves/Backends/LN/AtomSet.v
+Tealeaves/Backends/LN/AssocList.v
+Tealeaves/Backends/LN/Operations.v
+Tealeaves/Backends/LN/Theory.v
+Tealeaves/Backends/LN/Top.v
+#Tealeaves/Backends/LN/Environment.v
 
 # STLC
-#STLC/Language.v
-#STLC/Theory.v
+Tealeaves/Examples/STLC/Language.v
+Tealeaves/Examples/STLC/Theory.v
+Tealeaves/Examples/STLC/LanguageAlgebraic.v
 
 # MULTISORTED
 

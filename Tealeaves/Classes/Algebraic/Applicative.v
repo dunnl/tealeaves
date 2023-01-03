@@ -432,7 +432,7 @@ Section ApplicativeFunctor_ap.
     now do 2 rewrite (fun_fmap_fmap G).
   Qed.
 
-  Theorem ap4 : forall `(f : G (B -> C)) `(g : G (A -> B)) (a : G A),
+  Theorem ap4 : forall {A B C : Type} (f : G (B -> C)) (g : G (A -> B)) (a : G A),
       (pure G compose) <⋆> f <⋆> g <⋆> a =
       f <⋆> (g <⋆> a).
   Proof.

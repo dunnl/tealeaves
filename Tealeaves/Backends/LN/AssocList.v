@@ -37,6 +37,7 @@ Qed.
 #[export] Hint Rewrite push_not : tea_rw_dom.
 
 (** * The <<alist>> functor *)
+(******************************************************************************)
 (** An association list is a list of pairs of type <<atom * A>>.  A
 functor instance is provided by mapping over <<A>>, leaving atoms
 alone.  Technically the functor is the composition of [list] and
@@ -59,214 +60,78 @@ Proof.
   - now rewrite 2(fun_fmap_fmap _).
 Qed.
 
-(** Envmap is just [fmap] specialized to <<alist>>. It is given a
-slightly more friendly name, primarily to avoid
-writing <<fun A => alist A>> all the time. *)
+(** ** DT functor instance for <<alist>> *)
+(******************************************************************************)
+Section DecoratedTraversableFunctor_alist.
+
+(*
+  Context
+    `{Monoid W}.
+
+  Import Theory.Algebraic.Traversable.Functor.ToKleisli.
+  Import Theory.Algebraic.Decorated.Functor.ToKleisli.
+
+  Check alist.
+  (** ** Traversable instance *)
+  (******************************************************************************)
+  #[global] Instance Dist_alist : Dist (alist)
+    := Dist_compose.
+
+  #[global] Instance Traversable_alist : TraversableFunctor (alist)
+    := Traversable_compose.
+
+  (** ** Decorated instance *)
+  (******************************************************************************)
+  #[global] Instance Decorate_alist :
+    Decorate W (alist)
+    := Decorate_zero.
+
+  #[global] Instance DecoratedFunctor_alist :
+    Algebraic.Decorated.Functor.DecoratedFunctor W (alist)
+    := DecoratedFunctor_zero.
+
+  (** ** DTM instance *)
+  (******************************************************************************)
+  #[global] Instance DecoratedTraversableFunctor_alist :
+    DecoratedTraversableFunctor W (alist).
+  Proof.
+    constructor.
+    typeclasses eauto.
+    typeclasses eauto.
+    intros.
+    unfold_ops @Dist_alist @Dist_compose.
+    unfold_ops @Fmap_compose.
+    unfold_ops @Decorate_alist @Decorate_zero.
+    reassociate <-.
+    change (fmap G (fmap (list ○ prod atom) ?f))
+      with (fmap (G ∘ list) (fmap (prod atom) f)).
+    #[local] Set Keyed Unification.
+    rewrite (natural (Natural := dist_natural list) (G := G ∘ list)).
+    reassociate -> on right.
+    rewrite (fun_fmap_fmap list).
+    change (fmap list (fmap (prod atom) ?f)) with (fmap (list ∘ prod atom) f).
+    (*
+    rewrite <- (natural (Natural := dist_natural list) (G := G ∘ list)).
+    rewrite (natural (Natural := dist_natural list)).
+    rewrite (dist_natural (prod atom)).
+    reassociate -> on left. rewrite (fun_fmap_fmap list).
+    reassociate -> on left. rewrite (fun_fmap_fmap list).
+    rewrite (fun_fmap_fmap (prod atom)). reflexivity.
+    #[local] Unset Keyed Unification.
+    *)
+  Qed.
+Admitted.
+*)
+
+End DecoratedTraversableFunctor_alist.
+
+(** * <<envmap>>  *)
+(******************************************************************************)
+(** [envmap] is just [fmap] specialized to <<alist>>. It is given a
+    slightly more friendly name, primarily to avoid writing <<fun A =>
+    alist A>> all the time. *)
 Definition envmap {A B} (f : A -> B) : alist A -> alist B :=
   fmap (alist) f.
-
-(** ** Operations on association lists *)
-
-(** [dom] computes the list of keys of an association list. *)
-Definition dom {A} (Γ : alist A) : list atom :=
-  fmap list fst Γ.
-
-(** [domset] computes the keys as an [AtomSet.t] for use with <<fsetdec>>. *)
-Definition domset {A} (Γ : alist A) : AtomSet.t :=
-  atoms (dom Γ).
-
-(** [range] computes the list of values of an association list. *)
-Definition range {A} ( Γ : alist A) : list A :=
-  fmap list (extract (atom ×))  Γ.
-
-(** <<uniq l>> whenever the keys of <<l>> contain no duplicates. *)
-Inductive uniq {A} : alist A -> Prop :=
-| uniq_nil : uniq nil
-| uniq_push : forall (x : atom) (v : A) ( Γ : alist A),
-    uniq  Γ -> ~ x ∈@ domset  Γ -> uniq (x ~ v ++  Γ).
-
-(** <<disjoint E F>> whenever the keys of <<E>> and <<F>> contain no
-common elements. *)
-Definition disjoint {A B} (Γ1 : alist A) (Γ2 : alist B) :=
-  domset Γ1 ∩ domset Γ2 [=] ∅.
-
-(** ** Support for prettifying association lists *)
-(** The following rewrite rules can be used for normalizing
-    alists. Note that we prefer <<one x ++ l>> to <<cons x l>>.  These
-    rules are put into a rewrite hint database that can be invoked as
-    <<simpl_alist>>. *)
-(******************************************************************************)
-Section alist_simpl_lemmas.
-
-  Variable  X : Type.
-  Variables x : X.
-  Variables l l1 l2 l3 : list X.
-
-  Lemma cons_app_one :
-    cons x l = one x ++ l.
-  Proof. clear. reflexivity. Qed.
-
-  Lemma cons_app_assoc :
-    (cons x l1) ++ l2 = cons x (l1 ++ l2).
-  Proof. clear. reflexivity. Qed.
-
-  Lemma app_assoc :
-    (l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3).
-  Proof. clear. auto with datatypes. Qed.
-
-  Lemma app_nil_l :
-    nil ++ l = l.
-  Proof. clear. reflexivity. Qed.
-
-  Lemma app_nil_r :
-    l ++ nil = l.
-  Proof. clear. auto with datatypes. Qed.
-
-End alist_simpl_lemmas.
-
-Create HintDb tea_simpl_alist.
-#[export] Hint Rewrite cons_app_one cons_app_assoc : tea_simpl_alist.
-#[export] Hint Rewrite app_assoc app_nil_l app_nil_r : tea_simpl_alist.
-
-Ltac simpl_alist :=
-  autorewrite with tea_simpl_alist.
-Tactic Notation "simpl_alist" "in" hyp(H) :=
-  autorewrite with tea_simpl_alist in H.
-Tactic Notation "simpl_alist" "in" "*" :=
-  autorewrite with tea_simpl_alist in *.
-
-(** *** Rewriting alists *)
-(** The tactic <<change_alist>> can be used to replace an alist with
-    an equivalent form, as long as the two forms are equal after
-    normalizing with <<simpl_alist>>. *)
-Tactic Notation "change_alist" constr(E) :=
-  match goal with
-    | |- context[?x] =>
-      change x with E
-    | |- context[?x] =>
-      replace x with E;
-        [| simpl_alist; reflexivity ]
-  end.
-
-Tactic Notation "change_alist" constr(E) "in" hyp(H) :=
-  match type of H with
-    | context[?x] =>
-      change x with E in H
-    | context[?x] =>
-      replace x with E in H;
-        [| simpl_alist; reflexivity ]
-  end.
-
-(** ** Induction principles for association lists *)
-(** The tactic <<alist induction>> can be used for induction on
-alists. The difference between this and ordinary induction on lists is
-that the induction hypothesis is stated in terms of <<one>> and <<++>>
-rather than <<cons>>.*)
-(******************************************************************************)
-Lemma alist_ind : forall (A : Type) (P : alist A -> Type),
-    P nil ->
-    (forall x a xs, P xs -> P (x ~ a ++ xs)) ->
-    (forall xs, P xs).
-Proof.
-  induction xs as [ | [x a] xs ].
-  auto.
-  change (P (x ~ a ++ xs)). auto.
-Defined.
-
-Tactic Notation "alist" "induction" ident(E) :=
-  try (intros until E);
-  let T := type of E in
-  let T := eval compute in T in
-      match T with
-      | list (?key * ?A) => induction E using (alist_ind A)
-      end.
-
-Tactic Notation "alist" "induction" ident(E) "as" simple_intropattern(P) :=
-  try (intros until E);
-  let T := type of E in
-  let T := eval compute in T in
-      match T with
-      | list (?key * ?A) => induction E as P using (alist_ind A)
-      end.
-
-(** * Specifications for operations on association lists *)
-(******************************************************************************)
-
-(** ** Specifications for <<∈>> and alist operations *)
-(******************************************************************************)
-Section in_operations_lemmas.
-
-  Context
-    {A : Type}
-    (Γ : alist A).
-
-  Ltac auto_star ::= intro; preprocess; eauto.
-
-  Lemma in_dom_iff : forall (x : atom),
-    x ∈ dom Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
-  Proof.
-    intros. unfold dom. rewrite (in_fmap_iff list).
-    splits*.
-  Qed.
-
-  Lemma in_range_iff : forall a,
-      a ∈ range Γ <-> exists x : atom, (x, a) ∈ (Γ : list (atom * A)).
-  Proof.
-    intros. unfold range. rewrite (in_fmap_iff list).
-    splits*.
-  Qed.
-
-  Lemma in_domset_iff : forall x,
-      x ∈@ domset Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
-  Proof.
-    unfold domset. intro x. rewrite <- in_atoms_iff.
-    setoid_rewrite in_dom_iff. easy.
-  Qed.
-
-  Lemma in_domset_iff_dom : forall x,
-      x ∈@ domset Γ <-> x ∈ dom Γ.
-  Proof.
-    intros. setoid_rewrite in_domset_iff.
-    setoid_rewrite in_dom_iff. easy.
-  Qed.
-
-End in_operations_lemmas.
-
-(** ** Specifications for [∈] and <<envmap>>*)
-(******************************************************************************)
-Section in_envmap_lemmas.
-
-  Context
-    {A B : Type}
-    (l : alist A)
-    (f : A -> B).
-
-  Lemma in_envmap_iff : forall x b,
-      (x, b) ∈ (envmap f l : list (atom * B)) <->
-      exists a : A, (x, a) ∈ (l : list (atom * A))  /\ f a = b.
-  Proof.
-    intros. unfold envmap. unfold_ops @Fmap_compose @Fmap_prod.
-    rewrite (in_fmap_iff list). split; intros; preprocess; eauto.
-  Qed.
-
-  Lemma in_range_envmap_iff : forall (b : B),
-      b ∈ range (envmap f l) <->
-      exists a : A, a ∈ range l /\ f a = b.
-  Proof.
-    intros. setoid_rewrite in_range_iff.
-    setoid_rewrite in_envmap_iff.
-    firstorder.
-  Qed.
-
-  Lemma in_dom_envmap_iff : forall (x : atom),
-      x ∈ dom (envmap f l) <-> x ∈ dom l.
-  Proof.
-    intros. setoid_rewrite in_dom_iff.
-    setoid_rewrite in_envmap_iff.
-    firstorder eauto.
-  Qed.
-
-End in_envmap_lemmas.
 
 (** ** Rewriting principles for [envmap] *)
 (******************************************************************************)
@@ -309,271 +174,24 @@ Create HintDb tea_rw_envmap.
 #[export] Hint Rewrite envmap_nil envmap_one envmap_cons envmap_app :
   tea_rw_envmap.
 
-(** ** Rewriting lemmas for [dom] *)
+(** ** Specifications for [∈] and <<envmap>>*)
 (******************************************************************************)
-Section dom_lemmas.
+Section in_envmap_lemmas.
 
   Context
-    (A : Type).
+    {A B : Type}
+    (l : alist A)
+    (f : A -> B).
 
-  Lemma dom_nil :
-    dom (@nil (atom * A)) = [].
+  Lemma in_envmap_iff : forall x b,
+      (x, b) ∈ (envmap f l : list (atom * B)) <->
+      exists a : A, (x, a) ∈ (l : list (atom * A))  /\ f a = b.
   Proof.
-    reflexivity.
+    intros. unfold envmap. unfold_ops @Fmap_compose @Fmap_prod.
+    rewrite (in_fmap_iff list). split; intros; preprocess; eauto.
   Qed.
 
-  Lemma dom_cons : forall (x : atom) (a : A) (E : alist A),
-      dom ((x, a) :: E) = [ x ] ++ dom E.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma dom_one : forall (x : atom) (a : A),
-      dom (x ~ a) = [ x ].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma dom_app : forall (E F : alist A),
-      dom (E ++ F) = dom E ++ dom F.
-  Proof.
-    intros. unfold dom. now simpl_list.
-  Qed.
-
-  Lemma dom_fmap : forall {B} {f : A -> B} (l : alist A),
-      dom (envmap f l) = dom l.
-  Proof.
-    intros. unfold dom, envmap. compose near l on left.
-    unfold_ops @Fmap_compose @Fmap_prod.
-    rewrite (fun_fmap_fmap list). fequal. now ext [? ?].
-  Qed.
-
-End dom_lemmas.
-
-Create HintDb tea_rw_dom.
-#[export] Hint Rewrite dom_nil dom_cons dom_app dom_one dom_fmap : tea_rw_dom.
-
-(** *** Elements of [dom] *)
-Section in_dom_lemmas.
-
-  Context
-    (A : Type).
-
-  Lemma in_dom_nil : forall x,
-      x ∈ dom (@nil (atom * A)) <-> False.
-  Proof.
-    intros; now autorewrite with tea_rw_dom.
-  Qed.
-
-  Lemma in_dom_cons : forall (x y : atom) (a : A) (Γ : alist A),
-      y ∈ dom ((x, a) :: Γ) <-> y = x \/ y ∈ dom Γ.
-  Proof.
-    intros; now autorewrite with tea_rw_dom tea_list.
-  Qed.
-
-  Lemma in_dom_one : forall (x y : atom) (a : A),
-      y ∈ dom (x ~ a) <-> y = x.
-  Proof.
-    intros. now autorewrite with tea_rw_dom tea_list.
-  Qed.
-
-  Lemma in_dom_app : forall x (Γ1 Γ2 : alist A),
-      x ∈ dom (Γ1 ++ Γ2) <-> x ∈ dom Γ1 \/ x ∈ dom Γ2.
-  Proof.
-    intros; now autorewrite with tea_rw_dom tea_list.
-  Qed.
-
-  Lemma in_dom_fmap : forall {B} {f : A -> B} (Γ : alist A) x,
-      x ∈ dom (envmap f Γ) <-> x ∈ dom Γ.
-  Proof.
-    intros; now autorewrite with tea_rw_dom.
-  Qed.
-
-End in_dom_lemmas.
-
-#[export] Hint Rewrite in_dom_nil in_dom_one in_dom_cons
-     in_dom_app in_dom_fmap : tea_rw_dom.
-
-(** ** Rewriting lemmas for [domset] *)
-(******************************************************************************)
-Section domset_lemmas.
-
-  Context
-    (A : Type).
-
-  Lemma domset_nil :
-    domset (@nil (atom * A)) [=] ∅.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma domset_cons : forall (x : atom) (a : A) (Γ : alist A),
-      domset ((x, a) :: Γ) [=] {{ x }} ∪ domset Γ.
-  Proof.
-    intros. unfold domset. autorewrite with tea_rw_dom tea_rw_atoms.
-    fsetdec.
-  Qed.
-
-  Lemma domset_one : forall (x : atom) (a : A),
-      domset (x ~ a) [=] {{ x }}.
-  Proof.
-    intros. unfold domset. autorewrite with tea_rw_dom tea_rw_atoms.
-    fsetdec.
-  Qed.
-
-  Lemma domset_app : forall (Γ1 Γ2 : alist A),
-      domset (Γ1 ++ Γ2) [=] domset Γ1 ∪ domset Γ2.
-  Proof.
-    intros. unfold domset. autorewrite with tea_rw_dom tea_rw_atoms.
-    fsetdec.
-  Qed.
-
-  Corollary domset_app_one_l : forall (Γ1 : alist A) (x : atom) (a : A),
-      domset (Γ1 ++ x ~ a) [=] domset Γ1 ∪ {{ x }}.
-  Proof.
-    intros. unfold domset. autorewrite with tea_rw_dom tea_rw_atoms.
-    fsetdec.
-  Qed.
-
-  Lemma domset_fmap : forall {B} {f : A -> B} (Γ : alist A),
-      domset (envmap f Γ) [=] domset Γ.
-  Proof.
-    intros. unfold domset. autorewrite with tea_rw_dom.
-    fsetdec.
-  Qed.
-
-End domset_lemmas.
-
-#[export] Hint Rewrite domset_nil domset_cons
-     domset_one domset_app domset_fmap : tea_rw_dom.
-
-Section in_domset_lemmas.
-
-  Context
-    (A : Type).
-
-  Lemma in_domset_nil : forall x,
-      x ∈@ domset (@nil (atom * A)) <-> False.
-  Proof.
-    intros. autorewrite with tea_rw_dom. fsetdec.
-  Qed.
-
-  Lemma in_domset_one : forall (x y : atom) (a : A),
-      y ∈@ domset (x ~ a) <-> y = x.
-  Proof.
-    intros. autorewrite with tea_rw_dom. fsetdec.
-  Qed.
-
-  Lemma in_domset_cons : forall (x y : atom) (a : A) (Γ : alist A),
-      y ∈@ domset ((x, a) :: Γ) <-> y = x \/ y ∈@ domset Γ.
-  Proof.
-    intros. autorewrite with tea_rw_dom. fsetdec.
-  Qed.
-
-  Lemma in_domset_app : forall x (Γ1 Γ2 : alist A),
-    x ∈@ domset (Γ1 ++ Γ2) <-> x ∈@ domset Γ1 \/ x ∈@ domset Γ2.
-  Proof.
-    intros. autorewrite with tea_rw_dom. fsetdec.
-  Qed.
-
-  Lemma in_domset_fmap : forall {B} {f : A -> B} (l : alist A) x,
-      x ∈@ domset (envmap f l) <-> x ∈@ domset l.
-  Proof.
-    intros. autorewrite with tea_rw_dom. fsetdec.
-  Qed.
-
-End in_domset_lemmas.
-
-#[export] Hint Rewrite in_domset_nil in_domset_one
-     in_domset_cons in_domset_app in_domset_fmap : tea_rw_dom.
-
-(** ** Rewriting lemmas for [range] *)
-(******************************************************************************)
-Section range_lemmas.
-
-  Context
-    (A : Type).
-
-  Lemma range_nil :
-    range (@nil (atom * A)) = [].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma range_one : forall (x : atom) (a : A),
-      range (x ~ a) = [ a ].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma range_cons : forall (x : atom) (a : A) (Γ : alist A),
-      range ((x, a) :: Γ) = [ a ] ++ range Γ.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma range_app : forall (Γ1 Γ2 : alist A),
-      range (Γ1 ++ Γ2) = range Γ1 ++ range Γ2.
-  Proof.
-    intros. unfold range.
-    now autorewrite with tea_list.
-  Qed.
-
-  Lemma range_fmap : forall {B} {f : A -> B} (Γ : alist A),
-      range (envmap f Γ) = fmap list f (range Γ).
-  Proof.
-    intros. unfold range, envmap. compose near Γ.
-    unfold_ops @Fmap_compose.
-    rewrite 2(fun_fmap_fmap list).
-    fequal. now ext [? ?].
-  Qed.
-
-End range_lemmas.
-
-Create HintDb tea_rw_range.
-#[export] Hint Rewrite range_nil range_cons
-     range_one range_app range_fmap : tea_rw_range.
-
-(** Elements of [range] *)
-Section in_range_lemmas.
-
-  Context
-    (A : Type).
-
-  Lemma in_range_nil : forall x,
-    x ∈ range (@nil (atom * A)) <-> False.
-  Proof.
-    intros; now autorewrite with tea_rw_range.
-  Qed.
-
-  Lemma in_range_cons : forall (x : atom) (a1 a2 : A) (Γ : alist A),
-      a2 ∈ range ((x, a1) :: Γ) <-> a2 = a1 \/ a2 ∈ range Γ.
-  Proof.
-    intros; now autorewrite with tea_rw_range tea_list.
-  Qed.
-
-  Lemma in_range_one : forall (x : atom) (a1 a2 : A),
-      a2 ∈ range (x ~ a1) <-> a1 = a2.
-  Proof.
-    intros; now autorewrite with tea_rw_range tea_list.
-  Qed.
-
-  Lemma in_range_app : forall x (Γ1 Γ2 : alist A),
-    x ∈ range (Γ1 ++ Γ2) <-> x ∈ range Γ1 \/ x ∈ range Γ2.
-  Proof.
-    intros; now autorewrite with tea_rw_range tea_list.
-  Qed.
-
-  Lemma in_range_fmap : forall {B} {f : A -> B} (l : alist A) (b : B),
-      b ∈ range (envmap f l) <-> exists a, a ∈ range l /\ f a = b.
-  Proof.
-    intros. autorewrite with tea_rw_range. now rewrite (in_fmap_iff list).
-  Qed.
-
-End in_range_lemmas.
-
-#[export] Hint Rewrite in_range_nil in_range_one
-     in_range_cons in_range_app in_range_fmap : tea_rw_range.
+End in_envmap_lemmas.
 
 (** ** Rewriting principles for [∈] *)
 (******************************************************************************)
@@ -614,7 +232,7 @@ End in_rewriting_lemmas.
 
 Create HintDb tea_rw_in.
 #[export] Hint Rewrite @in_nil_iff @in_cons_iff
-     @in_one_iff @in_app_iff @in_envmap_iff : tea_rw_in.
+  @in_one_iff @in_app_iff @in_envmap_iff : tea_rw_in.
 
 (** ** Tactical lemmas for [∈] *)
 (******************************************************************************)
@@ -691,33 +309,531 @@ Section in_theorems.
     eauto.
   Qed.
 
+End in_theorems.
+
+#[export] Hint Resolve in_one_3 in_cons2 in_cons_3 in_app2
+ in_app_3 in_fmap_mono : tea_alist.
+#[export] Hint Immediate in_one1 in_one2 : tea_alist.
+
+(** * Domain and range on alists *)
+(******************************************************************************)
+
+(** [dom] computes the list of keys of an association list. *)
+Definition dom {A} (Γ : alist A) : list atom :=
+  fmap list fst Γ.
+
+(** [domset] computes the keys as an [AtomSet.t] for use with <<fsetdec>>. *)
+Definition domset {A} (Γ : alist A) : AtomSet.t :=
+  atoms (dom Γ).
+
+(** [range] computes the list of values of an association list. *)
+Definition range {A} ( Γ : alist A) : list A :=
+  fmap list (extract (atom ×))  Γ.
+
+(** ** Rewriting lemmas for [dom] *)
+(******************************************************************************)
+Section dom_lemmas.
+
+  Context
+    (A : Type).
+
+  Lemma dom_nil :
+    dom (@nil (atom * A)) = [].
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma dom_cons : forall (x : atom) (a : A) (E : alist A),
+      dom ((x, a) :: E) = [ x ] ++ dom E.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma dom_one : forall (x : atom) (a : A),
+      dom (x ~ a) = [ x ].
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma dom_app : forall (E F : alist A),
+      dom (E ++ F) = dom E ++ dom F.
+  Proof.
+    intros. unfold dom. now simpl_list.
+  Qed.
+
+  Lemma dom_fmap : forall {B} {f : A -> B} (l : alist A),
+      dom (envmap f l) = dom l.
+  Proof.
+    intros. unfold dom, envmap. compose near l on left.
+    unfold_ops @Fmap_compose @Fmap_prod.
+    rewrite (fun_fmap_fmap list). fequal. now ext [? ?].
+  Qed.
+
+End dom_lemmas.
+
+Create HintDb tea_rw_dom.
+#[export] Hint Rewrite dom_nil dom_cons dom_app dom_one dom_fmap : tea_rw_dom.
+
+(** ** Rewriting lemmas for [domset] *)
+(******************************************************************************)
+Section domset_lemmas.
+
+  Context
+    (A : Type).
+
+  Lemma domset_nil :
+    domset (@nil (atom * A)) [=] ∅.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma domset_cons : forall (x : atom) (a : A) (Γ : alist A),
+      domset ((x, a) :: Γ) [=] {{ x }} ∪ domset Γ.
+  Proof.
+    intros. unfold domset. autorewrite with tea_rw_dom tea_rw_atoms.
+    fsetdec.
+  Qed.
+
+  Lemma domset_one : forall (x : atom) (a : A),
+      domset (x ~ a) [=] {{ x }}.
+  Proof.
+    intros. unfold domset. autorewrite with tea_rw_dom tea_rw_atoms.
+    fsetdec.
+  Qed.
+
+  Lemma domset_app : forall (Γ1 Γ2 : alist A),
+      domset (Γ1 ++ Γ2) [=] domset Γ1 ∪ domset Γ2.
+  Proof.
+    intros. unfold domset. autorewrite with tea_rw_dom tea_rw_atoms.
+    fsetdec.
+  Qed.
+
+  Corollary domset_app_one_l : forall (Γ1 : alist A) (x : atom) (a : A),
+      domset (Γ1 ++ x ~ a) [=] domset Γ1 ∪ {{ x }}.
+  Proof.
+    intros. unfold domset. autorewrite with tea_rw_dom tea_rw_atoms.
+    fsetdec.
+  Qed.
+
+  Lemma domset_fmap : forall {B} {f : A -> B} (Γ : alist A),
+      domset (envmap f Γ) [=] domset Γ.
+  Proof.
+    intros. unfold domset. autorewrite with tea_rw_dom.
+    fsetdec.
+  Qed.
+
+End domset_lemmas.
+
+#[export] Hint Rewrite domset_nil domset_cons
+  domset_one domset_app domset_fmap : tea_rw_dom.
+
+(** ** Rewriting lemmas for [range] *)
+(******************************************************************************)
+Section range_lemmas.
+
+  Context
+    (A : Type).
+
+  Lemma range_nil :
+    range (@nil (atom * A)) = [].
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma range_one : forall (x : atom) (a : A),
+      range (x ~ a) = [ a ].
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma range_cons : forall (x : atom) (a : A) (Γ : alist A),
+      range ((x, a) :: Γ) = [ a ] ++ range Γ.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma range_app : forall (Γ1 Γ2 : alist A),
+      range (Γ1 ++ Γ2) = range Γ1 ++ range Γ2.
+  Proof.
+    intros. unfold range.
+    now autorewrite with tea_list.
+  Qed.
+
+  Lemma range_fmap : forall {B} {f : A -> B} (Γ : alist A),
+      range (envmap f Γ) = fmap list f (range Γ).
+  Proof.
+    intros. unfold range, envmap. compose near Γ.
+    unfold_ops @Fmap_compose.
+    rewrite 2(fun_fmap_fmap list).
+    fequal. now ext [? ?].
+  Qed.
+
+End range_lemmas.
+
+Create HintDb tea_rw_range.
+#[export] Hint Rewrite range_nil range_cons
+     range_one range_app range_fmap : tea_rw_range.
+
+(** ** Rewriting lemmas for [∈] [dom] *)
+(******************************************************************************)
+Section in_dom_lemmas.
+
+  Context
+    (A : Type).
+
+  Lemma in_dom_nil : forall x,
+      x ∈ dom (@nil (atom * A)) <-> False.
+  Proof.
+    intros; now autorewrite with tea_rw_dom.
+  Qed.
+
+  Lemma in_dom_cons : forall (x y : atom) (a : A) (Γ : alist A),
+      y ∈ dom ((x, a) :: Γ) <-> y = x \/ y ∈ dom Γ.
+  Proof.
+    intros; now autorewrite with tea_rw_dom tea_list.
+  Qed.
+
+  Lemma in_dom_one : forall (x y : atom) (a : A),
+      y ∈ dom (x ~ a) <-> y = x.
+  Proof.
+    intros. now autorewrite with tea_rw_dom tea_list.
+  Qed.
+
+  Lemma in_dom_app : forall x (Γ1 Γ2 : alist A),
+      x ∈ dom (Γ1 ++ Γ2) <-> x ∈ dom Γ1 \/ x ∈ dom Γ2.
+  Proof.
+    intros; now autorewrite with tea_rw_dom tea_list.
+  Qed.
+
+  Lemma in_dom_fmap : forall {B} {f : A -> B} (Γ : alist A) x,
+      x ∈ dom (envmap f Γ) <-> x ∈ dom Γ.
+  Proof.
+    intros; now autorewrite with tea_rw_dom.
+  Qed.
+
+End in_dom_lemmas.
+
+#[export] Hint Rewrite in_dom_nil in_dom_one in_dom_cons
+  in_dom_app in_dom_fmap : tea_rw_dom.
+
+(** ** Rewriting lemmas for [∈] [domset] *)
+(******************************************************************************)
+Section in_domset_lemmas.
+
+  Context
+    (A : Type).
+
+  Lemma in_domset_nil : forall x,
+      x ∈@ domset (@nil (atom * A)) <-> False.
+  Proof.
+    intros. autorewrite with tea_rw_dom. fsetdec.
+  Qed.
+
+  Lemma in_domset_one : forall (x y : atom) (a : A),
+      y ∈@ domset (x ~ a) <-> y = x.
+  Proof.
+    intros. autorewrite with tea_rw_dom.
+    fsetdec.
+  Qed.
+
+  Lemma in_domset_cons : forall (x y : atom) (a : A) (Γ : alist A),
+      y ∈@ domset ((x, a) :: Γ) <-> y = x \/ y ∈@ domset Γ.
+  Proof.
+    intros. autorewrite with tea_rw_dom. fsetdec.
+  Qed.
+
+  Lemma in_domset_app : forall x (Γ1 Γ2 : alist A),
+    x ∈@ domset (Γ1 ++ Γ2) <-> x ∈@ domset Γ1 \/ x ∈@ domset Γ2.
+  Proof.
+    intros. autorewrite with tea_rw_dom. fsetdec.
+  Qed.
+
+  Lemma in_domset_fmap : forall {B} {f : A -> B} (l : alist A) x,
+      x ∈@ domset (envmap f l) <-> x ∈@ domset l.
+  Proof.
+    intros. autorewrite with tea_rw_dom. fsetdec.
+  Qed.
+
+End in_domset_lemmas.
+
+#[export] Hint Rewrite in_domset_nil in_domset_one
+     in_domset_cons in_domset_app in_domset_fmap : tea_rw_dom.
+
+(** ** Elements of [range] *)
+(******************************************************************************)
+Section in_range_lemmas.
+
+  Context
+    (A : Type).
+
+  Lemma in_range_nil : forall x,
+    x ∈ range (@nil (atom * A)) <-> False.
+  Proof.
+    intros; now autorewrite with tea_rw_range.
+  Qed.
+
+  Lemma in_range_cons : forall (x : atom) (a1 a2 : A) (Γ : alist A),
+      a2 ∈ range ((x, a1) :: Γ) <-> a2 = a1 \/ a2 ∈ range Γ.
+  Proof.
+    intros; now autorewrite with tea_rw_range tea_list.
+  Qed.
+
+  Lemma in_range_one : forall (x : atom) (a1 a2 : A),
+      a2 ∈ range (x ~ a1) <-> a1 = a2.
+  Proof.
+    intros; now autorewrite with tea_rw_range tea_list.
+  Qed.
+
+  Lemma in_range_app : forall x (Γ1 Γ2 : alist A),
+    x ∈ range (Γ1 ++ Γ2) <-> x ∈ range Γ1 \/ x ∈ range Γ2.
+  Proof.
+    intros; now autorewrite with tea_rw_range tea_list.
+  Qed.
+
+  Lemma in_range_fmap : forall {B} {f : A -> B} (l : alist A) (b : B),
+      b ∈ range (envmap f l) <-> exists a, a ∈ range l /\ f a = b.
+  Proof.
+    intros. autorewrite with tea_rw_range. now rewrite (in_fmap_iff list).
+  Qed.
+
+End in_range_lemmas.
+
+#[export] Hint Rewrite in_range_nil in_range_one
+  in_range_cons in_range_app in_range_fmap : tea_rw_range.
+
+(** * Specifications for operations on association lists *)
+(******************************************************************************)
+
+(** ** Specifications for <<∈>> and [dom], [domset], [range] *)
+(******************************************************************************)
+Section in_operations_lemmas.
+
+  Context
+    {A : Type}
+    (Γ : alist A).
+
+  Ltac auto_star ::= intro; preprocess; eauto.
+
+  Lemma in_dom_iff : forall (x : atom),
+    x ∈ dom Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
+  Proof.
+    intros. unfold dom. rewrite (in_fmap_iff list).
+    splits*.
+  Qed.
+
+  Lemma in_range_iff : forall a,
+      a ∈ range Γ <-> exists x : atom, (x, a) ∈ (Γ : list (atom * A)).
+  Proof.
+    intros. unfold range. rewrite (in_fmap_iff list).
+    splits*.
+  Qed.
+
+  Lemma in_domset_iff : forall x,
+      x ∈@ domset Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
+  Proof.
+    unfold domset. intro x. rewrite <- in_atoms_iff.
+    setoid_rewrite in_dom_iff. easy.
+  Qed.
+
+  Lemma in_domset_iff_dom : forall x,
+      x ∈@ domset Γ <-> x ∈ dom Γ.
+  Proof.
+    intros. setoid_rewrite in_domset_iff.
+    setoid_rewrite in_dom_iff. easy.
+  Qed.
+
+End in_operations_lemmas.
+
+Section in_envmap_lemmas.
+
+  Context
+    {A B : Type}
+    (l : alist A)
+    (f : A -> B).
+
+  Lemma in_range_envmap_iff : forall (b : B),
+      b ∈ range (envmap f l) <->
+      exists a : A, a ∈ range l /\ f a = b.
+  Proof.
+    intros. setoid_rewrite in_range_iff.
+    setoid_rewrite in_envmap_iff.
+    firstorder.
+  Qed.
+
+  Lemma in_dom_envmap_iff : forall (x : atom),
+      x ∈ dom (envmap f l) <-> x ∈ dom l.
+  Proof.
+    intros. setoid_rewrite in_dom_iff.
+    setoid_rewrite in_envmap_iff.
+    firstorder eauto.
+  Qed.
+  
+End in_envmap_lemmas.
+
+Section in_in.
+
+  Context (A B : Type).
+  Implicit Types (x : atom) (a : A) (b : B).
+  
   Lemma in_in_dom : forall x a Γ,
       (x, a) ∈ Γ ->
-      x ∈ dom Γ.
+      x ∈ dom (A := A) Γ.
   Proof.
     setoid_rewrite in_dom_iff. eauto.
   Qed.
 
   Lemma in_in_domset : forall x a Γ,
       (x, a) ∈ Γ ->
-      x ∈@ domset Γ.
+      x ∈@ domset (A := A) Γ.
   Proof.
     setoid_rewrite in_domset_iff. eauto.
   Qed.
 
   Lemma in_in_range : forall x a Γ,
       (x, a) ∈ Γ ->
-      a ∈ range Γ.
+      a ∈ range (A := A) Γ.
   Proof.
     setoid_rewrite in_range_iff. eauto.
   Qed.
 
-End in_theorems.
+End in_in.
 
-#[export] Hint Resolve in_one_3 in_cons2 in_cons_3 in_app2
- in_app_3 in_fmap_mono : tea_alist.
-#[export] Hint Immediate in_one1 in_one2 in_in_dom
- in_in_domset in_in_range : tea_alist.
+#[export] Hint Immediate in_in_dom in_in_domset in_in_range : tea_alist.
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+(** ** Support for prettifying association lists *)
+(** The following rewrite rules can be used for normalizing
+    alists. Note that we prefer <<one x ++ l>> to <<cons x l>>.  These
+    rules are put into a rewrite hint database that can be invoked as
+    <<simpl_alist>>. *)
+(******************************************************************************)
+Section alist_simpl_lemmas.
+
+  Variable  X : Type.
+  Variables x : X.
+  Variables l l1 l2 l3 : list X.
+
+  Lemma cons_app_one :
+    cons x l = one x ++ l.
+  Proof. clear. reflexivity. Qed.
+
+  Lemma cons_app_assoc :
+    (cons x l1) ++ l2 = cons x (l1 ++ l2).
+  Proof. clear. reflexivity. Qed.
+
+  Lemma app_assoc :
+    (l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3).
+  Proof. clear. auto with datatypes. Qed.
+
+  Lemma app_nil_l :
+    nil ++ l = l.
+  Proof. clear. reflexivity. Qed.
+
+  Lemma app_nil_r :
+    l ++ nil = l.
+  Proof. clear. auto with datatypes. Qed.
+
+End alist_simpl_lemmas.
+
+Create HintDb tea_simpl_alist.
+#[export] Hint Rewrite cons_app_one cons_app_assoc : tea_simpl_alist.
+#[export] Hint Rewrite app_assoc app_nil_l app_nil_r : tea_simpl_alist.
+
+Ltac simpl_alist :=
+  autorewrite with tea_simpl_alist.
+Tactic Notation "simpl_alist" "in" hyp(H) :=
+  autorewrite with tea_simpl_alist in H.
+Tactic Notation "simpl_alist" "in" "*" :=
+  autorewrite with tea_simpl_alist in *.
+
+(** ** Tactics for normalizing alists *)
+(******************************************************************************)
+(** The tactic <<change_alist>> can be used to replace an alist with
+    an equivalent form, as long as the two forms are equal after
+    normalizing with <<simpl_alist>>. *)
+Tactic Notation "change_alist" constr(E) :=
+  match goal with
+    | |- context[?x] =>
+      change x with E
+    | |- context[?x] =>
+      replace x with E;
+        [| simpl_alist; reflexivity ]
+  end.
+
+Tactic Notation "change_alist" constr(E) "in" hyp(H) :=
+  match type of H with
+    | context[?x] =>
+      change x with E in H
+    | context[?x] =>
+      replace x with E in H;
+        [| simpl_alist; reflexivity ]
+  end.
+
+(** ** Induction principles for alists *)
+(** The tactic <<alist induction>> can be used for induction on
+alists. The difference between this and ordinary induction on lists is
+that the induction hypothesis is stated in terms of <<one>> and <<++>>
+rather than <<cons>>.*)
+(******************************************************************************)
+Lemma alist_ind : forall (A : Type) (P : alist A -> Type),
+    P nil ->
+    (forall x a xs, P xs -> P (x ~ a ++ xs)) ->
+    (forall xs, P xs).
+Proof.
+  induction xs as [ | [x a] xs ].
+  auto.
+  change (P (x ~ a ++ xs)). auto.
+Defined.
+
+Tactic Notation "alist" "induction" ident(E) :=
+  try (intros until E);
+  let T := type of E in
+  let T := eval compute in T in
+      match T with
+      | list (?key * ?A) => induction E using (alist_ind A)
+      end.
+
+Tactic Notation "alist" "induction" ident(E) "as" simple_intropattern(P) :=
+  try (intros until E);
+  let T := type of E in
+  let T := eval compute in T in
+      match T with
+      | list (?key * ?A) => induction E as P using (alist_ind A)
+      end.
+
+
+(** <<uniq l>> whenever the keys of <<l>> contain no duplicates. *)
+Inductive uniq {A} : alist A -> Prop :=
+| uniq_nil : uniq nil
+| uniq_push : forall (x : atom) (v : A) ( Γ : alist A),
+    uniq  Γ -> ~ x ∈@ domset  Γ -> uniq (x ~ v ++  Γ).
+
+(** <<disjoint E F>> whenever the keys of <<E>> and <<F>> contain no
+common elements. *)
+Definition disjoint {A B} (Γ1 : alist A) (Γ2 : alist B) :=
+  domset Γ1 ∩ domset Γ2 [=] ∅.
 
 (** ** Rewriting principles for [disjoint] *)
 (******************************************************************************)
@@ -805,7 +921,9 @@ End disjoint_rewriting_lemmas.
 Create HintDb tea_rw_disj.
 #[export] Hint Rewrite @disjoint_nil_l @disjoint_nil_r @disjoint_cons_l @disjoint_cons_r
      @disjoint_one_l @disjoint_one_r @disjoint_app_l @disjoint_app_r
-  @disjoint_fmap_l @disjoint_fmap_r : tea_rw_disj.
+     @disjoint_fmap_l @disjoint_fmap_r : tea_rw_disj.
+
+
 
 (** ** Tactical lemmas for [disjoint] *)
 (******************************************************************************)

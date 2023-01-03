@@ -3,9 +3,10 @@ From Tealeaves Require Export
   Theory.Algebraic.Traversable.Functor.ToKleisli.
 From Tealeaves Require Import
   Theory.Algebraic.Traversable.Functor.Const
+  Theory.Algebraic.Listable.Functor.Properties
   Functors.Batch.
 
-#[local] Generalizable Variable T.
+#[local] Generalizable Variables T G A.
 
 (** ** The [tolist] operation *)
 (** We only define this operation and prove it forms a natural
@@ -39,18 +40,22 @@ Section TraversableFunctor_fold_spec.
 
   Context
     (T : Type -> Type)
-    `{TraversableFunctor T}.
+      `{TraversableFunctor T}.
+
+  Import ToKleisli.Operation.
+  Import ToKleisli.Instance.
 
   (** *** Specification for <<Tolist_Traversable>> *)
   (******************************************************************************)
   Theorem traversable_tolist_spec {A : Type} (tag : Type) :
     @tolist T Tolist_Traversable A
-    = @traverse T (const (list A)) _ _
-            (Fmap_const)
-            (Pure_const)
-            (Mult_const) A tag (ret list).
+    = @traverse T _ (const (list A))
+        (Fmap_const)
+        (Pure_const)
+        (Mult_const) A tag (ret list).
   Proof.
-    intros. unfold tolist, Tolist_Traversable, traverse.
+    intros. unfold tolist, Tolist_Traversable;
+      unfold traverse, Traverse_alg.
     rewrite <- (fun_fmap_fmap T). reassociate <- on left.
     rewrite (traversable_const_spec T (M := list A) False).
     now rewrite (dist_const1 T tag).
@@ -69,7 +74,7 @@ Section TraversableFunctor_fold_spec.
     - cbn. now rewrite <- IHl.
   Qed.
 
-  Lemma tolist_to_runBatch `{Applicative F} `(t : T A) :
+  Lemma tolist_to_runBatch `{Applicative G} `(t : T A) :
     tolist T t = runBatch (ret list : A -> const (list A) A) (iterate A t).
   Proof.
     unfold iterate. compose near t on right.

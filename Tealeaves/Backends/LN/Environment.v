@@ -1,8 +1,8 @@
 From Tealeaves Require Import
-     Classes.DecoratedTraversableModule
-     LN.Atom LN.Leaf LN.AtomSet LN.AssocList
-     LN.Operations
-     LN.Theory.
+  Theory.Algebraic.DT.Monad
+  Traversable.Functor.Instances
+  LN.Atom LN.Leaf LN.AtomSet LN.AssocList
+  LN.Operations LN.Theory.
 
 Require Import Coq.Sorting.Permutation.
 
@@ -12,66 +12,18 @@ Import LN.AssocList.Notations.
 Import Applicative.Notations.
 Import Sets.Notations.
 Import Applicative.Notations.
-Import DecoratedTraversableMonad.Notations.
 Open Scope list_scope.
 Open Scope set_scope.
 Open Scope tealeaves_scope.
 
+About scoped.
+
+(*
 Definition scoped_env F `{Fmap F} `{Dist F} {A} :
   F leaf -> alist A -> Prop := fun t γ => scoped F t (domset γ).
+*)
 
-(** * D-T functor instance for <<alist>> *)
-(******************************************************************************)
-Section DecoratedTraversableFunctor_alist.
-
-  Context
-    `{Monoid W}.
-
-  (** ** Traversable instance *)
-  (******************************************************************************)
-  #[global] Instance Dist_alist : Dist (alist)
-    := Dist_compose.
-
-  #[global] Instance Traversable_alist : TraversableFunctor (alist)
-    := Traversable_compose.
-
-  (** ** Decorated instance *)
-  (******************************************************************************)
-  #[global] Instance Decorate_alist :
-    Decorate W (alist)
-    := Decorate_zero.
-
-  #[global] Instance DecoratedFunctor_alist :
-    DecoratedFunctor W (alist)
-    := DecoratedFunctor_zero.
-
-  (** ** DTM instance *)
-  (******************************************************************************)
-  #[global] Instance DecoratedTraversableFunctor_alist :
-    DecoratedTraversableFunctor W (alist).
-  Proof.
-    constructor.
-    typeclasses eauto.
-    typeclasses eauto.
-    intros.
-    unfold_ops @Dist_alist @Dist_compose.
-    unfold_ops @Fmap_compose.
-    unfold_ops @Decorate_alist @Decorate_zero.
-    reassociate <-.
-    change (fmap G (fmap (list ○ prod atom) ?f))
-      with (fmap (G ∘ list) (fmap (prod atom) f)).
-    #[local] Set Keyed Unification.
-    rewrite (dist_natural list).
-    reassociate -> on right.
-    rewrite (fun_fmap_fmap list).
-    rewrite (dist_natural (prod atom)).
-    reassociate -> on left. rewrite (fun_fmap_fmap list).
-    reassociate -> on left. rewrite (fun_fmap_fmap list).
-    rewrite (fun_fmap_fmap (prod atom)). reflexivity.
-    #[local] Unset Keyed Unification.
-  Qed.
-
-End DecoratedTraversableFunctor_alist.
+#[local] Generalizable Variables W.
 
 (** * DTM instance for <<alist>>-based environments *)
 (******************************************************************************)

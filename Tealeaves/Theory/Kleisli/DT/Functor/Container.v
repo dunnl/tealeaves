@@ -358,10 +358,7 @@ Section new.
     rewrite <- (foldMapd_morphism T).
     unfold tosetd.
     unfold compose.
-    change (fmap set (extract (prod W)) (foldMapd T (ret set) t)) with
-      (toset set (fmap set (extract (prod W)) (foldMapd T (ret set) t))).
-    rewrite Functor.in_fmap_iff; [ |typeclasses eauto].
-    split.
+    unfold_ops @Fmap_set. split.
     - intros [[w a'] [rest1 rest2]]. exists w.
       unfold toset in rest1. unfold Toset_set in rest1.
       now inverts rest2.
