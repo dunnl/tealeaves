@@ -1,6 +1,6 @@
 From Tealeaves Require Export
-  Theory.Kleisli.DT.Functor
-  Classes.Kleisli.DT.Monad
+  Theory.Kleisli.Decorated.Functor
+  Classes.Kleisli.Decorated.Monad
   Theory.Kleisli.Decorated.Monad.ToAlgebraic
   Theory.Kleisli.Decorated.Monad.DerivedInstances.
 
