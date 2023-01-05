@@ -128,8 +128,8 @@ End DecoratedTraversableFunctor_alist.
 (** * <<envmap>>  *)
 (******************************************************************************)
 (** [envmap] is just [fmap] specialized to <<alist>>. It is given a
-    slightly more friendly name, primarily to avoid writing <<fun A =>
-    alist A>> all the time. *)
+    slightly more friendly name, primarily to avoid writing <<fun A => alist A>>
+    all the time. *)
 Definition envmap {A B} (f : A -> B) : alist A -> alist B :=
   fmap (alist) f.
 
@@ -667,14 +667,14 @@ Section in_envmap_lemmas.
     setoid_rewrite in_envmap_iff.
     firstorder eauto.
   Qed.
-  
+
 End in_envmap_lemmas.
 
 Section in_in.
 
   Context (A B : Type).
   Implicit Types (x : atom) (a : A) (b : B).
-  
+
   Lemma in_in_dom : forall x a Γ,
       (x, a) ∈ Γ ->
       x ∈ dom (A := A) Γ.
@@ -699,7 +699,6 @@ Section in_in.
 End in_in.
 
 #[export] Hint Immediate in_in_dom in_in_domset in_in_range : tea_alist.
-  
 
 
 
@@ -712,7 +711,8 @@ End in_in.
 
 
 
-  
+
+
 
 
 
