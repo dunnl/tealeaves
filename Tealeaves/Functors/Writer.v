@@ -253,6 +253,7 @@ End incr.
 Section Writer_miscellaneous.
 
   Context
+    (W : Type)
     `{Monoid W}.
 
   Lemma extract_incr {A : Type} :
@@ -263,7 +264,7 @@ Section Writer_miscellaneous.
 
   (* This rewrite is useful when proving decoration-traversal compatibility
      in the binder case. *)
-  Theorem strength_shift1 : forall `{Functor F} (w : W) (A : Type),
+  Theorem strength_shift1 : forall (F : Type -> Type) `{Functor F} (w : W) (A : Type),
       σ F ∘ μ (W ×) ∘ pair w = fmap F (μ (W ×) ∘ pair w) ∘ σ F (B := A).
   Proof.
     intros. ext [w' x]. unfold compose; cbn.

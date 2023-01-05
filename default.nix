@@ -16,7 +16,13 @@ in with mylib; pkgs.coqPackages.mkCoqDerivation {
     propagatedBuildInputs =
       [ ];
     meta = {
-      description = "A library for generic reasoning about syntax.";
+      description = "A Coq framework for reusable syntax metatheory.";
+      longDescription = ''
+        Tealeaves is a Coq framework for building reusable libraries
+        of formal syntax metatheory called backends. Backends can be
+        used by to develop languages formalized in Coq.
+      '';
+      homepage = https://tealeaves.science;
       license = lib.licenses.mit;
     };
-  }
+}

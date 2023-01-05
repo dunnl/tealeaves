@@ -83,7 +83,10 @@ Section class.
   Context
     (W : Type)
     (T : Type -> Type)
-    `{DT.Monad.Monad W T}.
+    `{Return T}
+    `{Binddt W T T}
+    `{op: Monoid_op W} `{unit: Monoid_unit W}
+    `{! Monoid W}.
 
   Lemma kcompose_dtm_incr : forall
       `{Applicative G1} `{Applicative G2}
@@ -104,6 +107,9 @@ Section class.
     intros. unfold prepromote. rewrite kcompose_dtm_incr.
     reflexivity.
   Qed.
+  
+  Context
+    `{! DT.Monad.Monad W T}.
 
   Lemma dtm_kleisli_identity1 : forall `{Applicative G} `(f : W * A -> G (T B)),
       kcompose_dtm (G2 := fun A => A) (ret T ∘ extract (W ×)) f = f.

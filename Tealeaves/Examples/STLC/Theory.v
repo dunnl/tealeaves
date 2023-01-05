@@ -1,14 +1,11 @@
 From Tealeaves Require Export
-     Util.Product
-     LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Environment
-     LN.Operations
-     Classes.DecoratedTraversableModule
-     STLC.Language.
+  Classes.Kleisli.DT.Monad
+  Backends.LN.Top
+  Examples.STLC.Language.
 
 Export List.ListNotations.
 Open Scope list_scope.
-Export DecoratedTraversableMonad.Notations.
+Export DT.Monad.Notations.
 Open Scope tealeaves_scope.
 Export LN.AtomSet.Notations.
 Open Scope set_scope.
@@ -17,34 +14,36 @@ Export LN.AssocList.Notations.
 Import Operations.Notations.
 Import STLC.Language.Notations.
 
+Import Setlike.Functor.Notations.
+
 (** * Inversion lemmas *)
 (******************************************************************************)
 Lemma inversion11 : forall (A : typ) (x : atom) (Γ : ctx),
-    Γ ⊢ (Var (Fr x)) : A -> (x, A) ∈ Γ.
+    Γ ⊢ (tvar (Fr x)) : A -> (x, A) ∈ Γ.
 Proof.
   inversion 1; auto.
 Qed.
 
 Lemma inversion12 : forall (A : typ) (n : nat) (Γ : ctx),
-    Γ ⊢ (Var (Bd n)) : A -> False.
+    Γ ⊢ (tvar (Bd n)) : A -> False.
 Proof.
   inversion 1; auto.
 Qed.
 
 (* This is somewhat weak because L should really be (dom Γ) *)
 Lemma inversion21 : forall (A B : typ) (e : term leaf) (Γ : ctx),
-    (Γ ⊢ λ A ⋅ e : B) ->
-    exists C, B = A ⟹ C /\ exists L, forall (x : atom), ~ AtomSet.In x L -> Γ ++ x ~ A ⊢ e '(Var (Fr x)) : C.
+    (Γ ⊢ λ A e : B) ->
+    exists C, B = A ⟹ C /\ exists L, forall (x : atom), ~ AtomSet.In x L -> Γ ++ x ~ A ⊢ e '(tvar (Fr x)) : C.
 Proof.
   introv J.
   inversion J; subst.
-  exists B0. split; auto; exists L; auto.
+  exists τ2. split; auto; exists L; auto.
 Qed.
 
 (** Inversion principle for [abs] where we may assume the abstraction has arrow type *)
 Lemma inversion22 : forall (A B : typ) (e : term leaf) (Γ : ctx),
-    (Γ ⊢ λ A ⋅ e : A ⟹ B) ->
-    exists L, forall (x : atom), ~ AtomSet.In x L -> Γ ++ x ~ A ⊢ e '(Var (Fr x)) : B.
+    (Γ ⊢ λ A e : A ⟹ B) ->
+    exists L, forall (x : atom), ~ AtomSet.In x L -> Γ ++ x ~ A ⊢ e '(tvar (Fr x)) : B.
 Proof.
   introv J. apply inversion21 in J.
   destruct J as [C [H1 H2]].
@@ -53,7 +52,7 @@ Proof.
 Qed.
 
 Lemma inversion3 : forall (A : typ) (Γ : ctx) (t1 t2 : term leaf),
-    (Γ ⊢ [t1][t2] : A) ->
+    (Γ ⊢ [t1]@[t2] : A) ->
     exists B, (Γ ⊢ t1 : B ⟹ A) /\ (Γ ⊢ t2 : B).
 Proof.
   introv J; inversion J; subst.
@@ -86,13 +85,12 @@ Proof.
   - unfold scoped. rewrite term_freeset12.
     intro y. rewrite AtomSet.singleton_spec. intro; subst.
     rewrite in_domset_iff. eauto.
-  - rename H0 into IH;
-      rename H into premise.
+  - rename H0 into IH; rename H into premise.
     specialize_freshly IH. unfold scoped in *.
     rewrite term_freeset2.
-    assert (step1 : freeset term t ⊆ freeset term (t '(Var (Fr e))))
+    assert (step1 : freeset term t ⊆ freeset term (t '(tvar (Fr e))))
       by apply Theory.freeset_open_lower.
-    assert (step2 : forall x, x ∈@ (freeset term t) -> x ∈@ (domset (Γ ++ e ~ A)))
+    assert (step2 : forall x, x ∈@ (freeset term t) -> x ∈@ (domset (Γ ++ e ~ τ1)))
       by fsetdec.
     intros x xin. assert (x <> e) by fsetdec.
     specialize (step2 x xin). rewrite domset_app in step2.
@@ -112,8 +110,8 @@ Proof.
 Qed.
 
 Theorem lc_lam : forall (L : AtomSet.t) (t : term leaf) (X : typ),
-    (forall x : atom, ~ x ∈@ L -> locally_closed term (t '(Var (Fr x)))) ->
-    locally_closed term (λ X ⋅ t).
+    (forall x : atom, ~ x ∈@ L -> locally_closed term (t '(tvar (Fr x)))) ->
+    locally_closed term (λ X t).
 Proof.
   introv hyp1. unfold locally_closed in *.
   rewrite term_lc_gap2. specialize_freshly hyp1.
@@ -124,7 +122,7 @@ Theorem j_lc : forall Γ t A,
     Γ ⊢ t : A -> locally_closed term t.
 Proof.
   introv J. induction J.
-  - cbv. introv [hyp|]. now inversion hyp. easy.
+  - cbv. introv hyp. now inversion hyp.
   - pick fresh y excluding L and apply lc_lam; auto.
   - now rewrite term_lc3.
 Qed.
@@ -180,8 +178,11 @@ Proof.
       * intuition (auto with tea_alist).
     + constructor; eauto using uniq_remove_mid, binds_remove_mid.
   - cbn. apply j_abs with (L := L ∪ domset Γ ∪ {{x}}).
-    intros_cof H1. change (right_action term (fmap term (subst_loc x u) t)) with (t '{x ~> u}).
-    change (Var (A := leaf)) with (η term (A := leaf)).
+    intros_cof H1.
+    unfold prepromote. reassociate ->. rewrite (extract_incr).
+    change (binddt term (fun A0 : Type => A0) (subst_loc x u ∘ extract (prod nat)) t)
+      with (t '{x ~> u}).
+    change (@tvar) with (@ret term _).
     rewrite <- subst_open_var.
     + simpl_alist in *. eapply H1.
       * eauto using j_ctx_wf.
@@ -203,18 +204,17 @@ Proof.
 Qed.
 
 Inductive value : term leaf -> Prop :=
-  | value_abs : forall X t,
-      value (λ X ⋅ t).
+  | value_abs : forall X t, value (λ X t).
 
 Inductive beta_step : term leaf -> term leaf -> Prop :=
 | beta_app_l : forall (t1 t2 t1' : term leaf),
     beta_step t1 t1' ->
-    beta_step ([t1][t2]) ([t1'][t2])
+    beta_step ([t1]@[t2]) ([t1']@[t2])
 | beta_app_r : forall (t1 t2 t2' : term leaf),
     beta_step t2 t2' ->
-    beta_step ([t1][t2]) ([t1][t2'])
+    beta_step ([t1]@[t2]) ([t1]@[t2'])
 | beta_beta : forall (X : typ) (t u : term leaf),
-    beta_step ([λ X ⋅ t][u]) (t '(u)).
+    beta_step ([λ X t]@[u]) (t '(u)).
 
 Theorem subject_reduction_step : forall (t t' : term leaf) Γ A,
     Γ ⊢ t : A -> beta_step t t' -> Γ ⊢ t' : A.
@@ -231,7 +231,7 @@ Proof.
       destruct J1 as [C [hyp1 [L hyp2]]].
       inversion hyp1; subst.
       specialize_freshly hyp2.
-      assert (rw : t '(t2) = t '(Vf e) '{e ~> t2}).
+      assert (rw : t '(t2) = t '(tvar (Fr e)) '{e ~> t2}).
       { erewrite open_spec_eq. reflexivity.
         fsetdec. }
       rewrite rw. eapply substitution_r.
