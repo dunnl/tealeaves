@@ -374,9 +374,30 @@ Section section.
         /\ wtotal = w1 ● w2) ->
       (wtotal, b) ∈d bindd T f t.
   Proof.
-    introv [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]. subst.
+    introv [w1 [w2 [a [a_in [b_in wsum]]]]]. subst.
     unfold tosetd, compose in *.
-  Admitted.
+    compose near t.
+    rewrite (foldMapd_bindd T).
+    rewrite (foldMapd_to_runBatch T).
+    rewrite (foldMapd_to_runBatch T) in a_in.
+    rewrite (foldMapd_to_runBatch T) in b_in.
+    induction (iterate_d T False t).
+    - cbv in a_in. inversion a_in.
+    - cbn in a_in. destruct a_in as [a_in | a_in].
+      + destruct x as [wx ax].
+        specialize (IHb0 a_in b_in).
+        left. assumption.
+      + clear IHb0. destruct x as [wx ax].
+        inverts a_in. right.
+        { rewrite (foldMapd_to_runBatch T).
+          induction (iterate_d T False (f (w1, a))).
+          - inversion b_in.
+          - destruct b_in.
+            + left. auto.
+            + right. destruct x. unfold prepromote, compose. cbn.
+              inverts H2. easy.
+        }
+  Qed.
 
   Theorem ind_bindd_iff :
     forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
