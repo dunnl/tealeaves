@@ -609,8 +609,49 @@ Module Instances.
 
     (** ** Traversable functor *)
     (******************************************************************************)
-    #[export] Instance KT_KDTM: Traversable.Functor.TraversableFunctor T.
-    Admitted.
+    Lemma trf_traverse_id_T : forall A : Type,
+        traverse T (fun A0 : Type => A0) (@id A) = id.
+    Proof.
+      unfold_ops @Traverse_Binddt @Fmap_I.
+      apply (kdtm_binddt1 W T).
+    Qed.
+    
+    Lemma trf_traverse_traverse_T : forall (G1 G2 : Type -> Type) (H0 : Fmap G2) (H1 : Pure G2) (H2 : Mult G2),
+                            Applicative G2 ->
+                            forall (H4 : Fmap G1) (H5 : Pure G1) (H6 : Mult G1),
+                            Applicative G1 ->
+                            forall (B C : Type) (g : B -> G2 C) (A : Type) (f : A -> G1 B),
+                            fmap G1 (traverse T G2 g) ∘ traverse T G1 f =
+                              traverse T (G1 ∘ G2) (fmap G1 g ∘ f).
+    Proof.
+      intros. unfold_ops @Traverse_Binddt.
+      rewrite (kdtm_binddt2 W T); auto.
+      rewrite (kcompose_dtm_33 W T).
+      rewrite (kcompose_tm_ret T).
+      reflexivity.
+    Qed.
+      
+    Lemma trf_traverse_morphism_T : forall (G1 G2 : Type -> Type) (H0 : Fmap G1) (H1 : Pure G1) 
+                                    (H2 : Mult G1) (H3 : Fmap G2) (H4 : Pure G2) 
+                              (H5 : Mult G2) (ϕ : forall A : Type, G1 A -> G2 A),
+                            ApplicativeMorphism G1 G2 ϕ ->
+                            forall (A B : Type) (f : A -> G1 B),
+                              ϕ (T B) ∘ traverse T G1 f = traverse T G2 (ϕ B ∘ f).
+    Proof.
+      intros. unfold_ops @Traverse_Binddt.
+      rewrite (kdtm_morph W T G1 G2).
+      do 2 reassociate <- on left.
+      fequal. unfold compose; ext x.
+      inversion H8.
+      rewrite appmor_natural.
+      reflexivity.
+    Qed.
+
+    #[export] Instance KT_KDTM: Traversable.Functor.TraversableFunctor T :=
+      {| trf_traverse_id := trf_traverse_id_T;
+         trf_traverse_traverse := trf_traverse_traverse_T;
+         trf_traverse_morphism := trf_traverse_morphism_T;
+      |}.
 
     (** ** Functor *)
     (******************************************************************************)
