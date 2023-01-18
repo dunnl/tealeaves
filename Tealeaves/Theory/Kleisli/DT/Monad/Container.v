@@ -335,10 +335,37 @@ Section section.
     change (foldMapd T (ret set) (bindd T f t) (wtotal, b))
       with (((foldMapd T (ret set) ∘ bindd T f) t) (wtotal, b)) in hyp.
     rewrite (foldMapd_bindd T) in hyp.
-    rewrite (foldMapd_to_runBatch T).
     rewrite (foldMapd_to_runBatch T) in hyp.
-    induction (iterate T False t).
-  Admitted.
+    rewrite (foldMapd_to_runBatch T).
+    (* HACK: We want to call "rewrite (foldMapd_to_runBatch T)" but
+    this fails under the binder. The following is a kludge. *)
+    cut (exists (w1 w2 : W) (a : A),
+               runBatch (B := False) (F := fun _ => set (W * A))
+                 (@ret set Return_set (W * A)) (iterate_d T (A:=A) False t) (w1, a) /\
+                 runBatch (B := False) (F := fun _ => set (W * B)) (ret set) (iterate_d T (A:=B) False (f (w1, a))) (w2, b) /\ wtotal = w1 ● w2).
+    { intro. preprocess. repeat eexists; try rewrite (foldMapd_to_runBatch T B); eauto. }
+    induction (iterate_d T False t).
+    - cbv in hyp. inversion hyp.
+    - destruct x as [wx ax].
+      cbn in hyp. destruct hyp as [hyp | hyp].
+      + (* (wtotal, b) in b0 *)
+        specialize (IHb0 hyp).
+        destruct IHb0 as [w1 [w2 [a [IH_a_in [IH_b_in IH_sum]]]]].
+        exists w1 w2 a. split; [now left | auto].
+      + (* (wotal, b) in f (wx,ax) *)
+        clear IHb0.
+        rewrite (foldMapd_to_runBatch T) in hyp.
+        assert (lemma : exists w2 : W, runBatch (B := False) (F := fun _ => set (W * B)) (ret set) (iterate_d T False (f (wx, ax))) (w2, b) /\ wtotal = wx ● w2).
+        { induction (iterate_d T False (f (wx, ax))).
+          - cbv in hyp. inversion hyp.
+          - destruct hyp as [hyp|hyp].
+            + specialize (IHb1 hyp). destruct IHb1 as [w2 [IHb1' IHb1'']].
+              exists w2. split. now left. assumption.
+            + destruct x as [wx2 b2]. cbv in hyp. inverts hyp.
+              exists wx2. split. now right. reflexivity. }
+        destruct lemma as [w2 rest].
+        exists wx w2 ax. split. now right. assumption.
+  Qed.
 
   Lemma ind_bindd_iff2 :
     forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
