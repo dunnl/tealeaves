@@ -270,9 +270,12 @@ Section tolistd.
           eexists. split; [| reflexivity]. now right. }
       + introv [a [rest1 rest2]]. subst.
         inverts rest1.
-        { left. admit. }
-        { admit. }
-  Admitted.
+        { left. rewrite IHb0.
+          exists a. split; auto. }
+        { right. destruct x.
+          unfold compose; cbn.
+          inverts H1. easy. }
+  Qed.
 
   Corollary ind_fmap_iff :
     forall `(f : A -> B) (t : T A) (w : W) (b : B),
