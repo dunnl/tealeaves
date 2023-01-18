@@ -49,8 +49,16 @@ Module Instance.
       rewrite (kdtm_binddt2 W T _ _ _ (G1 := fun A => A) (G2 := fun A => A)).
       fequal.
       - now rewrite Mult_compose_identity1.
-      - admit.
-    Admitted.
+      - unfold kcompose_dtm. ext [w a].
+        unfold_ops @Fmap_I.
+        compose near (w, a) on left.
+        do 2 reassociate <- on left.
+        unfold_compose_in_compose.
+        rewrite (kdtm_binddt0 W T _ _ (G := fun A => A)).
+        unfold_ops @Return_writer @Monoid_unit_product.
+        unfold compose; cbn.
+        reflexivity.
+    Qed.
 
     #[export] Instance: Classes.Functor.Functor T :=
       {| fun_fmap_id := fmap_id;
