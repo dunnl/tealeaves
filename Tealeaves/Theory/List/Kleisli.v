@@ -67,10 +67,23 @@ Section bindt_rewriting_lemmas.
     unfold compose.
     rewrite (fmap_list_cons).
     rewrite dist_list_cons_1.
-    rewrite ap6.
-    rewrite ap6.
+    do 2 rewrite ap6.
     rewrite (app_pure_natural G).
-  Admitted.
+    assert (lemma : compose (join list) ∘ cons (A:=list B) =
+                      (precompose (join list) ∘ (@app B))).
+    { ext l1 lrest. unfold compose.
+      rewrite join_list_cons.
+      reflexivity. }
+    Set Keyed Unification.
+    rewrite lemma.
+    Unset Keyed Unification.
+    rewrite <- (fmap_to_ap).
+    rewrite <- (fun_fmap_fmap G).
+    unfold compose.
+    rewrite ap7.
+    rewrite (fmap_to_ap).
+    reflexivity.
+  Qed.
   
   Lemma bindt_list_app : forall (f : A -> G (list B)) (l1 l2 : list A),
       bindt list G f (l1 ++ l2) =
@@ -84,11 +97,22 @@ Section bindt_rewriting_lemmas.
     rewrite (app_pure_natural G).
     assert (lemma : compose (join list) ∘ app (A:=list B) =
               (precompose (join list) ∘ (@app B) ∘ (join list))).
-    { admit. }
+    { ext x y. unfold compose.
+      rewrite join_list_app.
+      reflexivity. }
     Set Keyed Unification.        
     rewrite lemma.
     Unset Keyed Unification.
-  Admitted.
+    rewrite <- (fmap_to_ap).
+    reassociate -> on left.
+    rewrite <- (fun_fmap_fmap G).
+    unfold compose at 1.
+    rewrite ap7.
+    rewrite <- (fun_fmap_fmap G).
+    unfold compose at 1.
+    rewrite fmap_to_ap.
+    reflexivity.
+  Qed.
   
 End bindt_rewriting_lemmas.
 
