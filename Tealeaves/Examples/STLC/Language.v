@@ -681,32 +681,86 @@ From Tealeaves Require Import Theory.Kleisli.DT.Functor.Container.
 Import DT.Functor.Container.Notations.
 Import Monoid.Notations.
          
+(** ** Rewriting lemmas for <<foldMapd> *)
+(******************************************************************************)
+Section term_foldMapd_rewrite.
+
+  Context {A M : Type} (f : nat * A -> M) `{Monoid M}.
+
+  Lemma term_foldMapd1 : forall (a : A),
+      foldMapd term f (tvar a) = f (Ƶ, a).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma term_foldMapd2 : forall X (t : term A),
+      foldMapd term f (λ X t) = foldMapd term (prepromote 1 f) t.
+  Proof.
+    intros. cbn.  simpl_monoid.
+    reflexivity.
+  Qed.
+
+  Lemma term_foldMapd3 : forall (t1 t2 : term A),
+      foldMapd term f ([t1]@[t2]) = foldMapd term f t1 ● foldMapd term f t2.
+  Proof.
+    intros. cbn. simpl_monoid.
+    reflexivity.
+  Qed.
+
+End term_foldMapd_rewrite.
+
 (** ** Rewriting lemmas for <<∈d>> *)
 (******************************************************************************)
 Section term_ind_rewrite.
 
+  Import Theory.Kleisli.DT.Monad.DerivedInstances.Instances.
+  
   Lemma term_ind1 : forall (l1 l2 : leaf) (n : nat),
       (n, l1) ∈d (tvar l2) <-> n = Ƶ /\ l1 = l2.
   Proof.
     introv. unfold tosetd, compose.
-    unfold foldMapd. unfold_ops @Fmapdt_Binddt.
-  Admitted.
+    rewrite term_foldMapd1.
+    split.
+    - now inversion 1.
+    - inversion 1. now subst.
+  Qed.
 
   Lemma term_ind2 : forall (t : term leaf) (l : leaf) (n : nat) (X : typ),
       (n, l) ∈d (λ X t) <-> (n - 1, l) ∈d t /\ n <> 0.
   Proof.
     introv. unfold tosetd, compose.
-  Admitted.
+    rewrite term_foldMapd2; try typeclasses eauto.
+    rewrite foldMapd_to_runBatch; try typeclasses eauto.
+    rewrite foldMapd_to_runBatch; try typeclasses eauto.
+    generalize dependent n.
+    induction (iterate_d term False t); intro n.
+    - cbn. unfold_ops @Pure_const. split.
+      inversion 1. intros [H _]. inversion H.
+    - cbn. unfold_ops @Monoid_op_set. unfold set_add.
+      split.
+      + intros [hyp|hyp].
+        { rewrite IHb in hyp. split; intuition. }
+        { clear IHb. unfold prepromote, compose in hyp.
+          destruct x. cbn in hyp. inverts hyp. split.
+          - right. cbn. replace (n0 - 0) with n0 by lia.
+            easy.
+          - lia. }
+      + intros [[hyp1|hyp1] hyp2].
+        { rewrite IHb. now left. }
+        { destruct x as [xn xl]. right.
+          unfold prepromote, compose, incr.
+          inverts hyp1. unfold_ops @Monoid_op_plus.
+          replace (1 + (n - 1))%nat with n by lia.
+          easy. }
+  Qed.
 
   Lemma term_ind3 : forall (t1 t2 : term leaf) (n : nat) (l : leaf),
       (n, l) ∈d ([t1]@[t2]) <-> (n, l) ∈d t1 \/ (n, l) ∈d t2.
   Proof.
     introv. unfold tosetd, compose.
-    intuition. destruct H.
-    - left. admit.
-    - right.
-    admit.
-  Admitted.
+    rewrite term_foldMapd3; try typeclasses eauto.
+    reflexivity.
+  Qed.
 
 End term_ind_rewrite.
 

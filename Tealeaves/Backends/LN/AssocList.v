@@ -120,7 +120,6 @@ Section DecoratedTraversableFunctor_alist.
     #[local] Unset Keyed Unification.
     *)
   Qed.
-Admitted.
 *)
 
 End DecoratedTraversableFunctor_alist.
