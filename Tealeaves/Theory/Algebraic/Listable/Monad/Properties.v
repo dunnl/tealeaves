@@ -11,6 +11,7 @@ Import Monoid.Notations.
 #[local] Generalizable Variable T A.
 
 (** * Listable monads *)
+(******************************************************************************)
 
 (** * Properties of listable monads *)
 (******************************************************************************)

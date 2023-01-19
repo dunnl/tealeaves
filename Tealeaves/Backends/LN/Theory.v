@@ -164,18 +164,23 @@ Section locally_nameless_basic_principles.
       x ∈ free T t <-> Fr x ∈ t.
   Proof.
     intros. unfold free.
-    (*
-    rewrite (in_bind_iff list).
+    rewrite (Toset_list_spec).
+    rewrite (Traversable.Monad.Container.in_bind_iff list).
     split.
-    - intros [l ?]. destruct l.
-      + rewrite in_iff_in_list. cbn in *.
-        cut (a = x). now intro; subst. tauto.
-      + cbn in *. tauto.
-    - exists (Fr x). rewrite <- (in_iff_in_list).
-      cbn. tauto.
+    - intros [l [hyp1 hyp2]]. destruct l.
+      + rewrite (in_iff_in_tolist T).
+        unfold free_loc in hyp2.
+        rewrite <- Toset_list_spec in hyp2.
+        rewrite toset_list_one in hyp2.
+        inverts hyp2.
+        rewrite <- Toset_list_spec in hyp1.
+        assumption.
+      + cbn in *. inverts hyp2.
+    - intro hyp. exists (Fr x).
+      rewrite (in_iff_in_tolist T) in hyp.
+      split. rewrite <- Toset_list_spec. assumption.
+      cbn. left. right. easy.
   Qed.
-     *)
-  Admitted.
 
   Theorem free_iff_freeset : forall (t : T leaf) (x : atom),
       x ∈ free T t <-> x ∈@ freeset T t.
@@ -597,13 +602,12 @@ Section locally_nameless_metatheory.
   Proof.
     intros. compose near t on right.
     unfold open, close, subst.
-    (*
     rewrite (bindd_fmapd T).
-    symmetry. apply (subd_respectful_sub F).
-    symmetry. apply subst_spec_local.
+    rewrite (bind_to_bindd).
+    fequal. ext [w l].
+    unfold compose; cbn.
+    now erewrite subst_spec_local.
   Qed.
-     *)
-  Admitted.
 
   (** ** Substitution when <<u>> is a leaf **)
   (******************************************************************************)

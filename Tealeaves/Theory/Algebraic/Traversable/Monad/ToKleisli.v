@@ -174,7 +174,7 @@ Module Instance.
       now rewrite (app_pure_natural G2).
     Qed.
 
-    #[export] Instance: Kleisli.Traversable.Monad.Monad T :=
+    #[export] Instance TravMon_ToKleisli: Kleisli.Traversable.Monad.Monad T :=
       {| ktm_bindt0 := @ktm_bindt0_T;
         ktm_bindt1 := @ktm_bindt1_T;
         ktm_bindt2 := @ktm_bindt2_T;

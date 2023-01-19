@@ -125,10 +125,6 @@ Tealeaves/Theory/Algebraic/Traversable/Functor/KleisliTheory.v
 #Tealeaves/Theory/Algebraic/DT/Functor/KleisliTheory.v
 #Tealeaves/Theory/Algebraic/DT/Monad/KleisliTheory.v
 
-# ADDING KLEISLI TO SET AND LIST
-Tealeaves/Theory/List/Kleisli.v
-Tealeaves/Theory/Sets/Kleisli.v
-
 # THEORY (KLEISLI)
 Tealeaves/Theory/Kleisli/Monad/ToFunctor.v
 Tealeaves/Theory/Kleisli/Monad/Properties.v
@@ -165,6 +161,10 @@ Tealeaves/Theory/Algebraic/Traversable/Functor/Const.v
 Tealeaves/Theory/Algebraic/Traversable/Functor/Coalgebraic.v
 #Tealeaves/Theory/Algebraic/Traversable/Functor/Listable.v
 #Tealeaves/Theory/Algebraic/Traversable/Monad/Listable.v
+
+# ADDING KLEISLI TO SET AND LIST
+Tealeaves/Theory/List/Kleisli.v
+Tealeaves/Theory/Sets/Kleisli.v
 
 # OTHER THINGS
 Tealeaves/Theory/Kleisli/Monad/ToApplicative.v

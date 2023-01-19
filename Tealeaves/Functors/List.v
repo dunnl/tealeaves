@@ -516,6 +516,8 @@ End dist_list_properties.
 (******************************************************************************)
 Section TraversableMonad_list.
 
+  Section with_context.
+    
   Context
     `{Applicative G}
     {A : Type}.
@@ -553,6 +555,13 @@ Section TraversableMonad_list.
       now rewrite (fun_fmap_fmap G).
   Qed.
   #[local] Set Keyed Unification.
+
+  End with_context.
+
+  #[export] Instance: TraversableMonad list :=
+    {| trvmon_ret := @trvmon_ret_list;
+       trvmon_join := @trvmon_join_list;
+    |}.
 
 End TraversableMonad_list.
 
