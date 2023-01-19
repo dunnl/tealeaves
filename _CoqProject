@@ -125,6 +125,9 @@ Tealeaves/Theory/Algebraic/Traversable/Functor/KleisliTheory.v
 #Tealeaves/Theory/Algebraic/DT/Functor/KleisliTheory.v
 #Tealeaves/Theory/Algebraic/DT/Monad/KleisliTheory.v
 
+# ADDING KLEISLI TO LIST
+Tealeaves/Theory/Sets/Kleisli.v
+
 # THEORY (KLEISLI)
 Tealeaves/Theory/Kleisli/Monad/ToFunctor.v
 Tealeaves/Theory/Kleisli/Monad/Properties.v
@@ -162,9 +165,8 @@ Tealeaves/Theory/Algebraic/Traversable/Functor/Coalgebraic.v
 #Tealeaves/Theory/Algebraic/Traversable/Functor/Listable.v
 #Tealeaves/Theory/Algebraic/Traversable/Monad/Listable.v
 
-# ADDING KLEISLI TO SET AND LIST
+# ADDING KLEISLI TO LIST
 Tealeaves/Theory/List/Kleisli.v
-Tealeaves/Theory/Sets/Kleisli.v
 
 # OTHER THINGS
 Tealeaves/Theory/Kleisli/Monad/ToApplicative.v
@@ -212,20 +214,20 @@ Tealeaves/Examples/STLC/Theory.v
 Tealeaves/Examples/STLC/LanguageAlgebraic.v
 
 # MULTISORTED
-Multisorted/Theory/Category.v
-Multisorted/Classes/Multifunctor.v
-Multisorted/Classes/DTM.v
-Multisorted/Functors/MList.v
-Multisorted/Functors/Schedule.v
-Multisorted/Theory/DTMContainer.v
-Multisorted/Theory/DTMSchedule.v
+Tealeaves/Multisorted/Theory/Category.v
+Tealeaves/Multisorted/Classes/Multifunctor.v
+Tealeaves/Multisorted/Classes/DTM.v
+Tealeaves/Multisorted/Functors/MList.v
+Tealeaves/Multisorted/Functors/Schedule.v
+Tealeaves/Multisorted/Theory/DTMContainer.v
+Tealeaves/Multisorted/Theory/DTMSchedule.v
 
 # MULTISORTED LOCALLY NAMELESS
-LN/Multisorted/Operations.v
-LN/Multisorted/Theory.v
+Tealeaves/Backends/LN/Multisorted/Operations.v
+Tealeaves/Backends/LN/Multisorted/Theory.v
 
 # SYSTEM F
-SystemF/Language.v
-SystemF/Rewriting.v
-SystemF/Contexts.v
-SystemF/Theory.v
+Tealeaves/Examples/SystemF/Language.v
+Tealeaves/Examples/SystemF/Rewriting.v
+Tealeaves/Examples/SystemF/Contexts.v
+Tealeaves/Examples/SystemF/Theory.v
