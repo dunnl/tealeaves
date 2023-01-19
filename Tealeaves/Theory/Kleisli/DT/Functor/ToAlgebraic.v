@@ -138,8 +138,16 @@ Module Instances.
   Proof.
     intros. unfold_ops @Dist_Fmapdt.
     rewrite (kdtfun_fmapdt2 E T).
-    fequal. admit.
-  Admitted.
+    fequal.
+    change (extract (E ×) (A := G1 (G2 A))) with (id (A := G1 (G2 A)) ∘ extract (E ×)).
+    rewrite kcompose_dt_32.
+    rewrite (fun_fmap_id (E ×)).
+    ext [e a]. unfold compose; cbn.
+    compose near a.
+    rewrite (fun_fmap_fmap G1).
+    rewrite (fun_fmap_id G1).
+    reflexivity.
+  Qed.
 
   #[export] Instance: Algebraic.Traversable.Functor.TraversableFunctor T :=
     {| dist_natural := dist_natural_T;
