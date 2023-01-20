@@ -1,5 +1,5 @@
 { pkgs ? import <nixpkgs> {}
-, tealeaves ? import ../. {}
+, tealeaves ? import ../../../. {}
 , no-tealeaves ? false}:
 pkgs.stdenv.mkDerivation {
   name = "tealeaves-stlc";
