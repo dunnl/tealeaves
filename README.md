@@ -49,7 +49,7 @@ Our multisorted classes live under `Multisorted/`. Our extension of the locally 
 
 ### Axioms used in Tealeaves
 Tealeaves currently uses two axioms commonly used in Coq formalizations, which have been proven (on paper) to be equi-consistent with Coq itself. They are the following.
-- [Propositional extensionality](https://coq.github.io/doc/v8.12/stdlib/Coq.Logic.PropExtensionality.html#propositional_extensionality), which says that equivalent propositions (`P <-> Q`) are computationally equal (`P = Q`)
+- [Propositional extensionality](https://coq.github.io/doc/v8.12/stdlib/Coq.Logic.PropExtensionality.html#propositional_extensionality), which says that equivalent propositions (`P <-> Q`) are propositionally equal (`P = Q`)
 - [Functional extensionality](https://coq.inria.fr/library/Coq.Logic.FunctionalExtensionality.html#functional_extensionality), which is the statement `forall x, f x = g x -> f = g`.
 
 There axioms are assumed [here](https://github.com/dunnl/tealeaves/blob/1e69a99b9376506c5c28c243112e74c9282535aa/Tealeaves/Util/Prelude.v#L6). They are a convenience to use Coq's rewriting features. In principle one can eliminate these at the cost of ``setoid hell'' (see [this question](https://stackoverflow.com/questions/65493694/why-do-calculus-of-construction-based-languages-use-setoids-so-much) on StackOverflow).
