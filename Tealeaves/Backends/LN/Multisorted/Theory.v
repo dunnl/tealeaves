@@ -1,5 +1,9 @@
-(** This files contains metatheorems for the locally nameless variables
- that closely parallel those of Metalib. *)
+(*|
+############################################################
+Multisorted locally nameless infrastructure
+############################################################
+|*)
+
 From Tealeaves Require Import
      Util.Prelude
      Util.EqDec_eq LN.Atom LN.AtomSet
@@ -25,8 +29,11 @@ Import DTMContainer.Notations.
 
 #[local] Generalizable Variables W T M F G A B C.
 
-(** * Basic specifications for <<open>>, <<close>>, and <<subst>> *)
-(******************************************************************************)
+(*|
+---------------------------------------
+Basic properties of operations
+---------------------------------------
+|*)
 Section operations_specifications.
 
   Context
