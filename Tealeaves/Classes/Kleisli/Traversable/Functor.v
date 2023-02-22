@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Classes.Algebraic.Applicative.
+  Classes.Applicative.
 
 #[local] Generalizable Variable G A B C ϕ.
 

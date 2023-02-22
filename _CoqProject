@@ -1,12 +1,14 @@
 -R Tealeaves/ Tealeaves
 
-# BASIC SETUP
-Tealeaves/Util/LibTactics.v
-Tealeaves/Util/EqDec_eq.v
-Tealeaves/Util/Unfold.v
-Tealeaves/Util/CompareNats.v
-Tealeaves/Util/Prelude.v
+Tealeaves/Axioms.v
+Tealeaves/Tactics/LibTactics.v
+Tealeaves/Tactics/Basics.v
+Tealeaves/Tactics/General.v
+Tealeaves/Tactics/Unfold.v
+Tealeaves/Tactics/CompareNats.v
+Tealeaves/Prelude.v
 Tealeaves/Data/Product.v
+Tealeaves/Classes/EqDec_eq.v
 Tealeaves/Classes/Category.v
 Tealeaves/Classes/Monoid.v
 Tealeaves/Classes/Comonoid.v
@@ -17,61 +19,56 @@ Tealeaves/Data/Strength.v
 Tealeaves/Data/Natural.v
 Tealeaves/Data/Prop.v
 Tealeaves/Data/Sets.v
-
-# FUNDAMENTAL CLASSES
-Tealeaves/Classes/Algebraic/Applicative.v
-Tealeaves/Classes/Algebraic/Monad.v
-Tealeaves/Classes/Algebraic/Comonad.v
-Tealeaves/Classes/Algebraic/ParamComonad.v
-Tealeaves/Classes/Algebraic/RightModule.v
-Tealeaves/Classes/Algebraic/RightComodule.v
-Tealeaves/Classes/Algebraic/BeckDistributiveLaw.v
-Tealeaves/Classes/Algebraic/Bimonad.v
+Tealeaves/Classes/Applicative.v
+Tealeaves/Classes/Kleisli/Monad.v
+Tealeaves/Classes/Monad.v
+Tealeaves/Classes/Comonad.v
+Tealeaves/Classes/ParamComonad.v
+Tealeaves/Classes/RightModule.v
+Tealeaves/Classes/RightComodule.v
+Tealeaves/Classes/BeckDistributiveLaw.v
+Tealeaves/Classes/Bimonad.v
 Tealeaves/Data/CoqCategory.v
-
-# TEALEAVES MAJOR CLASSES (ALGEBRAIC)
 Tealeaves/Functors/Environment.v
 Tealeaves/Functors/Writer.v
-Tealeaves/Classes/Algebraic/Decorated/Functor.v
-Tealeaves/Classes/Algebraic/Decorated/Monad.v
-#Tealeaves/Classes/Algebraic/Decorated/Module.v
-Tealeaves/Classes/Algebraic/Traversable/Functor.v
-
-# THIS IS HERE BECAUSE TRAVERSABLEMONAD DEPENDS ON IT
-Tealeaves/Theory/Algebraic/Traversable/Functor/Category.v
-
-Tealeaves/Classes/Algebraic/Traversable/Monad.v
-#Tealeaves/Classes/Algebraic/Traversable/Module.v
-Tealeaves/Classes/Algebraic/DT/Functor.v
-Tealeaves/Classes/Algebraic/DT/Monad.v
-#Tealeaves/Classes/Algebraic/DT/Module.v
-
-# TEALEAVES MAJOR CLASSES (KLEISLI)
-Tealeaves/Classes/Kleisli/Monad.v
 Tealeaves/Classes/Kleisli/Decorated/Functor.v
 Tealeaves/Classes/Kleisli/Decorated/Monad.v
 #Tealeaves/Classes/Kleisli/Decorated/Module.v
+Tealeaves/Classes/Decorated/Functor.v
+Tealeaves/Classes/Decorated/Monad.v
+#Tealeaves/Classes/Decorated/Module.v
 Tealeaves/Classes/Kleisli/Traversable/Functor.v
 Tealeaves/Classes/Kleisli/Traversable/Monad.v
 #Tealeaves/Classes/Kleisli/Traversable/Module.v
+Tealeaves/Classes/Traversable/Functor.v
+Tealeaves/Classes/Traversable/Monad.v
+#Tealeaves/Classes/Traversable/Module.v
+Tealeaves/Functors/Sets.v
+Tealeaves/Classes/Setlike/Functor.v
+Tealeaves/Classes/Setlike/Monad.v
+#Tealeaves/Classes/Setlike/Module.v
+#Tealeaves/Classes/Listable/Module.v
+Tealeaves/Functors/List.v
+Tealeaves/Classes/Listable/Functor.v
+Tealeaves/Classes/Listable/Monad.v
+Tealeaves/Classes/Decorated/Setlike.v
+Tealeaves/Classes/Decorated/Listable.v
 Tealeaves/Classes/Kleisli/DT/Functor.v
 Tealeaves/Classes/Kleisli/DT/Monad.v
 #Tealeaves/Classes/Kleisli/DT/Module.v
+Tealeaves/Classes/DT/Functor.v
+Tealeaves/Classes/DT/Monad.v
+#Tealeaves/Classes/DT/Module.v
 
-# TEALEAVES LESSER CLASSES
-Tealeaves/Functors/Sets.v
-Tealeaves/Classes/Algebraic/Setlike/Functor.v
-Tealeaves/Classes/Algebraic/Setlike/Monad.v
-#Tealeaves/Classes/Algebraic/Setlike/Module.v
-Tealeaves/Functors/List.v
-Tealeaves/Classes/Algebraic/Listable/Functor.v
-Tealeaves/Classes/Algebraic/Listable/Monad.v
-#Tealeaves/Classes/Algebraic/Listable/Module.v
+# FIX THESE GUYS
+#Tealeaves/Theory/Algebraic/Decorated/Functor/Category.v
+#Tealeaves/Theory/Algebraic/Decorated/Functor/Characterization.v
+#Tealeaves/Theory/Algebraic/Decorated/Functor/Properties.v
+#Tealeaves/Theory/Algebraic/Decorated/Functor/Setlike.v
+#Tealeaves/Theory/Algebraic/Decorated/Functor/Listable.v
 
-# CONCRETE FUNCTORS
 Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/Constant.v
-#Tealeaves/Functors/DecoratedList.v
 Tealeaves/Functors/Diagonal.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
@@ -82,152 +79,4 @@ Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
 Tealeaves/Functors/Batch.v
 
-# THEORY (ALGEBRAIC)
-Tealeaves/Theory/Algebraic/Applicative/Monoid.v
-Tealeaves/Theory/Algebraic/Monad/Properties.v
-#Tealeaves/Theory/Algebraic/RightModule/Composition.v
-Tealeaves/Theory/Algebraic/Decorated/Shift.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/Category.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/Characterization.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/Helpers.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/Properties.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/Setlike.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/Listable.v
-Tealeaves/Theory/Algebraic/Decorated/Monad/Helpers.v
-Tealeaves/Theory/Algebraic/Decorated/Monad/Setlike.v
-Tealeaves/Theory/Algebraic/Decorated/Monad/Listable.v
-Tealeaves/Theory/Algebraic/Decorated/Monad/Characterization.v
-Tealeaves/Theory/Algebraic/Listable/Shape.v
-Tealeaves/Theory/Algebraic/Traversable/Functor/Properties.v
-Tealeaves/Theory/Algebraic/Traversable/Functor/Instances.v
-Tealeaves/Theory/Algebraic/Traversable/Monad/Characterization.v
-Tealeaves/Theory/Algebraic/Listable/Functor/Category.v
-Tealeaves/Theory/Algebraic/Listable/Functor/Properties.v
-Tealeaves/Theory/Algebraic/Listable/Monad/Properties.v
-Tealeaves/Theory/Algebraic/DT/Functor/Category.v
-
-# ALGEBRAIC TO KLEISLI
-Tealeaves/Theory/Algebraic/Monad/ToKleisli.v
-#Tealeaves/Theory/Algebraic/RightModule/ToKleisli.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/ToKleisli.v
-Tealeaves/Theory/Algebraic/Decorated/Monad/ToKleisli.v
-Tealeaves/Theory/Algebraic/Traversable/Functor/ToKleisli.v
-Tealeaves/Theory/Algebraic/Traversable/Monad/ToKleisli.v
-Tealeaves/Theory/Algebraic/DT/Functor/ToKleisli.v
-Tealeaves/Theory/Algebraic/DT/Monad/ToKleisli.v
-
-# ALGEBRAIC KLEISLI LEMMAS
-#Tealeaves/Theory/Algebraic/Monad/KleisliTheory.v
-Tealeaves/Theory/Algebraic/Decorated/Functor/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/Decorated/Monad/KleisliTheory.v
-Tealeaves/Theory/Algebraic/Traversable/Functor/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/Traversable/Monad/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/DT/Functor/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/DT/Monad/KleisliTheory.v
-
-# ADDING KLEISLI TO LIST
-Tealeaves/Theory/Sets/Kleisli.v
-
-# THEORY (KLEISLI)
-Tealeaves/Theory/Kleisli/Monad/ToFunctor.v
-Tealeaves/Theory/Kleisli/Monad/Properties.v
-Tealeaves/Theory/Kleisli/Decorated/Prepromote.v
-Tealeaves/Theory/Kleisli/Decorated/Functor/ToFunctor.v
-Tealeaves/Theory/Kleisli/Decorated/Monad/DerivedInstances.v
-Tealeaves/Theory/Kleisli/Traversable/Functor/ToFunctor.v
-Tealeaves/Theory/Kleisli/Traversable/Functor/Container.v
-Tealeaves/Theory/Kleisli/Traversable/Monad/Properties.v
-Tealeaves/Theory/Kleisli/Traversable/Monad/ToFunctor.v
-Tealeaves/Theory/Kleisli/Traversable/Monad/DerivedInstances.v
-Tealeaves/Theory/Kleisli/Traversable/Monad/Container.v
-Tealeaves/Theory/Kleisli/DT/Functor/ToFunctor.v
-Tealeaves/Theory/Kleisli/DT/Functor/DerivedInstances.v
-Tealeaves/Theory/Kleisli/DT/Functor/Container.v
-Tealeaves/Theory/Kleisli/DT/Monad/ToFunctor.v
-Tealeaves/Theory/Kleisli/DT/Monad/Properties.v
-Tealeaves/Theory/Kleisli/DT/Monad/DerivedInstances.v
-Tealeaves/Theory/Kleisli/DT/Monad/Container.v
-
-# KLEISLI TO ALGEBRAIC
-Tealeaves/Theory/Kleisli/Monad/ToAlgebraic.v
-Tealeaves/Theory/Kleisli/Decorated/Functor/ToAlgebraic.v
-Tealeaves/Theory/Kleisli/Decorated/Monad/ToAlgebraic.v
-Tealeaves/Theory/Kleisli/Traversable/Functor/ToAlgebraic.v
-Tealeaves/Theory/Kleisli/Traversable/Monad/ToAlgebraic.v
-Tealeaves/Theory/Kleisli/DT/Functor/ToAlgebraic.v
-Tealeaves/Theory/Kleisli/DT/Monad/ToAlgebraic.v
-
-# ALGEBRAIC MODULES THAT DEPEND ON SHAPELINESS VIA KLEISLI
-Tealeaves/Theory/Algebraic/Listable/Monad/Characterization.v
-Tealeaves/Theory/Algebraic/Traversable/Functor/Product.v
-Tealeaves/Theory/Algebraic/Traversable/Functor/Const.v
-Tealeaves/Theory/Algebraic/Traversable/Functor/Coalgebraic.v
-#Tealeaves/Theory/Algebraic/Traversable/Functor/Listable.v
-#Tealeaves/Theory/Algebraic/Traversable/Monad/Listable.v
-
-# ADDING KLEISLI TO LIST
-Tealeaves/Theory/List/Kleisli.v
-
-# OTHER THINGS
-Tealeaves/Theory/Kleisli/Monad/ToApplicative.v
-
-# ALGEBRAIC WRAPPERS
-Tealeaves/Theory/Algebraic/Monad.v
-Tealeaves/Theory/Algebraic/Decorated/Functor.v
-Tealeaves/Theory/Algebraic/Decorated/Monad.v
-Tealeaves/Theory/Algebraic/Traversable/Functor.v
-Tealeaves/Theory/Algebraic/Traversable/Monad.v
-Tealeaves/Theory/Algebraic/DT/Functor.v
-Tealeaves/Theory/Algebraic/DT/Monad.v
-
-# KLEISLI WRAPPERS
-Tealeaves/Theory/Kleisli/Monad.v
-Tealeaves/Theory/Kleisli/Decorated/Functor.v
-Tealeaves/Theory/Kleisli/Decorated/Monad.v
-Tealeaves/Theory/Kleisli/Traversable/Functor.v
-Tealeaves/Theory/Kleisli/Traversable/Monad.v
-Tealeaves/Theory/Kleisli/DT/Functor.v
-Tealeaves/Theory/Kleisli/DT/Monad.v
-
-# EQUIVALENCES
-Tealeaves/Theory/Equivalences/Monad.v
-Tealeaves/Theory/Equivalences/TraversableFunctor.v
-Tealeaves/Theory/Equivalences/TraversableMonad.v
-Tealeaves/Theory/Equivalences/DecoratedFunctor.v
-Tealeaves/Theory/Equivalences/DecoratedMonad.v
-Tealeaves/Theory/Equivalences/DecoratedTraversableFunctor.v
-Tealeaves/Theory/Equivalences/DecoratedTraversableMonad.v
-
-# LOCALLY NAMELESS
-Tealeaves/Backends/LN/Atom.v
-Tealeaves/Backends/LN/Leaf.v
-Tealeaves/Backends/LN/AtomSet.v
-Tealeaves/Backends/LN/AssocList.v
-Tealeaves/Backends/LN/Operations.v
-Tealeaves/Backends/LN/Theory.v
-Tealeaves/Backends/LN/Top.v
-#Tealeaves/Backends/LN/Environment.v
-
-# STLC
-Tealeaves/Examples/STLC/Language.v
-Tealeaves/Examples/STLC/Theory.v
-Tealeaves/Examples/STLC/LanguageAlgebraic.v
-
-# MULTISORTED
-Tealeaves/Multisorted/Theory/Category.v
-Tealeaves/Multisorted/Classes/Multifunctor.v
-Tealeaves/Multisorted/Classes/DTM.v
-Tealeaves/Multisorted/Functors/MList.v
-Tealeaves/Multisorted/Functors/Schedule.v
-Tealeaves/Multisorted/Theory/DTMContainer.v
-Tealeaves/Multisorted/Theory/DTMSchedule.v
-
-# MULTISORTED LOCALLY NAMELESS
-Tealeaves/Backends/LN/Multisorted/Operations.v
-Tealeaves/Backends/LN/Multisorted/Theory.v
-
-# SYSTEM F
-Tealeaves/Examples/SystemF/Language.v
-Tealeaves/Examples/SystemF/Rewriting.v
-Tealeaves/Examples/SystemF/Contexts.v
-Tealeaves/Examples/SystemF/Theory.v
+#Tealeaves/Classes/Monad/ToApplicative.v

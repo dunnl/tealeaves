@@ -1,8 +1,8 @@
 From Tealeaves Require Import
   Classes.Monoid
-  Functors.Sets
-  Classes.Algebraic.Traversable.Monad
-  Classes.Algebraic.Setlike.Monad.
+  Classes.Traversable.Monad
+  Classes.Setlike.Monad
+  Functors.Sets.
 
 From Coq Require Import
   Sorting.Permutation.
@@ -62,7 +62,9 @@ Section fmap_list_rw.
   Lemma fmap_list_app : forall (l1 l2 : list A),
       fmap list f (l1 ++ l2) = fmap list f l1 ++ fmap list f l2.
   Proof.
-    unfold transparent tcs. now rewrites List.map_app.
+    intros.
+    unfold transparent tcs.
+    now rewrites List.map_app.
   Qed.
 
 End fmap_list_rw.

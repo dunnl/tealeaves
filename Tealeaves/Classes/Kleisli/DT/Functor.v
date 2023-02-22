@@ -1,6 +1,6 @@
 From Tealeaves Require Export
-  Classes.Algebraic.Applicative
-  Classes.Algebraic.Comonad
+  Classes.Applicative
+  Classes.Comonad
   Functors.Environment.
 
 Import Product.Notations.

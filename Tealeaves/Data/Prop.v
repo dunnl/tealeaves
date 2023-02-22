@@ -1,5 +1,4 @@
 From Tealeaves Require Import
-  Util.Prelude
   Classes.Monoid.
 
 (** * Propositional monoids *)

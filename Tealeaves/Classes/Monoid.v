@@ -15,8 +15,8 @@ Just like in the category of sets, where
 comonoids in Coq's category are not particularly varied: there is one comonoid on each type.
 |*)
 
-From Tealeaves Require Import
-  Util.Prelude.
+From Tealeaves Require Export
+  Prelude.
 
 #[local] Generalizable Variables x y z a A B.
 
@@ -85,19 +85,19 @@ End monoid_morphism.
 
 (** ** Some rudimentary automation *)
 Ltac simpl_monoid :=
-  try rewrites monoid_id_l;
-  try rewrites monoid_id_r;
-  try rewrites monoid_assoc.
+  repeat rewrite monoid_id_l;
+  repeat rewrite monoid_id_r;
+  repeat rewrite monoid_assoc.
 
 Tactic Notation "simpl_monoid" "in" ident(H) :=
-  try rewrite monoid_id_l in H;
-  try rewrite monoid_id_r in H;
-  try rewrite monoid_assoc in H.
+  repeat rewrite monoid_id_l in H;
+  repeat rewrite monoid_id_r in H;
+  repeat rewrite monoid_assoc in H.
 
 Tactic Notation "simpl_monoid" "in" "*" :=
-  try rewrite monoid_id_l in *;
-  try rewrite monoid_id_r in *;
-  try rewrite monoid_assoc in *.
+  repeat rewrite monoid_id_l in *;
+  repeat rewrite monoid_id_r in *;
+  repeat rewrite monoid_assoc in *.
 
 (** * Cartesian product of monoids *)
 Section product_monoid.
@@ -109,7 +109,7 @@ Section product_monoid.
 
   #[export] Instance Monoid_op_product : Monoid_op (A * B) :=
     fun '(a1, b1) '(a2, b2) => (a1 ● a2, b1 ● b2).
-#[export] Program Instance Monoid_product : Monoid (A * B).
+  #[export] Program Instance Monoid_product : Monoid (A * B).
 
   Solve Obligations with
     (intros; destruct_all_pairs; unfold transparent tcs;

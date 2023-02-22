@@ -2,7 +2,7 @@
     the set of proofs of equality between any two terms of <<A>>. *)
 
 From Tealeaves Require Export
-  Algebraic.Applicative.
+  Applicative.
 
 (** * Pathspace applicative functor *)
 (******************************************************************************)

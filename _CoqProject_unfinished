@@ -1,0 +1,128 @@
+# THEORY (ALGEBRAIC)
+Tealeaves/Theory/Algebraic/Traversable/Functor/Properties.v
+Tealeaves/Theory/Algebraic/Traversable/Functor/Instances.v
+Tealeaves/Theory/Algebraic/Traversable/Monad/Characterization.v
+Tealeaves/Theory/Algebraic/DT/Functor/Category.v
+
+# ALGEBRAIC TO KLEISLI
+Tealeaves/Theory/Algebraic/Monad/ToKleisli.v
+#Tealeaves/Theory/Algebraic/RightModule/ToKleisli.v
+Tealeaves/Theory/Algebraic/Decorated/Functor/ToKleisli.v
+Tealeaves/Theory/Algebraic/Decorated/Monad/ToKleisli.v
+Tealeaves/Theory/Algebraic/Traversable/Functor/ToKleisli.v
+Tealeaves/Theory/Algebraic/Traversable/Monad/ToKleisli.v
+Tealeaves/Theory/Algebraic/DT/Functor/ToKleisli.v
+Tealeaves/Theory/Algebraic/DT/Monad/ToKleisli.v
+
+# ALGEBRAIC KLEISLI LEMMAS
+#Tealeaves/Theory/Algebraic/Monad/KleisliTheory.v
+Tealeaves/Theory/Algebraic/Decorated/Functor/KleisliTheory.v
+#Tealeaves/Theory/Algebraic/Decorated/Monad/KleisliTheory.v
+Tealeaves/Theory/Algebraic/Traversable/Functor/KleisliTheory.v
+#Tealeaves/Theory/Algebraic/Traversable/Monad/KleisliTheory.v
+#Tealeaves/Theory/Algebraic/DT/Functor/KleisliTheory.v
+#Tealeaves/Theory/Algebraic/DT/Monad/KleisliTheory.v
+
+# ADDING KLEISLI TO LIST
+Tealeaves/Theory/Sets/Kleisli.v
+
+# THEORY (KLEISLI)
+Tealeaves/Theory/Kleisli/Monad/ToFunctor.v
+Tealeaves/Theory/Kleisli/Monad/Properties.v
+Tealeaves/Theory/Kleisli/Decorated/Prepromote.v
+Tealeaves/Theory/Kleisli/Decorated/Functor/ToFunctor.v
+Tealeaves/Theory/Kleisli/Decorated/Monad/DerivedInstances.v
+Tealeaves/Theory/Kleisli/Traversable/Functor/ToFunctor.v
+Tealeaves/Theory/Kleisli/Traversable/Functor/Container.v
+Tealeaves/Theory/Kleisli/Traversable/Monad/Properties.v
+Tealeaves/Theory/Kleisli/Traversable/Monad/ToFunctor.v
+Tealeaves/Theory/Kleisli/Traversable/Monad/DerivedInstances.v
+Tealeaves/Theory/Kleisli/Traversable/Monad/Container.v
+Tealeaves/Theory/Kleisli/DT/Functor/ToFunctor.v
+Tealeaves/Theory/Kleisli/DT/Functor/DerivedInstances.v
+Tealeaves/Theory/Kleisli/DT/Functor/Container.v
+Tealeaves/Theory/Kleisli/DT/Monad/ToFunctor.v
+Tealeaves/Theory/Kleisli/DT/Monad/Properties.v
+Tealeaves/Theory/Kleisli/DT/Monad/DerivedInstances.v
+Tealeaves/Theory/Kleisli/DT/Monad/Container.v
+
+# KLEISLI TO ALGEBRAIC
+Tealeaves/Theory/Kleisli/Monad/ToAlgebraic.v
+Tealeaves/Theory/Kleisli/Decorated/Functor/ToAlgebraic.v
+Tealeaves/Theory/Kleisli/Decorated/Monad/ToAlgebraic.v
+Tealeaves/Theory/Kleisli/Traversable/Functor/ToAlgebraic.v
+Tealeaves/Theory/Kleisli/Traversable/Monad/ToAlgebraic.v
+Tealeaves/Theory/Kleisli/DT/Functor/ToAlgebraic.v
+Tealeaves/Theory/Kleisli/DT/Monad/ToAlgebraic.v
+
+# ALGEBRAIC MODULES THAT DEPEND ON SHAPELINESS VIA KLEISLI
+Tealeaves/Theory/Algebraic/Traversable/Functor/Product.v
+Tealeaves/Theory/Algebraic/Traversable/Functor/Const.v
+Tealeaves/Theory/Algebraic/Traversable/Functor/Coalgebraic.v
+#Tealeaves/Theory/Algebraic/Traversable/Functor/Listable.v
+#Tealeaves/Theory/Algebraic/Traversable/Monad/Listable.v
+
+# ADDING KLEISLI TO LIST
+Tealeaves/Theory/List/Kleisli.v
+
+# ALGEBRAIC WRAPPERS
+Tealeaves/Theory/Algebraic/Monad.v
+Tealeaves/Theory/Algebraic/Decorated/Functor.v
+Tealeaves/Theory/Algebraic/Decorated/Monad.v
+Tealeaves/Theory/Algebraic/Traversable/Functor.v
+Tealeaves/Theory/Algebraic/Traversable/Monad.v
+Tealeaves/Theory/Algebraic/DT/Functor.v
+Tealeaves/Theory/Algebraic/DT/Monad.v
+
+# KLEISLI WRAPPERS
+Tealeaves/Theory/Kleisli/Monad.v
+Tealeaves/Theory/Kleisli/Decorated/Functor.v
+Tealeaves/Theory/Kleisli/Decorated/Monad.v
+Tealeaves/Theory/Kleisli/Traversable/Functor.v
+Tealeaves/Theory/Kleisli/Traversable/Monad.v
+Tealeaves/Theory/Kleisli/DT/Functor.v
+Tealeaves/Theory/Kleisli/DT/Monad.v
+
+# EQUIVALENCES
+Tealeaves/Theory/Equivalences/Monad.v
+Tealeaves/Theory/Equivalences/TraversableFunctor.v
+Tealeaves/Theory/Equivalences/TraversableMonad.v
+Tealeaves/Theory/Equivalences/DecoratedFunctor.v
+Tealeaves/Theory/Equivalences/DecoratedMonad.v
+Tealeaves/Theory/Equivalences/DecoratedTraversableFunctor.v
+Tealeaves/Theory/Equivalences/DecoratedTraversableMonad.v
+
+# LOCALLY NAMELESS
+Tealeaves/Backends/LN/Atom.v
+Tealeaves/Backends/LN/Leaf.v
+Tealeaves/Backends/LN/AtomSet.v
+Tealeaves/Backends/LN/AssocList.v
+#Tealeaves/Backends/LN/Top.v
+#Tealeaves/Backends/LN/Environment.v
+
+Tealeaves/Backends/LN/Operations.v
+Tealeaves/Backends/LN/Theory.v
+
+# MULTISORTED
+Tealeaves/Multisorted/Theory/Category.v
+Tealeaves/Multisorted/Classes/Multifunctor.v
+Tealeaves/Multisorted/Classes/DTM.v
+Tealeaves/Multisorted/Functors/MList.v
+Tealeaves/Multisorted/Functors/Schedule.v
+Tealeaves/Multisorted/Theory/DTMContainer.v
+Tealeaves/Multisorted/Theory/DTMSchedule.v
+
+# MULTISORTED LOCALLY NAMELESS
+Tealeaves/Backends/LN/Multisorted/Operations.v
+Tealeaves/Backends/LN/Multisorted/Theory.v
+
+# STLC
+Tealeaves/Examples/STLC/Language.v
+Tealeaves/Examples/STLC/Theory.v
+Tealeaves/Examples/STLC/LanguageAlgebraic.v
+
+# SYSTEM F
+Tealeaves/Examples/SystemF/Language.v
+Tealeaves/Examples/SystemF/Rewriting.v
+Tealeaves/Examples/SystemF/Contexts.v
+Tealeaves/Examples/SystemF/Theory.v

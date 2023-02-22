@@ -2,7 +2,7 @@ From Tealeaves Require Import
   Data.Product
   Data.Strength
   Classes.Comonoid
-  Classes.Algebraic.Comonad.
+  Classes.Comonad.
 
 Import Product.Notations.
 Import Strength.Notations.

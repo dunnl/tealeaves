@@ -1,7 +1,5 @@
 From Tealeaves.Classes Require Import
-  Monoid
-  Algebraic.Monad
-  Algebraic.Applicative.
+  Monoid Monad Applicative.
 From Tealeaves Require Export
   Data.Sets.
 

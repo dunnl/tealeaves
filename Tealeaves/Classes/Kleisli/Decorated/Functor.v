@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Classes.Algebraic.Comonad
+  Classes.Comonad
   Functors.Environment.
 
 Import Product.Notations.

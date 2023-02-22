@@ -1,8 +1,8 @@
 From Tealeaves Require Export
-     Classes.Monoid
-     Algebraic.Applicative
-     Functors.Store
-     Functors.Constant.
+  Classes.Monoid
+  Applicative
+  Functors.Store
+  Functors.Constant.
 
 Import Monoid.Notations.
 Import Applicative.Notations.

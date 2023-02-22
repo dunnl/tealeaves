@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-     Algebraic.Applicative.
+  Applicative.
 
 Import Applicative.Notations.
 

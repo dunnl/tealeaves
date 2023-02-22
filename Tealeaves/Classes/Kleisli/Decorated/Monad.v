@@ -6,7 +6,7 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables W T A B C.
 
-Definition prepromote `{Monoid_op W} (w : W) `(f : W * A -> B) :=
+Definition preincr `{Monoid_op W} (w : W) `(f : W * A -> B) :=
   f ∘ incr w.
 
 (** * The <<Bindd>> operation *)
@@ -35,7 +35,7 @@ Definition kcompose_dm {A B C} `{Bindd W T T} `{Monoid_op W} :
   (W * B -> T C) ->
   (W * A -> T B) ->
   (W * A -> T C) :=
-  fun g f '(w, a) => bindd W T T B C (prepromote w g) (f (w, a)).
+  fun g f '(w, a) => bindd W T T B C (preincr w g) (f (w, a)).
 
 #[local] Notation "g ⋆dm f" := (kcompose_dm g f) (at level 40) : tealeaves_scope.
 

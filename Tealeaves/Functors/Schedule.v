@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Classes.Algebraic.Applicative
+  Classes.Applicative
   Functors.Constant.
 
 Import Monoid.Notations.

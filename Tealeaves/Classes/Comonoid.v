@@ -10,7 +10,7 @@ Just like in the category of sets, where
 comonoids in Coq's category are not particularly varied: there is one comonoid on each type.
 |*)
 From Tealeaves Require Import
-  Util.Prelude
+  Prelude
   Data.Product.
 
 #[local] Generalizable Variables a.

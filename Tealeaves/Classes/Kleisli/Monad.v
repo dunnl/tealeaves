@@ -1,8 +1,5 @@
 From Tealeaves.Classes Require Export
   Functor.
-From Tealeaves.Classes Require
-  Algebraic.Monad.
-Export Algebraic.Monad (Return, ret).
 
 Import Functor.Notations.
 
@@ -18,6 +15,8 @@ Section kleisli_operations.
   Context
     (F T : Type -> Type).
 
+  Class Return := ret : (fun A => A) ⇒ T.
+  
   Class Bind :=
     bind : forall (A B : Type), (A -> T B) -> F A -> F B.
 

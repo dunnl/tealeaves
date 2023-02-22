@@ -1,14 +1,13 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Classes.Algebraic.Applicative
-  Classes.Algebraic.Comonad
+  Classes.Applicative
+  Classes.Comonad
   Functors.Writer.
 From Tealeaves Require
-  Classes.Algebraic.Monad
+  Classes.Monad
   Classes.Kleisli.Decorated.Monad.
 
-Export Algebraic.Monad (Return, ret).
-Export Decorated.Monad (prepromote).
+Export Decorated.Monad (preincr).
 
 Import Monoid.Notations.
 Import Product.Notations.
@@ -39,7 +38,7 @@ Definition kcompose_dtm
   (W * B -> G2 (T C)) ->
   (W * A -> G1 (T B)) ->
   (W * A -> G1 (G2 (T C))) :=
-  fun g f '(w, a) => fmap G1 (binddt W T T G2 B C (prepromote w g)) (f (w, a)).
+  fun g f '(w, a) => fmap G1 (binddt W T T G2 B C (preincr w g)) (f (w, a)).
 
 #[local] Infix "⋆dtm" := kcompose_dtm (at level 60) : tealeaves_scope.
 
@@ -94,17 +93,17 @@ Section class.
       (g ∘ incr w) ⋆dtm (f ∘ incr w) = (g ⋆dtm f) ∘ incr w.
   Proof.
     intros. unfold kcompose_dtm.
-    ext [w' a]. unfold prepromote.
+    ext [w' a]. unfold preincr.
     reassociate ->. rewrite incr_incr.
     reflexivity.
   Qed.
 
-  Lemma kcompose_dtm_prepromote : forall
+  Lemma kcompose_dtm_preincr : forall
       `{Applicative G1} `{Applicative G2}
       `(g : W * B -> G2 (T C)) `(f : W * A -> G1 (T B)) (w : W),
-      (prepromote w g) ⋆dtm (prepromote w f) = prepromote w (g ⋆dtm f).
+      (preincr w g) ⋆dtm (preincr w f) = preincr w (g ⋆dtm f).
   Proof.
-    intros. unfold prepromote. rewrite kcompose_dtm_incr.
+    intros. unfold preincr. rewrite kcompose_dtm_incr.
     reflexivity.
   Qed.
   
@@ -115,7 +114,7 @@ Section class.
       kcompose_dtm (G2 := fun A => A) (ret T ∘ extract (W ×)) f = f.
   Proof.
     intros. unfold kcompose_dtm.
-    ext [w a]. unfold prepromote.
+    ext [w a]. unfold preincr.
     reassociate ->. rewrite (extract_incr).
     rewrite (kdtm_binddt1 W T).
     rewrite (fun_fmap_id G).
@@ -130,7 +129,8 @@ Section class.
     compose near a.
     change (fmap (fun A => A) ?f) with f.
     rewrite (kdtm_binddt0 W T); auto.
-    cbv. simpl_monoid.
+    cbv. change (g ((w ● Ƶ), a) = g (w, a)).
+    simpl_monoid.
     reflexivity.
   Qed.
 
@@ -148,7 +148,7 @@ Section class.
     fequal.
     rewrite (kdtm_binddt2 W T); auto.
     fequal.
-    rewrite kcompose_dtm_prepromote.
+    rewrite kcompose_dtm_preincr.
     reflexivity.
   Qed.
 

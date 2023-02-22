@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Classes.Algebraic.Applicative
-  Classes.Algebraic.Monad.
+  Classes.Applicative
+  Classes.Monad.
 
 #[local] Generalizable Variables T G A B ϕ.
 

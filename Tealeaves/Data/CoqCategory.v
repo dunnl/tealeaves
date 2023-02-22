@@ -1,12 +1,11 @@
-(** This file contains a [Category] instance for the category of types and morphisms, the underlying category of
-    the <<Tealeaves.Ordinary.*>> interface. *)
+(** This file contains a [Category] instance for the category of types
+    and morphisms, the underlying category of the
+    <<Tealeaves.Ordinary.*>> interface. *)
 From Tealeaves Require Export
-     Util.Prelude
-     Classes.Category.
-
-From Tealeaves Require
+     Prelude
+     Classes.Category
      Classes.Functor
-     Classes.Algebraic.Monad.
+     Classes.Monad.
 
 #[local] Generalizable Variables T F G ϕ.
 

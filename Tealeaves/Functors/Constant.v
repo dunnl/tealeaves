@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Algebraic.Applicative.
+  Applicative.
 
 Import Monoid.Notations.
 
@@ -128,9 +128,9 @@ Section constant_functor.
       constructor; intros; try reflexivity.
       - constructor; reflexivity.
       - cbn. now Monoid.simpl_monoid.
-      - cbn. now Monoid.simpl_monoid.
-      - cbn. now Monoid.simpl_monoid.
-      - cbn. now Monoid.simpl_monoid.
+      - cbn. unfold_ops @Pure_const. now Monoid.simpl_monoid.
+      - cbn. unfold_ops @Pure_const. now Monoid.simpl_monoid.
+      - cbn. unfold_ops @Pure_const. now Monoid.simpl_monoid.
     Qed.
 
     #[global] Instance ApplicativeMorphism_unconst :

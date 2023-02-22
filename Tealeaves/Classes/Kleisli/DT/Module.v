@@ -1,12 +1,12 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Classes.Algebraic.Applicative
-  Classes.Algebraic.Comonad.
+  Classes.Applicative
+  Classes.Comonad.
 From Tealeaves Require
-  Classes.Algebraic.Monad
+  Classes.Monad
   Classes.Kleisli.Decorated.Monad.
 
-Import Algebraic.Monad (Return, ret).
+Import Monad (Return, ret).
 Import Decorated.Monad (prepromote).
 
 Import Product.Notations.

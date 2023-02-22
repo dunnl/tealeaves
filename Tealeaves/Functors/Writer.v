@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Classes.Algebraic.Bimonad
-  Classes.Algebraic.RightModule
+  Classes.Bimonad
+  Classes.RightModule
   Functors.Environment
   Data.Product.
 
