@@ -1,30 +1,22 @@
-From Tealeaves Require Import
-  Functors.List
-  Functors.Writer
-  LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-  LN.Multisorted.Operations.
+From Tealeaves Require Export
+  Examples.SystemF.Syntax
+  Classes.EqDec_eq
+  Classes.Applicative
+  Functors.Sets
+  Backends.LN.Multisorted.LN.
 
-From Tealeaves.Multisorted Require Import
-     Classes.DTM
-     Theory.DTMContainer
-     Theory.DTMSchedule.
-
-From Tealeaves.Examples Require Import
-     SystemF.Language.
-
-Import DTMContainer.Notations.
+Import Multisorted.Classes.DTM.Notations.
+Import Multisorted.Classes.DTM.Notations2.
+Import Multisorted.Classes.DTM.Notations3.
 Import AtomSet.Notations.
 Import Tealeaves.Classes.Monoid.Notations.
 Import Tealeaves.Data.Product.Notations.
-Import Tealeaves.Classes.Algebraic.Applicative.Notations.
+Import Tealeaves.Classes.Applicative.Notations.
 Import Multisorted.Classes.DTM.Notations.
+Import Setlike.Functor.Notations.
 Import List.ListNotations.
-Import Algebraic.Setlike.Functor.Notations.
 
-Open Scope set_scope.
-Open Scope list_scope.
-Open Scope tealeaves_scope.
-Open Scope tealeaves_multi_scope.
+Import Tactics.CompareNats.
 
 Create HintDb sysf_rw.
 Tactic Notation "simpl_F" := autorewrite with sysf_rw.
@@ -46,7 +38,6 @@ Proof.
     + rewrite filterk_cons_neq; auto.
       rewrite filterk_cons_neq; auto.
 Qed.
-
 
 (** * Rewriting operations on <<typ>> *)
 (******************************************************************************)
@@ -461,7 +452,7 @@ Section rw_tomsetd_type.
   Lemma rw_tomsetd_type4 : forall w a (body : typ A), (w, (k, a)) ∈md (ty_univ body) <-> exists w', (w', (k, a)) ∈md body /\ w = (cons KType w').
   Proof.
     intros. unfold tomsetd, compose. autorewrite with sysf_rw.
-    rewrite (in_fmap_iff list). splits.
+    rewrite (Setlike.Functor.in_fmap_iff list). splits.
     - intros [[w'' [j a']] [rest1 rest2]]. cbn in *. inverts rest2. eauto.
     - intros [w' rest]. exists (w', (k, a)). now inverts rest.
   Qed.
@@ -603,7 +594,7 @@ End rw_free_KTerm_type.
 
 #[export] Hint Rewrite rw_free_KTerm_type11 rw_free_KTerm_type12 rw_free_KTerm_type2 rw_free_KTerm_type3 rw_free_KTerm_type4 : sysf_rw.
 
-Corollary rw_free_KTerm_type : forall (τ : typ leaf), free typ KTerm τ = [].
+Corollary rw_free_KTerm_type : forall (τ : typ LN), free typ KTerm τ = [].
 Proof.
   intros. induction τ; autorewrite with sysf_rw.
   - trivial.
@@ -644,7 +635,7 @@ End rw_freeset_KTerm_type.
 
 #[export] Hint Rewrite rw_freeset_KTerm_type11 rw_freeset_KTerm_type12 rw_freeset_KTerm_type2 rw_freeset_KTerm_type3 rw_freeset_KTerm_type4 : sysf_rw.
 
-Corollary rw_freeset_KTerm_type : forall (τ : typ leaf), freeset typ KTerm τ [=] ∅.
+Corollary rw_freeset_KTerm_type : forall (τ : typ LN), freeset typ KTerm τ [=] ∅.
 Proof.
   intros. induction τ.
   - autorewrite with sysf_rw. fsetdec.
@@ -663,15 +654,15 @@ Qed.
 Section rw_open_type.
 
   Context
-    (u : typ leaf).
+    (u : typ LN).
 
   Lemma rw_open_type1 : forall c, open typ KType u (ty_c c) = ty_c c.
   Proof. reflexivity. Qed.
 
-  Lemma rw_open_type2 : forall (l : leaf), open typ KType u (ty_v l) = open_loc KType u (nil, l).
+  Lemma rw_open_type2 : forall (l : LN), open typ KType u (ty_v l) = open_loc KType u (nil, l).
   Proof. reflexivity. Qed.
 
-  Lemma rw_open_type3 : forall (t1 t2 : typ leaf), open typ KType u (ty_ar t1 t2) = ty_ar (open typ KType u t1) (open typ KType u t2).
+  Lemma rw_open_type3 : forall (t1 t2 : typ LN), open typ KType u (ty_ar t1 t2) = ty_ar (open typ KType u t1) (open typ KType u t2).
   Proof. reflexivity. Qed.
 
 End rw_open_type.
@@ -684,18 +675,18 @@ Section rw_subst_KType_type.
 
   Context
     (x : atom)
-    (u : typ leaf).
+    (u : typ LN).
 
   Lemma rw_subst_KType_type1 : forall c, subst typ KType x u (ty_c c) = ty_c c.
   Proof. reflexivity. Qed.
 
-  Lemma rw_subst_KType_type2 : forall (l : leaf), subst typ KType x u (ty_v l) = subst_loc KType x u l.
+  Lemma rw_subst_KType_type2 : forall (l : LN), subst typ KType x u (ty_v l) = subst_loc KType x u l.
   Proof. reflexivity. Qed.
 
-  Lemma rw_subst_KType_type3 : forall (t1 t2 : typ leaf), subst typ KType x u (ty_ar t1 t2) = ty_ar (subst typ KType x u t1) (subst typ KType x u t2).
+  Lemma rw_subst_KType_type3 : forall (t1 t2 : typ LN), subst typ KType x u (ty_ar t1 t2) = ty_ar (subst typ KType x u t1) (subst typ KType x u t2).
   Proof. reflexivity. Qed.
 
-  Lemma rw_subst_KType_type4 : forall (t : typ leaf), subst typ KType x u (ty_univ t) = ty_univ (subst typ KType x u t).
+  Lemma rw_subst_KType_type4 : forall (t : typ LN), subst typ KType x u (ty_univ t) = ty_univ (subst typ KType x u t).
   Proof.
     intros. unfold subst. now autorewrite with sysf_rw.
   Qed.
@@ -710,18 +701,18 @@ Section rw_subst_KTerm_type.
 
   Context
     (x : atom)
-    (u : term leaf).
+    (u : term LN).
 
   Lemma rw_subst_KTerm_type1 : forall c, subst typ KTerm x u (ty_c c) = ty_c c.
   Proof. reflexivity. Qed.
 
-  Lemma rw_subst_KTerm_type2 : forall (l : leaf), subst typ KTerm x u (ty_v l) = ty_v l.
+  Lemma rw_subst_KTerm_type2 : forall (l : LN), subst typ KTerm x u (ty_v l) = ty_v l.
   Proof. reflexivity. Qed.
 
-  Lemma rw_subst_KTerm_type3 : forall (t1 t2 : typ leaf), subst typ KTerm x u (ty_ar t1 t2) = ty_ar (subst typ KTerm x u t1) (subst typ KTerm x u t2).
+  Lemma rw_subst_KTerm_type3 : forall (t1 t2 : typ LN), subst typ KTerm x u (ty_ar t1 t2) = ty_ar (subst typ KTerm x u t1) (subst typ KTerm x u t2).
   Proof. reflexivity. Qed.
 
-  Lemma rw_subst_KTerm_type4 : forall (t : typ leaf), subst typ KTerm x u (ty_univ t) = ty_univ (subst typ KTerm x u t).
+  Lemma rw_subst_KTerm_type4 : forall (t : typ LN), subst typ KTerm x u (ty_univ t) = ty_univ (subst typ KTerm x u t).
   Proof.
     intros. unfold subst. now autorewrite with sysf_rw.
   Qed.
@@ -730,7 +721,7 @@ End rw_subst_KTerm_type.
 
 #[export] Hint Rewrite @rw_subst_KTerm_type1 @rw_subst_KTerm_type2 @rw_subst_KTerm_type3 @rw_subst_KTerm_type4 : sysf_rw.
 
-Corollary rw_subst_KTerm_type : forall (τ : typ leaf) (x : atom) (u : term leaf), subst typ KTerm x u τ = τ.
+Corollary rw_subst_KTerm_type : forall (τ : typ LN) (x : atom) (u : term LN), subst typ KTerm x u τ = τ.
 Proof.
   intros; induction τ; autorewrite with sysf_rw; try easy.
   - now rewrite IHτ1, IHτ2.
@@ -749,7 +740,7 @@ Section rw_lc_KType_type.
     now rewrite rw_tomsetd_type1 in hyp.
   Qed.
 
-  Lemma rw_lc_KType_type2 : forall (l : leaf), locally_closed typ KType (ty_v l) <-> exists x, l = Fr x.
+  Lemma rw_lc_KType_type2 : forall (l : LN), locally_closed typ KType (ty_v l) <-> exists x, l = Fr x.
   Proof.
     intros. unfold locally_closed, locally_closed_gap.
     setoid_rewrite rw_tomsetd_type2. split.
@@ -760,7 +751,7 @@ Section rw_lc_KType_type.
       inverts H0. cbn; trivial.
   Qed.
 
-  Lemma rw_lc_KType_type3 : forall (t1 t2 : typ leaf), locally_closed typ KType (ty_ar t1 t2) <-> (locally_closed typ KType t1 /\ locally_closed typ KType t2).
+  Lemma rw_lc_KType_type3 : forall (t1 t2 : typ LN), locally_closed typ KType (ty_ar t1 t2) <-> (locally_closed typ KType t1 /\ locally_closed typ KType t2).
   Proof.
     intros. unfold locally_closed, locally_closed_gap.
     setoid_rewrite rw_tomsetd_type3. firstorder.
@@ -768,7 +759,7 @@ Section rw_lc_KType_type.
 
   #[local] Open Scope nat_scope.
 
-  Lemma rw_lc_KType_type4 : forall (t : typ leaf), locally_closed typ KType (ty_univ t) <-> locally_closed_gap typ KType 1 t.
+  Lemma rw_lc_KType_type4 : forall (t : typ LN), locally_closed typ KType (ty_univ t) <-> locally_closed_gap typ KType 1 t.
   Proof.
     intros. unfold locally_closed, locally_closed_gap.
     setoid_rewrite rw_tomsetd_type4. split.
@@ -830,7 +821,7 @@ Qed.
 
 Lemma ok_type_univ : forall Δ τ,
     ok_type Δ (ty_univ τ) <->
-    scoped typ KType τ (domset Δ) /\
+    scoped typ KType τ (AssocList.domset Δ) /\
     locally_closed_gap typ KType 1 τ.
 Proof.
   intros. unfold ok_type.
@@ -1295,7 +1286,7 @@ Section rw_tomsetd_type.
       (w, (k, a)) ∈md τ \/ exists w', (w', (k, a)) ∈md t /\ w = KTerm :: w'.
   Proof.
     intros. unfold tomsetd, compose. autorewrite with sysf_rw tea_list.
-    rewrite (in_fmap_iff list). split.
+    rewrite (Setlike.Functor.in_fmap_iff list). split.
     - intros [hyp | hyp].
       + now left.
       + right. destruct hyp as [[w' [j a'']] [hyp1 hyp2]].
@@ -1315,7 +1306,7 @@ Section rw_tomsetd_type.
   Lemma rw_tomsetd_term4 : forall w a (t : term A), (w, (k, a)) ∈md (tm_tab t) <-> exists w', (w', (k, a)) ∈md t /\ w = KType :: w'.
   Proof.
     intros. unfold tomsetd, compose. autorewrite with sysf_rw.
-    rewrite (in_fmap_iff list). splits.
+    rewrite (Setlike.Functor.in_fmap_iff list). splits.
     - intros [[w'' [j a']] [rest1 rest2]]. cbn in *. inverts rest2. eauto.
     - intros [w' rest]. exists (w', (k, a)). now inverts rest.
   Qed.
@@ -1376,7 +1367,7 @@ End rw_tomset_type.
 (******************************************************************************)
 Section rw_free_KType_term.
 
-  Lemma rw_free_KType_term1 : forall (l : leaf), free term KType (tm_var l) = [].
+  Lemma rw_free_KType_term1 : forall (l : LN), free term KType (tm_var l) = [].
   Proof. reflexivity. Qed.
 
   Lemma rw_free_KType_term2 : forall τ t, free term KType (tm_abs τ t) = free typ KType τ ++ free term KType t.
@@ -1407,7 +1398,7 @@ End rw_free_KType_term.
 (******************************************************************************)
 Section rw_freeset_KType_term.
 
-  Lemma rw_freeset_KType_term1 : forall (l : leaf), freeset term KType (tm_var l) [=] ∅.
+  Lemma rw_freeset_KType_term1 : forall (l : LN), freeset term KType (tm_var l) [=] ∅.
   Proof. reflexivity. Qed.
 
   Lemma rw_freeset_KType_term2 : forall τ t, freeset term KType (tm_abs τ t) [=] freeset typ KType τ ∪ freeset term KType t.
@@ -1513,7 +1504,7 @@ Section rw_subst_KType_term.
 
   Context
     (x : atom)
-    (u : typ leaf).
+    (u : typ LN).
 
   Lemma rw_subst_KType_term1 : forall l, subst term KType x u (tm_var l) = tm_var l.
   Proof. reflexivity. Qed.
@@ -1544,7 +1535,7 @@ Section rw_subst_KTerm_term.
 
   Context
     (x : atom)
-    (u : term leaf).
+    (u : term LN).
 
   Lemma rw_subst_KTerm_term11 : subst term KTerm x u (tm_var (Fr x)) = u.
   Proof. unfold subst. autorewrite with sysf_rw. cbn. compare values x and x. Qed.
@@ -1587,7 +1578,7 @@ Section rw_lc_KType_term.
     introv. autorewrite with sysf_rw. introv [? [? ?]]; now subst.
   Qed.
 
-  Lemma rw_lc_KType_term2 : forall (τ : typ leaf) (t : term leaf), locally_closed term KType (tm_abs τ t) <-> locally_closed typ KType τ /\ locally_closed term KType t.
+  Lemma rw_lc_KType_term2 : forall (τ : typ LN) (t : term LN), locally_closed term KType (tm_abs τ t) <-> locally_closed typ KType τ /\ locally_closed term KType t.
   Proof.
     intros. unfold locally_closed, locally_closed_gap.
     setoid_rewrite rw_tomsetd_term2. split.
@@ -1599,7 +1590,7 @@ Section rw_lc_KType_term.
       + inverts hyp. inverts H. cbn. now apply hyp2.
   Qed.
 
-  Lemma rw_lc_KType_term3 : forall (t1 t2 : term leaf), locally_closed term KType (tm_app t1 t2) <-> locally_closed term KType t1 /\ locally_closed term KType t2.
+  Lemma rw_lc_KType_term3 : forall (t1 t2 : term LN), locally_closed term KType (tm_app t1 t2) <-> locally_closed term KType t1 /\ locally_closed term KType t2.
   Proof.
     intros. unfold locally_closed, locally_closed_gap.
     setoid_rewrite rw_tomsetd_term3. firstorder.
@@ -1652,7 +1643,7 @@ Section rw_lc_KTerm_term.
     specialize (hyp [] (Bd n) ltac:(auto)). cbn in hyp. lia.
   Qed.
 
-  Lemma rw_lc_KTerm_term2 : forall (τ : typ leaf) (t : term leaf), locally_closed term KTerm (tm_abs τ t) <-> locally_closed typ KTerm τ /\ locally_closed_gap term KTerm 1 t.
+  Lemma rw_lc_KTerm_term2 : forall (τ : typ LN) (t : term LN), locally_closed term KTerm (tm_abs τ t) <-> locally_closed typ KTerm τ /\ locally_closed_gap term KTerm 1 t.
   Proof.
     intros. unfold locally_closed, locally_closed_gap.
     setoid_rewrite rw_tomsetd_term2. split.
@@ -1668,7 +1659,7 @@ Section rw_lc_KTerm_term.
       rewrite rw. apply hyp2. auto.
   Qed.
 
-  Lemma rw_lc_KTerm_term3 : forall (t1 t2 : term leaf), locally_closed term KTerm (tm_app t1 t2) <-> locally_closed term KTerm t1 /\ locally_closed term KTerm t2.
+  Lemma rw_lc_KTerm_term3 : forall (t1 t2 : term LN), locally_closed term KTerm (tm_app t1 t2) <-> locally_closed term KTerm t1 /\ locally_closed term KTerm t2.
   Proof.
     intros. unfold locally_closed, locally_closed_gap.
     setoid_rewrite rw_tomsetd_term3. firstorder.
@@ -1705,8 +1696,8 @@ End rw_lc_KTerm_term.
 Lemma ok_term_abs : forall Δ Γ τ t,
     ok_term Δ Γ (tm_abs τ t) <->
     ok_type Δ τ /\
-    scoped term KTerm t (domset Γ) /\
-    scoped term KType t (domset Δ) /\
+    scoped term KTerm t (AssocList.domset Γ) /\
+    scoped term KType t (AssocList.domset Δ) /\
     locally_closed term KType t /\
     locally_closed_gap term KTerm 1 t.
 Proof.

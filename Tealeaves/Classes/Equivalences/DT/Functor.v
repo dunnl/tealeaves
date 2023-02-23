@@ -1,9 +1,8 @@
 From Tealeaves.Classes Require Export
-  Algebraic.DT.Functor
+  DT.Functor
   Kleisli.DT.Functor.
-From Tealeaves.Theory Require Export
-  Kleisli.DT.Functor.DerivedInstances.
 
+Import Kleisli.Decorated.Functor.
 Import Product.Notations.
 Import Comonad.Notations.
 Import DT.Functor.Notations.
@@ -24,8 +23,6 @@ Module Operations.
   End with_kleisli.
 End Operations.
 
-Import ToFunctor.Operation.
-Import ToFunctor.Instance.
 Import Operations.
 
 Module Instances.
@@ -37,8 +34,7 @@ Module Instances.
       (T : Type -> Type)
       `{Kleisli.DT.Functor.DecoratedTraversableFunctor E T}.
 
-    Export DerivedInstances.Operations.
-    Export DerivedInstances.Instances.
+    Import Kleisli.DT.Functor.Derived.
 
     Lemma dec_dec : forall (A : Type),
         dec T ∘ dec T = fmap T (cojoin (E ×)) ∘ dec T (A := A).
@@ -81,7 +77,7 @@ Module Instances.
         now rewrite <- (fmap_to_cobind (E ×)).
     Qed.
 
-    #[export] Instance: Algebraic.Decorated.Functor.DecoratedFunctor E T :=
+    #[export] Instance: Classes.Decorated.Functor.DecoratedFunctor E T :=
       {| dfun_dec_natural := dec_natural;
          dfun_dec_dec := dec_dec;
          dfun_dec_extract := dec_extract;
@@ -149,7 +145,7 @@ Module Instances.
     reflexivity.
   Qed.
 
-  #[export] Instance: Algebraic.Traversable.Functor.TraversableFunctor T :=
+  #[export] Instance: Classes.Traversable.Functor.TraversableFunctor T :=
     {| dist_natural := dist_natural_T;
        dist_morph := dist_morph_T;
        dist_unit := dist_unit_T;
@@ -172,7 +168,7 @@ Module Instances.
       reflexivity.
   Qed.
 
-  #[export] Instance: Algebraic.DT.Functor.DecoratedTraversableFunctor E T :=
+  #[export] Instance: Classes.DT.Functor.DecoratedTraversableFunctor E T :=
     {| dtfun_compat := dtfun_compat_T;
     |}.
 
@@ -180,3 +176,90 @@ Module Instances.
 
 End Instances.
 
+#[local] Generalizable Variables E T.
+
+Module AlgebraicToKleisli.
+
+  Context
+    `{fmapT : Fmap T}
+    `{distT : Dist T}
+    `{decorateT : Decorate E T}
+    `{! DT.Functor.DecoratedTraversableFunctor E T}.
+
+  #[local] Instance fmapdt' : Fmapdt E T := ToKleisli.Fmapdt_distdec E T.
+
+  Definition fmap' : Fmap T := Derived.Fmap_Fmapdt T.
+  Definition decorate' : Decorate E T := Operations.Decorate_Fmapdt E T.
+  Definition dist' : Dist T := Operations.Dist_Fmapdt E T.
+
+  Goal fmapT = fmap'.
+  Proof.
+    unfold fmap'. unfold_ops @Derived.Fmap_Fmapdt.
+    unfold fmapdt, fmapdt'.
+    unfold_ops @ToKleisli.Fmapdt_distdec.
+    ext A B f.
+    rewrite (dist_unit T).
+    rewrite <- (fun_fmap_fmap T).
+    reassociate -> on right.
+    reassociate -> on right.
+    rewrite (dfun_dec_extract E T).
+    reflexivity.
+  Qed.
+
+  Goal distT = dist'.
+  Proof.
+    unfold dist'. unfold_ops @Operations.Dist_Fmapdt.
+    unfold fmapdt, fmapdt'.
+    unfold_ops @ToKleisli.Fmapdt_distdec.
+    ext G Hmap Hpure Hmult. ext A.
+    reassociate -> on right.
+    rewrite (dfun_dec_extract E T).
+    reflexivity.
+  Qed.
+
+  Goal decorateT = decorate'.
+  Proof.
+    unfold decorate'. unfold_ops @Operations.Decorate_Fmapdt.
+    unfold fmapdt, fmapdt'.
+    unfold_ops @ToKleisli.Fmapdt_distdec.
+    ext A.
+    rewrite (dist_unit T).
+    now rewrite (fun_fmap_id T).
+  Qed.
+
+End AlgebraicToKleisli.
+
+Module KleisliToAlgebraic.
+
+  Context
+    `{fmapdtT : Fmapdt E T}
+    `{@Classes.Kleisli.DT.Functor.DecoratedTraversableFunctor E T _}.
+
+  #[local] Instance fmap' : Fmap T := Derived.Fmap_Fmapdt T.
+  #[local] Instance dist' : Dist T := Operations.Dist_Fmapdt E T.
+  #[local] Instance decorate' : Decorate E T := Operations.Decorate_Fmapdt E T.
+
+  Definition fmapdt' : Fmapdt E T := ToKleisli.Fmapdt_distdec E T.
+
+  Import Derived.
+
+  Goal forall G `{Applicative G}, @fmapdtT G _ _ _ = @fmapdt' G _ _ _.
+  Proof.
+    intros.
+    unfold fmapdt'. unfold_ops @ToKleisli.Fmapdt_distdec.
+    unfold fmap, fmap', dist, dist', dec, decorate'.
+    ext A B f.
+    unfold_ops @Operations.Dist_Fmapdt.
+    unfold_ops @Derived.Fmap_Fmapdt.
+    unfold_ops @Operations.Decorate_Fmapdt.
+    change_right (fmapdt T G (extract (prod E)) ∘
+                    fmap T f ∘
+                    fmapd T id).
+    unfold fmap'.
+    change (@Derived.Fmap_Fmapdt T) with (@Derived.Fmap_Fmapdt T).
+    rewrite (fmapdt_fmap T G).
+    rewrite (fmapdt_fmapd T G).
+    fequal. ext [e a]. reflexivity.
+  Qed.
+
+End KleisliToAlgebraic.

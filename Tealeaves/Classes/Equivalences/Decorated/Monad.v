@@ -1,41 +1,37 @@
 From Tealeaves.Classes Require Export
-  Algebraic.Decorated.Functor
-  Algebraic.Decorated.Monad
+  Decorated.Functor
+  Decorated.Monad
   Kleisli.Decorated.Monad.
-From Tealeaves.Theory Require Import
-  Kleisli.Decorated.Monad.DerivedInstances
-  Kleisli.Monad.ToFunctor.
 
 Import Monoid.Notations.
 Import Product.Notations.
 Import Functor.Notations.
 Import Kleisli.Decorated.Monad.Notations.
 Import Kleisli.Monad.Notations.
-Import Algebraic.Comonad.Notations.
+Import Comonad.Notations.
 
 #[local] Generalizable Variables A B C.
 
-Module Operations.
-  Section with_kleisli.
+(** * Algebraic operations from Kleisli operation *)
+(******************************************************************************)
 
-    Context
-      (W : Type)
+Section with_kleisli.
+
+  Context
+    (W : Type)
       (T : Type -> Type)
       `{Bindd W T T}
       `{Return T}.
 
-    #[export] Instance Fmap_Bindd: Fmap T := fun A B f => bindd T (ret T ∘ f ∘ extract (W ×)).
-    #[export] Instance Join_Bindd: Join T := fun A => bindd T (B := A) (A := T A) (extract (W ×)).
-    #[export] Instance Decorate_Bindd: Decorate W T := fun A => bindd T (ret T).
+  #[export] Instance Fmap_Bindd: Fmap T := fun A B f => bindd T (ret T ∘ f ∘ extract (W ×)).
+  #[export] Instance Join_Bindd: Join T := fun A => bindd T (B := A) (A := T A) (extract (W ×)).
+  #[export] Instance Decorate_Bindd: Decorate W T := fun A => bindd T (ret T).
 
-  End with_kleisli.
-End Operations.
-
-Import Operations.
+End with_kleisli.
 
 Module Instances.
 
-  Import Theory.Kleisli.Decorated.Monad.DerivedInstances.Instances.
+  Import Kleisli.Decorated.Monad.Derived.
 
   Section with_monad.
 
@@ -43,8 +39,6 @@ Module Instances.
       (W : Type)
       (T : Type -> Type)
       `{Kleisli.Decorated.Monad.Monad W T}.
-
-    Import DerivedInstances.
 
     Lemma fmap_id : forall (A : Type),
         fmap T (@id A) = @id (T A).
@@ -61,7 +55,7 @@ Module Instances.
       rewrite (kmond_bindd2 T).
       fequal.
       reassociate -> near (extract (prod W) (A := A)).
-      now rewrite (DerivedInstances.dm_kleisli_star5 T).
+      now rewrite (dm_kleisli_star5 T).
     Qed.
 
     #[local] Instance: Classes.Functor.Functor T :=
@@ -91,9 +85,9 @@ Module Instances.
         unfold_compose_in_compose.
         rewrite (kmond_bindd2 T). (* left *)
         rewrite (kmond_bindd2 T). (* right *)
-        rewrite (DerivedInstances.dm_kleisli_star2 T).
+        rewrite (dm_kleisli_star2 T).
         reassociate -> near (extract (W ×)).
-        rewrite (DerivedInstances.dm_kleisli_star1 T).
+        rewrite (dm_kleisli_star1 T).
         fequal.
         rewrite cokleisli_id_l.
         reflexivity.
@@ -116,7 +110,7 @@ Module Instances.
       unfold_compose_in_compose.
       rewrite (kmond_bindd2 T).
       reassociate -> near (extract (W ×)).
-      rewrite (DerivedInstances.dm_kleisli_star1 T).
+      rewrite (dm_kleisli_star1 T).
       rewrite cokleisli_id_l.
       rewrite (kmond_bindd1 T).
       reflexivity.
@@ -135,13 +129,13 @@ Module Instances.
       rewrite (kmond_bindd2 T).
       fequal.
       reassociate ->.
-      rewrite (DerivedInstances.dm_kleisli_star1 T).
+      rewrite (dm_kleisli_star1 T).
       rewrite (cokcompose_misc1).
       ext [w a]. cbn.
-      now rewrite prepromote_extract2.
+      now rewrite preincr_extract2.
     Qed.
 
-    #[local] Instance: Algebraic.Monad.Monad T :=
+    #[local] Instance: Classes.Monad.Monad T :=
       {| mon_ret_natural := ret_natural;
         mon_join_natural := join_natural;
         mon_join_ret := join_ret;
@@ -160,12 +154,14 @@ Module Instances.
       unfold_ops @Fmap_Bindd.
       rewrite (kmond_bindd2 T).
       fequal. rewrite (dm_kleisli_star2 T).
-      rewrite (kleisli_id_r T).
+      rewrite (Kleisli.Monad.kleisli_id_r T).
       ext [w a]. cbn.
       compose near (w, a) on left.
       rewrite (kmond_bindd0 T).
       unfold compose; cbn.
-      cbv. now simpl_monoid.
+      unfold_ops @Return_writer.
+      unfold preincr, compose, incr.
+      now simpl_monoid.
     Qed.
 
     Lemma dec_extract : forall (A : Type),
@@ -198,7 +194,7 @@ Module Instances.
         now rewrite cokcompose_misc1.
     Qed.
 
-    #[local] Instance: Algebraic.Decorated.Functor.DecoratedFunctor W T :=
+    #[local] Instance: Decorated.Functor.DecoratedFunctor W T :=
       {| dfun_dec_natural := dec_natural;
         dfun_dec_dec := dec_dec;
         dfun_dec_extract := dec_extract;
@@ -228,27 +224,27 @@ Module Instances.
       rewrite cokleisli_id_l.
       rewrite (dm_kleisli_star2 T).
       ext [w t].
-      unfold kcompose.
-      rewrite (kmon_bind0 T).
+      unfold Monad.kcompose.
+      rewrite (Monad.kmon_bind0 T).
       unfold compose; cbn.
       compose near t on right.
-      rewrite (kmond_bindd2 T).
+      rewrite (Monad.kmond_bindd2 T).
       compose near t on right.
-      rewrite (kmond_bindd2 T).
+      rewrite (Monad.kmond_bindd2 T).
       fequal. ext [w' a].
       cbn. compose near (w', a) on right.
-      rewrite (kmond_bindd0 T).
+      rewrite (Monad.kmond_bindd0 T).
       unfold compose. cbn.
       compose near (w', a) on right.
-      rewrite prepromote_ret.
+      rewrite preincr_ret.
       unfold compose; cbn.
       compose near (id w, (w', a)) on right.
       rewrite (kmond_bindd0 T).
-      rewrite prepromote_ret.
+      rewrite preincr_ret.
       reflexivity.
     Qed.
 
-    #[local] Instance: Algebraic.Decorated.Monad.DecoratedMonad W T :=
+    #[local] Instance: Decorated.Monad.DecoratedMonad W T :=
       {| dmon_ret := dmon_ret_;
         dmon_join := dmon_join_;
       |}.
@@ -257,3 +253,95 @@ Module Instances.
 
 End Instances.
 
+#[local] Generalizable Variables T W.
+
+Module CategoricalToKleisli.
+  
+  Context
+    `{fmapT : Fmap T}
+    `{decT : Decorate W T}
+    `{joinT : Join T}
+    `{retT : Return T}
+    `{Monoid W}
+    `{! Decorated.Monad.DecoratedMonad W T}.
+
+  #[local] Instance bindd' : Bindd W T T := ToKleisli.Bindd_dec W T.
+
+  Definition fmap' : Fmap T := Fmap_Bindd W T.
+  Definition dec' : Decorate W T := Decorate_Bindd W T.
+  Definition join' : Join T := Join_Bindd W T.
+
+  Goal fmapT = fmap'.
+  Proof.
+    unfold fmap'. unfold_ops @Fmap_Bindd.
+    unfold bindd, bindd'.
+    unfold_ops @ToKleisli.Bindd_dec.
+    ext A B f.
+    rewrite <- (fun_fmap_fmap T).
+    reassociate <-.
+    reassociate ->.
+    rewrite (dfun_dec_extract W T).
+    rewrite <- (fun_fmap_fmap T).
+    reassociate <-.
+    rewrite (mon_join_fmap_ret T).
+    reflexivity.
+  Qed.
+
+  Goal decT = dec'.
+  Proof.
+    unfold dec'. unfold_ops @Decorate_Bindd.
+    unfold bindd, bindd'.
+    unfold_ops @ToKleisli.Bindd_dec.
+    ext A.
+    rewrite (mon_join_fmap_ret T).
+    reflexivity.
+  Qed.
+
+  Goal joinT = join'.
+  Proof.
+    unfold join'. unfold_ops @Join_Bindd.
+    unfold bindd, bindd'.
+    unfold_ops @ToKleisli.Bindd_dec.
+    ext A.
+    reassociate ->.
+    rewrite (dfun_dec_extract W T).
+    reflexivity.
+  Qed.
+
+End CategoricalToKleisli.
+
+Module KleisliToAlgebraic.
+
+  Context
+    `{binddT : Bindd W T T}
+    `{retT : Return T}
+    `{Monoid W}
+    `{@Classes.Kleisli.Decorated.Monad.Monad W T retT binddT _ _}.
+
+  #[local] Instance fmap' : Fmap T := Fmap_Bindd W T.
+  #[local] Instance dec' : Decorate W T := Decorate_Bindd W T.
+  #[local] Instance join' : Join T := Join_Bindd W T.
+
+  Definition bindd' : Bindd W T T := ToKleisli.Bindd_dec W T.
+
+  Goal binddT = bindd'.
+  Proof.
+    unfold bindd'. unfold_ops @ToKleisli.Bindd_dec.
+    unfold fmap, fmap', dec, dec', join, join'.
+    unfold_ops @Fmap_Bindd.
+    unfold_ops @Join_Bindd.
+    unfold_ops @Decorate_Bindd.
+    ext A B f.
+    unfold_compose_in_compose.
+    rewrite (kmond_bindd2 T).
+    rewrite (kmond_bindd2 T).
+    fequal.
+    reassociate -> near (extract (W ×)).
+    rewrite (Derived.dm_kleisli_star1 T).
+    rewrite cokleisli_id_l.
+    change (@ret T _ (W * A)) with (@ret T _ (W * A) ∘ id).
+    rewrite (Derived.dm_kleisli_star5 T).
+    reflexivity.
+  Qed.
+
+End KleisliToAlgebraic.

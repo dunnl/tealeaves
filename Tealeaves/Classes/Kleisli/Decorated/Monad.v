@@ -304,80 +304,84 @@ Module Derived.
     Qed.
 
   End with_monad.
+  
+  Section laws.
+    
+    Context
+      (T : Type -> Type)
+      `{Decorated.Monad.Monad W T}.
 
-  Context
-    (T : Type -> Type)
-    `{Decorated.Monad.Monad W T}.
-
-  (** *** Composition with <<bind>> *)
-  (******************************************************************************)
-  Corollary bind_bindd {A B C} : forall (g : B -> T C) (f : W * A -> T B),
-      bind T g ∘ bindd T f = bindd T (g ⋆ f).
-  Proof.
-    intros. unfold_ops @Bind_Bindd.
-    rewrite (kmond_bindd2 T).
-    rewrite (dm_kleisli_star2 T).
-    reflexivity.
-  Qed.
+    (** *** Composition with <<bind>> *)
+    (******************************************************************************)
+    Corollary bind_bindd {A B C} : forall (g : B -> T C) (f : W * A -> T B),
+        bind T g ∘ bindd T f = bindd T (g ⋆ f).
+    Proof.
+      intros. unfold_ops @Bind_Bindd.
+      rewrite (kmond_bindd2 T).
+      rewrite (dm_kleisli_star2 T).
+      reflexivity.
+    Qed.
 
 
-  Corollary bindd_bind {A B C} : forall (g : W * B -> T C) (f : A -> T B),
-      bindd T g ∘ bind T f = bindd T ((fun '(w, t) => bindd T (preincr w g) t) ∘ fmap (W ×) f).
-  Proof.
-    introv. unfold_ops @Bind_Bindd.
-    rewrite (kmond_bindd2 T).
-    now rewrite (dm_kleisli_star3 T).
-  Qed.
+    Corollary bindd_bind {A B C} : forall (g : W * B -> T C) (f : A -> T B),
+        bindd T g ∘ bind T f = bindd T ((fun '(w, t) => bindd T (preincr w g) t) ∘ fmap (W ×) f).
+    Proof.
+      introv. unfold_ops @Bind_Bindd.
+      rewrite (kmond_bindd2 T).
+      now rewrite (dm_kleisli_star3 T).
+    Qed.
 
-  (** *** Composition with <<fmapd>> *)
-  (******************************************************************************)
-  Lemma bindd_fmapd {A B C} : forall (g : W * B -> T C) (f : W * A -> B),
-      bindd T g ∘ fmapd T f = bindd T (g co⋆ f).
-  Proof.
-    introv. unfold_ops @Fmapd_Bindd.
-    rewrite (kmond_bindd2 T).
-    rewrite (dm_kleisli_star1 T).
-    reflexivity.
-  Qed.
+    (** *** Composition with <<fmapd>> *)
+    (******************************************************************************)
+    Lemma bindd_fmapd {A B C} : forall (g : W * B -> T C) (f : W * A -> B),
+        bindd T g ∘ fmapd T f = bindd T (g co⋆ f).
+    Proof.
+      introv. unfold_ops @Fmapd_Bindd.
+      rewrite (kmond_bindd2 T).
+      rewrite (dm_kleisli_star1 T).
+      reflexivity.
+    Qed.
 
-  Corollary fmapd_bindd {A B C} : forall (g : W * B -> C) (f : W * A -> T B),
-      fmapd T g ∘ bindd T f = bindd T (fun '(w, t) => fmapd T (preincr w g) (f (w, t))).
-  Proof.
-    intros. unfold_ops @Fmapd_Bindd.
-    rewrite (kmond_bindd2 T).
-    rewrite (dm_kleisli_star4 T).
-    reflexivity.
-  Qed.
+    Corollary fmapd_bindd {A B C} : forall (g : W * B -> C) (f : W * A -> T B),
+        fmapd T g ∘ bindd T f = bindd T (fun '(w, t) => fmapd T (preincr w g) (f (w, t))).
+    Proof.
+      intros. unfold_ops @Fmapd_Bindd.
+      rewrite (kmond_bindd2 T).
+      rewrite (dm_kleisli_star4 T).
+      reflexivity.
+    Qed.
 
-  (** *** Composition with <<fmap>> *)
-  (******************************************************************************)
-  Lemma bindd_fmap {A B C} : forall (g : W * B -> T C) (f : A -> B),
-      bindd T g ∘ fmap T f = bindd T (g ∘ fmap (prod W) f).
-  Proof.
-    intros. unfold_ops @Fmap_Bindd.
-    rewrite (kmond_bindd2 T).
-    reassociate ->.
-    rewrite (dm_kleisli_star1 T).
-    rewrite (fmap_to_cobind (W ×)).
-    reflexivity.
-  Qed.
+    (** *** Composition with <<fmap>> *)
+    (******************************************************************************)
+    Lemma bindd_fmap {A B C} : forall (g : W * B -> T C) (f : A -> B),
+        bindd T g ∘ fmap T f = bindd T (g ∘ fmap (prod W) f).
+    Proof.
+      intros. unfold_ops @Fmap_Bindd.
+      rewrite (kmond_bindd2 T).
+      reassociate ->.
+      rewrite (dm_kleisli_star1 T).
+      rewrite (fmap_to_cobind (W ×)).
+      reflexivity.
+    Qed.
 
-  Corollary fmap_bindd {A B C} : forall (g : B -> C) (f : W * A -> T B),
-      fmap T g ∘ bindd T f = bindd T (fmap T g ∘ f).
-  Proof.
-    intros. unfold_ops @Fmap_Bindd.
-    rewrite (kmond_bindd2 T).
-    rewrite (dm_kleisli_star2 T).
-    reflexivity.
-  Qed.
+    Corollary fmap_bindd {A B C} : forall (g : B -> C) (f : W * A -> T B),
+        fmap T g ∘ bindd T f = bindd T (fmap T g ∘ f).
+    Proof.
+      intros. unfold_ops @Fmap_Bindd.
+      rewrite (kmond_bindd2 T).
+      rewrite (dm_kleisli_star2 T).
+      reflexivity.
+    Qed.
 
-  (** *** Composition between <<fmapd>> and <<bind>> *)
-  (******************************************************************************)
+    (** *** Composition between <<fmapd>> and <<bind>> *)
+    (******************************************************************************)
 
-  (** *** Composition between <<fmapd>> and <<fmap>> *)
-  (******************************************************************************)
+    (** *** Composition between <<fmapd>> and <<fmap>> *)
+    (******************************************************************************)
 
-  (** *** Composition between <<bind>> and <<fmap>> *)
-  (******************************************************************************)
+    (** *** Composition between <<bind>> and <<fmap>> *)
+    (******************************************************************************)
 
+  End laws.
+  
 End Derived.

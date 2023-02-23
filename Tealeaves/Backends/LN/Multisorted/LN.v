@@ -1,33 +1,266 @@
+From Tealeaves Require Export
+  Classes.EqDec_eq
+  Categories.TypeFamilies
+  Backends.LN.Atom
+  Backends.LN.AtomSet
+  Multisorted.Classes.DTM
+  Classes.Traversable.Monad. (* bind for lists *)
+
+From Tealeaves Require Import Classes.Kleisli.Monad.
+From Tealeaves Require Import Classes.Kleisli.Traversable.Functor.
+From Tealeaves Require Import Classes.Kleisli.Traversable.Monad.
+From Tealeaves Require Import Classes.Kleisli.Decorated.Functor.
+From Tealeaves Require Import Classes.Kleisli.Decorated.Monad.
+From Tealeaves Require Import Classes.Kleisli.DT.Functor.
+From Tealeaves Require Import Classes.Kleisli.DT.Monad.
+
+Import Multisorted.Classes.DTM.Notations.
+Import Multisorted.Classes.DTM.Notations2.
+Import Multisorted.Classes.DTM.Notations3.
+Import Categories.TypeFamilies.Notations.
+Import Classes.Setlike.Functor.Notations.
+Import Monoid.Notations.
+Import List.ListNotations.
+Import LN.AtomSet.Notations.
+
+#[local] Open Scope nat_scope. (* Let <<x + y>> be addition, not sum type. *)
+#[local] Generalizable Variables T.
+
+(** * Binders contexts **)
+(** We assume that binder contexts are lists of tagged values of type
+    <<unit>>, which are just tags themselves. *)
+(******************************************************************************)
+Section operations_on_context.
+
+  Context
+    `{Index}.
+
+  Fixpoint countk (j : K) (l : list K) : nat :=
+    match l with
+    | nil => 0
+    | cons k rest =>
+      (if j == k then 1 else 0) + countk j rest
+    end.
+
+  Lemma countk_nil : forall j, countk j nil = 0.
+  Proof.
+    easy.
+  Qed.
+
+  Lemma countk_one_eq : forall j, countk j [j] = 1.
+  Proof.
+    intros. cbn. compare values j and j.
+  Qed.
+
+  Lemma countk_one_neq : forall j k, j <> k -> countk j [k] = 0.
+  Proof.
+    intros. cbn. compare values j and k.
+  Qed.
+
+  Lemma countk_cons_eq : forall j l, countk j (j :: l) = S (countk j l).
+  Proof.
+    intros. cbn. compare values j and j.
+  Qed.
+
+  Lemma countk_cons_neq : forall j k l, j <> k -> countk j (k :: l) = countk j l.
+  Proof.
+    intros. cbn. compare values j and k.
+  Qed.
+
+  Lemma countk_app : forall j l1 l2, countk j (l1 ++ l2) = countk j l1 + countk j l2.
+  Proof.
+    intros. induction l1.
+    - easy.
+    - cbn. compare values j and a.
+      now rewrite IHl1.
+  Qed.
+
+End operations_on_context.
+
+(** * Locally nameless variables *)
+(******************************************************************************)
+Inductive LN :=
+| Fr : atom -> LN
+| Bd : nat -> LN.
+
+Theorem eq_dec_LN : forall l1 l2 : LN, {l1 = l2} + {l1 <> l2}.
+Proof.
+  decide equality.
+  - compare values a and a0; auto.
+  - compare values n and n0; auto.
+Qed.
+
+#[export] Instance EqDec_LN : EquivDec.EqDec LN eq := eq_dec_LN.
+
+Lemma compare_to_atom : forall x l (P : LN -> Prop),
+    P (Fr x) ->
+    (forall a : atom, a <> x -> P (Fr a)) ->
+    (forall n : nat, P (Bd n)) ->
+    P l.
+Proof.
+  introv case1 case2 case3. destruct l.
+  - destruct_eq_args x a. auto.
+  - auto.
+Qed.
+
+Tactic Notation "compare" constr(l) "to" "atom" constr(x) :=
+  (induction l using (compare_to_atom x)).
+
+(** * Syntax operations for locally nameless *)
+(******************************************************************************)
+
+(** ** Local operations *)
+(******************************************************************************)
+Section local_operations.
+
+  Context
+    `{Index}
+    `{MReturn T}.
+
+  Implicit Types (x : atom) (k : K).
+
+  Definition free_loc : LN -> list atom :=
+    fun l => match l with
+          | Fr x => cons x List.nil
+          | _ => List.nil
+          end.
+
+  Definition subst_loc k x (u : T k LN) : LN -> T k LN :=
+    fun l => match l with
+          | Fr y =>
+            if x == y then u else mret T k (Fr y)
+          | Bd n =>
+            mret T k (Bd n)
+          end.
+
+  Definition open_loc k (u : T k LN) : list K * LN -> T k LN :=
+    fun '(w, l) =>
+      match l with
+      | Fr x => mret T k (Fr x)
+      | Bd n =>
+        match Nat.compare n (countk k w) with
+        | Gt => mret T k (Bd (n - 1))
+        | Eq => u
+        | Lt => mret T k (Bd n)
+        end
+      end.
+
+  Definition is_opened : list K * (K * LN) -> Prop :=
+    fun '(w, (k, l)) =>
+      match l with
+      | Fr y => False
+      | Bd n => n = countk k w
+      end.
+
+  Definition close_loc k x : list K * LN -> LN :=
+    fun '(w, l) =>
+      match l with
+      | Fr y =>
+        if x == y then Bd (countk k w) else Fr y
+      | Bd n =>
+        match Nat.compare n (countk k w) with
+        | Gt => Bd (S n)
+        | Eq => Bd (S n)
+        | Lt => Bd n
+        end
+      end.
+
+  (** To define local closure we will take <<n = 0>>, but we can also
+      consider more notions like ``local closure within a gap of 1
+      binder,'' which is useful for backend reasoning. **)
+  Definition is_bound_or_free k (gap : nat) : list K * LN -> Prop :=
+    fun '(w, l) =>
+      match l with
+      | Fr x => True
+      | Bd n => n < (countk k w) + gap
+      end.
+
+End local_operations.
+
+(** ** Lifted operations *)
+(******************************************************************************)
+Section LocallyNamelessOperations.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    `{! DTM (list K) T}.
+
+  Definition open k (u : T k LN) : S LN -> S LN  :=
+    kbindd S k (open_loc k u).
+
+  Definition close k x : S LN -> S LN :=
+    kfmapd S k (close_loc k x).
+
+  Definition subst k x (u : T k LN) : S LN -> S LN :=
+    kbind S k (subst_loc k x u).
+
+  Definition free : K -> S LN -> list atom :=
+    fun k t => bind list free_loc (toklist S k t).
+
+  Definition locally_closed_gap k (gap : nat) : S LN -> Prop :=
+    fun t => forall (w : list K) (l : LN),
+        (w, (k, l)) ∈md t -> is_bound_or_free k gap (w, l).
+
+  Definition locally_closed k : S LN -> Prop :=
+    locally_closed_gap k 0.
+
+  Definition freeset : K -> S LN -> AtomSet.t :=
+    fun k t => LN.AtomSet.atoms (free k t).
+
+  Definition scoped : K -> S LN -> AtomSet.t -> Prop :=
+    fun k t γ => freeset k t ⊆ γ.
+
+End LocallyNamelessOperations.
+
+(** ** Notations for operations *)
+(******************************************************************************)
+Module Notations.
+
+  Notation "t '{ k | x ~> u }" := (subst _ k x u t) (at level 35).
+  Notation "t '( k | u )" := (open _ k u t) (at level 35).
+  Notation "'[ k | x ] t" := (close _ k x t) (at level 35).
+  Notation "( x , y , z )" := (pair x (pair y z)) : tealeaves_multi_scope.
+
+End Notations.
+
+Section test_notations.
+
+  Import Notations.
+
+  Context
+    (S : Type -> Type)
+    `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    `{! DTM (list K) T}.
+
+  Context
+    (k j : K)
+    (t1 : T k LN)
+    (t2 : T j LN)
+    (u : S LN)
+    (x : atom)
+    (n : nat).
+
+  Check u '{ k | x ~> t1}.
+  Check u '(k | t1).
+  Check '[k | x] u.
+
+  Check u '{j | x ~> t2}.
+  Check u '(j | t2).
+  Check '[j | x] u.
+
+  Fail Check u '{j | x ~> t1}.
+  Fail Check u '(j | t1).
+
+End test_notations.
+
+Import Notations.
+
 (*|
 ############################################################
 Multisorted locally nameless infrastructure
 ############################################################
 |*)
-
-From Tealeaves Require Import
-     Util.Prelude
-     Util.EqDec_eq LN.Atom LN.AtomSet
-     Theory.Kleisli.DT.Monad.Container
-     Theory.List.Kleisli
-     LN.Multisorted.Operations.
-
-From Tealeaves.Multisorted Require Import
-     Classes.DTM
-     Theory.DTMContainer
-     Theory.DTMSchedule.
-
-Import Multisorted.Theory.Category.Notations.
-Import Monoid.Notations.
-Import LN.AtomSet.Notations.
-Import Classes.Algebraic.Setlike.Functor.Notations.
-Import Operations.Notations.
-Import DTMContainer.Notations.
-#[local] Open Scope tealeaves_scope.
-#[local] Open Scope tealeaves_multi_scope.
-#[local] Open Scope set_scope.
-#[local] Open Scope nat_scope. (* Let <<x + y>> be addition, not sum type. *)
-
-#[local] Generalizable Variables W T M F G A B C.
 
 (*|
 ---------------------------------------
@@ -41,15 +274,15 @@ Section operations_specifications.
     `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! DTM (list K) T}.
 
-  Implicit Types (l : leaf) (w : list K) (t : S leaf) (x : atom).
+  Implicit Types (l : LN) (w : list K) (t : S LN) (x : atom).
 
   (** ** Identity and equality lemmas for operations *)
   (******************************************************************************)
 
   (** *** For [open] *)
   (******************************************************************************)
-  Lemma open_eq : forall k t (u1 u2 : T k leaf),
-      (forall (w : list K) (l : leaf), (w, (k, l)) ∈md t -> open_loc k u1 (w, l) = open_loc k u2 (w, l)) ->
+  Lemma open_eq : forall k t (u1 u2 : T k LN),
+      (forall (w : list K) (l : LN), (w, (k, l)) ∈md t -> open_loc k u1 (w, l) = open_loc k u2 (w, l)) ->
       t '(k | u1) = t '(k | u2).
   Proof.
     introv hyp. unfold open. apply kbindd_respectful. auto.
@@ -98,7 +331,7 @@ Section operations_specifications.
     now apply (kfmapd_respectful_id).
   Qed.
 
-  (** ** Context-sensitive leaf analysis of operations *)
+  (** ** Context-sensitive LN analysis of operations *)
   (******************************************************************************)
 
   (** *** For [open] *)
@@ -158,7 +391,7 @@ Section operations_specifications.
     now rewrite (ind_kbind_neq_iff S); auto.
   Qed.
 
-  (** ** Context-agnostic leaf analysis of operations *)
+  (** ** Context-agnostic LN analysis of operations *)
   (******************************************************************************)
 
   (** *** For [open] *)
@@ -233,7 +466,7 @@ Section operations_specifications.
       `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
       `{! DTM (list K) T}.
 
-    Theorem in_free_iff : forall (k : K) (t : S leaf) (x : atom),
+    Theorem in_free_iff : forall (k : K) (t : S LN) (x : atom),
         x ∈ free S k t <-> (k, Fr x) ∈m t.
     Proof.
       intros. unfold free. rewrite in_bind_list_iff. split.
@@ -247,7 +480,7 @@ Section operations_specifications.
         cbv. now left.
     Qed.
 
-    Corollary free_iff_freeset : forall (k : K) (t : S leaf) (x : atom),
+    Corollary free_iff_freeset : forall (k : K) (t : S LN) (x : atom),
         x ∈ free S k t <-> x ∈@ freeset S k t.
     Proof.
       intros. unfold freeset. rewrite <- in_atoms_iff.
@@ -340,7 +573,7 @@ Section locally_nameless_local.
     `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! DTM (list K) T}.
 
-  Implicit Types (l : leaf) (w : list K) (t : S leaf) (x : atom) (j k : K) (n : nat).
+  Implicit Types (l : LN) (w : list K) (t : S LN) (x : atom) (j k : K) (n : nat).
 
   (** ** Lemmas for proving (in)equalities between leaves *)
   (******************************************************************************)
@@ -377,7 +610,7 @@ Section locally_nameless_local.
     now subst. now injection hyp.
   Qed.
 
-  Lemma ninf_in_neq : forall k x l (t : S leaf),
+  Lemma ninf_in_neq : forall k x l (t : S LN),
       ~ x ∈ free S k t ->
       (k, l) ∈m t -> Fr x <> l.
   Proof.
@@ -517,11 +750,11 @@ Section subst_metatheory.
 
     Implicit Types
              (k : K) (j : K)
-             (l : leaf) (p : leaf)
-             (x : atom) (t : S leaf)
+             (l : LN) (p : LN)
+             (x : atom) (t : S LN)
              (w : list K) (n : nat).
 
-    (** ** Leaf analysis with contexts *)
+    (** ** LN analysis with contexts *)
     (******************************************************************************)
     Lemma ind_subst_loc_iff : forall k l w j p u x,
         (w, (j, p)) ∈md subst_loc k x u l <->
@@ -564,7 +797,7 @@ Section subst_metatheory.
         k <> j /\ (w, j, l) ∈md t \/
         (* <<l>> is an occurrence of the same sort but not an occurrence of <<x>> OR *)
         k = j /\ (w, k, l) ∈md t /\ l <> Fr x \/
-        (* <<x>> occurs and <<l>> is the any leaf in a substituted <<u>> *)
+        (* <<x>> occurs and <<l>> is the any LN in a substituted <<u>> *)
         exists w1 w2 : list K, (w1, k, Fr x) ∈md t /\ (w2, j, l) ∈md u /\ w = w1 ● w2.
     Proof with auto.
       intros. compare values k and j.
@@ -606,7 +839,7 @@ Section subst_metatheory.
       intros. rewrite ind_subst_iff. intuition.
     Qed.
 
-    (** ** Leaf analysis without contexts *)
+    (** ** LN analysis without contexts *)
     (******************************************************************************)
     Lemma in_subst_loc_iff : forall k l j p u x,
         (j, p) ∈m subst_loc k x u l <->
@@ -639,7 +872,7 @@ Section subst_metatheory.
         k <> j /\ (j, l) ∈m t \/
         (* <<l>> is an occurrence of the same sort but not an occurrence of <<x>> OR *)
         k = j /\ (k, l) ∈m t /\ l <> Fr x \/
-        (* <<x>> occurs and <<l>> is the any leaf in a substituted <<u>> *)
+        (* <<x>> occurs and <<l>> is the any LN in a substituted <<u>> *)
         (k, Fr x) ∈m t /\ (j, l) ∈m u.
     Proof with auto.
       intros. destruct_eq_args k j.
@@ -807,7 +1040,7 @@ Section subst_metatheory.
       intuition.
     Qed.
 
-    Corollary scoped_subst_eq : forall t k (u : T k leaf) x γ1 γ2,
+    Corollary scoped_subst_eq : forall t k (u : T k LN) x γ1 γ2,
         scoped S k t γ1 ->
         scoped (T k) k u γ2 ->
         scoped S k (t '{k | x ~> u}) (γ1 \\ {{x}} ∪ γ2).
@@ -851,7 +1084,7 @@ Section subst_metatheory.
       intros; rewrite in_subst_iff...
     Qed.
 
-    Corollary in_free_subst_lower_eq : forall t k (u : T k leaf) x y,
+    Corollary in_free_subst_lower_eq : forall t k (u : T k LN) x y,
         y ∈ free S k t /\ y <> x ->
         y ∈ free S k (t '{k | x ~> u}).
     Proof.
@@ -868,7 +1101,7 @@ Section subst_metatheory.
       now apply in_subst_lower_neq.
     Qed.
 
-    Corollary freeset_subst_lower_eq : forall t k (u : T k leaf) x,
+    Corollary freeset_subst_lower_eq : forall t k (u : T k LN) x,
         freeset S k t \\ {{ x }} ⊆ freeset S k (t '{k | x ~> u}).
     Proof.
       introv. intro a. rewrite AtomSet.diff_spec.
@@ -877,7 +1110,7 @@ Section subst_metatheory.
       intuition.
     Qed.
 
-    Corollary freeset_subst_lower_eq_alt : forall t k (u : T k leaf) x,
+    Corollary freeset_subst_lower_eq_alt : forall t k (u : T k LN) x,
         freeset S k t ⊆ freeset S k (t '{k | x ~> u}) ∪ {{ x }}.
     Proof.
       introv. intro a. rewrite AtomSet.union_spec.
@@ -961,11 +1194,11 @@ Section subst_metatheory.
 
     Implicit Types
              (k : K) (j : K)
-             (l : leaf) (p : leaf)
-             (x : atom) (t : S leaf)
+             (l : LN) (p : LN)
+             (x : atom) (t : S LN)
              (w : list K) (n : nat).
 
-    Lemma subst_subst_neq_loc : forall j k1 k2 (u1 : T k1 leaf) (u2 : T k2 leaf) (x1 x2 : atom),
+    Lemma subst_subst_neq_loc : forall j k1 k2 (u1 : T k1 LN) (u2 : T k2 LN) (x1 x2 : atom),
         k1 <> k2 ->
         ~ x1 ∈ free (T k2) k1 u2 ->
         subst (T j) k2 x2 u2 ∘ btg T k1 (subst_loc k1 x1 u1) j =
@@ -1108,16 +1341,16 @@ Section subst_metatheory.
       symmetry. apply subst_spec_local.
     Qed.
 
-    (** ** Substitution when <<u>> is a leaf **)
+    (** ** Substitution when <<u>> is a LN **)
     (******************************************************************************)
-    Definition subst_loc_leaf k x (u : leaf) : leaf -> leaf :=
+    Definition subst_loc_LN k x (u : LN) : LN -> LN :=
       fun l => match l with
             | Fr y => if x == y then u else Fr y
             | Bd n => Bd n
             end.
 
-    Theorem subst_by_leaf_spec : forall k x l,
-        subst S k x (mret T k l) = kfmap S k (subst_loc_leaf k x l).
+    Theorem subst_by_LN_spec : forall k x l,
+        subst S k x (mret T k l) = kfmap S k (subst_loc_LN k x l).
     Proof.
       intros. unfold subst. ext t.
       apply kbind_respectful_kfmap.
@@ -1150,8 +1383,8 @@ Section close_metatheory.
 
   Implicit Types
            (k : K) (j : K)
-           (l : leaf) (p : leaf)
-           (x : atom) (t : S leaf)
+           (l : LN) (p : LN)
+           (x : atom) (t : S LN)
            (w : list K) (n : nat).
 
   (** ** Free variables after variable closing *)
@@ -1163,7 +1396,7 @@ Section close_metatheory.
   Proof.
     introv lin heq. destruct l as [la | ln].
     - cbn in heq. destruct_eq_args x la.
-      inverts heq. now apply (ind_implies_in S) in lin.
+      inverts heq. now apply (DTM.ind_implies_in S) in lin.
     - cbn in heq. compare_nats_args ln (countk k w); discriminate.
   Qed.
 
@@ -1172,7 +1405,7 @@ Section close_metatheory.
       (k, Fr y) ∈m t ->
       exists w l, (w, k, l) ∈md t /\ Fr y = close_loc k x (w, l).
   Proof.
-    introv neq yin. apply (ind_iff_in S) in yin. destruct yin as [w yin].
+    introv neq yin. apply (DTM.ind_iff_in S) in yin. destruct yin as [w yin].
     exists w. exists (Fr y). cbn. compare values x and y.
   Qed.
 
@@ -1252,13 +1485,13 @@ Section open_metatheory.
 
   Implicit Types
            (k : K) (j : K)
-           (l : leaf) (p : leaf)
-           (x : atom) (t : S leaf)
+           (l : LN) (p : LN)
+           (x : atom) (t : S LN)
            (w : list K) (n : nat).
 
   (** ** Upper and lower bounds on free variables after opening *)
   (******************************************************************************)
-  Lemma free_open_upper_local : forall t k j (u : T k leaf) w l x,
+  Lemma free_open_upper_local : forall t k j (u : T k LN) w l x,
       (k, l) ∈m t ->
       x ∈ free (T k) j (open_loc k u (w, l)) ->
       k = j /\ l = Fr x /\ x ∈ free S j t \/
@@ -1273,7 +1506,7 @@ Section open_metatheory.
       { contradict xin. simpl_local. intuition. }
   Qed.
 
-  Corollary free_open_upper_local_eq : forall t k (u : T k leaf) w l x,
+  Corollary free_open_upper_local_eq : forall t k (u : T k LN) w l x,
       (k, l) ∈m t ->
       x ∈ free (T k) k (open_loc k u (w, l)) ->
       x ∈ free S k t \/ x ∈ free (T k) k u.
@@ -1284,7 +1517,7 @@ Section open_metatheory.
     intuition.
   Qed.
 
-  Corollary free_open_upper_local_neq : forall t k j (u : T k leaf) w l x,
+  Corollary free_open_upper_local_neq : forall t k j (u : T k LN) w l x,
       k <> j ->
       (k, l) ∈m t ->
       x ∈ free (T k) j (open_loc k u (w, l)) ->
@@ -1296,22 +1529,22 @@ Section open_metatheory.
     intuition.
   Qed.
 
-  Theorem free_open_upper : forall t k j (u : T k leaf) x,
+  Theorem free_open_upper : forall t k j (u : T k LN) x,
       x ∈ free S j (t '(k | u)) ->
       x ∈ free S j t \/ x ∈ free (T k) j u.
   Proof.
     introv xin. compare values j and k.
     - rewrite (free_open_eq_iff S) in xin.
       destruct xin as [w [l [hin ?]]].
-      eapply (ind_implies_in S) in hin.
+      eapply (DTM.ind_implies_in S) in hin.
       eauto using free_open_upper_local_eq.
     - rewrite (free_open_neq_iff S) in xin; auto.
       destruct xin as  [? |  [w [l [hin ?]]]].
-      auto. apply (ind_implies_in S) in hin.
+      auto. apply (DTM.ind_implies_in S) in hin.
       right. eauto using free_open_upper_local_neq.
   Qed.
 
-  Corollary freeset_open_upper : forall t k j (u : T k leaf),
+  Corollary freeset_open_upper : forall t k j (u : T k LN),
       freeset S j (t '(k | u)) ⊆ freeset S j t ∪ freeset (T k) j u.
   Proof.
     intros. intro a. rewrite AtomSet.union_spec.
@@ -1319,14 +1552,14 @@ Section open_metatheory.
     auto using free_open_upper.
   Qed.
 
-  Corollary free_open_upper_eq : forall t k (u : T k leaf) x,
+  Corollary free_open_upper_eq : forall t k (u : T k LN) x,
       x ∈ free S k (t '(k | u)) ->
       x ∈ free S k t \/ x ∈ free (T k) k u.
   Proof.
     intros. auto using free_open_upper.
   Qed.
 
-  Corollary freeset_open_upper_eq : forall t k (u : T k leaf),
+  Corollary freeset_open_upper_eq : forall t k (u : T k LN),
       freeset S k (t '(k | u)) ⊆ freeset S k t ∪ freeset (T k) k u.
   Proof.
     intros. apply freeset_open_upper.
@@ -1338,7 +1571,7 @@ Section open_metatheory.
   Proof.
     introv xin. compare values j and k.
     - rewrite (in_free_iff) in xin.
-      rewrite (ind_iff_in S) in xin.
+      rewrite (DTM.ind_iff_in S) in xin.
       destruct xin as [w xin].
       rewrite (free_open_eq_iff S).
       setoid_rewrite (in_free_iff).
@@ -1368,7 +1601,7 @@ Section open_metatheory.
 
   (** ** Opening a locally closed term is the identity *)
   (**************************************************************************)
-  Lemma open_lc_local : forall k (u : T k leaf) w l,
+  Lemma open_lc_local : forall k (u : T k LN) w l,
       is_bound_or_free k 0 (w, l) ->
       open_loc k u (w, l) = mret T k l.
   Proof.
@@ -1422,7 +1655,7 @@ Section open_metatheory.
     fequal. apply subst_open_eq_loc; auto.
   Qed.
 
-  Theorem subst_open_neq_loc :  forall k1 k2 (u1 : T k1 leaf) (u2 : T k2 leaf) (x : atom),
+  Theorem subst_open_neq_loc :  forall k1 k2 (u1 : T k1 LN) (u2 : T k2 LN) (x : atom),
       k1 <> k2 ->
       locally_closed (T k2) k1 u2 ->
       (btgd T k2 (subst_loc k2 x u2 ∘ extract (prod (list K)))) ⋆dm btgd T k1 (open_loc k1 u1) =
@@ -1471,7 +1704,7 @@ Section open_metatheory.
         do 2 rewrite (mbindd_comp_mret k). now simpl_tgt_fallback. }
   Qed.
 
-  Theorem subst_open_neq :  forall k1 k2 (u1 : T k1 leaf) (u2 : T k2 leaf) (x : atom) (t : S leaf),
+  Theorem subst_open_neq :  forall k1 k2 (u1 : T k1 LN) (u2 : T k2 LN) (x : atom) (t : S LN),
       k1 <> k2 ->
       locally_closed (T k2) k1 u2 ->
       t '(k1 | u1) '{k2 | x ~> u2} =
@@ -1516,7 +1749,7 @@ Section open_metatheory.
     unfold subst, open. rewrite (kbind_kbindd S).
     apply (kbindd_respectful). introv Hin.
     assert (a <> Fr x).
-    { apply (ind_implies_in S) in Hin.
+    { apply (DTM.ind_implies_in S) in Hin.
       rewrite <- free_iff_freeset in fresh.
       eapply ninf_in_neq in fresh; eauto. }
     now rewrite <- (open_spec_eq_loc k u x).
@@ -1570,9 +1803,9 @@ Section open_metatheory.
     apply open_close_loc.
   Qed.
 
-  (** ** Opening by a leaf reduces to an [kfmapd] *)
+  (** ** Opening by a LN reduces to an [kfmapd] *)
   (**************************************************************************)
-  Definition open_leaf_loc k (u : leaf) : list K * leaf -> leaf :=
+  Definition open_LN_loc k (u : LN) : list K * LN -> LN :=
     fun wl =>
       match wl with
       | (w, l) =>
@@ -1587,8 +1820,8 @@ Section open_metatheory.
         end
       end.
 
-  Lemma open_by_leaf_spec : forall k l,
-      open S k (mret T k l) = kfmapd S k (open_leaf_loc k l).
+  Lemma open_by_LN_spec : forall k l,
+      open S k (mret T k l) = kfmapd S k (open_LN_loc k l).
   Proof.
     intros. unfold open. ext t.
     apply (kbindd_respectful_kfmapd).
@@ -1602,7 +1835,7 @@ Section open_metatheory.
   Lemma close_open_local : forall k x w l,
       l <> Fr x ->
       (close_loc k x ∘ cobind (prod (list K))
-                 (open_leaf_loc k (Fr x))) (w, l) = l.
+                 (open_LN_loc k (Fr x))) (w, l) = l.
   Proof.
     introv neq. cbn. unfold id. compare l to atom x.
     - contradiction.
@@ -1617,12 +1850,12 @@ Section open_metatheory.
       '[k | x] (t '(k | mret T k (Fr x))) = t.
   Proof.
     introv fresh. compose near t on left.
-    rewrite open_by_leaf_spec. unfold close.
+    rewrite open_by_LN_spec. unfold close.
     rewrite (kfmapd_kfmapd S).
     apply (kfmapd_respectful_id).
     intros w l lin.
     assert (l <> Fr x).
-    { rewrite neq_symmetry. apply (ind_implies_in) in lin.
+    { rewrite neq_symmetry. apply (DTM.ind_implies_in) in lin.
       eapply (ninf_in_neq S). eassumption. auto. }
     now apply close_open_local.
   Qed.

@@ -1,27 +1,21 @@
 From Tealeaves Require Import
-     Functors.List
-     LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Multisorted.Operations
-     LN.Multisorted.Theory.
-
-From Tealeaves.Multisorted Require Import
-     Classes.DTM
-     Theory.DTMContainer.
+  Examples.SystemF.Syntax
+  Examples.SystemF.Rewriting
+  Examples.SystemF.Contexts
+  Backends.LN.AssocList
+  Classes.Traversable.Monad. (* bind for lists *)
 
 From Coq Require Import
-     Sorting.Permutation.
-
-From Tealeaves.Examples Require Import
-     SystemF.Language
-     SystemF.Rewriting
-     SystemF.Contexts.
+  Sorting.Permutation.
 
 Implicit Types (x : atom).
 
-Import Classes.Algebraic.Setlike.Functor.Notations.
-Import DTMContainer.Notations.
-Import List.ListNotations.
+From Tealeaves Require Import Classes.Kleisli.Monad.
+
+Import Classes.Setlike.Functor.Notations.
+Import DTM.Notations.
 Import LN.AssocList.Notations.
+Import List.ListNotations.
 
 Lemma rw_subst_type_var_neq {x y} {τ'} :
   x <> y ->
@@ -183,7 +177,7 @@ Qed.
 (******************************************************************************)
 Corollary j_type_ctx1 : forall Δ Γ t τ x τ2,
     (Δ ; Γ ⊢ t : τ) ->
-    (x, τ2) ∈ Γ ->
+    (x, τ2) ∈ (Γ : list (atom * _)) ->
     ok_type Δ τ2.
 Proof.
   eauto using ok_type_ctx_binds, j_type_ctx_wf.
@@ -489,7 +483,7 @@ Theorem preservation_theorem : preservation.
 Proof.
   introv j. generalize dependent t'.
   remember (@nil (atom * unit)) as Delta.
-  remember (@nil (atom * typ leaf)) as Gamma.
+  remember (@nil (atom * typ LN)) as Gamma.
   induction j; subst.
   - inversion 1.
   - inversion 1.
@@ -508,7 +502,7 @@ Proof.
       pick fresh e for (L ∪ freeset term KType t0 ∪ freeset typ KType τ2).
       rewrite (open_spec_eq term) with (x := e); [|fsetdec].
       rewrite (open_spec_eq typ) with (x := e); [|fsetdec].
-      change (@nil (atom * typ leaf))
+      change (@nil (atom * typ LN))
         with (envmap (subst typ KType e τ1) []).
       eapply j_kind_ctx_subst1.
       { assumption. }
@@ -518,7 +512,7 @@ Qed.
 Theorem  progress_theorem : progress.
 Proof.
   introv j. remember (@nil (atom * unit)) as Delta.
-  remember (@nil (atom * typ leaf)) as Gamma.
+  remember (@nil (atom * typ LN)) as Gamma.
   induction j; subst.
   - inversion H1.
   - left; auto using value.

@@ -1,20 +1,9 @@
 From Tealeaves Require Export
   Classes.Kleisli.DT.Monad
-  Backends.LN.Top
-  Examples.STLC.Language.
+  Backends.LN
+  Examples.STLC.Syntax.
 
-Export List.ListNotations.
-Open Scope list_scope.
-Export DT.Monad.Notations.
-Open Scope tealeaves_scope.
-Export LN.AtomSet.Notations.
-Open Scope set_scope.
-Export LN.AssocList.Notations.
-
-Import Operations.Notations.
-Import STLC.Language.Notations.
-
-Import Setlike.Functor.Notations.
+Export STLC.Syntax.Notations.
 
 (** * Inversion lemmas *)
 (******************************************************************************)
@@ -31,7 +20,7 @@ Proof.
 Qed.
 
 (* This is somewhat weak because L should really be (dom Γ) *)
-Lemma inversion21 : forall (A B : typ) (e : term leaf) (Γ : ctx),
+Lemma inversion21 : forall (A B : typ) (e : term LN) (Γ : ctx),
     (Γ ⊢ λ A e : B) ->
     exists C, B = A ⟹ C /\ exists L, forall (x : atom), ~ AtomSet.In x L -> Γ ++ x ~ A ⊢ e '(tvar (Fr x)) : C.
 Proof.
@@ -41,7 +30,7 @@ Proof.
 Qed.
 
 (** Inversion principle for [abs] where we may assume the abstraction has arrow type *)
-Lemma inversion22 : forall (A B : typ) (e : term leaf) (Γ : ctx),
+Lemma inversion22 : forall (A B : typ) (e : term LN) (Γ : ctx),
     (Γ ⊢ λ A e : A ⟹ B) ->
     exists L, forall (x : atom), ~ AtomSet.In x L -> Γ ++ x ~ A ⊢ e '(tvar (Fr x)) : B.
 Proof.
@@ -51,7 +40,7 @@ Proof.
   assumption.
 Qed.
 
-Lemma inversion3 : forall (A : typ) (Γ : ctx) (t1 t2 : term leaf),
+Lemma inversion3 : forall (A : typ) (Γ : ctx) (t1 t2 : term LN),
     (Γ ⊢ [t1]@[t2] : A) ->
     exists B, (Γ ⊢ t1 : B ⟹ A) /\ (Γ ⊢ t2 : B).
 Proof.
@@ -61,7 +50,7 @@ Qed.
 
 (** * Misc lemmas *)
 (******************************************************************************)
-Theorem j_ctx_wf : forall Γ (t : term leaf) (A : typ),
+Theorem j_ctx_wf : forall Γ (t : term LN) (A : typ),
     Γ ⊢ t : A -> uniq Γ.
 Proof.
   introv J. induction J.
@@ -74,11 +63,11 @@ Qed.
 Ltac gather_atoms ::=
   let A := gather_atoms_with (fun s : AtomSet.t => s) in
   let B := gather_atoms_with (fun x : atom => {{ x }}) in
-  let C := gather_atoms_with (fun t : term leaf => freeset term t) in
+  let C := gather_atoms_with (fun t : term LN => freeset term t) in
   let D := gather_atoms_with (fun Γ : alist typ => domset Γ) in
   constr:(A ∪ B ∪ C ∪ D).
 
-Theorem j_wf : forall Γ (t : term leaf) (A : typ),
+Theorem j_wf : forall Γ (t : term LN) (A : typ),
     Γ ⊢ t : A -> scoped term t (domset Γ).
 Proof.
   introv J. induction J.
@@ -89,7 +78,7 @@ Proof.
     specialize_freshly IH. unfold scoped in *.
     rewrite term_freeset2.
     assert (step1 : freeset term t ⊆ freeset term (t '(tvar (Fr e))))
-      by apply Theory.freeset_open_lower.
+      by apply freeset_open_lower.
     assert (step2 : forall x, x ∈@ (freeset term t) -> x ∈@ (domset (Γ ++ e ~ τ1)))
       by fsetdec.
     intros x xin. assert (x <> e) by fsetdec.
@@ -98,7 +87,7 @@ Proof.
   - unfold scoped in *. rewrite term_freeset3. fsetdec.
 Qed.
 
-Theorem is_bound_or_free_monotone : forall (k w1 w2 : nat) (l : leaf),
+Theorem is_bound_or_free_monotone : forall (k w1 w2 : nat) (l : LN),
     w1 < w2 ->
     is_bound_or_free k (w1, l) ->
     is_bound_or_free k (w2, l).
@@ -109,7 +98,7 @@ Proof.
   + cbn in *. lia.
 Qed.
 
-Theorem lc_lam : forall (L : AtomSet.t) (t : term leaf) (X : typ),
+Theorem lc_lam : forall (L : AtomSet.t) (t : term LN) (X : typ),
     (forall x : atom, ~ x ∈@ L -> locally_closed term (t '(tvar (Fr x)))) ->
     locally_closed term (λ X t).
 Proof.
@@ -127,7 +116,7 @@ Proof.
   - now rewrite term_lc3.
 Qed.
 
-Theorem weakening : forall Γ1 Γ2 Γ' (t : term leaf) (A : typ),
+Theorem weakening : forall Γ1 Γ2 Γ' (t : term LN) (A : typ),
     uniq Γ' ->
     disjoint Γ' (Γ1 ++ Γ2) ->
     (Γ1 ++ Γ2 ⊢ t : A) ->
@@ -147,7 +136,7 @@ Proof.
   - eauto using j_app.
 Qed.
 
-Corollary weakening_r : forall Γ1 (t : term leaf) (A : typ),
+Corollary weakening_r : forall Γ1 (t : term LN) (A : typ),
     (Γ1 ⊢ t : A) ->
     forall Γ2, uniq Γ2 -> disjoint Γ1 Γ2 -> Γ1 ++ Γ2 ⊢ t : A.
 Proof.
@@ -159,7 +148,7 @@ Proof.
   eauto with tea_alist.
 Qed.
 
-Theorem substitution : forall Γ1 Γ2 (x : atom) (t u : term leaf) (A B : typ),
+Theorem substitution : forall Γ1 Γ2 (x : atom) (t u : term LN) (A B : typ),
     (Γ1 ++ x ~ A ++ Γ2 ⊢ t : B) ->
     (Γ1 ⊢ u : A) ->
     (Γ1 ++ Γ2 ⊢ t '{x ~> u} : B).
@@ -179,7 +168,7 @@ Proof.
     + constructor; eauto using uniq_remove_mid, binds_remove_mid.
   - cbn. apply j_abs with (L := L ∪ domset Γ ∪ {{x}}).
     intros_cof H1.
-    unfold prepromote. reassociate ->. rewrite (extract_incr).
+    unfold preincr. reassociate ->. rewrite (extract_incr).
     change (binddt term (fun A0 : Type => A0) (subst_loc x u ∘ extract (prod nat)) t)
       with (t '{x ~> u}).
     change (@tvar) with (@ret term _).
@@ -192,7 +181,7 @@ Proof.
   - cbn. eauto using j_app.
 Qed.
 
-Corollary substitution_r : forall Γ (x : atom) (t u : term leaf) (A B : typ),
+Corollary substitution_r : forall Γ (x : atom) (t u : term LN) (A B : typ),
     (Γ ++ x ~ A ⊢ t : B) ->
     (Γ ⊢ u : A) ->
     (Γ ⊢ t '{x ~> u} : B).
@@ -203,20 +192,20 @@ Proof.
   eapply substitution; eauto.
 Qed.
 
-Inductive value : term leaf -> Prop :=
+Inductive value : term LN -> Prop :=
   | value_abs : forall X t, value (λ X t).
 
-Inductive beta_step : term leaf -> term leaf -> Prop :=
-| beta_app_l : forall (t1 t2 t1' : term leaf),
+Inductive beta_step : term LN -> term LN -> Prop :=
+| beta_app_l : forall (t1 t2 t1' : term LN),
     beta_step t1 t1' ->
     beta_step ([t1]@[t2]) ([t1']@[t2])
-| beta_app_r : forall (t1 t2 t2' : term leaf),
+| beta_app_r : forall (t1 t2 t2' : term LN),
     beta_step t2 t2' ->
     beta_step ([t1]@[t2]) ([t1]@[t2'])
-| beta_beta : forall (X : typ) (t u : term leaf),
+| beta_beta : forall (X : typ) (t u : term LN),
     beta_step ([λ X t]@[u]) (t '(u)).
 
-Theorem subject_reduction_step : forall (t t' : term leaf) Γ A,
+Theorem subject_reduction_step : forall (t t' : term LN) Γ A,
     Γ ⊢ t : A -> beta_step t t' -> Γ ⊢ t' : A.
 Proof.
   intros t t' Γ A J step.
@@ -238,7 +227,7 @@ Proof.
       exact hyp2. assumption.
 Qed.
 
-Theorem progress : forall (t : term leaf) A,
+Theorem progress : forall (t : term LN) A,
     nil ⊢ t : A -> value t \/ (exists t', beta_step t t').
 Proof.
   intros. remember [] as ctx.

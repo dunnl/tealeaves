@@ -1,25 +1,18 @@
-From Tealeaves Require Import
-     Functors.List
-     LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Multisorted.Operations
-     Classes.Kleisli.Decorated.Monad. (* prepromote *)
+From Tealeaves Require Export
+  Functors.List
+  Categories.TypeFamilies
+  Classes.Kleisli.Decorated.Monad (* preincr *)
+  Multisorted.Classes.DTM.
 
-From Tealeaves.Multisorted Require Import
-     Classes.DTM
-     Theory.DTMContainer
-     Theory.DTMSchedule.
+From Tealeaves.Backends.LN Require Import
+  Atom AtomSet AssocList Multisorted.LN.
 
 Import AtomSet.Notations.
 Import Tealeaves.Classes.Monoid.Notations.
 Import Tealeaves.Data.Product.Notations.
-Import Tealeaves.Classes.Algebraic.Applicative.Notations.
+Import Tealeaves.Classes.Applicative.Notations.
 Import Multisorted.Classes.DTM.Notations.
 Import List.ListNotations.
-
-Open Scope set_scope.
-Open Scope list_scope.
-Open Scope tealeaves_scope.
-Open Scope tealeaves_multi_scope.
 
 #[local] Generalizable Variables F G A B C ϕ.
 
@@ -87,21 +80,22 @@ Module Notations.
   Notation "t1 @@ t2" := (tm_tap t1 t2) (at level 40) : SystemF_scope.
 
   (** *** Coercions from variables to leaves *)
-  Coercion Fr : atom >-> leaf.
-  Coercion Bd : nat >-> leaf.
+  Coercion Fr : atom >-> LN.
+  Coercion Bd : nat >-> LN.
 
   (** *** Coercions from leaves to term expressions *)
-  Definition tm_var_ : leaf -> term leaf := @tm_var leaf.
-  Coercion tm_var_ : leaf >-> term.
+  Definition tm_var_ : LN -> term LN := @tm_var LN.
+  Coercion tm_var_ : LN >-> term.
 
   (** *** Coercions from leaves to type expressions *)
-  Definition c_base_type: base_typ -> typ leaf := @ty_c leaf.
-  Definition c_leaf_type : leaf -> typ leaf := @ty_v leaf.
+  Definition c_base_type: base_typ -> typ LN := @ty_c LN.
+  Definition c_LN_type : LN -> typ LN := @ty_v LN.
   Coercion c_base_type : base_typ >-> typ.
-  Coercion c_leaf_type : leaf >-> typ.
+  Coercion c_LN_type : LN >-> typ.
 
 End Notations.
 
+Open Scope SystemF_scope.
 Import Notations.
 
 (** ** Example expressions *)
@@ -117,43 +111,43 @@ Module examples.
   (******************************************************************************)
 
   (** *** Constants and variables *)
-  Example typ_1 : typ leaf := ty_v (Fr x).
-  Example typ_2 : typ leaf := ty_v (Fr y).
-  Example typ_3 : typ leaf := ty_v (Fr z).
-  Example typ_4 : typ leaf := ty_v (Bd 0).
-  Example typ_5 : typ leaf := ty_v (Bd 1).
-  Example typ_6 : typ leaf := ty_v (Bd 2).
-  Example typ_7 : typ leaf := ty_c c1.
-  Example typ_8 : typ leaf := ty_c c2.
+  Example typ_1 : typ LN := ty_v (Fr x).
+  Example typ_2 : typ LN := ty_v (Fr y).
+  Example typ_3 : typ LN := ty_v (Fr z).
+  Example typ_4 : typ LN := ty_v (Bd 0).
+  Example typ_5 : typ LN := ty_v (Bd 1).
+  Example typ_6 : typ LN := ty_v (Bd 2).
+  Example typ_7 : typ LN := ty_c c1.
+  Example typ_8 : typ LN := ty_c c2.
 
   (** *** Simple types *)
-  Example typ_9  : typ leaf := ty_ar (ty_v (Fr x))
+  Example typ_9  : typ LN := ty_ar (ty_v (Fr x))
                                      (ty_v (Fr x)).
-  Example typ_10 : typ leaf := ty_ar (ty_v (Fr x))
+  Example typ_10 : typ LN := ty_ar (ty_v (Fr x))
                                      (ty_v (Fr y)).
-  Example typ_11 : typ leaf := ty_ar (ty_v (Fr x))
+  Example typ_11 : typ LN := ty_ar (ty_v (Fr x))
                                      (ty_v (Bd 1)).
-  Example typ_12 : typ leaf := ty_ar (ty_v (Bd 1))
+  Example typ_12 : typ LN := ty_ar (ty_v (Bd 1))
                                      (ty_c c1).
-  Example typ_13 : typ leaf := ty_ar (ty_ar (ty_v (Bd 0))
+  Example typ_13 : typ LN := ty_ar (ty_ar (ty_v (Bd 0))
                                             (ty_v (Fr x)))
                                      (ty_v (Bd 1)).
-  Example typ_14 : typ leaf := ty_ar (ty_c c2)
+  Example typ_14 : typ LN := ty_ar (ty_c c2)
                                      (ty_ar (ty_v (Fr x))
                                             (ty_v (Bd 1))).
-  Example typ_15 : typ leaf := ty_ar (ty_ar (ty_v (Bd 2))
+  Example typ_15 : typ LN := ty_ar (ty_ar (ty_v (Bd 2))
                                             (ty_c c1))
                                      (ty_ar (ty_v (Fr y))
                                             (ty_v (Fr x))).
-  Example typ_16 : typ leaf := ty_ar (ty_ar (ty_v (Bd 2))
+  Example typ_16 : typ LN := ty_ar (ty_ar (ty_v (Bd 2))
                                             (ty_v (Bd 1)))
                                      (ty_ar (ty_v (Fr y))
                                             (ty_v (Fr x))).
 
   (** *** Universal types *)
-  Example typ_17 : typ leaf := ty_univ (ty_ar (ty_v (Bd 0))
+  Example typ_17 : typ LN := ty_univ (ty_ar (ty_v (Bd 0))
                                               (ty_v (Bd 0))).
-  Example typ_18 : typ leaf := ty_univ (ty_ar (ty_ar (ty_v (Bd 2))
+  Example typ_18 : typ LN := ty_univ (ty_ar (ty_ar (ty_v (Bd 2))
                                                      (ty_v (Bd 1)))
                                               (ty_ar (ty_v (Fr y))
                                                      (ty_v (Fr x)))).
@@ -164,67 +158,67 @@ Module examples.
 
     #[local] Open Scope SystemF_scope.
 
-    Compute (0 : typ leaf).
-    Compute (x : typ leaf).
-    Compute (c1 : typ leaf).
+    Compute (0 : typ LN).
+    Compute (x : typ LN).
+    Compute (c1 : typ LN).
 
     (** Constants and variables *)
-    Example typ_1 : typ leaf := x.
-    Example typ_2 : typ leaf := y.
-    Example typ_3 : typ leaf := Fr z.
-    Example typ_4 : typ leaf := 0.
-    Example typ_5 : typ leaf := Bd 1.
-    Example typ_6 : typ leaf := 2.
-    Example typ_7 : typ leaf := c1.
-    Example typ_8 : typ leaf := c2.
+    Example typ_1 : typ LN := x.
+    Example typ_2 : typ LN := y.
+    Example typ_3 : typ LN := Fr z.
+    Example typ_4 : typ LN := 0.
+    Example typ_5 : typ LN := Bd 1.
+    Example typ_6 : typ LN := 2.
+    Example typ_7 : typ LN := c1.
+    Example typ_8 : typ LN := c2.
 
     (** Simple types *)
-    Example typ_9  : typ leaf := x ⟹ x.
-    Example typ_10 : typ leaf := x ⟹ y.
+    Example typ_9  : typ LN := x ⟹ x.
+    Example typ_10 : typ LN := x ⟹ y.
 
-    Goal ((x ⟹ x : typ leaf) = Fr x ⟹ Fr x). reflexivity. Qed.
-    Goal ((x ⟹ 1 : typ leaf) = Fr x ⟹ Bd 1). reflexivity. Qed.
+    Goal ((x ⟹ x : typ LN) = Fr x ⟹ Fr x). reflexivity. Qed.
+    Goal ((x ⟹ 1 : typ LN) = Fr x ⟹ Bd 1). reflexivity. Qed.
 
-    Example typ_11 : typ leaf := x ⟹ 1.
-    Example typ_12 : typ leaf := x ⟹ c1.
-    Example typ_13 : typ leaf := (x ⟹ 0) ⟹ 1.
-    Example typ_14 : typ leaf := c2 ⟹ (x ⟹ 1).
+    Example typ_11 : typ LN := x ⟹ 1.
+    Example typ_12 : typ LN := x ⟹ c1.
+    Example typ_13 : typ LN := (x ⟹ 0) ⟹ 1.
+    Example typ_14 : typ LN := c2 ⟹ (x ⟹ 1).
 
     Goal c2 ⟹ x ⟹ 1 = c2 ⟹ (x ⟹ 1). reflexivity. Qed.
 
-    Example typ_15 : typ leaf := (2 ⟹ c1) ⟹ (y ⟹ x).
-    Example typ_16 : typ leaf := (2 ⟹ 1) ⟹ (y ⟹ x).
+    Example typ_15 : typ LN := (2 ⟹ c1) ⟹ (y ⟹ x).
+    Example typ_16 : typ LN := (2 ⟹ 1) ⟹ (y ⟹ x).
 
     (** Universal types *)
-    Example typ_17 : typ leaf := ∀ (0 ⟹ 0).
+    Example typ_17 : typ LN := ∀ (0 ⟹ 0).
     Goal ∀ (0 ⟹ 0) = ∀ 0 ⟹ 0. reflexivity. Qed.
 
-    Example typ_18 : typ leaf := ∀ (2 ⟹ 1) ⟹ (y ⟹ x).
+    Example typ_18 : typ LN := ∀ (2 ⟹ 1) ⟹ (y ⟹ x).
     Goal ∀ (2 ⟹ 1) ⟹ (y ⟹ x) = ∀ ((2 ⟹ 1) ⟹ (y ⟹ x)). reflexivity. Qed.
 
-    Example typ_19 : typ leaf := (∀ 2 ⟹ 1) ⟹ (y ⟹ x).
-    Example typ_20 : typ leaf := (2 ⟹ 1) ⟹ ∀ y ⟹ x.
+    Example typ_19 : typ LN := (∀ 2 ⟹ 1) ⟹ (y ⟹ x).
+    Example typ_20 : typ LN := (2 ⟹ 1) ⟹ ∀ y ⟹ x.
 
   End pretty.
 
-  Example term_1 : term leaf := tm_var (Fr x).
-  Example term_2 : term leaf := tm_var (Bd 0).
-  Example term_3 : term leaf := tm_app term_1 term_2.
-  Example term_4 : term leaf := tm_app term_3 term_3.
+  Example term_1 : term LN := tm_var (Fr x).
+  Example term_2 : term LN := tm_var (Bd 0).
+  Example term_3 : term LN := tm_app term_1 term_2.
+  Example term_4 : term LN := tm_app term_3 term_3.
 
   (** Identity function on type [c1]. *)
-  Example term_5 : term leaf := tm_abs (ty_c c1) (tm_var (Bd 0)).
-  Example term_6 : term leaf := tm_app term_5 term_3.
+  Example term_5 : term LN := tm_abs (ty_c c1) (tm_var (Bd 0)).
+  Example term_6 : term LN := tm_app term_5 term_3.
 
   (** Polymorphic identity function. *)
-  Example term_7 : term leaf := tm_tab (tm_abs (ty_v (Bd 0))(tm_var (Bd 0))).
+  Example term_7 : term LN := tm_tab (tm_abs (ty_v (Bd 0))(tm_var (Bd 0))).
 
   (** Instantiate identity at <<c1>> *)
-  Example term_8 : term leaf := tm_tap term_7 c1.
+  Example term_8 : term LN := tm_tap term_7 c1.
 
   #[local] Open Scope SystemF_scope.
 
-  Example term_9 : term leaf := (Λ λ 0 ⋅ 0).
+  Example term_9 : term LN := (Λ λ 0 ⋅ 0).
 
 End examples.
 
@@ -246,7 +240,7 @@ Section operations.
     | ty_ar t1 t2 =>
       pure F (ty_ar) <⋆> (bind_type f t1) <⋆> (bind_type f t2)
     | ty_univ body =>
-      pure F (ty_univ) <⋆> (bind_type (fun k => prepromote [KType] (f k)) body)
+      pure F (ty_univ) <⋆> (bind_type (fun k => preincr [KType] (f k)) body)
     end.
 
   Fixpoint bind_term (f : forall (k : K), list K2 * A -> F (SystemF k B)) (t : term A) : F (term B) :=
@@ -380,7 +374,7 @@ Proof.
     + apply IHt1.
     + apply IHt2.
   - cbn. fequal.
-    unfold prepromote.
+    unfold preincr.
     rewrite <- mbinddt_inst_law1_case12.
     apply IHt.
 Qed.
@@ -661,7 +655,7 @@ Qed.
 (******************************************************************************)
 Reserved Notation "Δ ; Γ ⊢ t : τ" (at level 90, t at level 99).
 
-Import Tealeaves.Classes.Algebraic.Setlike.Functor.Notations.
+Import Tealeaves.Classes.Setlike.Functor.Notations.
 Export LN.AtomSet.Notations.
 Export LN.AssocList.Notations.
 
@@ -672,7 +666,7 @@ Export LN.AssocList.Notations.
 Definition kind_ctx := alist unit.
 
 (** *** Context of term variables *)
-Definition type_ctx := alist (typ leaf).
+Definition type_ctx := alist (typ LN).
 
 (** *** Well-formedness for kinding contexts *)
 (** A kinding context is well-formed when its keys, i.e. type
@@ -682,7 +676,7 @@ Definition ok_kind_ctx : kind_ctx -> Prop := uniq.
 (** *** Well-formedness of type expressions in a kinding context *)
 (** A type is well-formed in a kinding context <<Δ>> when all of its
     type variables appear in Δ and the type is locally closed. *)
-Definition ok_type : kind_ctx -> typ leaf -> Prop :=
+Definition ok_type : kind_ctx -> typ LN -> Prop :=
   fun Δ τ => scoped typ KType τ (domset Δ) /\ locally_closed typ KType τ.
 
 (** *** Well-formedness for typing contexts *)
@@ -697,7 +691,7 @@ Definition ok_type_ctx : kind_ctx -> type_ctx -> Prop :=
     type variables are declared in <<Δ>>, its term variables are
     declared in <<Γ>>, and it is locally closed with respect to both
     kinds of variables. *)
-Definition ok_term : kind_ctx -> type_ctx -> term leaf -> Prop :=
+Definition ok_term : kind_ctx -> type_ctx -> term LN -> Prop :=
   fun Δ Γ t => scoped term KType t (domset Δ) /\
             scoped term KTerm t (domset Γ) /\
             locally_closed term KTerm t /\
@@ -705,14 +699,14 @@ Definition ok_term : kind_ctx -> type_ctx -> term leaf -> Prop :=
 
 (** ** Typing judgments *)
 (******************************************************************************)
-Implicit Types (Δ : kind_ctx) (Γ : type_ctx) (τ : typ leaf).
+Implicit Types (Δ : kind_ctx) (Γ : type_ctx) (τ : typ LN).
 
-Inductive Judgment : kind_ctx -> type_ctx -> term leaf -> typ leaf -> Prop :=
+Inductive Judgment : kind_ctx -> type_ctx -> term LN -> typ LN -> Prop :=
 | j_var :
     forall Δ Γ x τ,
       ok_kind_ctx Δ ->
       ok_type_ctx Δ Γ ->
-      (x, τ) ∈ Γ ->
+      (x, τ) ∈ (Γ : list (atom * typ LN)) ->
       (Δ ; Γ ⊢ tm_var (Fr x) : τ)
 | j_abs :
     forall Δ Γ L t τ1 τ2,
@@ -739,11 +733,11 @@ where "Δ ; Γ ⊢ t : τ" := (Judgment Δ Γ t τ).
 
 (** ** Values and reduction rules *)
 (******************************************************************************)
-Inductive value : term leaf -> Prop :=
+Inductive value : term LN -> Prop :=
 | val_abs : forall T t, value (tm_abs T t)
 | val_tab : forall t, value (tm_tab t).
 
-Inductive red : term leaf -> term leaf -> Prop :=
+Inductive red : term LN -> term LN -> Prop :=
 | red_app_l : forall t1 t1' t2,
     red t1 t1' ->
     red (tm_app t1 t2) (tm_app t1' t2)
@@ -759,9 +753,6 @@ Inductive red : term leaf -> term leaf -> Prop :=
     red (tm_tap t T) (tm_tap t' T)
 | red_tab : forall T t,
     red (tm_tap (tm_tab t) T) (open term KType T t).
-
-From Tealeaves Require Import
-     LN.Multisorted.Theory.
 
 Definition preservation := forall t t' τ,
     (nil ; nil ⊢ t : τ) ->

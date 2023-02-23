@@ -1,12 +1,10 @@
 From Tealeaves Require Export
-  Classes.Algebraic.Listable.Functor
-  Theory.Algebraic.Traversable.Functor.ToKleisli.
-From Tealeaves Require Import
-  Theory.Algebraic.Traversable.Functor.Const
-  Theory.Algebraic.Listable.Functor.Properties
+  Classes.Listable.Functor
+  Classes.Kleisli.Traversable.Functor
+  Classes.Traversable.Functor
   Functors.Batch.
 
-#[local] Generalizable Variables T G A.
+#[local] Generalizable Variables T G A M.
 
 (** ** The [tolist] operation *)
 (** We only define this operation and prove it forms a natural
@@ -15,15 +13,16 @@ instance until we prove the shapeliness property in another section
 below. *)
 (******************************************************************************)
 (* set <<tag := False>> to emphasize this type is arbitrary *)
-#[global] Instance Tolist_Traversable `{Fmap T} `{Dist T} : Tolist T :=
+#[global] Instance Tolist_dist `{Fmap T} `{Dist T} : Tolist T :=
   fun A => unconst ∘ dist T (Const (list A)) ∘
                 fmap T (mkConst (tag := False) ∘ ret list (A := A)).
 
-#[global] Instance Natural_tolist_Traversable
-         `{TraversableFunctor T} : Natural (@tolist T Tolist_Traversable).
+
+#[global] Instance Natural_tolist_dist
+  `{TraversableFunctor T} : Natural (@tolist T (Tolist_dist)).
 Proof.
   constructor; try typeclasses eauto.
-  intros. unfold_ops @Tolist_Traversable.
+  intros. unfold_ops @Tolist_dist.
   repeat reassociate <-.
   rewrite (mapConst_2 (fmap list f)).
   repeat reassociate -> on left;
@@ -40,53 +39,51 @@ Section TraversableFunctor_fold_spec.
 
   Context
     (T : Type -> Type)
-      `{TraversableFunctor T}.
-
-  Import ToKleisli.Operation.
-  Import ToKleisli.Instance.
+    `{TraversableFunctor T}.
+  
+  Import Classes.Kleisli.Traversable.Functor.
+  Import Traversable.Functor.ToKleisli.
 
   (** *** Specification for <<Tolist_Traversable>> *)
   (******************************************************************************)
   Theorem traversable_tolist_spec {A : Type} (tag : Type) :
-    @tolist T Tolist_Traversable A
+    @tolist T Tolist_dist A
     = @traverse T _ (const (list A))
         (Fmap_const)
         (Pure_const)
         (Mult_const) A tag (ret list).
   Proof.
-    intros. unfold tolist, Tolist_Traversable;
-      unfold traverse, Traverse_alg.
+    intros. unfold tolist, Tolist_dist;
+      unfold traverse, Traverse_dist.
     rewrite <- (fun_fmap_fmap T). reassociate <- on left.
     rewrite (traversable_const_spec T (M := list A) False).
     now rewrite (dist_const1 T tag).
   Qed.
 
   Theorem traversable_tolist_spec2 {A : Type} :
-    @tolist T Tolist_Traversable A
-    = foldMap (ret list).
+    @tolist T Tolist_dist A
+    = foldMap T (ret list).
   Proof.
-    intros. unfold foldMap. unfold fold.
-    reassociate -> on right. rewrite <- (natural (ϕ := @tolist T _)).
-    reassociate <- on right.
-    ext t. unfold compose.
-    induction (tolist T t).
-    - easy.
-    - cbn. now rewrite <- IHl.
+    intros. unfold foldMap. rewrite (traversable_tolist_spec False).
+    reflexivity.
   Qed.
 
+  (*
   Lemma tolist_to_runBatch `{Applicative G} `(t : T A) :
-    tolist T t = runBatch (ret list : A -> const (list A) A) (iterate A t).
+    tolist T t = runBatch (ret list : A -> const (list A) A) (toBatch T A t).
   Proof.
-    unfold iterate. compose near t on right.
+    unfold toBatch. compose near t on right.
     rewrite (traverse_morphism T (ϕ := @runBatch A (const (list A)) _ (ret list) _ _ _)).
+    Set Printing All.
     rewrite (traversable_tolist_spec A).
     reflexivity.
   Qed.
+   *)
 
   (** *** Specification for folding over traversables *)
   (******************************************************************************)
   Theorem traversable_fold_spec (tag : Type) `{Monoid M} :
-    @fold T Tolist_Traversable M _ _
+    @fold T Tolist_dist M _ _
     = @dist T _ (const M)
             (Fmap_const)
             (Pure_const)
@@ -104,7 +101,7 @@ Section TraversableFunctor_fold_spec.
   Qed.
 
   Theorem traversable_foldMap_spec (tag : Type) `{Monoid M} `{f : A -> M} :
-    @foldMap T _ Tolist_Traversable A M _ _  f =
+    @foldMap T _ Tolist_dist A M _ _  f =
     @traverse T (const M) _ _ (Fmap_const) (Pure_const) (Mult_const) A tag f.
   Proof.
     unfold foldMap. now rewrite (traversable_fold_spec tag).
@@ -177,7 +174,7 @@ Section traversal_shapeliness.
 
 End traversal_shapeliness.
 
-#[global] Instance ListableFunctor_Traversable `{TraversableFunctor T} : ListableFunctor T :=
+#[global] Instance ListableFunctor_dist `{TraversableFunctor T} : ListableFunctor T :=
   {| lfun_shapeliness := shapeliness (T := T) |}.
 
 (** * Respectfulness properties *)

@@ -1,14 +1,10 @@
 From Tealeaves.Classes Require Export
-  Algebraic.Traversable.Functor
+  Traversable.Functor
   Kleisli.Traversable.Functor.
-
-From Tealeaves.Theory Require Import
-  Kleisli.Traversable.Functor.ToFunctor.
 
 #[local] Generalizable Variables A B C.
 
-Export Kleisli.Traversable.Functor.ToFunctor.Operation.
-Export Kleisli.Traversable.Functor.ToFunctor.Instances.
+Export Kleisli.Traversable.Functor.ToFunctor.
 
 (** * Traversable Functors: Kleisli to Algebraic *)
 (******************************************************************************)
@@ -86,7 +82,7 @@ Module Instances.
     reflexivity.
   Qed.
 
-  #[export] Instance: Algebraic.Traversable.Functor.TraversableFunctor T :=
+  #[export] Instance: Traversable.Functor.TraversableFunctor T :=
     {| dist_natural := dist_natural_T;
        dist_morph := dist_morph_T;
        dist_unit := dist_unit_T;
@@ -94,3 +90,70 @@ Module Instances.
     |}.
 
 End Instances.
+
+#[local] Generalizable Variables T.
+
+Module AlgebraicToKleisli.
+
+  Context
+    `{fmapT : Fmap T}
+    `{distT : Dist T}
+    `{! Traversable.Functor.TraversableFunctor T}.
+
+  #[local] Instance traverse' : Traverse T := ToKleisli.Traverse_dist T.
+  
+  Definition fmap' : Fmap T := ToFunctor.Fmap_Traverse T.
+  Definition dist' : Dist T := Dist_Traverse T.
+
+  Goal fmapT = fmap'.
+  Proof.
+    unfold fmap'. unfold_ops @Fmap_Traverse.
+    unfold traverse, traverse'.
+    unfold_ops @ToKleisli.Traverse_dist.
+    ext A B f.
+    rewrite (dist_unit T).
+    reflexivity.
+  Qed.
+
+  Goal distT = dist'.
+  Proof.
+    unfold dist'. unfold_ops @Dist_Traverse.
+    unfold traverse, traverse'.
+    unfold_ops @ToKleisli.Traverse_dist.
+    ext G Hmap Hpure Hmult. ext A.
+    rewrite (fun_fmap_id T).
+    reflexivity.
+  Qed.
+
+End AlgebraicToKleisli.
+
+Module KleisliToAlgebraic.
+
+  Context
+    `{traverseT : Traverse T}
+    `{@Classes.Kleisli.Traversable.Functor.TraversableFunctor T _}.
+
+  #[local] Instance fmap' : Fmap T := Fmap_Traverse T.
+  #[local] Instance dist' : Dist T := Dist_Traverse T.
+
+  Definition traverse' : Traverse T := ToKleisli.Traverse_dist T.
+
+  Goal forall G `{Applicative G}, @traverseT G _ _ _ = @traverse' G _ _ _.
+  Proof.
+    intros.
+    unfold traverse'. unfold_ops @ToKleisli.Traverse_dist.
+    unfold fmap, fmap', dist, dist'.
+    ext A B f.
+    unfold_ops @Dist_Traverse.
+    unfold_ops @Fmap_Traverse.
+    change (traverse T G (@id (G B))) with (fmap (fun A => A) (traverse T G (@id (G B)))).
+    rewrite (trf_traverse_traverse T (fun A => A) G);
+      try typeclasses eauto.
+    rewrite (fun_fmap_id (fun A => A)).
+    change (id ∘ f) with f.
+    change_left (traverse T G f).
+    fequal.
+    now rewrite (Mult_compose_identity2).
+  Qed.
+
+End KleisliToAlgebraic.

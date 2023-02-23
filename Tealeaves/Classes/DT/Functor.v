@@ -218,7 +218,7 @@ Module ToKleisli.
       (T : Type -> Type)
       `{Fmap T} `{Decorate E T} `{Dist T}.
 
-  #[export] Instance Fmapdt_alg : Fmapdt E T :=
+  #[export] Instance Fmapdt_distdec : Fmapdt E T :=
       fun (G : Type -> Type) `{Fmap G} `{Pure G} `{Mult G}
         `(f : E * A -> G B) => (dist T G ∘ fmap T f ∘ dec T : T A -> G (T B)).
 
@@ -232,7 +232,7 @@ Module ToKleisli.
 
     Theorem fmapdt_id : forall (A : Type), fmapdt T (fun A => A) (extract _) = @id (T A).
     Proof.
-      introv. unfold_ops @Fmapdt_alg.
+      introv. unfold_ops @Fmapdt_distdec.
       reassociate -> on left.
       rewrite (dfun_dec_extract E T). now rewrite (dist_unit T).
     Qed.

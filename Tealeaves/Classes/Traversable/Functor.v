@@ -235,7 +235,8 @@ End purity_law.
 (** * Kleisi presentation of traversable functors *)
 (******************************************************************************)
 
-From Tealeaves Require Classes.Kleisli.Traversable.Functor.
+From Tealeaves Require
+  Classes.Kleisli.Traversable.Functor.
 
 Module ToKleisli.
 
@@ -490,7 +491,7 @@ Section dist_list_properties.
 
 End dist_list_properties.
 
-#[export] Instance Traversable_list : TraversableFunctor list :=
+#[export] Instance Traversable_list : Classes.Traversable.Functor.TraversableFunctor list :=
   {| dist_natural := @dist_natural_list_;
      dist_morph := @dist_morph_list;
      dist_unit := @dist_unit_list;
@@ -550,7 +551,7 @@ Section TraversableFunctor_prod.
     compose near a on right. now rewrite (fun_fmap_fmap G1).
   Qed.
 
-  #[global] Instance Traversable_prod : TraversableFunctor (prod X) :=
+  #[global] Instance Traversable_prod : Classes.Traversable.Functor.TraversableFunctor (prod X) :=
     {| dist_natural := @dist_natural_prod_;
        dist_morph := @dist_morph_prod;
        dist_unit := @dist_unit_prod;
@@ -698,3 +699,25 @@ Module Notations.
   Notation "'δ'" := (dist) : tealeaves_scope.
   Notation "f <◻> g" := (traversal_combine f g) (at level 60) : tealeaves_scope.
 End Notations.
+
+(** * Decomposing <<dist>> in terms of <<iterate>> *)
+(******************************************************************************)
+Section traversal_iterate.
+
+  Import Classes.Kleisli.Traversable.Functor.
+
+  Context
+    `{Classes.Traversable.Functor.TraversableFunctor T}.
+
+  Import Traversable.Functor.ToKleisli.
+
+  Lemma dist_to_runBatch `{Applicative G} {A : Type} :
+    dist T G (A := A) = runBatch (@id (G A)) ∘ Functor.toBatch T A.
+  Proof.
+    ext t.
+    replace t with (fmap T id t) at 1 by (now rewrite (fun_fmap_id T)).
+    change_left (traverse T G (@id (G A)) t).
+    now rewrite (traverse_to_runBatch T).
+  Qed.
+
+End traversal_iterate.

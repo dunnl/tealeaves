@@ -20,20 +20,32 @@ Since we are using the Kleisli typeclass hierarchy, we import modules under
 the namespaces ``Classes.Kleisli`` and ``Theory.Kleisli.``
 |*)
 From Tealeaves Require Export
-  Data.Natural
+  Backends.LN
+  (* Locally nameless infrastructure *)
   Classes.Kleisli.DT.Monad
-  Theory.Kleisli.Decorated.Prepromote
-  Functors.List.
+  (* DTM definition *)
+  Data.Natural
+  (* Monoid of natural numbers *)
+  Functors.List
+  (* List functor *)
+  Classes.Kleisli.DT.Functor.
+  (* foldMapd operation *)
 
-Import Product.Notations.
-Import Applicative.Notations.
-Export List.ListNotations.
-Open Scope list_scope.
-Export DT.Monad.Notations.
-Open Scope tealeaves_scope.
+Export DT.Functor.Notations. (* ∈d *)
+Import Monoid.Notations. (* Ƶ and ● *)
+Export Classes.Kleisli.DT.Monad.Derived. (* DTM sub-instances *)
+Export Applicative.Notations. (* <⋆> *)
+Export DT.Monad.Notations. (* ⋆dtm *)
+Export List.ListNotations. (* [] :: *)
+Export LN.Notations. (* operations *)
+Export LN.AtomSet.Notations.
+Export LN.AssocList.Notations. (* one, ~ *)
+Export Product.Notations. (* × *)
+Export Setlike.Functor.Notations. (* ∈ *)
 
 #[local] Generalizable Variables G.
-Set Implicit Arguments.
+
+#[local] Set Implicit Arguments.
 
 (** * Language definition *)
 (******************************************************************************)
@@ -71,7 +83,7 @@ Fixpoint binddt_term (G : Type -> Type) `{Fmap G} `{Pure G} `{Mult G}
     {v1 v2 : Type} (f : nat * v1 -> G (term v2)) (t : term v1) : G (term v2) :=
   match t with
   | tvar v => f (0, v)
-  | lam τ e => pure G (lam τ) <⋆> (binddt_term (prepromote 1 f) e)
+  | lam τ body => pure G (lam τ) <⋆> binddt_term (preincr 1 f) body
   | app t1 t2 => pure G (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
   end.
 
@@ -81,6 +93,9 @@ Fixpoint binddt_term (G : Type -> Type) `{Fmap G} `{Pure G} `{Mult G}
 ========================================
 Some rewriting principles for binddt
 ========================================
+
+These definitional equalities help prove the composition law later.
+
 |*)
 
 Section binddt_helpers.
@@ -100,7 +115,7 @@ Section binddt_helpers.
   Lemma binddt_lam :
     forall `{Applicative G2} `(g : nat * v2 -> G2 (term v3)) (τ : typ),
       B term G2 g ∘ lam τ =
-        (precompose (B term G2 (prepromote 1 g)) ∘ ap G2 ∘
+        (precompose (B term G2 (preincr 1 g)) ∘ ap G2 ∘
            P G2) (lam τ).
   Proof.
     reflexivity.
@@ -195,7 +210,7 @@ to each of the variables in expression `t` acts as the pure effect on
     - cbn. (* var case *) (* .unfold *)
       reflexivity.
     - cbn. (* lam case *) (* .unfold *)
-      unfold prepromote.
+      unfold preincr.
       reassociate -> near (incr 1).
       rewrite extract_incr. (* .unfold *)
       rewrite IHt.
@@ -231,7 +246,7 @@ to each of the variables in expression `t` acts as the pure effect on
 
   Ltac solve_dtm2 :=
     intros; ext t; induction_on_term;
-    cbn; unfold prepromote;
+    cbn; unfold preincr;
     repeat absorb_incr;
     repeat rewrite_with_bind_hyp;
     easy.
@@ -362,9 +377,9 @@ A close comparison shows the rules differ in two respects:
       change_right ((binddt _ (G1 ∘ G2) (g ⋆dtm f) ∘ ret term) v).
       rewrite (dtm1_stlc); [| typeclasses eauto].
       unfold kcompose_dtm; cbn.
-      rewrite prepromote_zero.
+      rewrite Decorated.Monad.preincr_zero.
       reflexivity.
-    - change_left (fmap G1 (BD term G2 g) (P G1 (lam t) <⋆> BD term G1 (prepromote 1 f) t0)).
+    - change_left (fmap G1 (BD term G2 g) (P G1 (lam t) <⋆> BD term G1 (preincr 1 f) t0)).
       rewrite ap6.
       rewrite (app_pure_natural G1).
       rewrite binddt_lam.
@@ -372,8 +387,8 @@ A close comparison shows the rules differ in two respects:
       rewrite ap5_new; [|typeclasses eauto].
       compose near t0 on left.
       rewrite IHt.
-      rewrite (kcompose_dtm_prepromote _ term).
-      change_right (P (G1 ∘ G2) (lam t) <⋆> BD term (G1 ∘ G2) (prepromote 1 (g ⋆dtm f)) t0).
+      rewrite (kcompose_dtm_preincr _ term).
+      change_right (P (G1 ∘ G2) (lam t) <⋆> BD term (G1 ∘ G2) (preincr 1 (g ⋆dtm f)) t0).
       rewrite ap_compose_new.
       reflexivity.
     - change_left (F G1 (BD term G2 g) (P G1 (app (v := B)) <⋆> BD term G1 f t1 <⋆> BD term G1 f t2)).
@@ -445,7 +460,7 @@ a restriction on implementations of `binddt` (cite Gibbons).
     - reflexivity.
     - unfold compose at 1.
       change (ϕ (term B) (BD term G1 f ((lam t) t0)))
-        with (ϕ (term B) (ap G1 (P G1 (lam t)) (BD term G1 (prepromote 1 f) t0))).
+        with (ϕ (term B) (ap G1 (P G1 (lam t)) (BD term G1 (preincr 1 f) t0))).
       rewrite ap_morphism_1.
       compose near t0 on left.
       rewrite IHt.
@@ -472,14 +487,6 @@ a restriction on implementations of `binddt` (cite Gibbons).
   
 End laws.
 
-From Tealeaves Require Export
-  LN.Leaf LN.Atom LN.AtomSet LN.AssocList LN.Operations LN.Theory.
-
-Export LN.AtomSet.Notations.
-Open Scope set_scope.
-Export LN.AssocList.Notations.
-Open Scope list_scope.
-
 Section test_notations.
 
   Context
@@ -499,39 +506,34 @@ End test_notations.
 
 Definition ctx := list (atom * typ).
 
-Import Tealeaves.Classes.Algebraic.Setlike.Functor.Notations.
-
-Import LN.Operations.Notations.
-
 Reserved Notation "Γ ⊢ t : S" (at level 90, t at level 99).
 
-Inductive Judgment : ctx -> term leaf -> typ -> Prop :=
+Inductive Judgment : ctx -> term LN -> typ -> Prop :=
 | j_var :
-    forall Γ (x : atom) (A : typ),
+    forall (Γ : ctx) (x : atom) (A : typ),
       uniq Γ ->
       (x, A) ∈ Γ ->
       Γ ⊢ tvar (Fr x) : A
 | j_abs :
-    forall (L : AtomSet.t) Γ (τ1 τ2 : typ) (t : term leaf),
+    forall (L : AtomSet.t) Γ (τ1 τ2 : typ) (t : term LN),
       (forall x : atom, ~ AtomSet.In x L -> Γ ++ x ~ τ1 ⊢ t '(tvar (Fr x)) : τ2) ->
       Γ ⊢ λ τ1 t : τ1 ⟹ τ2
 | j_app :
-    forall Γ (t1 t2 : term leaf) (A B : typ),
+    forall Γ (t1 t2 : term LN) (A B : typ),
       Γ ⊢ t1 : A ⟹ B ->
       Γ ⊢ t2 : A ->
       Γ ⊢ [t1]@[t2] : B
 where "Γ ⊢ t : A" := (Judgment Γ t A).
 
-From Tealeaves Require Import
-  Classes.Algebraic.Listable.Functor
-  Theory.Kleisli.DT.Monad.DerivedInstances
-  Theory.Kleisli.Traversable.Functor.Container.
-
-Import DerivedInstances.Operations.
-
 
 (** * Rewriting lemmas for high-level operations *)
 (******************************************************************************)
+
+From Tealeaves Require Export
+  Classes.Listable.Functor
+  (* <<Tolist>> operation *)
+  Classes.Kleisli.Traversable.Functor.
+(* <<Tolist>> instance for Traversable functors *)
 
 (** ** Rewriting lemmas for <<tolist>>, <<toset>> *)
 (******************************************************************************)
@@ -550,7 +552,7 @@ Section term_list_rewrite.
     tolist term (lam X t) = tolist term t.
   Proof.
     intros. cbn.
-    unfold prepromote.
+    unfold preincr.
     reassociate -> on left.
     rewrite (extract_incr).
     reflexivity.
@@ -566,7 +568,7 @@ Section term_list_rewrite.
       x ∈ tvar y <-> x = y.
   Proof.
     intros.
-    rewrite (Container.in_iff_in_tolist term).
+    rewrite (in_iff_in_tolist term).
     rewrite tolist_term_1.
     now simpl_list.
   Qed.
@@ -575,7 +577,7 @@ Section term_list_rewrite.
     y ∈ (lam X t) <-> y ∈ t.
   Proof.
     intros.
-    do 2 rewrite (Container.in_iff_in_tolist term).
+    do 2 rewrite (in_iff_in_tolist term).
     rewrite tolist_term_2.
     reflexivity.
   Qed.
@@ -584,7 +586,7 @@ Section term_list_rewrite.
       y ∈ (app t1 t2) <-> y ∈ t1 \/ y ∈ t2.
   Proof.
     intros.
-    do 3 rewrite (Container.in_iff_in_tolist term).
+    do 3 rewrite (in_iff_in_tolist term).
     rewrite tolist_term_3.
     now simpl_list.
   Qed.
@@ -609,14 +611,14 @@ Section term_free_rewrite.
     intros. cbn. intuition.
   Qed.
 
-  Lemma term_free2 : forall (x : atom) (t : term leaf) (X : typ),
+  Lemma term_free2 : forall (x : atom) (t : term LN) (X : typ),
       x ∈ free term (lam X t) <-> x ∈ free term t.
   Proof.
     intros. rewrite in_free_iff. rewrite in_term_2.
     now rewrite <- in_free_iff.
   Qed.
 
-  Lemma term_free3 : forall (x : atom) (t1 t2 : term leaf),
+  Lemma term_free3 : forall (x : atom) (t1 t2 : term LN),
       x ∈ free term (app t1 t2) <-> x ∈ free term t1 \/ x ∈ free term t2.
   Proof.
     intros. rewrite in_free_iff. rewrite in_term_3.
@@ -637,13 +639,13 @@ Section term_free_rewrite.
     now rewrite term_free12.
   Qed.
 
-  Lemma term_in_freeset2 : forall (x : atom) (t : term leaf) (X : typ),
+  Lemma term_in_freeset2 : forall (x : atom) (t : term LN) (X : typ),
       AtomSet.In x (freeset term (lam X t)) <-> AtomSet.In x (freeset term t).
   Proof.
     intros. rewrite <- 2(free_iff_freeset). now rewrite term_free2.
   Qed.
 
-  Lemma term_in_freeset3 : forall (x : atom) (t1 t2 : term leaf),
+  Lemma term_in_freeset3 : forall (x : atom) (t1 t2 : term LN),
       AtomSet.In x (freeset term (app t1 t2)) <-> AtomSet.In x (freeset term t1) \/ AtomSet.In x (freeset term t2).
   Proof.
     intros. rewrite <- 3(free_iff_freeset). now rewrite term_free3.
@@ -661,14 +663,14 @@ Section term_free_rewrite.
     intros. cbn. fsetdec.
   Qed.
 
-  Lemma term_freeset2 : forall (t : term leaf) (X : typ),
+  Lemma term_freeset2 : forall (t : term LN) (X : typ),
       freeset term (lam X t) [=] freeset term t.
   Proof.
     intros. unfold AtomSet.Equal; intro x.
     rewrite term_in_freeset2. reflexivity.
   Qed.
 
-  Lemma term_freeset3 : forall (t1 t2 : term leaf),
+  Lemma term_freeset3 : forall (t1 t2 : term LN),
       freeset term (app t1 t2) [=] freeset term t1 ∪ freeset term t2.
   Proof.
     intros. unfold AtomSet.Equal; intro x.
@@ -677,10 +679,6 @@ Section term_free_rewrite.
 
 End term_free_rewrite.
 
-From Tealeaves Require Import Theory.Kleisli.DT.Functor.Container.
-Import DT.Functor.Container.Notations.
-Import Monoid.Notations.
-         
 (** ** Rewriting lemmas for <<foldMapd> *)
 (******************************************************************************)
 Section term_foldMapd_rewrite.
@@ -694,17 +692,17 @@ Section term_foldMapd_rewrite.
   Qed.
 
   Lemma term_foldMapd2 : forall X (t : term A),
-      foldMapd term f (λ X t) = foldMapd term (prepromote 1 f) t.
+      foldMapd term f (λ X t) = foldMapd term (preincr 1 f) t.
   Proof.
-    intros. cbn.  simpl_monoid.
-    reflexivity.
+    intros. cbv. change (op unit0 ?f) with (Ƶ ● f).
+    now simpl_monoid.
   Qed.
 
   Lemma term_foldMapd3 : forall (t1 t2 : term A),
       foldMapd term f ([t1]@[t2]) = foldMapd term f t1 ● foldMapd term f t2.
   Proof.
-    intros. cbn. simpl_monoid.
-    reflexivity.
+    intros. cbv. change (op unit0 ?f) with (Ƶ ● f).
+    now simpl_monoid.
   Qed.
 
 End term_foldMapd_rewrite.
@@ -712,10 +710,8 @@ End term_foldMapd_rewrite.
 (** ** Rewriting lemmas for <<∈d>> *)
 (******************************************************************************)
 Section term_ind_rewrite.
-
-  Import Theory.Kleisli.DT.Monad.DerivedInstances.Instances.
   
-  Lemma term_ind1 : forall (l1 l2 : leaf) (n : nat),
+  Lemma term_ind1 : forall (l1 l2 : LN) (n : nat),
       (n, l1) ∈d (tvar l2) <-> n = Ƶ /\ l1 = l2.
   Proof.
     introv. unfold tosetd, compose.
@@ -725,7 +721,7 @@ Section term_ind_rewrite.
     - inversion 1. now subst.
   Qed.
 
-  Lemma term_ind2 : forall (t : term leaf) (l : leaf) (n : nat) (X : typ),
+  Lemma term_ind2 : forall (t : term LN) (l : LN) (n : nat) (X : typ),
       (n, l) ∈d (λ X t) <-> (n - 1, l) ∈d t /\ n <> 0.
   Proof.
     introv. unfold tosetd, compose.
@@ -733,14 +729,14 @@ Section term_ind_rewrite.
     rewrite foldMapd_to_runBatch; try typeclasses eauto.
     rewrite foldMapd_to_runBatch; try typeclasses eauto.
     generalize dependent n.
-    induction (iterate_d term False t); intro n.
+    induction (toBatchd term False t); intro n.
     - cbn. unfold_ops @Pure_const. split.
       inversion 1. intros [H _]. inversion H.
     - cbn. unfold_ops @Monoid_op_set. unfold set_add.
       split.
       + intros [hyp|hyp].
         { rewrite IHb in hyp. split; intuition. }
-        { clear IHb. unfold prepromote, compose in hyp.
+        { clear IHb. unfold preincr, compose in hyp.
           destruct x. cbn in hyp. inverts hyp. split.
           - right. cbn. replace (n0 - 0) with n0 by lia.
             easy.
@@ -748,13 +744,13 @@ Section term_ind_rewrite.
       + intros [[hyp1|hyp1] hyp2].
         { rewrite IHb. now left. }
         { destruct x as [xn xl]. right.
-          unfold prepromote, compose, incr.
+          unfold preincr, compose, incr.
           inverts hyp1. unfold_ops @Monoid_op_plus.
           replace (1 + (n - 1))%nat with n by lia.
           easy. }
   Qed.
 
-  Lemma term_ind3 : forall (t1 t2 : term leaf) (n : nat) (l : leaf),
+  Lemma term_ind3 : forall (t1 t2 : term LN) (n : nat) (l : LN),
       (n, l) ∈d ([t1]@[t2]) <-> (n, l) ∈d t1 \/ (n, l) ∈d t2.
   Proof.
     introv. unfold tosetd, compose.
@@ -788,7 +784,7 @@ Proof.
   now subst.
 Qed.
 
-Theorem term_lc_gap2 : forall (X : typ) (t : term leaf) (m : nat),
+Theorem term_lc_gap2 : forall (X : typ) (t : term LN) (m : nat),
     locally_closed_gap term m (lam X t) <-> locally_closed_gap term (S m) t.
 Proof.
   intros. unfold locally_closed, locally_closed_gap.
@@ -806,7 +802,7 @@ Proof.
     cbn in *. unfold_lia.
 Qed.
 
-Theorem term_lc_gap3 : forall (t1 t2 : term leaf) (m : nat),
+Theorem term_lc_gap3 : forall (t1 t2 : term LN) (m : nat),
     locally_closed_gap term m ([t1]@[t2]) <-> locally_closed_gap term m t1 /\ locally_closed_gap term m t2.
 Proof.
   intros. unfold locally_closed, locally_closed_gap.
@@ -825,13 +821,13 @@ Proof.
   intros. unfold locally_closed. now (rewrite term_lc_gap12).
 Qed.
 
-Theorem term_lc2 : forall (X : typ) (t : term leaf),
+Theorem term_lc2 : forall (X : typ) (t : term LN),
     locally_closed term (lam X t) <-> locally_closed_gap term 1 t.
 Proof.
   intros. unfold locally_closed. now (rewrite term_lc_gap2).
 Qed.
 
-Theorem term_lc3 : forall (t1 t2 : term leaf),
+Theorem term_lc3 : forall (t1 t2 : term LN),
     locally_closed term ([t1]@[t2]) <-> locally_closed term t1 /\ locally_closed term t2.
 Proof.
   intros. unfold locally_closed.

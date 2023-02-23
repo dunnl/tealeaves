@@ -21,19 +21,15 @@ the namespaces ``Classes.Algebraic`` and ``Theory.Algebraic.``
 |*)
 
 From Tealeaves Require Export
-  Classes.Algebraic.DT.Monad
+  Classes.DT.Monad
   Classes.Monoid
-  Data.Natural
-  Theory.Algebraic.Decorated.Functor.Helpers
-  Theory.Algebraic.Decorated.Monad.Helpers
-  Classes.Algebraic.Listable.Functor.
+  Classes.Listable.Functor
+  Data.Natural.
 
 Import Traversable.Functor.Notations.
 Import List.ListNotations.
 Import Strength.Notations.
 Import Monoid.Notations.
-Open Scope tealeaves_scope.
-Open Scope list_scope.
 
 #[local] Generalizable All Variables.
 #[local] Set Implicit Arguments.
