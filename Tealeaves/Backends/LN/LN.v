@@ -1,23 +1,198 @@
 (** This files contains metatheorems for the locally nameless variables
  that closely parallel those of LNgen. *)
 From Tealeaves Require Import
-  LN.Leaf LN.Atom LN.AtomSet LN.Operations
   Data.Natural
-  Theory.List.Kleisli
-  Theory.Kleisli.DT.Monad.
+  Classes.Kleisli.DT.Monad.
+From Tealeaves.Backends.LN Require Import
+  Atom AtomSet.
 
-Import DT.Monad.DerivedInstances.Operations.
-Import DT.Monad.DerivedInstances.Instances.
+Import DT.Monad.Derived.
+From Tealeaves Require Import Classes.Kleisli.Monad.
+From Tealeaves Require Import Classes.Kleisli.Traversable.Functor.
+From Tealeaves Require Import Classes.Kleisli.Traversable.Monad.
+From Tealeaves Require Import Classes.Kleisli.Decorated.Functor.
+From Tealeaves Require Import Classes.Kleisli.Decorated.Monad.
+From Tealeaves Require Import Classes.Kleisli.DT.Functor.
+From Tealeaves Require Import Classes.Kleisli.DT.Monad.
+From Tealeaves Require Import Classes.Traversable.Monad. (* bind for lists *)
+From Tealeaves Require Import Kleisli.Monad.
 
 Import Comonad.Notations.
 Import LN.AtomSet.Notations.
-Import Operations.Notations.
 Import Setlike.Functor.Notations.
+Import DT.Functor.Notations.
 Import DT.Monad.Notations.
 Import Monoid.Notations.
-#[local] Open Scope set_scope.
 
 #[local] Generalizable Variable T.
+
+(** * Locally nameless variables *)
+(******************************************************************************)
+Inductive LN :=
+| Fr : atom -> LN
+| Bd : nat -> LN.
+
+Theorem eq_dec_LN : forall l1 l2 : LN, {l1 = l2} + {l1 <> l2}.
+Proof.
+  decide equality.
+  - compare values a and a0; auto.
+  - compare values n and n0; auto.
+Qed.
+
+#[export] Instance EqDec_LN : EquivDec.EqDec LN eq := eq_dec_LN.
+
+(** [compare_to_atom] is an induction principle for leaves that splits
+      the <<Fr x>> case into subcases <<x = y>> and <<x <> y>> for
+      some user-specified atom <<y>>. *)
+Lemma compare_to_atom : forall x l (P : LN -> Prop),
+    P (Fr x) ->
+    (forall a : atom, a <> x -> P (Fr a)) ->
+    (forall n : nat, P (Bd n)) ->
+    P l.
+Proof.
+  introv case1 case2 case3. destruct l.
+  - destruct_eq_args x a. auto.
+  - auto.
+Qed.
+
+Tactic Notation "compare" constr(l) "to" "atom" constr(x) :=
+  (induction l using (compare_to_atom x)).
+
+(** * Locally nameless operations *)
+(******************************************************************************)
+
+(** ** Localized operations *)
+(******************************************************************************)
+Section locally_nameless_local_operations.
+
+  Context
+    `{Return T}.
+
+  Definition free_loc : LN -> list atom :=
+    fun l => match l with
+          | Fr x => cons x List.nil
+          | _ => List.nil
+          end.
+
+  Definition subst_loc (x : atom) (u : T LN) : LN -> T LN :=
+    fun l => match l with
+          | Fr y => if x == y then u else ret T (Fr y)
+          | Bd n => ret T (Bd n)
+          end.
+
+  Definition open_loc (u : T LN) : nat * LN -> T LN :=
+    fun p => match p with
+          | (w, l) =>
+            match l with
+            | Fr x => ret T (Fr x)
+            | Bd n =>
+              match Nat.compare n w with
+              | Gt => ret T (Bd (n - 1))
+              | Eq => u
+              | Lt => ret T (Bd n)
+              end
+            end
+          end.
+
+  Definition is_opened : nat * LN -> Prop :=
+    fun p =>
+      match p with
+      | (ctx, l) =>
+        match l with
+        | Fr y => False
+        | Bd n => n = ctx
+        end
+      end.
+
+  Definition close_loc (x : atom ) : nat * LN -> LN :=
+    fun p => match p with
+          | (w, l) =>
+            match l with
+            | Fr y => if x == y then Bd w else Fr y
+            | Bd n =>
+              match Nat.compare n w with
+              | Gt => Bd (S n)
+              | Eq => Bd (S n)
+              | Lt => Bd n
+              end
+            end
+          end.
+
+  (** The argument <<n>> is appended the context---to define local
+      closure we will take <<n = 0>>, but we can also consider more
+      notions like ``local closure within a gap of 1 binder,'' which
+      is useful for backend reasoning. **)
+  Definition is_bound_or_free (gap : nat) : nat * LN -> Prop :=
+    fun p => match p with
+          | (w, l) =>
+            match l with
+            | Fr x => True
+            | Bd n => n < w ● gap
+            end
+          end.
+
+End locally_nameless_local_operations.
+
+(** ** Extended operations *)
+(******************************************************************************)
+Section locally_nameless_operations.
+
+  Context
+    (T : Type -> Type)
+    `{Classes.Kleisli.DT.Monad.Monad nat T}.
+
+  Definition open (u : T LN) : T LN -> T LN  :=
+    bindd T (open_loc u).
+
+  Definition close x : T LN -> T LN :=
+    fmapd T (close_loc x).
+
+  Definition subst x (u : T LN) : T LN -> T LN :=
+    bind T (subst_loc x u).
+  
+  Definition free : T LN -> list atom :=
+    fun t => bind list free_loc (tolist T t).
+
+  Definition freeset : T LN -> AtomSet.t :=
+    fun t => LN.AtomSet.atoms (free t).
+
+  Definition locally_closed_gap (gap : nat) : T LN -> Prop :=
+    fun t => forall w l, (w, l) ∈d t -> is_bound_or_free gap (w, l).
+
+  Definition locally_closed : T LN -> Prop :=
+    locally_closed_gap 0.
+
+  Definition scoped : T LN -> AtomSet.t -> Prop :=
+    fun t γ => freeset t ⊆ γ.
+
+End locally_nameless_operations.
+
+(** ** Notations *)
+(******************************************************************************)
+Module Notations.
+  Notation "t '{ x ~> u }" := (subst _ x u t) (at level 35).
+  Notation "t '( u )" := (open _ u t) (at level 35).
+  Notation "'[ x ] t" := (close _ x t) (at level 35).
+End Notations.
+
+Import Notations.
+
+Section test_notations.
+
+  Context
+    `{DT.Monad.Monad nat T}.
+
+  Context
+    (t : T LN)
+    (u : T LN)
+    (x : atom)
+    (n : nat).
+
+  Check u '{x ~> t}.
+  Check u '(t).
+  Check '[ x ] u.
+
+End test_notations.
 
 (** * Lemmas for local reasoning *)
 (******************************************************************************)
@@ -34,12 +209,14 @@ Tactic Notation "unfold_lia" :=
 (******************************************************************************)
 Section locally_nameless_basic_principles.
 
+  Import Notations.
+  
   Context
     `{DT.Monad.Monad nat T
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
 
-  Implicit Types (l : leaf) (n : nat) (t : T leaf) (x : atom).
+  Implicit Types (l : LN) (n : nat) (t : T LN) (x : atom).
 
   (** ** Reasoning principles for proving equalities *)
   (******************************************************************************)
@@ -160,12 +337,12 @@ Section locally_nameless_basic_principles.
 
   (** *** Specifications for [free] and [freeset] *)
   (******************************************************************************)
-  Theorem in_free_iff : forall (t : T leaf) (x : atom),
+  Theorem in_free_iff : forall (t : T LN) (x : atom),
       x ∈ free T t <-> Fr x ∈ t.
   Proof.
     intros. unfold free.
     rewrite (Toset_list_spec).
-    rewrite (Traversable.Monad.Container.in_bind_iff list).
+    rewrite (Traversable.Monad.in_bind_iff list).
     split.
     - intros [l [hyp1 hyp2]]. destruct l.
       + rewrite (in_iff_in_tolist T).
@@ -182,7 +359,7 @@ Section locally_nameless_basic_principles.
       cbn. left. right. easy.
   Qed.
 
-  Theorem free_iff_freeset : forall (t : T leaf) (x : atom),
+  Theorem free_iff_freeset : forall (t : T LN) (x : atom),
       x ∈ free T t <-> x ∈@ freeset T t.
   Proof.
     intros. unfold freeset. rewrite <- in_atoms_iff.
@@ -262,11 +439,11 @@ Section locally_nameless_utilities.
 
   (** ** [subst_loc] *)
   (******************************************************************************)
-  Lemma subst_loc_eq : forall (u : T leaf) x,
+  Lemma subst_loc_eq : forall (u : T LN) x,
       subst_loc x u (Fr x) = u.
   Proof. intros. cbn. now compare values x and x. Qed.
 
-  Lemma subst_loc_neq : forall (u : T leaf) x y,
+  Lemma subst_loc_neq : forall (u : T LN) x y,
       y <> x -> subst_loc x u (Fr y) = ret T (Fr y).
   Proof. intros. cbn. now compare values x and y. Qed.
 
@@ -274,7 +451,7 @@ Section locally_nameless_utilities.
       subst_loc x u (Bd n) = ret T (Bd n).
   Proof. reflexivity. Qed.
 
-  Lemma subst_loc_fr_neq : forall (u : T leaf) l x,
+  Lemma subst_loc_fr_neq : forall (u : T LN) l x,
       Fr x <> l -> subst_loc x u l = ret T l.
   Proof.
     introv neq. unfold subst_loc.
@@ -283,25 +460,25 @@ Section locally_nameless_utilities.
 
   (** ** [open_loc] *)
   (******************************************************************************)
-  Lemma open_loc_lt : forall (u : T leaf) w n,
+  Lemma open_loc_lt : forall (u : T LN) w n,
       n < w -> open_loc u (w, Bd n) = ret T (Bd n).
   Proof.
     introv ineq. unfold open_loc. compare naturals n and w.
   Qed.
 
-  Lemma open_loc_gt : forall (u : T leaf) n w,
+  Lemma open_loc_gt : forall (u : T LN) n w,
       n > w -> open_loc u (w, Bd n) = ret T (Bd (n - 1)).
   Proof.
     introv ineq. unfold open_loc. compare naturals n and w.
   Qed.
 
-  Lemma open_loc_eq : forall w (u : T leaf),
+  Lemma open_loc_eq : forall w (u : T LN),
       open_loc u (w, Bd w) = u.
   Proof.
     introv. unfold open_loc. compare naturals w and w.
   Qed.
 
-  Lemma open_loc_atom : forall (u : T leaf) w x,
+  Lemma open_loc_atom : forall (u : T LN) w x,
       open_loc u (w, Fr x) = ret T (Fr x).
   Proof.
     reflexivity.
@@ -309,7 +486,7 @@ Section locally_nameless_utilities.
 
   (** ** [Miscellaneous utilities] *)
   (******************************************************************************)
-  Lemma ninf_in_neq : forall x l (t : T leaf),
+  Lemma ninf_in_neq : forall x l (t : T LN),
       ~ x ∈ free T t ->
       l ∈ t ->
       Fr x <> l.
@@ -359,11 +536,9 @@ Section locally_nameless_metatheory.
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
 
-  Import Kleisli.DT.Monad.ToFunctor.Operation.
-  Import Kleisli.DT.Monad.ToFunctor.Instance.
-  Import Kleisli.DT.Monad.DerivedInstances.Instances.
+  Import Kleisli.DT.Monad.Derived.
 
-  Lemma subst_in_ret : forall x l (u : T leaf),
+  Lemma subst_in_ret : forall x l (u : T LN),
       (ret T l) '{x ~> u} = subst_loc x u l.
   Proof.
     intros. unfold subst. compose near l on left.
@@ -372,13 +547,13 @@ Section locally_nameless_metatheory.
   Qed.
 
   Implicit Types
-           (l : leaf) (p : leaf)
-           (x : atom) (t : T leaf)
+           (l : LN) (p : LN)
+           (x : atom) (t : T LN)
            (w : nat) (n : nat).
 
-  (** ** Leaf analysis: substitution with contexts *)
+  (** ** LN analysis: substitution with contexts *)
   (******************************************************************************)
-  Lemma ind_subst_loc_iff : forall l w p (u : T leaf) x,
+  Lemma ind_subst_loc_iff : forall l w p (u : T LN) x,
       (w, p) ∈d subst_loc x u l <->
       l <> Fr x /\ w = Ƶ /\ l = p \/ (* l is not replaced *)
       l = Fr x /\ (w, p) ∈d u. (* l is replaced *)
@@ -402,9 +577,9 @@ Section locally_nameless_metatheory.
       + exists n1 n2 (Fr x). splits; auto.
   Qed.
 
-  (** ** Leaf analysis: substitution without contexts *)
+  (** ** LN analysis: substitution without contexts *)
   (******************************************************************************)
-  Lemma in_subst_loc_iff : forall l p (u : T leaf) x,
+  Lemma in_subst_loc_iff : forall l p (u : T LN) x,
       p ∈ subst_loc x u l <->
       l <> Fr x /\ l = p \/
       l = Fr x /\ p ∈ u.
@@ -479,7 +654,7 @@ Section locally_nameless_metatheory.
     intros; rewrite in_subst_iff'...
   Qed.
 
-  Corollary in_free_subst_lower : forall t (u : T leaf) x y,
+  Corollary in_free_subst_lower : forall t (u : T LN) x y,
       y ∈ free T t -> y <> x ->
       y ∈ free T (t '{x ~> u}).
   Proof.
@@ -487,7 +662,7 @@ Section locally_nameless_metatheory.
     apply in_subst_lower; now simpl_local.
   Qed.
 
-  Corollary freeset_subst_lower : forall t (u : T leaf) x,
+  Corollary freeset_subst_lower : forall t (u : T LN) x,
       freeset T t \\ {{ x }} ⊆ freeset T (t '{x ~> u}).
   Proof.
     introv. intro a.
@@ -496,7 +671,7 @@ Section locally_nameless_metatheory.
     intros [? ?]. now apply in_free_subst_lower.
   Qed.
 
-  Corollary scoped_subst_eq : forall t (u : T leaf) x γ1 γ2,
+  Corollary scoped_subst_eq : forall t (u : T LN) x γ1 γ2,
       scoped T t γ1 ->
       scoped T u γ2 ->
       scoped T (t '{x ~> u}) (γ1 \\ {{x}} ∪ γ2).
@@ -525,7 +700,7 @@ Section locally_nameless_metatheory.
 
   (** ** Composing substitutions *)
   (******************************************************************************)
-  Lemma subst_subst_local : forall (u1 u2 : T leaf) x1 x2,
+  Lemma subst_subst_local : forall (u1 u2 : T LN) x1 x2,
       ~ x1 ∈ free T u2 ->
       x1 <> x2 ->
       subst T x2 u2 ∘ subst_loc x1 u1 =
@@ -584,7 +759,7 @@ Section locally_nameless_metatheory.
 
   (** ** Decompose substitution into closing/opening *)
   (******************************************************************************)
-  Lemma subst_spec_local : forall (u : T leaf) w l x,
+  Lemma subst_spec_local : forall (u : T LN) w l x,
       subst_loc x u l =
       open_loc u (cobind (prod nat) (close_loc x) (w, l)).
   Proof.
@@ -609,16 +784,16 @@ Section locally_nameless_metatheory.
     now erewrite subst_spec_local.
   Qed.
 
-  (** ** Substitution when <<u>> is a leaf **)
+  (** ** Substitution when <<u>> is a LN **)
   (******************************************************************************)
-  Definition subst_loc_leaf x (u : leaf) : leaf -> leaf :=
+  Definition subst_loc_LN x (u : LN) : LN -> LN :=
     fun l => match l with
           | Fr y => if x == y then u else Fr y
           | Bd n => Bd n
           end.
 
-  Theorem subst_by_leaf_spec : forall x l,
-      subst T x (ret T l) = fmap T (subst_loc_leaf x l).
+  Theorem subst_by_LN_spec : forall x l,
+      subst T x (ret T l) = fmap T (subst_loc_LN x l).
   Proof.
     intros. unfold subst. ext t.
     apply (bind_respectful_fmap T).
@@ -717,7 +892,7 @@ Section locally_nameless_metatheory.
 
   (** ** Upper and lower bounds on free variables after opening *)
   (******************************************************************************)
-  Lemma free_open_upper_local : forall t (u : T leaf) w l x,
+  Lemma free_open_upper_local : forall t (u : T LN) w l x,
       l ∈ t ->
       x ∈ free T (open_loc u (w, l)) ->
       (l = Fr x /\ x ∈ free T t) \/
@@ -732,7 +907,7 @@ Section locally_nameless_metatheory.
       { contradict xin. simpl_local. easy. }
   Qed.
 
-  Theorem free_open_upper : forall t (u : T leaf) x,
+  Theorem free_open_upper : forall t (u : T LN) x,
       x ∈ free T (t '(u)) ->
       x ∈ free T t \/ x ∈ free T u.
   Proof.
@@ -744,7 +919,7 @@ Section locally_nameless_metatheory.
     eauto using free_open_upper_local.
   Qed.
 
-  Corollary freeset_open_upper : forall t (u : T leaf),
+  Corollary freeset_open_upper : forall t (u : T LN),
       freeset T (t '(u)) ⊆ freeset T t ∪ freeset T u.
   Proof.
     intros. intro a. rewrite AtomSet.union_spec.
@@ -774,7 +949,7 @@ Section locally_nameless_metatheory.
 
   (** ** Opening a locally closed term is the identity *)
   (**************************************************************************)
-  Lemma open_lc_local : forall (u : T leaf) w l,
+  Lemma open_lc_local : forall (u : T LN) w l,
       is_bound_or_free 0 (w, l) ->
       open_loc u (w, l) = ret T l.
   Proof.
@@ -802,7 +977,7 @@ Section locally_nameless_metatheory.
       open_loc (u1 '{x ~> u2}) ⋆dm (subst_loc x u2 ∘ extract (prod nat)).
   Proof.
     introv lcu2. ext [w l]. unfold kcompose_dm.
-    unfold prepromote, compose; cbn. compare l to atom x.
+    unfold preincr, compose; cbn. compare l to atom x.
     - rewrite subst_in_ret. cbn.
       compare values x and x. symmetry.
       apply (bindd_respectful_id T).
@@ -929,8 +1104,8 @@ Section locally_nameless_metatheory.
     auto using open_close_local.
   Qed.
 
-  (** ** Opening by a leaf reduces to an [fmapkr] *)
-  Definition open_leaf_loc (u : leaf) : nat * leaf -> leaf :=
+  (** ** Opening by a LN reduces to an [fmapkr] *)
+  Definition open_LN_loc (u : LN) : nat * LN -> LN :=
     fun wl => match wl with
            | (w, l) =>
              match l with
@@ -944,8 +1119,8 @@ Section locally_nameless_metatheory.
              end
            end.
 
-  Lemma open_by_leaf_spec : forall l,
-      open T (ret T l) = fmapd T (open_leaf_loc l).
+  Lemma open_by_LN_spec : forall l,
+      open T (ret T l) = fmapd T (open_LN_loc l).
   Proof.
     intros. unfold open. ext t.
     apply (bindd_respectful_fmapd T).
@@ -958,7 +1133,7 @@ Section locally_nameless_metatheory.
   (**************************************************************************)
   Lemma close_open_local : forall x w l,
       l <> Fr x ->
-      (close_loc x co⋆ open_leaf_loc (Fr x)) (w, l) = l.
+      (close_loc x co⋆ open_LN_loc (Fr x)) (w, l) = l.
   Proof.
     introv neq. cbn. unfold id. compare l to atom x.
     - contradiction.
@@ -973,7 +1148,7 @@ Section locally_nameless_metatheory.
       '[x] (t '(ret T (Fr x))) = t.
   Proof.
     introv fresh. compose near t on left.
-    rewrite open_by_leaf_spec. unfold close.
+    rewrite open_by_LN_spec. unfold close.
     rewrite (dfun_fmapd2 _ T).
     apply (fmapd_respectful_id T).
     intros w l lin.

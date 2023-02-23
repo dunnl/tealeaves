@@ -1,11 +1,9 @@
-From Tealeaves Require Export
-     Util.Prelude.
-
 From Tealeaves Require Import
-     Classes.Category.
+  Classes.EqDec_eq
+  Classes.Category.
 
 Import Category.Notations.
-#[local] Open Scope category_scope.
+Open Scope category_scope.
 
 Class Index : Type :=
   { K : Type;
@@ -41,7 +39,7 @@ End category_kconst.
 (******************************************************************************)
 Declare Scope tealeaves_multi_scope.
 Delimit Scope tealeaves_multi_scope with tea_multi.
-#[local] Open Scope tealeaves_multi_scope.
+Open Scope tealeaves_multi_scope.
 
 Module Notations.
 

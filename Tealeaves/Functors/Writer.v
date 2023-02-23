@@ -231,7 +231,7 @@ Section incr.
   (* It sometimes useful to have this curried operation, the
   composition of [strength] and [join]. *)
   Definition incr {A : Type} : W -> W * A -> W * A :=
-    fun w '(w2, a) => (w ● w2, a).
+    fun w2 '(w1, a) => (w2 ● w1, a).
 
   Lemma incr_zero {A : Type} :
     incr Ƶ = @id (W * A).

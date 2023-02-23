@@ -1,11 +1,12 @@
 From Tealeaves Require Export
-     Classes.Algebraic.Applicative
-     Classes.Algebraic.Listable.Functor.
+  Classes.Applicative
+  Classes.Listable.Functor
+  Categories.TypeFamilies
+  Multisorted.Classes.DTM.
 
 From Tealeaves.Multisorted Require Import
-     Theory.Category
-     Classes.DTM
-     Functors.MList.
+                           
+  Functors.MList.
 
 Import Classes.Algebraic.Setlike.Functor.Notations.
 Import Data.Sets.Notations.

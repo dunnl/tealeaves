@@ -2,10 +2,9 @@
     and morphisms, the underlying category of the
     <<Tealeaves.Ordinary.*>> interface. *)
 From Tealeaves Require Export
-     Prelude
-     Classes.Category
-     Classes.Functor
-     Classes.Monad.
+  Classes.Category
+  Classes.Functor
+  Classes.Monad.
 
 #[local] Generalizable Variables T F G ϕ.
 

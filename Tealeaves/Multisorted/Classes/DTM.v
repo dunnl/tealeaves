@@ -1,18 +1,15 @@
 From Tealeaves Require Import
-  Data.Product
+  Categories.TypeFamilies
+  Classes.EqDec_eq
   Classes.Monoid
   Classes.Functor
-  Classes.Algebraic.Applicative
+  Classes.Applicative
+  Data.Product
   Functors.Writer.
 
-From Tealeaves.Multisorted Require Export
-  Theory.Category.
-
-Import Multisorted.Theory.Category.Notations.
+Import TypeFamilies.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
-#[local] Open Scope tealeaves_scope.
-#[local] Open Scope tealeaves_multi_scope.
 
 #[local] Generalizable Variables A B C F G ϕ W T.
 
