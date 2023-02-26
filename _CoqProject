@@ -86,6 +86,8 @@ Tealeaves/Examples/SystemF/Syntax.v
 Tealeaves/Examples/SystemF/Rewriting.v
 Tealeaves/Examples/SystemF/Contexts.v
 Tealeaves/Examples/SystemF/TypeSoundness.v
+Tealeaves/Examples/STLC+Let/Let1.v
+Tealeaves/Examples/STLC+Let/Let2.v
 Tealeaves/Classes/Equivalences/Monad.v
 Tealeaves/Classes/Equivalences/Decorated/Functor.v
 Tealeaves/Classes/Equivalences/Decorated/Monad.v
