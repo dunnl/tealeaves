@@ -135,6 +135,19 @@ Section laws.
    and symbols for applicative homomorphisms. *)
   Generalizable Variables v ϕ.
 
+  Ltac rewrite_with_bind_hyp :=
+    match goal with
+    | H : context[binddt] |- _ => rewrite H
+    end.
+
+  Ltac induction_on_term :=
+    match goal with
+    | t : term ?v |- _ => induction t
+    end.
+
+  Ltac dtm_setup :=
+    intros; ext t; unfold id; induction_on_term; cbn.
+
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Composition with unit (left unit law)
@@ -201,31 +214,18 @@ to each of the variables in expression `t` acts as the pure effect on
 
   Theorem dtm2_stlc : forall A : Type, binddt term (fun A0 : Type => A0) (ret term ∘ extract (prod nat)) = @id (term A).
   Proof.
-    intros. ext t.
-    induction t. (* .unfold *)
-    - cbn. reflexivity.
-    - cbn. rewrite dtm2_helper. now rewrite IHt.
-    - cbn. now rewrite IHt1, IHt2.
+    intros. ext t. unfold id.
+    induction t.
+    - cbn. fequal.
+    - cbn. fequal; (rewrite dtm2_helper; auto).
+    - cbn. fequal; auto.
   Qed.
 
-  Ltac rewrite_with_bind_hyp :=
-    match goal with
-    | H : context[binddt] |- _ => rewrite H
-    end.
-
-  Ltac induction_on_term :=
-    match goal with
-    | t : term ?v |- _ => induction t
-    end.
-
   Ltac solve_dtm2_case :=
-    try rewrite dtm2_helper;
-    now repeat rewrite_with_bind_hyp.
+    fequal; repeat rewrite dtm2_helper; auto.
 
   Theorem dtm2_stlc_automated : forall A : Type, binddt term (fun A0 : Type => A0) (ret term ∘ extract (prod nat)) = @id (term A).
-    intros. ext t.
-    induction_on_term; cbn;
-      solve_dtm2_case.
+    dtm_setup; solve_dtm2_case.
   Qed.
 
 (*|
