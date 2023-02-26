@@ -10,7 +10,7 @@ available for future abstract nonsense.
 (** but this development focuses more on monad-related abstractions
     such as modules and comonads. *)
 From Tealeaves Require Export
-     Util.Prelude.
+     Prelude.
 
 Declare Scope category_scope.
 Delimit Scope category_scope with cat.

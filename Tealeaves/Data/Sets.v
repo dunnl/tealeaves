@@ -1,5 +1,4 @@
 From Tealeaves Require Import
-  Util.Prelude
   Classes.Monoid.
 
 #[local] Generalizable Variables A B.

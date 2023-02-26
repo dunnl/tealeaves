@@ -1,8 +1,9 @@
 From Tealeaves Require Export
-  Util.Prelude
-  Functors.List.
+  Prelude
+  Functors.List
+  Classes.EqDec_eq.
 
-Import Classes.Algebraic.Setlike.Functor.Notations.
+Import Classes.Setlike.Functor.Notations.
 
 (** * An opaque type of atoms *)
 (******************************************************************************)
@@ -12,7 +13,7 @@ Import Classes.Algebraic.Setlike.Functor.Notations.
 (** This type has been borrowed from Metalib and lightly adapted for Tealeaves.
     https://github.com/plclub/metalib/blob/master/Metalib/MetatheoryAtom.v
  *)
-Module Type ATOM <: UsualDecidableType.
+Module Type AtomModule  <: UsualDecidableType.
 
   Parameter atom : Set.
 
@@ -33,13 +34,11 @@ Module Type ATOM <: UsualDecidableType.
 
   Include HasUsualEq <+ UsualIsEq <+ UsualIsEqOrig.
 
-End ATOM.
+End AtomModule.
 
 (** ** Implementation of atoms *)
 (******************************************************************************)
-(** The implementation of the above interface is hidden for
-    documentation purposes. *)
-Module Atom : ATOM.
+Module Atom : AtomModule.
 
   Definition atom := nat.
 
@@ -95,14 +94,11 @@ End Atom.
 (** ** Shorthands and notations *)
 (******************************************************************************)
 Notation atom := Atom.atom.
-
 Notation fresh := Atom.fresh.
-
 Notation fresh_not_in := Atom.fresh_not_in.
-
 Notation atom_fresh_for_list := Atom.atom_fresh_for_list.
 
 (* Automatically unfold Atom.eq *)
 #[global] Arguments Atom.eq /.
 
-#[global] Instance EqDec_atom : @EqDec atom eq eq_equivalence := Atom.eq_dec.
+#[export] Instance EqDec_atom : @EqDec atom eq eq_equivalence := Atom.eq_dec.

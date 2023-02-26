@@ -1,15 +1,11 @@
 From Tealeaves Require Export
-     Util.Prelude
-     Classes.Functor
-     Functors.Writer. (* for the <<extract>> function *)
-
-From Tealeaves.Multisorted Require Export
-     Theory.Category.
+  Classes.Functor
+  Functors.Writer.
+From Tealeaves.Categories Require Export
+  TypeFamilies.
 
 Import Product.Notations.
-Import Multisorted.Theory.Category.Notations.
-#[local] Open Scope tealeaves_scope.
-#[local] Open Scope tealeaves_multi_scope.
+Import TypeFamilies.Notations.
 
 #[local] Generalizable Variables A B C F G.
 

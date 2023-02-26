@@ -1,5 +1,4 @@
 From Tealeaves Require Export
-  Util.Prelude
   Classes.Functor.
 
 (** * The identity functor *)

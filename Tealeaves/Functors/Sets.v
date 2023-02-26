@@ -1,7 +1,5 @@
 From Tealeaves.Classes Require Import
-  Monoid
-  Algebraic.Monad
-  Algebraic.Applicative.
+  Monoid Monad Applicative.
 From Tealeaves Require Export
   Data.Sets.
 
@@ -155,76 +153,133 @@ Qed.
      mon_join_join := @join_join;
   |}.
 
+(** * Set as an applicative functor *)
+(******************************************************************************)
 (*
 TODO: This isn't really necessary because it is inferred from the monad instance.
  *)
-(*
-(** * Set as an applicative functor *)
+Section set_applicative.
+  
+  Instance Pure_set : Pure set := @eq.
+
+  #[export] Instance Mult_set : Mult set :=
+    fun (A B : Type) (p : set A * set B) (v : A * B) =>
+      (fst p) (fst v) /\ (snd p) (snd v).
+
+  Theorem app_mult_pure_set : forall (A B : Type) (a : A) (b : B),
+      mult set (pure set a, pure set b) = pure set (a, b).
+  Proof.
+    intros. unfold transparent tcs.
+    ext [a1 b1]. cbn. propext; now rewrite pair_equal_spec.
+  Qed.
+
+  Theorem app_pure_natural_set : forall (A B : Type) (f : A -> B) (x : A),
+      fmap set f (pure set x) = pure set (f x).
+  Proof.
+    intros. unfold transparent tcs. ext b.
+    propext; firstorder (now subst).
+  Qed.
+
+  Theorem app_mult_natural_set : forall (A B C D: Type) (f : A -> C) (g : B -> D) (x : set A) (y : set B),
+      mult set  (fmap set f x, fmap set g y) = fmap set (map_tensor f g) (mult set (x, y)).
+  Proof.
+    intros. unfold transparent tcs. ext [c d].
+    cbn. propext.
+    - intros [[a ?] [b ?]].
+      exists (a, b). firstorder (now subst).
+    - intros [[a b] rest]. cbn in *.
+      rewrite pair_equal_spec in rest.
+      split. exists a; tauto. exists b; tauto.
+  Qed.
+
+  Theorem app_assoc_set : forall (A B C : Type) (x : set A) (y : set B) (z : set C),
+      fmap set α (x ⊗ y ⊗ z) = x ⊗ (y ⊗ z).
+  Proof.
+    intros. ext [a [b c]]. unfold transparent tcs.
+    cbn. propext.
+    - intros [[[a1 b1] c1]]. cbn in *.
+      now preprocess.
+    - intros. now exists (a, b, c).
+  Qed.
+
+  Theorem app_unital_l_set : forall (A : Type) (x : set A),
+      fmap set left_unitor (pure set tt ⊗ x) = x.
+  Proof.
+    intros. ext a. unfold transparent tcs. cbn. propext.
+    + intros [[? a1] rest]. cbn in rest. now preprocess.
+    + exists (tt, a). easy.
+  Qed.
+
+  Theorem app_unital_r_set : forall (A : Type) (x : set A),
+      fmap set right_unitor (x ⊗ pure set tt) = x.
+  Proof.
+    intros. ext a. unfold transparent tcs. cbn. propext.
+    + intros [[? a1] rest]. cbn in rest. now preprocess.
+    + intros. exists (a, tt). easy.
+  Qed.
+
+  Instance Applicative_set : Applicative set :=
+    {| app_mult_pure := app_mult_pure_set;
+      app_pure_natural := app_pure_natural_set;
+      app_mult_natural := app_mult_natural_set;
+      app_assoc := app_assoc_set;
+      app_unital_l := app_unital_l_set;
+      app_unital_r := app_unital_r_set;
+    |}.
+
+End set_applicative.
+
+Import Tealeaves.Classes.Kleisli.Monad.
+Import Tealeaves.Classes.Monad.ToKleisli.
+
+(** ** [set]/[set] right module *)
 (******************************************************************************)
-Instance Pure_set : Pure set := @eq.
+#[export] Instance Bind_set: Bind set set := Monad.ToKleisli.Bind_join set.
+#[export] Instance KleisliMonad_list : Kleisli.Monad.Monad set := Kleisli_Monad set.
 
-#[export] Instance Mult_set : Mult set :=
-  fun (A B : Type) (p : set A * set B) (v : A * B) =>
-    (fst p) (fst v) /\ (snd p) (snd v).
-
-Theorem app_mult_pure_set : forall (A B : Type) (a : A) (b : B),
-    mult set (pure set a, pure set b) = pure set (a, b).
+(** ** Rewriting lemmas for <<bind>> *)
+(******************************************************************************)
+Lemma bind_set_nil `{f : A -> set B} :
+  bind set f ∅ = ∅.
 Proof.
-  intros. unfold transparent tcs.
-  ext [a1 b1]. cbn. propext; now rewrite pair_equal_spec.
+  solve_basic_set.
 Qed.
 
-Theorem app_pure_natural_set : forall (A B : Type) (f : A -> B) (x : A),
-    fmap set f (pure set x) = pure set (f x).
+Lemma bind_set_one `{f : A -> set B} (a : A) :
+  bind set f {{ a }} = f a.
 Proof.
-  intros. unfold transparent tcs. ext b.
-  propext; firstorder (now subst).
+  unfold_ops @Bind_set.
+  unfold_ops @Bind_join.
+  unfold compose; cbn.
+  rewrite fmap_set_one.
+  rewrite join_set_one.
+  reflexivity.
 Qed.
 
-Theorem app_mult_natural_set : forall (A B C D: Type) (f : A -> C) (g : B -> D) (x : set A) (y : set B),
-    mult set  (fmap set f x, fmap set g y) = fmap set (map_tensor f g) (mult set (x, y)).
+Lemma bind_set_add `{f : A -> set B} {x y} :
+  bind set f (x ∪ y) = bind set f x ∪ bind set f y.
 Proof.
-  intros. unfold transparent tcs. ext [c d].
-  cbn. propext.
-  - intros [[a ?] [b ?]].
-    exists (a, b). firstorder (now subst).
-  - intros [[a b] rest]. cbn in *.
-    rewrite pair_equal_spec in rest.
-    split. exists a; tauto. exists b; tauto.
+  solve_basic_set.
 Qed.
 
-Theorem app_assoc_set : forall (A B C : Type) (x : set A) (y : set B) (z : set C),
-    fmap set α (x ⊗ y ⊗ z) = x ⊗ (y ⊗ z).
+(** Since [bind] is defined tediously by composing <<join>> and
+    <<fmap>>, we give a characterization of <<set>>'s <<bind>> that is
+    easier to use. N.B. be mindful that this rewriting would have to
+    be done ~before~ calling <<unfold transparent tcs>>, otherwise <<bind set>>
+    will be unfolded to its definition first. *)
+Lemma bind_set_spec : forall `(f : A -> set B) (s : set A) (b : B),
+    bind set f s b = exists (a : A), s a /\ f a b.
 Proof.
-  intros. ext [a [b c]]. unfold transparent tcs.
-  cbn. propext.
-  - intros [[[a1 b1] c1]]. cbn in *.
-    now preprocess.
-  - intros. now exists (a, b, c).
+  unfold_ops @Bind_set.
+  unfold_ops @Bind_join.
+  solve_basic_set.
 Qed.
 
-Theorem app_unital_l_set : forall (A : Type) (x : set A),
-    fmap set left_unitor (pure set tt ⊗ x) = x.
-Proof.
-  intros. ext a. unfold transparent tcs. cbn. propext.
-  + intros [[? a1] rest]. cbn in rest. now preprocess.
-  + exists (tt, a). easy.
-Qed.
+#[export] Hint Rewrite @bind_set_nil @bind_set_one @bind_set_add : tea_set.
 
-Theorem app_unital_r_set : forall (A : Type) (x : set A),
-    fmap set right_unitor (x ⊗ pure set tt) = x.
-Proof.
-  intros. ext a. unfold transparent tcs. cbn. propext.
-  + intros [[? a1] rest]. cbn in rest. now preprocess.
-  + intros. exists (a, tt). easy.
-Qed.
-
-Instance Applicative_set : Applicative set :=
-  {| app_mult_pure := app_mult_pure_set;
-     app_pure_natural := app_pure_natural_set;
-     app_mult_natural := app_mult_natural_set;
-     app_assoc := app_assoc_set;
-     app_unital_l := app_unital_l_set;
-     app_unital_r := app_unital_r_set;
+(** ** <<bind>> is a monoid homomorphism *)
+(******************************************************************************)
+#[export] Instance Monmor_bind {A B f} : Monoid_Morphism (bind set f) :=
+  {| monmor_unit := @bind_set_nil A B f;
+     monmor_op := @bind_set_add A B f;
   |}.
-*)

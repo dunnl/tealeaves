@@ -1,6 +1,5 @@
 From Tealeaves Require Export
-  Util.Prelude
-  Data.Product (* To use associator morphism α *)
+  Data.Product
   Classes.Functor
   Functors.Identity
   Functors.Compose.

@@ -1,5 +1,5 @@
 From Tealeaves Require Import
-  Classes.Algebraic.Setlike.Functor
+  Classes.Setlike.Functor
   LN.Atom.
 
 From Coq Require
@@ -7,7 +7,6 @@ From Coq Require
 
 Import List.ListNotations.
 Import Setlike.Functor.Notations.
-#[local] Open Scope list_scope.
 
 (** * Definition of <<AtomSet>> type *)
 (******************************************************************************)
@@ -43,7 +42,8 @@ Import Notations.
 
 (** ** The [atoms] operation *)
 (** <<atoms>> collects a list of atoms into an <<AtomSet>>. It is
-    inverse to [AtomSet.elements] *)
+    conceptually inverse to [AtomSet.elements], but there's no
+    guarantee the operations won't disturb the order*)
 (******************************************************************************)
 Fixpoint atoms (l : list atom) : AtomSet.t :=
   match l with
@@ -80,7 +80,7 @@ Proof.
   - cbn. introv. rewrite (IHl1 l2). fsetdec.
 Qed.
 
-#[global] Hint Rewrite atoms_nil atoms_cons atoms_one atoms_app : tea_rw_atoms.
+#[export] Hint Rewrite atoms_nil atoms_cons atoms_one atoms_app : tea_rw_atoms.
 
 Lemma in_atoms_nil : forall x, x ∈@ atoms nil <-> False.
 Proof.
@@ -105,8 +105,8 @@ Proof.
    intros. autorewrite with tea_rw_atoms. fsetdec.
 Qed.
 
-#[global] Hint Rewrite in_atoms_nil in_atoms_cons in_atoms_one in_atoms_app : tea_rw_atoms.
-(*
+#[export] Hint Rewrite in_atoms_nil in_atoms_cons in_atoms_one in_atoms_app : tea_rw_atoms.
+
 Lemma in_singleton_iff : forall (x : atom) (y : atom),
     y ∈@ {{ x }} <-> y = x.
 Proof.
@@ -118,7 +118,6 @@ Lemma in_union_iff : forall (x : atom) (s1 s2 : AtomSet.t),
 Proof.
   intros. fsetdec.
 Qed.
-*)
 
 (** ** Relating <<AtomSet.t>> and <<list atom>> *)
 (******************************************************************************)

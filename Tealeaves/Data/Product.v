@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Util.Prelude.
+  Prelude.
 
 (** This file defines the monoidal-category-theoretic structure on the
     category of types and functions given by the Cartesian product

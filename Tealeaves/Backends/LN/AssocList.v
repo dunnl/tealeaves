@@ -1,8 +1,7 @@
 From Tealeaves Require Import
-  Util.Prelude
-  LN.Atom
-  LN.AtomSet
-  Classes.Algebraic.Listable.Functor
+  LN.Atom LN.AtomSet
+  Classes.Listable.Functor
+  Classes.Traversable.Functor
   Functors.Writer.
 
 From Coq Require Import
@@ -13,28 +12,8 @@ Import Product.Notations.
 Import List.ListNotations.
 Import LN.AtomSet.Notations.
 Import Setlike.Functor.Notations.
-#[local] Open Scope set_scope.
-#[local] Open Scope list_scope.
 
 Create HintDb tea_alist.
-
-(** * Miscellaneous *)
-(** TODO : Put this somewhere useful *)
-(******************************************************************************)
-Lemma nin_app_iff : forall X (x : X) (l1 l2 : list X),
-    ~ x ∈ (l1 ++ l2) <-> ~ x ∈ l1 /\ ~ x ∈ l2.
-Proof.
-  intros. rewrite List.in_list_app.
-  firstorder.
-Qed.
-
-Lemma push_not : forall P Q,
-    ~ (P \/ Q) <-> ~P /\ ~ Q.
-Proof.
-  firstorder.
-Qed.
-
-#[export] Hint Rewrite push_not : tea_rw_dom.
 
 (** * The <<alist>> functor *)
 (******************************************************************************)
@@ -46,40 +25,29 @@ alone.  Technically the functor is the composition of [list] and
 Module Notations.
   Notation "'one'" := (ret list).
   Notation "x ~ a" := (ret list (x, a)) (at level 50).
-  Notation "'alist'" := (list ○ (atom ×)) (at level 50, no associativity).
 End Notations.
 
 Import Notations.
 
+Definition alist := list ∘ (atom ×).
+
 (** ** Functor instance for <<alist>> *)
 (******************************************************************************)
-#[export] Instance Functor_alist : Functor (alist).
-Proof.
-  constructor; intros; unfold_ops @Fmap_compose.
-  - now rewrite 2(fun_fmap_id _).
-  - now rewrite 2(fun_fmap_fmap _).
-Qed.
+#[export] Instance Functor_alist : Functor alist := Functor_compose.
 
 (** ** DT functor instance for <<alist>> *)
 (******************************************************************************)
 Section DecoratedTraversableFunctor_alist.
 
-(*
-  Context
-    `{Monoid W}.
-
-  Import Theory.Algebraic.Traversable.Functor.ToKleisli.
-  Import Theory.Algebraic.Decorated.Functor.ToKleisli.
-
-  Check alist.
   (** ** Traversable instance *)
   (******************************************************************************)
-  #[global] Instance Dist_alist : Dist (alist)
+  #[global] Instance Dist_alist : Dist alist
     := Dist_compose.
 
-  #[global] Instance Traversable_alist : TraversableFunctor (alist)
+  #[global] Instance Traversable_alist : TraversableFunctor alist
     := Traversable_compose.
 
+  (*
   (** ** Decorated instance *)
   (******************************************************************************)
   #[global] Instance Decorate_alist :
@@ -120,17 +88,16 @@ Section DecoratedTraversableFunctor_alist.
     #[local] Unset Keyed Unification.
     *)
   Qed.
-*)
+   *)
 
 End DecoratedTraversableFunctor_alist.
 
 (** * <<envmap>>  *)
 (******************************************************************************)
-(** [envmap] is just [fmap] specialized to <<alist>>. It is given a
-    slightly more friendly name, primarily to avoid writing <<fun A => alist A>>
-    all the time. *)
-Definition envmap {A B} (f : A -> B) : alist A -> alist B :=
-  fmap (alist) f.
+(** [envmap] is just [fmap] specialized to <<alist>>. *)
+
+Definition envmap {A B } : (A -> B) -> alist A -> alist B :=
+  fmap alist.
 
 (** ** Rewriting principles for [envmap] *)
 (******************************************************************************)
@@ -170,8 +137,8 @@ Section envmap_lemmas.
 End envmap_lemmas.
 
 Create HintDb tea_rw_envmap.
-#[export] Hint Rewrite envmap_nil envmap_one envmap_cons envmap_app :
-  tea_rw_envmap.
+#[export] Hint Rewrite envmap_nil envmap_one
+  envmap_cons envmap_app : tea_rw_envmap.
 
 (** ** Specifications for [∈] and <<envmap>>*)
 (******************************************************************************)
@@ -182,9 +149,9 @@ Section in_envmap_lemmas.
     (l : alist A)
     (f : A -> B).
 
-  Lemma in_envmap_iff : forall x b,
+  Lemma in_envmap_iff : forall (x : atom) (b : B),
       (x, b) ∈ (envmap f l : list (atom * B)) <->
-      exists a : A, (x, a) ∈ (l : list (atom * A))  /\ f a = b.
+      exists a : A, (x, a) ∈ (l : list (atom * A)) /\ f a = b.
   Proof.
     intros. unfold envmap. unfold_ops @Fmap_compose @Fmap_prod.
     rewrite (in_fmap_iff list). split; intros; preprocess; eauto.
@@ -364,14 +331,23 @@ Section dom_lemmas.
       dom (envmap f l) = dom l.
   Proof.
     intros. unfold dom, envmap. compose near l on left.
-    unfold_ops @Fmap_compose @Fmap_prod.
-    rewrite (fun_fmap_fmap list). fequal. now ext [? ?].
+    unfold_ops @Fmap_compose.
+    rewrite (fun_fmap_fmap list _ _ _ (fmap (prod atom) f) fst).
+    fequal. now ext [? ?].
   Qed.
 
 End dom_lemmas.
 
 Create HintDb tea_rw_dom.
 #[export] Hint Rewrite dom_nil dom_cons dom_app dom_one dom_fmap : tea_rw_dom.
+
+Lemma push_not : forall P Q,
+    ~ (P \/ Q) <-> ~P /\ ~ Q.
+Proof.
+  firstorder.
+Qed.
+
+#[export] Hint Rewrite push_not : tea_rw_dom.
 
 (** ** Rewriting lemmas for [domset] *)
 (******************************************************************************)
@@ -462,8 +438,9 @@ Section range_lemmas.
       range (envmap f Γ) = fmap list f (range Γ).
   Proof.
     intros. unfold range, envmap. compose near Γ.
-    unfold_ops @Fmap_compose.
-    rewrite 2(fun_fmap_fmap list).
+    unfold_ops @Fmap_compose.    
+    rewrite (fun_fmap_fmap list _ _ _ (fmap (prod atom) f) (extract (prod atom))).
+    rewrite (fun_fmap_fmap list _ _ _ (extract (prod atom)) f).
     fequal. now ext [? ?].
   Qed.
 
@@ -699,29 +676,6 @@ End in_in.
 
 #[export] Hint Immediate in_in_dom in_in_domset in_in_range : tea_alist.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 (** ** Support for prettifying association lists *)
 (** The following rewrite rules can be used for normalizing
     alists. Note that we prefer <<one x ++ l>> to <<cons x l>>.  These
@@ -821,7 +775,6 @@ Tactic Notation "alist" "induction" ident(E) "as" simple_intropattern(P) :=
       match T with
       | list (?key * ?A) => induction E as P using (alist_ind A)
       end.
-
 
 (** <<uniq l>> whenever the keys of <<l>> contain no duplicates. *)
 Inductive uniq {A} : alist A -> Prop :=
@@ -1594,8 +1547,6 @@ Qed.
 (** * Tactic support for picking fresh atoms *)
 (* ********************************************************************** *)
 
-(* begin hide *)
-
 Ltac ltac_remove_dups xs :=
   let rec remove xs acc :=
     match xs with
@@ -1624,8 +1575,6 @@ Ltac simplify_list_of_atom_sets L :=
   match L with
     | context C [AtomSet.union ?E AtomSet.empty] => context C [ E ]
   end.
-
-(* end hide *)
 
 (** [gather_atoms_with F] returns the union of all the finite sets
     [F x] where [x] is a variable from the context such that [F x]
@@ -1712,8 +1661,6 @@ Proof.
 
   trivial.
 Qed.
-(* end show *)
-
 
 Tactic Notation
   "pick" "fresh" ident(atom_name)

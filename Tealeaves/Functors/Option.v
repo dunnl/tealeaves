@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Classes.Algebraic.Monad.
+  Classes.Monad.
 
 (** * [option] monad *)
 (******************************************************************************)

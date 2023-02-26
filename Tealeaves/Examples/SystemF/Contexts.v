@@ -1,24 +1,28 @@
 From Tealeaves Require Import
-     Functors.List
-     LN.Leaf LN.Atom LN.AtomSet LN.AssocList
-     LN.Multisorted.Operations
-     LN.Multisorted.Theory.
-
-From Tealeaves.Multisorted Require Import
-     Classes.DTM.
+  Functors.List
+  Backends.LN.Atom
+  Backends.LN.AtomSet
+  Backends.LN.AssocList
+  LN.Multisorted.LN
+  Multisorted.Classes.DTM
+  Examples.SystemF.Syntax
+  Examples.SystemF.Rewriting.
 
 From Coq Require Import
-     Sorting.Permutation.
+  Sorting.Permutation.
 
+(*
 From Tealeaves.Examples Require Import
-     SystemF.Language
-     SystemF.Rewriting.
+  SystemF.Syntax.
+  SystemF.Rewriting.
+*)
 
 Implicit Types (x : atom).
 
-Import Classes.Algebraic.Setlike.Functor.Notations.
-Import List.ListNotations.
+Import AtomSet.Notations.
+Import Classes.Setlike.Functor.Notations.
 Import LN.AssocList.Notations.
+Import List.ListNotations.
 
 Create HintDb sysf_ctx.
 
@@ -62,7 +66,7 @@ Section scope_lemmas.
 
   (** *** Permutation *)
   (******************************************************************************)
-  Lemma scoped_perm : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
+  Lemma scoped_perm : forall (k : K) (t : S LN) (X : Type) (γ1 γ2 : alist X),
       Permutation γ1 γ2 ->
       scoped S k t (domset γ1) ->
       scoped S k t (domset γ2).
@@ -70,7 +74,7 @@ Section scope_lemmas.
     introv Hperm. unfold scoped. rewrite (perm_domset); eauto.
   Qed.
 
-  Theorem scoped_perm_iff : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
+  Theorem scoped_perm_iff : forall (k : K) (t : S LN) (X : Type) (γ1 γ2 : alist X),
       Permutation γ1 γ2 ->
       scoped S k t (domset γ1) <->
       scoped S k t (domset γ2).
@@ -79,7 +83,7 @@ Section scope_lemmas.
     split; eauto using scoped_perm.
   Qed.
 
-  Corollary scoped_perm_comm : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
+  Corollary scoped_perm_comm : forall (k : K) (t : S LN) (X : Type) (γ1 γ2 : alist X),
       scoped S k t (domset (γ1 ++ γ2)) <->
       scoped S k t (domset (γ2 ++ γ1)).
   Proof.
@@ -88,7 +92,7 @@ Section scope_lemmas.
 
   (** *** Weakening *)
   (******************************************************************************)
-  Lemma scoped_weak_l : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
+  Lemma scoped_weak_l : forall (k : K) (t : S LN) (X : Type) (γ1 γ2 : alist X),
       scoped S k t (domset γ1) ->
       scoped S k t (domset (γ1 ++ γ2)).
   Proof.
@@ -96,7 +100,7 @@ Section scope_lemmas.
     autorewrite with tea_rw_dom. fsetdec.
   Qed.
 
-  Lemma scoped_weak_mid : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 γ : alist X),
+  Lemma scoped_weak_mid : forall (k : K) (t : S LN) (X : Type) (γ1 γ2 γ : alist X),
       scoped S k t (domset (γ1 ++ γ2)) ->
       scoped S k t (domset (γ1 ++ γ ++ γ2)).
   Proof.
@@ -104,7 +108,7 @@ Section scope_lemmas.
     autorewrite with tea_rw_dom in *. fsetdec.
   Qed.
 
-  Lemma scoped_weak_r : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X),
+  Lemma scoped_weak_r : forall (k : K) (t : S LN) (X : Type) (γ1 γ2 : alist X),
       scoped S k t (domset γ2) ->
       scoped S k t (domset (γ1 ++ γ2)).
   Proof.
@@ -114,7 +118,7 @@ Section scope_lemmas.
 
   (** *** Strengthening *)
   (******************************************************************************)
-  Lemma scoped_stren_mid : forall (k : K) (t : S leaf) (X : Type) (γ1 γ2 : alist X) (x : atom) (x' : X),
+  Lemma scoped_stren_mid : forall (k : K) (t : S LN) (X : Type) (γ1 γ2 : alist X) (x : atom) (x' : X),
       scoped S k t (domset (γ1 ++ x ~ x' ++ γ2)) ->
       ~ x ∈@ (freeset S k t) ->
       scoped S k t (domset (γ1 ++ γ2)).
@@ -123,7 +127,7 @@ Section scope_lemmas.
     autorewrite with tea_rw_dom in *. fsetdec.
   Qed.
 
-  Corollary scoped_stren_l : forall (k : K) (t : S leaf) (X : Type) (γ : alist X) (x : atom) (x' : X),
+  Corollary scoped_stren_l : forall (k : K) (t : S LN) (X : Type) (γ : alist X) (x : atom) (x' : X),
       scoped S k t (domset (x ~ x' ++ γ)) ->
       ~ x ∈@ (freeset S k t) ->
       scoped S k t (domset γ).
@@ -132,7 +136,7 @@ Section scope_lemmas.
     eapply scoped_stren_mid; [apply Hscope | apply Hnotin].
   Qed.
 
-  Corollary scoped_stren_r : forall (k : K) (t : S leaf) (X : Type) (γ : alist X) (x : atom) (x' : X),
+  Corollary scoped_stren_r : forall (k : K) (t : S LN) (X : Type) (γ : alist X) (x : atom) (x' : X),
       scoped S k t (domset (γ ++ x ~ x')) ->
       ~ x ∈@ (freeset S k t) ->
       scoped S k t (domset γ).
@@ -144,7 +148,7 @@ Section scope_lemmas.
   (** *** Substitution *)
   (******************************************************************************)
   Lemma scoped_sub_eq_mid :
-    forall (k : K) (t1 : S leaf) (t2 : T k leaf)
+    forall (k : K) (t1 : S LN) (t2 : T k LN)
       (X : Type) (γ1 γ2 : alist X) (x : atom) (x' : X),
       scoped S k t1 (domset (γ1 ++ x ~ x' ++ γ2)) ->
       scoped (T k) k t2 (domset (γ1 ++ γ2)) ->
@@ -155,7 +159,7 @@ Section scope_lemmas.
   Qed.
 
   Corollary scoped_sub_eq_r :
-    forall (k : K) (t1 : S leaf) (t2 : T k leaf)
+    forall (k : K) (t1 : S LN) (t2 : T k LN)
       (X : Type) (γ1 : alist X) (x : atom) (x' : X),
       scoped S k t1 (domset (γ1 ++ x ~ x')) ->
       scoped (T k) k t2 (domset γ1) ->
@@ -168,7 +172,7 @@ Section scope_lemmas.
   Qed.
 
   Corollary scoped_sub_eq_l :
-    forall (k : K) (t1 : S leaf) (t2 : T k leaf)
+    forall (k : K) (t1 : S LN) (t2 : T k LN)
       (X : Type) (γ1 : alist X) (x : atom) (x' : X),
       scoped S k t1 (domset (x ~ x' ++ γ1)) ->
       scoped (T k) k t2 (domset γ1) ->
@@ -181,7 +185,7 @@ Section scope_lemmas.
   Qed.
 
   Lemma scoped_sub_neq :
-    forall (k1 k2 : K) (neq : k1 <> k2) (t1 : S leaf) (t2 : T k2 leaf)
+    forall (k1 k2 : K) (neq : k1 <> k2) (t1 : S LN) (t2 : T k2 LN)
       (X : Type) (γ : alist X) (x : atom),
       scoped S k1 t1 (domset γ) ->
       scoped (T k2) k1 t2 (domset γ) ->
@@ -194,7 +198,7 @@ Section scope_lemmas.
   (** *** Other *)
   (******************************************************************************)
   Lemma scoped_envmap :
-    forall (k : K) (t1 : S leaf) (X Y : Type) (γ1 : alist X) (f : X -> Y),
+    forall (k : K) (t1 : S LN) (X Y : Type) (γ1 : alist X) (f : X -> Y),
       scoped S k t1 (domset γ1) ->
       scoped S k t1 (domset (envmap f γ1)).
   Proof.
@@ -457,7 +461,7 @@ Qed.
 
 Lemma ok_type_ctx_binds : forall Δ Γ x τ,
     ok_type_ctx Δ Γ ->
-    (x, τ) ∈ Γ ->
+    (x, τ) ∈ (Γ : list (atom * typ LN)) ->
     ok_type Δ τ.
 Proof.
   introv Hok Hin. unfold ok_type_ctx, ok_type in *.
@@ -567,7 +571,7 @@ Qed.
 (******************************************************************************)
 Lemma ok_type_ctx_stren : forall Δ1 Δ2 x Γ,
     ok_type_ctx (Δ1 ++ x ~ tt ++ Δ2) Γ ->
-    (forall t : typ leaf, t ∈ range Γ -> ~ x ∈@ freeset typ KType t) ->
+    (forall t : typ LN, t ∈ range Γ -> ~ x ∈@ freeset typ KType t) ->
     ok_type_ctx (Δ1 ++ Δ2) Γ.
 Proof.
   introv [hunit hok] hfresh.
@@ -578,7 +582,7 @@ Qed.
 
 Corollary ok_type_ctx_stren1 : forall Δ x Γ,
     ok_type_ctx (Δ ++ x ~ tt) Γ ->
-    (forall t : typ leaf, t ∈ range Γ -> ~ x ∈@ freeset typ KType t) ->
+    (forall t : typ LN, t ∈ range Γ -> ~ x ∈@ freeset typ KType t) ->
     ok_type_ctx Δ Γ.
 Proof.
   introv hyp1 hyp2. change_alist (Δ ++ x ~ tt ++ []) in hyp1.

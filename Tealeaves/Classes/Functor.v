@@ -1,6 +1,6 @@
 (** This file implements the ordinary endofunctors of functional programming. *)
 From Tealeaves Require Export
-     Util.Prelude.
+     Prelude.
 
 #[local] Generalizable Variables F G A B.
 
