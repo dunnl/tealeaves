@@ -494,6 +494,13 @@ Section term_list_rewrite.
   Variable
     (A : Type).
 
+  Ltac solve_in_term :=
+    unfold_ops @Pure_const;
+    repeat rewrite (@fmap_const_spec (A -> Prop) _ _ (ret term));
+    simpl_monoid;
+    repeat rewrite (dtm2_helper);
+    try reflexivity.
+  
   Lemma tolist_term_1 : forall (x : A),
     tolist term (tvar x) = [x].
   Proof.
@@ -503,42 +510,36 @@ Section term_list_rewrite.
   Lemma tolist_term_2 : forall (X : typ) (t : term A),
     tolist term (lam X t) = tolist term t.
   Proof.
-    intros. cbn.
-    rewrite dtm2_helper.
+    intros. cbn. rewrite dtm2_helper.
     reflexivity.
   Qed.
 
   Lemma tolist_term_3 : forall (t1 t2 : term A),
       tolist term (app t1 t2) = tolist term t1 ++ tolist term t2.
   Proof.
-    reflexivity.
-  Qed.
+    reflexivity.      
+  Qed.    
 
   Lemma in_term_1 : forall (x y : A),
       x ∈ tvar y <-> x = y.
   Proof.
-    intros.
-    rewrite (in_iff_in_tolist term).
-    rewrite tolist_term_1.
-    now simpl_list.
+    intros. cbv. easy.
   Qed.
 
   Lemma in_term_2 : forall (y : A) (X : typ) (t : term A),
     y ∈ (lam X t) <-> y ∈ t.
   Proof.
-    intros.
-    do 2 rewrite (in_iff_in_tolist term).
-    rewrite tolist_term_2.
+    intros. cbn. rewrite dtm2_helper.
+    unfold_ops @Pure_const; simpl_monoid.
     reflexivity.
   Qed.
 
   Lemma in_term_3 : forall (t1 t2 : term A) (y : A),
       y ∈ (app t1 t2) <-> y ∈ t1 \/ y ∈ t2.
   Proof.
-    intros.
-    do 3 rewrite (in_iff_in_tolist term).
-    rewrite tolist_term_3.
-    now simpl_list.
+    intros. cbn.
+    unfold_ops @Pure_const; simpl_monoid.
+    reflexivity.
   Qed.
 
 End term_list_rewrite.
@@ -558,7 +559,8 @@ Section term_free_rewrite.
   Lemma term_free12 : forall (y : atom) (x : atom),
       x ∈ free term (tvar (Fr y)) <-> x = y.
   Proof.
-    intros. cbn. intuition.
+    intros. cbn.
+    intuition.
   Qed.
 
   Lemma term_free2 : forall (x : atom) (t : term LN) (X : typ),
@@ -657,6 +659,31 @@ Section term_foldMapd_rewrite.
 
 End term_foldMapd_rewrite.
 
+From Tealeaves Require Import Data.Prop.
+
+Section test.
+
+  Context
+    (A : Type).
+
+  Print Monoid_Morphism.
+
+  Check @Monoid_Morphism (A -> Prop) Prop (@Monoid_op_set A) Monoid_unit_set
+    Monoid_op_or Monoid_unit_false.
+  
+  #[export] Instance MonMor_evalAt :
+    forall (a : A), @Monoid_Morphism (A -> Prop) Prop (@Monoid_op_set A) Monoid_unit_set
+                 Monoid_op_or Monoid_unit_false (evalAt a).
+  Proof.
+    intros. constructor.
+    - typeclasses eauto.
+    - typeclasses eauto.
+    - reflexivity.
+    - reflexivity.
+  Qed.
+
+End test.
+
 (** ** Rewriting lemmas for <<∈d>> *)
 (******************************************************************************)
 Section term_ind_rewrite.
@@ -672,39 +699,37 @@ Section term_ind_rewrite.
   Qed.
 
   Lemma term_ind2 : forall (t : term LN) (l : LN) (n : nat) (X : typ),
-      (n, l) ∈d (λ X t) <-> (n - 1, l) ∈d t /\ n <> 0.
+      (n, l) ∈d t = (S n, l) ∈d (λ X t).
   Proof.
     introv. unfold_ops @Tosetd_Kleisli.
-    rewrite term_foldMapd2; try typeclasses eauto.
-    rewrite foldMapd_to_runBatch; try typeclasses eauto.
-    rewrite foldMapd_to_runBatch; try typeclasses eauto.
-    generalize dependent n.
-    induction (toBatchd term False t); intro n.
-    - cbn. unfold_ops @Pure_const. split.
-      inversion 1. intros [H _]. inversion H.
-    - cbn. unfold_ops @Monoid_op_set. unfold set_add.
-      split.
-      + intros [hyp|hyp].
-        { rewrite IHb in hyp. split; intuition. }
-        { clear IHb. unfold preincr, compose in hyp.
-          destruct x. cbn in hyp. inverts hyp. split.
-          - right. cbn. replace (n0 - 0) with n0 by lia.
-            easy.
-          - lia. }
-      + intros [[hyp1|hyp1] hyp2].
-        { rewrite IHb. now left. }
-        { destruct x as [xn xl]. right.
-          unfold preincr, compose, incr.
-          inverts hyp1. unfold_ops @Monoid_op_plus.
-          replace (1 + (n - 1))%nat with n by lia.
-          easy. }
+    cbn. unfold_ops @Pure_const. simpl_monoid.
+    change_right (foldMapd term (preincr 1 (ret (fun A : Type => A -> Prop))) t (S n, l)).
+    change (foldMapd term ?f ?t ?a) with ((evalAt a ∘ foldMapd term f) t).
+    rewrite (foldMapd_morphism term).
+    rewrite (foldMapd_morphism term).
+    fequal. ext [na la].
+    cbv. propext; inversion 1; now subst.
   Qed.
+  
+  Lemma term_ind2' : forall (t : term LN) (l : LN) (n : nat) (X : typ),
+      (n, l) ∈d (λ X t) = ((n - 1, l) ∈d t /\ n <> 0).
+  Proof.
+    introv. unfold_ops @Tosetd_Kleisli.
+    cbn. unfold_ops @Pure_const. simpl_monoid.
+    change_left (foldMapd term (preincr 1 (ret (fun A : Type => A -> Prop))) t (n, l)).
+    change (foldMapd term ?f ?t ?a) with ((evalAt a ∘ foldMapd term f) t).
+    rewrite (foldMapd_morphism term).
+    rewrite (foldMapd_morphism term).
+    propext.
+    - intros. split. admit. admit.
+    - admit.
+  Admitted.
 
   Lemma term_ind3 : forall (t1 t2 : term LN) (n : nat) (l : LN),
       (n, l) ∈d ([t1]@[t2]) <-> (n, l) ∈d t1 \/ (n, l) ∈d t2.
   Proof.
     introv. unfold_ops @Tosetd_Kleisli.
-    rewrite term_foldMapd3; try typeclasses eauto.
+    cbn. unfold_ops @Pure_const. simpl_monoid.
     reflexivity.
   Qed.
 
@@ -739,7 +764,7 @@ Theorem term_lc_gap2 : forall (X : typ) (t : term LN) (m : nat),
     locally_closed_gap term m (lam X t) <-> locally_closed_gap term (S m) t.
 Proof.
   intros. unfold locally_closed, locally_closed_gap.
-  setoid_rewrite term_ind2. split.
+  setoid_rewrite term_ind2'. split.
   - introv premise hypothesis. destruct l; [easy|].
     cbn. specialize (premise (S w) (Bd n)).
     cbn in premise.
