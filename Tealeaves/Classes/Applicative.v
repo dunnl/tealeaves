@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Basics
+  Prelude
   Data.Product
   Classes.Functor
   Functors.Identity

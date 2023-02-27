@@ -16,7 +16,7 @@ Import Multisorted.Classes.DTM.Notations.
 Import Setlike.Functor.Notations.
 Import List.ListNotations.
 
-Import Tactics.CompareNats.
+Import Prelude.
 
 Create HintDb sysf_rw.
 Tactic Notation "simpl_F" := autorewrite with sysf_rw.

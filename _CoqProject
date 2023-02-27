@@ -1,11 +1,7 @@
 -R Tealeaves/ Tealeaves
 
+Tealeaves/LibTactics.v
 Tealeaves/Axioms.v
-Tealeaves/Basics.v
-Tealeaves/Tactics/LibTactics.v
-Tealeaves/Tactics/Rewriting.v
-Tealeaves/Tactics/Unfolding.v
-Tealeaves/Tactics/CompareNats.v
 Tealeaves/Prelude.v
 Tealeaves/Data/Product.v
 Tealeaves/Classes/EqDec_eq.v
