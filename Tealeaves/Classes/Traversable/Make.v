@@ -4,7 +4,9 @@ From Tealeaves Require Export
   Classes.Traversable.Functor
   Functors.Batch.
 
-#[local] Generalizable Variables T G A M.
+#[local] Generalizable Variables T G A M F.
+
+Import Applicative.Notations.
 
 (** ** Misc *)
 (******************************************************************************)
@@ -14,23 +16,60 @@ Fixpoint batch_length {A B C : Type} (b : Batch A B C) : nat :=
   | Step b' rest => S (batch_length b')
   end.
 
-(** ** varargs and Vector *)
+(** ** Misc *)
+(******************************************************************************)
+Section direct.
+
+  Context
+    `{Applicative G}
+      (A : Type).
+
+  Section fns.
+
+    Definition sigcons : forall (l : list A) (a : A),
+        {la : list A & length la = length l} ->
+        {la : list A & length la = S (length l)}.
+    Proof.
+      intros. destruct X.
+      apply (existT _ (cons a x)).
+      cbn. auto.
+    Defined.
+    
+    Definition sigcons2 : forall (a : A) (l : list A),
+        {la : list A & length la = S (length l)}.
+    Proof.
+      intros. refine (existT _ (cons a l) _).
+      reflexivity.
+    Defined.
+    
+    Context
+      (l : list (G A)).
+
+  Definition discard : {la : list A & length la = length l} -> list A.
+  Proof.
+    Search sigT.
+    apply projT1.
+  Defined.
+  
+  Definition test :  G ({la : list A & length la = length l}).
+  Proof.
+    intros. destruct l.
+    - apply (pure G (existT (fun la : list A => eq (length la) (length nil)) nil eq_refl)).
+    - cbn.
+      Check (ap G (pure G (sigcons2)) g).
+      Check (ap G (pure G (@cons A) <⋆> g) (dist list G l0)).
+  Admitted.
+
+  End fns.
+
+End direct.
+
+(** ** varargs *)
 (******************************************************************************)
 Fixpoint varargs (n : nat) (A : Type) (C : Type) :=
   match n with
   | 0 => C
   | S m => A -> varargs m A C
-  end.
-
-Inductive Vector (n : nat)  (A : Type) : Type :=
-| MkVec : forall (l : list A), length l = n -> Vector n A.
-
-Definition vcons (n : nat) (A : Type) (a : A) (v : Vector n A) : Vector (S n) A :=
-  match v with
-  | MkVec _ _ l len =>
-      MkVec (S n) A (a :: l) (match len with
-                             | eq_refl => eq_refl
-                             end)
   end.
 
 Definition vargs_cons1 : forall A C (n : nat), varargs n A (A -> C) = (A -> varargs n A C).
@@ -47,6 +86,75 @@ Proof.
   - cbn. now rewrite IHn.
 Defined.
 
+(** ** Vector *)
+(******************************************************************************)
+Inductive Vector (n : nat)  (A : Type) : Type :=
+| MkVec : forall (l : list A), length l = n -> Vector n A.
+
+Definition vcons (n : nat) (A : Type) (a : A) (v : Vector n A) : Vector (S n) A :=
+  match v with
+  | MkVec _ _ l len =>
+      MkVec (S n) A (a :: l) (match len with
+                             | eq_refl => eq_refl
+                             end)
+  end.
+
+Section Vector_dist.
+
+  Lemma length_fmap_list : forall (A B : Type) (f : A -> B) (l : list A),
+      length l = length (fmap list f l).
+  Proof.
+    intros. induction l.
+    - cbn. reflexivity.
+    - cbn. fequal. auto.
+  Defined.
+
+  Variable (n : nat).
+
+  #[export] Instance Fmap_Vector : Fmap (Vector n).
+  refine (fun A B f Vk =>
+            match Vk with
+            | MkVec _ _ l len => MkVec n B (fmap list f l) _
+            end).
+  rewrite <- length_fmap_list. auto.
+  Defined.
+  
+  Lemma key_step : forall `{Fmap G} `{Mult G} `{Pure G} (A : Type),
+    forall (l : list (G A)), G (Vector (length l) A).
+  Proof.
+    intros. induction l.
+    - cbn. apply (pure G (MkVec 0 A nil eq_refl)).
+    - cbn. apply (ap G ((pure G (vcons (length l) A) <⋆> a)) IHl).
+  Defined.
+        
+  #[export] Instance Dist_Vector : Dist (Vector n).
+  Proof.
+    intro G. intros.
+    destruct X.
+    destruct l.
+    - subst. cbn. apply (pure G (MkVec 0 A nil eq_refl)).
+    - subst. cbn. Check (pure G (vcons (length l) A) <⋆> g).
+      apply (ap G ((pure G (vcons (length l) A) <⋆> g))).
+      apply (key_step A l).
+  Defined.
+
+(*
+  Instance Dist_Vector : Dist (Vector n).
+  refine (fun G map mlt pur A (v : Vector n (G A)) =>
+      match v with
+      | MkVec _ _ l len =>
+          match l return (length l = n -> G (Vector n A)) with
+          | nil => fun pf => pure G (MkVec n A nil pf)
+          | cons x xs => fun pf => _ pf
+              (* fun pf => _ (pure G (vcons (length xs) A) <⋆> x) *)
+          end len
+      end).
+ *)
+  
+End Vector_dist.
+
+(** ** Vector and vargs *)
+(******************************************************************************)
 Definition apply_make : forall (n : nat) (A C : Type),
     varargs n A C -> Vector n A -> C.
 Proof.
@@ -69,6 +177,13 @@ Record Repr (n : nat) (A B C : Type) :=
     make : varargs n B C
   }.
 
+Section Repr_split.
+
+  Context
+    (n : nat) (A B C : Type).
+  
+End Repr_split.
+
 Section Repr_traversable.
 
   Context
@@ -80,8 +195,11 @@ Section Repr_traversable.
   Definition traverse_Repr : forall (f : A -> F B), Repr n A B C -> F (Repr n A B C).
     intros.
     induction X.
-    -
-
+    Check dist (Vector n) F (fmap (Vector n) f contents0).
+    Check (pure F (apply_make n B C make0)).
+    Check (pure F (apply_make n B C make0) <⋆>  dist (Vector n) F (fmap (Vector n) f contents0)).
+  Abort.
+  
 Section Batch_To_Repr.
 
   Context
@@ -122,7 +240,43 @@ Section Batch_To_Repr.
           |}
       end) A B C bat.
 
+  (*
+  Definition Repr_To_Batch {A B C : Type} (bat : Batch A B C) : Repr (batch_length bat) A B C :=
+    (fix F (A B C : Type) (b : Batch A B C) :=
+      match b in (Batch _ _ _) return Repr (batch_length b) A B C with
+            | Done c => {| contents := MkVec 0 A (@nil A) eq_refl;
+                          make := c
+                       |}
+      | Step rest a =>
+          {| contents := vcons (batch_length rest) A a
+                           (contents (batch_length rest) A B (B -> C) (F A B (B -> C) rest));
+            make := (@eq_rect Type (varargs (batch_length rest) B (B -> C))
+                       (fun A => A) (make (batch_length rest) A B (B -> C) (F A B (B -> C) rest))
+                       _ (vargs_cons2 _ _ _))
+          |}
+      end) A B C bat.
+*)
+
 End Batch_To_Repr.
+
+End Repr_traversable.
+
+Section Batch_vs_Repr.
+
+  Context
+    (A B : Type)
+    `{Applicative F}
+    (f : A -> F B).
+
+  Lemma equal : forall n C (b : Batch A B C) (x : Repr n A B C), b = b.
+  Proof.
+    intros.
+    Check runBatch f b.
+
+    Check traverse_to_runBatch.
+    
+    Set Printing All.
+    About traverse_to_runBatch. 
 
 (*
 Definition Make (n : nat) (A : Type) (C : Type) := Package n A -> C.
