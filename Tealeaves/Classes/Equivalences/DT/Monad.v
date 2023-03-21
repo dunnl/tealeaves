@@ -8,7 +8,7 @@ From Tealeaves.Classes Require Export
   DT.Functor
   DT.Monad.
 
-From Tealeaves.Classes.Kleisli Require Export  
+From Tealeaves.Classes.Kleisli Require Export
   Monad
   Decorated.Functor
   Decorated.Monad
@@ -521,8 +521,8 @@ Module KleisliToAlgebraic.
     rewrite (kdtm_binddt2 W T _ _ _ (G1 := G) (G2 := fun A => A)).
     change_left (binddt T G f).
     fequal. now rewrite Mult_compose_identity1.
-    change_right (id ∘ extract (prod W) ⋆dtm fmap G (ret T) ∘ f).
-    rewrite (Derived.dtm_kleisli_37 W T).
+    change (extract (A := ?A) (W ×)) with (id ∘ extract (A := A) (W ×)).
+    rewrite (Derived.dtm_kleisli_37 W T (A := A) (C := B) (B := T B) (G2 := fun A => A)).
     rewrite (@Traversable.Monad.Derived.kcompose_tm21 T _ _ _ G); [|assumption].
     rewrite (fun_fmap_id G).
     reflexivity.
