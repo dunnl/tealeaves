@@ -1715,9 +1715,9 @@ Section open_metatheory.
     rewrite (mbind_to_mbindd S), (mbindd_mbindd S).
     rewrite (mbindd_mbindd S). fequal.
     pose (lemma := subst_open_neq_loc).
-    unfold compose_dm in lemma. rewrite <- lemma; auto.
+    unfold compose_dm in lemma. setoid_rewrite <- lemma; auto.
     ext k [w a]. fequal. ext j [w' a']. compare values j and k2.
-    + rewrite btgd_eq, btg_eq. reflexivity.
+    + rewrite btgd_eq, btg_eq. cbn. reflexivity.
     + rewrite btgd_neq, btg_neq; auto.
   Qed.
 
