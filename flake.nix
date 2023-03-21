@@ -6,7 +6,7 @@
   outputs = { self, nixpkgs }: {
 
     packages.x86_64-linux.default =
-      let pkgs = nixpkgs { system = "x86_64-linux"; };
+      let pkgs = import nixpkgs { system = "x86_64-linux"; };
       in pkgs.coqPackages.mkCoqDerivation {
         pname = "tealeaves";
         owner = "dunnl";
@@ -27,9 +27,9 @@
             for extrinsically typed first-order abstract syntax.
           '';
         homepage = https://tealeaves.science;
-        license = lib.licenses.mit;
+        license = pkgs.lib.licenses.mit;
         };
       };
-  }
+  };
 }
 
