@@ -500,7 +500,7 @@ Section term_list_rewrite.
     simpl_monoid;
     repeat rewrite (dtm2_helper);
     try reflexivity.
-  
+
   Lemma tolist_term_1 : forall (x : A),
     tolist term (tvar x) = [x].
   Proof.
@@ -517,8 +517,8 @@ Section term_list_rewrite.
   Lemma tolist_term_3 : forall (t1 t2 : term A),
       tolist term (app t1 t2) = tolist term t1 ++ tolist term t2.
   Proof.
-    reflexivity.      
-  Qed.    
+    reflexivity.
+  Qed.
 
   Lemma in_term_1 : forall (x y : A),
       x ∈ tvar y <-> x = y.
@@ -666,11 +666,9 @@ Section test.
   Context
     (A : Type).
 
-  Print Monoid_Morphism.
-
   Check @Monoid_Morphism (A -> Prop) Prop (@Monoid_op_set A) Monoid_unit_set
     Monoid_op_or Monoid_unit_false.
-  
+
   #[export] Instance MonMor_evalAt :
     forall (a : A), @Monoid_Morphism (A -> Prop) Prop (@Monoid_op_set A) Monoid_unit_set
                  Monoid_op_or Monoid_unit_false (evalAt a).
@@ -710,7 +708,7 @@ Section term_ind_rewrite.
     fequal. ext [na la].
     cbv. propext; inversion 1; now subst.
   Qed.
-  
+
   Lemma term_ind2' : forall (t : term LN) (l : LN) (n : nat) (X : typ),
       (n, l) ∈d (λ X t) = ((n - 1, l) ∈d t /\ n <> 0).
   Proof.
