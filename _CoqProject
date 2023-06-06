@@ -91,12 +91,3 @@ Tealeaves/Classes/Equivalences/Traversable/Functor.v
 Tealeaves/Classes/Equivalences/Traversable/Monad.v
 Tealeaves/Classes/Equivalences/DT/Functor.v
 Tealeaves/Classes/Equivalences/DT/Monad.v
-
-# KLEISLI LEMMAS BUILT FROM ALGEBRAIC AXIOMS
-#Tealeaves/Theory/Algebraic/Monad/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/Decorated/Functor/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/Decorated/Monad/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/Traversable/Functor/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/Traversable/Monad/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/DT/Functor/KleisliTheory.v
-#Tealeaves/Theory/Algebraic/DT/Monad/KleisliTheory.v
