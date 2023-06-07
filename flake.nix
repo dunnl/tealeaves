@@ -3,33 +3,23 @@
 
   inputs.nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
 
-  outputs = { self, nixpkgs }: {
-
-    packages.x86_64-linux.default =
-      let pkgs = import nixpkgs { system = "x86_64-linux"; };
-      in pkgs.coqPackages.mkCoqDerivation {
-        pname = "tealeaves";
-        owner = "dunnl";
-        version = ./.;
-        src = pkgs.nix-gitignore.gitignoreSource ["*.nix"] ./.;
-        nativeBuildInputs = [
-          pkgs.coq
-          pkgs.ocaml # `ocaml` is needed for `ocamldoc`, which is needed to make Makefile.coq happy
-        ];
-        propagatedBuildInputs =
-          [ ];
-        installTargets = "install install-doc";
-        extraInstallFlags = ["DOCDIR=$(out)/share/coq/${pkgs.coq.coq-version}/"];
-        meta = {
-          description = "A Coq framework for reusable syntax metatheory.";
-          longDescription = ''
-            Tealeaves is a Coq framework for building reusable metatheory
-            for extrinsically typed first-order abstract syntax.
-          '';
-        homepage = https://tealeaves.science;
-        license = pkgs.lib.licenses.mit;
+  outputs = { self, nixpkgs }:
+    let pkgs = import nixpkgs {
+          system = "x86_64-linux";
         };
-      };
-  };
+        tealeaves = pkgs.callPackage ./tealeaves.nix {
+          version = "dunnl:master";
+          coq = pkgs.coq;
+          mkCoqDerivation = pkgs.coqPackages.mkCoqDerivation;
+        };
+        tealeaves-examples = pkgs.callPackage ./tealeaves-examples.nix {
+          inherit (pkgs.coqPackages) serapi;
+          inherit tealeaves;
+        };
+    in { packages.x86_64-linux.default = tealeaves;
+         packages.x86_64-linux.tealeaves = tealeaves;
+         packages.x86_64-linux.tealeaves-examples = tealeaves-examples;
+         devShells.x86_64-linux.default = tealeaves;
+         devShells.x86_64-linux.examples = tealeaves-examples;
+       };
 }
-

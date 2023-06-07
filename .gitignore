@@ -15,3 +15,5 @@ html
 result
 # Everything in the ~ignore/~ directory
 ignore/
+# Ignore result of building examples with alectryon
+html-examples/

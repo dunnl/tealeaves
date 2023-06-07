@@ -1,10 +1,10 @@
-EXTRA_DIR:=extra
+COQDOC_EXTRA_DIR:=extra/CoqdocJS
 COQDOCFLAGS:= \
   --external 'http://ssr2.msr-inria.inria.fr/doc/ssreflect-1.5/' Ssreflect \
   --external 'http://ssr2.msr-inria.inria.fr/doc/mathcomp-1.5/' MathComp \
   --toc --toc-depth 2 --html --interpolate \
   --index indexpage --no-lib-name --parse-comments \
-  --with-header $(EXTRA_DIR)/header.html --with-footer $(EXTRA_DIR)/footer.html
+  --with-header $(COQDOC_EXTRA_DIR)/header.html --with-footer $(COQDOC_EXTRA_DIR)/footer.html
 export COQDOCFLAGS
 COQMAKEFILE:=Makefile.coq
 COQ_PROJ:=_CoqProject
@@ -20,7 +20,7 @@ clean: $(COQMAKEFILE)
 html: $(COQMAKEFILE) $(VS)
 	rm -fr html
 	@$(MAKE) -f $(COQMAKEFILE) $@
-	cp $(EXTRA_DIR)/resources/* html
+	cp $(COQDOC_EXTRA_DIR)/resources/* html
 
 #alectryon: $(COQMAKEFILE) $(COQMF_VFILES)
 #	rm -fr html-alectryon
