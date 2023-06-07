@@ -1,602 +1,730 @@
 From Tealeaves Require Export
-  Classes.Monad
-  Classes.Traversable.Functor.
+  Classes.Monoid
+  Classes.Applicative
+  Classes.Monad.
 
-Import Functor.Notations.
-Import Monad.Notations.
-Import Applicative.Notations.
+#[local] Generalizable Variables T G A B C ϕ M.
 
-#[local] Generalizable Variables F G T A B.
-
-(** * Traversable monads *)
-(******************************************************************************)
-Section TraversableMonad.
+Section operations.
 
   Context
     (T : Type -> Type)
-    `{Fmap T} `{Return T} `{Join T} `{Dist T}.
+    (F : Type -> Type).
 
-  Class TraversableMonad :=
-    { trvmon_monad :> Monad T;
-      trvmon_functor :> TraversableFunctor T;
-      trvmon_ret : forall `{Applicative G},
-          `(dist T G ∘ ret T (A := G A) = fmap G (ret T));
-      trvmon_join : forall `{Applicative G},
-          `(dist T G ∘ join T = fmap G (join T) ∘ dist (T ∘ T) G (A := A));
+  Class Bindt :=
+    bindt : forall (G : Type -> Type) (A B : Type) `{Fmap G} `{Pure G} `{Mult G},
+        (A -> G (T B)) -> F A -> G (F B).
+
+End operations.
+
+Definition kcompose_tm
+  {A B C : Type}
+  `{Fmap G1} `{Pure G1} `{Mult G1}
+  `{Fmap G2} `{Pure G2} `{Mult G2}
+  `{Bindt T T} :
+  (B -> G2 (T C)) ->
+  (A -> G1 (T B)) ->
+  (A -> G1 (G2 (T C))) :=
+  fun g f => fmap G1 (bindt T T G2 B C g) ∘ f.
+
+#[local] Infix "⋆tm" := kcompose_tm (at level 60) : tealeaves_scope.
+
+Section class.
+
+  Context
+    (T : Type -> Type)
+    `{Return T}
+    `{Bindt T T}.
+
+  Class Monad :=
+    { ktm_bindt0 : forall (A B : Type) `{Applicative G} (f : A -> G (T B)),
+        bindt T T G A B f ∘ ret T = f;
+      ktm_bindt1 : forall (A : Type),
+        bindt T T (fun A => A) A A (ret T) = @id (T A);
+      ktm_bindt2 : forall (A B C : Type) `{Applicative G1} `{Applicative G2}
+        (g : B -> G2 (T C)) (f : A -> G1 (T B)),
+        fmap G1 (bindt T T G2 B C g) ∘ bindt T T G1 A B f =
+          bindt T T (G1 ∘ G2) A C (g ⋆tm f);
+      ktm_morph : forall `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : A -> G1 (T B)),
+          ϕ (T B) ∘ bindt T T G1 A B f = bindt T T G2 A B (ϕ (T B) ∘ f);
     }.
 
-End TraversableMonad.
+End class.
 
-(** * The monad operations as <<traverse>>-respecting morphisms *)
-(******************************************************************************)
-Section traverable_monad_theory.
+#[global] Arguments bindt {T}%function_scope (F)%function_scope
+  {Bindt} G%function_scope {A B}%type_scope {H H0 H1} _%function_scope _.
+
+Module Notations.
+
+  Infix "⋆tm" := kcompose_tm (at level 60) : tealeaves_scope.
+
+End Notations.
+
+Section with_kleisli.
 
   Context
     (T : Type -> Type)
-    `{TraversableMonad T}.
+    `{Monad T}.
 
-  Lemma dist_ret_spec :
-    TraversableMorphism (T := (fun A => A)) (U := T) (@ret T _).
+  Lemma kcompose_tm_ret : forall `{Applicative G1} `{Applicative G2} `(g : B -> G2 C) `(f : A -> G1 B),
+      (fmap G2 (ret T) ∘ g) ⋆tm (fmap G1 (ret T) ∘ f) = fmap (G1 ∘ G2) (ret T) ∘ (fmap G1 g ∘ f).
   Proof.
-    constructor; try typeclasses eauto.
-    intros. now rewrite (trvmon_ret T).
+    intros. unfold_ops @Fmap_compose.
+    reassociate <- on right. unfold_compose_in_compose.
+    rewrite (fun_fmap_fmap G1).
+    unfold kcompose_tm. reassociate <- on left.
+    rewrite (fun_fmap_fmap G1).
+    rewrite (ktm_bindt0 T); auto.
   Qed.
 
-  Lemma dist_join_spec :
-      TraversableMorphism (T := T ∘ T) (U := T) (@join T _).
+  Corollary kcompose_tm_ret_I : forall `(g : B -> C) `(f : A -> B),
+      (ret T ∘ g) ⋆tm (ret T ∘ f) = ret T ∘ (g ∘ f).
   Proof.
-    constructor; try typeclasses eauto.
-    intros. now rewrite <- (trvmon_join T).
+    intros. change (@ret T _ C) with (fmap (fun A => A) (@ret T _ C)).
+    change (@ret T _ B) with (fmap (fun A => A) (@ret T _ B)).
+    rewrite (kcompose_tm_ret (G2 := fun A => A) (G1 := fun A => A)).
+    reflexivity.
   Qed.
 
-End traverable_monad_theory.
+  Lemma kcompose_tm_ret2 : forall `{Applicative G2} `(g : B -> G2 (T C)) `(f : A -> B),
+      g ⋆tm ret T ∘ f = g ∘ f.
+  Proof.
+    intros. unfold kcompose_tm.
+    reassociate <- on left. change (fmap (fun A => A) ?g) with g.
+    now rewrite (ktm_bindt0 T).
+  Qed.
 
-From Tealeaves Require Kleisli.Traversable.Monad.
-
-(** * Algebraic traversable monads to Kleisli traversable monads *)
-(******************************************************************************)
-
-Module ToKleisli.
-
-  Import Kleisli.Traversable.Monad.
-
-  Section operation.
-
-    Context
-      (T : Type -> Type)
-      `{Fmap T} `{Join T} `{Dist T}.
-
-    #[export] Instance Bindt_distjoin : Bindt T T :=
-      fun (G : Type -> Type) (A B : Type) _ _ _ (f : A -> G (T B)) =>
-        fmap G (join T) ∘ dist T G ∘ fmap T f.
-
-  End operation.
-
-  Import Setlike.Functor.Notations.
-  Import Kleisli.Traversable.Monad.Notations.
-  Import Classes.Traversable.Functor.ToKleisli.
-
-  Section with_monad.
-
-    Context
-      (T : Type -> Type)
-      `{Classes.Traversable.Monad.TraversableMonad T}.
-
-    (** *** Identity law *)
-    (******************************************************************************)
-    Lemma ktm_bindt1_T :
-      forall (A : Type), bindt T (fun A => A) (ret T) = @id (T A).
-    Proof.
-      intros. unfold bindt. unfold_ops @Bindt_distjoin.
-      unfold_ops @Fmap_I. rewrite (dist_unit T).
-      change (?g ∘ id ∘ ?f) with (g ∘ f).
-      now rewrite (mon_join_fmap_ret T).
-    Qed.
-
-
-    (** *** Composition law *)
-    (******************************************************************************)
-    Lemma ktm_bindt2_T : forall
-        (A B C : Type)
-        (G1 : Type -> Type) `{Fmap G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
-        (G2 : Type -> Type) `{Fmap G2} `{Pure G2} `{Mult G2} `{! Applicative G2}
-        (g : B -> G2 (T C)) (f : A -> G1 (T B)),
-        fmap G1 (bindt T G2 g) ∘ bindt T G1 f =
-          bindt T (G1 ∘ G2) (g ⋆tm f).
-    Proof.
-      intros. unfold bindt at 1 2 3.
-      unfold_ops @Bindt_distjoin.
-      reassociate -> on right. repeat reassociate <-.
-      rewrite (fun_fmap_fmap G1).
-      reassociate -> near (join T). rewrite (natural (ϕ := @join T _)).
-      reassociate <-. reassociate -> near (join T).
-      rewrite (trvmon_join T). reassociate <-.
-      rewrite (fun_fmap_fmap G2). rewrite (mon_join_join T).
-      rewrite <- (fun_fmap_fmap G1).
-      reassociate -> near (dist T G1).
-      change (fmap G1 (fmap (T ∘ T) g) ∘ dist T G1)
-        with (fmap (G1 ∘ T) (fmap T g) ∘ dist T G1).
-      #[local] Set Keyed Unification.
-      rewrite (natural (ϕ := @dist T _ G1 _ _ _)).
-      #[local] Unset Keyed Unification.
-      reassociate <-. rewrite <- (fun_fmap_fmap G1).
-      reassociate -> near (dist T G1).
-      unfold_ops @Dist_compose.
-      rewrite <- (fun_fmap_fmap G1).
-      reassociate <-. reassociate -> near (dist T G1).
-      change (fmap G1 (fmap T (dist (A:=?A) T G2)))
-        with (fmap (G1 ∘ T) (dist (A:=A) T G2)).
-      reassociate -> near (dist T G1).
-      #[local] Set Keyed Unification.
-      rewrite (natural (ϕ := @dist T _ G1 _ _ _)).
-      #[local] Unset Keyed Unification.
-      repeat reassociate <-. reassociate -> near (dist T G1).
-      rewrite <- (dist_linear T).
-      change (fmap G1 (fmap G2 ?f)) with (fmap (G1 ∘ G2) f).
-      rewrite <- (fun_fmap_fmap (G1 ∘ G2)).
-      reassociate -> near (dist T (G1 ∘ G2)).
-      change (fmap (G1 ∘ G2) (fmap T ?f)) with (fmap ((G1 ∘ G2) ∘ T) f).
-      #[local] Set Keyed Unification.
-      rewrite (natural (ϕ := @dist T _ (G1 ∘ G2) _ _ _)).
-      reassociate <-. reassociate -> near (fmap T f).
-      rewrite (fun_fmap_fmap T).
-      reassociate -> near (fmap T (fmap G1 (fmap T g) ∘ f)).
-      rewrite (fun_fmap_fmap T).
-      reassociate ->.
-      reassociate ->.
-      rewrite (fun_fmap_fmap T).
-      reassociate <-.
-      reassociate <-.
-      rewrite (fun_fmap_fmap G1).
-      reassociate <-.
-      rewrite (fun_fmap_fmap G1).
-      #[local] Unset Keyed Unification.
-      reflexivity.
-    Qed.
-
-    (** *** Unit law *)
-    (******************************************************************************)
-    Lemma ktm_bindt0_T : forall
-        (A B: Type)
-        (G1 : Type -> Type) `{Fmap G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
-        (f : A -> G1 (T B)),
-        bindt T G1 f ∘ ret T = f.
-    Proof.
-      intros. unfold_ops @Bindt_distjoin.
-      reassociate -> on left.
-      rewrite (natural (Natural := mon_ret_natural T)).
-      unfold_ops @Fmap_I.
-      reassociate <-; reassociate -> near (ret T).
-      rewrite (trvmon_ret T).
-      rewrite (fun_fmap_fmap G1).
-      rewrite (mon_join_ret T).
-      now rewrite (fun_fmap_id G1).
-    Qed.
-
-    (** *** Morphism law *)
-    (******************************************************************************)
-    Lemma ktm_morph_T : forall
-        (G1 G2 : Type -> Type) `{Fmap G1} `{Pure G1} `{Mult G1}
-        `{Fmap G2} `{Pure G2} `{Mult G2}
-        (ϕ : forall A : Type, G1 A -> G2 A),
-        ApplicativeMorphism G1 G2 ϕ ->
-        forall (A B : Type) (f : A -> G1 (T B)), ϕ (T B) ∘ bindt T G1 f = bindt T G2 (ϕ (T B) ∘ f).
-    Proof.
-      introv morph.
-      inversion morph. intros.
-      unfold_ops @Bindt_distjoin.
-      do 2 reassociate <- on left.
-      unfold compose. ext a.
-      rewrite (appmor_natural _ (T B) (join T)).
-      unfold compose. compose near (fmap T f a).
-      rewrite <- (dist_morph T).
-      unfold compose. compose near a on left.
-      rewrite (fun_fmap_fmap T).
-      reflexivity.
-    Qed.
-
-    (** *** Purity law *)
-    (******************************************************************************)
-    Theorem bindt_purity_T
-      `{Applicative G1} `{Applicative G2} : forall `(f : A -> G1 (T B)),
-        bindt T (G2 ∘ G1) (pure G2 ∘ f) = pure G2 ∘ bindt T G1 f.
-    Proof.
-      intros. unfold_ops @Bindt_distjoin.
-      reassociate -> on left.
-      rewrite (fmap_purity_2 T (G2 := G2) f).
-      do 2 reassociate <- on left.
-      do 2 reassociate <- on right.
-      do 2 fequal.
-      unfold_ops @Fmap_compose.
-      ext t; unfold compose.
-      now rewrite (app_pure_natural G2).
-    Qed.
-
-    #[export] Instance TravMon_ToKleisli: Kleisli.Traversable.Monad.Monad T :=
-      {| ktm_bindt0 := @ktm_bindt0_T;
-        ktm_bindt1 := @ktm_bindt1_T;
-        ktm_bindt2 := @ktm_bindt2_T;
-        ktm_morph := @ktm_morph_T;
-      |}.
-
-  End with_monad.
-
-End ToKleisli.
+End with_kleisli.
 
 From Tealeaves Require Import
-  Functors.List.
+  Kleisli.Monad
+  Kleisli.Traversable.Functor.
 
-(** * Traversable monad instance for [list] *)
+Import Kleisli.Monad.Notations.
+
+(** * Derived instances *)
 (******************************************************************************)
-Section TraversableMonad_list.
+Module Derived.
 
-  Section with_context.
+  Section operations.
 
-  Context
-    `{Applicative G}
-    {A : Type}.
+    Context
+      (T : Type -> Type)
+      `{Bindt T T}
+      `{Return T}.
 
-  Theorem trvmon_ret_list :
-    `(dist list G ∘ ret list (A := G A) = fmap G (ret list)).
+    #[export] Instance Fmap_Bindt : Fmap T :=
+      fun (A B : Type) (f : A -> B) => bindt T (fun A => A) (ret T ∘ f).
+    #[export] Instance Bind_Bindt: Bind T T :=
+      fun A B f => bindt T (fun A => A) f.
+    #[export] Instance Traverse_Bindt: Traverse T :=
+      fun G _ _ _ A B f => bindt T G (fmap G (ret T) ∘ f).
+
+  End operations.
+
+  Section special_cases.
+
+    Context
+      (W : Type)
+      (T : Type -> Type)
+      `{Return T}
+      `{Bindt T T}
+      `{Applicative G}.
+
+    (** *** Rewriting rules for special cases of <<bindt>> *)
+    (******************************************************************************)
+    Lemma bind_to_bindt `(f : A -> T B):
+      bind T f = bindt T (fun A => A) f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma traverse_to_bindt `(f : A -> G B):
+      traverse T G f = bindt T G (fmap G (ret T) ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma fmapt_to_bindt `(f : A -> G B):
+      traverse T G f = bindt T G (fmap G (ret T) ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma fmap_to_bindt `(f : A -> B):
+      fmap T f = bindt T (fun A => A) (ret T ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** *** Rewriting rules for special cases of <<fmapt>> *)
+    (******************************************************************************)
+    Lemma fmap_to_fmapt `(f : A -> B):
+      fmap T f = traverse T (fun A => A) f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** *** Rewriting rules for special cases of <<bind>> *)
+    (******************************************************************************)
+    Lemma fmap_to_bind `(f : A -> B):
+      fmap T f = bind T (ret T ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+  End special_cases.
+
+  Section with_kleisli.
+
+    Context
+      (T : Type -> Type)
+      `{Kleisli.Traversable.Monad.Monad T}.
+
+    (** *** Functor instance *)
+    (******************************************************************************)
+    Lemma fmap_id : forall (A : Type),
+        fmap T (@id A) = @id (T A).
+    Proof.
+      intros. unfold_ops @Fmap_Bindt.
+      change (?g ∘ id) with g.
+      now rewrite (ktm_bindt1 T).
+    Qed.
+
+    Lemma fmap_fmap : forall (A B C : Type) (f : A -> B) (g : B -> C),
+        fmap T g ∘ fmap T f = fmap T (g ∘ f).
+    Proof.
+      intros. unfold_ops @Fmap_Bindt.
+      change (bindt T (fun A : Type => A) (ret T ∘ g))
+        with (fmap (fun A => A) (bindt T (fun A => A) (ret T ∘ g))).
+      rewrite (ktm_bindt2 T _ _ _ (G1 := fun A => A) (G2 := fun A => A));
+        try typeclasses eauto.
+      fequal. now rewrite Mult_compose_identity1.
+      rewrite kcompose_tm_ret_I; auto.
+    Qed.
+
+    #[export] Instance: Classes.Functor.Functor T :=
+      {| fun_fmap_id := fmap_id;
+        fun_fmap_fmap := fmap_fmap;
+      |}.
+
+    (** *** Monad instance *)
+    (******************************************************************************)
+    #[export] Instance: Kleisli.Monad.Monad T.
+    Proof.
+      constructor; unfold_ops @Bind_Bindt.
+      - intros. now rewrite (ktm_bindt0 T _ _ (G := fun A => A)).
+      - intros. now rewrite (ktm_bindt1 T).
+      - intros.
+        change_left (fmap (fun A => A) (bindt T (fun A0 : Type => A0) g) ∘ bindt T (fun A0 : Type => A0) f).
+        rewrite (ktm_bindt2 T _ _ _ (G2 := fun A => A) (G1 := fun A => A)).
+        fequal. now rewrite Mult_compose_identity1.
+    Qed.
+
+    (** *** Traversable functor instance *)
+    (******************************************************************************)
+    #[export] Instance: Kleisli.Traversable.Functor.TraversableFunctor T.
+    Proof.
+      constructor; unfold_ops @Traverse_Bindt.
+      - intros. change (?g ∘ id) with g.
+        change (fmap (fun A => A) ?g) with g.
+        now rewrite (ktm_bindt1 T).
+      - intros. rewrite (ktm_bindt2 T); auto.
+        rewrite kcompose_tm_ret; auto.
+      - intros. rewrite (ktm_morph T); auto. reassociate <-.
+        fequal. unfold compose. ext a. now rewrite (appmor_natural G1 G2).
+    Qed.
+
+  End with_kleisli.
+
+  (** ** Special cases for Kleisli composition *)
+  (******************************************************************************)
+  Section Kleisli_composition.
+
+    Context
+     `{Traversable.Monad.Monad T}
+      `{Applicative G2}
+      `{Applicative G1}.
+    (*
+    t/m:
+    00 0 no t or m
+    01 1 no m
+    10 2 no t
+    11 3 everything
+     *)
+
+  Lemma kcompose_tm00 : forall `(g : B -> C) `(f : A -> B),
+     kcompose_tm (G1 := fun A => A) (G2 := fun A => A) (ret T ∘ g) (ret T ∘ f) = ret T ∘ g ∘ f.
   Proof.
-    ext x. unfold compose.
-    unfold_ops @Return_list.
-    rewrite dist_list_cons_2.
-    rewrite dist_list_nil.
-    rewrite ap3, pure_ap_fmap.
+    intros. unfold kcompose_tm. reassociate <-.
+    change (fmap (fun A => A) ?f) with f.
+    rewrite (ktm_bindt0 T _ _ (G := fun A => A)); auto.
+  Qed.
+
+  Lemma kcompose_tm11 : forall `(g : B -> G2 C) `(f : A -> G1 B),
+      (fmap G2 (ret T) ∘ g) ⋆tm (fmap G1 (ret T) ∘ f) = fmap (G1 ∘ G2) (ret T) ∘ (fmap G1 g ∘ f).
+  Proof.
+    intros. unfold kcompose_tm. reassociate <-.
+    rewrite (fun_fmap_fmap G1). reassociate <-.
+    unfold_ops @Fmap_compose.
+    unfold_compose_in_compose.
+    rewrite (fun_fmap_fmap G1).
+    rewrite (ktm_bindt0 T); auto.
+  Qed.
+
+  Lemma kcompose_tm22 : forall `(g : B -> T C) `(f : A -> T B),
+      kcompose_tm (G1 := fun A => A) (G2 := fun A => A) g f = (g ⋆ f).
+  Proof.
+    intros. unfold kcompose_tm, kcompose.
     reflexivity.
   Qed.
 
-  #[local] Set Keyed Unification.
-  Theorem trvmon_join_list :
-    `(dist list G ∘ join list = fmap G (join list) ∘ dist (list ∘ list) G (A := A)).
+  Lemma kcompose_tm12 : forall `(g : B -> G2 C) `(f : A -> T B),
+      (fmap G2 (ret T) ∘ g) ⋆tm (f : A -> (fun A => A)(T B)) =
+        traverse T G2 g ∘ f.
   Proof.
-    ext l. unfold compose. induction l.
-    - rewrite join_list_nil. rewrite dist_list_nil.
-      unfold_ops @Dist_compose. unfold compose.
-      rewrite fmap_list_nil, dist_list_nil.
-      now rewrite (app_pure_natural G).
-    - rewrite join_list_cons.
-      unfold_ops @Dist_compose. unfold compose.
-      rewrite (fmap_list_cons). rewrite dist_list_cons_2.
-      rewrite dist_list_app. rewrite IHl; clear IHl.
-      unfold_ops @Dist_compose. unfold compose.
-      rewrite <- (fmap_to_ap).
-      rewrite fmap_ap. compose near (dist list G a) on right.
-      rewrite (fun_fmap_fmap G).
-      rewrite <- ap_fmap.
-      compose near (dist list G a) on left.
-      now rewrite (fun_fmap_fmap G).
-  Qed.
-  #[local] Set Keyed Unification.
-
-  End with_context.
-
-  #[export] Instance: TraversableMonad list :=
-    {| trvmon_ret := @trvmon_ret_list;
-       trvmon_join := @trvmon_join_list;
-    |}.
-
-End TraversableMonad_list.
-
-
-Import Kleisli.Traversable.Monad.
-Import Kleisli.Monad.
-Import ToKleisli.
-
-(** ** [list]/[list] right module *)
-(******************************************************************************)
-#[export] Instance Bindt_list : Bindt list _
-  := ToKleisli.Bindt_distjoin list.
-#[export] Instance Bind_list : Bind list list
-  := Derived.Bind_Bindt list.
-#[export] Instance KleisliTravMonad_list : Kleisli.Traversable.Monad.Monad list
-  := ToKleisli.TravMon_ToKleisli list.
-(*
-#[export] Instance KleisliMonad_list : Kleisli.Monad.Monad list.
-  := ToKleisli.Kleisli_Monad list.
-*)
-
-(** ** Rewriting lemmas for <<bindt>> *)
-(******************************************************************************)
-Section bindt_rewriting_lemmas.
-
-  Context (A B : Type) (G : Type -> Type) `{Applicative G}.
-
-  Lemma bindt_list_nil : forall (f : A -> G (list B)),
-      bindt list G f (@nil A) = pure G (@nil B).
-  Proof.
-    intros. unfold_ops @Bindt_list @ToKleisli.Bindt_distjoin.
-    unfold compose. simpl_list.
-    rewrite (app_pure_natural G).
     reflexivity.
   Qed.
 
-  Lemma bindt_list_one : forall (f : A -> G (list B)) (a : A),
-      bindt list G f (ret list a) = f a.
+  Lemma kcompose_tm21 : forall `(g : B -> T C) `(f : A -> G1 B),
+      kcompose_tm (G1 := G1) (G2 := fun A => A) g (fmap G1 (ret T) ∘ f) = (fmap G1 g ∘ f).
+  Proof.
+    intros. unfold kcompose_tm. reassociate <-.
+    rewrite (fun_fmap_fmap G1). rewrite (ktm_bindt0 T _ _ (G := fun A => A)); auto.
+  Qed.
+
+  Lemma kcompose_tm31 : forall `(g : B -> G2 (T C)) `(f : A -> G1 B),
+      g ⋆tm fmap G1 (ret T) ∘ f = fmap G1 g ∘ f.
+  Proof.
+    intros. unfold kcompose_tm. reassociate <-.
+    rewrite (fun_fmap_fmap G1). rewrite (ktm_bindt0 T); auto.
+  Qed.
+
+  Lemma kcompose_tm32 : forall `(g : B -> G2 (T C)) `(f : A -> T B),
+      kcompose_tm (G1 := fun A => A) g f = bindt T G2 g ∘ f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma kcompose_tm30 : forall `(g : B -> G2 (T C)) `(f : A -> B),
+      kcompose_tm (G1 := fun A => A) g (ret T ∘ f) = g ∘ f.
+  Proof.
+    intros. unfold kcompose_tm. reassociate <-.
+    change (fmap (fun A => A) ?f) with f.
+    rewrite (ktm_bindt0 T); auto.
+  Qed.
+
+  Lemma kcompose_tm13 : forall `(g : B -> G2 C) `(f : A -> G1 (T B)),
+      (fmap G2 (ret T) ∘ g) ⋆tm f = fmap G1 (traverse T G2 g) ∘ f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma kcompose_tm23 : forall `(g : B -> T C) `(f : A -> G1 (T B)),
+      kcompose_tm (G2 := fun A => A) g f = fmap G1 (bind T g) ∘ f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma kcompose_tm03 : forall `(g : B -> C) `(f : A -> G1 (T B)),
+      kcompose_tm (G2 := fun A => A) (ret T ∘ g) f = fmap G1 (fmap T g) ∘ f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma kcompose_tm_lunit : forall `(g : A -> G2 (T B)),
+     kcompose_tm (G1 := fun A => A) g (ret T) = g.
+  Proof.
+    intros. change (ret T) with (ret T ∘ (@id A)).
+    now rewrite (kcompose_tm30).
+  Qed.
+
+  Lemma kcompose_tm_runit : forall `(f : A -> G1 (T B)),
+     kcompose_tm (G2 := fun A => A) (ret T) f = f.
+  Proof.
+    intros. change (ret T) with (ret T ∘ (@id B)).
+    rewrite (kcompose_tm03).
+    rewrite (fun_fmap_id T).
+    now rewrite (fun_fmap_id G1).
+  Qed.
+
+  End Kleisli_composition.
+
+  (** ** Composition with lesser Kleisli operations *)
+  (******************************************************************************)
+  Section Kleisli_composition.
+
+    Context
+      (T : Type -> Type)
+     `{Traversable.Monad.Monad T}
+      (G1 : Type -> Type)
+      (G2 : Type -> Type)
+      `{Applicative G2}
+      `{Applicative G1}.
+
+  (** *** Composition with <<fmap>> *)
+  (******************************************************************************)
+  Lemma fmap_bindt : forall `(g : B -> C) `(f : A -> G1 (T B)),
+      fmap G1 (fmap T g) ∘ bindt T G1 f = bindt T G1 (fmap G1 (fmap T g) ∘ f).
+  Proof.
+    intros. unfold fmap at 2. unfold_ops @Fmap_Bindt.
+    rewrite (ktm_bindt2 T _ _ _ (G1 := G1) (G2 := fun A => A)).
+    fequal. rewrite Mult_compose_identity1.
+    reflexivity.
+  Qed.
+
+  Lemma bindt_fmap : forall `(g : B -> G2 (T C)) `(f : A -> B),
+      bindt T G2 g ∘ fmap T f = bindt T G2 (g ∘ f).
+  Proof.
+    intros. unfold fmap. unfold_ops @Fmap_Bindt.
+    change_left (fmap (fun A => A) (bindt T G2 g) ∘ bindt T (fun A => A) (ret T ∘ f)).
+    rewrite (ktm_bindt2 T _ _ _ (G1 := fun A => A) (G2 := G2)).
+    fequal. now rewrite Mult_compose_identity2.
+    rewrite kcompose_tm30; auto.
+  Qed.
+
+  (** *** Composition with <<traverse>> *)
+  (******************************************************************************)
+  Lemma traverse_bindt : forall `(g : B -> G2 C) `(f : A -> G1 (T B)),
+      fmap G1 (traverse T G2 g) ∘ bindt T G1 f =
+        bindt T (G1 ∘ G2) (fmap G1 (traverse T G2 g) ∘ f).
+  Proof.
+    intros. unfold_ops @Traverse_Bindt @Bind_Bindt.
+    rewrite (ktm_bindt2 T); auto.
+  Qed.
+
+  Lemma bindt_traverse : forall `(g : B -> G2 (T C)) `(f : A -> G1 B),
+      fmap G1 (bindt T G2 g) ∘ traverse T G1 f =
+        bindt T (G1 ∘ G2) (fmap G1 g ∘ f).
+  Proof.
+    intros. unfold_ops @Traverse_Bindt @Bind_Bindt.
+    rewrite (ktm_bindt2 T); auto.
+    fequal. rewrite kcompose_tm31; auto.
+  Qed.
+
+  (** *** Composition with <<bind>> *)
+  (******************************************************************************)
+  Lemma bind_bindt : forall `(g : B -> T C) `(f : A -> G1 (T B)),
+      fmap G1 (bind T g) ∘ bindt T G1 f =
+        bindt T G1 (fmap G1 (bind T g) ∘ f).
+  Proof.
+    intros. unfold_ops @Bind_Bindt @Bind_Bindt.
+    rewrite (ktm_bindt2 T _ _ _ (G2 := fun A => A) (G1 := G1)); auto.
+    fequal. now rewrite Mult_compose_identity1.
+  Qed.
+
+  Lemma bindt_bind : forall `(g : B -> G2 (T C)) `(f : A -> T B),
+      bindt T G2 g ∘ bind T f =
+        bindt T G2 (bindt T G2 g ∘ f).
+  Proof.
+    intros. unfold_ops @Bind_Bindt @Bind_Bindt.
+    change_left (fmap (fun A => A) (bindt T G2 g) ∘ (bindt T (fun A0 : Type => A0) f)).
+    rewrite (ktm_bindt2 T _ _ _ (G1 := fun A => A) (G2 := G2)); auto.
+    fequal. now rewrite Mult_compose_identity2.
+  Qed.
+
+  (** *** Composition between <<traverse>> and <<bind>> *)
+  (******************************************************************************)
+  Lemma traverse_bind : forall `(g : B -> G2 C) `(f : A -> T B),
+      traverse T G2 g ∘ bind T f =
+        bindt T G2 (traverse T G2 g ∘ f).
+  Proof.
+    intros. unfold_ops @Traverse_Bindt @Bind_Bindt.
+    change_left (fmap (fun A => A) (bindt T G2 (fmap G2 (ret T) ∘ g)) ∘ bindt T (fun A0 : Type => A0) f).
+    rewrite (ktm_bindt2 T _ _ _ (G1 := fun A => A)); auto.
+    fequal. now rewrite Mult_compose_identity2.
+  Qed.
+
+  Lemma bind_traverse : forall `(g : B -> T C) `(f : A -> G1 B),
+      fmap G1 (bind T g) ∘ traverse T G1 f =
+        bindt T G1 (fmap G1 g ∘ f).
+  Proof.
+    intros. unfold_ops @Traverse_Bindt @Bind_Bindt.
+    rewrite (ktm_bindt2 T _ _ _ (G2 := fun A => A)); auto.
+    fequal. now rewrite Mult_compose_identity1.
+    now rewrite kcompose_tm31.
+  Qed.
+
+  (** *** Composition between <<traverse>> and <<fmap>> *)
+  (******************************************************************************)
+  Lemma fmap_traverse : forall (A B C : Type)
+                          (g : B -> C)
+                          (f : A -> G1 B),
+      fmap G1 (fmap T g) ∘ traverse T G1 f =
+        traverse T G1 (fmap G1 g ∘ f).
   Proof.
     intros.
-    unfold_ops @Bindt_list @ToKleisli.Bindt_distjoin.
-    compose near a on left.
-    reassociate -> near (ret list).
-    rewrite (natural (G := list) (ϕ := @ret list _)).
-    unfold_ops @Fmap_I.
-    reassociate <-.
-    reassociate -> near (ret list).
-    rewrite trvmon_ret_list.
-    rewrite (fun_fmap_fmap G).
-    #[local] Set Keyed Unification.
-    rewrite (join_ret_list).
-    #[local] Unset Keyed Unification.
-    rewrite (fun_fmap_id G).
+    change (@Fmap_Bindt T H0 H) with (@ToFunctor.Fmap_Traverse T _).
+    rewrite (ToFunctor.fmap_traverse T G1); try typeclasses eauto.
     reflexivity.
   Qed.
 
-  Import Applicative.Notations.
-
-  Lemma bindt_list_cons : forall (f : A -> G (list B)) (a : A) (l : list A),
-      bindt list G f (cons a l) =
-        pure G (@app _) <⋆> f a <⋆> bindt list G f l.
+  Lemma traverse_fmap: forall (A B C : Type)
+                         (g : B -> G2 C)
+                         (f : A -> B),
+      traverse T G2 g ∘ fmap T f =
+        traverse T G2 (g ∘ f).
   Proof.
-    intros. unfold_ops @Bindt_list @ToKleisli.Bindt_distjoin.
-    unfold compose.
-    rewrite (fmap_list_cons).
-    rewrite dist_list_cons_1.
-    do 2 rewrite fmap_ap.
-    rewrite (app_pure_natural G).
-    assert (lemma : compose (join list) ∘ cons (A:=list B) =
-                      (precompose (join list) ∘ (@app B))).
-    { ext l1 lrest. unfold compose.
-      rewrite join_list_cons.
-      reflexivity. }
-    Set Keyed Unification.
-    rewrite lemma.
-    Unset Keyed Unification.
-    rewrite <- (fmap_to_ap).
-    rewrite <- (fun_fmap_fmap G).
-    unfold compose.
-    rewrite ap_fmap.
-    rewrite (fmap_to_ap).
+    intros.
+    change (@Fmap_Bindt T H0 H) with (@ToFunctor.Fmap_Traverse T _).
+    rewrite (ToFunctor.traverse_fmap T G2); try typeclasses eauto.
     reflexivity.
   Qed.
 
-  Lemma bindt_list_app : forall (f : A -> G (list B)) (l1 l2 : list A),
-      bindt list G f (l1 ++ l2) =
-        pure G (@app B) <⋆> (bindt list G f l1) <⋆> (bindt list G f l2).
+  (** *** Composition between <<bind>> and <<fmap>> *)
+  (******************************************************************************)
+  Lemma bind_fmap : forall (A B C : Type)
+                          (g : B -> T C)
+                          (f : A -> B),
+      bind T g ∘ fmap T f = bind T (g ∘ f).
   Proof.
-    intros. unfold_ops @Bindt_list @ToKleisli.Bindt_distjoin.
-    unfold compose.
-    rewrite (fmap_list_app).
-    rewrite (dist_list_app).
-    do 2 rewrite fmap_ap.
-    rewrite (app_pure_natural G).
-    assert (lemma : compose (join list) ∘ app (A:=list B) =
-              (precompose (join list) ∘ (@app B) ∘ (join list))).
-    { ext x y. unfold compose.
-      rewrite join_list_app.
-      reflexivity. }
-    Set Keyed Unification.
-    rewrite lemma.
-    Unset Keyed Unification.
-    rewrite <- (fmap_to_ap).
-    reassociate -> on left.
-    rewrite <- (fun_fmap_fmap G).
-    unfold compose at 1.
-    rewrite ap_fmap.
-    rewrite <- (fun_fmap_fmap G).
-    unfold compose at 1.
-    rewrite fmap_to_ap.
-    reflexivity.
+    intros.
+    change (@Fmap_Bindt T H0 H) with (@ToFunctor.Fmap_Bind T _ _).
+    now rewrite (ToFunctor.bind_fmap T).
   Qed.
 
-End bindt_rewriting_lemmas.
+  Lemma fmap_bind : forall (A B C : Type)
+                         (g : B -> C)
+                         (f : A -> T B),
+      fmap T g ∘ bind T f = bind T (fmap T g ∘ f).
+  Proof.
+    intros.
+    change (@Fmap_Bindt T H0 H) with (@ToFunctor.Fmap_Bind T _ _).
+    now rewrite (ToFunctor.fmap_bind T).
+  Qed.
 
-(** ** Rewriting lemmas for <<foldMapd>> *)
+  End Kleisli_composition.
+
+End Derived.
+
+(** * Batch *)
 (******************************************************************************)
-Section foldMap_rewriting_lemmas.
+Section with_functor.
 
-  Import Classes.Setlike.Functor.
-  Import Kleisli.Traversable.Functor.
-  Import Traversable.Monad.Derived.
-  Import Monoid.Notations.
+  Context
+    (T : Type -> Type)
+    `{Kleisli.Traversable.Monad.Monad T}.
 
-  Context (A : Type) (M : Type) `{Monoid M}.
-
-  Lemma foldMap_list_nil : forall (f : A -> M),
-      foldMap list f (@nil A) = Ƶ.
+  Lemma runBatch_batch : forall  `{Applicative G} (A B : Type) (f : A -> G (T B)),
+      runBatch f ∘ (@batch A (T B)) = f.
   Proof.
+    intros. ext a. cbn.
+    now rewrite ap1.
+  Qed.
+
+  Definition toBatch_tm {A : Type} (B : Type) : T A -> @Batch A (T B) (T B) :=
+    bindt T (Batch A (T B)) (batch (T B)).
+
+End with_functor.
+
+Import Derived.
+
+(** * <<foldMap>> on monads *)
+(******************************************************************************)
+Section with_monad.
+
+  Context
+    (T : Type -> Type)
+    `{Kleisli.Traversable.Monad.Monad T}.
+
+  (** ** Composition with <<bindt>> *)
+  (******************************************************************************)
+  Lemma foldMap_bindt `{Applicative G} `{Monoid M} : forall `(g : B -> M) `(f : A -> G (T B)),
+      fmap G (foldMap T g) ∘ bindt T G f =
+        foldMap T (fmap G (foldMap T g) ∘ f).
+  Proof.
+    intros. unfold foldMap.
+    rewrite (traverse_bindt T G (const M)).
+    unfold_ops @Traverse_Bindt.
+    fequal.
+    - ext A' B' f' t. unfold_ops @Fmap_compose @Fmap_const.
+      now rewrite (fun_fmap_id G).
+    - ext A' B' [a b]. reflexivity.
+  Qed.
+
+  (** ** Composition with <<bind>> and <<ret>> *)
+  (******************************************************************************)
+  Lemma foldMap_bind `{Monoid M} : forall `(g : B -> M) `(f : A -> T B),
+      foldMap T g ∘ bind T f =
+        foldMap T (foldMap T g ∘ f).
+  Proof.
+    intros. unfold foldMap. rewrite (traverse_bind T (const M)).
     reflexivity.
   Qed.
 
-  Lemma foldMap_list_one : forall (f : A -> M) (a : A),
-      foldMap list f (ret list a) = f a.
+  Lemma foldMap_ret `{Monoid M} : forall `(f : A -> M),
+      foldMap T f ∘ ret T = f.
   Proof.
-    intros. cbn. unfold_ops @Pure_const.
-    simpl_monoid. reflexivity.
+    intros. unfold foldMap. unfold_ops @Traverse_Bindt.
+    rewrite (ktm_bindt0 T _ _ (G := const M)).
+    reflexivity.
   Qed.
 
-  Lemma foldMap_list_cons : forall (f : A -> M) (a : A) (l : list A),
-      foldMap list f (cons a l) = f a ● foldMap list f l.
+End with_monad.
+
+Import Classes.Kleisli.Traversable.Functor.ToFunctor.
+
+(** ** Expressing operations using <<runBatch>> *)
+(******************************************************************************)
+Section with_kleisli.
+
+  Context
+    (T : Type -> Type)
+    `{Kleisli.Traversable.Monad.Monad T}.
+
+  Lemma bindt_to_runBatch `{Applicative G} `(f : A -> G (T B)) :
+    bindt T G f = runBatch f ∘ toBatch_tm T B.
   Proof.
-    intros. cbn. unfold_ops @Pure_const.
-    now do 2 simpl_monoid.
+    unfold toBatch_tm.
+    rewrite (ktm_morph T (ϕ := @runBatch A G (T B) f _ _ _)).
+    now rewrite (runBatch_batch T).
   Qed.
 
-  Lemma foldMap_list_app : forall (f : A -> M) (l1 l2 : list A),
-      foldMap list f (l1 ++ l2) = foldMap list f l1 ● foldMap list f l2.
+  Lemma traverse_to_runBatch `{Applicative G} `(f : A -> G B) :
+    traverse T G f = runBatch f ∘ toBatch T B.
   Proof.
-    intros. unfold foldMap, traverse, Traverse_Bindt.
-    rewrite (bindt_list_app); try typeclasses eauto.
-    unfold ap. unfold_ops @Pure_const @Mult_const.
-    now simpl_monoid.
+    now rewrite (traverse_to_runBatch T).
   Qed.
 
-  Lemma Toset_list_spec: Toset_list = @Toset_Traverse list _.
+  Corollary fmap_to_runBatch `(f : A -> B) :
+    fmap T f = runBatch f ∘ toBatch T B.
   Proof.
-    unfold_ops @Toset_list @Toset_Traverse.
-    ext A' l a.
-    unfold foldMap, traverse, Traverse_Bindt.
-    induction l.
-    - reflexivity.
-    - rewrite bindt_list_cons; try typeclasses eauto.
-      cbn. unfold_ops @Pure_const.
-      simpl_monoid.
-      unfold_ops @Monoid_op_set.
-      unfold set_add.
-      Set Keyed Unification.
-      rewrite <- IHl.
-      Unset Keyed Unification.
-      reflexivity.
+    change (@Fmap_Bindt T H0 H) with (ToFunctor.Fmap_Traverse T).
+    rewrite (fmap_to_traverse T).
+    now rewrite traverse_to_runBatch.
   Qed.
 
-End foldMap_rewriting_lemmas.
+  Corollary id_to_runBatch : forall (A : Type),
+    @id (T A) = runBatch (@id A) ∘ toBatch T A.
+  Proof.
+    intros. rewrite <- (trf_traverse_id T).
+    rewrite traverse_to_runBatch.
+    reflexivity.
+  Qed.
 
+  Lemma foldMap_to_runBatch : forall `{Monoid M} (fake : Type) `(f : A -> M),
+      foldMap T f = runBatch f ∘ toBatch_tm T fake.
+  Proof.
+    intros.
+    unfold foldMap.
+    rewrite (traverse_constant_applicative2 T f False fake).
+    rewrite (traverse_to_bindt).
+    rewrite (bindt_to_runBatch).
+    reflexivity.
+  Qed.
+
+End with_kleisli.
+
+Import Sets.Notations.
 Import Setlike.Functor.Notations.
-Import List.ListNotations.
 
-(** ** Rewriting lemmas for <<bind>> *)
+(** * Characterizing <<∈>> *)
 (******************************************************************************)
-Section bind_rewriting_lemmas.
+Section with_monad.
 
   Context
-    (A B : Type)
-    (f : A -> list B).
+    (T : Type -> Type)
+    `{Kleisli.Traversable.Monad.Monad T}.
 
-  Lemma bind_list_nil : bind list f [] = [].
+  #[export] Instance Monad_Hom_Toset : Kleisli.Monad.Monad_Hom T set (@toset T _).
   Proof.
-    reflexivity.
-  Qed.
-
-  Lemma bind_list_one : forall x, bind list f [ x ] = f x.
-  Proof.
-    intros. unfold_ops @Bind_list @Derived.Bind_Bindt.
-    unfold bindt, Bindt_list, ToKleisli.Bindt_distjoin.
-    rewrite dist_unit_list.
-    unfold compose. cbn.
-    now rewrite List.app_nil_r.
-  Qed.
-
-  Lemma bind_list_cons : forall (x : A) (xs : list A),
-      bind list f (x :: xs) = f x ++ bind list f xs.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma bind_list_app : forall (l1 l2 : list A),
-      bind list f (l1 ++ l2) = bind list f l1 ++ bind list f l2.
-  Proof.
-    intros. unfold_ops @Bind_list.
-    unfold_ops @Bind_list @Derived.Bind_Bindt.
-    unfold bindt, Bindt_list, ToKleisli.Bindt_distjoin.
-    rewrite dist_unit_list.
-    unfold id, compose.
-    unfold_ops @Fmap_I.
-    now autorewrite with tea_list.
-  Qed.
-
-End bind_rewriting_lemmas.
-
-#[export] Hint Rewrite bind_list_nil bind_list_one bind_list_cons bind_list_app :
-  tea_list.
-
-(** ** <<bind>> is a monoid homomorphism *)
-(******************************************************************************)
-#[export] Instance Monmor_bind {A B f} : Monoid_Morphism (bind list f) :=
-  {| monmor_unit := bind_list_nil A B f;
-     monmor_op := bind_list_app A B f;
-  |}.
-
-(** ** Other rewriting lemmas for <<bind>> *)
-(******************************************************************************)
-Section bind_rewriting_lemmas.
-
-  Context
-    (A B : Type)
-    (f : A -> list B).
-
-  Lemma in_bind_list_iff : forall (b : B) (l : list A),
-      b ∈ bind list f l <-> exists a : A, a ∈ l /\ b ∈ f a.
-  Proof.
-    intros. induction l.
-    - cbn. intuition. now destruct H.
-    - destruct IHl as [IHl1 IHl2]. simpl_list. split.
-      + intros [H | H].
-        exists a. split. left; easy. easy.
-        specialize (IHl1 H). destruct IHl1 as [a' rest].
-        exists a'. split. right. easy. easy.
-      + intros [a' [rest1 rest2]]. destruct rest1 as [rest1 | rest1].
-        left. inverts rest1. assumption.
-        right. apply IHl2. exists a'. easy.
-  Qed.
-
-End bind_rewriting_lemmas.
-
-(*
-(******************************************************************************)
-Section TraversableMonad_listable.
-
-  Context
-    `{TraversableMonad T}.
-
-  Instance ApplicativeMorphism_join_list : forall A : Type,
-      ApplicativeMorphism
-        (const (list (list A)))
-        (const (list A))
-        (fun X => @join list Join_list A).
-  Proof.
-    intros. constructor; try typeclasses eauto.
-    - intros X Y f x. cbv in x.
-      rewrite (@fmap_const_spec (list A) X Y f).
-      rewrite (@fmap_const_spec (list (list A)) X Y f).
+    constructor.
+    - intros.
+      unfold_ops @Toset_Traverse.
+      rewrite (foldMap_bind T (ret set) f).
+      unfold_ops @Traverse_Bindt.
+      rewrite (foldMap_morphism T).
+      rewrite (kmon_bind0 set).
       reflexivity.
-    - intros X x. cbn. reflexivity.
-    - intros X Y x y. cbv in x, y.
-      change (?x ⊗ ?y) with (List.app x y).
-      now rewrite join_list_app.
+    - intros.
+      unfold_ops @Toset_Traverse.
+      rewrite (foldMap_ret T).
+      reflexivity.
   Qed.
 
-  Theorem tolist_ret : forall A : Type,
-      tolist T ∘ ret T = ret list (A := A).
+  Theorem in_ret_iff :
+    forall (A : Type) (a1 a2 : A), a1 ∈ ret T a2 <-> a1 = a2.
   Proof.
-    intros. unfold_ops @Tolist_Traversable.
-    rewrite <- (fun_fmap_fmap T).
-    repeat reassociate -> on left. reassociate <- near (dist T (Const (list A))).
-    rewrite (natural (ϕ := @ret T _));
-      unfold_ops @Fmap_I.
-    repeat reassociate -> on left.
-    reassociate <- near (fmap T (@mkConst (list A) False)).
-    rewrite (natural (ϕ := @ret T _));
-      unfold_ops @Fmap_I.
-    repeat reassociate -> on left;
-      reassociate <- near (dist T _).
-    rewrite (trvmon_ret T).
-    ext a. reflexivity.
+    intros. unfold_ops @Toset_Traverse.
+    compose near a2 on left. rewrite (foldMap_ret T).
+    solve_basic_set.
   Qed.
 
-  Theorem tolist_join : forall A : Type,
-      tolist T ∘ join T = join list ∘ tolist T ∘ fmap T (tolist T) (A := T A).
+  Theorem in_bind_iff :
+    forall `(f : A -> T B) (t : T A) (b : B),
+      b ∈ bind T f t <-> exists a, a ∈ t /\ b ∈ f a.
   Proof.
-    intros. rewrite (traversable_tolist_spec T False). reassociate ->.
-    unfold traverse. reassociate -> on left.
-    rewrite (natural (ϕ := @join T _)).
-    reassociate <- on left. rewrite (trvmon_join T (G := const (list A))).
-    change (fmap (const (list A)) (join T) ∘ ?f) with f.
-    rewrite <- (fun_fmap_fmap T).
-    repeat reassociate <-. fequal.
-    unfold_ops @Dist_compose. fequal.
-    rewrite (traversable_tolist_spec T False). unfold traverse.
-    reassociate <- on right.
-    rewrite <- (dist_morph T (ϕ := (fun X : Type => @join list Join_list A))).
-    reassociate -> on right. rewrite (fun_fmap_fmap T).
-    rewrite (mon_join_ret list). rewrite (fun_fmap_id T).
-    change (?f ∘ id) with f.
-    now rewrite (dist_const1 T (T False)).
+    intros. compose near t on left.
+    rewrite (kmon_hom_bind T set); try typeclasses eauto.
+    unfold compose. now rewrite bind_set_spec.
   Qed.
 
-  #[global] Instance ListableMonad_TraversableMonad : ListableMonad T :=
-    {| lmon_ret := tolist_ret;
-       lmon_join := tolist_join;
-    |}.
+End with_monad.
 
-End TraversableMonad_listable.
-*)
+(** * Respectfulness properties *)
+(******************************************************************************)
+Section respectfulness_properties.
+
+  Context
+    (T : Type -> Type)
+    `{Traversable.Monad.Monad T}.
+
+  Lemma bindt_respectful : forall (G : Type -> Type)
+    `{Applicative G} `(f1 : A -> G (T B)) `(f2 : A -> G (T B)) (t : T A),
+    (forall (a : A), a ∈ t -> f1 a = f2 a) -> bindt T G f1 t = bindt T G f2 t.
+  Proof.
+    introv ? hyp. do 2 (rewrite (bindt_to_runBatch T); auto).
+    unfold toset, Toset_Traverse in hyp.
+    rewrite (foldMap_to_runBatch T B) in hyp.
+    unfold compose in *.
+    induction (toBatch_tm T B t).
+    - reflexivity.
+    - cbn. fequal.
+      + apply IHb. intros. apply hyp. now left.
+      + apply hyp. now right.
+  Qed.
+
+  Lemma traverse_respectful : forall (G : Type -> Type)
+    `{Applicative G} `(f1 : A -> G B) `(f2 : A -> G B) (t : T A),
+    (forall (a : A), a ∈ t -> f1 a = f2 a) -> traverse T G f1 t = traverse T G f2 t.
+  Proof.
+    apply (Traversable.Functor.traverse_respectful T).
+  Qed.
+
+  Lemma traverse_respectful_pure : forall (G : Type -> Type)
+    `{Applicative G} `(f1 : A -> G A) (t : T A),
+    (forall (a : A), a ∈ t -> f1 a = pure G a) -> traverse T G f1 t = pure G t.
+  Proof.
+    apply (Traversable.Functor.traverse_respectful_pure T).
+  Qed.
+
+  Lemma traverse_respectful_fmap {A B} : forall (G : Type -> Type)
+    `{Applicative G} t (f : A -> G B) (g : A -> B),
+      (forall a, a ∈ t -> f a = pure G (g a)) -> traverse T G f t = pure G (fmap T g t).
+  Proof.
+    change (@Fmap_Bindt T H0 H) with (@ToFunctor.Fmap_Traverse T _).
+    apply (Traversable.Functor.traverse_respectful_fmap T).
+  Qed.
+
+  Corollary traverse_respectful_id {A} : forall (G : Type -> Type)
+    `{Applicative G} t (f : A -> G A),
+      (forall a, a ∈ t -> f a = pure G a) -> traverse T G f t = pure G t.
+  Proof.
+    apply (Traversable.Functor.traverse_respectful_id T).
+  Qed.
+
+  Corollary fmap_respectful : forall `(f1 : A -> B) `(f2 : A -> B) (t : T A),
+    (forall (a : A), a ∈ t -> f1 a = f2 a) -> fmap T f1 t = fmap T f2 t.
+  Proof.
+    intros. change (@Fmap_Bindt T H0 H) with (@ToFunctor.Fmap_Traverse T _).
+    now apply (Traversable.Functor.fmap_respectful T).
+  Qed.
+
+  Corollary fmap_respectful_id : forall `(f1 : A -> A) (t : T A),
+    (forall (a : A), a ∈ t -> f1 a = a) -> fmap T f1 t = t.
+  Proof.
+    intros. change (@Fmap_Bindt T H0 H) with (@ToFunctor.Fmap_Traverse T _).
+    now apply (Traversable.Functor.fmap_respectful_id T).
+  Qed.
+
+End respectfulness_properties.

@@ -17,7 +17,6 @@ Import Strength.Notations.
 
 Solve All Obligations with (introv; now ext [? ?]).
 
-
 (** * Environment comonad (a/k/a "Reader" or "co-Reader") *)
 (** The properties of Cartesian products imply the product functor (by
     any type <<E>>) forms a comonad. This comonad is sometimes called
@@ -38,6 +37,24 @@ Proof.
   now ext [? ?].
 Qed.
 
+Section environment_comonad_instance.
+
+  Context
+    `{W : Type}.
+
+  #[export] Instance Cobind_prod : Cobind (W ×) :=
+    fun A B f => fmap (W ×) f ∘ @dup_left W A.
+
+  #[export] Instance Extract_prod : Extract (W ×) :=
+    @snd W.
+
+  #[export, program] Instance Comonad_prod : Comonad (W ×).
+
+  Solve All Obligations with (introv; now ext [? ?]).
+
+End environment_comonad_instance.
+
+(*
 Section environment_comonad_instance.
 
   Context
@@ -66,6 +83,7 @@ Section environment_comonad_instance.
   Solve All Obligations with (introv; now ext [? ?]).
 
 End environment_comonad_instance.
+*)
 
 (** * Miscellaneous properties *)
 (******************************************************************************)
@@ -82,12 +100,14 @@ Section miscellaneous.
     compose_near a. now rewrite (fun_fmap_fmap F), (fun_fmap_id F).
   Qed.
 
+  (*
   Theorem strength_cojoin `{Functor F} {A : Type} :
     `(fmap F (cojoin (E ×)) ∘ σ F = σ F ∘ cobind (E ×) (σ F) (A := F A)).
   Proof.
     intros. unfold strength, compose. ext [w a]. cbn.
     compose_near a. now rewrite 2(fun_fmap_fmap F).
   Qed.
+  *)
 
   Theorem product_fmap_commute {E1 E2 A B : Type} (g : E1 -> E2) (f : A -> B) :
     fmap (E2 ×) f ∘ map_fst g = map_fst g ∘ fmap (E1 ×) f.

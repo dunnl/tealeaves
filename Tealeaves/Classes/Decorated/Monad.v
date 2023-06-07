@@ -1,406 +1,387 @@
-(** This file implements "monads decorated by monoid <<W>>." *)
 From Tealeaves Require Export
-  Classes.Monoid
-  Classes.Decorated.Functor
-  Classes.Monad
   Functors.Writer.
 
+Import Product.Notations.
 Import Monoid.Notations.
 
-#[local] Generalizable Variable W.
+#[local] Generalizable Variables W T A B C.
 
-(** * Decorated monads *)
+(** * The <<prepromote>> operation *)
+(** A decorated monad is a decorated functor whose monad operations
+    are compatible with the decorated structure. *)
 (******************************************************************************)
-Section DecoratedMonad.
+
+Definition preincr `{Monoid_op W} (w : W) `(f : W * A -> B) :=
+  f ∘ incr w.
+
+Lemma preincr_zero `{Monoid W} : forall `(f : W * A -> B),
+    preincr Ƶ f = f.
+Proof.
+  intros. unfold preincr.
+  now rewrite incr_zero.
+Qed.
+
+Lemma preincr_incr1 `{Monoid W} : forall `(f : W * A -> B) (w1 : W) (w2 : W),
+    preincr w2 (f ∘ incr w1) = f ∘ (incr (w1 ● w2)).
+Proof.
+  intros. unfold preincr.
+  reassociate ->.
+  now rewrite (incr_incr).
+Qed.
+
+Lemma preincr_preincr1 `{Monoid W} : forall `(f : W * A -> B) (w1 : W) (w2 : W),
+    preincr w2 (preincr w1 f) = preincr (w1 ● w2) f.
+Proof.
+  intros. unfold preincr.
+  reassociate ->.
+  now rewrite (incr_incr).
+Qed.
+
+Lemma preincr_ret `{Monoid W} : forall `(f : W * A -> B) (w : W),
+    preincr w f ∘ ret (W ×) = f ∘ pair w.
+Proof.
+  intros. ext a. cbv.
+  change (op w unit0) with (w ● Ƶ).
+  now simpl_monoid.
+Qed.
+
+Lemma preincr_extract `{Monoid W} : forall `(f : A -> B) (w : W),
+    preincr w (f ∘ extract (W ×)) = f ∘ extract (W ×).
+Proof.
+  intros. now ext [w' a].
+Qed.
+
+Lemma preincr_extract2 `{Monoid W} : forall (A : Type) (w : W),
+    preincr w (extract (W ×)) = extract (W ×) (A := A).
+Proof.
+  intros. now ext [w' a].
+Qed.
+
+(** * The <<Bindd>> operation *)
+(** A decorated monad is a decorated functor whose monad operations
+    are compatible with the decorated structure. *)
+(******************************************************************************)
+Section operations.
 
   Context
     (W : Type)
     (T : Type -> Type)
-    `{Fmap T} `{Return T} `{Join T} `{Decorate W T}
-    `{Monoid_op W} `{Monoid_unit W}.
+    (F : Type -> Type).
 
-  Class DecoratedMonad:=
-    { dmon_functor :> DecoratedFunctor W T;
-      dmon_monad :> Monad T;
-      dmon_monoid :> Monoid W;
-      dmon_ret : forall (A : Type),
-        dec T ∘ ret T = ret T ∘ pair Ƶ (B:=A);
-      dmon_join : forall (A : Type),
-        dec T ∘ join T (A:=A) =
-          join T ∘ fmap T (shift T) ∘ dec T ∘ fmap T (dec T);
-    }.
+  Class Bindd :=
+    bindd : forall (A B : Type), (W * A -> T B) -> F A -> F B.
 
-End DecoratedMonad.
+End operations.
 
-(** * Decorated right modules *)
+(** ** Kleisli composition *)
+(** This definition is such that more recently seen binders (those
+    deeper in the AST, closer to the variable occurrence) are seen on
+    the _left_. So @f@ gets called on @([β0, β1, ... βn], v)@
+    where @βn@ is the outermost binder. *)
 (******************************************************************************)
-Section DecoratedModule.
+Definition kcompose_dm {A B C} `{Bindd W T T} `{Monoid_op W} :
+  (W * B -> T C) ->
+  (W * A -> T B) ->
+  (W * A -> T C) :=
+  fun g f '(w, a) => bindd W T T B C (preincr w g) (f (w, a)).
+
+#[local] Notation "g ⋆dm f" := (kcompose_dm g f) (at level 40) : tealeaves_scope.
+
+(** ** Decorated Monad *)
+(******************************************************************************)
+Section class.
 
   Context
-    (W : Type)
-    (F T : Type -> Type)
-    `{Fmap T} `{Return T} `{Join T} `{Decorate W T}
-    `{Fmap F} `{RightAction F T} `{Decorate W F}
+    {W : Type}
+    (T : Type -> Type)
+    `{Return T}
+    `{Bindd W T T}
     `{Monoid_op W} `{Monoid_unit W}.
 
-  Class DecoratedRightModule :=
-    { dmod_monad :> DecoratedMonad W T;
-      dmod_functor :> DecoratedFunctor W T;
-      dmon_module :> RightModule F T;
-      dmod_action : forall (A : Type),
-        dec F ∘ right_action F (A := A) =
-          right_action F ∘ fmap F (shift T) ∘ dec F ∘ fmap F (dec T);
+  Class Monad :=
+    { kmond_monoid :> Monoid W;
+      kmond_bindd0 : forall `(f : W * A -> T B),
+        bindd W T T A B f  ∘ ret T (A := A) = f ∘ ret ((W ×));
+      kmond_bindd1 : forall (A : Type),
+        bindd W T T A A (ret T ∘ extract (W ×)) = @id (T A);
+      kmond_bindd2 : forall `(g : W * B -> T C) `(f : W * A -> T B),
+        bindd W T T B C g ∘ bindd W T T A B f = bindd W T T A C (g ⋆dm f);
     }.
 
-End DecoratedModule.
+End class.
 
-(** * Algebraic decorated monad to Kleisli decorated monad *)
+Arguments bindd {W}%type_scope {T}%function_scope (F)%function_scope
+  {Bindd} {A B}%type_scope _%function_scope _.
+
+(** * Notations *)
 (******************************************************************************)
+Module Notations.
 
-From Tealeaves Require Classes.Kleisli.Decorated.Monad.
+  Notation "g ⋆dm f" := (kcompose_dm g f) (at level 40) : tealeaves_scope.
 
-(** ** Kleisli laws *)
+End Notations.
+
+(** * Kleisli composition *)
 (******************************************************************************)
-Module ToKleisli.
+Section kleisli_composition.
 
-  #[local] Generalizable Variables A B C.
+  Context
+    `{Decorated.Monad.Monad W T}.
 
-  Import Classes.Kleisli.Decorated.Monad.
-  Import Classes.Kleisli.Decorated.Monad.Notations.
+  Lemma kcompose_incr : forall `(g : W * B -> T C) `(f : W * A -> T B) (w : W),
+      (g ∘ incr w) ⋆dm (f ∘ incr w) = (g ⋆dm f) ∘ incr w.
+  Proof.
+    intros. unfold kcompose_dm.
+    ext [w' a]. rewrite preincr_incr1.
+    reflexivity.
+  Qed.
 
-  Section operation.
+  Lemma preincr_kcompose : forall `(g : W * B -> T C) `(f : W * A -> T B) (w : W),
+      preincr w (g ⋆dm f) = (preincr w g) ⋆dm (preincr w f).
+  Proof.
+    intros. unfold preincr. now rewrite kcompose_incr.
+  Qed.
+
+  Theorem dm_kleisli_id_r {B C} : forall (g : W * B -> T C),
+      g ⋆dm (ret T ∘ extract (W ×)) = g.
+  Proof.
+    intros. unfold kcompose_dm.
+    ext [w a]. unfold compose. cbn.
+    compose near a on left.
+    rewrite (kmond_bindd0 T _).
+    now rewrite preincr_ret.
+  Qed.
+
+  Theorem dm_kleisli_id_l {A B} : forall (f : W * A -> T B),
+      (ret T ∘ extract (W ×)) ⋆dm f = f.
+  Proof.
+    intros. unfold kcompose_dm.
+    ext [w a]. rewrite preincr_extract.
+    now rewrite (kmond_bindd1 T _).
+  Qed.
+
+  Theorem dm_kleisli_assoc {A B C D} : forall (h : W * C -> T D) (g : W * B -> T C) (f : W * A -> T B),
+      h ⋆dm (g ⋆dm f) = (h ⋆dm g) ⋆dm f.
+  Proof.
+    intros. unfold kcompose_dm at 3.
+    ext [w a]. unfold preincr.
+    rewrite <- kcompose_incr.
+    rewrite <- (kmond_bindd2 T).
+    reflexivity.
+  Qed.
+
+End kleisli_composition.
+
+
+From Tealeaves Require Import
+  Classes.Kleisli.Monad
+  Classes.Kleisli.Decorated.Functor.
+
+(** * Derived instances *)
+(******************************************************************************)
+Module Derived.
+
+  Import
+    Kleisli.Monad.Notations
+    Comonad.Notations.
+
+  Section operations.
 
     Context
-      (W : Type)
       (T : Type -> Type)
-      `{Fmap T} `{Join T} `{Decorate W T}.
+      `{Return T}
+      `{Bindd W T T}.
 
-    #[export] Instance Bindd_dec : Bindd W T T :=
-      fun A B f => join T ∘ fmap T f ∘ dec T.
+    #[export] Instance Fmap_Bindd: Fmap T := fun A B f => bindd T (ret T ∘ f ∘ extract (W ×)).
+    #[export] Instance Bind_Bindd: Bind T T := fun A B f => bindd T (f ∘ extract (W ×)).
+    #[export] Instance Fmapd_Bindd: Fmapd W T := fun A B f => bindd T (ret T ∘ f).
 
-  End operation.
+  End operations.
+
+  (** ** Lesser Kleisli composition laws *)
+  (******************************************************************************)
+  Section Kleisli_composition.
+
+    Context
+      (T : Type -> Type)
+      `{Decorated.Monad.Monad W T}.
+
+    (** *** Lifting context-agnostic substitutions *)
+    Lemma kcompose_extract : forall `(g : B -> T C) `(f : A -> T B),
+        (g ∘ extract (W ×)) ⋆dm (f ∘ extract (W ×)) = (g ⋆ f) ∘ extract (W ×).
+    Proof.
+      intros. unfold kcompose_dm.
+      ext [w a]. rewrite preincr_extract.
+      reflexivity.
+    Qed.
+
+    (** *** Lifting context-sensitive maps *)
+    Lemma kcompose_ret : forall `(g : W * B -> C) `(f : W * A -> B),
+        (ret T ∘ g) ⋆dm (ret T ∘ f) = ret T ∘ (g co⋆ f).
+    Proof.
+      intros. unfold kcompose_dm.
+      ext [w' a]. unfold compose at 2.
+      compose near (f (w', a)).
+      rewrite (kmond_bindd0 T).
+      rewrite preincr_ret.
+      reflexivity.
+    Qed.
+
+    (** Composition when <<f>> has no substitution *)
+    Theorem dm_kleisli_star1 {A B C} : forall (g : W * B -> T C) (f : W * A -> B),
+        g ⋆dm (ret T ∘ f) = g co⋆ f.
+    Proof.
+      intros. unfold kcompose_dm, cokcompose.
+      ext [w a]. unfold compose. cbn.
+      unfold compose, id; cbn.
+      compose near (f (w, a)) on left.
+      rewrite (kmond_bindd0 T _).
+      now rewrite (preincr_ret).
+    Qed.
+
+    (** Composition when <<g>> is context-agnostic *)
+    Theorem dm_kleisli_star2 {A B C} : forall (g : B -> T C) (f : W * A -> T B),
+        (g ∘ extract (W ×)) ⋆dm f = g ⋆ f.
+    Proof.
+      intros. unfold kcompose_dm.
+      ext [w a]. rewrite preincr_extract.
+      reflexivity.
+    Qed.
+
+    (** Composition when <<f>> is context-agnostic *)
+    Theorem dm_kleisli_star3 {A B C} : forall (g : W * B -> T C) (f : A -> T B),
+        g ⋆dm (f ∘ extract (W ×)) =
+          ((fun '(w, t) => bindd T (preincr w g) t) ∘ fmap (W ×) f).
+    Proof.
+      intros. unfold kcompose_dm.
+      ext [w a]. reflexivity.
+    Qed.
+
+    (** Composition when <<g>> has no substitution *)
+    Theorem dm_kleisli_star4 {A B C} : forall (g : W * B -> C) (f : W * A -> T B),
+        (ret T ∘ g) ⋆dm f = fun '(w, t) => fmapd T (preincr w g) (f (w, t)).
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** Other laws *)
+    (* Alternatively, this one could be proved using rewrite dm_kleisli_star1 *)
+    Theorem dm_kleisli_star5 {A B C} : forall (g : B -> T C) (f : W * A -> B),
+        (g ∘ extract (W ×)) ⋆dm (ret T ∘ f) = g ∘ f.
+    Proof.
+      intros. rewrite dm_kleisli_star2.
+      rewrite ToFunctor.kcompose_asc2.
+      unfold kcompose, bind, Bind_Bindd.
+      rewrite (kmond_bindd0 T).
+      reflexivity.
+    Qed.
+
+  End Kleisli_composition.
 
   Section with_monad.
 
     Context
       (T : Type -> Type)
-      `{DecoratedMonad W T}.
+      `{Decorated.Monad.Monad W T}.
 
-    (** *** Identity law *)
-    (******************************************************************************)
-    Lemma bindd_id :
-      `(bindd T (ret T ∘ extract (prod W)) = @id (T A)).
+    #[export] Instance: Kleisli.Monad.Monad T.
     Proof.
-      intros. unfold_ops @Bindd_dec.
-      rewrite <- (fun_fmap_fmap T).
-      reassociate <-.
-      rewrite (mon_join_fmap_ret T).
-      reassociate ->.
-      rewrite (dfun_dec_extract W T).
-      reflexivity.
+      constructor; unfold_ops @Bind_Bindd.
+      - intros. now rewrite (kmond_bindd0 T).
+      - intros. now rewrite (kmond_bindd1 T).
+      - intros. rewrite (kmond_bindd2 T).
+        rewrite (kcompose_extract T).
+        reflexivity.
     Qed.
 
-    (** *** Composition law *)
-    (******************************************************************************)
-    Lemma bindd_bindd : forall `(g : W * B -> T C) `(f : W * A -> T B),
-        bindd T g ∘ bindd T f = bindd T (g ⋆dm f).
+    #[export] Instance: Kleisli.Decorated.Functor.DecoratedFunctor W T.
     Proof.
-      intros. unfold bindd at 1 2, Bindd_dec.
-      (* change (join T ∘ fmap T ?f) with (bind T f).*)
-      do 2 reassociate <-.
-      reassociate -> near (join T). rewrite (dmon_join W T).
-      repeat reassociate <-.
-      reassociate -> near (fmap T f).
-      rewrite (fun_fmap_fmap T).
-      change (?g ∘ dec T ∘ fmap T (dec T ∘ f) ∘ dec T)
-        with (g ∘ (dec T ∘ fmap T (dec T ∘ f) ∘ dec T)).
-      rewrite <- (cobind_dec T).
-      reassociate <-.
-      change (?g ∘ fmap T (shift T) ∘ fmap T (cobind (prod W) (dec T ∘ f)) ∘ ?h)
-        with (g ∘ (fmap T (shift T) ∘ fmap T (cobind (prod W) (dec T ∘ f))) ∘ h).
-      rewrite (fun_fmap_fmap T).
-      unfold bindd.
-      change (?h ∘ fmap T g ∘ join T ∘ fmap T (shift T ∘ cobind (prod W) (dec T ∘ f)) ∘ ?i)
-        with (h ∘ (fmap T g ∘ join T ∘ fmap T (shift T ∘ cobind (prod W) (dec T ∘ f))) ∘ i).
-      fequal.
-      unfold kcompose_dm, bindd, preincr.
-      rewrite natural.
-      reassociate ->. unfold_ops @Fmap_compose. unfold_compose_in_compose.
-      rewrite (fun_fmap_fmap T).
-      replace (fun '(w, a) => (join T ∘ fmap T (g ∘ incr w) ∘ dec T) (f (w, a)))
-        with (join T ∘ (fun '(w, a) => (fmap T (g ∘ incr w) ∘ dec T) (f (w, a))))
-        by (ext [? ?]; reflexivity).
-      reassociate <-.
-      #[local] Set Keyed Unification.
-      rewrite (mon_join_join T).
-      #[local] Unset Keyed Unification.
-      reassociate ->.
-      fequal. unfold_compose_in_compose.
-      rewrite (fun_fmap_fmap T).
-      fequal. fequal. ext [w a].
-      unfold shift, compose; cbn.
-      compose near (dec T (f (w, a))) on left.
-      rewrite (fun_fmap_fmap T).
-      compose near (dec T (f (w, a))) on left.
-      rewrite (fun_fmap_fmap T).
-      fequal. ext [w' b].
-      reflexivity.
+      constructor; unfold_ops @Fmapd_Bindd.
+      - intros. now rewrite (kmond_bindd1 T).
+      - intros. rewrite (kmond_bindd2 T).
+        rewrite (kcompose_ret T).
+        reflexivity.
     Qed.
-
-    (** *** Unit law *)
-    (******************************************************************************)
-    Lemma bindd_comp_ret `(f : W * A -> T B) :
-      bindd T f ∘ ret T = f ∘ pair Ƶ.
-    Proof.
-      intros. unfold_ops Bindd_dec.
-      reassociate -> on left.
-      rewrite (dmon_ret W T).
-      reassociate <- on left.
-      reassociate -> near (ret T).
-      rewrite (natural (G := T) (ϕ := @ret T _)).
-      reassociate <-. rewrite (mon_join_ret T).
-      reflexivity.
-    Qed.
-
-    #[export] Instance: Kleisli.Decorated.Monad.Monad T :=
-      {| kmond_bindd0 := @bindd_comp_ret;
-        kmond_bindd1 := @bindd_id;
-        kmond_bindd2 := @bindd_bindd;
-      |}.
 
   End with_monad.
 
-End ToKleisli.
+  Section laws.
 
-(** * Basic properties of [shift] on monads *)
-(******************************************************************************)
-Section shift_monad_lemmas.
+    Context
+      (T : Type -> Type)
+      `{Decorated.Monad.Monad W T}.
 
-  #[local] Generalizable Variables T A.
-
-  Context
-    `{Monad T}
-    `{Monoid W}.
-
-  (** [shift] applied to a singleton simplifies to a singleton. *)
-  Lemma shift_return `(a : A) (w1 w2 : W) :
-    shift T (w2, ret T (w1, a)) = ret T (w2 ● w1, a).
-  Proof.
-    unfold shift, compose. rewrite strength_return.
-    compose near (w2, (w1, a)) on left.
-    now rewrite (natural (F := fun A => A)).
-  Qed.
-
-  Lemma shift_join `(t : T (T (W * A))) (w : W) :
-    shift T (w, join T t) = join T (fmap T (fun t => shift T (w, t)) t).
-  Proof.
-    rewrite (shift_spec T). compose near t on left.
-    rewrite natural. unfold compose; cbn.
-    fequal. unfold_ops @Fmap_compose.
-    fequal. ext x. now rewrite (shift_spec T).
-  Qed.
-
-  (*
-  Lemma shift_bind `(t : T (W * A)) (w : W) `(f : W * A -> T (W * B)) :
-    shift T (w, bind T f t) = bind T (fun p => shift T (w, f p)) t.
-  Proof.
-    unfold_ops @Bind_Join. unfold compose.
-    rewrite shift_join. fequal.
-    compose near t on left.
-    now rewrite (fun_fmap_fmap T).
-  Qed.
-  *)
-
-End shift_monad_lemmas.
-
-(** * Helper lemmas for proving instances *)
-(******************************************************************************)
-Section helper_lemmas.
-
-  #[local] Generalizable Variables T.
-
-  Context
-    `{Monad T}
-    `{Decorate W T}
-    `{Monoid W}.
-
-  (** This lemmas is useful for proving the decoration-join law. *)
-  Lemma dec_helper_4 {A} : forall (t : T (T A)) (w : W),
-      dec T (join T t) =
-        join T (fmap T (shift T) (dec T (fmap T (dec T) t))) ->
-      shift T (w, dec T (join T t)) =
-        join T (fmap T (shift T) (shift T (w, dec T (fmap T (dec T) t)))).
-  Proof.
-    introv IH. rewrite !(shift_spec T) in *. rewrite IH.
-    compose near (dec T (fmap T (dec T) t)) on right.
-    rewrite (fun_fmap_fmap T). rewrite (shift_increment T).
-    rewrite <- (fun_fmap_fmap T).
-    change (fmap T (fmap T ?f)) with (fmap (T ∘ T) f).
-    compose near (dec T (fmap T (dec T) t)).
-    reassociate <-.
-    #[local] Set Keyed Unification.
-    now rewrite <- (natural (ϕ := @join T _)).
-    #[local] Unset Keyed Unification.
-  Qed.
-
-End helper_lemmas.
-
-#[local] Generalizable Variables E F ϕ A B.
-
-(** * Pushing decorations through a monoid homomorphism *)
-(** If a functor is readable by a monoid, it is readable by any target
-    of a homomorphism from that monoid too. *)
-(******************************************************************************)
-Section DecoratedFunctor_monoid_homomorphism.
-
-  Import Product.Notations.
-
-  Context
-    (Wsrc Wtgt : Type)
-    `{Monoid_Morphism Wsrc Wtgt ϕ}
-    `{Decorate Wsrc F} `{Fmap F} `{Return F} `{Join F}
-    `{! DecoratedMonad Wsrc F}.
-
-  Instance Decorate_homomorphism :
-    Decorate Wtgt F := fun A => fmap F (map_fst ϕ) ∘ dec F.
-
-  Instance Natural_read_morphism : Natural (@dec Wtgt F Decorate_homomorphism).
-  Proof.
-    constructor.
-    - typeclasses eauto.
-    - typeclasses eauto.
-    - intros. unfold_ops @Decorate_homomorphism.
-      unfold_ops @Fmap_compose.
-      reassociate <- on left.
-      rewrite (fun_fmap_fmap F).
-      rewrite (product_fmap_commute).
-      rewrite <- (fun_fmap_fmap F).
-      reassociate -> on left.
-      change (fmap F (fmap (prod Wsrc) f)) with
-          (fmap (F ∘ prod Wsrc) f).
-      now rewrite (natural (ϕ := @dec Wsrc F _ )).
-  Qed.
-
-  Instance DecoratedFunctor_morphism : DecoratedFunctor Wtgt F.
-  Proof.
-    constructor; try typeclasses eauto.
-    - intros. unfold dec, Decorate_homomorphism.
-      reassociate <-. reassociate -> near (fmap F (map_fst ϕ)).
-      rewrite <- (natural (ϕ := @dec Wsrc F _) (map_fst ϕ)).
-      reassociate <-. unfold_ops @Fmap_compose. rewrite (fun_fmap_fmap F).
-      reassociate -> near (@dec Wsrc F _ A).
-      rewrite (dfun_dec_dec Wsrc F).
-      reassociate <-. rewrite (fun_fmap_fmap F).
-      reassociate <-. rewrite (fun_fmap_fmap F).
-      fequal. fequal. ext [w a]. reflexivity.
-    - intros. unfold dec, Decorate_homomorphism.
-      reassociate <-. rewrite (fun_fmap_fmap F).
-      replace (extract (Wtgt ×) ∘ map_fst ϕ)
-        with (@extract (Wsrc ×) _ A) by now ext [w a].
-      now rewrite (dfun_dec_extract Wsrc F).
-  Qed.
-
-  Instance DecoratedMonad_morphism : DecoratedMonad Wtgt F.
-  Proof.
-    inversion H3.
-    constructor; try typeclasses eauto.
-    - intros. unfold dec, Decorate_homomorphism.
-      reassociate ->. rewrite (dmon_ret Wsrc F).
-      reassociate <-. rewrite (natural (ϕ := @ret F _)).
-      ext a. unfold compose; cbn.
-      now rewrite (monmor_unit).
-    - intros. unfold dec, Decorate_homomorphism.
-      reassociate ->. rewrite (dmon_join Wsrc F).
-      repeat reassociate <-.
-      rewrite (natural (ϕ := @join F _)).
-      reassociate -> near (fmap F (shift F)).
-      unfold_ops @Fmap_compose.
-      unfold_compose_in_compose.
-      rewrite (fun_fmap_fmap F _ _ _ (shift F) (fmap F (map_fst ϕ))).
-      reassociate -> near (fmap F (map_fst ϕ)). rewrite (fun_fmap_fmap F).
-      rewrite <- (fun_fmap_fmap F _ _ _ (dec F) (fmap F (map_fst ϕ))).
-      reassociate <-. reassociate -> near (fmap F (fmap F (map_fst ϕ))).
-      rewrite <- (natural (ϕ := @dec Wsrc F _)).
-      reassociate <-. unfold_ops @Fmap_compose.
-      reassociate -> near (fmap F (fmap (prod Wsrc) (fmap F (map_fst ϕ)))).
-      rewrite (fun_fmap_fmap F).
-      repeat fequal. ext [w t].
-      unfold compose; cbn.
-      change (id ?f) with f. unfold shift.
-      unfold compose; cbn.
-      do 2 (compose near t;
-            repeat rewrite (fun_fmap_fmap F)).
-      fequal. ext [w' a].
-      unfold compose; cbn. rewrite monmor_op.
+    (** *** Composition with <<bind>> *)
+    (******************************************************************************)
+    Corollary bind_bindd {A B C} : forall (g : B -> T C) (f : W * A -> T B),
+        bind T g ∘ bindd T f = bindd T (g ⋆ f).
+    Proof.
+      intros. unfold_ops @Bind_Bindd.
+      rewrite (kmond_bindd2 T).
+      rewrite (dm_kleisli_star2 T).
       reflexivity.
-  Qed.
+    Qed.
 
-End DecoratedFunctor_monoid_homomorphism.
 
-(** * Decorated monads in terms of monad homomorphisms *)
-(******************************************************************************)
-Section DecoratedMonad_characterization.
+    Corollary bindd_bind {A B C} : forall (g : W * B -> T C) (f : A -> T B),
+        bindd T g ∘ bind T f = bindd T ((fun '(w, t) => bindd T (preincr w g) t) ∘ fmap (W ×) f).
+    Proof.
+      introv. unfold_ops @Bind_Bindd.
+      rewrite (kmond_bindd2 T).
+      now rewrite (dm_kleisli_star3 T).
+    Qed.
 
-  Generalizable Variables T.
+    (** *** Composition with <<fmapd>> *)
+    (******************************************************************************)
+    Lemma bindd_fmapd {A B C} : forall (g : W * B -> T C) (f : W * A -> B),
+        bindd T g ∘ fmapd T f = bindd T (g co⋆ f).
+    Proof.
+      introv. unfold_ops @Fmapd_Bindd.
+      rewrite (kmond_bindd2 T).
+      rewrite (dm_kleisli_star1 T).
+      reflexivity.
+    Qed.
 
-  Context
-    `{Monad T} `{Decorate W T} `{Monoid W}
-    `{! DecoratedFunctor W T}.
+    Corollary fmapd_bindd {A B C} : forall (g : W * B -> C) (f : W * A -> T B),
+        fmapd T g ∘ bindd T f = bindd T (fun '(w, t) => fmapd T (preincr w g) (f (w, t))).
+    Proof.
+      intros. unfold_ops @Fmapd_Bindd.
+      rewrite (kmond_bindd2 T).
+      rewrite (dm_kleisli_star4 T).
+      reflexivity.
+    Qed.
 
-  (** <<ret T>> commutes with decoration if and only if <<dec T>> maps
-     <<ret T>> to <<ret (T ∘ W)>> *)
-  Lemma dec_ret_iff {A} :
-    (dec T ∘ ret T = ret T ∘ dec (fun x => x) (A:=A)) <->
-    (dec T ∘ ret T = ret (T ∘ prod W) (A:=A)).
-  Proof with auto.
-    split...
-  Qed.
+    (** *** Composition with <<fmap>> *)
+    (******************************************************************************)
+    Lemma bindd_fmap {A B C} : forall (g : W * B -> T C) (f : A -> B),
+        bindd T g ∘ fmap T f = bindd T (g ∘ fmap (prod W) f).
+    Proof.
+      intros. unfold_ops @Fmap_Bindd.
+      rewrite (kmond_bindd2 T).
+      reassociate ->.
+      rewrite (dm_kleisli_star1 T).
+      rewrite (fmap_to_cobind (W ×)).
+      reflexivity.
+    Qed.
 
-  (** <<join T>> commutes with decoration if and only if <<dec T>>
-     maps <<join T>> to <<join (T ∘ prod W)>> of <<dec T ∘ fmap T (dec T)>>
-     (in other words iff <<dec T>> commutes with <<join>>). *)
-  Lemma dec_join_iff {A} :
-    `(dec T ∘ join T = join T ∘ dec (T ∘ T) (A := A)) <->
-    `(dec T ∘ join T = join (T ∘ prod W) ∘ dec T ∘ fmap T (dec T (A:=A))).
-  Proof.
-    enough (Heq : join T ∘ dec (A := A) (T ∘ T)
-                  = join (T ∘ prod W) ∘ dec T ∘ fmap T (dec T))
-      by (split; intro hyp; now rewrite hyp).
-    unfold_ops @Join_Beck @Decorate_compose @BeckDistribution_strength.
-    repeat reassociate <-. fequal. fequal.
-    rewrite (natural (ϕ := @join T _)).
-    unfold_ops @Fmap_compose. reassociate -> on right.
-    now unfold_compose_in_compose; rewrite (fun_fmap_fmap T).
-  Qed.
+    Corollary fmap_bindd {A B C} : forall (g : B -> C) (f : W * A -> T B),
+        fmap T g ∘ bindd T f = bindd T (fmap T g ∘ f).
+    Proof.
+      intros. unfold_ops @Fmap_Bindd.
+      rewrite (kmond_bindd2 T).
+      rewrite (dm_kleisli_star2 T).
+      reflexivity.
+    Qed.
 
-  Theorem decorated_monad_compatibility_spec :
-    Monad_Hom T (T ∘ prod W) (@dec W T _) <->
-    DecoratePreservingTransformation (@ret T _) /\
-    DecoratePreservingTransformation (@join T _).
-  Proof with auto.
-    split.
-    - introv mhom. inverts mhom. inverts mhom_domain. split.
-      + constructor...
-        introv. symmetry. rewrite dec_ret_iff. apply mhom_ret.
-      + constructor...
-        introv. symmetry. rewrite dec_join_iff. apply mhom_join.
-    - intros [h1 h2]. inverts h1. inverts h2.
-      constructor; try typeclasses eauto.
-      + introv. rewrite <- dec_ret_iff...
-      + introv. rewrite <- dec_join_iff...
-  Qed.
+    (** *** Composition between <<fmapd>> and <<bind>> *)
+    (******************************************************************************)
 
-  Theorem decorated_monad_spec :
-    DecoratedMonad W T <-> Monad_Hom T (T ∘ prod W) (@dec W T _).
-  Proof with try typeclasses eauto.
-    rewrite decorated_monad_compatibility_spec.
-    split; intro hyp.
-    - inversion hyp. constructor...
-      + constructor... intros. now rewrite (dmon_ret W T).
-      + constructor... intros. now rewrite (dmon_join W T).
-    - destruct hyp as [hyp1 hyp2]. constructor...
-      + intros. inversion hyp1. now rewrite dectrans_commute.
-      + intros. inversion hyp2. now rewrite <- dectrans_commute.
-  Qed.
+    (** *** Composition between <<fmapd>> and <<fmap>> *)
+    (******************************************************************************)
 
-End DecoratedMonad_characterization.
+    (** *** Composition between <<bind>> and <<fmap>> *)
+    (******************************************************************************)
+
+  End laws.
+
+End Derived.
