@@ -121,7 +121,7 @@ Module Derived.
       fun G _ _ _ A B f => bindt T G (fmap G (ret T) ∘ f).
 
   End operations.
-  
+
   Section special_cases.
 
     Context
@@ -207,7 +207,7 @@ Module Derived.
       {| fun_fmap_id := fmap_id;
         fun_fmap_fmap := fmap_fmap;
       |}.
-    
+
     (** *** Monad instance *)
     (******************************************************************************)
     #[export] Instance: Kleisli.Monad.Monad T.
@@ -236,7 +236,7 @@ Module Derived.
     Qed.
 
   End with_kleisli.
-  
+
   (** ** Special cases for Kleisli composition *)
   (******************************************************************************)
   Section Kleisli_composition.
@@ -347,7 +347,7 @@ Module Derived.
     rewrite (fun_fmap_id T).
     now rewrite (fun_fmap_id G1).
   Qed.
-  
+
   End Kleisli_composition.
 
   (** ** Composition with lesser Kleisli operations *)
@@ -361,7 +361,7 @@ Module Derived.
       (G2 : Type -> Type)
       `{Applicative G2}
       `{Applicative G1}.
-  
+
   (** *** Composition with <<fmap>> *)
   (******************************************************************************)
   Lemma fmap_bindt : forall `(g : B -> C) `(f : A -> G1 (T B)),
@@ -382,7 +382,7 @@ Module Derived.
     fequal. now rewrite Mult_compose_identity2.
     rewrite kcompose_tm30; auto.
   Qed.
-  
+
   (** *** Composition with <<traverse>> *)
   (******************************************************************************)
   Lemma traverse_bindt : forall `(g : B -> G2 C) `(f : A -> G1 (T B)),
@@ -492,7 +492,7 @@ Module Derived.
     change (@Fmap_Bindt T H0 H) with (@ToFunctor.Fmap_Bind T _ _).
     now rewrite (ToFunctor.fmap_bind T).
   Qed.
-  
+
   End Kleisli_composition.
 
 End Derived.

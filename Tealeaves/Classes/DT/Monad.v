@@ -67,12 +67,12 @@ From Tealeaves Require
 Module ToKleisli.
 
   Import Classes.Kleisli.DT.Monad.
-  
+
   Import Classes.Kleisli.DT.Monad.Notations.
   Import Classes.Monad.Notations.
   Import Classes.Traversable.Functor.Notations.
   Import Data.Strength.Notations.
-  
+
   Section operation.
 
     Context
@@ -145,7 +145,7 @@ Module ToKleisli.
 
     Import Decorated.Monad.ToKleisli.
     Import Kleisli.Decorated.Monad.
-    
+
     Theorem kdtm_binddt1_T {A} : binddt T (fun A => A) (ret T ∘ extract (prod W)) = @id (T A).
     Proof.
       introv. unfold_ops @Binddt_ddj.

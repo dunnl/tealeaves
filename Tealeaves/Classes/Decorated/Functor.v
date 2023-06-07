@@ -312,7 +312,7 @@ Module ToKleisli.
 
   Import Classes.Kleisli.Decorated.Functor.
   Import Comonad.Notations.
-  
+
   Section operation.
 
     Context

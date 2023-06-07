@@ -101,7 +101,7 @@ Module AlgebraicToKleisli.
     `{! Traversable.Functor.TraversableFunctor T}.
 
   #[local] Instance traverse' : Traverse T := ToKleisli.Traverse_dist T.
-  
+
   Definition fmap' : Fmap T := ToFunctor.Fmap_Traverse T.
   Definition dist' : Dist T := Dist_Traverse T.
 

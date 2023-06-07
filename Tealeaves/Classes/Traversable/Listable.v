@@ -40,7 +40,7 @@ Section TraversableFunctor_fold_spec.
   Context
     (T : Type -> Type)
     `{TraversableFunctor T}.
-  
+
   Import Classes.Kleisli.Traversable.Functor.
   Import Traversable.Functor.ToKleisli.
 

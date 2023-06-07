@@ -176,7 +176,7 @@ End kleisli_composition.
 From Tealeaves Require Import
   Classes.Kleisli.Monad
   Classes.Kleisli.Decorated.Functor.
-  
+
 (** * Derived instances *)
 (******************************************************************************)
 Module Derived.
@@ -184,7 +184,7 @@ Module Derived.
   Import
     Kleisli.Monad.Notations
     Comonad.Notations.
-  
+
   Section operations.
 
     Context
@@ -197,7 +197,7 @@ Module Derived.
     #[export] Instance Fmapd_Bindd: Fmapd W T := fun A B f => bindd T (ret T ∘ f).
 
   End operations.
-  
+
   (** ** Lesser Kleisli composition laws *)
   (******************************************************************************)
   Section Kleisli_composition.
@@ -304,9 +304,9 @@ Module Derived.
     Qed.
 
   End with_monad.
-  
+
   Section laws.
-    
+
     Context
       (T : Type -> Type)
       `{Decorated.Monad.Monad W T}.
@@ -383,5 +383,5 @@ Module Derived.
     (******************************************************************************)
 
   End laws.
-  
+
 End Derived.

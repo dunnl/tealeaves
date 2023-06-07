@@ -438,7 +438,7 @@ Section range_lemmas.
       range (envmap f Γ) = fmap list f (range Γ).
   Proof.
     intros. unfold range, envmap. compose near Γ.
-    unfold_ops @Fmap_compose.    
+    unfold_ops @Fmap_compose.
     rewrite (fun_fmap_fmap list _ _ _ (fmap (prod atom) f) (extract (prod atom))).
     rewrite (fun_fmap_fmap list _ _ _ (extract (prod atom)) f).
     fequal. now ext [? ?].

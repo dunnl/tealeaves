@@ -64,7 +64,7 @@ End RightModule_Monad.
 Section functor_module_composition.
 
   #[local] Generalizable Variables F G.
-  
+
   Context
     `{Functor F}
     `{RightModule G T}.
@@ -103,14 +103,14 @@ From Tealeaves Require Import Classes.Kleisli.Monad.
 (** * Kleisli laws for <<bind>> *)
 (******************************************************************************)
 Module ToKleisli.
-  
+
   Import Kleisli.Monad.Notations.
   Import Classes.Monad.ToKleisli.
-  
+
   Section Monad_kleisli_laws.
 
     Generalizable All Variables.
-    
+
     Context
       (T : Type -> Type)
         `{Classes.RightModule.RightModule F T}.

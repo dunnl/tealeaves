@@ -256,7 +256,7 @@ End Instances.
 #[local] Generalizable Variables T W.
 
 Module CategoricalToKleisli.
-  
+
   Context
     `{fmapT : Fmap T}
     `{decT : Decorate W T}

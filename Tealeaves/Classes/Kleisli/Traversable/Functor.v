@@ -53,7 +53,7 @@ End class.
 (** ** <<Functor>> instance *)
 (******************************************************************************)
 Module ToFunctor.
-  
+
   Section operation.
 
     Context
@@ -64,7 +64,7 @@ Module ToFunctor.
       fun (A B : Type) (f : A -> B) => traverse T (fun A => A) f.
 
   End operation.
-  
+
   Section properties.
 
     Context
@@ -149,7 +149,7 @@ Module ToFunctor.
     Qed.
 
   End properties.
-  
+
 End ToFunctor.
 
 Import Batch.Notations.

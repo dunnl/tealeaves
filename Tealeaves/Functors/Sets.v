@@ -159,7 +159,7 @@ Qed.
 TODO: This isn't really necessary because it is inferred from the monad instance.
  *)
 Section set_applicative.
-  
+
   Instance Pure_set : Pure set := @eq.
 
   #[export] Instance Mult_set : Mult set :=

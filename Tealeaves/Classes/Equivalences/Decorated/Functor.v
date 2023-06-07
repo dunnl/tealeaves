@@ -77,7 +77,7 @@ End properties.
 Import Kleisli.Decorated.Functor.ToFunctor.
 
 Module Roundtrip1.
-  
+
   Context
     `{fmapT : Fmap T}
     `{decT : Decorate E T}

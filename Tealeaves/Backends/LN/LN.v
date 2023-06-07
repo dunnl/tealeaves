@@ -149,7 +149,7 @@ Section locally_nameless_operations.
 
   Definition subst x (u : T LN) : T LN -> T LN :=
     bind T (subst_loc x u).
-  
+
   Definition free : T LN -> list atom :=
     fun t => bind list free_loc (tolist T t).
 
@@ -210,7 +210,7 @@ Tactic Notation "unfold_lia" :=
 Section locally_nameless_basic_principles.
 
   Import Notations.
-  
+
   Context
     `{DT.Monad.Monad nat T
      (unit := Monoid_unit_zero)

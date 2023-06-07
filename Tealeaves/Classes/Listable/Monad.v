@@ -44,7 +44,7 @@ End Listable_list.
 Section listable_monad_compatibility_conditions.
 
   Generalizable All Variables.
-  
+
   Context
     `{Monad T}
     `{Tolist T}
@@ -110,7 +110,7 @@ End listable_monad_compatibility_conditions.
 (** * Properties of listable monads *)
 (******************************************************************************)
 Section ListableMonad_theory.
-  
+
   Context
     `{ListableMonad T}.
 

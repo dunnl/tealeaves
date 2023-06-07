@@ -42,7 +42,7 @@ End class.
 (** * To functor *)
 (******************************************************************************)
 Module ToFunctor.
-  
+
   Section operation.
 
     Context

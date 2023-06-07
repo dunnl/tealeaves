@@ -1,18 +1,18 @@
 From Tealeaves.Classes Require Import
   Monad
   Applicative.
-  
+
 (** * Monadic applicative functors *)
 (******************************************************************************)
 Section Applicative_Monad.
 
   #[local] Generalizable Variable T.
-  
+
   Import Applicative.Notations.
-  
+
   Context
     `{Classes.Monad.Monad T}.
-  
+
   Import Monad.ToKleisli.Operation.
   Import Monad.ToKleisli.Instance.
 

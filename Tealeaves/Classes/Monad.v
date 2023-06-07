@@ -85,16 +85,16 @@ Module ToKleisli.
   Generalizable All Variables.
 
   Section operation.
-    
+
     Context
       (T : Type -> Type)
       `{Fmap T} `{Join T}.
 
     #[export] Instance Bind_join : Bind T T :=
       fun {A B} (f : A -> T B) => join T ∘ fmap T f.
-    
+
   End operation.
-  
+
   Section with_monad.
 
     Context
