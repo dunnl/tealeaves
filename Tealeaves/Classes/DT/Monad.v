@@ -2,12 +2,7 @@ From Tealeaves Require Export
   Classes.Monoid
   Classes.Applicative
   Classes.Comonad
-  Functors.Writer.
-From Tealeaves Require
-  Classes.Monad
-  Classes.Kleisli.Decorated.Monad.
-
-Export Decorated.Monad (preincr).
+  Classes.Decorated.Monad.
 
 Import Monoid.Notations.
 Import Product.Notations.
@@ -154,16 +149,13 @@ Section class.
 
 End class.
 
-From Tealeaves.Classes.Kleisli Require Import
-  Monad
-  Decorated.Functor
-  Decorated.Monad
-  Traversable.Functor
-  Traversable.Monad
-  DT.Functor.
-
 (** * Auxiliary lemmas for constant applicative functors *)
 (******************************************************************************)
+From Tealeaves.Classes Require
+  Decorated.Functor
+  Decorated.Monad
+  DT.Functor.
+
 Module Derived.
 
   Section with_kleisli.

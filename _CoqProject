@@ -26,11 +26,11 @@ Tealeaves/Categories/TypeFamilies.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/Environment.v
-#Tealeaves/Functors/Writer.v
+Tealeaves/Functors/Writer.v
 #Tealeaves/Functors/Sets.v
 #Tealeaves/Functors/List.v
 Tealeaves/Classes/Decorated/Functor.v
-#Tealeaves/Classes/Decorated/Monad.v
+Tealeaves/Classes/Decorated/Monad.v
 #Tealeaves/Classes/Decorated/Module.v
 Tealeaves/Functors/Store.v
 Tealeaves/Functors/Batch.v

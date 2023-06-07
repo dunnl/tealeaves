@@ -172,18 +172,17 @@ Section kleisli_composition.
 
 End kleisli_composition.
 
-
 From Tealeaves Require Import
-  Classes.Kleisli.Monad
-  Classes.Kleisli.Decorated.Functor.
+  Classes.Monad
+  Classes.Decorated.Functor.
 
 (** * Derived instances *)
 (******************************************************************************)
 Module Derived.
 
   Import
-    Kleisli.Monad.Notations
-    Comonad.Notations.
+    Classes.Monad.Notations
+    Classes.Comonad.Notations.
 
   Section operations.
 
@@ -284,7 +283,7 @@ Module Derived.
       (T : Type -> Type)
       `{Decorated.Monad.Monad W T}.
 
-    #[export] Instance: Kleisli.Monad.Monad T.
+    #[export] Instance: Monad T.
     Proof.
       constructor; unfold_ops @Bind_Bindd.
       - intros. now rewrite (kmond_bindd0 T).
@@ -294,7 +293,7 @@ Module Derived.
         reflexivity.
     Qed.
 
-    #[export] Instance: Kleisli.Decorated.Functor.DecoratedFunctor W T.
+    #[export] Instance: DecoratedFunctor W T.
     Proof.
       constructor; unfold_ops @Fmapd_Bindd.
       - intros. now rewrite (kmond_bindd1 T).
@@ -360,7 +359,9 @@ Module Derived.
       rewrite (kmond_bindd2 T).
       reassociate ->.
       rewrite (dm_kleisli_star1 T).
-      rewrite (fmap_to_cobind (W ×)).
+      unfold cokcompose.
+      fequal.
+      rewrite (fmap_to_cobind (E := W) _ _ f).
       reflexivity.
     Qed.
 

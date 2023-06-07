@@ -1,5 +1,6 @@
-From Tealeaves.Classes Require Export
-  Functor.
+From Tealeaves Require Export
+  Classes.Functor
+  Functors.Identity.
 
 Import Functor.Notations.
 
@@ -231,6 +232,16 @@ Module ToFunctor.
       h ⋆ (g ∘ f) = (h ⋆ g) ∘ f.
   Proof.
     intros. unfold kcompose.
+    reflexivity.
+  Qed.
+
+  (** *** Naturality of <<ret>> *)
+  (******************************************************************************)
+  #[export] Instance mon_ret_natural : Natural (@ret T _).
+  Proof.
+    constructor; try typeclasses eauto.
+    intros. unfold_ops @Fmap_Bind.
+    rewrite (kmon_bind0 T).
     reflexivity.
   Qed.
 

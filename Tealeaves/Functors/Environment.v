@@ -1,4 +1,4 @@
-From Tealeaves Require Import
+From Tealeaves Require Export
   Data.Product
   Data.Strength
   Classes.Comonoid
@@ -53,6 +53,12 @@ Section environment_comonad_instance.
   Solve All Obligations with (introv; now ext [? ?]).
 
 End environment_comonad_instance.
+
+Lemma fmap_to_cobind {E} : forall A B (f : A -> B),
+    fmap (E ×) f = cobind (E ×) (f ∘ extract (E ×)).
+Proof.
+  intros. now ext [e a].
+Qed.
 
 (*
 Section environment_comonad_instance.
