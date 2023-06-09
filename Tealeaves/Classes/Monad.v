@@ -9,68 +9,6 @@ Import Functor.Notations.
 (** * Kleisli presentation of monads *)
 (******************************************************************************)
 
-(** ** <<Bind>> operation *)
-(******************************************************************************)
-Class Return (T : Type -> Type) :=
-  ret : (fun A => A) ⇒ T.
-
-Class Bind (T U : Type -> Type) :=
-  bind : forall (A B : Type), (A -> T B) -> U A -> U B.
-
-#[local] Arguments ret T%function_scope {Return} A%type_scope _.
-#[local] Arguments bind (T U)%function_scope {Bind} (A B C)%type_scope.
-
-(** ** Kleisli composition *)
-(******************************************************************************)
-Definition kc1 (T : Type -> Type) `{Bind T T} {A B C : Type}
-  (g : B -> T C) (f : A -> T B) : (A -> T C) :=
-  bind T T B C g ∘ f.
-
-#[local] Notation "g ⋆ f" := (kc1 _ g f) (at level 60) : tealeaves_scope.
-
-(** ** Typeclass *)
-(******************************************************************************)
-Class Monad (T : Type -> Type) `{Return T} `{Bind T T} :=
-  { (* left unit law of the monoid *)
-    kmon_bind0 : forall `(f : A -> T B),
-      bind T T A B f ∘ ret T A = f;
-    (* right unit law of the monoid *)
-    kmon_bind1 : forall (A : Type),
-      bind T T A A (ret T A) = @id (T A);
-    (* associativity of the monoid *)
-    kmon_bind2 : forall `(g : B -> T C) `(f : A -> T B),
-      bind T T B C g ∘ bind T T A B f = bind T T A C (g ⋆ f);
-  }.
-
-(** ** Monad Homomorphisms *)
-(******************************************************************************)
-Class Monad_Hom
-  (T U : Type -> Type)
-  `{Return T} `{Bind T T}
-  `{Return U} `{Bind U U}
-  (ϕ : forall (A : Type), T A -> U A) :=
-  { kmon_hom_bind : forall (A B : Type) (f : A -> T B),
-      ϕ B ∘ bind T T A B f = bind U U A B (ϕ B ∘ f) ∘ ϕ A;
-    kmon_hom_ret : forall (A : Type),
-      ϕ A ∘ ret T A = ret U A;
-  }.
-
-(** ** Right modules *)
-(******************************************************************************)
-Class RightModule
-  (T : Type -> Type)
-  (U : Type -> Type)
-  `{Return T} `{Bind T T} `{Bind T U} :=
-  { kmod_monad :> Monad T;
-    kmod_bind1 : forall (A : Type),
-      bind T U A A (ret T A) = @id (U A);
-    kmod_bind2 : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
-      bind T U B C g ∘ bind T U A B f = bind T U A C (g ⋆ f);
-  }.
-
-Arguments ret T%function_scope {Return} {A}%type_scope.
-Arguments bind (T U)%function_scope {Bind} {A B}%type_scope.
-
 (** ** Kleisli category laws *)
 (** An interesting note here is that the left unit law of the monad
 corresponds to the right identity law of the Kleisli category and vice versa. *)

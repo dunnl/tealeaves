@@ -23,16 +23,16 @@ Section Functor_composition.
     `{Functor F}
     `{Functor G}.
 
-  #[export] Instance Fmap_compose : Fmap (G ∘ F) :=
-    fun A B f => fmap G (fmap F f).
+  #[export] Instance Map_compose : Map (G ∘ F) :=
+    fun A B f => map G (map F f).
 
   #[export, program] Instance Functor_compose : Functor (G ∘ F).
 
   Solve Obligations with
     (intros; unfold transparent tcs;
      unfold_compose_in_compose;
-     (rewrite (fun_fmap_id F), (fun_fmap_id G)) +
-       (rewrite (fun_fmap_fmap G), (fun_fmap_fmap F));
+     (rewrite (fun_map_id F), (fun_map_id G)) +
+       (rewrite (fun_map_map G), (fun_map_map F));
      reflexivity).
 
 End Functor_composition.

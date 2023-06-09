@@ -2,7 +2,7 @@ From Tealeaves Require Export
   Data.Product
   Data.Strength
   Classes.Comonoid
-  Classes.Comonad.
+  Classes.Kleisli.
 
 Import Product.Notations.
 Import Strength.Notations.
@@ -11,7 +11,7 @@ Import Strength.Notations.
 (** For any type [A], there is an endofunctor whose object map is
     <<fun B => prod A B>>. *)
 (******************************************************************************)
-#[export] Instance Fmap_prod {E} : Fmap (E ×) := (fun A B => map_snd).
+#[export] Instance Map_prod {E} : Map (E ×) := (fun A B => map_snd).
 
 #[program, export] Instance Functor_prod E : Functor (E ×).
 
@@ -43,7 +43,7 @@ Section environment_comonad_instance.
     `{W : Type}.
 
   #[export] Instance Cobind_prod : Cobind (W ×) :=
-    fun A B f => fmap (W ×) f ∘ @dup_left W A.
+    fun A B f => map (W ×) (W * A) B f ∘ @dup_left W A.
 
   #[export] Instance Extract_prod : Extract (W ×) :=
     @snd W.
@@ -54,8 +54,8 @@ Section environment_comonad_instance.
 
 End environment_comonad_instance.
 
-Lemma fmap_to_cobind {E} : forall A B (f : A -> B),
-    fmap (E ×) f = cobind (E ×) (f ∘ extract (E ×)).
+Lemma map_to_cobind {E} : forall A B (f : A -> B),
+    map (E ×) A B f = cobind (E ×) A B (f ∘ extract (E ×) A).
 Proof.
   intros. now ext [e a].
 Qed.
@@ -100,23 +100,23 @@ Section miscellaneous.
     (F : Type -> Type).
 
   Theorem strength_extract `{Functor F} {A : Type} :
-    `(fmap F (extract (E ×)) ∘ σ F = extract (E ×) (A := F A)).
+    map F (E * A) A (extract (E ×) A) ∘ σ F = extract (E ×) (F A).
   Proof.
     intros. unfold strength, compose. ext [w a]. cbn.
-    compose_near a. now rewrite (fun_fmap_fmap F), (fun_fmap_id F).
+    compose_near a. now rewrite (fun_map_map F), (fun_map_id F).
   Qed.
 
   (*
   Theorem strength_cojoin `{Functor F} {A : Type} :
-    `(fmap F (cojoin (E ×)) ∘ σ F = σ F ∘ cobind (E ×) (σ F) (A := F A)).
+    `(map F (cojoin (E ×)) ∘ σ F = σ F ∘ cobind (E ×) (σ F) (A := F A)).
   Proof.
     intros. unfold strength, compose. ext [w a]. cbn.
-    compose_near a. now rewrite 2(fun_fmap_fmap F).
+    compose_near a. now rewrite 2(fun_map_map F).
   Qed.
   *)
 
-  Theorem product_fmap_commute {E1 E2 A B : Type} (g : E1 -> E2) (f : A -> B) :
-    fmap (E2 ×) f ∘ map_fst g = map_fst g ∘ fmap (E1 ×) f.
+  Theorem product_map_commute {E1 E2 A B : Type} (g : E1 -> E2) (f : A -> B) :
+    map (E2 ×) _ _ f ∘ map_fst g = map_fst g ∘ map (E1 ×) _ _ f.
   Proof.
     now ext [w a].
   Qed.

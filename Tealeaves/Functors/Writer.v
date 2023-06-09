@@ -1,49 +1,35 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Classes.Monad
+  Classes.Kleisli
   Functors.Environment.
 
 Import Product.Notations.
 Import Functor.Notations.
 Import Strength.Notations.
 Import Monoid.Notations.
-Import Monad.Notations.
+Import Kleisli.Notations.
 
 #[local] Generalizable Variables W T F A M.
 
-(** ** <<incr>> *)
-(******************************************************************************)
-Section incr.
+Section misc.
 
   Context
+    (W : Type)
     `{Monoid W}.
 
-  (* It sometimes useful to have this curried operation, the
-  composition of [strength] and [join]. *)
-  Definition incr {A : Type} : W -> W * A -> W * A :=
-    fun w2 '(w1, a) => (w2 ● w1, a).
-
-  Lemma incr_zero {A : Type} :
-    incr Ƶ = @id (W * A).
-  Proof.
-    ext [? ?]. cbn. now simpl_monoid.
-  Qed.
-
-  Lemma incr_incr {A : Type} : forall w1 w2,
-    incr (A:=A) w2 ∘ incr w1 = incr (w2 ● w1).
-  Proof.
-    intros. ext [w a].
-    cbn. now simpl_monoid.
-  Qed.
-
   Lemma extract_incr {A : Type} :
-    forall (w : W), extract (W ×) ∘ incr w = extract (W ×) (A := A).
+    forall (w : W), extract (W ×) A ∘ incr W w = extract (W ×) A.
   Proof.
     intros. now ext [w' a].
   Qed.
 
-End incr.
+  Lemma extract_preincr {A : Type} :
+    forall (w : W), extract (W ×) A ⦿ w = extract (W ×) A.
+  Proof.
+    intros. now ext [w' a].
+  Qed.
 
+End misc.
 
 (** ** Properties of <<strength>> w.r.t. monad operations *)
 (** Formalizing the product functor allows expressing some general
@@ -57,22 +43,23 @@ Section Monad_strength_laws.
     (T : Type -> Type)
     {W : Type}
     `{Monad T}.
+  (*
+  Import Monad.DerivedInstances.
 
-  Import Monad.ToFunctor.
 
   Lemma strength_ret : forall (A : Type),
-      σ T ∘ fmap (W ×) (ret T) = ret T (A := W * A).
+      σ T ∘ map (W ×) A (T A) (ret T A) = ret T (W * A).
   Proof.
     intros. ext [w a]. unfold compose; cbn. compose near a on left.
     now rewrite (natural (G := T) (F := fun A => A)).
   Qed.
 
   Lemma strength_bind : forall (A B : Type) (f : A -> T B),
-      σ T ∘ fmap (W ×) (bind T f) =
-        bind T (σ T ∘ fmap (W ×) f) ∘ σ T.
+      σ T ∘ map (W ×) (T A) (T B) (bind T T A B f) =
+        bind T T (W * A) (W * B) (σ T ∘ map (W ×) A (T B) f) ∘ σ T.
   Proof.
     intros. ext [w t].
-    change_left (σ T (w, bind T f t)).
+    change_left (σ T (w, bind T T f t)).
     unfold Strength.strength, compose.
     compose near t on left.
     rewrite (fmap_bind T).
@@ -80,6 +67,7 @@ Section Monad_strength_laws.
     rewrite (bind_fmap T).
     reflexivity.
   Qed.
+  *)
 
 End Monad_strength_laws.
 

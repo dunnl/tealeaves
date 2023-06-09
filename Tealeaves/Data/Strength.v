@@ -16,8 +16,8 @@ Import Product.Notations.
 (******************************************************************************)
 Section tensor_strength.
 
-  Definition strength (F : Type -> Type) `{Fmap F} {A B} : forall (p : A * F B), F (A * B) :=
-    fun '(a, t) => fmap F (pair a) t.
+  Definition strength (F : Type -> Type) `{Map F} {A B} : forall (p : A * F B), F (A * B) :=
+    fun '(a, t) => map F (pair a) t.
 
   Lemma strength_I : forall (A B : Type), strength (fun A : Type => A) = @id (A * B).
   Proof.
@@ -25,11 +25,11 @@ Section tensor_strength.
   Qed.
 
   Lemma strength_compose `{Functor F} `{Functor G} : forall (A B : Type),
-      strength (A := A) (B := B) (F ∘ G) = fmap F (strength G) ∘ strength F.
+      strength (A := A) (B := B) (F ∘ G) = map F (strength G) ∘ strength F.
   Proof.
     intros. ext [x y]. unfold strength, compose; cbn.
     compose near y.
-    now rewrite (fun_fmap_fmap F).
+    now rewrite (fun_map_map F).
   Qed.
 
   Context
@@ -37,54 +37,54 @@ Section tensor_strength.
     `{Functor F}.
 
   Lemma strength_1 {A B} : forall (a : A) (x : F B),
-      strength F (a, x) = fmap F (pair a) x.
+      strength F (a, x) = map F (pair a) x.
   Proof.
     reflexivity.
   Qed.
 
   Lemma strength_2 {A B} : forall (a : A),
-      (strength F ∘ pair a : F B -> F (A * B)) = fmap F (pair a).
+      (strength F ∘ pair a : F B -> F (A * B)) = map F (pair a).
   Proof.
     reflexivity.
   Qed.
 
   Lemma strength_nat `{f : A1 -> B1} `{g : A2 -> B2} : forall (p : A1 * F A2),
-      strength F (map_tensor f (fmap F g) p) = fmap F (map_tensor f g) (strength F p).
+      strength F (map_tensor f (map F g) p) = map F (map_tensor f g) (strength F p).
   Proof.
     intros [a t]. cbn.
     compose near t on left.
     compose near t on right.
-    now rewrite 2(fun_fmap_fmap F).
+    now rewrite 2(fun_map_map F).
   Qed.
 
   Corollary strength_nat_l {A B C} {f : A -> B} : forall (p : A * F C),
-      fmap F (map_fst f) (strength F p) = strength F (map_fst f p).
+      map F (map_fst f) (strength F p) = strength F (map_fst f p).
   Proof.
     intros. unfold map_fst.
     rewrite <- strength_nat.
-    now rewrite (fun_fmap_id F).
+    now rewrite (fun_map_id F).
   Qed.
 
   Corollary strength_nat_r {A B C} {f : A -> B} : forall (p : C * F A),
-      fmap F (map_snd f) (strength F p) = strength F (map_snd (fmap F f) p).
+      map F (map_snd f) (strength F p) = strength F (map_snd (map F f) p).
   Proof.
     intros. unfold map_snd.
     now rewrite <- strength_nat.
   Qed.
 
   Lemma strength_triangle {A} : forall (p : unit * F A),
-      fmap F (left_unitor) (strength F p) = left_unitor p.
+      map F (left_unitor) (strength F p) = left_unitor p.
   Proof.
     intros [u t]. destruct u. cbn.
-    compose_near t. rewrite (fun_fmap_fmap F).
-    now rewrite (fun_fmap_id F).
+    compose_near t. rewrite (fun_map_map F).
+    now rewrite (fun_map_id F).
   Qed.
 
   Lemma strength_assoc {A B C} :
-    fmap F α ∘ (@strength F _ (A * B) C) = strength F ∘ map_snd (strength F) ∘ α.
+    map F α ∘ (@strength F _ (A * B) C) = strength F ∘ map_snd (strength F) ∘ α.
   Proof.
     ext [[? ?] t]. unfold strength, compose. cbn.
-    compose_near t. do 2 rewrite (fun_fmap_fmap F).
+    compose_near t. do 2 rewrite (fun_map_map F).
     reflexivity.
   Qed.
 
