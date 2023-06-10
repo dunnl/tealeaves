@@ -1113,45 +1113,75 @@ Module DerivedInstances.
 
 
 
-
-
+  (** ** Derived typeclass instances *)
+  (******************************************************************************)
   Section laws.
 
-    Context
-      (W : Type)
-      (T : Type -> Type)
-      `{Kleisli.DTM W T}.
 
-    Lemma map_id : forall (A : Type),
-        map T A A (@id A) = @id (T A).
-    Proof.
-      intros. unfold_ops @Map_Binddt.
-      change (ret T A ∘ id) with (ret T A).
-      now rewrite (kdtm_binddt1 W T).
-    Qed.
 
-    Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
-        map T g ∘ map T f = map T (g ∘ f).
-    Proof.
-      intros. unfold_ops @Map_Binddt.
-      change (binddt T (fun A0 : Type => A0) (ret T ∘ g ∘ extract (prod W)))
-        with (map (fun A => A) (binddt T (fun A0 : Type => A0) (ret T ∘ g ∘ extract (prod W)))).
-      rewrite (kdtm_binddt2 W T _ _ _ (G1 := fun A => A) (G2 := fun A => A)).
-      fequal.
-      - now rewrite Mult_compose_identity1.
-      - unfold kc7. ext [w a].
-        unfold_ops @Map_I.
-        compose near (w, a) on left.
-        do 2 reassociate <- on left.
-        unfold_compose_in_compose.
-        rewrite (kdtm_binddt0 W T _ _ (G := fun A => A)).
-        unfold_ops @Return_writer @Monoid_unit_product.
-        unfold compose; cbn.
-        reflexivity.
-    Qed.
+  End special_cases.
 
-    #[export] Instance: Classes.Functor.Functor T :=
-      {| fun_map_id := map_id;
+  Import Kleisli.Traversable.Monad.Notations.
+  Import Kleisli.DT.Functor.Notations.
+  Import Kleisli.Decorated.Monad.Notations.
+  Import Kleisli.Monad.Notations.
+  Import Comonad.Notations.
+
+  (** ** Special cases of Kleisli composition *)
+  (******************************************************************************)
+  Section kleisli_composition.
+
+    (*
+    d/t/m:
+    000 0 no d or t or m
+    001 1 no context or effect
+    010 2 no context or subst
+    011 3 no context
+    100 4 no effect or subst
+    101 5 no effect
+    110 6 no subst
+    111 7 everything
+     *)
+
+    (** * Lesser Kleisli typeclass instances *)
+    (******************************************************************************)
+    Section instances.
+
+      Context
+        (W : Type)
+        (T : Type -> Type)
+        `{Kleisli.DTM W T}.
+
+      Lemma map_id : forall (A : Type),
+          map T A A (@id A) = @id (T A).
+      Proof.
+        intros. unfold_ops @Map_Binddt.
+        change (ret T A ∘ id) with (ret T A).
+        now rewrite (kdtm_binddt1 W T).
+      Qed.
+
+      Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
+          map T g ∘ map T f = map T (g ∘ f).
+      Proof.
+        intros. unfold_ops @Map_Binddt.
+        change (binddt T (fun A0 : Type => A0) (ret T ∘ g ∘ extract (prod W)))
+          with (map (fun A => A) (binddt T (fun A0 : Type => A0) (ret T ∘ g ∘ extract (prod W)))).
+        rewrite (kdtm_binddt2 W T _ _ _ (G1 := fun A => A) (G2 := fun A => A)).
+        fequal.
+        - now rewrite Mult_compose_identity1.
+        - unfold kc7. ext [w a].
+          unfold_ops @Map_I.
+          compose near (w, a) on left.
+          do 2 reassociate <- on left.
+          unfold_compose_in_compose.
+          rewrite (kdtm_binddt0 W T _ _ (G := fun A => A)).
+          unfold_ops @Return_writer @Monoid_unit_product.
+          unfold compose; cbn.
+          reflexivity.
+      Qed.
+
+      #[export] Instance: Classes.Functor.Functor T :=
+        {| fun_map_id := map_id;
         fun_map_map := map_map;
       |}.
 
@@ -1187,170 +1217,6 @@ Module DerivedInstances.
       cbv. change (op w unit0) with (w ● Ƶ).
       now simpl_monoid.
     Qed.
-
-  End with_monad.
-
-
-  End special_cases.
-
-  Import Kleisli.Traversable.Monad.Notations.
-  Import Kleisli.DT.Functor.Notations.
-  Import Kleisli.Decorated.Monad.Notations.
-  Import Kleisli.Monad.Notations.
-  Import Comonad.Notations.
-
-  (** ** Special cases of Kleisli composition *)
-  (******************************************************************************)
-  Section kleisli_composition.
-
-    Context
-      (W : Type)
-      (T : Type -> Type)
-      `{DT.Monad.Monad W T}.
-
-    (*
-    d/t/m:
-    000 0 no d or t or m
-    001 1 no context or effect
-    010 2 no context or subst
-    011 3 no context
-    100 4 no effect or subst
-    101 5 no effect
-    110 6 no subst
-    111 7 everything
-     *)
-
-
-    (** *** Composition when <<g>> has no substitution *)
-    (******************************************************************************)
-
-
-    (** *** Composition when <<g>> has no applicative effect *)
-    (******************************************************************************)
-
-    (** Composition when neither <<g>> or <<f>> has an applicative effect *)
-    Lemma kc7_55 : forall
-        `(g : W * B -> T C) `(f : W * A -> T B),
-        kc7 (G1 := fun A => A) (G2 := fun A => A) g f =
-          kcompose_dm g f.
-    Proof.
-      reflexivity.
-    Qed.
-
-    (** Composition when neither <<g>> or <<f>> has an applicative effect or substitution *)
-    Lemma kc7_44 : forall
-        `(g : W * B -> C) `(f : W * A -> B),
-        kc7 (G1 := fun A => A) (G2 := fun A => A)
-          (ret T ∘ g) (ret T ∘ f) = ret T ∘ (g co⋆ f).
-    Proof.
-      intros. rewrite kc7_55.
-      unfold kcompose_dm.
-      ext [w a].
-      intros. unfold_ops @Bindd_Binddt.
-      unfold compose. compose near (f (w, a)).
-      rewrite (kdtm_binddt0 W T _ _ (G := fun A => A)).
-      cbv. change (op w unit0) with (w ● Ƶ). now simpl_monoid.
-    Qed.
-
-
-    (** *** Composition when <<f>> has no applicative effect *)
-    (******************************************************************************)
-
-    (** Composition when <<f>> has no applicative effect *)
-    Theorem kc7_75 {A B C} : forall
-        `{Applicative G2}
-        (g : W * B -> G2 (T C)) (f : W * A -> T B),
-        kc7 (G1 := fun A => A) g f = fun '(w, a) => binddt T G2 (g ⦿ w) (f (w, a)).
-    Proof.
-      reflexivity.
-    Qed.
-
-    (** Composition when <<f>> has no applicative effect, substitution, or context-sensitivity *)
-    Lemma kc7_70 : forall
-        `{Applicative G}
-        `(g : W * B -> G (T C)) `(f : A -> B),
-        kc7 (G1 := fun A => A) (G2 := G)
-          g (ret T ∘ f ∘ extract (W ×)) = g ∘ map (W ×) f.
-    Proof.
-      intros. unfold kc7.
-      ext [w a]. unfold compose.
-      cbn. compose near (f a) on left.
-      change (map (fun A => A) ?f) with f.
-      rewrite (kdtm_binddt0 W T _ _ (G := G)).
-      now rewrite preincr_ret.
-    Qed.
-
-    (** Composition when <<f>> is just a map *)
-    Theorem kc7_70 {A B C} : forall
-        `{Applicative G2}
-        (g : W * B -> G2 (T C)) (f : A -> B),
-        kc7 (G1 := fun A => A) (G2 := G2) g
-          (ret T ∘ f ∘ extract (W ×)) = g ∘ map (W ×) f.
-    Proof.
-      intros. unfold kc7.
-      ext [w a]. unfold compose. cbn.
-      compose near (f a) on left.
-      change (map (fun A => A) ?f) with f.
-      rewrite (kdtm_binddt0 W T); auto.
-      now rewrite (preincr_ret).
-    Qed.
-
-    (** Composition when <<f>> has no applicative effect or substitution *)
-    Lemma kc7_74 : forall
-        `{Applicative G}
-        `(g : W * B -> G (T C)) `(f : W * A -> B),
-        kc7 (G1 := fun A => A) (G2 := G)
-          g (ret T ∘ f) = g co⋆ f.
-    Proof.
-      intros. unfold kc7.
-      ext [w a]. unfold compose.
-      compose near (f (w, a)).
-      change (map (fun A => A) ?f) with f.
-      rewrite (kdtm_binddt0 W T _ _ (G := G)).
-      now rewrite preincr_ret.
-    Qed.
-
-    (** *** Others *)
-    (******************************************************************************)
-
-    (** Composition when <<f>> is context-agnostic *)
-    Theorem kc7_73 {A B C} : forall
-        `{Applicative G1} `{Applicative G2}
-        (g : W * B -> G2 (T C)) (f : A -> G1 (T B)),
-        g ⋆7 (f ∘ extract (W ×)) =
-          ((fun '(w, t) => map G1 (binddt T G2 (g ⦿ w)) t) ∘ map (W ×) f).
-    Proof.
-      intros. unfold kc7.
-      ext [w a]. unfold compose. cbn.
-      reflexivity.
-    Qed.
-    (** Composition when <<f>> has no substitution *)
-    Theorem kc7_76 {A B C} : forall
-        `{Applicative G1} `{Applicative G2}
-        (g : W * B -> G2 (T C)) (f : W * A -> G1 B),
-        g ⋆7 (map G1 (ret T) ∘ f) = g ⋆dt f.
-    Proof.
-      intros. unfold kc7.
-      ext [w a]. unfold kcompose_dt.
-      unfold compose. cbn.
-      compose near (f (w, a)).
-      rewrite (fun_map_map G1).
-      rewrite (fun_map_map G1).
-      fequal.
-      rewrite (kdtm_binddt0 W T); auto.
-      now rewrite (preincr_ret).
-    Qed.
-
-  End kleisli_composition.
-
-  (** * Lesser Kleisli typeclass instances *)
-  (******************************************************************************)
-  Section instances.
-
-    Context
-      (W : Type)
-        (T : Type -> Type)
-        `{Kleisli.DT.Monad.Monad W T}.
 
     (** ** Monad *)
     (******************************************************************************)
