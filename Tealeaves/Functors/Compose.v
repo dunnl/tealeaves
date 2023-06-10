@@ -37,3 +37,27 @@ Section Functor_composition.
      reflexivity).
 
 End Functor_composition.
+
+Require Import Tealeaves.Functors.Identity.
+
+Section lemmas.
+
+  Context
+    (F : Type -> Type)
+    `{Functor F}.
+
+  Lemma map_id_l :
+    forall {A B : Type} (f : A -> B),
+      @map ((fun A => A) ∘ F) (Map_compose (fun A => A) F) A B f = @map F _ A B f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma map_id_r :
+    forall {A B : Type} (f : A -> B),
+      @map (F ∘ (fun A => A)) (Map_compose F (fun A => A)) A B f = @map F _ A B f.
+  Proof.
+    reflexivity.
+  Qed.
+
+End lemmas.

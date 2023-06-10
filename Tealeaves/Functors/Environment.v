@@ -43,10 +43,12 @@ Section environment_comonad_instance.
     `{W : Type}.
 
   #[export] Instance Cobind_prod : Cobind (W ×) :=
-    fun A B f => map (W ×) (W * A) B f ∘ @dup_left W A.
+    Kleisli.Cobind_env.
+    (* fun A B f => map (W ×) (W * A) B f ∘ @dup_left W A. *)
 
   #[export] Instance Extract_prod : Extract (W ×) :=
-    @snd W.
+    Kleisli.Extract_env.
+  (* @snd W. *)
 
   #[export, program] Instance Comonad_prod : Comonad (W ×).
 

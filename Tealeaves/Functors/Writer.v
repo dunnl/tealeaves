@@ -17,6 +17,12 @@ Section misc.
     (W : Type)
     `{Monoid W}.
 
+  Lemma extract_pair {A : Type} :
+    forall (w : W), extract (W ×) A ∘ pair w = id.
+  Proof.
+    reflexivity.
+  Qed.
+
   Lemma extract_incr {A : Type} :
     forall (w : W), extract (W ×) A ∘ incr W w = extract (W ×) A.
   Proof.

@@ -280,8 +280,9 @@ Section class.
         traverse T (fun A => A) A A id = @id (T A);
       trf_traverse_traverse :
       forall (G1 G2 : Type -> Type)
+        `(Applicative G1)
+        `(Applicative G2)
         {A B C : Type}
-        `(Applicative G2) `(Applicative G1)
         (g : B -> G2 C) (f : A -> G1 B),
         map G1 (T B) (G2 (T C)) (traverse T G2 B C g) ∘ traverse T G1 A B f =
           traverse T (G1 ∘ G2) A C (map G1 B (G2 C) g ∘ f);
@@ -325,7 +326,7 @@ Section class.
         bindt T T G A B f ∘ ret T A = f;
       ktm_bindt1 : forall (A : Type),
         bindt T T (fun A => A) A A (ret T A) = @id (T A);
-      ktm_bindt2 : forall (A B C : Type) `{Applicative G1} `{Applicative G2}
+      ktm_bindt2 : forall (G1 G2 : Type -> Type) `{Applicative G1} `{Applicative G2} (A B C : Type)
         (g : B -> G2 (T C)) (f : A -> G1 (T B)),
         map G1 (T B) (G2 (T C)) (bindt T T G2 B C g) ∘ bindt T T G1 A B f =
           bindt T T (G1 ∘ G2) A C (g ⋆3 f);
@@ -364,11 +365,12 @@ Section class.
     `{Mapdt E T}.
 
   Class DecoratedTraversableFunctor :=
-    { kdtfun_fmapdt1 : forall (A : Type),
+    { kdtfun_mapdt1 : forall (A : Type),
         mapdt E T (fun A => A) A A (extract (E ×) A) = @id (T A);
-      kdtfun_mapdt2 : forall (A B C : Type)
-        `{Applicative G1} `{Applicative G2}
-        `(g : E * B -> G2 C) `(f : E * A -> G1 B),
+      kdtfun_mapdt2 : forall (G1 G2 : Type -> Type)
+                        `{Applicative G1} `{Applicative G2}
+                        (A B C : Type)
+                        `(g : E * B -> G2 C) `(f : E * A -> G1 B),
         map G1 (T B) (G2 (T C)) (mapdt E T G2 B C g) ∘ mapdt E T G1 A B f = mapdt E T (G1 ∘ G2) A C (g ⋆6 f);
       kdtfun_morph : forall `{ApplicativeMorphism G1 G2 ϕ} `(f : E * A -> G1 B),
         mapdt E T G2 A B (ϕ B ∘ f) = ϕ (T B) ∘ mapdt E T G1 A B f;
