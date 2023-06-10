@@ -29,6 +29,14 @@ Section misc.
     intros. now ext [w' a].
   Qed.
 
+  Lemma preincr_ret {A B : Type} : forall (f : W * A -> B) (w : W),
+      (f ⦿ w) ∘ ret (W ×) A = f ∘ pair w.
+  Proof.
+    intros. ext a. cbv.
+    change (op w unit0) with (w ● Ƶ).
+    now simpl_monoid.
+  Qed.
+
 End misc.
 
 (** ** Properties of <<strength>> w.r.t. monad operations *)

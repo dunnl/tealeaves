@@ -20,6 +20,7 @@ Ltac unfold_compose_in_compose :=
 Section Functor_composition.
 
   Context
+    (G F : Type -> Type)
     `{Functor F}
     `{Functor G}.
 

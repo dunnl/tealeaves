@@ -246,7 +246,7 @@ End pure_as_applicative_transformation.
 Section applicative_compose.
 
   Context
-    (G1 G2 : Type -> Type)
+    (G2 G1 : Type -> Type)
     `{Applicative G1}
     `{Applicative G2}.
 
@@ -352,26 +352,26 @@ Section applicative_compose_laws.
     `{Applicative G}.
 
   Theorem Pure_compose_identity1 :
-    Pure_compose (fun A => A) G = @pure G _.
-  Proof.
-    easy.
-  Qed.
-
-  Theorem Pure_compose_identity2 :
     Pure_compose G (fun A => A) = @pure G _.
   Proof.
     easy.
   Qed.
 
+  Theorem Pure_compose_identity2 :
+    Pure_compose (fun A => A) G = @pure G _.
+  Proof.
+    easy.
+  Qed.
+
   Theorem Mult_compose_identity1 :
-    Mult_compose (fun A => A) G = @mult G _.
+    Mult_compose G (fun A => A) = @mult G _.
   Proof.
     ext A B [x y]. cbv in x, y. unfold Mult_compose.
     rewrite (fun_map_id G). reflexivity.
   Qed.
 
   Theorem Mult_compose_identity2 :
-    Mult_compose G (fun A => A) = @mult G _.
+    Mult_compose (fun A => A) G = @mult G _.
   Proof.
     ext A B [x y]. cbv in x, y. unfold Mult_compose.
     reflexivity.
