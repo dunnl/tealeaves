@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Classes.Monad.
+  Classes.Kleisli.
 
 (** * [option] monad *)
 (******************************************************************************)
@@ -12,7 +12,7 @@ Arguments Just {A}%type_scope _.
 Arguments None {A}%type_scope.
 *)
 
-#[export] Instance Fmap_option : Fmap option :=
+#[export] Instance Map_option : Map option :=
   fun A B (f : A -> B) (m : option A) =>
     match m with
     | Some a => Some (f a)
@@ -29,6 +29,7 @@ Qed.
 #[export] Instance Return_option : Return option :=
   fun A => Some.
 
+(*
 #[export] Instance Join_option : Join option :=
   fun A (m : option (option A)) =>
     match m with
@@ -55,3 +56,4 @@ Proof.
   - intros. now ext [|].
   - intros. now ext [|].
 Qed.
+*)

@@ -1,10 +1,10 @@
 From Tealeaves Require Export
   Prelude
-  Data.Product
   Classes.Functor
+  Definitions.Product
+  Definitions.Strength
   Functors.Identity
-  Functors.Compose
-  Data.Strength.
+  Functors.Compose.
 
 Import Product.Notations.
 

@@ -1,10 +1,11 @@
 From Tealeaves Require Export
-  Classes.Comonad.
+  Categorical.Classes.Comonad.
 
 Import Functor.Notations.
 Import Comonad.Notations.
 
 #[local] Generalizable Variables W A.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 
 (** * Right Comodules *)
 (******************************************************************************)
@@ -21,18 +22,18 @@ Section RightComodule_class.
 
   Context
     (F W : Type -> Type)
-    `{Fmap W} `{Cojoin W} `{Extract W}
-    `{Fmap F} `{RightCoaction F W}.
+    `{Map W} `{Cojoin W} `{Extract W}
+    `{Map F} `{RightCoaction F W}.
 
   Class RightComodule :=
     { rcom_comonad :> Comonad W;
       rcom_functor :> Functor F;
       rcom_coaction_natural :> Natural (@right_coaction F W _);
-      rcom_fmap_extr_coaction :
-        `(fmap F (extract W) ∘ right_coaction F W A = @id (F A));
+      rcom_map_extr_coaction :
+        `(map F (extract W) ∘ right_coaction F W A = @id (F A));
       rcom_coaction_coaction :
         `(right_coaction F W (W A) ∘ right_coaction F W A =
-          fmap F (cojoin W) ∘ right_coaction F W A);
+          map F (cojoin W) ∘ right_coaction F W A);
     }.
 
 End RightComodule_class.
@@ -46,8 +47,8 @@ Section RightComoduleHomomorphism.
   Context
     (W F G : Type -> Type)
     `{Comonad W}
-    `{Fmap F}
-    `{Fmap G}
+    `{Map F}
+    `{Map G}
     `{RightCoaction F W}
     `{RightCoaction G W}
     `{! RightComodule F W}
@@ -69,7 +70,7 @@ Section RightComodule_Comonad.
   Instance RightCoaction_Cojoin `{Cojoin W} : RightCoaction W W := @cojoin W _.
 
   #[program] Instance RightComodule_Comonad `{Comonad W} : RightComodule W W :=
-  {| rcom_fmap_extr_coaction := com_fmap_extr_cojoin W;
+  {| rcom_map_extr_coaction := com_map_extr_cojoin W;
      rcom_coaction_coaction := com_cojoin_cojoin W;
   |}.
 

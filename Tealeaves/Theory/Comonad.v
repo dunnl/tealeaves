@@ -1,52 +1,5 @@
-From Tealeaves Require Export
-  Classes.Functor
-  Functors.Identity
-  Functors.Compose.
 
-Import Functor.Notations.
-
-#[local] Generalizable Variables W A B C D.
-
-(** * Comonads *)
-(******************************************************************************)
-Section Comonad_operations.
-
-  Context
-    (W : Type -> Type).
-
-  Class Cojoin :=
-    cojoin : W ⇒ W ∘ W.
-
-  Class Extract :=
-    extract : W ⇒ (fun A => A).
-
-End Comonad_operations.
-
-Section Comonad.
-
-  Context
-    `(W : Type -> Type)
-    `{Fmap W}
-    `{Cojoin W}
-    `{Extract W}.
-
-  Class Comonad :=
-    { com_functor :> Functor W;
-      com_extract_natural :> Natural (extract W);
-      com_cojoin_natural :> Natural (cojoin W);
-      com_extract_cojoin :
-          `(extract W (W A) ∘ cojoin W A = @id (W A));
-      com_fmap_extr_cojoin :
-          `(fmap W (extract W A) ∘ cojoin W A = @id (W A));
-      com_cojoin_cojoin :
-        `(cojoin W (W A) ∘ cojoin W A = fmap W (cojoin W A) ∘ (cojoin W A));
-    }.
-
-End Comonad.
-
-Arguments cojoin _%function_scope {Cojoin} {A}%type_scope.
-Arguments extract _%function_scope {Extract} {A}%type_scope.
-
+(*
 (** * Kleisli presentation of comonads *)
 (******************************************************************************)
 
@@ -217,11 +170,4 @@ Section comodule_cobind.
   Qed.
 
 End comodule_cobind.
-
-(** * Notations *)
-(******************************************************************************)
-Module Notations.
-  Notation "g 'co⋆' f" := (cokcompose g f) (at level 60) : tealeaves_scope.
-  Notation "'coμ'" := (cojoin) : tealeaves_scope.
-  (*Notation "'coη'" := (extract) : tealeaves_scope.*)
-End Notations.
+*)

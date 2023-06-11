@@ -29,6 +29,84 @@ Create HintDb tea_list.
 
 Solve Obligations with (intros; unfold transparent tcs; auto with datatypes).
 
+(** * Folding over lists *)
+(******************************************************************************)
+Fixpoint fold `{op : Monoid_op M} `{unit : Monoid_unit M} (l : list M) : M :=
+  match l with
+  | nil => Ƶ
+  | cons x l' => x ● fold l'
+  end.
+
+(** ** Rewriting lemmas for [fold] *)
+(******************************************************************************)
+Section fold_rewriting_lemmas.
+
+  Context
+    `{Monoid M}.
+
+  Lemma fold_nil : fold (@nil M) = Ƶ.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma fold_cons : forall (m : M) (l : list M),
+      fold (m :: l) = m ● fold l.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma fold_one : forall (m : M), fold [ m ] = m.
+  Proof.
+    intro. cbn. now simpl_monoid.
+  Qed.
+
+  Lemma fold_app : forall (l1 l2 : list M),
+      fold (l1 ++ l2) = fold l1 ● fold l2.
+  Proof.
+    intros l1 ?. induction l1 as [| ? ? IHl].
+    - cbn. now simpl_monoid.
+    - cbn. rewrite IHl. now simpl_monoid.
+  Qed.
+
+End fold_rewriting_lemmas.
+
+(** ** Folding a list is a monoid homomorphism *)
+(** <<fold : list M -> M>> is homomorphism of monoids. *)
+(******************************************************************************)
+#[export] Instance Monmor_fold `{Monoid M} : Monoid_Morphism fold :=
+  {| monmor_unit := fold_nil;
+     monmor_op := fold_app |}.
+
+(** ** Other properties of <<fold>> *)
+(******************************************************************************)
+
+(** In the special case that we fold a list of lists, the result is equivalent
+    to joining the list of lists. *)
+Lemma fold_equal_join : forall {A},
+    fold = join list (A:=A).
+Proof.
+  intros. ext l. induction l as [| ? ? IHl].
+  - reflexivity.
+  - cbn. now rewrite IHl.
+Qed.
+
+(** Folding across a list of monoidal values commutes with applying a monoid
+    homomorphism to the elements. *)
+Theorem fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
+    ϕ ∘ fold = fold ∘ fmap list ϕ.
+Proof.
+  intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
+  induction l as [| ? ? IHl].
+  - cbn. apply (monmor_unit ϕ).
+  - cbn. now rewrite (monmor_op ϕ), IHl.
+Qed.
+
+Corollary fold_nat {A B : Type} (f : A -> B) :
+  fmap list f ∘ fold = fold ∘ fmap list (fmap list f).
+Proof.
+  now rewrite (fold_mon_hom (fmap list f)).
+Qed.
+
 (** * [list] functor *)
 (******************************************************************************)
 #[export] Instance Fmap_list : Fmap list :=
@@ -339,83 +417,6 @@ Qed.
      xmon_ret_injective := return_injective_list;
   |}.
 
-(** * Folding over lists *)
-(******************************************************************************)
-Fixpoint fold `{op : Monoid_op M} `{unit : Monoid_unit M} (l : list M) : M :=
-  match l with
-  | nil => Ƶ
-  | cons x l' => x ● fold l'
-  end.
-
-(** ** Rewriting lemmas for [fold] *)
-(******************************************************************************)
-Section fold_rewriting_lemmas.
-
-  Context
-    `{Monoid M}.
-
-  Lemma fold_nil : fold (@nil M) = Ƶ.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma fold_cons : forall (m : M) (l : list M),
-      fold (m :: l) = m ● fold l.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma fold_one : forall (m : M), fold [ m ] = m.
-  Proof.
-    intro. cbn. now simpl_monoid.
-  Qed.
-
-  Lemma fold_app : forall (l1 l2 : list M),
-      fold (l1 ++ l2) = fold l1 ● fold l2.
-  Proof.
-    intros l1 ?. induction l1 as [| ? ? IHl].
-    - cbn. now simpl_monoid.
-    - cbn. rewrite IHl. now simpl_monoid.
-  Qed.
-
-End fold_rewriting_lemmas.
-
-(** ** Folding a list is a monoid homomorphism *)
-(** <<fold : list M -> M>> is homomorphism of monoids. *)
-(******************************************************************************)
-#[export] Instance Monmor_fold `{Monoid M} : Monoid_Morphism fold :=
-  {| monmor_unit := fold_nil;
-     monmor_op := fold_app |}.
-
-(** ** Other properties of <<fold>> *)
-(******************************************************************************)
-
-(** In the special case that we fold a list of lists, the result is equivalent
-    to joining the list of lists. *)
-Lemma fold_equal_join : forall {A},
-    fold = join list (A:=A).
-Proof.
-  intros. ext l. induction l as [| ? ? IHl].
-  - reflexivity.
-  - cbn. now rewrite IHl.
-Qed.
-
-(** Folding across a list of monoidal values commutes with applying a monoid
-    homomorphism to the elements. *)
-Theorem fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
-    ϕ ∘ fold = fold ∘ fmap list ϕ.
-Proof.
-  intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
-  induction l as [| ? ? IHl].
-  - cbn. apply (monmor_unit ϕ).
-  - cbn. now rewrite (monmor_op ϕ), IHl.
-Qed.
-
-Corollary fold_nat {A B : Type} (f : A -> B) :
-  fmap list f ∘ fold = fold ∘ fmap list (fmap list f).
-Proof.
-  now rewrite (fold_mon_hom (fmap list f)).
-Qed.
 
 (** ** Monoids form list (monad-)algebras *)
 (** In fact, list algebras are precisely monoids. *)

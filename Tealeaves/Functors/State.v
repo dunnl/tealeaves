@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Classes.Monad.
+  Classes.Kleisli.
 
 (** * State monad *)
 (******************************************************************************)
@@ -24,7 +24,7 @@ Section state_monad.
   Definition runStateState {A} : State S A -> S -> S :=
     fun st s => fst (runState st s).
 
-  #[export] Instance Fmap_State : Fmap (State S) :=
+  #[export] Instance Map_State : Map (State S) :=
     fun A B (f : A -> B) (st : State S A) =>
       match st with
       | mkState r =>
@@ -43,6 +43,7 @@ Section state_monad.
   #[export] Instance Return_State : Return (State S) :=
     fun A (a : A) => mkState (fun s => (s, a)).
 
+  (*
   #[export] Instance Join_State : Join (State S) :=
     fun A (st : State S (State S A)) =>
       match st with
@@ -72,5 +73,6 @@ Section state_monad.
     - intros. ext [st]. unfold compose; cbn.
       fequal. ext s. destruct (st s). now (destruct s1).
   Qed.
+   *)
 
 End state_monad.

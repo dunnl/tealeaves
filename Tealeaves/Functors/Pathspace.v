@@ -9,7 +9,7 @@ From Tealeaves Require Export
 Inductive PathSpace (A : Type) : Type :=
 | path : forall (x y : A), x = y -> PathSpace A.
 
-#[export] Instance Fmap_Path : Fmap PathSpace :=
+#[export] Instance Map_Path : Map PathSpace :=
   fun A B (f : A -> B) '(@path _ x y p)
   => @path _ (f x) (f y) (ltac:(subst; auto)).
 

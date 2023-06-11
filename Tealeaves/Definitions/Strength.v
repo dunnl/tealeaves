@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Data.Product
+  Definitions.Product
   Classes.Functor
   Functors.Identity
   Functors.Compose.

@@ -11,7 +11,7 @@ comonoids in Coq's category are not particularly varied: there is one comonoid o
 |*)
 From Tealeaves Require Import
   Prelude
-  Data.Product.
+  Definitions.Product.
 
 #[local] Generalizable Variables a.
 

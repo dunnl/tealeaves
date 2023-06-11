@@ -280,8 +280,8 @@ Section class.
         traverse T (fun A => A) A A id = @id (T A);
       trf_traverse_traverse :
       forall (G1 G2 : Type -> Type)
-        `(Applicative G1)
-        `(Applicative G2)
+        `{Applicative G1}
+        `{Applicative G2}
         {A B C : Type}
         (g : B -> G2 C) (f : A -> G1 B),
         map G1 (T B) (G2 (T C)) (traverse T G2 B C g) ∘ traverse T G1 A B f =

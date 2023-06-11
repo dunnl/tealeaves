@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Applicative.
+  Classes.Applicative.
 
 Import Monoid.Notations.
 
@@ -29,7 +29,7 @@ Qed.
 Definition retag {V A B} : Const V A -> Const V B :=
   mkConst ∘ unconst.
 
-#[global] Instance Fmap_Const {V} : Fmap (Const V) :=
+#[global] Instance Map_Const {V} : Map (Const V) :=
   fun A B f x => mkConst (unconst x).
 
 #[global, program] Instance End_Const {V} : Functor (Const V).
@@ -41,8 +41,8 @@ Solve All Obligations with
 
 #[global] Hint Rewrite (@unconst_mkConst) (@mkConst_unconst) : tea_applicative.
 
-Lemma fmap_Const_1 : forall V (A B : Type) (f : A -> B) (x : Const V A),
-    unconst (fmap (Const V) f x) = unconst x.
+Lemma map_Const_1 : forall V (A B : Type) (f : A -> B) (x : Const V A),
+    unconst (map (Const V) f x) = unconst x.
 Proof.
   introv. now destruct x.
 Qed.
@@ -107,11 +107,11 @@ Section constant_functor.
     Context
       `{Monoid M}.
 
-    #[global] Instance Fmap_const : Fmap (const M) :=
+    #[global] Instance Map_const : Map (const M) :=
       fun X Y f t => t.
 
-    Theorem fmap_const_spec : forall (X Y : Type) (f : X -> Y),
-        fmap (const M) f = id.
+    Theorem map_const_spec : forall (X Y : Type) (f : X -> Y),
+        map (const M) f = id.
     Proof.
       reflexivity.
     Qed.

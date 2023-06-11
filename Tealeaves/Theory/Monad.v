@@ -1,8 +1,10 @@
 From Tealeaves Require Export
   Classes.Functor
+  Classes.Kleisli
   Functors.Identity.
 
 Import Functor.Notations.
+Import Kleisli.Notations.
 
 #[local] Generalizable Variables A B C D.
 
@@ -22,24 +24,24 @@ Section Monad_kleisli_category.
 
   (** ** Left identity law *)
   Theorem kleisli_id_l : forall (f : A -> T B),
-      (@ret T _ B) ⋆ f = f.
+      (@ret T _ B) ⋆1 f = f.
   Proof.
     intros. unfold kc1. now rewrite kmon_bind1.
   Qed.
 
   (** ** Right identity law *)
   Theorem kleisli_id_r : forall (g : B -> T C),
-      g ⋆ (@ret T _ B) = g.
+      g ⋆1 (@ret T _ B) = g.
   Proof.
-    intros. unfold kc1. now rewrite kmon_bind0.
+    intros. unfold kc1. now rewrite (kmon_bind0 T).
   Qed.
 
   (** ** Associativity law *)
   Theorem kleisli_assoc : forall (h : C -> T D) (g : B -> T C) (f : A -> T B),
-      h ⋆ (g ⋆ f) = (h ⋆ g) ⋆ f.
+      h ⋆1 (g ⋆1 f) = (h ⋆1 g) ⋆1 f.
   Proof.
     intros. unfold kc1 at 3.
-    now rewrite <- kmon_bind2.
+    now rewrite <- (kmon_bind2 T).
   Qed.
 
 End Monad_kleisli_category.
@@ -48,7 +50,7 @@ End Monad_kleisli_category.
 (******************************************************************************)
 Module Notations.
 
-  Notation "g ⋆ f" := (kc1 _ g f) (at level 60) : tealeaves_scope.
+  Notation "g ⋆1 f" := (kc1 _ g f) (at level 60) : tealeaves_scope.
 
 End Notations.
 
@@ -56,11 +58,11 @@ End Notations.
 (******************************************************************************)
 Module DerivedInstances.
 
-  #[export] Instance Fmap_Bind
+  #[export] Instance Map_Bind
     (T : Type -> Type)
     `{Return T}
-    `{Bind T T} : Fmap T :=
-  fun A B (f : A -> B) => bind T T (ret T ∘ f).
+    `{Bind T T} : Map T :=
+  fun A B (f : A -> B) => bind T T A B (ret T B ∘ f).
 
   Section with_monad.
 
@@ -74,47 +76,47 @@ Module DerivedInstances.
       - intros. unfold transparent tcs.
         unfold compose. now rewrite kmon_bind1.
       - intros. unfold transparent tcs.
-        rewrite kmon_bind2.
-        unfold kc1. reassociate <- near (bind T T (ret T ∘ g)).
-        now rewrite kmon_bind0.
+        rewrite (kmon_bind2 T).
+        unfold kc1. reassociate <- near (bind T T B C (ret T C ∘ g)).
+        now rewrite (kmon_bind0 T).
     Qed.
 
-    (** *** Composition with [fmap] *)
+    (** *** Composition with [map] *)
     (******************************************************************************)
-    Lemma bind_fmap : forall `(g : B -> T C) `(f : A -> B),
-        bind T T g ∘ fmap T f = bind T T (g ∘ f).
+    Lemma bind_map : forall `(g : B -> T C) `(f : A -> B),
+        bind T T B C g ∘ map T A B f = bind T T A C (g ∘ f).
     Proof.
       intros. unfold transparent tcs.
-      rewrite kmon_bind2.
+      rewrite (kmon_bind2 T).
       fequal. unfold kc1.
-      reassociate <-. now rewrite kmon_bind0.
+      reassociate <-. now rewrite (kmon_bind0 T).
     Qed.
 
-    Corollary fmap_bind : forall `(g : B -> C) `(f : A -> T B),
-        fmap T g ∘ bind T T f = bind T T (fmap T g ∘ f).
+    Corollary map_bind : forall `(g : B -> C) `(f : A -> T B),
+        map T _ _ g ∘ bind T T _ _ f = bind T T _ _ (map T _ _ g ∘ f).
     Proof.
       intros. unfold transparent tcs.
-      now rewrite kmon_bind2.
+      now rewrite (kmon_bind2 T).
     Qed.
 
     (** *** Special cases for Kleisli composition *)
     (******************************************************************************)
     Lemma kc1_00 : forall `(g : B -> C) `(f : A -> B),
-        (ret T ∘ g) ⋆ (ret T ∘ f) = ret T ∘ (g ∘ f).
+        (ret T C ∘ g) ⋆1 (ret T B ∘ f) = ret T C ∘ (g ∘ f).
     Proof.
       intros. unfold kc1.
-      reassociate <-. now rewrite kmon_bind0.
+      reassociate <-. now rewrite (kmon_bind0 T).
     Qed.
 
     Lemma kc1_10 : forall `(g : B -> T C) `(f : A -> B),
-        g ⋆ (ret T ∘ f) = g ∘ f.
+        g ⋆1 (ret T B ∘ f) = g ∘ f.
     Proof.
       intros. unfold kc1.
-      reassociate <-. now rewrite kmon_bind0.
+      reassociate <-. now rewrite (kmon_bind0 T).
     Qed.
 
     Lemma kc1_01 : forall `(g : B -> C) `(f : A -> T B),
-        (ret T ∘ g) ⋆ f = fmap T g ∘ f.
+        (ret T C ∘ g) ⋆1 f = map T B C g ∘ f.
     Proof.
       intros. unfold kc1.
       reflexivity.
@@ -123,16 +125,16 @@ Module DerivedInstances.
     (** *** Other rules for Kleisli composition *)
     (******************************************************************************)
     Lemma kc1_asc1 : forall `(g : B -> C) `(h : C -> T D) `(f : A -> T B),
-        (h ∘ g) ⋆ f = h ⋆ (fmap T g ∘ f).
+        (h ∘ g) ⋆1 f = h ⋆1 (map T B C g ∘ f).
     Proof.
       intros. unfold kc1.
       reassociate <-.
-      rewrite (bind_fmap).
+      rewrite (bind_map).
       reflexivity.
     Qed.
 
     Lemma kc1_asc2 : forall `(f : A -> B) `(g : B -> T C) `(h : C -> T D),
-        h ⋆ (g ∘ f) = (h ⋆ g) ∘ f.
+        h ⋆1 (g ∘ f) = (h ⋆1 g) ∘ f.
     Proof.
       intros. unfold kc1.
       reflexivity.
@@ -143,8 +145,9 @@ Module DerivedInstances.
     #[export] Instance mon_ret_natural : Natural (@ret T _).
     Proof.
       constructor; try typeclasses eauto.
-      intros. unfold_ops @Fmap_Bind.
-      rewrite kmon_bind0.
+      intros.
+      unfold_ops @Map_Bind.
+      rewrite (kmon_bind0 T).
       reflexivity.
     Qed.
 

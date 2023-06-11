@@ -15,8 +15,8 @@ Section Backwards.
   Context
     `{Applicative F}.
 
-  #[export] Instance Fmap_Backwards : Fmap (Backwards F) :=
-    fun A B f '(Build_Backwards _ _ x) => {| forwards := fmap F f x |}.
+  #[export] Instance Map_Backwards : Map (Backwards F) :=
+    fun A B f '(Build_Backwards _ _ x) => {| forwards := map F f x |}.
 
   #[export] Instance Pure_Backwards : Pure (Backwards F) :=
     fun A a => Build_Backwards _ _ (pure F a).
@@ -25,7 +25,7 @@ Section Backwards.
     fun '(b, a) => (a, b).
 
   Definition mult_Backwards {A B} : Backwards F A -> Backwards F B -> Backwards F (A * B) :=
-    fun ba bb => Build_Backwards F _ (fmap F swap (forwards _ _ bb ⊗ forwards _ _ ba)).
+    fun ba bb => Build_Backwards F _ (map F swap (forwards _ _ bb ⊗ forwards _ _ ba)).
 
   #[export] Instance Mult_Backwards : Mult (Backwards F) :=
     fun A B '(x, y) => mult_Backwards x y.

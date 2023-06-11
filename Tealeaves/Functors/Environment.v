@@ -1,6 +1,6 @@
 From Tealeaves Require Export
-  Data.Product
-  Data.Strength
+  Definitions.Product
+  Definitions.Strength
   Classes.Comonoid
   Classes.Kleisli.
 

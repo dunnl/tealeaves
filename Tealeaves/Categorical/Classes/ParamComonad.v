@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-     Classes.Functor.
+  Classes.Functor.
 
 Import Functor.Notations.
 
@@ -24,7 +24,7 @@ Section ParameterizedComonad_typeclass.
 
   Context
     `(W : Type -> Type -> Type -> Type)
-    `{forall A B, Fmap (W A B)}
+    `{forall A B, Map (W A B)}
     `{PCojoin W}
     `{PExtract W}.
 
@@ -32,11 +32,11 @@ Section ParameterizedComonad_typeclass.
     { pcom_functor :> forall A B, Functor (W A B);
       pcom_extract_cojoin :
         `((pextract W A _) ∘ pcojoin W A A B X = @id (W A B X));
-      pcom_fmap_extract_cojoin :
-        `(fmap (W A B) (pextract W B X) ∘ pcojoin W A B B X = @id (W A B X));
+      pcom_map_extract_cojoin :
+        `(map (W A B) (pextract W B X) ∘ pcojoin W A B B X = @id (W A B X));
       pcom_cojoin_cojoin :
         `(pcojoin W A B C (W C D X) ∘ pcojoin W A C D X =
-         fmap (W A B) (pcojoin W B C D X) ∘ pcojoin W A B D X);
+         map (W A B) (pcojoin W B C D X) ∘ pcojoin W A B D X);
     }.
 
 End ParameterizedComonad_typeclass.
