@@ -2,19 +2,9 @@ Tealeaves/Classes/Monad.v
 Tealeaves/Classes/Comonad.v
 #Tealeaves/Classes/RightModule.v        # This doesn't currently exist!
 #Tealeaves/Classes/RightComodule.v
-#Tealeaves/Categories/Types.v           # This expects Categorical API ready
-Tealeaves/Categories/TypeFamilies.v
-Tealeaves/Functors/Constant.v
-Tealeaves/Functors/ProductFunctor.v
-Tealeaves/Functors/Environment.v
-Tealeaves/Functors/Writer.v
-#Tealeaves/Functors/Sets.v
-#Tealeaves/Functors/List.v
 Tealeaves/Classes/Decorated/Functor.v
 Tealeaves/Classes/Decorated/Monad.v
 #Tealeaves/Classes/Decorated/Module.v
-
-
 Tealeaves/Classes/Traversable/Functor.v
 Tealeaves/Classes/Traversable/Monad.v
 #Tealeaves/ClassesTraversable/Module.v
@@ -23,26 +13,3 @@ Tealeaves/Classes/Decorated/Listable.v
 Tealeaves/Classes/DT/Functor.v
 Tealeaves/Classes/DT/Monad.v
 #Tealeaves/Classes/DT/Module.v
-
-Tealeaves/Backends/LN/Atom.v
-Tealeaves/Backends/LN/AtomSet.v
-Tealeaves/Backends/LN/AssocList.v
-Tealeaves/Backends/LN/LN.v
-Tealeaves/Backends/LN.v
-
-Tealeaves/Multisorted/Classes/Multifunctor.v
-Tealeaves/Multisorted/Classes/DTM.v
-
-Tealeaves/Backends/LN/Multisorted/LN.v
-
-Tealeaves/Examples/STLC/Syntax.v
-Tealeaves/Examples/STLC/TypeSoundness.v
-Tealeaves/Examples/STLC/SyntaxCategorical.v
-
-Tealeaves/Examples/SystemF/Syntax.v
-Tealeaves/Examples/SystemF/Rewriting.v
-Tealeaves/Examples/SystemF/Contexts.v
-Tealeaves/Examples/SystemF/TypeSoundness.v
-
-Tealeaves/Examples/STLC+Let/Let1.v
-Tealeaves/Examples/STLC+Let/Let2.v

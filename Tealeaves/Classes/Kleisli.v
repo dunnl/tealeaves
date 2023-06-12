@@ -76,50 +76,6 @@ End operations.
 
 
 
-(** ** Traversable monad *)
-(******************************************************************************)
-Section kc.
-
-  Context
-    (T : Type -> Type)
-    `{Bindt T T}.
-
-  Definition kc3
-    {A B C : Type}
-    (G1 G2 : Type -> Type)
-    `{Map G1} `{Pure G1} `{Mult G1}
-    `{Map G2} `{Pure G2} `{Mult G2} :
-    (B -> G2 (T C)) ->
-    (A -> G1 (T B)) ->
-    (A -> G1 (G2 (T C))) :=
-    fun g f => map G1 (T B) (G2 (T C)) (bindt T T G2 B C g) ∘ f.
-
-End kc.
-
-#[local] Infix "⋆3" := (kc3 _ _ _) (at level 60) : tealeaves_scope.
-
-Section class.
-
-  Context
-    (T : Type -> Type)
-    `{Return T}
-    `{Bindt T T}.
-
-  Class TraversableMonad :=
-    { ktm_bindt0 : forall (G : Type -> Type) `{Applicative G} (A B : Type) (f : A -> G (T B)),
-        bindt T T G A B f ∘ ret T A = f;
-      ktm_bindt1 : forall (A : Type),
-        bindt T T (fun A => A) A A (ret T A) = @id (T A);
-      ktm_bindt2 : forall (G1 G2 : Type -> Type) `{Applicative G1} `{Applicative G2} (A B C : Type)
-        (g : B -> G2 (T C)) (f : A -> G1 (T B)),
-        map G1 (T B) (G2 (T C)) (bindt T T G2 B C g) ∘ bindt T T G1 A B f =
-          bindt T T (G1 ∘ G2) A C (g ⋆3 f);
-      ktm_morph : forall `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : A -> G1 (T B)),
-          ϕ (T B) ∘ bindt T T G1 A B f = bindt T T G2 A B (ϕ (T B) ∘ f);
-    }.
-
-End class.
-
 (** ** Decorated traversable functor *)
 (******************************************************************************)
 Section kc.
@@ -164,52 +120,3 @@ End class.
 
 (** ** Decorated traversable monad *)
 (******************************************************************************)
-Section kc.
-
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{Return T}
-    `{Binddt W T T}
-    `{op: Monoid_op W} `{unit: Monoid_unit W}.
-
-  Definition kc7
-    {A B C}
-    (G1 G2 : Type -> Type)
-    `{Map G1} `{Pure G1} `{Mult G1}
-    `{Map G2} `{Pure G2} `{Mult G2} :
-    (W * B -> G2 (T C)) ->
-    (W * A -> G1 (T B)) ->
-    (W * A -> G1 (G2 (T C))) :=
-    fun g f '(w, a) => map G1 (T B) (G2 (T C)) (binddt W T T G2 B C (g ⦿ w)) (f (w, a)).
-
-End kc.
-
-#[local] Infix "⋆7" := (kc7 _ _ _ _) (at level 60) : tealeaves_scope.
-
-Section class.
-
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{Return T}
-    `{Binddt W T T}
-    `{op: Monoid_op W} `{unit: Monoid_unit W}.
-
-  Class DTM :=
-    { kdtm_monoid :> Monoid W;
-      kdtm_binddt0 : forall (G : Type -> Type) `{Applicative G} (A B : Type) (f : W * A -> G (T B)),
-        binddt W T T G A B f ∘ ret T A = f ∘ ret (W ×) A;
-      kdtm_binddt1 : forall (A : Type),
-        binddt W T T (fun A => A) A A (ret T A ∘ extract (W ×) A) = @id (T A);
-      kdtm_binddt2 :
-      forall (G1 G2 : Type -> Type) `{Applicative G1} `{Applicative G2}
-        (A B C : Type)
-        (g : W * B -> G2 (T C)) (f : W * A -> G1 (T B)),
-        map G1 (T B) (G2 (T C)) (binddt W T T G2 B C g) ∘ binddt W T T G1 A B f =
-          binddt W T T (G1 ∘ G2) A C (g ⋆7 f);
-      kdtm_morph : forall (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : W * A -> G1 (T B)),
-        ϕ (T B) ∘ binddt W T T G1 A B f = binddt W T T G2 A B (ϕ (T B) ∘ f);
-    }.
-
-End class.

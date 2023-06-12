@@ -1,6 +1,6 @@
 From Tealeaves Require Import
   Classes.Monoid
-  Classes.Kleisli
+  Classes.Traversable.Monad
   Functors.Sets
   Definitions.List.
 

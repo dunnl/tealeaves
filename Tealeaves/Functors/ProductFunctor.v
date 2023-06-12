@@ -35,15 +35,15 @@ Section product_applicative.
     `{Applicative F}
     `{Applicative G}.
 
-  #[export] Instance Fmap_Product : Fmap (F ◻ G) :=
+  #[export] Instance Map_Product : Map (F ◻ G) :=
     fun A B (f : A -> B) (p : (F ◻ G) A) =>
-      match p with product x y => product (fmap F f x) (fmap G f y) end.
+      match p with product x y => product (map F f x) (map G f y) end.
 
   #[export] Instance Functor_Product : Functor (F ◻ G).
   Proof.
     constructor.
-    - introv. ext [?]. cbn. now rewrite 2(fun_fmap_id _).
-    - introv. ext [?]. cbn. now rewrite <- 2(fun_fmap_fmap _).
+    - introv. ext [?]. cbn. now rewrite 2(fun_map_id _).
+    - introv. ext [?]. cbn. now rewrite <- 2(fun_map_map _).
   Qed.
 
   #[export] Instance Pure_Product : Pure (F ◻ G) :=
