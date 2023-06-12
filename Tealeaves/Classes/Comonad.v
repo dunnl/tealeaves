@@ -71,6 +71,36 @@ Module DerivedInstances.
     #[export] Instance Map_Cobind : Map W :=
       fun `(f : A -> B) => cobind W A B (f ∘ extract W A).
 
+    Section kc4.
+      Context
+        `{! Comonad W}
+         (A B C : Type).
+
+      Lemma kc4_40 : forall (g : W B -> C) (f : A -> B),
+          g ⋆4 (f ∘ extract W A) = g ∘ map W f.
+      Proof.
+        reflexivity.
+      Qed.
+
+      Lemma kc4_04 : forall (g : B -> C) (f : W A -> B),
+          (g ∘ extract W B) ⋆4 f = g ∘ f.
+      Proof.
+        intros. unfold kc4.
+        reassociate ->.
+        rewrite (kcom_cobind0 W).
+        reflexivity.
+      Qed.
+
+      Lemma kc4_00 : forall (g : B -> C) (f : A -> B),
+          (g ∘ extract W B) ⋆4 (f ∘ extract W A) = (g ∘ f) ∘ extract W A.
+      Proof.
+        intros. unfold kc4.
+        reassociate ->.
+        rewrite (kcom_cobind0 W).
+        reflexivity.
+      Qed.
+
+    End kc4.
     Context
       `{! Comonad W}.
 
