@@ -26,7 +26,7 @@ Tealeaves/Classes/Decorated/Functor.v
 Tealeaves/Classes/Decorated/Monad.v
 Tealeaves/Classes/Traversable/Functor.v
 Tealeaves/Classes/Traversable/Monad.v
-#Tealeaves/Classes/DT/Functor.v
+Tealeaves/Classes/DT/Functor.v
 #Tealeaves/Classes/DT/Monad.v
 
 Tealeaves/Functors/Constant.v

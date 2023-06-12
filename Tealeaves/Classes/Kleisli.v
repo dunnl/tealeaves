@@ -78,45 +78,7 @@ End operations.
 
 (** ** Decorated traversable functor *)
 (******************************************************************************)
-Section kc.
 
-  Context
-    (E : Type).
-
-  Definition kc6
-    {A B C}
-    (G1 G2 : Type -> Type)
-    `{Map G1} `{Pure G1} `{Mult G1}
-    `{Map G2} `{Pure G2} `{Mult G2} :
-    (E * B -> G2 C) ->
-    (E * A -> G1 B) ->
-    (E * A -> G1 (G2 C)) :=
-    fun g f => map G1 (E * B) (G2 C) g ∘ strength G1 ∘ cobind (prod E) A (G1 B) f.
-
-End kc.
-
-#[local] Infix "⋆6" := (kc6 _ _ _) (at level 60) : tealeaves_scope.
-
-Section class.
-
-  Context
-    (E : Type)
-    (T : Type -> Type)
-    `{Mapdt E T}.
-
-  Class DecoratedTraversableFunctor :=
-    { kdtfun_mapdt1 : forall (A : Type),
-        mapdt E T (fun A => A) A A (extract (E ×) A) = @id (T A);
-      kdtfun_mapdt2 : forall (G1 G2 : Type -> Type)
-                        `{Applicative G1} `{Applicative G2}
-                        (A B C : Type)
-                        `(g : E * B -> G2 C) `(f : E * A -> G1 B),
-        map G1 (T B) (G2 (T C)) (mapdt E T G2 B C g) ∘ mapdt E T G1 A B f = mapdt E T (G1 ∘ G2) A C (g ⋆6 f);
-      kdtfun_morph : forall `{ApplicativeMorphism G1 G2 ϕ} `(f : E * A -> G1 B),
-        mapdt E T G2 A B (ϕ B ∘ f) = ϕ (T B) ∘ mapdt E T G1 A B f;
-    }.
-
-End class.
 
 (** ** Decorated traversable monad *)
 (******************************************************************************)

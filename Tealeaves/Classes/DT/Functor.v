@@ -1,191 +1,338 @@
 From Tealeaves Require Export
   Classes.Applicative
   Classes.Comonad
-  Classes.Setlike.Functor
+  Classes.Decorated.Functor
+  Classes.Traversable.Functor
   Functors.Environment.
 
+Import Strength.Notations.
+Import Traversable.Functor.Notations.
+Import Comonad.Notations.
 Import Product.Notations.
-Import Setlike.Functor.Notations.
 
-#[local] Generalizable Variables W ϕ G A B C M.
+#[local] Generalizable Variables E ϕ G A B C M.
+
+#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 
 (** * Kleisli presentation *)
 (******************************************************************************)
-
-(** ** Operation <<fmapdt>> *)
-(******************************************************************************)
-Section dt_operations.
+Section operations.
 
   Context
-    (W : Type)
-    (F : Type -> Type).
+    (M : Type)
+    (T : Type -> Type).
 
-  Class Fmapdt := fmapdt :
-      forall `{Fmap G} `{Pure G} `{Mult G}
-        {A B : Type} (f : W * A -> G B), F A -> G (F B).
+  Class Mapdt := mapdt :
+      forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+        (A B : Type),
+        (M * A -> G B) -> T A -> G (T B).
 
-End dt_operations.
+End operations.
 
-#[local] Arguments fmapdt {W}%type_scope F%function_scope {Fmapdt}
-  G%function_scope {H H0 H1} (A B)%type_scope f%function_scope _.
+Section kc.
 
-Definition kcompose_dt {A B C W : Type}
-  `{Applicative G1}
-  `{Applicative G2} :
-  (W * B -> G2 C) ->
-  (W * A -> G1 B) ->
-  (W * A -> G1 (G2 C)) :=
-  fun g f => fmap G1 g ∘ strength G1 ∘ cobind (prod W) f.
+  Context
+    (E : Type).
 
-#[local] Notation "g ⋆dt f" := (kcompose_dt g f) (at level 40) : tealeaves_scope.
+  Definition kc6
+    {A B C}
+    (G1 G2 : Type -> Type)
+    `{Map G1} `{Pure G1} `{Mult G1}
+    `{Map G2} `{Pure G2} `{Mult G2} :
+    (E * B -> G2 C) ->
+    (E * A -> G1 B) ->
+    (E * A -> G1 (G2 C)) :=
+    fun g f => map G1 (E * B) (G2 C) g ∘ strength G1 ∘ cobind (prod E) A (G1 B) f.
 
-(** ** Typeclass *)
-(******************************************************************************)
-Section decorated_class.
+End kc.
+
+#[local] Infix "⋆6" := (kc6 _ _ _) (at level 60) : tealeaves_scope.
+
+Section class.
 
   Context
     (E : Type)
     (T : Type -> Type)
-    `{Fmapdt E T}.
+    `{Mapdt E T}.
 
   Class DecoratedTraversableFunctor :=
-    { kdtfun_fmapdt1 : forall (A : Type),
-        fmapdt T (fun A => A) A A (extract (E ×)) = @id (T A);
-      kdtfun_fmapdt2 : forall
-        `{Applicative G1} `{Applicative G2}
-        `(g : E * B -> G2 C) `(f : E * A -> G1 B),
-        fmap G1 (fmapdt T G2 B C g) ∘ fmapdt T G1 A B f = fmapdt T (G1 ∘ G2) A C (g ⋆dt f);
+    { kdtfun_mapdt1 : forall (A : Type),
+        mapdt E T (fun A => A) A A (extract (E ×) A) = @id (T A);
+      kdtfun_mapdt2 : forall (G1 G2 : Type -> Type)
+                        `{Applicative G1} `{Applicative G2}
+                        (A B C : Type)
+                        `(g : E * B -> G2 C) `(f : E * A -> G1 B),
+        map G1 (T B) (G2 (T C)) (mapdt E T G2 B C g) ∘ mapdt E T G1 A B f = mapdt E T (G1 ∘ G2) A C (g ⋆6 f);
       kdtfun_morph : forall `{ApplicativeMorphism G1 G2 ϕ} `(f : E * A -> G1 B),
-        fmapdt T G2 A B (ϕ B ∘ f) = ϕ (T B) ∘ fmapdt T G1 A B f;
+        mapdt E T G2 A B (ϕ B ∘ f) = ϕ (T B) ∘ mapdt E T G1 A B f;
     }.
 
-End decorated_class.
-
-#[global] Arguments fmapdt {W}%type_scope F%function_scope {Fmapdt}
-  G%function_scope {H H0 H1} {A B}%type_scope f%function_scope _.
-
-From Tealeaves Require Import
-  Classes.Kleisli.Decorated.Functor
-  Classes.Kleisli.Traversable.Functor.
-
-Import Strength.Notations Comonad.Notations.
+End class.
 
 (** * Derived instances *)
 (******************************************************************************)
-Module Derived.
+Module DerivedInstances.
 
   Section operations.
 
     Context
+      (E : Type)
       (T : Type -> Type)
-      `{Fmapdt W T}.
+      `{Mapdt E T}.
 
-    #[export] Instance Fmap_Fmapdt: Fmap T := fun A B f => fmapdt T (fun A => A) (f ∘ extract (W ×)).
-    #[export] Instance Fmapd_Fmapdt: Fmapd W T := fun A B f => fmapdt T (fun A => A) f.
-    #[export] Instance Traverse_Fmapdt: Traverse T := fun G _ _ _ A B f => fmapdt T G (f ∘ extract (W ×)).
+    #[export] Instance Map_Mapdt: Map T := fun A B f => mapdt E T (fun A => A) A B (f ∘ extract (E ×) A).
+    #[export] Instance Mapd_Mapdt: Mapd E T := fun A B f => mapdt E T (fun A => A) A B f.
+    #[export] Instance Traverse_Mapdt: Traverse T := fun G _ _ _ A B f => mapdt E T G A B (f ∘ extract (E ×) A).
 
   End operations.
 
-  Section kcompose_dt_lemmas.
+  Section misc.
+
+    Context
+      (E : Type)
+      (T : Type -> Type)
+      `{DecoratedTraversableFunctor E T}.
+
+    (** *** Identity composition in the applicative functor *)
+    (******************************************************************************)
+    Lemma mapdt_app_l {A B : Type} (G : Type -> Type) `{Applicative G} :
+      forall (f : E * A -> G B),
+        @mapdt E T _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G)
+          (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f
+        = mapdt E T G A B f.
+    Proof.
+      intros. fequal. now rewrite Mult_compose_identity2.
+    Qed.
+
+    Lemma mapdt_app_r {A B : Type} (G : Type -> Type) `{Applicative G} :
+      forall (f : E * A -> G B),
+        @mapdt E T _ (G ∘ (fun A => A)) (Map_compose G (fun A => A))
+          (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f
+        = mapdt E T G A B f.
+    Proof.
+      intros. fequal. now rewrite Mult_compose_identity1.
+    Qed.
+
+    Context
+      (G : Type -> Type)
+      `{Applicative G}.
+
+    Corollary traverse_to_mapdt {A B : Type} : forall (f : A -> G B),
+        traverse T G A B f = mapdt E T G A B (f ∘ extract (E ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary mapd_to_mapdt {A B : Type} : forall (f : E * A -> B),
+        mapd E T A B f = mapdt E T (fun A => A) A B f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary map_to_mapdt {A B : Type} : forall (f : A -> B),
+        map T A B f = mapdt E T (fun A => A) A B (f ∘ extract (E ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary map_to_mapd {A B : Type} : forall (f : A -> B),
+        map T A B f = mapd E T A B (f ∘ extract (E ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary map_to_traverse {A B : Type} : forall (f : A -> B),
+        map T A B f = traverse T (fun A => A) A B f.
+    Proof.
+      reflexivity.
+    Qed.
+
+  End misc.
+
+  Section kc6_lemmas.
 
     Context
       (T : Type -> Type)
-      `{DecoratedTraversableFunctor W T}
+      `{DecoratedTraversableFunctor E T}
       (G1 G2 : Type -> Type)
       `{Applicative G1}
       `{Applicative G2}
       (A B C : Type).
 
-    Lemma kcompose_dt_00 :
-      forall (A B C : Type) (f : A -> B) (g : B -> C),
-        kcompose_dt (G1 := fun A => A) (G2 := fun A => A)
-          (g ∘ extract (prod W)) (f ∘ extract (prod W)) = g ∘ f ∘ extract (prod W).
+    Lemma kc6_44 :
+      forall (g : E * B -> C) (f : E * A -> B),
+        kc6 E (fun A => A) (fun A => A) g f = kc4 (E ×) g f.
     Proof.
-      intros. unfold kcompose_dt. unfold strength.
-      unfold_ops @Fmap_I. rewrite <- (fmap_to_cobind (W ×)).
-      now ext [w a].
+      intros. unfold kc6.
+      rewrite strength_I.
+      unfold_ops @Map_I.
+      reflexivity.
     Qed.
 
-    Lemma kcompose_dt_22 :
+    Lemma kc6_22 :
       forall (g : B -> G2 C) (f : A -> G1 B),
-        (g ∘ extract (prod W)) ⋆dt (f ∘ extract (prod W)) = fmap G1 g ∘ f ∘ extract (prod W).
+        (g ∘ extract (E ×) B) ⋆6 (f ∘ extract (E ×) A) =
+          map G1 B (G2 C) g ∘ f ∘ extract (E ×) A.
     Proof.
-      intros. unfold kcompose_dt.
-      rewrite <- (fmap_to_cobind (W ×)).
-      ext [w a].
-      unfold compose; cbn.
+      intros. unfold kc6.
+      rewrite <- (map_to_cobind A (G1 B)).
+      ext [e a].
+      do 2 (unfold compose; cbn).
       compose near (f a) on left.
-      now rewrite (fun_fmap_fmap G1).
+      rewrite (fun_map_map G1).
+      reflexivity.
     Qed.
 
-    Lemma kcompose_dt_23 :
-      forall (g : B -> G2 C) (f : W * A -> G1 B),
-        (g ∘ extract (prod W)) ⋆dt f = fmap G1 g ∘ f.
+    (* This holds by `ext [e a]; reflexivity` but I prefer using rewriting
+     to understand what's happening *)
+    Lemma kc6_00 :
+      forall (f : A -> B) (g : B -> C),
+        kc6 E (fun A => A) (fun A => A)
+          (g ∘ extract (E ×) B)
+          (f ∘ extract (E ×) A)
+        = g ∘ f ∘ extract (E ×) A.
     Proof.
-      intros. unfold kcompose_dt.
+      intros. unfold kc6.
+      unfold_ops @Map_I.
+      rewrite strength_I.
+      change (?f ∘ id) with f.
+      reassociate ->.
+      rewrite (kcom_cobind0 (E ×)).
+      reflexivity.
+    Qed.
+
+    Lemma kc6_64 :
+      forall (g : E * B -> G2 C)
+        (f : E * A -> B),
+        g ⋆6 f = g ⋆4 f.
+    Proof.
+      intros. unfold kc6.
+      unfold strength; unfold_ops @Map_I.
+      ext [w a].
+      reflexivity.
+    Qed.
+
+    Lemma kc6_62 :
+      forall (g : E * B -> G2 C) (f : A -> G1 B),
+        g ⋆6 (f ∘ extract (E ×) A) =
+          map G1 (E * B) (G2 C) g ∘ σ G1 ∘ map (E ×) A (G1 B) f.
+    Proof.
+      intros. unfold kc6.
+      ext [w a].
+      rewrite <- (map_to_cobind).
+      unfold compose; cbn.
+      reflexivity.
+    Qed.
+
+    Lemma kc6_60 :
+      forall (g : E * B -> G2 C) (f : A -> B),
+        g ⋆6 (f ∘ extract (E ×) A) = g ∘ map (E ×) A B f.
+    Proof.
+      intros. unfold kc6.
+      rewrite strength_I.
+      unfold_ops @Map_I.
+      ext [w a].
+      reflexivity.
+    Qed.
+
+    Lemma kc6_46 :
+      forall (g : E * B -> C) (f : E * A -> G1 B),
+        kc6 E G1 (fun A => A) g f =
+          map G1 (E * B) C g ∘ σ G1 ∘ cobind (E ×) A (G1 B) f.
+    Proof.
+      intros.
+      unfold kc6.
+      reflexivity.
+    Qed.
+
+    Lemma kc6_26 :
+      forall (g : B -> G2 C) (f : E * A -> G1 B),
+        (g ∘ extract (E ×) B) ⋆6 f = map G1 B (G2 C) g ∘ f.
+    Proof.
+      intros. unfold kc6.
       ext [w a].
       unfold compose; cbn.
       compose near (f (w, a)) on left.
-      now rewrite (fun_fmap_fmap G1).
+      now rewrite (fun_map_map G1).
     Qed.
 
-    Lemma kcompose_dt_03 :
-      forall (g : B -> C) (f : W * A -> G1 B),
-        kcompose_dt (G2 := fun A => A) (g ∘ extract (W ×)) f = fmap G1 g ∘ f.
+    Lemma kc6_06 :
+      forall (g : B -> C) (f : E * A -> G1 B),
+        kc6 E G1 (fun A => A) (g ∘ extract (E ×) B) f = map G1 B C g ∘ f.
     Proof.
-      intros. unfold kcompose_dt.
+      intros. unfold kc6.
       ext [w a].
       unfold compose; cbn.
       compose near (f (w, a)) on left.
-      now rewrite (fun_fmap_fmap G1).
+      now rewrite (fun_map_map G1).
     Qed.
 
-    Lemma kcompose_dt_32 :
-      forall (g : W * B -> G2 C) (f : A -> G1 B),
-        g ⋆dt (f ∘ extract (prod W)) = fmap G1 g ∘ σ G1 ∘ fmap (prod W) f.
+    Lemma kc6_24 :
+      forall (g : B -> G2 C)
+        (f : E * A -> B),
+        kc6 E (fun A => A) G2 (g ∘ extract (E ×) B) f = g ∘ f.
     Proof.
-      intros. unfold kcompose_dt.
+      intros. unfold kc6.
+      unfold strength; unfold_ops @Map_I.
+      ext [w a].
+      reflexivity.
+    Qed.
+
+    Lemma kc6_42 :
+      forall (g : E * B -> C) (f : A -> G1 B),
+        kc6 E G1 (fun A => A) g (f ∘ extract (E ×) A) =
+          fun '(e, a) => map G1 _ _ (g ∘ pair e) (f a).
+    Proof.
+      intros. unfold kc6.
       ext [w a].
       unfold compose; cbn.
       compose near (f a) on left.
-      rewrite (fun_fmap_fmap G1).
-      compose near (f a) on right.
-      rewrite (fun_fmap_fmap G1).
+      rewrite (fun_map_map G1).
       reflexivity.
     Qed.
 
-    Lemma kcompose_dt_31 :
-      forall (g : W * B -> G2 C)
-        (f : W * A -> B),
-        g ⋆dt f = g co⋆ f.
+    Lemma kc6_04 :
+      forall (g : B -> C)
+        (f : E * A -> B),
+        kc6 E (fun A => A) (fun A => A) (g ∘ extract (E ×) B) f = g ∘ f.
     Proof.
-      intros. unfold kcompose_dt.
-      unfold strength; unfold_ops @Fmap_I.
+      intros. unfold kc6.
+      unfold strength; unfold_ops @Map_I.
       ext [w a].
       reflexivity.
     Qed.
 
-    Lemma kcompose_dt_30 :
-      forall (g : W * B -> G2 C) (f : A -> B),
-        g ⋆dt (f ∘ extract (prod W)) = g ∘ fmap (prod W) f.
+    Lemma kc6_40 :
+      forall (g : E * B -> C) (f : A -> B),
+        kc6 E (fun A => A) (fun A => A) g (f ∘ extract (E ×) A) = g ∘ map (E ×) A B f.
     Proof.
-      intros. unfold kcompose_dt.
-      unfold strength; unfold_ops @Fmap_I.
+      intros. unfold kc6.
       ext [w a].
       reflexivity.
     Qed.
 
-    Lemma kcompose_dt_01 :
-      forall (g : B -> C) (f : W * A -> B),
-        kcompose_dt (G2 := fun A => A) (g ∘ extract (prod W)) f = g ∘ f.
+    Lemma kc6_20 :
+      forall (g : B -> G2 C) (f : A -> B),
+        kc6 E (fun A => A) G2 (g ∘ extract (E ×) B) (f ∘ extract (E ×) A) =
+          g ∘ f ∘ extract (E ×) A.
     Proof.
-      intros. unfold kcompose_dt.
-      unfold strength; unfold_ops @Fmap_I.
+      intros. unfold kc6.
+      unfold strength; unfold_ops @Map_I.
       ext [w a].
       reflexivity.
     Qed.
 
-  End kcompose_dt_lemmas.
+    Lemma kc6_02 :
+      forall (g : B -> C) (f : E * A -> B),
+        kc6 E (fun A => A) (fun A => A) (g ∘ extract (E ×) B) f = g ∘ f.
+    Proof.
+      intros. unfold kc6.
+      unfold strength; unfold_ops @Map_I.
+      ext [w a].
+      reflexivity.
+    Qed.
+
+  End kc6_lemmas.
 
   (** ** Composition with lesser Kleisli operations *)
   (******************************************************************************)
@@ -193,80 +340,187 @@ Module Derived.
 
     Context
       (T : Type -> Type)
-      `{DecoratedTraversableFunctor W T}
+      `{DecoratedTraversableFunctor E T}
       (G1 G2 : Type -> Type)
       `{Applicative G1}
-      `{Applicative G2}.
+      `{Applicative G2}
+      {A B C : Type}.
 
-    (** *** <<fmapdt>> on the right *)
+    (** *** <<mapdt>> on the right *)
     (******************************************************************************)
-    Corollary traverse_fmapdt {A B C} : forall (g : B -> G2 C) (f : W * A -> G1 B),
-        fmap G1 (traverse T G2 g) ∘ fmapdt T G1 f = fmapdt T (G1 ∘ G2) (fmap G1 g ∘ f).
+    Corollary traverse_mapdt : forall (g : B -> G2 C) (f : E * A -> G1 B),
+        map G1 (T B) (G2 (T C)) (traverse T G2 B C g) ∘ mapdt E T G1 A B f =
+          mapdt E T (G1 ∘ G2) A C (map G1 B (G2 C) g ∘ f).
     Proof.
-      intros. unfold_ops @Traverse_Fmapdt.
-      rewrite (kdtfun_fmapdt2 W T).
-      fequal. now rewrite kcompose_dt_23.
-    Qed.
-
-    Corollary fmapd_fmapdt {A B C} : forall (g : W * B -> C) (f : W * A -> G1 B),
-        fmap G1 (fmapd T g) ∘ fmapdt T G1 f = fmapdt T G1 (fmap G1 g ∘ σ G1 ∘ cobind (W ×) f).
-    Proof.
-      intros. unfold_ops @Fmapd_Fmapdt.
-      rewrite (kdtfun_fmapdt2 W T (G2 := fun A => A)).
-      fequal. now rewrite Mult_compose_identity1.
-    Qed.
-
-    Corollary fmap_fmapdt {A B C} : forall (g : B -> C) (f : W * A -> G1 B),
-        fmap G1 (fmap T g) ∘ fmapdt T G1 f = fmapdt T G1 (fmap G1 g ∘ f).
-    Proof.
-      intros. unfold_ops @Fmap_Fmapdt.
-      rewrite (kdtfun_fmapdt2 W T (G2 := fun A => A)).
-      fequal. now rewrite Mult_compose_identity1.
-      now rewrite kcompose_dt_03.
-    Qed.
-
-    (** *** <<fmapdt>> on the right *)
-    (******************************************************************************)
-    Corollary fmapdt_traverse {A B C} : forall (g : W * B -> G2 C) (f : A -> G1 B),
-        fmap G1 (fmapdt T G2 g) ∘ traverse T G1 f = fmapdt T (G1 ∘ G2) (fmap G1 g ∘ σ G1 ∘ fmap (W ×) f).
-    Proof.
-      introv. unfold_ops @Traverse_Fmapdt.
-      rewrite (kdtfun_fmapdt2 W T).
-      rewrite kcompose_dt_32.
+      intros.
+      rewrite (traverse_to_mapdt).
+      rewrite (kdtfun_mapdt2 E T G1 G2).
+      rewrite (kc6_26 G1 G2).
       reflexivity.
     Qed.
 
-    Lemma fmapdt_fmapd {A B C} : forall (g : W * B -> G2 C) (f : W * A -> B),
-        fmapdt T G2 g ∘ fmapd T f = fmapdt T G2 (g co⋆ f).
+    Corollary mapd_mapdt : forall (g : E * B -> C) (f : E * A -> G1 B),
+        map G1 (T B) (T C) (mapd E T B C g) ∘ mapdt E T G1 A B f =
+            mapdt E T G1 A C (map G1 (E * B) C g ∘ σ G1 ∘ cobind (E ×) A (G1 B) f).
     Proof.
-      introv. unfold_ops @Fmapd_Fmapdt.
-      change (fmapdt T G2 g) with (fmap (fun A => A) (fmapdt T G2 g)).
-      rewrite (kdtfun_fmapdt2 W T (G1 := fun A => A)).
-      fequal. now rewrite Mult_compose_identity2.
-      now rewrite kcompose_dt_31.
+      intros.
+      rewrite (mapd_to_mapdt).
+      rewrite (kdtfun_mapdt2 E T G1 (fun A => A)).
+      rewrite (mapdt_app_r E T G1).
+      reflexivity.
     Qed.
 
-    Lemma fmapdt_fmap {A B C} : forall (g : W * B -> G2 C) (f : A -> B),
-        fmapdt T G2 g ∘ fmap T f = fmapdt T G2 (g ∘ fmap (prod W) f).
+    Corollary map_mapdt : forall (g : B -> C) (f : E * A -> G1 B),
+        map G1 (T B) (T C) (map T B C g) ∘ mapdt E T G1 A B f = mapdt E T G1 A C (map G1 B C g ∘ f).
     Proof.
-      intros. unfold_ops @Fmap_Fmapdt.
-      change (fmapdt T G2 g) with (fmap (fun A => A) (fmapdt T G2 g)).
-      rewrite (kdtfun_fmapdt2 W T (G1 := fun A => A)).
-      fequal. now rewrite Mult_compose_identity2.
-      now rewrite kcompose_dt_30.
+      intros.
+      rewrite (map_to_mapdt).
+      rewrite (kdtfun_mapdt2 E T G1 (fun A => A)).
+      rewrite (mapdt_app_r E T G1).
+      rewrite (kc6_06 G1).
+      reflexivity.
+    Qed.
+
+    (** *** <<mapdt>> on the left *)
+    (******************************************************************************)
+    Corollary mapdt_traverse : forall (g : E * B -> G2 C) (f : A -> G1 B),
+        map G1 (T B) (G2 (T C)) (mapdt E T G2 B C g) ∘ traverse T G1 A B f =
+          mapdt E T (G1 ∘ G2) A C (map G1 (E * B) (G2 C) g ∘ σ G1 ∘ map (E ×) A (G1 B) f).
+    Proof.
+      intros.
+      rewrite (traverse_to_mapdt).
+      rewrite (kdtfun_mapdt2 E T G1 G2).
+      rewrite kc6_62.
+      reflexivity.
+    Qed.
+
+    Lemma mapdt_mapd : forall (g : E * B -> G2 C) (f : E * A -> B),
+        mapdt E T G2 B C g ∘ mapd E T A B f = mapdt E T G2 A C (g ⋆4 f).
+    Proof.
+      intros.
+      rewrite (mapd_to_mapdt).
+      change (mapdt E T G2 B C g)
+        with (map (fun A => A) _ _ (mapdt E T G2 B C g)).
+      rewrite (kdtfun_mapdt2 E T (fun A => A) G2).
+      rewrite (mapdt_app_l E T G2).
+      rewrite kc6_64.
+      reflexivity.
+    Qed.
+
+    Lemma mapdt_map : forall (g : E * B -> G2 C) (f : A -> B),
+        mapdt E T G2 B C g ∘ map T A B f = mapdt E T G2 A C (g ∘ map (E ×) A B f).
+    Proof.
+      intros.
+      rewrite (map_to_mapdt).
+      change (mapdt E T G2 B C g)
+        with (map (fun A => A) _ _ (mapdt E T G2 B C g)).
+      rewrite (kdtfun_mapdt2 E T (fun A => A) G2).
+      rewrite (mapdt_app_l E T G2).
+      rewrite kc6_60.
+      reflexivity.
     Qed.
 
     (** *** Mixes *)
     (******************************************************************************)
-    Corollary fmap_fmapd {A B C} : forall (g : B -> C) (f : W * A -> B),
-        fmap T g ∘ fmapd T f = fmapd T (g ∘ f).
+    Corollary map_mapd : forall (g : B -> C) (f : E * A -> B),
+        map T B C g ∘ mapd E T A B f = mapd E T A C (g ∘ f).
     Proof.
       intros.
-      change_left (fmap (fun A => A) (fmap T g) ∘ fmapd T f).
-      unfold fmap at 2. unfold Fmap_Fmapdt. unfold_ops @Fmapd_Fmapdt.
-      rewrite (kdtfun_fmapdt2 W T (G2 := fun A => A) (G1 := fun A => A)).
-      fequal. now rewrite Mult_compose_identity2.
-      now rewrite (kcompose_dt_03).
+      rewrite (map_to_mapdt).
+      rewrite (mapd_to_mapdt).
+      change (mapdt E T ?G B C ?g)
+        with (map (fun A => A) _ _ (mapdt E T G B C g)).
+      rewrite (kdtfun_mapdt2 E T (fun A => A) (fun A => A)).
+      rewrite (mapdt_app_l E T (fun A => A)).
+      rewrite kc6_04.
+      reflexivity.
+    Qed.
+
+    Corollary mapd_map : forall (g : E * B -> C) (f : A -> B),
+        mapd E T B C g ∘ map T A B f = mapd E T A C (g ∘ map (E ×) A B f).
+    Proof.
+      intros.
+      do 2 rewrite (mapd_to_mapdt).
+      rewrite (map_to_mapdt).
+      change (mapdt E T ?G B C ?g)
+        with (map (fun A => A) _ _ (mapdt E T G B C g)).
+      rewrite (kdtfun_mapdt2 E T (fun A => A) (fun A => A)).
+      rewrite (mapdt_app_l E T (fun A => A)).
+      rewrite kc6_44.
+      reflexivity.
+    Qed.
+
+    Corollary mapd_mapd : forall (g : E * B -> C) (f : E * A -> B),
+        mapd E T B C g ∘ mapd E T A B f = mapd E T A C (g ⋆4 f).
+    Proof.
+      intros.
+      do 2 rewrite (mapd_to_mapdt).
+      change (mapdt E T ?G B C ?g)
+        with (map (fun A => A) _ _ (mapdt E T G B C g)).
+      rewrite (kdtfun_mapdt2 E T (fun A => A) (fun A => A)).
+      rewrite (mapdt_app_l E T (fun A => A)).
+      rewrite kc6_44.
+      reflexivity.
+    Qed.
+
+    Corollary traverse_traverse : forall (g : B -> G2 C) (f : A -> G1 B),
+        map G1 (T B) (G2 (T C)) (traverse T G2 B C g) ∘ traverse T G1 A B f = traverse T (G1 ∘ G2) A C (g ⋆2 f).
+    Proof.
+      intros.
+      do 2 rewrite (traverse_to_mapdt).
+      rewrite (kdtfun_mapdt2 E T G1 G2).
+      rewrite (kc6_22 G1 G2).
+      reflexivity.
+    Qed.
+
+    Lemma map_map : forall (f : A -> B) (g : B -> C),
+        map T B C g ∘ map T A B f = map T A C (g ∘ f).
+    Proof.
+      intros.
+      do 2 rewrite (map_to_mapdt).
+      change_left (map (fun A => A) _ _ (mapdt E T (fun A => A) B C (g ∘ extract (prod E) B)) ∘
+                     mapdt E T (fun A => A) A B (f ∘ extract (prod E) A)).
+      rewrite (kdtfun_mapdt2 E T (fun A => A) (fun A => A)).
+      rewrite (mapdt_app_l _ _ (fun A => A)).
+      rewrite kc6_00.
+      reflexivity.
+    Qed.
+
+    (** ** Identity laws *)
+    (******************************************************************************)
+    Lemma traverse_id :
+      forall A : Type, traverse T (fun A => A) A A (id) = @id (T A).
+    Proof.
+      intros.
+      rewrite (traverse_to_mapdt).
+      now rewrite (kdtfun_mapdt1 E T).
+    Qed.
+
+    Lemma mapd_id :
+      forall A : Type, mapd E T A A (extract (E ×) A) = @id (T A).
+    Proof.
+      intros.
+      rewrite (mapd_to_mapdt).
+      now rewrite (kdtfun_mapdt1 E T).
+    Qed.
+
+    Lemma map_id :
+      forall A : Type, map T A A (@id A) = @id (T A).
+    Proof.
+      intros.
+      rewrite (map_to_mapdt).
+      now rewrite (kdtfun_mapdt1 E T).
+    Qed.
+
+    Lemma traverse_morphism :
+      forall (ϕ : forall (A : Type), G1 A -> G2 A)
+        `{! ApplicativeMorphism G1 G2 ϕ},
+      forall (A B : Type) (f : A -> G1 B), ϕ (T B) ∘ traverse T G1 A B f = traverse T G2 A B (ϕ B ∘ f).
+    Proof.
+      intros.
+      rewrite (traverse_to_mapdt).
+      rewrite <- (kdtfun_morph E T).
+      reflexivity.
     Qed.
 
   End composition.
@@ -275,458 +529,24 @@ Module Derived.
 
     Context
       (T : Type -> Type)
-      `{DecoratedTraversableFunctor W T}.
+      `{DecoratedTraversableFunctor E T}.
 
-    Lemma fmap_id_T :
-      forall A : Type, fmap T (@id A) = @id (T A).
-    Proof.
-      unfold_ops @Fmap_Fmapdt.
-      intros. now rewrite (kdtfun_fmapdt1 W T).
-    Qed.
-
-    Lemma fmap_fmap_T :
-      forall (A B C : Type) (f : A -> B) (g : B -> C), fmap T g ∘ fmap T f = fmap T (g ∘ f).
-    Proof.
-      unfold_ops @Fmap_Fmapdt.
-      intros.
-      change_left (fmap (fun A => A) (fmapdt T (fun A0 : Type => A0) (g ∘ extract (prod W))) ∘
-                     fmapdt T (fun A0 : Type => A0) (f ∘ extract (prod W))).
-      rewrite (kdtfun_fmapdt2 W T (G1 := fun A => A) (G2 := fun A => A)).
-      fequal. now rewrite Mult_compose_identity1.
-      now rewrite kcompose_dt_00.
-    Qed.
-
-    #[export] Instance: Functor T :=
-      {| fun_fmap_id := fmap_id_T;
-        fun_fmap_fmap := fmap_fmap_T;
+    #[export] Instance Functor_DT : Functor T :=
+      {| fun_map_id := map_id T;
+        fun_map_map := @map_map T E _ _;
       |}.
 
-    #[export] Instance: Kleisli.Decorated.Functor.DecoratedFunctor W T.
-    Proof.
-      constructor; unfold_ops @Fmapd_Fmapdt.
-      - intros. now rewrite (kdtfun_fmapdt1 W T).
-      - intros.
-        change_left ((fmap (fun A => A) (fmapdt T (fun A0 : Type => A0) g) ∘
-                        fmapdt T (fun A0 : Type => A0) f)).
-        rewrite (kdtfun_fmapdt2 W T (G1 := fun A => A) (G2 := fun A => A) g f).
-        fequal. now rewrite Mult_compose_identity1.
-        unfold kcompose_dt. now ext [w a].
-    Qed.
+    #[export] Instance DF_DT : DecoratedFunctor E T :=
+      {| dfun_mapd1 := mapd_id T;
+        dfun_mapd2 := @mapd_mapd T E _ _;
+      |}.
 
-    #[export] Instance: Kleisli.Traversable.Functor.TraversableFunctor T.
-    Proof.
-      constructor; unfold_ops @Traverse_Fmapdt.
-      - intros. now rewrite (kdtfun_fmapdt1 W T).
-      - intros. rewrite (kdtfun_fmapdt2 W T _ _ (G1 := G1) (G2 := G2)).
-        fequal. now rewrite kcompose_dt_22.
-      - intros. rewrite <- (kdtfun_morph W T).
-        reflexivity.
-    Qed.
+    #[export] Instance Traversable_DT : TraversableFunctor T :=
+      {| trf_traverse_id := traverse_id T;
+        trf_traverse_traverse := @traverse_traverse T _ _ _;
+        trf_traverse_morphism := @traverse_morphism T _ _ _;
+      |}.
 
   End instances.
 
-End Derived.
-
-(** * Batch *)
-(******************************************************************************)
-Section with_functor.
-
-  Import Derived.
-
-  Context
-    (T : Type -> Type)
-    `{DT.Functor.DecoratedTraversableFunctor W T}.
-
-  Definition toBatchd {A : Type} (B : Type) : T A -> @Batch (W * A) B (T B) :=
-    fmapdt T (Batch (W * A) B) (batch B).
-
-  (** ** Expressing operations with <<runBatch>> *)
-  (******************************************************************************)
-
-  (** *** <<fmapdt>> *)
-  (******************************************************************************)
-  Theorem fmapdt_to_runBatch :
-    forall `{Applicative G} (A B : Type) (f : W * A -> G B) (t : T A),
-      fmapdt T G f t = runBatch f (toBatchd B t).
-  Proof.
-    intros. unfold toBatchd.
-    compose near t on right.
-    rewrite <- (kdtfun_morph W T).
-    now rewrite runBatch_batch.
-  Qed.
-
-  (** *** <<fmapd>> *)
-  (******************************************************************************)
-  Theorem fmapd_to_runBatch :
-    forall (A B : Type) (f : W * A -> B) (t : T A),
-      fmapd T f t = runBatch f (toBatchd B t).
-  Proof.
-    intros. unfold toBatchd.
-    compose near t on right.
-    rewrite <- (kdtfun_morph W T (G1 := Batch (prod W A) B) (G2 := fun A => A)).
-    reflexivity.
-  Qed.
-
-  (** *** <<fmapt>> *)
-  (******************************************************************************)
-  Theorem fmap_to_runBatch :
-    forall (A B : Type) (f : A -> B),
-      fmap T f = runBatch f ∘ toBatch T B.
-  Proof.
-    intros.
-    change (@Fmap_Fmapdt T W H) with (@ToFunctor.Fmap_Traverse T _).
-    apply (fmap_to_runBatch T).
-  Qed.
-
-End with_functor.
-
-(** * <<foldMapd>> *)
-(******************************************************************************)
-Section foldMapd.
-
-  Context
-    (T : Type -> Type)
-    `{Monoid_op M} `{Monoid_unit M}
-    `{Fmapdt W T}.
-
-  Definition foldMapd : forall {A : Type}, (W * A -> M) -> T A -> M :=
-    fun A f => fmapdt (B := False) T (const M) f.
-
-End foldMapd.
-
-(** ** Basic properties *)
-(******************************************************************************)
-Section with_functor.
-
-  Context
-    (T : Type -> Type)
-    `{DT.Functor.DecoratedTraversableFunctor W T}.
-
-  Import Derived.
-
-  (** *** Lemmas for <<fmapdt>> with constant applicative functors *)
-  (******************************************************************************)
-  Section constant_applicatives.
-
-    Context
-      `{Monoid M}
-      `{f : W * A -> M}.
-
-    Lemma fmapdt_constant_applicative1: forall (B : Type),
-        fmapdt (B := B) T (const M) f = fmapdt (B := False) T (const M) f.
-    Proof.
-      intros.
-      change_right (fmap (B := T B) (const M) (fmap T exfalso)
-                      ∘ fmapdt (B := False) T (const M) (f : W * A -> const M False)).
-      rewrite (fmap_fmapdt T (const M)).
-      reflexivity.
-    Qed.
-
-    Lemma fmapdt_constant_applicative2 : forall (fake1 fake2 : Type),
-        fmapdt (B := fake1) T (const M) f = fmapdt (B := fake2) T (const M) f.
-    Proof.
-      intros. rewrite (fmapdt_constant_applicative1 fake1).
-      rewrite (fmapdt_constant_applicative1 fake2).
-      reflexivity.
-    Qed.
-
-  End constant_applicatives.
-
-  (** *** Expressing <<foldMapd>> in terms of <<runBatch>> *)
-  (******************************************************************************)
-  Theorem foldMapd_to_runBatch :
-    forall `{Monoid M} (A : Type) (f : W * A -> M) (t : T A),
-      foldMapd T f t = runBatch f (toBatchd T False t).
-  Proof.
-    intros. unfold foldMapd.
-    rewrite (fmapdt_to_runBatch); auto.
-    typeclasses eauto.
-  Qed.
-
-  (** *** Rewriting the "tag" parameter *)
-  (******************************************************************************)
-  Lemma foldMapd_equiv1 `{Monoid M} : forall (fake : Type) `(f : W * A -> M),
-      foldMapd T f = fmapdt (B := fake) T (const M) f.
-  Proof.
-    intros. unfold foldMapd.
-    now rewrite (fmapdt_constant_applicative2 fake False).
-  Qed.
-
-  (** *** Homomorphism law *)
-  (******************************************************************************)
-  Lemma foldMapd_morphism `{Monoid_Morphism M1 M2 ϕ} : forall `(f : W * A -> M1),
-      ϕ ∘ foldMapd T f = foldMapd T (ϕ ∘ f).
-  Proof.
-    intros.
-    unfold foldMapd. inversion H5.
-    change ϕ with (const (ϕ) (T False)).
-    rewrite (fmapdt_constant_applicative2 (f := const ϕ (T False) ∘ f) False (T False)).
-    rewrite (kdtfun_morph W T f (G1 := const M1) (G2 := const M2) (ϕ := const ϕ) (B := T False) (A := A)).
-    rewrite (fmapdt_constant_applicative2 (T False) False).
-    reflexivity.
-  Qed.
-
-  (** *** Composition with <<fmapdt>> *)
-  (******************************************************************************)
-  Lemma foldMapd_fmapdt : forall `{Monoid M} `{Applicative G} `(g : W * B -> M) `(f : W * A -> G B),
-      fmap G (foldMapd T g) ∘ fmapdt T G f =
-        foldMapd T (M := G M) (fmap G g ∘ σ G ∘ cobind (W ×) f).
-  Proof.
-    intros. unfold foldMapd.
-    rewrite (kdtfun_fmapdt2 W T _ _ (G1 := G) (G2 := const M)).
-    fequal.
-    - ext A' B' f' t. unfold Fmap_compose, Fmap_const.
-      change t with (id t) at 2. rewrite (fun_fmap_id G).
-      reflexivity.
-    - ext A' B' [a b]. reflexivity.
-  Qed.
-
-  (** *** Composition with <<fmapd>>, <<traverse>>, <<fmap>> *)
-  (******************************************************************************)
-  Lemma foldMapd_fmapd : forall `{Monoid M} `(g : W * B -> M) `(f : W * A -> B),
-      foldMapd T g ∘ fmapd T f =
-        foldMapd T (M := M) (g ∘ cobind (W ×) f).
-  Proof.
-    intros. unfold foldMapd. unfold_ops @Fmapd_Fmapdt.
-    change (fmapdt (B := ?B) T (const M) g) with (fmap (fun A => A) (fmapdt (B := B) T (const M) g)).
-    rewrite (kdtfun_fmapdt2 W T _ _ (G1 := fun A => A) (G2 := const M)).
-    fequal.
-    - ext A' B' [a b]. reflexivity.
-    - ext [w a]. reflexivity.
-  Qed.
-
-  Lemma foldMapd_traverse : forall `{Monoid M} `{Applicative G} `(g : W * B -> M) `(f : A -> G B),
-      fmap G (foldMapd T g) ∘ traverse T G f =
-        foldMapd T (M := G M) (fmap G g ∘ σ G ∘ fmap (W ×) f).
-  Proof.
-    intros. unfold_ops @Traverse_Fmapdt.
-    rewrite (foldMapd_fmapdt g (f ∘ extract (W ×))).
-    fequal. ext [w a]. reflexivity.
-  Qed.
-
-  Lemma foldMap_fmap : forall `{Monoid M} `(g : W * B -> M) `(f : A -> B),
-      foldMapd T g ∘ fmap T f =
-        foldMapd T (M := M) (g ∘ fmap (W ×) f).
-  Proof.
-    intros. unfold_ops @Fmap_Fmapdt.
-    change (fmapdt T (fun A => A) ?f) with (fmapd T f).
-    rewrite foldMapd_fmapd.
-    fequal. now ext [w a].
-  Qed.
-
-End with_functor.
-
-Import Sets.Notations.
-
-(** * <<tolistd>> and <<tosetd>> *)
-(******************************************************************************)
-Section tolistd.
-
-  Context
-    (T : Type -> Type)
-    `{DecoratedTraversableFunctor W T}.
-
-  Definition tolistd {A} : T A -> list (W * A) :=
-    foldMapd T (ret list).
-
-  #[export] Instance Tosetd_Kleisli : Tosetd T W :=
-    fun A => foldMapd T (ret set).
-
-  Import Derived.
-
-  (** ** Relating <<tosetd>> and <<tolistd>> *)
-  (******************************************************************************)
-  Lemma tosetd_to_tolistd : forall (A : Type),
-      @tosetd T W _ A = toset list ∘ tolistd.
-  Proof.
-    intros. unfold_ops @Tosetd_Kleisli. unfold tolistd.
-    rewrite (foldMapd_morphism T).
-    fequal. ext [w a]. unfold compose.
-    solve_basic_set.
-  Qed.
-
-  (** ** Characterizing <<∈d>> *)
-  (******************************************************************************)
-  Theorem ind_fmapd_iff :
-    forall `(f : W * A -> B) (t : T A) (w : W) (b : B),
-      (w, b) ∈d fmapd T f t <-> exists (a : A), (w, a) ∈d t /\ f (w, a) = b.
-  Proof.
-    intros. unfold_ops @Tosetd_Kleisli.
-    compose near t on left.
-    rewrite (foldMapd_fmapd);
-      try typeclasses eauto.
-    rewrite foldMapd_to_runBatch;
-      try typeclasses eauto.
-    rewrite foldMapd_to_runBatch;
-      try typeclasses eauto.
-    induction (toBatchd T False t).
-    - splits.
-      + introv hyp. inverts hyp.
-      + introv [a' hyp]. inverts hyp.
-        solve_basic_set.
-    - splits.
-      + intros [hyp | hyp].
-        { rewrite IHb0 in hyp. preprocess.
-          eexists. split; [| reflexivity]. now left. }
-        { destruct x as [w' a]. inverts hyp.
-          eexists. split; [| reflexivity]. now right. }
-      + introv [a [rest1 rest2]]. subst.
-        inverts rest1.
-        { left. rewrite IHb0.
-          exists a. split; auto. }
-        { right. destruct x.
-          unfold compose; cbn.
-          inverts H1. easy. }
-  Qed.
-
-  Corollary ind_fmap_iff :
-    forall `(f : A -> B) (t : T A) (w : W) (b : B),
-      (w, b) ∈d fmap T f t <-> exists (a : A), (w, a) ∈d t /\ f a = b.
-  Proof.
-    intros. change_left ((w, b) ∈d fmapd T (f ∘ extract (prod W)) t).
-    rewrite ind_fmapd_iff.
-    unfold compose. cbn. splits; eauto.
-  Qed.
-
-End tolistd.
-
-(** * Notations *)
-(******************************************************************************)
-Module Notations.
-
-  Notation "x ∈d t" :=
-    (tosetd _ t x) (at level 50) : tealeaves_scope.
-  Notation "g ⋆dt f" := (kcompose_dt g f) (at level 40) : tealeaves_scope.
-
-End Notations.
-
-Import Notations.
-
-Import Setlike.Functor.Notations.
-
-(** * Relating <<foldMapd>> and <<foldMap>> *)
-(******************************************************************************)
-Section new.
-
-  Context
-    (T : Type -> Type)
-    `{DT.Functor.DecoratedTraversableFunctor W T}.
-
-  Import Derived.
-
-  (** ** Expressing <<foldMap>> with <<foldMapd>> *)
-  (******************************************************************************)
-  Lemma foldMap_to_foldMapd : forall `{Monoid M} `(f : A -> M),
-      foldMap T f = foldMapd T (f ∘ extract (W ×)).
-  Proof.
-    intros. unfold foldMapd, foldMap.
-    unfold_ops @Traverse_Fmapdt.
-    reflexivity.
-  Qed.
-
-
-  (** ** Relating <<tolist>> to <<tolistd>>*)
-  (******************************************************************************)
-  Lemma tolist_to_tolistd : forall (A : Type),
-      @tolist T _ A = fmap list (extract (W ×)) ∘ tolistd T.
-  Proof.
-    intros. unfold_ops Tolist_Traverse.
-    rewrite (foldMap_to_foldMapd).
-    unfold tolistd.
-    rewrite (foldMapd_morphism T).
-    rewrite (natural (ϕ := @ret list _)).
-    reflexivity.
-  Qed.
-
-  (** ** Relating <<toset>> to <<tosetd>>*)
-  (******************************************************************************)
-  Lemma toset_to_tosetd : forall (A : Type),
-      @toset T _ A = fmap set (extract (W ×)) ∘ tosetd T.
-  Proof.
-    intros. unfold_ops @Toset_Traverse @Tolist_Traverse.
-    unfold_ops @Tosetd_Kleisli.
-    rewrite (foldMap_to_foldMapd).
-    rewrite (foldMapd_morphism T).
-    rewrite (natural (ϕ := @ret set _)).
-    reflexivity.
-  Qed.
-
-  (** ** Relating <<∈>> to <<∈d>> *)
-  (******************************************************************************)
-  Existing Instance Toset_set.
-  Existing Instance SetlikeFunctor_set.
-  Lemma ind_iff_in : forall (A : Type) (a : A) (t : T A),
-      a ∈ t <-> exists w, (w, a) ∈d t.
-  Proof.
-    intros. unfold_ops @Toset_Traverse.
-    rewrite (foldMap_to_foldMapd).
-    change (extract (prod W)) with (fmap (fun A => A) (@extract (prod W) _ A)).
-    rewrite <- (natural (ϕ := @ret set _)).
-    rewrite <- (foldMapd_morphism T).
-    unfold tosetd.
-    unfold compose.
-    unfold_ops @Fmap_set. split.
-    - intros [[w a'] [rest1 rest2]]. exists w.
-      unfold toset in rest1. unfold Toset_set in rest1.
-      now inverts rest2.
-    - intros [w rest]. exists (w, a). auto.
-  Qed.
-
-  Corollary ind_implies_in : forall (A : Type) (a : A) (w : W) (t : T A),
-      (w, a) ∈d t -> a ∈ t.
-  Proof.
-    intros. rewrite ind_iff_in. eauto.
-  Qed.
-
-  (** ** Characterizing <<∈>> to with <<fmapdt>> *)
-  (******************************************************************************)
-  Theorem in_fmapd_iff :
-    forall `(f : W * A -> B) (t : T A) (b : B),
-      b ∈ fmapd T f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
-  Proof.
-    intros. rewrite ind_iff_in.
-    setoid_rewrite (ind_fmapd_iff T).
-    reflexivity.
-  Qed.
-
-End new.
-
-(** * Respectfulness *)
-(******************************************************************************)
-Section decorated_setlike_respectfulness.
-
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{Kleisli.DT.Functor.DecoratedTraversableFunctor W T}.
-
-  Import Derived.
-
-  Lemma fmapd_respectful {A B} : forall (t : T A) (f g : W * A -> B),
-      (forall w a, (w, a) ∈d t -> f (w, a) = g (w, a)) ->
-      fmapd T f t = fmapd T g t.
-  Proof.
-    unfold_ops @Tosetd_Kleisli.
-    introv hyp.
-    unfold foldMapd in hyp.
-    rewrite (fmapdt_constant_applicative2 T False B) in hyp.
-    rewrite (fmapdt_to_runBatch T) in hyp.
-    unfold_ops @Fmapd_Fmapdt.
-    do 2 rewrite (fmapdt_to_runBatch T).
-    induction (toBatchd T B t).
-    - reflexivity.
-    - destruct x as [w a]. cbn. rewrite IHb. fequal.
-      apply hyp. now right.
-      intros. apply hyp. now left.
-  Qed.
-
-  Corollary fmapd_respectful_id {A} : forall (t : T A) (f : W * A -> A),
-      (forall w a, (w, a) ∈d t -> f (w, a) = a) ->
-      fmapd T f t = t.
-  Proof.
-    intros. replace t with (fmapd T (extract (prod W)) t) at 2
-      by (now rewrite (dfun_fmapd1 W T)).
-    now apply fmapd_respectful.
-  Qed.
-
-End decorated_setlike_respectfulness.
+End DerivedInstances.

@@ -189,5 +189,5 @@ Module DerivedInstances.
 End DerivedInstances.
 
 Module Notations.
-  #[local] Infix "⋆2" := (kc2 _ _) (at level 60) : tealeaves_scope.
+  Infix "⋆2" := (kc2 _ _) (at level 60) : tealeaves_scope.
 End Notations.
