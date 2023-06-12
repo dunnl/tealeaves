@@ -6,8 +6,9 @@ Import Batch.Notations.
 
 #[local] Generalizable Variable M.
 
-Import DerivedInstances.
+#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 
+Import Traversable.Functor.DerivedInstances.
 
 (** * Purity *)
 (******************************************************************************)

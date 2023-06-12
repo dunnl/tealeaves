@@ -25,7 +25,7 @@ Tealeaves/Functors/Writer.v
 Tealeaves/Classes/Decorated/Functor.v
 Tealeaves/Classes/Decorated/Monad.v
 Tealeaves/Classes/Traversable/Functor.v
-#Tealeaves/Classes/Traversable/Monad.v
+Tealeaves/Classes/Traversable/Monad.v
 #Tealeaves/Classes/DT/Functor.v
 #Tealeaves/Classes/DT/Monad.v
 
@@ -40,9 +40,9 @@ Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Sets.v
-#Tealeaves/Functors/List.v
-#Tealeaves/Theory/Traversable/Functor.v
-#Tealeaves/Theory/Traversable/Monad.v
+Tealeaves/Functors/List.v
+Tealeaves/Theory/Traversable/Functor.v
+Tealeaves/Theory/Traversable/Monad.v
 #Tealeaves/Theory/DT/Functor.v
 #Tealeaves/Theory/DT/Monad.v
 

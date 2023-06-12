@@ -181,7 +181,7 @@ Module DerivedInstances.
 
   (** ** Special cases for Kleisli composition *)
   (******************************************************************************)
-  Section Kleisli_composition.
+  Section kc3_special_cases.
 
     Context
       (T : Type -> Type)
@@ -196,16 +196,6 @@ Module DerivedInstances.
     10 2 no t
     11 3 everything
      *)
-
-    Lemma kc3_00 : forall `(g : B -> C) `(f : A -> B),
-        kc3 T (fun A => A) (fun A => A) (ret T C ∘ g) (ret T B ∘ f) = ret T C ∘ g ∘ f.
-    Proof.
-      intros. unfold kc3.
-      reassociate <-.
-      change (map (fun A => A) _ _ ?f) with f.
-      rewrite (ktm_bindt0 T (fun A => A)).
-      reflexivity.
-    Qed.
 
     Lemma kc3_22 : forall `(g : B -> G2 C) `(f : A -> G1 B),
         (map G2 C (T C) (ret T C) ∘ g) ⋆3 (map G1 B (T B) (ret T B) ∘ f) =
@@ -229,18 +219,12 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma kc3_21 : forall `(g : B -> G2 C) `(f : A -> T B),
-        (map G2 C (T C) (ret T C) ∘ g) ⋆3 (f : A -> (fun A => A)(T B)) =
-          traverse T G2 B C g ∘ f.
+    Lemma kc3_00 : forall `(g : B -> C) `(f : A -> B),
+        kc3 T (fun A => A) (fun A => A) (ret T C ∘ g) (ret T B ∘ f) = ret T C ∘ g ∘ f.
     Proof.
-      reflexivity.
-    Qed.
-
-    Lemma kc3_12 : forall `(g : B -> T C) `(f : A -> G1 B),
-        kc3 T G1 (fun A => A) g (map G1 B (T B) (ret T B) ∘ f) = (map G1 B (T C) g ∘ f).
-    Proof.
-      intros. unfold kc3. reassociate <-.
-      rewrite (fun_map_map G1).
+      intros. unfold kc3.
+      reassociate <-.
+      change (map (fun A => A) _ _ ?f) with f.
       rewrite (ktm_bindt0 T (fun A => A)).
       reflexivity.
     Qed.
@@ -288,6 +272,31 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
+    Lemma kc3_21 : forall `(g : B -> G2 C) `(f : A -> T B),
+        (map G2 C (T C) (ret T C) ∘ g) ⋆3 (f : A -> (fun A => A)(T B)) =
+          traverse T G2 B C g ∘ f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma kc3_20 : forall `(g : B -> G2 C) `(f : A -> B),
+        kc3 T (fun A => A) G2 (map G2 C (T C) (ret T C) ∘ g) (ret T B ∘ f) = map G2 C (T C) (ret T C) ∘ g ∘ f.
+    Proof.
+      intros. unfold kc3. reassociate <-.
+      change (map (fun A => A) _ _ ?f) with f.
+      rewrite (ktm_bindt0 T G2).
+      reflexivity.
+    Qed.
+
+    Lemma kc3_12 : forall `(g : B -> T C) `(f : A -> G1 B),
+        kc3 T G1 (fun A => A) g (map G1 B (T B) (ret T B) ∘ f) = (map G1 B (T C) g ∘ f).
+    Proof.
+      intros. unfold kc3. reassociate <-.
+      rewrite (fun_map_map G1).
+      rewrite (ktm_bindt0 T (fun A => A)).
+      reflexivity.
+    Qed.
+
     Lemma kc3_02 : forall `(g : B -> C) `(f : A -> G1 B),
         kc3 T G1 (fun A => A) (ret T C ∘ g) (map G1 B (T B) (ret T B) ∘ f) =
           map G1 C (T C) (ret T C) ∘ map G1 B C g ∘ f.
@@ -300,12 +309,21 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma kc3_20 : forall `(g : B -> G2 C) `(f : A -> B),
-        kc3 T (fun A => A) G2 (map G2 C (T C) (ret T C) ∘ g) (ret T B ∘ f) = map G2 C (T C) (ret T C) ∘ g ∘ f.
+    Lemma kc3_01 : forall `(g : B -> C) `(f : A -> T B),
+        kc3 T (fun A => A) (fun A => A) (ret T C ∘ g) f =
+          map T B C g ∘ f.
+    Proof.
+      intros.
+      unfold kc3.
+      reflexivity.
+    Qed.
+
+    Lemma kc3_10 : forall `(g : B -> T C) `(f : A -> B),
+        kc3 T (fun A => A) (fun A => A) g (ret T B ∘ f) = g ∘ f.
     Proof.
       intros. unfold kc3. reassociate <-.
       change (map (fun A => A) _ _ ?f) with f.
-      rewrite (ktm_bindt0 T G2).
+      rewrite (ktm_bindt0 T (fun A => A)).
       reflexivity.
     Qed.
 
@@ -346,7 +364,7 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-  End Kleisli_composition.
+  End kc3_special_cases.
 
   Lemma bindt_app_l (T : Type -> Type) `{TraversableMonad T}:
     forall (G : Type -> Type) {A B : Type} `{Applicative G} (f : A -> G (T B)),
@@ -364,15 +382,16 @@ Module DerivedInstances.
 
   (** ** Composition with lesser Kleisli operations *)
   (******************************************************************************)
-  Section Kleisli_composition.
+  Section composition_special_cases.
 
     Context
       (T : Type -> Type)
      `{TraversableMonad T}
       (G1 : Type -> Type)
       (G2 : Type -> Type)
+      `{Applicative G1}
       `{Applicative G2}
-      `{Applicative G1}.
+      (A B C : Type).
 
 #[local] Arguments bindt                 T {U}%function_scope {Bindt}    G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments traverse              T%function_scope     {Traverse} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
@@ -381,7 +400,7 @@ Module DerivedInstances.
 
   (** *** Composition with <<traverse>> *)
   (******************************************************************************)
-  Lemma traverse_bindt : forall `(g : B -> G2 C) `(f : A -> G1 (T B)),
+  Lemma traverse_bindt : forall (g : B -> G2 C) (f : A -> G1 (T B)),
       map G1 (traverse T G2 g) ∘ bindt T G1 f =
         bindt T (G1 ∘ G2) (map G1 (traverse T G2 g) ∘ f).
   Proof.
@@ -391,7 +410,7 @@ Module DerivedInstances.
     reflexivity.
   Qed.
 
-  Lemma bindt_traverse : forall `(g : B -> G2 (T C)) `(f : A -> G1 B),
+  Lemma bindt_traverse : forall (g : B -> G2 (T C)) (f : A -> G1 B),
       map G1 (bindt T G2 g) ∘ traverse T G1 f =
         bindt T (G1 ∘ G2) (map G1 g ∘ f).
   Proof.
@@ -404,7 +423,7 @@ Module DerivedInstances.
 
   (** *** Composition with <<bind>> *)
   (******************************************************************************)
-  Lemma bind_bindt : forall `(g : B -> T C) `(f : A -> G1 (T B)),
+  Lemma bind_bindt : forall (g : B -> T C) (f : A -> G1 (T B)),
       map G1 (bind T g) ∘ bindt T G1 f =
         bindt T G1 (map G1 (bind T g) ∘ f).
   Proof.
@@ -415,7 +434,7 @@ Module DerivedInstances.
     reflexivity.
   Qed.
 
-  Lemma bindt_bind : forall `(g : B -> G2 (T C)) `(f : A -> T B),
+  Lemma bindt_bind : forall (g : B -> G2 (T C)) (f : A -> T B),
       bindt T G2 g ∘ bind T f =
         bindt T G2 (bindt T G2 g ∘ f).
   Proof.
@@ -429,7 +448,7 @@ Module DerivedInstances.
 
   (** *** Composition with <<map>> *)
   (******************************************************************************)
-  Lemma map_bindt : forall `(g : B -> C) `(f : A -> G1 (T B)),
+  Lemma map_bindt : forall (g : B -> C) (f : A -> G1 (T B)),
       map G1 (map T g) ∘ bindt T G1 f = bindt T G1 (map G1 (map T g) ∘ f).
   Proof.
     intros.
@@ -439,7 +458,7 @@ Module DerivedInstances.
     reflexivity.
   Qed.
 
-  Lemma bindt_map : forall `(g : B -> G2 (T C)) `(f : A -> B),
+  Lemma bindt_map : forall (g : B -> G2 (T C)) (f : A -> B),
       bindt T G2 g ∘ map T f = bindt T G2 (g ∘ f).
   Proof.
     intros.
@@ -453,7 +472,7 @@ Module DerivedInstances.
 
   (** *** Composition between <<traverse>> and <<bind>> *)
   (******************************************************************************)
-  Lemma traverse_bind : forall `(g : B -> G2 C) `(f : A -> T B),
+  Lemma traverse_bind : forall (g : B -> G2 C) (f : A -> T B),
       traverse T G2 g ∘ bind T f =
         bindt T G2 (traverse T G2 g ∘ f).
   Proof.
@@ -467,7 +486,7 @@ Module DerivedInstances.
     reflexivity.
   Qed.
 
-  Lemma bind_traverse : forall `(g : B -> T C) `(f : A -> G1 B),
+  Lemma bind_traverse : forall (g : B -> T C) (f : A -> G1 B),
       map G1 (bind T g) ∘ traverse T G1 f =
         bindt T G1 (map G1 g ∘ f).
   Proof.
@@ -477,6 +496,30 @@ Module DerivedInstances.
     rewrite (ktm_bindt2 T G1 (fun A => A)).
     rewrite (bindt_app_r T G1).
     rewrite (kc3_12 T).
+    reflexivity.
+  Qed.
+
+  Lemma bind_bind : forall (g : B -> T C) (f : A -> T B),
+      bind T g ∘ bind T f =
+        bind T (g ⋆1 f).
+  Proof.
+    intros.
+    do 2 rewrite (bind_to_bindt T).
+    change (bindt T ?G g) with (map (fun A => A) (bindt T G g)).
+    rewrite (ktm_bindt2 T (fun A => A) (fun A => A)).
+    rewrite (bindt_app_r T (fun A => A)).
+    rewrite (kc3_11 T).
+    reflexivity.
+  Qed.
+
+  Lemma traverse_traverse : forall (g : B -> G2 C) (f : A -> G1 B),
+      map G1 (traverse T G2 g) ∘ traverse T G1 f =
+        traverse T (G1 ∘ G2) (map G1 g ∘ f).
+  Proof.
+    intros.
+    do 2 rewrite (traverse_to_bindt T).
+    rewrite (ktm_bindt2 T G1 G2).
+    rewrite (kc3_22 T).
     reflexivity.
   Qed.
 
@@ -516,13 +559,18 @@ Module DerivedInstances.
   (** *** Composition between <<bind>> and <<map>> *)
   (******************************************************************************)
   Lemma bind_map : forall (A B C : Type)
-                          (g : B -> T C)
-                          (f : A -> B),
+                     (g : B -> T C)
+                     (f : A -> B),
       bind T g ∘ map T f = bind T (g ∘ f).
   Proof.
     intros.
-    change (@Map_Bindt T H0 H) with (@ToFunctor.Map_Bind T _ _).
-    now rewrite (ToFunctor.bind_map T).
+    rewrite (bind_to_bindt T).
+    rewrite (map_to_bindt T).
+    change (bindt T ?G g) with (map (fun A => A) (bindt T G g)).
+    rewrite (ktm_bindt2 T (fun A => A) (fun A => A)).
+    rewrite (bindt_app_r T (fun A => A)).
+    rewrite (kc3_10 T).
+    reflexivity.
   Qed.
 
   Lemma map_bind : forall (A B C : Type)
@@ -531,74 +579,105 @@ Module DerivedInstances.
       map T g ∘ bind T f = bind T (map T g ∘ f).
   Proof.
     intros.
-    change (@Map_Bindt T H0 H) with (@ToFunctor.Map_Bind T _ _).
-    now rewrite (ToFunctor.map_bind T).
+    rewrite (bind_to_bindt T).
+    rewrite (map_to_bindt T).
+    change (bindt T (fun A => A) (?r ∘ g)) with (map (fun A => A) (bindt T (fun A => A) (r ∘ g))).
+    rewrite (ktm_bindt2 T (fun A => A) (fun A => A)).
+    rewrite (bindt_app_r T (fun A => A)).
+    rewrite (kc3_01 T).
+    reflexivity.
   Qed.
-
 
   Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
       map T g ∘ map T f = map T (g ∘ f).
   Proof.
-    intros. unfold_ops @Map_Bindt.
-    change (bindt T (fun A : Type => A) (ret T ∘ g))
-      with (map (fun A => A) (bindt T (fun A => A) (ret T ∘ g))).
-    rewrite (ktm_bindt2 T _ _ _ ( fun A => A) (G2 := fun A => A));
-      try typeclasses eauto.
-    fequal. now rewrite Mult_compose_identity1.
-    rewrite kcompose_tm_ret_I; auto.
+    intros.
+    do 3 rewrite (map_to_bindt T).
+    change (bindt T (fun A => A) (?r ∘ g)) with (map (fun A => A) (bindt T (fun A => A) (r ∘ g))).
+    rewrite (ktm_bindt2 T (fun A => A) (fun A => A)).
+    rewrite (bindt_app_r T (fun A => A)).
+    rewrite (kc3_00 T).
+    reflexivity.
   Qed.
 
   (** *** Identity laws *)
   (******************************************************************************)
+  Lemma bind_id : forall (A : Type),
+      bind T (ret T A) = @id (T A).
+  Proof.
+    intros.
+    rewrite (bind_to_bindt T).
+    now rewrite (ktm_bindt1 T).
+  Qed.
+
+  Lemma traverse_id : forall (A : Type),
+      traverse T (fun A => A) (@id A) = @id (T A).
+  Proof.
+    intros.
+    rewrite (traverse_to_bindt T).
+    change (?g ∘ id) with g.
+    change (map (fun A => A) ?f) with f.
+    now rewrite (ktm_bindt1 T).
+  Qed.
+
   Lemma map_id : forall (A : Type),
       map T (@id A) = @id (T A).
   Proof.
-    intros. unfold_ops @Map_Bindt.
+    intros.
+    rewrite (map_to_bindt T).
     change (?g ∘ id) with g.
     now rewrite (ktm_bindt1 T).
   Qed.
 
-  End Kleisli_composition.
+  (** *** Composition with <<ret>> *)
+  (******************************************************************************)
+  Lemma bind_ret : forall (A B : Type) (f : A -> T B),
+      bind T f ∘ ret T A = f.
+  Proof.
+    intros. rewrite (bind_to_bindt).
+    rewrite (ktm_bindt0 T (fun A => A)).
+    reflexivity.
+  Qed.
 
-  Section with_kleisli.
+  (** *** Composition with applicative morphisms *)
+  (******************************************************************************)
+  Lemma traverse_morphism : forall `{! ApplicativeMorphism G1 G2 ϕ} (A B : Type) (f : A -> G1 B),
+      ϕ (T B) ∘ traverse T G1 f = traverse T G2 (ϕ B ∘ f).
+  Proof.
+    intros. do 2 rewrite (traverse_to_bindt).
+    rewrite (ktm_morph T).
+    reassociate <-.
+    fequal. ext a.
+    inversion ApplicativeMorphism0.
+    unfold compose; cbn. rewrite appmor_natural.
+    reflexivity.
+  Qed.
+
+  End composition_special_cases.
+
+  Section instances.
 
     Context
       (T : Type -> Type)
-      `{Kleisli.Traversable.Monad.Monad T}.
+      `{TraversableMonad T}.
 
-
-    #[export] Instance: Classes.Functor.Functor T :=
-      {| fun_map_id := map_id;
-        fun_map_map := map_map;
+    #[export] Instance Functor_TM : Functor T :=
+      {| fun_map_id := map_id T;
+        fun_map_map := map_map T;
       |}.
 
-    (** *** Monad instance *)
-    (******************************************************************************)
-    #[export] Instance: Kleisli.Monad.Monad T.
-    Proof.
-      constructor; unfold_ops @Bind_Bindt.
-      - intros. now rewrite (ktm_bindt0 T _ _ (G := fun A => A)).
-      - intros. now rewrite (ktm_bindt1 T).
-      - intros.
-        change_left (map (fun A => A) (bindt T (fun A0 : Type => A0) g) ∘ bindt T (fun A0 : Type => A0) f).
-        rewrite (ktm_bindt2 T _ _ _ (G2 := fun A => A) (fun A => A)).
-        fequal. now rewrite Mult_compose_identity1.
-    Qed.
+    #[export] Instance Monad_TM : Monad T :=
+      {| kmon_bind0 := bind_ret T;
+        kmon_bind1 := bind_id T;
+        kmon_bind2 := bind_bind T;
+      |}.
 
-    (** *** Traversable functor instance *)
-    (******************************************************************************)
-    #[export] Instance: Kleisli.Traversable.Functor.TraversableFunctor T.
-    Proof.
-      constructor; unfold_ops @Traverse_Bindt.
-      - intros. change (?g ∘ id) with g.
-        change (map (fun A => A) ?g) with g.
-        now rewrite (ktm_bindt1 T).
-      - intros. rewrite (ktm_bindt2 T); auto.
-        rewrite kcompose_tm_ret; auto.
-      - intros. rewrite (ktm_morph T); auto. reassociate <-.
-        fequal. unfold compose. ext a. now rewrite (appmor_natural G1 G2).
-    Qed.
+    #[export] Instance Traversable_TM : TraversableFunctor T :=
+      {| trf_traverse_id := traverse_id T;
+        trf_traverse_traverse := traverse_traverse T;
+        trf_traverse_morphism := traverse_morphism T;
+      |}.
 
-  End with_kleisli.
+  End instances.
 
-End Derived.
+End DerivedInstances.

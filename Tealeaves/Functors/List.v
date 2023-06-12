@@ -15,7 +15,6 @@ Import Applicative.Notations.
 Create HintDb tea_list.
 
 #[local] Generalizable Variables M A B G ϕ.
-About bindt.
 #[local] Arguments bindt T {U}%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
 
 (** * [list] traversable monad *)
@@ -36,7 +35,10 @@ Fixpoint bindt_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Type)
 (******************************************************************************)
 Section bindt_rewriting_lemmas.
 
-  Context (A B : Type) (G : Type -> Type) `{Applicative G}.
+  Context
+    (G : Type -> Type)
+      `{Applicative G}
+      (A B : Type).
 
   Lemma bindt_list_nil : forall (f : A -> G (list B)),
       bindt list G A B f (@nil A) = pure G (@nil B).
@@ -90,16 +92,159 @@ Section bindt_rewriting_lemmas.
 
 End bindt_rewriting_lemmas.
 
+Section bindt_laws.
+
+  Context
+    (G : Type -> Type)
+    `{Applicative G}
+    (G1 G2 : Type -> Type)
+    `{Applicative G1}
+    `{Applicative G2}
+    (A B C : Type).
+
+  Lemma list_bindt0 : forall (f : A -> G (list B)), bindt list G A B f ∘ ret list A = f.
+  Proof.
+    intros. ext a.
+    apply (bindt_list_one G).
+  Qed.
+
+  Lemma list_bindt1 : bindt (U := list) list (fun A => A) A A (ret list A) = id.
+  Proof.
+    ext l. induction l.
+    - reflexivity.
+    - cbn. rewrite IHl.
+      reflexivity.
+  Qed.
+
+  Lemma list_bindt2 :
+    forall (g : B -> G2 (list C)) (f : A -> G1 (list B)),
+      map G1 (bindt list G2 B C g) ∘ bindt list G1 A B f =
+        bindt list (G1 ∘ G2) A C (kc3 list G1 G2 g f).
+  Proof.
+    intros. ext l. induction l.
+    - unfold compose; cbn.
+      rewrite (app_pure_natural G1).
+      rewrite (bindt_list_nil).
+      reflexivity.
+    - unfold compose at 1.
+      rewrite (bindt_list_cons).
+      rewrite map_to_ap.
+      do 3 rewrite <- ap4.
+      do 4 rewrite (ap2).
+      rewrite (bindt_list_cons).
+      rewrite <- IHl.
+      unfold compose at 7.
+      do 2 rewrite (ap_compose1 G2 G1).
+      unfold_ops @Pure_compose.
+      rewrite map_to_ap.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      repeat rewrite (ap2).
+      unfold kc3.
+      unfold compose at 8.
+      rewrite map_to_ap.
+      rewrite <- ap4.
+      repeat rewrite ap2.
+
+      rewrite ap3.
+      rewrite <- ap4.
+      repeat rewrite ap2.
+      fequal.
+      fequal.
+      fequal. ext l1 l2.
+      unfold compose. rewrite (bindt_list_app G2).
+      reflexivity.
+  Qed.
+
+  Lemma list_morph : forall (ϕ : forall A : Type, G1 A -> G2 A)
+                       (morph : ApplicativeMorphism G1 G2 ϕ),
+      forall (A B : Type) (f : A -> G1 (list B)),
+        ϕ (list B) ∘ bindt list G1 A B f = bindt list G2 A B (ϕ (list B) ∘ f).
+  Proof.
+    intros. unfold compose at 1 2. ext l.
+    inversion morph.
+    induction l.
+    - cbn. rewrite appmor_pure. reflexivity.
+    - cbn. do 2 rewrite ap_morphism_1.
+      rewrite appmor_pure.
+      rewrite IHl.
+      reflexivity.
+  Qed.
+
+End bindt_laws.
+
+  #[export] Instance TM_list : TraversableMonad list :=
+  {| ktm_bindt0 := list_bindt0;
+    ktm_bindt1 := list_bindt1;
+    ktm_bindt2 := list_bindt2;
+    ktm_morph := list_morph;
+  |}.
+
 #[export] Hint Rewrite bindt_list_nil bindt_list_cons bindt_list_one bindt_list_app :
   tea_list.
+
+#[export] Instance Map_list : Map list := Traversable.Monad.DerivedInstances.Map_Bindt list.
+#[export] Instance Bind_list : Bind list list := Traversable.Monad.DerivedInstances.Bind_Bindt list.
+#[export] Instance Traverse_list : Traverse list := Traversable.Monad.DerivedInstances.Traverse_Bindt list.
+#[export] Instance Functor_list : Functor list := Traversable.Monad.DerivedInstances.Functor_TM list.
+#[export] Instance Monad_list : Bind list list := Traversable.Monad.DerivedInstances.Bind_Bindt list.
+#[export] Instance TraversableFunctor_list : Traverse list := Traversable.Monad.DerivedInstances.Traverse_Bindt list.
+
+(** ** Rewriting lemmas for <<map>> *)
+(******************************************************************************)
+Section map_list_rw.
+
+  Context
+    {A B : Type}
+    (f : A -> B).
+
+  Lemma map_list_nil : map list f (@nil A) = @nil B.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma map_list_cons : forall (x : A) (xs : list A),
+      map list f (x :: xs) = f x :: map list f xs.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma map_list_one (a : A) : map list f [ a ] = [f a].
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma map_list_app : forall (l1 l2 : list A),
+      map list f (l1 ++ l2) = map list f l1 ++ map list f l2.
+  Proof.
+    intros.
+    unfold Map_list.
+    rewrite (DerivedInstances.map_to_bindt list).
+    rewrite (bindt_list_app (fun A => A)).
+    reflexivity.
+  Qed.
+
+End map_list_rw.
+
+#[export] Hint Rewrite @map_list_nil @map_list_cons
+     @map_list_one @map_list_app : tea_list.
+
+Tactic Notation "simpl_list" := (autorewrite with tea_list).
+Tactic Notation "simpl_list" "in" hyp(H) := (autorewrite with tea_list H).
+Tactic Notation "simpl_list" "in" "*" := (autorewrite with tea_list in *).
+
+(** ** [map] is a monoid homomorphism *)
+(******************************************************************************)
+#[export, program] Instance Monmor_list_fmap `(f : A -> B) :
+  Monoid_Morphism (map list f) := {| monmor_op := map_list_app f; |}.
 
 (** ** Other properties of <<fold>> *)
 (******************************************************************************)
 
-(** Folding across a list of monoidal values commutes with applying a monoid
-    homomorphism to the elements. *)
-Theorem fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
-    ϕ ∘ fold = fold ∘ fmap list ϕ.
+Lemma fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
+    ϕ ∘ fold M1 = fold M2 ∘ map list ϕ.
 Proof.
   intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
   induction l as [| ? ? IHl].
@@ -107,86 +252,7 @@ Proof.
   - cbn. now rewrite (monmor_op ϕ), IHl.
 Qed.
 
-Corollary fold_nat {A B : Type} (f : A -> B) :
-  fmap list f ∘ fold = fold ∘ fmap list (fmap list f).
-Proof.
-  now rewrite (fold_mon_hom (fmap list f)).
-Qed.
-
-
-(** * [list] functor *)
-(******************************************************************************)
-#[export] Instance Fmap_list : Fmap list :=
-  fun A B f => List.map f.
-
-(** ** Rewriting lemmas for <<fmap>> *)
-(******************************************************************************)
-Section fmap_list_rw.
-
-  Context
-    {A B : Type}
-    (f : A -> B).
-
-  Lemma fmap_list_nil : fmap list f (@nil A) = @nil B.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma fmap_list_cons : forall (x : A) (xs : list A),
-      fmap list f (x :: xs) = f x :: fmap list f xs.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma fmap_list_one (a : A) : fmap list f [ a ] = [f a].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma fmap_list_app : forall (l1 l2 : list A),
-      fmap list f (l1 ++ l2) = fmap list f l1 ++ fmap list f l2.
-  Proof.
-    intros.
-    unfold transparent tcs.
-    now rewrites List.map_app.
-  Qed.
-
-End fmap_list_rw.
-
-#[export] Hint Rewrite @fmap_list_nil @fmap_list_cons
-     @fmap_list_one @fmap_list_app : tea_list.
-
-Tactic Notation "simpl_list" := (autorewrite with tea_list).
-Tactic Notation "simpl_list" "in" hyp(H) := (autorewrite with tea_list H).
-Tactic Notation "simpl_list" "in" "*" := (autorewrite with tea_list in *).
-
-(** ** [fmap] is a monoid homomorphism *)
-(******************************************************************************)
-#[export, program] Instance Monmor_list_fmap `(f : A -> B) :
-  Monoid_Morphism (fmap list f) :=
-  {| monmor_op := fmap_list_app f; |}.
-
-(** ** Functor instance *)
-(******************************************************************************)
-Theorem fmap_id_list {A} : fmap list (@id A) = id.
-Proof.
-  ext l. induction l as [| ? ? IH]; simpl_list.
-  trivial. now rewrite IH.
-Qed.
-
-Theorem fmap_fmap_list {A B C} : forall (f : A -> B) (g : B -> C),
-    fmap list g ∘ fmap list f = fmap list (g ∘ f).
-Proof.
-  intros. unfold compose. ext l. induction l as [| ? ? IH]; simpl_list.
-  trivial. now rewrite IH.
-Qed.
-
-#[export] Instance Functor_list : Functor list :=
-  {| fun_fmap_id := @fmap_id_list;
-     fun_fmap_fmap := @fmap_fmap_list;
-  |}.
-
-
+(*
 (** * [list] is set-like *)
 (** A [list] can be reduced to a [set] by discarding the ordering, or more
     concretely by applying [List.In]. This makes [list] into a quantifiable
@@ -282,8 +348,8 @@ Proof.
   - simpl_list; simpl_set. now rewrite IHl.
 Qed.
 
-Theorem fmap_rigidly_respectful_list : forall A B (f g : A -> B) (l : list A),
-    (forall (a : A), a ∈ l -> f a = g a) <-> fmap list f l = fmap list g l.
+Theorem map_rigidly_respectful_list : forall A B (f g : A -> B) (l : list A),
+    (forall (a : A), a ∈ l -> f a = g a) <-> map list f l = map list g l.
 Proof.
   intros. induction l.
   - simpl_list. setoid_rewrite set_in_empty. tauto.
@@ -294,14 +360,14 @@ Proof.
     + injection 1; intuition (subst; auto).
 Qed.
 
-Corollary fmap_respectful_list : forall A B (l : list A) (f g : A -> B),
-    (forall (a : A), a ∈ l -> f a = g a) -> fmap list f l = fmap list g l.
+Corollary map_respectful_list : forall A B (l : list A) (f g : A -> B),
+    (forall (a : A), a ∈ l -> f a = g a) -> map list f l = map list g l.
 Proof.
-  intros. now rewrite <- fmap_rigidly_respectful_list.
+  intros. now rewrite <- map_rigidly_respectful_list.
 Qed.
 
 #[export] Instance SetlikeFunctor_list : SetlikeFunctor list :=
-  {| xfun_respectful := fmap_respectful_list; |}.
+  {| xfun_respectful := map_respectful_list; |}.
 
 (** ** Set-like monad instance *)
 (******************************************************************************)
@@ -313,7 +379,7 @@ Proof.
 Qed.
 
 Theorem toset_join_list :
-  `(toset (A:=A) list ∘ join list = join set ∘ toset list ∘ fmap list (toset list)).
+  `(toset (A:=A) list ∘ join list = join set ∘ toset list ∘ map list (toset list)).
 Proof.
   intros. unfold compose. ext l. induction l.
   - simpl_list; simpl_set; trivial.
@@ -332,7 +398,6 @@ Qed.
      xmon_ret_injective := return_injective_list;
   |}.
 
-
 (** ** Monoids form list (monad-)algebras *)
 (** In fact, list algebras are precisely monoids. *)
 (******************************************************************************)
@@ -348,7 +413,7 @@ Section foldable_list.
   Qed.
 
   Lemma fold_join : forall (l : list (list M)),
-      fold (join list l) = fold (fmap list fold l).
+      fold (join list l) = fold (map list fold l).
   Proof.
     intro l. rewrite <- fold_equal_join.
     compose near l on left.
@@ -356,7 +421,7 @@ Section foldable_list.
   Qed.
 
   Lemma fold_constant_unit : forall (l : list M),
-      fold (fmap list (fun _ => Ƶ) l) = Ƶ.
+      fold (map list (fun _ => Ƶ) l) = Ƶ.
   Proof.
     intro l. induction l.
     - reflexivity.
@@ -364,14 +429,15 @@ Section foldable_list.
   Qed.
 
 End foldable_list.
+*)
 
-(** * <<fmap>> equality inversion lemmas *)
+(** * <<map>> equality inversion lemmas *)
 (** Some lemmas for reasoning backwards from equality between two
     similarly-concatenated lists.  *)
 (******************************************************************************)
-Lemma fmap_app_inv_l : forall {A B} {f g : A -> B} (l1 l2 : list A),
-    fmap list f (l1 ++ l2) = fmap list g (l1 ++ l2) ->
-    fmap list f l1 = fmap list g l1.
+Lemma map_app_inv_l : forall {A B} {f g : A -> B} (l1 l2 : list A),
+    map list f (l1 ++ l2) = map list g (l1 ++ l2) ->
+    map list f l1 = map list g l1.
 Proof.
   intros. induction l1.
   - reflexivity.
@@ -380,21 +446,21 @@ Proof.
     + simpl in H. inversion H. auto.
 Qed.
 
-Lemma fmap_app_inv_r : forall {A B} {f g : A -> B} (l1 l2 : list A),
-    fmap list f (l1 ++ l2) = fmap list g (l1 ++ l2) ->
-    fmap list f l2 = fmap list g l2.
+Lemma map_app_inv_r : forall {A B} {f g : A -> B} (l1 l2 : list A),
+    map list f (l1 ++ l2) = map list g (l1 ++ l2) ->
+    map list f l2 = map list g l2.
 Proof.
   intros.
-  assert (heads_equal : fmap list f l1 = fmap list g l1).
-  { eauto using fmap_app_inv_l. }
+  assert (heads_equal : map list f l1 = map list g l1).
+  { eauto using map_app_inv_l. }
   simpl_list in *.
   rewrite heads_equal in H.
   eauto using List.app_inv_head.
 Qed.
 
-Lemma fmap_app_inv : forall {A B} {f g : A -> B} (l1 l2 : list A),
-    fmap list f (l1 ++ l2) = fmap list g (l1 ++ l2) ->
-    fmap list f l1 = fmap list g l1 /\ fmap list f l2 = fmap list g l2.
+Lemma map_app_inv : forall {A B} {f g : A -> B} (l1 l2 : list A),
+    map list f (l1 ++ l2) = map list g (l1 ++ l2) ->
+    map list f l1 = map list g l1 /\ map list f l2 = map list g l2.
 Proof.
-  intros; split; eauto using fmap_app_inv_l, fmap_app_inv_r.
+  intros; split; eauto using map_app_inv_l, map_app_inv_r.
 Qed.

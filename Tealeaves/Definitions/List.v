@@ -21,10 +21,10 @@ Solve Obligations with (intros; unfold transparent tcs; auto with datatypes).
 
 (** * Folding over lists *)
 (******************************************************************************)
-Fixpoint fold `{op : Monoid_op M} `{unit : Monoid_unit M} (l : list M) : M :=
+Fixpoint fold (M : Type) `{op : Monoid_op M} `{unit : Monoid_unit M} (l : list M) : M :=
   match l with
   | nil => Ƶ
-  | cons x l' => x ● fold l'
+  | cons x l' => x ● fold M l'
   end.
 
 (** ** Rewriting lemmas for [fold] *)
@@ -32,26 +32,27 @@ Fixpoint fold `{op : Monoid_op M} `{unit : Monoid_unit M} (l : list M) : M :=
 Section fold_rewriting_lemmas.
 
   Context
+    (M : Type)
     `{Monoid M}.
 
-  Lemma fold_nil : fold (@nil M) = Ƶ.
+  Lemma fold_nil : fold M (@nil M) = Ƶ.
   Proof.
     reflexivity.
   Qed.
 
   Lemma fold_cons : forall (m : M) (l : list M),
-      fold (m :: l) = m ● fold l.
+      fold M (m :: l) = m ● fold M l.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma fold_one : forall (m : M), fold [ m ] = m.
+  Lemma fold_one : forall (m : M), fold M [ m ] = m.
   Proof.
     intro. cbn. now simpl_monoid.
   Qed.
 
   Lemma fold_app : forall (l1 l2 : list M),
-      fold (l1 ++ l2) = fold l1 ● fold l2.
+      fold M (l1 ++ l2) = fold M l1 ● fold M l2.
   Proof.
     intros l1 ?. induction l1 as [| ? ? IHl].
     - cbn. now simpl_monoid.
@@ -72,9 +73,9 @@ Fixpoint filter `(P : A -> bool) (l : list A) : list A :=
 (** ** Folding a list is a monoid homomorphism *)
 (** <<fold : list M -> M>> is homomorphism of monoids. *)
 (******************************************************************************)
-#[export] Instance Monmor_fold `{Monoid M} : Monoid_Morphism fold :=
-  {| monmor_unit := fold_nil;
-     monmor_op := fold_app |}.
+#[export] Instance Monmor_fold (M : Type) `{Monoid M} : Monoid_Morphism (fold M) :=
+  {| monmor_unit := fold_nil M;
+     monmor_op := fold_app M |}.
 
 (** ** Rewriting lemmas for [filter] *)
 (******************************************************************************)
