@@ -33,7 +33,7 @@ Section Functor_class.
 
 End Functor_class.
 
-Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope.
+#[global] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope.
 
 (** ** Natural transformations *)
 (******************************************************************************)

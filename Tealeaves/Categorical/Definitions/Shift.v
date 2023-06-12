@@ -5,6 +5,8 @@ From Tealeaves Require Import
 
 #[local] Generalizable Variable W.
 
+Import Monoid.Notations.
+
 (** * The [shift] operation *)
 (** The theory of decorated functors makes frequent use of an
     operation <<shift>> that uniformly increments each of the

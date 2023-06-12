@@ -1,100 +1,94 @@
 From Tealeaves Require Import
   Classes.Monoid
-  Classes.Kleisli
-  Functors.Sets
-  Definitions.List.
+  Classes.Setlike.Monad
+  Functors.Sets.
 
 From Coq Require Import
   Sorting.Permutation.
 
 Import List.ListNotations.
+Open Scope list_scope.
+
 Import Monoid.Notations.
 Import Sets.Notations.
+Import Setlike.Functor.Notations.
 Import Applicative.Notations.
 
 Create HintDb tea_list.
 
 #[local] Generalizable Variables M A B G ϕ.
-About bindt.
-#[local] Arguments bindt T {U}%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
 
-(** * [list] traversable monad *)
+(** * [list] monoid *)
 (******************************************************************************)
-#[export] Instance Return_list : Return list := fun A a => cons a nil.
+#[export] Instance Monoid_op_list {A} : Monoid_op (list A) := @app A.
 
-Fixpoint bindt_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Type) (f : A -> G (list B)) (l : list A)
-  : G (list B) :=
+#[export] Instance Monoid_unit_list {A} : Monoid_unit (list A) := nil.
+
+#[export, program] Instance Monoid_list {A} :
+  @Monoid (list A) (@Monoid_op_list A) (@Monoid_unit_list A).
+
+Solve Obligations with (intros; unfold transparent tcs; auto with datatypes).
+
+(** * Folding over lists *)
+(******************************************************************************)
+Fixpoint fold `{op : Monoid_op M} `{unit : Monoid_unit M} (l : list M) : M :=
   match l with
-  | nil => pure G (@nil B)
-  | x :: xs =>
-      pure G (@List.app B) <⋆> (f x) <⋆> (bindt_list G A B f xs)
+  | nil => Ƶ
+  | cons x l' => x ● fold l'
   end.
 
-#[export] Instance Bindt_list : Bindt list list := @bindt_list.
-
-(** ** Rewriting lemmas for <<bindt>> *)
+(** ** Rewriting lemmas for [fold] *)
 (******************************************************************************)
-Section bindt_rewriting_lemmas.
+Section fold_rewriting_lemmas.
 
-  Context (A B : Type) (G : Type -> Type) `{Applicative G}.
+  Context
+    `{Monoid M}.
 
-  Lemma bindt_list_nil : forall (f : A -> G (list B)),
-      bindt list G A B f (@nil A) = pure G (@nil B).
+  Lemma fold_nil : fold (@nil M) = Ƶ.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma bindt_list_one : forall (f : A -> G (list B)) (a : A),
-      bindt list G A B f (ret list A a) = f a.
+  Lemma fold_cons : forall (m : M) (l : list M),
+      fold (m :: l) = m ● fold l.
   Proof.
-    intros.
-    cbn.
-    rewrite (ap3).
-    rewrite <- (ap4).
-    rewrite ap2.
-    rewrite ap2.
-    rewrite <- ap1.
-    unfold compose; do 2 fequal;
-      ext l; rewrite (List.app_nil_end).
     reflexivity.
   Qed.
 
-  Lemma bindt_list_cons : forall (f : A -> G (list B)) (a : A) (l : list A),
-      bindt list G A B f (cons a l) =
-        pure G (@app B) <⋆> f a <⋆> bindt list G A B f l.
+  Lemma fold_one : forall (m : M), fold [ m ] = m.
   Proof.
-    intros.
-    reflexivity.
+    intro. cbn. now simpl_monoid.
   Qed.
 
-  Lemma bindt_list_app : forall (f : A -> G (list B)) (l1 l2 : list A),
-      bindt list G A B f (l1 ++ l2) =
-        pure G (@app B) <⋆> (bindt list G A B f l1) <⋆> (bindt list G A B f l2).
+  Lemma fold_app : forall (l1 l2 : list M),
+      fold (l1 ++ l2) = fold l1 ● fold l2.
   Proof.
-    intros.
-    induction l1.
-    - cbn. rewrite ap2.
-      rewrite ap1.
-      reflexivity.
-    - cbn.
-      rewrite IHl1.
-      repeat rewrite <- ap4.
-      repeat rewrite (ap2).
-      rewrite ap3.
-      repeat rewrite <- ap4.
-      repeat rewrite ap2.
-      repeat fequal.
-      ext x y z. unfold compose.
-      now rewrite (List.app_assoc).
+    intros l1 ?. induction l1 as [| ? ? IHl].
+    - cbn. now simpl_monoid.
+    - cbn. rewrite IHl. now simpl_monoid.
   Qed.
 
-End bindt_rewriting_lemmas.
+End fold_rewriting_lemmas.
 
-#[export] Hint Rewrite bindt_list_nil bindt_list_cons bindt_list_one bindt_list_app :
-  tea_list.
+(** ** Folding a list is a monoid homomorphism *)
+(** <<fold : list M -> M>> is homomorphism of monoids. *)
+(******************************************************************************)
+#[export] Instance Monmor_fold `{Monoid M} : Monoid_Morphism fold :=
+  {| monmor_unit := fold_nil;
+     monmor_op := fold_app |}.
 
 (** ** Other properties of <<fold>> *)
 (******************************************************************************)
+
+(** In the special case that we fold a list of lists, the result is equivalent
+    to joining the list of lists. *)
+Lemma fold_equal_join : forall {A},
+    fold = join list (A:=A).
+Proof.
+  intros. ext l. induction l as [| ? ? IHl].
+  - reflexivity.
+  - cbn. now rewrite IHl.
+Qed.
 
 (** Folding across a list of monoidal values commutes with applying a monoid
     homomorphism to the elements. *)
@@ -112,7 +106,6 @@ Corollary fold_nat {A B : Type} (f : A -> B) :
 Proof.
   now rewrite (fold_mon_hom (fmap list f)).
 Qed.
-
 
 (** * [list] functor *)
 (******************************************************************************)
@@ -186,6 +179,98 @@ Qed.
      fun_fmap_fmap := @fmap_fmap_list;
   |}.
 
+(** * [list] monad *)
+(******************************************************************************)
+#[export] Instance Return_list : Return list := fun A a => cons a nil.
+
+#[export] Instance Join_list : Join list := @List.concat.
+
+(** ** Rewriting lemmas for <<join>> *)
+(******************************************************************************)
+Lemma join_list_nil :
+  `(join list ([ ] : list (list A)) = []).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma join_list_cons : forall A (l : list A) (ll : list (list A)),
+    join list (l :: ll) = l ++ join list ll.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma join_list_one : forall A (l : list A),
+    join list [ l ] = l.
+Proof.
+  intros. cbn. now List.simpl_list.
+Qed.
+
+Lemma join_list_app : forall A (l1 l2 : list (list A)),
+    join list (l1 ++ l2) = join list l1 ++ join list l2.
+Proof.
+  apply List.concat_app.
+Qed.
+
+#[export] Hint Rewrite join_list_nil join_list_cons join_list_one join_list_app :
+  tea_list.
+
+(** ** [join] is a monoid homomorphism *)
+(** The <<join>> operation is a monoid homomorphism from <<list (list A)>> to
+    <<list A>>. This is just a special case of the fact that monoid homomorphisms
+    on free monoids are precisely of the form <<foldMap f>> for any <<f : A -> M>>,
+    specialized to <<f = id>> case, but we don't need that much generality. *)
+(******************************************************************************)
+#[export] Instance Monmor_join (A : Type) : Monoid_Morphism (join list (A := A)) :=
+  {| monmor_unit := @join_list_nil A;
+     monmor_op := @join_list_app A;
+  |}.
+
+(** ** Monad instance *)
+(******************************************************************************)
+#[export] Instance Natural_ret_list : Natural (@ret list _).
+Proof.
+  constructor; try typeclasses eauto.
+  introv. now ext l.
+Qed.
+
+#[export] Instance Natural_join_list : Natural (@join list _).
+Proof.
+  constructor; try typeclasses eauto.
+  intros ? ? f. ext l. unfold compose. induction l as [| ? ? IHl].
+  - reflexivity.
+  - simpl_list. now rewrite IHl.
+Qed.
+
+Theorem join_ret_list {A} :
+  join list ∘ ret list = @id (list A).
+Proof.
+  ext l. unfold compose. destruct l.
+  - reflexivity.
+  - cbn. now List.simpl_list.
+Qed.
+
+Theorem join_fmap_ret_list {A} :
+  join list ∘ fmap list (ret list) = @id (list A).
+Proof.
+  ext l. unfold compose. induction l as [| ? ? IHl].
+  - reflexivity.
+  - simpl_list. now rewrite IHl.
+Qed.
+
+Theorem join_join_list {A} :
+  join list ∘ join list (A:=list A) =
+  join list ∘ fmap list (join list).
+Proof.
+  ext l. unfold compose. induction l as [| ? ? IHl].
+  - reflexivity.
+  - simpl_list. now rewrite IHl.
+Qed.
+
+#[export] Instance Monad_list : Monad list :=
+  {| mon_join_ret := @join_ret_list;
+     mon_join_fmap_ret := @join_fmap_ret_list;
+     mon_join_join := @join_join_list;
+  |}.
 
 (** * [list] is set-like *)
 (** A [list] can be reduced to a [set] by discarding the ordering, or more
@@ -364,6 +449,52 @@ Section foldable_list.
   Qed.
 
 End foldable_list.
+
+(** * Filtering lists *)
+(******************************************************************************)
+Fixpoint filter `(P : A -> bool) (l : list A) : list A :=
+  match l with
+  | nil => nil
+  | cons a rest =>
+    if P a then a :: filter P rest else filter P rest
+  end.
+
+(** ** Rewriting lemmas for [filter] *)
+(******************************************************************************)
+Section filter_lemmas.
+
+  Context
+    `(P : A -> bool).
+
+  Lemma filter_nil :
+    filter P nil = nil.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma filter_cons : forall (a : A) (l : list A),
+      filter P (a :: l) = if P a then a :: filter P l else filter P l.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma filter_one : forall (a : A),
+      filter P [a] = if P a then [a] else nil.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma filter_app : forall (l1 l2 : list A),
+      filter P (l1 ++ l2) = filter P l1 ++ filter P l2.
+  Proof.
+    intros. induction l1.
+    - reflexivity.
+    - cbn. rewrite IHl1. now destruct (P a).
+  Qed.
+
+End filter_lemmas.
+
+#[export] Hint Rewrite @filter_nil @filter_cons @filter_app @filter_one : tea_list.
 
 (** * <<fmap>> equality inversion lemmas *)
 (** Some lemmas for reasoning backwards from equality between two

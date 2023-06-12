@@ -15,56 +15,6 @@ Import Product.Notations.
 
 Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 
-(** * Operational typeclasses for comonads *)
-(******************************************************************************)
-Section operations.
-
-  Context
-    (W : Type -> Type).
-
-  Class Extract :=
-    extract : W ⇒ (fun A => A).
-
-  Class Cobind :=
-    cobind : forall (A B : Type), (W A -> B) -> W A -> W B.
-
-End operations.
-
-Section kc4.
-
-  Context
-    (W : Type -> Type)
-    `{Cobind W}.
-
-  Definition kc4
-    {A B C : Type}
-    `(g : W B -> C)
-    `(f : W A -> B)
-    : (W A -> C) :=
-    g ∘ cobind W A B f.
-
-End kc4.
-
-#[local] Infix "⋆4" := (kc4 _) (at level 60) : tealeaves_scope.
-
-Section Comonad.
-
-  Context
-    `(W : Type -> Type)
-    `{Cobind W}
-    `{Extract W}.
-
-  Class Comonad :=
-    { kcom_cobind0 : forall `(f : W A -> B),
-        extract W B ∘ cobind W A B f = f;
-      kcom_cobind1 : forall (A : Type),
-        cobind W A A (extract W A) = @id (W A);
-      kcom_cobind2 : forall (A B C : Type) (g : W B -> C) (f : W A -> B),
-        cobind W B C g ∘ cobind W A B f = cobind W A C (g ⋆4 f)
-    }.
-
-End Comonad.
-
 (** * Operational typeclasses for DTM hierarchy *)
 (******************************************************************************)
 Section operations.
@@ -117,180 +67,14 @@ End operations.
 #[export] Instance Cobind_env {E : Type} : Cobind (E ×) :=
   fun A B (f : E * A -> B) '(e, a) => (e, f (e, a)).
 
-#[export] Instance Return_writer {M : Type} `{Monoid_unit M} : Return (prod M) :=
-  fun A (a : A) => (Ƶ, a).
-
 (** * Kleisli-style typeclasses for structured functors *)
 (******************************************************************************)
 
-(** ** Monad *)
-(******************************************************************************)
-
-Section kc.
-
-  Context
-    (T : Type -> Type)
-    `{Return T}
-    `{Bind T T}.
-
-  Definition kc1
-    {A B C : Type}
-    (g : B -> T C)
-    (f : A -> T B) :
-    (A -> T C) :=
-    bind T T B C g ∘ f.
-
-End kc.
-
-#[local] Infix "⋆1" := (kc1 _) (at level 60) : tealeaves_scope.
-
-Section class.
-
-  Context
-    (T : Type -> Type)
-    `{Return T}
-    `{Bind T T}.
-
-  Class Monad :=
-    { (* left unit law of the monoid *)
-      kmon_bind0 : forall (A B : Type) (f : A -> T B),
-        bind T T A B f ∘ ret T A = f;
-      (* right unit law of the monoid *)
-      kmon_bind1 : forall (A : Type),
-        bind T T A A (ret T A) = @id (T A);
-      (* associativity of the monoid *)
-      kmon_bind2 : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
-        bind T T B C g ∘ bind T T A B f = bind T T A C (g ⋆1 f);
-    }.
-
-End class.
-
-(** *** Monad Homomorphisms *)
-(******************************************************************************)
-Section class.
-
-  Context
-    (T U : Type -> Type)
-      `{Return T} `{Bind T T}
-      `{Return U} `{Bind U U}.
-
-  Class MonadHom (ϕ : forall (A : Type), T A -> U A) :=
-    { kmon_hom_bind : forall (A B : Type) (f : A -> T B),
-        ϕ B ∘ bind T T A B f = bind U U A B (ϕ B ∘ f) ∘ ϕ A;
-      kmon_hom_ret : forall (A : Type),
-        ϕ A ∘ ret T A = ret U A;
-    }.
-
-End class.
-
-(** *** Right modules *)
-(******************************************************************************)
-Section class.
-
-  Context
-    (T : Type -> Type)
-    (U : Type -> Type)
-    `{Return T} `{Bind T T} `{Bind T U}.
-
-  Class RightModule :=
-    { kmod_monad :> Monad T;
-      kmod_bind1 : forall (A : Type),
-        bind T U A A (ret T A) = @id (U A);
-      kmod_bind2 : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
-        bind T U B C g ∘ bind T U A B f = bind T U A C (g ⋆1 f);
-    }.
-
-End class.
-
-(** ** Decorated functor *)
-(******************************************************************************)
-
-(* Here would go kc4 *)
-
-Section class.
-
-  Context
-    (E : Type)
-    (T : Type -> Type)
-    `{Mapd E T}.
-
-  Class DecoratedFunctor :=
-    { dfun_mapd1 : forall (A : Type),
-        mapd E T A A (extract (E ×) A) = @id (T A);
-      dfun_mapd2 : forall (A B C : Type) (g : E * B -> C) (f : E * A -> B),
-        mapd E T B C g ∘ mapd E T A B f = mapd E T A C (g ⋆4 f);
-    }.
-
-End class.
 
 (** ** Decorated monad *)
 (******************************************************************************)
-Section kc.
 
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{Bindd W T T}
-    `{Monoid_op W}.
 
-  Definition kc5 {A B C : Type} :
-    (W * B -> T C) ->
-    (W * A -> T B) ->
-    (W * A -> T C) :=
-    fun g f '(w, a) => bindd W T T B C (g ⦿ w) (f (w, a)).
-
-End kc.
-
-#[local] Infix "⋆5" := (kc5 _ _) (at level 60) : tealeaves_scope.
-
-Section class.
-
-  Context
-    {W : Type}
-    (T : Type -> Type)
-    `{Return T}
-    `{Bindd W T T}
-    `{Monoid_op W} `{Monoid_unit W}.
-
-  Class DecoratedMonad :=
-    { kmond_monoid :> Monoid W;
-      kmond_bindd0 : forall (A B : Type) (f : W * A -> T B),
-        bindd W T T A B f  ∘ ret T A = f ∘ ret (W ×) A;
-      kmond_bindd1 : forall (A : Type),
-        bindd W T T A A (ret T A ∘ extract (W ×) A) = @id (T A);
-      kmond_bindd2 : forall (A B C : Type) (g : W * B -> T C) (f : W * A -> T B),
-        bindd W T T B C g ∘ bindd W T T A B f = bindd W T T A C (g ⋆5 f);
-    }.
-
-End class.
-
-(** ** Traversable functor *)
-(******************************************************************************)
-
-(* Here would go kc2 *)
-
-Section class.
-
-  Context
-    (T : Type -> Type)
-    `{Traverse T}.
-
-  Class TraversableFunctor :=
-    { trf_traverse_id : forall (A : Type),
-        traverse T (fun A => A) A A id = @id (T A);
-      trf_traverse_traverse :
-      forall (G1 G2 : Type -> Type)
-        `{Applicative G1}
-        `{Applicative G2}
-        {A B C : Type}
-        (g : B -> G2 C) (f : A -> G1 B),
-        map G1 (T B) (G2 (T C)) (traverse T G2 B C g) ∘ traverse T G1 A B f =
-          traverse T (G1 ∘ G2) A C (map G1 B (G2 C) g ∘ f);
-      trf_traverse_morphism : forall `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : A -> G1 B),
-        ϕ (T B) ∘ traverse T G1 A B f = traverse T G2 A B (ϕ B ∘ f);
-    }.
-
-End class.
 
 (** ** Traversable monad *)
 (******************************************************************************)
@@ -322,7 +106,7 @@ Section class.
     `{Bindt T T}.
 
   Class TraversableMonad :=
-    { ktm_bindt0 : forall (A B : Type) `{Applicative G} (f : A -> G (T B)),
+    { ktm_bindt0 : forall (G : Type -> Type) `{Applicative G} (A B : Type) (f : A -> G (T B)),
         bindt T T G A B f ∘ ret T A = f;
       ktm_bindt1 : forall (A : Type),
         bindt T T (fun A => A) A A (ret T A) = @id (T A);
@@ -429,14 +213,3 @@ Section class.
     }.
 
 End class.
-
-Module Notations.
-
-  Infix "⋆1" := (kc1 _) (at level 60) : tealeaves_scope.
-  Infix "⋆3" := (kc3 _ _ _) (at level 60) : tealeaves_scope.
-  Infix "⋆4" := (kc4 _) (at level 60) : tealeaves_scope.
-  Infix "⋆5" := (kc5 _ _) (at level 60) : tealeaves_scope.
-  Infix "⋆6" := (kc6 _ _ _) (at level 60) : tealeaves_scope.
-  Infix "⋆7" := (kc7 _ _ _ _) (at level 60) : tealeaves_scope.
-
-End Notations.

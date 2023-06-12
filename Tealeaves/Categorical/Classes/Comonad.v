@@ -2,11 +2,13 @@ From Tealeaves Require Export
   Classes.Functor
   Functors.Identity
   Functors.Compose
-  Classes.Kleisli (Extract, extract).
+  Classes.Comonad (Extract, extract).
 
 Import Functor.Notations.
 
 #[local] Generalizable Variables W A B C D.
+
+#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 
 (** * Comonads *)
 (******************************************************************************)

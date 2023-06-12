@@ -1,86 +1,106 @@
 From Tealeaves Require Export
-  Classes.Comonad
-  Functors.Environment.
+  Functors.Writer.
 
+Import Monoid.Notations.
 Import Product.Notations.
+Import Comonad.Notations.
 
-(** * Decorated functor *)
+#[export] Instance Return_writer {M : Type} `{Monoid_unit M} : Return (prod M) :=
+  fun A (a : A) => (Ƶ, a).
+
+(** * Operational typeclasses for DTM hierarchy *)
 (******************************************************************************)
+Section operations.
 
-(** ** Operation <<fmapd>> *)
-(******************************************************************************)
-Class Fmapd (E : Type) (F : Type -> Type) :=
-  fmapd : forall {A B : Type} (f : E * A -> B), F A -> F B.
+  Context
+    (M : Type)
+    (T : Type -> Type)
+    (U : Type -> Type).
 
-Arguments fmapd {E}%type_scope F%function_scope {Fmapd} {A B}%type_scope f%function_scope _.
+    Class Mapd := mapd :
+        forall (A B : Type),
+          (M * A -> B) -> T A -> T B.
 
-(** ** Typeclass *)
-(******************************************************************************)
-Class DecoratedFunctor (E : Type) (T : Type -> Type) `{Fmapd E T} :=
-  { dfun_fmapd1 : forall (A : Type),
-      fmapd T (extract (E ×)) = @id (T A);
-    dfun_fmapd2 : forall (A B C : Type) (g : E * B -> C) (f : E * A -> B),
-      fmapd T g ∘ fmapd T f = fmapd T (g ∘ cobind (E ×) f);
-  }.
+End operations.
 
-#[local] Generalizable Variables E T.
+Section class.
+
+  Context
+    (E : Type)
+    (T : Type -> Type)
+    `{Mapd E T}.
+
+  Class DecoratedFunctor :=
+    { dfun_mapd1 : forall (A : Type),
+        mapd E T A A (extract (E ×) A) = @id (T A);
+      dfun_mapd2 : forall (A B C : Type) (g : E * B -> C) (f : E * A -> B),
+        mapd E T B C g ∘ mapd E T A B f = mapd E T A C (g ⋆4 f);
+    }.
+
+End class.
 
 (** ** Derived functor instance *)
 (******************************************************************************)
 Module DerivedInstances.
 
-  #[export] Instance Fmap_Fmapd
+  #[export] Instance Map_Mapd
+   (E : Type)
     (T : Type -> Type)
-    `{Fmapd E T} : Fmap T :=
-  fun (A B : Type) (f : A -> B) => fmapd T (f ∘ extract (E ×)).
+    `{Mapd E T} : Map T :=
+  fun (A B : Type) (f : A -> B) => mapd E T A B (f ∘ extract (E ×) A).
 
   Section with_instance.
 
     Context
+      (E : Type)
       (T : Type -> Type)
       `{DecoratedFunctor E T}.
 
-    Lemma fmap_id : forall (A : Type),
-        fmap T (@id A) = @id (T A).
+    Lemma map_id : forall (A : Type),
+        map T (@id A) = @id (T A).
     Proof.
-      intros. unfold_ops @Fmap_Fmapd.
-      now rewrite (dfun_fmapd1 (T := T) (E := E)).
+      intros. unfold_ops @Map_Mapd.
+      now rewrite (dfun_mapd1 E T).
     Qed.
 
-    Lemma fmap_fmap : forall (A B C : Type) (f : A -> B) (g : B -> C),
-        fmap T g ∘ fmap T f = fmap T (g ∘ f).
+    Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
+        map T g ∘ map T f = map T (g ∘ f).
     Proof.
-      intros. unfold_ops @Fmap_Fmapd.
-      rewrite dfun_fmapd2.
+      intros. unfold_ops @Map_Mapd.
+      rewrite (dfun_mapd2 E T).
       fequal. reassociate ->.
-      now rewrite (kcom_cobind0 (E ×)).
-    Qed.
-
-    #[export] Instance: Classes.Functor.Functor T :=
-      {| fun_fmap_id := fmap_id;
-        fun_fmap_fmap := fmap_fmap;
-      |}.
-
-    Lemma fmap_fmapd :
-      forall (A B C : Type)
-        (g : B -> C)
-        (f : E * A -> B),
-        fmap T g ∘ fmapd T f = fmapd T (g ∘ f).
-    Proof.
-      intros. unfold_ops @Fmap_Fmapd.
-      rewrite dfun_fmapd2.
+      unfold kc4.
       reassociate ->.
       now rewrite (kcom_cobind0 (E ×)).
     Qed.
 
-    Lemma fmapd_fmap: forall (A B C : Type)
+    #[export] Instance: Classes.Functor.Functor T :=
+      {| fun_map_id := map_id;
+        fun_map_map := map_map;
+      |}.
+
+    Lemma map_mapd :
+      forall (A B C : Type)
+        (g : B -> C)
+        (f : E * A -> B),
+        map T g ∘ mapd E T A B f = mapd E T A C (g ∘ f).
+    Proof.
+      intros. unfold_ops @Map_Mapd.
+      rewrite (dfun_mapd2 E T).
+      unfold kc4.
+      reassociate ->.
+      now rewrite (kcom_cobind0 (E ×)).
+    Qed.
+
+    Lemma mapd_map: forall (A B C : Type)
                         (g : E * B -> C)
                         (f : A -> B),
-        fmapd T g ∘ fmap T f = fmapd T (g ∘ fmap (E ×) f).
+        mapd E T B C g ∘ map T f = mapd E T A C (g ∘ map (E ×) f).
     Proof.
-      intros. unfold_ops @Fmap_Fmapd.
-      rewrite dfun_fmapd2.
-      now rewrite <- (fmap_to_cobind (E := E)).
+      intros. unfold_ops @Map_Mapd.
+      rewrite (dfun_mapd2 E T).
+      unfold kc4.
+      now rewrite <- (map_to_cobind (E := E)).
     Qed.
 
   End with_instance.

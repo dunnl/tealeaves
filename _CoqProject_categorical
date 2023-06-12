@@ -19,10 +19,3 @@ Tealeaves/Categorical/DT/Functor.v
 Tealeaves/Categorical/DT/Monad.v
 #Tealeaves/Categorical/DT/Module.v
 
-Tealeaves/Classes/Equivalences/Monad.v
-Tealeaves/Classes/Equivalences/Decorated/Functor.v
-Tealeaves/Classes/Equivalences/Decorated/Monad.v
-Tealeaves/Classes/Equivalences/Traversable/Functor.v
-Tealeaves/Classes/Equivalences/Traversable/Monad.v
-Tealeaves/Classes/Equivalences/DT/Functor.v
-Tealeaves/Classes/Equivalences/DT/Monad.v

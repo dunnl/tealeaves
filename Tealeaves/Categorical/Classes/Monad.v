@@ -3,11 +3,13 @@ From Tealeaves Require Export
   Definitions.Strength
   Functors.Identity
   Functors.Compose
-  Classes.Kleisli (Return, ret).
+  Classes.Monad (Return, ret).
 
 Import Functor.Notations.
 
 #[local] Generalizable Variables W T A.
+
+#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 
 (** * Monads *)
 (******************************************************************************)

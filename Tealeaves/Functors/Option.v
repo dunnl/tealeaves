@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Classes.Kleisli.
+  Classes.Monad.
 
 (** * [option] monad *)
 (******************************************************************************)

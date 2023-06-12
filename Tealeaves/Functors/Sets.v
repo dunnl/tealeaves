@@ -1,8 +1,7 @@
 From Tealeaves Require Import
   Classes.Monoid
-  Classes.Kleisli
-  Classes.Applicative
-  Theory.Monad.
+  Classes.Monad
+  Classes.Applicative.
 From Tealeaves Require Export
   Definitions.Sets.
 
@@ -47,17 +46,19 @@ Qed.
 
 Import Monad.DerivedInstances.
 
+#[export] Instance Map_set : Map set := DerivedInstances.Map_Bind set.
+
 Definition map_set_nil `{f : A -> B} :
-  map set A B f ∅ = ∅ := ltac:(solve_basic_set).
+  map set f ∅ = ∅ := ltac:(solve_basic_set).
 
 Lemma map_set_one `{f : A -> B} {a : A} :
-  map set A B f {{ a }} = {{ f a }}.
+  map set f {{ a }} = {{ f a }}.
 Proof.
   solve_basic_set.
 Qed.
 
 Definition map_set_add `{f : A -> B} {x y} :
-  map set A B f (x ∪ y) = map set A B f x ∪ map set A B f y
+  map set f (x ∪ y) = map set f x ∪ map set f y
   := ltac:(solve_basic_set).
 
 #[export] Hint Rewrite @bind_set_nil @bind_set_one @bind_set_add
@@ -100,6 +101,8 @@ Qed.
     kmon_bind1 := set_bind1;
     kmon_bind2 := set_bind2;
   |}.
+
+#[export] Instance Functor_set : Functor set := DerivedInstances.Monad_Functor set.
 
 (** ** <<bind>> is a monoid homomorphism *)
 (******************************************************************************)

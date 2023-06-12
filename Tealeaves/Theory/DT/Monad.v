@@ -1431,7 +1431,7 @@ Module DerivedInstances.
   Qed.
 
   Lemma bindt_ret :
-    forall (A B : Type) `{Applicative G} (f : A -> G (T B)),
+    forall (G : Type -> Type) `{Applicative G} (A B : Type) (f : A -> G (T B)),
       bindt G A B f ∘ ret T A = f.
   Proof.
     intros.
