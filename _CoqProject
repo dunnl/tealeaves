@@ -5,6 +5,7 @@ Tealeaves/Axioms.v
 Tealeaves/Prelude.v
 Tealeaves/Classes/EqDec_eq.v
 Tealeaves/Classes/Category.v
+#Tealeaves/Categories/Types.v # This expects Categorical API ready
 Tealeaves/Definitions/Product.v
 Tealeaves/Classes/Monoid.v
 Tealeaves/Classes/Comonoid.v
@@ -45,6 +46,28 @@ Tealeaves/Functors/Sets.v
 #Tealeaves/Theory/DT/Functor.v
 #Tealeaves/Theory/DT/Monad.v
 
+#Tealeaves/Backends/LN/Atom.v
+#Tealeaves/Backends/LN/AtomSet.v
+#Tealeaves/Backends/LN/AssocList.v
+#Tealeaves/Backends/LN/LN.v
+#Tealeaves/Backends/LN.v
+
+#Tealeaves/Examples/STLC/Syntax.v
+#Tealeaves/Examples/STLC/TypeSoundness.v
+#Tealeaves/Examples/STLC/SyntaxCategorical.v
+#Tealeaves/Examples/STLC+Let/Let1.v
+#Tealeaves/Examples/STLC+Let/Let2.v
+
+#Tealeaves/Categories/TypeFamilies.v # This expects Categorical API ready
+#Tealeaves/Multisorted/Classes/Multifunctor.v
+#Tealeaves/Multisorted/Classes/DTM.v
+#Tealeaves/Multisorted/Theory/DTM.v
+#Tealeaves/Multisorted/Backends/LN.v
+#Tealeaves/Multisorted/Examples/SystemF/Syntax.v
+#Tealeaves/Multisorted/Examples/SystemF/Rewriting.v
+#Tealeaves/Multisorted/Examples/SystemF/Contexts.v
+#Tealeaves/Multisorted/Examples/SystemF/TypeSoundness.v
+
 #Tealeaves/Categorical/Definitions/Shift.v
 Tealeaves/Categorical/Classes/Monad.v
 Tealeaves/Categorical/Classes/RightModule.v
@@ -72,26 +95,4 @@ Tealeaves/Categorical/Classes/Bimonad.v
 #Tealeaves/Categorical/Equivalences/DT/Monad.v
 #Tealeaves/Categories/Functors/Decorated.v
 #Tealeaves/Categories/Functors/Traversable.v
-
-#Tealeaves/Backends/LN/Atom.v
-#Tealeaves/Backends/LN/AtomSet.v
-#Tealeaves/Backends/LN/AssocList.v
-#Tealeaves/Backends/LN/LN.v
-#Tealeaves/Backends/LN.v
-
-#Tealeaves/Examples/STLC/Syntax.v
-#Tealeaves/Examples/STLC/TypeSoundness.v
-#Tealeaves/Examples/STLC/SyntaxCategorical.v
-#Tealeaves/Examples/STLC+Let/Let1.v
-#Tealeaves/Examples/STLC+Let/Let2.v
-
-#Tealeaves/Multisorted/Classes/Multifunctor.v
-#Tealeaves/Multisorted/Classes/DTM.v
-#Tealeaves/Multisorted/Backends/LN.v
-#Tealeaves/Examples/SystemF/Syntax.v
-#Tealeaves/Examples/SystemF/Rewriting.v
-#Tealeaves/Examples/SystemF/Contexts.v
-#Tealeaves/Examples/SystemF/TypeSoundness.v
-
-#Tealeaves/Categories/Types.v           # This expects Categorical API ready
-#Tealeaves/Categories/TypeFamilies.v
+#Tealeaves/Categories/Examples/STLC/Syntax.v

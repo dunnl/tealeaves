@@ -60,9 +60,6 @@ Section class.
 
 End class.
 
-
-#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
-
 (** * Derived instances *)
 (******************************************************************************)
 Module DerivedInstances.
@@ -190,3 +187,7 @@ Module DerivedInstances.
   End properties.
 
 End DerivedInstances.
+
+Module Notations.
+  #[local] Infix "⋆2" := (kc2 _ _) (at level 60) : tealeaves_scope.
+End Notations.
