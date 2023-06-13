@@ -252,48 +252,51 @@ Proof.
   - cbn. now rewrite (monmor_op ϕ), IHl.
 Qed.
 
-(*
 (** * [list] is set-like *)
 (** A [list] can be reduced to a [set] by discarding the ordering, or more
     concretely by applying [List.In]. This makes [list] into a quantifiable
     monad. The lemmas involved in proving this fact form a key step in proving
     that all listables are quantifiable, below. *)
 (******************************************************************************)
-#[export] Instance Toset_list : Toset list :=
-  fun _ l a => List.In a l.
+#[export] Instance El_list : El list :=
+  fun (A : Type) (l : list A) (a : A) => List.In a l.
+
+#[local] Arguments el F%function_scope {El} {A}%type_scope.
 
 (** ** Rewriting lemmas for <<toset>>\<<∈>>*)
 (******************************************************************************)
-Lemma toset_list_nil : forall A, toset list (@nil A) = ∅.
+Lemma toset_list_nil : forall A, el list (@nil A) = ∅.
 Proof.
   reflexivity.
 Qed.
 
 Lemma toset_list_cons : forall A (x : A) (xs : list A),
-    toset list (x :: xs) = ret set x ∪ toset list xs.
+    el list (x :: xs) = {{x}} ∪ el list xs.
 Proof.
   reflexivity.
 Qed.
 
-Lemma toset_list_one : forall A (a : A), toset list [ a ] = ret set a.
+Lemma toset_list_one : forall A (a : A), el list [ a ] = ret set A a.
 Proof.
   intros. ext b; propext; cbv; intuition.
 Qed.
 
-Lemma toset_list_ret : forall A (a : A), toset list (ret list a) = ret set a.
+Lemma toset_list_ret : forall A (a : A), el list (ret list A a) = ret set A a.
 Proof.
   intros. ext b; propext; cbv; intuition.
 Qed.
 
 Lemma toset_list_app : forall A (l1 l2 : list A),
-    toset list (l1 ++ l2) = toset list l1 ∪ toset list l2.
+    el list (l1 ++ l2) = el list l1 ∪ el list l2.
 Proof.
-  intros. ext b. change (toset list ?l b) with (List.In b l).
+  intros. ext b. change (el list ?l b) with (List.In b l).
   propext; rewrite -> List.in_app_iff; auto.
 Qed.
 
 #[export] Hint Rewrite toset_list_nil toset_list_cons
      toset_list_one toset_list_ret toset_list_app : tea_list.
+
+Import Sets.ElNotations.
 
 Lemma in_list_nil {A} : forall (p : A), p ∈ @nil A <-> False.
 Proof.
@@ -311,7 +314,7 @@ Proof.
   intros. simpl_list. simpl_set. intuition congruence.
 Qed.
 
-Lemma in_list_ret {A} (a1 a2 : A) : a1 ∈ ret list a2 <-> a1 = a2.
+Lemma in_list_ret {A} (a1 a2 : A) : a1 ∈ ret list A a2 <-> a1 = a2.
 Proof.
   intros. simpl_list. intuition.
 Qed.
@@ -333,19 +336,24 @@ Qed.
 
 (** ** [toset] is a monoid homomorphism *)
 (******************************************************************************)
-#[export] Instance Monmor_toset_list (A : Type) : Monoid_Morphism (toset list (A := A)) :=
+#[export] Instance Monmor_toset_list (A : Type) : Monoid_Morphism (el list (A := A)) :=
   {| monmor_unit := @toset_list_nil A;
      monmor_op := @toset_list_app A;
   |}.
 
 (** ** Respectfulness conditions *)
 (******************************************************************************)
-#[export] Instance Natural_toset_list: Natural (@toset list _).
+#[export] Instance Natural_toset_list: Natural (@el list _).
 Proof.
   constructor; try typeclasses eauto.
   intros A B f. unfold compose. ext l. induction l.
-  - simpl_list; simpl_set. trivial.
-  - simpl_list; simpl_set. now rewrite IHl.
+  - simpl_list.
+    simpl_set.
+    autorewrite with tea_set.
+    reflexivity.
+  - simpl_list.
+    simpl_set.
+    now rewrite IHl.
 Qed.
 
 Theorem map_rigidly_respectful_list : forall A B (f g : A -> B) (l : list A),
@@ -366,6 +374,7 @@ Proof.
   intros. now rewrite <- map_rigidly_respectful_list.
 Qed.
 
+(*
 #[export] Instance SetlikeFunctor_list : SetlikeFunctor list :=
   {| xfun_respectful := map_respectful_list; |}.
 

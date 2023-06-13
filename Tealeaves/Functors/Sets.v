@@ -61,8 +61,10 @@ Definition map_set_add `{f : A -> B} {x y} :
   map set f (x ∪ y) = map set f x ∪ map set f y
   := ltac:(solve_basic_set).
 
-#[export] Hint Rewrite @bind_set_nil @bind_set_one @bind_set_add
-  @map_set_add @map_set_one : tea_set.
+#[export] Hint Rewrite
+  @bind_set_nil @bind_set_one @bind_set_add
+  @map_set_nil  @map_set_one  @map_set_add
+  : tea_set.
 
 Definition set_in_ret : forall A (a b : A),
     (ret set A a) b = (a = b) := ltac:(reflexivity).
@@ -120,6 +122,30 @@ Proof.
   intros. now rewrite H. specialize (lemma a).
   cbv in lemma. symmetry. now rewrite <- lemma.
 Qed.
+
+(** * Toset operation *)
+(******************************************************************************)
+Import Functor.Notations.
+
+Section ops.
+
+  Context
+    (F : Type -> Type).
+
+  Class El :=
+    el : F ⇒ set.
+
+  Class El_ctx (W : Type) :=
+    el_ctx : forall (A : Type), F A -> set (W * A).
+
+End ops.
+Module ElNotations.
+  Notation "x ∈ t" :=
+    (el _ _ t x) (at level 50) : tealeaves_scope.
+
+  Notation "x ∈d t" :=
+    (el_ctx _ _ t x) (at level 50) : tealeaves_scope.
+End ElNotations.
 
 (** * Set as an applicative functor *)
 (******************************************************************************)
