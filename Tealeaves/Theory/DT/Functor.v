@@ -26,6 +26,12 @@ Section with_functor.
     (T : Type -> Type)
     `{DecoratedTraversableFunctor W T}.
 
+  Lemma runBatch_batch3 : forall `{Applicative G} (A B : Type) (f : W * A -> G B),
+      runBatch f ∘ (@batch (W * A) B) = f.
+  Proof.
+    intros. apply (runBatch_batch G).
+  Qed.
+
   Definition toBatch6 {A : Type} (B : Type) : T A -> @Batch (W * A) B (T B) :=
     mapdt T (Batch (W * A) B) A B (batch B).
 

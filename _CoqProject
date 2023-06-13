@@ -43,14 +43,12 @@ Tealeaves/Functors/List.v
 Tealeaves/Theory/Traversable/Functor.v
 Tealeaves/Theory/Traversable/Monad.v
 Tealeaves/Theory/DT/Functor.v
-#Tealeaves/Theory/DT/Monad.v
-
+Tealeaves/Theory/DT/Monad.v
 #Tealeaves/Backends/LN/Atom.v
 #Tealeaves/Backends/LN/AtomSet.v
 #Tealeaves/Backends/LN/AssocList.v
 #Tealeaves/Backends/LN/LN.v
 #Tealeaves/Backends/LN.v
-
 #Tealeaves/Examples/STLC/Syntax.v
 #Tealeaves/Examples/STLC/TypeSoundness.v
 #Tealeaves/Examples/STLC/SyntaxCategorical.v
@@ -67,7 +65,6 @@ Tealeaves/Theory/DT/Functor.v
 #Tealeaves/Multisorted/Examples/SystemF/Contexts.v
 #Tealeaves/Multisorted/Examples/SystemF/TypeSoundness.v
 
-#Tealeaves/Categorical/Definitions/Shift.v
 Tealeaves/Categorical/Classes/Monad.v
 Tealeaves/Categorical/Classes/RightModule.v
 Tealeaves/Categorical/Classes/Comonad.v
@@ -77,6 +74,7 @@ Tealeaves/Categorical/Classes/BeckDistributiveLaw.v
 Tealeaves/Categorical/Classes/Bimonad.v
 #Tealeaves/Categorical/Functors/Environment.v
 #Tealeaves/Categorical/Functors/Writer.v
+#Tealeaves/Categorical/Definitions/Shift.v
 #Tealeaves/Categorical/Classes/Decorated/Functor.v
 #Tealeaves/Categorical/Classes/Traversable/Functor.v
 #Tealeaves/Categorical/Theory/Decorated/Functor.v

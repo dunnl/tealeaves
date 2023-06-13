@@ -22,7 +22,7 @@ Section batch.
     (T : Type -> Type)
     `{TraversableMonad T}.
 
-  Lemma runBatch_batch : forall `{Applicative G} (A B : Type) (f : A -> G (T B)),
+  Lemma runBatch_batch3 : forall `{Applicative G} (A B : Type) (f : A -> G (T B)),
       runBatch f ∘ (@batch A (T B)) = f.
   Proof.
     intros. apply (runBatch_batch G).
@@ -101,13 +101,21 @@ Section runBatch.
   Proof.
     unfold toBatch3.
     rewrite (ktm_morph T (ϕ := @runBatch A G (T B) f _ _ _)).
-    now rewrite (runBatch_batch T).
+    now rewrite (runBatch_batch3 T).
   Qed.
 
   Lemma traverse_to_runBatch `{Applicative G} `(f : A -> G B) :
     traverse T G f = runBatch f ∘ toBatch T B.
   Proof.
-    now rewrite (traverse_to_runBatch T).
+    now rewrite (Traversable.Functor.traverse_to_runBatch T).
+  Qed.
+
+  Lemma bind_to_runBatch `(f : A -> T B) :
+    bind T f = runBatch (F := fun A => A) f ∘ toBatch3 T B.
+  Proof.
+    rewrite (bind_to_bindt).
+    rewrite bindt_to_runBatch.
+    reflexivity.
   Qed.
 
   Corollary map_to_runBatch `(f : A -> B) :
