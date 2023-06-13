@@ -1,19 +1,18 @@
 From Tealeaves Require Export
-  Classes.Monoid
-  Classes.Applicative
-  Classes.Kleisli
+  Classes.Traversable.Monad
   Theory.Traversable.Functor.
 
 #[local] Generalizable Variables T G A B C ϕ M.
 
-Import Kleisli.Notations.
-Import Classes.Traversable.Functor.DerivedInstances.
+Import Traversable.Functor.Notations.
+Import Traversable.Monad.Notations.
 
-Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 #[local] Arguments traverse T%function_scope {Traverse} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments bind (T)%function_scope {U}%function_scope {Bind} {A B}%type_scope _%function_scope _.
 #[local] Arguments bindt (T)%function_scope {U}%function_scope {Bindt} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 
+Import Traversable.Monad.DerivedInstances.
 
 (** * Batch *)
 (******************************************************************************)
@@ -29,7 +28,7 @@ Section batch.
     intros. apply (runBatch_batch G).
   Qed.
 
-  Definition toBatch_1 {A : Type} (B : Type) : T A -> @Batch A (T B) (T B) :=
+  Definition toBatch3 {A : Type} (B : Type) : T A -> @Batch A (T B) (T B) :=
     bindt T (Batch A (T B)) (batch (T B)).
 
 End batch.
@@ -42,28 +41,40 @@ Section foldMap.
     (T : Type -> Type)
     `{TraversableMonad T}.
 
+#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
+#[local] Arguments traverse T%function_scope {Traverse} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
+#[local] Arguments bind (T)%function_scope {U}%function_scope {Bind} (A B)%type_scope _%function_scope _.
+#[local] Arguments bindt (T)%function_scope {U}%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
+
   (** ** Composition with <<bindt>> *)
   (******************************************************************************)
   Lemma foldMap_bindt `{Applicative G} `{Monoid M} : forall `(g : B -> M) `(f : A -> G (T B)),
-      map G (foldMap T g) ∘ bindt T G f =
-        foldMap T (map G (foldMap T g) ∘ f).
+      map G _ _ (foldMap T g) ∘ bindt T G _ _ f =
+        foldMap T (map G _ _ (foldMap T g) ∘ f).
   Proof.
     intros. unfold foldMap.
-    rewrite (traverse_bindt T G (const M)).
+    rewrite (traverse_bindt T G (const M) A B False).
     rewrite (traverse_to_bindt T (const (G M))).
     fequal.
-    - ext A' B' f' t. unfold_ops @Map_compose @Map_const.
+    - ext A' B' f'.
+      unfold Map_compose, Map_const.
+      unfold const in *.
+      unfold map at 2.
       now rewrite (fun_map_id G).
-    - ext A' B' [a b]. reflexivity.
+    - ext A' B' [a b].
+      unfold Mult_compose, Mult_const.
+      unfold compose in *.
+      unfold const in *.
+      cbn.
+      reflexivity.
   Qed.
 
-  (** ** Composition with <<bind>> and <<ret>> *)
-  (******************************************************************************)
   Lemma foldMap_bind `{Monoid M} : forall `(g : B -> M) `(f : A -> T B),
-      foldMap T g ∘ bind T f =
+      foldMap T g ∘ bind T A B f =
         foldMap T (foldMap T g ∘ f).
   Proof.
-    intros. unfold foldMap. rewrite (traverse_bind T (const M)).
+    intros. unfold foldMap.
+    rewrite (traverse_bind T (const M) A B False).
     reflexivity.
   Qed.
 
@@ -77,8 +88,6 @@ Section foldMap.
 
 End foldMap.
 
-Import Theory.Traversable.Functor.DerivedInstances.
-
 (** ** Expressing operations using <<runBatch>> *)
 (******************************************************************************)
 Section runBatch.
@@ -88,9 +97,9 @@ Section runBatch.
     `{TraversableMonad T}.
 
   Lemma bindt_to_runBatch `{Applicative G} `(f : A -> G (T B)) :
-    bindt T G f = runBatch f ∘ toBatch_1 T B.
+    bindt T G f = runBatch f ∘ toBatch3 T B.
   Proof.
-    unfold toBatch_1.
+    unfold toBatch3.
     rewrite (ktm_morph T (ϕ := @runBatch A G (T B) f _ _ _)).
     now rewrite (runBatch_batch T).
   Qed.
@@ -104,7 +113,6 @@ Section runBatch.
   Corollary map_to_runBatch `(f : A -> B) :
     map T f = runBatch f ∘ toBatch T B.
   Proof.
-    change (@Map_Bindt T H0 H) with (Map_Traverse T).
     rewrite (map_to_traverse T).
     now rewrite traverse_to_runBatch.
   Qed.
@@ -118,7 +126,7 @@ Section runBatch.
   Qed.
 
   Lemma foldMap_to_runBatch : forall `{Monoid M} (fake : Type) `(f : A -> M),
-      foldMap T f = runBatch f ∘ toBatch_1 T fake.
+      foldMap T f = runBatch f ∘ toBatch3 T fake.
   Proof.
     intros.
     unfold foldMap.

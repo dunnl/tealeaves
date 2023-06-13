@@ -1,11 +1,19 @@
 From Tealeaves Require Export
-  Classes.Monoid
-  Classes.Applicative
-  Classes.Comonad
-  Classes.Decorated.Monad.
+  Classes.Decorated.Functor
+  Classes.Decorated.Monad
+  Classes.Traversable.Functor
+  Classes.Traversable.Monad
+  Classes.DT.Functor.
 
 Import Monoid.Notations.
 Import Product.Notations.
+
+Import Classes.Monad.Notations.
+Import Comonad.Notations.
+Import Decorated.Monad.Notations.
+Import Traversable.Functor.Notations.
+Import Traversable.Monad.Notations.
+Import DT.Functor.Notations.
 
 #[local] Generalizable Variables ϕ T W G A B C D F M.
 
@@ -176,9 +184,181 @@ Section kc7.
 
 End kc7.
 
-  (** ** Rewriting rules for special cases of <<kc7>> *)
+(** * Derived Instances *)
+(******************************************************************************)
+Module DerivedInstances.
+
+  (** ** Operations *)
   (******************************************************************************)
-  Section kc7_special_cases.
+  Section operations.
+
+    Context
+      (W : Type)
+      (T : Type -> Type)
+      `{Binddt W T T}
+      `{Return T}.
+
+    #[export] Instance Map_Binddt : Map T :=
+      fun (A B : Type) (f : A -> B) => binddt W T T (fun A => A) A B (ret T B ∘ f ∘ extract (W ×) A).
+    #[export] Instance Mapdt_Binddt: Mapdt W T
+      := fun G _ _ _ A B f => binddt W T T G A B (map G B (T B) (ret T B) ∘ f).
+    #[export] Instance Bindd_Binddt: Bindd W T T
+      := fun A B f => binddt W T T (fun A => A) A B f.
+    #[export] Instance Bindt_Binddt: Bindt T T
+      := fun G _ _ _ A B f => binddt W T T G A B (f ∘ extract (W ×) A).
+    #[export] Instance Bind_Binddt: Bind T T
+      := fun A B f => binddt W T T (fun A => A) A B (f ∘ extract (W ×) A).
+    #[export] Instance Mapd_Binddt: Mapd W T
+      := fun A B f => binddt W T T (fun A => A) A B (ret T B ∘ f).
+    #[export] Instance Traverse_Binddt: Traverse T
+      := fun G _ _ _ A B f => binddt W T T G A B (map G B (T B) (ret T B) ∘ f ∘ extract (W ×) A).
+
+  End operations.
+
+  (** ** Rewrite rules for derived operations *)
+  (******************************************************************************)
+  Section special_cases.
+
+    Context
+      (W : Type)
+      (T : Type -> Type)
+      `{Return T}
+      `{Binddt W T T}
+      `{Applicative G}.
+
+    (** *** Rewriting rules for special cases of <<binddt>> *)
+    (******************************************************************************)
+    Lemma bindt_to_binddt `(f : A -> G (T B)):
+      bindt T T G A B f = binddt W T T G A B (f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma bindd_to_binddt `(f : W * A -> T B):
+      bindd W T T A B f = binddt W T T (fun A => A) A B f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma mapdt_to_binddt `(f : W * A -> G B):
+      mapdt W T G A B f = binddt W T T G A B (map G B (T B) (ret T B) ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma bind_to_binddt `(f : A -> T B):
+      bind T T A B f = binddt W T T (fun A => A) A B (f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma mapd_to_binddt `(f : W * A -> B):
+      mapd W T A B f = binddt W T T (fun A => A) A B (ret T B ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma traverse_to_binddt `(f : A -> G B):
+      traverse T G A B f = binddt W T T G A B (map G B (T B) (ret T B) ∘ f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma map_to_binddt `(f : A -> B):
+      map T A B f = binddt W T T (fun A => A) A B (ret T B ∘ f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** *** Rewriting rules for special cases of <<bindt>> *)
+    (******************************************************************************)
+    Lemma bind_to_bindt `(f : A -> T B):
+      bind T T A B f = bindt T T (fun A => A) A B f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma traverse_to_bindt `(f : A -> G B):
+      traverse T G A B f = bindt T T G A B (map G B (T B) (ret T B) ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma map_to_bindt `(f : A -> B):
+      map T A B f = bindt T T (fun A => A) A B (ret T B ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** *** Rewriting rules for special cases of <<bindd>> *)
+    (******************************************************************************)
+    Lemma bind_to_bindd `(f : A -> T B):
+      bind T T A B f = bindd W T T A B (f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma mapd_to_bindd `(f : W * A -> B):
+      mapd W T A B f = bindd W T T A B (ret T B ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma map_to_bindd `(f : A -> B):
+      map T A B f = bindd W T T A B (ret T B ∘ f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** *** Rewriting rules for special cases of <<mapdt>> *)
+    (******************************************************************************)
+    Lemma mapd_to_mapdt `(f : W * A -> B):
+      mapd W T A B f = mapdt W T (fun A => A) A B f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma map_to_mapdt `(f : A -> B):
+      map T A B f = mapdt W T (fun A => A) A B (f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma traverse_to_mapdt `(f : A -> G B):
+      traverse T G A B f = mapdt W T G A B (f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** *** Rewriting rules for special cases of <<traverse>> *)
+    (******************************************************************************)
+    Lemma map_to_traverse `(f : A -> B):
+      map T A B f = traverse T (fun A => A) A B f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** *** Rewriting rules for special cases of <<mapd>> *)
+    (******************************************************************************)
+    Lemma map_to_mapd `(f : A -> B):
+      map T A B f = mapd W T A B (f ∘ extract (W ×) A).
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** *** Rewriting rules for special cases of <<bind>> *)
+    (******************************************************************************)
+    Lemma map_to_bind `(f : A -> B):
+      map T A B f = bind T T A B (ret T B ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
+  End special_cases.
+
+(** ** Rewriting rules for special cases of <<kc7>> *)
+(******************************************************************************)
+Section kc7_special_cases.
 
   Context
     (W : Type)
@@ -547,179 +727,7 @@ End kc7.
       reflexivity.
     Qed.
 
-  End kc7_special_cases.
-
-(** * Derived Instances *)
-(******************************************************************************)
-Module DerivedInstances.
-
-  (** ** Operations *)
-  (******************************************************************************)
-  Section operations.
-
-    Context
-      (W : Type)
-      (T : Type -> Type)
-      `{Binddt W T T}
-      `{Return T}.
-
-    #[export] Instance Map_Binddt : Map T :=
-      fun (A B : Type) (f : A -> B) => binddt W T T (fun A => A) A B (ret T B ∘ f ∘ extract (W ×) A).
-    #[export] Instance Mapdt_Binddt: Mapdt W T
-      := fun G _ _ _ A B f => binddt W T T G A B (map G B (T B) (ret T B) ∘ f).
-    #[export] Instance Bindd_Binddt: Bindd W T T
-      := fun A B f => binddt W T T (fun A => A) A B f.
-    #[export] Instance Bindt_Binddt: Bindt T T
-      := fun G _ _ _ A B f => binddt W T T G A B (f ∘ extract (W ×) A).
-    #[export] Instance Bind_Binddt: Bind T T
-      := fun A B f => binddt W T T (fun A => A) A B (f ∘ extract (W ×) A).
-    #[export] Instance Mapd_Binddt: Mapd W T
-      := fun A B f => binddt W T T (fun A => A) A B (ret T B ∘ f).
-    #[export] Instance Traverse_Binddt: Traverse T
-      := fun G _ _ _ A B f => binddt W T T G A B (map G B (T B) (ret T B) ∘ f ∘ extract (W ×) A).
-
-  End operations.
-
-  (** ** Rewrite rules for derived operations *)
-  (******************************************************************************)
-  Section special_cases.
-
-    Context
-      (W : Type)
-      (T : Type -> Type)
-      `{Return T}
-      `{Binddt W T T}
-      `{Applicative G}.
-
-    (** *** Rewriting rules for special cases of <<binddt>> *)
-    (******************************************************************************)
-    Lemma bindt_to_binddt `(f : A -> G (T B)):
-      bindt T T G A B f = binddt W T T G A B (f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma bindd_to_binddt `(f : W * A -> T B):
-      bindd W T T A B f = binddt W T T (fun A => A) A B f.
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma mapdt_to_binddt `(f : W * A -> G B):
-      mapdt W T G A B f = binddt W T T G A B (map G B (T B) (ret T B) ∘ f).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma bind_to_binddt `(f : A -> T B):
-      bind T T A B f = binddt W T T (fun A => A) A B (f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma mapd_to_binddt `(f : W * A -> B):
-      mapd W T A B f = binddt W T T (fun A => A) A B (ret T B ∘ f).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma traverse_to_binddt `(f : A -> G B):
-      traverse T G A B f = binddt W T T G A B (map G B (T B) (ret T B) ∘ f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma map_to_binddt `(f : A -> B):
-      map T A B f = binddt W T T (fun A => A) A B (ret T B ∘ f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    (** *** Rewriting rules for special cases of <<bindt>> *)
-    (******************************************************************************)
-    Lemma bind_to_bindt `(f : A -> T B):
-      bind T T A B f = bindt T T (fun A => A) A B f.
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma traverse_to_bindt `(f : A -> G B):
-      traverse T G A B f = bindt T T G A B (map G B (T B) (ret T B) ∘ f).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma map_to_bindt `(f : A -> B):
-      map T A B f = bindt T T (fun A => A) A B (ret T B ∘ f).
-    Proof.
-      reflexivity.
-    Qed.
-
-    (** *** Rewriting rules for special cases of <<bindd>> *)
-    (******************************************************************************)
-    Lemma bind_to_bindd `(f : A -> T B):
-      bind T T A B f = bindd W T T A B (f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma mapd_to_bindd `(f : W * A -> B):
-      mapd W T A B f = bindd W T T A B (ret T B ∘ f).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma map_to_bindd `(f : A -> B):
-      map T A B f = bindd W T T A B (ret T B ∘ f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    (** *** Rewriting rules for special cases of <<mapdt>> *)
-    (******************************************************************************)
-    Lemma mapd_to_mapdt `(f : W * A -> B):
-      mapd W T A B f = mapdt W T (fun A => A) A B f.
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma map_to_mapdt `(f : A -> B):
-      map T A B f = mapdt W T (fun A => A) A B (f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma traverse_to_mapdt `(f : A -> G B):
-      traverse T G A B f = mapdt W T G A B (f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    (** *** Rewriting rules for special cases of <<traverse>> *)
-    (******************************************************************************)
-    Lemma map_to_traverse `(f : A -> B):
-      map T A B f = traverse T (fun A => A) A B f.
-    Proof.
-      reflexivity.
-    Qed.
-
-    (** *** Rewriting rules for special cases of <<mapd>> *)
-    (******************************************************************************)
-    Lemma map_to_mapd `(f : A -> B):
-      map T A B f = mapd W T A B (f ∘ extract (W ×) A).
-    Proof.
-      reflexivity.
-    Qed.
-
-    (** *** Rewriting rules for special cases of <<bind>> *)
-    (******************************************************************************)
-    Lemma map_to_bind `(f : A -> B):
-      map T A B f = bind T T A B (ret T B ∘ f).
-    Proof.
-      reflexivity.
-    Qed.
-
-  End special_cases.
+End kc7_special_cases.
 
   Section assume_dtm.
 
@@ -877,7 +885,7 @@ Module DerivedInstances.
       intros.
       rewrite (mapdt_to_binddt).
       rewrite (kdtm_binddt2 W T G1 G2 A B C).
-      rewrite (kc7_76).
+      rewrite (kc7_76 W T).
       unfold kc6.
       fequal. ext [w a].
       unfold compose, strength; cbn.
@@ -912,7 +920,7 @@ Module DerivedInstances.
       rewrite (mapd_to_binddt) at 1.
       change (binddt G2 B C g) with (map (fun A => A) (T B) (G2 (T C)) (binddt G2 B C g)).
       rewrite (kdtm_binddt2 W T (fun A => A) G2 A B C).
-      rewrite (kc7_74).
+      rewrite (kc7_74 W T).
       rewrite (binddt_app_l G2).
       reflexivity.
     Qed.
@@ -941,7 +949,7 @@ Module DerivedInstances.
       intros.
       rewrite (traverse_to_binddt).
       rewrite (kdtm_binddt2 W T G1 G2 A B C).
-      rewrite (kc7_72).
+      rewrite (kc7_72 W T).
       reflexivity.
     Qed.
 
@@ -973,7 +981,7 @@ Module DerivedInstances.
       change (binddt G2 B C g) with (map (fun A => A) _ _ (binddt G2 B C g)).
       rewrite (kdtm_binddt2 W T (fun A => A) G2 A B C).
       rewrite (binddt_app_l G2).
-      rewrite (kc7_70).
+      rewrite (kc7_70 W T).
       reflexivity.
     Qed.
 
@@ -1001,7 +1009,7 @@ Module DerivedInstances.
       intros.
       do 2 rewrite (mapdt_to_binddt) at 1.
       rewrite (kdtm_binddt2 W T G1 G2).
-      rewrite (kc7_66).
+      rewrite (kc7_66 W T).
       reflexivity.
     Qed.
 
@@ -1197,7 +1205,7 @@ Module DerivedInstances.
     Proof.
       intros. rewrite (mapd_to_bindd W T).
       rewrite (bindd_bindd).
-      rewrite (kc5_54).
+      rewrite (kc5_54 W T).
       reflexivity.
     Qed.
 
@@ -1341,7 +1349,7 @@ Module DerivedInstances.
       rewrite (bindt_bindt (fun A => A) G2).
       rewrite (bindt_to_binddt).
       rewrite (binddt_app_l G2).
-      rewrite (kc3_30).
+      rewrite (kc3_30 W T).
       reflexivity.
     Qed.
 
@@ -1358,7 +1366,7 @@ Module DerivedInstances.
       intros.
       do 3 rewrite traverse_to_binddt.
       rewrite (kdtm_binddt2 W T G1 G2).
-      rewrite (kc7_22).
+      rewrite (kc7_22 W T).
       reflexivity.
     Qed.
 
@@ -1390,7 +1398,7 @@ Module DerivedInstances.
       change (binddt ?X ?B ?C ?g) with (map (fun A => A) _ _ (binddt X B C g)) at 1.
       rewrite (kdtm_binddt2 W T (fun A => A) (fun A => A)).
       rewrite (binddt_app_l (fun A => A)).
-      rewrite (kc7_44).
+      rewrite (kc7_44 W T).
       reflexivity.
     Qed.
 
@@ -1440,7 +1448,7 @@ Module DerivedInstances.
       change (binddt ?I B C ?g) with (map (fun A => A) _ _ (binddt I B C g)).
       rewrite (kdtm_binddt2 W T (fun A => A) (fun A => A)).
       rewrite (binddt_app_l (fun A => A)).
-      rewrite (kc7_00).
+      rewrite (kc7_00 W T).
       reflexivity.
     Qed.
 
@@ -1619,3 +1627,7 @@ Module DerivedInstances.
   End assume_dtm.
 
 End DerivedInstances.
+
+Module Notations.
+  Infix "⋆7" := (kc7 _ _ _ _) (at level 60) : tealeaves_scope.
+End Notations.

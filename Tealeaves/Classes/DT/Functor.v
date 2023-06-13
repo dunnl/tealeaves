@@ -550,3 +550,9 @@ Module DerivedInstances.
   End instances.
 
 End DerivedInstances.
+
+Module Notations.
+
+  Infix "⋆6" := (kc6 _ _ _) (at level 60) : tealeaves_scope.
+
+End Notations.

@@ -139,6 +139,7 @@ Module DerivedInstances.
       (T : Type -> Type)
       `{Return T}
       `{Bindt T T}
+      (G : Type -> Type)
       `{Applicative G}.
 
     (** *** Rewriting rules for special cases of <<bindt>> *)
@@ -681,3 +682,9 @@ Module DerivedInstances.
   End instances.
 
 End DerivedInstances.
+
+Module Notations.
+
+  Infix "⋆3" := (kc3 _ _ _) (at level 60) : tealeaves_scope.
+
+End Notations.

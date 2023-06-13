@@ -195,7 +195,7 @@ Section with_functor.
     rewrite (foldMap_to_traverse1 M).
     rewrite (trf_traverse_traverse T G (const M) (B := B) (C := False)).
     rewrite (foldMap_to_traverse1 (G M)).
-    fequal.
+    fequal.  (* TODO abstract this step *)
     - ext A' B' f' t.
       unfold_ops @Map_compose @Map_const.
       rewrite (fun_map_id G).

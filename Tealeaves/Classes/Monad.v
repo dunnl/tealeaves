@@ -142,14 +142,6 @@ Section Monad_kleisli_category.
 
 End Monad_kleisli_category.
 
-(** ** Notations *)
-(******************************************************************************)
-Module Notations.
-
-  Notation "g ⋆1 f" := (kc1 _ g f) (at level 60) : tealeaves_scope.
-
-End Notations.
-
 (** * Derived functor instance *)
 (******************************************************************************)
 Module DerivedInstances.
@@ -250,3 +242,7 @@ Module DerivedInstances.
   End with_monad.
 
 End DerivedInstances.
+
+Module Notations.
+  Infix "⋆1" := (kc1 _) (at level 60) : tealeaves_scope.
+End Notations.
