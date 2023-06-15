@@ -10,34 +10,26 @@ Import Applicative.Notations.
 
 (** ** Misc *)
 (******************************************************************************)
-Section properties_of_batch.
+Fixpoint batch_length {A B C : Type} (b : Batch A B C) : nat :=
+  match b with
+  | Done _ => 0
+  | Step b' rest => S (batch_length b')
+  end.
 
-  Context (A B : Type).
-
-  Fixpoint length_Batch (C : Type) (b : Batch A B C) : nat :=
-    match b with
-    | Done _ => 0
-    | Step b' rest => S (length_Batch (B -> C) b')
-    end.
-
-  (* The length of a batch is the same as the length of the list we can extract from it *)
-  Lemma batch_length1 : forall (C : Type) (b : Batch A B C),
-      length_Batch C b =
-        length (runBatch (F := const (list A)) (ret list (A := A)) b).
-  Proof.
-    intros C b.
-    induction b as [C c | C b IHb a].
-    - reflexivity.
-    - cbn. rewrite IHb.
-      unfold_ops @Monoid_op_list.
-      rewrite List.app_length.
-      cbn. lia.
-  Qed.
-
-End properties_of_batch.
+Lemma batch_length1 : forall (A B C : Type) (b : Batch A B C),
+    length (runBatch (F := const (list A)) (ret list (A := A)) b) = batch_length b.
+Proof.
+  intros.
+  induction b.
+  - reflexivity.
+  - cbn. rewrite <- IHb.
+    unfold_ops @Monoid_op_list.
+    Search length app.
+    rewrite List.app_length.
+    cbn. lia.
+Qed.
 
 (** ** varargs *)
-(* varargs n A C is the type A -> A ->...(n times)...-> A -> C *)
 (******************************************************************************)
 Fixpoint varargs (n : nat) (A : Type) (C : Type) :=
   match n with
@@ -61,18 +53,14 @@ Defined.
 (******************************************************************************)
 Import Classes.Traversable.Functor.ToKleisli.
 
-(* makeFnType T A t B is the type
-B -> B -> B... -> T B
-*)
-Definition makeFnType (T : Type -> Type) `{Dist T} `{Fmap T} (A : Type) (t : T A) :=
+Definition makeFunction (T : Type -> Type) `{Dist T} `{Fmap T} (A : Type) (t : T A) :=
   forall (B : Type), varargs (length (tolist T t)) B (T B).
 
-(*
 Section goal.
 
   Context
     (T : Type -> Type)
-    `{TraversableFunctor T}.
+      `{TraversableFunctor T}.
 
   Definition coerce : forall A B (pf : A = B), A -> B :=
     fun A B e a => match e with
@@ -113,20 +101,10 @@ Section goal.
   Defined.
 
 End goal.
- *)
 
-(** ** Fixed-length lists *)
+(** ** Misc *)
 (******************************************************************************)
-(* Length of a list is preserved by map *)
-Lemma length_fmap_list : forall (A B : Type) (f : A -> B) (l : list A),
-    length l = length (fmap list f l).
-Proof.
-  intros. induction l.
-  - cbn. reflexivity.
-  - cbn. fequal. auto.
-Defined.
-
-Section nlist.
+Section direct.
 
   Definition nlist (A : Type) (n : nat) := {l : list A & length l = n}.
 
@@ -169,66 +147,116 @@ Section nlist.
     Qed.
 
     #[program] Definition distr (n : nat) : nlist (G A) n -> G (nlist A n).
-    intros [? ?]. rewrite <- e.
-    refine ((fix F l := match l return (G (nlist A (length l))) with
-                        | nil => pure G (existT (fun l => length l = 0) (@nil A) (eq_refl))
-                        | cons a a' =>
-                            (pure G (sigcons3 (length a')) <⋆> a <⋆> F a')
-                        end) x).
+      intros [? ?]. rewrite <- e.
+      refine ((fix F l := match l return (G (nlist A (length l))) with
+                                    | nil => pure G (existT (fun l => length l = 0) (@nil A) (eq_refl))
+                          | cons a a' =>
+                              (pure G (sigcons3 (length a')) <⋆> a <⋆> F a')
+                         end) x).
     Qed.
 
     Definition distr3 (l : list (G A)) : G (nlist A (length l)) :=
       ((fix F l :=
-          match l return (G (nlist A (length l))) with
-          | nil => pure G (existT (fun l => length l = 0) (@nil A) (eq_refl))
-          | cons a a' => pure G (sigcons3 (length a')) <⋆> a <⋆> F a'
-          end) l).
+         match l return (G (nlist A (length l))) with
+         | nil => pure G (existT (fun l => length l = 0) (@nil A) (eq_refl))
+         | cons a a' => pure G (sigcons3 (length a')) <⋆> a <⋆> F a'
+         end) l).
 
     Definition distr2 (n : nat) : nlist (G A) n -> G (nlist A n) :=
-      (fun (nl : nlist (G A) n) =>
-         match nl with
-         | existT _ l pf =>
-             match pf in (_ = n) return G (nlist A n) with
-             | eq_refl _ => distr3 l
-             end
-         end).
+    (fun (nl : nlist (G A) n) =>
+        match nl with
+        | existT _ l pf =>
+              match pf in (_ = n) return G (nlist A n) with
+              | eq_refl _ => distr3 l
+              end
+        end).
 
   End fns.
 
-  Goal forall `{Applicative G} A (n : nat) (l : nlist (G A) n),
-      dist list G (discard (G A) n l) = pure G (discard A n) <⋆> distr2 A n l.
-  Proof.
-    intros. destruct l. rename x into l. generalize dependent l.
-    induction n; intros.
-    - destruct l.
-      + destruct e. cbn. rewrite ap2. reflexivity.
-      + inversion e.
-    - destruct l.
-      + inversion e.
-      + cbn in *. inversion e.
-        specialize (IHn l H4).
-        rewrite IHn. destruct e.
-        destruct H4. clear IHn.
-        rewrite <- fmap_to_ap.
-        rewrite <- fmap_to_ap.
-        rewrite <- fmap_to_ap.
-        rewrite 2 fmap_ap.
-        rewrite (app_pure_natural G).
-        change_right (pure G (compose (discard A (S (length l))) ∘ sigcons3 A (length l)) <⋆> g <⋆> distr3 A l).
-        Check ap G (fmap G cons g).
-        rewrite -> fmap_to_ap.
-        rewrite -> fmap_to_ap.
-        rewrite <- ap4.
-        rewrite <- ap4.
-        repeat rewrite ap2.
-        Search fmap ap.
-  Abort.
+    Goal forall `{Applicative G} A (n : nat) (l : nlist (G A) n),
+        dist list G (discard (G A) n l) = pure G (discard A n) <⋆> distr2 A n l.
+    Proof.
+      intros. destruct l. rename x into l. generalize dependent l.
+      induction n; intros.
+      - destruct l.
+        + destruct e. cbn. rewrite ap2. reflexivity.
+        + inversion e.
+      - destruct l.
+        + inversion e.
+        + cbn in *. inversion e.
+          specialize (IHn l H4).
+          rewrite IHn. destruct e.
+          destruct H4. clear IHn.
+          rewrite <- fmap_to_ap.
+          rewrite <- fmap_to_ap.
+          rewrite <- fmap_to_ap.
+          rewrite 2 fmap_ap.
+          rewrite (app_pure_natural G).
+          change_right (pure G (compose (discard A (S (length l))) ∘ sigcons3 A (length l)) <⋆> g <⋆> distr3 A l).
+          Check ap G (fmap G cons g).
+          rewrite -> fmap_to_ap.
+          rewrite -> fmap_to_ap.
+          rewrite <- ap4.
+          rewrite <- ap4.
+          repeat rewrite ap2.
+          Search fmap ap.
 
-End nlist.
+
+    Goal forall `{Applicative G} A (n : nat) (l : nlist (G A) n),
+        dist list G (discard (G A) n l) = pure G (discard A n) <⋆> distr2 A n l.
+    Proof.
+      intros. destruct l. generalize dependent n. rename x into l.
+      induction l; intros.
+      - cbn. destruct e. rewrite ap2. reflexivity.
+      - destruct n.
+        + inversion e.
+        + inversion e. subst.
+          specialize (IHl (length l) eq_refl).
+
+
+        intros. assert (tmp : length x = n - 1) by lia.
+        specialize (IHx (n - 1) tmp). destruct e.
+        cbn.
+        change_right ((pure G (sigcons3 A (length x)) <⋆> a <⋆> distr2 A _ x)).
+
+   (fix F (l : list (G A)) : G (nlist A (length l)) :=
+      match l as l0 return (G (nlist A (length l0))) with
+      | nil => pure G (existT (fun l0 : list A => length l0 = 0) nil eq_refl)
+      | a0 :: a' => pure G (sigcons3 A (length a')) <⋆> a0 <⋆> F a'
+      end) x)
+
+
+
+    (*
+    Definition distr (n : nat) : nlist (G A) n -> G (nlist A n).
+    Proof.
+      intros [? ?]. rewrite <- e.
+      refine (fun X => match X with
+                    | existT _ l pf =>
+                        (fix F n l := match l return (length l = n -> G (nlist A n)) with
+                                    | nil =>
+                                        fun pf =>
+                                          (* nlist (G A) (length l)) (nlist (G A) n) *)
+                                          match pf with
+                                          | eq_refl => pure G (existT (fun l => length l = 0) (@nil A) (eq_refl))
+                                          end
+                                    | cons a a' =>
+                                        fun pf =>
+                                          (* nlist (G A) (length l)) (nlist (G A) n) *)
+                                          match pf with
+                                          | eq_refl => _ (F (n - 1) a')
+                                          end
+                                    end) n l pf
+                    end).
+      cbn. intros hyp. cbn in pf.
+    Abort.
+*)
+
+  End fns.
+
+End direct.
 
 (** ** Vectors *)
-(* This is a version of vector that is just a wrapped around a
-fixed-length list type *)
 (******************************************************************************)
 Inductive Vector (n : nat)  (A : Type) : Type :=
 | MkVec : forall (l : list A), length l = n -> Vector n A.
@@ -242,19 +270,25 @@ Definition vcons (n : nat) (A : Type) (a : A) (v : Vector n A) : Vector (S n) A 
 
 Section Vector_dist.
 
-  Variable
-    (n : nat).
-
-  #[export] Instance Fmap_Vector : Fmap (Vector n).
+  Lemma length_fmap_list : forall (A B : Type) (f : A -> B) (l : list A),
+      length l = length (fmap list f l).
   Proof.
-    refine (fun A B f Vk =>
-              match Vk with
-              | MkVec _ _ l len => MkVec n B (fmap list f l) _
-              end).
-    rewrite <- length_fmap_list. auto.
+    intros. induction l.
+    - cbn. reflexivity.
+    - cbn. fequal. auto.
   Defined.
 
-  Lemma list_G_to_G_Vector : forall `{Fmap G} `{Mult G} `{Pure G} (A : Type),
+  Variable (n : nat).
+
+  #[export] Instance Fmap_Vector : Fmap (Vector n).
+  refine (fun A B f Vk =>
+            match Vk with
+            | MkVec _ _ l len => MkVec n B (fmap list f l) _
+            end).
+  rewrite <- length_fmap_list. auto.
+  Defined.
+
+  Lemma key_step : forall `{Fmap G} `{Mult G} `{Pure G} (A : Type),
     forall (l : list (G A)), G (Vector (length l) A).
   Proof.
     intros. induction l.
@@ -262,23 +296,18 @@ Section Vector_dist.
     - cbn. apply (ap G ((pure G (vcons (length l) A) <⋆> a)) IHl).
   Defined.
 
-  #[export] Instance Pure_Vector : Pure (Vector n) :=
-    fun A a => MkVec 1 A (cons a nil) eq_refl.
-  Proof.
-    cbv.
-    intros G ? ?.
-
   #[export] Instance Dist_Vector : Dist (Vector n).
   Proof.
-    intros G ? ? ? A V. destruct V. destruct l.
-    - subst. cbn. exact (pure G (MkVec 0 A nil eq_refl)).
-    - subst. cbn.
-      Check (pure G (vcons (length l) A) <⋆> g).
+    intro G. intros.
+    destruct X.
+    destruct l.
+    - subst. cbn. apply (pure G (MkVec 0 A nil eq_refl)).
+    - subst. cbn. Check (pure G (vcons (length l) A) <⋆> g).
       apply (ap G ((pure G (vcons (length l) A) <⋆> g))).
-      apply (list_G_to_G_Vector A l).
+      apply (key_step A l).
   Defined.
 
-  Instance Dist_Vector_manual : Dist (Vector n).
+  Instance Dist_Vector : Dist (Vector n).
   Proof.
   refine (fun G map mlt pur A (v : Vector n (G A)) =>
       match v with
@@ -294,7 +323,7 @@ End Vector_dist.
 
 (** ** Vector and vargs *)
 (******************************************************************************)
-Definition apply_varargs : forall (n : nat) (A C : Type),
+Definition apply_make : forall (n : nat) (A C : Type),
     varargs n A C -> Vector n A -> C.
 Proof.
   intros. induction n.
@@ -335,11 +364,10 @@ Section Repr_traversable.
     intros.
     induction X.
     Check dist (Vector n) F (fmap (Vector n) f contents0).
-    Check (pure F (apply_varargs n B C make0)).
-    Check (pure F (apply_varargs n B C make0) <⋆>  dist (Vector n) F (fmap (Vector n) f contents0)).
+    Check (pure F (apply_make n B C make0)).
+    Check (pure F (apply_make n B C make0) <⋆>  dist (Vector n) F (fmap (Vector n) f contents0)).
   Abort.
 
-(* Isomorphic representation of Batch *)
 Section Batch_To_Repr.
 
   Context
@@ -347,26 +375,41 @@ Section Batch_To_Repr.
     `{Classes.Kleisli.Traversable.Functor.TraversableFunctor T}.
 
 
-  Definition Batch_to_Repr {A B C : Type} (bat : Batch A B C) :
-    Repr (length_Batch A B C bat) A B C :=
+  Definition Batch_to_Repr {A B C : Type} (bat : Batch A B C) : Repr (batch_length bat) A B C :=
     (fix F (A B C : Type) (b : Batch A B C) :=
-       match b in (Batch _ _ _) return Repr (length_Batch A B C b) A B C with
+       match b in (Batch _ _ _) return Repr (batch_length b) A B C with
        | Done c => {| contents := MkVec 0 A (@nil A) eq_refl;
                     make := c
                   |}
        | Step rest a =>
-           {| contents :=
-               vcons (length_Batch A B (B -> C) rest) A a
-                 (contents (length_Batch A B (B -> C) rest) A B (B -> C) (F A B (B -> C) rest));
-             make :=
-               (@eq_rect Type (varargs (length_Batch A B (B -> C) rest) B (B -> C))
-                  (fun A => A) (make (length_Batch A B (B -> C) rest)
-                               A B (B -> C) (F A B (B -> C) rest))
-                  _ (vargs_cons2 _ _ _))
+           {| contents := vcons (batch_length rest) A a
+                            (contents (batch_length rest) A B (B -> C) (F A B (B -> C) rest));
+             make := (@eq_rect Type (varargs (batch_length rest) B (B -> C))
+                        (fun A => A) (make (batch_length rest) A B (B -> C) (F A B (B -> C) rest))
+                        _ (vargs_cons2 _ _ _))
            |}
        end) A B C bat.
 
 End Batch_To_Repr.
+
+End Repr_traversable.
+
+Section Batch_vs_Repr.
+
+  Context
+    (A B : Type)
+    `{Applicative F}
+    (f : A -> F B).
+
+  Lemma equal : forall n C (b : Batch A B C) (x : Repr n A B C), b = b.
+  Proof.
+    intros.
+    Check runBatch f b.
+    Check traverse_to_runBatch.
+    Set Printing All.
+  Abort.
+
+End Batch_vs_Repr.
 
 (*
 Section shape.
@@ -376,12 +419,12 @@ Section shape.
     `{Classes.Kleisli.Traversable.Functor.TraversableFunctor T}.
 
   Definition P A : forall C : Type, Batch A A C -> Type :=
-    fun C (b : Batch A A C) => Make2 (length_Batch b) A C.
+    fun C (b : Batch A A C) => Make2 (batch_length b) A C.
 
   Definition Q A : forall C : Type, Batch A A C -> Type :=
-    fun C (b : Batch A A C) => Make (length_Batch b) A C.
+    fun C (b : Batch A A C) => Make (batch_length b) A C.
 
-  Definition batch_to_Make2 {A : Type} (b : Batch A A (T A)) : Make2 (length_Batch b) A (T A).
+  Definition batch_to_Make2 {A : Type} (b : Batch A A (T A)) : Make2 (batch_length b) A (T A).
   Proof.
     apply (Batch_rect (P A)); unfold P.
     - intros B. cbn. apply id.
@@ -391,7 +434,7 @@ Section shape.
       exact mk.
   Defined.
 
-  Definition batch_to_Make {A : Type} (bat : Batch A A (T A)) : Make (length_Batch bat) A (T A).
+  Definition batch_to_Make {A : Type} (bat : Batch A A (T A)) : Make (batch_length bat) A (T A).
   Proof.
     apply (Batch_rect (Q A)); unfold Q.
     - intros C c contents. apply c.
@@ -402,8 +445,8 @@ Section shape.
 
   Print batch_to_decompose.
 
-  Theorem length_is_length_Batch {A} : forall B (t : T A),
-      length (tolist T t) = length_Batch (toBatch T B t).
+  Theorem length_is_batch_length {A} : forall B (t : T A),
+      length (tolist T t) = batch_length (toBatch T B t).
   Proof.
     intros.
     unfold tolist, Tolist_Traverse, foldMap.
@@ -417,12 +460,12 @@ Section shape.
     (t : T A).
 
 
-  Definition statement (A B C : Type) (b : Batch A B C) := Make T (length_Batch b) C.
+  Definition statement (A B C : Type) (b : Batch A B C) := Make T (batch_length b) C.
 
   Definition getMake : Make (length (tolist T t)) (T B).
   Proof.
     About Batch_rect.
-    rewrite (length_is_length_Batch B).
+    rewrite (length_is_batch_length B).
     Check iterate T B t.
     change (statement A B (T B) (iterate T B t)).
     induction (iterate T B t).
@@ -485,12 +528,3 @@ Section shape.
 
 End shape.
 *)
-
-
-Section representation_theorem.
-
-  Context
-    `{TraversableFunctor T}.
-
-  Goal forall (A B : Type) `{Applicative G} (f : A -> G B),
-      traverse T G f = traverse T G f.
