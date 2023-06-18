@@ -679,6 +679,16 @@ Module DerivedInstances.
         trf_traverse_morphism := traverse_morphism T;
       |}.
 
+    #[export] Instance Natural_ret_TM : Natural (ret T).
+    Proof.
+      constructor.
+      - typeclasses eauto.
+      - typeclasses eauto.
+      - intros. rewrite (map_to_bindt T).
+        rewrite (ktm_bindt0 T (fun A => A)).
+        reflexivity.
+    Qed.
+
   End instances.
 
 End DerivedInstances.
