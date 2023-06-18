@@ -1,8 +1,11 @@
-From Tealeaves Require Export
-  Classes.Monoid
+From Tealeaves.Classes Require Export
+  Monoid
   Applicative
-  Functors.Store
-  Functors.Constant.
+  Traversable.Monad.
+From Tealeaves.Functors Require Export
+  Store
+  Constant
+  List.
 
 Import Monoid.Notations.
 Import Applicative.Notations.
@@ -463,6 +466,36 @@ Section runBatch_monoid.
   Qed.
 
 End runBatch_monoid.
+
+(** ** Length *)
+(******************************************************************************)
+Section length.
+
+  Context (A B : Type).
+
+  #[local] Unset Implicit Arguments.
+
+  Fixpoint length_Batch (C : Type) (b : Batch A B C) : nat :=
+    match b with
+    | Done _ => 0
+    | Step b' rest => S (length_Batch (B -> C) b')
+    end.
+
+ (* The length of a batch is the same as the length of the list we can extract from it *)
+  Lemma batch_length1 : forall (C : Type) (b : Batch A B C),
+      length_Batch C b =
+        length (runBatch (F := const (list A)) (ret list A) b).
+  Proof.
+    intros C b.
+    induction b as [C c | C b IHb a].
+    - reflexivity.
+    - cbn. rewrite IHb.
+      unfold_ops @Monoid_op_list.
+      rewrite List.app_length.
+      cbn. lia.
+  Qed.
+
+End length.
 
 (** ** Auxiliary lemmas for runBatch and constant applicative functors. *)
 (******************************************************************************)
