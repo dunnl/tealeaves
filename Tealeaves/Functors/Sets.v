@@ -139,12 +139,15 @@ Section ops.
     el_ctx : forall (A : Type), F A -> set (W * A).
 
 End ops.
+
 Module ElNotations.
+
   Notation "x ∈ t" :=
     (el _ _ t x) (at level 50) : tealeaves_scope.
 
   Notation "x ∈d t" :=
     (el_ctx _ _ t x) (at level 50) : tealeaves_scope.
+
 End ElNotations.
 
 (** * Set as an applicative functor *)
