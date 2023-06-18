@@ -1,5 +1,4 @@
-From Tealeaves Require Import
-  Classes.Monoid
+From Tealeaves Require Export
   Classes.Traversable.Monad
   Functors.Sets
   Definitions.List.
@@ -473,3 +472,220 @@ Lemma map_app_inv : forall {A B} {f g : A -> B} (l1 l2 : list A),
 Proof.
   intros; split; eauto using map_app_inv_l, map_app_inv_r.
 Qed.
+
+#[local] Generalizable Variable F.
+
+(** * The [shape] operation *)
+(******************************************************************************)
+Definition shape (F : Type -> Type) `{Map F} {A} : F A -> F unit :=
+  map F (const tt).
+
+(** ** Basic reasoning principles for <<shape>> *)
+(******************************************************************************)
+Theorem shape_map `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
+    shape F (map F f t) = shape F t.
+Proof.
+  intros. compose near t on left.
+  unfold shape. now rewrite (fun_map_map F).
+Qed.
+
+Theorem shape_shape `{Functor F} : forall A (t : F A),
+    shape F (shape F t) = shape F t.
+Proof.
+  intros.  compose near t on left.
+  unfold shape. now rewrite (fun_map_map F).
+Qed.
+
+(** * Properties of <<shape>> *)
+(******************************************************************************)
+
+(** ** Rewriting [shape] on lists *)
+(******************************************************************************)
+Section list_shape_rewrite.
+
+  Lemma shape_nil : forall A,
+      shape list (@nil A) = @nil unit.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma shape_cons : forall A (a : A) (l : list A),
+      shape list (a :: l) = tt :: shape list l.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma shape_one : forall A (a : A),
+      shape list [ a ] = [ tt ].
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma shape_app : forall A (l1 l2 : list A),
+      shape list (l1 ++ l2) = shape list l1 ++ shape list l2.
+  Proof.
+    intros. unfold shape. now rewrite map_list_app.
+  Qed.
+
+  Lemma shape_nil_iff : forall A (l : list A),
+      shape list l = @nil unit <-> l = [].
+  Proof.
+    induction l. intuition.
+    split; intro contra; now inverts contra.
+  Qed.
+
+End list_shape_rewrite.
+
+#[export] Hint Rewrite @shape_nil @shape_cons @shape_one @shape_app : tea_rw_list.
+
+(** ** Reasoning princples for <<shape>> on lists *)
+(******************************************************************************)
+Section list_shape_lemmas.
+
+  Theorem shape_eq_app_r : forall A (l1 l2 r1 r2: list A),
+      shape list r1 = shape list r2 ->
+      (shape list (l1 ++ r1) = shape list (l2 ++ r2) <->
+       shape list l1 = shape list l2).
+  Proof.
+    introv heq. rewrite 2(shape_app). rewrite heq.
+    split. intros; eauto using List.app_inv_tail.
+    intros hyp; now rewrite hyp.
+  Qed.
+
+  Theorem shape_eq_app_l : forall A (l1 l2 r1 r2: list A),
+      shape list l1 = shape list l2 ->
+      (shape list (l1 ++ r1) = shape list (l2 ++ r2) <->
+       shape list r1 = shape list r2).
+  Proof.
+    introv heq. rewrite 2(shape_app). rewrite heq.
+    split. intros; eauto using List.app_inv_head.
+    intros hyp; now rewrite hyp.
+  Qed.
+
+  Theorem shape_eq_cons_iff : forall A (l1 l2 : list A) (x y : A),
+      shape list (x :: l1) = shape list (y :: l2) <->
+      shape list l1 = shape list l2.
+  Proof.
+    intros. rewrite 2(shape_cons).
+    split; intros hyp. now inverts hyp.
+    now rewrite hyp.
+  Qed.
+
+  Theorem inv_app_eq_ll : forall A (l1 l2 r1 r2 : list A),
+      shape list l1 = shape list l2 ->
+      (l1 ++ r1 = l2 ++ r2) ->
+      l1 = l2.
+  Proof.
+    intros A. induction l1 as [| ? ? IHl1 ];
+                induction l2 as [| ? ? IHl2 ].
+    - reflexivity.
+    - introv shape_eq. now inverts shape_eq.
+    - introv shape_eq. now inverts shape_eq.
+    - introv shape_eq heq.
+      rewrite shape_eq_cons_iff in shape_eq.
+      rewrite <- 2(List.app_comm_cons) in heq.
+      inverts heq. fequal. eauto.
+  Qed.
+
+  Theorem inv_app_eq_rl : forall A (l1 l2 r1 r2 : list A),
+      shape list r1 = shape list r2 ->
+      (l1 ++ r1 = l2 ++ r2) ->
+      l1 = l2.
+  Proof.
+    intros A. induction l1 as [| ? ? IHl1 ];
+                induction l2 as [| ? ? IHl2 ].
+    - reflexivity.
+    - introv shape_eq heq. apply (inv_app_eq_ll) with (r1 := r1) (r2 := r2).
+      + rewrite <- shape_eq_app_r. now rewrite heq. auto.
+      + assumption.
+    - introv shape_eq heq. apply (inv_app_eq_ll) with (r1 := r1) (r2 := r2).
+      + rewrite <- shape_eq_app_r. now rewrite heq. auto.
+      + assumption.
+    - introv shape_eq heq.
+      rewrite <- 2(List.app_comm_cons) in heq.
+      inverts heq. fequal. eauto.
+  Qed.
+
+  Theorem inv_app_eq_lr : forall A (l1 l2 r1 r2 : list A),
+      shape list l1 = shape list l2 ->
+      (l1 ++ r1 = l2 ++ r2) ->
+      r1 = r2.
+  Proof.
+    introv hyp1 hyp2. enough (l1 = l2).
+    { subst. eauto using List.app_inv_head. }
+    { eauto using inv_app_eq_ll. }
+  Qed.
+
+  Theorem inv_app_eq_rr : forall A (l1 l2 r1 r2 : list A),
+      shape list r1 = shape list r2 ->
+      (l1 ++ r1 = l2 ++ r2) ->
+      r1 = r2.
+  Proof.
+    introv hyp1 hyp2. enough (l1 = l2).
+    { subst. eauto using List.app_inv_head. }
+    { eauto using inv_app_eq_rl. }
+  Qed.
+
+  Theorem inv_app_eq : forall A (l1 l2 r1 r2 : list A),
+      shape list l1 = shape list l2 \/ shape list r1 = shape list r2 ->
+      (l1 ++ r1 = l2 ++ r2) <-> (l1 = l2 /\ r1 = r2).
+  Proof.
+    introv [hyp | hyp]; split.
+    - introv heq. split. eapply inv_app_eq_ll; eauto.
+      eapply inv_app_eq_lr; eauto.
+    - introv [? ?]. now subst.
+    - introv heq. split. eapply inv_app_eq_rl; eauto.
+      eapply inv_app_eq_rr; eauto.
+    - introv [? ?]. now subst.
+  Qed.
+
+  Lemma list_app_inv_r : forall A (l l1 l2 : list A),
+      l ++ l1 = l ++ l2 -> l1 = l2.
+  Proof.
+    introv hyp. induction l.
+    - cbn in hyp. auto.
+    - inversion hyp. auto.
+  Qed.
+
+  Lemma list_app_inv_l : forall A (l l1 l2 : list A),
+      l1 ++ l = l2 ++ l -> l1 = l2.
+  Proof.
+    introv hyp. eapply inv_app_eq_rl.
+    2: eauto. reflexivity.
+  Qed.
+
+  Lemma list_app_inv_l2 : forall A (l1 l2 : list A) (a1 a2 : A),
+      l1 ++ ret list A a1 = l2 ++ ret list A a2 ->
+      l1 = l2.
+  Proof.
+    intros. eapply inv_app_eq_rl; [|eauto]; auto.
+  Qed.
+
+  Lemma list_app_inv_r2 : forall A (l1 l2 : list A) (a1 a2 : A),
+      l1 ++ [a1] = l2 ++ [a2] ->
+      a1 = a2.
+  Proof.
+    introv. introv hyp.
+    apply inv_app_eq_rr in hyp.
+    now inversion hyp. easy.
+  Qed.
+
+End list_shape_lemmas.
+
+
+(** * Tolist operation *)
+(******************************************************************************)
+Import Classes.Functor.Notations.
+
+Section ops.
+
+  Context
+    (F : Type -> Type).
+
+  Class Tolist :=
+    tolist : F ⇒ list.
+
+  Class Tolist_ctx (W : Type) :=
+    tolist_ctx : forall (A : Type), F A -> list (W * A).
+
+End ops.
