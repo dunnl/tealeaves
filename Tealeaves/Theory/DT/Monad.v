@@ -11,6 +11,7 @@ Import Monoid.Notations.
 Import Batch.Notations.
 Import List.ListNotations.
 Import Sets.Notations.
+Import Sets.ElNotations.
 
 #[local] Generalizable Variables G A B C.
 
@@ -131,11 +132,12 @@ Section with_monad.
     now rewrite (bindt_to_runBatch T).
   Qed.
 
-  (*
   Corollary traverse_to_runBatch `{Applicative G} `(f : A -> G B) (t : T A) :
-    traverse T G f t = runBatch T G (map G (ret T) ∘ f ∘ extract (W ×)) ( T B t).
+    traverse T G A B f t = runBatch G (map G (ret T B) ∘ f ∘ extract (W ×) A) (toBatch7 W T B t).
   Proof.
-    rewrite traverse_to_binddt. now rewrite (binddt_to_runBatch T).
+    rewrite traverse_to_binddt.
+    rewrite (binddt_to_runBatch).
+    reflexivity.
   Qed.
 
   Theorem mapd_to_runBatch :
@@ -156,7 +158,6 @@ Section with_monad.
     change (@Traverse_Binddt W T _ _) with (@DerivedInstances.Traverse_Mapdt W T _).
     apply (map_to_runBatch W T).
   Qed.
-  *)
 
 End with_monad.
 
@@ -216,58 +217,45 @@ Section foldMapd.
 
 End foldMapd.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(*
 (** * Shape and contents *)
 (******************************************************************************)
 Section DTM_tolist.
 
   Context
+    (W : Type)
     (T : Type -> Type)
-    `{DT.Monad.Monad W T}.
+    `{DTM W T}.
 
-  Import DT.Monad.Derived.
+  Import DT.Monad.DerivedInstances.
 
   (** ** Relating <<tolistd>> and <<binddt>> / <<ret>> *)
   (******************************************************************************)
   Lemma tolistd_ret : forall (A : Type) (a : A),
-      tolistd T (ret T a) = [ (Ƶ, a) ].
+      tolistd W T (ret T A a) = [ (Ƶ, a) ].
   Proof.
     unfold tolistd.
     intros. compose near a.
-    now rewrite (foldMapd_ret T).
+    rewrite (foldMapd_ret W T (list (W * A))).
+    reflexivity.
   Qed.
 
-  Lemma tolistd_binddt : forall `{Applicative G} `{Monoid M} `(f : W * A -> G (T B)),
-      map G (tolistd T) ∘ binddt T G f =
-        foldMapd T (fun '(w, a) => map G (foldMapd T (preincr w (ret list))) (f (w, a))).
+  Lemma tolistd_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
+      map G (tolistd W T) ∘ binddt W T T G A B f =
+        foldMapd W T (fun '(w, a) => map G (foldMapd W T (ret list (W * B) ⦿ w)) (f (w, a))).
   Proof.
-    intros. unfold tolistd. now rewrite (foldMapd_binddt T).
+    intros. unfold tolistd. rewrite (foldMapd_binddt W T (list (W * B))).
+    reflexivity.
   Qed.
 
   (** ** Relating <<tolistd>> and lesser operations *)
   (******************************************************************************)
-  Lemma tolistd_bindd : forall `{Monoid M} `(f : W * A -> T B),
-      tolistd T ∘ bindd T f =
-        foldMapd T (fun '(w, a) => foldMapd T (preincr w (ret list)) (f (w, a))).
+  Lemma tolistd_bindd : forall `(f : W * A -> T B),
+      tolistd W T ∘ bindd W T T A B f =
+        foldMapd W T (fun '(w, a) => foldMapd W T (ret list (W * B) ⦿ w) (f (w, a))).
   Proof.
-    intros. unfold_ops @Bindd_Binddt.
-    change (@tolistd T _ _ B) with (map (fun A => A) (@tolistd T _ _ B)).
+    intros.
+    rewrite (bindd_to_binddt W T).
+    change (tolistd W T (A := ?A)) with (map (fun A => A) (tolistd W T (A := A))).
     rewrite (tolistd_binddt (G := fun A => A)).
     reflexivity.
   Qed.
@@ -275,184 +263,153 @@ Section DTM_tolist.
   (** ** Corollaries for the rest *)
   (******************************************************************************)
   Corollary tosetd_ret : forall (A : Type) (a : A),
-      tosetd T (ret T a) = {{ (Ƶ, a) }}.
+      el_ctx T A (ret T A a) = {{ (Ƶ, a) }}.
   Proof.
-    intros. unfold_ops @Tosetd_Kleisli.
+    intros. unfold_ops @Tosetd_DTF.
     compose near a.
-    now rewrite (foldMapd_ret T).
+    rewrite (foldMapd_ret W T (W * A -> Prop)).
+    reflexivity.
   Qed.
 
-  Corollary tolist_binddt : forall `{Applicative G} `{Monoid M} `(f : W * A -> G (T B)),
-      map G (tolist T) ∘ binddt T G f =
-        foldMapd T (map G (tolist T) ∘ f).
+  Corollary tolist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
+      map G (tolist T B) ∘ binddt W T T G A B f =
+        foldMapd W T (map G (tolist T B) ∘ f).
   Proof.
     intros.
-    change (@Traverse_Binddt T W _ _)
-      with (@Derived.Traverse_Mapdt _ _ _).
-    rewrite (tolist_to_tolistd T).
+    change (@Traverse_Binddt W T _ _)
+      with (@DerivedInstances.Traverse_Mapdt _ _ _).
+    rewrite (tolist_to_tolistd W T).
     rewrite <- (fun_map_map G).
     reassociate ->.
     rewrite tolistd_binddt.
-    rewrite (foldMapd_morphism T).
+    rewrite (foldMapd_morphism W T).
     rewrite (fun_map_map G).
     fequal. unfold tolistd.
     ext [w a]. unfold compose at 1 2.
     compose near (f (w, a)) on left.
     rewrite (fun_map_map G).
-    rewrite (foldMapd_morphism T).
-    rewrite (foldMapd_morphism T).
+    rewrite (foldMapd_morphism W T).
+    rewrite (foldMapd_morphism W T).
     fequal. fequal.
     ext [w' b]. reflexivity.
   Qed.
 
   (** ** Relating <<tolist>> and lesser operations *)
   (******************************************************************************)
-  Lemma tolist_bindd : forall `{Monoid M} `(f : W * A -> T B),
-      tolist T ∘ bindd T f =
-        foldMapd T (fun '(w, a) => foldMap T (ret list) (f (w, a))).
+  Lemma tolist_bindd : forall `(f : W * A -> T B),
+      tolist T B ∘ bindd W T T A B f =
+        foldMapd W T (fun '(w, a) => foldMap T (ret list B) (f (w, a))).
   Proof.
     intros.
-    change (@Traverse_Binddt T W _ _)
-      with (@Derived.Traverse_Mapdt T W _).
-    rewrite (tolist_to_tolistd T).
+    change (@Traverse_Binddt W T _ _)
+      with (@DerivedInstances.Traverse_Mapdt W T _).
+    rewrite (tolist_to_tolistd W T).
     reassociate ->. rewrite (tolistd_bindd).
-    rewrite (foldMapd_morphism T).
+    rewrite (foldMapd_morphism W T).
     fequal. ext [w a].
     cbn. compose near (f (w, a)) on left.
-    rewrite (foldMapd_morphism T).
-    rewrite (foldMap_to_foldMapd T).
+    rewrite (foldMapd_morphism W T).
+    rewrite (foldMap_to_foldMapd W T).
     fequal. now ext [w' a'].
   Qed.
 
 End DTM_tolist.
-
-Import Setlike.Functor.Notations.
 
 (** ** Characterizing membership in list operations *)
 (******************************************************************************)
 Section DTM_tolist.
 
   Context
+    (W : Type)
     (T : Type -> Type)
-    `{DT.Monad.Monad W T}.
+    `{DTM W T}.
 
-  Import Derived.
+  Import DerivedInstances.
 
   Lemma ind_iff_in_tolistd : forall (A : Type) (a : A) (w : W) (t : T A),
-      (w, a) ∈d t <-> toset list (tolistd T t) (w, a).
+      (w, a) ∈d t <-> el list (W * A) (tolistd W T t) (w, a).
   Proof.
     intros. unfold tolistd.
-    unfold_ops @Tosetd_Kleisli.
+    unfold_ops @Tosetd_DTF.
     compose near t on right.
-    rewrite (foldMapd_morphism T (ϕ := toset list)).
-    replace (@ret set (Return_set) (W * A)) with (toset (A := W * A) list ∘ ret list).
+    rewrite (foldMapd_morphism W T (ϕ := el list _)).
+    replace (@ret set (Return_set) (W * A)) with (el list _ ∘ ret list (W * A)).
     reflexivity. ext [w' a']. solve_basic_set.
   Qed.
 
   Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
-      (a ∈ t) <-> toset list (tolist T t) a.
+      (a ∈ t) <-> el list A (tolist T A t) a.
   Proof.
     intros.
-    change (@Traverse_Binddt T W _ _)
-      with (@Derived.Traverse_Mapdt _ _ _).
+    change (@Traverse_Binddt W T _ _)
+      with (@DerivedInstances.Traverse_Mapdt _ _ _).
     rewrite (toset_to_tolist T).
     reflexivity.
   Qed.
 
 End DTM_tolist.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 (** * Characterizing <<∈d>> *)
 (******************************************************************************)
 Section section.
 
   Context
+    (W : Type)
     (T : Type -> Type)
-    `{DT.Monad.Monad W T}.
+    `{DTM W T}.
 
-  Import Derived.
+  Import DT.Monad.DerivedInstances.
 
-  #[local] Notation "x ∈d t" :=
-    (tosetd _ t x) (at level 50) : tealeaves_scope.
-
-  Existing Instance Toset_set.
-  Existing Instance SetlikeFunctor_set.
   Lemma ind_iff_in : forall (A : Type) (a : A) (t : T A),
       a ∈ t <-> exists w, (w, a) ∈d t.
   Proof.
     intros.
-    change (@Traverse_Binddt T W _ _)
-      with (@Derived.Traverse_Mapdt T _ _).
-    now rewrite (ind_iff_in T).
+    change (@Traverse_Binddt W T _ _)
+      with (@DerivedInstances.Traverse_Mapdt W T _).
+    rewrite (ind_iff_in W T).
+    reflexivity.
   Qed.
 
   Lemma ind_ret_iff : forall {A : Type} (w : W) (a1 a2 : A),
-      (w, a1) ∈d ret T a2 <-> w = Ƶ /\ a1 = a2.
+      (w, a1) ∈d ret T A a2 <-> w = Ƶ /\ a1 = a2.
   Proof.
-    intros. unfold_ops @Tosetd_Kleisli.
-    compose near a2 on left. rewrite (foldMapd_ret T).
+    intros. unfold_ops @Tosetd_DTF.
+    compose near a2 on left. rewrite (foldMapd_ret W T _).
     unfold compose. split.
     now inversion 1.
     inversion 1. subst. solve_basic_set.
   Qed.
 
   Lemma in_ret_iff : forall {A : Type} (a1 a2 : A),
-      a1 ∈ ret T a2 <-> a1 = a2.
+      a1 ∈ ret T A a2 <-> a1 = a2.
   Proof.
     intros.
-    change (@Traverse_Binddt T W _ _)
-      with (@Derived.Traverse_Bindt T _ _).
+    change (@Traverse_Binddt W T _ _)
+      with (@DerivedInstances.Traverse_Bindt T _ _).
     now rewrite (in_ret_iff T).
   Qed.
 
   Lemma ind_bindd_iff1 :
     forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
-      (wtotal, b) ∈d bindd T f t ->
+      (wtotal, b) ∈d bindd W T T A B f t ->
       exists (w1 w2 : W) (a : A),
         (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
         /\ wtotal = w1 ● w2.
   Proof.
-    introv hyp. unfold Tosetd_Kleisli, tosetd, compose in *.
-    change (foldMapd T (ret set) (bindd T f t) (wtotal, b))
-      with (((foldMapd T (ret set) ∘ bindd T f) t) (wtotal, b)) in hyp.
-    rewrite (foldMapd_bindd T) in hyp.
-    rewrite (foldMapd_to_runBatch T) in hyp.
-    rewrite (foldMapd_to_runBatch T).
+    introv hyp. unfold Tosetd_DTF, el_ctx, compose in *.
+    change (foldMapd W T (ret set (W * B)) (bindd W T T A B f t) (wtotal, b))
+      with (((foldMapd W T (ret set _) ∘ bindd W T T A B f) t) (wtotal, b)) in hyp.
+    rewrite (foldMapd_bindd W T _) in hyp.
+    rewrite (foldMapd_to_runBatch W T _) in hyp.
+    rewrite (foldMapd_to_runBatch W T _).
     (* HACK: We want to call "rewrite (foldMapd_to_runBatch T)" but
     this fails under the binder. The following is a kludge. *)
     cut (exists (w1 w2 : W) (a : A),
-               runBatch (B := False) (F := fun _ => set (W * A))
-                 (@ret set Return_set (W * A)) (toBatchd T (A:=A) False t) (w1, a) /\
-                 runBatch (B := False) (F := fun _ => set (W * B)) (ret set) (toBatchd T (A:=B) False (f (w1, a))) (w2, b) /\ wtotal = w1 ● w2).
-    { intro. preprocess. repeat eexists; try rewrite (foldMapd_to_runBatch T B); eauto. }
-    induction (toBatchd T False t).
+               runBatch (B := False) (fun _ => set (W * A))
+                 (@ret set Return_set (W * A)) (toBatch6 W T False t) (w1, a) /\
+                 runBatch (B := False) (fun _ => set (W * B)) (ret set _) (toBatch6 W T False (f (w1, a))) (w2, b) /\ wtotal = w1 ● w2).
+    { intro. preprocess. repeat eexists; try rewrite (foldMapd_to_runBatch W T B _); eauto. }
+    induction (toBatch6 W T False t).
     - cbv in hyp. inversion hyp.
     - destruct x as [wx ax].
       cbn in hyp. destruct hyp as [hyp | hyp].
@@ -462,9 +419,9 @@ Section section.
         exists w1 w2 a. split; [now left | auto].
       + (* (wotal, b) in f (wx,ax) *)
         clear IHb0.
-        rewrite (foldMapd_to_runBatch T) in hyp.
-        assert (lemma : exists w2 : W, runBatch (B := False) (F := fun _ => set (W * B)) (ret set) (toBatchd T False (f (wx, ax))) (w2, b) /\ wtotal = wx ● w2).
-        { induction (toBatchd T False (f (wx, ax))).
+        rewrite (foldMapd_to_runBatch W T) in hyp.
+        assert (lemma : exists w2 : W, runBatch (B := False) (fun _ => set (W * B)) (ret set _) (toBatch6 W T False (f (wx, ax))) (w2, b) /\ wtotal = wx ● w2).
+        { induction (toBatch6 W T False (f (wx, ax))).
           - cbv in hyp. inversion hyp.
           - destruct hyp as [hyp|hyp].
             + specialize (IHb1 hyp). destruct IHb1 as [w2 [IHb1' IHb1'']].
@@ -480,16 +437,16 @@ Section section.
     (exists (w1 w2 : W) (a : A),
       (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
         /\ wtotal = w1 ● w2) ->
-      (wtotal, b) ∈d bindd T f t.
+      (wtotal, b) ∈d bindd W T T A B f t.
   Proof.
     introv [w1 [w2 [a [a_in [b_in wsum]]]]]. subst.
-    unfold tosetd, Tosetd_Kleisli, compose in *.
+    unfold el_ctx, Tosetd_DTF, compose in *.
     compose near t.
-    rewrite (foldMapd_bindd T).
-    rewrite (foldMapd_to_runBatch T).
-    rewrite (foldMapd_to_runBatch T) in a_in.
-    rewrite (foldMapd_to_runBatch T) in b_in.
-    induction (toBatchd T False t).
+    rewrite (foldMapd_bindd W T _).
+    rewrite (foldMapd_to_runBatch W T _).
+    rewrite (foldMapd_to_runBatch W T _) in a_in.
+    rewrite (foldMapd_to_runBatch W T _) in b_in.
+    induction (toBatch6 W T False t).
     - cbv in a_in. inversion a_in.
     - cbn in a_in. destruct a_in as [a_in | a_in].
       + destruct x as [wx ax].
@@ -497,8 +454,8 @@ Section section.
         left. assumption.
       + clear IHb0. destruct x as [wx ax].
         inverts a_in. right.
-        { rewrite (foldMapd_to_runBatch T).
-          induction (toBatchd T False (f (w1, a))).
+        { rewrite (foldMapd_to_runBatch W T).
+          induction (toBatch6 W T False (f (w1, a))).
           - inversion b_in.
           - destruct b_in.
             + left. auto.
@@ -509,7 +466,7 @@ Section section.
 
   Theorem ind_bindd_iff :
     forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
-      (wtotal, b) ∈d bindd T f t <->
+      (wtotal, b) ∈d bindd W T T A B f t <->
       exists (w1 w2 : W) (a : A),
         (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
         /\ wtotal = w1 ● w2.
@@ -519,7 +476,7 @@ Section section.
 
   Theorem ind_bind_iff :
     forall `(f : A -> T B) (t : T A) (wtotal : W) (b : B),
-      (wtotal, b) ∈d bind T f t <->
+      (wtotal, b) ∈d bind T T A B f t <->
       exists (w1 w2 : W) (a : A),
         (w1, a) ∈d t /\ (w2, b) ∈d f a
         /\ wtotal = w1 ● w2.
@@ -531,7 +488,7 @@ Section section.
   (******************************************************************************)
   Corollary in_bindd_iff :
     forall `(f : W * A -> T B) (t : T A) (b : B),
-      b ∈ bindd T f t <->
+      b ∈ bindd W T T A B f t <->
       exists (w1 : W) (a : A),
         (w1, a) ∈d t /\ b ∈ f (w1, a).
   Proof.
@@ -544,10 +501,10 @@ Section section.
 
   Corollary in_bind_iff :
     forall `(f : A -> T B) (t : T A) (b : B),
-      b ∈ bind T f t <-> exists (a : A), a ∈ t /\ b ∈ f a.
+      b ∈ bind T T A B f t <-> exists (a : A), a ∈ t /\ b ∈ f a.
   Proof.
-    change (@Traverse_Binddt T W _ _)
-      with (@Derived.Traverse_Mapdt _ _ _).
+    change (@Traverse_Binddt W T _ _)
+      with (@DerivedInstances.Traverse_Mapdt _ _ _).
     intros. setoid_rewrite (ind_iff_in).
     setoid_rewrite (ind_bindd_iff).
     intuition.
@@ -557,13 +514,15 @@ Section section.
 
   Theorem in_mapd_iff :
     forall `(f : W * A -> B) (t : T A) (b : B),
-      b ∈ mapd T f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
+      b ∈ mapd W T A B f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
   Proof.
     intros.
-    change (@Traverse_Binddt T W _ _)
-      with (@Derived.Traverse_Mapdt _ _ _).
+    change (@Traverse_Binddt W T _ _)
+      with (@DerivedInstances.Traverse_Mapdt _ _ _).
     rewrite (ind_iff_in).
-    setoid_rewrite (ind_mapd_iff T).
+    change (@Mapd_Binddt W T _ _)
+      with (@DerivedInstances.Mapd_Mapdt _ _ _).
+    setoid_rewrite (ind_mapd_iff W T (A := A) (B := B)).
     reflexivity.
   Qed.
 
@@ -574,27 +533,25 @@ End section.
 Section bindd_respectful.
 
   Context
+    (W : Type)
     (T : Type -> Type)
-    `{Kleisli.DT.Monad.Monad W T}.
+    `{DTM W T}.
 
-  Import Derived.
-
-  #[local] Notation "x ∈d t" :=
-    (tosetd _ t x) (at level 50) : tealeaves_scope.
+  Import DT.Monad.DerivedInstances.
 
   Theorem bindd_respectful :
     forall A B (t : T A) (f g : W * A -> T B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a))
-      -> bindd T f t = bindd T g t.
+      -> bindd W T T A B f t = bindd W T T A B g t.
   Proof.
-    unfold_ops @Tosetd_Kleisli.
+    unfold_ops @Tosetd_DTF.
     unfold foldMapd in *.
     introv hyp.
-    rewrite (mapdt_constant_applicative2 T False B) in hyp.
+    rewrite (mapdt_constant_applicative2 W T False B) in hyp.
     unfold mapdt, Mapdt_Binddt in hyp.
-    rewrite (binddt_to_runBatch T) in hyp.
-    do 2 rewrite (bindd_to_runBatch T).
-    induction (toBatchdm T B t).
+    rewrite (binddt_to_runBatch W T) in hyp.
+    do 2 rewrite (bindd_to_runBatch W T).
+    induction (toBatch7 W T B t).
     - easy.
     - destruct x. do 2 rewrite runBatch_rw2.
       rewrite runBatch_rw2 in hyp.
@@ -611,7 +568,7 @@ Section bindd_respectful.
   Corollary bindd_respectful_bind :
     forall A B (t : T A) (f : W * A -> T B) (g : A -> T B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g a)
-      -> bindd T f t = bind T g t.
+      -> bindd W T T A B f t = bind T T A B g t.
   Proof.
     introv hyp. rewrite bind_to_bindd.
     apply bindd_respectful. introv Hin.
@@ -620,8 +577,8 @@ Section bindd_respectful.
 
   Corollary bindd_respectful_mapd :
     forall A B (t : T A) (f : W * A -> T B) (g : W * A -> B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret T (g (w, a)))
-      -> bindd T f t = mapd T g t.
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret T _ (g (w, a)))
+      -> bindd W T T A B f t = mapd W T A B g t.
   Proof.
     introv hyp. rewrite mapd_to_bindd.
     apply bindd_respectful. introv Hin.
@@ -630,8 +587,8 @@ Section bindd_respectful.
 
   Corollary bindd_respectful_map :
     forall A B (t : T A) (f : W * A -> T B) (g : A -> B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret T (g a))
-      -> bindd T f t = map T g t.
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret T _ (g a))
+      -> bindd W T T A B f t = map T g t.
   Proof.
     introv hyp. rewrite map_to_bindd.
     apply bindd_respectful. introv Hin.
@@ -640,8 +597,8 @@ Section bindd_respectful.
 
   Corollary bindd_respectful_id :
     forall A (t : T A) (f : W * A -> T A),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret T a)
-      -> bindd T f t = t.
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret T _ a)
+      -> bindd W T T A A f t = t.
   Proof.
     intros. change t with (id t) at 2.
     rewrite <- (kmond_bindd1 T).
@@ -656,21 +613,20 @@ End bindd_respectful.
 Section bind_respectful.
 
   Context
+    (W : Type)
     (T : Type -> Type)
-    `{Kleisli.DT.Monad.Monad W T}.
+    `{DTM W T}.
 
-  Import Derived.
-
-  #[local] Notation "x ∈d t" :=
-    (tosetd _ t x) (at level 50) : tealeaves_scope.
+  Import DT.Monad.DerivedInstances.
 
   Lemma bind_respectful :
     forall A B (t : T A) (f g : A -> T B),
       (forall (a : A), a ∈ t -> f a = g a)
-      -> bind T f t = bind T g t.
+      -> bind T T A B f t = bind T T A B g t.
   Proof.
-    introv hyp. rewrite bind_to_bindd.
-    apply (bindd_respectful T). introv premise. apply (ind_implies_in T) in premise.
+    introv hyp.
+    rewrite (bind_to_bindd W T).
+    apply (bindd_respectful W T). introv premise. apply (ind_implies_in W T) in premise.
     unfold compose; cbn. auto.
   Qed.
 
@@ -680,19 +636,19 @@ Section bind_respectful.
   (******************************************************************************)
   Corollary bind_respectful_mapd :
     forall A B (t : T A) (f : A -> T B) (g : W * A -> B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f a = ret T (g (w, a)))
-      -> bind T f t = mapd T g t.
+      (forall (w : W) (a : A), (w, a) ∈d t -> f a = ret T _ (g (w, a)))
+      -> bind T T A B f t = mapd W T A B g t.
   Proof.
     intros. rewrite mapd_to_bindd.
-    symmetry. apply (bindd_respectful_bind T).
+    symmetry. apply (bindd_respectful_bind W T).
     introv Hin. symmetry. unfold compose; cbn.
     auto.
   Qed.
 
   Corollary bind_respectful_map :
     forall A B (t : T A) (f : A -> T B) (g : A -> B),
-      (forall (a : A), a ∈ t -> f a = ret T (g a))
-      -> bind T f t = map T g t.
+      (forall (a : A), a ∈ t -> f a = ret T _ (g a))
+      -> bind T T A B f t = map T g t.
   Proof.
     intros. rewrite map_to_bind.
     symmetry. apply bind_respectful.
@@ -701,8 +657,8 @@ Section bind_respectful.
   Qed.
 
   Corollary bind_respectful_id : forall A (t : T A) (f : A -> T A),
-      (forall (a : A), a ∈ t -> f a = ret T a)
-      -> bind T f t = t.
+      (forall (a : A), a ∈ t -> f a = ret T _ a)
+      -> bind T T A A f t = t.
   Proof.
     intros. change t with (id t) at 2.
     rewrite <- (kmon_bind1 T).
@@ -717,21 +673,19 @@ End bind_respectful.
 Section mapd_respectful.
 
   Context
+    (W : Type)
     (T : Type -> Type)
-    `{Kleisli.DT.Monad.Monad W T}.
+    `{DTM W T}.
 
-  Import Derived.
-
-  #[local] Notation "x ∈d t" :=
-    (tosetd _ t x) (at level 50) : tealeaves_scope.
+  Import DT.Monad.DerivedInstances.
 
   Lemma mapd_respectful :
     forall A B (t : T A) (f g : W * A -> B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a))
-      -> mapd T f t = mapd T g t.
+      -> mapd W T A B f t = mapd W T A B g t.
   Proof.
     introv hyp. do 2 rewrite mapd_to_bindd.
-    apply (bindd_respectful T). introv premise.
+    apply (bindd_respectful W T). introv premise.
     unfold compose; cbn. fequal. auto.
   Qed.
 
@@ -740,9 +694,9 @@ Section mapd_respectful.
   other <<m*>> operations *)
   (******************************************************************************)
   Corollary mapd_respectful_map :
-    forall A (t : T A) (f : W * A -> A) (g : A -> A),
+    forall A B (t : T A) (f : W * A -> B) (g : A -> B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g a)
-      -> mapd T f t = map T g t.
+      -> mapd W T A B f t = map T g t.
   Proof.
     intros. rewrite map_to_mapd.
     apply (mapd_respectful). introv Hin.
@@ -751,7 +705,7 @@ Section mapd_respectful.
 
   Corollary mapd_respectful_id : forall A (t : T A) (f : W * A -> A),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = a)
-      -> mapd T f t = t.
+      -> mapd W T A A f t = t.
   Proof.
     intros. change t with (id t) at 2.
     rewrite <- (dfun_mapd1 W T).
@@ -766,13 +720,11 @@ End mapd_respectful.
 Section map_respectful.
 
   Context
+    (W : Type)
     (T : Type -> Type)
-    `{Kleisli.DT.Monad.Monad W T}.
+    `{DTM W T}.
 
-  Import Derived.
-
-  #[local] Notation "x ∈d t" :=
-    (tosetd _ t x) (at level 50) : tealeaves_scope.
+  Import DT.Monad.DerivedInstances.
 
   Lemma map_respectful :
     forall A B (t : T A) (f g : A -> B),
@@ -780,7 +732,7 @@ Section map_respectful.
       -> map T f t = map T g t.
   Proof.
     introv hyp. do 2 rewrite map_to_mapd.
-    now apply (mapd_respectful T).
+    now apply (mapd_respectful W T).
   Qed.
 
   Corollary map_respectful_id :
@@ -795,4 +747,3 @@ Section map_respectful.
   Qed.
 
 End map_respectful.
-*)
