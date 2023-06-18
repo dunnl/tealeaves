@@ -1,5 +1,7 @@
 From Tealeaves Require Export
   Classes.Traversable.Functor
+  Functors.Sets
+  Functors.List
   Functors.Batch.
 
 Import Batch.Notations.
@@ -213,9 +215,9 @@ Section with_functor.
     reflexivity.
   Qed.
 
-  (** *** Composition with <<fmap>> *)
+  (** *** Composition with <<map>> *)
   (******************************************************************************)
-  Corollary foldMap_fmap `{Monoid M} : forall `(g : B -> M) `(f : A -> B),
+  Corollary foldMap_map `{Monoid M} : forall `(g : B -> M) `(f : A -> B),
       foldMap T g ∘ map T A B f = foldMap T (g ∘ f).
   Proof.
     intros. apply foldMap_traverse_I.
@@ -236,8 +238,7 @@ Section with_functor.
 
 End with_functor.
 
-
-(*
+Import Traversable.Monad.DerivedInstances.
 
 (** * <<tolist>> and <<toset>> / <<∈>>*)
 (******************************************************************************)
@@ -248,24 +249,40 @@ Section tolist.
     `{TraversableFunctor T}.
 
   #[export] Instance Tolist_Traverse `{Traverse T} : Tolist T :=
-    fun A => foldMap T (ret list).
+    fun A => foldMap T (ret list A).
 
   #[export] Instance Natural_Tolist_Traverse : Natural (@tolist T _).
   Proof.
     constructor; try typeclasses eauto.
     intros. unfold_ops @Tolist_Traverse.
     rewrite (foldMap_morphism T).
-    rewrite (foldMap_fmap T).
+    rewrite (foldMap_map T).
     rewrite (natural (ϕ := @ret list _)).
     reflexivity.
   Qed.
 
-  Corollary tolist_to_runBatch (tag : Type) `(t : T A) :
-    tolist T t = runBatch (F := const (list A)) (ret list : A -> const (list A) tag) (toBatch T tag t).
+  Corollary tolist_to_runBatch {A : Type} (tag : Type) `(t : T A) :
+    tolist T A t = runBatch (F := const (list A)) (ret list A : A -> const (list A) tag) (toBatch T tag t).
   Proof.
     unfold_ops @Tolist_Traverse.
-    rewrite (foldMap_to_runBatch T tag).
+    rewrite (foldMap_to_runBatch2 T tag).
     reflexivity.
+  Qed.
+
+  Lemma length_to_Batch_length : forall (A B : Type) (t : T A),
+      length (tolist T A t) = length_Batch _ _ (T B) (toBatch T B t).
+  Proof.
+    intros.
+    rewrite (tolist_to_runBatch B).
+    induction (toBatch T B t).
+    - cbn. reflexivity.
+    - cbn.
+      unfold_ops @Monoid_op_list.
+      rewrite (List.app_length).
+      rewrite <- IHb.
+      cbn.
+      rewrite PeanoNat.Nat.add_1_r.
+      reflexivity.
   Qed.
 
 End tolist.
@@ -279,15 +296,17 @@ Section traversal_shapeliness.
     `{TraversableFunctor T}.
 
   Lemma shapeliness_tactical : forall A (b1 b2 : @Batch A A (T A)),
-      runBatch (F := const (list A)) (ret list) b1 = runBatch (F := const (list A)) (ret list) b2 ->
+      runBatch (F := const (list A)) (ret list A) b1 = runBatch (F := const (list A)) (ret list A) b2 ->
       mapfst_Batch (const tt) b1 = mapfst_Batch (const tt) b2 ->
       runBatch id b1 = runBatch id b2.
   Proof.
-    intros. induction b1, b2; cbn in *.
+    intros.
+    induction b1, b2; cbn in *.
     - now inversion H2.
     - now inversion H1.
     - now inversion H1.
-    - specialize (list_app_inv_l2 _ _ _ _ _ H1).
+    - unfold monoid_op, Monoid_op_list in *.
+      specialize (list_app_inv_l2 _ _ _ _ _ H1).
       specialize (list_app_inv_r2 _ _ _ _ _ H1).
       introv hyp1 hyp2. subst.
       erewrite IHb1. eauto. eauto.
@@ -296,7 +315,7 @@ Section traversal_shapeliness.
 
   Theorem shapeliness : forall A (t1 t2 : T A),
       shape T t1 = shape T t2 /\
-      tolist T t1 = tolist T t2 ->
+      tolist T A t1 = tolist T A t2 ->
       t1 = t2.
   Proof.
     introv [hyp1 hyp2].
@@ -332,29 +351,44 @@ Section listable.
 End listable.
  *)
 
-  #[export] Instance Toset_Traverse `{Traverse T} : Toset T :=
-    fun A => foldMap T (ret set).
+Import Sets.Notations.
+Import Sets.ElNotations.
+Import Classes.Monad.DerivedInstances. (* Naturality of ret *)
+
+Section toset.
+
+  Context
+    (T : Type -> Type)
+    `{Traverse T}.
+
+  #[export] Instance Toset_Traverse (T : Type -> Type) `{Traverse T} : El T :=
+    fun A => foldMap T (ret set A).
+
+  Context
+    `{! TraversableFunctor T}.
 
   Lemma toset_to_tolist : forall (A : Type),
-      @toset T _ A = toset list ∘ tolist T.
+      @el T _ A = el list A ∘ tolist T A.
   Proof.
     intros. unfold_ops @Toset_Traverse @Tolist_Traverse.
     rewrite (foldMap_morphism T).
     fequal. ext a. solve_basic_set.
   Qed.
 
-  Theorem in_fmap_iff :
-    forall `(f : A -> B) (t : T A) (b : B),
-      b ∈ fmap T f t <-> exists (a : A), a ∈ t /\ f a = b.
+  Theorem in_map_iff :
+    forall (A B : Type) (f : A -> B) (t : T A) (b : B),
+      b ∈ map T A B f t <-> exists (a : A), a ∈ t /\ f a = b.
   Proof.
     intros. unfold_ops @Toset_Traverse.
     compose near t.
-    rewrite (foldMap_fmap T).
-    change f with (fmap (fun A => A) f).
+    rewrite (foldMap_map T).
+    change f with (map (fun A => A) A B f).
     rewrite <- (natural (F := (fun A => A)) (G := set)).
     rewrite <- (foldMap_morphism T).
     reflexivity.
   Qed.
+
+End toset.
 
 (** * Respectfulness properties *)
 (******************************************************************************)
@@ -364,66 +398,70 @@ Section respectfulness_properties.
     (T : Type -> Type)
     `{TraversableFunctor T}.
 
+  #[local] Generalizable Variables A B.
+
   Lemma traverse_respectful : forall (G : Type -> Type)
     `{Applicative G} `(f1 : A -> G B) `(f2 : A -> G B) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = f2 a) -> traverse T G f1 t = traverse T G f2 t.
+    (forall (a : A), a ∈ t -> f1 a = f2 a) -> traverse T G A B f1 t = traverse T G A B f2 t.
   Proof.
     introv ? hyp. do 2 (rewrite traverse_to_runBatch; auto).
-    unfold toset, Toset_Traverse in hyp.
-    rewrite (foldMap_to_runBatch T B) in hyp.
+    unfold el, Toset_Traverse in hyp.
+    rewrite (foldMap_to_runBatch2 T B) in hyp.
     unfold compose in *.
     induction (toBatch T B t).
     - reflexivity.
     - cbn. fequal.
-      + apply IHb. intros. apply hyp. now left.
+      + apply IHb. intros.
+        apply hyp. now left.
       + apply hyp. now right.
   Qed.
 
   Lemma traverse_respectful_pure : forall (G : Type -> Type)
     `{Applicative G} `(f1 : A -> G A) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = pure G a) -> traverse T G f1 t = pure G t.
+    (forall (a : A), a ∈ t -> f1 a = pure G a) -> traverse T G A A f1 t = pure G t.
   Proof.
     intros.
-    rewrite <- (traverse_id_purity T).
+    rewrite <- (traverse_id_purity T G).
     now apply (traverse_respectful G).
   Qed.
 
-  Lemma traverse_respectful_fmap {A B} : forall (G : Type -> Type)
+  Lemma traverse_respectful_map {A B} : forall (G : Type -> Type)
     `{Applicative G} t (f : A -> G B) (g : A -> B),
-      (forall a, a ∈ t -> f a = pure G (g a)) -> traverse T G f t = pure G (fmap T g t).
+      (forall a, a ∈ t -> f a = pure G (g a)) -> traverse T G A B f t = pure G (map T A B g t).
   Proof.
-    intros. rewrite <- (traverse_id_purity T). compose near t on right.
-    rewrite (traverse_fmap T G); auto. apply (traverse_respectful); auto.
+    intros. rewrite <- (traverse_id_purity T G).
+    compose near t on right.
+    rewrite (Traversable.Functor.DerivedInstances.traverse_map T G).
+    apply (traverse_respectful); auto.
   Qed.
 
   Corollary traverse_respectful_id {A} : forall (G : Type -> Type)
     `{Applicative G} t (f : A -> G A),
-      (forall a, a ∈ t -> f a = pure G a) -> traverse T G f t = pure G t.
+      (forall a, a ∈ t -> f a = pure G a) -> traverse T G A A f t = pure G t.
   Proof.
-    intros. rewrite <- (traverse_id_purity T).
+    intros. rewrite <- (traverse_id_purity T G).
     now apply traverse_respectful.
   Qed.
 
-  Corollary fmap_respectful : forall `(f1 : A -> B) `(f2 : A -> B) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = f2 a) -> fmap T f1 t = fmap T f2 t.
+  Corollary map_respectful : forall `(f1 : A -> B) `(f2 : A -> B) (t : T A),
+    (forall (a : A), a ∈ t -> f1 a = f2 a) -> map T A B f1 t = map T A B f2 t.
   Proof.
-    introv hyp. unfold_ops @Fmap_Traverse.
+    introv hyp. unfold_ops @Map_Traverse.
     apply (traverse_respectful (fun A => A)).
     assumption.
   Qed.
 
 
-  Corollary fmap_respectful_id : forall `(f1 : A -> A) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = a) -> fmap T f1 t = t.
+  Corollary map_respectful_id : forall `(f1 : A -> A) (t : T A),
+    (forall (a : A), a ∈ t -> f1 a = a) -> map T A A f1 t = t.
   Proof.
     intros. change t with (id t) at 2.
-    rewrite <- (fun_fmap_id T).
-    apply fmap_respectful.
+    rewrite <- (fun_map_id T).
+    apply map_respectful.
     assumption.
   Qed.
 
 End respectfulness_properties.
-
 
 (*
 TODO: Prove reassembly is the opposite of disassembly
@@ -449,5 +487,4 @@ Section traversal_reassemble.
     runBatch id (add_elements (toBatch _ t) l).
 
 End traversal_reassemble.
-*)
 *)
