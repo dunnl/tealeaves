@@ -146,9 +146,8 @@ Section runBatch.
 
 End runBatch.
 
-(*
 Import Sets.Notations.
-Import Setlike.Functor.Notations.
+Import Sets.ElNotations.
 
 (** * Characterizing <<∈>> *)
 (******************************************************************************)
@@ -156,14 +155,14 @@ Section with_monad.
 
   Context
     (T : Type -> Type)
-    `{Kleisli.Traversable.Monad.Monad T}.
+    `{TraversableMonad T}.
 
-  #[export] Instance Monad_Hom_Toset : Kleisli.Monad.Monad_Hom T set (@toset T _).
+  #[export] Instance Monad_Hom_Toset : MonadHom T set (@el T _).
   Proof.
     constructor.
     - intros.
       unfold_ops @Toset_Traverse.
-      rewrite (foldMap_bind T (ret set) f).
+      rewrite (foldMap_bind T (ret set B) f).
       unfold_ops @Traverse_Bindt.
       rewrite (foldMap_morphism T).
       rewrite (kmon_bind0 set).
@@ -175,7 +174,7 @@ Section with_monad.
   Qed.
 
   Theorem in_ret_iff :
-    forall (A : Type) (a1 a2 : A), a1 ∈ ret T a2 <-> a1 = a2.
+    forall (A : Type) (a1 a2 : A), a1 ∈ ret T A a2 <-> a1 = a2.
   Proof.
     intros. unfold_ops @Toset_Traverse.
     compose near a2 on left. rewrite (foldMap_ret T).
@@ -188,7 +187,9 @@ Section with_monad.
   Proof.
     intros. compose near t on left.
     rewrite (kmon_hom_bind T set); try typeclasses eauto.
-    unfold compose. now rewrite bind_set_spec.
+    unfold compose.
+    unfold_ops @Bind_set.
+    reflexivity.
   Qed.
 
 End with_monad.
@@ -199,17 +200,17 @@ Section respectfulness_properties.
 
   Context
     (T : Type -> Type)
-    `{Traversable.Monad.Monad T}.
+    `{TraversableMonad T}.
 
   Lemma bindt_respectful : forall (G : Type -> Type)
     `{Applicative G} `(f1 : A -> G (T B)) `(f2 : A -> G (T B)) (t : T A),
     (forall (a : A), a ∈ t -> f1 a = f2 a) -> bindt T G f1 t = bindt T G f2 t.
   Proof.
     introv ? hyp. do 2 (rewrite (bindt_to_runBatch T); auto).
-    unfold toset, Toset_Traverse in hyp.
+    unfold el, Toset_Traverse in hyp.
     rewrite (foldMap_to_runBatch T B) in hyp.
     unfold compose in *.
-    induction (toBatch_tm T B t).
+    induction (toBatch3 T B t).
     - reflexivity.
     - cbn. fequal.
       + apply IHb. intros. apply hyp. now left.
@@ -234,7 +235,7 @@ Section respectfulness_properties.
     `{Applicative G} t (f : A -> G B) (g : A -> B),
       (forall a, a ∈ t -> f a = pure G (g a)) -> traverse T G f t = pure G (map T g t).
   Proof.
-    change (@Map_Bindt T H0 H) with (@ToFunctor.Map_Traverse T _).
+    change (@Map_Bindt T H0 H) with (@DerivedInstances.Map_Traverse T _).
     apply (Traversable.Functor.traverse_respectful_map T).
   Qed.
 
@@ -248,20 +249,15 @@ Section respectfulness_properties.
   Corollary map_respectful : forall `(f1 : A -> B) `(f2 : A -> B) (t : T A),
     (forall (a : A), a ∈ t -> f1 a = f2 a) -> map T f1 t = map T f2 t.
   Proof.
-    intros. change (@Map_Bindt T H0 H) with (@ToFunctor.Map_Traverse T _).
+    intros. change (@Map_Bindt T H0 H) with (@DerivedInstances.Map_Traverse T _).
     now apply (Traversable.Functor.map_respectful T).
   Qed.
 
   Corollary map_respectful_id : forall `(f1 : A -> A) (t : T A),
     (forall (a : A), a ∈ t -> f1 a = a) -> map T f1 t = t.
   Proof.
-    intros. change (@Map_Bindt T H0 H) with (@ToFunctor.Map_Traverse T _).
+    intros. change (@Map_Bindt T H0 H) with (@DerivedInstances.Map_Traverse T _).
     now apply (Traversable.Functor.map_respectful_id T).
   Qed.
 
 End respectfulness_properties.
-*)
-
-
-
-
