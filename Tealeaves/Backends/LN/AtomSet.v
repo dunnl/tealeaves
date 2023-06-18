@@ -1,12 +1,12 @@
 From Tealeaves Require Import
-  Classes.Setlike.Functor
-  LN.Atom.
+  Functors.List
+  Backends.LN.Atom.
 
 From Coq Require
   MSets.MSets.
 
 Import List.ListNotations.
-Import Setlike.Functor.Notations.
+Import Sets.ElNotations.
 
 (** * Definition of <<AtomSet>> type *)
 (******************************************************************************)
