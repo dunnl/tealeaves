@@ -3,7 +3,7 @@ From Tealeaves Require Export
   Functors.List
   Classes.EqDec_eq.
 
-Import Classes.Setlike.Functor.Notations.
+Import Functors.Sets.ElNotations.
 
 (** * An opaque type of atoms *)
 (******************************************************************************)
