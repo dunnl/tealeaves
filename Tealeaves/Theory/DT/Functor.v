@@ -234,30 +234,30 @@ Section with_functor.
 
 End with_functor.
 
-(*
+Import Sets.ElNotations.
+
 (** * <<tolistd>> and <<tosetd>> *)
 (******************************************************************************)
 Section tolistd.
 
   Context
+    (W : Type)
     (T : Type -> Type)
     `{DecoratedTraversableFunctor W T}.
 
   Definition tolistd {A} : T A -> list (W * A) :=
-    foldMapd T (ret list).
+    foldMapd W T (ret list (W * A)).
 
-  #[export] Instance Tosetd_Kleisli : Tosetd T W :=
-    fun A => foldMapd T (ret set).
-
-  Import Derived.
+  #[export] Instance Tosetd_DTF : El_ctx T W :=
+    fun A => foldMapd W T (ret set (W * A)).
 
   (** ** Relating <<tosetd>> and <<tolistd>> *)
   (******************************************************************************)
   Lemma tosetd_to_tolistd : forall (A : Type),
-      @tosetd T W _ A = toset list ∘ tolistd.
+      @el_ctx T W _ A = el list (W * A) ∘ tolistd.
   Proof.
-    intros. unfold_ops @Tosetd_Kleisli. unfold tolistd.
-    rewrite (foldMapd_morphism T).
+    intros. unfold_ops @Tosetd_DTF. unfold tolistd.
+    rewrite (foldMapd_morphism W T).
     fequal. ext [w a]. unfold compose.
     solve_basic_set.
   Qed.
@@ -266,9 +266,9 @@ Section tolistd.
   (******************************************************************************)
   Theorem ind_mapd_iff :
     forall `(f : W * A -> B) (t : T A) (w : W) (b : B),
-      (w, b) ∈d mapd T f t <-> exists (a : A), (w, a) ∈d t /\ f (w, a) = b.
+      (w, b) ∈d mapd W T A B f t <-> exists (a : A), (w, a) ∈d t /\ f (w, a) = b.
   Proof.
-    intros. unfold_ops @Tosetd_Kleisli.
+    intros. unfold_ops @Tosetd_DTF.
     compose near t on left.
     rewrite (foldMapd_mapd);
       try typeclasses eauto.
@@ -276,7 +276,7 @@ Section tolistd.
       try typeclasses eauto.
     rewrite foldMapd_to_runBatch;
       try typeclasses eauto.
-    induction (toBatch6 T False t).
+    induction (toBatch6 W T False t).
     - splits.
       + introv hyp. inverts hyp.
       + introv [a' hyp]. inverts hyp.
@@ -300,93 +300,83 @@ Section tolistd.
     forall `(f : A -> B) (t : T A) (w : W) (b : B),
       (w, b) ∈d map T f t <-> exists (a : A), (w, a) ∈d t /\ f a = b.
   Proof.
-    intros. change_left ((w, b) ∈d mapd T (f ∘ extract (prod W)) t).
+    intros. change_left ((w, b) ∈d mapd W T A B (f ∘ extract (prod W) A) t).
     rewrite ind_mapd_iff.
     unfold compose. cbn. splits; eauto.
   Qed.
 
 End tolistd.
 
-(** * Notations *)
-(******************************************************************************)
-Module Notations.
-
-  Notation "x ∈d t" :=
-    (tosetd _ t x) (at level 50) : tealeaves_scope.
-  Notation "g ⋆dt f" := (kcompose_dt g f) (at level 40) : tealeaves_scope.
-
-End Notations.
-
-Import Notations.
-
-Import Setlike.Functor.Notations.
-
 (** * Relating <<foldMapd>> and <<foldMap>> *)
 (******************************************************************************)
 Section new.
 
   Context
+    (W : Type)
     (T : Type -> Type)
-    `{DT.Functor.DecoratedTraversableFunctor W T}.
-
-  Import Derived.
+    `{DecoratedTraversableFunctor W T}.
 
   (** ** Expressing <<foldMap>> with <<foldMapd>> *)
   (******************************************************************************)
   Lemma foldMap_to_foldMapd : forall `{Monoid M} `(f : A -> M),
-      foldMap T f = foldMapd T (f ∘ extract (W ×)).
+      foldMap T f = foldMapd W T (f ∘ extract (W ×) A).
   Proof.
     intros. unfold foldMapd, foldMap.
     unfold_ops @Traverse_Mapdt.
     reflexivity.
   Qed.
 
+  (* for naturality of <<ret list>> *)
+  Import Tealeaves.Classes.Traversable.Monad.DerivedInstances.
 
   (** ** Relating <<tolist>> to <<tolistd>>*)
   (******************************************************************************)
   Lemma tolist_to_tolistd : forall (A : Type),
-      @tolist T _ A = map list (extract (W ×)) ∘ tolistd T.
+      @tolist T _ A = map list (extract (W ×) A) ∘ tolistd W T.
   Proof.
     intros. unfold_ops Tolist_Traverse.
     rewrite (foldMap_to_foldMapd).
     unfold tolistd.
-    rewrite (foldMapd_morphism T).
+    rewrite (foldMapd_morphism W T).
     rewrite (natural (ϕ := @ret list _)).
     reflexivity.
   Qed.
 
+  (* for naturality of <<ret set>> *)
+  Import Tealeaves.Classes.Monad.DerivedInstances.
+
   (** ** Relating <<toset>> to <<tosetd>>*)
   (******************************************************************************)
   Lemma toset_to_tosetd : forall (A : Type),
-      @toset T _ A = map set (extract (W ×)) ∘ tosetd T.
+      @el T _ A = map set (extract (W ×) A) ∘ el_ctx T A.
   Proof.
     intros. unfold_ops @Toset_Traverse @Tolist_Traverse.
-    unfold_ops @Tosetd_Kleisli.
+    unfold_ops @Tosetd_DTF.
     rewrite (foldMap_to_foldMapd).
-    rewrite (foldMapd_morphism T).
+    rewrite (foldMapd_morphism W T).
     rewrite (natural (ϕ := @ret set _)).
     reflexivity.
   Qed.
 
   (** ** Relating <<∈>> to <<∈d>> *)
   (******************************************************************************)
-  Existing Instance Toset_set.
-  Existing Instance SetlikeFunctor_set.
   Lemma ind_iff_in : forall (A : Type) (a : A) (t : T A),
       a ∈ t <-> exists w, (w, a) ∈d t.
   Proof.
     intros. unfold_ops @Toset_Traverse.
     rewrite (foldMap_to_foldMapd).
-    change (extract (prod W)) with (map (fun A => A) (@extract (prod W) _ A)).
+    change (extract (prod W) A) with (map (fun A => A) (@extract (prod W) _ A)).
     rewrite <- (natural (ϕ := @ret set _)).
-    rewrite <- (foldMapd_morphism T).
-    unfold tosetd.
+    rewrite <- (foldMapd_morphism W T).
+    unfold el_ctx.
     unfold compose.
     unfold_ops @Map_set. split.
     - intros [[w a'] [rest1 rest2]]. exists w.
-      unfold toset in rest1. unfold Toset_set in rest1.
-      now inverts rest2.
-    - intros [w rest]. exists (w, a). auto.
+      inverts rest2.
+      assumption.
+    - intros [w rest]. exists (w, a). split.
+      + assumption.
+      + cbv. reflexivity.
   Qed.
 
   Corollary ind_implies_in : forall (A : Type) (a : A) (w : W) (t : T A),
@@ -399,10 +389,10 @@ Section new.
   (******************************************************************************)
   Theorem in_mapd_iff :
     forall `(f : W * A -> B) (t : T A) (b : B),
-      b ∈ mapd T f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
+      b ∈ mapd W T A B f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
   Proof.
     intros. rewrite ind_iff_in.
-    setoid_rewrite (ind_mapd_iff T).
+    setoid_rewrite (ind_mapd_iff W T).
     reflexivity.
   Qed.
 
@@ -415,22 +405,20 @@ Section decorated_setlike_respectfulness.
   Context
     (W : Type)
     (T : Type -> Type)
-    `{Kleisli.DT.Functor.DecoratedTraversableFunctor W T}.
-
-  Import Derived.
+    `{DecoratedTraversableFunctor W T}.
 
   Lemma mapd_respectful {A B} : forall (t : T A) (f g : W * A -> B),
       (forall w a, (w, a) ∈d t -> f (w, a) = g (w, a)) ->
-      mapd T f t = mapd T g t.
+      mapd W T A B f t = mapd W T A B g t.
   Proof.
-    unfold_ops @Tosetd_Kleisli.
+    unfold_ops @Tosetd_DTF.
     introv hyp.
     unfold foldMapd in hyp.
-    rewrite (mapdt_constant_applicative2 T False B) in hyp.
-    rewrite (mapdt_to_runBatch T) in hyp.
-    unfold_ops @Mapd_Mapdt.
-    do 2 rewrite (mapdt_to_runBatch T).
-    induction (toBatch6 T B t).
+    rewrite (mapdt_constant_applicative2 W T False B) in hyp.
+    rewrite (mapdt_to_runBatch W T _) in hyp.
+    do 2 rewrite (mapd_to_mapdt W T).
+    do 2 rewrite (mapdt_to_runBatch W T (fun A => A)).
+    induction (toBatch6 W T B t).
     - reflexivity.
     - destruct x as [w a]. cbn. rewrite IHb. fequal.
       apply hyp. now right.
@@ -439,12 +427,11 @@ Section decorated_setlike_respectfulness.
 
   Corollary mapd_respectful_id {A} : forall (t : T A) (f : W * A -> A),
       (forall w a, (w, a) ∈d t -> f (w, a) = a) ->
-      mapd T f t = t.
+      mapd W T A A f t = t.
   Proof.
-    intros. replace t with (mapd T (extract (prod W)) t) at 2
+    intros. replace t with (mapd W T _ _ (extract (prod W) A) t) at 2
       by (now rewrite (dfun_mapd1 W T)).
     now apply mapd_respectful.
   Qed.
 
 End decorated_setlike_respectfulness.
-*)
