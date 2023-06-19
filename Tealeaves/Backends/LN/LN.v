@@ -1,12 +1,13 @@
 (** This files contains metatheorems for the locally nameless variables
  that closely parallel those of LNgen. *)
 From Tealeaves Require Import
-  Data.Natural
-  Classes.Kleisli.DT.Monad.
+  Definitions.Natural
+  Theory.DT.Monad.
 From Tealeaves.Backends.LN Require Import
   Atom AtomSet.
 
-Import DT.Monad.Derived.
+Import DT.Monad.DerivedInstances.
+(*
 From Tealeaves Require Import Classes.Kleisli.Monad.
 From Tealeaves Require Import Classes.Kleisli.Traversable.Functor.
 From Tealeaves Require Import Classes.Kleisli.Traversable.Monad.
@@ -16,10 +17,11 @@ From Tealeaves Require Import Classes.Kleisli.DT.Functor.
 From Tealeaves Require Import Classes.Kleisli.DT.Monad.
 From Tealeaves Require Import Classes.Traversable.Monad. (* bind for lists *)
 From Tealeaves Require Import Kleisli.Monad.
+*)
 
 Import Comonad.Notations.
 Import LN.AtomSet.Notations.
-Import Setlike.Functor.Notations.
+Import Sets.ElNotations.
 Import DT.Functor.Notations.
 Import DT.Monad.Notations.
 Import Monoid.Notations.
@@ -76,20 +78,20 @@ Section locally_nameless_local_operations.
 
   Definition subst_loc (x : atom) (u : T LN) : LN -> T LN :=
     fun l => match l with
-          | Fr y => if x == y then u else ret T (Fr y)
-          | Bd n => ret T (Bd n)
+          | Fr y => if x == y then u else ret T LN (Fr y)
+          | Bd n => ret T LN (Bd n)
           end.
 
   Definition open_loc (u : T LN) : nat * LN -> T LN :=
     fun p => match p with
           | (w, l) =>
             match l with
-            | Fr x => ret T (Fr x)
+            | Fr x => ret T LN (Fr x)
             | Bd n =>
               match Nat.compare n w with
-              | Gt => ret T (Bd (n - 1))
+              | Gt => ret T LN (Bd (n - 1))
               | Eq => u
-              | Lt => ret T (Bd n)
+              | Lt => ret T LN (Bd n)
               end
             end
           end.
@@ -139,19 +141,19 @@ Section locally_nameless_operations.
 
   Context
     (T : Type -> Type)
-    `{Classes.Kleisli.DT.Monad.Monad nat T}.
+    `{DTM nat T}.
 
   Definition open (u : T LN) : T LN -> T LN  :=
-    bindd T (open_loc u).
+    bindd nat T T LN LN (open_loc u).
 
   Definition close x : T LN -> T LN :=
-    fmapd T (close_loc x).
+    mapd nat T LN LN (close_loc x).
 
   Definition subst x (u : T LN) : T LN -> T LN :=
-    bind T (subst_loc x u).
+    bind T T LN LN (subst_loc x u).
 
   Definition free : T LN -> list atom :=
-    fun t => bind list free_loc (tolist T t).
+    fun t => bind list list LN atom free_loc (tolist T LN t).
 
   Definition freeset : T LN -> AtomSet.t :=
     fun t => LN.AtomSet.atoms (free t).
@@ -180,7 +182,7 @@ Import Notations.
 Section test_notations.
 
   Context
-    `{DT.Monad.Monad nat T}.
+    `{DTM nat T}.
 
   Context
     (t : T LN)
@@ -212,7 +214,7 @@ Section locally_nameless_basic_principles.
   Import Notations.
 
   Context
-    `{DT.Monad.Monad nat T
+    `{DTM nat T
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
 
@@ -228,15 +230,15 @@ Section locally_nameless_basic_principles.
       t '(u1) = t '(u2).
   Proof.
     intros. unfold open.
-    now apply (bindd_respectful T).
+    now apply (bindd_respectful nat T).
   Qed.
 
   Lemma open_id : forall t u,
-      (forall w l, (w, l) ∈d t -> open_loc u (w, l) = ret T l) ->
+      (forall w l, (w, l) ∈d t -> open_loc u (w, l) = ret T LN l) ->
       t '(u) = t.
   Proof.
     intros. unfold open.
-    now apply (bindd_respectful_id T).
+    now apply (bindd_respectful_id nat T).
   Qed.
 
   (** *** <<close>> *)
@@ -246,7 +248,7 @@ Section locally_nameless_basic_principles.
       '[x] t = '[y] t.
   Proof.
     intros. unfold close.
-    now apply (fmapd_respectful T).
+    now apply (mapd_respectful nat T).
   Qed.
 
   Lemma close_id : forall t x,
@@ -254,7 +256,7 @@ Section locally_nameless_basic_principles.
       '[x] t = t.
   Proof.
      intros. unfold close.
-    now apply (fmapd_respectful_id T).
+    now apply (mapd_respectful_id nat T).
   Qed.
 
   (** *** <<subst>> *)
@@ -264,15 +266,15 @@ Section locally_nameless_basic_principles.
       t '{x ~> u1} = t '{y ~> u2}.
   Proof.
     intros. unfold subst.
-    now apply (bind_respectful T).
+    now apply (bind_respectful nat T).
   Qed.
 
   Lemma subst_id : forall t x u,
-      (forall l, l ∈ t -> subst_loc x u l = ret T l) ->
+      (forall l, l ∈ t -> subst_loc x u l = ret T LN l) ->
       t '{x ~> u} = t.
   Proof.
     intros. unfold subst.
-    now apply (bind_respectful_id T).
+    now apply (bind_respectful_id nat T).
   Qed.
 
   (** ** Occurrence analysis lemmas *)
@@ -285,7 +287,7 @@ Section locally_nameless_basic_principles.
         (n1, l1) ∈d t /\ (n2, l) ∈d open_loc u (n1, l1) /\ n = n1 ● n2.
   Proof.
     intros. unfold open.
-    now rewrite (ind_bindd_iff T).
+    now rewrite (ind_bindd_iff nat T).
   Qed.
 
   Lemma in_open_iff : forall l u t,
@@ -293,7 +295,7 @@ Section locally_nameless_basic_principles.
         (n1, l1) ∈d t /\ l ∈ open_loc u (n1, l1).
   Proof.
     intros. unfold open.
-    now rewrite (in_bindd_iff T).
+    now rewrite (in_bindd_iff nat T).
   Qed.
 
   (** *** <<close>> *)
@@ -303,7 +305,8 @@ Section locally_nameless_basic_principles.
         (n, l1) ∈d t /\ close_loc x (n, l1) = l.
   Proof.
     intros. unfold close.
-    now rewrite (ind_fmapd_iff T).
+    rewrite (ind_mapd_iff nat T).
+    easy.
   Qed.
 
   Lemma in_close_iff : forall l x t,
@@ -311,7 +314,7 @@ Section locally_nameless_basic_principles.
         (n, l1) ∈d t /\ close_loc x (n, l1) = l.
   Proof.
     intros. unfold close.
-    now rewrite (in_fmapd_iff T).
+    now rewrite (in_mapd_iff nat T).
   Qed.
 
   (** *** <<subst>> *)
@@ -321,7 +324,7 @@ Section locally_nameless_basic_principles.
         (n1, l1) ∈d t /\ (n2, l) ∈d subst_loc x u l1 /\ n = n1 ● n2.
   Proof.
     intros. unfold subst.
-    now rewrite (ind_bind_iff T).
+    now rewrite (ind_bind_iff nat T).
   Qed.
 
   Lemma in_subst_iff : forall l u t x,
@@ -329,7 +332,7 @@ Section locally_nameless_basic_principles.
        l1 ∈ t /\ l ∈ subst_loc x u l1.
   Proof.
     intros. unfold subst.
-    now rewrite (in_bind_iff T).
+    now rewrite (in_bind_iff nat T).
   Qed.
 
   (** ** Free variables *)
@@ -341,11 +344,14 @@ Section locally_nameless_basic_principles.
       x ∈ free T t <-> Fr x ∈ t.
   Proof.
     intros. unfold free.
-    rewrite (Toset_list_spec).
+    unfold TraversableFunctor_list.
     rewrite (Traversable.Monad.in_bind_iff list).
     split.
     - intros [l [hyp1 hyp2]]. destruct l.
-      + rewrite (in_iff_in_tolist T).
+      + Set Printing All.
+        Search "in_iff_in".
+        About in_iff_in_tolist.
+        rewrite (DT.Monad.in_iff_in_tolist W T).
         unfold free_loc in hyp2.
         rewrite <- Toset_list_spec in hyp2.
         rewrite toset_list_one in hyp2.
@@ -777,7 +783,7 @@ Section locally_nameless_metatheory.
   Proof.
     intros. compose near t on right.
     unfold open, close, subst.
-    rewrite (bindd_fmapd T).
+    rewrite (bindd_mapd T).
     rewrite (bind_to_bindd).
     fequal. ext [w l].
     unfold compose; cbn.
@@ -793,10 +799,10 @@ Section locally_nameless_metatheory.
           end.
 
   Theorem subst_by_LN_spec : forall x l,
-      subst T x (ret T l) = fmap T (subst_loc_LN x l).
+      subst T x (ret T l) = map T (subst_loc_LN x l).
   Proof.
     intros. unfold subst. ext t.
-    apply (bind_respectful_fmap T).
+    apply (bind_respectful_map T).
     intros l' l'in. destruct l'.
     - cbn. compare values x and a.
     - reflexivity.
@@ -1099,12 +1105,12 @@ Section locally_nameless_metatheory.
   Proof.
     intros. compose near t on left.
     unfold open, close.
-    rewrite (bindd_fmapd T).
+    rewrite (bindd_mapd T).
     apply (bindd_respectful_id T); intros.
     auto using open_close_local.
   Qed.
 
-  (** ** Opening by a LN reduces to an [fmapkr] *)
+  (** ** Opening by a LN reduces to an [mapkr] *)
   Definition open_LN_loc (u : LN) : nat * LN -> LN :=
     fun wl => match wl with
            | (w, l) =>
@@ -1120,10 +1126,10 @@ Section locally_nameless_metatheory.
            end.
 
   Lemma open_by_LN_spec : forall l,
-      open T (ret T l) = fmapd T (open_LN_loc l).
+      open T (ret T l) = mapd T (open_LN_loc l).
   Proof.
     intros. unfold open. ext t.
-    apply (bindd_respectful_fmapd T).
+    apply (bindd_respectful_mapd T).
     intros w l' l'in. destruct l'.
     - reflexivity.
     - cbn. compare naturals n and w.
@@ -1149,8 +1155,8 @@ Section locally_nameless_metatheory.
   Proof.
     introv fresh. compose near t on left.
     rewrite open_by_LN_spec. unfold close.
-    rewrite (dfun_fmapd2 _ T).
-    apply (fmapd_respectful_id T).
+    rewrite (dfun_mapd2 _ T).
+    apply (mapd_respectful_id T).
     intros w l lin.
     assert (l <> Fr x).
     { rewrite neq_symmetry. apply (ind_implies_in T) in lin.

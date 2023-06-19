@@ -205,6 +205,14 @@ Section with_monad.
     split; intros; preprocess; eauto.
   Qed.
 
+ Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
+     (a ∈ t) <-> el list A (tolist T A t) a.
+ Proof.
+   intros.
+   rewrite (toset_to_tolist T).
+   reflexivity.
+ Qed.
+
 End with_monad.
 
 (** * Respectfulness properties *)

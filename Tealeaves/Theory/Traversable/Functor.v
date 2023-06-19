@@ -238,6 +238,36 @@ Section with_functor.
 
 End with_functor.
 
+Section foldMap_list.
+
+  Import Monoid.Notations.
+
+  Context
+    (T : Type -> Type)
+    `{TraversableFunctor T}
+    `{Monoid M} {A : Type}.
+
+  #[export] Instance foldMap_list_morphism `{Monoid M} `(f : A -> M) : Monoid_Morphism (foldMap list f).
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - typeclasses eauto.
+    - cbn. reflexivity.
+    - intros.
+      unfold_ops @Monoid_op_list.
+      rewrite (foldMap_to_traverse1 list M).
+      unfold TraversableFunctor_list.
+      rewrite (DerivedInstances.traverse_to_bindt list).
+      rewrite (bindt_list_app (const M)).
+      cbn.
+      simpl_monoid.
+      unfold pure, Pure_const.
+      rewrite (monoid_id_r).
+      reflexivity.
+  Qed.
+
+End foldMap_list.
+
 Import Traversable.Monad.DerivedInstances.
 
 (** * <<tolist>> and <<toset>> / <<∈>>*)
@@ -370,7 +400,9 @@ Section toset.
   Lemma toset_to_tolist : forall (A : Type),
       @el T _ A = el list A ∘ tolist T A.
   Proof.
-    intros. unfold_ops @Toset_Traverse @Tolist_Traverse.
+    intros.
+    unfold_ops @Toset_Traverse.
+    unfold_ops @Tolist_Traverse.
     rewrite (foldMap_morphism T).
     fequal. ext a. solve_basic_set.
   Qed.

@@ -1,7 +1,8 @@
 From Tealeaves Require Export
   Prelude
   Functors.List
-  Classes.EqDec_eq.
+  Classes.EqDec_eq
+  Theory.Traversable.Functor.
 
 Import Functors.Sets.ElNotations.
 
@@ -59,13 +60,15 @@ Module Atom : AtomModule.
   Qed.
 
   Lemma nat_list_max : forall (xs : list nat),
-      { n : nat | forall x, List.In x xs -> x <= n }.
+      { n : nat | forall x, x ∈ xs -> x <= n }.
   Proof.
     induction xs as [ | x xs [y H] ].
     - exists 0. inversion 1.
     - exists (max x y). intros z J.
       cbn in J. destruct J as [K | K].
-      + subst. auto with arith.
+      + subst. cbv in K. destruct K.
+        * exfalso. assumption.
+        * subst. lia.
       + auto using max_lt_r.
   Qed.
 
@@ -73,7 +76,8 @@ Module Atom : AtomModule.
     forall (xs : list nat), { n : nat | ~ n ∈ xs }.
   Proof.
     intros xs. destruct (nat_list_max xs) as [x H].
-    exists (S x). intros J. lapply (H (S x)). lia. trivial.
+    exists (S x). intros J. lapply (H (S x)). lia.
+    assumption.
   Qed.
 
   Definition fresh (l : list atom) :=

@@ -1,5 +1,6 @@
 From Tealeaves Require Import
   Functors.List
+  Theory.List
   Backends.LN.Atom.
 
 From Coq Require
@@ -121,17 +122,23 @@ Qed.
 
 (** ** Relating <<AtomSet.t>> and <<list atom>> *)
 (******************************************************************************)
+
+Import Monoid.Notations.
+Import Sets.Notations.
+
 Lemma in_elements_iff : forall (s : AtomSet.t) (x : atom),
     x ∈@ s <-> x ∈ elements s.
 Proof.
   intros. rewrite <- AtomSet.elements_spec1. induction (elements s).
   - cbv. split; intro H; inversion H.
-  - cbn. split; intro H; inversion H.
-    + subst. now left.
-    + subst. destruct H.
-      subst. rewrite IHl in H1. now right.
-      rewrite IHl in H1. now right.
-    + subst. now left.
+  - unfold_ops @Monoid_op_set @Pure_const.
+    split; intro H; inversion H.
+    + subst. rewrite in_list_cons. now left.
+    + subst. rewrite in_list_cons.
+      rewrite <- IHl. now right.
+    + rewrite in_list_cons in H. destruct H.
+      * subst. now left.
+      * right. rewrite IHl. assumption.
     + right. now rewrite IHl.
 Qed.
 
