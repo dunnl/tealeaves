@@ -367,20 +367,22 @@ Import Sets.Notations.
 Import Sets.ElNotations.
 Import Classes.Monad.DerivedInstances. (* Naturality of ret *)
 
+(** ** Elements of traversable functors *)
+(******************************************************************************)
+
+#[export] Instance Toset_Traverse (T : Type -> Type) `{Traverse T} : El T :=
+  fun A => foldMap T (ret set A).
+
 Section toset.
 
   Context
     (T : Type -> Type)
-    `{Traverse T}.
+    `{TraversableFunctor T}.
 
-  #[export] Instance Toset_Traverse (T : Type -> Type) `{Traverse T} : El T :=
-    fun A => foldMap T (ret set A).
-
-  Context
-    `{! TraversableFunctor T}.
-
+  (* Relate elements to those obtained by enumeration *)
+  (* Note: <<el list A>> (like <<el T A>>) is provided by <<Toset_Traverse>> *)
   Lemma toset_to_tolist : forall (A : Type),
-      @el T _ A = el list A ∘ tolist T A.
+      el T A = el list A ∘ tolist T A.
   Proof.
     intros.
     unfold_ops @Toset_Traverse.
@@ -404,7 +406,7 @@ Section toset.
 
 End toset.
 
-(** * Respectfulness properties *)
+(** ** Respectfulness properties *)
 (******************************************************************************)
 Section respectfulness_properties.
 
@@ -430,7 +432,9 @@ Section respectfulness_properties.
       + apply hyp. now right.
   Qed.
 
-  Lemma traverse_respectful_pure : forall (G : Type -> Type)
+  (** *** Corollaries *)
+  (******************************************************************************)
+  Corollary traverse_respectful_pure : forall (G : Type -> Type)
     `{Applicative G} `(f1 : A -> G A) (t : T A),
     (forall (a : A), a ∈ t -> f1 a = pure G a) -> traverse T G A A f1 t = pure G t.
   Proof.
@@ -439,7 +443,7 @@ Section respectfulness_properties.
     now apply (traverse_respectful G).
   Qed.
 
-  Lemma traverse_respectful_map {A B} : forall (G : Type -> Type)
+  Corollary traverse_respectful_map {A B} : forall (G : Type -> Type)
     `{Applicative G} t (f : A -> G B) (g : A -> B),
       (forall a, a ∈ t -> f a = pure G (g a)) -> traverse T G A B f t = pure G (map T A B g t).
   Proof.
@@ -447,14 +451,6 @@ Section respectfulness_properties.
     compose near t on right.
     rewrite (Traversable.Functor.DerivedInstances.traverse_map T G).
     apply (traverse_respectful); auto.
-  Qed.
-
-  Corollary traverse_respectful_id {A} : forall (G : Type -> Type)
-    `{Applicative G} t (f : A -> G A),
-      (forall a, a ∈ t -> f a = pure G a) -> traverse T G A A f t = pure G t.
-  Proof.
-    intros. rewrite <- (traverse_id_purity T G).
-    now apply traverse_respectful.
   Qed.
 
   Corollary map_respectful : forall `(f1 : A -> B) `(f2 : A -> B) (t : T A),
@@ -465,6 +461,15 @@ Section respectfulness_properties.
     assumption.
   Qed.
 
+  (** *** Identity laws *)
+  (******************************************************************************)
+  Corollary traverse_respectful_id {A} : forall (G : Type -> Type)
+    `{Applicative G} t (f : A -> G A),
+      (forall a, a ∈ t -> f a = pure G a) -> traverse T G A A f t = pure G t.
+  Proof.
+    intros. rewrite <- (traverse_id_purity T G).
+    now apply traverse_respectful.
+  Qed.
 
   Corollary map_respectful_id : forall `(f1 : A -> A) (t : T A),
     (forall (a : A), a ∈ t -> f1 a = a) -> map T A A f1 t = t.
