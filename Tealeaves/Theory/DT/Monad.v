@@ -474,7 +474,7 @@ Section section.
     split; auto using ind_bindd_iff1, ind_bindd_iff2.
   Qed.
 
-  Theorem ind_bind_iff :
+  Corollary ind_bind_iff :
     forall `(f : A -> T B) (t : T A) (wtotal : W) (b : B),
       (wtotal, b) ∈d bind T T A B f t <->
       exists (w1 w2 : W) (a : A),
@@ -482,6 +482,36 @@ Section section.
         /\ wtotal = w1 ● w2.
   Proof.
     intros. apply ind_bindd_iff.
+  Qed.
+
+  (** ** Characterizing <<∈d>> *)
+  (******************************************************************************)
+  Theorem ind_mapd_iff :
+    forall `(f : W * A -> B) (t : T A) (w : W) (b : B),
+      (w, b) ∈d mapd W T A B f t <-> exists (a : A), (w, a) ∈d t /\ f (w, a) = b.
+  Proof.
+    intros.
+    rewrite (mapd_to_bindd W T).
+    unfold compose.
+    rewrite ind_bindd_iff.
+    setoid_rewrite (ind_ret_iff).
+    split.
+    - intros [w1 [w2 [a [h1 [h2 h3]]]]].
+      destruct h2 as [hz heq].
+      subst. simpl_monoid.
+      eauto.
+    - intros [a [h1 h2]].
+      subst.
+      exists w Ƶ a. simpl_monoid. auto.
+  Qed.
+
+  Corollary ind_map_iff :
+    forall `(f : A -> B) (t : T A) (w : W) (b : B),
+      (w, b) ∈d map T f t <-> exists (a : A), (w, a) ∈d t /\ f a = b.
+  Proof.
+    intros. change_left ((w, b) ∈d mapd W T A B (f ∘ extract (prod W) A) t).
+    rewrite ind_mapd_iff.
+    unfold compose. cbn. splits; eauto.
   Qed.
 
   (** ** Characterizing <<∈>> with <<bindd>> *)
@@ -522,7 +552,7 @@ Section section.
     rewrite (ind_iff_in).
     change (@Mapd_Binddt W T _ _)
       with (@DerivedInstances.Mapd_Mapdt _ _ _).
-    setoid_rewrite (ind_mapd_iff W T (A := A) (B := B)).
+    setoid_rewrite (ind_mapd_iff).
     reflexivity.
   Qed.
 

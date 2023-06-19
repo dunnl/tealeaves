@@ -192,6 +192,19 @@ Section with_monad.
     reflexivity.
   Qed.
 
+ Corollary in_map_iff :
+    forall `(f : A -> B) (t : T A) (b : B),
+      b ∈ map T f t <-> exists a, a ∈ t /\ f a = b.
+ Proof.
+   intros. compose near t on left.
+   rewrite map_to_bind.
+   rewrite (kmon_hom_bind T set).
+    unfold compose.
+    unfold_ops @Bind_set.
+    setoid_rewrite (in_ret_iff B).
+    split; intros; preprocess; eauto.
+  Qed.
+
 End with_monad.
 
 (** * Respectfulness properties *)

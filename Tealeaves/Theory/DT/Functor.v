@@ -387,7 +387,7 @@ Section new.
 
   (** ** Characterizing <<∈>> to with <<mapdt>> *)
   (******************************************************************************)
-  Theorem in_mapd_iff :
+  Corollary in_mapd_iff :
     forall `(f : W * A -> B) (t : T A) (b : B),
       b ∈ mapd W T A B f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
   Proof.
