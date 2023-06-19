@@ -169,6 +169,12 @@ Module DerivedInstances.
         now rewrite (kmon_bind0 T).
     Qed.
 
+    Lemma map_to_bind : forall `(f : A -> B),
+        map T A B f = bind T T A B (ret T B ∘ f).
+    Proof.
+      reflexivity.
+    Qed.
+
     (** *** Composition with [map] *)
     (******************************************************************************)
     Lemma bind_map : forall `(g : B -> T C) `(f : A -> B),
@@ -234,12 +240,25 @@ Module DerivedInstances.
     Proof.
       constructor; try typeclasses eauto.
       intros.
-      unfold_ops @Map_Bind.
+      rewrite (map_to_bind).
       rewrite (kmon_bind0 T).
       reflexivity.
     Qed.
 
   End with_monad.
+
+  (** *** Naturality of homomorphisms *)
+  (******************************************************************************)
+  #[export] Instance Natural_MonadHom `{MonadHom T1 T2 ϕ} `{! Monad T1} `{! Monad T2} : Natural ϕ.
+  Proof.
+    constructor; try typeclasses eauto. intros.
+    rewrite (map_to_bind T1).
+    rewrite (map_to_bind T2).
+    rewrite (kmon_hom_bind T1 T2).
+    reassociate <-.
+    rewrite (kmon_hom_ret T1 T2).
+    reflexivity.
+  Qed.
 
 End DerivedInstances.
 
