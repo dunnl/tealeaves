@@ -156,7 +156,7 @@ Module DerivedInstances.
 
     Context
       (T : Type -> Type)
-        `{Monad T}.
+      `{Monad T}.
 
     #[export] Instance Monad_Functor: Functor T.
     Proof.
