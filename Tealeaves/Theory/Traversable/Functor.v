@@ -363,24 +363,6 @@ Section traversal_shapeliness.
 
 End traversal_shapeliness.
 
-(*
-(** ** Listable/set-like instances *)
-(******************************************************************************)
-Section listable.
-
-  Context
-    (T : Type -> Type)
-    `{TraversableFunctor T}.
-
-  #[export] Instance Listable_Traversable : ListableFunctor T.
-  Proof.
-    constructor; try typeclasses eauto.
-    - unfold Listable.Functor.shapeliness. auto using (shapeliness T).
-  Qed.
-
-End listable.
- *)
-
 Import Sets.Notations.
 Import Sets.ElNotations.
 Import Classes.Monad.DerivedInstances. (* Naturality of ret *)
