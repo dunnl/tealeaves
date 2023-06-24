@@ -3,7 +3,8 @@ From Tealeaves Require Import
   Classes.Monad
   Classes.Applicative.
 From Tealeaves Require Export
-  Definitions.Sets.
+  Definitions.Sets
+  Definitions.Prop.
 
 Import Monad.Notations.
 Import Product.Notations.
@@ -110,8 +111,22 @@ Qed.
 (******************************************************************************)
 #[export] Instance Monmor_bind {A B f} : Monoid_Morphism (bind set set A B f) :=
   {| monmor_unit := @bind_set_nil A B f;
-     monmor_op := @bind_set_add A B f;
+    monmor_op := @bind_set_add A B f;
   |}.
+
+(** ** Querying for an element is a monoid homomorphism *)
+(******************************************************************************)
+#[export] Instance Monmor_el {A : Type} (a : A) :
+  @Monoid_Morphism _ _ (@Monoid_op_set A) (@Monoid_unit_set A)
+                   (Monoid_op_or) (Monoid_unit_false)
+                   (evalAt a).
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - reflexivity.
+  - reflexivity.
+Qed.
 
 (** * Misc properties *)
 (******************************************************************************)
