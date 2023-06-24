@@ -15,7 +15,7 @@ Section TraversableFunctor_operation.
     (F : Type -> Type).
 
   Class Dist :=
-    dist : forall (G : Type -> Type) `{Fmap G} `{Pure G} `{Mult G}, F ○ G ⇒ G ○ F.
+    dist : forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}, F ○ G ⇒ G ○ F.
 
 End TraversableFunctor_operation.
 
@@ -31,11 +31,11 @@ Section TraversableFunctor.
       dist_natural :> forall `{Applicative G},
           @Natural (F ∘ G) _ (G ∘ F) _ (dist F G);
       dist_morph : forall `{ApplicativeMorphism G1 G2 ϕ} A,
-          dist F G2 A ∘ fmap F (ϕ A) = ϕ (F A) ∘ dist F G1 A;
+          dist F G2 A ∘ map F (ϕ A) = ϕ (F A) ∘ dist F G1 A;
       dist_unit :
         `(dist F (fun A => A) A = id);
       dist_linear : forall `{Applicative G1} `{Applicative G2},
-          `(dist F (G1 ∘ G2) A = fmap G1 (dist F G2 A) ∘ dist F G1 (G2 A));
+          `(dist F (G1 ∘ G2) A = map G1 (dist F G2 A) ∘ dist F G1 (G2 A));
     }.
 
 End TraversableFunctor.
@@ -55,7 +55,7 @@ Section TraversableMorphism.
       trvmor_trv_G : TraversableFunctor U;
       trvmor_nat :> Natural ϕ;
       trvmor_hom : forall `{Applicative G},
-          `(fmap G (ϕ A) ∘ dist T G = dist U G ∘ ϕ (G A));
+          `(map G (ϕ A) ∘ dist T G = dist U G ∘ ϕ (G A));
     }.
 
 End TraversableMorphism.
@@ -65,7 +65,7 @@ End TraversableMorphism.
 
 (** ** The identity functor is traversable *)
 (******************************************************************************)
-#[export] Instance Dist_I : Dist (fun A => A) := fun F fmap mult pure A a => a.
+#[export] Instance Dist_I : Dist (fun A => A) := fun F map mult pure A a => a.
 
 #[export, program] Instance Traversable_I : TraversableFunctor (fun A => A).
 
@@ -77,7 +77,7 @@ Qed.
 
 Next Obligation.
   unfold transparent tcs. ext a.
-  symmetry. now rewrite (fun_fmap_id G1).
+  symmetry. now rewrite (fun_map_id G1).
 Qed.
 
 (** ** Traversable functors are closed under composition *)
@@ -89,8 +89,8 @@ Section TraversableFunctor_compose.
     `{TraversableFunctor U}.
 
   #[export] Instance Dist_compose : Dist (T ∘ U) :=
-    fun G map mult pure A =>
-      dist T G ∘ fmap T (dist U G (A := A)).
+    fun G Gmap mult pure A =>
+      dist T G ∘ map T (dist U G (A := A)).
 
   Lemma dist_unit_compose : forall A,
       dist (T ∘ U) (fun A => A) = @id (T (U A)).
@@ -98,24 +98,24 @@ Section TraversableFunctor_compose.
     intros. unfold transparent tcs.
     rewrite (dist_unit T).
     rewrite (dist_unit U).
-    now rewrite (fun_fmap_id T).
+    now rewrite (fun_map_id T).
   Qed.
 
   Lemma dist_natural_compose : forall `{Applicative G} `(f : X -> Y),
-      fmap (G ∘ (T ∘ U)) f ∘ dist (T ∘ U) G = dist (T ∘ U) G ∘ fmap ((T ∘ U) ∘ G) f.
+      map (G ∘ (T ∘ U)) f ∘ dist (T ∘ U) G = dist (T ∘ U) G ∘ map ((T ∘ U) ∘ G) f.
   Proof.
     intros. unfold transparent tcs.
-    change_left (fmap (G ∘ T) (fmap U f) ∘ dist T G ∘ fmap T (dist U G)).
+    change_left (map (G ∘ T) (map U f) ∘ dist T G ∘ map T (dist U G)).
     #[local] Set Keyed Unification.
     rewrite (natural (ϕ := @dist T _ G _ _ _ ) (F := T ∘ G)).
     #[local] Unset Keyed Unification.
-    unfold_ops @Fmap_compose.
+    unfold_ops @Map_compose.
     reassociate -> on left.
     reassociate -> on right.
     unfold_compose_in_compose.
-    rewrite (fun_fmap_fmap T).
-    rewrite (fun_fmap_fmap T).
-    change (fmap ?F (fmap ?G ?f)) with (fmap (F ∘ G) f).
+    rewrite (fun_map_map T).
+    rewrite (fun_map_map T).
+    change (map ?F (map ?G ?f)) with (map (F ∘ G) f).
     now rewrite <- (natural (ϕ := @dist U _ G _ _ _)).
   Qed.
 
@@ -126,32 +126,32 @@ Section TraversableFunctor_compose.
   Qed.
 
   Lemma dist_morph_compose : forall `{ApplicativeMorphism G1 G2 ϕ} (A : Type),
-      dist (T ∘ U) G2 ∘ fmap (T ∘ U) (ϕ A) = ϕ (T (U A)) ∘ dist (T ∘ U) G1.
+      dist (T ∘ U) G2 ∘ map (T ∘ U) (ϕ A) = ϕ (T (U A)) ∘ dist (T ∘ U) G1.
   Proof.
     intros. unfold transparent tcs.
     reassociate -> on left.
     unfold_compose_in_compose.
-    rewrite (fun_fmap_fmap T).
+    rewrite (fun_map_map T).
     rewrite (dist_morph U).
-    rewrite <- (fun_fmap_fmap T).
+    rewrite <- (fun_map_map T).
     reassociate <- on left.
     now rewrite (dist_morph T).
   Qed.
 
   Lemma dist_linear_compose : forall `{Applicative G1} `{Applicative G2} (A : Type),
-      dist (T ∘ U) (G1 ∘ G2) = fmap G1 (dist (T ∘ U) G2) ∘ dist (T ∘ U) G1 (A := G2 A).
+      dist (T ∘ U) (G1 ∘ G2) = map G1 (dist (T ∘ U) G2) ∘ dist (T ∘ U) G1 (A := G2 A).
   Proof.
     intros. unfold transparent tcs.
-    rewrite <- (fun_fmap_fmap G1).
+    rewrite <- (fun_map_map G1).
     reassociate -> on right;
-      change (fmap ?F (fmap ?G ?f)) with (fmap (F ∘ G) f);
-      reassociate <- near (fmap (G1 ∘ T) (dist U G2)).
+      change (map ?F (map ?G ?f)) with (map (F ∘ G) f);
+      reassociate <- near (map (G1 ∘ T) (dist U G2)).
     #[local] Set Keyed Unification.
     rewrite (natural (ϕ := @dist T _ G1 _ _ _)).
     #[local] Unset Keyed Unification.
     reassociate -> on right;
-      unfold_ops @Fmap_compose;
-      rewrite (fun_fmap_fmap T).
+      unfold_ops @Map_compose;
+      rewrite (fun_map_map T).
     #[local] Set Keyed Unification.
     rewrite (dist_linear U).
     rewrite (dist_linear T).
@@ -178,7 +178,7 @@ Section pure_as_applicative_transformation.
     `{Applicative G}.
 
   Lemma pure_appmor_1 : forall A B (f : A -> B) (t : A),
-      pure G (fmap (fun A : Type => A) f t) = fmap G f (pure G t).
+      pure G (map (fun A : Type => A) f t) = map G f (pure G t).
   Proof.
     intros. now rewrite (app_pure_natural G).
   Qed.
@@ -212,20 +212,20 @@ Section purity_law.
     (T : Type -> Type)
     `{TraversableFunctor T}.
 
-  Corollary fmap_purity_1 `{Applicative G} : forall A,
-    dist T G ∘ fmap T (pure G) (A := A) = pure G.
+  Corollary map_purity_1 `{Applicative G} : forall A,
+    dist T G ∘ map T (pure G) (A := A) = pure G.
   Proof.
     intros. rewrite (dist_morph T (ϕ := @pure G _)).
     now rewrite (dist_unit T).
   Qed.
 
-  Corollary fmap_purity_2 {B} `{Applicative G1} `{Applicative G2} : forall `(f : A -> G1 B),
-      dist T (G2 ∘ G1) ∘ fmap T (pure G2 ∘ f) = pure G2 ∘ dist T G1 ∘ fmap T f.
+  Corollary map_purity_2 {B} `{Applicative G1} `{Applicative G2} : forall `(f : A -> G1 B),
+      dist T (G2 ∘ G1) ∘ map T (pure G2 ∘ f) = pure G2 ∘ dist T G1 ∘ map T f.
   Proof.
-    intros. rewrite <- (fun_fmap_fmap T).
+    intros. rewrite <- (fun_map_map T).
     reassociate <-. rewrite (dist_linear T).
-    reassociate -> near (fmap T (pure G2)).
-    rewrite fmap_purity_1.
+    reassociate -> near (map T (pure G2)).
+    rewrite map_purity_1.
     fequal. ext t. unfold compose.
     now rewrite (app_pure_natural G2).
   Qed.
@@ -236,21 +236,21 @@ End purity_law.
 (******************************************************************************)
 
 From Tealeaves Require
-  Classes.Kleisli.Traversable.Functor.
+  Classes.Traversable.Functor.
 
 Module ToKleisli.
 
-  Import Classes.Kleisli.Traversable.Functor.
+  Import Classes.Traversable.Functor.
 
   Section operation.
 
     Context
       (T : Type -> Type)
-      `{Fmap T} `{Dist T}.
+      `{Map T} `{Dist T}.
 
     #[export] Instance Traverse_dist : Traverse T :=
-      fun (G : Type -> Type) `{Fmap G} `{Pure G} `{Mult G}
-        (A B : Type) (f : A -> G B) => dist T G ∘ fmap T f.
+      fun (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+        (A B : Type) (f : A -> G B) => dist T G ∘ map T f.
 
   End operation.
 
@@ -260,55 +260,55 @@ Module ToKleisli.
 
     Context
       (T : Type -> Type)
-      `{Classes.Traversable.Functor.TraversableFunctor T}.
+      `{Categorical.Classes.Traversable.Functor.TraversableFunctor T}.
 
     Theorem traverse_id : forall (A : Type),
-        traverse T (fun A => A) id = @id (T A).
+        traverse T (fun A => A) A A id = @id (T A).
     Proof.
       intros. unfold traverse. unfold_ops @Traverse_dist.
       ext t. rewrite (dist_unit T).
-      now rewrite (fun_fmap_id T).
+      now rewrite (fun_map_id T).
     Qed.
 
     Theorem traverse_id_purity : forall `{Applicative G} (A : Type),
-        traverse T G (pure G) = @pure G _ (T A).
+        traverse T G A A (pure G) = @pure G _ (T A).
     Proof.
       intros. unfold traverse.
       unfold_ops @Traverse_dist.
-      ext t. now rewrite fmap_purity_1.
+      ext t. now rewrite map_purity_1.
     Qed.
 
-    Lemma traverse_traverse (G1 G2 : Type -> Type) `{Applicative G2} `{Applicative G1} :
-      forall `(g : B -> G2 C) `(f : A -> G1 B),
-        fmap G1 (traverse T G2 g) ∘ traverse T G1 f = traverse T (G1 ∘ G2) (fmap G1 g ∘ f).
+    Lemma traverse_traverse (G1 G2 : Type -> Type) `{Applicative G1} `{Applicative G2} :
+      forall (A B C : Type) (g : B -> G2 C) (f : A -> G1 B),
+        map G1 (traverse T G2 B C g) ∘ traverse T G1 A B f = traverse T (G1 ∘ G2) A C (map G1 g ∘ f).
     Proof.
       introv. unfold traverse.
       unfold_ops @Traverse_dist.
       rewrite (dist_linear T).
       repeat reassociate <-.
-      rewrite <- (fun_fmap_fmap T).
+      rewrite <- (fun_map_map T).
       repeat reassociate <-.
-      reassociate -> near (fmap T (fmap G1 g)).
-      change (fmap T (fmap G1 g)) with (fmap (T ∘ G1) g).
+      reassociate -> near (map T (map G1 g)).
+      change (map T (map G1 g)) with (map (T ∘ G1) g).
       rewrite <- (natural (ϕ := @dist T _ G1 _ _ _)).
-      unfold_ops @Fmap_compose.
+      unfold_ops @Map_compose.
       reassociate <-.
       unfold_compose_in_compose.
-      now rewrite (fun_fmap_fmap G1).
+      now rewrite (fun_map_map G1).
     Qed.
 
     Lemma traverse_morphism `{morph : ApplicativeMorphism G1 G2 ϕ} : forall `(f : A -> G1 B),
-        ϕ (T B) ∘ traverse T G1 f = traverse T G2 (ϕ B ∘ f).
+        ϕ (T B) ∘ traverse T G1 A B f = traverse T G2 A B (ϕ B ∘ f).
     Proof.
       intros. unfold traverse.  unfold_ops @Traverse_dist.
       reassociate <-.
       inversion morph.
       rewrite <- (dist_morph T).
       reassociate ->.
-      now rewrite (fun_fmap_fmap T).
+      now rewrite (fun_map_map T).
     Qed.
 
-    #[export] Instance: Kleisli.Traversable.Functor.TraversableFunctor T :=
+    #[export] Instance: Classes.Traversable.Functor.TraversableFunctor T :=
       {| trf_traverse_id := @traverse_id;
         trf_traverse_traverse := @traverse_traverse;
         trf_traverse_morphism := @traverse_morphism;
@@ -329,8 +329,9 @@ End ToKleisli.
          (pure G (@cons A) <⋆> x) <⋆> (dist xs)
        end).
 
-Require Import Tealeaves.Classes.Monad.
-Require Import Tealeaves.Functors.List.
+Require Import Tealeaves.Categorical.Classes.Monad.
+Require Import Tealeaves.Categorical.Functors.List.
+About TraversableFunctor.
 Import List.ListNotations.
 
 (** ** Rewriting lemmas for <<dist>> *)
@@ -357,15 +358,15 @@ Section list_dist_rewrite.
 
   Lemma dist_list_cons_2 : forall (x : G A) (xs : list (G A)),
       dist list G (x :: xs) =
-      (fmap G (@cons A) x) <⋆> (dist list G xs).
+      (map G (@cons A) x) <⋆> (dist list G xs).
   Proof.
     intros. rewrite dist_list_cons_1.
-    now rewrite fmap_to_ap.
+    now rewrite map_to_ap.
   Qed.
 
-  Lemma dist_list_one (a : G A) : dist list G [ a ] = fmap G (ret list) a.
+  Lemma dist_list_one (a : G A) : dist list G [ a ] = map G (ret list _) a.
   Proof.
-    cbn. rewrite fmap_to_ap. rewrite ap3.
+    cbn. rewrite map_to_ap. rewrite ap3.
     rewrite <- ap4. now do 2 rewrite ap2.
   Qed.
 
@@ -378,16 +379,16 @@ Section list_dist_rewrite.
     - cbn [app]. rewrite dist_list_cons_2.
       rewrite dist_list_cons_2.
       rewrite IHl1; clear IHl1.
-      rewrite <- fmap_to_ap.
-      rewrite <- fmap_to_ap.
-      rewrite <- ap4. rewrite <- fmap_to_ap.
-      fequal. rewrite <- ap_fmap.
-      rewrite fmap_ap. fequal.
+      rewrite <- map_to_ap.
+      rewrite <- map_to_ap.
+      rewrite <- ap4. rewrite <- map_to_ap.
+      fequal. rewrite <- ap_map.
+      rewrite map_ap. fequal.
       compose near a.
-      rewrite (fun_fmap_fmap G).
-      rewrite (fun_fmap_fmap G).
+      rewrite (fun_map_map G).
+      rewrite (fun_map_map G).
       compose near a on left.
-      now rewrite (fun_fmap_fmap G).
+      now rewrite (fun_map_map G).
   Qed.
 
 End list_dist_rewrite.
@@ -403,40 +404,40 @@ Section dist_list_properties.
   Generalizable All Variables.
 
   Lemma dist_list_1 : forall `{Applicative G} `(f : A -> B) (a : G A) (l : list (G A)),
-      fmap G (fmap list f) ((fmap G (@cons A) a) <⋆> dist list G A l) =
-      (fmap G (@cons B ○ f) a) <⋆> fmap G (fmap list f) (dist list G A l).
+      map G (map list f) ((map G (@cons A) a) <⋆> dist list G A l) =
+      (map G (@cons B ○ f) a) <⋆> map G (map list f) (dist list G A l).
   Proof.
-    intros. rewrite fmap_ap. rewrite <- ap_fmap.
-    fequal. compose near a. now rewrite 2(fun_fmap_fmap G).
+    intros. rewrite map_ap. rewrite <- ap_map.
+    fequal. compose near a. now rewrite 2(fun_map_map G).
   Qed.
 
   Lemma dist_list_2 : forall `{Applicative G} `(f : A -> B) (a : G A) (l : list (G A)),
-      fmap G (fmap list f) ((pure G (@cons A) <⋆> a) <⋆> dist list G A l) =
-      (pure G cons <⋆> fmap G f a) <⋆> fmap G (fmap list f) (dist list G A l).
+      map G (map list f) ((pure G (@cons A) <⋆> a) <⋆> dist list G A l) =
+      (pure G cons <⋆> map G f a) <⋆> map G (map list f) (dist list G A l).
   Proof.
-    intros. rewrite <- fmap_to_ap.
-    rewrite fmap_ap.
+    intros. rewrite <- map_to_ap.
+    rewrite map_ap.
     compose near a on left.
-    rewrite (fun_fmap_fmap G).
-    rewrite pure_ap_fmap.
+    rewrite (fun_map_map G).
+    rewrite pure_ap_map.
     unfold ap. rewrite (app_mult_natural G).
     rewrite (app_mult_natural_1 G).
     compose near ((a ⊗ dist list G A l)) on right.
-    rewrite (fun_fmap_fmap G). fequal. ext [? ?].
+    rewrite (fun_map_map G). fequal. ext [? ?].
     reflexivity.
   Qed.
 
   Lemma dist_natural_list : forall `{Applicative G} `(f : A -> B),
-      fmap (G ∘ list) f ∘ dist list G A =
-      dist list G B ∘ fmap (list ∘ G) f.
+      map (G ∘ list) f ∘ dist list G A =
+      dist list G B ∘ map (list ∘ G) f.
   Proof.
-    intros; cbn. unfold_ops @Fmap_compose. unfold compose.
+    intros; cbn. unfold_ops @Map_compose. unfold compose.
     ext l. induction l.
     + cbn. now rewrite (app_pure_natural G).
     + rewrite dist_list_cons_2.
-      rewrite fmap_list_cons, dist_list_cons_2.
+      rewrite map_list_cons, dist_list_cons_2.
       rewrite <- IHl. rewrite dist_list_1.
-      compose near a on right. now rewrite (fun_fmap_fmap G).
+      compose near a on right. now rewrite (fun_map_map G).
   Qed.
 
   Instance dist_natural_list_ : forall `{Applicative G}, Natural (@dist list _ G _ _ _).
@@ -446,14 +447,14 @@ Section dist_list_properties.
   Qed.
 
   Lemma dist_morph_list : forall `{ApplicativeMorphism G1 G2 ϕ} A,
-      dist list G2 A ∘ fmap list (ϕ A) = ϕ (list A) ∘ dist list G1 A.
+      dist list G2 A ∘ map list (ϕ A) = ϕ (list A) ∘ dist list G1 A.
   Proof.
     intros. ext l. unfold compose. induction l.
     - cbn. now rewrite (appmor_pure G1 G2).
     - specialize (appmor_app_F G1 G2);
         specialize (appmor_app_G G1 G2);
         intros.
-      rewrite fmap_list_cons, dist_list_cons_2.
+      rewrite map_list_cons, dist_list_cons_2.
       rewrite dist_list_cons_2.
       rewrite IHl. rewrite ap_morphism_1.
       fequal. now rewrite (appmor_natural G1 G2 A).
@@ -471,37 +472,37 @@ Section dist_list_properties.
   Lemma dist_linear_list
     : forall `{Applicative G1} `{Applicative G2} (A : Type),
       dist list (G1 ∘ G2) A =
-      fmap G1 (dist list G2 A) ∘ dist list G1 (G2 A).
+      map G1 (dist list G2 A) ∘ dist list G1 (G2 A).
   Proof.
     intros. unfold compose. ext l. induction l.
     - cbn. unfold_ops @Pure_compose.
-      rewrite fmap_to_ap. now rewrite ap2.
+      rewrite map_to_ap. now rewrite ap2.
     - rewrite (dist_list_cons_2 (G := G1 ○ G2)).
       rewrite (dist_list_cons_2 (G := G1)).
       rewrite IHl; clear IHl.
-      unfold_ops @Mult_compose @Pure_compose @Fmap_compose.
+      unfold_ops @Mult_compose @Pure_compose @Map_compose.
       rewrite (ap_compose2 G2 G1).
       compose near a on left.
-      rewrite (fun_fmap_fmap G1).
+      rewrite (fun_map_map G1).
       unfold ap at 1.
       rewrite (app_mult_natural G1).
       unfold ap at 2. rewrite (app_mult_natural_1 G1).
       fequal. compose near (a ⊗ dist list G1 (G2 A) l).
-      repeat rewrite (fun_fmap_fmap G1). fequal.
-      ext [? ?]. cbn. unfold compose. now rewrite fmap_to_ap.
+      repeat rewrite (fun_map_map G1). fequal.
+      ext [? ?]. cbn. unfold compose. now rewrite map_to_ap.
   Qed.
   #[local] Unset Keyed Unification.
 
 End dist_list_properties.
 
-#[export] Instance Traversable_list : Classes.Traversable.Functor.TraversableFunctor list :=
+#[export] Instance Traversable_list : Categorical.Classes.Traversable.Functor.TraversableFunctor list :=
   {| dist_natural := @dist_natural_list_;
      dist_morph := @dist_morph_list;
      dist_unit := @dist_unit_list;
      dist_linear := @dist_linear_list;
   |}.
 
-Require Import Tealeaves.Functors.Environment.
+Require Import Tealeaves.Categorical.Functors.Environment.
 
 (** * Traversable instance for <<prod>> *)
 (******************************************************************************)
@@ -513,14 +514,17 @@ Section TraversableFunctor_prod.
     (X : Type).
 
   #[global] Instance Dist_prod : Dist (prod X) :=
-    fun F map mlt pur A '(x, a) => fmap F (pair x) a.
+    fun F Fmap mlt pur A '(x, a) => map F (pair x) a.
 
   Lemma dist_natural_prod : forall `{Applicative G} `(f : A -> B),
-      fmap (G ∘ prod X) f ∘ dist (prod X) G = dist (prod X) G ∘ fmap (prod X ∘ G) f.
+      map (G ∘ prod X) f ∘ dist (prod X) G = dist (prod X) G ∘ map (prod X ∘ G) f.
   Proof.
-    intros; unfold compose; cbn. ext [x a]; cbn.
-    unfold_ops @Fmap_compose. compose near a.
-    now do 2 rewrite (fun_fmap_fmap G).
+    intros. ext [x a]; cbn.
+    unfold compose; cbn.
+    unfold_ops @Map_compose.
+    compose near a.
+    do 2 rewrite (fun_map_map G).
+    reflexivity.
   Qed.
 
   Instance dist_natural_prod_ : forall `{Applicative G}, Natural (@dist (prod X) _ G _ _ _).
@@ -530,7 +534,7 @@ Section TraversableFunctor_prod.
   Qed.
 
   Lemma dist_morph_prod : forall `{ApplicativeMorphism G1 G2 ϕ} A,
-      dist (prod X) G2 ∘ fmap (prod X) (ϕ A) = ϕ (X * A) ∘ dist (prod X) G1.
+      dist (prod X) G2 ∘ map (prod X) (ϕ A) = ϕ (X * A) ∘ dist (prod X) G1.
   Proof.
     intros; unfold compose; cbn. ext [x a]; cbn.
     specialize (appmor_app_F G1 G2);
@@ -547,14 +551,14 @@ Section TraversableFunctor_prod.
 
   Lemma dist_linear_prod : forall `{Applicative G1} `{Applicative G2} (A : Type),
       dist (prod X) (G1 ∘ G2) (A := A) =
-      fmap G1 (dist (prod X) G2) ∘ dist (prod X) G1.
+      map G1 (dist (prod X) G2) ∘ dist (prod X) G1.
   Proof.
     intros; unfold compose; cbn. ext [x a].
-    unfold_ops @Dist_prod @Fmap_compose.
-    compose near a on right. now rewrite (fun_fmap_fmap G1).
+    unfold_ops @Dist_prod @Map_compose.
+    compose near a on right. now rewrite (fun_map_map G1).
   Qed.
 
-  #[global] Instance Traversable_prod : Classes.Traversable.Functor.TraversableFunctor (prod X) :=
+  #[global] Instance Traversable_prod : Categorical.Classes.Traversable.Functor.TraversableFunctor (prod X) :=
     {| dist_natural := @dist_natural_prod_;
        dist_morph := @dist_morph_prod;
        dist_unit := @dist_unit_prod;
@@ -590,27 +594,27 @@ Section TraversableFunctor_const.
   (******************************************************************************)
   Lemma dist_const1 : forall (X : Type) `{Monoid M},
       (@dist T _ (const M)
-             (Fmap_const) (Pure_const) (Mult_const) X)
+             (Map_const) (Pure_const) (Mult_const) X)
       =
       (@dist T _ (const M)
-             (Fmap_const) (Pure_const) (Mult_const) False).
+             (Map_const) (Pure_const) (Mult_const) False).
   Proof.
     intros. symmetry. change (?f = ?g) with (f = g ∘ (@id (T M))).
-    rewrite <- (fun_fmap_id T).
+    rewrite <- (fun_map_id T).
     change (@id M) with
-        (fmap (A := False) (B:=X) (const M) exfalso).
-    change (fmap T (fmap (const M) ?f))
-      with (fmap (T ∘ const M) f).
+        (map (A := False) (B:=X) (const M) exfalso).
+    change (map T (map (const M) ?f))
+      with (map (T ∘ const M) f).
     rewrite <- (natural (ϕ := @dist T _ (const M) _ _ _) (B := X) (A := False)).
     reflexivity.
   Qed.
 
   Lemma dist_const2 : forall (X Y : Type) `{Monoid M},
       (@dist T _ (const M)
-             (Fmap_const) (Pure_const) (Mult_const) X)
+             (Map_const) (Pure_const) (Mult_const) X)
       =
       (@dist T _ (const M)
-             (Fmap_const) (Pure_const) (Mult_const) Y).
+             (Map_const) (Pure_const) (Mult_const) Y).
   Proof.
     intros. now rewrite (dist_const1 X), (dist_const1 Y).
   Qed.
@@ -619,18 +623,18 @@ Section TraversableFunctor_const.
   (******************************************************************************)
   Theorem traversable_const_spec (tag : Type) `{Monoid M} :
     unconst ∘ @dist T _ (Const M)
-            (Fmap_Const)
+            (Map_Const)
             (Pure_Const)
-            (Mult_Const) tag ∘ fmap T (mkConst)
+            (Mult_Const) tag ∘ map T (mkConst)
     = @dist T _ (const M)
-            (Fmap_const)
+            (Map_const)
             (Pure_const)
             (Mult_const) tag.
   Proof.
     intros. rewrite <- (dist_morph T (ϕ := @unconst _)).
-    reassociate -> on left. rewrite (fun_fmap_fmap T).
+    reassociate -> on left. rewrite (fun_map_map T).
     change (unconst ∘ mkConst) with (@id M).
-    now rewrite (fun_fmap_id T).
+    now rewrite (fun_map_id T).
   Qed.
 
 End TraversableFunctor_const.
@@ -677,7 +681,7 @@ Section traversable_product.
   Qed.
 
   Theorem dist_combine : forall (t : T A),
-    dist T (G1 ◻ G2) (fmap T (f <◻> g) t) =
+    dist T (G1 ◻ G2) (map T (f <◻> g) t) =
     product (traverse T G1 f t) (traverse T G2 g t).
   Proof.
     intros. compose near t on left.
@@ -718,7 +722,7 @@ Section traversal_iterate.
     dist T G (A := A) = runBatch (@id (G A)) ∘ Functor.toBatch T A.
   Proof.
     ext t.
-    replace t with (fmap T id t) at 1 by (now rewrite (fun_fmap_id T)).
+    replace t with (map T id t) at 1 by (now rewrite (fun_map_id T)).
     change_left (traverse T G (@id (G A)) t).
     now rewrite (traverse_to_runBatch T).
   Qed.

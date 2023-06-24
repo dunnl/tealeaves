@@ -30,7 +30,7 @@ Section RightComodule_class.
       rcom_functor :> Functor F;
       rcom_coaction_natural :> Natural (@right_coaction F W _);
       rcom_map_extr_coaction :
-        `(map F (extract W) ∘ right_coaction F W A = @id (F A));
+        `(map F (extract W A) ∘ right_coaction F W A = @id (F A));
       rcom_coaction_coaction :
         `(right_coaction F W (W A) ∘ right_coaction F W A =
           map F (cojoin W) ∘ right_coaction F W A);

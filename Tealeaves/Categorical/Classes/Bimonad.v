@@ -43,13 +43,13 @@ Section Bimonad.
       bimonad_comonad :> Comonad W;
       bimonad_distributive_law :> BeckDistributiveLaw W W;
       bimonad_dist_counit_r :
-        `(map W (extract W) ∘ bdist W W = extract W (A := W A));
+        `(map W (extract W A) ∘ bdist W W = extract W (W A));
       bimonad_dist_counit_l :
-        `(extract W ∘ bdist W W = map W (extract W (A := A)));
+        `(extract W (W A) ∘ bdist W W = map W (extract W A));
       bimonad_cap :
-        `(extract W ∘ join W = extract W ∘ extract W (A := W A));
+        `(extract W A ∘ join W = extract W A ∘ extract W (W A));
       bimonad_baton :
-        `(extract W ∘ ret W = @id A);
+        `(extract W A ∘ ret W = @id A);
       bimonad_cup :
         `(cojoin W ∘ ret W = ret W ∘ ret W (A := A));
       bimonad_butterfly :

@@ -1,6 +1,7 @@
 From Tealeaves Require Import
   Classes.Functor
   Classes.Monoid
+  Categorical.Functors.Writer
   Definitions.Strength.
 
 #[local] Generalizable Variable W.
@@ -42,7 +43,8 @@ Section shift_functor_lemmas.
   Proof.
     intros ? x. unfold shift. unfold_ops @Join_writer.
     unfold compose; cbn. compose near x on left.
-    rewrite (fun_map_map F). f_equal. now ext [? ?].
+    rewrite (fun_map_map F).
+    reflexivity.
   Qed.
 
   (** If we think of <<shift>> as a function of two arguments,
@@ -88,8 +90,8 @@ Section shift_functor_lemmas.
       leaves, is equivalent to simply discarding the original
       annotations and the argument to <<shift>>. *)
   Lemma shift_extract {A} :
-    map F (extract (prod W)) ∘ shift F =
-    map F (extract (prod W)) ∘ extract (prod W) (A := F (W * A)).
+    map F (extract (prod W) A) ∘ shift F =
+    map F (extract (prod W) A) ∘ extract (prod W) (F (W * A)).
   Proof.
     unfold shift. reassociate <- on left.
     ext [w t]. unfold compose; cbn.

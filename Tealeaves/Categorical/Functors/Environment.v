@@ -2,7 +2,7 @@ From Tealeaves Require Export
   Definitions.Product
   Definitions.Strength
   Classes.Comonoid
-  Classes.Comonad.
+  Categorical.Classes.Comonad.
 
 Import Product.Notations.
 Import Strength.Notations.
@@ -42,32 +42,6 @@ Section environment_comonad_instance.
   Context
     `{W : Type}.
 
-  #[export] Instance Cobind_prod : Cobind (W ×) :=
-    Cobind_env.
-    (* fun A B f => map (W ×) (W * A) B f ∘ @dup_left W A. *)
-
-  #[export] Instance Extract_prod : Extract (W ×) :=
-    Kleisli.Extract_env.
-  (* @snd W. *)
-
-  #[export, program] Instance Comonad_prod : Comonad (W ×).
-
-  Solve All Obligations with (introv; now ext [? ?]).
-
-End environment_comonad_instance.
-
-Lemma map_to_cobind {E} : forall A B (f : A -> B),
-    map (E ×) A B f = cobind (E ×) A B (f ∘ extract (E ×) A).
-Proof.
-  intros. now ext [e a].
-Qed.
-
-(*
-Section environment_comonad_instance.
-
-  Context
-    `{W : Type}.
-
   #[export] Instance Cojoin_prod : Cojoin (W ×) :=
     @dup_left W.
 
@@ -91,7 +65,6 @@ Section environment_comonad_instance.
   Solve All Obligations with (introv; now ext [? ?]).
 
 End environment_comonad_instance.
-*)
 
 (** * Miscellaneous properties *)
 (******************************************************************************)
@@ -102,23 +75,21 @@ Section miscellaneous.
     (F : Type -> Type).
 
   Theorem strength_extract `{Functor F} {A : Type} :
-    map F (E * A) A (extract (E ×) A) ∘ σ F = extract (E ×) (F A).
+    map F (extract (E ×) A) ∘ σ F = extract (E ×) (F A).
   Proof.
     intros. unfold strength, compose. ext [w a]. cbn.
     compose_near a. now rewrite (fun_map_map F), (fun_map_id F).
   Qed.
 
-  (*
   Theorem strength_cojoin `{Functor F} {A : Type} :
-    `(map F (cojoin (E ×)) ∘ σ F = σ F ∘ cobind (E ×) (σ F) (A := F A)).
+    `(map F (cojoin (E ×) (A := A)) ∘ σ F = σ F ∘ map (E ×) (σ F) ∘ cojoin (E ×)).
   Proof.
     intros. unfold strength, compose. ext [w a]. cbn.
     compose_near a. now rewrite 2(fun_map_map F).
   Qed.
-  *)
 
   Theorem product_map_commute {E1 E2 A B : Type} (g : E1 -> E2) (f : A -> B) :
-    map (E2 ×) _ _ f ∘ map_fst g = map_fst g ∘ map (E1 ×) _ _ f.
+    map (E2 ×) f ∘ map_fst g = map_fst g ∘ map (E1 ×) f.
   Proof.
     now ext [w a].
   Qed.

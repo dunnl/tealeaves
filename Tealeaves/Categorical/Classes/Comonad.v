@@ -40,7 +40,9 @@ Section comonad.
 End comonad.
 
 Arguments cojoin _%function_scope {Cojoin} {A}%type_scope.
+(*
 Arguments extract _%function_scope {Extract} {A}%type_scope.
+*)
 
 (** * Notations *)
 (******************************************************************************)
@@ -48,3 +50,83 @@ Module Notations.
   Notation "'coμ'" := (cojoin) : tealeaves_scope.
   (*Notation "'coη'" := (extract) : tealeaves_scope.*)
 End Notations.
+
+
+(** * Comonad to Kleisli comonad *)
+(******************************************************************************)
+Module ToKleisli.
+
+  Import Tealeaves.Classes.Comonad.
+  Import Tealeaves.Classes.Comonad.Notations.
+
+  #[local] Generalizable All Variables.
+
+  Section operation.
+
+    Context
+      (W : Type -> Type)
+      `{Map W} `{Cojoin W}.
+
+    #[export] Instance Cobind_Cojoin : Cobind W :=
+      fun {A B} (f : W A -> B) => map W (W A) B f ∘ cojoin W.
+
+  End operation.
+
+  Section with_monad.
+
+    Context
+      (W : Type -> Type)
+      `{Categorical.Classes.Comonad.Comonad W}.
+
+    (** *** Identity law *)
+    (******************************************************************************)
+    Lemma kcom_bind_id :
+      `(cobind W A A (extract W A) = @id (W A)).
+    Proof.
+      intros. unfold_ops @Cobind_Cojoin.
+      now rewrite (com_map_extr_cojoin W).
+    Qed.
+
+    (** *** Composition law *)
+    (******************************************************************************)
+    Lemma kcom_bind_bind : forall (A B C : Type) (g : W B -> C) (f : W A -> B),
+        cobind W B C g ∘ cobind W A B f = cobind W A C (g ⋆4 f).
+    Proof.
+      introv. unfold transparent tcs.
+      unfold kc4.
+      unfold_ops @Cobind_Cojoin.
+      reassociate <- on left.
+      reassociate -> near (map W (W A) B f).
+      rewrite <- (natural (ϕ := @cojoin W _)).
+      unfold_ops @Map_compose.
+      reassociate -> on left.
+      reassociate -> on left.
+      rewrite (com_cojoin_cojoin W).
+      do 2 reassociate <- on left.
+      unfold_compose_in_compose.
+      do 2 rewrite (fun_map_map W).
+      reflexivity.
+    Qed.
+
+    (** *** Unit law *)
+    (******************************************************************************)
+    Lemma kcom_bind_comp_ret : forall (A B : Type) (f : W A -> B),
+        extract W B ∘ cobind W A B f = f.
+    Proof.
+      intros. unfold transparent tcs.
+      reassociate <- on left.
+      rewrite <- (natural (ϕ := extract W)).
+      reassociate -> on left.
+      rewrite (com_extract_cojoin W).
+      reflexivity.
+    Qed.
+
+    #[export] Instance Kleisli_Comonad : Tealeaves.Classes.Comonad.Comonad W :=
+      {| kcom_cobind0 := @kcom_bind_comp_ret;
+        kcom_cobind1 := @kcom_bind_id;
+        kcom_cobind2 := @kcom_bind_bind;
+      |}.
+
+  End with_monad.
+
+End ToKleisli.

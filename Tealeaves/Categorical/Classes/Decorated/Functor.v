@@ -3,8 +3,9 @@
 
 From Tealeaves Require Export
   Categorical.Classes.Comonad
-  Functors.Environment
-  Functors.Writer.
+  Categorical.Functors.Environment
+  Categorical.Functors.Writer
+  Definitions.Shift.
 
 Import Product.Notations.
 Import Functor.Notations.
@@ -39,7 +40,7 @@ Section DecoratedFunctor.
       dfun_dec_dec : forall (A : Type),
         dec E F (E * A) ∘ dec E F A = map F (cojoin (prod E)) ∘ dec E F A;
       dfun_dec_extract : forall (A : Type),
-        map F (extract (E ×)) ∘ dec E F A = @id (F A);
+        map F (extract (E ×) A) ∘ dec E F A = @id (F A);
     }.
 
 End DecoratedFunctor.
@@ -63,7 +64,7 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables T F W.
 
-From Tealeaves.Classes Require Import RightComodule.
+From Tealeaves.Categorical.Classes Require Import RightComodule.
 
 (** * Helper lemmas for proving typeclass instances *)
 (** Each of the following lemmas is useful for proving one of the laws
@@ -99,8 +100,8 @@ Section helper_lemmas.
 
   (** This lemmas is useful for proving the dec-extract law. *)
   Lemma dec_helper_2 {A} : forall (t : F A) (w : W),
-      map F (extract (prod W)) (dec F t) = t ->
-      map F (extract (prod W)) (shift F (w, dec F t)) = t.
+      map F (extract (prod W) A) (dec F t) = t ->
+      map F (extract (prod W) A) (shift F (w, dec F t)) = t.
   Proof.
     intros.
     compose near (w, dec F t).
@@ -129,6 +130,69 @@ Section helper_lemmas.
 
 End helper_lemmas.
 
+(** * Algebraic decorated functor to Kleisli decorated functor *)
+(******************************************************************************)
+
+From Tealeaves Require Import Classes.Decorated.Functor.
+
+(** ** Kleisli laws for <<fmapd>> *)
+(******************************************************************************)
+Module ToKleisli.
+
+  Section operation.
+
+    Context
+      (E : Type)
+      (F : Type -> Type)
+      `{Map F} `{Decorate E F}.
+
+    #[export] Instance Mapd_dec : Mapd E F :=
+      fun A B (f : E * A -> B) => map F f ∘ dec F.
+
+  End operation.
+
+  Import Tealeaves.Classes.Comonad.Notations.
+  Import Comonad.ToKleisli.
+
+  Section with_functor.
+
+    Context
+      (F : Type -> Type)
+      `{Categorical.Classes.Decorated.Functor.DecoratedFunctor E F}.
+
+    Theorem mapd_id {A} : mapd E F A A (extract (E ×) A) = @id (F A).
+    Proof.
+      introv. unfold_ops @Mapd_dec.
+      apply (dfun_dec_extract E F).
+    Qed.
+
+    Theorem mapd_mapd (A B C : Type) (g : E * B -> C) (f : E * A -> B) :
+      mapd E F B C g ∘ mapd E F A B f = mapd E F A C (kc4 (H := Cobind_Cojoin (E ×)) (E ×) g f).
+    Proof.
+      unfold_ops @Mapd_dec.
+      reassociate <- on left.
+      reassociate -> near (map F f).
+      rewrite <- (natural (G := F ○ prod E)).
+      reassociate <- on left.
+      unfold transparent tcs.
+      rewrite (fun_map_map F).
+      reassociate -> on left.
+      rewrite (dfun_dec_dec E F).
+      reassociate <- on left.
+      rewrite (fun_map_map F).
+      reflexivity.
+    Qed.
+
+    #[export] Instance DecoratedFunctor: Classes.Decorated.Functor.DecoratedFunctor E F (H := Mapd_dec E F) :=
+      {| dfun_mapd1 := @mapd_id;
+        dfun_mapd2 := @mapd_mapd
+      |}.
+
+  End with_functor.
+
+End ToKleisli.
+
+(*
 (** * Miscellaneous properties of decorated functors *)
 (******************************************************************************)
 Section DecoratedFunctor_misc.
@@ -148,6 +212,7 @@ Section DecoratedFunctor_misc.
   Qed.
 
 End DecoratedFunctor_misc.
+*)
 
 (** * Decorated functor instance for [Environment] *)
 (******************************************************************************)

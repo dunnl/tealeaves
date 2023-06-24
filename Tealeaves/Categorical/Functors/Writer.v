@@ -1,9 +1,9 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Classes.Bimonad
-  Classes.RightModule
-  Functors.Environment
-  Data.Product.
+  Categorical.Classes.Bimonad
+  Categorical.Classes.RightModule
+  Categorical.Functors.Environment
+  Definitions.Product.
 
 Import Product.Notations.
 Import Functor.Notations.
@@ -27,21 +27,23 @@ Section Monad_strength_laws.
     `{Monad T}.
 
   Lemma strength_ret : forall (A : Type),
-      σ T ∘ fmap (W ×) (ret T) = ret T (A := W * A).
+      σ T ∘ map (W ×) (ret T A) = ret T (W * A).
   Proof.
-    intros. ext [w a]. unfold compose; cbn. compose near a on left.
+    intros. ext [w a].
+    unfold compose; cbn.
+    compose near a on left.
     now rewrite (natural (G := T) (F := fun A => A)).
   Qed.
 
   Lemma strength_join : forall (A : Type),
-      σ T ∘ fmap (W ×) (μ T) =
-      μ T (A := W * A) ∘ fmap T (σ T) ∘ σ T.
+      σ T ∘ map (W ×) (μ T A) =
+      μ T (W * A) ∘ map T (σ T) ∘ σ T.
   Proof.
-    intros. ext [w t]. change_left (σ T (w, μ T t)).
+    intros. ext [w t]. change_left (σ T (w, μ T A t)).
     unfold strength, compose.
     compose near t on right.
-    rewrite (fun_fmap_fmap T).
-    unfold compose. change_right (μ T (fmap (T ∘ T) (pair w) t)).
+    rewrite (fun_map_map T).
+    unfold compose. change_right (μ T _ (map (T ∘ T) (pair w) t)).
     compose near t on right. now rewrite <- (natural (F := T ∘ T)).
   Qed.
 
@@ -50,14 +52,14 @@ Section Monad_strength_laws.
     `{RightModule F T}.
 
   Lemma strength_right_action : forall (A : Type),
-      σ F ∘ fmap (W ×) (right_action F) =
-      right_action F (A := W * A) ∘ fmap F (σ T) ∘ σ F.
+      σ F ∘ map (W ×) (right_action F) =
+      right_action F (A := W * A) ∘ map F (σ T) ∘ σ F.
   Proof.
     intros. ext [w t]. change_left (σ F (w, right_action F t)).
     unfold strength, compose.
     compose near t on right.
-    rewrite (fun_fmap_fmap F).
-    unfold compose. change_right (right_action F (fmap (F ∘ T) (pair w) t)).
+    rewrite (fun_map_map F).
+    unfold compose. change_right (right_action F (map (F ∘ T) (pair w) t)).
     compose near t on right. now rewrite <- (natural (F := F ∘ T)).
   Qed.
 
@@ -102,7 +104,7 @@ End writer_monad.
 
 (** * Writer bimonad *)
 (******************************************************************************)
-#[export] Instance BeckDistribution_strength (W : Type) (T : Type -> Type) `{Fmap T}:
+#[export] Instance BeckDistribution_strength (W : Type) (T : Type -> Type) `{Map T}:
   BeckDistribution (W ×) T := (fun A => σ T).
 
 (** ** <<T ∘ (W ×)>> is a monad *)
@@ -110,11 +112,11 @@ End writer_monad.
 #[export] Instance Natural_strength `{Functor F} {W : Type} : Natural (F := prod W ∘ F) (@strength F _ W).
 Proof.
   constructor; try typeclasses eauto.
-  intros. unfold_ops @Fmap_compose. ext [a t].
+  intros. unfold_ops @Map_compose. ext [a t].
   unfold compose; cbn.
   compose near t on left.
   compose near t on right.
-  now rewrite 2(fun_fmap_fmap F).
+  now rewrite 2(fun_map_map F).
 Qed.
 
 Section strength_as_writer_distributive_law.
@@ -123,19 +125,19 @@ Section strength_as_writer_distributive_law.
     `{Monoid W}.
 
   Lemma strength_ret_l `{Functor F} : forall A : Type,
-      σ F ∘ ret (W ×) (A := F A) =
-      fmap F (ret (W ×)).
+      σ F ∘ ret (W ×) (F A) =
+      map F (ret (W ×) A).
   Proof.
     reflexivity.
   Qed.
 
   Lemma strength_join_l `{Functor F} : forall A : Type,
-      σ F ∘ join (W ×) (A := F A) =
-      fmap F (join (W ×)) ∘ σ F ∘ fmap (W ×) (σ F).
+      σ F ∘ join (W ×) (F A) =
+      map F (join (W ×) A) ∘ σ F ∘ map (W ×) (σ F).
   Proof.
     intros. ext [w1 [w2 t]]. unfold compose; cbn.
-    compose near t. rewrite (fun_fmap_fmap F).
-    compose near t on right. rewrite (fun_fmap_fmap F).
+    compose near t. rewrite (fun_map_map F).
+    compose near t on right. rewrite (fun_map_map F).
     reflexivity.
   Qed.
 
@@ -168,41 +170,41 @@ Section writer_bimonad_instance.
   Qed.
 
   Lemma bimonad_dist_counit_l : forall A,
-      extract (W ×) ∘ bdist (W ×) (W ×) =
-      fmap (W ×) (extract (W ×) (A := A)).
+      extract (W ×) (W * A) ∘ bdist (W ×) (W ×) =
+      map (W ×) (extract (W ×) A).
   Proof.
     intros. now ext [w1 [w2 a]].
   Qed.
 
   Lemma bimonad_dist_counit_r : forall A,
-      fmap (W ×) (extract (W ×)) ∘ bdist (W ×) (W ×) =
-      extract (W ×) (A := W * A).
+      map (W ×) (extract (W ×) A) ∘ bdist (W ×) (W ×) =
+      extract (W ×) (W * A).
   Proof.
     intros. now ext [w1 [w2 a]].
   Qed.
 
   Lemma bimonad_baton : forall A,
-      extract (W ×) ∘ ret (W ×) = @id A.
+      extract (W ×) A ∘ ret (W ×) A = @id A.
   Proof.
     intros. reflexivity.
   Qed.
 
   Lemma bimonad_cup : forall A,
-      cojoin (W ×) ∘ ret (W ×) = ret (W ×) ∘ ret (W ×) (A := A).
+      cojoin (W ×) ∘ ret (W ×) A = ret (W ×) (W * A) ∘ ret (W ×) A.
   Proof.
     intros. reflexivity.
   Qed.
 
   Lemma bimonad_cap : forall A,
-      extract (W ×) ∘ join (W ×) = extract (W ×) ∘ extract (W ×) (A := W * A).
+      extract (W ×) A ∘ join (W ×) A = extract (W ×) A ∘ extract (W ×) (W * A).
   Proof.
     intros. now ext [w1 [w2 a]].
   Qed.
 
   Lemma bimonad_butterfly : forall A,
-      cojoin (W ×) ∘ join (W ×) (A := A) =
-      fmap (W ×) (join (W ×)) ∘ join (W ×) ∘ fmap (W ×) (bdist (W ×) (W ×))
-           ∘ cojoin (W ×) ∘ fmap (W ×) (cojoin (W ×)).
+      cojoin (W ×) ∘ join (W ×) A =
+      map (W ×) (join (W ×) _) ∘ join (W ×) _ ∘ map (W ×) (bdist (W ×) (W ×))
+           ∘ cojoin (W ×) ∘ map (W ×) (cojoin (W ×)).
   Proof.
     intros. now ext [w1 [w2 a]].
   Qed.
@@ -225,29 +227,8 @@ End writer_bimonad_instance.
 (******************************************************************************)
 Section incr.
 
-  Context
-    `{Monoid W}.
-
-  (* It sometimes useful to have this curried operation, the
-  composition of [strength] and [join]. *)
-  Definition incr {A : Type} : W -> W * A -> W * A :=
-    fun w2 '(w1, a) => (w2 ● w1, a).
-
-  Lemma incr_zero {A : Type} :
-    incr Ƶ = @id (W * A).
-  Proof.
-    ext [? ?]. cbn. now simpl_monoid.
-  Qed.
-
-  Lemma incr_incr {A : Type} : forall w1 w2,
-    incr (A:=A) w2 ∘ incr w1 = incr (w2 ● w1).
-  Proof.
-    intros. ext [w a].
-    cbn. now simpl_monoid.
-  Qed.
-
-  Lemma extract_incr {A : Type} :
-    forall (w : W), extract (W ×) ∘ incr w = extract (W ×) (A := A).
+  Lemma extract_incr `{Monoid W} {A : Type} :
+    forall (w : W), extract (W ×) A ∘ incr W w = extract (W ×) A.
   Proof.
     intros. now ext [w' a].
   Qed.
@@ -265,10 +246,10 @@ Section Writer_miscellaneous.
   (* This rewrite is useful when proving decoration-traversal compatibility
      in the binder case. *)
   Theorem strength_shift1 : forall (F : Type -> Type) `{Functor F} (w : W) (A : Type),
-      σ F ∘ μ (W ×) ∘ pair w = fmap F (μ (W ×) ∘ pair w) ∘ σ F (B := A).
+      σ F ∘ μ (W ×) _ ∘ pair w = map F (μ (W ×) _ ∘ pair w) ∘ σ F (B := A).
   Proof.
     intros. ext [w' x]. unfold compose; cbn.
-    compose near x. now rewrite (fun_fmap_fmap F).
+    compose near x. now rewrite (fun_map_map F).
   Qed.
 
 End Writer_miscellaneous.
