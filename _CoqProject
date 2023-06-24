@@ -47,10 +47,9 @@ Tealeaves/Theory/DT/Monad.v
 Tealeaves/Theory/List.v
 Tealeaves/Backends/LN/Atom.v
 Tealeaves/Backends/LN/AtomSet.v
-#Tealeaves/Backends/LN/AssocList.v
+Tealeaves/Backends/LN/AssocList.v
 Tealeaves/Backends/LN/LN.v
-#Tealeaves/Backends/LN.v
-#Tealeaves/Examples/STLC/Syntax.v
+Tealeaves/Backends/LN.v
 #Tealeaves/Examples/STLC/TypeSoundness.v
 #Tealeaves/Examples/STLC/SyntaxCategorical.v
 #Tealeaves/Examples/STLC+Let/Let1.v

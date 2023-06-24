@@ -152,8 +152,9 @@ Section locally_nameless_operations.
   Definition subst x (u : T LN) : T LN -> T LN :=
     bind T T LN LN (subst_loc x u).
 
+  (* fun t => bind list list LN atom free_loc (tolist T LN t). *)
   Definition free : T LN -> list atom :=
-    fun t => bind list list LN atom free_loc (tolist T LN t).
+    foldMap T free_loc.
 
   Definition freeset : T LN -> AtomSet.t :=
     fun t => LN.AtomSet.atoms (free t).
@@ -196,6 +197,17 @@ Section test_notations.
 
 End test_notations.
 
+#[local] Arguments binddt {M}%type_scope T {U}%function_scope {Binddt}   G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[local] Arguments mapdt  {M}%type_scope (T)%function_scope   {Mapdt}    G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[local] Arguments bindd  {M}%type_scope T {U}%function_scope {Bindd}                               {A B}%type_scope _%function_scope _.
+#[local] Arguments mapd   {M}%type_scope (T)%function_scope   {Mapd}                                {A B}%type_scope _%function_scope _.
+#[local] Arguments bindt                 T {U}%function_scope {Bindt}    G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[local] Arguments traverse              (T)%function_scope   {Traverse} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[local] Arguments bind                  (T) {U}%function_scope {Bind}                              {A B}%type_scope _%function_scope _.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
+#[local] Arguments cobind W%function_scope {Cobind} {A B}%type_scope _%function_scope _.
+
 (** * Lemmas for local reasoning *)
 (******************************************************************************)
 Create HintDb tea_local.
@@ -234,7 +246,7 @@ Section locally_nameless_basic_principles.
   Qed.
 
   Lemma open_id : forall t u,
-      (forall w l, (w, l) ∈d t -> open_loc u (w, l) = ret T LN l) ->
+      (forall w l, (w, l) ∈d t -> open_loc u (w, l) = ret T l) ->
       t '(u) = t.
   Proof.
     intros. unfold open.
@@ -270,7 +282,7 @@ Section locally_nameless_basic_principles.
   Qed.
 
   Lemma subst_id : forall t x u,
-      (forall l, l ∈ t -> subst_loc x u l = ret T LN l) ->
+      (forall l, l ∈ t -> subst_loc x u l = ret T l) ->
       t '{x ~> u} = t.
   Proof.
     intros. unfold subst.
@@ -343,26 +355,29 @@ Section locally_nameless_basic_principles.
   Theorem in_free_iff : forall (t : T LN) (x : atom),
       x ∈ free T t <-> Fr x ∈ t.
   Proof.
-    intros. unfold free.
-    unfold TraversableFunctor_list.
-    rewrite (Traversable.Monad.in_bind_iff list).
-    split.
-    - intros [l [hyp1 hyp2]]. destruct l.
-      + Set Printing All.
-        Search "in_iff_in".
-        About in_iff_in_tolist.
-        rewrite (DT.Monad.in_iff_in_tolist W T).
-        unfold free_loc in hyp2.
-        rewrite <- Toset_list_spec in hyp2.
-        rewrite toset_list_one in hyp2.
-        inverts hyp2.
-        rewrite <- Toset_list_spec in hyp1.
-        assumption.
-      + cbn in *. inverts hyp2.
-    - intro hyp. exists (Fr x).
-      rewrite (in_iff_in_tolist T) in hyp.
-      split. rewrite <- Toset_list_spec. assumption.
-      cbn. left. right. easy.
+    intros.
+    enough (Heq : x ∈ free T t = Fr x ∈ t) by (now rewrite Heq).
+    unfold free.
+    compose near t on left.
+    rewrite (foldMap_morphism T).
+    rewrite (toset_to_foldMap T).
+    compose near x on right.
+    Import Sets.Notations.
+    change_right (precompose Fr (foldMap T (ret set) t) x).
+    compose near t on right.
+    cut (Monoid_Morphism (precompose Fr)).
+    { intro. rewrite (foldMap_morphism T).
+      fequal. unfold compose. ext l. destruct l.
+      - cbn. ext b.
+        unfold compose. cbn.
+        cbv. propext. intuition. subst. reflexivity.
+        inversion 1. left. now right.
+      - cbv. ext b. propext. intuition.
+        inversion 1.
+    }
+    constructor; try typeclasses eauto.
+    - cbv. reflexivity.
+    - intros. ext b. cbv. intuition.
   Qed.
 
   Theorem free_iff_freeset : forall (t : T LN) (x : atom),
@@ -409,7 +424,7 @@ End locally_nameless_basic_principles.
 Section locally_nameless_utilities.
 
   Context
-    `{DT.Monad.Monad nat T
+    `{DTM nat T
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
 
@@ -538,11 +553,9 @@ Tactic Notation "simpl_local" := (autorewrite* with tea_local).
 Section locally_nameless_metatheory.
 
   Context
-    `{DT.Monad.Monad nat T
+    `{DTM nat T
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
-
-  Import Kleisli.DT.Monad.Derived.
 
   Lemma subst_in_ret : forall x l (u : T LN),
       (ret T l) '{x ~> u} = subst_loc x u l.
@@ -783,7 +796,7 @@ Section locally_nameless_metatheory.
   Proof.
     intros. compose near t on right.
     unfold open, close, subst.
-    rewrite (bindd_mapd T).
+    rewrite (bindd_mapd _ T).
     rewrite (bind_to_bindd).
     fequal. ext [w l].
     unfold compose; cbn.
@@ -802,7 +815,7 @@ Section locally_nameless_metatheory.
       subst T x (ret T l) = map T (subst_loc_LN x l).
   Proof.
     intros. unfold subst. ext t.
-    apply (bind_respectful_map T).
+    apply (bind_respectful_map _ T).
     intros l' l'in. destruct l'.
     - cbn. compare values x and a.
     - reflexivity.
@@ -826,7 +839,7 @@ Section locally_nameless_metatheory.
   Proof.
     introv lin heq. destruct l as [la | ln].
     - cbn in heq. destruct_eq_args x la.
-      inverts heq. apply (ind_implies_in T) in lin. tauto.
+      inverts heq. apply (ind_implies_in _ T) in lin. tauto.
     - cbn in heq. compare_nats_args ln w; discriminate.
   Qed.
 
@@ -836,7 +849,7 @@ Section locally_nameless_metatheory.
       exists w l, (w, l) ∈d t /\ close_loc x (w, l) = Fr y.
   Proof.
     introv neq yin.
-    rewrite (ind_iff_in T) in yin. destruct yin as [w yin].
+    rewrite (ind_iff_in _ T) in yin. destruct yin as [w yin].
     exists w. exists (Fr y). cbn. compare values x and y.
   Qed.
 
@@ -920,7 +933,7 @@ Section locally_nameless_metatheory.
     introv xin.
     rewrite free_open_iff in xin.
     destruct xin as [w [l [hin ?]]].
-    apply (ind_implies_in T) in hin.
+    apply (ind_implies_in _ T) in hin.
     enough ((l = Fr x /\ x ∈ free T t) \/ x ∈ free T u) by intuition.
     eauto using free_open_upper_local.
   Qed.
@@ -939,7 +952,7 @@ Section locally_nameless_metatheory.
   Proof.
     introv xin.
     rewrite (in_free_iff) in xin.
-    rewrite (ind_iff_in T) in xin.
+    rewrite (ind_iff_in _ T) in xin.
     destruct xin as [w xin].
     rewrite (free_open_iff).
     setoid_rewrite (in_free_iff).
@@ -980,13 +993,13 @@ Section locally_nameless_metatheory.
   Lemma subst_open_local : forall u1 u2 x,
       locally_closed T u2 ->
       subst T x u2 ∘ open_loc u1 =
-      open_loc (u1 '{x ~> u2}) ⋆dm (subst_loc x u2 ∘ extract (prod nat)).
+        open_loc (u1 '{x ~> u2}) ⋆5 (subst_loc x u2 ∘ extract (prod nat) LN).
   Proof.
-    introv lcu2. ext [w l]. unfold kcompose_dm.
+    introv lcu2. ext [w l]. unfold kc5.
     unfold preincr, compose; cbn. compare l to atom x.
     - rewrite subst_in_ret. cbn.
       compare values x and x. symmetry.
-      apply (bindd_respectful_id T).
+      apply (bindd_respectful_id _ T).
       intros. destruct a.
       + reflexivity.
       + unfold locally_closed, locally_closed_gap, is_bound_or_free in lcu2. cbn.
@@ -1015,8 +1028,8 @@ Section locally_nameless_metatheory.
   Proof.
     introv lc. compose near t.
     unfold open, subst at 1 3.
-    rewrite (bind_bindd T).
-    rewrite (bindd_bind T).
+    rewrite (bind_bindd _ T).
+    rewrite (bindd_bind _ T).
     fequal.
     #[local] Set Keyed Unification.
     rewrite subst_open_local; auto.
@@ -1049,10 +1062,10 @@ Section locally_nameless_metatheory.
   Proof.
     introv fresh. compose near t on right.
     unfold subst, open.
-    rewrite (bind_bindd T).
-    apply (bindd_respectful T). introv hin.
+    rewrite (bind_bindd _ T).
+    apply (bindd_respectful _ T). introv hin.
     assert (a <> Fr x).
-    { apply (ind_implies_in T) in hin.
+    { apply (ind_implies_in _ T) in hin.
       rewrite <- free_iff_freeset in fresh.
       eapply ninf_in_neq in fresh; eauto. }
     now rewrite <- (open_spec_local u x).
@@ -1064,7 +1077,7 @@ Section locally_nameless_metatheory.
       x <> y ->
       locally_closed T u ->
       subst T x u ∘ open_loc (ret T (Fr y)) =
-      open_loc (ret T (Fr y)) ⋆dm (subst_loc x u ∘ extract (prod nat)).
+      open_loc (ret T (Fr y)) ⋆5 (subst_loc x u ∘ extract (prod nat) LN).
   Proof with auto.
     introv neq lc. rewrite subst_open_local...
     rewrite subst_in_ret. cbn. compare values x and y.
@@ -1078,7 +1091,7 @@ Section locally_nameless_metatheory.
   Proof.
     introv neq lc. compose near t.
     unfold open, subst.
-    rewrite (bind_bindd T), (bindd_bind T).
+    rewrite (bind_bindd _ T), (bindd_bind _ T).
     fequal.
     change_left (subst T x u ∘ open_loc (ret T (Fr y))).
     #[local] Set Keyed Unification.
@@ -1089,7 +1102,7 @@ Section locally_nameless_metatheory.
   (** ** Closing, followed by opening *)
   (**************************************************************************)
   Lemma open_close_local : forall x w l,
-      (open_loc (ret T (Fr x)) co⋆ close_loc x)
+      (open_loc (ret T (Fr x)) ⋆4 close_loc x)
       (w, l) = ret T l.
   Proof.
     intros. cbn. unfold id. compare l to atom x.
@@ -1105,8 +1118,8 @@ Section locally_nameless_metatheory.
   Proof.
     intros. compose near t on left.
     unfold open, close.
-    rewrite (bindd_mapd T).
-    apply (bindd_respectful_id T); intros.
+    rewrite (bindd_mapd _ T).
+    apply (bindd_respectful_id _ T); intros.
     auto using open_close_local.
   Qed.
 
@@ -1129,7 +1142,7 @@ Section locally_nameless_metatheory.
       open T (ret T l) = mapd T (open_LN_loc l).
   Proof.
     intros. unfold open. ext t.
-    apply (bindd_respectful_mapd T).
+    apply (bindd_respectful_mapd _ T).
     intros w l' l'in. destruct l'.
     - reflexivity.
     - cbn. compare naturals n and w.
@@ -1139,7 +1152,7 @@ Section locally_nameless_metatheory.
   (**************************************************************************)
   Lemma close_open_local : forall x w l,
       l <> Fr x ->
-      (close_loc x co⋆ open_LN_loc (Fr x)) (w, l) = l.
+      (close_loc x ⋆4 open_LN_loc (Fr x)) (w, l) = l.
   Proof.
     introv neq. cbn. unfold id. compare l to atom x.
     - contradiction.
@@ -1156,10 +1169,10 @@ Section locally_nameless_metatheory.
     introv fresh. compose near t on left.
     rewrite open_by_LN_spec. unfold close.
     rewrite (dfun_mapd2 _ T).
-    apply (mapd_respectful_id T).
+    apply (mapd_respectful_id _ T).
     intros w l lin.
     assert (l <> Fr x).
-    { rewrite neq_symmetry. apply (ind_implies_in T) in lin.
+    { rewrite neq_symmetry. apply (ind_implies_in _ T) in lin.
       eauto using (ninf_in_neq (T := T)). }
     now apply close_open_local.
   Qed.
@@ -1175,14 +1188,14 @@ Section locally_nameless_metatheory.
     introv lcu lct Hin. rewrite ind_open_iff in Hin.
     destruct Hin as [n1 [n2 [l1 [h1 [h2 h3]]]]].
     destruct l1.
-    - cbn in h2. rewrite (ind_ret_iff T) in h2.
+    - cbn in h2. rewrite (ind_ret_iff _ T) in h2.
       destruct h2; subst. cbn. trivial.
     - specialize (lct _ _ h1). cbn in h2. compare naturals n0 and n1.
-      + rewrite (ind_ret_iff T) in h2; destruct h2; subst.
+      + rewrite (ind_ret_iff _ T) in h2; destruct h2; subst.
         cbn. unfold_monoid. lia.
       + specialize (lcu n2 l h2). unfold is_bound_or_free in *.
         destruct l; [trivial|]. unfold_monoid. lia.
-      + rewrite (ind_ret_iff T) in h2. destruct h2; subst.
+      + rewrite (ind_ret_iff _ T) in h2. destruct h2; subst.
         unfold is_bound_or_free in *. unfold_lia.
   Qed.
 
@@ -1202,14 +1215,14 @@ Section locally_nameless_metatheory.
         { cbn; unfold_lia. }
         { exists w (Ƶ : nat) (Bd n0).
           split; auto. cbn. compare naturals n0 and w.
-          rewrite (ind_ret_iff T). now simpl_monoid. }
+          rewrite (ind_ret_iff _ T). now simpl_monoid. }
       + cbn. unfold_lia.
       + cbn. specialize (lct w (Bd (n0 - 1))).
         lapply lct.
         { cbn; unfold_lia. }
         { exists w (Ƶ : nat) (Bd n0).
           split; auto. cbn. compare naturals n0 and w.
-          rewrite (ind_ret_iff T). now simpl_monoid. }
+          rewrite (ind_ret_iff _ T). now simpl_monoid. }
   Qed.
 
   Theorem open_lc_gap_eq_iff : forall n t u,
@@ -1227,7 +1240,7 @@ Section locally_nameless_metatheory.
       locally_closed_gap T (n - 1) (t '(ret T (Fr x))).
   Proof.
     intros. apply open_lc_gap_eq_iff. auto.
-    intros w l hin. rewrite (ind_ret_iff T) in hin.
+    intros w l hin. rewrite (ind_ret_iff _ T) in hin.
     destruct hin; subst. cbv. trivial.
   Qed.
 

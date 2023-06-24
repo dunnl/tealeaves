@@ -1,5 +1,5 @@
 From Tealeaves.Theory Require Import
-  Traversable.Functor.
+  Traversable.Functor List.
 From Tealeaves.Functors Require Import
   Writer.
 From Tealeaves.Backends.LN Require Import
@@ -142,6 +142,8 @@ Create HintDb tea_rw_envmap.
 #[export] Hint Rewrite envmap_nil envmap_one
   envmap_cons envmap_app : tea_rw_envmap.
 
+Import Traversable.Monad.DerivedInstances.
+
 (** ** Specifications for [∈] and <<envmap>>*)
 (******************************************************************************)
 Section in_envmap_lemmas.
@@ -156,15 +158,10 @@ Section in_envmap_lemmas.
       exists a : A, (x, a) ∈ (l : list (atom * A)) /\ f a = b.
   Proof.
     intros. unfold envmap.
-    unfold_ops @Map_compose @Map_Env @El_list.
-    unfold_ops @Map_list.
-    Set Printing All.
-    Search "in_map_iff".
-    admit.
-    (*
-    rewrite (in_map_iff list). split; intros; preprocess; eauto.
-     *)
-  Admitted.
+    unfold_ops @Map_compose @Map_Env.
+    rewrite (in_map_iff list).
+    split; intros; preprocess; eauto.
+  Qed.
 
 End in_envmap_lemmas.
 
@@ -180,7 +177,7 @@ Section in_rewriting_lemmas.
   Lemma in_nil_iff : forall x a,
       (x, a) ∈ nil <-> False.
   Proof.
-    now autorewrite with tea_list.
+    reflexivity.
   Qed.
 
   Lemma in_cons_iff : forall x y a1 a2 Γ,
@@ -1358,11 +1355,14 @@ Section binds_theorems.
       + left. simpl_list. now right.
       + compare values x and x0.
         { destruct (X a a0); subst.
-          - left. now left.
+          - left. simpl_list. now left.
           - right. simpl_list. intros [hyp|hyp].
             inversion hyp; contradiction. contradiction. }
         { right. intros [hyp|hyp].
-          inversion hyp; contradiction. contradiction. }
+          cbv in hyp. inversion hyp.
+          assumption. inversion H; contradiction.
+          cbn in hyp. contradiction.
+        }
   Defined.
 
   Lemma in_lookup : forall x Γ,
@@ -1373,7 +1373,7 @@ Section binds_theorems.
     - destruct a as [y a]. destruct IHΓ.
       + destruct s. left. eexists. right. eauto.
       + compare values x and y.
-        { left. exists a. now left. }
+        { left. exists a. simpl_list. now left. }
         { right. introv. simpl_list.
           intros [contra|contra].
           - inversion contra; subst. contradiction.

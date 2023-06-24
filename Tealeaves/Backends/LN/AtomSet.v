@@ -52,6 +52,22 @@ Fixpoint atoms (l : list atom) : AtomSet.t :=
   | x :: xs => AtomSet.add x (atoms xs)
   end.
 
+(** ** Monoids  *)
+(* The current implementation is not a monoid because the monoid laws do not hold for
+Coq's propositional equality (s <<=>> t), only for equivalence (<<s [=] t>>) *)
+(******************************************************************************)
+(*
+#[export] Instance Monoid_op_AtomSet : Monoid_op (AtomSet.t) := AtomSet.union.
+#[export] Instance Monoid_unit_AtomSet : Monoid_unit (AtomSet.t) := AtomSet.empty.
+#[export] Instance Monoid_AtomSet : Monoid (AtomSet.t).
+Proof.
+  constructor;
+  unfold_ops @Monoid_op_AtomSet;
+    unfold_ops @Monoid_unit_AtomSet;
+    intros.
+Qed.
+ *)
+
 (** ** Rewriting rules *)
 (******************************************************************************)
 Create HintDb tea_rw_atoms.
@@ -73,6 +89,9 @@ Proof.
   intros. cbn. fsetdec.
 Qed.
 
+(*
+ Monoid_Morphism_atoms
+*)
 Lemma atoms_app : forall (l1 l2 : list atom),
     atoms (l1 ++ l2) [=] atoms l1 ∪ atoms l2.
 Proof.
