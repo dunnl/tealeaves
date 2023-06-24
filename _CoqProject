@@ -45,6 +45,7 @@ Tealeaves/Theory/Traversable/Monad.v
 Tealeaves/Theory/DT/Functor.v
 Tealeaves/Theory/DT/Monad.v
 Tealeaves/Theory/List.v
+Tealeaves/Tealeaves.v
 Tealeaves/Backends/LN/Atom.v
 Tealeaves/Backends/LN/AtomSet.v
 Tealeaves/Backends/LN/AssocList.v
