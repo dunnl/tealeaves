@@ -31,19 +31,19 @@ Export Tealeaves.DerivedInstances.
 #[local] Set Implicit Arguments.
 
 (* Halfway explicit *)
-#[local] Arguments binddt {M}%type_scope T {U}%function_scope {Binddt}   G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments mapdt  {M}%type_scope (T)%function_scope   {Mapdt}    G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments bindd  {M}%type_scope T {U}%function_scope {Bindd}                               {A B}%type_scope _%function_scope _.
-#[local] Arguments mapd   {M}%type_scope (T)%function_scope   {Mapd}                                {A B}%type_scope _%function_scope _.
-#[local] Arguments bindt                 T {U}%function_scope {Bindt}    G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments traverse              (T)%function_scope   {Traverse} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments bind                  (T) {U}%function_scope {Bind}                              {A B}%type_scope _%function_scope _.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments ret T%function_scope {Return} A%type_scope _.
-#[local] Arguments cobind W%function_scope {Cobind} {A B}%type_scope _%function_scope _.
-#[local] Arguments tolist F%function_scope {Tolist} {A}%type_scope _.
-#[local] Arguments foldMap T%function_scope {M}%type_scope {H H0 H1} {A}%type_scope f%function_scope _.
-#[local] Arguments foldMapd {W}%type_scope T%function_scope {M}%type_scope {H H0 H1} {A}%type_scope _%function_scope _.
+#[global] Arguments binddt {M}%type_scope T {U}%function_scope {Binddt}   G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[global] Arguments mapdt  {M}%type_scope (T)%function_scope   {Mapdt}    G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[global] Arguments bindd  {M}%type_scope T {U}%function_scope {Bindd}                               {A B}%type_scope _%function_scope _.
+#[global] Arguments mapd   {M}%type_scope (T)%function_scope   {Mapd}                                {A B}%type_scope _%function_scope _.
+#[global] Arguments bindt                 T {U}%function_scope {Bindt}    G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[global] Arguments traverse              (T)%function_scope   {Traverse} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[global] Arguments bind                  (T) {U}%function_scope {Bind}                              {A B}%type_scope _%function_scope _.
+#[global] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[global] Arguments ret T%function_scope {Return} A%type_scope _.
+#[global] Arguments cobind W%function_scope {Cobind} {A B}%type_scope _%function_scope _.
+#[global] Arguments tolist F%function_scope {Tolist} {A}%type_scope _.
+#[global] Arguments foldMap T%function_scope {M}%type_scope {H H0 H1} {A}%type_scope f%function_scope _.
+#[global] Arguments foldMapd {W}%type_scope T%function_scope {M}%type_scope {H H0 H1} {A}%type_scope _%function_scope _.
 
 (** * Language definition *)
 (******************************************************************************)

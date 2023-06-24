@@ -1,6 +1,4 @@
 From Tealeaves Require Export
-  Classes.Kleisli.DT.Monad
-  Backends.LN
   Examples.STLC.Syntax.
 
 Export STLC.Syntax.Notations.
@@ -169,7 +167,7 @@ Proof.
   - cbn. apply j_abs with (L := L ∪ domset Γ ∪ {{x}}).
     intros_cof H1.
     unfold preincr. reassociate ->. rewrite (extract_incr).
-    change (binddt term (fun A0 : Type => A0) (subst_loc x u ∘ extract (prod nat)) t)
+    change (binddt term (fun A0 : Type => A0) (subst_loc x u ∘ extract (prod nat) _) t)
       with (t '{x ~> u}).
     change (@tvar) with (@ret term _).
     rewrite <- subst_open_var.

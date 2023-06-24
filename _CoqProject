@@ -52,7 +52,7 @@ Tealeaves/Backends/LN/AssocList.v
 Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN.v
 Tealeaves/Examples/STLC/Syntax.v
-#Tealeaves/Examples/STLC/TypeSoundness.v
+Tealeaves/Examples/STLC/TypeSoundness.v
 #Tealeaves/Examples/STLC/SyntaxCategorical.v
 #Tealeaves/Examples/STLC+Let/Let1.v
 #Tealeaves/Examples/STLC+Let/Let2.v
