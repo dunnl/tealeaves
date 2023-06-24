@@ -157,27 +157,37 @@ Section with_monad.
     (T : Type -> Type)
     `{TraversableMonad T}.
 
-  #[export] Instance Monad_Hom_Toset : MonadHom T set (@el T _).
+  Lemma el_hom1 : forall (A : Type),
+      el T A ∘ ret T A = ret set A.
   Proof.
-    constructor.
-    - intros.
+    intros.
+    unfold_ops @Toset_Traverse.
+    rewrite (foldMap_ret T).
+    reflexivity.
+  Qed.
+
+  Lemma el_hom2 : forall (A B : Type) (f : A -> T B),
+      el T B ∘ bind T f = bind set (el T B ∘ f) ∘ el T A.
+  Proof.
+    intros.
       unfold_ops @Toset_Traverse.
       rewrite (foldMap_bind T (ret set B) f).
-      unfold_ops @Traverse_Bindt.
       rewrite (foldMap_morphism T).
       rewrite (kmon_bind0 set).
       reflexivity.
-    - intros.
-      unfold_ops @Toset_Traverse.
-      rewrite (foldMap_ret T).
-      reflexivity.
   Qed.
+
+  #[export] Instance Monad_Hom_Toset : MonadHom T set (@el T _) :=
+    {| kmon_hom_ret := el_hom1;
+      kmon_hom_bind := el_hom2;
+    |}.
 
   Theorem in_ret_iff :
     forall (A : Type) (a1 a2 : A), a1 ∈ ret T A a2 <-> a1 = a2.
   Proof.
-    intros. unfold_ops @Toset_Traverse.
-    compose near a2 on left. rewrite (foldMap_ret T).
+    intros.
+    compose near a2 on left.
+    rewrite (kmon_hom_ret T set).
     solve_basic_set.
   Qed.
 
@@ -186,23 +196,19 @@ Section with_monad.
       b ∈ bind T f t <-> exists a, a ∈ t /\ b ∈ f a.
   Proof.
     intros. compose near t on left.
-    rewrite (kmon_hom_bind T set); try typeclasses eauto.
-    unfold compose.
-    unfold_ops @Bind_set.
+    rewrite (kmon_hom_bind T set).
     reflexivity.
   Qed.
 
- Corollary in_map_iff :
+  Import Classes.Monad.DerivedInstances.
+
+  Corollary in_map_iff :
     forall `(f : A -> B) (t : T A) (b : B),
       b ∈ map T f t <-> exists a, a ∈ t /\ f a = b.
- Proof.
-   intros. compose near t on left.
-   rewrite map_to_bind.
-   rewrite (kmon_hom_bind T set).
-    unfold compose.
-    unfold_ops @Bind_set.
-    setoid_rewrite (in_ret_iff B).
-    split; intros; preprocess; eauto.
+  Proof.
+    intros. compose near t on left.
+    rewrite <- (natural (ϕ := el T)).
+    reflexivity.
   Qed.
 
  Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),

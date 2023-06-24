@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Classes.DT.Functor
   Theory.Traversable.Functor
+  Theory.Traversable.Monad (* to reason about list *)
   Functors.Sets.
 
 #[local] Generalizable Variables T G A B C ϕ M.
@@ -68,7 +69,8 @@ Section with_functor.
     forall (G : Type -> Type) `{Applicative G} (A B : Type) (f : A -> G B) (t : T A),
       traverse T G f t = runBatch f (toBatch T B t).
   Proof.
-    intros. now rewrite (traverse_to_runBatch T G).
+    intros.
+    now rewrite (Traversable.Functor.traverse_to_runBatch T).
   Qed.
 
   (** *** <<map>> *)
@@ -235,6 +237,7 @@ Section with_functor.
 End with_functor.
 
 Import Sets.ElNotations.
+Import Classes.Traversable.Monad.DerivedInstances.
 
 (** * <<tolistd>> and <<tosetd>> *)
 (******************************************************************************)

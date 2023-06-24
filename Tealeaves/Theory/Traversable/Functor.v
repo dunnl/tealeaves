@@ -1,5 +1,6 @@
 From Tealeaves Require Export
   Classes.Traversable.Functor
+  Definitions.Prop
   Functors.Sets
   Functors.List
   Functors.Batch.
@@ -270,7 +271,7 @@ End foldMap_list.
 
 Import Traversable.Monad.DerivedInstances.
 
-(** * <<tolist>> and <<toset>> / <<∈>>*)
+(** * <<tolist>> *)
 (******************************************************************************)
 Section tolist.
 
@@ -312,6 +313,23 @@ Section tolist.
       rewrite <- IHb.
       cbn.
       rewrite PeanoNat.Nat.add_1_r.
+      reflexivity.
+  Qed.
+
+  (* TODO This relies on foldMap_ret *)
+  Lemma foldMap_to_tolist `{Monoid M} : forall (A : Type) (f : A -> M),
+      foldMap T f = foldMap list f ∘ tolist T A.
+  Proof.
+    intros.
+    rewrite (foldMap_to_traverse1 T M).
+    unfold_ops @Tolist_Traverse.
+    rewrite (foldMap_morphism T).
+    rewrite (foldMap_to_traverse1 T M).
+    fequal.
+    Import Monoid.Notations.
+    - ext a. cbv.
+      change_right ((Ƶ ● f a) ● Ƶ).
+      simpl_monoid.
       reflexivity.
   Qed.
 
@@ -378,6 +396,12 @@ Section toset.
   Context
     (T : Type -> Type)
     `{TraversableFunctor T}.
+
+  Lemma toset_to_foldMap : forall (A : Type) (t : T A) (a : A),
+      el T A t a = foldMap T (ret set A) t a.
+  Proof.
+    reflexivity.
+  Qed.
 
   (* Relate elements to those obtained by enumeration *)
   (* Note: <<el list A>> (like <<el T A>>) is provided by <<Toset_Traverse>> *)
@@ -507,3 +531,71 @@ Section traversal_reassemble.
 
 End traversal_reassemble.
 *)
+
+
+(** ** Quantification over elements *)
+(******************************************************************************)
+Section quantification.
+
+  Context
+    (T : Type -> Type)
+    `{TraversableFunctor T}.
+
+  #[local] Generalizable Variable A.
+
+  #[local] Arguments foldMap T%function_scope M%type_scope op unit
+    {H1} {A}%type_scope f%function_scope _ : rename.
+
+  Definition Forall `(P : A -> Prop) : T A -> Prop :=
+    foldMap T Prop Monoid_op_and Monoid_unit_true P.
+
+  Definition Forany `(P : A -> Prop) : T A -> Prop :=
+    foldMap T Prop Monoid_op_or Monoid_unit_false P.
+
+  Lemma forall_iff `(P : A -> Prop) (t : T A) :
+    Forall P t <-> forall (a : A), a ∈ t -> P a.
+  Proof.
+    unfold Forall.
+    unfold_ops @Toset_Traverse.
+    rewrite (foldMap_to_tolist T _).
+    rewrite (foldMap_to_tolist T _).
+    unfold compose. induction (tolist T A t).
+    - cbv. intuition.
+    - cbn. rewrite IHl.
+      cbv. intuition. subst. assumption.
+  Qed.
+
+  Lemma forany_iff `(P : A -> Prop) (t : T A) :
+    Forany P t <-> exists (a : A), a ∈ t /\ P a.
+  Proof.
+    unfold Forany.
+    unfold_ops @Toset_Traverse.
+    rewrite (foldMap_to_tolist T _).
+    rewrite (foldMap_to_tolist T _).
+    unfold compose. induction (tolist T A t).
+    - cbv. intuition. preprocess. assumption.
+    - cbn.
+      unfold compose.
+      unfold_ops @Pure_const.
+      unfold_ops @Map_const.
+      unfold_ops @Monoid_op_or.
+      unfold_ops @Monoid_unit_false.
+      unfold_ops @Monoid_op_set.
+      unfold_ops @Monoid_unit_set.
+      unfold_ops @Return_set.
+      split.
+      + intros [[h1|h2]|h3].
+        * false.
+        * exists a. split.
+          left. right. reflexivity. assumption.
+        * rewrite IHl in h3.
+          preprocess. eexists.
+          split; eauto. right. assumption.
+      + intro. preprocess.
+        destruct H1; try destruct H1.
+        * cbv in H1. false.
+        * subst. left. now right.
+        * right. rewrite IHl. eexists. eauto.
+  Qed.
+
+End quantification.
