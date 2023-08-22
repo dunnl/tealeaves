@@ -78,8 +78,8 @@ Section assume_some_index_type.
   (** ** Composition with ordinary functors *)
   (******************************************************************************)
   #[global] Instance MFmap_compose_Fmap
-   `{MFmap F2} `{Fmap F1} : MFmap (F2 ∘ F1) :=
-    fun A B f => mfmap F2 (fun (k : K) (a : F1 A) => fmap F1 (f k) a).
+   `{MFmap F2} `{Map F1} : MFmap (F2 ∘ F1) :=
+    fun A B f => mfmap F2 (fun (k : K) (a : F1 A) => map F1 (f k) a).
 
   Section MultisortedFunctor_compose_Functor.
 
@@ -91,9 +91,9 @@ Section assume_some_index_type.
     Proof.
       intros. ext x. cbv in x.
       unfold_ops @MFmap_compose_Fmap.
-      change (fun (k : K) (a : G A) => fmap G (kid k) a)
-        with (fun (_ : K) (a : G A) => fmap G id a).
-      now rewrite (fun_fmap_id G), (mfun_mfmap_id F).
+      change (fun (k : K) (a : G A) => map G (kid k) a)
+        with (fun (_ : K) (a : G A) => map G id a).
+      now rewrite (fun_map_id G), (mfun_mfmap_id F).
     Qed.
 
     Lemma mfmap_mfmap_compose_fmap : forall `(f : A -k-> B) `(g : B -k-> C),
@@ -102,7 +102,7 @@ Section assume_some_index_type.
       introv. ext t. unfold compose. unfold_ops @MFmap_compose_Fmap.
       compose near t on left. rewrite (mfun_mfmap_mfmap F).
       fequal. ext k x. unfold Category.comp, kconst_comp, compose.
-      compose near x on left. now rewrite (fun_fmap_fmap G).
+      compose near x on left. now rewrite (fun_map_map G).
     Qed.
 
     #[global] Instance MultisortedFunctor_compose_Functor :
@@ -125,8 +125,8 @@ Section assume_some_index_type.
       fun '(b, x) => mfmap F (fun k => pair b) x.
 
     Lemma strength_extract {W : Type} {A : Type} :
-      mfmap F (const (extract (W ×))) ∘ mstrength (B:=W) (A:=A) =
-      extract (prod W) (A := F A).
+      mfmap F (const (extract (W ×) A)) ∘ mstrength (B:=W) (A:=A) =
+      extract (prod W) (F A).
     Proof.
       unfold mstrength. ext [w t].
       unfold compose; cbn. compose near t on left.
