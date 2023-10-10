@@ -4,7 +4,7 @@
 From Tealeaves Require Export
   Classes.Category
   Classes.Functor
-  Classes.Monad.
+  Categorical.Classes.Functor.
 
 #[local] Generalizable Variables T F G ϕ.
 
@@ -26,16 +26,18 @@ Qed.
 
 (** * Instances for general categories *)
 (******************************************************************************)
-#[export] Instance Fmap_ordinary `{H : Functor.Fmap F} : Category.Fmap F := H.
+#[export] Instance Fmap_ordinary `{H : Map F} : Category.Fmap F := H.
 
 #[export] Instance Functor_ordinary `{Functor.Functor F} : Category.Functor F Fmap_ordinary :=
-  {| Category.fmap_id := Functor.fun_fmap_id F;
-     Category.fmap_fmap := Functor.fun_fmap_fmap F
+  {| Category.fmap_id := Functor.fun_map_id F;
+     Category.fmap_fmap := Functor.fun_map_map F
   |}.
 
 #[export] Instance Natural_ordinary `{H : Functor.Natural F G ϕ} : Category.Natural ϕ := @Functor.natural F _ G _ ϕ H.
 
-#[export] Instance Join_ordinary `{H : Monad.Join T} : Category.Join T := H.
+About Join.
+
+#[export] Instance Join_ordinary `{H : CategJoin _ T} : Category.Join T := H.
 
 #[export] Instance Ret_ordinary `{H : Monad.Return T} : Category.Return T := H.
 
@@ -45,7 +47,7 @@ Proof.
   - apply Functor_ordinary.
   - apply Natural_ordinary.
   - apply Natural_ordinary.
-  - apply (Monad.mon_join_fmap_ret T).
+  - apply (Monad.mon_join_map_ret T).
   - apply (Monad.mon_join_ret T).
   - apply (Monad.mon_join_join T).
 Qed.

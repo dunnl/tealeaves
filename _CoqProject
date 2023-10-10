@@ -5,7 +5,6 @@ Tealeaves/Axioms.v
 Tealeaves/Prelude.v
 Tealeaves/Classes/EqDec_eq.v
 Tealeaves/Classes/Category.v
-#Tealeaves/Categories/Types.v # This expects Categorical API ready
 Tealeaves/Definitions/Product.v
 Tealeaves/Classes/Monoid.v
 Tealeaves/Classes/Comonoid.v
@@ -81,6 +80,7 @@ Tealeaves/Categorical/Functors/Writer.v
 Tealeaves/Categorical/Definitions/Shift.v
 #Tealeaves/Categorical/Classes/Decorated/Functor.v
 #Tealeaves/Categorical/Classes/Decorated/Monad.v
+#Tealeaves/Categories/Types.v
 
 #Tealeaves/Categorical/Functors/List.v
 #Tealeaves/Categorical/Functors/Sets.v
