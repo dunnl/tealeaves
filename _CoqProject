@@ -1,14 +1,14 @@
 -R Tealeaves/ Tealeaves
 
+
 Tealeaves/Axioms.v
 Tealeaves/Tactics/LibTactics.v
 Tealeaves/Tactics/Prelude.v
+Tealeaves/Misc/Product.v #Required by comonoid.v
 Tealeaves/Classes/EqDec_eq.v
 Tealeaves/Classes/Category.v
-Tealeaves/Definitions/Product.v
 Tealeaves/Classes/Monoid.v
 Tealeaves/Classes/Comonoid.v
 Tealeaves/Classes/Functor.v
-
 Tealeaves/Functors/Identity.v
 Tealeaves/Functors/Compose.v
