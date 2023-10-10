@@ -20,3 +20,4 @@ Tealeaves/Misc/List.v
 Tealeaves/Classes/Kleisli/Monad.v
 Tealeaves/Classes/Kleisli/Comonad.v
 Tealeaves/Functors/Environment.v
+Tealeaves/Functors/Writer.v
