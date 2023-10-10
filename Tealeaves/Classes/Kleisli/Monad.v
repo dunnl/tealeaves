@@ -16,11 +16,11 @@ Import Functor.Notations.
 Class Return (T : Type -> Type) :=
   ret : (fun A => A) ⇒ T.
 
-Class Bind (T U : Type -> Type) :=
-  bind : forall (A B : Type), (A -> T B) -> U A -> U B.
+Class Bind (U T : Type -> Type) :=
+  bind : forall (A B : Type), (A -> U B) -> T A -> T B.
 
 #[global] Arguments ret T%function_scope {Return} A%type_scope.
-#[global] Arguments bind T {U}%function_scope {Bind} {A B}%type_scope _%function_scope _.
+#[global] Arguments bind {U} (T)%function_scope {Bind} {A B}%type_scope _%function_scope _.
 
 (** ** Kleisli composition *)
 (******************************************************************************)
