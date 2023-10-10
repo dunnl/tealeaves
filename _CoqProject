@@ -60,7 +60,6 @@ Tealeaves/Examples/STLC/TypeSoundness.v
 Tealeaves/Categories/TypeFamilies.v # This expects Categorical API ready
 Tealeaves/Multisorted/Classes/Multifunctor.v
 Tealeaves/Multisorted/Classes/DTM.v
-#Tealeaves/Multisorted/Theory/DTM.v
 #Tealeaves/Multisorted/Backends/LN.v
 #Tealeaves/Multisorted/Examples/SystemF/Syntax.v
 #Tealeaves/Multisorted/Examples/SystemF/Rewriting.v
