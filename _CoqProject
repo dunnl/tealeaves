@@ -18,3 +18,4 @@ Tealeaves/Misc/Prop.v
 Tealeaves/Misc/Subset.v
 Tealeaves/Misc/List.v
 Tealeaves/Classes/Kleisli/Monad.v
+Tealeaves/Classes/Kleisli/Comonad.v
