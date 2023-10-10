@@ -18,6 +18,9 @@ Class Extract (W : Type -> Type) :=
 Class Cobind (W : Type -> Type) :=
   cobind : forall (A B : Type), (W A -> B) -> W A -> W B.
 
+#[global] Arguments extract W%function_scope {Extract} {A}%type_scope.
+#[global] Arguments cobind (W)%function_scope {Cobind} {A B}%type_scope _%function_scope _.
+
 (** ** Co-Kleisli composition *)
 (******************************************************************************)
 Definition kc4 (W : Type -> Type) `{Cobind W}

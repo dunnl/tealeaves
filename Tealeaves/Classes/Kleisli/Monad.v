@@ -19,6 +19,9 @@ Class Return (T : Type -> Type) :=
 Class Bind (T U : Type -> Type) :=
   bind : forall (A B : Type), (A -> T B) -> U A -> U B.
 
+#[global] Arguments ret T%function_scope {Return} {A}%type_scope.
+#[global] Arguments bind T {U}%function_scope {Bind} {A B}%type_scope _%function_scope _.
+
 (** ** Kleisli composition *)
 (******************************************************************************)
 Definition kc1 (T : Type -> Type) `{Return T} `{Bind T T}
