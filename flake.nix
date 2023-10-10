@@ -1,5 +1,5 @@
 {
-  description = "A flake for building Hello World";
+  description = "A flake for building Tealeaves";
 
   inputs.nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
 
@@ -20,6 +20,7 @@
          packages.x86_64-linux.tealeaves = tealeaves;
          packages.x86_64-linux.tealeaves-examples = tealeaves-examples;
          devShells.x86_64-linux.default = tealeaves;
+         devShells.x86_64-linux.tealeaves = tealeaves;
          devShells.x86_64-linux.examples = tealeaves-examples;
        };
 }
