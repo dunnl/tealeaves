@@ -34,7 +34,7 @@ Section tensor_strength.
 
   Context
     (F : Type -> Type)
-      `{Functor F}.
+    `{Functor F}.
 
   Lemma strength_1 {A B} : forall (a : A) (x : F B),
       strength F (a, x) = map F (pair a) x.

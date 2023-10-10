@@ -10,11 +10,11 @@ Tealeaves/Classes/Category.v
 Tealeaves/Classes/Monoid.v
 Tealeaves/Classes/Comonoid.v
 Tealeaves/Classes/Functor.v
+Tealeaves/Functors/Identity.v
+Tealeaves/Functors/Compose.v
 Tealeaves/Misc/Strength.v
 Tealeaves/Misc/NaturalNumbers.v
 Tealeaves/Misc/Prop.v
 Tealeaves/Misc/Subset.v
 Tealeaves/Misc/List.v
-Tealeaves/Functors/Identity.v
-Tealeaves/Functors/Compose.v
 Tealeaves/Classes/Kleisli/Monad.v
