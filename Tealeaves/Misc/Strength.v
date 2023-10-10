@@ -29,12 +29,12 @@ Section tensor_strength.
   Proof.
     intros. ext [x y]. unfold strength, compose; cbn.
     compose near y.
-    now rewrite (fun_map_map F).
+    now rewrite (fun_map_map).
   Qed.
 
   Context
     (F : Type -> Type)
-    `{Functor F}.
+      `{Functor F}.
 
   Lemma strength_1 {A B} : forall (a : A) (x : F B),
       strength F (a, x) = map F (pair a) x.
@@ -54,7 +54,7 @@ Section tensor_strength.
     intros [a t]. cbn.
     compose near t on left.
     compose near t on right.
-    now rewrite 2(fun_map_map F).
+    now rewrite 2(fun_map_map).
   Qed.
 
   Corollary strength_nat_l {A B C} {f : A -> B} : forall (p : A * F C),
@@ -62,7 +62,7 @@ Section tensor_strength.
   Proof.
     intros. unfold map_fst.
     rewrite <- strength_nat.
-    now rewrite (fun_map_id F).
+    now rewrite (fun_map_id).
   Qed.
 
   Corollary strength_nat_r {A B C} {f : A -> B} : forall (p : C * F A),
@@ -76,15 +76,15 @@ Section tensor_strength.
       map F (left_unitor) (strength F p) = left_unitor p.
   Proof.
     intros [u t]. destruct u. cbn.
-    compose_near t. rewrite (fun_map_map F).
-    now rewrite (fun_map_id F).
+    compose_near t. rewrite (fun_map_map).
+    now rewrite (fun_map_id).
   Qed.
 
   Lemma strength_assoc {A B C} :
     map F α ∘ (@strength F _ (A * B) C) = strength F ∘ map_snd (strength F) ∘ α.
   Proof.
     ext [[? ?] t]. unfold strength, compose. cbn.
-    compose_near t. do 2 rewrite (fun_map_map F).
+    compose_near t. do 2 rewrite (fun_map_map).
     reflexivity.
   Qed.
 

@@ -32,8 +32,8 @@ Section Functor_composition.
   Solve Obligations with
     (intros; unfold transparent tcs;
      unfold_compose_in_compose;
-     (rewrite (fun_map_id F), (fun_map_id G)) +
-       (rewrite (fun_map_map G), (fun_map_map F));
+     (do 2 rewrite fun_map_id) +
+        (do 2 rewrite fun_map_map);
      reflexivity).
 
 End Functor_composition.
