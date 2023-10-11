@@ -14,8 +14,8 @@ Import Monoid.Notations.
 
 (** ** The [bindd] operation *)
 (******************************************************************************)
-Class Bindd (M : Type) (U T : Type -> Type):=
-  bindd : forall (A B : Type), (M * A -> U B) -> T A -> T B.
+Class Bindd (W : Type) (U T : Type -> Type):=
+  bindd : forall (A B : Type), (W * A -> U B) -> T A -> T B.
 
 Definition kc5 (W : Type) (T : Type -> Type)
   `{Bindd W T T} `{Monoid_op W}
@@ -45,7 +45,7 @@ Class DecoratedMonad
       @bindd W T T _ B C g ∘ @bindd W T T _ A B f = @bindd W T T _ A C (g ⋆5 f);
   }.
 
-#[local] Arguments bindd {M}%type_scope {U}%function_scope (T)%function_scope {Bindd} {A B}%type_scope _%function_scope _.
+#[global] Arguments bindd {W}%type_scope {U}%function_scope (T)%function_scope {Bindd} {A B}%type_scope _%function_scope _.
 
 (** * Kleisli category *)
 (******************************************************************************)
@@ -123,6 +123,8 @@ End DecoratedMonad_kleisli_category.
 (******************************************************************************)
 Module DerivedInstances.
 
+  (** ** Derived operations *)
+  (******************************************************************************)
   Section operations.
 
     Context
@@ -134,8 +136,6 @@ Module DerivedInstances.
     #[export] Instance Bind_Bindd: Bind T T := fun A B f => bindd T (f ∘ extract (W ×) A).
     #[export] Instance Mapd_Bindd: Mapd W T := fun A B f => bindd T (ret T B ∘ f).
 
-    (** ** Rewriting rules for special cases of <<binddt>> *)
-    (******************************************************************************)
     Lemma bind_to_bindd `(f : A -> T B) :
       @bind T T _ A B f = bindd T (f ∘ extract (W ×) A).
     Proof.
@@ -457,7 +457,7 @@ Module DerivedInstances.
 
     Context
       (T : Type -> Type)
-      `{DecoratedMonad W T}.
+        `{DecoratedMonad W T}.
 
     #[export] Instance: Monad T.
     Proof.
