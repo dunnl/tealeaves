@@ -12,6 +12,7 @@ Import Product.Notations.
 
 #[local] Generalizable Variables E ϕ G A B C M.
 
+(* Locally enable explicit arguments *)
 #[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 #[local] Arguments cobind W%function_scope {Cobind} (A B)%type_scope _%function_scope _.
 
@@ -38,7 +39,7 @@ Definition kc6
   (E * B -> G2 C) ->
   (E * A -> G1 B) ->
   (E * A -> G1 (G2 C)) :=
-  fun g f => map G1 (E * B) (G2 C) g ∘ strength G1 ∘ @cobind (prod E) _ A (G1 B) f.
+  fun g f => map G1 (E * B) (G2 C) g ∘ strength G1 ∘ cobind (prod E) A (G1 B) f.
 
 #[local] Infix "⋆6" := (kc6 _ _) (at level 60) : tealeaves_scope.
 
@@ -60,10 +61,11 @@ Class DecoratedTraversableFunctor
       mapdt G2 A B (ϕ B ∘ f) = ϕ (T B) ∘ mapdt G1 A B f;
   }.
 
+(* Globally suppress type parameters, but locally make them explicit. *)
 #[global] Arguments mapdt {E}%type_scope T%function_scope {Mapdt} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments mapdt {E}%type_scope T%function_scope {Mapdt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
+#[local]  Arguments mapdt {E}%type_scope T%function_scope {Mapdt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
 
-(** * Identity composition in the applicative functor *)
+(** * Functor composition in the applicative functor *)
 (******************************************************************************)
 Section operations.
 
@@ -72,20 +74,32 @@ Section operations.
     (T : Type -> Type)
     `{DecoratedTraversableFunctor E T}.
 
-  Lemma mapdt_app_l {A B : Type} (G : Type -> Type) `{Applicative G} :
-    forall (f : E * A -> G B),
-      @mapdt E T _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G)
-        (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f
-      = mapdt T G A B f.
+  #[local]  Arguments mapdt E%type_scope T%function_scope {Mapdt} G%function_scope (H H0 H1) (A B)%type_scope _%function_scope _.
+
+  Context
+    (G : Type -> Type)
+    {A B : Type}
+    {mapG  : Map G}
+    {pureG : Pure G}
+    {multG : Mult G}
+    `{! Applicative G}.
+
+  Lemma mapdt_app_l: forall (f : E * A -> G B),
+      mapdt E T ((fun A => A) ∘ G)
+        (Map_compose  (fun A => A) G)
+        (Pure_compose (fun A => A) G)
+        (Mult_compose (fun A => A) G)
+        A B f = mapdt E T G mapG pureG multG A B f.
   Proof.
     intros. fequal. now rewrite Mult_compose_identity2.
   Qed.
 
-  Lemma mapdt_app_r {A B : Type} (G : Type -> Type) `{Applicative G} :
-    forall (f : E * A -> G B),
-      @mapdt E T _ (G ∘ (fun A => A)) (Map_compose G (fun A => A))
-        (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f
-      = mapdt T G A B f.
+  Lemma mapdt_app_r: forall (f : E * A -> G B),
+      mapdt E T (G ∘ (fun A => A))
+        (Map_compose  G (fun A => A))
+        (Pure_compose G (fun A => A))
+        (Mult_compose G (fun A => A))
+        A B f = mapdt E T G mapG pureG multG A B f.
   Proof.
     intros. fequal. now rewrite Mult_compose_identity1.
   Qed.
