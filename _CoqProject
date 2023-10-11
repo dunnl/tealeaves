@@ -17,6 +17,7 @@ Tealeaves/Misc/NaturalNumbers.v
 Tealeaves/Misc/Prop.v
 Tealeaves/Misc/Subset.v
 Tealeaves/Misc/List.v
+Tealeaves/Classes/Categorical/Applicative.v
 Tealeaves/Classes/Kleisli/Monad.v
 Tealeaves/Classes/Kleisli/Comonad.v
 Tealeaves/Functors/Environment.v
