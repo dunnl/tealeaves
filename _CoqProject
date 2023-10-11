@@ -24,3 +24,4 @@ Tealeaves/Functors/Environment.v
 Tealeaves/Functors/Writer.v
 Tealeaves/Classes/Kleisli/DecoratedFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedMonad.v
+Tealeaves/Classes/Kleisli/TraversableFunctor.v
