@@ -24,6 +24,7 @@ Tealeaves/Functors/Environment.v
 Tealeaves/Functors/Writer.v
 Tealeaves/Classes/Kleisli/DecoratedFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedMonad.v
+Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v
 Tealeaves/Classes/Kleisli/DecTravFunctor.v
@@ -33,7 +34,6 @@ Tealeaves/Functors/Constant.v
 Tealeaves/Functors/Diagonal.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
-Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
 Tealeaves/Functors/Subset.v
