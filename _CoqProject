@@ -36,3 +36,5 @@ Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
+Tealeaves/Functors/Subset.v
+Tealeaves/Functors/List.v
