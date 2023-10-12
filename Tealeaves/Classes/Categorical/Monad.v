@@ -17,31 +17,25 @@ Import Strength.Notations.
 
 (** * Monads *)
 (******************************************************************************)
-Section monad.
+Class Join (T : Type -> Type) :=
+  join : T ∘ T ⇒ T.
 
-  Context
-    (T : Type -> Type).
+Class Monad
+  (T : Type -> Type)
+  `{Map T} `{Return T} `{Join T} :=
+  { mon_functor :> Functor T;
+    mon_ret_natural :> Natural (@ret T _);
+    mon_join_natural :> Natural (join);
+    mon_join_ret : (* left unit law *)
+    `(join A ∘ ret T (T A) = @id (T A));
+    mon_join_map_ret : (* right unit law *)
+    `(join A ∘ map T A (T A) (ret T A) = @id (T A));
+    mon_join_join : (* associativity *)
+    `(join A ∘ join (T A) =
+        join A ∘ map T (T (T A)) (T A) (join A));
+  }.
 
-  Class Join := join : T ∘ T ⇒ T.
-
-  Context
-    `{Map T} `{Return T} `{Join}.
-
-  Class Monad :=
-    { mon_functor :> Functor T;
-      mon_ret_natural :> Natural (@ret T _);
-      mon_join_natural :> Natural (join);
-      mon_join_ret : (* left unit law *)
-      `(join A ∘ ret T (T A) = @id (T A));
-      mon_join_map_ret : (* right unit law *)
-      `(join A ∘ map T A (T A) (ret T A) = @id (T A));
-      mon_join_join : (* associativity *)
-      `(join A ∘ join (T A) =
-          join A ∘ map T (T (T A)) (T A) (join A));
-    }.
-
-End monad.
-
+#[global] Arguments join _%function_scope {Join} {A}%type_scope.
 #[local] Arguments join _%function_scope {Join} A%type_scope.
 #[local] Arguments ret _%function_scope {Return} A%type_scope.
 

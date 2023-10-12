@@ -79,8 +79,8 @@ Section strength_as_writer_distributive_law.
   Qed.
 
   Lemma strength_join_l `{Functor F} : forall A : Type,
-      σ F ∘ join (W ×) (F A) =
-      map F (join (W ×) A) ∘ σ F ∘ map (W ×) (σ F).
+      σ F ∘ join (W ×) (A := F A) =
+      map F (join (W ×) (A := A)) ∘ σ F ∘ map (W ×) (σ F).
   Proof.
     intros. ext [w1 [w2 t]]. unfold compose; cbn.
     compose near t. rewrite (fun_map_map).
@@ -143,14 +143,14 @@ Section writer_bimonad_instance.
   Qed.
 
   Lemma bimonad_cap : forall A,
-      extract (W ×) A ∘ join (W ×) A = extract (W ×) A ∘ extract (W ×) (W * A).
+      extract (W ×) A ∘ join (W ×) = extract (W ×) A ∘ extract (W ×) (W * A).
   Proof.
     intros. now ext [w1 [w2 a]].
   Qed.
 
-  Lemma bimonad_butterfly : forall A,
-      cojoin (W ×) ∘ join (W ×) A =
-      map (W ×) (join (W ×) _) ∘ join (W ×) _ ∘ map (W ×) (bdist (W ×) (W ×))
+  Lemma bimonad_butterfly : forall (A : Type),
+      cojoin (W ×) ∘ join (W ×) (A := A) =
+      map (W ×) (join (W ×)) ∘ join (W ×) ∘ map (W ×) (bdist (W ×) (W ×))
            ∘ cojoin (W ×) ∘ map (W ×) (cojoin (W ×)).
   Proof.
     intros. now ext [w1 [w2 a]].
@@ -193,11 +193,10 @@ Section Writer_miscellaneous.
   (* This rewrite is useful when proving decoration-traversal compatibility
      in the binder case. *)
   Theorem strength_shift1 : forall (F : Type -> Type) `{Functor F} (w : W) (A : Type),
-      σ F ∘ μ (W ×) _ ∘ pair w = map F (μ (W ×) _ ∘ pair w) ∘ σ F (B := A).
+      σ F ∘ μ (W ×) ∘ pair w = map F (μ (W ×) ∘ pair w) ∘ σ F (B := A).
   Proof.
     intros. ext [w' x]. unfold compose; cbn.
     compose near x. now rewrite (fun_map_map).
   Qed.
 
 End Writer_miscellaneous.
-

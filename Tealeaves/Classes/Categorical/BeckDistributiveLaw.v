@@ -108,10 +108,10 @@ Section BeckDistributivelaw_composite_monad.
     reassociate ->. reassociate <- near (map T (bdist U T)).
     rewrite (natural (F := fun A => A)). unfold_ops @Map_I.
     repeat reassociate ->. reassociate <- near (join T).
-    rewrite (mon_join_ret T).
+    rewrite (mon_join_ret).
     unfold_compose_in_compose. rewrite (bdist_unit_l U T).
     change (id ∘ ?f) with f. rewrite (fun_map_map (F := T)).
-    rewrite (mon_join_ret U).
+    rewrite (mon_join_ret (T := U)).
     now rewrite (fun_map_id (F := T)).
   Qed.
 
@@ -119,7 +119,7 @@ Section BeckDistributivelaw_composite_monad.
     join (T ∘ U) ∘ map (T ∘ U) (ret (T ∘ U)) = @id (T (U A)).
   Proof.
     intros. unfold_ops @Join_Beck @Ret_Beck.
-    rewrite (natural (G := T) (Natural := mon_join_natural T)).
+    rewrite (natural (G := T) (Natural := mon_join_natural (T := T))).
     unfold_ops @Map_compose.
     do 2 reassociate ->.
     #[local] Set Keyed Unification.
@@ -130,9 +130,9 @@ Section BeckDistributivelaw_composite_monad.
     rewrite (bdist_unit_r U T).
     reassociate <-. rewrite (natural (G := T) (F := fun A => A)).
     unfold_ops @Map_I.
-    reassociate ->. rewrite (mon_join_map_ret U).
+    reassociate ->. rewrite (mon_join_map_ret (T := U)).
     rewrite <-(fun_map_map (F := T)). reassociate <-.
-    rewrite (mon_join_map_ret T).
+    rewrite (mon_join_map_ret (T := T)).
     now rewrite (fun_map_id (F := T)).
   Qed.
 
@@ -156,7 +156,7 @@ Section BeckDistributivelaw_composite_monad.
     rewrite <- (natural (ϕ := @join T _ )).
     repeat reassociate <- on left.
     rewrite (fun_map_map (F := T)).
-    rewrite (mon_join_join U).
+    rewrite (mon_join_join (T := U)).
     rewrite <- (fun_map_map (F := T)).
     change (?x ∘ map T (map U (join U)) ∘ join T ∘ ?y)
       with (x ∘ (map T (map U (join U)) ∘ join T) ∘ y).
@@ -174,7 +174,7 @@ Section BeckDistributivelaw_composite_monad.
     reassociate <- on left.
     (* Re-associate <<join T>> *)
     reassociate -> near (join T).
-    rewrite (mon_join_join T).
+    rewrite (mon_join_join (T := T)).
     reassociate <-.
     (* Unite everything under the top-level <<map T>> *)
     change (?x ∘ map T (join T) ∘ map (T ∘ T) (?etc) ∘ ?y)

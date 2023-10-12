@@ -108,15 +108,15 @@ Section Monad_strength_laws.
   Qed.
 
   Lemma strength_join :
-      σ T ∘ map (A ×) (μ T B) =
-      μ T (A * B) ∘ map T (σ T) ∘ σ T.
+      σ T ∘ map (A ×) (μ T (A := B)) =
+      μ T (A := A * B) ∘ map T (σ T) ∘ σ T.
   Proof.
     intros. ext [a t]. unfold compose; cbn.
-    change_left (σ T (a, μ T B t)).
+    change_left (σ T (a, μ T t)).
     unfold strength, compose.
     compose near t on right.
     rewrite (fun_map_map).
-    unfold compose. change_right (μ T _ (map (T ∘ T) (pair a) t)).
+    unfold compose. change_right (μ T (map (T ∘ T) (pair a) t)).
     compose near t on right. now rewrite <- (natural (F := T ∘ T)).
   Qed.
 

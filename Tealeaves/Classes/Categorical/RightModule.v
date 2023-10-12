@@ -43,8 +43,8 @@ Module MonadToModule.
   #[export] Instance RightAction_Join `{Join T} : RightAction T T := @join T _.
 
   #[export] Instance RightModule_Monad `{Monad T} : RightModule T T :=
-    {| mod_action_map_ret := mon_join_map_ret T;
-      mod_action_action := mon_join_join T; |}.
+    {| mod_action_map_ret := mon_join_map_ret (T := T);
+      mod_action_action := mon_join_join (T := T); |}.
 
 End MonadToModule.
 
