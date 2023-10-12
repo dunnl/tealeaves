@@ -22,7 +22,7 @@ Class Functor (F : Type -> Type) `{Map F} : Type :=
 
 (** ** Natural transformations *)
 (******************************************************************************)
-Class Natural `{Functor F} `{Functor G} (ϕ : F ⇒ G) :=
+Class Natural `{Map F} `{Map G} (ϕ : F ⇒ G) :=
   { natural_src : Functor F;
     natural_tgt : Functor G;
     natural : forall `(f : A -> B),
