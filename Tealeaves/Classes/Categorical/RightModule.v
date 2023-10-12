@@ -38,11 +38,15 @@ Class RightModule
 
 (** * Coerceing monads into modules *)
 (******************************************************************************)
-#[export] Instance RightAction_Join `{Join T} : RightAction T T := @join T _.
+Module MonadToModule.
 
-#[export] Instance RightModule_Monad `{Monad T} : RightModule T T :=
-  {| mod_action_map_ret := mon_join_map_ret T;
-    mod_action_action := mon_join_join T; |}.
+  #[export] Instance RightAction_Join `{Join T} : RightAction T T := @join T _.
+
+  #[export] Instance RightModule_Monad `{Monad T} : RightModule T T :=
+    {| mod_action_map_ret := mon_join_map_ret T;
+      mod_action_action := mon_join_join T; |}.
+
+End MonadToModule.
 
 (** ** Right modules compose with functors *)
 (******************************************************************************)
@@ -63,7 +67,7 @@ Section functor_module_composition.
       better to use it explicitly. *)
   Instance RightModule_compose : RightModule (T1 ∘ T2) U.
   Proof.
-    inversion H6; econstructor.
+    constructor; try typeclasses eauto.
     - constructor; try typeclasses eauto.
       introv. unfold transparent tcs.
       unfold_compose_in_compose.
