@@ -13,7 +13,8 @@ Class Traverse (T : Type -> Type) := traverse :
     forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
       (A B : Type), (A -> G B) -> T A -> G (T B).
 
-#[global] Arguments traverse (T)%function_scope {Traverse} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
+#[global] Arguments traverse (T)%function_scope {Traverse} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+#[local] Arguments traverse (T)%function_scope {Traverse} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
 
 (** ** "Kleisli" composition *)
 (******************************************************************************)
@@ -102,6 +103,87 @@ Section properties.
 
 End properties.
 
+(** * Traversing over specific applicative functors *)
+(******************************************************************************)
+
+(** * Cartesian product of applicative functors *)
+(******************************************************************************)
+From Tealeaves Require Import Functors.ProductFunctor.
+Import ProductFunctor.Notations.
+
+Definition applicative_arrow_combine {F G A B} `(f : A -> F B) `(g : A -> G B) : A -> (F ◻ G) B :=
+  fun a => product (f a) (g a).
+
+#[local] Notation "f <◻> g" := (applicative_arrow_combine f g) (at level 60) : tealeaves_scope.
+
+(** ** Characterization of distribution w.r.t. (F ◻ G) *)
+(******************************************************************************)
+Section traversable_product.
+
+  #[local] Arguments traverse (T)%function_scope {Traverse} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
+
+  Context
+    (T : Type -> Type)
+    `{TraversableFunctor T}
+    `{Applicative G1}
+    `{Applicative G2}.
+
+  Variables
+    (A B : Type)
+    (f : A -> G1 B)
+    (g : A -> G2 B).
+
+  Lemma traverse_product1 : forall (t : T A),
+    pi1 (traverse T (G1 ◻ G2) (f <◻> g) t) = traverse T G1 f t.
+  Proof.
+    intros.
+    pose (ApplicativeMorphism_pi1 G1 G2).
+    compose near t on left.
+    now rewrite (trf_traverse_morphism).
+  Qed.
+
+  Lemma traverse_product2 : forall (t : T A),
+    pi2 (traverse T (G1 ◻ G2) (f <◻> g) t) = traverse T G2 g t.
+  Proof.
+    intros. pose (ApplicativeMorphism_pi2 G1 G2).
+    compose near t on left.
+    now rewrite (trf_traverse_morphism).
+  Qed.
+
+  Theorem traverse_combine :
+    traverse T (G1 ◻ G2) (f <◻> g) = (traverse T G1 f) <◻> (traverse T G2 g).
+  Proof.
+    intros.
+    ext t.
+    unfold applicative_arrow_combine at 2.
+    erewrite <- traverse_product1.
+    erewrite <- traverse_product2.
+    rewrite <- product_eta.
+    reflexivity.
+  Qed.
+
+  (*
+  Theorem dist_combine : forall (t : T A),
+    dist T (G1 ◻ G2) (map T (f <◻> g) t) =
+    product (traverse T G1 f t) (traverse T G2 g t).
+  Proof.
+    intros. compose near t on left.
+    erewrite <- (dist_combine1).
+    erewrite <- (dist_combine2).
+    now rewrite <- product_eta.
+  Qed.
+
+  Theorem traverse_combine :
+    traverse T (G1 ◻ G2) (f <◻> g) = (traverse T G1 f) <◻> (traverse T G2 g).
+  Proof.
+    intros. unfold_ops Traverse_dist.
+    ext t. unfold compose.
+    now rewrite dist_combine.
+  Qed.
+*)
+
+End traversable_product.
+
 (** * Derived instances *)
 (******************************************************************************)
 Module DerivedInstances.
@@ -189,4 +271,5 @@ End DerivedInstances.
 (******************************************************************************)
 Module Notations.
   Infix "⋆2" := (kc2 _ _) (at level 60) : tealeaves_scope.
+  Notation "f <◻> g" := (applicative_arrow_combine f g) (at level 60) : tealeaves_scope.
 End Notations.

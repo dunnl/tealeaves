@@ -10,6 +10,7 @@ Import TraversableFunctor.Notations.
 #[local] Generalizable Variables T G A B C D ϕ M.
 
 #[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
+#[local] Arguments traverse (T)%function_scope {Traverse} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
 
 (** * Traversable monad *)
 (******************************************************************************)
