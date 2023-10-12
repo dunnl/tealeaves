@@ -42,3 +42,5 @@ Tealeaves/Classes/Categorical/Monad.v
 Tealeaves/Classes/Categorical/Comonad.v
 Tealeaves/Classes/Categorical/BeckDistributiveLaw.v
 Tealeaves/Classes/Categorical/Bimonad.v
+Tealeaves/Classes/Categorical/RightModule.v
+Tealeaves/Classes/Categorical/RightComodule.v
