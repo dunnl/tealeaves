@@ -50,3 +50,4 @@ Tealeaves/Classes/Categorical/DecoratedFunctor.v
 Tealeaves/Classes/Categorical/DecoratedMonad.v
 Tealeaves/Classes/Categorical/TraversableFunctor.v
 Tealeaves/Classes/Categorical/TraversableMonad.v
+Tealeaves/Classes/Categorical/DecTravFunctor.v
