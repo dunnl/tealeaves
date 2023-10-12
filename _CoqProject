@@ -48,3 +48,4 @@ Tealeaves/Functors/Categorical/Environment.v
 Tealeaves/Functors/Categorical/Writer.v
 Tealeaves/Classes/Categorical/DecoratedFunctor.v
 Tealeaves/Classes/Categorical/DecoratedMonad.v
+Tealeaves/Classes/Categorical/TraversableFunctor.v
