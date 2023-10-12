@@ -27,3 +27,4 @@ Tealeaves/Classes/Kleisli/DecoratedMonad.v
 Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v
 Tealeaves/Classes/Kleisli/DecTravFunctor.v
+Tealeaves/Classes/Kleisli/DecTravMonad.v
