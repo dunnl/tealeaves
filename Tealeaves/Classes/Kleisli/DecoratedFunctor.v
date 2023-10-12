@@ -3,7 +3,7 @@ From Tealeaves Require Export
 
 Import Monoid.Notations.
 Import Product.Notations.
-Import Comonad.Notations.
+Import Kleisli.Comonad.Notations.
 
 (** * Decorated functors *)
 (******************************************************************************)
@@ -27,7 +27,6 @@ Class DecoratedFunctor (E : Type) (T : Type -> Type) `{Mapd E T} :=
 (** ** Derived functor instance *)
 (******************************************************************************)
 Module DerivedInstances.
-
 
   (** ** [map] as a special case of [mapd] *)
   (******************************************************************************)

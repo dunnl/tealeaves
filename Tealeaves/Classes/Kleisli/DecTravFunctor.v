@@ -189,7 +189,7 @@ Module DerivedInstances.
           map G1 B (G2 C) g ∘ f ∘ extract (E ×) A.
     Proof.
       intros. unfold kc6.
-      rewrite <- (map_to_cobind A (G1 B)).
+      rewrite <- (map_to_cobind E A (G1 B)).
       ext [e a].
       do 2 (unfold compose; cbn).
       compose near (f a) on left.

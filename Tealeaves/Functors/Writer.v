@@ -13,42 +13,43 @@ Import Comonad.Notations.
 #[local] Generalizable Variables W T F A M.
 
 (** * Writer monad *)
-(** In the even that [A] is a monoid, the product functor forms a monad. The
-    return operation maps <<b>> to <<(1, b)>> where <<1>> is the monoid unit.
-    The join operation monoidally combines the two monoid values. *)
+(******************************************************************************)
+
+(** ** Kleisli *)
 (******************************************************************************)
 Section writer_monad.
 
   Context
-    `{Monoid M}.
+    (W : Type)
+    `{Monoid W}.
 
-  #[export] Instance Return_Writer : Return (prod M) :=
+  #[export] Instance Return_Writer : Return (prod W) :=
     fun A (a : A) => (Ƶ, a).
 
-  #[export] Instance Bind_Writer : Bind (prod M) (prod M) :=
-    fun A B (f : A -> M * B) (p : M * A) =>
-      map_fst (uncurry (@monoid_op M _)) (α^-1 (map_snd f p)).
+  #[export] Instance Bind_Writer : Bind (prod W) (prod W) :=
+    fun A B (f : A -> W * B) (p : W * A) =>
+      map_fst (uncurry (@monoid_op W _)) (α^-1 (map_snd f p)).
 
-  #[export] Instance Natural_ret_Writer : Natural (@ret (prod M) Return_Writer).
+  #[export] Instance Natural_ret_Writer : Natural (@ret (prod W) Return_Writer).
   Proof.
     constructor; try typeclasses eauto.
     intros A B f. now ext a.
   Qed.
 
-  Lemma Writer_kmon_bind0 : forall (A B : Type) (f : A -> M * B), bind (prod M) f ∘ ret (prod M) A = f.
+  Lemma Writer_kmon_bind0 : forall (A B : Type) (f : A -> W * B), bind (prod W) f ∘ ret (prod W) A = f.
   Proof.
     intros. ext a. unfold compose. unfold transparent tcs.
     cbn. destruct (f a). cbn. now simpl_monoid.
   Qed.
 
-  Lemma Writer_kmon_bind1 : forall A : Type, bind (prod M) (ret (prod M) A) = id.
+  Lemma Writer_kmon_bind1 : forall A : Type, bind (prod W) (ret (prod W) A) = id.
   Proof.
     intros. ext [m a]. unfold transparent tcs.
     cbn. now simpl_monoid.
   Qed.
 
-  Lemma Writer_kmon_bind2 : forall (A B C : Type) (g : B -> (prod M) C) (f : A -> (prod M) B),
-      bind (prod M) g ∘ bind (prod M) f = bind (prod M) (g ⋆1 f).
+  Lemma Writer_kmon_bind2 : forall (A B C : Type) (g : B -> (prod W) C) (f : A -> (prod W) B),
+      bind (prod W) g ∘ bind (prod W) f = bind (prod W) (g ⋆1 f).
   Proof.
     intros. ext [m a]. unfold_ops @Bind_Writer.
     unfold kc1, bind, compose. cbn.
@@ -56,22 +57,14 @@ Section writer_monad.
     cbn. unfold id. now simpl_monoid.
   Qed.
 
-  #[export] Instance Monad_writer : Monad (prod M) :=
+  #[export] Instance Monad_writer : Kleisli.Monad.Monad (prod W) :=
     {| kmon_bind0 := Writer_kmon_bind0;
       kmon_bind1 := Writer_kmon_bind1;
       kmon_bind2 := Writer_kmon_bind2;
     |}.
 
-End writer_monad.
-
-(** ** Miscellaneous properties *)
-(******************************************************************************)
-Section misc.
-
-  Context
-    (W : Type)
-    `{Monoid W}.
-
+  (** ** Miscellaneous properties *)
+  (******************************************************************************)
   Lemma extract_pair {A : Type} :
     forall (w : W), extract (W ×) A ∘ pair w = @id A.
   Proof.
@@ -104,4 +97,4 @@ Section misc.
     now simpl_monoid.
   Qed.
 
-End misc.
+End writer_monad.
