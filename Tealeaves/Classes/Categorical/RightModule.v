@@ -34,7 +34,7 @@ Class RightModule
     mod_action_action :
     `(right_action T U A ∘ right_action T U (U A) =
         right_action T U A ∘ map T (join U));
-    }.
+  }.
 
 (** * Coerceing monads into modules *)
 (******************************************************************************)

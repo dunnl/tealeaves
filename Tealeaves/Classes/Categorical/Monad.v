@@ -7,6 +7,9 @@ From Tealeaves Require Export
   Misc.Strength.
 
 Import Functor.Notations.
+Import Product.Notations.
+Import Functor.Notations.
+Import Strength.Notations.
 
 #[local] Generalizable Variables W T A.
 
