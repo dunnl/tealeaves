@@ -35,8 +35,6 @@ Qed.
 
 #[export] Instance Natural_ordinary `{H : Functor.Natural F G ϕ} : Category.Natural ϕ := @Functor.natural F _ G _ ϕ H.
 
-About Join.
-
 #[export] Instance Join_ordinary `{H : Monad.Join T} : Category.Join T := H.
 
 #[export] Instance Ret_ordinary `{H : Monad.Return T} : Category.Return T := H.
