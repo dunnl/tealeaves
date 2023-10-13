@@ -184,6 +184,19 @@ Section traversable_product.
 
 End traversable_product.
 
+(** * Purity *)
+(******************************************************************************)
+Theorem traverse_id_purity :
+  forall (T G : Type -> Type) `{TraversableFunctor T}
+    `{Applicative G} (A : Type),
+    traverse T G A A (pure G) = @pure G _ (T A).
+Proof.
+  intros.
+  change (@pure G _ A) with (@pure G _ A ∘ id).
+  rewrite <- (trf_traverse_morphism (G1 := fun A => A) (G2 := G)).
+  now rewrite (trf_traverse_id).
+Qed.
+
 (** * Derived instances *)
 (******************************************************************************)
 Module DerivedInstances.
@@ -266,8 +279,7 @@ Module DerivedInstances.
 
 End DerivedInstances.
 
-
-(** ** Notation *)
+(** * Notation *)
 (******************************************************************************)
 Module Notations.
   Infix "⋆2" := (kc2 _ _) (at level 60) : tealeaves_scope.
