@@ -55,3 +55,4 @@ Tealeaves/Classes/Categorical/DecTravMonad.v
 Tealeaves/Functors/Batch.v
 Tealeaves/Categories/Type.v
 Tealeaves/Categories/DecoratedFunctor.v
+Tealeaves/Categories/TraversableFunctor.v
