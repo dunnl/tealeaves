@@ -1,7 +1,8 @@
 From Tealeaves Require Import
-  Classes.Categorical.DecoratedFunctor.
+  Classes.Categorical.DecoratedFunctor
+  Classes.Categorical.RightComodule.
 
-#[local] Generalizable Variables T W F G.
+#[local] Generalizable Variables E T W F G.
 
 Import Monad.Notations.
 Import Strength.Notations.
@@ -13,6 +14,23 @@ Lemma incr_spec `{Monoid W} : forall A, uncurry (incr (A := A) W) = join (W ×).
 Proof.
   intros. ext [w1 [w2 a]]. reflexivity.
 Qed.
+
+(** * A decorated functor is precisely a right comodule of <<prod E>> *)
+(******************************************************************************)
+Definition RightComodule_DecoratedFunctor
+  `{DecoratedFunctor E F}
+  : RightComodule F (prod E) :=
+  {| rcom_coaction_coaction := dfun_dec_dec;
+    rcom_map_extr_coaction := dfun_dec_extract;
+  |}.
+
+Definition DecoratedFunctor_RightComodule
+  `{Map F} `{RightCoaction F (prod E)}
+  `{! RightComodule F (prod E)} `{Monoid E}
+  : DecoratedFunctor E F :=
+  {| dfun_dec_dec := rcom_coaction_coaction F (prod E);
+    dfun_dec_extract := rcom_map_extr_coaction F (prod E);
+  |}.
 
 (** * Decorated functors form a monoidal category *)
 (******************************************************************************)
