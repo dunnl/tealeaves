@@ -58,3 +58,4 @@ Tealeaves/Categories/TypeFamily.v
 Tealeaves/Categories/DecoratedFunctor.v
 Tealeaves/Categories/TraversableFunctor.v
 Tealeaves/Categories/DecTravFunctor.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctor.v
