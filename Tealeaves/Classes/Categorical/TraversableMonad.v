@@ -19,9 +19,9 @@ Class TraversableMonad
   { trvmon_monad :> Monad T;
     trvmon_functor :> TraversableFunctor T;
     trvmon_ret : forall `{Applicative G},
-      `(dist G ∘ ret T (G A) = map G (ret T A));
+      `(dist T G ∘ ret T (G A) = map G (ret T A));
     trvmon_join : forall `{Applicative G},
-      `(dist G ∘ join T (A := G A) = map G (join T) ∘ dist (F := T) G ∘ map T (dist G));
+      `(dist T G ∘ join T (A := G A) = map G (join T) ∘ dist T G ∘ map T (dist T G));
   }.
 
 (*

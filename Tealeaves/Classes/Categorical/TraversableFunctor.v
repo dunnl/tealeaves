@@ -16,7 +16,7 @@ Class ApplicativeDist (F : Type -> Type) :=
   dist : forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G},
       F ○ G ⇒ G ○ F.
 
-#[global] Arguments dist {F}%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} {A}%type_scope _.
+#[global] Arguments dist (F)%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} {A}%type_scope _.
 #[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} A%type_scope _.
 
 (** ** Typeclass *)

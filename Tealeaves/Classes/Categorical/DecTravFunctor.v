@@ -22,8 +22,8 @@ Class DecoratedTraversableFunctor
   { dtfun_decorated :> DecoratedFunctor E F;
     dtfun_traversable :> TraversableFunctor F;
     dtfun_compat : forall `{Applicative G},
-      `(dist G ∘ map F (σ G) ∘ dec F (A := G A) =
-          map G (dec F) ∘ dist G);
+      `(dist F G ∘ map F (σ G) ∘ dec F (A := G A) =
+          map G (dec F) ∘ dist F G);
   }.
 
 (*|
