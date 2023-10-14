@@ -67,5 +67,7 @@ Tealeaves/Adapters/CategoricalToKleisli/DecTravFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/DecTravMonad.v
 Tealeaves/Adapters/KleisliToCategorical/Monad.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedFunctor.v
+Tealeaves/Adapters/KleisliToCategorical/DecoratedMonad.v
 Tealeaves/Adapters/Roundtrips/Monad.v
 Tealeaves/Adapters/Roundtrips/DecoratedFunctor.v
+Tealeaves/Adapters/Roundtrips/DecoratedMonad.v
