@@ -101,7 +101,6 @@ Module Roundtrip2.
     change (Map_Env ?x) with (Map_prod x) in *.
     (* TODO ^^ Fix this *)
     rewrite <- (natural (ϕ := @extract (W ×) _)).
-    Search kc4 extract.
     rewrite (DerivedInstances.kc4_04).
     reflexivity.
   Qed.
