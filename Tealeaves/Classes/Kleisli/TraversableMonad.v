@@ -627,6 +627,15 @@ Section special_cases.
     now rewrite (DerivedInstances.kc3_30 T).
   Qed.
 
+  Lemma kc3_id_l' : forall `(g : A -> G2 (T B)),
+      kc3 T G1 G2 g (map G1 A (T A) (ret T A)) = map G1 A (G2 (T B)) g.
+  Proof.
+    intros.
+    unfold kc3.
+    rewrite (fun_map_map (F := G1)).
+    now rewrite (ktm_bindt0 G2).
+  Qed.
+
   Lemma kc3_id_r : forall `(f : A -> G1 (T B)),
       kc3 T G1 (fun A => A) (ret T B) f = f.
   Proof.
