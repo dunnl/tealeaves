@@ -109,3 +109,33 @@ Section TraversableFunctor_compose.
     |}.
 
 End TraversableFunctor_compose.
+
+From Tealeaves Require Import
+  Classes.Categorical.TraversableMonad.
+
+(** * The monad operations as <<traverse>>-respecting morphisms *)
+(******************************************************************************)
+Section traverable_monad_theory.
+
+  Context
+    (T : Type -> Type)
+    `{TraversableMonad T}.
+
+  Lemma dist_ret_spec :
+    TraversableMorphism (fun A => A) T (ret T).
+  Proof.
+    constructor; try typeclasses eauto.
+    intros. now rewrite (trvmon_ret).
+  Qed.
+
+  Lemma dist_join_spec :
+      TraversableMorphism (T ∘ T) T (@join T _).
+  Proof.
+    constructor; try typeclasses eauto.
+    intros. unfold_ops @Dist_compose.
+    reassociate <- on left.
+    unfold_compose_in_compose.
+    now rewrite <- (trvmon_join (T := T) (G := G)).
+  Qed.
+
+End traverable_monad_theory.
