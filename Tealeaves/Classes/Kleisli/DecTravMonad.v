@@ -428,20 +428,22 @@ Module DerivedInstances.
       intros.
       unfold kc7.
       ext [w a].
-      unfold compose at 2.
+      (* LHS *)
+      change ((map G1 B (T B) (ret T B) ∘ f) (w, a))
+        with (map G1 B (T B) (ret T B) (f (w, a))).
       compose near (f (w, a)).
-      rewrite (fun_map_map).
+      rewrite (fun_map_map (F := G1)).
       rewrite (kdtm_binddt0 W T G2 B C).
+      (* RHS *)
       unfold kc6.
-      unfold_ops @Map_compose;
-        do 2 reassociate <-;
-          unfold_compose_in_compose.
-      rewrite (fun_map_map).
-      unfold compose; cbn.
+      unfold_ops @Map_compose.
+      do 2 reassociate <-.
+      unfold_compose_in_compose; rewrite (fun_map_map).
+      unfold_ops @Cobind_env; unfold strength.
+      unfold compose at 3 4.
       compose near (f (w, a)) on right.
-      rewrite (fun_map_map).
-      unfold preincr, compose; cbn.
-      simpl_monoid.
+      rewrite (fun_map_map (F := G1)).
+      rewrite (preincr_ret W).
       reflexivity.
     Qed.
 
@@ -457,7 +459,16 @@ Module DerivedInstances.
         kc7 W T (fun A => A) (fun A => A) (ret T C ∘ g) (ret T B ∘ f) =
           ret T C ∘ (g ⋆4 f).
     Proof.
-      intros. rewrite kc7_55. rewrite kc5_44.
+      intros. rewrite kc7_55.
+      (* This is a property for decorated monads
+         , but at this stage we don't know DTMs are DMs *)
+      (* rewrite kc5_44.*)
+      unfold kc5. ext [w' a].
+      unfold compose at 2.
+      compose near (f (w', a)).
+      unfold_ops @Bindd_Binddt.
+      rewrite (kdtm_binddt0 W T (fun A => A) B).
+      rewrite (preincr_ret W).
       reflexivity.
     Qed.
 
