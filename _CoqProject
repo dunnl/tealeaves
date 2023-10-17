@@ -70,8 +70,10 @@ Tealeaves/Adapters/KleisliToCategorical/DecoratedFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedMonad.v
 Tealeaves/Adapters/KleisliToCategorical/TraversableFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/TraversableMonad.v
+Tealeaves/Adapters/KleisliToCategorical/DecTravFunctor.v
 Tealeaves/Adapters/Roundtrips/Monad.v
 Tealeaves/Adapters/Roundtrips/DecoratedFunctor.v
 Tealeaves/Adapters/Roundtrips/DecoratedMonad.v
 Tealeaves/Adapters/Roundtrips/TraversableFunctor.v
 Tealeaves/Adapters/Roundtrips/TraversableMonad.v
+Tealeaves/Adapters/Roundtrips/DecTravFunctor.v
