@@ -9,7 +9,6 @@ From Tealeaves.Functors Require Export
 Import Monoid.Notations.
 Import Applicative.Notations.
 
-#[local] Set Implicit Arguments.
 #[local] Generalizable Variables ψ ϕ W F G M A B C D X Y O.
 
 (** * The [Batch] idiom *)
@@ -18,14 +17,20 @@ Inductive Batch (A B C : Type) : Type :=
 | Done : C -> Batch A B C
 | Step : Batch A B (B -> C) -> A -> Batch A B C.
 
+#[global] Arguments Done {A B C}%type_scope _.
+#[global] Arguments Step {A B C}%type_scope _ _.
+
+#[local] Arguments Done : clear implicits.
+#[local] Arguments Step : clear implicits.
+
 (** ** Functor instance *)
 (******************************************************************************)
 Fixpoint map_Batch {A B : Type} `(f : C1 -> C2) (b : Batch A B C1) : Batch A B C2 :=
   match b with
-  | Done _ _ c =>
-      Done _ _ (f c)
-  | Step rest a =>
-      Step (@map_Batch A B (B -> C1) (B -> C2) (compose f) rest) a
+  | Done _ _ _ c =>
+      Done A B C2 (f c)
+  | Step _ _ _ rest a =>
+      Step A B C2 (@map_Batch A B (B -> C1) (B -> C2) (compose f) rest) a
   end.
 
 #[export] Instance Map_Batch {A B : Type} : Map (Batch A B) := @map_Batch A B.
@@ -60,7 +65,7 @@ Qed.
 (** ** Notations *)
 (******************************************************************************)
 Module Notations.
-  Infix "⧆" := Step (at level 51, left associativity) : tealeaves_scope.
+  Infix "⧆" := (Step _ _ _) (at level 51, left associativity) : tealeaves_scope.
 End Notations.
 
 Import Notations.
@@ -75,13 +80,13 @@ Section Applicative_Batch.
   (** *** Operations *)
   (******************************************************************************)
   #[export] Instance Pure_Batch : Pure (@Batch A B) :=
-    fun (C : Type) (c : C) => Done A B c.
+    fun (C : Type) (c : C) => Done A B C c.
 
   Fixpoint mult_Batch `(b1 : Batch A B C) `(b2 : Batch A B D) : @Batch A B (C * D) :=
     match b2 with
-    | Done _ _ d => map (Batch A B) (fun (c : C) => (c, d)) b1
-    | Step rest a =>
-        Step (map (Batch A B) strength_arrow (mult_Batch b1 rest)) a
+    | Done _ _ _ d => map (Batch A B) (fun (c : C) => (c, d)) b1
+    | Step _ _ _ rest a =>
+        Step A B (C * D) (map (Batch A B) strength_arrow (mult_Batch b1 rest)) a
     end.
 
   #[export] Instance Mult_Batch : Mult (@Batch A B) :=
@@ -90,19 +95,19 @@ Section Applicative_Batch.
   (** *** Rewriting principles *)
   (******************************************************************************)
   Lemma mult_Batch_rw1 : forall `(c : C) `(d : D),
-      Done A B c ⊗ Done A B d = Done A B (c, d).
+      Done A B C c ⊗ Done A B D d = Done A B (C * D) (c, d).
   Proof.
     reflexivity.
   Qed.
 
   Lemma mult_Batch_rw2 : forall `(d : D) `(b1 : Batch A B C),
-      b1 ⊗ Done A B d = map (Batch A B) (pair_right d) b1.
+      b1 ⊗ Done A B D d = map (Batch A B) (pair_right d) b1.
   Proof.
     intros. induction b1; easy.
   Qed.
 
   Lemma mult_Batch_rw3 : forall `(b2 : Batch A B D) `(c : C),
-      Done A B c ⊗ b2 = map (Batch A B) (pair c) b2.
+      Done A B C c ⊗ b2 = map (Batch A B) (pair c) b2.
   Proof.
     induction b2.
     - reflexivity.
@@ -113,14 +118,14 @@ Section Applicative_Batch.
   Qed.
 
   Lemma mult_Batch_rw4 : forall (a : A) `(b1 : @Batch A B (B -> C)) `(d : D),
-      (b1 ⧆ a) ⊗ Done A B d =
+      (b1 ⧆ a) ⊗ Done A B D d =
         map (Batch A B) (costrength_arrow ∘ pair_right d) b1 ⧆ a.
   Proof.
     reflexivity.
   Qed.
 
   Lemma mult_Batch_rw5 : forall `(b2 : @Batch A B (B -> D)) `(c : C) (a : A),
-      Done A B c ⊗ (b2 ⧆ a) = map (Batch A B) (strength_arrow ∘ pair c) b2 ⧆ a.
+      Done A B C c ⊗ (b2 ⧆ a) = map (Batch A B) (strength_arrow ∘ pair c) b2 ⧆ a.
   Proof.
     cbn. change (mult_Batch ?x ?y) with (x ⊗ y) in *. intros.
     fequal. rewrite (mult_Batch_rw3). compose near b2 on left.
@@ -255,32 +260,32 @@ Section demo.
       (mk1' : B -> D)
       (mk2 : B -> B -> C).
 
-  Compute Done A B c1 ⊗ Done A B d1.
-  Compute Done A B c1 ⊗ (Done A B mk1' ⧆ a1).
-  Compute (Done A B mk1 ⧆ a1) ⊗ Done A B d2.
-  Compute (Done A B mk1 ⧆ a1) ⊗ (Done A B mk1' ⧆ a2).
-  Compute (Done A B mk2 ⧆ a1 ⧆ a2) ⊗ (Done A B mk1' ⧆ a3).
+  Compute Done A B C c1 ⊗ Done A B D d1.
+  Compute Done A B C c1 ⊗ (Done A B (B -> D) mk1' ⧆ a1).
+  Compute (Done A B _ mk1 ⧆ a1) ⊗ Done A B D d2.
+  Compute (Done A B _ mk1 ⧆ a1) ⊗ (Done A B _ mk1' ⧆ a2).
+  Compute (Done A B _ mk2 ⧆ a1 ⧆ a2) ⊗ (Done A B _ mk1' ⧆ a3).
 
 End demo.
 
 (** * Functoriality of <<Batch A B>> in <<A>> and <<B>> *)
 (******************************************************************************)
-Fixpoint mapfst_Batch (A1 A2 B C : Type) (f : A1 -> A2) (b : Batch A1 B C) : Batch A2 B C :=
+Fixpoint mapfst_Batch (A1 A2 : Type) {B C : Type} (f : A1 -> A2) (b : Batch A1 B C) : Batch A2 B C :=
   match b with
-  | Done _ _  a => Done _ _ a
-  | Step rest a => Step (mapfst_Batch f rest) (f a)
+  | Done _ _ _  c => Done A2 B C c
+  | Step _ _ _ rest a => Step A2 B C (mapfst_Batch A1 A2 f rest) (f a)
   end.
 
-Fixpoint mapsnd_Batch (A B1 B2 C : Type) (f : B1 -> B2) (b : Batch A B2 C) : Batch A B1 C :=
+Fixpoint mapsnd_Batch {A : Type} (B1 B2 : Type) {C : Type} (f : B1 -> B2) (b : Batch A B2 C) : Batch A B1 C :=
   match b with
-  | Done _ _ a => Done A B1 a
-  | Step rest c => Step (map (Batch A B1) (precompose f) (mapsnd_Batch f rest)) c
+  | Done _ _ _ c => Done A B1 C c
+  | Step _ _ _ rest c => Step A B1 C (map (Batch A B1) (precompose f) (mapsnd_Batch B1 B2 f rest)) c
   end.
 
 (** ** Commuting independent maps *)
 (******************************************************************************)
 Lemma mapfst_map_Batch {B : Type} `(f : A1 -> A2) `(g : C1 -> C2) (b : Batch A1 B C1) :
-  mapfst_Batch f (map (Batch A1 B) g b) = map (Batch A2 B) g (mapfst_Batch f b).
+  mapfst_Batch A1 A2 f (map (Batch A1 B) g b) = map (Batch A2 B) g (mapfst_Batch A1 A2 f b).
 Proof.
   generalize dependent C2.
   generalize dependent B.
@@ -294,21 +299,21 @@ Proof.
 Qed.
 
 Lemma mapsnd_map_Batch {A : Type} `(f : B1 -> B2) `(g : C1 -> C2) (b : Batch A B2 C1) :
-  mapsnd_Batch f (map (Batch A B2) g b) = map (Batch A B1) g (mapsnd_Batch f b).
+  mapsnd_Batch B1 B2 f (map (Batch A B2) g b) = map (Batch A B1) g (mapsnd_Batch B1 B2 f b).
 Proof.
   generalize dependent C2.
   induction b.
   - reflexivity.
   - intros. cbn. fequal.
     rewrite IHb.
-    compose near (mapsnd_Batch f b).
+    compose near (mapsnd_Batch _ _ f b).
     do 2 rewrite (fun_map_map (F := Batch A B1)).
     do 2 rewrite <- IHb.
     reflexivity.
 Qed.
 
 Lemma mapfst_mapsnd_Batch : forall {C : Type} `(f : A1 -> A2) `(g : B1 -> B2) (b : Batch A1 B2 C),
-    mapfst_Batch f (mapsnd_Batch g b) = mapsnd_Batch g (mapfst_Batch f b).
+    mapfst_Batch A1 A2 f (mapsnd_Batch B1 B2 g b) = mapsnd_Batch B1 B2 g (mapfst_Batch A1 A2 f b).
 Proof.
   intros.
   generalize dependent f.
@@ -325,13 +330,13 @@ Qed.
 (** ** Rewriting principles *)
 (******************************************************************************)
 Lemma mapfst_Batch_rw1 {A1 A2 B C : Type} `(f : A1 -> A2) (c : C) :
-  mapfst_Batch f (Done A1 B c) = Done A2 B c.
+  mapfst_Batch A1 A2 f (Done A1 B C c) = Done A2 B C c.
 Proof.
   reflexivity.
 Qed.
 
 Lemma mapfst_Batch_rw2 {A1 A2 B C : Type} (f : A1 -> A2) (a : A1) (b : Batch A1 B (B -> C)) :
-  mapfst_Batch f (b ⧆ a) = mapfst_Batch f b ⧆ f a.
+  mapfst_Batch A1 A2 f (b ⧆ a) = mapfst_Batch A1 A2 f b ⧆ f a.
 Proof.
   reflexivity.
 Qed.
@@ -339,7 +344,7 @@ Qed.
 (** ** [mapfst] is a homomorphism *)
 (******************************************************************************)
 Lemma mapfst_Batch1 {B C D : Type} `(f : A1 -> A2) (b1 : Batch A1 B C) (b2 : Batch A1 B D) :
-  mapfst_Batch f (b1 ⊗ b2) = mapfst_Batch f b1 ⊗ mapfst_Batch f b2.
+  mapfst_Batch A1 A2 f (b1 ⊗ b2) = mapfst_Batch A1 A2 f b1 ⊗ mapfst_Batch A1 A2 f b2.
 Proof.
   generalize dependent b1. induction b2.
   - intros. cbn. now rewrite mapfst_map_Batch.
@@ -350,7 +355,7 @@ Proof.
 Qed.
 
 Lemma mapfst_Batch2 {B C D : Type} `(f : A1 -> A2) (b1 : Batch A1 B (C -> D)) (b2 : Batch A1 B C) :
-  mapfst_Batch f (b1 <⋆> b2) = mapfst_Batch f b1 <⋆> mapfst_Batch f b2.
+  mapfst_Batch A1 A2 f (b1 <⋆> b2) = mapfst_Batch A1 A2 f b1 <⋆> mapfst_Batch A1 A2 f b2.
 Proof.
   unfold ap. rewrite mapfst_map_Batch.
   now rewrite mapfst_Batch1.
@@ -364,21 +369,21 @@ Qed.
 Fixpoint runBatch {A B : Type} {F : Type -> Type}
   (ϕ : A -> F B) `{Map F} `{Mult F} `{Pure F} (C : Type) (b : Batch A B C) : F C :=
   match b with
-  | Done _ _ c => pure F c
-  | Step rest a => runBatch ϕ rest <⋆> ϕ a
+  | Done _ _ _ c => pure F c
+  | Step _ _ _ rest a => runBatch ϕ (B -> C) rest <⋆> ϕ a
   end.
 
 (** ** Rewriting principles *)
 (******************************************************************************)
 Lemma runBatch_rw1 `{Applicative F} `(ϕ : A -> F B) (C : Type) (c : C) :
-  runBatch ϕ (Done A B c) = pure F c.
+  runBatch ϕ C (Done A B C c) = pure F c.
 Proof.
   reflexivity.
 Qed.
 
 Lemma runBatch_rw2 `{Applicative F} `(ϕ : A -> F B)
   (a : A) (C : Type) (rest : Batch A B (B -> C)) :
-  runBatch ϕ (rest ⧆ a) = runBatch ϕ rest <⋆> ϕ a.
+  runBatch ϕ C (rest ⧆ a) = runBatch ϕ (B -> C) rest <⋆> ϕ a.
 Proof.
   reflexivity.
 Qed.
@@ -391,7 +396,7 @@ Section runBatch_naturality.
     `{Applicative F}.
 
   Lemma natural_runBatch {A B C1 C2 : Type} (ϕ : A -> F B) (f : C1 -> C2) (b : Batch A B C1) :
-    map F f (runBatch ϕ b) = runBatch ϕ (map (Batch A B) f b).
+    map F f (runBatch ϕ C1 b) = runBatch ϕ C2 (map (Batch A B) f b).
   Proof.
     generalize dependent C2.
     induction b; intros.
@@ -406,8 +411,8 @@ Section runBatch_naturality.
     introv. ext j. unfold compose. apply natural_runBatch.
   Qed.
 
-  Lemma runBatch_mapfst : forall `(s : @Batch A1 B C) `(ϕ : A2 -> F B) (f : A1 -> A2),
-      runBatch (ϕ ∘ f) s = runBatch ϕ (mapfst_Batch f s).
+  Lemma runBatch_mapfst : forall `(s : Batch A1 B C) `(ϕ : A2 -> F B) (f : A1 -> A2),
+      runBatch (ϕ ∘ f) C s = runBatch ϕ C (mapfst_Batch A1 A2 f s).
   Proof.
     intros; induction s.
     - easy.
@@ -415,7 +420,7 @@ Section runBatch_naturality.
   Qed.
 
   Lemma runBatch_mapsnd : forall `(s : @Batch A B2 C) `(ϕ : A -> F B1) (f : B1 -> B2),
-      runBatch (map F f ∘ ϕ) s = runBatch ϕ (mapsnd_Batch f s).
+      runBatch (map F f ∘ ϕ) C s = runBatch ϕ C (mapsnd_Batch B1 B2 f s).
   Proof.
     intros. induction s.
     - easy.
@@ -429,7 +434,7 @@ Section runBatch_naturality.
     `{ApplicativeMorphism F G ψ}.
 
   Lemma runBatch_morphism `(ϕ : A -> F B) `(b : Batch A B C) :
-    @ψ C (runBatch ϕ b) = runBatch (@ψ B ∘ ϕ) b.
+    @ψ C (runBatch ϕ C b) = runBatch (@ψ B ∘ ϕ) C b.
   Proof.
     induction b.
     - cbn. now rewrite (appmor_pure F G).
@@ -448,13 +453,13 @@ Section runBatch_morphism.
     `{ϕ : A -> F B}.
 
   Lemma appmor_pure_runBatch : forall (a : A),
-      runBatch ϕ (pure (Batch A B) a) = pure F a.
+      runBatch ϕ A (pure (Batch A B) a) = pure F a.
   Proof.
     easy.
   Qed.
 
   Lemma appmor_mult_runBatch : forall {C D} (x : Batch A B C) (y : Batch A B D),
-      runBatch ϕ (x ⊗ y) = runBatch ϕ x ⊗ runBatch ϕ y.
+      runBatch ϕ (C * D) (x ⊗ y) = runBatch ϕ C x ⊗ runBatch ϕ D y.
   Proof.
     intros. generalize dependent x. induction y as [ANY any | ANY rest IH x'].
     - intros. rewrite mult_Batch_rw2.
@@ -464,11 +469,11 @@ Section runBatch_morphism.
       unfold ap. rewrite (app_mult_natural_r F).
       rewrite <- (app_assoc F).
       rewrite <- IH. clear IH.
-      compose near (runBatch ϕ (x ⊗ rest) ⊗ ϕ x').
+      compose near (runBatch ϕ _ (x ⊗ rest) ⊗ ϕ x').
       rewrite (fun_map_map).
       cbn. unfold ap. change (mult_Batch ?jx ?jy) with (jx ⊗ jy).
       rewrite <- natural_runBatch. rewrite (app_mult_natural_l F).
-      compose near (runBatch ϕ (x ⊗ rest) ⊗ ϕ x') on left.
+      compose near (runBatch ϕ _ (x ⊗ rest) ⊗ ϕ x') on left.
       rewrite (fun_map_map). fequal. now ext [[? ?] ?].
   Qed.
 
@@ -492,12 +497,12 @@ Section runBatch_monoid.
 
   Fixpoint runBatch_monoid `(ϕ : A -> M) `(b : Batch A B C) : M :=
     match b with
-    | Done _ _ c => monoid_unit M
-    | Step rest a => runBatch_monoid (ϕ : A -> M) rest ● ϕ a
+    | Done _ _ _ c => monoid_unit M
+    | Step _ _ _ rest a => runBatch_monoid (ϕ : A -> M) rest ● ϕ a
     end.
 
   Lemma runBatch_monoid1 : forall (ϕ : A -> M) `(b : Batch A B C),
-      runBatch_monoid ϕ b = unconst (runBatch (mkConst (tag := B) ∘ ϕ) b).
+      runBatch_monoid ϕ b = unconst (runBatch (mkConst (tag := B) ∘ ϕ) _ b).
   Proof.
     intros. induction b.
     - easy.
@@ -505,7 +510,7 @@ Section runBatch_monoid.
   Qed.
 
   Lemma runBatch_monoid2 : forall (ϕ : A -> M) `(b : Batch A B C),
-      runBatch_monoid ϕ b = runBatch (F := const M) (ϕ : A -> const M B) b.
+      runBatch_monoid ϕ b = runBatch (F := const M) (ϕ : A -> const M B) _ b.
   Proof.
     intros. induction b.
     - easy.
@@ -524,14 +529,14 @@ Section length.
 
   Fixpoint length_Batch (C : Type) (b : Batch A B C) : nat :=
     match b with
-    | Done _ _ _ => 0
-    | Step rest a => S (length_Batch (B -> C) rest)
+    | Done _ _ _ _ => 0
+    | Step _ _ _ rest a => S (length_Batch (B -> C) rest)
     end.
 
  (* The length of a batch is the same as the length of the list we can extract from it *)
   Lemma batch_length1 : forall (C : Type) (b : Batch A B C),
       length_Batch C b =
-        length (runBatch (F := const (list A)) (ret list A) b).
+        length (runBatch (F := const (list A)) (ret list A) _ b).
   Proof.
     intros C b.
     induction b as [C c | C b IHb a].
@@ -554,15 +559,15 @@ Section parameterized.
   (******************************************************************************)
   Fixpoint extract_Batch {A B : Type} (b : Batch A A B) : B :=
     match b with
-    | Done _ _ b => b
-    | Step rest a => extract_Batch rest a
+    | Done _ _ _ b => b
+    | Step _ _ _ rest a => extract_Batch rest a
     end.
 
   Fixpoint cojoin_Batch {A B C D : Type} (b : Batch A C D) :
     Batch A B (Batch B C D) :=
     match b with
-    | Done _ _ d => Done A B (Done B C d)
-    | Step rest a => Step (map (Batch A B) (@Step B C D) (cojoin_Batch rest)) a
+    | Done _ _ _ d => Done A B _ (Done B C D d)
+    | Step _ _ _ rest a => Step _ _ _ (map (Batch A B) (@Step B C D) (cojoin_Batch rest)) a
     end.
 
   (* TODO Finish rest of the parameterized comonad structure. *)
