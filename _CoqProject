@@ -44,6 +44,7 @@ Tealeaves/Classes/Categorical/BeckDistributiveLaw.v
 Tealeaves/Classes/Categorical/Bimonad.v
 Tealeaves/Classes/Categorical/RightModule.v
 Tealeaves/Classes/Categorical/RightComodule.v
+Tealeaves/Classes/Categorical/ParamComonad.v
 Tealeaves/Functors/Categorical/Environment.v
 Tealeaves/Functors/Categorical/Writer.v
 Tealeaves/Classes/Categorical/DecoratedFunctor.v
