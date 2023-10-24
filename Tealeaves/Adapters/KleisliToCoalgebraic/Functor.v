@@ -36,7 +36,7 @@ Section traversals_coalgebras.
     `{TraversableFunctor T}.
 
   Lemma runBatch_batch : forall (G : Type -> Type) `{Applicative G} (A B : Type) (f : A -> G B),
-      runBatch B f ∘ batch A B = f.
+      runBatch f B ∘ batch A B = f.
   Proof.
     intros. ext a. cbn.
     now rewrite ap1.
@@ -45,7 +45,7 @@ Section traversals_coalgebras.
   (** ** Expressing operations using <<runBatch>> *)
   (******************************************************************************)
   Lemma extract_to_runBatch : forall (A B : Type) (b : Batch A A B),
-      extract_Batch b = runBatch (@id A) b.
+      extract_Batch b = runBatch (@id A) B b.
   Proof.
     intros. induction b.
     - reflexivity.
@@ -54,7 +54,7 @@ Section traversals_coalgebras.
 
   Lemma traverse_to_runBatch (G : Type -> Type)
     `{Applicative G} {A B : Type} (f : A -> G B) :
-    traverse T G A B f = runBatch (C := T B) f ∘ toBatch T A B.
+    traverse T G A B f = runBatch f (T B) ∘ toBatch T A B.
   Proof.
     unfold toBatch.
     rewrite (trf_traverse_morphism (ϕ := @runBatch A B G f _ _ _)).
@@ -62,7 +62,6 @@ Section traversals_coalgebras.
     reflexivity.
   Qed.
 
-  About runBatch.
   Corollary map_to_runBatch {A B : Type} (f : A -> B) :
     map T A B f = runBatch (C := _) f ∘ toBatch T A B.
   Proof.
