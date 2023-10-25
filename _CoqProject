@@ -39,6 +39,7 @@ Tealeaves/Functors/Store.v
 Tealeaves/Functors/Subset.v
 Tealeaves/Functors/List.v
 Tealeaves/Classes/Categorical/Monad.v
+Tealeaves/Adapters/MonadToApplicative.v
 Tealeaves/Classes/Categorical/Comonad.v
 Tealeaves/Classes/Categorical/BeckDistributiveLaw.v
 Tealeaves/Classes/Categorical/Bimonad.v
