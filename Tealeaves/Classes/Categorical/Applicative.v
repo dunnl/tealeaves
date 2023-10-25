@@ -8,7 +8,7 @@ From Tealeaves Require Export
 
 Import Product.Notations.
 
-#[local] Generalizable Variables F G A B C.
+#[local] Generalizable Variables ϕ F G A B C.
 
 (** * Applicative functors *)
 (******************************************************************************)
@@ -379,6 +379,69 @@ Section applicative_compose_laws.
 
 End applicative_compose_laws.
 
+(** *** Parallel composition of applicative morphisms *)
+(******************************************************************************)
+
+Section applicative_compose_laws.
+
+  Context
+    (F1 F2 G1 G2 : Type -> Type)
+      `{Applicative G1}
+      `{Applicative G2}
+      `{Applicative F1}
+      `{Applicative F2}
+      `{! ApplicativeMorphism F1 G1 ϕ1}
+      `{! ApplicativeMorphism F2 G2 ϕ2}.
+
+  #[export] Instance ApplicativeMorphism_parallel :
+    ApplicativeMorphism
+      (F1 ∘ F2) (G1 ∘ G2)
+      (fun A => ϕ1 (G2 A) ∘ map F1 (ϕ2 A)).
+  Proof.
+    inversion ApplicativeMorphism0.
+    inversion ApplicativeMorphism1.
+    constructor; try typeclasses eauto.
+    - intros.
+      unfold_ops @Map_compose. unfold compose.
+      compose near x.
+      rewrite (fun_map_map (F := F1)).
+      assert (appmor_natural1' : forall (A B : Type) (f : A -> B), ϕ2 B ∘ map F2 f = map G2 f ∘ ϕ2 A).
+      { intros. ext f2a. apply appmor_natural1. }
+      rewrite appmor_natural1'.
+      rewrite <- (fun_map_map (F := F1)).
+      unfold compose.
+      rewrite appmor_natural0.
+      reflexivity.
+    - intros.
+      unfold_ops @Pure_compose. unfold compose.
+      rewrite (app_pure_natural F1).
+      rewrite appmor_pure0.
+      rewrite appmor_pure1.
+      reflexivity.
+    - intros.
+      unfold_ops @Mult_compose. unfold compose in *.
+      cbn.
+      compose near (x ⊗ y).
+      rewrite (fun_map_map (F := F1)).
+      assert (appmor_mult1' :
+               forall (A B : Type),
+                 ϕ2 (A * B) ∘ mult F2 = mult G2 ∘ map_tensor (ϕ2 A) (ϕ2 B)).
+      { intros. ext [x' y'].
+        unfold compose; cbn. rewrite appmor_mult1. reflexivity. }
+      rewrite appmor_mult1'.
+      rewrite appmor_natural0.
+      rewrite <- (fun_map_map (F := G1)).
+      rewrite appmor_mult0.
+      unfold compose; cbn.
+      (* rhs *)
+      rewrite appmor_natural0.
+      rewrite appmor_natural0.
+      rewrite (app_mult_natural G1).
+      reflexivity.
+  Qed.
+
+End applicative_compose_laws.
+
 (** * The "ap" combinator << <⋆> >> *)
 (******************************************************************************)
 Definition ap (G : Type -> Type) `{Map G} `{Mult G} {A B : Type} :
@@ -602,8 +665,6 @@ From Tealeaves Require Import
   Classes.Monoid.
 
 Import Monoid.Notations.
-
-#[local] Generalizable Variables ϕ.
 
 Section with_monoid.
 
