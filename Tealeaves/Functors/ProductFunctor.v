@@ -26,7 +26,38 @@ Proof.
   intros. now destruct x.
 Qed.
 
-(** ** Cartesian product of applicative functors *)
+(** ** Functor instance *)
+(******************************************************************************)
+#[export] Instance Map_Product (F G : Type -> Type) `{Map F} `{Map G} : Map (F ◻ G) :=
+  fun A B (f : A -> B) (p : (F ◻ G) A) =>
+    match p with product x y => product (map F f x) (map G f y)
+    end.
+
+#[export] Instance Functor_Product (F G : Type -> Type) `{Functor F} `{Functor G} : Functor (F ◻ G).
+Proof.
+  constructor.
+  - introv. ext [?]. cbn. now rewrite 2(fun_map_id _).
+  - introv. ext [?]. cbn. now rewrite <- 2(fun_map_map _).
+Qed.
+
+(** ** Applicative functor instance *)
+(******************************************************************************)
+
+(** *** Operations *)
+(******************************************************************************)
+#[export] Instance Pure_Product (F G : Type -> Type)
+  `{Pure F} `{Pure G} : Pure (F ◻ G) :=
+  fun A (a : A) => product (pure F a) (pure G a).
+
+#[export] Instance Mult_Product (F G : Type -> Type)
+  `{Mult F} `{Mult G} : Mult (F ◻ G) :=
+  fun A B (p : (F ◻ G) A * (F ◻ G) B) =>
+    match p with
+    | (product fa ga , product fb gb) =>
+        product (mult F (fa, fb)) (mult G (ga, gb))
+    end.
+
+(** *** Applicative instance *)
 (******************************************************************************)
 Section product_applicative.
 
@@ -34,27 +65,6 @@ Section product_applicative.
     (F G : Type -> Type)
     `{Applicative F}
     `{Applicative G}.
-
-  #[export] Instance Map_Product : Map (F ◻ G) :=
-    fun A B (f : A -> B) (p : (F ◻ G) A) =>
-      match p with product x y => product (map F f x) (map G f y) end.
-
-  #[export] Instance Functor_Product : Functor (F ◻ G).
-  Proof.
-    constructor.
-    - introv. ext [?]. cbn. now rewrite 2(fun_map_id _).
-    - introv. ext [?]. cbn. now rewrite <- 2(fun_map_map _).
-  Qed.
-
-  #[export] Instance Pure_Product : Pure (F ◻ G) :=
-    fun A (a : A) => product (pure F a) (pure G a).
-
-  #[export] Instance Mult_Product : Mult (F ◻ G) :=
-    fun A B (p : (F ◻ G) A * (F ◻ G) B) =>
-      match p with
-      | (product fa ga , product fb gb) =>
-        product (mult F (fa, fb)) (mult G (ga, gb))
-      end.
 
   #[export] Instance Applicative_Product : Applicative (F ◻ G).
   Proof.
@@ -72,23 +82,60 @@ Section product_applicative.
       now rewrite 2(app_mult_pure _).
   Qed.
 
-  Theorem ApplicativeMorphism_pi1 : ApplicativeMorphism (F ◻ G) F (@pi1 _ _).
-  Proof.
-    intros. constructor; try typeclasses eauto.
-    - intros. now destruct x.
-    - intros. reflexivity.
-    - intros. now destruct x, y.
-  Qed.
-
-  Theorem ApplicativeMorphism_pi2 : ApplicativeMorphism (F ◻ G) G (@pi2 _ _).
-  Proof.
-    intros. constructor; try typeclasses eauto.
-    - intros. now destruct x.
-    - intros. reflexivity.
-    - intros. now destruct x, y.
-  Qed.
-
 End product_applicative.
+
+(** *** Some applicative morphisms *)
+(******************************************************************************)
+Theorem ApplicativeMorphism_pi1
+  (F G : Type -> Type)
+  `{Applicative F}
+  `{Applicative G}
+  : ApplicativeMorphism (F ◻ G) F (@pi1 _ _).
+Proof.
+  intros. constructor; try typeclasses eauto.
+  - intros. now destruct x.
+  - intros. reflexivity.
+  - intros. now destruct x, y.
+Qed.
+
+Theorem ApplicativeMorphism_pi2
+  (F G : Type -> Type)
+  `{Applicative F}
+  `{Applicative G}
+  : ApplicativeMorphism (F ◻ G) G (@pi2 _ _).
+Proof.
+  intros. constructor; try typeclasses eauto.
+  - intros. now destruct x.
+  - intros. reflexivity.
+  - intros. now destruct x, y.
+Qed.
+
+Theorem ApplicativeMorphism_product
+  (F1 F2 G1 G2 : Type -> Type)
+  `{Applicative F1}
+  `{Applicative F2}
+  `{Applicative G1}
+  `{Applicative G2}
+  ϕ1 ϕ2
+  `{! ApplicativeMorphism F1 G1 ϕ1} `{! ApplicativeMorphism F2 G2 ϕ2}
+  : ApplicativeMorphism (F1 ◻ F2) (G1 ◻ G2) (fun A '(product f1 f2) => product (ϕ1 A f1) (ϕ2 A f2)).
+Proof.
+  intros. inversion ApplicativeMorphism0.
+  inversion ApplicativeMorphism1.
+  constructor; try typeclasses eauto.
+  - intros. destruct x. cbn.
+    rewrite appmor_natural.
+    rewrite appmor_natural0.
+    reflexivity.
+  - intros. cbn.
+    rewrite appmor_pure.
+    rewrite appmor_pure0.
+    reflexivity.
+  - intros. destruct x; destruct y. cbn.
+    rewrite appmor_mult.
+    rewrite appmor_mult0.
+    reflexivity.
+Qed.
 
 (** * Notations *)
 (******************************************************************************)
