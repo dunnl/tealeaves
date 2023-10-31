@@ -73,9 +73,11 @@ Fixpoint filter `(P : A -> bool) (l : list A) : list A :=
 (** ** Folding a list is a monoid homomorphism *)
 (** <<fold : list M -> M>> is homomorphism of monoids. *)
 (******************************************************************************)
-#[export] Instance Monmor_fold (M : Type) `{Monoid M} : Monoid_Morphism (fold M) :=
+#[export] Instance Monmor_fold (M : Type) `{Monoid M} :
+  Monoid_Morphism (list M) M (fold M) :=
   {| monmor_unit := fold_nil M;
-     monmor_op := fold_app M |}.
+    monmor_op := fold_app M
+  |}.
 
 (** ** Rewriting lemmas for [filter] *)
 (******************************************************************************)

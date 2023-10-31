@@ -349,6 +349,7 @@ End applicative_compose.
 Section applicative_compose_laws.
 
   Context
+    (G : Type -> Type)
     `{Applicative G}.
 
   Theorem Pure_compose_identity1 :
@@ -384,19 +385,15 @@ End applicative_compose_laws.
 
 Section applicative_compose_laws.
 
-  Context
+  #[export] Instance ApplicativeMorphism_parallel
     (F1 F2 G1 G2 : Type -> Type)
-      `{Applicative G1}
-      `{Applicative G2}
-      `{Applicative F1}
-      `{Applicative F2}
-      `{! ApplicativeMorphism F1 G1 ϕ1}
-      `{! ApplicativeMorphism F2 G2 ϕ2}.
-
-  #[export] Instance ApplicativeMorphism_parallel :
-    ApplicativeMorphism
-      (F1 ∘ F2) (G1 ∘ G2)
-      (fun A => ϕ1 (G2 A) ∘ map F1 (ϕ2 A)).
+    `{Applicative G1}
+    `{Applicative G2}
+    `{Applicative F1}
+    `{Applicative F2}
+    `{! ApplicativeMorphism F1 G1 ϕ1}
+    `{! ApplicativeMorphism F2 G2 ϕ2} :
+  ApplicativeMorphism (F1 ∘ F2) (G1 ∘ G2) (fun A => ϕ1 (G2 A) ∘ map F1 (ϕ2 A)).
   Proof.
     inversion ApplicativeMorphism0.
     inversion ApplicativeMorphism1.
@@ -438,6 +435,32 @@ Section applicative_compose_laws.
       rewrite appmor_natural0.
       rewrite (app_mult_natural G1).
       reflexivity.
+  Qed.
+
+  #[export] Instance ApplicativeMorphism_parallel_left
+    (F1 F2 G1 : Type -> Type)
+    `{Applicative G1}
+    `{Applicative F1}
+    `{Applicative F2}
+    `{! ApplicativeMorphism F1 G1 ϕ1} :
+    ApplicativeMorphism (F1 ∘ F2) (G1 ∘ F2) (fun A => ϕ1 (F2 A)).
+  Proof.
+    replace (ϕ1 ○ F2) with (fun A => ϕ1 (F2 A) ∘ map F1 (@id (F2 A))).
+    - apply (ApplicativeMorphism_parallel F1 F2 G1 F2).
+    - ext A. now rewrite (fun_map_id (F := F1)).
+  Qed.
+
+  #[export] Instance ApplicativeMorphism_parallel_right
+    (F1 F2 G2 : Type -> Type)
+    `{Applicative G2}
+    `{Applicative F1}
+    `{Applicative F2}
+    `{! ApplicativeMorphism F2 G2 ϕ2} :
+    ApplicativeMorphism (F1 ∘ F2) (F1 ∘ G2) (fun A => map F1 (ϕ2 A)).
+  Proof.
+    change (fun A => map F1 (ϕ2 A)) with
+      ((fun A : Type => (fun X => @id (F1 X)) (G2 A) ∘ map F1 (ϕ2 A))).
+    apply (ApplicativeMorphism_parallel F1 F2 F1 G2).
   Qed.
 
 End applicative_compose_laws.
@@ -725,9 +748,9 @@ Section with_hom.
     `{Monoid_Morphism M1 M2 ϕ}.
 
   #[export] Instance Monoid_hom_applicative :
-    Monoid_Morphism (map G ϕ).
+    Monoid_Morphism (G M1) (G M2) (map G ϕ).
   Proof.
-    inversion H7.
+    inversion H3.
     constructor.
     - typeclasses eauto.
     - typeclasses eauto.

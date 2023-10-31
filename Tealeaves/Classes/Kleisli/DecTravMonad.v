@@ -100,14 +100,14 @@ Section properties.
     forall (G : Type -> Type) {A B : Type} `{Applicative G} (f : W * A -> G (T B)),
       @binddt W T T _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G) (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f = binddt W T T G A B f.
   Proof.
-    intros. fequal. now rewrite Mult_compose_identity2.
+    intros. fequal. now rewrite (Mult_compose_identity2 G).
   Qed.
 
   Lemma binddt_app_r :
     forall (G : Type -> Type) {A B : Type} `{Applicative G} (f : W * A -> G (T B)),
       @binddt W T T _ (G ∘ (fun A => A)) (Map_compose G (fun A => A)) (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f = binddt W T T G A B f.
   Proof.
-    intros. fequal. now rewrite Mult_compose_identity1.
+    intros. fequal. now rewrite (Mult_compose_identity1 G).
   Qed.
 
 End properties.
@@ -1255,7 +1255,7 @@ End kc7_special_cases.
       rewrite lemma; clear lemma.
       rewrite (mapdt_to_binddt).
       rewrite (binddt_app_l T G2).
-      rewrite (map_id_l G2).
+      rewrite (map_compose_id1 G2).
       rewrite (kc6_64).
       reflexivity.
     Qed.

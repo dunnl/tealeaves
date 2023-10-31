@@ -21,8 +21,10 @@ From Tealeaves Require Export
 #[local] Generalizable Variables x y z a A B.
 
 (** * Monoids *)
+(******************************************************************************)
 
 (** ** Operational typeclasses *)
+(******************************************************************************)
 Class Monoid_op (A : Type) := monoid_op : A -> A -> A.
 
 Class Monoid_unit (A : Type) := monoid_unit : A.
@@ -34,6 +36,7 @@ Arguments monoid_unit A%type_scope {Monoid_unit}.
 #[local] Infix "●" := monoid_op (at level 60) : tealeaves_scope. (* \CIRCLE *)
 
 (** ** Monoid typeclass *)
+(******************************************************************************)
 Class Monoid (M : Type) {op : Monoid_op M} {unit : Monoid_unit M} :=
   { monoid_assoc : `((x ● y) ● z = x ● (y ● z));
     monoid_id_l : `(x ● Ƶ = x);
@@ -57,25 +60,51 @@ A homomorphism :math:`\phi : A \to B` is a function which satisfies
 .. coq::
 |*)
 
-Section monoid_morphism.
+(** ** Monoid homomorphsims *)
+(******************************************************************************)
+Class Monoid_Morphism
+  (src tgt : Type)
+  `{src_op : Monoid_op src}
+  `{src_unit : Monoid_unit src}
+  `{tgt_op : Monoid_op tgt}
+  `{tgt_unit : Monoid_unit tgt}
+  (ϕ : src -> tgt) :=
+  { monmor_src : Monoid src;
+    monmor_tgt : Monoid tgt;
+    monmor_unit : ϕ Ƶ = Ƶ;
+    monmor_op : `(ϕ (a1 ● a2) = ϕ a1 ● ϕ a2);
+  }.
+
+Section monoid_morphism_composition.
 
   Context
-    {A B : Type}
-      `{Monoid_op A}
-      `{Monoid_unit A}
-      `{Monoid_op B}
-      `{Monoid_unit B}
-      (ϕ : A -> B).
+    (M1 M2 M3 : Type)
+      `{Monoid M1}
+      `{Monoid M2}
+      `{Monoid M3}
+      (ϕ1 : M1 -> M2)
+      (ϕ2 : M2 -> M3)
+      `{! Monoid_Morphism M1 M2 ϕ1 }
+      `{! Monoid_Morphism M2 M3 ϕ2 }.
 
-  Class Monoid_Morphism :=
-    { monmor_a : Monoid A;
-      monmor_b : Monoid B;
-      monmor_unit : ϕ Ƶ = Ƶ;
-      monmor_op : `(ϕ (a1 ● a2) = ϕ a1 ● ϕ a2); }.
+  #[export] Instance Monoid_Morphism_compose :
+    Monoid_Morphism M1 M3 (ϕ2 ∘ ϕ1).
+  Proof.
+    constructor; try typeclasses eauto.
+    all: unfold compose.
+    - rewrite (monmor_unit (src := M1) (tgt := M2)).
+      rewrite (monmor_unit (src := M2) (tgt := M3)).
+      reflexivity.
+    - intros.
+      rewrite (monmor_op (src := M1) (tgt := M2)).
+      rewrite (monmor_op (src := M2) (tgt := M3)).
+      reflexivity.
+  Qed.
 
-End monoid_morphism.
+End monoid_morphism_composition.
 
 (** ** Some rudimentary automation *)
+(******************************************************************************)
 Ltac simpl_monoid :=
   repeat rewrite monoid_id_l;
   repeat rewrite monoid_id_r;
@@ -92,6 +121,7 @@ Tactic Notation "simpl_monoid" "in" "*" :=
   repeat rewrite monoid_assoc in *.
 
 (** * Cartesian product of monoids *)
+(******************************************************************************)
 Section product_monoid.
 
   Context `{Monoid A, Monoid B}.
@@ -178,6 +208,7 @@ Section preincr.
 End preincr.
 
 (** * Notations *)
+(******************************************************************************)
 Module Notations.
 
   Notation "'Ƶ'" := (monoid_unit _) : tealeaves_scope. (* \Zbar *)

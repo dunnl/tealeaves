@@ -46,14 +46,26 @@ Section lemmas.
     (F : Type -> Type)
     `{Functor F}.
 
-  Lemma map_id_l :
+  Lemma Map_compose_id1 :
+    Map_compose (fun A => A) F = @map F _.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma Map_compose_id2 :
+    Map_compose F (fun A => A) = @map F _.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma map_compose_id1 :
     forall {A B : Type} (f : A -> B),
       @map ((fun A => A) ∘ F) (Map_compose (fun A => A) F) A B f = @map F _ A B f.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma map_id_r :
+  Lemma map_compose_id2 :
     forall {A B : Type} (f : A -> B),
       @map (F ∘ (fun A => A)) (Map_compose F (fun A => A)) A B f = @map F _ A B f.
   Proof.

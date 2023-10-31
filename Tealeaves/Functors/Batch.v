@@ -1,6 +1,7 @@
 From Tealeaves.Classes Require Export
   Monoid
-  Categorical.Applicative.
+  Categorical.Applicative
+  Categorical.Monad.
 From Tealeaves.Functors Require Export
   Store
   Constant
@@ -8,6 +9,7 @@ From Tealeaves.Functors Require Export
 
 Import Monoid.Notations.
 Import Applicative.Notations.
+Import TraversableFunctor.Notations.
 
 #[local] Generalizable Variables ψ ϕ W F G M A B C D X Y O.
 
@@ -106,7 +108,15 @@ Section Applicative_Batch.
     intros. induction b1; easy.
   Qed.
 
-  Lemma mult_Batch_rw3 : forall `(b2 : Batch A B D) `(c : C),
+  Lemma mult_Batch_rw3 : forall (D : Type) (b2 : Batch A B (B -> D)) (a : A) `(b1 : Batch A B C),
+      b1 ⊗ (b2 ⧆ a) =
+        map (Batch A B) strength_arrow (b1 ⊗ b2) ⧆ a.
+  Proof.
+    reflexivity.
+  Qed.
+
+
+  Lemma mult_Batch_rw4 : forall `(b2 : Batch A B D) `(c : C),
       Done A B C c ⊗ b2 = map (Batch A B) (pair c) b2.
   Proof.
     induction b2.
@@ -117,22 +127,24 @@ Section Applicative_Batch.
       now rewrite (fun_map_map (F := Batch A B)).
   Qed.
 
-  Lemma mult_Batch_rw4 : forall (a : A) `(b1 : @Batch A B (B -> C)) `(d : D),
+  Lemma mult_Batch_rw5 : forall (a : A) `(b1 : @Batch A B (B -> C)) `(d : D),
       (b1 ⧆ a) ⊗ Done A B D d =
         map (Batch A B) (costrength_arrow ∘ pair_right d) b1 ⧆ a.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma mult_Batch_rw5 : forall `(b2 : @Batch A B (B -> D)) `(c : C) (a : A),
+  Lemma mult_Batch_rw6 : forall `(b2 : @Batch A B (B -> D)) `(c : C) (a : A),
       Done A B C c ⊗ (b2 ⧆ a) = map (Batch A B) (strength_arrow ∘ pair c) b2 ⧆ a.
   Proof.
-    cbn. change (mult_Batch ?x ?y) with (x ⊗ y) in *. intros.
-    fequal. rewrite (mult_Batch_rw3). compose near b2 on left.
+    intros.
+    rewrite mult_Batch_rw3.
+    rewrite mult_Batch_rw4.
+    compose near b2 on left.
     now rewrite (fun_map_map (F := Batch A B)).
   Qed.
 
-  Lemma mult_Batch_rw6 : forall (a1 a2 : A) `(b1 : Batch A B (B -> C)) `(b2 : Batch A B (B -> D)),
+  Lemma mult_Batch_rw7 : forall (a1 a2 : A) `(b1 : Batch A B (B -> C)) `(b2 : Batch A B (B -> D)),
       (b1 ⧆ a1) ⊗ (b2 ⧆ a2) =
         (map (Batch A B) strength_arrow ((b1 ⧆ a1) ⊗ b2)) ⧆ a2.
   Proof.
@@ -366,24 +378,25 @@ Qed.
 
 (** ** Initiality (<<runBatch>>) *)
 (******************************************************************************)
-Fixpoint runBatch {A B : Type} {F : Type -> Type}
-  (ϕ : A -> F B) `{Map F} `{Mult F} `{Pure F} (C : Type) (b : Batch A B C) : F C :=
+Fixpoint runBatch {A B : Type}
+  (F : Type -> Type) `{Map F} `{Mult F} `{Pure F}
+   (ϕ : A -> F B) (C : Type) (b : Batch A B C) : F C :=
   match b with
   | Done _ _ _ c => pure F c
-  | Step _ _ _ rest a => runBatch ϕ (B -> C) rest <⋆> ϕ a
+  | Step _ _ _ rest a => runBatch F ϕ (B -> C) rest <⋆> ϕ a
   end.
 
 (** ** Rewriting principles *)
 (******************************************************************************)
 Lemma runBatch_rw1 `{Applicative F} `(ϕ : A -> F B) (C : Type) (c : C) :
-  runBatch ϕ C (Done A B C c) = pure F c.
+  runBatch F ϕ C (Done A B C c) = pure F c.
 Proof.
   reflexivity.
 Qed.
 
 Lemma runBatch_rw2 `{Applicative F} `(ϕ : A -> F B)
   (a : A) (C : Type) (rest : Batch A B (B -> C)) :
-  runBatch ϕ C (rest ⧆ a) = runBatch ϕ (B -> C) rest <⋆> ϕ a.
+  runBatch F ϕ C (rest ⧆ a) = runBatch F ϕ (B -> C) rest <⋆> ϕ a.
 Proof.
   reflexivity.
 Qed.
@@ -396,7 +409,7 @@ Section runBatch_naturality.
     `{Applicative F}.
 
   Lemma natural_runBatch {A B C1 C2 : Type} (ϕ : A -> F B) (f : C1 -> C2) (b : Batch A B C1) :
-    map F f (runBatch ϕ C1 b) = runBatch ϕ C2 (map (Batch A B) f b).
+    map F f (runBatch F ϕ C1 b) = runBatch F ϕ C2 (map (Batch A B) f b).
   Proof.
     generalize dependent C2.
     induction b; intros.
@@ -405,14 +418,15 @@ Section runBatch_naturality.
   Qed.
 
   #[export] Instance Natural_runBatch `(ϕ : A -> F B) :
-    Natural (@runBatch A B F ϕ _ _ _).
-  Proof.
+    Natural (runBatch F ϕ).
     constructor; try typeclasses eauto.
-    introv. ext j. unfold compose. apply natural_runBatch.
+    intros C D f. ext b. unfold compose.
+    rewrite natural_runBatch.
+    reflexivity.
   Qed.
 
   Lemma runBatch_mapfst : forall `(s : Batch A1 B C) `(ϕ : A2 -> F B) (f : A1 -> A2),
-      runBatch (ϕ ∘ f) C s = runBatch ϕ C (mapfst_Batch A1 A2 f s).
+      runBatch F (ϕ ∘ f) C s = runBatch F ϕ C (mapfst_Batch A1 A2 f s).
   Proof.
     intros; induction s.
     - easy.
@@ -420,7 +434,7 @@ Section runBatch_naturality.
   Qed.
 
   Lemma runBatch_mapsnd : forall `(s : @Batch A B2 C) `(ϕ : A -> F B1) (f : B1 -> B2),
-      runBatch (map F f ∘ ϕ) C s = runBatch ϕ C (mapsnd_Batch B1 B2 f s).
+      runBatch F (map F f ∘ ϕ) C s = runBatch F ϕ C (mapsnd_Batch B1 B2 f s).
   Proof.
     intros. induction s.
     - easy.
@@ -434,12 +448,19 @@ Section runBatch_naturality.
     `{ApplicativeMorphism F G ψ}.
 
   Lemma runBatch_morphism `(ϕ : A -> F B) `(b : Batch A B C) :
-    @ψ C (runBatch ϕ C b) = runBatch (@ψ B ∘ ϕ) C b.
+    ψ C (runBatch F ϕ C b) = runBatch G (ψ B ∘ ϕ) C b.
   Proof.
     induction b.
     - cbn. now rewrite (appmor_pure F G).
     - cbn. rewrite ap_morphism_1.
       now rewrite IHb.
+  Qed.
+
+  Lemma runBatch_morphism' `(ϕ : A -> F B) :
+    forall C, ψ C ∘ runBatch F ϕ C = runBatch G (ψ B ∘ ϕ) C.
+  Proof.
+    intros. ext b. unfold compose. rewrite runBatch_morphism.
+    reflexivity.
   Qed.
 
 End runBatch_naturality.
@@ -453,13 +474,13 @@ Section runBatch_morphism.
     `{ϕ : A -> F B}.
 
   Lemma appmor_pure_runBatch : forall (a : A),
-      runBatch ϕ A (pure (Batch A B) a) = pure F a.
+      runBatch F ϕ A (pure (Batch A B) a) = pure F a.
   Proof.
     easy.
   Qed.
 
   Lemma appmor_mult_runBatch : forall {C D} (x : Batch A B C) (y : Batch A B D),
-      runBatch ϕ (C * D) (x ⊗ y) = runBatch ϕ C x ⊗ runBatch ϕ D y.
+      runBatch F ϕ (C * D) (x ⊗ y) = runBatch F ϕ C x ⊗ runBatch F ϕ D y.
   Proof.
     intros. generalize dependent x. induction y as [ANY any | ANY rest IH x'].
     - intros. rewrite mult_Batch_rw2.
@@ -469,15 +490,15 @@ Section runBatch_morphism.
       unfold ap. rewrite (app_mult_natural_r F).
       rewrite <- (app_assoc F).
       rewrite <- IH. clear IH.
-      compose near (runBatch ϕ _ (x ⊗ rest) ⊗ ϕ x').
+      compose near (runBatch F ϕ _ (x ⊗ rest) ⊗ ϕ x').
       rewrite (fun_map_map).
       cbn. unfold ap. change (mult_Batch ?jx ?jy) with (jx ⊗ jy).
       rewrite <- natural_runBatch. rewrite (app_mult_natural_l F).
-      compose near (runBatch ϕ _ (x ⊗ rest) ⊗ ϕ x') on left.
+      compose near (runBatch F ϕ _ (x ⊗ rest) ⊗ ϕ x') on left.
       rewrite (fun_map_map). fequal. now ext [[? ?] ?].
   Qed.
 
-  #[export] Instance Morphism_store_fold: ApplicativeMorphism (Batch A B) F (@runBatch A B F ϕ _ _ _).
+  #[export] Instance Morphism_store_fold: ApplicativeMorphism (Batch A B) F (runBatch F ϕ).
   Proof.
     constructor; try typeclasses eauto.
     - intros. now rewrite natural_runBatch.
@@ -502,7 +523,7 @@ Section runBatch_monoid.
     end.
 
   Lemma runBatch_monoid1 : forall (ϕ : A -> M) `(b : Batch A B C),
-      runBatch_monoid ϕ b = unconst (runBatch (mkConst (tag := B) ∘ ϕ) _ b).
+      runBatch_monoid ϕ b = unconst (runBatch (Const M) (mkConst (tag := B) ∘ ϕ) _ b).
   Proof.
     intros. induction b.
     - easy.
@@ -510,7 +531,7 @@ Section runBatch_monoid.
   Qed.
 
   Lemma runBatch_monoid2 : forall (ϕ : A -> M) `(b : Batch A B C),
-      runBatch_monoid ϕ b = runBatch (F := const M) (ϕ : A -> const M B) _ b.
+      runBatch_monoid ϕ b = runBatch (const M) (ϕ : A -> const M B) _ b.
   Proof.
     intros. induction b.
     - easy.
@@ -536,7 +557,7 @@ Section length.
  (* The length of a batch is the same as the length of the list we can extract from it *)
   Lemma batch_length1 : forall (C : Type) (b : Batch A B C),
       length_Batch C b =
-        length (runBatch (F := const (list A)) (ret list A) _ b).
+        length (runBatch (const (list A)) (ret list A) _ b).
   Proof.
     intros C b.
     induction b as [C c | C b IHb a].
@@ -566,16 +587,526 @@ Section parameterized.
   Fixpoint cojoin_Batch {A B C D : Type} (b : Batch A C D) :
     Batch A B (Batch B C D) :=
     match b with
-    | Done _ _ _ d => Done A B _ (Done B C D d)
-    | Step _ _ _ rest a => Step _ _ _ (map (Batch A B) (@Step B C D) (cojoin_Batch rest)) a
+    | Done _ _ _ d => Done A B (Batch B C D) (Done B C D d)
+    | Step _ _ _ rest a => Step A B (Batch B C D)
+                            (map (Batch A B) (Step B C D) (cojoin_Batch rest)) a
     end.
 
-  (* TODO Finish rest of the parameterized comonad structure. *)
+  Lemma extract_Batch_rw0 : forall (A : Type),
+      @extract_Batch A = runBatch (fun A => A) (@id A).
+  Proof.
+    intros. ext B b.
+    induction b.
+    - reflexivity.
+    - cbn. rewrite IHb.
+      reflexivity.
+  Qed.
+
+  Lemma extract_Batch_rw1 : forall (A B : Type) (rest : Batch A A (A -> B)) (a : A),
+      extract_Batch (rest ⧆ a) = extract_Batch rest a.
+  Proof.
+    reflexivity.
+  Qed.
+
+  (** *** Naturality properties *)
+  (******************************************************************************)
+  Lemma extract_natural (A C D : Type) (f : C -> D) :
+    forall (b : Batch A A C),
+      @extract_Batch A D (map (Batch A A) f b) =
+        f (@extract_Batch A C b).
+  Proof.
+    intros.
+    generalize dependent D.
+    induction b as [C c | C rest IHrest a]; intros D f.
+    - reflexivity.
+    - cbn.
+      now rewrite IHrest.
+  Qed.
+
+  Lemma extract_dinatural (A B C : Type) (f : A -> B) :
+    forall (b : Batch A B C),
+      @extract_Batch B C (mapfst_Batch A B f b) =
+        @extract_Batch A C (mapsnd_Batch A B f b).
+  Proof.
+    intros.
+    induction b as [C c | C rest IHrest a].
+    - reflexivity.
+    - cbn.
+      rewrite IHrest.
+      rewrite extract_natural.
+      reflexivity.
+  Qed.
+
+  Lemma cojoin_natural (A B C D E : Type) (f : D -> E) :
+    forall (b : Batch A C D),
+      @cojoin_Batch A B C E (map (Batch A C) f b) =
+        map (Batch A B) (map (Batch B C) f) (@cojoin_Batch A B C D b).
+  Proof.
+    intros.
+    generalize dependent E.
+    induction b as [D d | D rest IHrest a]; intros E f.
+    - reflexivity.
+    - cbn.
+      rewrite IHrest.
+      compose near (cojoin_Batch (B := B) rest).
+      rewrite (fun_map_map (F := Batch A B)).
+      rewrite (fun_map_map (F := Batch A B)).
+      reflexivity.
+  Qed.
+
+  Lemma cojoin_natural1 (A A' B C D : Type) (f : A -> A') :
+    forall (b : Batch A C D),
+      @cojoin_Batch A' B C D (mapfst_Batch _ _ f b) =
+        mapfst_Batch _ _ f (@cojoin_Batch A B C D b).
+  Proof.
+    intros.
+    induction b as [D d | D rest IHrest a].
+    - reflexivity.
+    - cbn.
+      rewrite IHrest.
+      rewrite <- (mapfst_map_Batch).
+      reflexivity.
+  Qed.
+
+  Lemma cojoin_natural2 (A B C C' D : Type) (f : C -> C') :
+    forall (b : Batch A C' D),
+      @cojoin_Batch A B C D (mapsnd_Batch _ _ f b) =
+        map (Batch A B) (mapsnd_Batch _ _ f) (@cojoin_Batch A B C' D b).
+  Proof.
+    intros.
+    generalize dependent C.
+    induction b as [D d | D rest IHrest a]; intros C f.
+    - reflexivity.
+    - cbn.
+      rewrite (cojoin_natural).
+      change (map (Batch A B) ?g (map (Batch A B) ?f ?b))
+        with ((map (Batch A B) g ∘ map (Batch A B) f) b).
+      rewrite (fun_map_map (F := Batch A B)).
+      rewrite (fun_map_map (F := Batch A B)).
+      rewrite IHrest.
+      change (map (Batch A B) ?g (map (Batch A B) ?f ?b))
+        with ((map (Batch A B) g ∘ map (Batch A B) f) b).
+      rewrite (fun_map_map (F := Batch A B)).
+      reflexivity.
+  Qed.
+
+  Lemma cojoin_dinatural (A B B' C D : Type) (f : B -> B') :
+    forall (b : Batch A C D),
+      map (Batch A B) (mapfst_Batch _ _ f) (@cojoin_Batch A B C D b) =
+        (mapsnd_Batch _ _ f) (@cojoin_Batch A B' C D b).
+  Proof.
+    intros.
+    induction b as [D d | D rest IHrest a].
+    - reflexivity.
+    - cbn.
+      compose near (cojoin_Batch (B := B) rest).
+      rewrite (fun_map_map (F := Batch A B)).
+      rewrite (mapsnd_map_Batch).
+      compose near (mapsnd_Batch B B' f (cojoin_Batch (B := B') rest)).
+      rewrite (fun_map_map (F := Batch A B)).
+      rewrite <- IHrest.
+      compose near (cojoin_Batch (B := B) rest).
+      rewrite (fun_map_map (F := Batch A B)).
+      reflexivity.
+  Qed.
+
+  (** ** <<extract>> as an applicative morphism *)
+  (******************************************************************************)
+  #[export] Instance AppMor_extract : forall (A : Type),
+      ApplicativeMorphism (Batch A A) (fun A => A) (@extract_Batch A).
+  Proof.
+    intros. constructor; try typeclasses eauto;
+    unfold_ops @Mult_I.
+    - intros B C f b.
+      generalize dependent C.
+      induction b as [B b | B rest IHrest a]; intros C f.
+      + cbn.
+        reflexivity.
+      + cbn.
+        rewrite IHrest.
+        reflexivity.
+    - intros B b.
+      reflexivity.
+    - intros B C b c.
+      induction c as [C c | C rest IHrest a].
+      + rewrite mult_Batch_rw2.
+        rewrite extract_natural.
+        reflexivity.
+      + rewrite mult_Batch_rw3.
+        rewrite extract_Batch_rw1.
+        rewrite extract_natural.
+        rewrite IHrest.
+        reflexivity.
+  Qed.
+
+  (** ** Comonad laws *)
+  (******************************************************************************)
   Lemma extr_cojoin_Batch : `(extract_Batch ∘ cojoin_Batch = @id (Batch A B C)).
   Proof.
-    intros. ext b. induction b.
-    - reflexivity.
-    - unfold compose. cbn.
-  Abort.
+    intros. ext b. unfold id.
+    induction b as [C c | C rest IHrest a].
+    - unfold compose. cbn. reflexivity.
+    - unfold compose in *.
+      cbn.
+      rewrite (extract_natural).
+      rewrite IHrest.
+      reflexivity.
+  Qed.
+
+  (* TODO Finish rest of the parameterized comonad structure. *)
 
 End parameterized.
+
+(** * <<Batch>> as a parameterized monad *)
+(******************************************************************************)
+Section parameterised_monad.
+
+  (** ** Operations *)
+  (******************************************************************************)
+  Definition batch (B : Type) (A : Type) : A -> Batch A B B :=
+    Step A B B (Done A B (B -> B) (@id B)).
+
+  Fixpoint join_Batch {A B C D : Type}
+    (b : Batch (Batch A B C) C D) : Batch A B D :=
+    match b with
+    | Done _ _ _ d => Done _ _ _ d
+    | Step _ _ _ rest a => ap (Batch A B) (@join_Batch A B C (C -> D) rest) a
+    end.
+
+  Lemma join_Batch_rw1 {A B C D : Type} : forall (rest : Batch (Batch A B C) C (C -> D)) (b : Batch A B C),
+      join_Batch (rest ⧆ b) = join_Batch rest <⋆> b.
+  Proof.
+    reflexivity.
+  Qed.
+
+  (** ** <<join>> as <<runBatch id>> *)
+  (******************************************************************************)
+  Lemma join_Batch_rw0 : forall (A B C : Type),
+      @join_Batch A B C = runBatch (Batch A B) (@id (Batch A B C)).
+  Proof.
+    intros. ext D b.
+    induction b as [D d | D rest IHrest a].
+    - reflexivity.
+    - rewrite join_Batch_rw1.
+      rewrite IHrest.
+      reflexivity.
+  Qed.
+
+  (** *** Naturality *)
+  (******************************************************************************)
+  Lemma ret_natural (A A' B : Type) (f : A -> A') :
+    mapfst_Batch A A' f ∘ batch B A = batch B A' ∘ f.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma ret_dinatural (A B B' : Type) (f : B -> B') :
+    mapsnd_Batch B B' f ∘ batch B' A = map (Batch A B) f ∘ batch B A.
+  Proof.
+    reflexivity.
+  Qed.
+
+  (** ** Other laws *)
+  (******************************************************************************)
+  Lemma runBatch_batch : forall (G : Type -> Type) `{Applicative G} (A B : Type) (f : A -> G B),
+      runBatch G f B ∘ batch B A = f.
+  Proof.
+    intros. ext a. cbn.
+    now rewrite ap1.
+  Qed.
+
+  (** ** Monad laws *)
+  (******************************************************************************)
+  Lemma ret_join : forall (A B C : Type),
+      (@join_Batch A B C C) ∘ batch C (Batch A B C) = @id (Batch A B C).
+  Proof.
+    intros. ext b. unfold compose, id.
+    induction b as [C c | C rest IHrest a].
+    - reflexivity.
+    - unfold batch.
+      unfold join_Batch.
+      change (Done A B (C -> C) id) with (pure (Batch A B) (@id C)).
+      rewrite ap1.
+      reflexivity.
+  Qed.
+
+  Lemma join_map_ret : forall (A B C : Type),
+      (@join_Batch A B B C) ∘ mapfst_Batch A (Batch A B B) (batch B A) = @id (Batch A B C).
+  Proof.
+    intros. ext b. unfold compose, id.
+    induction b as [C c | C rest IHrest a].
+    - reflexivity.
+    - admit.
+  Abort.
+
+  #[local] Notation "'BMONAD' B" := (fun A => Batch A B B) (at level 3).
+
+  #[local] Instance Map_Batch_Fst (B : Type) : Map (BMONAD B) :=
+    fun A B f => mapfst_Batch _ _ f.
+
+  #[local] Instance Return_Batch (B : Type) : Return (BMONAD B) :=
+    batch B.
+
+  #[local] Instance Join_Batch (B : Type) : Join (BMONAD B) :=
+    fun A => @join_Batch A B B B.
+
+  Goal forall B, Categorical.Monad.Monad (BMONAD B).
+  Proof.
+    intros. constructor; unfold compose, id.
+    - admit.
+    - admit.
+    - admit.
+    - intros. ext b.
+  Abort.
+
+End parameterised_monad.
+
+(** ** <<cojoin>> as <<runBatch (double_batch)>> *)
+(******************************************************************************)
+Definition double_batch {A B C : Type} :
+    A -> Batch A B (Batch B C C) :=
+  map (Batch A B) (batch C B) ∘ (batch B A).
+
+Lemma cojoin_Batch_rw0 : forall (A B C : Type),
+    @cojoin_Batch A B C = runBatch (Batch A B ∘ Batch B C) (double_batch).
+Proof.
+  intros. ext D.
+  Check @cojoin_Batch A B C D.
+  ext b.
+  induction b as [D d | D rest IHrest a].
+  - reflexivity.
+  - cbn.
+    compose near (runBatch (Batch A B ∘ Batch B C) double_batch (C -> D) rest).
+    rewrite (fun_map_map (F := Batch A B)).
+    compose near (runBatch (Batch A B ∘ Batch B C) double_batch (C -> D) rest).    rewrite (fun_map_map (F := Batch A B)).
+    compose near (runBatch (Batch A B ∘ Batch B C) double_batch (C -> D) rest).
+    rewrite (fun_map_map (F := Batch A B)).
+    rewrite <- IHrest.
+    fequal.
+    fequal.
+    clear.
+    ext rest b. cbn.
+    unfold compose, id.
+    fequal.
+    compose near rest.
+    rewrite (fun_map_map).
+    compose near rest.
+    rewrite (fun_map_map).
+    rewrite (fun_map_id).
+    reflexivity.
+Qed.
+
+Lemma cojoin_Batch_batch : forall (A B C : Type),
+    @cojoin_Batch A B C C ∘ batch C A =
+      double_batch.
+Proof.
+  intros.
+  rewrite (cojoin_Batch_rw0).
+  rewrite (runBatch_batch (Batch A B ∘ Batch B C) A C).
+  reflexivity.
+Qed.
+
+Lemma double_batch_spec : forall (A B C : Type),
+    double_batch = batch C B ⋆2 batch B A.
+Proof.
+  reflexivity.
+Qed.
+
+(*
+Lemma double_batch_spec {A B C : Type} :
+  @double_batch A B C = @cojoin_Batch A B C C ∘ batch C A.
+Proof.
+  reflexivity.
+Qed.
+*)
+
+#[export] Instance AppMor_cojoin : forall (A B C : Type),
+    ApplicativeMorphism (Batch A C) (Batch A B ∘ Batch B C) (@cojoin_Batch A B C).
+Proof.
+  intros.
+  rewrite (@cojoin_Batch_rw0 A B C).
+  apply Morphism_store_fold.
+Qed.
+
+#[export] Instance AppMor_join : forall (A B C : Type),
+    ApplicativeMorphism (Batch (Batch A B C) C) (Batch A B) (@join_Batch A B C).
+Proof.
+  intros.
+  rewrite (@join_Batch_rw0 A B C).
+  apply Morphism_store_fold.
+Qed.
+
+From Tealeaves Require Import Functors.Option.
+
+(** ** Reassembly operation *)
+(******************************************************************************)
+Section traversal_reassemble.
+
+  Context
+    (T : Type -> Type)
+    `{TraversableFunctor T}.
+
+  Fixpoint add_elements `(b : Batch A B C) `(l : list A') : Batch (option A') B C :=
+    match b with
+    | Done _ _ _ c => Done _ _ _ c
+    | Step _ _ _ rest a =>
+      match l with
+      | nil => Step _ _ _ (add_elements rest nil) None
+      | cons a l' => Step _ _ _ (add_elements rest l') (Some a)
+      end
+    end.
+
+End traversal_reassemble.
+
+
+(** * Misc *)
+(******************************************************************************)
+
+(** ** <<Batch _ B C>> is a traversable functor *)
+(******************************************************************************)
+
+Notation "'BATCH1' B C" := (fun A => Batch A B C) (at level 0, B at level 0, C at level 0).
+Notation "'BATCH2' A" := (fun B => Batch A B) (at level 3).
+
+Fixpoint traverse_Batch (B C : Type) (G : Type -> Type)
+  `{Map G} `{Pure G} `{Mult G} (A A' : Type) (f : A -> G A')
+  (b : Batch A B C) : G (Batch A' B C) :=
+  match b with
+  | Done _ _ _ c => pure G (Done A' B C c)
+  | Step _ _ _ rest a => pure G (Step A' B C) <⋆>
+                          traverse_Batch B (B -> C) G A A' f rest <⋆>
+                          f a
+  end.
+
+#[export] Instance Traverse_Batch :
+  forall (B C : Type), Traverse (BATCH1 B C) := traverse_Batch.
+
+Lemma trf_traverse_id_Batch :
+  forall B C A : Type, traverse (BATCH1 B C) (fun X : Type => X) (@id A) = id.
+Proof.
+  intros. ext b.
+  unfold id.
+  induction b as [C c | C rest IHrest].
+  - cbn. reflexivity.
+  - cbn. fold (traverse (BATCH1 B (B -> C))).
+    rewrite IHrest.
+    reflexivity.
+Qed.
+
+Lemma trf_traverse_traverse_Batch :
+  forall (B C : Type) (G1 G2 : Type -> Type) (H0 : Map G1) (H1 : Pure G1) (H2 : Mult G1),
+    Applicative G1 ->
+    forall (H4 : Map G2) (H5 : Pure G2) (H6 : Mult G2),
+      Applicative G2 ->
+      forall (A A' A'' : Type) (g : A' -> G2 A'') (f : A -> G1 A'),
+        map G1 (traverse (BATCH1 B C) G2 g) ∘ traverse (BATCH1 B C) G1 f = traverse (BATCH1 B C) (G1 ∘ G2) (g ⋆2 f).
+Proof.
+  intros. ext b.
+  unfold id.
+  induction b as [C c | C rest IHrest].
+  - cbn. unfold compose.
+    cbn. rewrite (app_pure_natural G1).
+    reflexivity.
+  - cbn.
+    (* RHS *)
+    fold (traverse (BATCH1 B (B -> C))).
+    (* cleanup *)
+    rewrite (ap_compose1 G2 G1).
+    rewrite (ap_compose1 G2 G1).
+    rewrite <- map_to_ap.
+    rewrite (map_ap).
+    rewrite (map_ap).
+    rewrite (app_pure_natural G1).
+    (* <<unfold_ops Pure_compose>> prevents << rewrite <- IHrest>> *)
+    unfold pure at 2; unfold Pure_compose at 1.
+    rewrite (ap2).
+    (* deal with <<rest>> *)
+    rewrite <- IHrest.
+    unfold compose at 4.
+    rewrite <- ap_map.
+    rewrite (app_pure_natural G1).
+    unfold kc2.
+    unfold compose at 4.
+    rewrite <- ap_map.
+    rewrite (map_ap).
+    rewrite (app_pure_natural G1).
+    (* LHS *)
+    unfold compose; cbn.
+    fold (traverse (BATCH1 B (B -> C))).
+    rewrite (map_ap).
+    rewrite (map_ap).
+    rewrite (app_pure_natural G1).
+    reflexivity.
+Qed.
+
+
+Lemma trf_traverse_morphism_Batch :
+  forall (B C : Type) (G1 G2 : Type -> Type) (H0 : Map G1) (H1 : Pure G1) (H2 : Mult G1)
+    (H3 : Map G2) (H4 : Pure G2) (H5 : Mult G2) (ϕ : forall A : Type, G1 A -> G2 A),
+    ApplicativeMorphism G1 G2 ϕ ->
+    forall (A A' : Type) (f : A -> G1 A'),
+      ϕ (BATCH1 B C A') ∘ traverse (BATCH1 B C) G1 f = traverse (BATCH1 B C) G2 (ϕ A' ∘ f).
+Proof.
+  intros. ext b.
+  pose H as H'; inversion H'.
+  induction b as [C c | C rest IHrest].
+  - unfold compose; cbn.
+    now rewrite appmor_pure.
+  - cbn.
+    unfold compose at 1. cbn.
+    fold (traverse (BATCH1 B (B -> C))).
+    rewrite <- IHrest.
+    rewrite <- appmor_pure.
+    rewrite (ap_morphism_1 (ϕ := ϕ)).
+    rewrite (ap_morphism_1 (ϕ := ϕ)).
+    reflexivity.
+Qed.
+
+#[export] Instance TraversableFunctor_Batch : forall (B C : Type),
+    TraversableFunctor (BATCH1 B C) := fun B C =>
+  {| trf_traverse_id := trf_traverse_id_Batch B C;
+      trf_traverse_traverse := trf_traverse_traverse_Batch B C;
+      trf_traverse_morphism := trf_traverse_morphism_Batch B C;
+  |}.
+
+Import TraversableFunctor.DerivedInstances.
+
+Lemma map_BATCH1_spec : forall (B C A A' : Type) (f : A -> A'),
+    map (BATCH1 B C) f = mapfst_Batch A A' f.
+Proof.
+  intros. ext b. induction b as [C c | C rest IHrest a].
+  - reflexivity.
+  - cbn. fold (traverse (BATCH1 B (B -> C))).
+    rewrite <- IHrest.
+    reflexivity.
+Qed.
+
+(** ** Specification for <<runBatch>> *)
+(******************************************************************************)
+Lemma runBatch_spec {A B : Type}
+  (F : Type -> Type) `{Map F} `{Mult F} `{Pure F} `{! Applicative F}
+  (ϕ : A -> F B) (C : Type) :
+  runBatch F ϕ C = map F (extract_Batch) ∘ traverse (BATCH1 B C) F ϕ.
+Proof.
+  intros. ext b.
+  induction b as [C c | C rest IHrest].
+  - unfold compose; cbn.
+    rewrite (app_pure_natural F).
+    reflexivity.
+  - cbn.
+    rewrite IHrest.
+    unfold compose; cbn.
+    fold (traverse (BATCH1 B (B -> C))).
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite (app_pure_natural F).
+    rewrite (map_to_ap).
+    reflexivity.
+Qed.
+
+(** ** <<Batch _ B C>> is a traversable monad *)
+(******************************************************************************)
+Definition bindt_Batch (B C : Type) (G : Type -> Type)
+  `{Map G} `{Pure G} `{Mult G} (A A' : Type) (f : A -> G (Batch A' B B))
+  (b : Batch A B B) : G (Batch A' B B) :=
+  map G (join_Batch) (traverse (BATCH1 B B) G f b).

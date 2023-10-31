@@ -37,7 +37,7 @@ Module ToCategorical.
       rewrite (trf_traverse_traverse (T := T) G (fun A => A)); try typeclasses eauto.
       change (traverse T G (@id (G B))) with (map (fun A => A) (traverse T G (@id (G B)))).
       rewrite (trf_traverse_traverse (T := T) (fun A => A) G); try typeclasses eauto.
-      fequal. rewrite Mult_compose_identity1, Mult_compose_identity2.
+      fequal. rewrite (Mult_compose_identity1 G), (Mult_compose_identity2 G).
       reflexivity.
   Qed.
 
@@ -51,7 +51,7 @@ Module ToCategorical.
     rewrite (trf_traverse_traverse (T := T) (fun A => A) G2); try typeclasses eauto.
     change (map (fun A => A) id ∘ ?f) with f.
     rewrite (trf_traverse_morphism (T := T)).
-    fequal. now rewrite Mult_compose_identity2.
+    fequal. now rewrite (Mult_compose_identity2 G2).
   Qed.
 
   Lemma dist_unit_T : forall A : Type,

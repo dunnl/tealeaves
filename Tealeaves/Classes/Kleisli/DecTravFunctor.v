@@ -92,7 +92,7 @@ Section operations.
         (Mult_compose (fun A => A) G)
         A B f = mapdt E T G mapG pureG multG A B f.
   Proof.
-    intros. fequal. now rewrite Mult_compose_identity2.
+    intros. fequal. now rewrite (Mult_compose_identity2 G).
   Qed.
 
   Lemma mapdt_app_r: forall (f : E * A -> G B),
@@ -102,7 +102,7 @@ Section operations.
         (Mult_compose G (fun A => A))
         A B f = mapdt E T G mapG pureG multG A B f.
   Proof.
-    intros. fequal. now rewrite Mult_compose_identity1.
+    intros. fequal. now rewrite (Mult_compose_identity1 G).
   Qed.
 
 End operations.

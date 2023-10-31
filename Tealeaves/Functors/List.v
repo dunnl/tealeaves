@@ -13,7 +13,10 @@ Create HintDb tea_list.
 #[local] Generalizable Variables M A B G ϕ.
 #[local] Arguments bindt {U} (T)%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
 
-(** * [list] traversable monad *)
+(** *The [list] functor *)
+(******************************************************************************)
+
+(** ** <<bindt>> operation *)
 (******************************************************************************)
 #[export] Instance Return_list : Return list := fun A a => cons a nil.
 
@@ -88,6 +91,8 @@ Section bindt_rewriting_lemmas.
 
 End bindt_rewriting_lemmas.
 
+(** ** Traversable monad instance *)
+(******************************************************************************)
 Section bindt_laws.
 
   Context
@@ -143,7 +148,6 @@ Section bindt_laws.
       rewrite map_to_ap.
       rewrite <- ap4.
       repeat rewrite ap2.
-
       rewrite ap3.
       rewrite <- ap4.
       repeat rewrite ap2.
@@ -171,7 +175,7 @@ Section bindt_laws.
 
 End bindt_laws.
 
-  #[export] Instance TM_list : TraversableMonad list :=
+#[export] Instance TM_list : TraversableMonad list :=
   {| ktm_bindt0 := list_bindt0;
     ktm_bindt1 := list_bindt1;
     ktm_bindt2 := list_bindt2;
@@ -181,12 +185,21 @@ End bindt_laws.
 #[export] Hint Rewrite bindt_list_nil bindt_list_cons bindt_list_one bindt_list_app :
   tea_list.
 
+(** ** Derived typeclass instances *)
+(******************************************************************************)
 #[export] Instance Map_list : Map list := TraversableMonad.DerivedInstances.Map_Bindt list.
 #[export] Instance Bind_list : Bind list list := TraversableMonad.DerivedInstances.Bind_Bindt list.
 #[export] Instance Traverse_list : Traverse list := TraversableMonad.DerivedInstances.Traverse_Bindt list.
 #[export] Instance Functor_list : Functor list := TraversableMonad.DerivedInstances.Functor_TM list.
 #[export] Instance Monad_list : Bind list list := TraversableMonad.DerivedInstances.Bind_Bindt list.
 #[export] Instance TraversableFunctor_list : Traverse list := TraversableMonad.DerivedInstances.Traverse_Bindt list.
+
+#[export] Instance Natural_ret_list : Natural (@ret list _).
+Proof.
+  constructor; try typeclasses eauto.
+  intros; unfold_ops @Map_list; unfold DerivedInstances.Map_Bindt.
+  now rewrite (ktm_bindt0 (T := list) (fun A => A)).
+Qed.
 
 (** ** Rewriting lemmas for <<map>> *)
 (******************************************************************************)
@@ -233,20 +246,79 @@ Tactic Notation "simpl_list" "in" "*" := (autorewrite with tea_list in *).
 
 (** ** [map] is a monoid homomorphism *)
 (******************************************************************************)
-#[export, program] Instance Monmor_list_fmap `(f : A -> B) :
-  Monoid_Morphism (map list f) := {| monmor_op := map_list_app f; |}.
+#[export, program] Instance Monmor_list_map `(f : A -> B) :
+  Monoid_Morphism (list A) (list B) (map list f) :=
+  {| monmor_op := map_list_app f; |}.
 
-(** ** Other properties of <<fold>> *)
+(** * Folding over lists *)
 (******************************************************************************)
 
+(** ** Properties of <<fold>> amd <<foldMap>> *)
+(******************************************************************************)
+Definition foldMap {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
+  {A : Type} (f : A -> M) : list A -> M :=
+  fold M ∘ map list f.
+
+(** <<fold>> commutes with monoid homomorphisms *)
 Lemma fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
     ϕ ∘ fold M1 = fold M2 ∘ map list ϕ.
 Proof.
   intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
   induction l as [| ? ? IHl].
-  - cbn. apply (monmor_unit ϕ).
-  - cbn. now rewrite (monmor_op ϕ), IHl.
+  - cbn. apply (monmor_unit).
+  - cbn. now rewrite (monmor_op (ϕ := ϕ)), IHl.
 Qed.
+
+(** <<foldMap>> is a monoid homomorphism *)
+#[export] Instance foldMap_list_morphism
+  `{Monoid M} {A : Type}
+  `(f : A -> M) : Monoid_Morphism (list A) M (foldMap f).
+Proof.
+  unfold foldMap.
+  eapply Monoid_Morphism_compose;
+    typeclasses eauto.
+Qed.
+
+(** ** Rewriting with <<foldMap>> *)
+(******************************************************************************)
+
+Section foldMap_list_rw.
+
+  Context
+    {A M : Type}
+    `{Monoid M}
+    (f : A -> M).
+
+  Lemma foldMap_list_nil : foldMap f (@nil A) = Ƶ.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_list_cons : forall (x : A) (xs : list A),
+      foldMap f (x :: xs) = f x ● foldMap f xs.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_list_one (a : A) : foldMap f [ a ] = f a.
+  Proof.
+    cbv. apply (monoid_id_l).
+  Qed.
+
+  Lemma foldMap_list_app : forall (l1 l2 : list A),
+      foldMap f (l1 ++ l2) = foldMap f l1 ● foldMap f l2.
+  Proof.
+    intros.
+    unfold foldMap.
+    unfold compose. autorewrite with tea_list.
+    rewrite (fold_app M).
+    reflexivity.
+  Qed.
+
+End foldMap_list_rw.
+
+#[export] Hint Rewrite @foldMap_list_nil @foldMap_list_cons
+  @foldMap_list_one @foldMap_list_app : tea_list.
 
 (** * <<map>> equality inversion lemmas *)
 (** Some lemmas for reasoning backwards from equality between two
@@ -305,8 +377,13 @@ Proof.
   unfold shape. now rewrite (fun_map_map).
 Qed.
 
-(** * Properties of <<shape>> *)
-(******************************************************************************)
+Lemma shape_map_eq `{Functor F} : forall A1 A2 B (f : A1 -> B) (g : A2 -> B) t u,
+    map F f t = map F g u -> shape F t = shape F u.
+Proof.
+  introv hyp. cut (shape F (map F f t) = shape F (map F g u)).
+  - now rewrite 2(shape_map).
+  - now rewrite hyp.
+Qed.
 
 (** ** Rewriting [shape] on lists *)
 (******************************************************************************)
@@ -345,11 +422,27 @@ Section list_shape_rewrite.
 
 End list_shape_rewrite.
 
-#[export] Hint Rewrite @shape_nil @shape_cons @shape_one @shape_app : tea_rw_list.
+#[export] Hint Rewrite @shape_nil @shape_cons @shape_one @shape_app : tea_list.
 
 (** ** Reasoning princples for <<shape>> on lists *)
 (******************************************************************************)
 Section list_shape_lemmas.
+
+  Theorem list_shape_equal_iff : forall (A : Type) (l1 l2 : list A),
+      shape list l1 = shape list l2 <->
+        List.length l1 = List.length l2.
+  Proof.
+    intros. generalize dependent l2.
+    induction l1.
+    - destruct l2.
+      + split; reflexivity.
+      + split; inversion 1.
+    - cbn. intro l2; destruct l2.
+      + cbn. split; inversion 1.
+      + cbn. split; inversion 1.
+        * fequal. apply IHl1. auto.
+        * fequal. apply IHl1. auto.
+  Qed.
 
   Theorem shape_eq_app_r : forall A (l1 l2 r1 r2: list A),
       shape list r1 = shape list r2 ->
@@ -481,20 +574,14 @@ Section list_shape_lemmas.
 
 End list_shape_lemmas.
 
-
 (** * Tolist operation *)
 (******************************************************************************)
 Import Classes.Functor.Notations.
 
-Section ops.
+Class Tolist (F : Type -> Type) :=
+  tolist : F ⇒ list.
 
-  Context
-    (F : Type -> Type).
+Class Tolist_ctx (F : Type -> Type) (W : Type) :=
+  tolist_ctx : forall (A : Type), F A -> list (W * A).
 
-  Class Tolist :=
-    tolist : F ⇒ list.
-
-  Class Tolist_ctx (W : Type) :=
-    tolist_ctx : forall (A : Type), F A -> list (W * A).
-
-End ops.
+#[global] Arguments tolist F%function_scope {Tolist} {A}%type_scope _.

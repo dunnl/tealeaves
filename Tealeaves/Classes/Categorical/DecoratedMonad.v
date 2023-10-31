@@ -169,7 +169,7 @@ Section DecoratedFunctor_monoid_homomorphism.
 
   Instance DecoratedMonad_morphism : Categorical.DecoratedMonad.DecoratedMonad Wtgt F.
   Proof.
-    inversion H3.
+    inversion H.
     constructor; try typeclasses eauto.
     - intros. unfold dec, Decorate_homomorphism.
       reassociate ->. rewrite (dmon_ret (W := Wsrc) (T := F)).

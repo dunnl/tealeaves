@@ -109,7 +109,8 @@ Qed.
 
 (** ** <<bind>> is a monoid homomorphism *)
 (******************************************************************************)
-#[export] Instance Monmor_bind {A B f} : Monoid_Morphism (bind subset subset A B f) :=
+#[export] Instance Monmor_bind {A B f} :
+  Monoid_Morphism (subset A) (subset B) (bind subset subset A B f) :=
   {| monmor_unit := @bind_set_nil A B f;
     monmor_op := @bind_set_add A B f;
   |}.

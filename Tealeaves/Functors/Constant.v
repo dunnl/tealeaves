@@ -87,7 +87,7 @@ End const_ops.
 #[global] Instance ApplicativeMorphism_Monoid_Morphism `(f : M1 -> M2) `{Monoid_Morphism M1 M2 f} :
   ApplicativeMorphism (Const M1) (Const M2) (@mapConst M1 M2 f).
 Proof.
-  match goal with H : Monoid_Morphism f |- _ => inversion H end.
+  match goal with H : Monoid_Morphism _ _ f |- _ => inversion H end.
   constructor; try typeclasses eauto.
   - introv. destruct x. reflexivity.
   - intros. cbn. rewrite (monmor_unit). reflexivity.
@@ -142,7 +142,8 @@ Section constant_functor.
 
   End with_monoid.
 
-  #[global] Instance ApplicativeMorphism_monoid_morphism `{hom : Monoid_Morphism ϕ (A := M) (B := N)} :
+  #[global] Instance ApplicativeMorphism_monoid_morphism
+    `{hom : Monoid_Morphism M N ϕ } :
     ApplicativeMorphism (const M) (const N) (const ϕ).
   Proof.
     inversion hom.

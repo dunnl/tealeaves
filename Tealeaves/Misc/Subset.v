@@ -30,10 +30,9 @@ End Notations.
 
 Import Notations.
 
-Create HintDb tea_subset.
-Tactic Notation "simpl_subset" := (autorewrite with tea_subset).
-Tactic Notation "simpl_subset" "in" hyp(H) := (autorewrite with tea_subset H).
-Tactic Notation "simpl_subset" "in" "*" := (autorewrite with tea_subset in *).
+Tactic Notation "simpl_subset" := (autorewrite with tea_set).
+Tactic Notation "simpl_subset" "in" hyp(H) := (autorewrite with tea_set H).
+Tactic Notation "simpl_subset" "in" "*" := (autorewrite with tea_set in *).
 
 Ltac unfold_subset :=
   unfold subset_empty; unfold subset_add; unfold const.
@@ -68,7 +67,7 @@ Section subset_monoid.
 End subset_monoid.
 
 #[export] Hint Rewrite @subset_add_nil_l @subset_add_nil_r
-     @subset_add_assoc @subset_in_empty @subset_in_add : tea_subset.
+     @subset_add_assoc @subset_in_empty @subset_in_add : tea_set.
 
 #[export] Instance Monoid_op_subset {A} : Monoid_op (subset A) := @subset_add A.
 
