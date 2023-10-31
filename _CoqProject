@@ -83,10 +83,13 @@ Tealeaves/Adapters/Roundtrips/TraversableMonad.v
 Tealeaves/Adapters/Roundtrips/DecTravFunctor.v
 Tealeaves/Adapters/Roundtrips/DecTravMonad.v
 Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
-#Tealeaves/Classes/Coalgebraic/TraversableMonad.v
-#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonad.v
+Tealeaves/Classes/Coalgebraic/TraversableMonad.v
 Tealeaves/Adapters/KleisliToCoalgebraic/TraversableFunctor.v
+#Tealeaves/Adapters/KleisliToCoalgebraic/TraversableMonad.v
 Tealeaves/Adapters/CoalgebraicToKleisli/TraversableFunctor.v
+Tealeaves/Adapters/CoalgebraicToKleisli/TraversableMonad.v
+Tealeaves/Theory/Traversable.v
+
+#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonad.v
 #Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedFunctor.v
 #Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
-Tealeaves/Theory/Traversable.v
