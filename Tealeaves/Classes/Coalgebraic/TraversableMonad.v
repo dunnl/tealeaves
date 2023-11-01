@@ -40,11 +40,11 @@ Section spec.
       A -> Batch A (T B) (Batch B (T C) (T C)) :=
     map (Batch A (T B)) (toBatchM T B C) ∘ batch (T B) A.
 
-  Lemma cojoin_BatchM_spec : forall (A B B' C : Type),
-      cojoin_BatchM T A B B' C =
-        runBatch (Batch A (T B') ∘ Batch B' (T B)) (double_BatchM A B' B) C.
+  Lemma cojoin_BatchM_spec : forall (A B B' : Type),
+      cojoin_BatchM T A B B' =
+        runBatch (Batch A (T B') ∘ Batch B' (T B)) (double_BatchM A B' B).
   Proof.
-    intros. ext b. induction b.
+    intros. ext C b. induction b.
     - cbn. reflexivity.
     - cbn. rewrite IHb.
       fequal.
@@ -60,8 +60,28 @@ Section spec.
       reflexivity.
   Qed.
 
+  Lemma cojoin_BatchM_batch : forall (A B C : Type),
+      cojoin_BatchM T A C B (T C) ∘ batch (T C) A =
+        double_BatchM A B C.
+  Proof.
+    intros.
+    rewrite (cojoin_BatchM_spec).
+    rewrite (runBatch_batch (Batch A (T B) ∘ Batch B (T C)) A (T C)).
+    reflexivity.
+  Qed.
+
+  #[export] Instance AppMor_cojoin_BatchM : forall (A B C : Type),
+      ApplicativeMorphism (Batch A (T C)) (Batch A (T B) ∘ Batch B (T C))
+        (@cojoin_BatchM T _ A C B).
+  Proof.
+    intros.
+    rewrite (@cojoin_BatchM_spec A C B).
+    apply Morphism_store_fold.
+  Qed.
+
 End spec.
 
+(*
 Section experiment.
 
   Context (A B B' C : Type) T `{ToBatchM T}.
@@ -81,6 +101,7 @@ Section experiment.
   Check cojoin_Batch (B := B) ∘ toBatchM T A C.
 
 End experiment.
+*)
 
 Class TraversableMonad
   (T : Type -> Type) `{Return T} `{ToBatchM T} :=

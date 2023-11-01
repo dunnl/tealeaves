@@ -1,16 +1,17 @@
 From Tealeaves Require Export
   Classes.Categorical.TraversableMonad
   Classes.Kleisli.TraversableMonad
+  Classes.Coalgebraic.TraversableMonad
   Adapters.CategoricalToKleisli.TraversableMonad
-  Adapters.KleisliToCategorical.TraversableMonad.
+  Adapters.KleisliToCategorical.TraversableMonad
+  Adapters.CoalgebraicToKleisli.TraversableMonad
+  Adapters.KleisliToCoalgebraic.TraversableMonad.
 
 #[local] Generalizable Variables T.
 
-Import TraversableMonad.Notations.
-
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
-Module Roundtrip1.
+Module Categorical_Kleisli_Categorical.
 
   Context
     `{mapT : Map T}
@@ -69,11 +70,11 @@ Module Roundtrip1.
     reflexivity.
   Qed.
 
-End Roundtrip1.
+End Categorical_Kleisli_Categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (******************************************************************************)
-Module Roundtrip2.
+Module Kleisli_Categorical_Kleisli.
 
   Context
     `{bindtT : Bindt T T}
@@ -119,4 +120,81 @@ Module Roundtrip2.
     reflexivity.
   Qed.
 
-End Roundtrip2.
+End Kleisli_Categorical_Kleisli.
+
+(** * Kleisli ~> Coalgebraic ~> Kleisli *)
+(******************************************************************************)
+Module Kleisli_Coalgebraic_Kleisli.
+
+  Context
+    `{bindtT : Bindt T T}
+    `{Return T}
+    `{! Kleisli.TraversableMonad.TraversableMonad T}.
+
+  #[local] Instance toBatchM' : ToBatchM T :=
+    ToBatchM_Bindt T.
+
+  #[local] Instance bindt' : Bindt T T :=
+    Bindt_ToBatchM T.
+
+  Goal forall A B G `{Applicative G}, @bindtT G _ _ _ A B = @bindt' G _ _ _ A B.
+  Proof.
+    intros. ext f.
+    unfold bindt'. unfold_ops @Bindt_ToBatchM.
+    unfold bindt_ToBatchM.
+    unfold toBatchM.
+    unfold toBatchM'.
+    unfold_ops @ToBatchM_Bindt.
+    erewrite (ktm_morph).
+    rewrite (runBatch_batch G).
+    reflexivity.
+  Qed.
+
+End Kleisli_Coalgebraic_Kleisli.
+
+
+(** * Coalgebraic ~> Kleisli ~> Coalgebraic *)
+(******************************************************************************)
+Module Coalgebraic_Kleisli_Coalgebraic.
+
+  Context
+    `{toBatchMT : ToBatchM T}
+    `{Return T}
+    `{! Coalgebraic.TraversableMonad.TraversableMonad T}.
+
+  #[local] Instance bindt' : Bindt T T := @Bindt_ToBatchM T toBatchMT.
+
+  #[local] Instance toBatchM' : ToBatchM T := @ToBatchM_Bindt T bindt'.
+
+  Lemma runBatch_batch2 : forall (A B : Type),
+      runBatch (Batch A B) (batch B A) B = @id (Batch A B B).
+  Proof.
+    intros. ext b.
+    induction b as [C c | C rest IHrest a].
+    - reflexivity.
+    - cbn. unfold id in *.
+      fequal. rewrite IHrest.
+      compose near rest.
+      rewrite (fun_map_map (F := Batch A B)).
+      compose near rest.
+      rewrite (fun_map_map (F := Batch A B)).
+      unfold compose, strength_arrow.
+      change rest with (id rest) at 2.
+      rewrite <- (fun_map_id (F := Batch A B)).
+      fequal.
+  Qed.
+
+  Goal forall A B, @toBatchMT A B = @toBatchM' A B.
+  Proof.
+    intros.
+    unfold toBatchM'. unfold_ops @ToBatchM_Bindt.
+    unfold bindt.
+    unfold bindt'.
+    unfold_ops @Bindt_ToBatchM.
+    unfold bindt_ToBatchM.
+    unfold toBatchM.
+    rewrite runBatch_batch2.
+    reflexivity.
+  Qed.
+
+End Coalgebraic_Kleisli_Coalgebraic.

@@ -815,6 +815,7 @@ Section parameterised_monad.
     now rewrite ap1.
   Qed.
 
+
   (** ** Monad laws *)
   (******************************************************************************)
   Lemma ret_join : forall (A B C : Type),
@@ -958,6 +959,14 @@ Section traversal_reassemble.
 
 End traversal_reassemble.
 
+
+(** * <<extract>> and <<batch>> *)
+(******************************************************************************)
+Lemma extract_batch : forall (A : Type),
+    extract_Batch ∘ batch A A = @id A.
+Proof.
+  reflexivity.
+Qed.
 
 (** * Misc *)
 (******************************************************************************)
