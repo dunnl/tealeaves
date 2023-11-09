@@ -47,7 +47,6 @@ Tealeaves/Functors/List.v
 Tealeaves/Classes/Categorical/ContainerFunctor.v
 Tealeaves/Classes/Categorical/ShapelyFunctor.v
 Tealeaves/Functors/Backwards.v
-Tealeaves/Functors/Batch.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Functors/Diagonal.v
 Tealeaves/Functors/Option.v
@@ -55,6 +54,7 @@ Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
+Tealeaves/Functors/Batch.v
 Tealeaves/Categories/Type.v
 Tealeaves/Categories/TypeFamily.v
 Tealeaves/Categories/DecoratedFunctor.v
@@ -88,7 +88,10 @@ Tealeaves/Adapters/Roundtrips/TraversableFunctor.v
 Tealeaves/Adapters/Roundtrips/TraversableMonad.v
 Tealeaves/Adapters/Roundtrips/DecTravFunctor.v
 Tealeaves/Adapters/Roundtrips/DecTravMonad.v
-Tealeaves/Theory/Traversable.v
+Tealeaves/Theory/TraversableFunctor.v
+#Tealeaves/Theory/TraversableMonad.v
+#Tealeaves/Theory/DecoratedTraversableFunctor.v
+#Tealeaves/Theory/DecoratedTraversableMonad.v
 
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonad.v
 #Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedFunctor.v

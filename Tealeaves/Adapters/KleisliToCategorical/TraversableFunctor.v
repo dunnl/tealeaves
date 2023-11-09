@@ -2,7 +2,8 @@ From Tealeaves Require Export
   Classes.Categorical.TraversableFunctor
   Classes.Kleisli.TraversableFunctor.
 
-Export Kleisli.TraversableFunctor.DerivedInstances.
+#[local] Existing Instances Map_Traverse.
+#[local] Existing Instances TraversableFunctor.TraversableFunctorMakeFull.
 
 (** * Traversable Functors: Kleisli to Algebraic *)
 (******************************************************************************)

@@ -42,6 +42,11 @@ Class TraversableFunctor (T : Type -> Type) `{Traverse T} :=
       ϕ (T B) ∘ traverse T G1 A B f = traverse T G2 A B (ϕ B ∘ f);
   }.
 
+Class TraversableFunctorFull (T : Type -> Type) `{Traverse T} `{Map T} :=
+  { trff_trf :> TraversableFunctor T;
+    trff_map_to_traverse : map T = traverse T (fun A => A);
+  }.
+
 (** ** Interaction of [traverse] with functor composition *)
 (******************************************************************************)
 Section properties.
@@ -78,22 +83,11 @@ End properties.
 
 (** * Derived instances *)
 (******************************************************************************)
-Module DerivedInstances.
-
-  #[export] Instance Map_Traverse (T : Type -> Type) `{Traverse T} : Map T :=
-  fun (A B : Type) (f : A -> B) => traverse T (fun A => A) A B f.
-
-  Corollary map_to_traverse (T : Type -> Type) `{Traverse T} {A B : Type} : forall (f : A -> B),
-      @map T _ A B f = traverse T (fun A => A) A B f.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Section properties.
+Section DerivedLaws.
 
     Context
     (T : Type -> Type)
-    `{TraversableFunctor T}
+    `{TraversableFunctorFull T}
     (G1 G2 : Type -> Type)
     `{Applicative G2}
     `{Applicative G1}.
@@ -105,10 +99,10 @@ Module DerivedInstances.
           traverse T G1 A C (map G1 B C g ∘ f).
     Proof.
       intros.
-      rewrite (map_to_traverse).
+      rewrite (trff_map_to_traverse (T := T)).
       rewrite (trf_traverse_traverse G1 (fun A => A)).
-      try typeclasses eauto.
-      fequal. now rewrite (Mult_compose_identity1 G1).
+      rewrite (traverse_app_r T G1).
+      reflexivity.
     Qed.
 
     Lemma traverse_map {A B C : Type} : forall (g : B -> G2 C) (f : A -> B),
@@ -116,20 +110,21 @@ Module DerivedInstances.
           traverse T G2 A C (g ∘ f).
     Proof.
       intros.
-      rewrite (map_to_traverse).
+      rewrite (trff_map_to_traverse (T := T)).
       change (traverse T G2 B C g)
         with (map (fun A => A) _ _ (traverse T G2 B C g)).
       rewrite (trf_traverse_traverse (fun A => A) G2).
-      fequal. now rewrite (Mult_compose_identity2 G2).
+      rewrite (traverse_app_l T G2).
+      reflexivity.
     Qed.
 
-    (** ** Derived Functor instance *)
+    (** ** [Functor] laws *)
     (******************************************************************************)
     Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
         map T B C g ∘ map T A B f = map T A C (g ∘ f).
     Proof.
       intros.
-      do 3 rewrite map_to_traverse.
+      rewrite (trff_map_to_traverse (T := T)).
       change (traverse T (fun A : Type => A) B C g)
         with (map (fun A => A) _ _ (traverse T (fun A => A) B C g)).
       rewrite (trf_traverse_traverse (fun A => A) (fun A => A)).
@@ -141,21 +136,44 @@ Module DerivedInstances.
         map T A A (@id A) = @id (T A).
     Proof.
       intros.
-      rewrite (map_to_traverse).
+      rewrite (trff_map_to_traverse (T := T)).
       now rewrite (trf_traverse_id).
     Qed.
 
-    #[export] Instance: Functor T :=
+    #[export] Instance Functor_TraversableFunctor : Functor T :=
       {| fun_map_id := map_id;
         fun_map_map := map_map;
       |}.
 
-  End properties.
-
-End DerivedInstances.
+End DerivedLaws.
 
 (** * Notation *)
 (******************************************************************************)
 Module Notations.
   Infix "⋆2" := (kc2 _ _) (at level 60) : tealeaves_scope.
 End Notations.
+
+(** * <<MakeFull>> *)
+(******************************************************************************)
+#[local] Instance Map_Traverse (T : Type -> Type) `{Traverse T} : Map T :=
+  fun (A B : Type) (f : A -> B) => traverse T (fun A => A) A B f.
+
+Corollary map_to_traverse (T : Type -> Type) `{Traverse T} {A B : Type} : forall (f : A -> B),
+    @map T _ A B f = traverse T (fun A => A) A B f.
+Proof.
+  reflexivity.
+Qed.
+
+Definition MakeFull
+  (T : Type -> Type) (traverse : Traverse T) (traverse_laws : @TraversableFunctor T traverse)
+  : @TraversableFunctorFull T traverse (@Map_Traverse T traverse) :=
+  {| trff_trf := traverse_laws;
+     trff_map_to_traverse := ltac:(reflexivity);
+  |}.
+
+(* temporary shim hack ugh *)
+
+#[local] Instance TraversableFunctorMakeFull T `{TraversableFunctor T} : TraversableFunctorFull T.
+Proof.
+  apply MakeFull. typeclasses eauto.
+Qed.

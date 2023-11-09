@@ -20,17 +20,17 @@ Module Categorical_Kleisli_Categorical.
     `{Return T}
     `{! Categorical.TraversableMonad.TraversableMonad T}.
 
-  #[local] Instance bindt' : Bindt T T := ToKleisli.Bindt_distjoin T.
+  #[local] Instance bindt' : Bindt T T := ToKleisli.Bindt_categorical T.
 
-  Definition map'  : Map T := DerivedInstances.Map_Bindt T.
+  Definition map'  : Map T := DerivedOperations.Map_Bindt T.
   Definition dist' : ApplicativeDist T := Dist_Bindt T.
   Definition join' : Join T := Join_Bindt T.
 
   Goal mapT = map'.
   Proof.
-    unfold map'. unfold_ops @DerivedInstances.Map_Bindt.
+    unfold map'. unfold_ops @DerivedOperations.Map_Bindt.
     unfold bindt, bindt'.
-    unfold_ops @ToKleisli.Bindt_distjoin.
+    unfold_ops @ToKleisli.Bindt_categorical.
     ext A B f.
     unfold_ops @Map_I.
     rewrite (dist_unit (F := T)).
@@ -45,7 +45,7 @@ Module Categorical_Kleisli_Categorical.
     intros.
     unfold dist'. unfold_ops Dist_Bindt.
     unfold bindt, bindt'.
-    unfold_ops @ToKleisli.Bindt_distjoin.
+    unfold_ops @ToKleisli.Bindt_categorical.
     ext A.
     change (map T (map G (ret T A))) with (map (T ∘ G) (ret T A)).
     reassociate -> on right.
@@ -63,7 +63,7 @@ Module Categorical_Kleisli_Categorical.
   Proof.
     unfold join'. unfold_ops @Join_Bindt.
     unfold bindt, bindt'.
-    unfold_ops @ToKleisli.Bindt_distjoin.
+    unfold_ops @ToKleisli.Bindt_categorical.
     ext A. rewrite (fun_map_id (F := T)).
     unfold_ops @Map_I.
     rewrite (dist_unit (F := T)).
@@ -81,20 +81,20 @@ Module Kleisli_Categorical_Kleisli.
     `{Return T}
     `{! Kleisli.TraversableMonad.TraversableMonad T}.
 
-  #[local] Instance map'  : Map T  := DerivedInstances.Map_Bindt T.
+  #[local] Instance map'  : Map T  := DerivedOperations.Map_Bindt T.
   #[local] Instance dist' : ApplicativeDist T := Dist_Bindt T.
   #[local] Instance join' : Join T := Join_Bindt T.
 
-  Definition bindt' : Bindt T T := ToKleisli.Bindt_distjoin T.
+  Definition bindt' : Bindt T T := ToKleisli.Bindt_categorical T.
 
   Goal forall A B G `{Applicative G}, @bindtT G _ _ _ A B = @bindt' G _ _ _ A B.
   Proof.
     intros. ext f.
-    unfold bindt'. unfold_ops @ToKleisli.Bindt_distjoin.
+    unfold bindt'. unfold_ops @ToKleisli.Bindt_categorical.
     unfold join, join', dist, dist', map at 2, map'.
     unfold_ops @Join_Bindt.
     unfold_ops @Dist_Bindt.
-    unfold_ops @DerivedInstances.Map_Bindt.
+    unfold_ops @DerivedOperations.Map_Bindt.
     change (?g ∘ id) with g.
     reassociate -> on right.
     change (bindt G _ _ (map G (ret T (T B))))
@@ -167,7 +167,7 @@ Module Coalgebraic_Kleisli_Coalgebraic.
   #[local] Instance toBatchM' : ToBatchM T := @ToBatchM_Bindt T bindt'.
 
   Lemma runBatch_batch2 : forall (A B : Type),
-      runBatch (Batch A B) (batch B A) B = @id (Batch A B B).
+      runBatch (Batch A B) (batch A B) B = @id (Batch A B B).
   Proof.
     intros. ext b.
     induction b as [C c | C rest IHrest a].

@@ -45,9 +45,7 @@ Proof.
   solve_basic_subset.
 Qed.
 
-Import Monad.DerivedInstances.
-
-#[export] Instance Map_subset : Map subset := DerivedInstances.Map_Bind subset.
+#[export] Instance Map_subset : Map subset := Map_Bind subset.
 
 Definition map_set_nil `{f : A -> B} :
   map subset f ∅ = ∅ := ltac:(solve_basic_subset).
@@ -105,7 +103,7 @@ Qed.
     kmon_bind2 := set_bind2;
   |}.
 
-#[export] Instance Functor_set : Functor subset := DerivedInstances.Monad_Functor.
+#[export] Instance MonadFull_set : MonadFull subset := MonadFull_Monad subset.
 
 (** ** <<bind>> is a monoid homomorphism *)
 (******************************************************************************)

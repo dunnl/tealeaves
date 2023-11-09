@@ -9,19 +9,21 @@ From Tealeaves Require Export
   `{Return T} `{Bind T T} : Join T :=
   fun A => bind T (@id (T A)).
 
-(* Import functor instance *)
-Import Kleisli.Monad.DerivedInstances.
-
 Section proofs.
 
   Context
     (T : Type -> Type)
     `{Classes.Kleisli.Monad.Monad T}.
 
+  Existing Instance Map_Bind.
+  Existing Instance Functor_Monad.
+  Existing Instance MonadFull_Monad.
+
   Instance: Classes.Categorical.Monad.Monad T.
   Proof.
     constructor.
-    - typeclasses eauto.
+    -
+      typeclasses eauto.
     - constructor.
       typeclasses eauto.
       typeclasses eauto.

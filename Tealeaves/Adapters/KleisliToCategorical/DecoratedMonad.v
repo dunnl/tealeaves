@@ -148,7 +148,7 @@ Module ToCategorical.
     Qed.
 
     #[local] Instance: Categorical.Monad.Monad T :=
-      {| mon_ret_natural := ret_natural;
+      {| Monad.mon_ret_natural := ret_natural;
         mon_join_natural := join_natural;
         mon_join_ret := join_ret;
         mon_join_map_ret := join_map_ret;

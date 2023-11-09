@@ -34,3 +34,10 @@
 #[local] Arguments bind                  {U} {T}%function_scope {Bind}                                {A B}%type_scope _%function_scope _.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 #[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
+
+
+
+#[local] Arguments runBatch (A B)%type_scope F%function_scope {H H0 H1} ϕ%function_scope C%type_scope b.
+#[local] Arguments runBatch {A B}%type_scope F%function_scope {H H0 H1} ϕ%function_scope C%type_scope b.
+#[local] Arguments runBatch {A B}%type_scope F%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
+#[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.

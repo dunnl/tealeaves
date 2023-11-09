@@ -38,7 +38,7 @@ Section spec.
 
   Definition double_BatchM (A B C : Type) :
       A -> Batch A (T B) (Batch B (T C) (T C)) :=
-    map (Batch A (T B)) (toBatchM T B C) ∘ batch (T B) A.
+    map (Batch A (T B)) (toBatchM T B C) ∘ batch A (T B).
 
   Lemma cojoin_BatchM_spec : forall (A B B' : Type),
       cojoin_BatchM T A B B' =
@@ -61,7 +61,7 @@ Section spec.
   Qed.
 
   Lemma cojoin_BatchM_batch : forall (A B C : Type),
-      cojoin_BatchM T A C B (T C) ∘ batch (T C) A =
+      cojoin_BatchM T A C B (T C) ∘ batch A (T C) =
         double_BatchM A B C.
   Proof.
     intros.
@@ -76,7 +76,7 @@ Section spec.
   Proof.
     intros.
     rewrite (@cojoin_BatchM_spec A C B).
-    apply Morphism_store_fold.
+    apply ApplicativeMorphism_runBatch.
   Qed.
 
 End spec.
@@ -106,7 +106,7 @@ End experiment.
 Class TraversableMonad
   (T : Type -> Type) `{Return T} `{ToBatchM T} :=
   { trfm_ret : forall (A B : Type),
-      toBatchM T A B ∘ ret T A = batch (T B) A;
+      toBatchM T A B ∘ ret T A = batch A (T B);
     trfm_extract : forall (A : Type),
       extract_Batch ∘ mapfst_Batch A (T A) (ret T A) ∘ toBatchM T A A = @id (T A);
     trfm_duplicate : forall (A B C : Type),

@@ -44,6 +44,12 @@ Class Monad (T : Type -> Type) `{Return T} `{Bind T T} :=
       @bind T T _ B C g ∘ @bind T T _ A B f = @bind T T _ A C (g ⋆1 f);
   }.
 
+Class MonadFull (T : Type -> Type) `{Return T} `{Map T} `{Bind T T} :=
+  { kmonf_kmon :> Monad T;
+    kmonf_map_to_bind : forall `(f : A -> B),
+      @map T _ A B f = @bind T T _ A B (ret T B ∘ f);
+  }.
+
 (** ** Homomorphisms *)
 (******************************************************************************)
 Class MonadHom (T U : Type -> Type)
@@ -103,127 +109,139 @@ Section Monad_kleisli_category.
 
 End Monad_kleisli_category.
 
-(** * Derived functor instance *)
+(** * Derived instances *)
 (******************************************************************************)
-Module DerivedInstances.
+Section derived_instances.
 
-  (** ** [map] as a special case of [bind] *)
+  Context
+    (T : Type -> Type)
+    `{MonadFull T}.
+
+  (** ** Composition between [bind] and [map] *)
   (******************************************************************************)
-  #[export] Instance Map_Bind (T : Type -> Type) `{Return T}
-    `{Bind T T} : Map T :=
-  fun A B (f : A -> B) => @bind T T _ A B (@ret T _ B ∘ f).
-
-  Lemma map_to_bind `{Return T} `{Bind T T} : forall `(f : A -> B),
-      @map T _ A B f = @bind T T _ A B (@ret T _ B ∘ f).
+  Lemma bind_map : forall `(g : B -> T C) `(f : A -> B),
+      @bind T T _ B C g ∘ map T A B f = @bind T T _ A C (g ∘ f).
   Proof.
-    reflexivity.
+    intros. rewrite (kmonf_map_to_bind).
+    rewrite (kmon_bind2). unfold kc1.
+    reassociate <-. now rewrite (kmon_bind0).
+  Qed.
+
+  Corollary map_bind : forall `(g : B -> C) `(f : A -> T B),
+      map T B C g ∘ bind T f = bind T (map T B C g ∘ f).
+  Proof.
+    intros. rewrite (kmonf_map_to_bind).
+    now rewrite (kmon_bind2).
   Qed.
 
   (** ** Functor laws *)
   (******************************************************************************)
-  #[export] Instance Monad_Functor `{Monad T} : Functor T.
+  Lemma map_id : forall (A : Type),
+      map T A A id = id.
   Proof.
-    constructor.
-    - intros. unfold transparent tcs.
-      unfold compose. now rewrite kmon_bind1.
-    - intros. unfold transparent tcs.
-      rewrite (kmon_bind2 (T := T)).
-      unfold kc1. reassociate <- near (@bind T T _ B C (@ret T _ C ∘ g)).
-      now rewrite (kmon_bind0 (T := T)).
+    intros.
+    rewrite (kmonf_map_to_bind).
+    change (?f ∘ id) with f.
+    now rewrite kmon_bind1.
   Qed.
 
-  Section with_monad.
-
-    Context
-      (T : Type -> Type)
-      `{Monad T}.
-
-    (** ** Composition between [bind] and [map] *)
-    (******************************************************************************)
-    Lemma bind_map : forall `(g : B -> T C) `(f : A -> B),
-        @bind T T _ B C g ∘ map T A B f = @bind T T _ A C (g ∘ f).
-    Proof.
-      intros. unfold transparent tcs.
-      rewrite (kmon_bind2).
-      fequal. unfold kc1.
-      reassociate <-. now rewrite (kmon_bind0).
-    Qed.
-
-    Corollary map_bind : forall `(g : B -> C) `(f : A -> T B),
-        map T _ _ g ∘ @bind T T _ _ _ f = @bind T T _ _ _ (map T _ _ g ∘ f).
-    Proof.
-      intros. unfold transparent tcs.
-      now rewrite (kmon_bind2).
-    Qed.
-
-    (** ** Special cases for Kleisli composition *)
-    (******************************************************************************)
-    Lemma kc1_00 : forall `(g : B -> C) `(f : A -> B),
-        (@ret T _ C ∘ g) ⋆1 (@ret T _ B ∘ f) = @ret T _ C ∘ (g ∘ f).
-    Proof.
-      intros. unfold kc1.
-      reassociate <-. now rewrite (@kmon_bind0 T).
-    Qed.
-
-    Lemma kc1_10 : forall `(g : B -> T C) `(f : A -> B),
-        g ⋆1 (@ret T _ B ∘ f) = g ∘ f.
-    Proof.
-      intros. unfold kc1.
-      reassociate <-. now rewrite (@kmon_bind0 T).
-    Qed.
-
-    Lemma kc1_01 : forall `(g : B -> C) `(f : A -> T B),
-        (@ret T _ C ∘ g) ⋆1 f = map T B C g ∘ f.
-    Proof.
-      intros. unfold kc1.
-      reflexivity.
-    Qed.
-
-    (** ** Other rules for Kleisli composition *)
-    (******************************************************************************)
-    Lemma kc1_asc1 : forall `(g : B -> C) `(h : C -> T D) `(f : A -> T B),
-        (h ∘ g) ⋆1 f = h ⋆1 (map T B C g ∘ f).
-    Proof.
-      intros. unfold kc1.
-      reassociate <-.
-      rewrite bind_map.
-      reflexivity.
-    Qed.
-
-    Lemma kc1_asc2 : forall `(f : A -> B) `(g : B -> T C) `(h : C -> T D),
-        h ⋆1 (g ∘ f) = (h ⋆1 g) ∘ f.
-    Proof.
-      intros. unfold kc1.
-      reflexivity.
-    Qed.
-
-    (** ** Naturality of <<ret>> *)
-    (******************************************************************************)
-    #[export] Instance mon_ret_natural : Natural (@ret T _).
-    Proof.
-      constructor; try typeclasses eauto.
-      intros.
-      rewrite (map_to_bind).
-      rewrite (kmon_bind0).
-      reflexivity.
-    Qed.
-
-  End with_monad.
-
-  (** ** Naturality of homomorphisms *)
-  (******************************************************************************)
-  #[export] Instance Natural_MonadHom `{MonadHom T1 T2 ϕ} `{! Monad T1} `{! Monad T2} : Natural ϕ.
+  Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
+      map T B C g ∘ map T A B f = map T A C (g ∘ f).
   Proof.
-    constructor; try typeclasses eauto. intros.
-    rewrite (map_to_bind (T := T1)).
-    rewrite (map_to_bind (T := T2)).
-    rewrite (kmon_hom_bind (T := T1) (U := T2)).
-    reassociate <-.
-    rewrite (kmon_hom_ret (T := T1) (U := T2)).
+    intros.
+    rewrite 3(kmonf_map_to_bind).
+    rewrite (kmon_bind2 (T := T)).
+    unfold kc1.
+    reassociate <- on left.
+    now rewrite (kmon_bind0 (T := T)).
+  Qed.
+
+  #[export] Instance Functor_Monad : Functor T :=
+    {| fun_map_id := map_id;
+      fun_map_map := map_map;
+    |}.
+
+  (** ** Special cases for Kleisli composition *)
+  (******************************************************************************)
+  Lemma kc1_00 : forall `(g : B -> C) `(f : A -> B),
+      (ret T C ∘ g) ⋆1 (ret T B ∘ f) = ret T C ∘ (g ∘ f).
+  Proof.
+    intros. unfold kc1.
+    reassociate <-. now rewrite (kmon_bind0).
+  Qed.
+
+  Lemma kc1_10 : forall `(g : B -> T C) `(f : A -> B),
+      g ⋆1 (ret T B ∘ f) = g ∘ f.
+  Proof.
+    intros. unfold kc1.
+    reassociate <-. now rewrite (kmon_bind0).
+  Qed.
+
+  Lemma kc1_01 : forall `(g : B -> C) `(f : A -> T B),
+      (ret T C ∘ g) ⋆1 f = map T B C g ∘ f.
+  Proof.
+    intros. unfold kc1.
+    rewrite (kmonf_map_to_bind).
     reflexivity.
   Qed.
 
-End DerivedInstances.
+  (** ** Other rules for Kleisli composition *)
+  (******************************************************************************)
+  Lemma kc1_asc1 : forall `(g : B -> C) `(h : C -> T D) `(f : A -> T B),
+      (h ∘ g) ⋆1 f = h ⋆1 (map T B C g ∘ f).
+  Proof.
+    intros. unfold kc1.
+    reassociate <-.
+    rewrite bind_map.
+    reflexivity.
+  Qed.
+
+  Lemma kc1_asc2 : forall `(f : A -> B) `(g : B -> T C) `(h : C -> T D),
+      h ⋆1 (g ∘ f) = (h ⋆1 g) ∘ f.
+  Proof.
+    intros. unfold kc1.
+    reflexivity.
+  Qed.
+
+  (** ** Naturality of <<ret>> *)
+  (******************************************************************************)
+  #[export] Instance mon_ret_natural : Natural (@ret T _).
+  Proof.
+    constructor; try typeclasses eauto.
+    intros.
+    rewrite (kmonf_map_to_bind).
+    rewrite (kmon_bind0).
+    reflexivity.
+  Qed.
+
+End derived_instances.
+
+(** ** Naturality of homomorphisms *)
+(******************************************************************************)
+#[export] Instance Natural_MonadHom  `{MonadFull T1} `{MonadFull T2} `{! MonadHom T1 T2 ϕ} : Natural ϕ.
+Proof.
+  constructor; try typeclasses eauto. intros.
+  rewrite (kmonf_map_to_bind (T := T1)).
+  rewrite (kmonf_map_to_bind (T := T2)).
+  rewrite (kmon_hom_bind (T := T1) (U := T2)).
+  reassociate <-.
+  rewrite (kmon_hom_ret (T := T1) (U := T2)).
+  reflexivity.
+Qed.
+
+#[local] Instance Map_Bind (T : Type -> Type)
+  `{Return T} `{Bind T T} : Map T :=
+  fun A B (f : A -> B) => @bind T T _ A B (@ret T _ B ∘ f).
+
+Lemma map_to_bind `{Return T} `{Bind T T} : forall `(f : A -> B),
+    @map T _ A B f = @bind T T _ A B (@ret T _ B ∘ f).
+Proof.
+  reflexivity.
+Qed.
+
+#[local] Instance MonadFull_Monad (T : Type -> Type) `{Monad T} : MonadFull T :=
+  {| kmonf_map_to_bind := ltac:(reflexivity);
+  |}.
 
 (** * Notations *)
 (******************************************************************************)

@@ -16,14 +16,11 @@ Module ToKleisli.
 
   (** ** Operation *)
   (******************************************************************************)
-  #[export] Instance Bindt_distjoin
-    (T : Type -> Type)
-    `{Map T} `{Join T} `{ApplicativeDist T} : Bindt T T :=
-  fun (G : Type -> Type) _ _ _ (A B : Type) (f : A -> G (T B)) =>
-    map G (join T) ∘ dist T G ∘ map T f.
-
-
-  Import CategoricalToKleisli.TraversableFunctor.ToKleisli.
+  #[export] Instance Bindt_categorical
+    (T : Type -> Type) `{Map T} `{Join T} `{ApplicativeDist T}
+  : Bindt T T | 1000
+  := fun (G : Type -> Type) _ _ _ (A B : Type) (f : A -> G (T B)) =>
+                   map G (join T) ∘ dist T G ∘ map T f.
 
   (** ** Laws *)
   (******************************************************************************)
@@ -31,14 +28,14 @@ Module ToKleisli.
 
     Context
       (T : Type -> Type)
-      `{Classes.Categorical.TraversableMonad.TraversableMonad T}.
+      `{Categorical.TraversableMonad.TraversableMonad T}.
 
     (** *** Identity law *)
     (******************************************************************************)
     Lemma ktm_bindt1_T :
       forall (A : Type), bindt T T (fun A => A) A A (ret T A) = @id (T A).
     Proof.
-      intros. unfold bindt. unfold_ops @Bindt_distjoin.
+      intros. unfold bindt. unfold_ops @Bindt_categorical.
       unfold_ops @Map_I. rewrite (dist_unit (F := T)).
       change (?g ∘ id ∘ ?f) with (g ∘ f).
       now rewrite (mon_join_map_ret (T := T)).
@@ -55,7 +52,7 @@ Module ToKleisli.
           bindt T T (G1 ∘ G2) A C (g ⋆3 f).
     Proof.
       intros. unfold bindt at 1 2 3.
-      unfold_ops @Bindt_distjoin.
+      unfold_ops @Bindt_categorical.
       reassociate -> on right. repeat reassociate <-.
       rewrite (fun_map_map (F := G1)).
       reassociate -> near (join T). rewrite (natural (ϕ := @join T _)).
@@ -114,9 +111,9 @@ Module ToKleisli.
         (A B: Type) (f : A -> G1 (T B)),
         bindt T T G1 A B f ∘ ret T A = f.
     Proof.
-      intros. unfold_ops @Bindt_distjoin.
+      intros. unfold_ops @Bindt_categorical.
       reassociate -> on left.
-      rewrite (natural (Natural := mon_ret_natural)).
+      rewrite (natural (Natural := Monad.mon_ret_natural)).
       unfold_ops @Map_I.
       reassociate <-; reassociate -> near (ret T (G1 (T B))).
       rewrite (trvmon_ret (T := T)).
@@ -136,7 +133,7 @@ Module ToKleisli.
     Proof.
       introv morph.
       inversion morph. intros.
-      unfold_ops @Bindt_distjoin.
+      unfold_ops @Bindt_categorical.
       do 2 reassociate <- on left.
       unfold compose. ext a.
       rewrite (appmor_natural _ (T B) (join T)).
@@ -153,7 +150,7 @@ Module ToKleisli.
       `{Applicative G1} `{Applicative G2} : forall (A B : Type) (f : A -> G1 (T B)),
         bindt T T (G2 ∘ G1) A B (pure G2 ∘ f) = pure G2 ∘ bindt T T G1 A B f.
     Proof.
-      intros. unfold_ops @Bindt_distjoin.
+      intros. unfold_ops @Bindt_categorical.
       reassociate -> on left.
       rewrite (map_purity_2 T (G2 := G2) f).
       do 2 reassociate <- on left.

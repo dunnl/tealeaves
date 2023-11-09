@@ -16,7 +16,7 @@ Module Roundtrip1.
 
   #[local] Instance traverse' : Traverse T := ToKleisli.Traverse_dist T.
 
-  Definition map' : Map T := DerivedInstances.Map_Traverse T.
+  Definition map' : Map T := Map_Traverse T.
   Definition dist' : ApplicativeDist T := ToCategorical.Dist_Traverse T.
 
   Goal mapT = map'.

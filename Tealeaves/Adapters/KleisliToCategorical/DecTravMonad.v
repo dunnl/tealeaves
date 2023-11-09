@@ -28,6 +28,7 @@ Module ToCategorical.
     #[export] Instance Join_Binddt: Join T := fun A => binddt T (fun A => A) (B := A) (A := T A) (extract (W ×) (T A)).
     #[export] Instance Decorate_Binddt: Decorate W T := fun A => binddt T (fun A => A) (ret T (W * A)).
     #[export] Instance Dist_Binddt: ApplicativeDist T := fun G _ _ _ A => binddt T G (map G (ret T A) ∘ extract (W ×) (G A)).
+
   End operations.
 
   (** ** Laws *)
@@ -135,7 +136,7 @@ Module ToCategorical.
     Qed.
 
     #[local] Instance: Categorical.Monad.Monad T :=
-      {| mon_ret_natural := ret_natural;
+      {| Monad.mon_ret_natural := ret_natural;
         mon_join_natural := join_natural;
         mon_join_ret := join_ret;
         mon_join_map_ret := join_map_ret;
@@ -325,6 +326,16 @@ Module ToCategorical.
     Proof.
       intros. unfold_ops @Dist_Binddt.
       apply (kdtm_binddt1 W T).
+    Qed.
+
+    #[local] Instance TODO_clean_me_up : TraversableMonadFull T.
+    Proof.
+      constructor; [
+          typeclasses eauto |
+          reflexivity |
+          reflexivity |
+          reflexivity
+        ].
     Qed.
 
     Lemma dist_linear_T : forall (G1 : Type -> Type) (H2 : Map G1) (H3 : Pure G1) (H4 : Mult G1),

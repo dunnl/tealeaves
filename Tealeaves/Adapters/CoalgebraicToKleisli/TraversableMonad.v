@@ -38,6 +38,7 @@ Section with_algebra.
     reflexivity.
   Qed.
 
+
   Lemma ktm_bindt1_T : forall (A : Type),
       bindt (fun A : Type => A) A A (ret T A) = (@id (T A)).
   Proof.
@@ -47,8 +48,8 @@ Section with_algebra.
     assert (lemma : @runBatch A (T A) (fun X => X) _ _ _ (ret T A) (T A) =
               extract_Batch ∘ mapfst_Batch A (T A) (ret T A)).
     { rewrite (runBatch_spec (fun A => A)).
-      rewrite <- (TraversableFunctor.DerivedInstances.map_to_traverse).
-      rewrite (map_BATCH1_spec).
+      rewrite <- (TraversableFunctor.map_to_traverse).
+      rewrite <- map_compat_traverse_Batch1.
       reflexivity. }
     rewrite lemma.
     rewrite trfm_extract.

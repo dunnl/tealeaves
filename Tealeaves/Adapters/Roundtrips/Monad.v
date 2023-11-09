@@ -21,13 +21,13 @@ Module Roundtrip1.
   #[local] Instance bind_derived: Bind T T :=
     CategoricalToKleisli.Monad.ToKleisli.Bind_Join T.
 
-  Definition map2 :=  Monad.DerivedInstances.Map_Bind T.
+  Definition map2 :=  Map_Bind T.
   Definition join2 := Join_Bind T.
 
   Goal map1 = map2.
   Proof.
     ext A B f.
-    unfold map2, DerivedInstances.Map_Bind,
+    unfold map2, Map_Bind,
       bind, bind_derived, ToKleisli.Bind_Join.
     rewrite <- (fun_map_map (F := T)).
     reassociate <-.
@@ -55,16 +55,16 @@ Section RoundTrip2.
     `{bind1 : Bind T T}
     `{! Kleisli.Monad.Monad T}.
 
-  Definition map_derived := DerivedInstances.Map_Bind.
+  Definition map_derived := Map_Bind.
   Definition join_derived := Join_Bind.
-  Definition bind2 : Bind T T := ToKleisli.Bind_Join T (H := DerivedInstances.Map_Bind T).
+  Definition bind2 : Bind T T := ToKleisli.Bind_Join T (H := Map_Bind T).
 
   Goal bind1 = bind2.
   Proof.
     ext A B f.
     unfold bind2, ToKleisli.Bind_Join.
     unfold join, Join_Bind.
-    unfold map, DerivedInstances.Map_Bind.
+    unfold map, Map_Bind.
     unfold_compose_in_compose.
     rewrite (kmon_bind2 (T := T)).
     fequal. unfold kc1.

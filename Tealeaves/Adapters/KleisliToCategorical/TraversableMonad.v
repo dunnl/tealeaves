@@ -36,7 +36,8 @@ Module ToCategorical.
       (T : Type -> Type)
       `{Kleisli.TraversableMonad.TraversableMonad T}.
 
-    Import Kleisli.TraversableMonad.DerivedInstances.
+    Import TraversableMonad.DerivedOperations.
+    Existing Instance DerivedOperations.TraversableMonadFull_Default.
 
     (** *** Traversable functor instance *)
     (******************************************************************************)
@@ -46,7 +47,8 @@ Module ToCategorical.
       intros. constructor.
       - typeclasses eauto.
       - typeclasses eauto.
-      - intros. unfold_ops @Map_compose @Dist_Bindt @Map_Bindt.
+      - intros. unfold_ops @Map_compose @Dist_Bindt.
+        unfold_ops @DerivedOperations.Map_Bindt.
         (* Simplify left side *)
         change (bindt T G (G A) A (map G (ret T A))) with (traverse T G (A := G A) (B := A) id).
         change (bindt T (fun A => A) A B (ret T B ∘ f)) with (map T f).
@@ -125,8 +127,8 @@ Module ToCategorical.
       - intros. unfold_ops @Map_compose @Join_Bindt.
         change (bindt T (fun A => A) _ _ ?g) with (bind T g).
         unfold_compose_in_compose.
-        rewrite (DerivedInstances.map_bind T).
-        rewrite (DerivedInstances.bind_map T).
+        rewrite (map_bind T).
+        rewrite (bind_map T).
         reflexivity.
     Qed.
 
@@ -157,7 +159,7 @@ Module ToCategorical.
       unfold_compose_in_compose.
       rewrite (kmon_bind2 (T := T)).
       rewrite (kmon_bind2 (T := T)).
-      rewrite (DerivedInstances.kc1_10 T).
+      rewrite (kc1_10 T).
       reflexivity.
     Qed.
 

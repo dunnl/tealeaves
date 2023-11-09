@@ -29,7 +29,7 @@ Section with_algebra.
     intros.
     unfold_ops @Traverse_Coalgebra.
     unfold traverse_ToBatch.
-    rewrite <- (extract_Batch_rw0).
+    rewrite <- (extract_Batch_to_runBatch).
     rewrite trf_extract.
     reflexivity.
   Qed.
@@ -81,7 +81,7 @@ Section with_algebra.
     reassociate ->.
     rewrite <- trf_duplicate.
     repeat reassociate <-.
-    rewrite cojoin_Batch_rw0.
+    rewrite cojoin_Batch_to_runBatch.
     rewrite (natural (G := G1) (F := Batch A B)).
     rewrite (runBatch_morphism'
                (H9 := ApplicativeMorphism_parallel (Batch A B) (Batch B C) G1 G2)).
