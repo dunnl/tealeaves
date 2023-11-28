@@ -362,6 +362,14 @@ Section traversable_functor_theory.
       reflexivity.
     Qed.
 
+    Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
+        (a ∈ t) <-> a ∈ (tolist T t).
+    Proof.
+      intros.
+      rewrite (element_to_tolist).
+      reflexivity.
+    Qed.
+
     Lemma element_to_toBatch1 : forall (A : Type),
         element_of T (A := A) = runBatch (const (A -> Prop)) (ret subset A) (T False) ∘ toBatch T A False.
     Proof.

@@ -29,7 +29,7 @@ Inductive Batch (A B C : Type) : Type :=
 #[local] Infix "⧆" := (Step _ _ _) (at level 51, left associativity) : tealeaves_scope.
 
 #[global] Notation "'BATCH1' B C" := (fun A => Batch A B C) (at level 0, B at level 0, C at level 0).
-#[global] Notation "'BATCH2' A" := (fun B => Batch A B) (at level 3).
+#[global] Notation "'BATCH2' A C" := (fun B => Batch A B C) (at level 3).
 
 (** ** Functor instances *)
 (******************************************************************************)
@@ -371,7 +371,7 @@ Section Applicative_Batch.
 
 End Applicative_Batch.
 
-(** *** <<mapfst>> is a homomorphism *)
+(** *** <<mapfst>> and <<mapsnd>> are homomorphisms *)
 (******************************************************************************)
 Lemma mapfst_Batch1 {B C D : Type} `(f : A1 -> A2) (b1 : Batch A1 B C) (b2 : Batch A1 B D) :
   mapfst_Batch A1 A2 f (b1 ⊗ b2) = mapfst_Batch A1 A2 f b1 ⊗ mapfst_Batch A1 A2 f b2.
@@ -389,6 +389,50 @@ Lemma mapfst_Batch2 {B C D : Type} `(f : A1 -> A2) (b1 : Batch A1 B (C -> D)) (b
 Proof.
   unfold ap. rewrite mapfst_map_Batch.
   now rewrite mapfst_Batch1.
+Qed.
+
+#[export] Instance mapfst_Batch1_Hom {B : Type} `(f : A1 -> A2)
+  : ApplicativeMorphism (Batch A1 B) (Batch A2 B) (fun C => mapfst_Batch _ _ f).
+Proof.
+  intros.
+  constructor; try typeclasses eauto.
+  - intros. now rewrite mapfst_map_Batch.
+  - intros. reflexivity.
+  - intros. apply mapfst_Batch1.
+Qed.
+
+Lemma mapsnd_Batch1 {A C D : Type} `(f : B1 -> B2) (b1 : Batch A B2 C) (b2 : Batch A B2 D) :
+  mapsnd_Batch B1 B2 f (b1 ⊗ b2) = mapsnd_Batch B1 B2 f b1 ⊗ mapsnd_Batch B1 B2 f b2.
+Proof.
+  generalize dependent b1. induction b2.
+  - intros. cbn. now rewrite mapsnd_map_Batch.
+  - cbn. fequal.
+    change (mult_Batch ?x ?y) with (x ⊗ y) in *; intros.
+    rewrite mapsnd_map_Batch.
+    compose near (mapsnd_Batch B1 B2 f (b1 ⊗ b2)).
+    rewrite (fun_map_map (F := Batch A B1)).
+    rewrite (app_mult_natural_Batch2).
+    compose near (mapsnd_Batch B1 B2 f b1 ⊗ mapsnd_Batch B1 B2 f b2).
+    rewrite (fun_map_map (F := Batch A B1)).
+    rewrite IHb2. do 2 fequal; ext [c rest].
+    reflexivity.
+Qed.
+
+Lemma mapsnd_Batch2 {A C D : Type} `(f : B1 -> B2) (b1 : Batch A B2 (C -> D)) (b2 : Batch A B2 C) :
+  mapsnd_Batch B1 B2 f (b1 <⋆> b2) = mapsnd_Batch B1 B2 f b1 <⋆> mapsnd_Batch B1 B2 f b2.
+Proof.
+  unfold ap. rewrite mapsnd_map_Batch.
+  now rewrite mapsnd_Batch1.
+Qed.
+
+#[export] Instance mapsnd_Batch2_Hom {A B1 B2 : Type} `(f : B1 -> B2)
+  : ApplicativeMorphism (Batch A B2) (Batch A B1) (fun C => mapsnd_Batch B1 B2 f).
+Proof.
+  intros.
+  constructor; try typeclasses eauto.
+  - intros. now rewrite mapsnd_map_Batch.
+  - intros. reflexivity.
+  - intros. apply mapsnd_Batch1.
 Qed.
 
 (** * <<runBatch>> *)

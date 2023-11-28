@@ -89,7 +89,7 @@ Tealeaves/Adapters/Roundtrips/TraversableMonad.v
 Tealeaves/Adapters/Roundtrips/DecTravFunctor.v
 Tealeaves/Adapters/Roundtrips/DecTravMonad.v
 Tealeaves/Theory/TraversableFunctor.v
-#Tealeaves/Theory/TraversableMonad.v
+Tealeaves/Theory/TraversableMonad.v
 #Tealeaves/Theory/DecoratedTraversableFunctor.v
 #Tealeaves/Theory/DecoratedTraversableMonad.v
 

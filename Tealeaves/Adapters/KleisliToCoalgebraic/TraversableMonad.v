@@ -1,5 +1,6 @@
 From Tealeaves Require Export
   Classes.Kleisli.TraversableMonad
+  Classes.Coalgebraic.TraversableFunctor
   Classes.Coalgebraic.TraversableMonad
   Functors.Batch.
 
@@ -45,7 +46,7 @@ Section runBatch.
     `{Applicative G} {A B : Type} (f : A -> G B) :
     traverse T G A B f = runBatch G (map G _ _ (ret T B) ∘ f) (T B) ∘ toBatchM T A B.
   Proof.
-    rewrite (ktmf_traverse_to_bindt).
+    rewrite (ktmf_traverse_to_bindt G).
     rewrite (bindt_to_runBatch G).
     reflexivity.
   Qed.
@@ -61,12 +62,34 @@ Section runBatch.
   Corollary id_to_runBatch : forall (A : Type),
       id (A := T A) = runBatch (fun A => A) (ret T A) (T A) ∘ toBatchM T A A.
   Proof.
-    intros. rewrite <- (trf_traverse_id (T := T)).
-    rewrite (traverse_to_runBatch (fun A => A)).
+    intros. rewrite <- (fun_map_id (F := T)).
+    rewrite map_to_runBatch.
     reflexivity.
   Qed.
 
 End runBatch.
+
+From Tealeaves Require Import Adapters.KleisliToCoalgebraic.TraversableFunctor.
+
+(** ** Relating <<toBatchM>> with <<toBatch>> *)
+(******************************************************************************)
+Lemma toBatchM_toBatch (T : Type -> Type)
+  `{Kleisli.TraversableMonad.TraversableMonadFull T}
+  {A B : Type} (t : T A) :
+  toBatch T A B t =
+    mapsnd_Batch B (T B) (ret T B) (toBatchM T A B t).
+Proof.
+  intros.
+  unfold toBatch, ToBatch_Traverse.
+  unfold toBatchM, ToBatchM_Bindt.
+  rewrite (ktmf_traverse_to_bindt (T := T) (Batch A B)).
+  compose near t on right.
+  rewrite (ktm_morph
+             (T := T) (A := A) (B := B)
+             (ϕ := fun C => mapsnd_Batch B (T B) (ret T B) (A := A) (C := C))).
+  rewrite (ret_dinatural).
+  reflexivity.
+Qed.
 
 (** ** Naturality of <<toBatch>> *)
 (******************************************************************************)

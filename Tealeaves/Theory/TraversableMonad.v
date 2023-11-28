@@ -1,11 +1,15 @@
 From Tealeaves Require Export
   Classes.Kleisli.TraversableMonad
-  Theory.TraversableFunctor.
+  Adapters.KleisliToCoalgebraic.TraversableMonad
+  Theory.TraversableFunctor
+  Functors.Subset.
 
 #[local] Generalizable Variables T G A B C ϕ M.
 
 Import TraversableFunctor.Notations.
 Import TraversableMonad.Notations.
+Import ContainerFunctor.Notations.
+Import Subset.Notations.
 
 (* Halfway explicit *)
 #[local] Arguments bindt (U T)%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
@@ -14,34 +18,13 @@ Import TraversableMonad.Notations.
 #[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 #[local] Arguments ret T%function_scope {Return} A%type_scope _.
 
-(** * Batch *)
-(******************************************************************************)
-Section batch.
-
-  Context
-    (T : Type -> Type)
-    `{TraversableMonad T}.
-
-  Lemma runBatch_batch3 : forall `{Applicative G} (A B : Type) (f : A -> G (T B)),
-      runBatch G f (T B) ∘ batch A (T B) = f.
-  Proof.
-    intros. apply (runBatch_batch G).
-  Qed.
-
-  Definition toBatch3 (A : Type) (B : Type) : T A -> @Batch A (T B) (T B) :=
-    bindt T T (Batch A (T B)) A B (batch A (T B)).
-
-End batch.
-
-(** * <<foldMap>> on monads *)
-(******************************************************************************)
-Section foldMap.
+Section traversable_monad_theory.
 
   Context
     (T : Type -> Type)
     `{TraversableMonadFull T}.
 
-  (** ** Composition with <<bindt>> *)
+  (** * <<foldMap>> on monads *)
   (******************************************************************************)
   Lemma foldMap_bindt `{Applicative G} `{Monoid M} : forall `(g : B -> M) `(f : A -> G (T B)),
       map G (T B) M (foldMap T g) ∘ bindt T T G A B f =
@@ -49,7 +32,7 @@ Section foldMap.
   Proof.
     intros. unfold foldMap.
     rewrite (traverse_bindt T G (const M) A B False).
-    rewrite 2(ktmf_traverse_to_bindt).
+    rewrite 2(ktmf_traverse_to_bindt _).
     fequal.
     - ext A' B' f'.
       unfold Map_compose, Map_const.
@@ -70,7 +53,8 @@ Section foldMap.
   Proof.
     intros. unfold foldMap.
     rewrite (traverse_bind T (const M) A B False).
-    rewrite (ktmf_traverse_to_bindt (T := T) (const M) _ _ _ A False).
+    rewrite (ktmf_traverse_to_bindt (T := T) (const M)).
+    rewrite (ktmf_traverse_to_bindt (T := T) (const M)).
     reflexivity.
   Qed.
 
@@ -78,289 +62,112 @@ Section foldMap.
       foldMap T f ∘ ret T A = f.
   Proof.
     intros. unfold foldMap.
-    rewrite (ktmf_traverse_to_bindt).
+    rewrite (ktmf_traverse_to_bindt (const M)).
     rewrite (ktm_bindt0 (T := T) (const M) A _).
     reflexivity.
   Qed.
 
-End foldMap.
-
-(** ** Expressing operations using <<runBatch>> *)
-(******************************************************************************)
-Section runBatch.
-
-  Context
-    (T : Type -> Type)
-    `{TraversableMonadFull T}.
-
-  Lemma bindt_to_runBatch `{Applicative G} `(f : A -> G (T B)) :
-    bindt T T G A B f = runBatch G f (T B) ∘ toBatch3 T A B.
-  Proof.
-    unfold toBatch3.
-    rewrite (ktm_morph (ϕ := runBatch G f)).
-    now rewrite (runBatch_batch3 T).
-  Qed.
-
-  Lemma traverse_to_runBatch `{Applicative G} `(f : A -> G B) :
-    traverse T G A B f = runBatch G f (T B) ∘ toBatch T A B.
-  Proof.
-    now rewrite (TraversableFunctor.traverse_to_runBatch T).
-  Qed.
-
-  Lemma bind_to_runBatch `(f : A -> T B) :
-    bind T T A B f = runBatch (fun A => A) f (T B) ∘ toBatch3 T A B.
-  Proof.
-    rewrite (ktmf_bind_to_bindt).
-    rewrite bindt_to_runBatch.
-    reflexivity.
-  Qed.
-
-  Corollary map_to_runBatch `(f : A -> B) :
-    map T A B f = runBatch (fun A => A) f (T B) ∘ toBatch T A B.
-  Proof.
-    rewrite (map_to_traverse T).
-    now rewrite traverse_to_runBatch.
-  Qed.
-
-  Corollary id_to_runBatch : forall (A : Type),
-    @id (T A) = runBatch (fun A => A) (@id A) (T A) ∘ toBatch T A A.
-  Proof.
-    intros. rewrite <- (trf_traverse_id).
-    rewrite traverse_to_runBatch.
-    reflexivity.
-  Qed.
-
-  Lemma foldMap_to_runBatch : forall `{Monoid M} (fake : Type) `(f : A -> M),
-      foldMap T f = runBatch (const M) f (T fake) ∘ toBatch3 T A fake.
+  (** * <<Tolist>> and <<element_of>> *)
+  (******************************************************************************)
+  Lemma tolist_ret : forall (A : Type),
+      tolist T ∘ ret T A = ret list A.
   Proof.
     intros.
-    unfold foldMap.
-    rewrite (traverse_const1 T fake).
-    rewrite (ktmf_traverse_to_bindt).
-    rewrite (bindt_to_runBatch).
-    reflexivity.
+    unfold_ops @Tolist_Traverse.
+    now rewrite (foldMap_ret).
   Qed.
 
-End runBatch.
-
-(*
-(** * <<tolist>> *)
-(******************************************************************************)
-Section tolist.
-
-  Context
-    (T : Type -> Type)
-    `{TraversableMonadFull T}.
-
-  Import Monoid.Notations.
-
-  #[export] Instance Tolist_Bindt `{Bindt T} : Tolist T :=
-    fun A => foldMap T (ret list A).
-
-  #[export] Instance Natural_Tolist_Traverse : Natural (@tolist T _).
+  Lemma tolist_bind : forall (A B : Type) (f : A -> T B),
+      tolist T ∘ bind T T A B f = bind list list A B (tolist T ∘ f) ∘ tolist T.
   Proof.
-    constructor; try typeclasses eauto.
-    intros. unfold_ops @Tolist_Traverse.
-    rewrite (foldMap_morphism T (list A) (list B)).
-    rewrite (foldMap_map T).
-    rewrite (natural (ϕ := @ret list _)).
-    reflexivity.
-  Qed.
-
-  Lemma foldMap_list_eq `{Monoid M} : forall (A : Type) (f : A -> M),
-      foldMap list f = List.foldMap f.
-  Proof.
-    intros. ext l. induction l.
-    - cbn. reflexivity.
-    - cbn. change (monoid_op ?x ?y) with (x ● y).
-      unfold_ops @Pure_const.
-      rewrite (monoid_id_r).
-      rewrite IHl.
+    intros.
+      unfold_ops @Tolist_Traverse.
+      rewrite (foldMap_bind (ret list B) f).
+      rewrite (foldMap_morphism T (list A) (list B)).
+      rewrite (kmon_bind0 (T := list)).
       reflexivity.
   Qed.
 
-  Lemma tolist_to_foldMap : forall (A : Type),
-      tolist T = foldMap T (ret list A).
-  Proof.
-    reflexivity.
-  Qed.
+  #[export] Instance Monad_Hom_Tolist : MonadHom T list (@tolist T _) :=
+    {| kmon_hom_ret := tolist_ret;
+      kmon_hom_bind := tolist_bind;
+    |}.
 
-  Corollary tolist_to_traverse1 : forall (A : Type),
-      tolist T = traverse T (const (list A)) A False (ret list A).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Corollary tolist_to_traverse2 : forall (A fake : Type),
-      tolist T = traverse T (const (list A)) A fake (ret list A).
+  Lemma element_of_hom1 : forall (A : Type),
+      element_of T ∘ ret T A = ret subset A.
   Proof.
     intros.
-    rewrite tolist_to_traverse1.
-    rewrite (traverse_const1 T fake).
-    reflexivity.
+    unfold_ops @Elements_Tolist.
+    unfold_ops @Tolist_Traverse.
+    reassociate -> on left.
+    rewrite (foldMap_ret).
+    unfold compose; ext a.
+    apply elements_list_ret.
   Qed.
 
-  Corollary tolist_to_runBatch {A : Type} (tag : Type) `(t : T A) :
-    tolist T t =
-      runBatch (const (list A))
-        (ret list A : A -> const (list A) tag)
-        (T tag) (toBatch T A tag t).
-  Proof.
-    rewrite (tolist_to_traverse2 A tag).
-    now rewrite (traverse_to_runBatch T (const (list A))).
-  Qed.
-
-  Corollary foldMap_to_tolist `{Monoid M} : forall (A : Type) (f : A -> M),
-      foldMap T f = foldMap list f ∘ tolist T.
+  Lemma element_of_hom2 : forall (A B : Type) (f : A -> T B),
+      element_of T ∘ bind T T A B f = bind subset _ _ _ (element_of T ∘ f) ∘ element_of T.
   Proof.
     intros.
-    rewrite (tolist_to_foldMap).
-    rewrite (foldMap_list_eq).
-    rewrite (foldMap_morphism T (list A) M).
-    fequal. ext a. cbn. rewrite monoid_id_l.
-    reflexivity.
-  Qed.
+    unfold_ops @Elements_Tolist.
+    reassociate -> on left.
+    rewrite (tolist_bind).
+  Admitted.
 
-
-End tolist.
-*)
+  #[export] Instance Monad_Hom_Toset : MonadHom T subset (@element_of T _) :=
+    {| kmon_hom_ret := element_of_hom1;
+      kmon_hom_bind := element_of_hom2;
+    |}.
 
 (** * Characterizing <<∈>> *)
 (******************************************************************************)
-Section with_monad.
-
-  Context
-    (T : Type -> Type)
-    `{TraversableMonad T}.
-
-  Lemma el_hom1 : forall (A : Type),
-      el T A ∘ ret T A = ret subset A.
-  Proof.
-    intros.
-    unfold_ops @Toset_Traverse.
-    rewrite (foldMap_ret T).
-    reflexivity.
-  Qed.
-
-  Lemma el_hom2 : forall (A B : Type) (f : A -> T B),
-      el T B ∘ bind T f = bind set (el T B ∘ f) ∘ el T A.
-  Proof.
-    intros.
-      unfold_ops @Toset_Traverse.
-      rewrite (foldMap_bind T (ret set B) f).
-      rewrite (foldMap_morphism T).
-      rewrite (kmon_bind0 set).
-      reflexivity.
-  Qed.
-
-  #[export] Instance Monad_Hom_Toset : MonadHom T set (@el T _) :=
-    {| kmon_hom_ret := el_hom1;
-      kmon_hom_bind := el_hom2;
-    |}.
-
   Theorem in_ret_iff :
     forall (A : Type) (a1 a2 : A), a1 ∈ ret T A a2 <-> a1 = a2.
   Proof.
     intros.
     compose near a2 on left.
-    rewrite (kmon_hom_ret T set).
-    solve_basic_set.
+    rewrite (kmon_hom_ret (ϕ := @element_of T _)).
+    easy.
   Qed.
 
   Theorem in_bind_iff :
     forall `(f : A -> T B) (t : T A) (b : B),
-      b ∈ bind T f t <-> exists a, a ∈ t /\ b ∈ f a.
+      b ∈ bind T T A B f t <-> exists a, a ∈ t /\ b ∈ f a.
   Proof.
     intros. compose near t on left.
-    rewrite (kmon_hom_bind T set).
+    rewrite (kmon_hom_bind (ϕ := @element_of T _)).
     reflexivity.
   Qed.
-
-  Import Classes.Monad.DerivedInstances.
 
   Corollary in_map_iff :
     forall `(f : A -> B) (t : T A) (b : B),
-      b ∈ map T f t <-> exists a, a ∈ t /\ f a = b.
+      b ∈ map T A B f t <-> exists a, a ∈ t /\ f a = b.
   Proof.
-    intros. compose near t on left.
-    rewrite <- (natural (ϕ := el T)).
+    intros.
+    rewrite (in_map_iff T).
     reflexivity.
   Qed.
 
- Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
-     (a ∈ t) <-> el list A (tolist T A t) a.
- Proof.
-   intros.
-   rewrite (toset_to_tolist T).
-   reflexivity.
- Qed.
-
-End with_monad.
-
-(** * Respectfulness properties *)
-(******************************************************************************)
-Section respectfulness_properties.
-
-  Context
-    (T : Type -> Type)
-    `{TraversableMonad T}.
-
+  (** * Respectfulness properties *)
+  (******************************************************************************)
   Lemma bindt_respectful : forall (G : Type -> Type)
-    `{Applicative G} `(f1 : A -> G (T B)) `(f2 : A -> G (T B)) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = f2 a) -> bindt T G f1 t = bindt T G f2 t.
+                             `{Applicative G} `(f1 : A -> G (T B)) `(f2 : A -> G (T B)) (t : T A),
+      (forall (a : A), a ∈ t -> f1 a = f2 a) -> bindt T T G A B f1 t = bindt T T G A B f2 t.
   Proof.
     introv ? hyp. do 2 (rewrite (bindt_to_runBatch T); auto).
-    unfold el, Toset_Traverse in hyp.
-    rewrite (foldMap_to_runBatch T B) in hyp.
+    unfold element_of, Elements_Tolist, tolist, Tolist_Traverse in hyp.
+    rewrite (foldMap_to_runBatch2 T A B) in hyp.
     unfold compose in *.
-    induction (toBatch3 T B t).
+    setoid_rewrite (toBatchM_toBatch T) in hyp.
+    rewrite <- (runBatch_mapsnd) in hyp.
+    change (map (const (list A)) _ _ _ ∘ ?x) with x in hyp.
+    induction (toBatchM T A B t).
+    cbn in *.
     - reflexivity.
     - cbn. fequal.
-      + apply IHb. intros. apply hyp. now left.
-      + apply hyp. now right.
-  Qed.
+      + apply IHb. intros.
+        apply hyp. admit.
+      + apply hyp. cbn. admit.
+  Admitted.
 
-  Lemma traverse_respectful : forall (G : Type -> Type)
-    `{Applicative G} `(f1 : A -> G B) `(f2 : A -> G B) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = f2 a) -> traverse T G f1 t = traverse T G f2 t.
-  Proof.
-    apply (Traversable.Functor.traverse_respectful T).
-  Qed.
-
-  Lemma traverse_respectful_pure : forall (G : Type -> Type)
-    `{Applicative G} `(f1 : A -> G A) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = pure G a) -> traverse T G f1 t = pure G t.
-  Proof.
-    apply (Traversable.Functor.traverse_respectful_pure T).
-  Qed.
-
-  Lemma traverse_respectful_map {A B} : forall (G : Type -> Type)
-    `{Applicative G} t (f : A -> G B) (g : A -> B),
-      (forall a, a ∈ t -> f a = pure G (g a)) -> traverse T G f t = pure G (map T g t).
-  Proof.
-    change (@Map_Bindt T H0 H) with (@DerivedInstances.Map_Traverse T _).
-    apply (Traversable.Functor.traverse_respectful_map T).
-  Qed.
-
-  Corollary traverse_respectful_id {A} : forall (G : Type -> Type)
-    `{Applicative G} t (f : A -> G A),
-      (forall a, a ∈ t -> f a = pure G a) -> traverse T G f t = pure G t.
-  Proof.
-    apply (Traversable.Functor.traverse_respectful_id T).
-  Qed.
-
-  Corollary map_respectful : forall `(f1 : A -> B) `(f2 : A -> B) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = f2 a) -> map T f1 t = map T f2 t.
-  Proof.
-    intros. change (@Map_Bindt T H0 H) with (@DerivedInstances.Map_Traverse T _).
-    now apply (Traversable.Functor.map_respectful T).
-  Qed.
-
-  Corollary map_respectful_id : forall `(f1 : A -> A) (t : T A),
-    (forall (a : A), a ∈ t -> f1 a = a) -> map T f1 t = t.
-  Proof.
-    intros. change (@Map_Bindt T H0 H) with (@DerivedInstances.Map_Traverse T _).
-    now apply (Traversable.Functor.map_respectful_id T).
-  Qed.
-
-End respectfulness_properties.
+End traversable_monad_theory.

@@ -167,158 +167,57 @@ Qed.
      mon_join_join := @join_join_list;
   |}.
 
-(** * List algebras and folds *)
-(******************************************************************************)
-
-(** ** Some homomorphisms *)
-(******************************************************************************)
-
-(** *** <<map>> is a monoid homomorphism *)
-(******************************************************************************)
-#[export, program] Instance Monmor_list_map `(f : A -> B) :
-  Monoid_Morphism (list A) (list B) (map list f) :=
-  {| monmor_op := map_list_app f; |}.
-
-(** *** [join] is a monoid homomorphism *)
-(** The <<join>> operation is a monoid homomorphism from <<list (list A)>> to
-    <<list A>>. This is just a special case of the fact that monoid homomorphisms
-    on free monoids are precisely of the form <<foldMap f>> for any <<f : A -> M>>,
-    specialized to <<f = id>> case, but we don't need that much generality. *)
-(******************************************************************************)
-#[export] Instance Monmor_join (A : Type) :
-  Monoid_Morphism (list (list A)) (list A) (join list (A := A)) :=
-  {| monmor_unit := @join_list_nil A;
-     monmor_op := @join_list_app A;
-  |}.
-
-(** ** Misc properties *)
-(******************************************************************************)
-(** <<fold>> commutes with monoid homomorphisms *)
-Lemma fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
-    ϕ ∘ fold M1 = fold M2 ∘ map list ϕ.
-Proof.
-  intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
-  induction l as [| ? ? IHl].
-  - cbn. apply (monmor_unit).
-  - cbn. now rewrite (monmor_op (ϕ := ϕ)), IHl.
-Qed.
-
-(** In the special case that we fold a list of lists, the result is equivalent
-    to joining the list of lists. *)
-Lemma fold_equal_join : forall {A},
-    fold (list A) = join list (A:=A).
-Proof.
-  intros. ext l. induction l as [| ? ? IHl].
-  - reflexivity.
-  - cbn. now rewrite IHl.
-Qed.
-
-(** ** <<foldMap>> *)
-(******************************************************************************)
-Definition foldMap {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
-  {A : Type} (f : A -> M) : list A -> M :=
-  fold M ∘ map list f.
-
-(** <<foldMap>> is a monoid homomorphism *)
-#[export] Instance foldMap_list_morphism
-  `{Monoid M} {A : Type}
-  `(f : A -> M) : Monoid_Morphism (list A) M (foldMap f).
-Proof.
-  unfold foldMap.
-  eapply Monoid_Morphism_compose;
-    typeclasses eauto.
-Qed.
-
-(** *** Rewriting with <<foldMap>> *)
-(******************************************************************************)
-Section foldMap_list_rw.
-
-  Context
-    {A M : Type}
-    `{Monoid M}
-    (f : A -> M).
-
-  Lemma foldMap_list_nil : foldMap f (@nil A) = Ƶ.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma foldMap_list_cons : forall (x : A) (xs : list A),
-      foldMap f (x :: xs) = f x ● foldMap f xs.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma foldMap_list_one (a : A) : foldMap f [ a ] = f a.
-  Proof.
-    cbv. apply (monoid_id_l).
-  Qed.
-
-  Lemma foldMap_list_app : forall (l1 l2 : list A),
-      foldMap f (l1 ++ l2) = foldMap f l1 ● foldMap f l2.
-  Proof.
-    intros.
-    unfold foldMap.
-    unfold compose. autorewrite with tea_list.
-    rewrite (fold_app M).
-    reflexivity.
-  Qed.
-
-End foldMap_list_rw.
-
-#[export] Hint Rewrite @foldMap_list_nil @foldMap_list_cons
-  @foldMap_list_one @foldMap_list_app : tea_list.
-
-(** *** Monoids form list (monad-)algebras *)
-(** In fact, list algebras are precisely monoids. *)
-(******************************************************************************)
-Section foldable_list.
-
-  Context
-    `{Monoid M}.
-
-  Lemma fold_ret : forall (x : M),
-      fold M (ret list _ x : list M) = x.
-  Proof.
-    apply monoid_id_l.
-  Qed.
-
-  Lemma fold_join : forall (l : list (list M)),
-      fold _ (join list l) = fold _ (map list (fold _) l).
-  Proof.
-    intro l. rewrite <- fold_equal_join.
-    compose near l on left.
-    now rewrite (fold_mon_hom (fold _)).
-  Qed.
-
-  Lemma fold_constant_unit : forall (l : list M),
-      fold M (map list (fun _ => Ƶ) l) = Ƶ.
-  Proof.
-    intro l. induction l.
-    - reflexivity.
-    - cbn. now simpl_monoid.
-  Qed.
-
-End foldable_list.
-
 (** * The [list] traversable monad, Kleisli *)
 (******************************************************************************)
 
-(** ** <<bindt>> operation *)
+(** ** <<bindt>>, <<bind>>, <<traverse>> operations *)
 (******************************************************************************)
 Fixpoint bindt_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Type) (f : A -> G (list B)) (l : list A)
   : G (list B) :=
   match l with
   | nil => pure G (@nil B)
   | x :: xs =>
-      pure G (@List.app B) <⋆> (f x) <⋆> (bindt_list G A B f xs)
+      pure G (@List.app B) <⋆> f x <⋆> bindt_list G A B f xs
+  end.
+
+Fixpoint bind_list (A B : Type) (f : A -> list B) (l : list A) : list B :=
+  match l with
+  | nil => @nil B
+  | x :: xs =>
+      f x ● bind_list A B f xs
+  end.
+
+Fixpoint traverse_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Type) (f : A -> G B) (l : list A)
+  : G (list B) :=
+  match l with
+  | nil => pure G (@nil B)
+  | x :: xs =>
+      pure G (@List.cons B) <⋆> f x <⋆> (traverse_list G A B f xs)
   end.
 
 #[export] Instance Bindt_list : Bindt list list := @bindt_list.
-#[export] Instance Bind_list : Bind list list :=
-  TraversableMonad.DerivedOperations.Bind_Bindt list.
-#[export] Instance Traverse_list : Traverse list :=
-  TraversableMonad.DerivedOperations.Traverse_Bindt list.
+#[export] Instance Bind_list : Bind list list := @bind_list.
+#[export] Instance Traverse_list : Traverse list := @traverse_list.
+
+Lemma list_bind_compat : forall (A B : Type),
+    bind list = TraversableMonad.DerivedOperations.Bind_Bindt list A B.
+Proof.
+  intros. ext f l. induction l as [|a rest IHrest].
+  - reflexivity.
+  - cbn. now rewrite IHrest.
+Qed.
+
+Lemma list_traverse_compat : forall (G : Type -> Type) `{Mult G} `{Map G} `{Pure G} `{! Applicative G} (A B : Type) (f : A -> G B),
+    traverse list G f = TraversableMonad.DerivedOperations.Traverse_Bindt list G _ _ _ A B f.
+Proof.
+  intros. ext l. induction l as [|a rest IHrest].
+  - reflexivity.
+  - cbn. rewrite IHrest.
+    unfold compose at 1.
+    rewrite (pure_ap_map).
+    rewrite (map_to_ap).
+    reflexivity.
+Qed.
 
 Lemma list_map_compat : forall (A B : Type) (f : A -> B),
     map list f = TraversableMonad.DerivedOperations.Map_Bindt list A B f.
@@ -485,9 +384,159 @@ End bindt_laws.
 
 (** ** Derived typeclass instances *)
 (******************************************************************************)
-#[program, export] Instance TraversableMonadFull_list : TraversableMonadFull list :=
+#[program, export]
+  Instance TraversableMonadFull_list : TraversableMonadFull list :=
   {| ktmf_map_to_bindt := list_map_compat;
+    ktmf_bind_to_bindt := @list_bind_compat;
+    ktmf_traverse_to_bindt := @list_traverse_compat;
   |}.
+
+(** * List algebras and folds *)
+(******************************************************************************)
+
+(** ** Some homomorphisms *)
+(******************************************************************************)
+
+(** *** <<map>> is a monoid homomorphism *)
+(******************************************************************************)
+#[export, program] Instance Monmor_list_map `(f : A -> B) :
+  Monoid_Morphism (list A) (list B) (map list f) :=
+  {| monmor_op := map_list_app f; |}.
+
+(** *** [join] is a monoid homomorphism *)
+(** The <<join>> operation is a monoid homomorphism from <<list (list A)>> to
+    <<list A>>. This is just a special case of the fact that monoid homomorphisms
+    on free monoids are precisely of the form <<foldMap f>> for any <<f : A -> M>>,
+    specialized to <<f = id>> case, but we don't need that much generality. *)
+(******************************************************************************)
+#[export] Instance Monmor_join (A : Type) :
+  Monoid_Morphism (list (list A)) (list A) (join list (A := A)) :=
+  {| monmor_unit := @join_list_nil A;
+     monmor_op := @join_list_app A;
+  |}.
+
+(** *** [bind] is a monoid homomorphism *)
+(******************************************************************************)
+#[export] Instance Monmor_bind (A B : Type) (f : A -> list B) :
+  Monoid_Morphism (list A) (list B) (bind list f).
+Proof.
+  constructor; try typeclasses eauto.
+  - reflexivity.
+  - intros. induction a1.
+    + reflexivity.
+    + cbn. rewrite IHa1.
+      now rewrite monoid_assoc.
+Qed.
+
+(** ** Misc properties *)
+(******************************************************************************)
+(** <<fold>> commutes with monoid homomorphisms *)
+Lemma fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
+    ϕ ∘ fold M1 = fold M2 ∘ map list ϕ.
+Proof.
+  intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
+  induction l as [| ? ? IHl].
+  - cbn. apply (monmor_unit).
+  - cbn. now rewrite (monmor_op (ϕ := ϕ)), IHl.
+Qed.
+
+(** In the special case that we fold a list of lists, the result is equivalent
+    to joining the list of lists. *)
+Lemma fold_equal_join : forall {A},
+    fold (list A) = join list (A:=A).
+Proof.
+  intros. ext l. induction l as [| ? ? IHl].
+  - reflexivity.
+  - cbn. now rewrite IHl.
+Qed.
+
+(** ** <<foldMap>> *)
+(******************************************************************************)
+Definition foldMap {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
+  {A : Type} (f : A -> M) : list A -> M :=
+  fold M ∘ map list f.
+
+(** <<foldMap>> is a monoid homomorphism *)
+#[export] Instance foldMap_list_morphism
+  `{Monoid M} {A : Type}
+  `(f : A -> M) : Monoid_Morphism (list A) M (foldMap f).
+Proof.
+  unfold foldMap.
+  eapply Monoid_Morphism_compose;
+    typeclasses eauto.
+Qed.
+
+(** *** Rewriting with <<foldMap>> *)
+(******************************************************************************)
+Section foldMap_list_rw.
+
+  Context
+    {A M : Type}
+    `{Monoid M}
+    (f : A -> M).
+
+  Lemma foldMap_list_nil : foldMap f (@nil A) = Ƶ.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_list_cons : forall (x : A) (xs : list A),
+      foldMap f (x :: xs) = f x ● foldMap f xs.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_list_one (a : A) : foldMap f [ a ] = f a.
+  Proof.
+    cbv. apply (monoid_id_l).
+  Qed.
+
+  Lemma foldMap_list_app : forall (l1 l2 : list A),
+      foldMap f (l1 ++ l2) = foldMap f l1 ● foldMap f l2.
+  Proof.
+    intros.
+    unfold foldMap.
+    unfold compose. autorewrite with tea_list.
+    rewrite (fold_app M).
+    reflexivity.
+  Qed.
+
+End foldMap_list_rw.
+
+#[export] Hint Rewrite @foldMap_list_nil @foldMap_list_cons
+  @foldMap_list_one @foldMap_list_app : tea_list.
+
+(** *** Monoids form list (monad-)algebras *)
+(** In fact, list algebras are precisely monoids. *)
+(******************************************************************************)
+Section foldable_list.
+
+  Context
+    `{Monoid M}.
+
+  Lemma fold_ret : forall (x : M),
+      fold M (ret list _ x : list M) = x.
+  Proof.
+    apply monoid_id_l.
+  Qed.
+
+  Lemma fold_join : forall (l : list (list M)),
+      fold _ (join list l) = fold _ (map list (fold _) l).
+  Proof.
+    intro l. rewrite <- fold_equal_join.
+    compose near l on left.
+    now rewrite (fold_mon_hom (fold _)).
+  Qed.
+
+  Lemma fold_constant_unit : forall (l : list M),
+      fold M (map list (fun _ => Ƶ) l) = Ƶ.
+  Proof.
+    intro l. induction l.
+    - reflexivity.
+    - cbn. now simpl_monoid.
+  Qed.
+
+End foldable_list.
 
 (** * <<map>> equality inversion lemmas *)
 (** Some lemmas for reasoning backwards from equality between two
