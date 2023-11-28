@@ -54,6 +54,7 @@ Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
+Tealeaves/Functors/ListHistory.v
 Tealeaves/Functors/Batch.v
 Tealeaves/Categories/Type.v
 Tealeaves/Categories/TypeFamily.v
