@@ -27,6 +27,7 @@ Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v
 Tealeaves/Classes/Kleisli/DecTravFunctor.v
 Tealeaves/Classes/Kleisli/DecTravMonad.v
+Tealeaves/Classes/Kleisli/DecTravMonadPoly.v
 Tealeaves/Classes/Categorical/Monad.v
 Tealeaves/Classes/Categorical/Comonad.v
 Tealeaves/Classes/Categorical/BeckDistributiveLaw.v
