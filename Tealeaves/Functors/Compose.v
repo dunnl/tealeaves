@@ -25,7 +25,7 @@ Section Functor_composition.
     `{Functor G}.
 
   #[export] Instance Map_compose : Map (G ∘ F) :=
-    fun A B f => map G (map F f).
+    fun A B f => map (F := G) (map (F := F) f).
 
   #[export, program] Instance Functor_compose : Functor (G ∘ F).
 

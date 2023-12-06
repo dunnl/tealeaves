@@ -12,63 +12,43 @@ Import Product.Notations.
 
 (** * Applicative functors *)
 (******************************************************************************)
-Section Applicative_operations.
+Class Pure (F : Type -> Type) :=
+  pure : forall {A}, A -> F A.
+Class Mult (F : Type -> Type) :=
+  mult : forall {A B : Type}, F A * F B -> F (A * B).
 
-  Context
-    (F : Type -> Type).
+#[local] Notation "x ⊗ y" := (mult (x, y)) (at level 50, left associativity).
 
-  Class Pure := pure : forall {A}, A -> F A.
-  Class Mult := mult : forall {A B : Type}, F A * F B -> F (A * B).
-
-End Applicative_operations.
-
-#[local] Notation "x ⊗ y" := (mult _ (x, y)) (at level 50, left associativity).
-
-Section Applicative.
-
-  Context
-    (G : Type -> Type)
-      `{Map G} `{Pure G} `{Mult G}.
-
-  Class Applicative :=
-    { app_functor :> Functor G;
-      app_pure_natural : forall (A B : Type) (f : A -> B) (x : A),
-        map G f (pure G x) = pure G (f x);
-      app_mult_natural : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : G A) (y : G B),
-        map G f x ⊗ map G g y = map G (map_tensor f g) (x ⊗ y);
-      app_assoc : forall (A B C : Type) (x : G A) (y : G B) (z : G C),
-        map G α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z);
-      app_unital_l : forall (A : Type) (x : G A),
-        map G left_unitor (pure G tt ⊗ x) = x;
-      app_unital_r : forall (A : Type) (x : G A),
-        map G right_unitor (x ⊗ pure G tt) = x;
-      app_mult_pure : forall (A B : Type) (a : A) (b : B),
-        pure G a ⊗ pure G b = pure G (a, b);
-    }.
-
-End Applicative.
+Class Applicative (G : Type -> Type)
+    `{Map G} `{Pure G} `{Mult G} :=
+  { app_functor :> Functor G;
+    app_pure_natural : forall (A B : Type) (f : A -> B) (x : A),
+      map f (pure x) = pure (f x);
+    app_mult_natural : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : G A) (y : G B),
+      map f x ⊗ map g y = map (map_tensor f g) (x ⊗ y);
+    app_assoc : forall (A B C : Type) (x : G A) (y : G B) (z : G C),
+      map α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z);
+    app_unital_l : forall (A : Type) (x : G A),
+      map left_unitor (pure tt ⊗ x) = x;
+    app_unital_r : forall (A : Type) (x : G A),
+      map right_unitor (x ⊗ pure tt) = x;
+    app_mult_pure : forall (A B : Type) (a : A) (b : B),
+      pure a ⊗ pure b = pure (a, b);
+  }.
 
 (** ** Homomorphisms between applicative functors *)
 (******************************************************************************)
-Section applicative_morphism.
-
-  Context
-    (F G : Type -> Type)
-    `{Applicative F}
-    `{Applicative G}.
-
-  Class ApplicativeMorphism (ϕ : forall {A}, F A -> G A) :=
-    { appmor_app_F : `{Applicative F};
-      appmor_app_G : `{Applicative G};
-      appmor_natural : forall (A B : Type) (f : A -> B) (x : F A),
-          ϕ (map F f x) = map G f (ϕ x);
-      appmor_pure : forall (A : Type) (a : A),
-          ϕ (pure F a) = pure G a;
-      appmor_mult : forall (A B : Type) (x : F A) (y : F B),
-          ϕ (x ⊗ y) = ϕ x ⊗ ϕ y;
-    }.
-
-End applicative_morphism.
+Class ApplicativeMorphism (F G : Type -> Type)
+  `{Applicative F} `{Applicative G} (ϕ : forall {A}, F A -> G A) :=
+  { appmor_app_F : `{Applicative F};
+    appmor_app_G : `{Applicative G};
+    appmor_natural : forall (A B : Type) (f : A -> B) (x : F A),
+      ϕ (map f x) = map f (ϕ x);
+    appmor_pure : forall (A : Type) (a : A),
+      ϕ (pure a) = pure a;
+    appmor_mult : forall (A B : Type) (x : F A) (y : F B),
+      ϕ (x ⊗ y) = ϕ x ⊗ ϕ y;
+  }.
 
 (** *** The identity transformation on any <<F>> is a homomorphism *)
 (******************************************************************************)
@@ -78,71 +58,102 @@ Proof.
   constructor; now try typeclasses eauto.
 Qed.
 
-(** * Basic coherence properties *)
+(** ** Basic lemmas *)
 (** TODO: Find a better name. I don't remember why these are
 named @triangle_x@. *)
 (******************************************************************************)
-Lemma triangle_1 `{Applicative F} : forall A (t : F A),
-    pure F tt ⊗ t = map F (left_unitor_inv) t.
-Proof.
-  intros. rewrite <- (app_unital_l F A t) at 2.
-  compose near (pure F tt ⊗ t). rewrite (fun_map_map).
-  rewrite (unitors_1). now rewrite (fun_map_id).
-Qed.
+Section basics.
 
-Lemma triangle_2 `{Applicative F} : forall A (t : F A),
-    t ⊗ pure F tt = map F (right_unitor_inv) t.
-Proof.
-  intros. rewrite <- (app_unital_r F A t) at 2.
-  compose near (t ⊗ pure F tt). rewrite (fun_map_map).
-  rewrite (unitors_3). now rewrite (fun_map_id).
-Qed.
+  Context
+    (F : Type -> Type)
+    `{Applicative F}.
 
-Lemma triangle_3 `{Applicative F} : forall A (a : A) B (t : F B),
-    pure F a ⊗ t = strength F (a, t).
-Proof.
-  intros. unfold strength. rewrite <- (app_unital_l F B t) at 2.
-  compose near (pure F tt ⊗ t).
-  rewrite (fun_map_map).
-  replace (pair a ∘ left_unitor) with (map_fst (X := unit) (Y := B) (const a)).
-  2:{ now ext [[] ?]. }
-  unfold map_fst. rewrite <- (app_mult_natural F).
-  rewrite (app_pure_natural F).
-  now rewrite (fun_map_id).
-Qed.
+  Lemma triangle_1 : forall (A : Type) (t : F A),
+      pure tt ⊗ t = map left_unitor_inv t.
+  Proof.
+    intros.
+    rewrite <- (app_unital_l A t) at 2.
+    compose near (pure tt ⊗ t).
+    rewrite fun_map_map.
+    rewrite unitors_1.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
 
-Lemma triangle_4 `{Applicative F} : forall A (a : A) B (t : F B),
-    t ⊗ pure F a = map F (fun b => (b, a)) t.
-Proof.
-  intros. rewrite <- (app_unital_r F B t) at 2.
-  compose near (t ⊗ pure F tt).
-  rewrite (fun_map_map).
-  replace ((fun b => (b, a)) ∘ right_unitor) with (map_snd (X := B) (Y := unit) (const a)).
-  2:{ now ext [? []]. }
-  unfold map_snd. rewrite <- (app_mult_natural F).
-  rewrite (app_pure_natural F).
-  now rewrite (fun_map_id).
-Qed.
+  Lemma triangle_2 : forall (A : Type) (t : F A),
+      t ⊗ pure tt = map right_unitor_inv t.
+  Proof.
+    intros.
+    rewrite <- (app_unital_r A t) at 2.
+    compose near (t ⊗ pure tt).
+    rewrite fun_map_map.
+    rewrite unitors_3.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
 
-Lemma weird_1 `{Applicative F} : forall A,
-    map F left_unitor ∘ mult F ∘ pair (pure F tt) = @id (F A).
-Proof.
-  intros. ext t. unfold compose. rewrite triangle_1.
-  compose near t on left.
-  rewrite (fun_map_map).
-  rewrite unitors_2.
-  now rewrite (fun_map_id).
-Qed.
+  Lemma triangle_3 : forall (A B : Type) (a : A) (t : F B),
+      pure a ⊗ t = strength (a, t).
+  Proof.
+    intros.
+    unfold strength.
+    rewrite <- (app_unital_l B t) at 2.
+    compose near (pure tt ⊗ t).
+    rewrite fun_map_map.
+    replace (pair a ∘ left_unitor) with
+      (map_fst (X := unit) (Y := B) (const a)) by
+      (now ext [[] ?]).
+    unfold map_fst.
+    rewrite <- app_mult_natural.
+    rewrite app_pure_natural.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
 
-Lemma weird_2  `{Applicative F} : forall A,
-    map F right_unitor ∘ mult F ∘ (fun b : F A => (b, pure F tt)) = @id (F A).
-Proof.
-  intros. ext t. unfold compose. rewrite triangle_2.
-  compose near t on left.
-  rewrite (fun_map_map).
-  rewrite unitors_4.
-  now rewrite (fun_map_id).
-Qed.
+  Lemma triangle_4 : forall (A B : Type) (a : A) (t : F B),
+      t ⊗ pure a = map (fun b => (b, a)) t.
+  Proof.
+    intros.
+    rewrite <- (app_unital_r B t) at 2.
+    compose near (t ⊗ pure tt).
+    rewrite (fun_map_map).
+    replace ((fun b => (b, a)) ∘ right_unitor) with
+      (map_snd (X := B) (Y := unit) (const a))
+      by (now ext [? []]).
+    unfold map_snd.
+    rewrite <- app_mult_natural.
+    rewrite app_pure_natural.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+  Lemma weird_1 : forall (A : Type),
+      map left_unitor ∘ mult ∘ pair (pure tt) = @id (F A).
+  Proof.
+    intros. ext t.
+    unfold compose.
+    rewrite triangle_1.
+    compose near t on left.
+    rewrite fun_map_map.
+    rewrite unitors_2.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+  Lemma weird_2 : forall A,
+      map right_unitor ∘ mult ∘ (fun b : F A => (b, pure tt)) = @id (F A).
+  Proof.
+    intros. ext t.
+    unfold compose.
+    rewrite triangle_2.
+    compose near t on left.
+    rewrite fun_map_map.
+    rewrite unitors_4.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+End basics.
 
 (** ** Mapping and reassociating <<⊗>> *)
 (******************************************************************************)
@@ -154,44 +165,59 @@ Section Applicative_corollaries.
 
   Lemma app_mult_natural_l :
     forall {A B C : Type} (f : A -> C) (x : F A) (y : F B),
-      map F f x ⊗ y = map F (map_fst f) (x ⊗ y).
+      map f x ⊗ y = map (map_fst f) (x ⊗ y).
   Proof.
-    intros. replace y with (map F id y) at 1
-      by (now rewrite (fun_map_id)).
-    now rewrite (app_mult_natural F).
+    intros.
+    replace y with (map id y) at 1
+      by (now rewrite fun_map_id).
+    rewrite app_mult_natural.
+    reflexivity.
   Qed.
 
   Lemma app_mult_natural_r :
     forall {A B D : Type} (g : B -> D) (x : F A) (y : F B),
-      x ⊗ map F g y = map F (map_snd g) (x ⊗ y).
+      x ⊗ map g y = map (map_snd g) (x ⊗ y).
   Proof.
-    intros. replace x with (map F id x) at 1
-      by (now rewrite (fun_map_id)).
-    now rewrite (app_mult_natural F).
+    intros.
+    replace x with (map id x) at 1
+      by (now rewrite fun_map_id).
+    rewrite app_mult_natural.
+    reflexivity.
   Qed.
 
   Corollary app_mult_natural_1 :
     forall {A B C E : Type} (f : A -> C) (h : C * B -> E) (x : F A) (y : F B),
-      map F h (map F f x ⊗ y) = map F (h ∘ map_fst f) (x ⊗ y).
+      map h (map f x ⊗ y) = map (h ∘ map_fst f) (x ⊗ y).
   Proof.
-    intros. rewrite app_mult_natural_l.
-    compose near (x ⊗ y) on left. now rewrite (fun_map_map).
+    intros.
+    rewrite app_mult_natural_l.
+    compose near (x ⊗ y) on left.
+    rewrite (fun_map_map).
+    reflexivity.
   Qed.
 
   Corollary app_mult_natural_2 :
     forall {A B D E : Type} (g : B -> D) (h : A * D -> E) (x : F A) (y : F B),
-      map F h (x ⊗ map F g y) = map F (h ∘ map_snd g) (x ⊗ y).
+      map h (x ⊗ map g y) = map (h ∘ map_snd g) (x ⊗ y).
   Proof.
-    intros. rewrite app_mult_natural_r.
-    compose near (x ⊗ y) on left. now rewrite (fun_map_map).
+    intros.
+    rewrite app_mult_natural_r.
+    compose near (x ⊗ y) on left.
+    rewrite fun_map_map.
+    reflexivity.
   Qed.
 
-  Lemma app_assoc_inv : forall (A B C : Type) (x : F A) (y : F B) (z : F C),
-      map F (α^-1) (x ⊗ (y ⊗ z)) = (x ⊗ y ⊗ z).
+  Lemma app_assoc_inv :
+    forall (A B C : Type) (x : F A) (y : F B) (z : F C),
+      map α^-1 (x ⊗ (y ⊗ z)) = (x ⊗ y ⊗ z).
   Proof.
-    intros. rewrite <- (app_assoc F).
-    compose near (x ⊗ y ⊗ z). rewrite (fun_map_map).
-    rewrite (associator_iso_1). now rewrite (fun_map_id).
+    intros.
+    rewrite <- app_assoc.
+    compose near (x ⊗ y ⊗ z).
+    rewrite fun_map_map.
+    rewrite associator_iso_1.
+    rewrite fun_map_id.
+    reflexivity.
   Qed.
 
 End Applicative_corollaries.
@@ -214,22 +240,27 @@ Section pure_as_applicative_transformation.
   Context
     `{Applicative G}.
 
-  Lemma pure_appmor_1 : forall A B (f : A -> B) (t : A),
-      pure G (map (fun A : Type => A) f t) = map G f (pure G t).
+  Lemma pure_appmor_1 : forall (A B : Type) (f : A -> B) (t : A),
+      pure (map (F := fun A => A) f t) = map f (pure t).
   Proof.
-    intros. now rewrite (app_pure_natural G).
+    intros.
+    rewrite app_pure_natural.
+    reflexivity.
   Qed.
 
   Lemma pure_appmor_2 : forall (A : Type) (a : A),
-      pure G (pure (fun A => A) a) = pure G a.
+      pure (F := G) (pure (F := fun A => A) a) = pure a.
   Proof.
-    intros. reflexivity.
+    reflexivity.
   Qed.
 
   Lemma pure_appmor_3 : forall (A B : Type) (a : A) (b : B),
-      pure G (mult (fun A => A) (a, b)) = mult G (pure G a, pure G b).
+      pure (mult (F := fun A => A) (a, b)) = pure a ⊗ pure b.
   Proof.
-    unfold transparent tcs. intros. now rewrite (app_mult_pure G).
+    intros.
+    unfold transparent tcs.
+    rewrite app_mult_pure.
+    reflexivity.
   Qed.
 
   #[export] Instance ApplicativeMorphism_pure :
@@ -251,64 +282,81 @@ Section applicative_compose.
     `{Applicative G2}.
 
   #[export] Instance Pure_compose : Pure (G2 ∘ G1) :=
-    fun (A : Type) (a : A) => pure G2 (pure G1 a).
+    fun (A : Type) (a : A) => pure (F := G2) (pure (F := G1) a).
 
   #[export] Instance Mult_compose : Mult (G2 ∘ G1) :=
     fun (A B : Type) (p : G2 (G1 A) * G2 (G1 B)) =>
-        map G2 (mult G1) (mult G2 (fst p, snd p)) : G2 (G1 (A * B)).
+      map (F := G2) (mult (F := G1))
+        (mult (F := G2) (fst p, snd p)) : G2 (G1 (A * B)).
 
   Lemma app_mult_pure_compose : forall (A B : Type) (a : A) (b : B),
-      pure (G2 ∘ G1) a ⊗ pure (G2 ∘ G1) b = pure (G2 ∘ G1) (a, b).
+      pure (F := G2 ∘ G1) a ⊗ pure (F := G2 ∘ G1) b =
+        pure (F := G2 ∘ G1) (a, b).
   Proof.
-    intros. unfold transparent tcs. cbn.
-    assert (square: forall (p : G1 A * G1 B), map G2 (mult G1) (pure G2 p) = pure G2 (mult G1 p))
-      by (intros; now rewrite (app_pure_natural G2)).
-    rewrite <- (app_mult_pure G1). (* top triangle *)
+    intros.
+    unfold transparent tcs. cbn.
+    assert (square: forall (p : G1 A * G1 B),
+               map mult (pure (F := G2) p) = pure (F := G2) (mult p)).
+    { intros.
+      rewrite app_pure_natural.
+      reflexivity. }
+    rewrite <- (app_mult_pure (G := G1)). (* top triangle *)
     rewrite <- square. (* bottom right square *)
-    rewrite <- (app_mult_pure G2). (* bottom left triangle *)
+    rewrite <- (app_mult_pure (G := G2)). (* bottom left triangle *)
     reflexivity.
   Qed.
 
   Lemma app_pure_nat_compose : forall (A B : Type) (f : A -> B) (x : A),
-      map (G2 ∘ G1) f (pure (G2 ∘ G1) x) = pure (G2 ∘ G1) (f x).
+      map (F := G2 ∘ G1) f (pure (F := G2 ∘ G1) x) = pure (f x).
   Proof.
-    intros. unfold transparent tcs.
+    intros.
+    unfold transparent tcs.
     rewrite 2(app_pure_natural _).
     reflexivity.
   Qed.
 
   Lemma app_mult_nat_compose : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : G2 (G1 A)) (y : G2 (G1 B)),
-      mult _ (map _ f x, map _ g y) = map _ (map_tensor f g) (mult _ (x, y)).
+      map f x ⊗ map g y = map (map_tensor f g) (x ⊗ y).
   Proof.
     intros. unfold transparent tcs. cbn [fst snd].
-    rewrite (app_mult_natural G2).
-    compose near (mult G2 (x, y)) on left.
+    rewrite (app_mult_natural).
+    compose near (mult (x, y)) on left.
     rewrite (fun_map_map).
-    compose near (mult G2 (x, y)) on right.
+    compose near (mult (x, y)) on right.
     rewrite (fun_map_map).
     fequal. ext [fa fb].
     unfold compose.
-    rewrite <- (app_mult_natural G1).
+    rewrite <- (app_mult_natural).
     reflexivity.
   Qed.
 
   Theorem app_asc_compose : forall A B C (x : G2 (G1 A)) (y : G2 (G1 B)) (z : G2 (G1 C)),
-      map (G2 ∘ G1) α (x ⊗ y ⊗ z) = x ⊗ (y ⊗ z).
+      map (F := G2 ∘ G1) α (x ⊗ y ⊗ z) = x ⊗ (y ⊗ z).
   Proof.
-    intros. unfold transparent tcs. cbn.
-    replace (map G2 (mult G1) (x ⊗ y) ⊗ z) with
-        (map G2 (map_tensor (mult G1) id) ((x ⊗ y) ⊗ z)).
-    2: { rewrite <- (app_mult_natural G2). now rewrite (fun_map_id). }
-    compose near ((x ⊗ y) ⊗ z); rewrite (fun_map_map).
-    compose near ((x ⊗ y) ⊗ z); rewrite (fun_map_map).
-    replace (x ⊗ map G2 (mult G1) (y ⊗ z)) with
-        (map G2 (map_tensor id (mult G1)) (x ⊗ (y ⊗ z))).
-    2: { rewrite <- (app_mult_natural G2). now rewrite (fun_map_id). }
-    compose near (x ⊗ (y ⊗ z)); rewrite (fun_map_map).
-    rewrite <- (app_assoc G2).
-    compose near (x ⊗ y ⊗ z) on right; rewrite (fun_map_map).
-    { fequal. ext [[? ?] ?]. unfold compose, id; cbn.
-      now rewrite (app_assoc G1). }
+    intros.
+    unfold transparent tcs. cbn.
+    replace (map (F := G2) (mult (F := G1)) (x ⊗ y) ⊗ z) with
+        (map (F := G2) (map_tensor (mult (F := G1)) id) ((x ⊗ y) ⊗ z)).
+    2: { rewrite <- (app_mult_natural (G := G2)).
+         now rewrite fun_map_id. }
+    compose near (x ⊗ y ⊗ z) on left.
+    rewrite fun_map_map.
+    compose near (x ⊗ y ⊗ z) on left.
+    rewrite fun_map_map.
+    replace (x ⊗ map mult (y ⊗ z)) with
+        (map (map_tensor id mult) (x ⊗ (y ⊗ z))).
+    2: { rewrite <- app_mult_natural.
+         rewrite fun_map_id.
+         reflexivity. }
+    compose near (x ⊗ (y ⊗ z)).
+    rewrite fun_map_map.
+    rewrite <- app_assoc.
+    compose near (x ⊗ y ⊗ z) on right.
+    rewrite fun_map_map.
+    - fequal. ext [[ga gb] gc].
+      unfold compose, id; cbn.
+      rewrite app_assoc.
+      reflexivity.
   Qed.
 
   Theorem app_unital_l_compose : forall A (x : G2 (G1 A)),
