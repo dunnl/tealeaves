@@ -7,8 +7,6 @@ From Tealeaves Require Export
 Import List.ListNotations.
 Import Monoid.Notations.
 
-About preincr.
-
 (* Map a context-sensitive function over the list, where the context is the prefix of the list up to the point considered. hfold = fold with history. *)
 Fixpoint hmap {A B : Type} (f : list A * A -> B) (l : list A) : list B :=
   match l with
