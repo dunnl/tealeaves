@@ -18,7 +18,7 @@ comonoids in Coq's category are not particularly varied: there is one comonoid o
 From Tealeaves Require Export
   Prelude.
 
-#[local] Generalizable Variables x y z a A B.
+#[local] Generalizable Variables x y z a A B W.
 
 (** * Monoids *)
 (******************************************************************************)
@@ -29,8 +29,8 @@ Class Monoid_op (A : Type) := monoid_op : A -> A -> A.
 
 Class Monoid_unit (A : Type) := monoid_unit : A.
 
-Arguments monoid_op {A}%type_scope {Monoid_op}.
-Arguments monoid_unit A%type_scope {Monoid_unit}.
+#[global] Arguments monoid_op {A}%type_scope {Monoid_op}.
+#[global] Arguments monoid_unit A%type_scope {Monoid_unit}.
 
 #[local] Notation "'Ƶ'" := (monoid_unit _) : tealeaves_scope. (* \Zbar *)
 #[local] Infix "●" := monoid_op (at level 60) : tealeaves_scope. (* \CIRCLE *)
@@ -147,7 +147,6 @@ End product_monoid.
 Section incr.
 
   Context
-    (W : Type)
     `{Monoid W}.
 
   (* It sometimes useful to have this curried operation, the
@@ -176,11 +175,10 @@ End incr.
 Section preincr.
 
   Context
-    (W : Type)
     `{Monoid W}.
 
   Definition preincr {A B : Type} (f : W * A -> B) (w : W) :=
-    f ∘ incr W w.
+    f ∘ incr w.
 
   #[local] Infix "⦿" := preincr (at level 30) : tealeaves_scope.
 
@@ -196,7 +194,7 @@ Section preincr.
   Proof.
     intros. unfold preincr.
     reassociate ->.
-    now rewrite (incr_incr W).
+    now rewrite incr_incr.
   Qed.
 
   Lemma preincr_assoc {A B C : Type} (g : B -> C) (f : W * A -> B) (w : W) :
@@ -213,6 +211,7 @@ Module Notations.
 
   Notation "'Ƶ'" := (monoid_unit _) : tealeaves_scope. (* \Zbar *)
   Infix "●" := monoid_op (at level 60) : tealeaves_scope. (* \CIRCLE *)
-  Infix "⦿" := (preincr _) (at level 30) : tealeaves_scope. (* \circledbullet *)
+  Infix "⦿" := preincr (at level 30) : tealeaves_scope. (* \circledbullet *)
 
 End Notations.
+
