@@ -1,8 +1,7 @@
 From Tealeaves Require Export
   Classes.Categorical.Applicative.
 
-#[local] Generalizable Variable G A B C ϕ M.
-#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
+#[local] Generalizable Variable T G A B C ϕ M.
 
 (** * Traversable functor *)
 (******************************************************************************)
@@ -13,38 +12,36 @@ Class Traverse (T : Type -> Type) := traverse :
     forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
       (A B : Type), (A -> G B) -> T A -> G (T B).
 
-#[global] Arguments traverse (T)%function_scope {Traverse} G%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments traverse (T)%function_scope {Traverse} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
+#[global] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope
+  {H H0 H1} {A B}%type_scope _%function_scope _.
 
 (** ** "Kleisli" composition *)
 (******************************************************************************)
 Definition kc2
-  (G1 G2 : Type -> Type)
-  `{Map G1} {A B C : Type} :
+  {G1 G2 : Type -> Type} `{Map G1} {A B C : Type} :
   (B -> G2 C) ->
   (A -> G1 B) ->
   (A -> (G1 ∘ G2) C) :=
-  fun g f => map G1 B (G2 C) g ∘ f.
+  fun g f => map (F := G1) (A := B) (B := G2 C) g ∘ f.
 
-#[local] Infix "⋆2" := (kc2 _ _) (at level 60) : tealeaves_scope.
+#[local] Infix "⋆2" := (kc2) (at level 60) : tealeaves_scope.
 
 (** ** Typeclass *)
 (******************************************************************************)
 Class TraversableFunctor (T : Type -> Type) `{Traverse T} :=
   { trf_traverse_id : forall (A : Type),
-      traverse T (fun A => A) A A id = @id (T A);
+      traverse (G := fun A => A) id = @id (T A);
     trf_traverse_traverse :
-    forall (G1 G2 : Type -> Type) `{Applicative G1} `{Applicative G2}
-      {A B C : Type} (g : B -> G2 C) (f : A -> G1 B),
-      map G1 (T B) (G2 (T C)) (traverse T G2 B C g) ∘ traverse T G1 A B f =
-        traverse T (G1 ∘ G2) A C (g ⋆2 f);
+    forall `{Applicative G1} `{Applicative G2} `(g : B -> G2 C) `(f : A -> G1 B),
+      map (traverse g) ∘ traverse f = traverse (T := T) (G := G1 ∘ G2) (g ⋆2 f);
     trf_traverse_morphism : forall `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : A -> G1 B),
-      ϕ (T B) ∘ traverse T G1 A B f = traverse T G2 A B (ϕ B ∘ f);
+      ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f);
   }.
 
 Class TraversableFunctorFull (T : Type -> Type) `{Traverse T} `{Map T} :=
   { trff_trf :> TraversableFunctor T;
-    trff_map_to_traverse : map T = traverse T (fun A => A);
+    trff_map_to_traverse :
+    @map T _ = @traverse T _ (fun A => A) Map_I Pure_I Mult_I;
   }.
 
 (** ** Interaction of [traverse] with functor composition *)
@@ -52,16 +49,15 @@ Class TraversableFunctorFull (T : Type -> Type) `{Traverse T} `{Map T} :=
 Section properties.
 
   Context
-    (T : Type -> Type)
     `{TraversableFunctor T}.
 
   (** ** Left identity law *)
   (******************************************************************************)
-  Lemma traverse_app_l {A B : Type} (G : Type -> Type) `{Applicative G} :
+  Lemma traverse_app_l {A B : Type} `{Applicative G} :
     forall (f : A -> G B),
       @traverse T _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G)
         (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f
-      = traverse T G A B f.
+      = traverse f.
   Proof.
     intros. fequal.
     now rewrite (Mult_compose_identity2 G).
@@ -69,11 +65,11 @@ Section properties.
 
   (** ** Right identity law *)
   (******************************************************************************)
-  Lemma traverse_app_r {A B : Type} (G : Type -> Type) `{Applicative G} :
+  Lemma traverse_app_r {A B : Type} `{Applicative G} :
     forall (f : A -> G B),
       @traverse T _ (G ∘ (fun A => A)) (Map_compose G (fun A => A))
         (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f
-      = traverse T G A B f.
+      = traverse f.
   Proof.
     intros. fequal.
     now rewrite (Mult_compose_identity1 G).
@@ -95,54 +91,54 @@ Section DerivedLaws.
     (** ** Composition between <<traverse>> and <<map>> *)
     (******************************************************************************)
     Lemma map_traverse {A B C : Type} : forall (g : B -> C) (f : A -> G1 B),
-        map G1 (T B) (T C) (@map T _ B C g) ∘ traverse T G1 A B f =
-          traverse T G1 A C (map G1 B C g ∘ f).
+        map (F := G1) (A := T B) (B := T C) (map g) ∘ traverse f =
+          traverse (map g ∘ f).
     Proof.
       intros.
       rewrite (trff_map_to_traverse (T := T)).
-      rewrite (trf_traverse_traverse G1 (fun A => A)).
-      rewrite (traverse_app_r T G1).
+      rewrite (trf_traverse_traverse (G2 := fun A => A)).
+      rewrite traverse_app_r.
       reflexivity.
     Qed.
 
     Lemma traverse_map {A B C : Type} : forall (g : B -> G2 C) (f : A -> B),
-        traverse T G2 B C g ∘ map T A B f =
-          traverse T G2 A C (g ∘ f).
+        traverse g ∘ map f = traverse (g ∘ f).
     Proof.
       intros.
       rewrite (trff_map_to_traverse (T := T)).
-      change (traverse T G2 B C g)
-        with (map (fun A => A) _ _ (traverse T G2 B C g)).
-      rewrite (trf_traverse_traverse (fun A => A) G2).
-      rewrite (traverse_app_l T G2).
+      change (traverse g)
+        with (map (F := fun A => A) (traverse g)).
+      rewrite (trf_traverse_traverse (G1 := fun A => A)).
+      rewrite traverse_app_l.
       reflexivity.
     Qed.
 
     (** ** [Functor] laws *)
     (******************************************************************************)
     Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
-        map T B C g ∘ map T A B f = map T A C (g ∘ f).
+        map g ∘ map f = map (F := T) (g ∘ f).
     Proof.
       intros.
       rewrite (trff_map_to_traverse (T := T)).
-      change (traverse T (fun A : Type => A) B C g)
-        with (map (fun A => A) _ _ (traverse T (fun A => A) B C g)).
-      rewrite (trf_traverse_traverse (fun A => A) (fun A => A)).
-      rewrite (traverse_app_l T (fun A => A)).
+      change (traverse (G := fun A => A) g)
+        with (map (F := fun A => A) (traverse (G := fun A => A) g)).
+      rewrite (trf_traverse_traverse (G1 := fun A => A) (G2 := fun A => A)).
+      rewrite traverse_app_l.
       reflexivity.
     Qed.
 
     Lemma map_id : forall (A : Type),
-        map T A A (@id A) = @id (T A).
+        map id = @id (T A).
     Proof.
       intros.
-      rewrite (trff_map_to_traverse (T := T)).
-      now rewrite (trf_traverse_id).
+      rewrite trff_map_to_traverse.
+      rewrite trf_traverse_id.
+      reflexivity.
     Qed.
 
     #[export] Instance Functor_TraversableFunctor : Functor T :=
       {| fun_map_id := map_id;
-        fun_map_map := map_map;
+         fun_map_map := map_map;
       |}.
 
 End DerivedLaws.
@@ -150,16 +146,16 @@ End DerivedLaws.
 (** * Notation *)
 (******************************************************************************)
 Module Notations.
-  Infix "⋆2" := (kc2 _ _) (at level 60) : tealeaves_scope.
+  Infix "⋆2" := (kc2) (at level 60) : tealeaves_scope.
 End Notations.
 
 (** * <<MakeFull>> *)
 (******************************************************************************)
 #[local] Instance Map_Traverse (T : Type -> Type) `{Traverse T} : Map T :=
-  fun (A B : Type) (f : A -> B) => traverse T (fun A => A) A B f.
+  fun (A B : Type) (f : A -> B) => traverse (G := fun A => A) f.
 
 Corollary map_to_traverse (T : Type -> Type) `{Traverse T} {A B : Type} : forall (f : A -> B),
-    @map T _ A B f = traverse T (fun A => A) A B f.
+    map (F := T) f = traverse (G := fun A => A) f.
 Proof.
   reflexivity.
 Qed.
