@@ -20,7 +20,6 @@ Import Comonad.Notations.
 Section writer_monad.
 
   Context
-    (W : Type)
     `{Monoid W}.
 
   #[export] Instance Return_Writer : Return (W ×) :=

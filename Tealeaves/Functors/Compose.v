@@ -24,7 +24,9 @@ Section Functor_composition.
     `{Functor F}
     `{Functor G}.
 
-  #[export] Instance Map_compose : Map (G ∘ F) :=
+  (* bump up the weight from 2~>3 to encourage using <Map_compose>
+     only as a last resort during typeclass resolution *)
+  #[export] Instance Map_compose : Map (G ∘ F) | 3 :=
     fun A B f => map (F := G) (map (F := F) f).
 
   #[export, program] Instance Functor_compose : Functor (G ∘ F).
