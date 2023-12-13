@@ -33,7 +33,7 @@ Section with_E.
     Comonad.DerivedInstances.Functor_Comonad (E ×).
 
   Lemma map_to_cobind : forall A B (f : A -> B),
-      map (E ×) f = cobind (E ×) (f ∘ extract (E ×) A).
+      map f = cobind (f ∘ extract).
   Proof.
     reflexivity.
   Qed.
