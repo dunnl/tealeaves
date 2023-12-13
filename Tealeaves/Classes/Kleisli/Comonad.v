@@ -18,16 +18,16 @@ Class Extract (W : Type -> Type) :=
 Class Cobind (W : Type -> Type) :=
   cobind : forall (A B : Type), (W A -> B) -> W A -> W B.
 
-#[global] Arguments extract W%function_scope {Extract} (A)%type_scope.
-#[global] Arguments cobind (W)%function_scope {Cobind} {A B}%type_scope _%function_scope _.
+#[global] Arguments extract {W}%function_scope {Extract} {A}%type_scope.
+#[global] Arguments cobind {W}%function_scope {Cobind} {A B}%type_scope _%function_scope _.
 
 (** ** Co-Kleisli composition *)
 (******************************************************************************)
-Definition kc4 (W : Type -> Type) `{Cobind W}
+Definition kc4 {W : Type -> Type} `{Cobind W}
   {A B C : Type} `(g : W B -> C) `(f : W A -> B) : (W A -> C) :=
   g ∘ @cobind W _ A B f.
 
-#[local] Infix "⋆4" := (kc4 _) (at level 60) : tealeaves_scope.
+#[local] Infix "⋆4" := (kc4) (at level 60) : tealeaves_scope.
 
 (** ** Typeclasses *)
 (******************************************************************************)
@@ -72,13 +72,13 @@ Module DerivedInstances.
     (** ** Kleisli composition in special cases *)
     (******************************************************************************)
     Lemma kc4_40 {A B C} : forall (g : W B -> C) (f : A -> B),
-        g ⋆4 (f ∘ @extract W _ A) = g ∘ map W f.
+        g ⋆4 (f ∘ extract) = g ∘ map f.
     Proof.
       reflexivity.
     Qed.
 
     Lemma kc4_04 {A B C} : forall (g : B -> C) (f : W A -> B),
-        (g ∘ @extract W _ B) ⋆4 f = g ∘ f.
+        (g ∘ extract) ⋆4 f = g ∘ f.
     Proof.
       intros. unfold kc4.
       reassociate ->.
@@ -87,7 +87,7 @@ Module DerivedInstances.
     Qed.
 
     Lemma kc4_00 {A B C} : forall (g : B -> C) (f : A -> B),
-        (g ∘ @extract W _ B) ⋆4 (f ∘ @extract W _ A) = (g ∘ f) ∘ @extract W _ A.
+        (g ∘ extract) ⋆4 (f ∘ extract) = (g ∘ f) ∘ extract.
     Proof.
       intros. unfold kc4.
       reassociate ->.
@@ -132,5 +132,5 @@ End DerivedInstances.
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
-  Infix "⋆4" := (kc4 _) (at level 60) : tealeaves_scope.
+  Infix "⋆4" := (kc4) (at level 60) : tealeaves_scope.
 End Notations.
