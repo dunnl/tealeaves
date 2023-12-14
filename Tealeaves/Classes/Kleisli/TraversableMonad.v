@@ -47,10 +47,11 @@ Class TraversableMonad (T : Type -> Type) `{Return T} `{Bindt T T} :=
       bindt f ∘ ret = f;
     ktm_bindt1 : forall (A : Type),
       bindt (G := fun A => A) (ret (T := T)) = @id (T A);
-    ktm_bindt2 : forall `{Applicative G1} `{Applicative G2} `(g : B -> G2 (T C)) `(f : A -> G1 (T B)),
+    ktm_bindt2 : forall `{Applicative G1} `{Applicative G2} {A B C : Type}
+                   (g : B -> G2 (T C)) (f : A -> G1 (T B)),
       map (F := G1) (A := T B) (B := G2 (T C)) (bindt g) ∘ bindt f =
         bindt (kc3 (G1 := G1) (G2 := G2) g f);
-    ktm_morph : forall `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : A -> G1 (T B)),
+    ktm_morph : forall `{morph : ApplicativeMorphism G1 G2 ϕ} {A B : Type} `(f : A -> G1 (T B)),
       ϕ (T B) ∘ bindt f = bindt (ϕ (T B) ∘ f);
   }.
 
@@ -424,7 +425,7 @@ Section DerivedInstances.
     Qed.
 
     Lemma traverse_traverse `{Applicative G1} `{Applicative G2} :
-      forall `(g : B -> G2 C) `(f : A -> G1 B),
+      forall {A B C : Type} (g : B -> G2 C) (f : A -> G1 B),
         map (traverse g) ∘ traverse f = traverse (G := G1 ∘ G2) (map g ∘ f).
     Proof.
       intros.

@@ -32,9 +32,10 @@ Class TraversableFunctor (T : Type -> Type) `{Traverse T} :=
   { trf_traverse_id : forall (A : Type),
       traverse (G := fun A => A) id = @id (T A);
     trf_traverse_traverse :
-    forall `{Applicative G1} `{Applicative G2} `(g : B -> G2 C) `(f : A -> G1 B),
+    forall `{Applicative G1} `{Applicative G2}
+      {A B C : Type} (g : B -> G2 C)`(f : A -> G1 B),
       map (traverse g) ∘ traverse f = traverse (T := T) (G := G1 ∘ G2) (g ⋆2 f);
-    trf_traverse_morphism : forall `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : A -> G1 B),
+    trf_traverse_morphism : forall `{morph : ApplicativeMorphism G1 G2 ϕ} {A B : Type} (f : A -> G1 B),
       ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f);
   }.
 
@@ -167,7 +168,7 @@ Definition MakeFull
      trff_map_to_traverse := ltac:(reflexivity);
   |}.
 
-(* temporary shim hack ugh *)
+(* todo temporary shim hack ugh *)
 
 #[local] Instance TraversableFunctorMakeFull T `{TraversableFunctor T} : TraversableFunctorFull T.
 Proof.

@@ -45,7 +45,6 @@ Require Import Tealeaves.Functors.Identity.
 Section lemmas.
 
   Context
-    (F : Type -> Type)
     `{Functor F}.
 
   Lemma Map_compose_id1 :

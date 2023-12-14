@@ -17,6 +17,8 @@ Import DecTravFunctor.Notations.
 #[local] Generalizable Variables ϕ T W G A B C D F M.
 
 (* Locally enable explicit arguments *)
+#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
 #[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 #[local] Arguments cobind W%function_scope {Cobind} (A B)%type_scope _%function_scope _.
 #[local] Arguments bindt (U T)%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
@@ -57,54 +59,46 @@ Definition kc7
 
 #[local] Infix "⋆7" := (kc7 _ _ _ _) (at level 60) : tealeaves_scope.
 
-Section class.
+Class DecTravMonad
+  (W : Type)
+  (T : Type -> Type)
+  `{Return T}
+  `{Binddt W T T}
+  `{op: Monoid_op W} `{unit: Monoid_unit W} :=
+  { kdtm_monoid :> Monoid W;
+    kdtm_binddt0 : forall {G : Type -> Type} `{Applicative G} (A B : Type) (f : W * A -> G (T B)),
+      binddt W T T G A B f ∘ ret T A = f ∘ ret (W ×) A;
+    kdtm_binddt1 : forall (A : Type),
+      binddt W T T (fun A => A) A A (ret T A ∘ extract (W ×) A) = @id (T A);
+    kdtm_binddt2 :
+    forall {G1 G2 : Type -> Type} `{Applicative G1} `{Applicative G2}
+      (A B C : Type)
+      (g : W * B -> G2 (T C)) (f : W * A -> G1 (T B)),
+      map G1 (T B) (G2 (T C)) (binddt W T T G2 B C g) ∘ binddt W T T G1 A B f =
+        binddt W T T (G1 ∘ G2) A C (g ⋆7 f);
+    kdtm_morph : forall (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : W * A -> G1 (T B)),
+      ϕ (T B) ∘ binddt W T T G1 A B f = binddt W T T G2 A B (ϕ (T B) ∘ f);
+  }.
 
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{Return T}
-    `{Binddt W T T}
-    `{op: Monoid_op W} `{unit: Monoid_unit W}.
-
-  Class DecTravMonad :=
-    { kdtm_monoid :> Monoid W;
-      kdtm_binddt0 : forall (G : Type -> Type) `{Applicative G} (A B : Type) (f : W * A -> G (T B)),
-        binddt W T T G A B f ∘ ret T A = f ∘ ret (W ×) A;
-      kdtm_binddt1 : forall (A : Type),
-        binddt W T T (fun A => A) A A (ret T A ∘ extract (W ×) A) = @id (T A);
-      kdtm_binddt2 :
-      forall (G1 G2 : Type -> Type) `{Applicative G1} `{Applicative G2}
-        (A B C : Type)
-        (g : W * B -> G2 (T C)) (f : W * A -> G1 (T B)),
-        map G1 (T B) (G2 (T C)) (binddt W T T G2 B C g) ∘ binddt W T T G1 A B f =
-          binddt W T T (G1 ∘ G2) A C (g ⋆7 f);
-      kdtm_morph : forall (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ} `(f : W * A -> G1 (T B)),
-        ϕ (T B) ∘ binddt W T T G1 A B f = binddt W T T G2 A B (ϕ (T B) ∘ f);
-    }.
-
-End class.
-
-Arguments incr {W}%type_scope {op} {A}%type_scope _ _.
-Arguments preincr {W}%type_scope {op} {A B}%type_scope f%function_scope w _.
+#[local] Arguments incr {W}%type_scope {op} {A}%type_scope _ _.
+#[local] Arguments preincr {W}%type_scope {op} {A B}%type_scope f%function_scope w _.
 
 (** * Interaction of [traverse] with functor composition *)
 (******************************************************************************)
 Section properties.
 
   Context
-    (T : Type -> Type)
     `{DecTravMonad W T}.
 
-
   Lemma binddt_app_l :
-    forall (G : Type -> Type) {A B : Type} `{Applicative G} (f : W * A -> G (T B)),
+    forall {G : Type -> Type} {A B : Type} `{Applicative G} (f : W * A -> G (T B)),
       @binddt W T T _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G) (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f = binddt W T T G A B f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity2 G).
   Qed.
 
   Lemma binddt_app_r :
-    forall (G : Type -> Type) {A B : Type} `{Applicative G} (f : W * A -> G (T B)),
+    forall {G : Type -> Type} {A B : Type} `{Applicative G} (f : W * A -> G (T B)),
       @binddt W T T _ (G ∘ (fun A => A)) (Map_compose G (fun A => A)) (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f = binddt W T T G A B f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity1 G).
@@ -112,39 +106,42 @@ Section properties.
 
 End properties.
 
-
 (** * Laws for <<kc7>> *)
 (******************************************************************************)
 Section kc7.
 
   Context
-    (W : Type)
-    (T : Type -> Type)
     `{Return T}
     `{Binddt W T T}
-    `{op: Monoid_op W} `{unit: Monoid_unit W}
-    `{! Monoid W}.
+    `{op: Monoid_op W} `{unit: Monoid_unit W} `{! Monoid W}.
 
   (** ** Interaction with [incr], [preincr] *)
   (******************************************************************************)
-  Lemma kc7_incr : forall
-      `{Applicative G1} `{Applicative G2}
-      `(g : W * B -> G2 (T C)) `(f : W * A -> G1 (T B)) (w : W),
-      (g ∘ incr w) ⋆7 (f ∘ incr w) = (g ⋆7 f) ∘ incr w.
-  Proof.
-    intros. unfold kc7. ext [w' a].
-    unfold preincr. reassociate ->.
-    now rewrite (incr_incr W).
-  Qed.
+  Section incr.
 
-  Lemma kc7_preincr : forall
-      `{Applicative G1} `{Applicative G2}
-      `(g : W * B -> G2 (T C)) `(f : W * A -> G1 (T B)) (w : W),
-      (g ⦿ w) ⋆7 (f ⦿ w) = (g ⋆7 f) ⦿ w.
-  Proof.
-    intros. unfold preincr. rewrite kc7_incr.
-    reflexivity.
-  Qed.
+    Context
+      `{Applicative G1}
+      `{Applicative G2}.
+
+    Lemma kc7_incr :
+      forall `(g : W * B -> G2 (T C)) `(f : W * A -> G1 (T B)) (w : W),
+        (g ∘ incr w) ⋆7 (f ∘ incr w) = (g ⋆7 f) ∘ incr w.
+    Proof.
+      intros. unfold kc7. ext [w' a].
+      unfold preincr. reassociate ->.
+      rewrite incr_incr.
+      reflexivity.
+    Qed.
+
+    Lemma kc7_preincr :
+      forall `(g : W * B -> G2 (T C)) `(f : W * A -> G1 (T B)) (w : W),
+        (g ⦿ w) ⋆7 (f ⦿ w) = (g ⋆7 f) ⦿ w.
+    Proof.
+      intros. unfold preincr. rewrite kc7_incr.
+      reflexivity.
+    Qed.
+
+  End incr.
 
   Context
     `{! DecTravMonad W T}
@@ -159,12 +156,11 @@ Section kc7.
   Lemma kc7_id1 : forall (f : W * A -> G (T B)),
       kc7 W T G (fun A => A) (ret T B ∘ extract (W ×) B) f = f.
   Proof.
-    intros. unfold kc7.
-    ext [w a].
-    rewrite (preincr_assoc).
-    rewrite (extract_preincr W).
-    rewrite (kdtm_binddt1 W T).
-    rewrite (fun_map_id).
+    intros. unfold kc7. ext [w a].
+    rewrite preincr_assoc.
+    rewrite extract_preincr.
+    rewrite kdtm_binddt1.
+    rewrite fun_map_id.
     reflexivity.
   Qed.
 
@@ -174,9 +170,8 @@ Section kc7.
     intros. unfold kc7. ext [w a].
     change (map (fun A => A) _ _ ?f) with f.
     change_left ((binddt W T T G A B (g ⦿ w) ∘ ret T A) a).
-    rewrite (kdtm_binddt0 W T G).
-    change ((g ⦿ w) (Ƶ, a)  = g (w, a)).
-    change (g (w ● Ƶ, a)  = g (w, a)).
+    rewrite kdtm_binddt0.
+    change (g (w ● Ƶ, a) = g (w, a)).
     simpl_monoid.
     reflexivity.
   Qed.
@@ -190,10 +185,8 @@ Section kc7.
     ext [w a].
     unfold_ops @Map_compose.
     compose near (f (w, a)) on left.
-    rewrite (fun_map_map).
-    fequal.
-    rewrite (kdtm_binddt2 W T); auto.
-    fequal.
+    rewrite fun_map_map.
+    rewrite kdtm_binddt2.
     rewrite kc7_preincr.
     reflexivity.
   Qed.
@@ -234,8 +227,6 @@ Module DerivedInstances.
   Section special_cases.
 
     Context
-      (W : Type)
-      (T : Type -> Type)
       `{Return T}
       `{Binddt W T T}
       `{Applicative G}.
@@ -375,12 +366,26 @@ Module DerivedInstances.
   Section kc7_special_cases.
 
     Context
-      (W : Type)
-      (T : Type -> Type)
       `{DecTravMonad W T}
       `{Applicative G1}
       `{Applicative G2}
       {A B C D : Type}.
+
+    Ltac unfold_map_id :=
+      repeat (change (map (fun A => A) _ _ ?f) with f).
+
+    Hint Unfold kc7 kc6 kc5 kc4 kc3 kc2 kc1 : tealeaves_kc_unfold.
+
+    Ltac setup :=
+      intros; autounfold with tealeaves_kc_unfold; ext [w a];
+      unfold_map_id.
+
+    Ltac solve_kc7 :=
+      setup;
+      try ( reflexivity ||
+            rewrite preincr_assoc;
+            rewrite extract_preincr;
+            reflexivity).
 
     (** *** Lemmas for <<kcx_yz>> (x < 7) *)
     (******************************************************************************)
@@ -394,8 +399,8 @@ Module DerivedInstances.
       unfold preincr, compose; cbn.
       change (id ?x) with x.
       compose near (f (w, a)) on left.
-      rewrite (bindd_to_binddt W T).
-      rewrite (kdtm_binddt0 W T (fun A => A)).
+      rewrite (bindd_to_binddt).
+      rewrite (kdtm_binddt0 (G := fun A => A)).
       unfold compose; cbn.
       simpl_monoid.
       reflexivity.
@@ -411,8 +416,8 @@ Module DerivedInstances.
       unfold preincr, compose; cbn.
       change (id ?x) with x.
       compose near (f (w, a)) on left.
-      rewrite (bindd_to_binddt W T).
-      rewrite (kdtm_binddt0 W T (fun A => A)).
+      rewrite (bindd_to_binddt).
+      rewrite (kdtm_binddt0 (G := fun A => A)).
       unfold compose; cbn.
       simpl_monoid.
       reflexivity.
@@ -432,24 +437,24 @@ Module DerivedInstances.
       change ((map G1 B (T B) (ret T B) ∘ f) (w, a))
         with (map G1 B (T B) (ret T B) (f (w, a))).
       compose near (f (w, a)).
-      rewrite (fun_map_map (F := G1)).
-      rewrite (kdtm_binddt0 W T G2 B C).
+      rewrite fun_map_map.
+      rewrite kdtm_binddt0.
       (* RHS *)
       unfold kc6.
       unfold_ops @Map_compose.
       do 2 reassociate <-.
-      unfold_compose_in_compose; rewrite (fun_map_map).
+      unfold_compose_in_compose; rewrite fun_map_map.
       unfold_ops @Cobind_env; unfold strength.
       unfold compose at 3 4.
       compose near (f (w, a)) on right.
-      rewrite (fun_map_map (F := G1)).
-      rewrite (preincr_ret W).
+      rewrite fun_map_map.
+      rewrite preincr_ret.
       reflexivity.
     Qed.
 
     Lemma kc7_55 : forall
         `(g : W * B -> T C) `(f : W * A -> T B),
-        kc7 W T (fun A => A) (fun A => A) g f = kc5 W T g f.
+        kc7 W T (fun A => A) (fun A => A) g f = g ⋆5 f.
     Proof.
       reflexivity.
     Qed.
@@ -460,15 +465,7 @@ Module DerivedInstances.
           ret T C ∘ (g ⋆4 f).
     Proof.
       intros. rewrite kc7_55.
-      (* This is a property for decorated monads
-         , but at this stage we don't know DTMs are DMs *)
-      (* rewrite kc5_44.*)
-      unfold kc5. ext [w' a].
-      unfold compose at 2.
-      compose near (f (w', a)).
-      unfold_ops @Bindd_Binddt.
-      rewrite (kdtm_binddt0 W T (fun A => A) B).
-      rewrite (preincr_ret W).
+      rewrite kc5_44.
       reflexivity.
     Qed.
 
@@ -477,12 +474,7 @@ Module DerivedInstances.
         kc7 W T G1 G2 (g ∘ extract (W ×) B) (f ∘ extract (W ×) A) =
           (g ⋆3 f) ∘ extract (W ×) A.
     Proof.
-      intros.
-      unfold kc7.
-      ext [w a].
-      rewrite preincr_assoc.
-      rewrite extract_preincr.
-      reflexivity.
+      solve_kc7.
     Qed.
 
     Lemma kc7_22 :
@@ -501,12 +493,12 @@ Module DerivedInstances.
       rewrite extract_preincr.
       unfold compose at 1 2 3 4; cbn.
       compose near (f a) on left.
-      rewrite (fun_map_map).
-      rewrite (kdtm_binddt0 W T G2).
+      rewrite fun_map_map.
+      rewrite kdtm_binddt0.
       unfold_ops @Map_compose.
       unfold compose; cbn.
       compose near (f a) on right.
-      rewrite (fun_map_map).
+      rewrite fun_map_map.
       reflexivity.
     Qed.
 
@@ -517,12 +509,7 @@ Module DerivedInstances.
           (f ∘ extract (W ×) A) =
           (g ⋆1 f) ∘ extract (W ×) A.
     Proof.
-      intros.
-      unfold kc7.
-      ext [w a].
-      rewrite preincr_assoc.
-      rewrite extract_preincr.
-      reflexivity.
+      solve_kc7.
     Qed.
 
     Lemma kc7_00 :
@@ -530,70 +517,47 @@ Module DerivedInstances.
         kc7 W T (fun A => A) (fun A => A) (ret T C ∘ g ∘ extract (W ×) B) (ret T B ∘ f ∘ extract (W ×) A) =
           (ret T C ∘ g ∘ f ∘ extract (W ×) A).
     Proof.
-      intros.
-      unfold kc7.
-      ext [w a].
-      change (map (fun A => A) _ _ ?f) with f.
-      unfold compose; cbn.
+      setup; unfold compose; cbn.
       compose near (f a) on left.
-      rewrite (kdtm_binddt0 W T (fun A => A)).
-      rewrite (preincr_ret W).
-      unfold compose; cbn.
+      rewrite (kdtm_binddt0 (G := fun A => A)).
+      rewrite preincr_ret.
       reflexivity.
     Qed.
 
     (** *** Lemmas <<kc7_x7>> *)
     (******************************************************************************)
-    Theorem kc7_07 :
+    Lemma kc7_07 :
       forall (g : B -> C) (f : W * A -> G1 (T B)),
         ret T C ∘ g ∘ extract (prod W) B ⋆7 f =
           map G1 (T B) (T C) (map T B C g) ∘ f.
     Proof.
-      intros.
-      unfold kc7.
-      ext [w a].
-      rewrite (preincr_assoc).
-      rewrite (extract_preincr).
-      reflexivity.
+      solve_kc7.
     Qed.
 
-    Theorem kc7_17 :
+    Lemma kc7_17 :
       forall (g : B -> T C) (f : W * A -> G1 (T B)),
         g ∘ extract (prod W) B ⋆7 f =
           map G1 (T B) (T C) (bind T T B C g) ∘ f.
     Proof.
-      intros.
-      unfold kc7.
-      ext [w a].
-      rewrite (preincr_assoc).
-      rewrite (extract_preincr).
-      reflexivity.
+      solve_kc7.
     Qed.
 
-    Theorem kc7_27 :
+    Lemma kc7_27 :
       forall (g : B -> G2 C) (f : W * A -> G1 (T B)),
         map G2 C (T C) (ret T C) ∘ g ∘ extract (prod W) B ⋆7 f =
           map G1 (T B) (G2 (T C)) (traverse T G2 B C g) ∘ f.
     Proof.
-      intros. unfold kc7.
-      ext [w a].
-      rewrite (preincr_assoc).
-      rewrite (extract_preincr).
-      reflexivity.
+      solve_kc7.
     Qed.
 
-    Theorem kc7_37 :
+    Lemma kc7_37 :
       forall (g : B -> G2 (T C)) (f : W * A -> G1 (T B)),
         (g ∘ extract (W ×) B) ⋆7 f = g ⋆3 f.
     Proof.
-      intros. unfold kc7.
-      ext [w a].
-      rewrite (preincr_assoc).
-      rewrite (extract_preincr).
-      reflexivity.
+      solve_kc7.
     Qed.
 
-    Theorem kc7_47 :
+    Lemma kc7_47 :
       forall (g : W * B -> C) (f : W * A -> G1 (T B)),
         kc7 W T G1 (fun A => A) (ret T C ∘ g) f = (fun '(w, a) => map G1 (T B) (T C) (mapd W T B C (g ⦿ w)) (f (w, a))).
     Proof.
@@ -601,14 +565,14 @@ Module DerivedInstances.
     Qed.
 
 
-    Theorem kc7_57 :
+    Lemma kc7_57 :
       forall (g : W * B -> T C) (f : W * A -> G1 (T B)),
         kc7 W T G1 (fun A => A) g f = g ⋆7 f.
     Proof.
       reflexivity.
     Qed.
 
-    Theorem kc7_67 :
+    Lemma kc7_67 :
       forall (g : W * B -> G2 C) (f : W * A -> G1 (T B)),
         (map G2 C (T C) (ret T C) ∘ g) ⋆7 f = (fun '(w, a) => map G1 (T B) (G2 (T C)) (mapdt W T G2 B C (g ⦿ w)) (f (w, a))).
     Proof.
@@ -617,7 +581,7 @@ Module DerivedInstances.
 
     (** *** Lemmas <<kc7_7x>> *)
     (******************************************************************************)
-    Theorem kc7_76 :
+    Lemma kc7_76 :
       forall (g : W * B -> G2 (T C)) (f : W * A -> G1 B),
         g ⋆7 (map G1 B (T B) (ret T B) ∘ f) = g ⋆6 f.
     Proof.
@@ -625,14 +589,14 @@ Module DerivedInstances.
       ext [w a].
       unfold compose; cbn.
       compose near (f (w, a)).
-      rewrite (fun_map_map).
-      rewrite (fun_map_map).
-      rewrite (kdtm_binddt0 W T G2).
-      rewrite (preincr_ret W).
+      rewrite fun_map_map.
+      rewrite fun_map_map.
+      rewrite kdtm_binddt0.
+      rewrite preincr_ret.
       reflexivity.
     Qed.
 
-    Theorem kc7_75 :
+    Lemma kc7_75 :
       forall (g : W * B -> G2 (T C)) (f : W * A -> T B),
         kc7 W T (fun A => A) G2 g f = fun '(w, a) => binddt W T T G2 B C (g ⦿ w) (f (w, a)).
     Proof.
@@ -648,59 +612,51 @@ Module DerivedInstances.
       unfold compose at 1.
       compose near (f (w, a)).
       change (map (fun A => A) _ _ ?f) with f.
-      rewrite (kdtm_binddt0 W T G2).
-      rewrite (preincr_ret W).
+      rewrite kdtm_binddt0.
+      rewrite preincr_ret.
       reflexivity.
     Qed.
 
-    Theorem kc7_73 :
+    Lemma kc7_73 :
       forall (g : W * B -> G2 (T C)) (f : A -> G1 (T B)),
         g ⋆7 (f ∘ extract (W ×) A) =
           fun '(w, a) => map G1 (T B) (G2 (T C)) (binddt W T T G2 B C (g ⦿ w)) (f a).
     Proof.
-      intros. unfold kc7.
-      ext [w a]. unfold compose. cbn.
-      reflexivity.
+      solve_kc7.
     Qed.
 
-    Theorem kc7_72 :
+    Lemma kc7_72 :
       forall (g : W * B -> G2 (T C)) (f : A -> G1 B),
         g ⋆7 (map G1 B (T B) (ret T B) ∘ f ∘ extract (W ×) A) =
           fun '(w, a) => map G1 B (G2 (T C)) (g ∘ pair w) (f a).
     Proof.
-      intros. unfold kc7.
-      ext [w a].
+      setup.
       unfold compose; cbn.
       compose near (f a) on left.
-      rewrite (fun_map_map).
-      rewrite (kdtm_binddt0 W T G2).
-      rewrite (preincr_ret W).
+      rewrite fun_map_map.
+      rewrite kdtm_binddt0.
+      rewrite preincr_ret.
       reflexivity.
     Qed.
 
-    Theorem kc7_71 :
+    Lemma kc7_71 :
       forall (g : W * B -> G2 (T C)) (f : A -> T B),
         kc7 W T (fun A => A) G2 g (f ∘ extract (W ×) A) =
           fun '(w, a) => binddt W T T G2 B C (g ⦿ w) (f a).
     Proof.
-      intros. unfold kc7.
-      ext [w a].
-      unfold compose; cbn.
-      change (map (fun A => A) _ _ ?f) with f.
-      reflexivity.
+      solve_kc7.
     Qed.
 
     Lemma kc7_70 :
       forall (g : W * B -> G2 (T C)) (f : A -> B),
         kc7 W T (fun A => A) G2 g (ret T B ∘ f ∘ extract (W ×) A) = g ∘ map (W ×) A B f.
     Proof.
-      intros. unfold kc7.
-      ext [w a].
+      setup.
       unfold compose; cbn.
       compose near (f a) on left.
       change (map (fun A => A) _ _ ?f) with f.
-      rewrite (kdtm_binddt0 W T G2).
-      rewrite (preincr_ret W).
+      rewrite kdtm_binddt0.
+      rewrite preincr_ret.
       reflexivity.
     Qed.
 
@@ -713,9 +669,9 @@ Module DerivedInstances.
     Proof.
       intros. unfold kc3.
       reassociate <-.
-      change (map (fun A => A) _ _ ?f) with f.
-      rewrite (bindt_to_binddt).
-      rewrite (kdtm_binddt0 W T G2).
+      unfold_map_id.
+      rewrite bindt_to_binddt.
+      rewrite kdtm_binddt0.
       reflexivity.
     Qed.
 
@@ -730,13 +686,12 @@ Module DerivedInstances.
       forall (g : W * B -> T C) (f : W * A -> G1 B),
         g ⋆7 map G1 B (T B) (ret T B) ∘ f = (fun '(w, a) => map G1 B (T C) (g ∘ pair w) (f (w, a))).
     Proof.
-      intros. unfold kc7.
-      ext [w a].
+      setup.
       unfold compose; cbn.
       compose near (f (w, a)) on left.
-      rewrite (fun_map_map).
-      rewrite (kdtm_binddt0 W T (fun A => A)).
-      rewrite (preincr_ret W).
+      rewrite fun_map_map.
+      rewrite (kdtm_binddt0 (G := fun A => A)).
+      rewrite preincr_ret.
       reflexivity.
     Qed.
 
@@ -754,7 +709,6 @@ End kc7_special_cases.
   Section composition_special_cases_top.
 
     Context
-      (G1 G2 : Type -> Type)
       `{Applicative G1}
       `{Applicative G2}
       {A B C : Type}.
@@ -770,8 +724,8 @@ End kc7_special_cases.
     Proof.
       intros.
       rewrite mapdt_to_binddt at 1.
-      rewrite (kdtm_binddt2 W T G1 G2 A B C).
-      rewrite (kc7_67).
+      rewrite kdtm_binddt2.
+      rewrite kc7_67.
       reflexivity.
     Qed.
 
@@ -784,9 +738,8 @@ End kc7_special_cases.
     Proof.
       intros.
       rewrite bindd_to_binddt at 1.
-      rewrite (kdtm_binddt2 W T G1 (fun A => A)).
-      rewrite (binddt_app_r T G1).
-      (* rewrite kc7_57 *)
+      rewrite (kdtm_binddt2 (G2 := fun A => A)).
+      rewrite binddt_app_r.
       reflexivity.
     Qed.
 
@@ -799,8 +752,8 @@ End kc7_special_cases.
     Proof.
       intros.
       rewrite mapd_to_binddt at 1.
-      rewrite (kdtm_binddt2 W T G1 (fun A => A) A B).
-      rewrite (binddt_app_r T G1).
+      rewrite (kdtm_binddt2 (G2 := fun A => A)).
+      rewrite binddt_app_r.
       rewrite kc7_47.
       reflexivity.
     Qed.
@@ -814,7 +767,7 @@ End kc7_special_cases.
     Proof.
       intros.
       rewrite bindt_to_binddt at 1.
-      rewrite (kdtm_binddt2 W T G1 G2 A B C).
+      rewrite kdtm_binddt2.
       rewrite kc7_37.
       reflexivity.
     Qed.
@@ -827,9 +780,9 @@ End kc7_special_cases.
           binddt W T T (G1 ∘ G2) A C (map G1 (T B) (G2 (T C)) (traverse T G2 B C  g) ∘ f).
     Proof.
       intros.
-      rewrite (traverse_to_binddt) at 1.
-      rewrite (kdtm_binddt2 W T G1 G2 A B C).
-      rewrite (kc7_27).
+      rewrite traverse_to_binddt at 1.
+      rewrite kdtm_binddt2.
+      rewrite kc7_27.
       reflexivity.
     Qed.
 
@@ -842,9 +795,9 @@ End kc7_special_cases.
     Proof.
       intros.
       rewrite bind_to_binddt at 1.
-      rewrite (kdtm_binddt2 W T G1 (fun A => A)).
+      rewrite (kdtm_binddt2 (G2 := fun A => A)).
       rewrite kc7_17.
-      rewrite (binddt_app_r T G1).
+      rewrite binddt_app_r.
       reflexivity.
     Qed.
 
@@ -857,9 +810,9 @@ End kc7_special_cases.
     Proof.
       intros.
       rewrite map_to_binddt at 1.
-      rewrite (kdtm_binddt2 W T G1 (fun A => A)).
+      rewrite (kdtm_binddt2 (G2 := fun A => A)).
       rewrite kc7_07.
-      rewrite (binddt_app_r T G1).
+      rewrite binddt_app_r.
       reflexivity.
     Qed.
 
@@ -873,14 +826,14 @@ End kc7_special_cases.
           binddt W T T (G1 ∘ G2) A C (fun '(w, a) => map G1 B (G2 (T C)) (fun b => g (w, b)) (f (w, a))).
     Proof.
       intros.
-      rewrite (mapdt_to_binddt).
-      rewrite (kdtm_binddt2 W T G1 G2 A B C).
-      rewrite (kc7_76 W T).
+      rewrite mapdt_to_binddt.
+      rewrite kdtm_binddt2.
+      rewrite kc7_76.
       unfold kc6.
       fequal. ext [w a].
       unfold compose, strength; cbn.
       compose near (f (w, a)) on left.
-      rewrite (fun_map_map).
+      rewrite fun_map_map.
       reflexivity.
     Qed.
 
@@ -894,8 +847,8 @@ End kc7_special_cases.
       intros.
       rewrite bindd_to_binddt.
       change (binddt W T T G2 B C g) with (map (fun A => A) (T B) (G2 (T C)) (binddt W T T G2 B C g)).
-      rewrite (kdtm_binddt2 W T (fun A => A) G2).
-      rewrite (binddt_app_l T G2).
+      rewrite (kdtm_binddt2 (G1 := fun A => A)).
+      rewrite binddt_app_l.
       reflexivity.
     Qed.
 
@@ -907,11 +860,11 @@ End kc7_special_cases.
           binddt W T T G2 A C (g ⋆4 f).
     Proof.
       intros.
-      rewrite (mapd_to_binddt) at 1.
+      rewrite mapd_to_binddt at 1.
       change (binddt W T T G2 B C g) with (map (fun A => A) (T B) (G2 (T C)) (binddt W T T G2 B C g)).
-      rewrite (kdtm_binddt2 W T (fun A => A) G2 A B C).
-      rewrite (kc7_74 W T).
-      rewrite (binddt_app_l T G2).
+      rewrite (kdtm_binddt2 (G1 := fun A => A)).
+      rewrite kc7_74.
+      rewrite binddt_app_l.
       reflexivity.
     Qed.
 
@@ -923,8 +876,8 @@ End kc7_special_cases.
           binddt W T T (G1 ∘ G2) A C (fun '(w, a) => map G1 (T B) (G2 (T C)) (binddt W T T G2 B C (g ⦿ w)) (f a)).
     Proof.
       intros.
-      rewrite (bindt_to_binddt).
-      rewrite (kdtm_binddt2 W T G1 G2).
+      rewrite bindt_to_binddt.
+      rewrite kdtm_binddt2.
       rewrite kc7_73.
       reflexivity.
     Qed.
@@ -937,9 +890,9 @@ End kc7_special_cases.
           binddt W T T (G1 ∘ G2) A C (fun '(w, a) => map G1 B (G2 (T C)) (fun b => g (w, b)) (f a)).
     Proof.
       intros.
-      rewrite (traverse_to_binddt).
-      rewrite (kdtm_binddt2 W T G1 G2 A B C).
-      rewrite (kc7_72 W T).
+      rewrite traverse_to_binddt.
+      rewrite kdtm_binddt2.
+      rewrite kc7_72.
       reflexivity.
     Qed.
 
@@ -951,11 +904,11 @@ End kc7_special_cases.
           binddt W T T G2 A C (fun '(w, a) => binddt W T T G2 B C (g ⦿ w) (f a)).
     Proof.
       intros.
-      rewrite (bind_to_binddt).
+      rewrite bind_to_binddt.
       change (binddt W T T G2 B C g) with (map (fun A => A) (T B) (G2 (T C)) (binddt W T T G2 B C g)).
-      rewrite (kdtm_binddt2 W T (fun A => A) G2 A B C).
-      rewrite (binddt_app_l T G2).
-      rewrite (kc7_71).
+      rewrite (kdtm_binddt2 (G1 := fun A => A)).
+      rewrite binddt_app_l.
+      rewrite kc7_71.
       reflexivity.
     Qed.
 
@@ -967,11 +920,11 @@ End kc7_special_cases.
           binddt W T T G2 A C (g ∘ map (W ×) A B f).
     Proof.
       intros.
-      rewrite (map_to_binddt).
+      rewrite map_to_binddt.
       change (binddt W T T G2 B C g) with (map (fun A => A) _ _ (binddt W T T G2 B C g)).
-      rewrite (kdtm_binddt2 W T (fun A => A) G2 A B C).
-      rewrite (binddt_app_l T G2).
-      rewrite (kc7_70 W T).
+      rewrite (kdtm_binddt2 (G1 := fun A => A)).
+      rewrite binddt_app_l.
+      rewrite kc7_70.
       reflexivity.
     Qed.
 
@@ -982,7 +935,6 @@ End kc7_special_cases.
   Section composition_special_cases_middle.
 
     Context
-      (G1 G2 : Type -> Type)
       `{Applicative G1}
       `{Applicative G2}
       {A B C : Type}.
@@ -997,9 +949,9 @@ End kc7_special_cases.
           mapdt W T (G1 ∘ G2) A C (g ⋆6 f).
     Proof.
       intros.
-      do 2 rewrite (mapdt_to_binddt) at 1.
-      rewrite (kdtm_binddt2 W T G1 G2).
-      rewrite (kc7_66 W T).
+      do 2 rewrite mapdt_to_binddt at 1.
+      rewrite (kdtm_binddt2).
+      rewrite (kc7_66).
       reflexivity.
     Qed.
 
@@ -1010,10 +962,10 @@ End kc7_special_cases.
         bindd W T T B C g ∘ bindd W T T A B f = bindd W T T A C (g ⋆5 f).
     Proof.
       intros.
-      do 2 rewrite (bindd_to_binddt).
+      do 2 rewrite bindd_to_binddt.
       change (binddt W T T ?X ?B ?C g) with (map (fun A => A) _ _ (binddt W T T X B C g)).
-      rewrite (kdtm_binddt2 W T (fun A => A) (fun A => A)).
-      rewrite (binddt_app_l T (fun A => A)).
+      rewrite (kdtm_binddt2 (G1 := fun A => A) (G2 := fun A => A)).
+      rewrite (binddt_app_l).
       reflexivity.
     Qed.
 
@@ -1023,9 +975,9 @@ End kc7_special_cases.
         map G1 (T B) (G2 (T C)) (bindt T T G2 B C g) ∘ bindt T T G1 A B f = bindt T T (G1 ∘ G2) A C (g ⋆3 f).
     Proof.
       intros.
-      do 2 rewrite (bindt_to_binddt).
-      rewrite (kdtm_binddt2 W T); auto.
-      rewrite (kc7_33).
+      do 2 rewrite bindt_to_binddt.
+      rewrite (kdtm_binddt2).
+      rewrite kc7_33.
       reflexivity.
     Qed.
 
@@ -1037,9 +989,9 @@ End kc7_special_cases.
           binddt W T T G1 A C (fun '(w, a) => map G1 B (T C) (g ∘ pair w) (f (w, a))).
     Proof.
       intros.
-      rewrite (bindd_to_binddt).
-      rewrite (binddt_mapdt G1 (fun A => A)).
-      rewrite (binddt_app_r T G1).
+      rewrite bindd_to_binddt.
+      rewrite (binddt_mapdt (G2 := fun A => A)).
+      rewrite (binddt_app_r).
       reflexivity.
     Qed.
 
@@ -1051,8 +1003,8 @@ End kc7_special_cases.
           binddt W T T G2 A C (fun '(w, a) => mapdt W T G2 B C (g ⦿ w) (f (w, a))).
     Proof.
       intros.
-      rewrite (mapdt_to_binddt).
-      rewrite (binddt_bindd G2).
+      rewrite mapdt_to_binddt.
+      rewrite (binddt_bindd).
       reflexivity.
     Qed.
 
@@ -1064,11 +1016,11 @@ End kc7_special_cases.
           binddt W T T G2 A C (bindt T T G2 B C g ∘ f).
     Proof.
       intros.
-      rewrite (bindt_to_binddt).
-      rewrite (binddt_bindd G2).
+      rewrite bindt_to_binddt.
+      rewrite (binddt_bindd).
       fequal; ext [w a].
-      rewrite (preincr_assoc).
-      rewrite (extract_preincr).
+      rewrite preincr_assoc.
+      rewrite extract_preincr.
       reflexivity.
     Qed.
 
@@ -1080,10 +1032,10 @@ End kc7_special_cases.
           binddt W T T G1 A C (fun '(w, a) => map G1 _ _ (bindd W T T B C (g ⦿ w)) (f a)).
     Proof.
       intros.
-      rewrite (bindd_to_binddt).
-      rewrite (bindt_to_binddt).
-      rewrite (kdtm_binddt2 W T G1 (fun A => A) A B C).
-      rewrite (binddt_app_r T G1).
+      rewrite bindd_to_binddt.
+      rewrite bindt_to_binddt.
+      rewrite (kdtm_binddt2 (G2 := fun A => A)).
+      rewrite (binddt_app_r).
       reflexivity.
     Qed.
 
@@ -1095,9 +1047,9 @@ End kc7_special_cases.
           binddt W T T (G1 ∘ G2) A C (fun '(w, a) => map G1 (T B) (G2 (T C)) (mapdt W T G2 B C (g ⦿ w)) (f a)).
     Proof.
       intros.
-      rewrite (mapdt_to_binddt).
-      rewrite (bindt_to_binddt).
-      rewrite (kdtm_binddt2 W T G1 G2 A B C).
+      rewrite mapdt_to_binddt.
+      rewrite bindt_to_binddt.
+      rewrite (kdtm_binddt2).
       reflexivity.
     Qed.
 
@@ -1110,7 +1062,7 @@ End kc7_special_cases.
     Proof.
       intros.
       rewrite bindt_to_binddt.
-      rewrite (binddt_mapdt G1 G2).
+      rewrite (binddt_mapdt).
       fequal. now ext [w a].
     Qed.
 
@@ -1120,7 +1072,6 @@ End kc7_special_cases.
   Section composition_special_cases_bottom.
 
     Context
-      (G1 G2 : Type -> Type)
       `{Applicative G1}
       `{Applicative G2}
       {A B C : Type}.
@@ -1134,8 +1085,8 @@ End kc7_special_cases.
         mapd W T B C g ∘ bindd W T T A B f =
           bindd W T T A C (fun '(w, a) => mapd W T B C (g ⦿ w) (f (w, a))).
     Proof.
-      intros. rewrite (mapd_to_bindd W T).
-      rewrite (bindd_bindd).
+      intros. rewrite (mapd_to_bindd).
+      rewrite bindd_bindd.
       reflexivity.
     Qed.
 
@@ -1146,11 +1097,11 @@ End kc7_special_cases.
         traverse T G2 B C g ∘ bindd W T T A B f =
           binddt W T T G2 A C (fun '(w, a) => traverse T G2 B C g (f (w, a))).
     Proof.
-      intros. rewrite (traverse_to_mapdt).
-      rewrite (mapdt_bindd G2).
+      intros. rewrite traverse_to_mapdt.
+      rewrite (mapdt_bindd).
       fequal; ext [w a].
-      rewrite (preincr_assoc W).
-      rewrite (extract_preincr W).
+      rewrite (preincr_assoc).
+      rewrite (extract_preincr).
       reflexivity.
     Qed.
 
@@ -1161,11 +1112,11 @@ End kc7_special_cases.
         bind T T B C g ∘ bindd W T T A B f =
           bindd W T T A C (bind T T B C g ∘ f).
     Proof.
-      intros. rewrite (bind_to_bindd W T).
-      rewrite (bindd_bindd).
+      intros. rewrite (bind_to_bindd).
+      rewrite bindd_bindd.
       fequal. unfold kc5. ext [w a].
-      rewrite (preincr_assoc W).
-      rewrite (extract_preincr W).
+      rewrite (preincr_assoc).
+      rewrite (extract_preincr).
       reflexivity.
     Qed.
 
@@ -1176,11 +1127,11 @@ End kc7_special_cases.
         map T B C g ∘ bindd W T T A B f =
           bindd W T T A C (map T B C g ∘ f).
     Proof.
-      intros. rewrite (map_to_bindd W T).
-      rewrite (bindd_bindd).
+      intros. rewrite (map_to_bindd).
+      rewrite bindd_bindd.
       fequal. unfold kc5. ext [w a].
-      rewrite (preincr_assoc W).
-      rewrite (extract_preincr W).
+      rewrite (preincr_assoc).
+      rewrite (extract_preincr).
       reflexivity.
     Qed.
 
@@ -1193,9 +1144,9 @@ End kc7_special_cases.
         bindd W T T B C g ∘ mapd W T A B f =
           bindd W T T A C (g ⋆4 f).
     Proof.
-      intros. rewrite (mapd_to_bindd W T).
-      rewrite (bindd_bindd).
-      rewrite (kc5_54 W T).
+      intros. rewrite (mapd_to_bindd).
+      rewrite bindd_bindd.
+      rewrite (kc5_54).
       reflexivity.
     Qed.
 
@@ -1209,8 +1160,8 @@ End kc7_special_cases.
         bindd W T T B C g ∘ bind T T A B f =
           bindd W T T A C (fun '(w, a) => bindd W T T B C (g ⦿ w) (f a)).
     Proof.
-      intros. rewrite (bind_to_bindd W T).
-      rewrite (bindd_bindd).
+      intros. rewrite (bind_to_bindd).
+      rewrite bindd_bindd.
       reflexivity.
     Qed.
 
@@ -1222,13 +1173,13 @@ End kc7_special_cases.
     (* composition_46 *)
     Lemma mapd_mapdt : forall (g : W * B -> C) (f : W * A -> G1 B),
         map G1 (T B) (T C) (mapd W T B C g) ∘ mapdt W T G1 A B f =
-          mapdt W T G1 A C (map G1 (W * B) C g ∘ strength G1 ∘ cobind (W ×) A (G1 B) f).
+          mapdt W T G1 A C (map G1 (W * B) C g ∘ strength ∘ cobind (W ×) A (G1 B) f).
     Proof.
       introv.
-      rewrite (mapd_to_mapdt).
-      rewrite (mapdt_mapdt G1 (fun A => A)).
-      do 2 rewrite (mapdt_to_binddt).
-      rewrite (binddt_app_r T G1).
+      rewrite mapd_to_mapdt.
+      rewrite (mapdt_mapdt (G2 := fun A => A)).
+      do 2 rewrite mapdt_to_binddt.
+      rewrite (binddt_app_r).
       reflexivity.
     Qed.
 
@@ -1249,14 +1200,14 @@ End kc7_special_cases.
         mapdt W T G2 B C g ∘ mapd W T A B f = mapdt W T G2 A C (g ⋆4 f).
     Proof.
       introv.
-      rewrite (mapd_to_mapdt).
-      pose (mapdt_mapdt (fun A => A) G2 (A := A) (B := B) (C := C) g f) as lemma.
+      rewrite mapd_to_mapdt.
+      pose (mapdt_mapdt g f) as lemma.
       change (map (fun A => A) ?A ?B ?f) with f in lemma.
       rewrite lemma; clear lemma.
-      rewrite (mapdt_to_binddt).
-      rewrite (binddt_app_l T G2).
-      rewrite (map_compose_id1 G2).
-      rewrite (kc6_64).
+      rewrite mapdt_to_binddt.
+      rewrite (binddt_app_l).
+      rewrite (map_compose_id1).
+      rewrite kc6_64.
       reflexivity.
     Qed.
 
@@ -1288,10 +1239,10 @@ End kc7_special_cases.
           bindt T T G1 A C (map G1 (T B) (T C) (bind T T B C g) ∘ f).
     Proof.
       introv.
-      rewrite (bind_to_bindt).
-      rewrite (bindt_bindt G1 (fun A => A)).
-      rewrite (bindt_to_binddt).
-      rewrite (binddt_app_r T G1).
+      rewrite bind_to_bindt.
+      rewrite (bindt_bindt (G2 := fun A => A)).
+      rewrite bindt_to_binddt.
+      rewrite (binddt_app_r).
       reflexivity.
     Qed.
 
@@ -1301,10 +1252,10 @@ End kc7_special_cases.
           bindt T T G1 A C (map G1 (T B) (T C) (map T B C g) ∘ f).
     Proof.
       intros.
-      rewrite (map_to_bindt).
-      rewrite (bindt_bindt G1 (fun A => A)).
-      rewrite (bindt_to_binddt).
-      rewrite (binddt_app_r T G1).
+      rewrite map_to_bindt.
+      rewrite (bindt_bindt (G2 := fun A => A)).
+      rewrite bindt_to_binddt.
+      rewrite (binddt_app_r).
       reflexivity.
     Qed.
 
@@ -1321,11 +1272,11 @@ End kc7_special_cases.
         bindt T T G2 B C g ∘ bind T T A B f = bindt T T G2 A C (bindt T T G2 B C g ∘ f).
     Proof.
       intros.
-      rewrite (bind_to_bindt).
+      rewrite bind_to_bindt.
       change (bindt T T ?X ?B ?C g) with (map (fun A => A) _ _ (bindt T T X B C g)).
-      rewrite (bindt_bindt (fun A => A) G2).
-      rewrite (bindt_to_binddt).
-      rewrite (binddt_app_l T G2).
+      rewrite (bindt_bindt (G1 := fun A => A)).
+      rewrite bindt_to_binddt.
+      rewrite (binddt_app_l).
       reflexivity.
     Qed.
 
@@ -1334,12 +1285,12 @@ End kc7_special_cases.
         bindt T T G2 B C g ∘ map T A B f = bindt T T G2 A C (g ∘ f).
     Proof.
       intros.
-      rewrite (map_to_bindt).
+      rewrite map_to_bindt.
       change (bindt T T ?X ?B ?C g) with (map (fun A => A) _ _ (bindt T T X B C g)).
-      rewrite (bindt_bindt (fun A => A) G2).
-      rewrite (bindt_to_binddt).
-      rewrite (binddt_app_l T G2).
-      rewrite (kc3_30 W T).
+      rewrite (bindt_bindt (G1 := fun A => A)).
+      rewrite bindt_to_binddt.
+      rewrite (binddt_app_l).
+      rewrite (kc3_30).
       reflexivity.
     Qed.
 
@@ -1349,14 +1300,14 @@ End kc7_special_cases.
     (* TODO mapd_traverse *)
 
     (* composition_22 *)
-    Lemma traverse_traverse : forall `(g : B -> G2 C) `(f : A -> G1 B),
+    Lemma traverse_traverse : forall {A B C : Type} (g : B -> G2 C) (f : A -> G1 B),
         map G1 _ _ (traverse T G2 B C g) ∘ traverse T G1 A B f =
           traverse T (G1 ∘ G2) _ _ (map G1 _ _ g ∘ f).
     Proof.
       intros.
       do 3 rewrite traverse_to_binddt.
-      rewrite (kdtm_binddt2 W T G1 G2).
-      rewrite (kc7_22 W T).
+      rewrite (kdtm_binddt2).
+      rewrite (kc7_22).
       reflexivity.
     Qed.
 
@@ -1384,11 +1335,11 @@ End kc7_special_cases.
         mapd W T B C g ∘ mapd W T A B f = mapd W T A C (g ∘ cobind (W ×) A B f).
     Proof.
       intros.
-      do 3 rewrite (mapd_to_binddt).
+      do 3 rewrite mapd_to_binddt.
       change (binddt W T T ?X ?B ?C ?g) with (map (fun A => A) _ _ (binddt W T T X B C g)) at 1.
-      rewrite (kdtm_binddt2 W T (fun A => A) (fun A => A)).
-      rewrite (binddt_app_l T (fun A => A)).
-      rewrite (kc7_44 W T).
+      rewrite (kdtm_binddt2 (G1 := fun A => A) (G2 := fun A => A)).
+      rewrite (binddt_app_l).
+      rewrite (kc7_44).
       reflexivity.
     Qed.
 
@@ -1419,11 +1370,11 @@ End kc7_special_cases.
         bind T T B C g ∘ bind T T A B f = bind T T A C (g ⋆1 f).
     Proof.
       intros.
-      do 3 rewrite (bind_to_binddt).
+      do 3 rewrite bind_to_binddt.
       change (binddt W T T ?X ?B ?C ?g) with (map (fun A => A) _ _ (binddt W T T X B C g)) at 1.
-      rewrite (kdtm_binddt2 W T (fun A => A) (fun A => A)).
-      rewrite (binddt_app_l T (fun A => A)).
-      rewrite (kc7_11).
+      rewrite (kdtm_binddt2 (G1 := fun A => A) (G2 := fun A => A)).
+      rewrite (binddt_app_l).
+      rewrite kc7_11.
       reflexivity.
     Qed.
 
@@ -1434,11 +1385,11 @@ End kc7_special_cases.
         map T B C g ∘ map T A B f = map T A C (g ∘ f).
     Proof.
       intros.
-      do 3 rewrite (map_to_binddt).
+      do 3 rewrite map_to_binddt.
       change (binddt W T T ?I B C ?g) with (map (fun A => A) _ _ (binddt W T T I B C g)).
-      rewrite (kdtm_binddt2 W T (fun A => A) (fun A => A)).
-      rewrite (binddt_app_l T (fun A => A)).
-      rewrite (kc7_00 W T).
+      rewrite (kdtm_binddt2 (G1 := fun A => A) (G2 := fun A => A)).
+      rewrite (binddt_app_l).
+      rewrite (kc7_00).
       reflexivity.
     Qed.
 
@@ -1449,43 +1400,43 @@ End kc7_special_cases.
   Lemma bindd_id : forall A : Type,
       bindd W T T A A (ret T A ∘ extract (prod W) A) = @id (T A).
   Proof.
-    apply (kdtm_binddt1 W T).
+    apply (kdtm_binddt1).
   Qed.
 
   Lemma bindt_id : forall A : Type,
       bindt T T (fun A : Type => A) A A (ret T A) = @id (T A).
   Proof.
-    apply (kdtm_binddt1 W T).
+    apply (kdtm_binddt1).
   Qed.
 
   Lemma mapdt_id : forall A : Type,
       mapdt W T (fun A => A) A A (extract (W ×) A) = @id (T A).
   Proof.
-    apply (kdtm_binddt1 W T).
+    apply (kdtm_binddt1).
   Qed.
 
   Lemma mapd_id : forall A : Type,
       mapd W T A A (extract (W ×) A) = @id (T A).
   Proof.
-    apply (kdtm_binddt1 W T).
+    apply (kdtm_binddt1).
   Qed.
 
   Lemma traverse_id : forall A : Type,
       traverse T (fun A => A) A A (@id A) = id.
   Proof.
-    apply (kdtm_binddt1 W T).
+    apply (kdtm_binddt1).
   Qed.
 
   Lemma bind_id : forall A : Type,
       bind T T A A (ret T A) = @id (T A).
   Proof.
-    apply (kdtm_binddt1 W T).
+    apply (kdtm_binddt1).
   Qed.
 
   Lemma map_id : forall A : Type,
       map T A A (@id A) = @id (T A).
   Proof.
-    apply (kdtm_binddt1 W T).
+    apply (kdtm_binddt1).
   Qed.
 
   (** ** Composition with <<ret>> *)
@@ -1495,8 +1446,8 @@ End kc7_special_cases.
       bindd W T T A B f ∘ ret T A = f ∘ ret (prod W) A.
   Proof.
     intros.
-    rewrite (bindd_to_binddt).
-    rewrite (kdtm_binddt0 W T (fun A => A)).
+    rewrite bindd_to_binddt.
+    rewrite (kdtm_binddt0 (G := fun A => A)).
     reflexivity.
   Qed.
 
@@ -1505,8 +1456,8 @@ End kc7_special_cases.
       bindt T T G A B f ∘ ret T A = f.
   Proof.
     intros.
-    rewrite (bindt_to_binddt).
-    rewrite (kdtm_binddt0 W T G).
+    rewrite bindt_to_binddt.
+    rewrite (kdtm_binddt0).
     reflexivity.
   Qed.
 
@@ -1515,8 +1466,8 @@ End kc7_special_cases.
       bind T T A B f ∘ ret T A = f.
   Proof.
     intros.
-    rewrite (bind_to_binddt).
-    rewrite (kdtm_binddt0 W T (fun A => A)).
+    rewrite bind_to_binddt.
+    rewrite (kdtm_binddt0 (G := fun A => A)).
     reflexivity.
   Qed.
 
@@ -1525,19 +1476,15 @@ End kc7_special_cases.
   Section applicative_morphisms.
 
     Context
-      (G1 G2 : Type -> Type)
-      `{Map G1} `{Pure G1} `{Mult G1}
-      `{Map G2} `{Pure G2} `{Mult G2}
-      (ϕ : forall A : Type, G1 A -> G2 A)
-      `{Hmorph : ! ApplicativeMorphism G1 G2 ϕ}.
+      `{Hmorph : ApplicativeMorphism G1 G2 ϕ}.
 
     Lemma bindt_morph:
       forall (A B : Type) (f : A -> G1 (T B)),
         ϕ (T B) ∘ bindt T T G1 A B f = bindt T T G2 A B (ϕ (T B) ∘ f).
     Proof.
       intros.
-      rewrite (bindt_to_binddt).
-      rewrite (kdtm_morph W T G1 G2).
+      rewrite bindt_to_binddt.
+      rewrite (kdtm_morph G1 G2).
       reflexivity.
     Qed.
 
@@ -1546,13 +1493,14 @@ End kc7_special_cases.
         mapdt W T G2 A B (ϕ B ∘ f) = ϕ (T B) ∘ mapdt W T G1 A B f.
     Proof.
       intros.
-      rewrite (mapdt_to_binddt W T (G := G1)) at 1.
-      rewrite (kdtm_morph W T G1 G2).
+      do 2 rewrite (mapdt_to_binddt).
+      rewrite (kdtm_morph G1 G2).
       reassociate <-.
-      rewrite (mapdt_to_binddt W T).
+      { (* todo cleanup *)
       fequal. inversion Hmorph. ext a.
       unfold compose. rewrite appmor_natural.
       reflexivity.
+      }
     Qed.
 
     Lemma traverse_morph:
@@ -1560,13 +1508,15 @@ End kc7_special_cases.
         ϕ (T B) ∘ traverse T G1 A B f = traverse T G2 A B (ϕ B ∘ f).
     Proof.
       intros.
-      rewrite (traverse_to_bindt).
-      rewrite (bindt_morph).
+      rewrite traverse_to_bindt.
+      rewrite bindt_morph.
       reassociate <-.
-      rewrite (traverse_to_bindt W T).
+      rewrite traverse_to_bindt.
+      {
       fequal. inversion Hmorph. ext a.
       unfold compose. rewrite appmor_natural.
       reflexivity.
+      }
     Qed.
 
   End applicative_morphisms.
@@ -1583,13 +1533,13 @@ End kc7_special_cases.
     {| ktm_bindt0 := bindt_ret;
       ktm_bindt1 := bindt_id;
       ktm_bindt2 := @bindt_bindt;
-      ktm_morph := bindt_morph;
+      ktm_morph := @bindt_morph;
     |}.
 
   #[export] Instance KDT_KDTM: DecoratedTraversableFunctor W T :=
     {| kdtfun_mapdt1 := mapdt_id;
       kdtfun_mapdt2 := @mapdt_mapdt;
-      kdtfun_morph := mapdt_morph;
+      kdtfun_morph := @mapdt_morph;
     |}.
 
   #[export] Instance KD_KDTM: DecoratedFunctor W T :=
@@ -1600,7 +1550,7 @@ End kc7_special_cases.
   #[export] Instance KT_KDTM: TraversableFunctor T :=
     {| trf_traverse_id := traverse_id;
       trf_traverse_traverse := @traverse_traverse;
-      trf_traverse_morphism := traverse_morph;
+      trf_traverse_morphism := @traverse_morph;
     |}.
 
   #[export] Instance KM_KDTM : Monad T :=
