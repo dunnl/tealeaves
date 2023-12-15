@@ -6,6 +6,8 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables W M N ϕ.
 
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+
 (** * Inductive definition of the constant functor *)
 (******************************************************************************)
 Inductive Const V (tag : Type) : Type :=
@@ -84,14 +86,15 @@ Section const_ops.
 
 End const_ops.
 
-#[global] Instance ApplicativeMorphism_Monoid_Morphism `(f : M1 -> M2) `{Monoid_Morphism M1 M2 f} :
+#[global] Instance ApplicativeMorphism_Monoid_Morphism
+  `(f : M1 -> M2) `{Monoid M1} `{Monoid M2} `{! Monoid_Morphism M1 M2 f} :
   ApplicativeMorphism (Const M1) (Const M2) (@mapConst M1 M2 f).
 Proof.
   match goal with H : Monoid_Morphism _ _ f |- _ => inversion H end.
   constructor; try typeclasses eauto.
   - introv. destruct x. reflexivity.
-  - intros. cbn. rewrite (monmor_unit). reflexivity.
-  - intros. destruct x, y. cbn. rewrite (monmor_op). reflexivity.
+  - intros. cbn. rewrite monmor_unit. reflexivity.
+  - intros. destruct x, y. cbn. rewrite monmor_op. reflexivity.
 Qed.
 
 (** * Computational definition of the constant functor *)
@@ -143,7 +146,8 @@ Section constant_functor.
   End with_monoid.
 
   #[global] Instance ApplicativeMorphism_monoid_morphism
-    `{hom : Monoid_Morphism M N ϕ } :
+    `{Monoid M} `{Monoid N}
+    `{hom: ! Monoid_Morphism M N ϕ } :
     ApplicativeMorphism (const M) (const N) (const ϕ).
   Proof.
     inversion hom.

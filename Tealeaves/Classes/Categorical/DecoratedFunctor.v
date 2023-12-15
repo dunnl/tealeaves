@@ -10,12 +10,14 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables W T F E A.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
 
 (** * The [shift] operation *)
 (* uncurry (incr W) = join (W ×) *)
 (******************************************************************************)
 Definition shift (F : Type -> Type) `{Map F} `{Monoid_op W} {A} :
-  W * F (W * A) -> F (W * A) := map F (uncurry (incr W)) ∘ strength F.
+  W * F (W * A) -> F (W * A) := map F (uncurry incr) ∘ strength.
 
 (** ** Basic properties of <<shift>> *)
 (******************************************************************************)
@@ -34,7 +36,7 @@ Section shift_functor_lemmas.
   Proof.
     intros ? x. unfold shift. unfold_ops @Join_writer.
     unfold compose; cbn. compose near x on left.
-    rewrite (fun_map_map).
+    rewrite fun_map_map.
     reflexivity.
   Qed.
 
@@ -43,7 +45,7 @@ Section shift_functor_lemmas.
   Lemma shift_map1 {A B} (t : F (W * A)) (w : W) (f : A -> B) :
     shift F (w, map (F ∘ prod W) f t) = map (F ∘ prod W) f (shift F (w, t)).
   Proof.
-    unfold_ops @Map_compose. rewrite (shift_spec).
+    unfold_ops @Map_compose. rewrite shift_spec.
     unfold compose; rewrite shift_spec.
     compose near t. rewrite 2(fun_map_map).
     fequal. now ext [w' a].
@@ -73,7 +75,7 @@ Section shift_functor_lemmas.
       map F (map_fst (fun m : W => w ● m)) ∘ shift F.
   Proof.
     intros. ext [w' a]. unfold compose. cbn. rewrite 2(shift_spec).
-    compose near a on right. rewrite (fun_map_map).
+    compose near a on right. rewrite fun_map_map.
     fequal. ext [w'' a']; cbn. now rewrite monoid_assoc.
   Qed.
 
@@ -87,7 +89,7 @@ Section shift_functor_lemmas.
     unfold shift. reassociate <- on left.
     ext [w t]. unfold compose; cbn.
     do 2 compose near t on left.
-    do 2 rewrite (fun_map_map).
+    do 2 rewrite fun_map_map.
     fequal. now ext [w' a].
   Qed.
 
@@ -96,7 +98,7 @@ Section shift_functor_lemmas.
   Proof.
     intros. rewrite shift_spec.
     cut (map_fst (Y := A) (fun w => Ƶ ● w) = id).
-    intros rw; rewrite rw. now rewrite (fun_map_id).
+    intros rw; rewrite rw. now rewrite fun_map_id.
     ext [w a]. cbn. now simpl_monoid.
   Qed.
 

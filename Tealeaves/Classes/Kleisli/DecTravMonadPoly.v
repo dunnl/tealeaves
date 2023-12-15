@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Monoid
   Classes.Categorical.Applicative
-  Classes.Categorical.Comonad
+  (* Classes.Categorical.Comonad *)
   Functors.Writer
   Functors.List
   Functors.ListHistory.

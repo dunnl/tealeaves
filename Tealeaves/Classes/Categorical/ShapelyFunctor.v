@@ -11,6 +11,9 @@ Import List.ListNotations.
 
 #[local] Generalizable Variables G F A B.
 
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+
 Definition shapeliness (F : Type -> Type)
   `{Map F} `{Tolist F} := forall A (t1 t2 : F A),
     shape F t1 = shape F t2 /\ tolist _ t1 = tolist _ t2 -> t1 = t2.

@@ -33,13 +33,13 @@ Section ParameterizedComonad_typeclass.
       pcom_extract_cojoin :
         `((pextract W A _) ∘ pcojoin W A A B X = @id (W A B X));
       pcom_map_extract_cojoin :
-        `(map (W A B) (pextract W B X) ∘ pcojoin W A B B X = @id (W A B X));
+      `(map (F := W A B) (pextract W B X) ∘ pcojoin W A B B X = @id (W A B X));
       pcom_cojoin_cojoin :
         `(pcojoin W A B C (W C D X) ∘ pcojoin W A C D X =
-         map (W A B) (pcojoin W B C D X) ∘ pcojoin W A B D X);
+         map (F := W A B) (pcojoin W B C D X) ∘ pcojoin W A B D X);
     }.
 
 End ParameterizedComonad_typeclass.
 
-Arguments pcojoin _%function_scope {PCojoin} {A}%type_scope.
-Arguments pextract _%function_scope {PExtract} {A}%type_scope.
+#[global] Arguments pcojoin _%function_scope {PCojoin} {A}%type_scope.
+#[global] Arguments pextract _%function_scope {PExtract} {A}%type_scope.

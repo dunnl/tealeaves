@@ -62,21 +62,22 @@ Section with_E.
     (F : Type -> Type).
 
   Theorem strength_extract `{Functor F} {A : Type} :
-    map F (extract (E ×) A) ∘ σ F = extract (E ×) (F A).
+    map extract ∘ σ = extract (W := (E ×)) (A := F A).
   Proof.
-    intros. unfold strength, compose. ext [w a]. cbn.
-    compose_near a. now rewrite (fun_map_map), (fun_map_id).
+    intros. unfold strength, compose. ext [w a].
+    reflexivity.
   Qed.
 
   Theorem strength_cojoin `{Functor F} {A : Type} :
-    `(map F (cojoin (E ×) (A := A)) ∘ σ F = σ F ∘ map (E ×) (σ F) ∘ cojoin (E ×)).
+    `(map (F := F) (cojoin (W := (E ×)) (A := A)) ∘ σ =
+        σ ∘ map (F := (E ×)) σ ∘ cojoin (W := (E ×))).
   Proof.
     intros. unfold strength, compose. ext [w a]. cbn.
     compose_near a. now rewrite 2(fun_map_map).
   Qed.
 
   Theorem product_map_commute {E1 E2 A B : Type} (g : E1 -> E2) (f : A -> B) :
-    map (E2 ×) f ∘ map_fst g = map_fst g ∘ map (E1 ×) f.
+    map (F := (E2 ×)) f ∘ map_fst g = map_fst g ∘ map (F := (E1 ×)) f.
   Proof.
     now ext [w a].
   Qed.
@@ -99,7 +100,7 @@ Section Monad_strength_laws.
     (A B : Type).
 
   Lemma strength_ret :
-    σ T ∘ map (A ×) (ret T B) = ret T (A * B).
+    σ ∘ map (F := (A ×)) ret = ret (T := T) (A := A * B).
   Proof.
     intros. ext [a b]. cbn.
     unfold compose; cbn.
@@ -108,16 +109,20 @@ Section Monad_strength_laws.
   Qed.
 
   Lemma strength_join :
-      σ T ∘ map (A ×) (μ T (A := B)) =
-      μ T (A := A * B) ∘ map T (σ T) ∘ σ T.
+      σ ∘ map (F := (A ×)) (μ T (A := B)) =
+      μ T (A := A * B) ∘ map (F := T) (strength (F := T)) ∘ strength (F := T).
   Proof.
-    intros. ext [a t]. unfold compose; cbn.
-    change_left (σ T (a, μ T t)).
-    unfold strength, compose.
-    compose near t on right.
-    rewrite (fun_map_map).
-    unfold compose. change_right (μ T (map (T ∘ T) (pair a) t)).
-    compose near t on right. now rewrite <- (natural (F := T ∘ T)).
+    intros. ext [a t].
+    unfold compose at 1.
+    change_left (σ (a, μ T t)).
+    unfold strength, compose at 1 4.
+    compose near t.
+    unfold_compose_in_compose.
+    rewrite (natural (A := B) (B := A * B) (ϕ := @join T _)).
+    unfold compose; cbn.
+    compose near t.
+    rewrite (fun_map_map (F := T)).
+    reflexivity.
   Qed.
 
   Context
@@ -125,16 +130,24 @@ Section Monad_strength_laws.
     `{RightModule F T}.
 
   Lemma strength_right_action :
-      σ F ∘ map (A ×) (right_action F) =
-      right_action F (A := A * B) ∘ map F (σ T) ∘ σ F.
+      σ ∘ map (F := (A ×)) (right_action F) =
+      right_action F (A := A * B) ∘ map σ ∘ σ.
   Proof.
-    intros. ext [a t]. change_left (σ F (a, right_action F t)).
+    intros. ext [a t]. change_left (σ (a, right_action F t)).
     unfold strength, compose in *.
-    compose near t on right.
+    unfold_ops @Map_I.
     inversion H8.
+    compose near t on right.
+    unfold_ops @Map_compose.
     rewrite (fun_map_map (F := F)).
-    unfold compose. change_right (right_action F (map (F ∘ T) (pair a) t)).
-    compose near t on right. now rewrite <- (natural (F := F ∘ T)).
+    unfold compose. cbn.
+    compose near t on left.
+    compose near t on right.
+    replace (fun '(a1, t0) => (a1, t0)) with (@id (A * B)).
+    rewrite (fun_map_id).
+    rewrite (natural (F := F ∘ T)).
+    reflexivity.
+    now ext [a' b'].
   Qed.
 
 End Monad_strength_laws.

@@ -9,12 +9,6 @@ Import Strength.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
 
-(* TODO Cleanup where this gets used *)
-Lemma incr_spec `{Monoid W} : forall A, uncurry (incr (A := A) W) = join (W ×).
-Proof.
-  intros. ext [w1 [w2 a]]. reflexivity.
-Qed.
-
 (** * A decorated functor is precisely a right comodule of <<prod E>> *)
 (******************************************************************************)
 Definition RightComodule_DecoratedFunctor

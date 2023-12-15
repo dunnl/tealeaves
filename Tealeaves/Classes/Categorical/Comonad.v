@@ -8,47 +8,31 @@ Import Functor.Notations.
 
 #[local] Generalizable Variables W A B C D.
 
-#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
-
 (** * Comonads *)
 (******************************************************************************)
-Section comonad.
+Class Cojoin (W : Type -> Type) :=
+  cojoin : W ⇒ W ∘ W.
 
-  Context
-    (W : Type -> Type).
+#[global] Arguments cojoin {W}%function_scope {Cojoin} {A}%type_scope.
 
-  Class Cojoin :=
-    cojoin : W ⇒ W ∘ W.
-
-  Context
-    `{Map W}
-    `{Cojoin}
-    `{Extract W}.
-
-  Class Comonad :=
-    { com_functor :> Functor W;
-      com_extract_natural :> Natural (extract W);
-      com_cojoin_natural :> Natural (cojoin);
-      com_extract_cojoin :
-      `(extract W (W A) ∘ cojoin A = @id (W A));
-      com_map_extr_cojoin :
-      `(map W (W A) A (extract W A) ∘ cojoin A = @id (W A));
-      com_cojoin_cojoin :
-      `(cojoin (W A) ∘ cojoin A = map W (W A) (W (W A)) (cojoin A) ∘ cojoin A);
-    }.
-
-End comonad.
-
-Arguments cojoin _%function_scope {Cojoin} {A}%type_scope.
-(*
-Arguments extract _%function_scope {Extract} {A}%type_scope.
-*)
+Class Comonad (W : Type -> Type)
+  `{Map W} `{Cojoin W} `{Extract W} :=
+  { com_functor :> Functor W;
+    com_extract_natural :> Natural (@extract W _);
+    com_cojoin_natural :> Natural (@cojoin W _);
+    com_extract_cojoin :
+    `(extract (A := W A) ∘ cojoin (A := A) = @id (W A));
+    com_map_extr_cojoin :
+    `(map (F := W) (extract (A := A)) ∘ cojoin (A := A) = @id (W A));
+    com_cojoin_cojoin :
+    `(cojoin (A := W A) ∘ cojoin (A := A) =
+        map (F := W) (cojoin (A := A)) ∘ cojoin (A := A));
+  }.
 
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
-  Notation "'coμ'" := (cojoin) : tealeaves_scope.
-  (*Notation "'coη'" := (extract) : tealeaves_scope.*)
+  Notation "'coμ'" := cojoin : tealeaves_scope.
 End Notations.
 
 (** * Comonad to Kleisli comonad *)
@@ -60,35 +44,27 @@ Module ToKleisli.
 
   #[local] Generalizable All Variables.
 
-  Section operation.
-
-    Context
-      (W : Type -> Type)
-      `{Map W} `{Cojoin W}.
-
-    #[export] Instance Cobind_Cojoin : Cobind W :=
-      fun {A B} (f : W A -> B) => map W (W A) B f ∘ cojoin W.
-
-  End operation.
+  #[export] Instance Cobind_Cojoin (W : Type -> Type)
+    `{Map W} `{Cojoin W} : Cobind W :=
+    fun {A B} (f : W A -> B) => map (F := W) f ∘ cojoin.
 
   Section with_monad.
 
     Context
-      (W : Type -> Type)
       `{Categorical.Comonad.Comonad W}.
 
     #[local] Arguments cobind W%function_scope {Cobind} (A B)%type_scope _%function_scope _.
 
-    (** *** Identity law *)
+    (** ** Identity law *)
     (******************************************************************************)
     Lemma kcom_bind_id :
-      `(cobind W A A (extract W A) = @id (W A)).
+      `(@cobind W _ A A (@extract W _ A) = @id (W A)).
     Proof.
       intros. unfold_ops @Cobind_Cojoin.
-      now rewrite (com_map_extr_cojoin W).
+      now rewrite com_map_extr_cojoin.
     Qed.
 
-    (** *** Composition law *)
+    (** ** Composition law *)
     (******************************************************************************)
     Lemma kcom_bind_bind : forall (A B C : Type) (g : W B -> C) (f : W A -> B),
         cobind W B C g ∘ cobind W A B f = cobind W A C (g ⋆4 f).
@@ -97,28 +73,28 @@ Module ToKleisli.
       unfold kc4.
       unfold_ops @Cobind_Cojoin.
       reassociate <- on left.
-      reassociate -> near (map W (W A) B f).
+      reassociate -> near (map f).
       rewrite <- (natural (ϕ := @cojoin W _)).
       unfold_ops @Map_compose.
       reassociate -> on left.
       reassociate -> on left.
-      rewrite (com_cojoin_cojoin W).
+      rewrite (com_cojoin_cojoin (W := W)).
       do 2 reassociate <- on left.
       unfold_compose_in_compose.
-      do 2 rewrite (fun_map_map).
+      do 2 rewrite fun_map_map.
       reflexivity.
     Qed.
 
-    (** *** Unit law *)
+    (** ** Unit law *)
     (******************************************************************************)
     Lemma kcom_bind_comp_ret : forall (A B : Type) (f : W A -> B),
-        extract W B ∘ cobind W A B f = f.
+        extract ∘ cobind W A B f = f.
     Proof.
       intros. unfold transparent tcs.
       reassociate <- on left.
-      rewrite <- (natural (ϕ := extract W)).
+      rewrite <- (natural (ϕ := @extract W _)).
       reassociate -> on left.
-      rewrite (com_extract_cojoin W).
+      rewrite com_extract_cojoin.
       reflexivity.
     Qed.
 

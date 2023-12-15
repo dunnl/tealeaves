@@ -10,6 +10,10 @@ Import Subset.Notations.
 Import Applicative.Notations.
 
 #[local] Generalizable Variables M A B G ϕ.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+#[local] Arguments pure F%function_scope {Pure} {A}%type_scope _.
+#[local] Arguments mult F%function_scope {Mult} {A B}%type_scope _.
 #[local] Arguments bindt {U} (T)%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
 
 (** * Automation: <<simpl_list>> *)
@@ -200,7 +204,7 @@ Fixpoint traverse_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Ty
 #[export] Instance Traverse_list : Traverse list := @traverse_list.
 
 Lemma list_bind_compat : forall (A B : Type),
-    bind list = TraversableMonad.DerivedOperations.Bind_Bindt list A B.
+    bind = @TraversableMonad.DerivedOperations.Bind_Bindt list _ A B.
 Proof.
   intros. ext f l. induction l as [|a rest IHrest].
   - reflexivity.
@@ -208,19 +212,19 @@ Proof.
 Qed.
 
 Lemma list_traverse_compat : forall (G : Type -> Type) `{Mult G} `{Map G} `{Pure G} `{! Applicative G} (A B : Type) (f : A -> G B),
-    traverse list G f = TraversableMonad.DerivedOperations.Traverse_Bindt list G _ _ _ A B f.
+    traverse f = @TraversableMonad.DerivedOperations.Traverse_Bindt list _ _ G _ _ _ A B f.
 Proof.
   intros. ext l. induction l as [|a rest IHrest].
   - reflexivity.
   - cbn. rewrite IHrest.
     unfold compose at 1.
-    rewrite (pure_ap_map).
-    rewrite (map_to_ap).
+    rewrite pure_ap_map.
+    rewrite map_to_ap.
     reflexivity.
 Qed.
 
 Lemma list_map_compat : forall (A B : Type) (f : A -> B),
-    map list f = TraversableMonad.DerivedOperations.Map_Bindt list A B f.
+    map list f = @TraversableMonad.DerivedOperations.Map_Bindt list _ _ A B f.
 Proof.
   intros. ext l. induction l as [|a rest IHrest].
   - reflexivity.
@@ -247,8 +251,8 @@ Section bindt_rewriting_lemmas.
   Proof.
     intros.
     cbn.
-    rewrite (ap3).
-    rewrite <- (ap4).
+    rewrite ap3.
+    rewrite <- ap4.
     rewrite ap2.
     rewrite ap2.
     rewrite <- ap1.
@@ -277,7 +281,7 @@ Section bindt_rewriting_lemmas.
     - cbn.
       rewrite IHl1.
       repeat rewrite <- ap4.
-      repeat rewrite (ap2).
+      repeat rewrite ap2.
       rewrite ap3.
       repeat rewrite <- ap4.
       repeat rewrite ap2.
@@ -295,7 +299,6 @@ Section bindt_laws.
   Context
     (G : Type -> Type)
     `{Applicative G}
-    (G1 G2 : Type -> Type)
     `{Applicative G1}
     `{Applicative G2}
     (A B C : Type).
@@ -317,19 +320,19 @@ Section bindt_laws.
   Lemma list_bindt2 :
     forall (g : B -> G2 (list C)) (f : A -> G1 (list B)),
       map G1 (bindt list G2 B C g) ∘ bindt list G1 A B f =
-        bindt list (G1 ∘ G2) A C (kc3 list G1 G2 g f).
+        bindt list (G1 ∘ G2) A C (kc3 g f).
   Proof.
     intros. ext l. induction l.
     - unfold compose; cbn.
-      rewrite (app_pure_natural G1).
-      rewrite (bindt_list_nil).
+      rewrite (app_pure_natural).
+      rewrite bindt_list_nil.
       reflexivity.
     - unfold compose at 1.
-      rewrite (bindt_list_cons).
+      rewrite bindt_list_cons.
       rewrite map_to_ap.
       do 3 rewrite <- ap4.
-      do 4 rewrite (ap2).
-      rewrite (bindt_list_cons).
+      do 4 rewrite ap2.
+      rewrite bindt_list_cons.
       rewrite <- IHl.
       unfold compose at 7.
       do 2 rewrite (ap_compose1 G2 G1).
@@ -339,7 +342,7 @@ Section bindt_laws.
       rewrite <- ap4.
       rewrite <- ap4.
       rewrite <- ap4.
-      repeat rewrite (ap2).
+      repeat rewrite ap2.
       unfold kc3.
       unfold compose at 8.
       rewrite map_to_ap.
@@ -355,28 +358,29 @@ Section bindt_laws.
       reflexivity.
   Qed.
 
-  Lemma list_morph : forall (ϕ : forall A : Type, G1 A -> G2 A)
-                       (morph : ApplicativeMorphism G1 G2 ϕ),
-      forall (A B : Type) (f : A -> G1 (list B)),
-        ϕ (list B) ∘ bindt list G1 A B f = bindt list G2 A B (ϕ (list B) ∘ f).
-  Proof.
-    intros. unfold compose at 1 2. ext l.
-    inversion morph.
-    induction l.
-    - cbn. rewrite appmor_pure. reflexivity.
-    - cbn. do 2 rewrite ap_morphism_1.
-      rewrite appmor_pure.
-      rewrite IHl.
-      reflexivity.
-  Qed.
-
 End bindt_laws.
+
+Lemma list_morph :
+  forall `(morph : ApplicativeMorphism G1 G2 ϕ),
+  forall (A B : Type) (f : A -> G1 (list B)),
+    ϕ (list B) ∘ bindt list G1 A B f = bindt list G2 A B (ϕ (list B) ∘ f).
+Proof.
+  intros. unfold compose at 1 2. ext l.
+  induction l.
+  - cbn. rewrite appmor_pure. reflexivity.
+  - cbn.
+    rewrite (ap_morphism_1 (G := G1)).
+    rewrite (ap_morphism_1 (G := G1)).
+    rewrite appmor_pure.
+    rewrite IHl.
+    reflexivity.
+Qed.
 
 #[export] Instance TM_list : TraversableMonad list :=
   {| ktm_bindt0 := list_bindt0;
     ktm_bindt1 := list_bindt1;
-    ktm_bindt2 := list_bindt2;
-    ktm_morph := list_morph;
+    ktm_bindt2 := @list_bindt2;
+    ktm_morph := @list_morph;
   |}.
 
 #[export] Hint Rewrite bindt_list_nil bindt_list_cons bindt_list_one bindt_list_app :
@@ -418,7 +422,7 @@ End bindt_laws.
 (** *** [bind] is a monoid homomorphism *)
 (******************************************************************************)
 #[export] Instance Monmor_bind (A B : Type) (f : A -> list B) :
-  Monoid_Morphism (list A) (list B) (bind list f).
+  Monoid_Morphism (list A) (list B) (bind f).
 Proof.
   constructor; try typeclasses eauto.
   - reflexivity.
@@ -436,7 +440,7 @@ Lemma fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
 Proof.
   intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
   induction l as [| ? ? IHl].
-  - cbn. apply (monmor_unit).
+  - cbn. apply monmor_unit.
   - cbn. now rewrite (monmor_op (ϕ := ϕ)), IHl.
 Qed.
 
@@ -488,7 +492,7 @@ Section foldMap_list_rw.
 
   Lemma foldMap_list_one (a : A) : foldMap f [ a ] = f a.
   Proof.
-    cbv. apply (monoid_id_l).
+    cbv. apply monoid_id_l.
   Qed.
 
   Lemma foldMap_list_app : forall (l1 l2 : list A),
@@ -585,14 +589,14 @@ Theorem shape_map `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
     shape F (map F f t) = shape F t.
 Proof.
   intros. compose near t on left.
-  unfold shape. now rewrite (fun_map_map).
+  unfold shape. now rewrite fun_map_map.
 Qed.
 
 Theorem shape_shape `{Functor F} : forall A (t : F A),
     shape F (shape F t) = shape F t.
 Proof.
   intros.  compose near t on left.
-  unfold shape. now rewrite (fun_map_map).
+  unfold shape. now rewrite fun_map_map.
 Qed.
 
 Lemma shape_map_eq `{Functor F} : forall A1 A2 B (f : A1 -> B) (g : A2 -> B) t u,
@@ -715,10 +719,10 @@ Section list_shape_lemmas.
     intros A. induction l1 as [| ? ? IHl1 ];
                 induction l2 as [| ? ? IHl2 ].
     - reflexivity.
-    - introv shape_eq heq. apply (inv_app_eq_ll) with (r1 := r1) (r2 := r2).
+    - introv shape_eq heq. apply inv_app_eq_ll with (r1 := r1) (r2 := r2).
       + rewrite <- shape_eq_app_r. now rewrite heq. auto.
       + assumption.
-    - introv shape_eq heq. apply (inv_app_eq_ll) with (r1 := r1) (r2 := r2).
+    - introv shape_eq heq. apply inv_app_eq_ll with (r1 := r1) (r2 := r2).
       + rewrite <- shape_eq_app_r. now rewrite heq. auto.
       + assumption.
     - introv shape_eq heq.

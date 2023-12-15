@@ -11,7 +11,6 @@ Import Applicative.Notations.
 Import Misc.Subset.Notations.
 
 #[local] Generalizable Variables A B.
-#[local] Arguments bind (U T)%function_scope {Bind} (A B)%type_scope _%function_scope _.
 
 (** * The <<subset>> monad *)
 (******************************************************************************)
@@ -23,24 +22,24 @@ Import Misc.Subset.Notations.
 #[export] Instance Bind_subset : Bind subset subset := fun A B f s_a =>
 (fun b => exists (a : A), s_a a /\ f a b).
 
-#[local] Notation "{{ x }}" := (ret subset _ x).
+#[local] Notation "{{ x }}" := (@ret subset _ _ x).
 
 (** ** Rewriting laws *)
 (******************************************************************************)
 Lemma bind_set_nil `{f : A -> subset B} :
-  bind subset subset A B f ∅ = ∅.
+  bind f ∅ = ∅.
 Proof.
   solve_basic_subset.
 Qed.
 
 Lemma bind_set_one `{f : A -> subset B} {a : A} :
-  bind subset subset A B f {{ a }} = f a.
+  bind f {{ a }} = f a.
 Proof.
   solve_basic_subset.
 Qed.
 
 Lemma bind_set_add `{f : A -> subset B} {x y} :
-  bind subset subset A B f (x ∪ y) = bind subset subset A B f x ∪ bind subset subset A B f y.
+  bind f (x ∪ y) = bind f x ∪ bind f y.
 Proof.
   solve_basic_subset.
 Qed.
@@ -48,16 +47,16 @@ Qed.
 #[export] Instance Map_subset : Map subset := Map_Bind subset.
 
 Definition map_set_nil `{f : A -> B} :
-  map subset f ∅ = ∅ := ltac:(solve_basic_subset).
+  map f ∅ = ∅ := ltac:(solve_basic_subset).
 
 Lemma map_set_one `{f : A -> B} {a : A} :
-  map subset f {{ a }} = {{ f a }}.
+  map f {{ a }} = {{ f a }}.
 Proof.
   solve_basic_subset.
 Qed.
 
 Definition map_set_add `{f : A -> B} {x y} :
-  map subset f (x ∪ y) = map subset f x ∪ map subset f y
+  map f (x ∪ y) = map f x ∪ map f y
   := ltac:(solve_basic_subset).
 
 #[export] Hint Rewrite
@@ -66,7 +65,7 @@ Definition map_set_add `{f : A -> B} {x y} :
   : tea_set.
 
 Definition set_in_ret : forall A (a b : A),
-    (ret subset A a) b = (a = b) := ltac:(reflexivity).
+    (ret a) b = (a = b) := ltac:(reflexivity).
 
 #[export] Hint Rewrite @set_in_ret : tea_set.
 
@@ -74,20 +73,20 @@ Definition set_in_ret : forall A (a b : A),
 (******************************************************************************)
 
 Lemma set_bind0 : forall (A B : Type) (f : A -> subset B),
-    bind subset subset A B f ∘ ret subset A = f.
+    bind f ∘ ret = f.
 Proof.
   intros. ext a. unfold compose.
   now autorewrite with tea_set.
 Qed.
 
-Lemma set_bind1 : forall A : Type, bind subset subset A A (ret subset A) = id.
+Lemma set_bind1 : forall A : Type, bind ret = @id (subset A).
   intros. cbv. ext s a. propext.
   - intros [a' [h1 h2]]. now subst.
   - intro. eexists a. intuition.
 Qed.
 
 Lemma set_bind2 : forall (A B C : Type) (g : B -> subset C) (f : A -> subset B),
-    bind subset subset B C g ∘ bind subset subset A B f = bind subset subset A C (g ⋆1 f).
+    bind g ∘ bind f = bind (g ⋆1 f).
 Proof.
   intros. ext a. unfold compose.
   cbv. ext c. propext.
@@ -108,7 +107,7 @@ Qed.
 (** ** <<bind>> is a monoid homomorphism *)
 (******************************************************************************)
 #[export] Instance Monmor_bind {A B f} :
-  Monoid_Morphism (subset A) (subset B) (bind subset subset A B f) :=
+  Monoid_Morphism (subset A) (subset B) (bind f) :=
   {| monmor_unit := @bind_set_nil A B f;
     monmor_op := @bind_set_add A B f;
   |}.

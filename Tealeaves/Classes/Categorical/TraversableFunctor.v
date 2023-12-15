@@ -18,6 +18,9 @@ Class ApplicativeDist (F : Type -> Type) :=
 
 #[global] Arguments dist (F)%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} {A}%type_scope _.
 #[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} A%type_scope _.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments pure F%function_scope {Pure} {A}%type_scope _.
+#[local] Arguments mult F%function_scope {Mult} {A B}%type_scope _.
 
 (** ** Typeclass *)
 (******************************************************************************)
@@ -61,7 +64,7 @@ Section pure_as_applicative_transformation.
   Lemma pure_appmor_1 : forall A B (f : A -> B) (t : A),
       pure G (map (fun A : Type => A) f t) = map G f (pure G t).
   Proof.
-    intros. now rewrite (app_pure_natural G).
+    intros. now rewrite app_pure_natural.
   Qed.
 
   Lemma pure_appmor_2 : forall (A : Type) (a : A),
@@ -73,7 +76,7 @@ Section pure_as_applicative_transformation.
   Lemma pure_appmor_3 : forall (A B : Type) (a : A) (b : B),
       pure G (mult (fun A => A) (a, b)) = mult G (pure G a, pure G b).
   Proof.
-    unfold transparent tcs. intros. now rewrite (app_mult_pure G).
+    unfold transparent tcs. intros. now rewrite app_mult_pure.
   Qed.
 
   #[export] Instance ApplicativeMorphism_pure :
@@ -108,7 +111,7 @@ Section purity_law.
     reassociate -> near (map T (pure G2)).
     rewrite map_purity_1.
     fequal. ext t. unfold compose.
-    now rewrite (app_pure_natural G2).
+    now rewrite app_pure_natural.
   Qed.
 
 End purity_law.
@@ -151,10 +154,7 @@ Section TraversableFunctor_prod.
       dist (prod E) G2 A ∘ map (prod E) (ϕ A) = ϕ (E * A) ∘ dist (prod E) G1 A.
   Proof.
     intros; unfold compose; cbn. ext [x a]; cbn.
-    specialize (appmor_app_F G1 G2);
-      specialize (appmor_app_G G1 G2);
-      intros.
-    now rewrite (appmor_natural G1 G2).
+    now rewrite appmor_natural.
   Qed.
 
   Lemma dist_unit_prod : forall (A : Type),

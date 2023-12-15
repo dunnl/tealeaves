@@ -11,6 +11,10 @@ Import Monoid.Notations.
 Import Product.Notations.
 
 #[local] Generalizable Variables W T F A M.
+#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
 
 (** * Writer monad *)
 (** In the even that [A] is a monoid, the product functor forms a monad. The
@@ -52,7 +56,7 @@ End writer_monad.
 (** * Writer bimonad *)
 (******************************************************************************)
 #[export] Instance BeckDistribution_strength (W : Type) (T : Type -> Type) `{Map T}:
-  BeckDistribution (W ×) T := (fun A => σ T).
+  BeckDistribution (W ×) T := (@strength T _ W).
 
 (** ** <<T ∘ (W ×)>> is a monad *)
 (******************************************************************************)
@@ -72,19 +76,19 @@ Section strength_as_writer_distributive_law.
     `{Monoid W}.
 
   Lemma strength_ret_l `{Functor F} : forall A : Type,
-      σ F ∘ ret (W ×) (F A) =
+      σ ∘ ret (W ×) (F A) =
       map F (ret (W ×) A).
   Proof.
     reflexivity.
   Qed.
 
   Lemma strength_join_l `{Functor F} : forall A : Type,
-      σ F ∘ join (W ×) (A := F A) =
-      map F (join (W ×) (A := A)) ∘ σ F ∘ map (W ×) (σ F).
+      σ ∘ join (W ×) (A := F A) =
+      map F (join (W ×) (A := A)) ∘ σ ∘ map (W ×) σ.
   Proof.
     intros. ext [w1 [w2 t]]. unfold compose; cbn.
-    compose near t. rewrite (fun_map_map).
-    compose near t on right. rewrite (fun_map_map).
+    compose near t. rewrite fun_map_map.
+    compose near t on right. rewrite fun_map_map.
     reflexivity.
   Qed.
 
@@ -175,7 +179,7 @@ End writer_bimonad_instance.
 Section incr.
 
   Lemma extract_incr `{Monoid W} {A : Type} :
-    forall (w : W), extract (W ×) A ∘ incr W w = extract (W ×) A.
+    forall (w : W), extract (W ×) A ∘ incr w = extract (W ×) A.
   Proof.
     intros. now ext [w' a].
   Qed.
@@ -193,10 +197,16 @@ Section Writer_miscellaneous.
   (* This rewrite is useful when proving decoration-traversal compatibility
      in the binder case. *)
   Theorem strength_shift1 : forall (F : Type -> Type) `{Functor F} (w : W) (A : Type),
-      σ F ∘ μ (W ×) ∘ pair w = map F (μ (W ×) ∘ pair w) ∘ σ F (B := A).
+      σ ∘ μ (W ×) ∘ pair w = map F (μ (W ×) ∘ pair w) ∘ strength (F := F) (B := A).
   Proof.
     intros. ext [w' x]. unfold compose; cbn.
-    compose near x. now rewrite (fun_map_map).
+    compose near x. now rewrite fun_map_map.
+  Qed.
+
+  (* TODO Cleanup where this gets used *)
+  Lemma incr_spec `{Monoid W} : forall A, uncurry incr = join (W ×) (A := A).
+  Proof.
+    intros. ext [w1 [w2 a]]. reflexivity.
   Qed.
 
 End Writer_miscellaneous.

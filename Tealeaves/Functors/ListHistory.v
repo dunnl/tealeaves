@@ -11,11 +11,11 @@ Import Monoid.Notations.
 Fixpoint hmap {A B : Type} (f : list A * A -> B) (l : list A) : list B :=
   match l with
   | nil => nil
-  | cons a rest => cons (f (Ƶ, a)) (hmap (preincr _ f [a]) rest)
+  | cons a rest => cons (f (Ƶ, a)) (hmap (preincr f [a]) rest)
   end.
 
 Lemma hmap_cons {A B : Type} (f : list A * A -> B) (a : A) (l : list A) :
-  hmap f (a :: l) = cons (f (Ƶ, a)) (hmap (preincr _ f [a]) l).
+  hmap f (a :: l) = cons (f (Ƶ, a)) (hmap (preincr f [a]) l).
 Proof.
   reflexivity.
 Qed.
@@ -24,15 +24,15 @@ Lemma hmap_app : forall {WA WB : Type}
                     (ρf : list WA * WA -> WB)
                     (wa wa' : list WA),
     hmap ρf (wa ● wa') =
-      hmap ρf wa ● hmap (preincr _ ρf wa) wa'.
+      hmap ρf wa ● hmap (preincr ρf wa) wa'.
 Proof.
   intros. generalize dependent ρf. induction wa; intros ρf.
   - change (@nil WA) with (Ƶ : list WA) at 1 3.
     rewrite monoid_id_r.
-    rewrite (preincr_zero (list WA)).
+    rewrite preincr_zero.
     reflexivity.
   - cbn. fequal. rewrite IHwa.
-    rewrite (preincr_preincr _).
+    rewrite preincr_preincr.
     reflexivity.
 Qed.
 
@@ -54,13 +54,13 @@ Module Hmap_alt.
   Definition hmap' {A B : Type} (f : list A * A -> B) : list A -> list B :=
     hmap_rec f nil.
 
-  Lemma hmap_rec_spec : forall {A B} (f : list A * A -> B) a, hmap (preincr _ f a) = hmap_rec f a.
+  Lemma hmap_rec_spec : forall {A B} (f : list A * A -> B) a, hmap (preincr f a) = hmap_rec f a.
   Proof.
     intros. ext l.
     generalize dependent a. induction l.
     - intros. reflexivity.
     - intros. cbn.
-      rewrite (preincr_preincr _).
+      rewrite preincr_preincr.
       rewrite IHl.
       unfold preincr, compose, incr.
       rewrite monoid_id_l.
@@ -69,7 +69,7 @@ Module Hmap_alt.
 
   Lemma hmap_spec : forall {A B} (f : list A * A -> B), hmap f = hmap' f.
   Proof.
-    intros. replace f with (preincr _ f Ƶ) at 1 by (now rewrite (preincr_zero _)).
+    intros. replace f with (preincr f Ƶ) at 1 by (now rewrite preincr_zero).
     apply hmap_rec_spec.
   Qed.
 

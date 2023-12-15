@@ -12,6 +12,10 @@ Import Strength.Notations.
 
 (** * Decorated-traversable functors *)
 (******************************************************************************)
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope
+  {H H0 H1} {A}%type_scope _.
+#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
 
 (** ** Typeclass *)
 (******************************************************************************)
@@ -22,7 +26,7 @@ Class DecoratedTraversableFunctor
   { dtfun_decorated :> DecoratedFunctor E F;
     dtfun_traversable :> TraversableFunctor F;
     dtfun_compat : forall `{Applicative G},
-      `(dist F G ∘ map F (σ G) ∘ dec F (A := G A) =
+      `(dist F G ∘ map F σ ∘ dec F (A := G A) =
           map G (dec F) ∘ dist F G);
   }.
 

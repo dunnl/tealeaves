@@ -13,6 +13,7 @@ Import Strength.Notations.
 
 #[local] Generalizable Variables W T A.
 
+#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
 #[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 
 (** * Monads *)
@@ -88,7 +89,7 @@ Section tensor_laws.
     {W : Type}.
 
   Theorem strength_return  {A B} (a : A) (b : B) :
-    strength T (b, ret T A a) = ret T (B * A) (b, a).
+    strength (b, ret T A a) = ret T (B * A) (b, a).
   Proof.
     unfold strength. compose near a on left.
     change (@compose ?B) with (@compose ((fun A => A) B)).

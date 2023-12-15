@@ -30,7 +30,7 @@ Qed.
 (******************************************************************************)
 #[export] Instance Map_Product (F G : Type -> Type) `{Map F} `{Map G} : Map (F ◻ G) :=
   fun A B (f : A -> B) (p : (F ◻ G) A) =>
-    match p with product x y => product (map F f x) (map G f y)
+    match p with product x y => product (map f x) (map f y)
     end.
 
 #[export] Instance Functor_Product (F G : Type -> Type) `{Functor F} `{Functor G} : Functor (F ◻ G).
@@ -47,14 +47,14 @@ Qed.
 (******************************************************************************)
 #[export] Instance Pure_Product (F G : Type -> Type)
   `{Pure F} `{Pure G} : Pure (F ◻ G) :=
-  fun A (a : A) => product (pure F a) (pure G a).
+  fun A (a : A) => product (pure a) (pure a).
 
 #[export] Instance Mult_Product (F G : Type -> Type)
   `{Mult F} `{Mult G} : Mult (F ◻ G) :=
   fun A B (p : (F ◻ G) A * (F ◻ G) B) =>
     match p with
     | (product fa ga , product fb gb) =>
-        product (mult F (fa, fb)) (mult G (ga, gb))
+        product (mult (fa, fb)) (mult (ga, gb))
     end.
 
 (** *** Applicative instance *)

@@ -12,6 +12,9 @@ Import Functor.Notations.
 Import Subset.Notations.
 Import List.ListNotations.
 
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+
 (** * Set-like functors *)
 (******************************************************************************)
 Class Elements (F : Type -> Type) :=

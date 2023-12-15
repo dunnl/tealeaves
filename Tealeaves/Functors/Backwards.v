@@ -16,16 +16,16 @@ Section Backwards.
     `{Applicative F}.
 
   #[export] Instance Map_Backwards : Map (Backwards F) :=
-    fun A B f '(Build_Backwards _ _ x) => {| forwards := map F f x |}.
+    fun A B f '(Build_Backwards _ _ x) => {| forwards := map f x |}.
 
   #[export] Instance Pure_Backwards : Pure (Backwards F) :=
-    fun A a => Build_Backwards _ _ (pure F a).
+    fun A a => Build_Backwards _ _ (pure a).
 
   Definition swap {A B} : B * A -> A * B :=
     fun '(b, a) => (a, b).
 
   Definition mult_Backwards {A B} : Backwards F A -> Backwards F B -> Backwards F (A * B) :=
-    fun ba bb => Build_Backwards F _ (map F swap (forwards _ _ bb ⊗ forwards _ _ ba)).
+    fun ba bb => Build_Backwards F _ (map swap (forwards _ _ bb ⊗ forwards _ _ ba)).
 
   #[export] Instance Mult_Backwards : Mult (Backwards F) :=
     fun A B '(x, y) => mult_Backwards x y.

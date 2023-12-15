@@ -52,13 +52,13 @@ Section parameterized.
   Qed.
 
   Lemma map_extr_cojoin :
-    `(map Store extract_Store ∘ cojoin_Store B = @id (@Store A B C)).
+    `(map extract_Store ∘ cojoin_Store B = @id (@Store A B C)).
   Proof.
     intros. now ext [i1 mk].
   Qed.
 
   Lemma cojoin_cojoin : `(cojoin_Store B2 ∘ @cojoin_Store A C X B1 =
-                          map Store (cojoin_Store B1) ∘ cojoin_Store B2).
+                          map (cojoin_Store B1) ∘ cojoin_Store B2).
   Proof.
     intros. now ext [i1 mk].
   Qed.
@@ -68,7 +68,7 @@ End parameterized.
 (** * A representation lemma *)
 (******************************************************************************)
 Definition runStore `{Map F} `(f : A -> F B) : forall X, Store X -> F X :=
-  fun A '(MkStore mk a) => map F mk (f a).
+  fun A '(MkStore mk a) => map mk (f a).
 
 Definition runStore_inv `{Map F} `(run : forall X, @Store A B X -> F X) : A -> F B :=
   fun (a : A) => run B (MkStore id a).

@@ -24,6 +24,8 @@ Import Comonad.Notations.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 #[local] Arguments join T%function_scope {Join} {A}%type_scope _.
 #[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
+#[local] Arguments extract W%function_scope {Extract} (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
 
 (** * Bimonad typeclass *)
 (******************************************************************************)
@@ -43,15 +45,15 @@ Section Bimonad.
       bimonad_comonad :> Comonad W;
       bimonad_distributive_law :> BeckDistributiveLaw W W;
       bimonad_dist_counit_r :
-        `(map W (extract W A) ∘ bdist W W = extract W (W A));
+      `(map W (extract W A) ∘ bdist W W = extract W (W A));
       bimonad_dist_counit_l :
-        `(extract W (W A) ∘ bdist W W = map W (extract W A));
+      `(extract W (W A) ∘ bdist W W = map W (extract W A));
       bimonad_cap :
-        `(extract W A ∘ join W = extract W A ∘ extract W (W A));
+      `(extract W A ∘ join W = extract W A ∘ extract W (W A));
       bimonad_baton :
-        `(extract W A ∘ ret W = @id A);
+      `(extract W A ∘ ret W = @id A);
       bimonad_cup :
-        `(cojoin W ∘ ret W = ret W ∘ ret W (A := A));
+      `(cojoin W ∘ ret W = ret W ∘ ret W (A := A));
       bimonad_butterfly :
         `(cojoin W ∘ join W (A := A) =
           map W (join W) ∘ join W ∘ map W (bdist W W) ∘ cojoin W ∘ map W (cojoin W));
