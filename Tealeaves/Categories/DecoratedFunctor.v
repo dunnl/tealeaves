@@ -9,6 +9,10 @@ Import Strength.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
 
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments dec {E}%type_scope F%function_scope {Decorate} {A}%type_scope _.
+#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+
 (** * A decorated functor is precisely a right comodule of <<prod E>> *)
 (******************************************************************************)
 Definition RightComodule_DecoratedFunctor
@@ -22,8 +26,8 @@ Definition DecoratedFunctor_RightComodule
   `{Map F} `{RightCoaction F (prod E)}
   `{! RightComodule F (prod E)} `{Monoid E}
   : DecoratedFunctor E F :=
-  {| dfun_dec_dec := rcom_coaction_coaction F (prod E);
-    dfun_dec_extract := rcom_map_extr_coaction F (prod E);
+  {| dfun_dec_dec := rcom_coaction_coaction;
+    dfun_dec_extract := rcom_map_extr_coaction;
   |}.
 
 (** * Decorated functors form a monoidal category *)
@@ -49,24 +53,24 @@ Section DecoratedFunctor_Zero.
   Proof.
     constructor; try typeclasses eauto.
     intros. unfold_ops @Map_compose @Decorate_zero.
-    now do 2 rewrite (fun_map_map).
+    now do 2 rewrite fun_map_map.
   Qed.
 
   Lemma dec_dec_zero {A} :
     dec F ∘ dec F (A:=A) =
-    map F (cojoin (prod W)) ∘ dec F.
+    map F (cojoin (W :=(W ×))) ∘ dec F.
   Proof.
     intros. unfold_ops @Decorate_zero.
-    now do 2 rewrite (fun_map_map).
+    now do 2 rewrite fun_map_map.
   Qed.
 
   Lemma dec_extract_zero {A} :
-    map F (extract (prod W) A) ∘ dec F = @id (F A).
+    map F (extract (W := (W ×))) ∘ dec F = @id (F A).
   Proof.
     intros. unfold_ops @Decorate_zero.
-    rewrite (fun_map_map).
+    rewrite fun_map_map.
     unfold compose; cbn.
-    now rewrite (fun_map_id).
+    now rewrite fun_map_id.
   Qed.
 
   Instance DecoratedFunctor_zero : DecoratedFunctor W F :=
@@ -105,7 +109,7 @@ Section DecoratedFunctor_I.
   Qed.
 
   Lemma dec_extract_I {A} :
-    map (fun A => A) (extract (prod W) A) ∘ dec (fun A => A) = (@id A).
+    map (fun A => A) (extract (W := (W ×))) ∘ dec (fun A => A) = (@id A).
   Proof.
     intros. reflexivity.
   Qed.
@@ -167,10 +171,10 @@ Section Decoratedfunctor_composition.
   (** Split the decoration wire on <<G>> into two wires with
       <<dfun_dec_dec G>> law. *)
   Lemma dec_dec_compose_1 {A} :
-    (map F (map (G ∘ prod W) (cojoin (prod W)) ∘ strength G))
+    (map F (map (G ∘ prod W) (cojoin (W := prod W)) ∘ strength (F := G)))
       ∘ dec F
       ∘ map F (dec G)
-    = (map F (strength G))
+    = (map F (strength (F := G)))
         ∘ dec F
         ∘ map F (dec G ∘ dec G (A := A)).
   Proof.
@@ -188,11 +192,11 @@ Section Decoratedfunctor_composition.
   Qed.
 
   Lemma strength_cojoin_r {A} :
-    (map G (cojoin (prod W)))
-      ∘ strength G
-    = (strength G)
-        ∘ map (prod W) (strength G)
-        ∘ cojoin (prod W) (A := G A).
+    (map G (cojoin (W := (W ×))))
+      ∘ strength (F := G)
+    = strength (F := G)
+        ∘ map (prod W) (strength (F := G))
+        ∘ cojoin (W := (W ×)) (A := G A).
   Proof.
     ext [w a]. unfold strength, compose. cbn.
     compose near a. now do 2 rewrite (fun_map_map (F := G)).
@@ -201,11 +205,11 @@ Section Decoratedfunctor_composition.
   (** Split the decoration wire on <<F>> into two wires with
      <<dfun_dec_dec F>>. *)
   Lemma dec_dec_compose_2 {A} :
-    (map F (map G (cojoin (prod W)) ∘ strength G))
+    (map F (map G (cojoin (W := prod W)) ∘ strength))
       ∘ dec F
-    = (map F (strength G))
+    = (map F strength)
         ∘ dec F
-        ∘ map F (strength G)
+        ∘ map F strength
         ∘ dec F (A := G A).
   Proof.
     rewrite strength_cojoin_r.
@@ -213,21 +217,21 @@ Section Decoratedfunctor_composition.
     reassociate -> on left. rewrite <- (dfun_dec_dec (E := W) (F := F)).
     reassociate <- on left.
     rewrite <- (fun_map_map (F := F)).
-    change (?f ∘ map F (map (prod W) (strength G)) ∘ dec F ∘ ?g)
-      with (f ∘ (map F (map (prod W) (strength G)) ∘ dec F) ∘ g).
+    change (?f ∘ map F (map (prod W) strength) ∘ dec F ∘ ?g)
+      with (f ∘ (map F (map (prod W) strength) ∘ dec F) ∘ g).
     change (map ?F (map ?G ?f)) with (map (F ∘ G) f).
-    now rewrite (natural (ϕ := @dec W F _) (strength G (B := A))).
+    now rewrite (natural (ϕ := @dec W F _) (strength (B := A))).
   Qed.
 
   (** Slide the upper decoration wire on <<G>> past the lower
   decoration wire on <<F>>, which requires crossing them. *)
   Lemma dec_dec_compose_3 {A} :
-    (map F (strength G))
+    (map F strength)
       ∘ dec F
       ∘ map F (dec G) =
     (map (F ∘ G) (bdist (prod W) (prod W)))
       ∘ map F (dec G)
-      ∘ map F (strength G)
+      ∘ map F strength
       ∘ dec F (A := G A).
   Proof.
     unfold_ops @BeckDistribution_strength.
@@ -248,17 +252,17 @@ Section Decoratedfunctor_composition.
 
   (** Re-arrange using naturality *)
   Lemma dec_dec_compose_5 : forall (A : Type),
-      map F (map G (join (prod W))) ∘ map F (strength G) ∘ dec F ∘ map F (dec G)
-           ∘ (map F (map G (join (prod W))) ∘ map F (strength G)) ∘ dec F ∘ map F (dec G)
+      map F (map G (join (prod W))) ∘ map F σ ∘ dec F ∘ map F (dec G)
+           ∘ (map F (map G (join (prod W))) ∘ map F strength) ∘ dec F ∘ map F (dec G)
       =
-      map F (map G (join (prod W)) ∘ map G (map (prod W ∘ prod W) (join (prod W))) ∘ strength G) ∘ dec F
-           ∘ map F (dec G) ∘ map F (strength G) ∘ dec F ∘ map F (dec G (A := A)).
+      map F (map G (join (prod W)) ∘ map G (map (prod W ∘ prod W) (join (prod W))) ∘ strength) ∘ dec F
+           ∘ map F (dec G) ∘ map F σ ∘ dec F ∘ map F (dec G (A := A)).
   Proof.
     intros. fequal. fequal. reassociate <-.
     unfold_ops @Map_compose.
     change (map G (map (prod W) (map (prod W) (join (A:=?A) (prod W)))))
       with (map (G ○ prod W) (map (prod W) (join (A:=A) (prod W)))).
-    reassociate -> near (strength G).
+    reassociate -> near strength.
     rewrite (natural (ϕ := @strength G _ W)).
     rewrite <- (fun_map_map (F := F)).
     rewrite <- (fun_map_map (F := F)).
@@ -280,7 +284,7 @@ Section Decoratedfunctor_composition.
   #[local] Set Keyed Unification.
   Theorem dec_dec_compose {A} :
     dec (F ∘ G) ∘ dec (F ∘ G) =
-    map (F ∘ G) (cojoin (prod W)) ∘ dec (F ∘ G) (A:=A).
+    map (F ∘ G) (cojoin (W := prod W)) ∘ dec (F ∘ G) (A:=A).
   Proof.
     intros. unfold_ops @Map_compose @Decorate_compose.
     (* Rewrite the RHS with the butterfly law *)
@@ -292,29 +296,29 @@ Section Decoratedfunctor_composition.
     (* Rewrite the outer (prod W) wire with the <<dfun_dec_dec>> law *)
     rewrite <- (fun_map_map (F := G)).
     change (map ?F (map ?G ?f)) with (map (F ∘ G) f).
-    reassociate -> near (strength G). rewrite <- (fun_map_map (F := F)).
-    change (?f ∘ map F (map (G ∘ prod W) (cojoin (prod W)) ∘ strength G) ∘ dec F ∘ map F (dec G))
-      with (f ∘ (map F (map (G ∘ prod W) (cojoin (prod W)) ∘ strength G) ∘ dec F ∘ map F (dec G))).
+    reassociate -> near (strength (F := G)). rewrite <- (fun_map_map (F := F)).
+    change (?f ∘ map F (map (G ∘ prod W) cojoin ∘ strength (F := G)) ∘ dec F ∘ map F (dec G))
+      with (f ∘ (map F (map (G ∘ prod W) cojoin ∘ strength (F := G)) ∘ dec F ∘ map F (dec G))).
     rewrite dec_dec_compose_1.
     (* Rewrite the outer (prod W) wire with the <<dfun_dec_dec>> law *)
     do 2 reassociate <- on right. rewrite (fun_map_map (F := F)).
-    rewrite <- (fun_map_map (F := G)). reassociate -> near (strength G).
+    rewrite <- (fun_map_map (F := G)). reassociate -> near strength.
     rewrite <- (fun_map_map (F := F)). reassociate -> near (dec F).
-    rewrite (dec_dec_compose_2).
+    rewrite dec_dec_compose_2.
     repeat change (map ?F (map ?G ?f)) with (map (F ∘ G) f).
     (* Slide a decoration on <<F>> and one on <<G>> past each other *)
     rewrite <- (fun_map_map (F := F)). do 4 reassociate <- on right.
     do 2 reassociate <- on left.
     rewrite <- (fun_map_map (F := F ∘ G)).
-    change (?f ∘ map F (strength G)
+    change (?f ∘ map F strength
              ∘ dec F
              ∘ map F (dec G)
              ∘ ?g) with
-        (f ∘ (map F (strength G)
+        (f ∘ (map F strength
                    ∘ dec F
                    ∘ map F (dec G))
            ∘ g).
-    rewrite (dec_dec_compose_3).
+    rewrite dec_dec_compose_3.
     (* Flatten out a distribution bubble. Move the second decoration on <<F>>
      out of the way to juxtapose the two distributions. *)
     rewrite (fun_map_map (F := F ∘ G)). unfold shift.
@@ -335,7 +339,7 @@ Section Decoratedfunctor_composition.
       with (map (F ∘ G) (bdist (A:=A) (prod W) (prod W))).
     reassociate -> near (map (F ∘ G) (bdist (prod W) (prod W))).
     rewrite (fun_map_map (F := F ∘ G)).
-    rewrite (writer_dist_involution).
+    rewrite writer_dist_involution.
     rewrite (fun_map_id (F := F ∘ G)).
     change (?x ∘ id) with x.
     (* final cleanup *)
@@ -343,13 +347,13 @@ Section Decoratedfunctor_composition.
     rewrite <- (fun_map_map (F := G)).
     rewrite <- (fun_map_map (F := F)) at 1.
     rewrite <- (fun_map_map (F := F)) at 1.
-    repeat rewrite incr_spec.
-    apply (dec_dec_compose_5).
+    do 2 rewrite incr_spec.
+    apply dec_dec_compose_5.
   Qed.
   #[local] Unset Keyed Unification.
 
   Theorem dec_extract_compose {A} :
-    map (F ∘ G) (extract (prod W) A) ∘ dec (F ∘ G) = @id (F (G A)).
+    map (F ∘ G) (extract (W := (W ×))) ∘ dec (F ∘ G) = @id (F (G A)).
   Proof.
     intros. unfold_ops @Map_compose @Decorate_compose.
     repeat reassociate <-. unfold_compose_in_compose.
@@ -357,7 +361,7 @@ Section Decoratedfunctor_composition.
     rewrite (shift_extract G).
     rewrite <- (fun_map_map (F := F)).
     do 2 reassociate -> on left.
-    reassociate <- near (map (A:=W * G (W * A)) F (extract (prod W) (G (W * A)))).
+    reassociate <- near (map (A := W * G (W * A)) F (extract (W := (W ×)) (A := G (W * A)))).
     rewrite (dfun_dec_extract (E := W) (F := F)).
     change (id ∘ ?f) with f.
     rewrite (fun_map_map (F := F)).
@@ -413,7 +417,7 @@ Section DecoratedFunctor_composition_laws.
         intros. unfold_ops @Decorate_compose. unfold_ops @Decorate_zero.
         do 2 rewrite (fun_map_map (F := F)).
         fequal. unfold shift.
-        reassociate -> near (pair Ƶ). rewrite (strength_2).
+        reassociate -> near (pair Ƶ). rewrite strength_2.
         rewrite (fun_map_map (F := T)).
         change (pair Ƶ) with (ret (W ×) (W * A)).
         rewrite incr_spec.
@@ -424,7 +428,7 @@ Section DecoratedFunctor_composition_laws.
       (** Composition with the identity functor on the left returns <<T>>. *)
       Theorem decorate_zero_compose_r : forall (A : Type),
           @dec W (T ∘ F) (@Decorate_compose W op T _ F _ dec_T Decorate_zero) A =
-          map T (σ F) ∘ dec T.
+          map T σ ∘ dec T.
       Proof.
         intros. unfold_ops @Decorate_compose. unfold_ops @Decorate_zero.
         reassociate -> on left.
@@ -473,8 +477,8 @@ Section DecoratedFunctor_composition_laws.
       `{! DecoratedFunctor W T3}.
 
     Lemma decorate_compose_assoc1 : forall (A : Type),
-        (map T2 (map T1 (μ (A:=A) (prod W)) ∘ σ T1 ∘ μ (prod W)) ∘ σ T2) =
-        (map T2 (map T1 (μ (W ×)) ∘ σ T1) ∘ σ T2) ∘ map ((W ×) ∘ T2) (map T1 (μ (W ×)) ∘ σ T1).
+        (map T2 (map T1 (μ (A:=A) (prod W)) ∘ σ ∘ μ (prod W)) ∘ σ) =
+        (map T2 (map T1 (μ (W ×)) ∘ σ) ∘ σ) ∘ map ((W ×) ∘ T2) (map T1 (μ (W ×)) ∘ σ).
     Proof.
       intros. ext [w1 t]. unfold compose; cbn.
       compose near t. unfold id.
@@ -484,7 +488,7 @@ Section DecoratedFunctor_composition_laws.
       ext [w2 t2]. unfold compose; cbn. unfold id.
       compose near t2. rewrite 2(fun_map_map (F := T1)).
       do 2 (compose near t2 on right; rewrite 1(fun_map_map (F := T1))).
-      fequal. ext [w3 a]. cbn. fequal. now rewrite (monoid_assoc).
+      fequal. ext [w3 a]. cbn. fequal. now rewrite monoid_assoc.
     Qed.
 
     Set Keyed Unification.
@@ -505,18 +509,18 @@ Section DecoratedFunctor_composition_laws.
       repeat rewrite incr_spec.
       rewrite decorate_compose_assoc1.
       unfold shift at 1 2.
-      change (map T2 (map T1 (μ (A:=?A) (prod W)) ∘ σ T1) ∘ dec T2 ∘ map T2 (dec T1))
-        with (map T2 (map T1 (μ (A:=A) (prod W)) ∘ σ T1) ∘ (dec T2 ∘ map T2 (dec T1))).
+      change (map T2 (map T1 (μ (A:=?A) (prod W)) ∘ σ) ∘ dec T2 ∘ map T2 (dec T1))
+        with (map T2 (map T1 (μ (A:=A) (prod W)) ∘ σ) ∘ (dec T2 ∘ map T2 (dec T1))).
       rewrite <- (fun_map_map (F := T3) _ _ _ (dec T2 ∘ map T2 (dec T1))).
       change (H0 ?x ?y ?f) with (map T2 f).
       (* ^^ not sure why this guy got unfolded *)
       reassociate <- on right.
       repeat rewrite incr_spec.
-      reassociate -> near (map T3 (map T2 (map T1 (μ (prod W)) ∘ σ T1))).
+      reassociate -> near (map T3 (map T2 (map T1 (μ (prod W)) ∘ σ))).
       rewrite <- (natural (ϕ := @dec W T3 _)).
       reassociate <- on right. fequal. fequal.
       rewrite (fun_map_map (F := T3)). fequal.
-      rewrite (strength_compose).
+      rewrite strength_compose.
       reassociate <- on right.
       now rewrite (fun_map_map (F := T2)).
     Qed.
@@ -609,7 +613,7 @@ Section DecoratedMonad_characterization.
       constructor; try typeclasses eauto.
       + admit.
       + admit.
-      + introv  rewrite <- (dec_ret_iff)...
+      + introv  rewrite <- dec_ret_iff...
       + introv. rewrite <- dec_join_iff...
   Qed.
 

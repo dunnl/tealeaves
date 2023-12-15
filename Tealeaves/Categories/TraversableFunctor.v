@@ -3,6 +3,8 @@ From Tealeaves Require Import
 
 #[local] Generalizable Variables T F U G X Y ϕ.
 
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+
 (** * Monoid structure of traversable functors *)
 (******************************************************************************)
 
@@ -122,7 +124,7 @@ Section traverable_monad_theory.
     `{TraversableMonad T}.
 
   Lemma dist_ret_spec :
-    TraversableMorphism (fun A => A) T (ret T).
+    TraversableMorphism (fun A => A) T (@ret T _).
   Proof.
     constructor; try typeclasses eauto.
     intros. now rewrite (trvmon_ret).

@@ -191,7 +191,6 @@ End incr.
 Section Writer_miscellaneous.
 
   Context
-    (W : Type)
     `{Monoid W}.
 
   (* This rewrite is useful when proving decoration-traversal compatibility

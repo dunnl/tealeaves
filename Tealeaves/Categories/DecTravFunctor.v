@@ -11,6 +11,8 @@ Import Strength.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
 
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+
 (** * Monoid structure of D-T functors *)
 (******************************************************************************)
 Section DecoratedTraversableFunctor_monoid.
@@ -45,14 +47,14 @@ Section DecoratedTraversableFunctor_monoid.
 
     (** Push the applicative wire underneath a <<shift>> operation *)
     Lemma strength_shift : forall (A : Type) `{Applicative G},
-        δ T G ∘ map T (σ G) ∘ shift T (A := G A) =
-          map G (shift T) ∘ σ G ∘ map (W ×) (δ T G ∘ map T (σ G)).
+        δ T G ∘ map T σ ∘ shift T (A := G A) =
+          map G (shift T) ∘ σ ∘ map (W ×) (δ T G ∘ map T σ).
     Proof.
       intros. unfold shift. ext [w t].
       unfold compose; cbn; unfold id.
       compose near t on left. rewrite (fun_map_map (F := T)).
       compose near t on left. rewrite (fun_map_map (F := T)).
-      compose near ((δ T G (map T (σ G) t))) on right.
+      compose near ((δ T G (map T σ t))) on right.
       rewrite (fun_map_map (F := G)).
       reassociate <- on left.
       rewrite 2(incr_spec).
@@ -66,11 +68,11 @@ Section DecoratedTraversableFunctor_monoid.
       rewrite <- (natural (ϕ := @dist T _ G _ _ _ )).
       (* now focus on the RHS *)
       unfold id.
-      change (map T (join (prod W) (A := ?A)) ○ σ T ∘ pair w)
-        with  (map T (join (prod W) (A := A)) ∘ (σ T ∘ pair w)).
+      change (map T (join (prod W) (A := ?A)) ○ σ ∘ pair w)
+        with  (map T (join (prod W) (A := A)) ∘ (σ ∘ pair w)).
       rewrite (strength_2).
       rewrite <- (fun_map_map (F := G)).
-      compose near (map T (σ G) t) on right.
+      compose near (map T σ t) on right.
       reassociate -> on right.
       change (map G (map T ?f)) with (map (G ∘ T) f).
       rewrite (natural (ϕ := @dist T _ G _ _ _) (pair w)).
@@ -80,7 +82,7 @@ Section DecoratedTraversableFunctor_monoid.
 
     (** Push the applicative wire underneath a <<dec (U ∘ T)>> operation *)
     Lemma strength_shift2 : forall (A : Type) `{Applicative G},
-        δ U G ∘ map U (σ G ∘ map (prod W) (δ T G ∘ map T (σ G)))
+        δ U G ∘ map U (σ ∘ map (prod W) (δ T G ∘ map T σ))
           ∘ (dec U ∘ map U (dec T (A := G A))) =
           map G (dec U ∘ map U (dec T)) ∘ δ (U ∘ T) G.
     Proof.
@@ -103,7 +105,7 @@ Section DecoratedTraversableFunctor_monoid.
     Qed.
 
     Theorem dtfun_compat_compose : forall `{Applicative G} {A : Type},
-        δ (U ∘ T) G ∘ map (U ∘ T) (σ G) ∘ dec (U ∘ T) (A := G A) =
+        δ (U ∘ T) G ∘ map (U ∘ T) σ ∘ dec (U ∘ T) (A := G A) =
         map G (dec (U ∘ T)) ∘ dist (U ∘ T) G.
     Proof.
       intros. reassociate -> on left.
@@ -113,7 +115,7 @@ Section DecoratedTraversableFunctor_monoid.
       do 3 reassociate <- on left;
         reassociate -> near (map U (shift T));
       rewrite (fun_map_map (F := U)).
-      reassociate -> near (map U (map T (σ G) ∘ shift T)).
+      reassociate -> near (map U (map T σ ∘ shift T)).
       rewrite (fun_map_map (F := U)).
       reassociate <- on left.
       rewrite (strength_shift); auto.
@@ -163,7 +165,7 @@ Section TraversableFunctor_zero_DT.
   Existing Instance DecoratedFunctor_zero.
 
   Theorem dtfun_compat_zero : forall `{Applicative G} {A : Type},
-      dist T G ∘ map T (strength G) ∘ dec T =
+      dist T G ∘ map T σ ∘ dec T =
       map G (dec T) ∘ dist T G (A := A).
   Proof.
     intros. unfold_ops @Decorate_zero.
