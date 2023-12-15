@@ -15,5 +15,5 @@ Class TraversableFunctor
       extract_Batch ∘ toBatch T A A = @id (T A);
     trf_duplicate : forall (A B C : Type),
       cojoin_Batch ∘ toBatch T A C =
-        map (Batch A B) (toBatch T B C) ∘ toBatch T A B;
+        map (F := Batch A B) (toBatch T B C) ∘ toBatch T A B;
   }.

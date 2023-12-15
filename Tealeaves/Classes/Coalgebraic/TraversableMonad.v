@@ -22,7 +22,7 @@ Fixpoint cojoin_BatchM (T : Type -> Type) `{ToBatchM T} (A B B' C : Type)
   | Done _ _ _ c => Done A (T B') (Batch B' (T B) C) (Done B' (T B) C c)
   | Step _ _ _ rest (*:Batch A (T B) (T B -> C)*) a(*:A*) =>
       Step A (T B') (Batch B' (T B) C)
-        (map (Batch A (T B'))
+        (map (F := Batch A (T B'))
            (fun (x : Batch B' (T B) (T B -> C)) (t : T B') =>
               x <⋆> (toBatchM T B' B t : Batch B' (T B) (T B))
            )
@@ -38,7 +38,7 @@ Section spec.
 
   Definition double_BatchM (A B C : Type) :
       A -> Batch A (T B) (Batch B (T C) (T C)) :=
-    map (Batch A (T B)) (toBatchM T B C) ∘ batch A (T B).
+    map (F := Batch A (T B)) (toBatchM T B C) ∘ batch A (T B).
 
   Lemma cojoin_BatchM_spec : forall (A B B' : Type),
       cojoin_BatchM T A B B' =
@@ -106,10 +106,10 @@ End experiment.
 Class TraversableMonad
   (T : Type -> Type) `{Return T} `{ToBatchM T} :=
   { trfm_ret : forall (A B : Type),
-      toBatchM T A B ∘ ret T A = batch A (T B);
+      toBatchM T A B ∘ ret = batch A (T B);
     trfm_extract : forall (A : Type),
-      extract_Batch ∘ mapfst_Batch A (T A) (ret T A) ∘ toBatchM T A A = @id (T A);
+      extract_Batch ∘ mapfst_Batch A (T A) (ret) ∘ toBatchM T A A = @id (T A);
     trfm_duplicate : forall (A B C : Type),
       cojoin_BatchM T A C B (T C) ∘ toBatchM T A C =
-        map (Batch A (T B)) (toBatchM T B C) ∘ toBatchM T A B;
+        map (F := Batch A (T B)) (toBatchM T B C) ∘ toBatchM T A B;
   }.
