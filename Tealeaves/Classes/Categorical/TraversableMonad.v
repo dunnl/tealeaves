@@ -15,6 +15,7 @@ Import Applicative.Notations.
 #[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope
   {H H0 H1} {A}%type_scope _.
 #[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+#[local] Arguments join T%function_scope {Join} {A}%type_scope _.
 
 (** ** Typeclass *)
 (******************************************************************************)

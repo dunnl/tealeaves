@@ -97,25 +97,25 @@ Qed.
 (** *** Rewriting lemmas for <<join>> *)
 (******************************************************************************)
 Lemma join_list_nil :
-  `(join list ([ ] : list (list A)) = []).
+  `(join ([] : list (list A)) = []).
 Proof.
   reflexivity.
 Qed.
 
 Lemma join_list_cons : forall A (l : list A) (ll : list (list A)),
-    join list (l :: ll) = l ++ join list ll.
+    join (l :: ll) = l ++ join ll.
 Proof.
   reflexivity.
 Qed.
 
 Lemma join_list_one : forall A (l : list A),
-    join list [ l ] = l.
+    join [ l ] = l.
 Proof.
   intros. cbn. now List.simpl_list.
 Qed.
 
 Lemma join_list_app : forall A (l1 l2 : list (list A)),
-    join list (l1 ++ l2) = join list l1 ++ join list l2.
+    join (l1 ++ l2) = join l1 ++ join l2.
 Proof.
   apply List.concat_app.
 Qed.
@@ -140,7 +140,7 @@ Proof.
 Qed.
 
 Theorem join_ret_list {A} :
-  join list ∘ ret list (list A) = @id (list A).
+  join ∘ ret list (list A) = @id (list A).
 Proof.
   ext l. unfold compose. destruct l.
   - reflexivity.
@@ -148,7 +148,7 @@ Proof.
 Qed.
 
 Theorem join_map_ret_list {A} :
-  join list ∘ map list (ret list A) = @id (list A).
+  join ∘ map list (ret list A) = @id (list A).
 Proof.
   ext l. unfold compose. induction l as [| ? ? IHl].
   - reflexivity.
@@ -156,8 +156,8 @@ Proof.
 Qed.
 
 Theorem join_join_list {A} :
-  join list ∘ join list (A:=list A) =
-  join list ∘ map list (join list).
+  join (T := list) ∘ join (T := list) (A:=list A) =
+  join ∘ map list (join).
 Proof.
   ext l. unfold compose. induction l as [| ? ? IHl].
   - reflexivity.
@@ -414,7 +414,7 @@ Qed.
     specialized to <<f = id>> case, but we don't need that much generality. *)
 (******************************************************************************)
 #[export] Instance Monmor_join (A : Type) :
-  Monoid_Morphism (list (list A)) (list A) (join list (A := A)) :=
+  Monoid_Morphism (list (list A)) (list A) (join (A := A)) :=
   {| monmor_unit := @join_list_nil A;
      monmor_op := @join_list_app A;
   |}.
@@ -447,7 +447,7 @@ Qed.
 (** In the special case that we fold a list of lists, the result is equivalent
     to joining the list of lists. *)
 Lemma fold_equal_join : forall {A},
-    fold (list A) = join list (A:=A).
+    fold (list A) = join (T := list) (A:=A).
 Proof.
   intros. ext l. induction l as [| ? ? IHl].
   - reflexivity.
@@ -525,7 +525,7 @@ Section foldable_list.
   Qed.
 
   Lemma fold_join : forall (l : list (list M)),
-      fold _ (join list l) = fold _ (map list (fold _) l).
+      fold _ (join (T := list) l) = fold _ (map list (fold _) l).
   Proof.
     intro l. rewrite <- fold_equal_join.
     compose near l on left.

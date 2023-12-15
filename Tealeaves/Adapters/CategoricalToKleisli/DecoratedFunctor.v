@@ -4,6 +4,10 @@ From Tealeaves Require Import
 
 #[local] Generalizable Variables E F.
 
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments dec {E}%type_scope F%function_scope {Decorate} {A}%type_scope _.
+#[local] Arguments extract W%function_scope {Extract} {A}%type_scope _.
+
 Import Product.Notations.
 
 (** * Algebraic decorated functor to Kleisli decorated functor *)
@@ -34,14 +38,14 @@ Module ToKleisli.
       (F : Type -> Type)
       `{Classes.Categorical.DecoratedFunctor.DecoratedFunctor E F}.
 
-    Theorem mapd_id {A} : @mapd E F _ A A (extract (E ×) A) = @id (F A).
+    Theorem mapd_id {A} : @mapd E F _ A A (extract (E ×)) = @id (F A).
     Proof.
       introv. unfold_ops @Mapd_dec.
       apply (dfun_dec_extract).
     Qed.
 
     Theorem mapd_mapd (A B C : Type) (g : E * B -> C) (f : E * A -> B) :
-      @mapd E F _ B C g ∘ @mapd E F _ A B f = @mapd E F _ A C (kc4 (E ×) g f).
+      @mapd E F _ B C g ∘ @mapd E F _ A B f = @mapd E F _ A C (kc4 g f).
     Proof.
       unfold_ops @Mapd_dec.
       reassociate <- on left.
@@ -77,7 +81,7 @@ Section DecoratedFunctor_misc.
     `{Categorical.DecoratedFunctor.DecoratedFunctor E T}.
 
   Theorem cobind_dec {A B} : forall (f : E * A -> B),
-      map T (cobind (E ×) f) ∘ dec T = dec T ∘ map T f ∘ dec T.
+      map T (cobind (W := (E ×)) f) ∘ dec T = dec T ∘ map T f ∘ dec T.
   Proof.
     intros.
     unfold_ops @Cobind_env.

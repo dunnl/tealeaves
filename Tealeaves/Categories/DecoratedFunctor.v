@@ -12,6 +12,7 @@ Import Monoid.Notations.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 #[local] Arguments dec {E}%type_scope F%function_scope {Decorate} {A}%type_scope _.
 #[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+#[local] Arguments join T%function_scope {Join} {A}%type_scope _.
 
 (** * A decorated functor is precisely a right comodule of <<prod E>> *)
 (******************************************************************************)

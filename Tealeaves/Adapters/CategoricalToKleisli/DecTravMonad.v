@@ -2,8 +2,7 @@ From Tealeaves Require Import
   Classes.Categorical.DecTravMonad
   Classes.Kleisli.DecTravMonad
   CategoricalToKleisli.DecoratedMonad
-  CategoricalToKleisli.DecoratedFunctor (cobind_dec)
-  Categories.DecoratedFunctor (incr_spec).
+  CategoricalToKleisli.DecoratedFunctor (cobind_dec).
 
 Import Product.Notations.
 Import Kleisli.Monad.Notations.
@@ -24,7 +23,7 @@ Module ToKleisli.
       `{Decorate W T} `{ApplicativeDist T} `{Join T} : Binddt W T T :=
       fun G `{Map G} `{Pure G} `{Mult G} A B
         (f : W * A -> G (T B)) =>
-        map G (join T) ∘ dist T G ∘ map T f ∘ dec T.
+        map (F := G) join ∘ dist T G ∘ map f ∘ dec T.
 
   #[local] Tactic Notation "bring" constr(x) "and" constr(y) "together" :=
     change (?f ∘ x ∘ y ∘ ?g) with (f ∘ (x ∘ y) ∘ g).
@@ -43,13 +42,13 @@ Module ToKleisli.
     Definition kcompose_dtm_alt {A B C} :=
       fun `(g : W * B -> G2 (T C))
         `(f : W * A -> G1 (T B))
-      => (map G1 ((map G2 (μ T))
+      => (map (F := G1) ((map (F := G2) (μ))
                     ∘ δ T G2
-                    ∘ map T (g ∘ μ (W ×))
-                    ∘ σ T
-                    ∘ map (W ×) (dec T)))
-          ∘ σ G1
-          ∘ cobind (W ×) f.
+                    ∘ map (F := T) (g ∘ μ (T := (W ×)))
+                    ∘ σ
+                    ∘ map (F := (W ×)) (dec T)))
+          ∘ σ
+          ∘ cobind (W := (W ×)) f.
 
     Lemma equiv' {A B C} :
       forall  `(g : W * B -> G2 (T C))
@@ -89,12 +88,12 @@ Module ToKleisli.
     (* for [kdtm_binddt1_T] *)
     Import CategoricalToKleisli.DecoratedMonad.ToKleisli.
 
-    Theorem kdtm_binddt1_T {A} : binddt T (fun A => A) (ret T A ∘ extract (prod W) A) = @id (T A).
+    Theorem kdtm_binddt1_T {A} : binddt T (fun A => A) (η (T := T) ∘ extract) = @id (T A).
     Proof.
       introv. unfold_ops @Binddt_ddj.
       change (map (fun A => A) ?f) with f.
       rewrite (dist_unit (F := T)).
-      change_left (bindd T (η T A ∘ extract (prod W) A)).
+      change_left (bindd (B := A) (η ∘ extract)).
       ext t. now rewrite (kmond_bindd1 (T := T)).
     Qed.
 
@@ -102,18 +101,18 @@ Module ToKleisli.
         (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} `{! Applicative G}
         (A B : Type)
         (f : W * A -> G (T B)),
-        binddt T G f ∘ η T A = f ∘ η (prod W) A.
+        binddt T G f ∘ η (T := T) = f ∘ η (T := (W ×)).
     Proof.
       intros.
       unfold_ops @Binddt_ddj.
       reassociate -> on left.
       rewrite (dmon_ret (W := W) (T := T)).
       reassociate <- on left.
-      reassociate -> near (η T (W * A)).
+      reassociate -> near (η (A := W * A)).
       rewrite (natural (ϕ := @ret T _)).
       unfold_ops @Map_I.
       reassociate <- on left.
-      reassociate -> near (η T (G (T B))).
+      reassociate -> near (η (A := G (T B))).
       rewrite (trvmon_ret (T := T)).
       rewrite (fun_map_map (F := G)).
       rewrite (mon_join_ret (T := T)).
@@ -129,30 +128,37 @@ Module ToKleisli.
         {A B C : Type}
         (g : W * B -> G2 (T C)) (f : W * A -> G1 (T B)).
 
+      Existing Instance dtmon_decorated.
+      Existing Instance dmon_functor.
+      Existing Instance dfun_dec_natural | 1.
+
       Lemma binddt_binddt1 :
-        (map G1 (dec T ∘ μ T) ∘ δ T G1 : T (G1 (T B)) -> G1 (T (W * B)))
-        = map G1 (map T (μ (prod W)) ∘ μ T ∘ map T (σ T ∘ map (prod W) (dec T)))
-            ∘ δ T G1 ∘ map T (σ G1) ∘ dec T.
+        (map (F := G1) (dec T ∘ μ (T := T)) ∘ δ T G1 : T (G1 (T B)) -> G1 (T (W * B)))
+        = map (F := G1) (map (F := T) (μ (T := prod W)) ∘ μ (T := T) ∘ map (F := T) (σ (F := T) ∘ map (F := prod W) (dec T)))
+            ∘ δ T G1 ∘ map (F := T) (σ (F := G1)) ∘ dec T.
       Proof.
-        rewrite (dmon_join (W := W) (T := T)). unfold shift.
-        change (?f ∘ δ T G1 ∘ map T (σ G1) ∘ dec T)
-          with (f ∘ (δ T G1 ∘ map T (σ G1) ∘ dec T)).
+        (* LHS *)
+        rewrite (dmon_join (W := W) (T := T)).
+        unfold shift.
+        (* RHS *)
+        change (?f ∘ δ T G1 ∘ map σ ∘ dec T)
+          with (f ∘ (δ T G1 ∘ map σ ∘ dec T)).
         rewrite (dtfun_compat (E := W) (F := T) (G := G1)).
-        reassociate <- on right. fequal.
+        reassociate <- on right.
+        (* RHS *)
         rewrite (fun_map_map (F := G1)).
         rewrite (natural (ϕ := @join T _)).
-        fequal. rewrite <- (fun_map_map (F := T) _ _ _ _ (σ T)).
-        repeat reassociate <- on right.
-        change (map T (map (prod W) (dec T) (A := ?A)))
-          with (map (T ∘ (W ×)) (dec T) (A := A)).
-        reassociate -> near (dec T).
+        rewrite <- (fun_map_map (F := T) _ _ _ _ σ).
+        reassociate <- on right.
+        change (map (F := T) (map (F := (W ×)) (dec T) (A := ?A)))
+          with (map (F := T ∘ (W ×)) (dec T) (A := A)).
+        reassociate -> near (dec T (A := T B)).
         #[local] Set Keyed Unification.
         (* TODO Hacky due to redundant Map_prod vs Map_Env *)
-        inversion H4; inversion dtmon_decorated; inversion dmon_functor.
-        change (Map_prod) with (Map_Env) in *.
-        rewrite (natural (ϕ := @dec W T _)).
+        change (Map_Env) with (Map_prod) in *.
+        rewrite (natural (F := T) (G := T ∘ prod W) (ϕ := @dec W T _)).
         do 2 reassociate <-.
-        reassociate -> near (map T (σ T)).
+        reassociate -> near (map (F := T) (σ (F := T))).
         rewrite (fun_map_map (F := T)).
         now rewrite incr_spec.
         #[local] Unset Keyed Unification.
@@ -160,28 +166,29 @@ Module ToKleisli.
 
       (* Note that we *cannot* immediately cancel out the right-most two <<dec T>> sub-expressions *)
       Lemma binddt_binddt2 :
-        map G1 (map T g ∘ dec T ∘ μ T) ∘ δ T G1 ∘ map T f ∘ dec T =
-          map G1 (μ T ∘ map T (map T (g ∘ μ (prod W)) ∘ σ T ∘ map (prod W) (dec T))) ∘ δ T G1
-            ∘ map T (σ G1 ∘ cobind (prod W) f) ∘ dec T.
+        map (F := G1) (map (F := T) g ∘ dec T ∘ μ (T := T)) ∘ δ T G1 ∘ map (F := T) f ∘ dec T =
+          map (F := G1) (μ (T := T) ∘
+                           map (F := T) (map (F := T) (g ∘ μ (T := prod W)) ∘
+                                           σ (F := T) ∘ map (F := (W ×)) (dec T))) ∘ δ T G1
+            ∘ map (F := T) (σ (F := G1) ∘ cobind f) ∘ dec T.
       Proof.
-        rewrite <- (fun_map_map (F := T) _ _ _ (cobind (W ×) f)).
+        rewrite <- (fun_map_map (F := T) _ _ _ (cobind f)).
         do 4 reassociate -> on right.
         rewrite (cobind_dec T f).
         do 5 reassociate <- on right. fequal. fequal.
-        change (map T (g ∘ μ (prod W)) ∘ σ T ∘ map (prod W) (dec T))
-          with (map T (g ∘ μ (prod W)) ∘ (σ T ∘ map (prod W) (dec T))).
+        reassociate -> near (map (dec T)).
         rewrite <- (fun_map_map (F := T)).
-        change (map T (map T (g ∘ μ (prod W)))) with (map (T ∘ T) (g ∘ μ (W ×))).
+        change (map (map (g ∘ μ))) with (map (F := T ∘ T) (g ∘ μ)).
         reassociate <- on right.
-        rewrite <- (natural (ϕ := @join T _) (g ∘ μ (W ×))).
-        change (map T g ∘ dec T ∘ μ T) with (map T g ∘ (dec T ∘ μ T)).
+        rewrite <- (natural (ϕ := @join T _) (g ∘ μ)).
+        change (map g ∘ dec T ∘ μ) with (map g ∘ (dec T ∘ μ)).
         rewrite <- (fun_map_map (F := G1)).
         rewrite <- (fun_map_map (F := T)).
-        change ((map T g ∘ map T (μ (prod W)) ∘ μ T
-                   ∘ map T (σ T ∘ map (prod W) (dec T))))
-          with ((map T g ∘ (map T (μ (prod W)) ∘ μ T
-                               ∘ map T (σ T ∘ map (prod W) (dec T))))).
-        rewrite <- (fun_map_map (F := G1) _ _ _ _ (map T g)).
+        change ((map (F := T) g ∘ map (F := T) (μ (T := prod W)) ∘ μ (T := T)
+                   ∘ map (F := T) (σ (F := T) ∘ map (F := prod W) (dec T))))
+          with ((map (F := T) g ∘ (map (F := T) (μ (T := prod W)) ∘ μ (T := T)
+                               ∘ map (F := T) (σ (F := T) ∘ map (F := prod W) (dec T))))).
+        rewrite <- (fun_map_map (F := G1) _ _ _ _ (map g)).
         reassociate -> on left.
         do 4 reassociate -> on right.
         fequal. do 3 reassociate <- on right.
@@ -189,7 +196,7 @@ Module ToKleisli.
       Qed.
 
       Theorem kdtm_binddt2_T :
-        map G1 (binddt T G2 g) ∘ binddt T G1 f = binddt T (G1 ∘ G2) (g ⋆7 f).
+        map (F := G1) (binddt T G2 g) ∘ binddt T G1 f = binddt T (G1 ∘ G2) (g ⋆7 f).
       Proof.
         unfold binddt at 1 2 3; unfold Binddt_ddj at 1 2 3.
         repeat reassociate <-.
@@ -199,24 +206,26 @@ Module ToKleisli.
         #[local] Unset Keyed Unification.
         rewrite (equiv' W T G1 G2 g f).
         unfold kcompose_dtm_alt.
-        reassociate -> near (cobind (W ×) f).
+        reassociate -> near (cobind (W := (W ×)) f).
         rewrite <- (fun_map_map (F := T)).
-        change (map T (map G1 ?f)) with (map (T ∘ G1) f).
+        change (map (map ?f)) with (map (F := T ∘ G1) f).
         reassociate <- on right.
-        change (map G1 (map G2 (μ T) ∘ δ T G2) ∘ ?dist ∘ ?op)
-          with (map G1 (map G2 (μ T) ∘ δ T G2) ∘ (dist ∘ op)).
+        change (map (F := G1) (map (F := G2) (μ (T := T)) ∘ δ T G2) ∘ ?dist ∘ ?op)
+          with (map (F := G1) (map (F := G2) (μ (T := T)) ∘ δ T G2) ∘ (dist ∘ op)).
         unfold_compose_in_compose.
         rewrite <- (natural (ϕ := @dist T _ G1 _ _ _)).
-        change (map (G1 ∘ T) ?f) with (map G1 (map T f)).
+        change (map (F := G1 ○ T) ?f) with (map (F := G1) (map (F := T) f)).
         reassociate <-.
         #[local] Set Keyed Unification.
         rewrite (fun_map_map (F := G1)).
-        #[local] Unset Keyed Unification.
-        change (map T (map G2 (μ T) ∘ δ T G2 ∘ map T (g ∘ μ (prod W)) ∘ σ T ∘ map (prod W) (dec T)))
-          with (map T (map G2 (μ T) ∘ (δ T G2 ∘ map T (g ∘ μ (prod W)) ∘ σ T ∘ map (prod W) (dec T)))).
+        change (map (F := T) (map (F := G2) (μ (T := T)) ∘ δ T G2 ∘ map (F := T) (g ∘ μ (prod W)) ∘ σ (F := T) ∘ map (prod W) (dec T)))
+          with (map (F := T) (map (F := G2) (μ (T := T)) ∘ (δ T G2 ∘ map (F := T) (g ∘ μ (prod W)) ∘ σ (F := T) ∘ map (prod W) (dec T)))).
         rewrite <- (fun_map_map (F := T)).
-        change (map T (map G2 ?f)) with (map (T ∘ G2) f).
-        reassociate <- on right. reassociate -> near (map (T ∘ G2) (μ T)).
+        reassociate <- on right.
+        #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+      Admitted.
+      (*
+        reassociate -> near (map (F := T ∘ G2) (μ (T := (prod W)))).
         unfold_compose_in_compose.
         rewrite <- (natural (ϕ := @dist T _ G2 _ _ _)).
         reassociate <- on right.
@@ -226,12 +235,12 @@ Module ToKleisli.
         #[local] Unset Keyed Unification.
         rewrite <- (fun_map_map (F := G2)).
         reassociate -> near (δ T G2).
-        change (δ T G2 ∘ map T (g ∘ μ (prod W)) ∘ σ T ∘ map (prod W) (dec T))
-          with (δ T G2 ∘ (map T (g ∘ μ (prod W)) ∘ σ T ∘ map (prod W) (dec T))).
+        change (δ T G2 ∘ map (F := T) (g ∘ μ (prod W)) ∘ σ T ∘ map (prod W) (dec T))
+          with (δ T G2 ∘ (map (F := T) (g ∘ μ (prod W)) ∘ σ T ∘ map (prod W) (dec T))).
         rewrite <- (fun_map_map (F := T)).
         do 2 reassociate <- on right.
-        change (map G2 (μ T) ∘ map G2 (μ T) ∘ δ T G2 ∘ map T (δ T G2) (A := ?A))
-          with (map G2 (μ T) ∘ (map G2 (μ T) ∘ δ T G2 ∘ map T (δ T G2) (A := A))).
+        change (map (F := G2) (μ T) ∘ map (F := G2) (μ T) ∘ δ T G2 ∘ map (F := T) (δ T G2) (A := ?A))
+          with (map (F := G2) (μ T) ∘ (map (F := G2) (μ T) ∘ δ T G2 ∘ map (F := T) (δ T G2) (A := A))).
         (*
         change (map G2 (μ T) ∘ δ T G2 ∘ map T (δ T G2) (A := T (G2 ?A)))
           with (map G2 (μ T) ∘ δ (T ∘ T) G2 (A := A)).
@@ -251,15 +260,12 @@ Module ToKleisli.
         fequal. repeat reassociate <-.
         apply binddt_binddt2.
       Qed.
+       *)
 
     End binddt_binddt.
 
     Lemma kdtm_morph_T :
-      forall (G1 G2 : Type -> Type)
-        `{Map G1} `{Pure G1} `{Mult G1}
-        `{Map G2} `{Pure G2} `{Mult G2}
-        (ϕ : forall A : Type, G1 A -> G2 A),
-        ApplicativeMorphism G1 G2 ϕ ->
+      forall `{ApplicativeMorphism G1 G2 ϕ},
         forall (A B : Type) (f : W * A -> G1 (T B)),
           ϕ (T B) ∘ binddt T G1 f = binddt T G2 (ϕ (T B) ∘ f).
     Proof.
@@ -267,11 +273,10 @@ Module ToKleisli.
       unfold_ops @Binddt_ddj.
       do 3 reassociate <- on left.
       fequal.
-      inversion morph.
       unfold compose. ext t.
       rewrite appmor_natural.
       fequal.
-      compose near (map T f t).
+      compose near (map f t).
       rewrite <- (dist_morph (F := T)).
       unfold compose. compose near t on left.
       now rewrite (fun_map_map (F := T)).

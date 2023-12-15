@@ -95,5 +95,7 @@ End tensor_strength.
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
+  (* This line has the effect that we can pass implicit arguments explicitly (e.g. <<σ (F := T)>> *)
+  #[local] Arguments strength F%function_scope {H} (A B)%type_scope _.
   Notation "'σ'":= (strength) : tealeaves_scope.
 End Notations.

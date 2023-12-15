@@ -4,12 +4,16 @@ From Tealeaves Require Import
 
 #[local] Generalizable Variables T A B C.
 
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
+
 (** * Algebraic monad to Kleisli monad *)
 (******************************************************************************)
 Module ToKleisli.
 
   Export Kleisli.Monad.
   Import Kleisli.Monad.Notations.
+  #[local] Arguments bind {U} (T)%function_scope {Bind} {A B}%type_scope _%function_scope _.
 
   Section operation.
 
@@ -18,14 +22,13 @@ Module ToKleisli.
       `{Map T} `{Join T}.
 
     #[export] Instance Bind_Join : Bind T T :=
-      fun {A B} (f : A -> T B) => join T ∘ map T f.
+      fun {A B} (f : A -> T B) => join ∘ map T f.
 
   End operation.
 
   Section with_monad.
 
     Context
-      (T : Type -> Type)
       `{Categorical.Monad.Monad T}.
 
     (** *** Identity law *)
@@ -93,7 +96,7 @@ Section ToKleisli_laws.
   Import ToKleisli.
 
   Lemma map_to_bind : forall `(f : A -> B),
-      map T f = bind T (ret T B ∘ f).
+      map T f = bind (ret T B ∘ f).
   Proof.
     intros. unfold_ops @Bind_Join.
     rewrite <- (fun_map_map (F := T)).
@@ -103,14 +106,14 @@ Section ToKleisli_laws.
   Qed.
 
   Corollary bind_map : forall `(g : B -> T C) `(f : A -> B),
-      bind T g ∘ map T f = bind T (g ∘ f).
+      bind g ∘ map T f = bind (g ∘ f).
   Proof.
     intros. unfold transparent tcs.
     now rewrite <- (fun_map_map (F := T)).
   Qed.
 
   Corollary map_bind : forall `(g : B -> C) `(f : A -> T B),
-      map T g ∘ bind T f = bind T (map T g ∘ f).
+      map T g ∘ bind f = bind (map T g ∘ f).
   Proof.
     intros. unfold transparent tcs.
     reassociate <- on left.
@@ -161,7 +164,7 @@ Module ToKleisliRightModule.
 
     (** *** Identity law *)
     Lemma bind_id :
-      `(bind F (ret T A) = @id (F A)).
+      `(bind (ret T A) = @id (F A)).
     Proof.
       intros. unfold transparent tcs.
       now rewrite (mod_action_map_ret).
@@ -169,7 +172,7 @@ Module ToKleisliRightModule.
 
     (** *** Composition law *)
     Lemma bind_bind : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
-        bind F g ∘ bind F f = bind F (g ⋆1 f).
+        bind g ∘ bind f = bind (g ⋆1 f).
     Proof.
       introv. unfold transparent tcs. unfold kc1.
       unfold_ops @Bind_Join.
@@ -200,7 +203,7 @@ Module ToKleisliRightModule.
 
     (** *** [map] as a special case of [bind]. *)
     Lemma map_to_bind {A B} : forall `(f : A -> B),
-        map T f = bind T (ret T B ∘ f).
+        map T f = bind (ret T B ∘ f).
     Proof.
       intros. unfold transparent tcs.
       rewrite <- (fun_map_map (F := T)).

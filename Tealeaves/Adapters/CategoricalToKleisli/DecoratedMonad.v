@@ -11,6 +11,14 @@ Import Monoid.Notations.
 Import Product.Notations.
 Import Classes.Kleisli.DecoratedMonad.Notations.
 
+#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments dec {E}%type_scope F%function_scope {Decorate} {A}%type_scope _.
+#[local] Arguments extract W%function_scope {Extract} {A}%type_scope _.
+#[local] Arguments bind {U} (T)%function_scope {Bind} {A B}%type_scope _%function_scope _.
+#[local] Arguments join (T)%function_scope {Join} {A}%type_scope _.
+#[local] Arguments bindd {W}%type_scope {U} (T)%function_scope {Bindd} {A B}%type_scope _ _.
+
 (** * Algebraic decorated monad to Kleisli decorated monad *)
 (******************************************************************************)
 
@@ -41,7 +49,7 @@ Module ToKleisli.
     (** *** Identity law *)
     (******************************************************************************)
     Lemma bindd_id :
-      `(bindd T (ret T A ∘ extract (prod W) A) = @id (T A)).
+      `(bindd T (ret T A ∘ extract (prod W)) = @id (T A)).
     Proof.
       intros. unfold_ops @Bindd_dec.
       rewrite <- (fun_map_map (F := T)).
@@ -69,19 +77,19 @@ Module ToKleisli.
         with (g ∘ (dec T ∘ map T (dec T ∘ f) ∘ dec T)).
       rewrite <- (cobind_dec T).
       reassociate <-.
-      change (?g ∘ map T (shift T) ∘ map T (cobind (prod W) (dec T ∘ f)) ∘ ?h)
-        with (g ∘ (map T (shift T) ∘ map T (cobind (prod W) (dec T ∘ f))) ∘ h).
+      change (?g ∘ map T (shift T) ∘ map T (cobind (W := prod W) (dec T ∘ f)) ∘ ?h)
+        with (g ∘ (map T (shift T) ∘ map T (cobind (W := prod W) (dec T ∘ f))) ∘ h).
       rewrite (fun_map_map (F := T)).
       unfold bindd.
-      change (?h ∘ map T g ∘ join T ∘ map T (shift T ∘ cobind (prod W) (dec T ∘ f)) ∘ ?i)
-        with (h ∘ (map T g ∘ join T ∘ map T (shift T ∘ cobind (prod W) (dec T ∘ f))) ∘ i).
+      change (?h ∘ map T g ∘ join T ∘ map T (shift T ∘ cobind (W := prod W) (dec T ∘ f)) ∘ ?i)
+        with (h ∘ (map T g ∘ join T ∘ map T (shift T ∘ cobind (W := prod W) (dec T ∘ f))) ∘ i).
       fequal.
       unfold kc5, bindd, preincr.
       rewrite natural.
       reassociate ->. unfold_ops @Map_compose. unfold_compose_in_compose.
       rewrite (fun_map_map (F := T)).
-      replace (fun '(w, a) => (join T ∘ map T (g ∘ incr W w) ∘ dec T) (f (w, a)))
-        with (join T ∘ (fun '(w, a) => (map T (g ∘ incr W w) ∘ dec T) (f (w, a))))
+      replace (fun '(w, a) => (join T ∘ map T (g ∘ incr w) ∘ dec T) (f (w, a)))
+        with (join T ∘ (fun '(w, a) => (map T (g ∘ incr w) ∘ dec T) (f (w, a))))
         by (ext [? ?]; reflexivity).
       reassociate <-.
       #[local] Set Keyed Unification.

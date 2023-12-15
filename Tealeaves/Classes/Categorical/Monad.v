@@ -36,9 +36,8 @@ Class Monad
         join A ∘ map T (T (T A)) (T A) (join A));
   }.
 
-#[global] Arguments join _%function_scope {Join} {A}%type_scope.
+#[global] Arguments join {T}%function_scope {Join} {A}%type_scope.
 #[local] Arguments join _%function_scope {Join} A%type_scope.
-#[local] Arguments ret _%function_scope {Return} A%type_scope.
 
 (** * Monad homomorphisms *)
 (******************************************************************************)

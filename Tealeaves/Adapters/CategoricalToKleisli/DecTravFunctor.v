@@ -16,7 +16,7 @@ Module ToKleisli.
     (T : Type -> Type)
     `{Map T} `{Decorate E T} `{ApplicativeDist T} : Mapdt E T :=
   fun (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    (A B : Type) (f : E * A -> G B) => (dist T G ∘ map T f ∘ dec T : T A -> G (T B)).
+    (A B : Type) (f : E * A -> G B) => (dist T G ∘ map f ∘ dec T : T A -> G (T B)).
 
   Section with_functor.
 
@@ -25,7 +25,7 @@ Module ToKleisli.
       (T : Type -> Type)
       `{Categorical.DecTravFunctor.DecoratedTraversableFunctor E T}.
 
-    Theorem mapdt_id : forall (A : Type), mapdt T (fun A => A) (extract (E ×) A) = @id (T A).
+    Theorem mapdt_id : forall (A : Type), mapdt (G := fun A => A) (extract (W := (E ×))) = @id (T A).
     Proof.
       introv. unfold_ops @Mapdt_distdec.
       reassociate -> on left.
@@ -34,29 +34,30 @@ Module ToKleisli.
     Qed.
 
     Theorem mapdt_mapdt :
-      forall (G1 G2 : Type -> Type) `{Applicative G1} `{Applicative G2}
+      forall `{Applicative G1} `{Applicative G2}
         (A B C : Type) (g : E * B -> G2 C) (f : E * A -> G1 B),
-        map G1 (mapdt T G2 g) ∘ mapdt T G1 f = mapdt T (G1 ∘ G2) (g ⋆6 f).
+        map (mapdt g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (g ⋆6 f).
     Proof.
       intros. unfold transparent tcs. unfold kc6.
       rewrite <- (fun_map_map (F := G1)).
       repeat reassociate <- on left.
-      change (?f ∘ map G1 (dec T) ∘ dist T G1 ∘ ?g) with
-        (f ∘ (map G1 (dec T) ∘ dist T G1) ∘ g).
+      change (?f ∘ map (dec T) ∘ dist T G1 ∘ ?g) with
+        (f ∘ (map (F := G1) (dec T) ∘ dist T G1) ∘ g).
       rewrite <- (dtfun_compat (E := E) (F := T) B).
       rewrite <- (fun_map_map (F := G1)).
       repeat reassociate <- on left.
-      change (?f ∘ map G1 (map T g) ∘ dist T G1 ∘ ?h) with
-        (f ∘ (map G1 (map T g) ∘ dist T G1) ∘ h).
-      change (map G1 (map T g)) with (map (G1 ∘ T) g).
+      change (?f ∘ map (map g) ∘ dist T G1 ∘ ?h) with
+        (f ∘ (map (F := G1) (map (F := T) g) ∘ dist T G1) ∘ h).
+      change (map (map g)) with (map (F := G1 ∘ T) g).
       rewrite (natural (ϕ := @dist T _ G1 _ _ _)).
       rewrite (dist_linear (F := T)).
       repeat reassociate <- on left.
       rewrite <- (fun_map_map (F := T)).
       unfold_ops @Map_compose.
-      change (?f ∘ map T (map G1 g) ∘ ?x ∘ ?h) with
-        (f ∘ (map T (map G1 g) ∘ x) ∘ h).
-      rewrite (fun_map_map (F := T)). reassociate -> near (map T f).
+      change (?f ∘ map (map g) ∘ ?x ∘ ?h) with
+        (f ∘ (map (F := T) (map (F := G1) g) ∘ x) ∘ h).
+      rewrite (fun_map_map (F := T)).
+      reassociate -> near (map f).
       rewrite <- (natural (ϕ := @dec E T _)).
       repeat reassociate ->.
       repeat fequal.
@@ -67,7 +68,7 @@ Module ToKleisli.
     Qed.
 
     Theorem mapdt_mapdt_morphism : forall `{ApplicativeMorphism G1 G2 ϕ} (A B : Type) (f : E * A -> G1 B),
-        mapdt T G2 (ϕ B ∘ f) = ϕ (T B) ∘ mapdt T G1 f.
+        mapdt (ϕ B ∘ f) = ϕ (T B) ∘ mapdt f.
     Proof.
       intros. unfold transparent tcs.
       do 2 reassociate <-.

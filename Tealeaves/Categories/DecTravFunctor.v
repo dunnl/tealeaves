@@ -12,6 +12,7 @@ Import Product.Notations.
 Import Monoid.Notations.
 
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments join T%function_scope {Join} {A}%type_scope _.
 
 (** * Monoid structure of D-T functors *)
 (******************************************************************************)

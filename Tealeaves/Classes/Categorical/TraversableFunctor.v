@@ -5,7 +5,7 @@ From Tealeaves Require Export
 Import Functor.Notations.
 Import Applicative.Notations.
 
-#[local] Generalizable Variable X Y T U G ϕ A.
+#[local] Generalizable Variable X Y T U G ϕ A B.
 
 (** * Traversable functors *)
 (******************************************************************************)
@@ -17,7 +17,6 @@ Class ApplicativeDist (F : Type -> Type) :=
       F ○ G ⇒ G ○ F.
 
 #[global] Arguments dist (F)%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} {A}%type_scope _.
-#[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} A%type_scope _.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 #[local] Arguments pure F%function_scope {Pure} {A}%type_scope _.
 #[local] Arguments mult F%function_scope {Mult} {A B}%type_scope _.
@@ -29,13 +28,13 @@ Class TraversableFunctor
   `{Map F} `{ApplicativeDist F} :=
   { trav_functor :> Functor F;
     dist_natural :> forall `{Applicative G},
-        @Natural (F ∘ G) _ (G ∘ F) _ (dist F G);
-    dist_morph : forall `{ApplicativeMorphism G1 G2 ϕ} A,
-      dist F G2 A ∘ map F (ϕ A) = ϕ (F A) ∘ dist F G1 A;
+        @Natural (F ∘ G) _ (G ∘ F) _ (@dist F _ G _ _ _);
+    dist_morph : forall `{ApplicativeMorphism G1 G2 ϕ},
+      `(dist F G2 ∘ map F (ϕ A) = ϕ (F A) ∘ dist F G1);
     dist_unit :
-    `(dist F (fun A => A) A = id);
+    `(dist F (fun A => A) = id (A := F A));
     dist_linear : forall `{Applicative G1} `{Applicative G2},
-      `(dist F (G1 ∘ G2) A = map G1 (dist F G2 A) ∘ dist F G1 (G2 A));
+      `(dist F (G1 ∘ G2) = map G1 (dist F G2) ∘ dist F G1 (A := G2 A));
   }.
 
 (** ** Distribution-respecting natural transformations *)
@@ -48,7 +47,7 @@ Class TraversableMorphism
       trvmor_trv_G : TraversableFunctor U;
       trvmor_nat :> Natural ϕ;
       trvmor_hom : forall `{Applicative G},
-          `(map G (ϕ A) ∘ dist T G A = dist U G A ∘ ϕ (G A));
+          `(map G (ϕ A) ∘ dist T G = dist U G ∘ ϕ (G A));
     }.
 
 (** * Basic properties of traversable functors *)
@@ -93,21 +92,21 @@ End pure_as_applicative_transformation.
 Section purity_law.
 
   Context
-    (T : Type -> Type)
     `{TraversableFunctor T}.
 
-  Corollary map_purity_1 `{Applicative G} : forall A,
-    dist T G A ∘ map T (pure G) = pure G.
+  Corollary map_purity_1 : forall `{Applicative G},
+      `(dist T G ∘ map T (pure G) = pure G (A := T A)).
   Proof.
     intros. rewrite (dist_morph (ϕ := @pure G _)).
     now rewrite (dist_unit).
   Qed.
 
-  Corollary map_purity_2 {B} `{Applicative G1} `{Applicative G2} : forall `(f : A -> G1 B),
-      dist T (G2 ∘ G1) B ∘ map T (pure G2 ∘ f) = pure G2 ∘ dist T G1 B ∘ map T f.
+  Corollary map_purity_2 :
+    forall `{Applicative G1} `{Applicative G2} `(f : A -> G1 B),
+      dist T (G2 ∘ G1) ∘ map T (pure G2 ∘ f) = pure G2 ∘ dist T G1 ∘ map T f.
   Proof.
     intros. rewrite <- (fun_map_map).
-    reassociate <-. rewrite (dist_linear).
+    reassociate <-. rewrite dist_linear.
     reassociate -> near (map T (pure G2)).
     rewrite map_purity_1.
     fequal. ext t. unfold compose.
@@ -134,13 +133,13 @@ Section TraversableFunctor_prod.
     fun F Fmap mlt pur A '(x, a) => map F (pair x) a.
 
   Lemma dist_natural_prod : forall `{Applicative G} `(f : A -> B),
-      map (G ∘ prod E) f ∘ dist (prod E) G A = dist (prod E) G B ∘ map (prod E ∘ G) f.
+      map (G ∘ prod E) f ∘ dist (prod E) G = dist (prod E) G ∘ map (prod E ∘ G) f.
   Proof.
     intros. ext [x a]; cbn.
     unfold compose; cbn.
     unfold_ops @Map_compose.
     compose near a.
-    do 2 rewrite (fun_map_map).
+    do 2 rewrite fun_map_map.
     reflexivity.
   Qed.
 
@@ -151,26 +150,26 @@ Section TraversableFunctor_prod.
   Qed.
 
   Lemma dist_morph_prod : forall `{ApplicativeMorphism G1 G2 ϕ} A,
-      dist (prod E) G2 A ∘ map (prod E) (ϕ A) = ϕ (E * A) ∘ dist (prod E) G1 A.
+      dist (prod E) G2 ∘ map (prod E) (ϕ A) = ϕ (E * A) ∘ dist (prod E) G1.
   Proof.
     intros; unfold compose; cbn. ext [x a]; cbn.
     now rewrite appmor_natural.
   Qed.
 
   Lemma dist_unit_prod : forall (A : Type),
-      dist (prod E) (fun A => A) A = @id (prod E A).
+      dist (prod E) (fun A => A) = @id (prod E A).
   Proof.
     intros; unfold compose; cbn. ext [x a]; now cbn.
   Qed.
 
   Lemma dist_linear_prod : forall `{Applicative G1} `{Applicative G2} (A : Type),
-      dist (prod E) (G1 ∘ G2) A =
-      map G1 (dist (prod E) G2 A) ∘ dist (prod E) G1 (G2 A).
+      dist (prod E) (G1 ∘ G2) =
+      map G1 (dist (prod E) G2) ∘ dist (prod E) G1 (A := G2 A).
   Proof.
     intros; unfold compose; cbn. ext [x a].
     unfold_ops @Dist_prod @Map_compose.
     compose near a on right.
-    now rewrite (fun_map_map).
+    now rewrite fun_map_map.
   Qed.
 
   #[global] Instance Traversable_prod :
@@ -212,13 +211,13 @@ Section TraversableFunctor_const.
   (******************************************************************************)
   Lemma dist_const1 : forall (X : Type) `{Monoid M},
       (@dist T _ (const M)
-             (Map_const) (Pure_const) (Mult_const) X)
+             Map_const Pure_const Mult_const X)
       =
       (@dist T _ (const M)
-             (Map_const) (Pure_const) (Mult_const) False).
+             Map_const Pure_const Mult_const False).
   Proof.
     intros. symmetry. change (?f = ?g) with (f = g ∘ (@id (T M))).
-    rewrite <- (fun_map_id).
+    rewrite <- fun_map_id.
     change (@id M) with
         (map (A := False) (B:=X) (const M) exfalso).
     change (map T (map (const M) ?f))
@@ -229,10 +228,10 @@ Section TraversableFunctor_const.
 
   Lemma dist_const2 : forall (X Y : Type) `{Monoid M},
       (@dist T _ (const M)
-             (Map_const) (Pure_const) (Mult_const) X)
+             Map_const Pure_const Mult_const X)
       =
       (@dist T _ (const M)
-             (Map_const) (Pure_const) (Mult_const) Y).
+             Map_const Pure_const Mult_const Y).
   Proof.
     intros. now rewrite (dist_const1 X), (dist_const1 Y).
   Qed.
@@ -241,18 +240,18 @@ Section TraversableFunctor_const.
   (******************************************************************************)
   Theorem traversable_const_spec (tag : Type) `{Monoid M} :
     unconst ∘ @dist T _ (Const M)
-            (Map_Const)
-            (Pure_Const)
-            (Mult_Const) tag ∘ map T (mkConst)
+            Map_Const
+            Pure_Const
+            Mult_Const tag ∘ map T mkConst
     = @dist T _ (const M)
-            (Map_const)
-            (Pure_const)
-            (Mult_const) tag.
+            Map_const
+            Pure_const
+            Mult_const tag.
   Proof.
     intros. rewrite <- (dist_morph (ϕ := @unconst _)).
-    reassociate -> on left. rewrite (fun_map_map).
+    reassociate -> on left. rewrite fun_map_map.
     change (unconst ∘ mkConst) with (@id M).
-    now rewrite (fun_map_id).
+    now rewrite fun_map_id.
   Qed.
 
 End TraversableFunctor_const.
@@ -260,5 +259,5 @@ End TraversableFunctor_const.
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
-  Notation "'δ'" := (dist) : tealeaves_scope.
+  Notation "'δ'" := dist : tealeaves_scope.
 End Notations.
