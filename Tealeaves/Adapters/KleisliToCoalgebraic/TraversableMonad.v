@@ -44,23 +44,23 @@ Section runBatch.
 
   Lemma traverse_to_runBatch (G : Type -> Type)
     `{Applicative G} {A B : Type} (f : A -> G B) :
-    traverse T G A B f = runBatch G (map G _ _ (ret T B) ∘ f) (T B) ∘ toBatchM T A B.
+    traverse T G A B f = runBatch G (map G _ _ (ret (A := B)) ∘ f) (T B) ∘ toBatchM T A B.
   Proof.
-    rewrite (ktmf_traverse_to_bindt G).
+    rewrite (ktmf_traverse_to_bindt).
     rewrite (bindt_to_runBatch G).
     reflexivity.
   Qed.
 
   Corollary map_to_runBatch {A B : Type} (f : A -> B) :
-    map T A B f = runBatch (fun A => A) (ret T B ∘ f) (T B) ∘ toBatchM T A B.
+    map T A B f = runBatch (fun A => A) (ret (T := T) (A := B) ∘ f) (T B) ∘ toBatchM T A B.
   Proof.
-    rewrite (map_to_traverse T).
+    rewrite (map_to_traverse).
     rewrite (traverse_to_runBatch (fun A => A)).
     reflexivity.
   Qed.
 
   Corollary id_to_runBatch : forall (A : Type),
-      id (A := T A) = runBatch (fun A => A) (ret T A) (T A) ∘ toBatchM T A A.
+      id (A := T A) = runBatch (fun A => A) (ret (T := T) (A := A)) (T A) ∘ toBatchM T A A.
   Proof.
     intros. rewrite <- (fun_map_id (F := T)).
     rewrite map_to_runBatch.
@@ -77,16 +77,16 @@ Lemma toBatchM_toBatch (T : Type -> Type)
   `{Kleisli.TraversableMonad.TraversableMonadFull T}
   {A B : Type} (t : T A) :
   toBatch T A B t =
-    mapsnd_Batch B (T B) (ret T B) (toBatchM T A B t).
+    mapsnd_Batch B (T B) (ret (T := T) (A := B)) (toBatchM T A B t).
 Proof.
   intros.
   unfold toBatch, ToBatch_Traverse.
   unfold toBatchM, ToBatchM_Bindt.
-  rewrite (ktmf_traverse_to_bindt (T := T) (Batch A B)).
+  rewrite (ktmf_traverse_to_bindt (T := T) (G := Batch A B)).
   compose near t on right.
   rewrite (ktm_morph
              (T := T) (A := A) (B := B)
-             (ϕ := fun C => mapsnd_Batch B (T B) (ret T B) (A := A) (C := C))).
+             (ϕ := fun C => mapsnd_Batch B (T B) (ret (T := T)) (A := A) (C := C))).
   rewrite (ret_dinatural).
   reflexivity.
 Qed.
@@ -100,7 +100,7 @@ Lemma toBatchM_mapfst (T : Type -> Type)
 Proof.
   unfold_ops @ToBatchM_Bindt.
   #[local] Existing Instance DerivedOperations.TraversableMonadFull_Default.
-  rewrite (bindt_map T (Batch B (T C))).
+  rewrite (bindt_map (G2 := Batch B (T C))).
   rewrite (bindt_to_runBatch T (Batch B (T C))).
   rewrite (bindt_to_runBatch T (Batch A (T C))).
   ext t.
@@ -129,7 +129,7 @@ Section to_coalgebraic.
   Qed.
 
   Lemma toBatchM_ret_Kleisli : forall A B : Type,
-      toBatchM T A B ∘ ret T A = batch A (T B).
+      toBatchM T A B ∘ ret = batch A (T B).
   Proof.
     intros.
     unfold_ops @ToBatchM_Bindt.
@@ -137,13 +137,13 @@ Section to_coalgebraic.
   Qed.
 
   Lemma toBatchM_extract_Kleisli : forall (A : Type),
-      extract_Batch (T A) ∘ mapfst_Batch A (T A) (ret T A) ∘ toBatchM T A A = @id (T A).
+      extract_Batch (T A) ∘ mapfst_Batch A (T A) ret ∘ toBatchM T A A = @id (T A).
   Proof.
     intros.
     reassociate -> on left.
     rewrite <- (toBatchM_mapfst T).
     unfold_ops @ToBatchM_Bindt.
-    rewrite (bindt_map T (Batch (T A) (T A))).
+    rewrite (bindt_map (G2 := Batch (T A) (T A))).
     rewrite (ktm_morph (ϕ := extract_Batch)).
     reassociate <- on left.
     rewrite (extract_Batch_batch).
@@ -169,7 +169,7 @@ Section to_coalgebraic.
     rewrite double_BatchM_spec.
     reflexivity.
     Unshelve.
-    eauto with typeclass_instances.
+    all:eauto with typeclass_instances.
   Qed.
 
   #[export] Instance Coalgebraic_TraversableMonad_of_Kleisli :

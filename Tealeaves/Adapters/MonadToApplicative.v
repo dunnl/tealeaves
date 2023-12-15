@@ -24,18 +24,18 @@ Section Applicative_Monad.
   #[global] Instance Mult_Monad : Mult T :=
     fun A B (p : T A * T B) =>
       match p with (ta, tb) =>
-                   bind T (fun a => strength T (a, tb)) ta
+                   bind (fun a => strength (a, tb)) ta
       end.
 
   Theorem app_pure_natural_Monad : forall (A B : Type) (f : A -> B) (x : A),
-      map T f (pure T x) = pure T (f x).
+      map f (pure x) = pure (f x).
   Proof.
     intros. unfold_ops @Pure_Monad.
     compose near x. now rewrite (natural (ϕ := @ret T _)).
   Qed.
 
   Theorem app_mult_natural_Monad : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : T A) (y : T B),
-      map T f x ⊗ map T g y = map T (map_tensor f g) (x ⊗ y).
+      map f x ⊗ map g y = map (map_tensor f g) (x ⊗ y).
   Proof.
     intros. unfold_ops @Mult_Monad.
     compose near x.
@@ -45,7 +45,7 @@ Section Applicative_Monad.
   Qed.
 
   Theorem app_assoc_Monad : forall (A B C : Type) (x : T A) (y : T B) (z : T C),
-      map T α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z).
+      map α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z).
   Proof.
     intros. unfold_ops @Mult_Monad.
     compose near x on left. rewrite (kmon_bind2 (T := T)).
@@ -62,34 +62,34 @@ Section Applicative_Monad.
   Qed.
 
   Theorem app_unital_l_Monad : forall (A : Type) (x : T A),
-      map T left_unitor (pure T tt ⊗ x) = x.
+      map left_unitor (pure tt ⊗ x) = x.
   Proof.
     intros. unfold_ops @Mult_Monad @Pure_Monad.
-    compose near tt. rewrite (mon_bind_comp_ret T).
+    compose near tt. rewrite mon_bind_comp_ret.
     unfold strength. compose near x.
     rewrite (fun_map_map (F := T)). change (left_unitor ∘ pair tt) with (@id A).
     now rewrite (fun_map_id (F := T)).
   Qed.
 
   Theorem app_unital_r_Monad : forall (A : Type) (x : T A),
-      map T right_unitor (x ⊗ pure T tt) = x.
+      map right_unitor (x ⊗ pure tt) = x.
   Proof.
     intros. unfold_ops @Mult_Monad @Pure_Monad.
     compose near x. rewrite (Monad.map_bind T).
-    replace (map T right_unitor ∘ (fun a : A => strength T (a, ret T unit tt)))
-      with (ret T A).
-    now rewrite (mon_bind_id T).
-    ext a; unfold compose; cbn. compose near (ret T unit tt).
+    replace (map right_unitor ∘ (fun a : A => strength (a, ret tt)))
+      with (ret (T := T) (A := A)).
+    now rewrite mon_bind_id.
+    ext a; unfold compose; cbn. compose near (ret tt).
     rewrite (fun_map_map (F := T)). compose near tt.
     rewrite (natural (ϕ := @ret T _ )). now unfold compose; cbn.
   Qed.
 
   Theorem app_mult_pure_Monad : forall (A B : Type) (a : A) (b : B),
-      pure T a ⊗ pure T b = pure T (a, b).
+      pure a ⊗ pure b = pure (a, b).
   Proof.
     intros. intros. unfold_ops @Mult_Monad @Pure_Monad.
-    compose near a. rewrite (mon_bind_comp_ret T).
-    now rewrite (strength_return).
+    compose near a. rewrite mon_bind_comp_ret.
+    now rewrite strength_return.
   Qed.
 
   #[global] Instance Applicative_Monad : Applicative T :=

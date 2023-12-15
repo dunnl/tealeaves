@@ -100,7 +100,7 @@ Section with_functor.
     unfold_ops @ToBatch_Traverse.
     rewrite (trf_traverse_morphism (T := T) (ϕ := @cojoin_Batch A B C)).
     rewrite (cojoin_Batch_batch).
-    rewrite (trf_traverse_traverse (T := T) (Batch A B) (Batch B C)).
+    rewrite (trf_traverse_traverse (T := T) (G1 := Batch A B) (G2 := Batch B C)).
     reflexivity.
   Qed.
 

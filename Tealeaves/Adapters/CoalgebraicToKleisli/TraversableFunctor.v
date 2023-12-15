@@ -24,12 +24,12 @@ Section with_algebra.
       `{TraversableFunctor T}.
 
   Lemma traverse_id : forall (A : Type),
-      traverse T (fun A => A) id = @id (T A).
+      traverse (G := fun A => A) id = @id (T A).
   Proof.
     intros.
     unfold_ops @Traverse_Coalgebra.
     unfold traverse_ToBatch.
-    rewrite <- (extract_Batch_to_runBatch).
+    rewrite <- extract_Batch_to_runBatch.
     rewrite trf_extract.
     reflexivity.
   Qed.
@@ -44,8 +44,8 @@ Section with_algebra.
         Applicative G2 ->
         forall (A B C : Type)
           (g : B -> G2 C) (f : A -> G1 B),
-          runBatch _ f (G2 C) ∘ map (Batch A B) (runBatch _ g C) ∘ double_batch =
-            kc2 G1 G2 g f.
+          runBatch _ f (G2 C) ∘ map (F := Batch A B) (runBatch _ g C) ∘ double_batch =
+            kc2 (G1 := G1) (G2 := G2) g f.
   Proof.
     intros.
     ext a.
@@ -68,15 +68,15 @@ Section with_algebra.
         Applicative G2 ->
         forall (A B C : Type)
           (g : B -> G2 C) (f : A -> G1 B),
-          map G1 (traverse T G2 g) ∘ traverse T G1 f =
-            traverse T (G1 ∘ G2) (kc2 G1 G2 g f).
+          map (F := G1) (traverse (T := T) (G := G2) g) ∘ traverse (G := G1) f =
+            traverse (G := G1 ∘ G2) (kc2 (G1 := G1) (G2 := G2) g f).
   Proof.
     intros.
     unfold_ops @Traverse_Coalgebra.
     unfold traverse_ToBatch.
     rewrite <- (fun_map_map (F := G1)).
     reassociate ->.
-    reassociate <- near (map G1 (toBatch T B C)).
+    reassociate <- near (map (toBatch T B C)).
     rewrite natural.
     reassociate ->.
     rewrite <- trf_duplicate.
@@ -84,7 +84,7 @@ Section with_algebra.
     rewrite cojoin_Batch_to_runBatch.
     rewrite (natural (G := G1) (F := Batch A B)).
     rewrite (runBatch_morphism'
-               (H9 := ApplicativeMorphism_parallel (Batch A B) (Batch B C) G1 G2)).
+               (homomorphism := ApplicativeMorphism_parallel (Batch A B) (Batch B C) G1 G2)).
     unfold_compose_in_compose.
     rewrite (k2_spec G1 G2 _ _ _ _ _ _ _ _).
     reflexivity.

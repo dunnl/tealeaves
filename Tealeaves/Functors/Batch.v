@@ -512,7 +512,7 @@ Section runBatch_naturality.
   Qed.
 
   Context
-    `{ApplicativeMorphism F G ψ}.
+    `{homomorphism : ApplicativeMorphism F G ψ}.
 
   Lemma runBatch_morphism `(ϕ : A -> F B) `(b : Batch A B C) :
     ψ C (runBatch F ϕ C b) = runBatch G (ψ B ∘ ϕ) C b.

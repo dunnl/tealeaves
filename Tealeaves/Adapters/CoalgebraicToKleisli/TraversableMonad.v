@@ -5,7 +5,7 @@ From Tealeaves Require Import
 
 Import Applicative.Notations.
 
-#[local] Generalizable Variables G.
+#[local] Generalizable Variables T G ϕ.
 
 (** * Coalgebraic to traversable monad *)
 (******************************************************************************)
@@ -23,12 +23,11 @@ Definition bindt_ToBatchM
 Section with_algebra.
 
   Context
-    (T : Type -> Type)
     `{Coalgebraic.TraversableMonad.TraversableMonad T}.
 
   Lemma ktm_bindt0_T :
     forall `{Applicative G} (A B : Type) (f : A -> G (T B)),
-      bindt G A B f ∘ ret T A = f.
+      bindt (T := T) (G := G) f ∘ ret = f.
   Proof.
     intros.
     unfold_ops Bindt_ToBatchM; unfold bindt_ToBatchM.
@@ -40,13 +39,13 @@ Section with_algebra.
 
 
   Lemma ktm_bindt1_T : forall (A : Type),
-      bindt (fun A : Type => A) A A (ret T A) = (@id (T A)).
+      bindt (G := fun A : Type => A) (ret (T := T)) = (@id (T A)).
   Proof.
     intros.
     unfold id. ext t.
     unfold_ops Bindt_ToBatchM; unfold bindt_ToBatchM.
-    assert (lemma : @runBatch A (T A) (fun X => X) _ _ _ (ret T A) (T A) =
-              extract_Batch ∘ mapfst_Batch A (T A) (ret T A)).
+    assert (lemma : @runBatch A (T A) (fun X => X) _ _ _ (@ret T _ A) (T A) =
+              extract_Batch ∘ mapfst_Batch A (T A) (@ret T _ A)).
     { rewrite (runBatch_spec (fun A => A)).
       rewrite <- (TraversableFunctor.map_to_traverse).
       rewrite <- map_compat_traverse_Batch1.
@@ -63,8 +62,8 @@ Section with_algebra.
     `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}
     (g : B -> G2 (T C))
     (f : A -> G1 (T B)) :
-    kc3 T G1 G2 g f =
-      runBatch G1 f (G2 (T C)) ∘ map (Batch A (T B)) (runBatch G2 g (T C))
+    kc3 (G1 := G1) (G2 := G2) g f =
+      runBatch G1 f (G2 (T C)) ∘ map (F := Batch A (T B)) (runBatch G2 g (T C))
         ∘ double_BatchM T A B C.
   Proof.
     ext a.
@@ -75,14 +74,10 @@ Section with_algebra.
   Qed.
 
   Lemma ktm_bindt2_T :
-    forall (G1 G2 : Type -> Type) (H1 : Map G1)
-      (H2 : Pure G1) (H4 : Mult G1),
-      Applicative G1 ->
-      forall (H6 : Map G2) (H7 : Pure G2) (H8 : Mult G2),
-        Applicative G2 ->
+    forall `{Applicative G1} `{Applicative G2},
         forall (A B C : Type) (g : B -> G2 (T C)) (f : A -> G1 (T B)),
-          map G1 (bindt G2 B C g) ∘ bindt G1 A B f =
-            bindt (G1 ∘ G2) A C (kc3 T G1 G2 g f).
+          map (F := G1) (bindt (G := G2) g) ∘ bindt (G := G1) f =
+            bindt (G := G1 ∘ G2) (kc3 (G1 := G1) (G2 := G2) g f).
   Proof.
     intros.
     unfold_ops Bindt_ToBatchM; unfold bindt_ToBatchM.
@@ -97,20 +92,16 @@ Section with_algebra.
     reassociate <- on left.
     rewrite (natural).
     rewrite (runBatch_morphism'
-               (H9 := ApplicativeMorphism_parallel
+               (homomorphism := ApplicativeMorphism_parallel
                         (Batch A (T B)) (Batch B (T C)) G1 G2)).
     rewrite (kc3_spec G1 G2).
     reflexivity.
   Qed.
 
   Lemma ktm_morph_T :
-    forall (G1 G2 : Type -> Type) (H1 : Map G1)
-      (H2 : Pure G1) (H4 : Mult G1) (H5 : Map G2)
-      (H6 : Pure G2) (H7 : Mult G2)
-      (ϕ : forall A : Type, G1 A -> G2 A),
-      ApplicativeMorphism G1 G2 ϕ ->
+    forall `{ApplicativeMorphism G1 G2 ϕ},
       forall (A B : Type) (f : A -> G1 (T B)),
-        ϕ (T B) ∘ bindt G1 A B f = bindt G2 A B (ϕ (T B) ∘ f).
+        ϕ (T B) ∘ bindt (G := G1) f = bindt (G := G2) (ϕ (T B) ∘ f).
   Proof.
     intros.
     unfold_ops Bindt_ToBatchM; unfold bindt_ToBatchM.
@@ -122,8 +113,8 @@ Section with_algebra.
     Kleisli.TraversableMonad.TraversableMonad T :=
     {| ktm_bindt0 := @ktm_bindt0_T;
       ktm_bindt1 := ktm_bindt1_T;
-      ktm_bindt2 := ktm_bindt2_T;
-      ktm_morph := ktm_morph_T;
+      ktm_bindt2 := @ktm_bindt2_T;
+      ktm_morph := @ktm_morph_T;
     |}.
 
 End with_algebra.
