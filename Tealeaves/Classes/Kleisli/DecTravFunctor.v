@@ -518,9 +518,8 @@ Module DerivedInstances.
 
     (** ** Naturality in applicative morphisms *)
     (******************************************************************************)
-    Lemma traverse_morphism `{Applicative G1} `{Applicative G2} :
-      forall (ϕ : forall (A : Type), G1 A -> G2 A)
-        `{! ApplicativeMorphism G1 G2 ϕ},
+    Lemma traverse_morphism :
+      forall `{ApplicativeMorphism G1 G2 ϕ},
       forall (A B : Type) (f : A -> G1 B),
         ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f).
     Proof.

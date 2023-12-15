@@ -18,38 +18,33 @@ Import Kleisli.TraversableFunctor.Notations.
 Import Batch.Notations.
 Import Monoid.Notations.
 
-#[local] Generalizable Variables M A B T ϕ G.
-#[local] Arguments traverse (T)%function_scope {Traverse} G%function_scope
-  {H H0 H1} (A B)%type_scope _%function_scope _.
-#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope.
+#[local] Generalizable Variables T G A B M ϕ.
 
 (** * Theory of traversable functors *)
 (******************************************************************************)
 Section traversable_functor_theory.
 
   Context
-    (T : Type -> Type)
     `{TraversableFunctorFull T}.
 
   (** * Interaction with <<pure>> *)
   (******************************************************************************)
   Theorem traverse_purity1 :
-    forall (G : Type -> Type)
-      `{Applicative G} (A : Type),
-      traverse T G A A (pure G) = @pure G _ (T A).
+    forall `{Applicative G},
+      `(traverse (G := G) pure = @pure G _ (T A)).
   Proof.
     intros.
     change (@pure G _ A) with (@pure G _ A ∘ id).
     rewrite <- (trf_traverse_morphism (G1 := fun A => A) (G2 := G)).
-    now rewrite (trf_traverse_id).
+    rewrite (trf_traverse_id).
+    reflexivity.
   Qed.
 
-  Lemma traverse_purity2
-    (G1 G2 : Type -> Type)
-    `{Applicative G2}
-    `{Applicative G1}
-    {A B : Type} : forall (f : A -> G1 B),
-      traverse T (G2 ∘ G1) A B (pure G2 ∘ f) = pure G2 ∘ traverse T G1 A B f.
+  Lemma traverse_purity2 :
+    forall `{Applicative G2}
+      `{Applicative G1}
+      `(f : A -> G1 B),
+      traverse (G := G2 ∘ G1) (pure (F := G2) ∘ f) = pure (F := G2) ∘ traverse f.
   Proof.
     intros.
     assert (ApplicativeMorphism G1 (G2 ∘ G1) (@pure G2 _ ○ G1)).
@@ -139,17 +134,17 @@ Section traversable_functor_theory.
       `{Monoid M}.
 
     Lemma traverse_const1: forall {A : Type} (B : Type) `(f : A -> M),
-        traverse T (const M) A False f = traverse T (const M) A B f.
+        traverse (G := const M) (B := False) f = traverse (G := const M) (B := B) f.
     Proof.
       intros.
-      change_left (map (const M) (T False) (T B) (map T False B exfalso)
-                     ∘ traverse T (const M) A False (f : A -> const M False)).
+      change_left (map (F := const M) (A := T False) (B := T B) (map (F := T) (A := False) (B := B) exfalso)
+                     ∘ traverse (T := T) (G := const M) (B := False) (f : A -> const M False)).
       rewrite (map_traverse T (const M)).
       reflexivity.
     Qed.
 
     Lemma traverse_const2: forall {A : Type} (f : A -> M) (fake1 fake2 : Type),
-        traverse T (const M) A fake1 f = traverse T (const M) A fake2 f.
+        traverse (G := const M) (B := fake1) f = traverse (G := const M) (B := fake2) f.
     Proof.
       intros.
       rewrite <- (traverse_const1 fake1).
@@ -161,21 +156,19 @@ Section traversable_functor_theory.
 
   (** ** The <<foldmap>> operation *)
   (******************************************************************************)
-  Definition foldMap (T : Type -> Type)
-    `{op : Monoid_op M} `{unit : Monoid_unit M} `{Traverse T}
-    {A : Type} (f : A -> M) : T A -> M := traverse T (const M) A False f.
-
+  Definition foldMap {T : Type -> Type} `{op : Monoid_op M} `{unit : Monoid_unit M} `{Traverse T}
+    {A : Type} (f : A -> M) : T A -> M := traverse (G := const M) (B := False) f.
 
   (** *** As a special case of <<traverse>> *)
   (******************************************************************************)
   Lemma foldMap_to_traverse1 (M : Type) `{Monoid M} : forall `(f : A -> M),
-      foldMap T f = traverse T (const M) A False f.
+      foldMap f = traverse (G := const M) (B := False) f.
   Proof.
     reflexivity.
   Qed.
 
   Lemma foldMap_to_traverse2 (M : Type) `{Monoid M} : forall (fake : Type) `(f : A -> M),
-      foldMap T f = traverse T (const M) A fake f.
+      foldMap f = traverse (G := const M) (B := fake) f.
   Proof.
     intros.
     rewrite (foldMap_to_traverse1 M).
@@ -186,7 +179,7 @@ Section traversable_functor_theory.
   (** *** As a special case of <<runBatch>> *)
   (******************************************************************************)
   Lemma foldMap_to_runBatch1 (A : Type) `{Monoid M} : forall `(f : A -> M),
-      foldMap T f = runBatch (const M) f (T False) ∘ toBatch T A False.
+      foldMap f = runBatch (const M) f (T False) ∘ toBatch T A False.
   Proof.
     intros.
     rewrite (foldMap_to_traverse1 M).
@@ -195,10 +188,11 @@ Section traversable_functor_theory.
   Qed.
 
   Lemma foldMap_to_runBatch2 `{Monoid M} : forall (A fake : Type) `(f : A -> M),
-      foldMap T f = runBatch (const M) f (T fake) ∘ toBatch T A fake.
+      foldMap f = runBatch (const M) f (T fake) ∘ toBatch T A fake.
   Proof.
     intros.
     rewrite (foldMap_to_traverse1 M).
+    change (fun _ : Type => M) with (const (A := Type) M).
     rewrite (traverse_const1 fake).
     rewrite (traverse_to_runBatch T (const M)).
     reflexivity.
@@ -208,37 +202,41 @@ Section traversable_functor_theory.
   (******************************************************************************)
   Lemma foldMap_traverse `{Monoid M} (G : Type -> Type) {B : Type} `{Applicative G} :
     forall `(g : B -> M) `(f : A -> G B),
-      map G (T B) M (foldMap T g) ∘ traverse T G A B f =
-        foldMap T (map G B M g ∘ f).
+      map (A := T B) (B := M) (foldMap g) ∘ traverse f =
+        foldMap (map g ∘ f).
   Proof.
     intros.
     rewrite (foldMap_to_traverse1 M).
-    rewrite (trf_traverse_traverse (T := T) G (const M) (B := B) (C := False)).
+    rewrite (trf_traverse_traverse (T := T) (G1 := G) (G2 := const M) (B := B) (C := False)).
     rewrite (foldMap_to_traverse1 (G M)).
-    fequal.  (* TODO abstract this step *)
-    - ext A' B' f' t.
+    (* TODO abstract this step *)
+    assert (hidden1 : @Map_compose G (const M) _ _ = @Map_const (G M)).
+    { ext A' B' f' t.
       unfold_ops @Map_compose @Map_const.
       rewrite (fun_map_id (F := G)).
-      reflexivity.
-    - ext A' B' [m1 m2].
-      reflexivity.
+      reflexivity. }
+    assert (hidden2 : @Mult_compose G (const M) _ _ _ = @Mult_const (G M) (Monoid_op_applicative G M)).
+    { ext A' B' [m1 m2].
+      reflexivity. }
+    rewrite hidden1, hidden2.
+    reflexivity.
   Qed.
 
   (** *** Composition with <<map>> *)
   (******************************************************************************)
   Corollary foldMap_map `{Monoid M} : forall `(g : B -> M) `(f : A -> B),
-      foldMap T g ∘ map T A B f = foldMap T (g ∘ f).
+      foldMap g ∘ map f = foldMap (g ∘ f).
   Proof.
     intros.
     rewrite (trff_map_to_traverse (T := T)).
-    change (foldMap T g) with (map (fun A => A) (T B) M (foldMap T g)).
+    change (foldMap g) with (map (F := fun A => A) (A := T B) (B := M) (foldMap g)).
     now rewrite (foldMap_traverse (fun X => X)).
   Qed.
 
   (** *** Homomorphism law *)
   (******************************************************************************)
   Lemma foldMap_morphism (M1 M2 : Type) `{morphism : Monoid_Morphism M1 M2 ϕ} : forall `(f : A -> M1),
-      ϕ ∘ foldMap T f = foldMap T (ϕ ∘ f).
+      ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
   Proof.
     intros.
     inversion morphism.
@@ -253,7 +251,7 @@ Section traversable_functor_theory.
   Section tolist.
 
     #[export] Instance Tolist_Traverse `{Traverse T} : Tolist T :=
-    fun A => foldMap T (ret list A).
+    fun A => foldMap (ret (T := list)).
 
     #[export] Instance Natural_Tolist_Traverse : Natural (@tolist T _).
     Proof.
@@ -266,7 +264,7 @@ Section traversable_functor_theory.
     Qed.
 
     Lemma foldMap_list_eq `{Monoid M} : forall (A : Type) (f : A -> M),
-        foldMap list f = List.foldMap f.
+        foldMap (T := list) f = List.foldMap f.
     Proof.
       intros. ext l. induction l.
       - cbn. reflexivity.
@@ -278,19 +276,19 @@ Section traversable_functor_theory.
     Qed.
 
     Lemma tolist_to_foldMap : forall (A : Type),
-        tolist T = foldMap T (ret list A).
+        tolist (F := T) = foldMap (ret (T := list) (A := A)).
     Proof.
       reflexivity.
     Qed.
 
     Corollary tolist_to_traverse1 : forall (A : Type),
-        tolist T = traverse T (const (list A)) A False (ret list A).
+        tolist = traverse (G := const (list A)) (B := False) (ret (T := list)).
     Proof.
       reflexivity.
     Qed.
 
     Corollary tolist_to_traverse2 : forall (A fake : Type),
-        tolist T = traverse T (const (list A)) A fake (ret list A).
+        tolist = traverse (G := const (list A)) (B := fake) (ret (T := list)).
     Proof.
       intros.
       rewrite tolist_to_traverse1.
@@ -299,9 +297,9 @@ Section traversable_functor_theory.
     Qed.
 
     Corollary tolist_to_runBatch {A : Type} (tag : Type) `(t : T A) :
-      tolist T t =
+      tolist t =
         runBatch (const (list A))
-          (ret list A : A -> const (list A) tag)
+          (ret (T := list) : A -> const (list A) tag)
           (T tag) (toBatch T A tag t).
     Proof.
       rewrite (tolist_to_traverse2 A tag).
@@ -309,7 +307,7 @@ Section traversable_functor_theory.
     Qed.
 
     Corollary foldMap_to_tolist `{Monoid M} : forall (A : Type) (f : A -> M),
-        foldMap T f = foldMap list f ∘ tolist T.
+        foldMap f = foldMap (T := list) f ∘ tolist.
     Proof.
       intros.
       rewrite (tolist_to_foldMap).
@@ -319,20 +317,14 @@ Section traversable_functor_theory.
       reflexivity.
     Qed.
 
-
   End tolist.
 
   (** ** Elements of traversable functors *)
   (******************************************************************************)
-  (*
-#[export] Instance Toset_Traverse (T : Type -> Type) `{Traverse T} : El T :=
-  fun A => foldMap T (ret subset A).
-   *)
-
   Section elements.
 
     Lemma element_to_foldMap1 : forall (A : Type),
-        element_of T = foldMap T (ret subset A).
+        element_of (F := T) (A := A) = foldMap (ret (T := subset)).
     Proof.
       intros.
       unfold_ops @Elements_Tolist.
@@ -343,7 +335,7 @@ Section traversable_functor_theory.
     Qed.
 
     Lemma element_to_foldMap2 : forall (A : Type) (a : A) (t : T A),
-        element_of T t a = foldMap T (op := or) (unit := False) (eq a) t.
+        element_of t a = foldMap (op := or) (unit := False) (eq a) t.
     Proof.
       intros.
       unfold_ops @Elements_Tolist.
@@ -357,13 +349,13 @@ Section traversable_functor_theory.
     (* Relate elements to those obtained by enumeration *)
     (* Note: <<el list A>> (like <<el T A>>) is provided by <<Toset_Traverse>> *)
     Lemma element_to_tolist : forall (A : Type),
-        element_of T (A := A) = element_of list ∘ tolist T.
+        element_of (A := A) = element_of ∘ tolist.
     Proof.
       reflexivity.
     Qed.
 
     Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
-        (a ∈ t) <-> a ∈ (tolist T t).
+        a ∈ t <-> a ∈ tolist t.
     Proof.
       intros.
       rewrite (element_to_tolist).
@@ -371,7 +363,7 @@ Section traversable_functor_theory.
     Qed.
 
     Lemma element_to_toBatch1 : forall (A : Type),
-        element_of T (A := A) = runBatch (const (A -> Prop)) (ret subset A) (T False) ∘ toBatch T A False.
+        element_of = runBatch (const (A -> Prop)) (ret (T := subset) (A := A)) (T False) ∘ toBatch T A False.
     Proof.
       intros.
       rewrite element_to_foldMap1.
@@ -380,7 +372,7 @@ Section traversable_functor_theory.
     Qed.
 
     Lemma element_to_toBatch2 : forall (A tag : Type),
-        element_of T (A := A) = runBatch (const (A -> Prop)) (ret subset A) (T tag) ∘ toBatch T A tag.
+        element_of = runBatch (const (A -> Prop)) (ret (T := subset)) (T tag) ∘ toBatch T A tag.
     Proof.
       intros.
       rewrite element_to_foldMap1.
@@ -390,7 +382,7 @@ Section traversable_functor_theory.
 
     Theorem in_map_iff :
       forall (A B : Type) (f : A -> B) (t : T A) (b : B),
-        b ∈ map T A B f t <-> exists (a : A), a ∈ t /\ f a = b.
+        b ∈ map f t <-> exists (a : A), a ∈ t /\ f a = b.
     Proof.
       intros.
       rewrite element_to_foldMap2.
@@ -454,7 +446,7 @@ Section traversable_functor_theory.
   (** ** Proof that traversable functors are shapely over lists *)
   (******************************************************************************)
   Lemma shapeliness_tactical : forall (A : Type) (b1 b2 : Batch A A (T A)),
-      runBatch (const (list A)) (ret list A) _ b1 = runBatch (const (list A)) (ret list A) _ b2 ->
+      runBatch (const (list A)) (ret (T := list)) _ b1 = runBatch (const (list A)) (ret (T := list) (A := A)) _ b2 ->
       mapfst_Batch A unit (const tt) b1 = mapfst_Batch A unit (const tt) b2 ->
       runBatch (fun A => A) id (T A) b1 = runBatch (fun A => A) id (T A) b2.
   Proof.
@@ -472,12 +464,11 @@ Section traversable_functor_theory.
   Qed.
 
   Theorem shapeliness : forall A (t1 t2 : T A),
-      shape T t1 = shape T t2 /\
-        tolist T t1 = tolist T t2 ->
+      shape t1 = shape t2 /\ tolist t1 = tolist t2 ->
       t1 = t2.
   Proof.
     introv [hyp1 hyp2].
-    assert (hyp1' : (toBatch T unit A ∘ shape T) t1 = (toBatch T unit A ∘ shape T) t2).
+    assert (hyp1' : (toBatch T unit A ∘ shape) t1 = (toBatch T unit A ∘ shape) t2).
     { unfold compose, shape in *. now rewrite hyp1. }
     clear hyp1; rename hyp1' into hyp1.
     unfold shape in hyp1.
@@ -494,7 +485,7 @@ Section traversable_functor_theory.
   Lemma traverse_respectful :
     forall (G : Type -> Type)
       `{Applicative G} `(f1 : A -> G B) `(f2 : A -> G B) (t : T A),
-      (forall (a : A), a ∈ t -> f1 a = f2 a) -> traverse T G A B f1 t = traverse T G A B f2 t.
+      (forall (a : A), a ∈ t -> f1 a = f2 a) -> traverse f1 t = traverse f2 t.
   Proof.
     introv ? hyp.
     do 2 rewrite (traverse_to_runBatch T G).
@@ -513,26 +504,27 @@ Section traversable_functor_theory.
   Corollary traverse_respectful_pure :
     forall (G : Type -> Type)
       `{Applicative G} `(f1 : A -> G A) (t : T A),
-      (forall (a : A), a ∈ t -> f1 a = pure G a) -> traverse T G A A f1 t = pure G t.
+      (forall (a : A), a ∈ t -> f1 a = pure a) -> traverse f1 t = pure t.
   Proof.
     intros.
-    rewrite <- (traverse_purity1 G).
-    now apply (traverse_respectful G).
+    rewrite <- (traverse_purity1).
+    now apply (traverse_respectful).
   Qed.
 
   Corollary traverse_respectful_map {A B} :
     forall (G : Type -> Type)
-      `{Applicative G} t (f : A -> G B) (g : A -> B),
-      (forall a, a ∈ t -> f a = pure G (g a)) -> traverse T G A B f t = pure G (map T A B g t).
+      `{Applicative G} (t : T A) (f : A -> G B) (g : A -> B),
+      (forall a, a ∈ t -> f a = pure (g a)) -> traverse f t = pure (map g t).
   Proof.
-    intros. rewrite <- (traverse_purity1 G).
+    intros. rewrite <- (traverse_purity1 (G := G)).
     compose near t on right.
     rewrite (traverse_map T G).
-    apply (traverse_respectful); auto.
+    apply (traverse_respectful G).
+    assumption.
   Qed.
 
   Corollary map_respectful : forall `(f1 : A -> B) `(f2 : A -> B) (t : T A),
-      (forall (a : A), a ∈ t -> f1 a = f2 a) -> map T A B f1 t = map T A B f2 t.
+      (forall (a : A), a ∈ t -> f1 a = f2 a) -> map f1 t = map f2 t.
   Proof.
     introv hyp.
     rewrite (trff_map_to_traverse).
@@ -544,15 +536,15 @@ Section traversable_functor_theory.
   (******************************************************************************)
   Corollary traverse_respectful_id {A} :
     forall (G : Type -> Type)
-      `{Applicative G} t (f : A -> G A),
-      (forall a, a ∈ t -> f a = pure G a) -> traverse T G A A f t = pure G t.
+      `{Applicative G} (t : T A) (f : A -> G A),
+      (forall a, a ∈ t -> f a = pure a) -> traverse f t = pure t.
   Proof.
-    intros. rewrite <- (traverse_purity1 G).
+    intros. rewrite <- (traverse_purity1).
     now apply traverse_respectful.
   Qed.
 
   Corollary map_respectful_id : forall `(f1 : A -> A) (t : T A),
-      (forall (a : A), a ∈ t -> f1 a = a) -> map T A A f1 t = t.
+      (forall (a : A), a ∈ t -> f1 a = a) -> map f1 t = t.
   Proof.
     intros. change t with (id t) at 2.
     rewrite <- (fun_map_id (F := T)).

@@ -292,6 +292,54 @@ Section bindt_rewriting_lemmas.
 
 End bindt_rewriting_lemmas.
 
+#[export] Hint Rewrite bindt_list_nil bindt_list_cons bindt_list_one bindt_list_app :
+  tea_list.
+
+(** ** Rewriting lemmas for <<bind>> *)
+(******************************************************************************)
+Section bind_rewriting_lemmas.
+
+  Context
+    (A B : Type).
+
+  Lemma bind_list_nil : forall (f : A -> list B),
+      bind f (@nil A) = @nil B.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma bind_list_one : forall (f : A -> list B) (a : A),
+      bind f (ret list A a) = f a.
+  Proof.
+    intros.
+    cbn. change (@nil B) with (Ƶ : list B).
+    now simpl_monoid.
+  Qed.
+
+  Lemma bind_list_cons : forall (f : A -> list B) (a : A) (l : list A),
+      bind f (a :: l) = f a ++ bind f l.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma bind_list_app : forall (f : A -> list B) (l1 l2 : list A),
+      bind f (l1 ++ l2) = bind f l1 ++ bind f l2.
+  Proof.
+    intros.
+    induction l1.
+    - cbn. reflexivity.
+    - cbn.
+      rewrite IHl1.
+      change (?f ● ?g) with (f ++ g).
+      rewrite List.app_assoc.
+      reflexivity.
+  Qed.
+
+End bind_rewriting_lemmas.
+
+#[export] Hint Rewrite bind_list_nil bind_list_cons bind_list_one bind_list_app :
+  tea_list.
+
 (** ** Traversable monad instance *)
 (******************************************************************************)
 Section bindt_laws.
@@ -382,9 +430,6 @@ Qed.
     ktm_bindt2 := @list_bindt2;
     ktm_morph := @list_morph;
   |}.
-
-#[export] Hint Rewrite bindt_list_nil bindt_list_cons bindt_list_one bindt_list_app :
-  tea_list.
 
 (** ** Derived typeclass instances *)
 (******************************************************************************)
@@ -580,29 +625,29 @@ Qed.
 
 (** * The [shape] operation *)
 (******************************************************************************)
-Definition shape (F : Type -> Type) `{Map F} {A} : F A -> F unit :=
+Definition shape `{Map F} {A} : F A -> F unit :=
   map F (const tt).
 
 (** ** Basic reasoning principles for <<shape>> *)
 (******************************************************************************)
 Theorem shape_map `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
-    shape F (map F f t) = shape F t.
+    shape (map F f t) = shape t.
 Proof.
   intros. compose near t on left.
   unfold shape. now rewrite fun_map_map.
 Qed.
 
 Theorem shape_shape `{Functor F} : forall A (t : F A),
-    shape F (shape F t) = shape F t.
+    shape (shape t) = shape t.
 Proof.
   intros.  compose near t on left.
   unfold shape. now rewrite fun_map_map.
 Qed.
 
 Lemma shape_map_eq `{Functor F} : forall A1 A2 B (f : A1 -> B) (g : A2 -> B) t u,
-    map F f t = map F g u -> shape F t = shape F u.
+    map F f t = map F g u -> shape t = shape u.
 Proof.
-  introv hyp. cut (shape F (map F f t) = shape F (map F g u)).
+  introv hyp. cut (shape (map F f t) = shape (map F g u)).
   - now rewrite 2(shape_map).
   - now rewrite hyp.
 Qed.
@@ -612,31 +657,31 @@ Qed.
 Section list_shape_rewrite.
 
   Lemma shape_nil : forall A,
-      shape list (@nil A) = @nil unit.
+      shape (@nil A) = @nil unit.
   Proof.
     reflexivity.
   Qed.
 
   Lemma shape_cons : forall A (a : A) (l : list A),
-      shape list (a :: l) = tt :: shape list l.
+      shape (a :: l) = tt :: shape l.
   Proof.
     reflexivity.
   Qed.
 
   Lemma shape_one : forall A (a : A),
-      shape list [ a ] = [ tt ].
+      shape [ a ] = [ tt ].
   Proof.
     reflexivity.
   Qed.
 
   Lemma shape_app : forall A (l1 l2 : list A),
-      shape list (l1 ++ l2) = shape list l1 ++ shape list l2.
+      shape (l1 ++ l2) = shape l1 ++ shape l2.
   Proof.
     intros. unfold shape. now rewrite map_list_app.
   Qed.
 
   Lemma shape_nil_iff : forall A (l : list A),
-      shape list l = @nil unit <-> l = [].
+      shape l = @nil unit <-> l = [].
   Proof.
     induction l. intuition.
     split; intro contra; now inverts contra.
@@ -651,7 +696,7 @@ End list_shape_rewrite.
 Section list_shape_lemmas.
 
   Theorem list_shape_equal_iff : forall (A : Type) (l1 l2 : list A),
-      shape list l1 = shape list l2 <->
+      shape l1 = shape l2 <->
         List.length l1 = List.length l2.
   Proof.
     intros. generalize dependent l2.
@@ -667,9 +712,9 @@ Section list_shape_lemmas.
   Qed.
 
   Theorem shape_eq_app_r : forall A (l1 l2 r1 r2: list A),
-      shape list r1 = shape list r2 ->
-      (shape list (l1 ++ r1) = shape list (l2 ++ r2) <->
-       shape list l1 = shape list l2).
+      shape r1 = shape r2 ->
+      (shape (l1 ++ r1) = shape (l2 ++ r2) <->
+       shape l1 = shape l2).
   Proof.
     introv heq. rewrite 2(shape_app). rewrite heq.
     split. intros; eauto using List.app_inv_tail.
@@ -677,9 +722,9 @@ Section list_shape_lemmas.
   Qed.
 
   Theorem shape_eq_app_l : forall A (l1 l2 r1 r2: list A),
-      shape list l1 = shape list l2 ->
-      (shape list (l1 ++ r1) = shape list (l2 ++ r2) <->
-       shape list r1 = shape list r2).
+      shape l1 = shape l2 ->
+      (shape (l1 ++ r1) = shape (l2 ++ r2) <->
+       shape r1 = shape r2).
   Proof.
     introv heq. rewrite 2(shape_app). rewrite heq.
     split. intros; eauto using List.app_inv_head.
@@ -687,8 +732,8 @@ Section list_shape_lemmas.
   Qed.
 
   Theorem shape_eq_cons_iff : forall A (l1 l2 : list A) (x y : A),
-      shape list (x :: l1) = shape list (y :: l2) <->
-      shape list l1 = shape list l2.
+      shape (x :: l1) = shape (y :: l2) <->
+      shape l1 = shape l2.
   Proof.
     intros. rewrite 2(shape_cons).
     split; intros hyp. now inverts hyp.
@@ -696,7 +741,7 @@ Section list_shape_lemmas.
   Qed.
 
   Theorem inv_app_eq_ll : forall A (l1 l2 r1 r2 : list A),
-      shape list l1 = shape list l2 ->
+      shape l1 = shape l2 ->
       (l1 ++ r1 = l2 ++ r2) ->
       l1 = l2.
   Proof.
@@ -712,7 +757,7 @@ Section list_shape_lemmas.
   Qed.
 
   Theorem inv_app_eq_rl : forall A (l1 l2 r1 r2 : list A),
-      shape list r1 = shape list r2 ->
+      shape r1 = shape r2 ->
       (l1 ++ r1 = l2 ++ r2) ->
       l1 = l2.
   Proof.
@@ -731,7 +776,7 @@ Section list_shape_lemmas.
   Qed.
 
   Theorem inv_app_eq_lr : forall A (l1 l2 r1 r2 : list A),
-      shape list l1 = shape list l2 ->
+      shape l1 = shape l2 ->
       (l1 ++ r1 = l2 ++ r2) ->
       r1 = r2.
   Proof.
@@ -741,7 +786,7 @@ Section list_shape_lemmas.
   Qed.
 
   Theorem inv_app_eq_rr : forall A (l1 l2 r1 r2 : list A),
-      shape list r1 = shape list r2 ->
+      shape r1 = shape r2 ->
       (l1 ++ r1 = l2 ++ r2) ->
       r1 = r2.
   Proof.
@@ -751,7 +796,7 @@ Section list_shape_lemmas.
   Qed.
 
   Theorem inv_app_eq : forall A (l1 l2 r1 r2 : list A),
-      shape list l1 = shape list l2 \/ shape list r1 = shape list r2 ->
+      shape l1 = shape l2 \/ shape r1 = shape r2 ->
       (l1 ++ r1 = l2 ++ r2) <-> (l1 = l2 /\ r1 = r2).
   Proof.
     introv [hyp | hyp]; split.
@@ -806,4 +851,4 @@ Class Tolist (F : Type -> Type) :=
 Class Tolist_ctx (F : Type -> Type) (W : Type) :=
   tolist_ctx : forall (A : Type), F A -> list (W * A).
 
-#[global] Arguments tolist F%function_scope {Tolist} {A}%type_scope _.
+#[global] Arguments tolist {F}%function_scope {Tolist} {A}%type_scope _.

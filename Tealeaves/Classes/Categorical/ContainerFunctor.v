@@ -13,7 +13,7 @@ Import Subset.Notations.
 Import List.ListNotations.
 
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+#[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
 
 (** * Set-like functors *)
 (******************************************************************************)
@@ -21,10 +21,10 @@ Class Elements (F : Type -> Type) :=
   element_of : F ⇒ subset.
 
 (* Mark the type argument of <<toset>> implicit *)
-Arguments element_of F%function_scope {Elements} {A}%type_scope.
+#[global] Arguments element_of {F}%function_scope {Elements} {A}%type_scope.
 
 #[local] Notation "x ∈ t" :=
-  (element_of _ t x) (at level 50) : tealeaves_scope.
+  (element_of t x) (at level 50) : tealeaves_scope.
 
 Class ContainerFunctor
   (F : Type -> Type)
@@ -43,7 +43,7 @@ Class ContainerTransformation
   `{Map G} `{Elements G}
   (η : F ⇒ G) :=
   { cont_trans_natural : Natural η;
-    cont_trans_commute : forall A, element_of F = element_of G ∘ η A;
+    cont_trans_commute : forall A, element_of (F := F) = element_of (F := G) ∘ η A;
   }.
 
 (** ** Container Instance for <<subset>> *)
@@ -155,32 +155,32 @@ Qed.
   fun (A : Type) (l : list A) => (fun a : A => @List.In A a l).
 
 Lemma elements_list_nil : forall (A : Type),
-    element_of list (@nil A) = ∅.
+    element_of (@nil A) = ∅.
 Proof.
   intros. extensionality a. reflexivity.
 Qed.
 
 Lemma elements_list_one : forall (A : Type) (a : A),
-    element_of list [a] = {{ a }}.
+    element_of [a] = {{ a }}.
 Proof.
   intros. solve_basic_subset.
 Qed.
 
 Lemma elements_list_ret : forall (A : Type) (a : A),
-    element_of list (ret list A a) = {{ a }}.
+    element_of (ret list a) = {{ a }}.
 Proof.
   intros. solve_basic_subset.
 Qed.
 
 Lemma elements_list_cons :
   forall (A : Type) (a : A) (l : list A),
-    element_of list (cons a l) = {{ a }} ∪ element_of list l.
+    element_of (a :: l) = {{ a }} ∪ element_of l.
 Proof.
   intros. extensionality a'. reflexivity.
 Qed.
 
 Lemma elements_list_app : forall (A : Type) (l1 l2 : list A),
-    element_of list (l1 ++ l2) = element_of list l1 ∪ element_of list l2.
+    element_of (l1 ++ l2) = element_of l1 ∪ element_of l2.
 Proof.
   intros. induction l1.
   - cbn. rewrite elements_list_nil.
@@ -210,7 +210,7 @@ Qed.
 (** ** [element_of] is a monoid homomorphism *)
 (******************************************************************************)
 #[export] Instance Monoid_Morphism_elements_list (A : Type) :
-  Monoid_Morphism (list A) (subset A) (element_of list (A := A)) :=
+  Monoid_Morphism (list A) (subset A) (element_of (A := A)) :=
   {| monmor_unit := @elements_list_nil A;
      monmor_op := @elements_list_app A;
   |}.
@@ -234,7 +234,7 @@ Proof.
   intros. simpl_list. simpl_subset. intuition congruence.
 Qed.
 
-Lemma in_list_ret {A} (a1 a2 : A) : a1 ∈ ret list A a2 <-> a1 = a2.
+Lemma in_list_ret {A} (a1 a2 : A) : a1 ∈ ret list a2 <-> a1 = a2.
 Proof.
   intros. simpl_list; simpl_subset. intuition.
 Qed.
@@ -253,7 +253,7 @@ Qed.
 (******************************************************************************)
 #[export] Instance Monoid_Morphism_element_list (A : Type) (a : A) :
   Monoid_Morphism (list A) Prop (tgt_op := or) (tgt_unit := False)
-    (fun l => element_of list (A := A) l a).
+    (fun l => element_of l a).
 Proof.
   constructor; try typeclasses eauto.
   - reflexivity.
@@ -265,7 +265,7 @@ Qed.
 (** ** Relation with <<foldMap>> *)
 (******************************************************************************)
 Lemma foldMap_list_elements1 : forall (A : Type),
-    element_of list = foldMap (ret subset A).
+    element_of = foldMap (ret subset (A := A)).
 Proof.
   intros. ext l. induction l.
   - reflexivity.
@@ -275,7 +275,7 @@ Proof.
 Qed.
 
 Lemma foldMap_list_elements2 : forall (A : Type) (l : list A) (a : A),
-    element_of list l a = foldMap (op := or) (unit := False) (eq a) l.
+    element_of l a = foldMap (op := or) (unit := False) (eq a) l.
 Proof.
   intros. rewrite foldMap_list_elements1. induction l.
   - reflexivity.
@@ -377,5 +377,5 @@ Qed.
 (******************************************************************************)
 Module Notations.
   Notation "x ∈ t" :=
-    (element_of _ t x) (at level 50) : tealeaves_scope.
+    (element_of t x) (at level 50) : tealeaves_scope.
 End Notations.

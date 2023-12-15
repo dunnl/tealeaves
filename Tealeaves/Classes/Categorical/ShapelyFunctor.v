@@ -16,7 +16,7 @@ Import List.ListNotations.
 
 Definition shapeliness (F : Type -> Type)
   `{Map F} `{Tolist F} := forall A (t1 t2 : F A),
-    shape F t1 = shape F t2 /\ tolist _ t1 = tolist _ t2 -> t1 = t2.
+    shape t1 = shape t2 /\ tolist t1 = tolist t2 -> t1 = t2.
 
 Class ShapelyFunctor
   (F : Type -> Type) `{Map F} `{Tolist F} :=
@@ -31,9 +31,9 @@ Class ShapelyTransformation
       {F G : Type -> Type}
       `{! Map F} `{Tolist F}
       `{! Map G} `{Tolist G}
-      (η : F ⇒ G) :=
-  { ltrans_commute : `(tolist F = tolist G ∘ η A);
-    ltrans_natural : Natural η;
+      (ϕ : F ⇒ G) :=
+  { ltrans_commute : `(tolist (F := F) = tolist (F := G) ∘ ϕ A);
+    ltrans_natural : Natural ϕ;
   }.
 
 (** ** Instance for [list] *)
@@ -73,8 +73,8 @@ Section listable_shape_lemmas.
 
   (* Values with the same shape have equal-length contents *)
   Lemma shape_tolist : forall `(t : F A) `(u : F B),
-      shape F t = shape F u ->
-      shape list (tolist F t) = shape list (tolist F u).
+      shape t = shape u ->
+      shape (tolist t) = shape (tolist u).
   Proof.
     introv heq. compose near t. compose near u.
     unfold shape in *. rewrite 2(natural). unfold compose.
@@ -82,18 +82,18 @@ Section listable_shape_lemmas.
   Qed.
 
   Corollary shape_l : forall A (l1 l2 : F A) (x y : list A),
-      shape F l1 = shape F l2 ->
-      (tolist F l1 ++ x = tolist F l2 ++ y) ->
-      tolist F l1 = tolist F l2.
+      shape l1 = shape l2 ->
+      (tolist l1 ++ x = tolist l2 ++ y) ->
+      tolist l1 = tolist l2.
   Proof.
     introv shape_eq heq.
     eauto using inv_app_eq_ll, shape_tolist.
   Qed.
 
   Corollary shape_r : forall A (l1 l2 : F A) (x y : list A),
-      shape F l1 = shape F l2 ->
-      (x ++ tolist F l1 = y ++ tolist F l2) ->
-      tolist F l1 = tolist F l2.
+      shape l1 = shape l2 ->
+      (x ++ tolist l1 = y ++ tolist l2) ->
+      tolist l1 = tolist l2.
   Proof.
     introv shape_eq heq.
     eauto using inv_app_eq_rr, shape_tolist.
@@ -111,17 +111,17 @@ Section listable_functor_respectful_definitions.
 
   Definition tolist_map_injective := forall A B (t1 t2 : F A) (f g : A -> B),
       map F f t1 = map F g t2 ->
-      shape F t1 = shape F t2 /\
-      map list f (tolist F t1) = map list g (tolist F t2).
+      shape t1 = shape t2 /\
+      map list f (tolist t1) = map list g (tolist t2).
 
   Definition tolist_map_respectful := forall A B (t1 t2 : F A) (f g : A -> B),
-      shape F t1 = shape F t2 ->
-      map list f (tolist F t1) = map list g (tolist F t2) ->
+      shape t1 = shape t2 ->
+      map list f (tolist t1) = map list g (tolist t2) ->
       map F f t1 = map F g t2.
 
   Definition tolist_map_respectful_iff := forall A B (t1 t2 : F A) (f g : A -> B),
-      shape F t1 = shape F t2 /\
-      map list f (tolist F t1) = map list g (tolist F t2) <->
+      shape t1 = shape t2 /\
+      map list f (tolist t1) = map list g (tolist t2) <->
       map F f t1 = map F g t2.
 
 End listable_functor_respectful_definitions.
@@ -134,7 +134,7 @@ Ltac unfold_list_properness :=
 (** * Shapely functors are containers *)
 (******************************************************************************)
 #[export] Instance Elements_Tolist `{Tolist F} : Elements F :=
-  fun A => element_of list ∘ tolist F.
+  fun A => element_of ∘ tolist.
 
 #[export] Instance: forall `{ShapelyFunctor F}, Natural (@element_of F _).
 Proof.
@@ -145,10 +145,60 @@ Proof.
 Qed.
 
 Theorem in_iff_in_list `{Tolist F} : forall (A : Type) (t : F A) (a : A),
-    a ∈ t <-> a ∈ tolist F t.
+    a ∈ t <-> a ∈ tolist t.
 Proof.
   reflexivity.
 Qed.
+
+(** ** <<element_of>> as a hom *)
+(******************************************************************************)
+Lemma element_of_list_hom1 : forall (A : Type),
+    element_of ∘ ret list A = ret subset A.
+Proof.
+  intros.
+  unfold_ops @Elements_Tolist.
+  ext a b. propext;
+  cbv; intuition.
+Qed.
+
+Lemma element_of_list_hom2 : forall (A B : Type) (f : A -> list B),
+    element_of ∘ bind f = bind (T := subset) (element_of ∘ f) ∘ element_of.
+Proof.
+  intros. ext l b. induction l.
+  - propext; cbv.
+    intuition.
+    intros [a [absurd]]; contradiction.
+  - unfold compose in *.
+    autorewrite with tea_list tea_set.
+    rewrite IHl.
+    reflexivity.
+Qed.
+
+Lemma element_of_list_map : forall (A B : Type) (f : A -> B),
+    element_of ∘ map list f = map subset f ∘ element_of.
+Proof.
+  intros. ext l. unfold compose. ext b.
+  unfold_ops @Elements_list @Map_list.
+  induction l.
+  - cbn. propext.
+    + contradiction.
+    + intros [? [? ?]].
+      contradiction.
+  - cbn. rewrite IHl.
+    cbv. propext.
+    + intros [Hleft | Hright].
+      * eauto.
+      * preprocess. eauto.
+    + intros. preprocess.
+      destruct H as [Hleft | Hright].
+      * left. now fequal.
+      * right. eauto.
+Qed.
+
+#[export] Instance Monad_Hom_list_elements : MonadHom list subset (@element_of list _) :=
+  {| kmon_hom_ret := element_of_list_hom1;
+    kmon_hom_bind := element_of_list_hom2;
+  |}.
 
 Section ShapelyFunctor_setlike.
 
@@ -158,7 +208,7 @@ Section ShapelyFunctor_setlike.
 
   Lemma shapeliness_iff :
     forall (A : Type) (t u : F A),
-      t = u <-> shape F t = shape F u /\ tolist F t = tolist F u.
+      t = u <-> shape t = shape u /\ tolist t = tolist u.
   Proof.
     intros. split.
     + intros; subst; auto.
@@ -169,7 +219,7 @@ Section ShapelyFunctor_setlike.
   Lemma shapely_map_eq_iff :
     forall (A B : Type) (t : F A) (f g : A -> B),
       map F f t = map F g t <->
-      map list f (tolist F t) = map list g (tolist F t).
+      map list f (tolist t) = map list g (tolist t).
   Proof.
     intros.
     compose near t on right. rewrite 2(natural).
@@ -211,12 +261,13 @@ Section tolist_respectfulness_characterizations.
   Theorem tolist_map_injective_proof : tolist_map_injective F.
   Proof.
     introv heq. split.
-    - cut (shape F (map F f t1) = shape F (map F g t2)).
+    - cut (shape (map F f t1) = shape (map F g t2)).
       + now rewrite 2(shape_map).
       + now rewrite heq.
     - compose near t1; compose near t2.
-      rewrite 2natural.
-      unfold compose; now rewrite heq.
+      do 2 rewrite natural.
+      unfold compose.
+      now rewrite heq.
   Qed.
 
   Lemma shapeliness_equiv_1 : shapeliness F -> tolist_map_respectful F.

@@ -441,12 +441,12 @@ Section DerivedInstances.
         ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f).
     Proof.
       intros.
+      infer_applicative_instances.
       rewrite ktmf_traverse_to_bindt.
       rewrite ktmf_traverse_to_bindt.
       rewrite ktm_morph.
       reassociate <-. (* TODO cleanup below *)
-      { fequal. inversion H13.
-        ext a. unfold compose. rewrite appmor_natural.
+      { fequal. ext a. unfold compose. rewrite appmor_natural.
         reflexivity. }
     Qed.
 

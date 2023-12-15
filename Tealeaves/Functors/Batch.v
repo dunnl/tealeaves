@@ -1135,10 +1135,7 @@ Qed.
 
 Lemma trf_traverse_morphism_Batch :
   forall (B C : Type) (G1 G2 : Type -> Type)
-    `(H0 : Map G1) `(H1 : Pure G1) `(H2 : Mult G1) `{! Applicative G1}
-    `(H3 : Map G2) `(H4 : Pure G2) `(H5 : Mult G2) `{! Applicative G2}
-    (ϕ : forall A : Type, G1 A -> G2 A)
-    `{! ApplicativeMorphism G1 G2 ϕ},
+    `{ApplicativeMorphism G1 G2 ϕ},
     forall (A A' : Type) (f : A -> G1 A'),
       ϕ (BATCH1 B C A') ∘ traverse (T := BATCH1 B C) (G := G1) f =
         traverse (T := BATCH1 B C) (G := G2) (ϕ A' ∘ f).

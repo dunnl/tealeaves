@@ -39,9 +39,11 @@ Class Applicative (G : Type -> Type)
 (** ** Homomorphisms between applicative functors *)
 (******************************************************************************)
 Class ApplicativeMorphism (F G : Type -> Type)
-  `{Applicative F} `{Applicative G} (ϕ : forall {A}, F A -> G A) :=
-  { appmor_app_F : `{Applicative F};
-    appmor_app_G : `{Applicative G};
+  `{Map F} `{Mult F} `{Pure F}
+  `{Map G} `{Mult G} `{Pure G}
+  (ϕ : forall {A}, F A -> G A) :=
+  { appmor_app_F : Applicative F;
+    appmor_app_G : Applicative G;
     appmor_natural : forall (A B : Type) (f : A -> B) (x : F A),
       ϕ (map f x) = map f (ϕ x);
     appmor_pure : forall (A : Type) (a : A),
@@ -49,6 +51,17 @@ Class ApplicativeMorphism (F G : Type -> Type)
     appmor_mult : forall (A B : Type) (x : F A) (y : F B),
       ϕ (x ⊗ y) = ϕ x ⊗ ϕ y;
   }.
+
+Ltac infer_applicative_instances :=
+  match goal with
+  | H : ApplicativeMorphism ?G1 ?G2 ?ϕ |- _ =>
+      let app1 := fresh "app1"
+      in assert (app1: Applicative G1) by now inversion H
+  end; match goal with
+       | H : ApplicativeMorphism ?G1 ?G2 ?ϕ |- _ =>
+           let app2 := fresh "app2"
+           in assert (app2 : Applicative G2) by now inversion H
+       end.
 
 (** *** The identity transformation on any <<F>> is a homomorphism *)
 (******************************************************************************)
