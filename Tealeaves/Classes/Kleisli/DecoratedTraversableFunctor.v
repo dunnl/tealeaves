@@ -53,6 +53,17 @@ Class DecoratedTraversableFunctor
       mapdt (ϕ B ∘ f) = ϕ (T B) ∘ mapdt f;
   }.
 
+Class DecoratedTraversableFunctorFull (E : Type) (T : Type -> Type)
+  `{Mapdt E T} `{Mapd E T} `{Traverse T} `{Map T} :=
+  { kdtfunf_dtf :> DecoratedTraversableFunctor E T;
+    kdtfunf_map_to_mapdt : forall `(f : A -> B),
+      @map T _ A B f = @mapdt E T _ (fun A => A) Map_I Pure_I Mult_I A B (f ∘ extract (W := (E ×)));
+    kdtfunf_mapd_to_mapdt : forall `(f : E * A -> B),
+      @mapd E T _ A B f = @mapdt E T _ (fun A => A) Map_I Pure_I Mult_I A B f;
+    kdtfunf_traverse_to_mapdt : forall `{Applicative G} `(f : A -> G B),
+    @traverse T _ G _ _ _ A B f = @mapdt E T _ G _ _ _ A B (f ∘ extract (W := (E ×)));
+  }.
+
 (** * Functor composition in the applicative functor *)
 (******************************************************************************)
 Section operations.
@@ -103,7 +114,7 @@ Module DerivedInstances.
 
   (** ** Operations *)
   (******************************************************************************)
-  Section operations.
+  Module operations.
 
     Context
       `{Mapdt E T}.
@@ -152,7 +163,7 @@ Module DerivedInstances.
   Section kc6_lemmas.
 
     Context
-      `{DecoratedTraversableFunctor E T}
+      `{DecoratedTraversableFunctorFull E T}
       `{Applicative G1}
       `{Applicative G2}
       (A B C : Type).
@@ -347,7 +358,7 @@ Module DerivedInstances.
   Section composition.
 
     Context
-      `{DecoratedTraversableFunctor E T}
+      `{DecoratedTraversableFunctorFull E T}
       `{Applicative G1}
       `{Applicative G2}
       {A B C : Type}.
@@ -358,7 +369,7 @@ Module DerivedInstances.
         map (traverse g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (map g ∘ f).
     Proof.
       intros.
-      rewrite traverse_to_mapdt.
+      rewrite (kdtfunf_traverse_to_mapdt).
       rewrite kdtfun_mapdt2.
       rewrite kc6_26.
       reflexivity.
@@ -368,7 +379,7 @@ Module DerivedInstances.
         map (mapd g) ∘ mapdt f = mapdt (map g ∘ σ ∘ cobind f).
     Proof.
       intros.
-      rewrite mapd_to_mapdt.
+      rewrite (kdtfunf_mapd_to_mapdt).
       rewrite (kdtfun_mapdt2 (G2 := fun A => A)).
       rewrite mapdt_app_r.
       reflexivity.
@@ -378,7 +389,7 @@ Module DerivedInstances.
         map (map g) ∘ mapdt f = mapdt (map g ∘ f).
     Proof.
       intros.
-      rewrite map_to_mapdt.
+      rewrite (kdtfunf_map_to_mapdt (T := T)).
       rewrite (kdtfun_mapdt2 (G2 := fun A => A)).
       rewrite mapdt_app_r.
       rewrite kc6_06.
@@ -393,7 +404,7 @@ Module DerivedInstances.
             (map g ∘ σ ∘ map (F := prod E) f).
     Proof.
       intros.
-      rewrite traverse_to_mapdt.
+      rewrite (kdtfunf_traverse_to_mapdt).
       rewrite kdtfun_mapdt2.
       rewrite kc6_62.
       reflexivity.
@@ -403,7 +414,7 @@ Module DerivedInstances.
         mapdt g ∘ mapd f = mapdt (g ⋆4 f).
     Proof.
       intros.
-      rewrite mapd_to_mapdt.
+      rewrite (kdtfunf_mapd_to_mapdt).
       change (mapdt g)
         with (map (F := fun A => A) (mapdt g)).
       rewrite (kdtfun_mapdt2 (G1 := fun A => A)).
@@ -416,7 +427,7 @@ Module DerivedInstances.
         mapdt g ∘ map f = mapdt (g ∘ map f).
     Proof.
       intros.
-      rewrite map_to_mapdt.
+      rewrite (kdtfunf_map_to_mapdt).
       change (mapdt g)
         with (map (F := fun A => A) (mapdt g)).
       rewrite (kdtfun_mapdt2 (G1 := fun A => A)).
@@ -431,8 +442,8 @@ Module DerivedInstances.
         map g ∘ mapd f = mapd (g ∘ f).
     Proof.
       intros.
-      rewrite map_to_mapdt.
-      rewrite mapd_to_mapdt.
+      rewrite (kdtfunf_map_to_mapdt).
+      do 2 rewrite (kdtfunf_mapd_to_mapdt).
       change (mapdt ?g)
         with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
       rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
@@ -445,8 +456,8 @@ Module DerivedInstances.
         mapd g ∘ map f = mapd (g ∘ map f).
     Proof.
       intros.
-      do 2 rewrite mapd_to_mapdt.
-      rewrite map_to_mapdt.
+      do 2 rewrite (kdtfunf_mapd_to_mapdt).
+      rewrite (kdtfunf_map_to_mapdt).
       change (mapdt ?g)
         with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
       rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
@@ -459,12 +470,13 @@ Module DerivedInstances.
         mapd g ∘ mapd f = mapd (g ⋆4 f).
     Proof.
       intros.
-      do 2 rewrite (mapd_to_mapdt).
+      do 2 rewrite (kdtfunf_mapd_to_mapdt).
       change (mapdt ?g)
         with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
       rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
       rewrite mapdt_app_l.
       rewrite kc6_44.
+      rewrite (kdtfunf_mapd_to_mapdt).
       reflexivity.
     Qed.
 
@@ -472,7 +484,7 @@ Module DerivedInstances.
         map (F := G1) (traverse g) ∘ traverse f = traverse (G := G1 ∘ G2) (g ⋆2 f).
     Proof.
       intros.
-      do 2 rewrite (traverse_to_mapdt).
+      do 3 rewrite (kdtfunf_traverse_to_mapdt).
       rewrite kdtfun_mapdt2.
       rewrite kc6_22.
       reflexivity.
@@ -482,7 +494,7 @@ Module DerivedInstances.
         map g ∘ map f = map (F := T) (g ∘ f).
     Proof.
       intros.
-      do 2 rewrite (map_to_mapdt).
+      do 3 rewrite (kdtfunf_map_to_mapdt).
       change_left (map (F := fun A => A)
                      (mapdt (T := T) (g ∘ extract)) ∘ mapdt (T := T) (f ∘ extract)).
       rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
@@ -497,7 +509,7 @@ Module DerivedInstances.
         traverse (G := fun A => A) id = @id (T A).
     Proof.
       intros.
-      rewrite traverse_to_mapdt.
+      rewrite (kdtfunf_traverse_to_mapdt).
       change (id ∘ ?f) with f.
       now rewrite kdtfun_mapdt1.
     Qed.
@@ -506,7 +518,7 @@ Module DerivedInstances.
       mapd extract = @id (T A).
     Proof.
       intros.
-      rewrite mapd_to_mapdt.
+      rewrite (kdtfunf_mapd_to_mapdt).
       rewrite kdtfun_mapdt1.
       reflexivity.
     Qed.
@@ -515,7 +527,7 @@ Module DerivedInstances.
       map (@id A) = @id (T A).
     Proof.
       intros.
-      rewrite map_to_mapdt.
+      rewrite (kdtfunf_map_to_mapdt).
       change (id ∘ ?f) with f.
       rewrite kdtfun_mapdt1.
       reflexivity.
@@ -529,7 +541,8 @@ Module DerivedInstances.
         ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f).
     Proof.
       intros.
-      rewrite traverse_to_mapdt.
+      infer_applicative_instances.
+      do 2 rewrite (kdtfunf_traverse_to_mapdt).
       rewrite <- kdtfun_morph.
       reflexivity.
     Qed.
@@ -538,6 +551,7 @@ Module DerivedInstances.
 
   (** ** Derived typeclass instances *)
   (******************************************************************************)
+  (*
   Section instances.
 
     Context
@@ -545,7 +559,7 @@ Module DerivedInstances.
 
     #[export] Instance Functor_DT : Functor T :=
       {| fun_map_id := map_id;
-        fun_map_map := @map_map E T _ _;
+         fun_map_map := @map_map E T _ _;
       |}.
 
     #[export] Instance DF_DT : DecoratedFunctor E T :=
@@ -560,6 +574,7 @@ Module DerivedInstances.
       |}.
 
   End instances.
+  *)
 
 End DerivedInstances.
 
