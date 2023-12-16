@@ -1,5 +1,5 @@
 From Tealeaves Require Import
-  Classes.Categorical.DecTravFunctor
+  Classes.Categorical.DecoratedTraversableFunctor
   Categories.DecoratedFunctor
   Categories.TraversableFunctor.
 

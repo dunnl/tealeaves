@@ -1,6 +1,6 @@
 From Tealeaves Require Export
-  Classes.Kleisli.DecTravFunctor
-  Classes.Categorical.DecTravFunctor.
+  Classes.Kleisli.DecoratedTraversableFunctor
+  Classes.Categorical.DecoratedTraversableFunctor.
 
 Import Comonad.Notations.
 Import Product.Notations.
@@ -22,9 +22,9 @@ Module ToCategorical.
     Context
       (E : Type)
       (T : Type -> Type)
-      `{Kleisli.DecTravFunctor.DecoratedTraversableFunctor E T}.
+      `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-    Import DecTravFunctor.DerivedInstances.
+    Import DecoratedTraversableFunctor.DerivedInstances.
 
     #[local] Tactic Notation "unfold_everything" :=
          unfold_ops @Map_compose;
@@ -46,7 +46,7 @@ Module ToCategorical.
       mapdt_to_mapd.
       mapd_to_map.
       rewrite (dfun_mapd2 (E := E) (T := T)).
-      rewrite (DecTravFunctor.DerivedInstances.map_mapd T).
+      rewrite (DecoratedTraversableFunctor.DerivedInstances.map_mapd T).
       reflexivity.
     Qed.
 
@@ -57,7 +57,7 @@ Module ToCategorical.
       unfold_everything.
       mapdt_to_mapd.
       mapd_to_map.
-      rewrite (DecTravFunctor.DerivedInstances.map_mapd T).
+      rewrite (DecoratedTraversableFunctor.DerivedInstances.map_mapd T).
       rewrite (dfun_mapd1 (E := E) (T := T)).
       reflexivity.
     Qed.
@@ -71,8 +71,8 @@ Module ToCategorical.
         unfold_everything.
         mapdt_to_mapd.
         mapd_to_map.
-        rewrite (DecTravFunctor.DerivedInstances.map_mapd T).
-        rewrite (DecTravFunctor.DerivedInstances.mapd_map T).
+        rewrite (DecoratedTraversableFunctor.DerivedInstances.map_mapd T).
+        rewrite (DecoratedTraversableFunctor.DerivedInstances.mapd_map T).
         reflexivity.
     Qed.
 
@@ -94,8 +94,8 @@ Module ToCategorical.
       unfold_everything.
       mapdt_to_mapd.
       mapd_to_map.
-      rewrite (DecTravFunctor.DerivedInstances.map_mapdt T G).
-      rewrite (DecTravFunctor.DerivedInstances.mapdt_map T G).
+      rewrite (DecoratedTraversableFunctor.DerivedInstances.map_mapdt T G).
+      rewrite (DecoratedTraversableFunctor.DerivedInstances.mapdt_map T G).
       (* TODO Fix this *)
       change (Map_Env) with (Map_prod).
       rewrite <- (natural (ϕ := extract (E ×))).
@@ -111,7 +111,7 @@ Module ToCategorical.
     mapdt_to_mapd.
     mapd_to_map.
     assert (Applicative G2) by now inversion H1.
-    rewrite (DecTravFunctor.DerivedInstances.mapdt_map T G2).
+    rewrite (DecoratedTraversableFunctor.DerivedInstances.mapdt_map T G2).
     (* TODO Fix this *)
     change (Map_Env) with (Map_prod).
     rewrite <- (natural (ϕ := extract (E ×))).
@@ -158,9 +158,9 @@ Module ToCategorical.
 
     unfold_everything.
     mapdt_to_mapd.
-    rewrite (DecTravFunctor.DerivedInstances.mapdt_mapd T G).
-    rewrite (DecTravFunctor.DerivedInstances.mapdt_mapd T G).
-    rewrite (DecTravFunctor.DerivedInstances.mapd_mapdt T G).
+    rewrite (DecoratedTraversableFunctor.DerivedInstances.mapdt_mapd T G).
+    rewrite (DecoratedTraversableFunctor.DerivedInstances.mapdt_mapd T G).
+    rewrite (DecoratedTraversableFunctor.DerivedInstances.mapd_mapdt T G).
     rewrite (fun_map_id (F := G)).
     rewrite (kcom_cobind1).
     change (extract (prod E) (G (E * A))) with (id ∘ (extract (prod E) (G (E * A)))).
@@ -168,7 +168,7 @@ Module ToCategorical.
     fequal. now ext [e ga].
   Qed.
 
-  #[export] Instance: Categorical.DecTravFunctor.DecoratedTraversableFunctor E T :=
+  #[export] Instance: Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
     {| dtfun_compat := dtfun_compat_T;
     |}.
 

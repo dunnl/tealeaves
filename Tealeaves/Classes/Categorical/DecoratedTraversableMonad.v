@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Categorical.DecoratedMonad
   Classes.Categorical.TraversableMonad
-  Classes.Categorical.DecTravFunctor.
+  Classes.Categorical.DecoratedTraversableFunctor.
 
 Import Product.Notations.
 Import Monad.Notations.

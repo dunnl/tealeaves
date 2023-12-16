@@ -8,16 +8,13 @@ Import Batch.Notations.
 Import List.ListNotations.
 Import Subset.Notations.
 
-#[local] Generalizable Variables G A B C.
+#[local] Generalizable Variables W T G A B C.
 
 #[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 #[local] Arguments binddt W%type_scope (U T)%function_scope
   {Binddt} G%function_scope {H H0 H1} (A B)%type_scope.
 
 Import DecTravMonad.DerivedInstances.
-
-#[local] Arguments binddt (W)%type_scope (U T)%function_scope {Binddt}   G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
-#[local] Arguments bindd  (W)%type_scope (U T)%function_scope {Bindd}                               (A B)%type_scope _%function_scope _.
 
 (** * Lemmas for particular applicative functors *)
 (******************************************************************************)
@@ -40,7 +37,7 @@ Section lemmas.
   Proof.
     change_right (map (const M) (T False) (T B) (map T False B exfalso)
                     ∘ (binddt W T T (const M) A False (f : W * A -> const M (T False)))).
-    rewrite (map_binddt W T (const M)).
+    rewrite (map_binddt W T (G1 := const M)).
     reflexivity.
   Qed.
 
@@ -60,17 +57,17 @@ End lemmas.
 (** * Batch *)
 (******************************************************************************)
 Definition toBatch7 W T `{Binddt W T T} {A : Type} (B : Type) : T A -> @Batch (W * A) (T B) (T B) :=
-  binddt W T T (Batch (W * A) (T B)) A B (batch (T B) (W * A)).
+  binddt W T T (Batch (W * A) (T B)) A B (batch (W * A) (T B)).
 
 Section with_functor.
 
   Context
-    (W : Type)
-    (T : Type -> Type)
     `{DecTravMonad W T}.
 
+  About runBatch.
+
   Lemma runBatch_batch7 : forall `{Applicative G} (A B : Type) (f : W * A -> G (T B)),
-      runBatch G f (T B) ∘ (@batch (T B) (W * A)) = f.
+      runBatch G f (T B) ∘ (@batch (W * A) (T B)) = f.
   Proof.
     intros. apply (runBatch_batch G).
   Qed.
@@ -90,8 +87,6 @@ End with_functor.
 Section with_monad.
 
   Context
-    (W : Type)
-    (T : Type -> Type)
     `{DecTravMonad W T}.
 
   Theorem binddt_to_runBatch :
@@ -101,11 +96,9 @@ Section with_monad.
     intros.
     unfold toBatch7.
     compose near t on right.
-    rewrite (kdtm_morph W T (Batch (W * A) (T B)) G).
+    rewrite (kdtm_morph (Batch (W * A) (T B)) G).
     now rewrite (runBatch_batch).
   Qed.
-
-  About bindd.
 
   Theorem bindd_to_runBatch :
     forall (A B : Type) (f : W * A -> T B) (t : T A),

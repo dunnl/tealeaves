@@ -1,8 +1,8 @@
 From Tealeaves Require Export
-  Classes.Categorical.DecTravMonad
-  Classes.Kleisli.DecTravMonad.
+  Classes.Categorical.DecoratedTraversableMonad
+  Classes.Kleisli.DecoratedTraversableMonad.
 
-Import DecTravMonad.Notations.
+Import DecoratedTraversableMonad.Notations.
 Import DecoratedMonad.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
@@ -38,9 +38,9 @@ Module ToCategorical.
     Context
       (W : Type)
       (T : Type -> Type)
-      `{Kleisli.DecTravMonad.DecTravMonad W T}.
+      `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
-    Import DecTravMonad.DerivedInstances.
+    Import DecoratedTraversableMonad.DerivedInstances.
 
     #[local] Tactic Notation "unfold_everything" :=
       unfold_ops @Map_compose;
@@ -411,13 +411,13 @@ Module ToCategorical.
       reflexivity.
     Qed.
 
-    #[export] Instance: Categorical.DecTravFunctor.DecoratedTraversableFunctor W T :=
+    #[export] Instance: Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor W T :=
       {| dtfun_compat := dtfun_compat_T;
       |}.
 
     (** *** Decorated Traversable monad instance *)
     (******************************************************************************)
-    #[export] Instance: Categorical.DecTravMonad.DecoratedTraversableMonad W T :=
+    #[export] Instance: Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
       ltac:(constructor; typeclasses eauto).
 
   End with_monad.

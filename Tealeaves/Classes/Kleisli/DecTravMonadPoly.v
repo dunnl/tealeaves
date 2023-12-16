@@ -12,6 +12,8 @@ Import List.ListNotations.
 
 #[local] Generalizable Variables ϕ T W G A B C D F M.
 
+#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
+
 Class Substitute
   (T : Type -> Type -> Type)
   (F : Type -> Type -> Type) :=
@@ -23,8 +25,8 @@ Class Substitute
       (list WA * A -> G (T WB B))
       -> F WA A -> G (F WB B).
 
-#[local] Arguments substitute (T F)%function_scope {Substitute}
-  (WA WB)%type_scope G%function_scope {H H0 H1} (A B)%type_scope
+#[local] Arguments substitute {T F}%function_scope {Substitute}
+  {WA WB}%type_scope {G}%function_scope {H H0 H1} {A B}%type_scope
   (_ _)%function_scope _.
 
 
@@ -35,7 +37,7 @@ Definition kcompose_rename
   (list WA * WA -> WC) :=
   fun ρg ρf '(ctx, wa) => ρg (hmap ρf ctx, ρf (ctx, wa)).
 
-Definition kcompose_dtm
+Definition kcompose_dtmp
   {A B C WA WB WC}
   `{Map G1} `{Pure G1} `{Mult G1}
   `{Map G2} `{Pure G2} `{Mult G2}
@@ -46,10 +48,11 @@ Definition kcompose_dtm
   (list WA * A -> G1 (T WB B)) ->
   (list WA * A -> G1 (G2 (T WC C))) :=
   fun ρg g ρf f '(wa, a) =>
-    map G1 (substitute T T WB WC G2 B C
-               (ρg ⦿ hmap ρf wa)
-               (g ⦿ hmap ρf wa))
-      (f (wa, a)).
+    map (F := G1) (substitute (ρg ⦿ hmap ρf wa) (g ⦿ hmap ρf wa)) (f (wa, a)).
+
+
+#[local] Infix "⋆ren" := kcompose_rename (at level 60) : tealeaves_scope.
+#[local] Notation "| r1 || s1 | '⋆sub' | r2 || s2 |" := (kcompose_dtmp r1 s1 r2 s2) (r1 at level 0, s1 at level 0, r2 at level 0, s2 at level 0, at level 60) : tealeaves_scope.
 
 Class DecTravMonadPoly
     (T : Type -> Type -> Type)
@@ -58,10 +61,10 @@ Class DecTravMonadPoly
   { kdtm_binddt0 :
     forall (WA WB A B : Type) `{Applicative G}
       (ρ : list WA * WA -> WB) (f : list WA * A -> G (T WB B)),
-      substitute T T WA WB G A B ρ f ∘ ret (T WA) A = f ∘ ret (list WA ×) A;
+      substitute ρ f ∘ ret (T WA) A = f ∘ ret (list WA ×) A;
     kdtm_substitute1 :
     forall (W A : Type),
-      substitute T T W W (fun A => A) A A (extract (list W ×) W) (ret (T W) A ∘ extract (list W ×) A) = @id (T W A);
+      substitute (G := fun A => A) (extract (W := (list W ×))) (ret (T W) A ∘ extract (W := (list W ×))) = @id (T W A);
     kdtm_substitute2 :
     forall (A B C : Type)
       `{Applicative G1} `{Applicative G2}
@@ -70,12 +73,13 @@ Class DecTravMonadPoly
       (g : list WB * B -> G2 (T WC C))
       (ρf : list WA * WA -> WB)
       (f : list WA * A -> G1 (T WB B)),
-      map G1 (substitute T T WB WC G2 B C ρg g) ∘ substitute T T WA WB G1 A B ρf f =
-        substitute T T WA WC (G1 ∘ G2) A C (kcompose_rename ρg ρf) (kcompose_dtm ρg g ρf f);
+      map (F := G1) (substitute ρg g) ∘ substitute ρf f =
+        substitute (G := G1 ∘ G2) (ρg ⋆ren ρf) (| ρg || g | ⋆sub | ρf || f |);
     kdtm_morph :
     forall (WA WB : Type) (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ} (ρ : list WA * WA -> WB) `(f : list WA * A -> G1 (T WB B)),
-      ϕ (T WB B) ∘ substitute T T WA WB G1 A B ρ f = substitute T T WA WB G2 A B ρ (ϕ (T WB B) ∘ f);
+      ϕ (T WB B) ∘ substitute ρ f = substitute ρ (ϕ (T WB B) ∘ f);
   }.
+
 
 Section compose_laws.
 
@@ -86,8 +90,8 @@ Section compose_laws.
       (ρg : list WB * WB -> WC)
       (ρf : list WA * WA -> WB)
       (wa : list WA),
-      preincr _ (kcompose_rename ρg ρf) wa =
-        kcompose_rename (preincr _ ρg (hmap ρf wa)) (preincr _ ρf wa).
+      preincr (kcompose_rename ρg ρf) wa =
+        kcompose_rename (preincr ρg (hmap ρf wa)) (preincr ρf wa).
   Proof.
     intros. ext [ctx a].
     unfold kcompose_rename. cbn.
@@ -105,13 +109,10 @@ Section compose_laws.
       (ρf : list WA * WA -> WB)
       (f : list WA * A -> G1 (T WB B))
       (wa : list WA),
-      preincr _ (kcompose_dtm (T := T) ρg g ρf f) wa =
-        kcompose_dtm (T := T)
-          (preincr _ ρg (hmap ρf wa))
-          (preincr _ g (hmap ρf wa))
-          (preincr _ ρf wa)
-          (preincr _ f wa).
+      (kcompose_dtm ρg g ρf f) ⦿ wa =
+        kcompose_dtm (ρg ⦿ hmap ρf wa) (g  ⦿ hmap ρf wa) (ρf ⦿ wa) (f ⦿ wa).
   Proof.
+
     intros.
     ext [wa' a]. cbn.
     fequal.

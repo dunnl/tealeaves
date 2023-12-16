@@ -3,7 +3,7 @@ From Tealeaves Require Export
   Classes.Kleisli.DecoratedMonad
   Classes.Kleisli.TraversableFunctor
   Classes.Kleisli.TraversableMonad
-  Classes.Kleisli.DecTravFunctor.
+  Classes.Kleisli.DecoratedTraversableFunctor.
 
 Import Monoid.Notations.
 Import Product.Notations.
@@ -12,7 +12,7 @@ Import Comonad.Notations.
 Import DecoratedMonad.Notations.
 Import TraversableFunctor.Notations.
 Import TraversableMonad.Notations.
-Import DecTravFunctor.Notations.
+Import DecoratedTraversableFunctor.Notations.
 
 #[local] Generalizable Variables ϕ T W G A B C D F M.
 
@@ -59,7 +59,7 @@ Definition kc7
 
 #[local] Infix "⋆7" := (kc7 _ _ _ _) (at level 60) : tealeaves_scope.
 
-Class DecTravMonad
+Class DecoratedTraversableMonad
   (W : Type)
   (T : Type -> Type)
   `{Return T}
@@ -88,13 +88,14 @@ Class DecTravMonad
 Section properties.
 
   Context
-    `{DecTravMonad W T}.
+    `{DecoratedTraversableMonad W T}.
 
   Lemma binddt_app_l :
     forall {G : Type -> Type} {A B : Type} `{Applicative G} (f : W * A -> G (T B)),
       @binddt W T T _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G) (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f = binddt W T T G A B f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity2 G).
+    now rewrite (Mult_compose_identity2 G).
   Qed.
 
   Lemma binddt_app_r :
@@ -102,6 +103,7 @@ Section properties.
       @binddt W T T _ (G ∘ (fun A => A)) (Map_compose G (fun A => A)) (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f = binddt W T T G A B f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity1 G).
+    now rewrite (Mult_compose_identity1 G).
   Qed.
 
 End properties.
@@ -144,7 +146,7 @@ Section kc7.
   End incr.
 
   Context
-    `{! DecTravMonad W T}
+    `{! DecoratedTraversableMonad W T}
     `{Applicative G}
     `{Applicative G1}
     `{Applicative G2}
@@ -366,7 +368,7 @@ Module DerivedInstances.
   Section kc7_special_cases.
 
     Context
-      `{DecTravMonad W T}
+      `{DecoratedTraversableMonad W T}
       `{Applicative G1}
       `{Applicative G2}
       {A B C D : Type}.
@@ -702,8 +704,7 @@ End kc7_special_cases.
   Context
     (W : Type)
     (T : Type -> Type)
-    `{DecTravMonad W T}.
-
+    `{DecoratedTraversableMonad W T}.
 
   (* Open a new section here so G1 and G2 can be generalized for later lemmas to instantiate *)
   Section composition_special_cases_top.

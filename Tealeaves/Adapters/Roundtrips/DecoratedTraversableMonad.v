@@ -1,13 +1,13 @@
 From Tealeaves Require Export
-  Adapters.CategoricalToKleisli.DecTravMonad
-  Adapters.KleisliToCategorical.DecTravMonad.
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonad
+  Adapters.KleisliToCategorical.DecoratedTraversableMonad.
 
 Import Product.Notations.
 Import Kleisli.Monad.Notations.
 
 #[local] Generalizable Variable T W.
 
-Import Kleisli.DecTravMonad.DerivedInstances.
+Import Kleisli.DecoratedTraversableMonad.DerivedInstances.
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
 Module Roundtrip1.
@@ -19,7 +19,7 @@ Module Roundtrip1.
     `{joinT : Join T}
     `{decorateT : Decorate W T}
     `{Return T}
-    `{! Categorical.DecTravMonad.DecoratedTraversableMonad W T}.
+    `{! Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
   #[local] Instance binddt' : Binddt W T T := ToKleisli.Binddt_ddj W T.
 
@@ -104,7 +104,7 @@ Module Roundtrip2.
     `{binddtT : Binddt W T T}
     `{Monoid W}
     `{Return T}
-    `{! Kleisli.DecTravMonad.DecTravMonad W T}.
+    `{! Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
   #[local] Instance map' : Map T := DerivedInstances.Map_Binddt W T.
   #[local] Instance dist' : ApplicativeDist T := ToCategorical.Dist_Binddt W T.
@@ -138,7 +138,7 @@ Module Roundtrip2.
     unfold_compose_in_compose.
     rewrite (DerivedInstances.bindt_bindd W T G).
     reassociate <- on right.
-    rewrite (DecTravMonad.DerivedInstances.bindt_map W T G).
+    rewrite (DecoratedTraversableMonad.DerivedInstances.bindt_map W T G).
     rewrite (ktm_bindt0 G).
     unfold join, join'; unfold_ops @ToCategorical.Join_Binddt.
     rewrite (kdtm_binddt2 W T G (fun A => A)).
@@ -146,7 +146,7 @@ Module Roundtrip2.
     rewrite (binddt_app_r T G).
     rewrite (kc7_76 W T).
     change (extract (W ×) (T B)) with (id ∘ extract (W ×) (T B)).
-    rewrite (DecTravFunctor.DerivedInstances.kc6_06 G).
+    rewrite (DecoratedTraversableFunctor.DerivedInstances.kc6_06 G).
     rewrite (fun_map_id (F := G)).
     reflexivity.
   Qed.

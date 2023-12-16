@@ -1,6 +1,6 @@
 From Tealeaves Require Export
-  Adapters.CategoricalToKleisli.DecTravFunctor
-  Adapters.KleisliToCategorical.DecTravFunctor.
+  Adapters.CategoricalToKleisli.DecoratedTraversableFunctor
+  Adapters.KleisliToCategorical.DecoratedTraversableFunctor.
 
 Import Product.Notations.
 Import Functor.Notations.
@@ -20,7 +20,7 @@ Module Roundtrip1.
     `{mapT : Map T}
     `{distT : ApplicativeDist T}
     `{decorateT : Decorate E T}
-    `{! Categorical.DecTravFunctor.DecoratedTraversableFunctor E T}.
+    `{! Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
   #[local] Instance mapdt' : Mapdt E T := ToKleisli.Mapdt_distdec E T.
 
@@ -73,7 +73,7 @@ Module Roundtrip2.
     (E : Type)
     (T : Type -> Type)
     `{mapdtT : Mapdt E T}
-    `{@Kleisli.DecTravFunctor.DecoratedTraversableFunctor E T _}.
+    `{@Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T _}.
 
   #[local] Instance map' : Map T := DerivedInstances.Map_Mapdt E T.
   #[local] Instance dist' : ApplicativeDist T := ToCategorical.Dist_Mapdt E T.

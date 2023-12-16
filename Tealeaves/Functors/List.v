@@ -625,28 +625,31 @@ Qed.
 
 (** * The [shape] operation *)
 (******************************************************************************)
-Definition shape `{Map F} {A} : F A -> F unit :=
+Definition shape `{Map F} {A : Type} : F A -> F unit :=
   map F (const tt).
 
 (** ** Basic reasoning principles for <<shape>> *)
 (******************************************************************************)
 Theorem shape_map `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
-    shape (map F f t) = shape t.
+    shape (F := F) (map F f t) =
+      shape (F := F) t.
 Proof.
   intros. compose near t on left.
   unfold shape. now rewrite fun_map_map.
 Qed.
 
-Theorem shape_shape `{Functor F} : forall A (t : F A),
+Theorem shape_shape `{Functor F} : forall (A : Type) (t : F A),
     shape (shape t) = shape t.
 Proof.
   intros.  compose near t on left.
   unfold shape. now rewrite fun_map_map.
 Qed.
 
-Lemma shape_map_eq `{Functor F} : forall A1 A2 B (f : A1 -> B) (g : A2 -> B) t u,
+
+Lemma shape_map_eq `{Functor F} : forall (A1 A2 B : Type) (f : A1 -> B) (g : A2 -> B) t u,
     map F f t = map F g u -> shape t = shape u.
 Proof.
+
   introv hyp. cut (shape (map F f t) = shape (map F g u)).
   - now rewrite 2(shape_map).
   - now rewrite hyp.

@@ -65,7 +65,6 @@ Fixpoint mapsnd_Batch {A : Type} (B1 B2 : Type) {C : Type} (f : B1 -> B2) (b : B
   | Step _ _ _ rest c => Step A B1 C (map (Batch A B1) (precompose f) (mapsnd_Batch B1 B2 f rest)) c
   end.
 
-
 (** *** Rewriting principles *)
 (******************************************************************************)
 Lemma map_Batch_rw1 {A B C1 C2 : Type} `(f : C1 -> C2) (c : C1) :
@@ -124,6 +123,30 @@ Qed.
 #[export, program] Instance Functor_Batch {A B : Type} : Functor (Batch A B) :=
   {| fun_map_id := @map_id_Batch A B;
     fun_map_map := @map_map_Batch A B;
+  |}.
+
+Lemma mapfst_id_Batch : forall (B C A : Type),
+    mapfst_Batch A A (@id A) = @id (Batch A B C).
+Proof.
+  intros. ext b. induction b as [C c|C rest IHrest a].
+  - reflexivity.
+  - cbn. rewrite IHrest. reflexivity.
+Qed.
+
+Lemma mapfst_mapfst_Batch : forall (B C A1 A2 A3 : Type) (f : A1 -> A2) (g : A2 -> A3),
+    mapfst_Batch _ _ g ∘ mapfst_Batch _ _ f =
+      mapfst_Batch (B := B) (C := C) _ _ (g ∘ f).
+Proof.
+  intros.
+  ext b. unfold compose. induction b as [C c|C rest IHrest a].
+  - reflexivity.
+  - cbn. fequal.
+    apply IHrest.
+Qed.
+
+#[export, program] Instance Functor_Batch1 {B C : Type} : Functor (BATCH1 B C) :=
+  {| fun_map_id := @mapfst_id_Batch B C;
+    fun_map_map := @mapfst_mapfst_Batch B C;
   |}.
 
 (** *** Commuting independent maps *)
@@ -1080,7 +1103,8 @@ Proof.
   unfold id.
   induction b as [C c | C rest IHrest].
   - cbn. reflexivity.
-  - cbn. fold (@traverse (BATCH1 B (B -> C)) _).
+  - cbn.
+    change (Traverse_Batch1 B (B -> C)) with (@traverse (BATCH1 B (B -> C)) _).
     rewrite IHrest.
     reflexivity.
 Qed.
@@ -1103,7 +1127,8 @@ Proof.
     reflexivity.
   - cbn.
     (* RHS *)
-    fold (@traverse (BATCH1 B (B -> C)) _).
+    change (Traverse_Batch1 B (B -> C))
+      with (@traverse (BATCH1 B (B -> C)) _).
     (* cleanup *)
     rewrite (ap_compose1 G2 G1).
     rewrite (ap_compose1 G2 G1).
@@ -1146,7 +1171,8 @@ Proof.
     now rewrite appmor_pure.
   - cbn.
     unfold compose at 1. cbn.
-    fold (@traverse (BATCH1 B (B -> C)) _).
+    change (Traverse_Batch1 B (B -> C))
+      with (@traverse (BATCH1 B (B -> C)) _).
     rewrite <- IHrest.
     rewrite <- (appmor_pure (F := G1) (G := G2)).
     rewrite (ap_morphism_1 (ϕ := ϕ)).
@@ -1167,7 +1193,8 @@ Proof.
   intros. unfold Map_Traverse.
   ext A A' f b. induction b as [C c | C rest IHrest a].
   - reflexivity.
-  - cbn. fold (@traverse (BATCH1 B (B -> C)) _).
+  - cbn.
+    change (Traverse_Batch1 B (B -> C)) with (@traverse (BATCH1 B (B -> C)) _).
     rewrite <- IHrest.
     reflexivity.
 Qed.

@@ -77,8 +77,9 @@ Section listable_shape_lemmas.
       shape (tolist t) = shape (tolist u).
   Proof.
     introv heq. compose near t. compose near u.
-    unfold shape in *. rewrite 2(natural). unfold compose.
-    now rewrite heq.
+    unfold shape in *. rewrite 2(natural).
+    unfold compose.
+    fequal. apply heq.
   Qed.
 
   Corollary shape_l : forall A (l1 l2 : F A) (x y : list A),

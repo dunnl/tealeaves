@@ -1,8 +1,8 @@
 From Tealeaves Require Import
-  Classes.Categorical.DecTravFunctor
-  Classes.Kleisli.DecTravFunctor.
+  Classes.Categorical.DecoratedTraversableFunctor
+  Classes.Kleisli.DecoratedTraversableFunctor.
 
-Import Kleisli.DecTravFunctor.Notations.
+Import Kleisli.DecoratedTraversableFunctor.Notations.
 Import Product.Notations.
 
 #[local] Generalizable Variables G ϕ.
@@ -23,7 +23,7 @@ Module ToKleisli.
     Context
       (E : Type)
       (T : Type -> Type)
-      `{Categorical.DecTravFunctor.DecoratedTraversableFunctor E T}.
+      `{Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
     Theorem mapdt_id : forall (A : Type), mapdt (G := fun A => A) (extract (W := (E ×))) = @id (T A).
     Proof.
@@ -77,7 +77,7 @@ Module ToKleisli.
       reflexivity.
     Qed.
 
-    #[local] Instance: Kleisli.DecTravFunctor.DecoratedTraversableFunctor E T :=
+    #[local] Instance: Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
       {| kdtfun_mapdt1 := @mapdt_id;
         kdtfun_mapdt2 := @mapdt_mapdt;
         kdtfun_morph := @mapdt_mapdt_morphism;

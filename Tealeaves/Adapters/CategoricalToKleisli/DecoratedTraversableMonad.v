@@ -1,12 +1,12 @@
 From Tealeaves Require Import
-  Classes.Categorical.DecTravMonad
-  Classes.Kleisli.DecTravMonad
+  Classes.Categorical.DecoratedTraversableMonad
+  Classes.Kleisli.DecoratedTraversableMonad
   CategoricalToKleisli.DecoratedMonad
   CategoricalToKleisli.DecoratedFunctor (cobind_dec).
 
 Import Product.Notations.
 Import Kleisli.Monad.Notations.
-Import Kleisli.DecTravMonad.Notations.
+Import Kleisli.DecoratedTraversableMonad.Notations.
 Import Categorical.Monad.Notations.
 Import Categorical.TraversableFunctor.Notations.
 Import Strength.Notations.
@@ -33,7 +33,7 @@ Module ToKleisli.
     Context
       (W : Type)
       (T : Type -> Type)
-      `{Classes.Categorical.DecTravMonad.DecoratedTraversableMonad W T}.
+      `{Classes.Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
     Context
       (G1 : Type -> Type) `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
@@ -83,7 +83,7 @@ Module ToKleisli.
     Context
       (W : Type)
       (T : Type -> Type)
-      `{Categorical.DecTravMonad.DecoratedTraversableMonad W T}.
+      `{Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
     (* for [kdtm_binddt1_T] *)
     Import CategoricalToKleisli.DecoratedMonad.ToKleisli.
@@ -282,7 +282,7 @@ Module ToKleisli.
       now rewrite (fun_map_map (F := T)).
     Qed.
 
-    #[export] Instance: Kleisli.DecTravMonad.DecTravMonad W T :=
+    #[export] Instance: Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
       {| kdtm_binddt0 := @kdtm_binddt0_T;
         kdtm_binddt1 := @kdtm_binddt1_T;
         kdtm_binddt2 := @kdtm_binddt2_T;

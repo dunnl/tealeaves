@@ -37,7 +37,6 @@ Section with_algebra.
     reflexivity.
   Qed.
 
-
   Lemma ktm_bindt1_T : forall (A : Type),
       bindt (G := fun A : Type => A) (ret (T := T)) = (@id (T A)).
   Proof.
@@ -50,7 +49,7 @@ Section with_algebra.
       rewrite <- (TraversableFunctor.map_to_traverse).
       rewrite <- map_compat_traverse_Batch1.
       reflexivity. }
-    rewrite lemma.
+    setoid_rewrite lemma.
     rewrite trfm_extract.
     reflexivity.
   Qed.
