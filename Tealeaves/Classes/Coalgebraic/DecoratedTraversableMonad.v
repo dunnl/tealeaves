@@ -88,7 +88,8 @@ End section.
 
 Class DecoratedTraversableMonad (W : Type) (T : Type -> Type)
   `{Monoid_op W} `{Monoid_unit W} `{Return T} `{ToBatchDM W T} :=
-  { dtm_ret : forall (A B : Type),
+  { dtm_monoid :> Monoid W;
+    dtm_ret : forall (A B : Type),
       toBatchDM ∘ ret (T := T) (A := A) = Step (Done (@id (T B))) ∘ ret (T := (W ×));
     dtm_extract : forall (A : Type),
       extract_Batch ∘ mapfst_Batch (ret ∘ extract (W := (W ×))) ∘ toBatchDM = @id (T A);

@@ -54,7 +54,7 @@ Definition kcompose_dtmp
 #[local] Infix "⋆ren" := kcompose_rename (at level 60) : tealeaves_scope.
 #[local] Notation "| r1 || s1 | '⋆sub' | r2 || s2 |" := (kcompose_dtmp r1 s1 r2 s2) (r1 at level 0, s1 at level 0, r2 at level 0, s2 at level 0, at level 60) : tealeaves_scope.
 
-Class DecTravMonadPoly
+Class DecoratedTraversableMonadPoly
     (T : Type -> Type -> Type)
     `{forall W, Return (T W)}
     `{Substitute T T} :=
@@ -79,7 +79,6 @@ Class DecTravMonadPoly
     forall (WA WB : Type) (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ} (ρ : list WA * WA -> WB) `(f : list WA * A -> G1 (T WB B)),
       ϕ (T WB B) ∘ substitute ρ f = substitute ρ (ϕ (T WB B) ∘ f);
   }.
-
 
 Section compose_laws.
 
@@ -109,8 +108,8 @@ Section compose_laws.
       (ρf : list WA * WA -> WB)
       (f : list WA * A -> G1 (T WB B))
       (wa : list WA),
-      (kcompose_dtm ρg g ρf f) ⦿ wa =
-        kcompose_dtm (ρg ⦿ hmap ρf wa) (g  ⦿ hmap ρf wa) (ρf ⦿ wa) (f ⦿ wa).
+      (kcompose_dtmp ρg g ρf f) ⦿ wa =
+        kcompose_dtmp (ρg ⦿ hmap ρf wa) (g  ⦿ hmap ρf wa) (ρf ⦿ wa) (f ⦿ wa).
   Proof.
 
     intros.
