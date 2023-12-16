@@ -2,8 +2,6 @@ From Tealeaves Require Export
   Classes.Monoid
   Classes.Categorical.Applicative
   (* Classes.Categorical.Comonad *)
-  Functors.Writer
-  Functors.List
   Functors.ListHistory.
 
 Import Monoid.Notations.

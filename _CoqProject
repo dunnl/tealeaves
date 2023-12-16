@@ -27,7 +27,6 @@ Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableMonad.v
-Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 Tealeaves/Classes/Categorical/Monad.v
 Tealeaves/Classes/Categorical/Comonad.v
 Tealeaves/Classes/Categorical/BeckDistributiveLaw.v
@@ -48,7 +47,6 @@ Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
 Tealeaves/Classes/Coalgebraic/TraversableMonad.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonad.v
-#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
 Tealeaves/Functors/Subset.v
 Tealeaves/Functors/List.v
 Tealeaves/Classes/Categorical/ContainerFunctor.v
@@ -84,7 +82,9 @@ Tealeaves/Adapters/CoalgebraicToKleisli/TraversableMonad.v
 #Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
 Tealeaves/Adapters/MonadToApplicative.v
-#Tealeaves/Theory/TraversableFunctor.v
-#Tealeaves/Theory/TraversableMonad.v
+Tealeaves/Theory/TraversableFunctor.v
+Tealeaves/Theory/TraversableMonad.v
 #Tealeaves/Theory/DecoratedTraversableFunctor.v
 #Tealeaves/Theory/DecoratedTraversableMonad.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
+#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v

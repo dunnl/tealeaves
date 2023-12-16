@@ -69,7 +69,7 @@ Section traversable_monad_theory.
   Proof.
     intros.
     unfold_ops @Tolist_Traverse.
-    now rewrite (foldMap_ret).
+    now rewrite foldMap_ret.
   Qed.
 
   Lemma tolist_bind : forall (A B : Type) (f : A -> T B),
@@ -95,7 +95,7 @@ Section traversable_monad_theory.
     unfold_ops @Elements_Tolist.
     unfold_ops @Tolist_Traverse.
     reassociate -> on left.
-    rewrite (foldMap_ret).
+    rewrite foldMap_ret.
     apply element_of_list_hom1.
   Qed.
 
@@ -105,7 +105,7 @@ Section traversable_monad_theory.
     intros.
     unfold_ops @Elements_Tolist.
     reassociate -> on left.
-    rewrite (tolist_bind).
+    rewrite tolist_bind.
     reassociate <- on right.
     reassociate -> near f.
     rewrite <- element_of_list_hom2.
@@ -142,7 +142,7 @@ Section traversable_monad_theory.
       b ∈ map f t <-> exists a, a ∈ t /\ f a = b.
   Proof.
     intros.
-    rewrite (in_map_iff).
+    rewrite in_map_iff.
     reflexivity.
   Qed.
 
@@ -153,15 +153,15 @@ Section traversable_monad_theory.
       (forall (a : A), a ∈ t -> f1 a = f2 a) -> bindt f1 t = bindt f2 t.
   Proof.
     introv ? hyp.
-    rewrite (bindt_to_runBatch T G).
-    rewrite (bindt_to_runBatch T G).
+    rewrite bindt_to_runBatch.
+    rewrite bindt_to_runBatch.
     unfold compose at 1 2.
     unfold element_of, Elements_Tolist, tolist, Tolist_Traverse in hyp.
     unfold compose at 1 in hyp.
     rewrite (foldMap_to_runBatch2 A B) in hyp.
     unfold compose at 1 in hyp.
-    setoid_rewrite (toBatchM_toBatch T) in hyp.
-    rewrite <- (runBatch_mapsnd) in hyp.
+    setoid_rewrite toBatchM_toBatch in hyp.
+    rewrite <- runBatch_mapsnd in hyp.
     induction (toBatchM T A B t).
     - cbn in *.
       reflexivity.

@@ -95,7 +95,6 @@ Section properties.
       @binddt W T T _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G) (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f = binddt W T T G A B f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity2 G).
-    now rewrite (Mult_compose_identity2 G).
   Qed.
 
   Lemma binddt_app_r :
@@ -103,7 +102,6 @@ Section properties.
       @binddt W T T _ (G ∘ (fun A => A)) (Map_compose G (fun A => A)) (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f = binddt W T T G A B f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity1 G).
-    now rewrite (Mult_compose_identity1 G).
   Qed.
 
 End properties.
