@@ -110,53 +110,7 @@ End operations.
 
 (** * Derived instances *)
 (******************************************************************************)
-Module DerivedInstances.
-
-  (** ** Operations *)
-  (******************************************************************************)
-  Module operations.
-
-    Context
-      `{Mapdt E T}.
-
-    #[export] Instance Mapd_Mapdt: Mapd E T := fun A B f => mapdt (G := fun A => A) f.
-    #[export] Instance Traverse_Mapdt: Traverse T := fun G _ _ _ A B f => mapdt (f ∘ extract).
-    #[export] Instance Map_Mapdt: Map T := fun A B f => mapdt (G := fun A => A) (f ∘ extract).
-
-    Context
-      `{Applicative G}.
-
-    Corollary traverse_to_mapdt : forall `(f : A -> G B),
-        traverse f = mapdt (f ∘ extract).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Corollary mapd_to_mapdt : forall `(f : E * A -> B),
-        mapd f = mapdt (T := T) (G := fun A => A) f.
-    Proof.
-      reflexivity.
-    Qed.
-
-    Corollary map_to_mapdt : forall `(f : A -> B),
-        map f = mapdt (T := T) (G := fun A => A) (f ∘ extract).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Corollary map_to_mapd : forall `(f : A -> B),
-        map f = mapd (T := T) (f ∘ extract).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Corollary map_to_traverse : forall `(f : A -> B),
-        map f = traverse (T := T) (G := fun A => A) f.
-    Proof.
-      reflexivity.
-    Qed.
-
-  End operations.
+Section DerivedInstances.
 
   (** ** Derived Kleisli composition laws *)
   (******************************************************************************)
@@ -551,30 +505,76 @@ Module DerivedInstances.
 
   (** ** Derived typeclass instances *)
   (******************************************************************************)
-  (*
+(*
+  (** ** Operations *)
+  (******************************************************************************)
+  Section operations.
+
+    Context
+      `{Mapdt E T}.
+
+    #[export] Instance Mapd_Mapdt: Mapd E T := fun A B f => mapdt (G := fun A => A) f.
+    #[export] Instance Traverse_Mapdt: Traverse T := fun G _ _ _ A B f => mapdt (f ∘ extract).
+    #[export] Instance Map_Mapdt: Map T := fun A B f => mapdt (G := fun A => A) (f ∘ extract).
+
+    Context
+      `{Applicative G}.
+
+    Corollary traverse_to_mapdt : forall `(f : A -> G B),
+        traverse f = mapdt (f ∘ extract).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary mapd_to_mapdt : forall `(f : E * A -> B),
+        mapd f = mapdt (T := T) (G := fun A => A) f.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary map_to_mapdt : forall `(f : A -> B),
+        map f = mapdt (T := T) (G := fun A => A) (f ∘ extract).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary map_to_mapd : forall `(f : A -> B),
+        map f = mapd (T := T) (f ∘ extract).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary map_to_traverse : forall `(f : A -> B),
+        map f = traverse (T := T) (G := fun A => A) f.
+    Proof.
+      reflexivity.
+    Qed.
+
+  End operations.
+*)
+
   Section instances.
 
     Context
-      `{DecoratedTraversableFunctor E T}.
+      `{DecoratedTraversableFunctorFull E T}.
 
     #[export] Instance Functor_DT : Functor T :=
       {| fun_map_id := map_id;
-         fun_map_map := @map_map E T _ _;
+         fun_map_map := @map_map E T _ _ _ _ _;
       |}.
 
     #[export] Instance DF_DT : DecoratedFunctor E T :=
       {| dfun_mapd1 := mapd_id;
-        dfun_mapd2 := @mapd_mapd E T _ _;
+        dfun_mapd2 := @mapd_mapd E T _ _ _ _ _;
       |}.
 
     #[export] Instance Traversable_DT : TraversableFunctor T :=
       {| trf_traverse_id := traverse_id;
-        trf_traverse_traverse := @traverse_traverse E T _ _;
-        trf_traverse_morphism := @traverse_morphism E T _ _;
+        trf_traverse_traverse := @traverse_traverse E T _ _ _ _ _;
+        trf_traverse_morphism := @traverse_morphism E T _ _ _ _ _;
       |}.
 
   End instances.
-  *)
 
 End DerivedInstances.
 
