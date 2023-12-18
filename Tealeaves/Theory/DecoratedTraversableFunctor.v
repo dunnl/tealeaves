@@ -1,7 +1,8 @@
 From Tealeaves Require Export
   Functors.Batch
   Classes.Kleisli.DecoratedTraversableFunctor
-  Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor.
+  Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
+  Theory.TraversableFunctor.
 
 Import Product.Notations.
 Import Monoid.Notations.
@@ -96,6 +97,17 @@ Section traversable_functor_theory.
   Definition foldMapd {T : Type -> Type} `{Mapdt E T} `{op : Monoid_op M} `{unit : Monoid_unit M}
     {A : Type} (f : E * A -> M) : T A -> M := mapdt (G := const M) (B := False) f.
 
+  (** *** As a generalization of <<foldMap>> *)
+  (******************************************************************************)
+  Lemma foldMap_to_foldMapd :  forall `{Monoid M} `(f : A -> M),
+      foldMap (T := T) f = foldMapd (T := T) (f ∘ extract).
+  Proof.
+    intros.
+    rewrite (foldMap_to_traverse1 M).
+    rewrite (kdtfunf_traverse_to_mapdt).
+    reflexivity.
+  Qed.
+
   (** *** As a special case of <<traverse>> *)
   (******************************************************************************)
   Lemma foldMapd_to_mapdt1 (M : Type) `{Monoid M} : forall `(f : E * A -> M),
@@ -173,137 +185,238 @@ Section traversable_functor_theory.
     reflexivity.
   Qed.
 
-(** * Shape and contents *)
-(******************************************************************************)
-Section DTM_tolist.
-
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{DTM W T}.
-
-  Import DT.Monad.DerivedInstances.
-
-  (** ** Relating <<tolistd>> and <<binddt>> / <<ret>> *)
+  (** ** The <<tolistd>> operation *)
   (******************************************************************************)
-  Lemma tolistd_ret : forall (A : Type) (a : A),
-      tolistd W T (ret T A a) = [ (Ƶ, a) ].
-  Proof.
-    unfold tolistd.
-    intros. compose near a.
-    rewrite (foldMapd_ret W T (list (W * A))).
-    reflexivity.
-  Qed.
+  Section tolist.
 
-  Lemma tolistd_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
-      map G (tolistd W T) ∘ binddt W T T G A B f =
-        foldMapd W T (fun '(w, a) => map G (foldMapd W T (ret list (W * B) ⦿ w)) (f (w, a))).
-  Proof.
-    intros. unfold tolistd. rewrite (foldMapd_binddt W T (list (W * B))).
-    reflexivity.
-  Qed.
+    Class Tolistd (E : Type) (F : Type -> Type) :=
+      tolistd : forall A : Type, F A -> list (E * A).
+
+    #[global] Arguments tolistd {E}%type_scope {F}%function_scope
+      {Tolistd} {A}%type_scope _.
+
+    #[export] Instance Tolistd_Mapdt : Tolistd E T :=
+    fun A => foldMapd (ret (T := list)).
+
+    #[export] Instance Natural_Tolistd_Mapdt : Natural (@tolistd E T _).
+    Proof.
+      constructor; try typeclasses eauto.
+      intros. unfold_ops @Tolistd_Mapdt.
+      rewrite (foldMapd_morphism (list (E * A)) (list (E * B))).
+      rewrite foldMapd_map.
+      unfold_ops @Map_compose.
+      rewrite (natural (ϕ := @ret list _)).
+      reflexivity.
+    Qed.
+
+    Lemma foldMapd_list_eq `{Monoid M} : forall (A : Type) (f : E * A -> M),
+        foldMapd f = List.foldMap f ∘ tolistd.
+    Proof.
+      intros. unfold_ops @Tolistd_Mapdt. unfold foldMapd.
+      rewrite <- (kdtfun_morph (ϕ := fun A => List.foldMap f)).
+      rewrite foldMap_list_ret.
+      reflexivity.
+    Qed.
+
+    Lemma tolistd_to_foldMapd : forall (A : Type),
+        tolistd (F := T) = foldMapd (ret (T := list) (A := E * A)).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary tolistd_to_mapdt1 : forall (A : Type),
+        tolistd = mapdt (G := const (list (E * A))) (B := False) (ret (T := list)).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary tolistd_to_mapdt2 : forall (A fake : Type),
+        tolistd = mapdt (G := const (list (E * A))) (B := fake) (ret (T := list)).
+    Proof.
+      intros.
+      rewrite tolistd_to_mapdt1.
+      rewrite (mapdt_constant_applicative1 (B := fake)).
+      reflexivity.
+    Qed.
+
+    Corollary tolistd_to_runBatch6 {A : Type} (tag : Type) :
+      tolistd = runBatch (B := tag) (F := const (list (E * A)))
+                  (ret (T := list)) ∘ toBatch6.
+    Proof.
+      rewrite (tolistd_to_mapdt2 A tag).
+      now rewrite (mapdt_to_runBatch).
+    Qed.
+
+  End tolist.
 
   (** ** Relating <<tolistd>> and lesser operations *)
   (******************************************************************************)
-  Lemma tolistd_bindd : forall `(f : W * A -> T B),
-      tolistd W T ∘ bindd W T T A B f =
-        foldMapd W T (fun '(w, a) => foldMapd W T (ret list (W * B) ⦿ w) (f (w, a))).
+  Lemma tolistd_mapd : forall `(f : E * A -> B),
+      tolistd (F := T) ∘ mapd f = foldMapd (ret (T := list) ∘ cobind f).
   Proof.
     intros.
-    rewrite (bindd_to_binddt W T).
-    change (tolistd W T (A := ?A)) with (map (fun A => A) (tolistd W T (A := A))).
-    rewrite (tolistd_binddt (G := fun A => A)).
+    rewrite tolistd_to_foldMapd.
+    rewrite foldMapd_mapd.
     reflexivity.
   Qed.
 
-  (** ** Corollaries for the rest *)
-  (******************************************************************************)
-  Corollary tosetd_ret : forall (A : Type) (a : A),
-      el_ctx T A (ret T A a) = {{ (Ƶ, a) }}.
-  Proof.
-    intros. unfold_ops @Tosetd_DTF.
-    compose near a.
-    rewrite (foldMapd_ret W T (W * A -> Prop)).
-    reflexivity.
-  Qed.
-
-  Corollary tolist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
-      map G (tolist T B) ∘ binddt W T T G A B f =
-        foldMapd W T (map G (tolist T B) ∘ f).
+  Lemma tolistd_map : forall `(f : A -> B),
+      tolistd (F := T) ∘ map f = foldMapd (ret (T := list) ∘ map (F := (E ×)) f).
   Proof.
     intros.
-    change (@Traverse_Binddt W T _ _)
-      with (@DerivedInstances.Traverse_Mapdt _ _ _).
-    rewrite (tolist_to_tolistd W T).
-    rewrite <- (fun_map_map G).
-    reassociate ->.
-    rewrite tolistd_binddt.
-    rewrite (foldMapd_morphism W T).
-    rewrite (fun_map_map G).
-    fequal. unfold tolistd.
-    ext [w a]. unfold compose at 1 2.
-    compose near (f (w, a)) on left.
-    rewrite (fun_map_map G).
-    rewrite (foldMapd_morphism W T).
-    rewrite (foldMapd_morphism W T).
-    fequal. fequal.
-    ext [w' b]. reflexivity.
+    rewrite tolistd_to_foldMapd.
+    rewrite foldMapd_map.
+    reflexivity.
   Qed.
 
   (** ** Relating <<tolist>> and lesser operations *)
   (******************************************************************************)
-  Lemma tolist_bindd : forall `(f : W * A -> T B),
-      tolist T B ∘ bindd W T T A B f =
-        foldMapd W T (fun '(w, a) => foldMap T (ret list B) (f (w, a))).
+  Lemma tolist_mapd : forall `(f : E * A -> B),
+      tolist ∘ mapd f = foldMapd (ret (T := list) ∘ f).
   Proof.
     intros.
-    change (@Traverse_Binddt W T _ _)
-      with (@DerivedInstances.Traverse_Mapdt W T _).
-    rewrite (tolist_to_tolistd W T).
-    reassociate ->. rewrite tolistd_bindd.
-    rewrite (foldMapd_morphism W T).
-    fequal. ext [w a].
-    cbn. compose near (f (w, a)) on left.
-    rewrite (foldMapd_morphism W T).
-    rewrite (foldMap_to_foldMapd W T).
-    fequal. now ext [w' a'].
-  Qed.
-
-End DTM_tolist.
-
-(** ** Characterizing membership in list operations *)
-(******************************************************************************)
-Section DTM_tolist.
-
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{DTM W T}.
-
-  Import DerivedInstances.
-
-  Lemma ind_iff_in_tolistd : forall (A : Type) (a : A) (w : W) (t : T A),
-      (w, a) ∈d t <-> el list (W * A) (tolistd W T t) (w, a).
-  Proof.
-    intros. unfold tolistd.
-    unfold_ops @Tosetd_DTF.
-    compose near t on right.
-    rewrite (foldMapd_morphism W T (ϕ := el list _)).
-    replace (@ret set Return_set (W * A)) with (el list _ ∘ ret list (W * A)).
-    reflexivity. ext [w' a']. solve_basic_set.
-  Qed.
-
-  Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
-      (a ∈ t) <-> el list A (tolist T A t) a.
-  Proof.
-    intros.
-    change (@Traverse_Binddt W T _ _)
-      with (@DerivedInstances.Traverse_Mapdt _ _ _).
-    rewrite (toset_to_tolist T).
+    rewrite tolist_to_foldMap.
+    rewrite foldMap_to_foldMapd.
+    rewrite foldMapd_mapd.
+    reassociate -> on left.
+    rewrite kcom_cobind0.
     reflexivity.
   Qed.
 
-End DTM_tolist.
+  (** ** The <<∈d>> operation *)
+  (******************************************************************************)
+  Section toset.
+
+    Class Elementsd (E : Type) (F : Type -> Type) :=
+      elementsd : forall A : Type, F A -> subset (E * A).
+
+    #[global] Arguments elementsd {E}%type_scope {F}%function_scope
+      {Elementsd} {A}%type_scope _.
+
+    #[export] Instance Elementd_Mapdt : Elementsd E T :=
+      fun A => foldMapd (ret (T := subset)).
+
+    #[export] Instance Elementd_Mapdt : Elementsd E T :=
+      fun A => foldMapd (ret (T := subset)).
+
+    #[export] Instance Natural_Tolistd_Mapdt : Natural (@tolistd E T _).
+    Proof.
+      constructor; try typeclasses eauto.
+      intros. unfold_ops @Tolistd_Mapdt.
+      rewrite (foldMapd_morphism (list (E * A)) (list (E * B))).
+      rewrite foldMapd_map.
+      unfold_ops @Map_compose.
+      rewrite (natural (ϕ := @ret list _)).
+      reflexivity.
+    Qed.
+
+    Lemma foldMapd_list_eq `{Monoid M} : forall (A : Type) (f : E * A -> M),
+        foldMapd f = List.foldMap f ∘ tolistd.
+    Proof.
+      intros. unfold_ops @Tolistd_Mapdt. unfold foldMapd.
+      rewrite <- (kdtfun_morph (ϕ := fun A => List.foldMap f)).
+      rewrite foldMap_list_ret.
+      reflexivity.
+    Qed.
+
+    Lemma tolistd_to_foldMapd : forall (A : Type),
+        tolistd (F := T) = foldMapd (ret (T := list) (A := E * A)).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary tolistd_to_mapdt1 : forall (A : Type),
+        tolistd = mapdt (G := const (list (E * A))) (B := False) (ret (T := list)).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Corollary tolistd_to_mapdt2 : forall (A fake : Type),
+        tolistd = mapdt (G := const (list (E * A))) (B := fake) (ret (T := list)).
+    Proof.
+      intros.
+      rewrite tolistd_to_mapdt1.
+      rewrite (mapdt_constant_applicative1 (B := fake)).
+      reflexivity.
+    Qed.
+
+    Corollary tolistd_to_runBatch6 {A : Type} (tag : Type) :
+      tolistd = runBatch (B := tag) (F := const (list (E * A)))
+                  (ret (T := list)) ∘ toBatch6.
+    Proof.
+      rewrite (tolistd_to_mapdt2 A tag).
+      now rewrite (mapdt_to_runBatch).
+    Qed.
+
+  End tolist.
+
+  (** ** Relating <<tolistd>> and lesser operations *)
+  (******************************************************************************)
+  Lemma tolistd_mapd : forall `(f : E * A -> B),
+      tolistd (F := T) ∘ mapd f = foldMapd (ret (T := list) ∘ cobind f).
+  Proof.
+    intros.
+    rewrite tolistd_to_foldMapd.
+    rewrite foldMapd_mapd.
+    reflexivity.
+  Qed.
+
+  Lemma tolistd_map : forall `(f : A -> B),
+      tolistd (F := T) ∘ map f = foldMapd (ret (T := list) ∘ map (F := (E ×)) f).
+  Proof.
+    intros.
+    rewrite tolistd_to_foldMapd.
+    rewrite foldMapd_map.
+    reflexivity.
+  Qed.
+
+  (** ** Relating <<tolist>> and lesser operations *)
+  (******************************************************************************)
+  Lemma tolist_mapd : forall `(f : E * A -> B),
+      tolist ∘ mapd f = foldMapd (ret (T := list) ∘ f).
+  Proof.
+    intros.
+    rewrite tolist_to_foldMap.
+    rewrite foldMap_to_foldMapd.
+    rewrite foldMapd_mapd.
+    reassociate -> on left.
+    rewrite kcom_cobind0.
+    reflexivity.
+  Qed.
+
+  (** ** Characterizing membership in list operations *)
+  (******************************************************************************)
+  Section DTM_tolist.
+
+    Context
+      (W : Type)
+        (T : Type -> Type)
+        `{DTM W T}.
+
+    Import DerivedInstances.
+
+    Lemma ind_iff_in_tolistd : forall (A : Type) (a : A) (w : W) (t : T A),
+        (w, a) ∈d t <-> el list (W * A) (tolistd W T t) (w, a).
+    Proof.
+      intros. unfold tolistd.
+      unfold_ops @Tosetd_DTF.
+      compose near t on right.
+      rewrite (foldMapd_morphism W T (ϕ := el list _)).
+      replace (@ret set Return_set (W * A)) with (el list _ ∘ ret list (W * A)).
+      reflexivity. ext [w' a']. solve_basic_set.
+    Qed.
+
+    Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
+        (a ∈ t) <-> el list A (tolist T A t) a.
+    Proof.
+      intros.
+      change (@Traverse_Binddt W T _ _)
+        with (@DerivedInstances.Traverse_Mapdt _ _ _).
+      rewrite (toset_to_tolist T).
+      reflexivity.
+    Qed.
+
+  End DTM_tolist.
 
 (** * Characterizing <<∈d>> *)
 (******************************************************************************)

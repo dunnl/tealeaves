@@ -15,7 +15,10 @@ Import Product.Notations.
 (** * Decorated traversable functors *)
 (******************************************************************************)
 
-(** ** Operation *)
+(** ** Typeclass *)
+(******************************************************************************)
+
+(** *** Operation *)
 (******************************************************************************)
 Class Mapdt (E : Type) (T : Type -> Type) :=
   mapdt : forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
@@ -25,7 +28,7 @@ Class Mapdt (E : Type) (T : Type -> Type) :=
 #[global] Arguments mapdt {E}%type_scope {T}%function_scope {Mapdt}
   {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 
-(** ** Kleisli composition *)
+(** *** Kleisli composition *)
 (******************************************************************************)
 Definition kc6
   {E A B C : Type}
@@ -39,7 +42,7 @@ Definition kc6
 
 #[local] Infix "⋆6" := kc6 (at level 60) : tealeaves_scope.
 
-(** ** Typeclass *)
+(** *** Typeclass *)
 (******************************************************************************)
 Class DecoratedTraversableFunctor
   (E : Type) (T : Type -> Type) `{Mapdt E T} :=
@@ -53,6 +56,8 @@ Class DecoratedTraversableFunctor
       mapdt (ϕ B ∘ f) = ϕ (T B) ∘ mapdt f;
   }.
 
+(** *** "Full" typeclass *)
+(******************************************************************************)
 Class DecoratedTraversableFunctorFull (E : Type) (T : Type -> Type)
   `{Mapdt E T} `{Mapd E T} `{Traverse T} `{Map T} :=
   { kdtfunf_dtf :> DecoratedTraversableFunctor E T;
@@ -64,65 +69,65 @@ Class DecoratedTraversableFunctorFull (E : Type) (T : Type -> Type)
     @traverse T _ G _ _ _ A B f = @mapdt E T _ G _ _ _ A B (f ∘ extract (W := (E ×)));
   }.
 
-(** * Functor composition in the applicative functor *)
+(** ** Theory *)
 (******************************************************************************)
-Section operations.
+Section theory.
 
   Context
-    `{DecoratedTraversableFunctor E T}.
+    `{DecoratedTraversableFunctorFull E T}.
 
-  #[local]  Arguments mapdt E%type_scope T%function_scope {Mapdt} G%function_scope (H H0 H1) (A B)%type_scope _%function_scope _.
+  (** *** Functor composition in the applicative functor *)
+  (******************************************************************************)
+  Section constant.
 
-  Context
-    {G : Type -> Type}
-    {A B : Type}
-    {mapG  : Map G}
-    {pureG : Pure G}
-    {multG : Mult G}
-    `{! Applicative G}.
+    #[local] Arguments mapdt E%type_scope T%function_scope {Mapdt}
+      G%function_scope (H H0 H1) (A B)%type_scope _%function_scope _.
 
-  Lemma mapdt_app_l: forall (f : E * A -> G B),
-      mapdt E T ((fun A => A) ∘ G)
-        (Map_compose  (fun A => A) G)
-        (Pure_compose (fun A => A) G)
-        (Mult_compose (fun A => A) G)
-        A B f = mapdt E T G mapG pureG multG A B f.
-  Proof.
-    intros. cbv. fequal. ext A' B' p. now destruct p.
-  Qed.
+    Context
+      {G : Type -> Type}
+      {A B : Type}
+      {mapG  : Map G}
+      {pureG : Pure G}
+      {multG : Mult G}
+      `{! Applicative G}.
 
-  Lemma mapdt_app_r: forall (f : E * A -> G B),
-      mapdt E T (G ∘ (fun A => A))
-        (Map_compose  G (fun A => A))
-        (Pure_compose G (fun A => A))
-        (Mult_compose G (fun A => A))
-        A B f = mapdt E T G mapG pureG multG A B f.
-  Proof.
-    intros. cbv. fequal. ext A' B' p.
-    destruct p.
-    change (mapG (A' * B') (A' * B') (fun p : A' * B' => p))
-      with (map (F := G) (@id (A' * B'))).
-    rewrite (fun_map_id (F := G)).
-    reflexivity.
-  Qed.
+    Lemma mapdt_app_l: forall (f : E * A -> G B),
+        mapdt E T ((fun A => A) ∘ G)
+          (Map_compose  (fun A => A) G)
+          (Pure_compose (fun A => A) G)
+          (Mult_compose (fun A => A) G)
+          A B f = mapdt E T G mapG pureG multG A B f.
+    Proof.
+      intros. cbv. fequal. ext A' B' p. now destruct p.
+    Qed.
 
-End operations.
+    Lemma mapdt_app_r: forall (f : E * A -> G B),
+        mapdt E T (G ∘ (fun A => A))
+          (Map_compose  G (fun A => A))
+          (Pure_compose G (fun A => A))
+          (Mult_compose G (fun A => A))
+          A B f = mapdt E T G mapG pureG multG A B f.
+    Proof.
+      intros. cbv. fequal. ext A' B' p.
+      destruct p.
+      change (mapG (A' * B') (A' * B') (fun p : A' * B' => p))
+        with (map (F := G) (@id (A' * B'))).
+      rewrite (fun_map_id (F := G)).
+      reflexivity.
+    Qed.
 
-(** * Derived instances *)
-(******************************************************************************)
-Section DerivedInstances.
+  End constant.
 
-  (** ** Derived Kleisli composition laws *)
+  (** *** Derived Kleisli composition laws *)
   (******************************************************************************)
   Section kc6_lemmas.
 
     Context
-      `{DecoratedTraversableFunctorFull E T}
       `{Applicative G1}
       `{Applicative G2}
       (A B C : Type).
 
-    (** *** Homogeneous cases *)
+    (** **** Homogeneous cases *)
     (******************************************************************************)
     Lemma kc6_44 :
       forall (g : E * B -> C) (f : E * A -> B),
@@ -166,10 +171,10 @@ Section DerivedInstances.
       reflexivity.
     Qed.
 
-    (** *** Heterogeneous cases *)
+    (** **** Heterogeneous cases *)
     (******************************************************************************)
 
-    (** **** [6x] *)
+    (** ***** [6x] *)
     (******************************************************************************)
     Lemma kc6_64 :
       forall (g : E * B -> G2 C)
@@ -204,7 +209,7 @@ Section DerivedInstances.
       reflexivity.
     Qed.
 
-    (** **** [x6] *)
+    (** ***** [x6] *)
     (******************************************************************************)
     Lemma kc6_46 :
       forall (g : E * B -> C) (f : E * A -> G1 B),
@@ -237,7 +242,7 @@ Section DerivedInstances.
       now rewrite fun_map_map.
     Qed.
 
-    (** **** [xy] *)
+    (** ***** [xy] *)
     (******************************************************************************)
     Lemma kc6_24 :
       forall (g : B -> G2 C)
@@ -307,12 +312,11 @@ Section DerivedInstances.
 
   End kc6_lemmas.
 
-  (** ** Derived Kleisli composition operations *)
+  (** *** Derived composition laws *)
   (******************************************************************************)
   Section composition.
 
     Context
-      `{DecoratedTraversableFunctorFull E T}
       `{Applicative G1}
       `{Applicative G2}
       {A B C : Type}.
@@ -503,11 +507,30 @@ Section DerivedInstances.
 
   End composition.
 
-  (** ** Derived typeclass instances *)
+  (** *** Derived typeclass instances *)
   (******************************************************************************)
-(*
-  (** ** Operations *)
-  (******************************************************************************)
+  #[export] Instance Functor_DT : Functor T :=
+    {| fun_map_id := map_id;
+      fun_map_map := @map_map;
+    |}.
+
+  #[export] Instance DF_DT : DecoratedFunctor E T :=
+    {| dfun_mapd1 := mapd_id;
+      dfun_mapd2 := @mapd_mapd;
+    |}.
+
+  #[export] Instance Traversable_DT : TraversableFunctor T :=
+    {| trf_traverse_id := traverse_id;
+      trf_traverse_traverse := @traverse_traverse;
+      trf_traverse_morphism := @traverse_morphism;
+    |}.
+
+End theory.
+
+(** ** Derived operations *)
+(******************************************************************************)
+Module DerivedOperations.
+
   Section operations.
 
     Context
@@ -551,32 +574,15 @@ Section DerivedInstances.
     Qed.
 
   End operations.
-*)
 
-  Section instances.
+  #[local] Instance MakeFull_DecoratedTraversableFunctor
+    `{DecoratedTraversableFunctor E T} :
+    DecoratedTraversableFunctorFull E T.
+  Proof.
+    now constructor.
+  Qed.
 
-    Context
-      `{DecoratedTraversableFunctorFull E T}.
-
-    #[export] Instance Functor_DT : Functor T :=
-      {| fun_map_id := map_id;
-         fun_map_map := @map_map E T _ _ _ _ _;
-      |}.
-
-    #[export] Instance DF_DT : DecoratedFunctor E T :=
-      {| dfun_mapd1 := mapd_id;
-        dfun_mapd2 := @mapd_mapd E T _ _ _ _ _;
-      |}.
-
-    #[export] Instance Traversable_DT : TraversableFunctor T :=
-      {| trf_traverse_id := traverse_id;
-        trf_traverse_traverse := @traverse_traverse E T _ _ _ _ _;
-        trf_traverse_morphism := @traverse_morphism E T _ _ _ _ _;
-      |}.
-
-  End instances.
-
-End DerivedInstances.
+End DerivedOperations.
 
 (** * Notations *)
 (******************************************************************************)

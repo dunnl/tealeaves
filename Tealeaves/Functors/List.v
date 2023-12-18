@@ -540,6 +540,11 @@ Section foldMap_list_rw.
     cbv. apply monoid_id_l.
   Qed.
 
+  Lemma foldMap_list_ret : foldMap f ∘ ret list A = f.
+  Proof.
+    ext a; cbn. apply monoid_id_l.
+  Qed.
+
   Lemma foldMap_list_app : forall (l1 l2 : list A),
       foldMap f (l1 ++ l2) = foldMap f l1 ● foldMap f l2.
   Proof.
