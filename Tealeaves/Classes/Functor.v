@@ -14,7 +14,7 @@ Class Map (F : Type -> Type) : Type :=
 #[global] Arguments map {F}%function_scope {Map} {A B}%type_scope f%function_scope.
 #[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope.
 
-Class Functor (F : Type -> Type) `{Map F} : Type :=
+Class Functor (F : Type -> Type) `{map_instance : Map F} : Type :=
   { fun_map_id : forall (A : Type),
       map F A A (@id A) = @id (F A);
     fun_map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),

@@ -24,11 +24,78 @@ Class DecoratedFunctor (E : Type) (T : Type -> Type) `{Mapd E T} :=
       @mapd E T _ B C g ∘ @mapd E T _ A B f = @mapd E T _ A C (g ⋆4 f);
   }.
 
+Class DecoratedFunctorFull (E : Type) (T : Type -> Type) `{Mapd E T} `{Map T} :=
+  { dfunf_df :> DecoratedFunctor E T;
+    dfunf_map_to_mapd : forall (A B : Type) (f : A -> B),
+      map f = mapd (f ∘ extract);
+  }.
+
+(** ** Theory *)
+(******************************************************************************)
+Section theory.
+
+  Import Comonad.DerivedInstances.
+
+  Context
+    `{DecoratedFunctorFull E T}.
+
+  (** ** Composition in special cases *)
+  (******************************************************************************)
+  Lemma map_mapd :
+    forall (A B C : Type)
+      (g : B -> C)
+      (f : E * A -> B),
+      map g ∘ mapd f = mapd (g ∘ f).
+  Proof.
+    intros.
+    rewrite dfunf_map_to_mapd.
+    rewrite dfun_mapd2.
+    rewrite kc4_04.
+    reflexivity.
+  Qed.
+
+  Lemma mapd_map: forall (A B C : Type)
+                    (g : E * B -> C)
+                    (f : A -> B),
+      mapd g ∘ map f = mapd (g ∘ map f).
+  Proof.
+    intros.
+    rewrite dfunf_map_to_mapd.
+    rewrite dfun_mapd2.
+    rewrite kc4_40.
+    reflexivity.
+  Qed.
+
+  Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
+      map g ∘ map f = map (F := T) (g ∘ f).
+  Proof.
+    intros.
+    do 3 rewrite dfunf_map_to_mapd.
+    rewrite dfun_mapd2.
+    rewrite kc4_00.
+    reflexivity.
+  Qed.
+
+  Lemma map_id : forall (A : Type),
+      map (@id A) = @id (T A).
+  Proof.
+    intros.
+    rewrite dfunf_map_to_mapd.
+    unfold id, compose.
+    rewrite dfun_mapd1.
+    reflexivity.
+  Qed.
+
+  #[export] Instance: Classes.Functor.Functor T :=
+    {| fun_map_id := map_id;
+       fun_map_map := map_map;
+    |}.
+
+End theory.
+
 (** ** Derived functor instance *)
 (******************************************************************************)
 Module DerivedInstances.
-
-  Import Comonad.DerivedInstances.
 
   (** ** [map] as a special case of [mapd] *)
   (******************************************************************************)
@@ -42,63 +109,13 @@ Module DerivedInstances.
     reflexivity.
   Qed.
 
-  Section with_instance.
-
-    Context
-      `{DecoratedFunctor E T}.
-
-    (** ** Composition in special cases *)
-    (******************************************************************************)
-    Lemma map_mapd :
-      forall (A B C : Type)
-        (g : B -> C)
-        (f : E * A -> B),
-        map g ∘ mapd f = mapd (g ∘ f).
-    Proof.
-      intros.
-      rewrite map_to_mapd.
-      rewrite dfun_mapd2.
-      rewrite kc4_04.
-      reflexivity.
-    Qed.
-
-    Lemma mapd_map: forall (A B C : Type)
-                      (g : E * B -> C)
-                      (f : A -> B),
-        mapd g ∘ map f = mapd (g ∘ map f).
-    Proof.
-      intros.
-      rewrite map_to_mapd.
-      rewrite dfun_mapd2.
-      rewrite kc4_40.
-      reflexivity.
-    Qed.
-
-    Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
-        map g ∘ map f = map (F := T) (g ∘ f).
-    Proof.
-      intros.
-      do 2 rewrite map_to_mapd.
-      rewrite dfun_mapd2.
-      rewrite kc4_00.
-      reflexivity.
-    Qed.
-
-    Lemma map_id : forall (A : Type),
-        map (@id A) = @id (T A).
-    Proof.
-      intros.
-      rewrite map_to_mapd.
-      unfold id, compose.
-      rewrite dfun_mapd1.
-      reflexivity.
-    Qed.
-
-    #[export] Instance: Classes.Functor.Functor T :=
-      {| fun_map_id := map_id;
-        fun_map_map := map_map;
-      |}.
-
-  End with_instance.
+  #[export] Instance MakeFull_DecoratedFunctor
+    `{DecoratedFunctor E T} :
+    `{DecoratedFunctorFull E T}.
+  Proof.
+    constructor.
+    typeclasses eauto.
+    apply map_to_mapd.
+  Qed.
 
 End DerivedInstances.

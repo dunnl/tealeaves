@@ -98,7 +98,7 @@ Module Roundtrip2.
     rewrite (kc5_50).
     change (ret (T := T) (A := W * A)) with (ret (T:=T) (A := W * A) ∘ id).
     rewrite (kc5_54).
-    change (Map_Env ?x) with (Map_prod x) in *.
+    change (Map_reader ?x) with (Map_prod x) in *.
     (* TODO ^^ Fix this *)
     rewrite <- (natural (ϕ := @extract (W ×) _)).
     rewrite (DerivedInstances.kc4_04).

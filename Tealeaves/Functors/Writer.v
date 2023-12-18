@@ -2,7 +2,7 @@ From Tealeaves Require Export
   Classes.Monoid
   Classes.Kleisli.Monad
   Classes.Kleisli.Comonad
-  Functors.Environment.
+  Functors.Reader.
 
 Import Product.Notations.
 Import Functor.Notations.

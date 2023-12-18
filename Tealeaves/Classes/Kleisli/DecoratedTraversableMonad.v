@@ -444,7 +444,7 @@ Module DerivedInstances.
       unfold_ops @Map_compose.
       do 2 reassociate <-.
       unfold_compose_in_compose; rewrite fun_map_map.
-      unfold_ops @Cobind_env; unfold strength.
+      unfold_ops @Cobind_reader; unfold strength.
       unfold compose at 3 4.
       compose near (f (w, a)) on right.
       rewrite fun_map_map.

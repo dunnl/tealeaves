@@ -162,8 +162,9 @@ Section to_coalgebraic.
     intros.
     reassociate -> on left.
     rewrite <- toBatch6_toBatch.
-    Fail rewrite (trf_extract).
-  Admitted.
+    rewrite trf_extract.
+    reflexivity.
+  Qed.
 
   Lemma toBatch6_duplicate_Kleisli : forall (A B C : Type),
       cojoin_Batch6 ∘ toBatch6 (A := A) (B := C) =

@@ -3,7 +3,7 @@ From Tealeaves Require Export
   Classes.Kleisli.Comonad
   Classes.Kleisli.DecoratedFunctor
   Classes.Kleisli.TraversableFunctor
-  Functors.Environment.
+  Functors.Reader.
 
 Import Strength.Notations.
 Import TraversableFunctor.Notations.

@@ -84,7 +84,7 @@ Section DecoratedFunctor_misc.
       map T (cobind (W := (E ×)) f) ∘ dec T = dec T ∘ map T f ∘ dec T.
   Proof.
     intros.
-    unfold_ops @Cobind_env.
+    unfold_ops @Cobind_reader.
     rewrite <- (natural (ϕ := @dec E T _)).
     unfold_ops @Map_compose.
     reassociate ->.

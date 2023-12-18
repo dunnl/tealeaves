@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Classes.Categorical.Comonad
-  Functors.Categorical.Environment
+  Functors.Categorical.Reader
   Functors.Categorical.Writer.
 
 Import Monoid.Notations.
@@ -210,9 +210,9 @@ Section helper_lemmas.
 
 End helper_lemmas.
 
-(** * Decorated functor instance for [Environment] *)
+(** * Decorated functor instance for [Reader] *)
 (******************************************************************************)
-Section DecoratedFunctor_env.
+Section DecoratedFunctor_reader.
 
   Context
     (E : Type).
@@ -223,4 +223,4 @@ Section DecoratedFunctor_env.
 
   Solve Obligations with (intros; now ext [? ?]).
 
-End DecoratedFunctor_env.
+End DecoratedFunctor_reader.

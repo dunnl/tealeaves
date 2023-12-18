@@ -19,7 +19,7 @@ Tealeaves/Misc/List.v
 Tealeaves/Classes/Categorical/Applicative.v
 Tealeaves/Classes/Kleisli/Monad.v
 Tealeaves/Classes/Kleisli/Comonad.v
-Tealeaves/Functors/Environment.v
+Tealeaves/Functors/Reader.v
 Tealeaves/Functors/Writer.v
 Tealeaves/Classes/Kleisli/DecoratedFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedMonad.v
@@ -34,7 +34,7 @@ Tealeaves/Classes/Categorical/Bimonad.v
 Tealeaves/Classes/Categorical/RightModule.v
 Tealeaves/Classes/Categorical/RightComodule.v
 Tealeaves/Classes/Categorical/ParamComonad.v
-Tealeaves/Functors/Categorical/Environment.v
+Tealeaves/Functors/Categorical/Reader.v
 Tealeaves/Functors/Categorical/Writer.v
 Tealeaves/Classes/Categorical/DecoratedFunctor.v
 Tealeaves/Classes/Categorical/DecoratedMonad.v
@@ -49,6 +49,7 @@ Tealeaves/Classes/Categorical/ContainerFunctor.v
 Tealeaves/Classes/Categorical/ShapelyFunctor.v
 Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/Diagonal.v
+Tealeaves/Functors/Environment.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/ProductFunctor.v

@@ -29,25 +29,25 @@ Section with_E.
     now ext [? ?].
   Qed.
 
-  #[export] Instance Cojoin_env : Cojoin (E ×) :=
+  #[export] Instance Cojoin_reader : Cojoin (E ×) :=
     @dup_left E.
 
-  #[export] Instance Extract_env : Extract (E ×) :=
+  #[export] Instance Extract_reader : Extract (E ×) :=
     @snd E.
 
-  #[export] Instance Natural_extract_env : Natural (@extract (E ×) _).
+  #[export] Instance Natural_extract_reader : Natural (@extract (E ×) _).
   Proof.
     constructor; try typeclasses eauto.
     introv. now ext [? ?].
   Qed.
 
-  #[export] Instance Natural_cojoin_env : Natural (@cojoin (E ×) _).
+  #[export] Instance Natural_cojoin_reader : Natural (@cojoin (E ×) _).
   Proof.
     constructor; try typeclasses eauto.
     introv. now ext [? ?].
   Qed.
 
-  #[export, program] Instance Comonad_env : Comonad (E ×).
+  #[export, program] Instance Comonad_reader : Comonad (E ×).
 
   Solve All Obligations with (introv; now ext [? ?]).
 

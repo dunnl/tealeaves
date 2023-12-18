@@ -2,7 +2,7 @@ From Tealeaves Require Export
   Classes.Monoid
   Classes.Categorical.Bimonad
   Classes.Categorical.RightModule
-  Functors.Categorical.Environment
+  Functors.Categorical.Reader
   Misc.Product.
 
 Import Strength.Notations.
@@ -162,7 +162,7 @@ Section writer_bimonad_instance.
 
   #[export] Instance Bimonad_Writer : Bimonad (W ×) :=
     {| bimonad_monad := Monad_writer;
-       bimonad_comonad := Comonad_env W;
+       bimonad_comonad := Comonad_reader W;
        Bimonad.bimonad_dist_counit_l := @bimonad_dist_counit_l;
        Bimonad.bimonad_dist_counit_r := @bimonad_dist_counit_r;
        Bimonad.bimonad_distributive_law := BeckDistributiveLaw_strength;

@@ -155,7 +155,7 @@ Module ToKleisli.
         reassociate -> near (dec T (A := T B)).
         #[local] Set Keyed Unification.
         (* TODO Hacky due to redundant Map_prod vs Map_Env *)
-        change (Map_Env) with (Map_prod) in *.
+        change (Map_reader) with (Map_prod) in *.
         rewrite (natural (F := T) (G := T ∘ prod W) (ϕ := @dec W T _)).
         do 2 reassociate <-.
         reassociate -> near (map (F := T) (σ (F := T))).

@@ -110,7 +110,7 @@ Module ToCategorical.
       rewrite map_mapdt.
       rewrite mapdt_map.
       (* TODO Fix this *)
-      change Map_Env with Map_prod.
+      change Map_reader with Map_prod.
       rewrite <- (natural (ϕ := extract (E ×))).
       reflexivity.
   Qed.
@@ -125,7 +125,7 @@ Module ToCategorical.
     infer_applicative_instances.
     rewrite mapdt_map.
     (* TODO Fix this *)
-    change Map_Env with Map_prod.
+    change Map_reader with Map_prod.
     rewrite <- (natural (ϕ := extract (E ×))).
     rewrite <- (kdtfun_morph (E := E) (T := T)).
     reflexivity.

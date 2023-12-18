@@ -270,7 +270,7 @@ Module ToCategorical.
       fequal.
       ext [w' a].
       unfold preincr; unfold compose; cbn.
-      unfold kc4; unfold_ops @Cobind_env.
+      unfold kc4; unfold_ops @Cobind_reader.
       unfold compose; cbn.
       change (id ?x) with x.
       compose near (w, (w', a)).

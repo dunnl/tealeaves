@@ -115,7 +115,7 @@ Section purity_law.
 
 End purity_law.
 
-Require Import Tealeaves.Functors.Categorical.Environment.
+Require Import Tealeaves.Functors.Categorical.Reader.
 
 (** * Traversable instance for certain functors *)
 (******************************************************************************)

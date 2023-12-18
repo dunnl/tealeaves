@@ -16,20 +16,20 @@ Section with_E.
   Context
     (E : Type).
 
-  #[export] Instance Extract_env : Extract (E ×) :=
+  #[export] Instance Extract_reader : Extract (E ×) :=
     fun A '(e, a) => a.
 
-  #[export] Instance Cobind_env : Cobind (E ×) :=
+  #[export] Instance Cobind_reader : Cobind (E ×) :=
     fun A B (f : E * A -> B) '(e, a) => (e, f (e, a)).
 
   #[export, program] Instance KleisliComonad_prod : Kleisli.Comonad.Comonad (E ×).
 
   Solve All Obligations with (introv; now ext [? ?]).
 
-  #[export] Instance Map_Env : Map (E ×) :=
+  #[export] Instance Map_reader : Map (E ×) :=
     Comonad.DerivedInstances.Map_Cobind (E ×).
 
-  #[export] Instance Functor_Env : Functor (E ×) :=
+  #[export] Instance Functor_reader : Functor (E ×) :=
     Comonad.DerivedInstances.Functor_Comonad (E ×).
 
   Lemma map_to_cobind : forall A B (f : A -> B),
