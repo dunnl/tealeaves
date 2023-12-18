@@ -8,7 +8,7 @@ Import Product.Notations.
 
 #[export] Instance Decorate_Mapd
   (E : Type) (T : Type -> Type) `{Mapd E T}
-  : Decorate E T := fun A => mapd T (@id ((E ×) A)).
+  : Decorate E T := fun A => mapd (@id ((E ×) A)).
 
 Import Kleisli.DecoratedFunctor.DerivedInstances.
 
@@ -20,7 +20,7 @@ Section properties.
     `{Kleisli.DecoratedFunctor.DecoratedFunctor E T}.
 
   Lemma dec_dec : forall (A : Type),
-      dec T ∘ dec T = map T (cojoin (E ×)) ∘ dec T (A := A).
+      dec T ∘ dec T = map (cojoin (W := (E ×))) ∘ dec T (A := A).
   Proof.
     intros.
     (* Merge LHS *)
@@ -34,7 +34,7 @@ Section properties.
   Qed.
 
   Lemma dec_extract : forall (A : Type),
-      map T (extract (E ×) A) ∘ dec T = @id (T A).
+      map (F := T) extract ∘ dec T = @id (T A).
   Proof.
     intros.
     unfold_ops @Decorate_Mapd.
@@ -62,8 +62,8 @@ Section properties.
 
   #[export] Instance: Categorical.DecoratedFunctor.DecoratedFunctor E T :=
     {| dfun_dec_natural := dec_natural;
-      dfun_dec_dec := dec_dec;
-      dfun_dec_extract := dec_extract;
+       dfun_dec_dec := dec_dec;
+       dfun_dec_extract := dec_extract;
     |}.
 
 End properties.

@@ -26,11 +26,11 @@ Section operations.
     `{Return T}.
 
   #[export] Instance Map_Bindd: Map T :=
-    fun A B f => bindd T (ret T B ∘ f ∘ extract (W ×) A).
+    fun A B f => bindd (ret ∘ f ∘ extract).
   #[export] Instance Join_Bindd: Join T :=
-    fun A => bindd T (B := A) (A := T A) (extract (W ×) (T A)).
+    fun A => bindd (B := A) (A := T A) (extract (W := (W ×))).
   #[export] Instance Decorate_Bindd: Decorate W T :=
-    fun A => bindd T (ret T (W * A)).
+    fun A => bindd (ret (A := W * A)).
 
 End operations.
 
@@ -50,19 +50,19 @@ Module ToCategorical.
     (** *** Functor laws *)
     (******************************************************************************)
     Lemma map_id : forall (A : Type),
-        map T (@id A) = @id (T A).
+        map (@id A) = @id (T A).
     Proof.
       intros. unfold_ops @Map_Bindd.
-      change (ret T A ∘ id) with (ret T A).
+      change (ret ∘ id) with (ret (A := A)).
       now rewrite (kmond_bindd1 (T := T)).
     Qed.
 
     Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
-        map T g ∘ map T f = map T (g ∘ f).
+        map g ∘ map f = map (F := T) (g ∘ f).
     Proof.
       intros. unfold_ops @Map_Bindd.
       rewrite (kmond_bindd2 (T := T)).
-      rewrite (kc5_00 T).
+      rewrite kc5_00.
       reflexivity.
     Qed.
 
@@ -96,13 +96,13 @@ Module ToCategorical.
         rewrite (kmond_bindd2 (T := T)). (* left *)
         rewrite (kmond_bindd2 (T := T)). (* right *)
         rewrite kc5_05.
-        rewrite (kc5_50 T).
+        rewrite kc5_50.
         rewrite map_to_cobind.
         rewrite kcom_cobind0.
         reflexivity.
     Qed.
 
-    Lemma join_ret : `(join T ∘ ret T (T A) = @id (T A)).
+    Lemma join_ret : `(join (T := T) ∘ ret (T := T) = @id (T A)).
     Proof.
       intros.
       unfold_ops @Join_Bindd.
@@ -111,14 +111,14 @@ Module ToCategorical.
       reflexivity.
     Qed.
 
-    Lemma join_map_ret : `(join T ∘ map T (ret T A) = @id (T A)).
+    Lemma join_map_ret : `(join (T := T) ∘ map (F := T) ret = @id (T A)).
     Proof.
       intros.
       unfold_ops @Map_Bindd.
       unfold_ops @Join_Bindd.
       unfold_compose_in_compose.
       rewrite (kmond_bindd2 (T := T)).
-      rewrite (kc5_50 T).
+      rewrite kc5_50.
       rewrite map_to_cobind.
       rewrite kcom_cobind0.
       rewrite (kmond_bindd1 (T := T)).
@@ -126,7 +126,8 @@ Module ToCategorical.
     Qed.
 
     Lemma join_join :
-      `(join T ∘ join T (A := T A) = join T ∘ map T (join T)).
+      `(join ∘ join (T := T) (A := T A) =
+          join ∘ map (F := T) join).
     Proof.
       intros.
       (* Merge LHS *)
@@ -137,7 +138,7 @@ Module ToCategorical.
       unfold_ops @Map_Bindd.
       rewrite (kmond_bindd2 (T := T)).
       fequal.
-      rewrite (kc5_50 T).
+      rewrite kc5_50.
       rewrite map_to_cobind.
       rewrite kcom_cobind0.
       unfold kc5.
@@ -158,7 +159,7 @@ Module ToCategorical.
     (** *** Decorated functor laws *)
     (******************************************************************************)
     Lemma dec_dec : forall (A : Type),
-        dec T ∘ dec T = map T (cojoin (W ×)) ∘ dec T (A := A).
+        dec T ∘ dec T = map (F := T) (cojoin (W := (W ×))) ∘ dec T (A := A).
     Proof.
       intros.
       (* Merge LHS *)
@@ -168,25 +169,26 @@ Module ToCategorical.
       unfold_ops @Map_Bindd.
       rewrite (kmond_bindd2 (T := T)).
       fequal.
-      rewrite (kc5_05 T).
-      change (ret T (W * A)) with (ret T (W * A) ∘ id) at 1.
-      rewrite (kc5_54 T).
+      rewrite kc5_05.
+      change (ret (T := T) (A := W * A)) with
+        (ret (T := T) (A := W * A) ∘ id) at 1.
+      rewrite kc5_54.
       unfold kc4.
-      rewrite (natural (ϕ := ret T)).
+      rewrite (natural (ϕ := @ret T _)).
       reflexivity.
     Qed.
 
     Lemma dec_extract : forall (A : Type),
-        map T (extract (W ×) A) ∘ dec T = @id (T A).
+        map (F := T) (extract (W := (W ×))) ∘ dec T = @id (T A).
     Proof.
       intros.
       unfold_ops @Decorate_Bindd.
       unfold_ops @Map_Bindd.
       rewrite (kmond_bindd2 (T := T)).
-      change (ret T (W * A)) with (ret T (W * A) ∘ @id (W * A)).
+      change (ret (A := W * A)) with (ret (A := W * A) ∘ @id (W * A)).
       rewrite kc5_05.
       change (?f ∘ id) with f.
-      rewrite (natural (ϕ := ret T)).
+      rewrite (natural (ϕ := @ret T _)).
       apply (kmond_bindd1 (T := T)).
     Qed.
 
@@ -202,8 +204,8 @@ Module ToCategorical.
         rewrite (kmond_bindd2 (T := T)).
         fequal.
         rewrite kc5_05.
-        rewrite (kc5_50 T).
-        rewrite (natural (ϕ := ret T)).
+        rewrite kc5_50.
+        rewrite (natural (ϕ := @ret T _)).
         reflexivity.
     Qed.
 
@@ -216,7 +218,7 @@ Module ToCategorical.
     (** *** Decorated monad laws *)
     (******************************************************************************)
     Lemma dmon_ret_ : forall (A : Type),
-        dec T ∘ ret T A = ret T (W * A) ∘ pair Ƶ (B:=A).
+        dec T ∘ ret (T := T) = ret ∘ pair Ƶ (B := A).
     Proof.
       intros.
       unfold_ops @Decorate_Bindd.
@@ -224,7 +226,8 @@ Module ToCategorical.
     Qed.
 
     Lemma dmon_join_ : forall (A : Type),
-        dec T ∘ join T (A:=A) = join T ∘ map T (shift T) ∘ dec T ∘ map T (dec T).
+        dec T ∘ join (T := T) (A:=A) =
+          join (T := T) ∘ map (F := T) (shift T) ∘ dec T ∘ map (F := T) (dec T).
     Proof.
       intros.
       unfold shift. unfold strength.
@@ -234,35 +237,35 @@ Module ToCategorical.
       unfold_compose_in_compose.
       (* Fuse LHS *)
       rewrite (kmond_bindd2 (T := T)) at 1.
-      change (extract (W ×) (T A))
-        with (id ∘ extract (W ×) (T A)) at 1.
-      rewrite (kc5_51).
+      change (extract (W := (W ×)) (A := T A))
+        with (id ∘ extract (W := (W ×)) (A := T A)) at 1.
+      rewrite kc5_51.
       rewrite (fun_map_id (F := (W ×))).
       change (?f ∘ id) with f.
       (* Fuse RHS *)
       rewrite (kmond_bindd2 (T := T)).
-      reassociate -> near (extract (W ×) _).
-      rewrite (kc5_54 T).
+      reassociate -> near (extract (W := (W ×))).
+      rewrite kc5_54.
       rewrite (DerivedInstances.kc4_id_l).
       rewrite (kmond_bindd2 (T := T)).
-      change (ret T ((W × ) (T ((W × ) A))))
-        with ((ret T ((W × ) (T ((W × ) A)))) ∘ id).
-      rewrite (kc5_54 T).
+      change (ret (T := T) ( A:= (W × ) (T ((W × ) A))))
+        with ((ret (T := T) (A := (W × ) (T ((W × ) A)))) ∘ id).
+      rewrite kc5_54.
       rewrite (DerivedInstances.kc4_04).
       change (?f ∘ id) with f.
       rewrite (kmond_bindd2 (T := T)).
-      rewrite (kc5_54 T).
+      rewrite kc5_54.
       rewrite (DerivedInstances.kc4_40).
       (* Now compare inner functions *)
       fequal.
       ext [w t].
       do 2 (unfold compose; cbn).
       compose near t on right.
-      rewrite (kmond_bindd2).
-      change (ret T ((W × ) A)) with (ret T ((W × ) A) ∘ id).
-      rewrite (kc5_54 T).
+      rewrite kmond_bindd2.
+      change (ret (A := (W × ) A)) with (ret (A := (W × ) A) ∘ id).
+      rewrite kc5_54.
       compose near t on right.
-      rewrite (kmond_bindd2).
+      rewrite kmond_bindd2.
       (* Now compare inner functions again *)
       fequal.
       ext [w' a].
@@ -271,7 +274,7 @@ Module ToCategorical.
       unfold compose; cbn.
       change (id ?x) with x.
       compose near (w, (w', a)).
-      rewrite (kmond_bindd0).
+      rewrite kmond_bindd0.
       reflexivity.
     Qed.
 

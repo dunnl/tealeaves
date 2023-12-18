@@ -24,7 +24,7 @@ Module Roundtrip1.
 
   #[local] Instance bindd' : Bindd W T T := ToKleisli.Bindd_dec W T.
 
-  Definition map' : Map T := Map_Bindd (W := W) T.
+  Definition map' : Map T := Map_Bindd (W := W) (T := T).
   Definition dec' : Decorate W T := Decorate_Bindd W T.
   Definition join' : Join T := Join_Bindd W T.
 
@@ -77,7 +77,7 @@ Module Roundtrip2.
     `{Monoid W}
     `{@Kleisli.DecoratedMonad.DecoratedMonad W T retT binddT _ _}.
 
-  #[local] Instance map' : Map T := Map_Bindd (W := W) T.
+  #[local] Instance map' : Map T := Map_Bindd (W := W) (T := T).
   #[local] Instance dec' : Decorate W T := Decorate_Bindd W T.
   #[local] Instance join' : Join T := Join_Bindd W T.
 
@@ -95,9 +95,9 @@ Module Roundtrip2.
     rewrite (kmond_bindd2 (T := T)).
     rewrite (kmond_bindd2 (T := T)).
     fequal.
-    rewrite (kc5_50 T).
-    change (ret T (W * A)) with (ret T ( W * A) ∘ id).
-    rewrite (kc5_54 T).
+    rewrite (kc5_50).
+    change (ret (T := T) (A := W * A)) with (ret (T:=T) (A := W * A) ∘ id).
+    rewrite (kc5_54).
     change (Map_Env ?x) with (Map_prod x) in *.
     (* TODO ^^ Fix this *)
     rewrite <- (natural (ϕ := @extract (W ×) _)).

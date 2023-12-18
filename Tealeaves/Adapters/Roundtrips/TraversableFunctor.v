@@ -63,10 +63,10 @@ Module Roundtrip2.
     ext A B f.
     unfold_ops @ToCategorical.Dist_Traverse.
     unfold_ops @Map_Traverse.
-    change (traverse T G (@id (G B))) with (map (fun A => A) (traverse T G (@id (G B)))).
-    rewrite (trf_traverse_traverse (T := T) (fun A => A) G);
-      try typeclasses eauto.
-    rewrite (traverse_app_l T G).
+    change (traverse (T := T) (G := G) (@id (G B))) with
+      (map (F := fun A => A) (traverse (T := T) (G := G) (@id (G B)))).
+    rewrite (trf_traverse_traverse (T := T) (G1 := fun A => A)).
+    rewrite (traverse_app_l).
     reflexivity.
   Qed.
 

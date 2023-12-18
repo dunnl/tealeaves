@@ -11,6 +11,19 @@ Import Comonad.Notations.
 
 #[local] Generalizable Variables T A B C.
 
+#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
+#[local] Arguments join T%function_scope {Join} {A}%type_scope _.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
+#[local] Arguments mapd {E}%type_scope T%function_scope {Mapd}
+  {A B}%type_scope _%function_scope _.
+#[local] Arguments mapdt {E}%type_scope T%function_scope {Mapdt}
+  G%function_scope {H H0 H1} {A B}%type_scope _%function_scope.
+#[local] Arguments bindd {W}%type_scope {U} (T)%function_scope {Bindd} {A B}%type_scope _ _.
+#[local] Arguments traverse T%function_scope {Traverse} G%function_scope
+  {H H0 H1} {A B}%type_scope _%function_scope _.
+
 (** * DTMs from Kleisli DTMs *)
 (******************************************************************************)
 
@@ -66,7 +79,7 @@ Module ToCategorical.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros. unfold_ops @Map_Binddt.
-        rewrite (kdtm_binddt0 W T (fun A => A)).
+        rewrite (kdtm_binddt0 (G := fun A => A)).
         reflexivity.
     Qed.
 
@@ -82,7 +95,7 @@ Module ToCategorical.
         rewrite (DerivedInstances.bindd_bindd W T). (* left *)
         rewrite (DerivedInstances.kc5_05).
         rewrite (DerivedInstances.bindd_bindd W T). (* right *)
-        rewrite (DerivedInstances.kc5_50 T).
+        rewrite (DerivedInstances.kc5_50).
         (* TODO Next two steps should be lemmaized *)
         rewrite map_to_cobind.
         rewrite kcom_cobind0.
@@ -94,7 +107,7 @@ Module ToCategorical.
       intros.
       unfold_ops @Join_Binddt.
       unfold_compose_in_compose.
-      rewrite (kdtm_binddt0 W T (fun A => A)).
+      rewrite (kdtm_binddt0 (G := fun A => A)).
       now rewrite bimonad_baton.
     Qed.
 
@@ -105,7 +118,7 @@ Module ToCategorical.
       unfold_compose_in_compose.
       binddt_to_bindd.
       rewrite (bindd_bindd W T).
-      rewrite (DecoratedMonad.DerivedInstances.kc5_50 T).
+      rewrite (DecoratedMonad.DerivedInstances.kc5_50).
       (* TODO lemma *)
       rewrite map_to_cobind.
       rewrite kcom_cobind0.
@@ -124,7 +137,7 @@ Module ToCategorical.
       rewrite (kmond_bindd2 (T := T)).
       (* Merge RHS *)
       rewrite (kmond_bindd2 (T := T)).
-      rewrite (DecoratedMonad.DerivedInstances.kc5_50 T).
+      rewrite (DecoratedMonad.DerivedInstances.kc5_50).
       rewrite map_to_cobind.
       rewrite kcom_cobind0.
       fequal.
@@ -158,9 +171,9 @@ Module ToCategorical.
       (* Merge RHS *)
       rewrite (kmond_bindd2 (T := T)).
       fequal.
-      rewrite (DecoratedMonad.DerivedInstances.kc5_05 T).
+      rewrite (DecoratedMonad.DerivedInstances.kc5_05).
       change (ret T (W * A)) with (ret T (W * A) ∘ id) at 1.
-      rewrite (kc5_54 W T).
+      rewrite (kc5_54).
       unfold kc4.
       rewrite (natural (ϕ := ret T)).
       reflexivity.
@@ -174,7 +187,7 @@ Module ToCategorical.
       binddt_to_bindd.
       rewrite (kmond_bindd2 (T := T)).
       change (ret T (W * A)) with (ret T (W * A) ∘ @id (W * A)).
-      rewrite (DecoratedMonad.DerivedInstances.kc5_05 T).
+      rewrite (DecoratedMonad.DerivedInstances.kc5_05).
       change (?f ∘ id) with f.
       rewrite (natural (ϕ := ret T)).
       apply (kmond_bindd1 (T := T)).
@@ -191,8 +204,8 @@ Module ToCategorical.
         rewrite (kmond_bindd2 (T := T)).
         rewrite (kmond_bindd2 (T := T)).
         fequal.
-        rewrite (DecoratedMonad.DerivedInstances.kc5_05 T).
-        rewrite (DecoratedMonad.DerivedInstances.kc5_50 T).
+        rewrite (DecoratedMonad.DerivedInstances.kc5_05).
+        rewrite (DecoratedMonad.DerivedInstances.kc5_50).
         rewrite (natural (ϕ := ret T)).
         reflexivity.
     Qed.
@@ -232,16 +245,16 @@ Module ToCategorical.
       (* Fuse RHS *)
       rewrite (kmond_bindd2 (T := T)).
       reassociate -> near (extract (W ×) _).
-      rewrite (DecoratedMonad.DerivedInstances.kc5_54 T).
+      rewrite (DecoratedMonad.DerivedInstances.kc5_54).
       rewrite (DerivedInstances.kc4_id_l).
       rewrite (kmond_bindd2 (T := T)).
       change (ret T ((W × ) (T ((W × ) A))))
         with ((ret T ((W × ) (T ((W × ) A)))) ∘ id).
-      rewrite (DecoratedMonad.DerivedInstances.kc5_54 T).
+      rewrite (DecoratedMonad.DerivedInstances.kc5_54).
       rewrite (DerivedInstances.kc4_04).
       change (?f ∘ id) with f.
       rewrite (kmond_bindd2 (T := T)).
-      rewrite (DecoratedMonad.DerivedInstances.kc5_54 T).
+      rewrite (DecoratedMonad.DerivedInstances.kc5_54).
       rewrite (DerivedInstances.kc4_40).
       (* Now compare inner functions *)
       fequal.
@@ -251,7 +264,7 @@ Module ToCategorical.
       binddt_to_bindd.
       rewrite (kmond_bindd2).
       change (ret T ((W × ) A)) with (ret T ((W × ) A) ∘ id).
-      rewrite (DecoratedMonad.DerivedInstances.kc5_54 T).
+      rewrite (DecoratedMonad.DerivedInstances.kc5_54).
       compose near t on right.
       rewrite (kmond_bindd2).
       (* Now compare inner functions again *)
@@ -283,9 +296,9 @@ Module ToCategorical.
         unfold_everything.
         binddt_to_bindd.
         (* LHS *)
-        rewrite (bindd_binddt W T G).
+        rewrite (bindd_binddt W T).
         (* RHS *)
-        rewrite (binddt_bindd W T G).
+        rewrite (binddt_bindd W T).
         fequal. ext [w ga]. compose near (w, ga).
         (* LHS *)
         rewrite (extract_preincr2).
@@ -296,7 +309,7 @@ Module ToCategorical.
         rewrite (bimonad_baton (W := W)).
         (* RHS *)
         do 2 reassociate <- on right.
-        rewrite (kdtm_binddt0 W T G).
+        rewrite (kdtm_binddt0).
         rewrite (extract_preincr2).
         reassociate -> near (ret (W ×) (G B)).
         rewrite (bimonad_baton (W := W)).
@@ -312,8 +325,6 @@ Module ToCategorical.
       introv morph; inversion morph; intros.
       change (mapdt T G2 (extract (prod W) _) ∘ map T (ϕ A)
               = ϕ (T A) ∘ traverse T G1 (@id (G1 A))).
-      change (@Map_Binddt W T H0 H)
-        with (@DerivedInstances.Map_Mapdt W T _).
       rewrite (DerivedInstances.mapdt_map T G2).
       rewrite (trf_traverse_morphism (T := T)).
       change (Map_Env) with (Map_prod) in *.

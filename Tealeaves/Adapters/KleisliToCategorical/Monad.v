@@ -7,7 +7,7 @@ From Tealeaves Require Export
 #[export] Instance Join_Bind
   (T : Type -> Type)
   `{Return T} `{Bind T T} : Join T :=
-  fun A => bind T (@id (T A)).
+  fun A => bind (@id (T A)).
 
 Section proofs.
 
@@ -45,7 +45,7 @@ Section proofs.
       unfold_compose_in_compose.
       rewrite (kmon_bind2 (T := T)).
       unfold kc1.
-      reassociate <- near (bind T (@id (T A))).
+      reassociate <- near (bind (@id (T A))).
       rewrite (kmon_bind0 (T := T)). unfold compose.
       now rewrite <- (kmon_bind1 (T := T) A) at 1.
     - intros. unfold transparent tcs.
@@ -53,7 +53,7 @@ Section proofs.
       rewrite (kmon_bind2 (T := T)).
       rewrite (kmon_bind2 (T := T)).
       unfold kc1.
-      reassociate <- near (bind T (@id (T A))).
+      reassociate <- near (bind (@id (T A))).
       now rewrite (kmon_bind0 (T := T)).
   Qed.
 

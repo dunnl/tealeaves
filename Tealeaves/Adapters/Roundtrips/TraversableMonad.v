@@ -9,6 +9,11 @@ From Tealeaves Require Export
 
 #[local] Generalizable Variables T.
 
+#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments bindt {U} (T)%function_scope {Bindt} G%function_scope
+  {H H0 H1} {A B}%type_scope _%function_scope _.
+
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
 Module Categorical_Kleisli_Categorical.
@@ -22,7 +27,7 @@ Module Categorical_Kleisli_Categorical.
 
   #[local] Instance bindt' : Bindt T T := ToKleisli.Bindt_categorical T.
 
-  Definition map'  : Map T := DerivedOperations.Map_Bindt T.
+  Definition map'  : Map T := DerivedOperations.Map_Bindt.
   Definition dist' : ApplicativeDist T := Dist_Bindt T.
   Definition join' : Join T := Join_Bindt T.
 
@@ -81,7 +86,7 @@ Module Kleisli_Categorical_Kleisli.
     `{Return T}
     `{! Kleisli.TraversableMonad.TraversableMonad T}.
 
-  #[local] Instance map'  : Map T  := DerivedOperations.Map_Bindt T.
+  #[local] Instance map'  : Map T  := DerivedOperations.Map_Bindt.
   #[local] Instance dist' : ApplicativeDist T := Dist_Bindt T.
   #[local] Instance join' : Join T := Join_Bindt T.
 
@@ -97,25 +102,26 @@ Module Kleisli_Categorical_Kleisli.
     unfold_ops @DerivedOperations.Map_Bindt.
     change (?g ∘ id) with g.
     reassociate -> on right.
-    change (bindt G _ _ (map G (ret T (T B))))
-      with (map (fun A => A) (bindt G _ _ (map G (ret T (T B))))).
+    change (bindt T G (map G (ret T (T B))))
+      with (map (fun A => A) (bindt T G (map G (ret T (T B))))).
     unfold_compose_in_compose.
-    rewrite (ktm_bindt2 (fun A => A) G).
-
+    rewrite (ktm_bindt2 (G1 := fun A => A)).
     unfold kc3.
     unfold_ops @Map_I.
     reassociate <- on right.
-    rewrite (ktm_bindt0 (T := T) G).
-    rewrite (bindt_app_l T G).
-    rewrite (ktm_bindt2 (T := T) G (fun A => A)).
-    rewrite (bindt_app_r T G).
-
+    rewrite (ktm_bindt0 (T := T)).
+    rewrite (bindt_app_l).
+    change ((fun A => A) ∘ ?G) with G.
+    Set Printing Implicit.
+    unfold compose at 2.
+    rewrite (ktm_bindt2 (B:= (T B)) (T := T) (G1 := G) (G2 := fun A => A)).
+    rewrite (bindt_app_r).
     unfold bindt.
     fequal.
     unfold kc3.
     reassociate <-.
     rewrite (fun_map_map (F := G)).
-    rewrite (ktm_bindt0 (T := T) (fun A => A)).
+    rewrite (ktm_bindt0 (T := T) (G := fun A => A)).
     rewrite (fun_map_id (F := G)).
     reflexivity.
   Qed.
@@ -132,7 +138,7 @@ Module Kleisli_Coalgebraic_Kleisli.
     `{! Kleisli.TraversableMonad.TraversableMonad T}.
 
   #[local] Instance toBatchM' : ToBatchM T :=
-    ToBatchM_Bindt T.
+    ToBatchM_Bindt.
 
   #[local] Instance bindt' : Bindt T T :=
     Bindt_ToBatchM T.
