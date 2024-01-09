@@ -115,9 +115,10 @@ Qed.
 (** ** Querying for an element is a monoid homomorphism *)
 (******************************************************************************)
 #[export] Instance Monmor_el {A : Type} (a : A) :
-  @Monoid_Morphism _ _ (@Monoid_op_subset A) (@Monoid_unit_subset A)
-                   (Monoid_op_or) (Monoid_unit_false)
-                   (evalAt a).
+  @Monoid_Morphism (subset A) Prop
+    (@Monoid_op_subset A) (@Monoid_unit_subset A)
+    (Monoid_op_or) (Monoid_unit_false)
+    (evalAt a).
 Proof.
   constructor.
   - typeclasses eauto.
@@ -135,6 +136,8 @@ Proof.
   intros. now rewrite H. specialize (lemma a).
   cbv in lemma. symmetry. now rewrite <- lemma.
 Qed.
+
+(* TODO This isn't necessary because it was factored out
 
 (** * Toset operation *)
 (******************************************************************************)
@@ -162,6 +165,7 @@ Module ElNotations.
     (el_ctx _ _ t x) (at level 50) : tealeaves_scope.
 
 End ElNotations.
+*)
 
 (** * Set as an applicative functor *)
 (******************************************************************************)

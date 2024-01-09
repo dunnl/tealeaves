@@ -506,13 +506,26 @@ Definition foldMap {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
   fold M ∘ map list f.
 
 (** <<foldMap>> is a monoid homomorphism *)
-#[export] Instance foldMap_list_morphism
+#[export] Instance Monoid_Morphism_foldMap
   `{Monoid M} {A : Type}
   `(f : A -> M) : Monoid_Morphism (list A) M (foldMap f).
 Proof.
   unfold foldMap.
   eapply Monoid_Morphism_compose;
     typeclasses eauto.
+Qed.
+
+(** <<foldMap>> commutes with monoid homomorphisms *)
+Lemma foldMap_morphism `{Monoid_Morphism M1 M2 ϕ}
+  : forall `(f : A -> M1),
+    ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
+Proof.
+  intros. unfold foldMap.
+  reassociate <- on left.
+  rewrite (fold_mon_hom ϕ).
+  reassociate -> on left.
+  rewrite fun_map_map.
+  reflexivity.
 Qed.
 
 (** *** Rewriting with <<foldMap>> *)
