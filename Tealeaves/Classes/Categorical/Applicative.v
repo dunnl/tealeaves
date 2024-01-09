@@ -36,6 +36,13 @@ Class Applicative (G : Type -> Type)
       pure a ⊗ pure b = pure (a, b);
   }.
 
+#[global] Instance Pure_Natural `{Applicative G} : Natural (@pure G _).
+Proof.
+  constructor; try typeclasses eauto.
+  - intros. unfold compose. ext a.
+    now rewrite app_pure_natural.
+Qed.
+
 (** ** Homomorphisms between applicative functors *)
 (******************************************************************************)
 Class ApplicativeMorphism (F G : Type -> Type)
