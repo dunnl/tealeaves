@@ -1,257 +1,220 @@
 From Tealeaves Require Export
-  Functors.Batch
-  Classes.Kleisli.DecTravMonad.
+  Adapters.KleisliToCoalgebraic.TraversableMonad
+  Adapters.KleisliToCoalgebraic.DecoratedTraversableMonad
+  Classes.Kleisli.DecoratedTraversableMonad
+  Classes.Kleisli.DecoratedContainerFunctor
+  Theory.DecoratedTraversableFunctor.
 
 Import Product.Notations.
 Import Monoid.Notations.
 Import Batch.Notations.
 Import List.ListNotations.
 Import Subset.Notations.
+Import ContainerFunctor.Notations.
+Import DecoratedContainerFunctor.Notations.
 
-#[local] Generalizable Variables W T G A B C.
+#[local] Generalizable Variables M W T G A B C.
 
-#[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
-#[local] Arguments binddt W%type_scope (U T)%function_scope
-  {Binddt} G%function_scope {H H0 H1} (A B)%type_scope.
+(* HACK get rid of me after making *-Full typeclass *)
+Import DecoratedTraversableMonad.DerivedInstances.
 
-Import DecTravMonad.DerivedInstances.
+#[local] Arguments binddt {W}%type_scope {U} {T}%function_scope
+  {Binddt} {G}%function_scope {H H0 H1} {A B}%type_scope.
+#[local] Arguments runBatch {A B}%type_scope {F}%function_scope
+  {H H0 H1} ϕ%function_scope {C}%type_scope b.
 
 (** * Lemmas for particular applicative functors *)
-(******************************************************************************)
-
-(** ** Constant applicative functors *)
 (******************************************************************************)
 Section lemmas.
 
   Context
-    (W : Type)
-      (T : Type -> Type)
-      `{DecTravMonad W T}
-      (M : Type)
-      `{Monoid M}.
+    `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
-  Lemma binddt_constant_applicative1 {A B : Type}
-    `(f : W * A -> const M (T B)) :
-    binddt W T T (const M) A B f =
-      binddt W T T (const M) A False f.
+  (** ** <<binddt>> with constant applicative functors *)
+  (******************************************************************************)
+  Section constant_applicative.
+
+    Context `{Monoid M}.
+
+    Lemma binddt_constant_applicative1 {A B : Type}
+      `(f : W * A -> const M (T B)) :
+      binddt (U := T) f = binddt (U := T) (B := False) f.
+    Proof.
+      change_right (map (F := const M) (A := T False) (B := T B)
+                      (map (F := T) (A := False) (B := B) exfalso)
+                      ∘ binddt (U := T) (B := False) f).
+      rewrite (map_binddt W T (G1 := const M)).
+      reflexivity.
+    Qed.
+
+    Lemma binddt_constant_applicative2 (fake1 fake2 : Type)
+      `(f : W * A -> const M (T B)) :
+      binddt (U := T) (B := fake1) f = binddt (U := T) (B := fake2) f.
+    Proof.
+      intros.
+      rewrite (binddt_constant_applicative1 (B := fake1)).
+      rewrite (binddt_constant_applicative1 (B := fake2)).
+      reflexivity.
+    Qed.
+
+  End constant_applicative.
+
+  (** ** Expressing <<binddt>> with <<runBatch>> *)
+  (******************************************************************************)
+  Theorem binddt_through_runBatch :
+    forall `{Applicative G} (A B : Type) (f : W * A -> G (T B)),
+      binddt f = runBatch f ∘ toBatchDM.
   Proof.
-    change_right (map (const M) (T False) (T B) (map T False B exfalso)
-                    ∘ (binddt W T T (const M) A False (f : W * A -> const M (T False)))).
-    rewrite (map_binddt W T (G1 := const M)).
+    intros.
+    unfold_ops @ToBatchDM_Binddt.
+    rewrite (kdtm_morph (Batch (W * A) (T B)) G).
+    rewrite (runBatch_batch G). (* TODO get rid of G argument *)
     reflexivity.
   Qed.
 
-  Lemma binddt_constant_applicative2 (fake1 fake2 : Type)
-    `(f : W * A -> const M (T B)) :
-    binddt W T T (const M) A fake1 f
-    = binddt W T T (const M) A fake2 f.
-  Proof.
-    intros.
-    rewrite (binddt_constant_applicative1 (B := fake1)).
-    rewrite (binddt_constant_applicative1 (B := fake2)).
-    easy.
-  Qed.
-
-End lemmas.
-
-(** * Batch *)
-(******************************************************************************)
-Definition toBatch7 W T `{Binddt W T T} {A : Type} (B : Type) : T A -> @Batch (W * A) (T B) (T B) :=
-  binddt W T T (Batch (W * A) (T B)) A B (batch (W * A) (T B)).
-
-Section with_functor.
-
-  Context
-    `{DecTravMonad W T}.
-
-  About runBatch.
-
-  Lemma runBatch_batch7 : forall `{Applicative G} (A B : Type) (f : W * A -> G (T B)),
-      runBatch G f (T B) ∘ (@batch (W * A) (T B)) = f.
-  Proof.
-    intros. apply (runBatch_batch G).
-  Qed.
-
-  Lemma extract_to_runBatch : forall (A X : Type) (b : Batch A A X),
-      extract_Batch b = runBatch (fun A => A) (@id A) X b.
-  Proof.
-    intros. induction b.
-    - reflexivity.
-    - cbn. now rewrite <- IHb.
-  Qed.
-
-End with_functor.
-
-(** ** Expressing <<binddt>> with <<runBatch>> *)
-(******************************************************************************)
-Section with_monad.
-
-  Context
-    `{DecTravMonad W T}.
-
-  Theorem binddt_to_runBatch :
-    forall `{Applicative G} (A B : Type) (f : W * A -> G (T B)) (t : T A),
-      binddt W T T G A B f t = runBatch G f (T B) (toBatch7 W T B t).
-  Proof.
-    intros.
-    unfold toBatch7.
-    compose near t on right.
-    rewrite (kdtm_morph (Batch (W * A) (T B)) G).
-    now rewrite (runBatch_batch).
-  Qed.
-
-  Theorem bindd_to_runBatch :
-    forall (A B : Type) (f : W * A -> T B) (t : T A),
-      bindd W T T A B f t =
-        runBatch (fun A => A) f (T B) (toBatch7 W T B t).
+  Theorem bindd_through_runBatch :
+    forall (A B : Type) (f : W * A -> T B),
+      bindd f = runBatch (F := fun A => A) f ∘ toBatchDM.
   Proof.
     intros.
     rewrite bindd_to_binddt.
-    rewrite (binddt_to_runBatch).
+    rewrite binddt_through_runBatch.
     reflexivity.
   Qed.
 
-  Theorem mapdt_to_runBatch :
-    forall `{Applicative G} (A B : Type) (f : W * A -> G B) (t : T A),
-      mapdt W T G A B f t = runBatch G f (toBatch6 W T B t).
-  Proof.
-    intros. apply (mapdt_to_runBatch W T G).
-  Qed.
-
-  Corollary bind_to_runBatch :
+  (*
+  Corollary bind_through_runBatch :
     forall (A B : Type) (t : T A)
       (f : A -> T B),
-      bind T T A B f t = runBatch (fun A => A) f (toBatch3 T B t).
+      bind f = runBatch (F := fun A => A) f ∘ toBatchM T A B.
   Proof.
-    intros. rewrite bind_to_bindt.
-    now rewrite (bindt_to_runBatch T).
-  Qed.
-
-  Corollary traverse_to_runBatch `{Applicative G} `(f : A -> G B) (t : T A) :
-    traverse T G A B f t = runBatch G (map G (ret T B) ∘ f ∘ extract (W ×) A) (toBatch7 W T B t).
-  Proof.
-    rewrite traverse_to_binddt.
-    rewrite (binddt_to_runBatch).
+    intros.
+    rewrite bind_to_bindt.
+    rewrite bindt_to_runBatch. (* TODO rename *)
     reflexivity.
   Qed.
 
-  Theorem mapd_to_runBatch :
+  Corollary traverse_through_runBatch `{Applicative G} `(f : A -> G B) (t : T A) :
+    traverse T G A B f t = runBatch G (map G (ret T B) ∘ f ∘ extract (W ×) A) (toBatchDM W T B t).
+  Proof.
+    rewrite traverse_through_binddt.
+    rewrite (binddt_through_runBatch).
+    reflexivity.
+  Qed.
+
+  Theorem mapd_through_runBatch :
     forall `{Applicative G} (A B : Type) (f : W * A -> B) (t : T A),
       mapd W T A B f t = runBatch (fun A => A) f (toBatch6 W T B t).
   Proof.
     intros.
     change (@Mapd_Binddt W T _ _) with
       (@DerivedInstances.Mapd_Mapdt W T _).
-    apply (mapd_to_runBatch W T).
+    apply (mapd_through_runBatch W T).
   Qed.
 
-  Theorem map_to_runBatch : forall (A B : Type) (f : A -> B),
+  Theorem map_through_runBatch : forall (A B : Type) (f : A -> B),
       map T f = runBatch (fun A => A) f ∘ toBatch T B.
   Proof.
     intros.
     change (@Map_Binddt W T H0 H) with (@DerivedInstances.Map_Mapdt W T _).
     change (@Traverse_Binddt W T _ _) with (@DerivedInstances.Traverse_Mapdt W T _).
-    apply (map_to_runBatch W T).
+    apply (map_through_runBatch W T).
   Qed.
+   *)
 
-End with_monad.
-
-Section foldMapd.
-
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{DTM W T}.
-
-  (** *** Composition with monad operattions *)
+  (** ** Properties of <<foldMapd>> *)
   (******************************************************************************)
-  Lemma foldMapd_ret (M : Type) `{Monoid M} : forall `(f : W * A -> M),
-      foldMapd W T f ∘ ret T A = f ∘ ret (W ×) A.
-  Proof.
-    intros. unfold foldMapd.
-    rewrite (mapdt_to_binddt).
-    rewrite (kdtm_binddt0 W T (const M) A False).
-    reflexivity.
-  Qed.
+  Section foldMapd.
 
-  Lemma foldMapd_binddt (M : Type) `{Applicative G} `{Monoid M} : forall `(g : W * B -> M) `(f : W * A -> G (T B)),
-      map G (foldMapd W T g) ∘ binddt W T T G A B f =
-        foldMapd W T (fun '(w, a) => map G (foldMapd W T (g ⦿ w)) (f (w, a))).
-  Proof.
-    intros. unfold foldMapd. unfold_ops @Mapdt_Binddt.
-    rewrite (kdtm_binddt2 W T G (const M) A B False).
-    fequal.
-    - unfold Map_compose.
-      ext A' B' f'.
-      enough (hyp : map G (map (const M) f') = id).
-      + rewrite hyp. reflexivity.
-      + ext m. rewrite <- (fun_map_id G).
-        reflexivity.
-    - ext A' B' [t1 t2]. reflexivity.
-  Qed.
+    (** *** Composition with monad operattions *)
+    (******************************************************************************)
+    Lemma foldMapd_ret `{Monoid M} : forall `(f : W * A -> M),
+        foldMapd f ∘ ret = f ∘ ret.
+    Proof.
+      intros.
+      rewrite (foldMapd_to_mapdt1 M). (* TODO get rid of this argument *)
+      rewrite mapdt_to_binddt.
+      rewrite (kdtm_binddt0 (G := const M) A False). (* TODO arguments *)
+      reflexivity.
+    Qed.
 
-  Corollary foldMapd_binddt_I (M : Type) `{Monoid M} : forall `(g : W * B -> M) `(f : W * A -> T B),
-      foldMapd W T g ∘ binddt W T T (fun A => A) A B f =
-        foldMapd W T (fun '(w, a) => foldMapd W T (g ⦿ w) (f (w, a))).
-  Proof.
-    intros. change (foldMapd W T g) with (map (fun A => A) (foldMapd W T g)).
-    rewrite (foldMapd_binddt M (G := fun A => A)).
-    reflexivity.
-  Qed.
+    Lemma foldMapd_binddt (M : Type) `{Applicative G} `{Monoid M} :
+      forall `(g : W * B -> M) `(f : W * A -> G (T B)),
+        map (foldMapd g) ∘ binddt f =
+          foldMapd (fun '(w, a) => map (foldMapd (g ⦿ w)) (f (w, a))).
+    Proof.
+      intros.
+      rewrite (foldMapd_to_mapdt1 M).
+      rewrite mapdt_to_binddt.
+      rewrite (kdtm_binddt2 (G2 := const M) (G1 := G) A B False). (* TODO args *)
+      rewrite (foldMapd_to_mapdt1 (G M)).
+      rewrite mapdt_to_binddt.
+      rewrite binddt_app_const_r.
+      reflexivity.
+    Qed.
 
-  (** *** Composition with lessor operations *)
+    Corollary foldMapd_binddt_I (M : Type) `{Monoid M} : forall `(g : W * B -> M) `(f : W * A -> T B),
+        foldMapd g ∘ binddt (T := T) (G := fun A => A) f =
+          foldMapd (fun '(w, a) => foldMapd (g ⦿ w) (f (w, a))).
+    Proof.
+      intros.
+      change (foldMapd g) with (map (F := fun A => A) (foldMapd (T := T) g)).
+      rewrite (foldMapd_binddt M (G := fun A => A)).
+      reflexivity.
+    Qed.
+
+    (** *** Composition with lessor operations *)
+    (******************************************************************************)
+    Lemma foldMapd_bindd (M : Type) `{Monoid M} : forall `(g : W * B -> M) `(f : W * A -> T B),
+        foldMapd g ∘ bindd f =
+          foldMapd (fun '(w, a) => foldMapd (g ⦿ w) (f (w, a))).
+    Proof.
+      intros.
+      unfold_ops @Bindd_Binddt.
+      change (foldMapd g) with (map (F := fun A => A) (foldMapd (T := T) g)).
+      rewrite (foldMapd_binddt M (G := fun A => A)).
+      reflexivity.
+    Qed.
+
+  End foldMapd.
+
+  (** * Shape and contents *)
   (******************************************************************************)
-  Lemma foldMapd_bindd (M : Type) `{Monoid M} : forall `(g : W * B -> M) `(f : W * A -> T B),
-      foldMapd W T g ∘ bindd W T T A B f =
-        foldMapd W T (fun '(w, a) => foldMapd W T (g ⦿ w) (f (w, a))).
-  Proof.
-    intros. unfold_ops @Bindd_Binddt.
-    change (foldMapd W T g) with (map (fun A => A) (foldMapd W T g)).
-    now rewrite (foldMapd_binddt M (G := fun A => A)).
-  Qed.
-
-End foldMapd.
-
-(** * Shape and contents *)
-(******************************************************************************)
-Section DTM_tolist.
-
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{DTM W T}.
-
-  Import DT.Monad.DerivedInstances.
+  Section DTM_tolist.
 
   (** ** Relating <<tolistd>> and <<binddt>> / <<ret>> *)
   (******************************************************************************)
-  Lemma tolistd_ret : forall (A : Type) (a : A),
-      tolistd W T (ret T A a) = [ (Ƶ, a) ].
-  Proof.
-    unfold tolistd.
-    intros. compose near a.
-    rewrite (foldMapd_ret W T (list (W * A))).
-    reflexivity.
-  Qed.
-
-  Lemma tolistd_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
-      map G (tolistd W T) ∘ binddt W T T G A B f =
-        foldMapd W T (fun '(w, a) => map G (foldMapd W T (ret list (W * B) ⦿ w)) (f (w, a))).
-  Proof.
-    intros. unfold tolistd. rewrite (foldMapd_binddt W T (list (W * B))).
-    reflexivity.
-  Qed.
-
-  (** ** Relating <<tolistd>> and lesser operations *)
-  (******************************************************************************)
-  Lemma tolistd_bindd : forall `(f : W * A -> T B),
-      tolistd W T ∘ bindd W T T A B f =
-        foldMapd W T (fun '(w, a) => foldMapd W T (ret list (W * B) ⦿ w) (f (w, a))).
+  Lemma ctx_tolist_ret : forall (A : Type) (a : A),
+      ctx_tolist (ret a) = [ (Ƶ, a) ].
   Proof.
     intros.
-    rewrite (bindd_to_binddt W T).
-    change (tolistd W T (A := ?A)) with (map (fun A => A) (tolistd W T (A := A))).
-    rewrite (tolistd_binddt (G := fun A => A)).
+    unfold_ops @CtxTolist_Mapdt.
+    compose near a.
+    rewrite foldMapd_ret.
+    reflexivity.
+  Qed.
+
+  Lemma ctx_tolist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
+      map (F := G) ctx_tolist ∘ binddt (G := G) f =
+        foldMapd (T := T) (fun '(w, a) => map (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
+  Proof.
+    intros.
+    unfold_ops @CtxTolist_Mapdt.
+    rewrite (foldMapd_binddt (list (W * B))).
+    reflexivity.
+  Qed.
+
+  (** ** Relating <<ctx_tolist>> and lesser operations *)
+  (******************************************************************************)
+  Lemma ctx_tolist_bindd : forall `(f : W * A -> T B),
+      ctx_tolist ∘ bindd f =
+        foldMapd (T := T) (fun '(w, a) => (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
+  Proof.
+    intros.
+    rewrite bindd_to_binddt.
+    change (ctx_tolist (E := W) (A := ?A)) with
+      (map (F := fun A => A) (ctx_tolist (F := T) (A := A))).
+    rewrite (ctx_tolist_binddt (G := fun A => A)).
     reflexivity.
   Qed.
 
@@ -273,7 +236,7 @@ Section DTM_tolist.
     intros.
     change (@Traverse_Binddt W T _ _)
       with (@DerivedInstances.Traverse_Mapdt _ _ _).
-    rewrite (tolist_to_tolistd W T).
+    rewrite (tolist_to_ctx_tolist W T).
     rewrite <- (fun_map_map G).
     reassociate ->.
     rewrite tolistd_binddt.
@@ -576,7 +539,7 @@ Section bindd_respectful.
     unfold mapdt, Mapdt_Binddt in hyp.
     rewrite (binddt_to_runBatch W T) in hyp.
     do 2 rewrite (bindd_to_runBatch W T).
-    induction (toBatch7 W T B t).
+    induction (toBatchDM W T B t).
     - easy.
     - destruct x. do 2 rewrite runBatch_rw2.
       rewrite runBatch_rw2 in hyp.

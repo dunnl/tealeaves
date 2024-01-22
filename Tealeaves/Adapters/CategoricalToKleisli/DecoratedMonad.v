@@ -122,7 +122,7 @@ Module ToKleisli.
       reflexivity.
     Qed.
 
-    #[export] Instance: Kleisli.DecoratedMonad.DecoratedMonad T :=
+    #[export] Instance: Kleisli.DecoratedMonad.DecoratedMonad W T :=
       {| kmond_bindd0 := @bindd_comp_ret;
         kmond_bindd1 := @bindd_id;
         kmond_bindd2 := @bindd_bindd;

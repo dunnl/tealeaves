@@ -47,9 +47,14 @@ Tealeaves/Functors/Subset.v
 Tealeaves/Functors/List.v
 Tealeaves/Classes/Categorical/ContainerFunctor.v
 Tealeaves/Classes/Categorical/ShapelyFunctor.v
+Tealeaves/Functors/Ctxset.v
+Tealeaves/Functors/Environment.v
+Tealeaves/Classes/Kleisli/DecoratedContainerFunctor.v
+Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
+Tealeaves/Classes/Kleisli/DecoratedContainerMonad.v
+#Tealeaves/Classes/Kleisli/DecoratedShapelyMonad.v
 Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/Diagonal.v
-Tealeaves/Functors/Environment.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/ProductFunctor.v

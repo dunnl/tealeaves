@@ -76,6 +76,26 @@ Section theory.
   Context
     `{DecoratedTraversableFunctorFull E T}.
 
+  Lemma map_strength_cobind_spec
+    `{Functor G} : forall (A B C : Type) (f : E * A -> G B) (g : E * B -> C),
+      map g ∘ strength ∘ cobind (W := (E ×)) f =
+        (fun '(w, a) => map (g ∘ pair w) (f (w, a))).
+  Proof.
+    intros. ext [w a].
+    unfold strength, compose; cbn.
+    compose near (f (w, a)) on left.
+    rewrite fun_map_map.
+    reflexivity.
+  Qed.
+
+  Lemma kc6_spec `{Applicative G2} `{Applicative G1} :
+    forall (A B C : Type) (f : E * A -> G1 B) (g : E * B -> G2 C),
+      g ⋆6 f =
+        (fun '(w, a) => map (g ∘ pair w) (f (w, a))).
+  Proof.
+    intros. unfold kc6. apply map_strength_cobind_spec.
+  Qed.
+
   (** *** Functor composition in the applicative functor *)
   (******************************************************************************)
   Section constant.
@@ -519,11 +539,27 @@ Section theory.
       dfun_mapd2 := @mapd_mapd;
     |}.
 
+  #[export] Instance DF_DT_Full : DecoratedFunctorFull E T.
+  Proof.
+    constructor.
+    - apply DF_DT.
+    - intros. now rewrite kdtfunf_map_to_mapdt,
+        kdtfunf_mapd_to_mapdt.
+  Qed.
+
   #[export] Instance Traversable_DT : TraversableFunctor T :=
     {| trf_traverse_id := traverse_id;
       trf_traverse_traverse := @traverse_traverse;
       trf_traverse_morphism := @traverse_morphism;
     |}.
+
+  #[export] Instance Traversable_DT_Full : TraversableFunctorFull T.
+  Proof.
+    constructor.
+    - apply Traversable_DT.
+    - ext A B f. now rewrite kdtfunf_map_to_mapdt,
+        kdtfunf_traverse_to_mapdt.
+  Qed.
 
 End theory.
 

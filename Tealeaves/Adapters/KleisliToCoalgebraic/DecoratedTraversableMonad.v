@@ -73,6 +73,37 @@ Section runBatch.
   *)
 End runBatch.
 
+(** * Batch *)
+  (******************************************************************************)
+  (*
+    Definition toBatch7 W T `{Binddt W T T} {A : Type} (B : Type) : T A -> @Batch (W * A) (T B) (T B) :=
+  binddt W T T (Batch (W * A) (T B)) A B (batch (W * A) (T B)).
+
+Section with_functor.
+
+  Context
+    `{DecTravMonad W T}.
+
+  About runBatch.
+
+  Lemma runBatch_batch7 : forall `{Applicative G} (A B : Type) (f : W * A -> G (T B)),
+      runBatch G f (T B) ∘ (@batch (W * A) (T B)) = f.
+  Proof.
+    intros. apply (runBatch_batch G).
+  Qed.
+
+  Lemma extract_to_runBatch : forall (A X : Type) (b : Batch A A X),
+      extract_Batch b = runBatch (fun A => A) (@id A) X b.
+  Proof.
+    intros. induction b.
+    - reflexivity.
+    - cbn. now rewrite <- IHb.
+  Qed.
+
+End with_functor.
+   *)
+
+
 Import Kleisli.DecoratedTraversableMonad.DerivedInstances.
 Require Import Tealeaves.Adapters.KleisliToCoalgebraic.TraversableMonad.
 

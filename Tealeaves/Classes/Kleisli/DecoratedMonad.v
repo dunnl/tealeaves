@@ -19,6 +19,8 @@ Class Bindd (W : Type) (U T : Type -> Type):=
 
 #[global] Arguments bindd {W}%type_scope {U T}%function_scope {Bindd} {A B}%type_scope.
 
+(** ** Kleisli composition *)
+(******************************************************************************)
 Definition kc5 {W : Type} {T : Type -> Type}
   `{Bindd W T T} `{Monoid_op W}
   {A B C : Type} :
@@ -32,7 +34,7 @@ Definition kc5 {W : Type} {T : Type -> Type}
 (** ** Typeclass *)
 (******************************************************************************)
 Class DecoratedMonad
-  {W : Type}
+  (W : Type)
   (T : Type -> Type)
   `{Return T}
   `{Bindd W T T}
@@ -45,6 +47,25 @@ Class DecoratedMonad
       @bindd W T T _ A A (ret ∘ extract) = @id (T A);
     kmond_bindd2 : forall (A B C : Type) (g : W * B -> T C) (f : W * A -> T B),
       @bindd W T T _ B C g ∘ @bindd W T T _ A B f = @bindd W T T _ A C (g ⋆5 f);
+  }.
+
+Class DecoratedMonadFull
+  (W : Type)
+  (T : Type -> Type)
+  `{ret_inst : Return T}
+  `{bindd_inst : Bindd W T T}
+  `{mapd_inst : Mapd W T}
+  `{bind_inst : Bind T T}
+  `{map_inst : Map T}
+  `{op : Monoid_op W} `{unit : Monoid_unit W}
+  :=
+  { kmondf_kmond :> DecoratedMonad W T;
+    kmondf_map_compat : forall (A B : Type) (f : A -> B),
+      map f = bindd (ret ∘ f ∘ extract);
+    kmondf_mapd_compat : forall (A B : Type) (f : W * A -> B),
+      mapd f = bindd (ret ∘ f);
+    kmondf_bind_compat : forall (A B : Type) (f : A -> T B),
+      bind f = bindd (f ∘ extract);
   }.
 
 (** * Kleisli category *)

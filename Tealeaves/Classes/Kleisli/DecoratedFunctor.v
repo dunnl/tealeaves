@@ -30,6 +30,16 @@ Class DecoratedFunctorFull (E : Type) (T : Type -> Type) `{Mapd E T} `{Map T} :=
       map f = mapd (f ∘ extract);
   }.
 
+(** ** Decoration-preserving natural transformations *)
+(******************************************************************************)
+Class DecoratedNatural
+  (E : Type) (T1 T2 : Type -> Type)
+  (ϕ : forall A : Type, T1 A -> T2 A)
+  `{Mapd E T1} `{Mapd E T2} :=
+  { dec_natural :
+      forall (A B : Type) (f : E * A -> B), mapd f ∘ ϕ A = ϕ B ∘ mapd f;
+  }.
+
 (** ** Theory *)
 (******************************************************************************)
 Section theory.

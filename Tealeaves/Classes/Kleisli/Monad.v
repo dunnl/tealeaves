@@ -30,7 +30,9 @@ Definition kc1 {T : Type -> Type} `{Return T} `{Bind T T}
 
 (** ** Typeclass *)
 (******************************************************************************)
-Class Monad (T : Type -> Type) `{Return T} `{Bind T T} :=
+Class Monad (T : Type -> Type)
+  `{Return_inst : Return T}
+  `{Bind_inst : Bind T T} :=
   { (* left unit law of the monoid *)
     kmon_bind0 : forall (A B : Type) (f : A -> T B),
       @bind T T _ A B f ∘ @ret T _ A = f;
@@ -42,10 +44,13 @@ Class Monad (T : Type -> Type) `{Return T} `{Bind T T} :=
       @bind T T _ B C g ∘ @bind T T _ A B f = @bind T T _ A C (g ⋆1 f);
   }.
 
-Class MonadFull (T : Type -> Type) `{Return T} `{Map T} `{Bind T T} :=
+Class MonadFull (T : Type -> Type)
+  `{Return_inst : Return T}
+  `{Map_inst : Map T}
+  `{Bind_inst : Bind T T} :=
   { kmonf_kmon :> Monad T;
     kmonf_map_to_bind : forall `(f : A -> B),
-      @map T _ A B f = @bind T T _ A B (ret ∘ f);
+      @map T Map_inst A B f = @bind T T Bind_inst A B (ret ∘ f);
   }.
 
 (** ** Homomorphisms *)
@@ -237,7 +242,8 @@ Proof.
   reflexivity.
 Qed.
 
-#[local] Instance MonadFull_Monad (T : Type -> Type) `{Monad T} : MonadFull T :=
+#[local] Instance MonadFull_Monad (T : Type -> Type)
+  `{Monad T} : MonadFull T (Map_inst := Map_Bind T) :=
   {| kmonf_map_to_bind := ltac:(reflexivity);
   |}.
 
