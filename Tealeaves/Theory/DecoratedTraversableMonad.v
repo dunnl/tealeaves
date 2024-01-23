@@ -129,7 +129,7 @@ Section lemmas.
     (** *** Composition with monad operattions *)
     (******************************************************************************)
     Lemma foldMapd_ret `{Monoid M} : forall `(f : W * A -> M),
-        foldMapd f ∘ ret = f ∘ ret.
+        foldMapd (T := T) f ∘ ret = f ∘ ret.
     Proof.
       intros.
       rewrite (foldMapd_to_mapdt1 M). (* TODO get rid of this argument *)
@@ -185,7 +185,7 @@ Section lemmas.
   (** ** Relating <<tolistd>> and <<binddt>> / <<ret>> *)
   (******************************************************************************)
   Lemma ctx_tolist_ret : forall (A : Type) (a : A),
-      ctx_tolist (ret a) = [ (Ƶ, a) ].
+      ctx_tolist (ret (T := T) a) = [ (Ƶ, a) ].
   Proof.
     intros.
     unfold_ops @CtxTolist_Mapdt.
@@ -221,12 +221,13 @@ Section lemmas.
   (** ** Corollaries for the rest *)
   (******************************************************************************)
   Corollary tosetd_ret : forall (A : Type) (a : A),
-      el_ctx T A (ret T A a) = {{ (Ƶ, a) }}.
+      ctx_element_of (ret (T := T) a) = {{ (Ƶ, a) }}.
   Proof.
-    intros. unfold_ops @Tosetd_DTF.
-    compose near a.
-    rewrite (foldMapd_ret W T (W * A -> Prop)).
-    reflexivity.
+    intros.
+    unfold_ops @CtxElements_CtxTolist.
+    unfold compose.
+    rewrite ctx_tolist_ret.
+    cbv. solve_basic_subset.
   Qed.
 
   Corollary tolist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
