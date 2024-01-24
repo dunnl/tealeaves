@@ -59,6 +59,18 @@ Class ApplicativeMorphism (F G : Type -> Type)
       ϕ (x ⊗ y) = ϕ x ⊗ ϕ y;
   }.
 
+#[export] Instance Natural_ApplicativeMorphism
+  `{morphism : ApplicativeMorphism F G ϕ} : Natural ϕ.
+Proof.
+  inversion morphism.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - intros. ext fa. unfold compose.
+    rewrite appmor_natural0.
+    reflexivity.
+Qed.
+
 Ltac infer_applicative_instances :=
   match goal with
   | H : ApplicativeMorphism ?G1 ?G2 ?ϕ |- _ =>
