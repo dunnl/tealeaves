@@ -29,19 +29,20 @@ Section decorated_traversable_functor_theory.
 
   (** ** <<mapdt>> with constant applicative functors *)
   (******************************************************************************)
-  Section constant.
+  Section constant_applicatives.
 
     Context
       `{Monoid M}.
 
     Lemma mapdt_constant_applicative1 {A B : Type}
       `(f : E * A -> const M B) :
-      mapdt (G := const M) f =
+      mapdt (G := const M) (A := A) (B := B) f=
         mapdt (G := const M) (B := False) f.
     Proof.
-      change_right (map (F := const M) (A := T False) (B := T B)
-                      (map (F := T) (@exfalso B))
-                      ∘ mapdt (G := const M) (B := False) f).
+      change_right
+        (map (F := const M) (A := T False) (B := T B)
+           (map (F := T) (@exfalso B))
+           ∘ (mapdt (G := const M) (B := False) f)).
       rewrite map_mapdt.
       reflexivity.
     Qed.
@@ -57,16 +58,15 @@ Section decorated_traversable_functor_theory.
       easy.
     Qed.
 
-  End constant.
+  End constant_applicatives.
 
-  (** ** Expressing <<mapdt>> with <<runBatch>> *)
+  (** ** Factoring <<mapdt>> through <<runBatch>> *)
   (******************************************************************************)
-  Theorem mapdt_through_runBatch :
-    forall `{Applicative G} (A B : Type) (f : E * A -> G B),
+  Theorem mapdt_through_runBatch `{Applicative G} `(f : E * A -> G B) :
       mapdt f = runBatch f ∘ toBatch6.
   Proof.
     intros. unfold_ops @ToBatch6_Mapdt.
-    rewrite <- (kdtfun_morph).
+    rewrite <- kdtfun_morph.
     rewrite (runBatch_batch G).
     reflexivity.
   Qed.
@@ -75,7 +75,7 @@ Section decorated_traversable_functor_theory.
     traverse f = runBatch (f ∘ extract (W := (E ×))) ∘ toBatch6.
   Proof.
     rewrite kdtfunf_traverse_to_mapdt.
-    rewrite (mapdt_through_runBatch).
+    rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
 
@@ -83,17 +83,17 @@ Section decorated_traversable_functor_theory.
       mapd f = runBatch (F := fun A => A) f ∘ toBatch6.
   Proof.
     intros.
-    rewrite (kdtfunf_mapd_to_mapdt).
-    rewrite (mapdt_through_runBatch).
+    rewrite kdtfunf_mapd_to_mapdt.
+    rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
 
-  Corollary map_through_runBatch : forall `(f : A -> B),
+  Corollary map_through_runBatch `(f : A -> B) :
       map f = runBatch (F := fun A => A) (f ∘ extract) ∘ toBatch6.
   Proof.
     intros.
-    rewrite (kdtfunf_map_to_mapdt).
-    rewrite (mapdt_through_runBatch).
+    rewrite kdtfunf_map_to_mapdt.
+    rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
 
@@ -101,33 +101,25 @@ Section decorated_traversable_functor_theory.
   (******************************************************************************)
   Definition foldMapd {T : Type -> Type} `{Mapdt E T}
     `{op : Monoid_op M} `{unit : Monoid_unit M}
-    {A : Type} (f : E * A -> M) : T A -> M := mapdt (G := const M) (B := False) f.
+    {A : Type} (f : E * A -> M) : T A -> M :=
+    mapdt (G := const M) (B := False) f.
 
   (** *** Rewriting the "tag" type parameter *)
   (******************************************************************************)
-  Lemma foldMapd_to_mapdt1 (M : Type) `{Monoid M} : forall A,
-      foldMapd (T := T) (A := A) = mapdt (T := T) (G := const M) (B := False) (A := A).
+  Lemma foldMapd_to_mapdt1 `{Monoid M} `(f : E * A -> M) :
+      foldMapd (T := T) (M := M) (A := A) f =
+        mapdt (G := const M) (B := False) f.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMap_to_mapdt2 (M : Type) `{Monoid M} : forall (fake : Type) `(f : E * A -> M),
-      foldMapd f = mapdt (G := const M) (B := fake) f.
+  Lemma foldMap_to_mapdt2 `{Monoid M} `(f : E * A -> M) : forall (fake : Type),
+      foldMapd (T := T) (M := M) (A := A) f =
+        mapdt (G := const M) (B := fake) f.
   Proof.
     intros.
-    rewrite (foldMapd_to_mapdt1 M).
-    rewrite (mapdt_constant_applicative1 (B := fake) f).
-    reflexivity.
-  Qed.
-
-  (** *** <<foldMapd>> as a generalization of <<foldMap>> *)
-  (******************************************************************************)
-  Lemma foldMap_to_foldMapd :  forall `{Monoid M} `(f : A -> M),
-      foldMap (T := T) f = foldMapd (T := T) (f ∘ extract).
-  Proof.
-    intros.
-    rewrite (foldMap_to_traverse1 M).
-    rewrite (kdtfunf_traverse_to_mapdt).
+    rewrite foldMapd_to_mapdt1.
+    rewrite (mapdt_constant_applicative1 (B := fake)).
     reflexivity.
   Qed.
 
@@ -137,7 +129,7 @@ Section decorated_traversable_functor_theory.
       foldMapd f = runBatch (F := const M) f (C := T False) ∘ toBatch6 (B := False).
   Proof.
     intros.
-    rewrite (foldMapd_to_mapdt1 M).
+    rewrite foldMapd_to_mapdt1.
     rewrite (mapdt_through_runBatch (G := const M)).
     reflexivity.
   Qed.
@@ -146,9 +138,9 @@ Section decorated_traversable_functor_theory.
       foldMapd f = runBatch (F := const M) f (C := T fake) ∘ toBatch6 (B := fake).
   Proof.
     intros.
-    rewrite (foldMapd_to_mapdt1 M).
+    rewrite foldMapd_to_mapdt1.
     rewrite (mapdt_constant_applicative2 False False fake).
-    rewrite (mapdt_through_runBatch).
+    rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
 
@@ -159,8 +151,8 @@ Section decorated_traversable_functor_theory.
       foldMapd g ∘ mapd f = foldMapd (g ∘ cobind f).
   Proof.
     intros.
-    rewrite (foldMapd_to_mapdt1 M).
-    rewrite (mapdt_mapd (E := E) (T := T) g f).
+    rewrite foldMapd_to_mapdt1.
+    rewrite (mapdt_mapd g f).
     reflexivity.
   Qed.
 
@@ -172,7 +164,7 @@ Section decorated_traversable_functor_theory.
     replace (mapdt (G := fun A => A) (f ∘ extract)) with (mapd (f ∘ extract)).
     - rewrite (foldMapd_mapd).
       reflexivity.
-    - rewrite (kdtfunf_mapd_to_mapdt).
+    - rewrite kdtfunf_mapd_to_mapdt.
       reflexivity.
   Qed.
 
@@ -184,9 +176,20 @@ Section decorated_traversable_functor_theory.
   Proof.
     intros.
     inversion morphism.
-    rewrite (foldMapd_to_mapdt1 M1).
+    rewrite foldMapd_to_mapdt1.
     change ϕ with (const ϕ (T False)).
     rewrite <- (kdtfun_morph (G1 := const M1) (G2 := const M2)).
+    reflexivity.
+  Qed.
+
+  (** *** <<foldMapd>> as a generalization of <<foldMap>> *)
+  (******************************************************************************)
+  Lemma foldMap_to_foldMapd : forall `{Monoid M} `(f : A -> M),
+      foldMap (T := T) f = foldMapd (T := T) (f ∘ extract).
+  Proof.
+    intros.
+    rewrite foldMap_to_traverse1.
+    rewrite kdtfunf_traverse_to_mapdt.
     reflexivity.
   Qed.
 
@@ -227,7 +230,7 @@ Section decorated_traversable_functor_theory.
                   ∘ toBatch6.
     Proof.
       rewrite (ctx_tolist_to_mapdt2 A tag).
-      now rewrite (mapdt_to_runBatch).
+      now rewrite mapdt_to_runBatch.
     Qed.
 
     (** *** <<ctx_tolist>> is a natural transformation *)
@@ -545,64 +548,64 @@ Section decorated_traversable_functor_theory.
       - intros [e Hin]. eauto.
     Qed.
 
-  (** ** Characterizing <<∈d>> and <<mapd>> *)
+    (** ** Characterizing <<∈d>> and <<mapd>> *)
     (******************************************************************************)
 
-  Theorem ind_mapd_iff :
-    forall `(f : E * A -> B) (t : T A) (e : E) (b : B),
-      (e, b) ∈d mapd f t <-> exists (a : A), (e, a) ∈d t /\ f (e, a) = b.
-  Proof.
-    intros.
-    unfold_ops @CtxElements_CtxTolist.
-    change_left ((evalAt (e, b) ∘ element_of (F := list) ∘ ctx_tolist ∘ mapd (T := T) f) t).
-    change_right ((evalAt (e, b) ∘ mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist) t).
-    enough (lemma : element_of (F := list) ∘ ctx_tolist ∘ mapd f =
-                      mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist).
-    change_left ((evalAt (e, b) ∘ (element_of (F := list) ∘ ctx_tolist ∘ mapd f)) t).
-    rewrite lemma. reflexivity.
-    { reassociate -> on left.
-      change (list (prod ?E ?X)) with (env E X). (* hidden *)
-      rewrite <- (mapd_ctx_tolist f).
-      reassociate <- on left.
-      fequal.
-      rewrite (env_mapd_spec).
-      rewrite (ctxset_mapd_spec).
-      change (env ?E ?X) with (list (prod E X)). (* hidden *)
-      rewrite <- (natural (ϕ := @element_of list _)).
-      reflexivity.
-    }
-  Qed.
+    Theorem ind_mapd_iff :
+      forall `(f : E * A -> B) (t : T A) (e : E) (b : B),
+        (e, b) ∈d mapd f t <-> exists (a : A), (e, a) ∈d t /\ f (e, a) = b.
+    Proof.
+      intros.
+      unfold_ops @CtxElements_CtxTolist.
+      change_left ((evalAt (e, b) ∘ element_of (F := list) ∘ ctx_tolist ∘ mapd (T := T) f) t).
+      change_right ((evalAt (e, b) ∘ mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist) t).
+      enough (lemma : element_of (F := list) ∘ ctx_tolist ∘ mapd f =
+                        mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist).
+      change_left ((evalAt (e, b) ∘ (element_of (F := list) ∘ ctx_tolist ∘ mapd f)) t).
+      rewrite lemma. reflexivity.
+      { reassociate -> on left.
+        change (list (prod ?E ?X)) with (env E X). (* hidden *)
+        rewrite <- (mapd_ctx_tolist f).
+        reassociate <- on left.
+        fequal.
+        rewrite (env_mapd_spec).
+        rewrite (ctxset_mapd_spec).
+        change (env ?E ?X) with (list (prod E X)). (* hidden *)
+        rewrite <- (natural (ϕ := @element_of list _)).
+        reflexivity.
+      }
+    Qed.
 
-  Corollary ind_map_iff :
-    forall `(f : A -> B) (t : T A) (e : E) (b : B),
-      (e, b) ∈d map f t <-> exists (a : A), (e, a) ∈d t /\ f a = b.
-  Proof.
-    intros.
-    rewrite (dfunf_map_to_mapd).
-    rewrite ind_mapd_iff.
-    reflexivity.
-  Qed.
-
-  Lemma mapd_respectful :
-    forall A B (t : T A) (f g : E * A -> B),
-      (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))
-      -> mapd f t = mapd g t.
-  Proof.
-    introv hyp.
-    do 2 rewrite mapd_through_runBatch.
-    rewrite (ctx_elements_through_runBatch2 (tag := B)) in hyp.
-    unfold compose in *.
-    induction (toBatch6 (B := B) t).
-    - reflexivity.
-    - destruct a as [e a]. cbn.
-      rewrite IHb.
-      rewrite hyp.
+    Corollary ind_map_iff :
+      forall `(f : A -> B) (t : T A) (e : E) (b : B),
+        (e, b) ∈d map f t <-> exists (a : A), (e, a) ∈d t /\ f a = b.
+    Proof.
+      intros.
+      rewrite (dfunf_map_to_mapd).
+      rewrite ind_mapd_iff.
       reflexivity.
-      + cbn. now right.
-      + introv hyp2.
-        apply hyp.
-        now left.
-  Qed.
+    Qed.
+
+    Lemma mapd_respectful :
+      forall A B (t : T A) (f g : E * A -> B),
+        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))
+        -> mapd f t = mapd g t.
+    Proof.
+      introv hyp.
+      do 2 rewrite mapd_through_runBatch.
+      rewrite (ctx_elements_through_runBatch2 (tag := B)) in hyp.
+      unfold compose in *.
+      induction (toBatch6 (B := B) t).
+      - reflexivity.
+      - destruct a as [e a]. cbn.
+        rewrite IHb.
+        rewrite hyp.
+        reflexivity.
+        + cbn. now right.
+        + introv hyp2.
+          apply hyp.
+          now left.
+    Qed.
 
   End tosetd.
 
