@@ -80,7 +80,7 @@ Class DecoratedTraversableMonadPoly
 
 Section compose_laws.
 
-  Generalizable All Variables.
+  #[local] Generalizable All Variables.
 
   Lemma kcompose_rename_preincr :
     forall {WA WB WC}

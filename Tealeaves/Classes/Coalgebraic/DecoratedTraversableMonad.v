@@ -145,10 +145,3 @@ Class DecoratedTraversableMonad (W : Type) (T : Type -> Type)
       cojoin_Batch7 ∘ toBatch7 (A := A) (B := C) =
         map (F := Batch (W * A) (T B)) (toBatch7) ∘ toBatch7;
   }.
-
-About toBatch7.
-
-Arguments toBatch7 {W}%type_scope {T}%function_scope
-  {ToBatch7} (A B)%type_scope _.
-
-About dtm_duplicate.
