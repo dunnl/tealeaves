@@ -162,17 +162,17 @@ Section traversable_functor_theory.
 
   (** *** As a special case of <<traverse>> *)
   (******************************************************************************)
-  Lemma foldMap_to_traverse1 (M : Type) `{Monoid M} : forall `(f : A -> M),
+  Lemma foldMap_to_traverse1 `{Monoid M} : forall `(f : A -> M),
       foldMap (T := T) f = traverse (G := const M) (B := False) f.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMap_to_traverse2 (M : Type) `{Monoid M} : forall (fake : Type) `(f : A -> M),
+  Lemma foldMap_to_traverse2 `{Monoid M} : forall (fake : Type) `(f : A -> M),
       foldMap f = traverse (G := const M) (B := fake) f.
   Proof.
     intros.
-    rewrite (foldMap_to_traverse1 M).
+    rewrite foldMap_to_traverse1.
     rewrite (traverse_const1 fake f).
     reflexivity.
   Qed.
@@ -183,7 +183,7 @@ Section traversable_functor_theory.
       foldMap f = runBatch (const M) f (T False) ∘ toBatch T A False.
   Proof.
     intros.
-    rewrite (foldMap_to_traverse1 M).
+    rewrite foldMap_to_traverse1.
     rewrite (traverse_to_runBatch (G := const M)).
     reflexivity.
   Qed.
@@ -192,7 +192,7 @@ Section traversable_functor_theory.
       foldMap f = runBatch (const M) f (T fake) ∘ toBatch T A fake.
   Proof.
     intros.
-    rewrite (foldMap_to_traverse1 M).
+    rewrite foldMap_to_traverse1.
     change (fun _ : Type => M) with (const (A := Type) M).
     rewrite (traverse_const1 fake).
     rewrite (traverse_to_runBatch (G := const M)).
@@ -207,9 +207,9 @@ Section traversable_functor_theory.
         foldMap (map g ∘ f).
   Proof.
     intros.
-    rewrite (foldMap_to_traverse1 M).
+    rewrite foldMap_to_traverse1.
     rewrite (trf_traverse_traverse (T := T) (G1 := G) (G2 := const M) (B := B) (C := False)).
-    rewrite (foldMap_to_traverse1 (G M)).
+    rewrite (foldMap_to_traverse1).
     (* TODO abstract this step *)
     assert (hidden1 : @Map_compose G (const M) _ _ = @Map_const (G M)).
     { ext A' B' f' t.
@@ -241,7 +241,7 @@ Section traversable_functor_theory.
   Proof.
     intros.
     inversion morphism.
-    rewrite (foldMap_to_traverse1 M1).
+    rewrite foldMap_to_traverse1.
     change ϕ with (const ϕ (T False)).
     rewrite (trf_traverse_morphism (T := T) (G1 := const M1) (G2 := const M2)).
     reflexivity.
