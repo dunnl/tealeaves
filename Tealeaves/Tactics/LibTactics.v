@@ -1507,7 +1507,7 @@ Ltac equates_several E cont :=
   let rec go pos :=
      match pos with
      | nil => cont tt
-     | (boxer ?n)::?pos' => equates_one n; [ instantiate; go pos' | ]
+     | (boxer ?n)::?pos' => equates_one n; [ idtac; go pos' | ]
      end in
   go all_pos.
 
@@ -1615,7 +1615,7 @@ Tactic Notation "tryfalse" :=
 
 Ltac false_then E cont :=
   false_goal; first
-  [ applys E; instantiate
+  [ applys E; idtac
   | forwards_then E ltac:(fun M =>
       pose M; jauto_set_hyps; intros; false) ];
   cont tt.
