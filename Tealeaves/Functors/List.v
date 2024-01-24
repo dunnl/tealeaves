@@ -367,7 +367,6 @@ Section bindt_laws.
       reflexivity.
   Qed.
 
-  About kc3.
   Lemma list_bindt2 :
     forall (g : B -> G2 (list C)) (f : A -> G1 (list B)),
       map (F := G1) (bindt g) ∘ bindt f =
