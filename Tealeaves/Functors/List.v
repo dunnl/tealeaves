@@ -4,17 +4,13 @@ From Tealeaves Require Export
   Functors.Subset
   Misc.List.
 
+Import TraversableMonad.Notations.
 Import List.ListNotations.
 Import Monoid.Notations.
 Import Subset.Notations.
 Import Applicative.Notations.
 
 #[local] Generalizable Variables M A B G ϕ.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
-#[local] Arguments pure F%function_scope {Pure} {A}%type_scope _.
-#[local] Arguments mult F%function_scope {Mult} {A B}%type_scope _.
-#[local] Arguments bindt {U} (T)%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
 
 (** * Automation: <<simpl_list>> *)
 (******************************************************************************)
@@ -39,24 +35,24 @@ Section map_list_rw.
     {A B : Type}
     (f : A -> B).
 
-  Lemma map_list_nil : map list f (@nil A) = @nil B.
+  Lemma map_list_nil : map f (@nil A) = @nil B.
   Proof.
     reflexivity.
   Qed.
 
   Lemma map_list_cons : forall (x : A) (xs : list A),
-      map list f (x :: xs) = f x :: map list f xs.
+      map f (x :: xs) = f x :: map f xs.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma map_list_one (a : A) : map list f [ a ] = [f a].
+  Lemma map_list_one (a : A) : map f [ a ] = [f a].
   Proof.
     reflexivity.
   Qed.
 
   Lemma map_list_app : forall (l1 l2 : list A),
-      map list f (l1 ++ l2) = map list f l1 ++ map list f l2.
+      map f (l1 ++ l2) = map f l1 ++ map f l2.
   Proof.
     intros.
     unfold transparent tcs.
@@ -70,14 +66,14 @@ End map_list_rw.
 
 (** *** Functor laws *)
 (******************************************************************************)
-Theorem map_id_list {A} : map list (@id A) = id.
+Theorem map_id_list {A} : map (F := list) (@id A) = id.
 Proof.
   ext l. induction l as [| ? ? IH]; simpl_list.
   trivial. now rewrite IH.
 Qed.
 
 Theorem map_map_list {A B C} : forall (f : A -> B) (g : B -> C),
-    map list g ∘ map list f = map list (g ∘ f).
+    map g ∘ map f = map (F := list) (g ∘ f).
 Proof.
   intros. unfold compose. ext l. induction l as [| ? ? IH]; simpl_list.
   trivial. now rewrite IH.
@@ -140,7 +136,7 @@ Proof.
 Qed.
 
 Theorem join_ret_list {A} :
-  join ∘ ret list (list A) = @id (list A).
+  join ∘ ret (T := list) = @id (list A).
 Proof.
   ext l. unfold compose. destruct l.
   - reflexivity.
@@ -148,7 +144,7 @@ Proof.
 Qed.
 
 Theorem join_map_ret_list {A} :
-  join ∘ map list (ret list A) = @id (list A).
+  join ∘ map (F := list) (ret (T := list)) = @id (list A).
 Proof.
   ext l. unfold compose. induction l as [| ? ? IHl].
   - reflexivity.
@@ -157,7 +153,7 @@ Qed.
 
 Theorem join_join_list {A} :
   join (T := list) ∘ join (T := list) (A:=list A) =
-  join ∘ map list (join).
+  join ∘ map (F := list) (join).
 Proof.
   ext l. unfold compose. induction l as [| ? ? IHl].
   - reflexivity.
@@ -179,9 +175,9 @@ Qed.
 Fixpoint bindt_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Type) (f : A -> G (list B)) (l : list A)
   : G (list B) :=
   match l with
-  | nil => pure G (@nil B)
+  | nil => pure (@nil B)
   | x :: xs =>
-      pure G (@List.app B) <⋆> f x <⋆> bindt_list G A B f xs
+      pure (@List.app B) <⋆> f x <⋆> bindt_list G A B f xs
   end.
 
 Fixpoint bind_list (A B : Type) (f : A -> list B) (l : list A) : list B :=
@@ -194,9 +190,9 @@ Fixpoint bind_list (A B : Type) (f : A -> list B) (l : list A) : list B :=
 Fixpoint traverse_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Type) (f : A -> G B) (l : list A)
   : G (list B) :=
   match l with
-  | nil => pure G (@nil B)
+  | nil => pure (@nil B)
   | x :: xs =>
-      pure G (@List.cons B) <⋆> f x <⋆> (traverse_list G A B f xs)
+      pure (@List.cons B) <⋆> f x <⋆> (traverse_list G A B f xs)
   end.
 
 #[export] Instance Bindt_list : Bindt list list := @bindt_list.
@@ -204,17 +200,21 @@ Fixpoint traverse_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Ty
 #[export] Instance Traverse_list : Traverse list := @traverse_list.
 
 Lemma list_bind_compat : forall (A B : Type),
-    bind = @TraversableMonad.DerivedOperations.Bind_Bindt list _ A B.
+    bind =
+      @TraversableMonad.DerivedOperations.Bind_Bindt list _ A B.
 Proof.
   intros. ext f l. induction l as [|a rest IHrest].
   - reflexivity.
   - cbn. now rewrite IHrest.
 Qed.
 
-Lemma list_traverse_compat : forall (G : Type -> Type) `{Mult G} `{Map G} `{Pure G} `{! Applicative G} (A B : Type) (f : A -> G B),
-    traverse f = @TraversableMonad.DerivedOperations.Traverse_Bindt list _ _ G _ _ _ A B f.
+Lemma list_traverse_compat :
+  forall (G : Type -> Type) `{Mult G} `{Map G} `{Pure G}
+    `{! Applicative G} (A B : Type) (f : A -> G B),
+    traverse f =
+      @TraversableMonad.DerivedOperations.Traverse_Bindt list _ _ G _ _ _ A B f.
 Proof.
-  intros. ext l. induction l as [|a rest IHrest].
+  intros. ext l. induction l as [| a rest IHrest].
   - reflexivity.
   - cbn. rewrite IHrest.
     unfold compose at 1.
@@ -224,7 +224,8 @@ Proof.
 Qed.
 
 Lemma list_map_compat : forall (A B : Type) (f : A -> B),
-    map list f = @TraversableMonad.DerivedOperations.Map_Bindt list _ _ A B f.
+    map (F := list) f =
+      @TraversableMonad.DerivedOperations.Map_Bindt list _ _ A B f.
 Proof.
   intros. ext l. induction l as [|a rest IHrest].
   - reflexivity.
@@ -241,13 +242,13 @@ Section bindt_rewriting_lemmas.
     (A B : Type).
 
   Lemma bindt_list_nil : forall (f : A -> G (list B)),
-      bindt list G A B f (@nil A) = pure G (@nil B).
+      bindt f (@nil A) = pure (@nil B).
   Proof.
     reflexivity.
   Qed.
 
   Lemma bindt_list_one : forall (f : A -> G (list B)) (a : A),
-      bindt list G A B f (ret list A a) = f a.
+      bindt f (ret (T := list) a) = f a.
   Proof.
     intros.
     cbn.
@@ -262,16 +263,14 @@ Section bindt_rewriting_lemmas.
   Qed.
 
   Lemma bindt_list_cons : forall (f : A -> G (list B)) (a : A) (l : list A),
-      bindt list G A B f (cons a l) =
-        pure G (@app B) <⋆> f a <⋆> bindt list G A B f l.
+      bindt f (a :: l) = pure (@app B) <⋆> f a <⋆> bindt f l.
   Proof.
     intros.
     reflexivity.
   Qed.
 
   Lemma bindt_list_app : forall (f : A -> G (list B)) (l1 l2 : list A),
-      bindt list G A B f (l1 ++ l2) =
-        pure G (@app B) <⋆> (bindt list G A B f l1) <⋆> (bindt list G A B f l2).
+      bindt f (l1 ++ l2) = pure (@app B) <⋆> bindt f l1 <⋆> bindt f l2.
   Proof.
     intros.
     induction l1.
@@ -287,7 +286,7 @@ Section bindt_rewriting_lemmas.
       repeat rewrite ap2.
       repeat fequal.
       ext x y z. unfold compose.
-      now rewrite (List.app_assoc).
+      now rewrite List.app_assoc.
   Qed.
 
 End bindt_rewriting_lemmas.
@@ -309,7 +308,7 @@ Section bind_rewriting_lemmas.
   Qed.
 
   Lemma bind_list_one : forall (f : A -> list B) (a : A),
-      bind f (ret list A a) = f a.
+      bind f (ret a) = f a.
   Proof.
     intros.
     cbn. change (@nil B) with (Ƶ : list B).
@@ -351,13 +350,16 @@ Section bindt_laws.
     `{Applicative G2}
     (A B C : Type).
 
-  Lemma list_bindt0 : forall (f : A -> G (list B)), bindt list G A B f ∘ ret list A = f.
+  Lemma list_bindt0 : forall (f : A -> G (list B)),
+      bindt f ∘ ret = f.
   Proof.
     intros. ext a.
     apply (bindt_list_one G).
   Qed.
 
-  Lemma list_bindt1 : bindt (U := list) list (fun A => A) A A (ret list A) = id.
+  Lemma list_bindt1 :
+    bindt (T := list) (U := list)
+      (A := A) (B := A) (G := fun A => A) (ret (T := list)) = id.
   Proof.
     ext l. induction l.
     - reflexivity.
@@ -365,14 +367,15 @@ Section bindt_laws.
       reflexivity.
   Qed.
 
+  About kc3.
   Lemma list_bindt2 :
     forall (g : B -> G2 (list C)) (f : A -> G1 (list B)),
-      map G1 (bindt list G2 B C g) ∘ bindt list G1 A B f =
-        bindt list (G1 ∘ G2) A C (kc3 g f).
+      map (F := G1) (bindt g) ∘ bindt f =
+        bindt (G := G1 ∘ G2) (g ⋆3 f).
   Proof.
     intros. ext l. induction l.
     - unfold compose; cbn.
-      rewrite (app_pure_natural).
+      rewrite app_pure_natural.
       rewrite bindt_list_nil.
       reflexivity.
     - unfold compose at 1.
@@ -390,15 +393,15 @@ Section bindt_laws.
       rewrite <- ap4.
       rewrite <- ap4.
       rewrite <- ap4.
-      repeat rewrite ap2.
+      do 6 rewrite ap2.
       unfold kc3.
       unfold compose at 8.
       rewrite map_to_ap.
       rewrite <- ap4.
-      repeat rewrite ap2.
+      do 2 rewrite ap2.
       rewrite ap3.
       rewrite <- ap4.
-      repeat rewrite ap2.
+      do 2 rewrite ap2.
       fequal.
       fequal.
       fequal. ext l1 l2.
@@ -411,7 +414,7 @@ End bindt_laws.
 Lemma list_morph :
   forall `(morph : ApplicativeMorphism G1 G2 ϕ),
   forall (A B : Type) (f : A -> G1 (list B)),
-    ϕ (list B) ∘ bindt list G1 A B f = bindt list G2 A B (ϕ (list B) ∘ f).
+    ϕ (list B) ∘ bindt f = bindt (ϕ (list B) ∘ f).
 Proof.
   intros. unfold compose at 1 2. ext l.
   induction l.
@@ -449,7 +452,7 @@ Qed.
 (** *** <<map>> is a monoid homomorphism *)
 (******************************************************************************)
 #[export, program] Instance Monmor_list_map `(f : A -> B) :
-  Monoid_Morphism (list A) (list B) (map list f) :=
+  Monoid_Morphism (list A) (list B) (map f) :=
   {| monmor_op := map_list_app f; |}.
 
 (** *** [join] is a monoid homomorphism *)
@@ -481,7 +484,7 @@ Qed.
 (******************************************************************************)
 (** <<fold>> commutes with monoid homomorphisms *)
 Lemma fold_mon_hom : forall `(ϕ : M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
-    ϕ ∘ fold M1 = fold M2 ∘ map list ϕ.
+    ϕ ∘ fold M1 = fold M2 ∘ map ϕ.
 Proof.
   intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
   induction l as [| ? ? IHl].
@@ -503,7 +506,7 @@ Qed.
 (******************************************************************************)
 Definition foldMap {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
   {A : Type} (f : A -> M) : list A -> M :=
-  fold M ∘ map list f.
+  fold M ∘ map f.
 
 (** <<foldMap>> is a monoid homomorphism *)
 #[export] Instance Monoid_Morphism_foldMap
@@ -553,7 +556,7 @@ Section foldMap_list_rw.
     cbv. apply monoid_id_l.
   Qed.
 
-  Lemma foldMap_list_ret : foldMap f ∘ ret list A = f.
+  Lemma foldMap_list_ret : foldMap f ∘ ret = f.
   Proof.
     ext a; cbn. apply monoid_id_l.
   Qed.
@@ -582,21 +585,21 @@ Section foldable_list.
     `{Monoid M}.
 
   Lemma fold_ret : forall (x : M),
-      fold M (ret list _ x : list M) = x.
+      fold M (ret x : list M) = x.
   Proof.
     apply monoid_id_l.
   Qed.
 
   Lemma fold_join : forall (l : list (list M)),
-      fold _ (join (T := list) l) = fold _ (map list (fold _) l).
+      fold M (join l) = fold M (map (fold M) l).
   Proof.
     intro l. rewrite <- fold_equal_join.
     compose near l on left.
-    now rewrite (fold_mon_hom (fold _)).
+    now rewrite (fold_mon_hom (fold M)).
   Qed.
 
   Lemma fold_constant_unit : forall (l : list M),
-      fold M (map list (fun _ => Ƶ) l) = Ƶ.
+      fold M (map (fun _ => Ƶ) l) = Ƶ.
   Proof.
     intro l. induction l.
     - reflexivity.
@@ -610,8 +613,8 @@ End foldable_list.
     similarly-concatenated lists.  *)
 (******************************************************************************)
 Lemma map_app_inv_l : forall {A B} {f g : A -> B} (l1 l2 : list A),
-    map list f (l1 ++ l2) = map list g (l1 ++ l2) ->
-    map list f l1 = map list g l1.
+    map f (l1 ++ l2) = map g (l1 ++ l2) ->
+    map f l1 = map g l1.
 Proof.
   intros. induction l1.
   - reflexivity.
@@ -621,11 +624,11 @@ Proof.
 Qed.
 
 Lemma map_app_inv_r : forall {A B} {f g : A -> B} (l1 l2 : list A),
-    map list f (l1 ++ l2) = map list g (l1 ++ l2) ->
-    map list f l2 = map list g l2.
+    map f (l1 ++ l2) = map g (l1 ++ l2) ->
+    map f l2 = map g l2.
 Proof.
   intros.
-  assert (heads_equal : map list f l1 = map list g l1).
+  assert (heads_equal : map f l1 = map g l1).
   { eauto using map_app_inv_l. }
   simpl_list in *.
   rewrite heads_equal in H.
@@ -633,8 +636,8 @@ Proof.
 Qed.
 
 Lemma map_app_inv : forall {A B} {f g : A -> B} (l1 l2 : list A),
-    map list f (l1 ++ l2) = map list g (l1 ++ l2) ->
-    map list f l1 = map list g l1 /\ map list f l2 = map list g l2.
+    map f (l1 ++ l2) = map g (l1 ++ l2) ->
+    map f l1 = map g l1 /\ map f l2 = map g l2.
 Proof.
   intros; split; eauto using map_app_inv_l, map_app_inv_r.
 Qed.
@@ -644,12 +647,12 @@ Qed.
 (** * The [shape] operation *)
 (******************************************************************************)
 Definition shape `{Map F} {A : Type} : F A -> F unit :=
-  map F (const tt).
+  map (const tt).
 
 (** ** Basic reasoning principles for <<shape>> *)
 (******************************************************************************)
 Theorem shape_map `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
-    shape (F := F) (map F f t) =
+    shape (F := F) (map f t) =
       shape (F := F) t.
 Proof.
   intros. compose near t on left.
@@ -665,10 +668,10 @@ Qed.
 
 
 Lemma shape_map_eq `{Functor F} : forall (A1 A2 B : Type) (f : A1 -> B) (g : A2 -> B) t u,
-    map F f t = map F g u -> shape t = shape u.
+    map f t = map g u -> shape t = shape u.
 Proof.
 
-  introv hyp. cut (shape (map F f t) = shape (map F g u)).
+  introv hyp. cut (shape (map f t) = shape (map g u)).
   - now rewrite 2(shape_map).
   - now rewrite hyp.
 Qed.
@@ -845,7 +848,7 @@ Section list_shape_lemmas.
   Qed.
 
   Lemma list_app_inv_l2 : forall A (l1 l2 : list A) (a1 a2 : A),
-      l1 ++ ret list A a1 = l2 ++ ret list A a2 ->
+      l1 ++ ret a1 = l2 ++ ret a2 ->
       l1 = l2.
   Proof.
     intros. eapply inv_app_eq_rl; [|eauto]; auto.
