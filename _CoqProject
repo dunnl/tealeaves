@@ -23,6 +23,7 @@ Tealeaves/Functors/Reader.v
 Tealeaves/Functors/Writer.v
 Tealeaves/Classes/Kleisli/DecoratedFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedMonad.v
+Tealeaves/Functors/Constant.v
 Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
@@ -38,7 +39,6 @@ Tealeaves/Functors/Categorical/Reader.v
 Tealeaves/Functors/Categorical/Writer.v
 Tealeaves/Classes/Categorical/DecoratedFunctor.v
 Tealeaves/Classes/Categorical/DecoratedMonad.v
-Tealeaves/Functors/Constant.v
 Tealeaves/Classes/Categorical/TraversableFunctor.v
 Tealeaves/Classes/Categorical/TraversableMonad.v
 Tealeaves/Classes/Categorical/DecoratedTraversableFunctor.v
