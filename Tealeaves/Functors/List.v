@@ -1,8 +1,10 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Categorical.Monad
   Classes.Kleisli.TraversableMonad
   Classes.Categorical.ContainerFunctor
-  Classes.Categorical.ShapelyFunctor
+  Classes.Categorical.ShapelyFunctor.
+
+From Tealeaves Require Export
   Functors.Subset
   Misc.List.
 
@@ -135,7 +137,7 @@ Fixpoint traverse_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Ty
 
 Lemma list_bind_compat : forall (A B : Type),
     bind =
-      @TraversableMonad.DerivedOperations.Bind_Bindt list _ A B.
+      @TraversableMonad.MakeFull.Bind_Bindt list _ A B.
 Proof.
   intros. ext f l. induction l as [|a rest IHrest].
   - reflexivity.
@@ -146,7 +148,7 @@ Lemma list_traverse_compat :
   forall (G : Type -> Type) `{Mult G} `{Map G} `{Pure G}
     `{! Applicative G} (A B : Type) (f : A -> G B),
     traverse f =
-      @TraversableMonad.DerivedOperations.Traverse_Bindt list _ _ G _ _ _ A B f.
+      @TraversableMonad.MakeFull.Traverse_Bindt list _ _ G _ _ _ A B f.
 Proof.
   intros. ext l. induction l as [| a rest IHrest].
   - reflexivity.
@@ -159,7 +161,7 @@ Qed.
 
 Lemma list_map_compat : forall (A B : Type) (f : A -> B),
     map (F := list) f =
-      @TraversableMonad.DerivedOperations.Map_Bindt list _ _ A B f.
+      @TraversableMonad.MakeFull.Map_Bindt list _ _ A B f.
 Proof.
   intros. ext l. induction l as [|a rest IHrest].
   - reflexivity.
