@@ -51,7 +51,7 @@ Class TraversableMonad (T : Type -> Type) `{Return T} `{Bindt T T} :=
                    (g : B -> G2 (T C)) (f : A -> G1 (T B)),
       map (F := G1) (A := T B) (B := G2 (T C)) (bindt g) ∘ bindt f =
         bindt (kc3 (G1 := G1) (G2 := G2) g f);
-    ktm_morph : forall `{morph : ApplicativeMorphism G1 G2 ϕ} {A B : Type} `(f : A -> G1 (T B)),
+    ktm_morph : forall `{morphism : ApplicativeMorphism G1 G2 ϕ} {A B : Type} `(f : A -> G1 (T B)),
       ϕ (T B) ∘ bindt f = bindt (ϕ (T B) ∘ f);
   }.
 
@@ -65,7 +65,6 @@ Class TraversableMonadFull
     ktmf_map_to_bindt :
     `(@map T _ A B f = @bindt T T _ (fun A => A) _ _ _ A B (ret ∘ f));
   }.
-
 
 (** * Interaction of [traverse] with functor composition *)
 (******************************************************************************)
@@ -144,10 +143,6 @@ Section DerivedInstances.
 
     (** *** Heterogeneous cases *)
     (******************************************************************************)
-
-    (** **** [3x] *)
-    (******************************************************************************)
-
     Lemma kc3_32 : forall `(g : B -> G2 (T C)) `(f : A -> G1 B),
         g ⋆3 map ret ∘ f = map g ∘ f.
     Proof.
@@ -173,8 +168,6 @@ Section DerivedInstances.
       reflexivity.
     Qed.
 
-    (** **** [x3] *)
-    (******************************************************************************)
     Lemma kc3_23 : forall `(g : B -> G2 C) `(f : A -> G1 (T B)),
         map ret ∘ g ⋆3 f = map (traverse g) ∘ f.
     Proof.
@@ -199,8 +192,6 @@ Section DerivedInstances.
       reflexivity.
     Qed.
 
-    (** **** [xy] *)
-    (******************************************************************************)
     Lemma kc3_21 : forall `(g : B -> G2 C) `(f : A -> T B),
         kc3 (map ret ∘ g) f = traverse (G := G2) g ∘ f.
     Proof.
@@ -267,6 +258,63 @@ Section DerivedInstances.
     Qed.
 
   End kc3_special_cases.
+
+  (** ** Kleisli composition laws *)
+  (******************************************************************************)
+  Section Kleisli_composition.
+
+    Context
+      `{Applicative G1}
+      `{Applicative G2}
+      `{Applicative G3}.
+
+    Lemma kc3_id_l : forall `(g : A -> G2 (T B)),
+        kc3 (T := T) (G1 := fun A => A) g (ret (T := T)) = g.
+    Proof.
+      intros. change ret with (ret ∘ @id A).
+      now rewrite kc3_30.
+    Qed.
+
+    Lemma kc3_id_l' : forall `(g : A -> G2 (T B)),
+        kc3 (T := T) g (map (F := G1) ret) = map g.
+    Proof.
+      intros.
+      unfold kc3.
+      rewrite (fun_map_map (F := G1)).
+      now rewrite ktm_bindt0.
+    Qed.
+
+    Lemma kc3_id_r : forall `(f : A -> G1 (T B)),
+        kc3 (T := T) (G2 := fun A => A) (ret (T := T)) f = f.
+    Proof.
+      intros.
+      change ret with (ret ∘ @id B).
+      rewrite kc3_03.
+      rewrite (ktmf_map_to_bindt (T := T)).
+      change (ret ∘ @id B) with (ret (A := B)).
+      rewrite ktm_bindt1.
+      rewrite fun_map_id.
+      reflexivity.
+    Qed.
+
+    Lemma kc3_assoc : forall `(h : C -> G3 (T D)) `(g : B -> G2 (T C)) `(f : A -> G1 (T B)),
+        kc3 (G1 := G1 ∘ G2) h (g ⋆3 f) =
+          kc3 (G2 := G2 ∘ G3) (h ⋆3 g) f.
+    Proof.
+      intros.
+      unfold kc3.
+      unfold_ops @Map_compose.
+      unfold_compose_in_compose.
+      ext a.
+      unfold compose at 1 2.
+      compose near (f a) on left.
+      rewrite fun_map_map.
+      rewrite ktm_bindt2.
+      unfold compose at 2 3.
+      reflexivity.
+    Qed.
+
+  End Kleisli_composition.
 
   (** ** Composition with lesser Kleisli operations *)
   (******************************************************************************)
@@ -462,17 +510,6 @@ Section DerivedInstances.
     reflexivity.
   Qed.
 
-  #[export] Instance Monad_TM : Monad T :=
-    {| kmon_bind0 := bind_ret;
-       kmon_bind1 := bind_id;
-       kmon_bind2 := bind_bind;
-    |}.
-
-  #[export] Instance MonadFull_TM : MonadFull T :=
-    {| kmonf_kmon := Monad_TM;
-       kmonf_map_to_bind := map_to_bind;
-    |}.
-
   Lemma map_to_traverse :
     @map T _ = @traverse T _ (fun X : Type => X) _ _ _.
   Proof.
@@ -482,84 +519,32 @@ Section DerivedInstances.
     reflexivity.
   Qed.
 
-  #[export] Instance TraversableFunctor_TM : TraversableFunctor T :=
+  #[export] Instance Monad_TraversableMonad : Monad T :=
+    {| kmon_bind0 := bind_ret;
+       kmon_bind1 := bind_id;
+       kmon_bind2 := bind_bind;
+    |}.
+
+  #[export] Instance MonadFull_TraversableMonadFull : MonadFull T :=
+    {| kmonf_map_to_bind := map_to_bind;
+    |}.
+
+  #[export] Instance TraversableFunctor_TraversableMoandFull : TraversableFunctor T :=
     {| trf_traverse_id := traverse_id;
        trf_traverse_traverse := @traverse_traverse;
        trf_traverse_morphism := @traverse_morphism;
     |}.
 
-  #[export] Instance TraversableFunctorFull_TM : TraversableFunctorFull T :=
-    {| trff_trf := TraversableFunctor_TM;
-       trff_map_to_traverse := @map_to_traverse;
+  #[export] Instance TraversableFunctorFull_TraversableMoandFull  : TraversableFunctorFull T :=
+    {| trff_map_to_traverse := map_to_traverse;
     |}.
 
-  #[export] Instance Functor_TM : Functor T := ltac:(typeclasses eauto).
-
-  #[export] Instance Natural_ret_TM : Natural (@ret T _) := ltac:(typeclasses eauto).
+  #[export] Instance Functor_TM : Functor T :=
+    {| fun_map_id := map_id;
+       fun_map_map := map_map;
+    |}.
 
 End DerivedInstances.
-
-(** ** Kleisli composition laws *)
-(******************************************************************************)
-Section Kleisli_composition.
-
-  Context
-    (T : Type -> Type)
-    `{TraversableMonadFull T}
-    (G1 : Type -> Type)
-    (G2 : Type -> Type)
-    (G3 : Type -> Type)
-    `{Applicative G1}
-    `{Applicative G2}
-    `{Applicative G3}.
-
-  Lemma kc3_id_l : forall `(g : A -> G2 (T B)),
-      kc3 (T := T) (G1 := fun A => A) g (ret (T := T)) = g.
-  Proof.
-    intros. change (ret) with (ret ∘ @id A).
-    now rewrite (kc3_30).
-  Qed.
-
-  Lemma kc3_id_l' : forall `(g : A -> G2 (T B)),
-      kc3 (T := T) g (map (F := G1) ret) = map g.
-  Proof.
-    intros.
-    unfold kc3.
-    rewrite (fun_map_map (F := G1)).
-    now rewrite ktm_bindt0.
-  Qed.
-
-  Lemma kc3_id_r : forall `(f : A -> G1 (T B)),
-      kc3 (T := T) (G2 := fun A => A) (ret (T := T)) f = f.
-  Proof.
-    intros.
-    change (ret) with (ret ∘ @id B).
-    rewrite kc3_03.
-    rewrite (ktmf_map_to_bindt (T := T)).
-    change (ret ∘ @id B) with (ret (A := B)).
-    rewrite ktm_bindt1.
-    rewrite fun_map_id.
-    reflexivity.
-  Qed.
-
-  Lemma kc3_assoc : forall `(h : C -> G3 (T D)) `(g : B -> G2 (T C)) `(f : A -> G1 (T B)),
-      kc3 (G1 := G1 ∘ G2) h (g ⋆3 f) =
-        kc3 (G2 := G2 ∘ G3) (h ⋆3 g) f.
-  Proof.
-    intros.
-    unfold kc3.
-    unfold_ops @Map_compose.
-    unfold_compose_in_compose.
-    ext a.
-    unfold compose at 1 2.
-    compose near (f a) on left.
-    rewrite (fun_map_map).
-    rewrite ktm_bindt2.
-    unfold compose at 2 3.
-    reflexivity.
-  Qed.
-
-End Kleisli_composition.
 
 (** * Notations *)
 (******************************************************************************)
@@ -567,11 +552,11 @@ Module Notations.
   Infix "⋆3" := (kc3) (at level 60) : tealeaves_scope.
 End Notations.
 
-(** ** Derived operations *)
+(** * <<TraversableMonad>> to <<TraversableMonadFull>> *)
 (******************************************************************************)
+Module MakeFull.
+  Section makefull.
 
-Module DerivedOperations.
-  Section ops.
     Context
       `{Bindt T T}
       `{Return T}.
@@ -585,7 +570,8 @@ Module DerivedOperations.
     #[export] Instance Traverse_Bindt: Traverse T | 13 :=
       fun G _ _ _ A B f => bindt (map ret ∘ f).
 
-    #[local, program] Instance TraversableMonadFull_Default
+    #[export, program] Instance MakeFull_TraversableMonad
       `{! TraversableMonad T} : TraversableMonadFull T.
-  End ops.
-End DerivedOperations.
+
+  End makefull.
+End MakeFull.

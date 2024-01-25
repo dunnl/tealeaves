@@ -3,9 +3,9 @@ From Tealeaves Require Export
   Classes.Kleisli.TraversableMonad.
 
 Import Kleisli.Monad.Notations.
+Import Kleisli.TraversableMonad.Notations.
 
-#[local] Generalizable Variables G ϕ.
-#[local] Arguments bindt {U} (T)%function_scope {Bindt} G%function_scope {H H0 H1} (A B)%type_scope _%function_scope _.
+#[local] Generalizable Variables T G ϕ.
 
 (** * Traversable Monads: Kleisli to Algebraic *)
 (******************************************************************************)
@@ -21,9 +21,9 @@ Section operations.
       `{Bindt T T}.
 
     #[export] Instance Dist_Bindt: ApplicativeDist T :=
-      fun G _ _ _ A => bindt T G (G A) A (map (F := G) (ret (T := T))).
+      fun G _ _ _ A => bindt (G := G) (map (F := G) ret).
     #[export] Instance Join_Bindt: Join T :=
-      fun A => bindt T (fun A => A) (T A) A (@id (T A)).
+      fun A => bindt (G := fun A => A) id.
 
 End operations.
 
@@ -33,70 +33,62 @@ Module ToCategorical.
   Section with_monad.
 
     Context
-      (W : Type)
-      (T : Type -> Type)
       `{Kleisli.TraversableMonad.TraversableMonad T}.
 
-    Import TraversableMonad.DerivedOperations.
-    Existing Instance DerivedOperations.TraversableMonadFull_Default.
+    Import TraversableMonad.MakeFull.
 
     (** *** Traversable functor instance *)
     (******************************************************************************)
-    Lemma dist_natural_T : forall (G : Type -> Type) (H2 : Map G) (H3 : Pure G) (H4 : Mult G),
-        Applicative G -> Natural (@dist T _ G H2 H3 H4).
+    Lemma dist_natural_T :
+      forall (G : Type -> Type) (mapG : Map G) (pureG : Pure G) (multG : Mult G),
+        Applicative G -> Natural (@dist T _ G mapG pureG multG).
     Proof.
       intros. constructor.
       - typeclasses eauto.
       - typeclasses eauto.
-      - intros. unfold_ops @Map_compose @Dist_Bindt.
-        unfold_ops @DerivedOperations.Map_Bindt.
-        (* Simplify left side *)
-        change (bindt T G (G A) A (map (F := G) ret)) with
-          (traverse (A := G A) (B := A) id).
-        change (bindt T (fun A => A) A B (ret (T := T) ∘ f)) with (map (F := T) f).
-        rewrite (map_traverse T); auto.
-        change (?f ∘ id) with f.
-        (* Simplify right side *)
-        change (bindt T (fun A => A) (G A) (G B) (ret (T := T) (A := G B) ∘ map f)) with (map (F := T ∘ G) f).
-        unfold_ops @Map_compose.
-        rewrite (bindt_map).
+      - intros.
+        unfold_ops @Map_compose @Dist_Bindt.
+        rewrite map_bindt.
+        rewrite bindt_map.
+        rewrite fun_map_map.
+        rewrite fun_map_map.
+        rewrite (natural (ϕ := @ret T _)).
         reflexivity.
     Qed.
 
-    Lemma dist_morph_T : forall `{ApplicativeMorphism G1 G2 ϕ},
+    Lemma dist_morph_T : forall `{morphism : ApplicativeMorphism G1 G2 ϕ},
       forall A : Type, dist T G2 ∘ map (F := T) (ϕ A) = ϕ (T A) ∘ dist T G1.
     Proof.
-      intros. unfold_ops @Dist_Bindt @Map_Bindt.
-      assert (Applicative G1) by now inversion H8.
-      assert (Applicative G2) by now inversion H8.
-      (* Simplify LHS *)
-      change (bindt T G2 (G2 A) A (?rest)) with (traverse (A := G2 A) (B := A) id).
-      change (bindt T (fun A0 : Type => A0) _ _ (ret (T := T) ∘ ϕ A)) with (map (F := T) (ϕ A)).
-      rewrite (traverse_map T G2).
-      (* RHS *)
-      change (bindt T G1 (G1 A) A (map (F := G1) (ret (T := T)))) with (traverse (@id (G1 A))).
-      rewrite (trf_traverse_morphism (T := T) (B := A)).
+      intros.
+      assert (Applicative G1) by now inversion morphism.
+      assert (Applicative G2) by now inversion morphism.
+      unfold_ops @Dist_Bindt.
+      rewrite bindt_map.
+      rewrite ktm_morph.
+      inversion morphism.
+      rewrite (natural (ϕ := ϕ)).
       reflexivity.
     Qed.
 
     Lemma dist_unit_T : forall A : Type,
         dist T (fun A0 : Type => A0) = @id (T A).
     Proof.
-      intros. unfold_ops @Dist_Bindt.
+      intros.
+      unfold_ops @Dist_Bindt.
       unfold_ops @Map_I.
-      now rewrite (ktm_bindt1 (T := T)).
+      rewrite ktm_bindt1.
+      reflexivity.
     Qed.
 
     Lemma dist_linear_T : forall `{Applicative G1} `{Applicative G2},
       forall A : Type, dist T (G1 ∘ G2) (A := A) = map (F := G1) (dist T G2) ∘ dist T G1.
     Proof.
-      intros. unfold_ops @Dist_Bindt.
       intros.
-      change (bindt T G2 (G2 A) A (map (F := G2) (ret (T := T) (A := A)))) with (traverse (@id (G2 A))).
-      change (bindt T G1 (G1 (G2 A)) (G2 A) (map (F := G1) (ret (A := G2 A)))) with (traverse (@id (G1 (G2 A)))).
-      rewrite trf_traverse_traverse.
-      unfold kc2.
-      rewrite (fun_map_id (F := G1)).
+      unfold_ops @Dist_Bindt @Map_compose.
+      rewrite ktm_bindt2.
+      unfold kc3.
+      rewrite fun_map_map.
+      rewrite ktm_bindt0.
       reflexivity.
     Qed.
 
@@ -124,8 +116,10 @@ Module ToCategorical.
       constructor.
       - typeclasses eauto.
       - typeclasses eauto.
-      - intros. unfold_ops @Map_compose @Join_Bindt.
-        change (bindt T (fun A => A) _ _ ?g) with (bind g).
+      - intros.
+        unfold_ops @Map_compose @Join_Bindt.
+        rewrite <- ktmf_bind_to_bindt.
+        rewrite <- ktmf_bind_to_bindt.
         unfold_compose_in_compose.
         rewrite (map_bind T).
         rewrite (bind_map T).
@@ -154,8 +148,9 @@ Module ToCategorical.
     Proof.
       intros.
       unfold_ops @Join_Bindt @Map_Bindt.
-      change (bindt T (fun A => A) _ _ ?g) with (bind g).
-      change (bindt T (fun A => A) _ _ ?g) with (bind g).
+      rewrite <- ktmf_bind_to_bindt.
+      rewrite <- ktmf_bind_to_bindt.
+      rewrite <- ktmf_bind_to_bindt.
       unfold_compose_in_compose.
       rewrite (kmon_bind2 (T := T)).
       rewrite (kmon_bind2 (T := T)).
@@ -183,16 +178,15 @@ Module ToCategorical.
                                       map (F := G) (join (T := T)) ∘ dist T G ∘ map (F := T) (dist T G).
     Proof.
       intros. unfold_ops @Dist_Bindt @Join_Bindt.
-      change_left (bindt T G _ _ (map (F := G) (ret (T := T) (A := A))) ∘ bind id).
-      rewrite (bindt_bind); auto.
-      change (?f ∘ id) with f.
-      change (bindt T (fun A => A) _ _ ?g) with (bind g).
+      do 2 rewrite <- ktmf_bind_to_bindt.
       unfold_compose_in_compose.
-      rewrite (bind_bindt (T := T) (G1 := G)).
-      rewrite (fun_map_map (F := G)).
-      rewrite (bindt_map (G2 := G)).
-      rewrite (kmon_bind0 (T := T)).
-      rewrite (fun_map_id (F := G)).
+      rewrite bindt_bind.
+      unfold compose at 5.
+      rewrite bind_bindt.
+      rewrite fun_map_map.
+      rewrite bindt_map.
+      rewrite bind_ret.
+      rewrite fun_map_id.
       reflexivity.
     Qed.
 
