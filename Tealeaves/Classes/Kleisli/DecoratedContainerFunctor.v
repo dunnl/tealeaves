@@ -29,11 +29,21 @@ Class ElementsCtx (E : Type) (F : Type -> Type) :=
 (******************************************************************************)
 Class DecoratedContainerFunctor
   (E : Type) (F : Type -> Type)
-  `{Map F} `{Mapd E F} `{ElementsCtx E F} :=
-  { dcont_functor :> DecoratedFunctorFull E F;
+  `{Mapd E F} `{ElementsCtx E F} :=
+  { dcont_functor :> DecoratedFunctor E F;
     dcont_natural :> DecoratedNatural E F (ctxset E) (@element_ctx_of E _ _);
     dcont_pointwise : forall (A B : Type) (t : F A) (f g : E * A -> B),
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> mapd f t = mapd g t;
+  }.
+
+Class DecoratedContainerFunctorFull
+  (E : Type) (F : Type -> Type)
+  `{Map F} `{Mapd E F} `{Elements F} `{ElementsCtx E F} :=
+  { dcontf_functor :> DecoratedFunctorFull E F;
+    dcontf_dcont :> DecoratedContainerFunctor E F;
+    dcontf_element_compat : forall A,
+      element_of (F := F) (A := A) =
+        map (F := subset) extract ∘ element_ctx_of (F := F);
   }.
 
 (** ** [ElementsCtx]-preserving Natural transformations *)
@@ -90,10 +100,27 @@ Section setlike_functor_theory.
   Context
     (E : Type)
     (F : Type -> Type)
-    `{DecoratedContainerFunctor E F}
+    `{DecoratedContainerFunctorFull E F}
     {A B : Type}.
 
   Implicit Types (t : F A) (b : B) (e : E) (a : A).
+
+  (** ** Relating (∈d) and <<∈>> *)
+  (******************************************************************************)
+  Lemma element_ctx_iff_element : forall (A : Type) (t : F A) (a : A),
+      a ∈ t <-> exists e, (e, a) ∈d t.
+  Proof.
+    intros.
+    rewrite dcontf_element_compat.
+    unfold compose.
+    unfold_ops @Map_subset.
+    split.
+    - intros [[w a'] [Hin Heq]].
+      cbn in Heq. subst.
+      eauto.
+    - intros [w Hin].
+      eauto.
+  Qed.
 
   (** ** Interaction between (∈d) and <<mapd>> *)
   (******************************************************************************)
@@ -101,25 +128,18 @@ Section setlike_functor_theory.
       (e, b) ∈d mapd f t <-> exists a : A, (e, a) ∈d t /\ f (e, a) = b.
   Proof.
     introv. compose near t on left.
-    About dec_natural.
     rewrite <- dec_natural.
     reflexivity.
   Qed.
 
-  (* TODO: Figure out if this should go here
-     Should we infer the <<elements>> instance in this file, or
-     elsewhere?
-   *)
-  (*
-  Corollary in_mapd_iff : forall e t f b,
+  Corollary in_mapd_iff : forall t f b,
       b ∈ mapd f t <-> exists (e : E) (a : A), (e, a) ∈d t /\ f (e, a) = b.
   Proof.
     introv.
-    rewrite dfunf_map_to_mapd.
-    rewrite ind_mapd_iff.
+    rewrite element_ctx_iff_element.
+    setoid_rewrite ind_mapd_iff.
     reflexivity.
   Qed.
-  *)
 
   Corollary ind_map_iff : forall e t f b,
       (e, b) ∈d map f t <-> exists a : A, (e, a) ∈d t /\ f a = b.

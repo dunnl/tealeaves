@@ -6,6 +6,7 @@ Import Monoid.Notations.
 Import Functor.Notations.
 Import Subset.Notations.
 Import List.ListNotations.
+Import ContainerFunctor.Notations.
 Import DecoratedContainerFunctor.Notations.
 
 #[local] Generalizable Variables A T W.
@@ -17,19 +18,124 @@ Import DecoratedContainerFunctor.Notations.
 (******************************************************************************)
 Class DecoratedContainerMonad
   (W : Type) (T : Type -> Type)
-  `{Map T} `{Mapd W T} `{Bind T T} `{Bindd W T T} `{Return T}
   `{Monoid_op W} `{Monoid_unit W}
+  `{Bindd W T T} `{Return T}
   `{ElementsCtx W T} :=
-  { dconm_functor :> DecoratedMonadFull W T;
+  { dconm_functor :> DecoratedMonad W T;
     dconm_morphism_ret : forall (A : Type),
       element_ctx_of ∘ ret (T := T) (A := A) =
         ret (T := ctxset W);
     dconm_morphism_bind : forall (A B : Type) (f : W * A -> T B),
-        element_ctx_of ∘ bindd f =
-          bindd (element_ctx_of ∘ f) ∘ element_ctx_of;
+      element_ctx_of ∘ bindd f =
+        bindd (element_ctx_of ∘ f) ∘ element_ctx_of;
     dconm_pointwise : forall (A B : Type) (t : T A) (f g : W * A -> T B),
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> bindd f t = bindd g t;
   }.
+
+Class DecoratedContainerMonadFull
+  (W : Type) (T : Type -> Type)
+  `{Map T} `{Mapd W T} `{Bind T T}
+  `{Bindd W T T} `{Return T}
+  `{Monoid_op W} `{Monoid_unit W}
+  `{Monoid W}
+  `{ElementsCtx W T} `{Elements T} :=
+  { dconmf_dconm :> DecoratedContainerMonad W T;
+    dconmf_functor :> DecoratedMonadFull W T;
+    dconmf_element_compat : forall (A : Type),
+      element_of (F := T) (A := A) =
+        map (F := subset) extract ∘ element_ctx_of (F := T);
+  }.
+
+#[local] Instance tmp `{DecoratedContainerMonadFull W T} :
+  DecoratedContainerFunctorFull W T.
+Proof.
+  constructor.
+  - admit.
+  - constructor.
+    + admit.
+    + constructor.
+      intros.
+      assert (lemma : mapd f = bindd (ret ∘ f)). admit.
+      rewrite lemma.
+      rewrite dconm_morphism_bind.
+      fequal.
+      ext p.
+      rewrite (@ctxset_mapd_to_bindd W _ _).
+      2: admit.
+      fequal.
+      reassociate <- on right.
+      rewrite dconm_morphism_ret.
+      reflexivity.
+    + intros.
+      assert (lemma : mapd f = bindd (ret ∘ f)). admit.
+      assert (lemma2 : mapd g = bindd (ret ∘ g)). admit.
+      rewrite lemma.
+      rewrite lemma2.
+      apply dconm_pointwise.
+      admit.
+Admitted.
+
+(** * Basic properties of containers *)
+(******************************************************************************)
+Section decorated_container_monad_theory.
+
+  Context
+    `{DecoratedContainerMonadFull W T}.
+
+  Variables (A B : Type).
+
+  Implicit Types (t : T A) (b : B) (w : W) (a : A).
+
+  Theorem ind_ret_iff : forall {A : Type} (w : W) (a1 a2 : A),
+      (w, a1) ∈d ret (T := T) a2 <-> w = Ƶ /\ a1 = a2.
+  Proof.
+    intros.
+    compose near a2 on left.
+    rewrite dconm_morphism_ret.
+    unfold_ops @Return_ctxset.
+    intuition.
+  Qed.
+
+  Theorem ind_bindd_iff : forall w t f b,
+      (w, b) ∈d bindd f t <->
+        exists (wa : W) (a : A), (wa, a) ∈d t /\
+                   exists wb : W, (wb, b) ∈d f (wa, a) /\
+                               w = wa ● wb.
+  Proof.
+    introv. compose near t on left.
+    rewrite dconm_morphism_bind.
+    reflexivity.
+  Qed.
+
+  Corollary ind_bind_iff : forall w t f b,
+      (w, b) ∈d bind f t <->
+        exists (wa : W) (a : A), (wa, a) ∈d t /\
+                   exists wb : W, (wb, b) ∈d f a /\
+                               w = wa ● wb.
+  Proof.
+    introv.
+    rewrite kmondf_bind_compat.
+    rewrite ind_bindd_iff.
+    reflexivity.
+  Qed.
+
+  Corollary in_bindd_iff : forall t f b,
+      b ∈ bindd f t <->
+        exists (wa : W) (a : A),
+          (wa, a) ∈d t /\ b ∈ f (wa, a).
+  Proof.
+    introv.
+    setoid_rewrite (element_ctx_iff_element W T).
+    setoid_rewrite ind_bindd_iff.
+    split.
+    - intros [w [wa [a [Hin [wb [Hin' Heq]]]]]].
+      eauto.
+    - intros [wa [a [Hin [w rest]]]].
+      exists (wa ● w) wa a. eauto.
+  Qed.
+
+End decorated_container_monad_theory.
+
 
 (** ** Instance for <<env>> *)
 (******************************************************************************)
@@ -61,60 +167,3 @@ Proof.
       rewrite (fun_map_map).
 Abort.
 *)
-(** ** Basic properties of containers *)
-(******************************************************************************)
-Section decorated_container_monad_theory.
-
-  Context
-    `{DecoratedContainerMonad W T}.
-
-  Variables (A B : Type).
-
-  Implicit Types (t : T A) (b : B) (w : W) (a : A).
-
-  Lemma ind_ret_iff : forall {A : Type} (w : W) (a1 a2 : A),
-      (w, a1) ∈d ret (T := T) a2 <-> w = Ƶ /\ a1 = a2.
-  Proof.
-    intros.
-    compose near a2 on left.
-    rewrite dconm_morphism_ret.
-    unfold_ops @Return_ctxset.
-    intuition.
-  Qed.
-
-  Theorem ind_bindd_iff : forall w t f b,
-      (w, b) ∈d bindd f t <->
-        exists (wa : W) (a : A), (wa, a) ∈d t /\
-                   exists wb : W, (wb, b) ∈d f (wa, a) /\
-                               w = wa ● wb.
-  Proof.
-    introv. compose near t on left.
-    rewrite dconm_morphism_bind.
-    reflexivity.
-  Qed.
-
-  Lemma ind_bind_iff : forall w t f b,
-      (w, b) ∈d bind f t <->
-        exists (wa : W) (a : A), (wa, a) ∈d t /\
-                   exists wb : W, (wb, b) ∈d f a /\
-                               w = wa ● wb.
-  Proof.
-    introv.
-    rewrite kmondf_bind_compat.
-    rewrite ind_bindd_iff.
-    reflexivity.
-  Qed.
-
-  Lemma ind_mapd_iff :
-    forall `(f : W * A -> B) (t : T A) (w : W) (b : B),
-      (w, b) ∈d mapd f t <-> exists (a : A), (w, a) ∈d t /\ f (w, a) = b.
-  Proof.
-    intros.
-    eapply ind_mapd_iff.
-    constructor.
-    - inversion H7.
-      admit.
-    -
-      typeclasses eauto.
-
-End decorated_container_monad_theory.
