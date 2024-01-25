@@ -26,16 +26,17 @@ Definition kc2
 
 #[local] Infix "⋆2" := (kc2) (at level 60) : tealeaves_scope.
 
-(** ** Typeclass *)
+(** ** Typeclasses *)
 (******************************************************************************)
 Class TraversableFunctor (T : Type -> Type) `{Traverse T} :=
   { trf_traverse_id : forall (A : Type),
       traverse (G := fun A => A) id = @id (T A);
     trf_traverse_traverse :
     forall `{Applicative G1} `{Applicative G2}
-      {A B C : Type} (g : B -> G2 C)`(f : A -> G1 B),
+      (A B C : Type) (g : B -> G2 C) (f : A -> G1 B),
       map (traverse g) ∘ traverse f = traverse (T := T) (G := G1 ∘ G2) (g ⋆2 f);
-    trf_traverse_morphism : forall `{morph : ApplicativeMorphism G1 G2 ϕ} {A B : Type} (f : A -> G1 B),
+    trf_traverse_morphism :
+    forall `{morphism : ApplicativeMorphism G1 G2 ϕ} (A B : Type) (f : A -> G1 B),
       ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f);
   }.
 
@@ -45,7 +46,7 @@ Class TraversableFunctorFull (T : Type -> Type) `{Traverse T} `{Map T} :=
     @map T _ = @traverse T _ (fun A => A) Map_I Pure_I Mult_I;
   }.
 
-(** ** Interaction of [traverse] with functor composition *)
+(** * Interaction of [traverse] with functor composition *)
 (******************************************************************************)
 Section properties.
 
@@ -80,7 +81,7 @@ End properties.
 
 (** * Derived instances *)
 (******************************************************************************)
-Section DerivedLaws.
+Section derived_instances.
 
     Context
     (T : Type -> Type)
@@ -137,40 +138,44 @@ Section DerivedLaws.
       reflexivity.
     Qed.
 
+    (** ** Typeclass instances *)
+    (******************************************************************************)
     #[export] Instance Functor_TraversableFunctor : Functor T :=
       {| fun_map_id := map_id;
          fun_map_map := map_map;
       |}.
 
-End DerivedLaws.
+End derived_instances.
 
-(** * Notation *)
+(** * Notations *)
 (******************************************************************************)
 Module Notations.
   Infix "⋆2" := (kc2) (at level 60) : tealeaves_scope.
 End Notations.
 
-(** * <<MakeFull>> *)
+(** * <<TraversableFunctor>> to <<TraversableFunctorFull>> *)
 (******************************************************************************)
-#[local] Instance Map_Traverse (T : Type -> Type) `{Traverse T} : Map T :=
+Module MakeFull.
+
+  #[export] Instance Map_Traverse (T : Type -> Type)
+    `{Traverse T} : Map T :=
   fun (A B : Type) (f : A -> B) => traverse (G := fun A => A) f.
 
-Corollary map_to_traverse (T : Type -> Type) `{Traverse T} {A B : Type} : forall (f : A -> B),
-    map (F := T) f = traverse (G := fun A => A) f.
-Proof.
-  reflexivity.
-Qed.
+  Corollary map_to_traverse (T : Type -> Type)
+    `{Traverse T} (A B : Type) : forall (f : A -> B),
+      map (F := T) f = traverse (G := fun A => A) f.
+  Proof.
+    reflexivity.
+  Qed.
 
-Definition MakeFull
-  (T : Type -> Type) (traverse : Traverse T) (traverse_laws : @TraversableFunctor T traverse)
-  : @TraversableFunctorFull T traverse (@Map_Traverse T traverse) :=
-  {| trff_trf := traverse_laws;
-     trff_map_to_traverse := ltac:(reflexivity);
-  |}.
+  #[export] Instance DecoratedFunctor_Fill
+    (T : Type -> Type)
+    (traverse : Traverse T)
+    (traverse_laws : @TraversableFunctor T traverse) :
+    @TraversableFunctorFull T traverse (Map_Traverse T) :=
+    {| trff_trf := traverse_laws;
+       trff_map_to_traverse :=
+        ltac:(reflexivity);
+    |}.
 
-(* todo temporary shim hack ugh *)
-
-#[local] Instance TraversableFunctorMakeFull T `{TraversableFunctor T} : TraversableFunctorFull T.
-Proof.
-  apply MakeFull. typeclasses eauto.
-Qed.
+End MakeFull.

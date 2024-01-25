@@ -5,15 +5,15 @@ From Tealeaves Require Import
 (** * Traversable functors as <<Batch>> coalgebras *)
 (******************************************************************************)
 Class ToBatch (T : Type -> Type) :=
-  toBatch : forall A B, T A -> Batch A B (T B).
+  toBatch : forall A A', T A -> Batch A A' (T A').
 
-#[global] Arguments toBatch (T)%function_scope {ToBatch} (A B)%type_scope _.
+#[global] Arguments toBatch {T}%function_scope {ToBatch} {A A'}%type_scope _.
 
 Class TraversableFunctor
   (T : Type -> Type) `{ToBatch T} :=
   { trf_extract : forall (A : Type),
-      extract_Batch ∘ toBatch T A A = @id (T A);
+      extract_Batch ∘ toBatch = @id (T A);
     trf_duplicate : forall (A B C : Type),
-      cojoin_Batch ∘ toBatch T A C =
-        map (F := Batch A B) (toBatch T B C) ∘ toBatch T A B;
+      cojoin_Batch ∘ toBatch =
+        map (toBatch (A' := C)) ∘ toBatch (A := A) (A' := B)
   }.
