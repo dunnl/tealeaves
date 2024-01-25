@@ -2,9 +2,6 @@ From Tealeaves Require Export
   Classes.Categorical.TraversableFunctor
   Classes.Kleisli.TraversableFunctor.
 
-#[local] Existing Instances Map_Traverse.
-#[local] Existing Instances TraversableFunctor.TraversableFunctorMakeFull.
-
 #[local] Generalizable Variables ϕ G.
 
 (** * Traversable Functors: Kleisli to Algebraic *)
@@ -27,6 +24,8 @@ Module ToCategorical.
     (W : Type)
     (T : Type -> Type)
     `{Kleisli.TraversableFunctor.TraversableFunctor T}.
+
+  Import TraversableFunctor.MakeFull.
 
   (** *** Traversable functor instance *)
   (******************************************************************************)
