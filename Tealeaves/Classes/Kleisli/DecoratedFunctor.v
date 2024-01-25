@@ -10,13 +10,20 @@ Import Kleisli.Comonad.Notations.
 (** * Decorated functors *)
 (******************************************************************************)
 
-(** ** Typeclasses *)
+(** ** <<Mapd>> operation *)
 (******************************************************************************)
 Class Mapd (E : Type) (T : Type -> Type) := mapd :
     forall (A B : Type), (E * A -> B) -> T A -> T B.
 
-#[global] Arguments mapd {E}%type_scope {T}%function_scope {Mapd} {A B}%type_scope _%function_scope _.
+#[global] Arguments mapd {E}%type_scope {T}%function_scope
+  {Mapd} {A B}%type_scope _%function_scope _.
 
+(** ** "Kleisli" composition *)
+(** Kleisli composition is the same as for comonads, i.e. [kc4] *)
+(******************************************************************************)
+
+(** ** Typeclasses *)
+(******************************************************************************)
 Class DecoratedFunctor (E : Type) (T : Type -> Type) `{Mapd E T} :=
   { dfun_mapd1 : forall (A : Type),
       @mapd E T _ A A (extract) = @id (T A);
@@ -40,9 +47,9 @@ Class DecoratedNatural
       forall (A B : Type) (f : E * A -> B), mapd f ∘ ϕ A = ϕ B ∘ mapd f;
   }.
 
-(** ** Theory *)
+(** * Derived instances *)
 (******************************************************************************)
-Section theory.
+Section derived_instances.
 
   Import Comonad.DerivedInstances.
 
@@ -96,36 +103,34 @@ Section theory.
     reflexivity.
   Qed.
 
+  (** ** Typeclass instances *)
+  (******************************************************************************)
   #[export] Instance: Classes.Functor.Functor T :=
     {| fun_map_id := map_id;
        fun_map_map := map_map;
     |}.
 
-End theory.
+End derived_instances.
 
-(** ** Derived functor instance *)
+(** * <<DecoratedFunctor>> to <<DecoratedFunctorFull>> *)
 (******************************************************************************)
-Module DerivedInstances.
+Module MakeFull.
 
   (** ** [map] as a special case of [mapd] *)
   (******************************************************************************)
   #[export] Instance Map_Mapd (E : Type) (T : Type -> Type) `{Mapd E T} : Map T :=
   fun (A B : Type) (f : A -> B) => @mapd E T _ A B (f ∘ extract).
 
-  Lemma map_to_mapd (E : Type) (T : Type -> Type) `{Mapd E T} :
+  Corollary map_to_mapd (E : Type) (T : Type -> Type) `{Mapd E T} :
     forall (A B : Type) (f : A -> B),
       map f = mapd (f ∘ extract).
   Proof.
     reflexivity.
   Qed.
 
-  #[export] Instance MakeFull_DecoratedFunctor
+  #[export] Instance DecoratedFunctor_Fill
     `{DecoratedFunctor E T} :
-    `{DecoratedFunctorFull E T}.
-  Proof.
-    constructor.
-    typeclasses eauto.
-    apply map_to_mapd.
-  Qed.
+    `{DecoratedFunctorFull E T} :=
+    {| dfunf_map_to_mapd := map_to_mapd E T |}.
 
-End DerivedInstances.
+End MakeFull.
