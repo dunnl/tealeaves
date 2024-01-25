@@ -1,5 +1,4 @@
-From Tealeaves Require Import
-  Classes.Kleisli.TraversableFunctor
+From Tealeaves Require Export
   Functors.Batch.
 
 (** * Traversable functors as <<Batch>> coalgebras *)

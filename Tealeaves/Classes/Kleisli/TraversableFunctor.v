@@ -84,9 +84,8 @@ End properties.
 Section derived_instances.
 
     Context
-    (T : Type -> Type)
     `{TraversableFunctorFull T}
-    (G1 G2 : Type -> Type)
+    {G1 G2 : Type -> Type}
     `{Applicative G2}
     `{Applicative G1}.
 

@@ -523,6 +523,13 @@ Section runBatch_naturality.
     - cbn. now rewrite IHs.
   Qed.
 
+  Lemma runBatch_mapfst' : forall `(ϕ : A2 -> F B) `(f : A1 -> A2) C,
+      runBatch F (ϕ ∘ f) C = runBatch F ϕ C ∘ mapfst_Batch A1 A2 f.
+  Proof.
+    intros. ext s.
+    apply runBatch_mapfst.
+  Qed.
+
   Lemma runBatch_mapsnd : forall `(s : @Batch A B2 C) `(ϕ : A -> F B1) (f : B1 -> B2),
       runBatch F (map F f ∘ ϕ) C s = runBatch F ϕ C (mapsnd_Batch B1 B2 f s).
   Proof.
@@ -1188,13 +1195,15 @@ Qed.
   |}.
 
 Lemma map_compat_traverse_Batch1 : forall (B C : Type),
-    @map (BATCH1 B C) _ = Map_Traverse (BATCH1 B C).
+    @map (BATCH1 B C) _ = @traverse (BATCH1 B C) _ (fun A => A) Map_I Pure_I Mult_I.
 Proof.
-  intros. unfold Map_Traverse.
-  ext A A' f b. induction b as [C c | C rest IHrest a].
+  intros.
+  ext A A' f b.
+  induction b as [C c | C rest IHrest a].
   - reflexivity.
   - cbn.
-    change (Traverse_Batch1 B (B -> C)) with (@traverse (BATCH1 B (B -> C)) _).
+    change (Traverse_Batch1 B (B -> C)) with
+      (@traverse (BATCH1 B (B -> C)) _).
     rewrite <- IHrest.
     reflexivity.
 Qed.
