@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Functor
-  Functors.Subset
-  Functors.List.
+  Misc.Subset
+  Misc.List.
 
 From Coq Require Import
   Relations.Relation_Definitions
@@ -12,20 +12,24 @@ Import Functor.Notations.
 Import Subset.Notations.
 Import List.ListNotations.
 
+#[local] Generalizable Variables T A.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
 
-(** * Set-like functors *)
+(** * Container-like functors *)
+(******************************************************************************)
+
+(** ** <<element_of>> operation *)
 (******************************************************************************)
 Class Elements (F : Type -> Type) :=
   element_of : F ⇒ subset.
 
-(* Mark the type argument of <<toset>> implicit *)
 #[global] Arguments element_of {F}%function_scope {Elements} {A}%type_scope.
 
 #[local] Notation "x ∈ t" :=
   (element_of t x) (at level 50) : tealeaves_scope.
 
+(** ** Functor typeclass *)
+(******************************************************************************)
 Class ContainerFunctor
   (F : Type -> Type)
   `{Map F} `{Elements F} :=
@@ -46,14 +50,14 @@ Class ContainerTransformation
     cont_trans_commute : forall A, element_of (F := F) = element_of (F := G) ∘ η A;
   }.
 
-(** ** Container Instance for <<subset>> *)
+(** * Container instance for <<subset>> *)
 (******************************************************************************)
 Section Container_subset.
 
-  Instance Toset_set : Elements subset :=
+  Instance Elements_set : Elements subset :=
     fun (A : Type) (s : subset A) => s.
 
-  Instance Natural_toset_set : Natural (@element_of subset _).
+  Instance Natural_elements_set : Natural (@element_of subset _).
   Proof.
     constructor; try typeclasses eauto.
     intros. ext S b. reflexivity.
@@ -73,7 +77,7 @@ Section Container_subset.
 
 End Container_subset.
 
-(** ** Basic properties of containers *)
+(** * Basic properties of containers *)
 (******************************************************************************)
 Section setlike_functor_theory.
 
@@ -84,6 +88,8 @@ Section setlike_functor_theory.
 
   Implicit Types (t : F A) (b : B) (a : A) (f g : A -> B).
 
+  (** ** Interaction between (∈) and <<map>> *)
+  (******************************************************************************)
   (** Naturality relates elements before and after a map. *)
   Theorem in_map_iff : forall t f b,
       b ∈ map F f t <-> exists a : A, a ∈ t /\ f a = b.
@@ -101,6 +107,15 @@ Section setlike_functor_theory.
     introv. rewrite in_map_iff. now exists a.
   Qed.
 
+  (** ** Respectfulness conditions *)
+  (******************************************************************************)
+  (** Renaming to keep consistent name scheme *)
+  Corollary map_respectful : forall t (f g : A -> B),
+      (forall a, a ∈ t -> f a = g a) -> map F f t = map F g t.
+  Proof.
+    apply (cont_pointwise (F := F)).
+  Qed.
+
   Corollary map_respectful_id : forall t (f : A -> A),
       (forall a, a ∈ t -> f a = a) -> map F f t = t.
   Proof.
@@ -111,7 +126,7 @@ Section setlike_functor_theory.
 
 End setlike_functor_theory.
 
-(** ** Properness conditions *)
+(** * Properness conditions *)
 (******************************************************************************)
 Definition pointwise_equal_on
   (F : Type -> Type) {A B} `{Elements F} :
@@ -146,232 +161,19 @@ Proof.
   now apply cont_pointwise.
 Qed.
 
-(** * List instance *)
-(******************************************************************************)
-
-(** ** <<elements_of>> *)
-(******************************************************************************)
-#[export] Instance Elements_list : Elements list :=
-  fun (A : Type) (l : list A) => (fun a : A => @List.In A a l).
-
-Lemma elements_list_nil : forall (A : Type),
-    element_of (@nil A) = ∅.
-Proof.
-  intros. extensionality a. reflexivity.
-Qed.
-
-Lemma elements_list_one : forall (A : Type) (a : A),
-    element_of [a] = {{ a }}.
-Proof.
-  intros. solve_basic_subset.
-Qed.
-
-Lemma elements_list_ret : forall (A : Type) (a : A),
-    element_of (ret list a) = {{ a }}.
-Proof.
-  intros. solve_basic_subset.
-Qed.
-
-Lemma elements_list_cons :
-  forall (A : Type) (a : A) (l : list A),
-    element_of (a :: l) = {{ a }} ∪ element_of l.
-Proof.
-  intros. extensionality a'. reflexivity.
-Qed.
-
-Lemma elements_list_app : forall (A : Type) (l1 l2 : list A),
-    element_of (l1 ++ l2) = element_of l1 ∪ element_of l2.
-Proof.
-  intros. induction l1.
-  - cbn. rewrite elements_list_nil.
-    solve_basic_subset.
-  - cbn.
-    do 2 rewrite elements_list_cons.
-    rewrite IHl1. solve_basic_subset.
-Qed.
-
-#[export] Hint Rewrite
-  elements_list_nil elements_list_one elements_list_ret
-  elements_list_cons elements_list_app : tea_list.
-
-#[export] Instance Natural_Elements_list : Natural (@element_of list _).
-Proof.
-  constructor; try typeclasses eauto.
-  intros A B f. ext l.
-  unfold compose at 1 2.
-  induction l.
-  - solve_basic_subset.
-  - rewrite elements_list_cons.
-    autorewrite with tea_set tea_list.
-    rewrite IHl.
-    solve_basic_subset.
-Qed.
-
-(** ** [element_of] is a monoid homomorphism *)
-(******************************************************************************)
-#[export] Instance Monoid_Morphism_elements_list (A : Type) :
-  Monoid_Morphism (list A) (subset A) (element_of (A := A)) :=
-  {| monmor_unit := @elements_list_nil A;
-     monmor_op := @elements_list_app A;
-  |}.
-
-(** ** <<∈>> for lists *)
-(******************************************************************************)
-Lemma in_list_nil {A} : forall (p : A), p ∈ @nil A <-> False.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma in_list_cons {A} : forall (a1 a2 : A) (xs : list A),
-    a1 ∈ (a2 :: xs) <-> a1 = a2 \/ a1 ∈ xs.
-Proof.
-  intros; simpl_list; simpl_subset.
-  intuition congruence.
-Qed.
-
-Lemma in_list_one {A} (a1 a2 : A) : a1 ∈ [ a2 ] <-> a1 = a2.
-Proof.
-  intros. simpl_list. simpl_subset. intuition congruence.
-Qed.
-
-Lemma in_list_ret {A} (a1 a2 : A) : a1 ∈ ret list a2 <-> a1 = a2.
-Proof.
-  intros. simpl_list; simpl_subset. intuition.
-Qed.
-
-Lemma in_list_app {A} : forall (a : A) (xs ys : list A),
-    a ∈ (xs ++ ys) <-> a ∈ xs \/ a ∈ ys.
-Proof.
-  intros. simpl_list. simpl_subset. reflexivity.
-Qed.
-
-#[export] Hint Rewrite @in_list_nil @in_list_cons
-  @in_list_one @in_list_ret @in_list_app : tea_list.
-
-
-(** ** [x ∈] is a monoid homomorphism *)
-(******************************************************************************)
-#[export] Instance Monoid_Morphism_element_list (A : Type) (a : A) :
-  Monoid_Morphism (list A) Prop (tgt_op := or) (tgt_unit := False)
-    (fun l => element_of l a).
-Proof.
-  constructor; try typeclasses eauto.
-  - reflexivity.
-  - intros. unfold_ops @Monoid_op_list.
-    apply propositional_extensionality.
-    now rewrite in_list_app.
-Qed.
-
-(** ** Relation with <<foldMap>> *)
-(******************************************************************************)
-Lemma foldMap_list_elements1 : forall (A : Type),
-    element_of = foldMap (ret subset (A := A)).
-Proof.
-  intros. ext l. induction l.
-  - reflexivity.
-  - cbn. autorewrite with tea_list.
-    rewrite IHl.
-    reflexivity.
-Qed.
-
-Lemma foldMap_list_elements2 : forall (A : Type) (l : list A) (a : A),
-    element_of l a = foldMap (op := or) (unit := False) (eq a) l.
-Proof.
-  intros. rewrite foldMap_list_elements1. induction l.
-  - reflexivity.
-  - rewrite foldMap_list_cons.
-    rewrite foldMap_list_cons.
-    rewrite <- IHl.
-    replace (a = a0) with (a0 = a) by (propext; auto).
-    reflexivity.
-Qed.
-
 (** * Quantification over elements *)
 (******************************************************************************)
 Section quantification.
 
-  #[local] Generalizable Variables A.
+  Context `{ContainerFunctor T}.
 
-  Definition Forall `(P : A -> Prop) : list A -> Prop :=
-    foldMap (op := Monoid_op_and) (unit := Monoid_unit_true) P.
+  Definition Forall `(P : A -> Prop) (t : T A) : Prop :=
+    forall (a : A), a ∈ t -> P a.
 
-  Definition Forany `(P : A -> Prop) : list A -> Prop :=
-    foldMap (op := Monoid_op_or) (unit := Monoid_unit_false) P.
-
-  Lemma forall_iff `(P : A -> Prop) (l : list A) :
-    Forall P l <-> forall (a : A), a ∈ l -> P a.
-  Proof.
-    unfold Forall.
-    induction l; autorewrite with tea_list tea_set.
-    - split.
-      + intros tt a contra. inversion contra.
-      + intros. exact I.
-    - setoid_rewrite subset_in_add.
-      unfold subset_one.
-      rewrite IHl. split.
-      + intros [Hpa Hrest].
-        intros x [Heq | Hin].
-        now subst. auto.
-      + intros H. split; auto.
-  Qed.
-
-  Lemma forany_iff `(P : A -> Prop) (l : list A) :
-    Forany P l <-> exists (a : A), a ∈ l /\ P a.
-  Proof.
-    unfold Forany.
-    induction l.
-    - split.
-      + intros [].
-      + intros [x [contra Hrest]]. inversion contra.
-    - autorewrite with tea_list tea_set.
-      setoid_rewrite subset_in_add.
-      unfold subset_one.
-      rewrite IHl. split.
-      + intros [Hpa | Hrest].
-        exists a. auto.
-        destruct Hrest as [x [H1 H2]].
-        exists x. auto.
-      + intros [x [[H1 | H2] H3]].
-        subst. now left.
-        right. eexists; eauto.
-  Qed.
+  Definition Forany `(P : A -> Prop) (t :T A): Prop :=
+    exists (a : A), a ∈ t /\ P a.
 
 End quantification.
-
-(** ** Specification of <<Permutation>> *)
-(******************************************************************************)
-From Coq Require Import Sorting.Permutation.
-
-Theorem permutation_spec : forall {A} {l1 l2 : list A},
-    Permutation l1 l2 -> (forall a, a ∈ l1 <-> a ∈ l2).
-Proof.
-  introv perm. induction perm; firstorder.
-Qed.
-
-(** ** Respectfulness conditions *)
-(******************************************************************************)
-Theorem map_rigidly_respectful_list : forall A B (f g : A -> B) (l : list A),
-    (forall (a : A), a ∈ l -> f a = g a) <-> map list f l = map list g l.
-Proof.
-  intros. induction l.
-  - simpl_list. setoid_rewrite subset_in_empty. tauto.
-  - simpl_list. setoid_rewrite subset_in_add.
-    setoid_rewrite set_in_ret.
-    destruct IHl. split.
-    + intro; fequal; auto.
-    + injection 1; intuition (subst; auto).
-Qed.
-
-Corollary map_respectful_list : forall A B (l : list A) (f g : A -> B),
-    (forall (a : A), a ∈ l -> f a = g a) -> map list f l = map list g l.
-Proof.
-  intros. now rewrite <- map_rigidly_respectful_list.
-Qed.
-
-(* We might not need to export this if we provide a shapely functor instance *)
-#[local] Instance ContainerFunctor_list : ContainerFunctor list :=
-  {| cont_pointwise := map_respectful_list;
-  |}.
 
 (** * Notations *)
 (******************************************************************************)

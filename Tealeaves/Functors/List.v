@@ -1,9 +1,12 @@
 From Tealeaves Require Export
   Classes.Categorical.Monad
   Classes.Kleisli.TraversableMonad
+  Classes.Categorical.ContainerFunctor
+  Classes.Categorical.ShapelyFunctor
   Functors.Subset
   Misc.List.
 
+Import ContainerFunctor.Notations.
 Import TraversableMonad.Notations.
 Import List.ListNotations.
 Import Monoid.Notations.
@@ -12,79 +15,10 @@ Import Applicative.Notations.
 
 #[local] Generalizable Variables M A B G ϕ.
 
-(** * Automation: <<simpl_list>> *)
-(******************************************************************************)
-Create HintDb tea_list.
-Tactic Notation "simpl_list" := (autorewrite with tea_list).
-Tactic Notation "simpl_list" "in" hyp(H) := (autorewrite with tea_list H).
-Tactic Notation "simpl_list" "in" "*" := (autorewrite with tea_list in *).
-
 (** * The [list] monad, categorically *)
 (******************************************************************************)
 
-(** ** [Functor] instance *)
-(******************************************************************************)
-#[export] Instance Map_list : Map list :=
-  fun A B => @List.map A B.
-
-(** *** Rewriting lemmas for <<map>> *)
-(******************************************************************************)
-Section map_list_rw.
-
-  Context
-    {A B : Type}
-    (f : A -> B).
-
-  Lemma map_list_nil : map f (@nil A) = @nil B.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma map_list_cons : forall (x : A) (xs : list A),
-      map f (x :: xs) = f x :: map f xs.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma map_list_one (a : A) : map f [ a ] = [f a].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma map_list_app : forall (l1 l2 : list A),
-      map f (l1 ++ l2) = map f l1 ++ map f l2.
-  Proof.
-    intros.
-    unfold transparent tcs.
-    now rewrites List.map_app.
-  Qed.
-
-End map_list_rw.
-
-#[export] Hint Rewrite @map_list_nil @map_list_cons
-     @map_list_one @map_list_app : tea_list.
-
-(** *** Functor laws *)
-(******************************************************************************)
-Theorem map_id_list {A} : map (F := list) (@id A) = id.
-Proof.
-  ext l. induction l as [| ? ? IH]; simpl_list.
-  trivial. now rewrite IH.
-Qed.
-
-Theorem map_map_list {A B C} : forall (f : A -> B) (g : B -> C),
-    map g ∘ map f = map (F := list) (g ∘ f).
-Proof.
-  intros. unfold compose. ext l. induction l as [| ? ? IH]; simpl_list.
-  trivial. now rewrite IH.
-Qed.
-
-#[export] Instance Functor_list : Functor list :=
-  {| fun_map_id := @map_id_list;
-     fun_map_map := @map_map_list;
-  |}.
-
-(** ** Monad instance *)
+(** ** Monad operations *)
 (******************************************************************************)
 #[export] Instance Return_list : Return list := fun A a => cons a nil.
 
@@ -643,37 +577,28 @@ Qed.
 
 #[local] Generalizable Variable F.
 
-(** * The [shape] operation *)
+(** * Shapely instance for [list] *)
+(** As a reasonability check, we prove that [list] is a listable functor. *)
 (******************************************************************************)
-Definition shape `{Map F} {A : Type} : F A -> F unit :=
-  map (const tt).
+Section ShapelyFunctor_list.
 
-(** ** Basic reasoning principles for <<shape>> *)
-(******************************************************************************)
-Theorem shape_map `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
-    shape (F := F) (map f t) =
-      shape (F := F) t.
-Proof.
-  intros. compose near t on left.
-  unfold shape. now rewrite fun_map_map.
-Qed.
+  Instance Tolist_list : Tolist list := fun A l => l.
 
-Theorem shape_shape `{Functor F} : forall (A : Type) (t : F A),
-    shape (shape t) = shape t.
-Proof.
-  intros.  compose near t on left.
-  unfold shape. now rewrite fun_map_map.
-Qed.
+  Instance: Natural (@tolist list _).
+  Proof.
+    constructor; try typeclasses eauto.
+    reflexivity.
+  Qed.
 
+  Theorem shapeliness_list : shapeliness list.
+  Proof.
+    intros A t1 t2. intuition.
+  Qed.
 
-Lemma shape_map_eq `{Functor F} : forall (A1 A2 B : Type) (f : A1 -> B) (g : A2 -> B) t u,
-    map f t = map g u -> shape t = shape u.
-Proof.
+  Instance: ShapelyFunctor list :=
+    {| shp_shapeliness := shapeliness_list; |}.
 
-  introv hyp. cut (shape (map f t) = shape (map g u)).
-  - now rewrite 2(shape_map).
-  - now rewrite hyp.
-Qed.
+End ShapelyFunctor_list.
 
 (** ** Rewriting [shape] on lists *)
 (******************************************************************************)
@@ -864,14 +789,397 @@ Section list_shape_lemmas.
 
 End list_shape_lemmas.
 
-(** * Tolist operation *)
+(** * Reasoning principles for <<shape>> on listable functors *)
 (******************************************************************************)
-Import Classes.Functor.Notations.
+Section listable_shape_lemmas.
 
-Class Tolist (F : Type -> Type) :=
-  tolist : F ⇒ list.
+  Context
+    `{Functor F}
+    `{Tolist F}
+    `{! Natural (@tolist F _)}.
 
-Class Tolist_ctx (F : Type -> Type) (W : Type) :=
-  tolist_ctx : forall (A : Type), F A -> list (W * A).
+  (* Values with the same shape have equal-length contents *)
+  Lemma shape_tolist : forall `(t : F A) `(u : F B),
+      shape t = shape u ->
+      shape (tolist t) = shape (tolist u).
+  Proof.
+    introv heq. compose near t. compose near u.
+    unfold shape in *. rewrite 2(natural).
+    unfold compose.
+    fequal. apply heq.
+  Qed.
 
-#[global] Arguments tolist {F}%function_scope {Tolist} {A}%type_scope _.
+  Corollary shape_l : forall A (l1 l2 : F A) (x y : list A),
+      shape l1 = shape l2 ->
+      (tolist l1 ++ x = tolist l2 ++ y) ->
+      tolist l1 = tolist l2.
+  Proof.
+    introv shape_eq heq.
+    eauto using inv_app_eq_ll, shape_tolist.
+  Qed.
+
+  Corollary shape_r : forall A (l1 l2 : F A) (x y : list A),
+      shape l1 = shape l2 ->
+      (x ++ tolist l1 = y ++ tolist l2) ->
+      tolist l1 = tolist l2.
+  Proof.
+    introv shape_eq heq.
+    eauto using inv_app_eq_rr, shape_tolist.
+  Qed.
+
+End listable_shape_lemmas.
+
+(** * Container-like functor instance *)
+(******************************************************************************)
+#[export] Instance Elements_list : Elements list :=
+  fun (A : Type) (l : list A) => (fun a : A => @List.In A a l).
+
+(** ** <<element_of>> and rewriting principles *)
+(******************************************************************************)
+Lemma elements_list_nil : forall (A : Type),
+    element_of (@nil A) = ∅.
+Proof.
+  intros. extensionality a. reflexivity.
+Qed.
+
+Lemma elements_list_one : forall (A : Type) (a : A),
+    element_of [a] = {{ a }}.
+Proof.
+  intros. solve_basic_subset.
+Qed.
+
+Lemma elements_list_ret : forall (A : Type) (a : A),
+    element_of (ret a) = {{ a }}.
+Proof.
+  intros. solve_basic_subset.
+Qed.
+
+Lemma elements_list_cons :
+  forall (A : Type) (a : A) (l : list A),
+    element_of (a :: l) = {{ a }} ∪ element_of l.
+Proof.
+  intros. extensionality a'. reflexivity.
+Qed.
+
+Lemma elements_list_app : forall (A : Type) (l1 l2 : list A),
+    element_of (l1 ++ l2) = element_of l1 ∪ element_of l2.
+Proof.
+  intros. induction l1.
+  - cbn. rewrite elements_list_nil.
+    solve_basic_subset.
+  - cbn.
+    do 2 rewrite elements_list_cons.
+    rewrite IHl1. solve_basic_subset.
+Qed.
+
+#[export] Hint Rewrite
+  elements_list_nil elements_list_one elements_list_ret
+  elements_list_cons elements_list_app : tea_list.
+
+(** ** Naturality of <<element_of>> *)
+(******************************************************************************)
+#[export] Instance Natural_Elements_list : Natural (@element_of list _).
+Proof.
+  constructor; try typeclasses eauto.
+  intros A B f. ext l.
+  unfold compose at 1 2.
+  induction l.
+  - solve_basic_subset.
+  - rewrite elements_list_cons.
+    autorewrite with tea_set tea_list.
+    rewrite IHl.
+    solve_basic_subset.
+Qed.
+
+(** ** [element_of] is a monoid homomorphism *)
+(******************************************************************************)
+#[export] Instance Monoid_Morphism_elements_list (A : Type) :
+  Monoid_Morphism (list A) (subset A) (element_of (A := A)) :=
+  {| monmor_unit := @elements_list_nil A;
+    monmor_op := @elements_list_app A;
+  |}.
+
+(** ** <<∈>> for lists *)
+(******************************************************************************)
+Lemma in_list_nil {A} : forall (p : A), p ∈ @nil A <-> False.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma in_list_cons {A} : forall (a1 a2 : A) (xs : list A),
+    a1 ∈ (a2 :: xs) <-> a1 = a2 \/ a1 ∈ xs.
+Proof.
+  intros; simpl_list; simpl_subset.
+  intuition congruence.
+Qed.
+
+Lemma in_list_one {A} (a1 a2 : A) : a1 ∈ [ a2 ] <-> a1 = a2.
+Proof.
+  intros. simpl_list. simpl_subset. intuition congruence.
+Qed.
+
+Lemma in_list_ret {A} (a1 a2 : A) : a1 ∈ ret a2 <-> a1 = a2.
+Proof.
+  intros. simpl_list; simpl_subset. intuition.
+Qed.
+
+Lemma in_list_app {A} : forall (a : A) (xs ys : list A),
+    a ∈ (xs ++ ys) <-> a ∈ xs \/ a ∈ ys.
+Proof.
+  intros. simpl_list. simpl_subset. reflexivity.
+Qed.
+
+#[export] Hint Rewrite @in_list_nil @in_list_cons
+  @in_list_one @in_list_ret @in_list_app : tea_list.
+
+(** *** [x ∈] is a monoid homomorphism *)
+(******************************************************************************)
+#[export] Instance Monoid_Morphism_element_list (A : Type) (a : A) :
+  Monoid_Morphism (list A) Prop (tgt_op := or) (tgt_unit := False)
+    (fun l => element_of l a).
+Proof.
+  change (fun l => element_of l a) with
+    (evalAt a ∘ element_of).
+  eapply Monoid_Morphism_compose;
+    typeclasses eauto.
+Qed.
+
+(** ** Respectfulness conditions *)
+(******************************************************************************)
+Theorem map_rigidly_respectful_list : forall A B (f g : A -> B) (l : list A),
+    (forall (a : A), a ∈ l -> f a = g a) <-> map f l = map g l.
+Proof.
+  intros. induction l.
+  - simpl_list. setoid_rewrite subset_in_empty. tauto.
+  - simpl_list. setoid_rewrite subset_in_add.
+    setoid_rewrite set_in_ret.
+    destruct IHl. split.
+    + intro; fequal; auto.
+    + injection 1; intuition (subst; auto).
+Qed.
+
+Corollary map_respectful_list : forall A B (l : list A) (f g : A -> B),
+    (forall (a : A), a ∈ l -> f a = g a) -> map f l = map g l.
+Proof.
+  intros. now rewrite <- map_rigidly_respectful_list.
+Qed.
+
+#[export] Instance ContainerFunctor_list : ContainerFunctor list :=
+  {| cont_pointwise := map_respectful_list;
+  |}.
+
+(** ** <<element_of>> as a monad homomorphism *)
+(******************************************************************************)
+Lemma element_of_list_hom1 : forall (A : Type),
+    element_of ∘ ret (A := A) = ret (T := subset).
+Proof.
+  intros.
+  ext a b. propext;
+  cbv; intuition.
+Qed.
+
+Lemma element_of_list_hom2 : forall (A B : Type) (f : A -> list B),
+    element_of ∘ bind f = bind (T := subset) (element_of ∘ f) ∘ element_of.
+Proof.
+  intros. unfold compose. ext l b.
+  induction l.
+  - propext; cbv.
+    + intuition.
+    + intros [a [absurd]]; contradiction.
+  - autorewrite with tea_list tea_set.
+    rewrite IHl.
+    reflexivity.
+Qed.
+
+Lemma element_of_list_map : forall (A B : Type) (f : A -> B),
+    element_of ∘ map f = map f ∘ element_of.
+Proof.
+  intros.
+  now rewrite <- (natural (ϕ := @element_of list _)).
+Qed.
+
+#[export] Instance Monad_Hom_list_elements :
+  MonadHom list subset (@element_of list _) :=
+  {| kmon_hom_ret := element_of_list_hom1;
+    kmon_hom_bind := element_of_list_hom2;
+  |}.
+
+(** * Quantification over elements *)
+(* TODO: There is no real purpose for this at this point is there? *)
+(******************************************************************************)
+Section quantification.
+
+  Definition Forall_List `(P : A -> Prop) : list A -> Prop :=
+    foldMap (op := Monoid_op_and) (unit := Monoid_unit_true) P.
+
+  Definition Forany_List `(P : A -> Prop) : list A -> Prop :=
+    foldMap (op := Monoid_op_or) (unit := Monoid_unit_false) P.
+
+  Lemma forall_iff `(P : A -> Prop) (l : list A) :
+    Forall_List P l <-> forall (a : A), a ∈ l -> P a.
+  Proof.
+    unfold Forall_List.
+    induction l; autorewrite with tea_list tea_set.
+    - split.
+      + intros tt a contra. inversion contra.
+      + intros. exact I.
+    - setoid_rewrite subset_in_add.
+      unfold subset_one.
+      rewrite IHl. split.
+      + intros [Hpa Hrest].
+        intros x [Heq | Hin].
+        now subst. auto.
+      + intros H. split; auto.
+  Qed.
+
+  Lemma forany_iff `(P : A -> Prop) (l : list A) :
+    Forany_List P l <-> exists (a : A), a ∈ l /\ P a.
+  Proof.
+    unfold Forany_List.
+    induction l.
+    - split.
+      + intros [].
+      + intros [x [contra Hrest]]. inversion contra.
+    - autorewrite with tea_list tea_set.
+      setoid_rewrite subset_in_add.
+      unfold subset_one.
+      rewrite IHl. split.
+      + intros [Hpa | Hrest].
+        exists a. auto.
+        destruct Hrest as [x [H1 H2]].
+        exists x. auto.
+      + intros [x [[H1 | H2] H3]].
+        subst. now left.
+        right. eexists; eauto.
+  Qed.
+
+End quantification.
+
+(** ** <<Element>> in terms of <<foldMap>> *)
+(******************************************************************************)
+Lemma element_to_foldMap1 : forall (A : Type),
+    element_of = foldMap (ret (T := subset) (A := A)).
+Proof.
+  intros. ext l. induction l.
+  - reflexivity.
+  - cbn. autorewrite with tea_list.
+    rewrite IHl.
+    reflexivity.
+Qed.
+
+Lemma element_to_foldMap2 : forall (A : Type) (l : list A) (a : A),
+    element_of l a = foldMap (op := or) (unit := False) (eq a) l.
+Proof.
+  intros. rewrite element_to_foldMap1.
+  (*
+    change_left ((evalAt a ∘ foldMap (ret (T := subset))) l).
+   *)
+  induction l.
+  - reflexivity.
+  - rewrite foldMap_list_cons.
+    rewrite foldMap_list_cons.
+    rewrite <- IHl.
+    replace (a = a0) with (a0 = a) by (propext; auto).
+    reflexivity.
+Qed.
+
+(** * Enumerating elements of listable functors *)
+(******************************************************************************)
+Section element_of_via_tolist.
+
+  Context
+    `{Functor F}
+    `{Tolist F}
+    `{! Natural (@tolist F _)}.
+
+  #[export] Instance Elements_Tolist `{Tolist F} : Elements F :=
+    fun A => element_of ∘ tolist.
+
+  #[export] Instance Natural_Element_Tolist:
+    forall `{ShapelyFunctor F}, Natural (@element_of F _).
+  Proof.
+    constructor; try typeclasses eauto.
+    intros A B f. unfold element_of, Elements_Tolist. ext t.
+    reassociate <- on left. rewrite (natural (G := subset)).
+    reassociate -> on left. now rewrite natural.
+  Qed.
+
+  Theorem in_iff_in_list `{Tolist F} : forall (A : Type) (t : F A) (a : A),
+      a ∈ t <-> a ∈ tolist t.
+  Proof.
+    reflexivity.
+  Qed.
+
+End element_of_via_tolist.
+
+(** * Shapely functors are container-like *)
+(******************************************************************************)
+Section ShapelyFunctor_setlike.
+
+  Context
+    `{ShapelyFunctor F}.
+
+  Lemma shapeliness_iff :
+    forall (A : Type) (t u : F A),
+      t = u <-> shape t = shape u /\ tolist t = tolist u.
+  Proof.
+    intros. split.
+    + intros; subst; auto.
+    + apply (shp_shapeliness).
+  Qed.
+
+  Lemma shapely_map_eq_iff :
+    forall (A B : Type) (t : F A) (f g : A -> B),
+      map f t = map g t <->
+      map f (tolist t) = map g (tolist t).
+  Proof.
+    intros.
+    compose near t on right. rewrite 2(natural).
+    unfold compose. split.
+    - introv heq. now rewrite heq.
+    - intros. apply (shp_shapeliness). rewrite 2(shape_map).
+      auto.
+  Qed.
+
+  Theorem shapely_pointwise_iff :
+    forall (A B : Type) (t : F A) (f g : A -> B),
+      (forall (a : A), a ∈ t -> f a = g a) <-> map f t = map g t.
+  Proof.
+    introv.
+    rewrite shapely_map_eq_iff.
+    setoid_rewrite in_iff_in_list.
+    rewrite map_rigidly_respectful_list.
+    reflexivity.
+  Qed.
+
+  Corollary shapely_pointwise :
+    forall (A B : Type) (t : F A) (f g : A -> B),
+      (forall (a : A), a ∈ t -> f a = g a) -> map f t = map g t.
+  Proof.
+   introv. rewrite shapely_pointwise_iff. auto.
+ Qed.
+
+  #[export] Instance ContainerFunctor_Shapely : ContainerFunctor F :=
+    {| cont_pointwise := shapely_pointwise; |}.
+
+  Corollary shapely_map_id_iff :
+    forall (A : Type) (t : F A) (f : A -> A),
+      (forall (a : A), a ∈ t -> f a = a) <-> map f t = t.
+  Proof.
+    intros.
+    replace t with (map id t) at 2
+      by now rewrite (fun_map_id (F := F)).
+    now rewrite shapely_pointwise_iff.
+  Qed.
+
+End ShapelyFunctor_setlike.
+
+(** * Specification of <<Permutation>> *)
+(******************************************************************************)
+From Coq Require Import Sorting.Permutation.
+
+Theorem permutation_spec : forall {A} {l1 l2 : list A},
+    Permutation l1 l2 -> (forall a, a ∈ l1 <-> a ∈ l2).
+Proof.
+  introv perm. induction perm; firstorder.
+Qed.

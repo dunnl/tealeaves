@@ -5,81 +5,85 @@ From Tealeaves Require Export
   Functors.Ctxset
   Functors.Environment.
 
+Import ContainerFunctor.Notations.
 Import Monoid.Notations.
 Import Functor.Notations.
 Import Subset.Notations.
 Import List.ListNotations.
 
-(** * Decorated container functors *)
+(** * Container-like functors with context *)
 (******************************************************************************)
-Class CtxElements (E : Type) (F : Type -> Type) :=
-  ctx_element_of : forall A : Type, F A -> ctxset E A.
 
-#[global] Arguments ctx_element_of {E}%type_scope {F}%function_scope
-  {CtxElements} {A}%type_scope _.
+(** ** <<element_ctx_of>> operation *)
+(******************************************************************************)
+Class ElementsCtx (E : Type) (F : Type -> Type) :=
+  element_ctx_of : forall A : Type, F A -> ctxset E A.
+
+#[global] Arguments element_ctx_of {E}%type_scope {F}%function_scope
+  {ElementsCtx} {A}%type_scope _.
 
 #[local] Notation "x ∈d t" :=
-  (ctx_element_of t x) (at level 50) : tealeaves_scope.
+  (element_ctx_of t x) (at level 50) : tealeaves_scope.
 
 (** ** Typeclass *)
 (******************************************************************************)
 Class DecoratedContainerFunctor
   (E : Type) (F : Type -> Type)
-  `{Map F} `{Mapd E F} `{CtxElements E F} :=
+  `{Map F} `{Mapd E F} `{ElementsCtx E F} :=
   { dcont_functor :> DecoratedFunctorFull E F;
-    dcont_natural :> DecoratedNatural E F (ctxset E) (@ctx_element_of E _ _);
+    dcont_natural :> DecoratedNatural E F (ctxset E) (@element_ctx_of E _ _);
     dcont_pointwise : forall (A B : Type) (t : F A) (f g : E * A -> B),
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> mapd f t = mapd g t;
   }.
 
-(** ** Natural transformations *)
+(** ** [ElementsCtx]-preserving Natural transformations *)
 (******************************************************************************)
 Class DecoratedContainerTransformation
   {E : Type} {F G : Type -> Type}
-  `{Map F} `{Mapd E F} `{CtxElements E F}
-  `{Map G} `{Mapd E G} `{CtxElements E G}
+  `{Map F} `{Mapd E F} `{ElementsCtx E F}
+  `{Map G} `{Mapd E G} `{ElementsCtx E G}
   (η : F ⇒ G) :=
   { dcont_trans_natural : Natural η;
     dcont_trans_commute :
-    forall A, ctx_element_of (F := F) = ctx_element_of (F := G) ∘ η A;
+    forall A, element_ctx_of (F := F) = element_ctx_of (F := G) ∘ η A;
   }.
 
-(** ** Instance for <<env>> *)
+(** * Container instance for <<ctxset>> *)
 (******************************************************************************)
-#[export] Instance CtxElements_env (E : Type) : CtxElements E (env E) :=
-  fun (A : Type) (s : env E A) => element_of (F := list) s.
+Section Container_ctxset.
 
-#[export] Instance DecoratedNatural_ctxelements_env (E : Type) :
-  DecoratedNatural E (env E) (ctxset E) (@ctx_element_of E (env E) _).
-Proof.
-  constructor. intros.
-  ext Γ [e b].
-  unfold compose; unfold_ops @Mapd_ctxset.
-  induction Γ.
-  - cbn. propext.
-    + intros. now preprocess.
-    + easy.
-  - preprocess.
-    change_right ((e0, f (e0, a)) = (e, b) \/ (e, b) ∈d mapd f Γ).
-    rewrite <- IHΓ. clear IHΓ. propext.
-    + intros [a' [[Hin|Hin] Heq]].
-      * left. inversion Hin; now subst.
-      * right. exists a'. easy.
-    + intros [Heq | [a' [Hin Heq]]].
-      * inversion Heq; subst. exists a.
-        split; now try left.
-      * exists a'. split; now try right.
-Qed.
+  Context {E: Type}.
 
-#[export] Instance Natural_Elementd_Mapdt (E : Type) :
-  Natural (@ctx_element_of E (env E) _).
-Proof.
-  constructor.
-  - typeclasses eauto.
-  - typeclasses eauto.
-Abort.
+  Instance ElementsCtx_ctxset : ElementsCtx E (ctxset E) :=
+    fun (A : Type) (s : ctxset E A) => s.
 
-(** ** Basic properties of containers *)
+  Instance Natural_elements_ctx_ctxset :
+    DecoratedNatural E (ctxset E) (ctxset E)
+      (@element_ctx_of E (ctxset E) _).
+  Proof.
+    constructor. reflexivity.
+  Qed.
+
+  Lemma ctxset_pointwise : forall (A B : Type) (t : ctxset E A) (f g : E * A -> B),
+      (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a)) ->
+      mapd f t = mapd g t.
+  Proof.
+    introv hyp. ext [e b]. cbv in *. propext.
+    - intros [a [Hin Heq]].
+      specialize (hyp e a Hin).
+      subst. eauto.
+    - intros [a [Hin Heq]].
+      specialize (hyp e a Hin).
+      subst. eauto.
+  Qed.
+
+  Instance ContainerFunctor_ctxset : DecoratedContainerFunctor E (ctxset E) :=
+    {| dcont_pointwise := ctxset_pointwise;
+    |}.
+
+End Container_ctxset.
+
+(** * Basic properties of decorated containers *)
 (******************************************************************************)
 Section setlike_functor_theory.
 
@@ -91,15 +95,33 @@ Section setlike_functor_theory.
 
   Implicit Types (t : F A) (b : B) (e : E) (a : A).
 
+  (** ** Interaction between (∈d) and <<mapd>> *)
+  (******************************************************************************)
   Theorem ind_mapd_iff : forall e t f b,
       (e, b) ∈d mapd f t <-> exists a : A, (e, a) ∈d t /\ f (e, a) = b.
   Proof.
     introv. compose near t on left.
+    About dec_natural.
     rewrite <- dec_natural.
     reflexivity.
   Qed.
 
-  Theorem ind_map_iff : forall e t f b,
+  (* TODO: Figure out if this should go here
+     Should we infer the <<elements>> instance in this file, or
+     elsewhere?
+   *)
+  (*
+  Corollary in_mapd_iff : forall e t f b,
+      b ∈ mapd f t <-> exists (e : E) (a : A), (e, a) ∈d t /\ f (e, a) = b.
+  Proof.
+    introv.
+    rewrite dfunf_map_to_mapd.
+    rewrite ind_mapd_iff.
+    reflexivity.
+  Qed.
+  *)
+
+  Corollary ind_map_iff : forall e t f b,
       (e, b) ∈d map f t <-> exists a : A, (e, a) ∈d t /\ f a = b.
   Proof.
     introv.
@@ -120,6 +142,12 @@ Section setlike_functor_theory.
     introv. rewrite ind_map_iff. now exists a.
   Qed.
 
+  Corollary mapd_respectful : forall t (f g : E * A -> A),
+      (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> mapd f t = mapd g t.
+  Proof.
+    apply dcont_pointwise.
+  Qed.
+
   Corollary mapd_respectful_id : forall t (f : E * A -> A),
       (forall e a, (e, a) ∈d t -> f (e, a) = a) -> mapd f t = t.
   Proof.
@@ -132,9 +160,62 @@ Section setlike_functor_theory.
 
 End setlike_functor_theory.
 
+(** * Notations *)
+(******************************************************************************)
 Module Notations.
 
   Notation "x ∈d t" :=
-    (ctx_element_of t x) (at level 50) : tealeaves_scope.
+    (element_ctx_of t x) (at level 50) : tealeaves_scope.
 
 End Notations.
+
+
+(** * Instance for <<env>> *)
+(******************************************************************************)
+Section env_instance.
+
+  Context {E : Type}.
+
+#[export] Instance ElementsCtx_env : ElementsCtx E (env E) :=
+  fun (A : Type) (s : env E A) =>
+    element_of (F := list) s.
+
+#[export] Instance DecoratedNatural_elements_ctx_env :
+  DecoratedNatural E (env E) (ctxset E) (@element_ctx_of E (env E) _).
+Proof.
+  constructor. intros.
+  ext Γ [e b].
+  unfold_ops @ElementsCtx_env @Mapd_ctxset.
+  unfold compose.
+  induction Γ.
+  - cbn. propext.
+    + intros [a [contra heq]]. contradiction.
+    + contradiction.
+  - destruct a as [e' a].
+    change_right ((e', f (e', a)) = (e, b) \/ (e, b) ∈d mapd f Γ).
+    setoid_rewrite <- IHΓ; clear IHΓ.
+    autorewrite with tea_list.
+    propext.
+    + intros [a' [[Hin|Hin] Heq]].
+      * left.
+        autorewrite with tea_set in *.
+        now inversion Hin; subst.
+      * right. now exists a'.
+    + intros [Heq | [a' [Hin Heq]]].
+      * inversion Heq; subst. exists a.
+        autorewrite with tea_set.
+        intuition.
+      * exists a'.
+        autorewrite with tea_set.
+        intuition.
+Qed.
+
+#[export] Instance Natural_Elementd_Mapdt :
+  Natural (@element_ctx_of E (env E) _).
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+Abort.
+
+End env_instance.

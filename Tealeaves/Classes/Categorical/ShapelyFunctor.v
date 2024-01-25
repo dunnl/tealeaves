@@ -1,8 +1,8 @@
 From Tealeaves Require Export
   Classes.Monoid
   Classes.Categorical.ContainerFunctor
-  Functors.List
-  Functors.Subset.
+  Misc.List
+  Misc.Subset.
 
 Import ContainerFunctor.Notations.
 Import Subset.Notations.
@@ -11,13 +11,49 @@ Import List.ListNotations.
 
 #[local] Generalizable Variables G F A B.
 
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+(** * Shapely functors *)
+(******************************************************************************)
 
+(** ** The [shape] operation *)
+(******************************************************************************)
+Definition shape `{Map F} {A : Type} : F A -> F unit :=
+  map (const tt).
+
+(** *** Basic reasoning principles for <<shape>> *)
+(******************************************************************************)
+Theorem shape_map `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
+    shape (F := F) (map f t) =
+      shape (F := F) t.
+Proof.
+  intros. compose near t on left.
+  unfold shape. now rewrite fun_map_map.
+Qed.
+
+Theorem shape_shape `{Functor F} : forall (A : Type) (t : F A),
+    shape (shape t) = shape t.
+Proof.
+  intros.  compose near t on left.
+  unfold shape. now rewrite fun_map_map.
+Qed.
+
+
+Lemma shape_map_eq `{Functor F} : forall (A1 A2 B : Type) (f : A1 -> B) (g : A2 -> B) t u,
+    map f t = map g u -> shape t = shape u.
+Proof.
+
+  introv hyp. cut (shape (map f t) = shape (map g u)).
+  - now rewrite 2(shape_map).
+  - now rewrite hyp.
+Qed.
+
+(** ** Shapeliness *)
+(******************************************************************************)
 Definition shapeliness (F : Type -> Type)
   `{Map F} `{Tolist F} := forall A (t1 t2 : F A),
     shape t1 = shape t2 /\ tolist t1 = tolist t2 -> t1 = t2.
 
+(** ** Typeclass for shapely functors *)
+(******************************************************************************)
 Class ShapelyFunctor
   (F : Type -> Type) `{Map F} `{Tolist F} :=
   { shp_natural :> Natural (@tolist F _);
@@ -36,73 +72,7 @@ Class ShapelyTransformation
     ltrans_natural : Natural ϕ;
   }.
 
-(** ** Instance for [list] *)
-(** As a reasonability check, we prove that [list] is a listable functor. *)
-(******************************************************************************)
-Section ShapelyFunctor_list.
-
-  Instance Tolist_list : Tolist list := fun A l => l.
-
-  Instance: Natural (@tolist list _).
-  Proof.
-    constructor; try typeclasses eauto.
-    reflexivity.
-  Qed.
-
-  Theorem shapeliness_list : shapeliness list.
-  Proof.
-    intros A t1 t2. intuition.
-  Qed.
-
-  Instance: ShapelyFunctor list :=
-    {| shp_shapeliness := shapeliness_list; |}.
-
-End ShapelyFunctor_list.
-
-(** ** Reasoning principles for <<shape>> on listable functors *)
-(** These principles are predicated just on <<tolist>> being a natural
-    transformation and can be used to prove [shapeliness] for a given
-    functor. *)
-(******************************************************************************)
-Section listable_shape_lemmas.
-
-  Context
-    (F : Type -> Type)
-    `{Functor F}
-    `{Tolist F} `{! Natural (@tolist F _)}.
-
-  (* Values with the same shape have equal-length contents *)
-  Lemma shape_tolist : forall `(t : F A) `(u : F B),
-      shape t = shape u ->
-      shape (tolist t) = shape (tolist u).
-  Proof.
-    introv heq. compose near t. compose near u.
-    unfold shape in *. rewrite 2(natural).
-    unfold compose.
-    fequal. apply heq.
-  Qed.
-
-  Corollary shape_l : forall A (l1 l2 : F A) (x y : list A),
-      shape l1 = shape l2 ->
-      (tolist l1 ++ x = tolist l2 ++ y) ->
-      tolist l1 = tolist l2.
-  Proof.
-    introv shape_eq heq.
-    eauto using inv_app_eq_ll, shape_tolist.
-  Qed.
-
-  Corollary shape_r : forall A (l1 l2 : F A) (x y : list A),
-      shape l1 = shape l2 ->
-      (x ++ tolist l1 = y ++ tolist l2) ->
-      tolist l1 = tolist l2.
-  Proof.
-    introv shape_eq heq.
-    eauto using inv_app_eq_rr, shape_tolist.
-  Qed.
-
-End listable_shape_lemmas.
-
-(** * Respectfulness conditions for shapely functors *)
+(** * Various characterizations of shapeliness *)
 (******************************************************************************)
 Section listable_functor_respectful_definitions.
 
@@ -111,19 +81,19 @@ Section listable_functor_respectful_definitions.
     `{Map F} `{Tolist F}.
 
   Definition tolist_map_injective := forall A B (t1 t2 : F A) (f g : A -> B),
-      map F f t1 = map F g t2 ->
+      map f t1 = map g t2 ->
       shape t1 = shape t2 /\
-      map list f (tolist t1) = map list g (tolist t2).
+      map f (tolist t1) = map g (tolist t2).
 
   Definition tolist_map_respectful := forall A B (t1 t2 : F A) (f g : A -> B),
       shape t1 = shape t2 ->
-      map list f (tolist t1) = map list g (tolist t2) ->
-      map F f t1 = map F g t2.
+      map f (tolist t1) = map g (tolist t2) ->
+      map f t1 = map g t2.
 
   Definition tolist_map_respectful_iff := forall A B (t1 t2 : F A) (f g : A -> B),
       shape t1 = shape t2 /\
-      map list f (tolist t1) = map list g (tolist t2) <->
-      map F f t1 = map F g t2.
+      map f (tolist t1) = map g (tolist t2) <->
+      map f t1 = map g t2.
 
 End listable_functor_respectful_definitions.
 
@@ -132,137 +102,19 @@ Ltac unfold_list_properness :=
   tolist_map_respectful,
     tolist_map_respectful_iff in *.
 
-(** * Shapely functors are containers *)
-(******************************************************************************)
-#[export] Instance Elements_Tolist `{Tolist F} : Elements F :=
-  fun A => element_of ∘ tolist.
-
-#[export] Instance: forall `{ShapelyFunctor F}, Natural (@element_of F _).
-Proof.
-  constructor; try typeclasses eauto.
-  intros A B f. unfold element_of, Elements_Tolist. ext t.
-  reassociate <- on left. rewrite (natural (G := subset)).
-  reassociate -> on left. now rewrite natural.
-Qed.
-
-Theorem in_iff_in_list `{Tolist F} : forall (A : Type) (t : F A) (a : A),
-    a ∈ t <-> a ∈ tolist t.
-Proof.
-  reflexivity.
-Qed.
-
-(** ** <<element_of>> as a hom *)
-(******************************************************************************)
-Lemma element_of_list_hom1 : forall (A : Type),
-    element_of ∘ ret list A = ret subset A.
-Proof.
-  intros.
-  unfold_ops @Elements_Tolist.
-  ext a b. propext;
-  cbv; intuition.
-Qed.
-
-Lemma element_of_list_hom2 : forall (A B : Type) (f : A -> list B),
-    element_of ∘ bind f = bind (T := subset) (element_of ∘ f) ∘ element_of.
-Proof.
-  intros. ext l b. induction l.
-  - propext; cbv.
-    intuition.
-    intros [a [absurd]]; contradiction.
-  - unfold compose in *.
-    autorewrite with tea_list tea_set.
-    rewrite IHl.
-    reflexivity.
-Qed.
-
-Lemma element_of_list_map : forall (A B : Type) (f : A -> B),
-    element_of ∘ map list f = map subset f ∘ element_of.
-Proof.
-  intros. ext l. unfold compose. ext b.
-  unfold_ops @Elements_list @Map_list.
-  induction l.
-  - cbn. propext.
-    + contradiction.
-    + intros [? [? ?]].
-      contradiction.
-  - cbn. rewrite IHl.
-    cbv. propext.
-    + intros [Hleft | Hright].
-      * eauto.
-      * preprocess. eauto.
-    + intros. preprocess.
-      destruct H as [Hleft | Hright].
-      * left. now fequal.
-      * right. eauto.
-Qed.
-
-#[export] Instance Monad_Hom_list_elements : MonadHom list subset (@element_of list _) :=
-  {| kmon_hom_ret := element_of_list_hom1;
-    kmon_hom_bind := element_of_list_hom2;
-  |}.
-
-Section ShapelyFunctor_setlike.
-
-  Context
-    (F : Type -> Type)
-    `{ShapelyFunctor F}.
-
-  Lemma shapeliness_iff :
-    forall (A : Type) (t u : F A),
-      t = u <-> shape t = shape u /\ tolist t = tolist u.
-  Proof.
-    intros. split.
-    + intros; subst; auto.
-    + apply (shp_shapeliness).
-  Qed.
-
-  (** Two maps over [t] are equal exactly when they're equal on t's contents. *)
-  Lemma shapely_map_eq_iff :
-    forall (A B : Type) (t : F A) (f g : A -> B),
-      map F f t = map F g t <->
-      map list f (tolist t) = map list g (tolist t).
-  Proof.
-    intros.
-    compose near t on right. rewrite 2(natural).
-    unfold compose. split.
-    - introv heq. now rewrite heq.
-    - intros. apply (shp_shapeliness). rewrite 2(shape_map).
-      auto.
-  Qed.
-
-  Theorem shapely_pointwise_iff :
-    forall (A B : Type) (t : F A) (f g : A -> B),
-      (forall (a : A), a ∈ t -> f a = g a) <-> map F f t = map F g t.
-  Proof.
-    introv. rewrite shapely_map_eq_iff.
-    setoid_rewrite in_iff_in_list.
-    now rewrite map_rigidly_respectful_list.
-  Qed.
-
-  Corollary shapely_pointwise :
-    forall (A B : Type) (t : F A) (f g : A -> B),
-      (forall (a : A), a ∈ t -> f a = g a) -> map F f t = map F g t.
-  Proof.
-   introv. rewrite shapely_pointwise_iff. auto.
- Qed.
-
-  #[export] Instance ContainerFunctor_Shapely : ContainerFunctor F :=
-    {| cont_pointwise := shapely_pointwise; |}.
-
-End ShapelyFunctor_setlike.
-
-
-(** ** Equivalence with shapeliness *)
+(** ** Equivalences *)
 (******************************************************************************)
 Section tolist_respectfulness_characterizations.
 
   Context
-    `{ShapelyFunctor F}.
+    `{Functor F}
+    `{Tolist F}
+    `{! Natural (@tolist F _)}.
 
   Theorem tolist_map_injective_proof : tolist_map_injective F.
   Proof.
     introv heq. split.
-    - cut (shape (map F f t1) = shape (map F g t2)).
+    - cut (shape (map f t1) = shape (map g t2)).
       + now rewrite 2(shape_map).
       + now rewrite heq.
     - compose near t1; compose near t2.
@@ -293,34 +145,14 @@ Section tolist_respectfulness_characterizations.
   Proof.
     unfold shapeliness, tolist_map_respectful_iff.
     introv hyp1 hyp2.
-    replace t1 with (map F id t1) by (now rewrite (fun_map_id (F := F))).
-    replace t2 with (map F id t2) by (now rewrite (fun_map_id (F := F))).
+    replace t1 with (map id t1) by (now rewrite (fun_map_id (F := F))).
+    replace t2 with (map id t2) by (now rewrite (fun_map_id (F := F))).
     apply hyp1. now rewrite (fun_map_id (F := list)).
   Qed.
 
 End tolist_respectfulness_characterizations.
 
-(** * Respectfulness conditions for shapely functors *)
-(******************************************************************************)
-Section ShapelyFunctor_theory.
-
-  Context
-    (F : Type -> Type)
-    `{ShapelyFunctor F}.
-
-  Corollary shapely_map_id_iff :
-    forall (A : Type) (t : F A) (f : A -> A),
-      (forall (a : A), a ∈ t -> f a = a) <-> map F f t = t.
-  Proof.
-    introv. replace t with (map F id t) at 2
-      by now rewrite (fun_map_id (F := F)).
-    now rewrite (shapely_pointwise_iff F).
-  Qed.
-
-End ShapelyFunctor_theory.
-
 (*
-
 (** * [fold] and [foldMap] operations *)
 (******************************************************************************)
 Section fold.
@@ -375,5 +207,4 @@ Section fold_monoidal_structure.
   Qed.
 
 End fold_monoidal_structure.
-
 *)
