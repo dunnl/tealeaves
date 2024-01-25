@@ -19,7 +19,7 @@ Class Mapd (E : Type) (T : Type -> Type) := mapd :
   {Mapd} {A B}%type_scope _%function_scope _.
 
 (** ** "Kleisli" composition *)
-(** Kleisli composition is the same as for comonads, i.e. [kc4] *)
+(** Kleisli composition is [kc4] as for comonads *)
 (******************************************************************************)
 
 (** ** Typeclasses *)
@@ -50,8 +50,6 @@ Class DecoratedNatural
 (** * Derived instances *)
 (******************************************************************************)
 Section derived_instances.
-
-  Import Comonad.DerivedInstances.
 
   Context
     `{DecoratedFunctorFull E T}.

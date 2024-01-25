@@ -27,10 +27,10 @@ Section with_E.
   Solve All Obligations with (introv; now ext [? ?]).
 
   #[export] Instance Map_reader : Map (E ×) :=
-    Comonad.DerivedInstances.Map_Cobind (E ×).
+    Comonad.Map_Cobind (E ×).
 
   #[export] Instance Functor_reader : Functor (E ×) :=
-    Comonad.DerivedInstances.Functor_Comonad (E ×).
+    Comonad.Functor_Comonad (E ×).
 
   Lemma map_to_cobind : forall A B (f : A -> B),
       map f = cobind (f ∘ extract).

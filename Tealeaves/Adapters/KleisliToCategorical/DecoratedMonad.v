@@ -25,7 +25,7 @@ Section operations.
     `{Bindd W T T}
     `{Return T}.
 
-  #[export] Instance Map_Bindd: Map T :=
+  #[local] Instance Map_Bindd: Map T :=
     fun A B f => bindd (ret ∘ f ∘ extract).
   #[export] Instance Join_Bindd: Join T :=
     fun A => bindd (B := A) (A := T A) (extract (W := (W ×))).
@@ -38,14 +38,14 @@ End operations.
 (******************************************************************************)
 Module ToCategorical.
 
-  Import Kleisli.DecoratedMonad.DerivedInstances.
-
   Section with_monad.
 
     Context
       (W : Type)
       (T : Type -> Type)
       `{Kleisli.DecoratedMonad.DecoratedMonad W T}.
+
+    Import DecoratedMonad.MakeFull.
 
     (** *** Functor laws *)
     (******************************************************************************)
@@ -230,39 +230,39 @@ Module ToCategorical.
           join (T := T) ∘ map (F := T) (shift T) ∘ dec T ∘ map (F := T) (dec T).
     Proof.
       intros.
-      unfold shift. unfold strength.
+      unfold shift, strength.
       unfold_ops @Decorate_Bindd.
       unfold_ops @Map_Bindd.
       unfold_ops @Join_Bindd.
       unfold_compose_in_compose.
       (* Fuse LHS *)
-      rewrite (kmond_bindd2 (T := T)) at 1.
+      rewrite kmond_bindd2 at 1.
       change (extract (W := (W ×)) (A := T A))
         with (id ∘ extract (W := (W ×)) (A := T A)) at 1.
       rewrite kc5_51.
-      rewrite (fun_map_id (F := (W ×))).
+      rewrite fun_map_id.
       change (?f ∘ id) with f.
       (* Fuse RHS *)
-      rewrite (kmond_bindd2 (T := T)).
+      rewrite kmond_bindd2.
       reassociate -> near (extract (W := (W ×))).
       rewrite kc5_54.
-      rewrite (DerivedInstances.kc4_id_l).
-      rewrite (kmond_bindd2 (T := T)).
-      change (ret (T := T) ( A:= (W × ) (T ((W × ) A))))
-        with ((ret (T := T) (A := (W × ) (T ((W × ) A)))) ∘ id).
+      rewrite kc4_id_l.
+      rewrite kmond_bindd2.
+      change (ret (T := T) ( A:= (W ×) (T ((W ×) A))))
+        with ((ret (T := T) (A := (W ×) (T ((W ×) A)))) ∘ id).
       rewrite kc5_54.
-      rewrite (DerivedInstances.kc4_04).
+      rewrite kc4_04.
       change (?f ∘ id) with f.
-      rewrite (kmond_bindd2 (T := T)).
+      rewrite kmond_bindd2.
       rewrite kc5_54.
-      rewrite (DerivedInstances.kc4_40).
+      rewrite kc4_40.
       (* Now compare inner functions *)
       fequal.
       ext [w t].
       do 2 (unfold compose; cbn).
       compose near t on right.
       rewrite kmond_bindd2.
-      change (ret (A := (W × ) A)) with (ret (A := (W × ) A) ∘ id).
+      change (ret (A := (W ×) A)) with (ret (A := (W ×) A) ∘ id).
       rewrite kc5_54.
       compose near t on right.
       rewrite kmond_bindd2.

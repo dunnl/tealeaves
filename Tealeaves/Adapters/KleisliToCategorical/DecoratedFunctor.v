@@ -2,6 +2,7 @@ From Tealeaves Require Export
   Classes.Kleisli.DecoratedFunctor
   Classes.Categorical.DecoratedFunctor.
 
+Import Kleisli.Comonad.Notations.
 Import Product.Notations.
 
 #[local] Generalizable Variables T E A B C.
@@ -10,26 +11,30 @@ Import Product.Notations.
   (E : Type) (T : Type -> Type) `{Mapd E T}
   : Decorate E T := fun A => mapd (@id ((E ×) A)).
 
-Import Kleisli.DecoratedFunctor.DerivedInstances.
-
 Section properties.
 
   Context
     (E : Type)
     (T : Type -> Type)
-    `{Kleisli.DecoratedFunctor.DecoratedFunctor E T}.
+    `{Kleisli.DecoratedFunctor.DecoratedFunctorFull E T}.
+
+  Lemma cojoin_spec : forall (A : Type),
+      cojoin (W := (E ×)) =
+        id (A := E * (E * A)) ⋆4 id (A := E * A).
+  Proof.
+    intros.
+    unfold kc4.
+    reflexivity.
+  Qed.
 
   Lemma dec_dec : forall (A : Type),
       dec T ∘ dec T = map (cojoin (W := (E ×))) ∘ dec T (A := A).
   Proof.
     intros.
-    (* Merge LHS *)
     unfold_ops @Decorate_Mapd.
-    rewrite (dfun_mapd2 (E := E) (T := T)).
-    (* Merge RHS *)
-    unfold_ops @Map_Mapd.
-    rewrite (dfun_mapd2 (E := E) (T := T)).
-    rewrite DerivedInstances.kc4_04.
+    rewrite dfun_mapd2.
+    rewrite <- cojoin_spec.
+    rewrite map_mapd.
     reflexivity.
   Qed.
 
@@ -38,11 +43,10 @@ Section properties.
   Proof.
     intros.
     unfold_ops @Decorate_Mapd.
-    unfold_ops @Map_Mapd.
-    rewrite (dfun_mapd2 (E := E) (T := T)).
-    rewrite DerivedInstances.kc4_04.
+    rewrite map_mapd.
     change (?f ∘ id) with f.
-    apply (dfun_mapd1 (E := E) (T := T)).
+    rewrite dfun_mapd1.
+    reflexivity.
   Qed.
 
   Lemma dec_natural : Natural (@dec E T _).
@@ -50,14 +54,12 @@ Section properties.
     constructor.
     - typeclasses eauto.
     - typeclasses eauto.
-    - intros. unfold_ops @Map_compose.
-      unfold_ops @Map_Mapd.
+    - intros.
+      unfold_ops @Map_compose.
       unfold_ops @Decorate_Mapd.
-      rewrite (dfun_mapd2 (E := E) (T := T)).
-      rewrite (dfun_mapd2 (E := E) (T := T)).
-    rewrite DerivedInstances.kc4_04.
-    rewrite DerivedInstances.kc4_40.
-    reflexivity.
+      rewrite map_mapd.
+      rewrite mapd_map.
+      reflexivity.
   Qed.
 
   #[export] Instance: Categorical.DecoratedFunctor.DecoratedFunctor E T :=

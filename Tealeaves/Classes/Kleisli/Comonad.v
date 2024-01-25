@@ -42,7 +42,7 @@ Class Comonad `(W : Type -> Type) `{Cobind W} `{Extract W} :=
 
 (** * Derived functor instance *)
 (******************************************************************************)
-Module DerivedInstances.
+Section derived_instances.
 
   (** ** [map] as a special case of [bind] *)
   (******************************************************************************)
@@ -127,7 +127,7 @@ Module DerivedInstances.
 
   End kc4.
 
-End DerivedInstances.
+End derived_instances.
 
 (** * Notations *)
 (******************************************************************************)
