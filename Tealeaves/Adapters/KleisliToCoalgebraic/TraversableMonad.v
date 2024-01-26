@@ -8,16 +8,10 @@ Import Kleisli.TraversableMonad.Notations.
 Import Batch.Notations.
 
 #[local] Generalizable Variables G T M A B.
-#[local] Existing Instance DerivedOperations.TraversableMonadFull_Default.
-
-#[local] Arguments map {F}%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 #[local] Arguments batch {A} (B)%type_scope _.
-#[local] Arguments toBatch {T}%function_scope {ToBatch} {A} (B)%type_scope _.
+#[local] Arguments toBatch {T}%function_scope {ToBatch} {A} (A')%type_scope _.
 #[local] Arguments toBatchM {T}%function_scope {ToBatchM} {A} (B)%type_scope _.
-#[local] Arguments bindt {U} {T}%function_scope {Bindt} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
@@ -27,18 +21,14 @@ Import Batch.Notations.
     : Coalgebraic.TraversableMonad.ToBatchM T :=
   (fun A B => bindt (G := Batch A (T B)) (batch (T B)) : T A -> Batch A (T B) (T B)).
 
-Import Kleisli.TraversableMonad.DerivedOperations.
-
 (** ** Factoring operations through <<toBatch>> *)
 (******************************************************************************)
 Section runBatch.
 
   Context
-    `{Kleisli.TraversableMonad.TraversableMonad T}.
+    `{Kleisli.TraversableMonad.TraversableMonadFull T}.
 
-  Existing Instance DerivedOperations.TraversableMonadFull_Default.
-
-  Lemma bindt_to_runBatch `{Applicative G} `(f : A -> G (T B)) :
+  Lemma bindt_through_runBatch `{Applicative G} `(f : A -> G (T B)) :
     bindt f = runBatch f ∘ toBatchM B.
   Proof.
     unfold_ops @ToBatchM_Bindt.
@@ -47,28 +37,28 @@ Section runBatch.
     reflexivity.
   Qed.
 
-  Lemma traverse_to_runBatch `{Applicative G} `(f : A -> G B) :
+  Lemma traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
     traverse (T := T) f = runBatch (map ret ∘ f) ∘ toBatchM B.
   Proof.
     rewrite ktmf_traverse_to_bindt.
-    rewrite bindt_to_runBatch.
+    rewrite bindt_through_runBatch.
     reflexivity.
   Qed.
 
-  Corollary map_to_runBatch `(f : A -> B) :
+  Corollary map_through_runBatch `(f : A -> B) :
     map (F := T) f = runBatch (F := fun A => A) (ret (T := T) ∘ f) ∘ toBatchM B.
   Proof.
     rewrite map_to_traverse.
-    rewrite traverse_to_runBatch.
+    rewrite traverse_through_runBatch.
     reflexivity.
   Qed.
 
-  Corollary id_to_runBatch : forall (A : Type),
+  Corollary id_through_runBatch : forall (A : Type),
       id (A := T A) = runBatch (F := fun A => A) (ret (T := T)) ∘ toBatchM A.
   Proof.
     intros.
     rewrite <- (fun_map_id (F := T)).
-    rewrite map_to_runBatch.
+    rewrite map_through_runBatch.
     reflexivity.
   Qed.
 
@@ -97,14 +87,14 @@ Qed.
 (** ** Naturality of <<toBatch>> *)
 (******************************************************************************)
 Lemma toBatchM_mapfst (T : Type -> Type)
-  `{Kleisli.TraversableMonad.TraversableMonad T}
+  `{Kleisli.TraversableMonad.TraversableMonadFull T}
   {A B : Type} (f : A -> B) {C : Type} :
   toBatchM C ∘ map (F := T) f = mapfst_Batch f ∘ toBatchM C.
 Proof.
   unfold_ops @ToBatchM_Bindt.
   rewrite (bindt_map (G2 := Batch B (T C))).
-  rewrite (bindt_to_runBatch (G := Batch B (T C))).
-  rewrite (bindt_to_runBatch (G := Batch A (T C))).
+  rewrite (bindt_through_runBatch (G := Batch B (T C))).
+  rewrite (bindt_through_runBatch (G := Batch A (T C))).
   ext t.
   unfold compose.
   induction (toBatchM C t).
@@ -120,7 +110,7 @@ Qed.
 Section to_coalgebraic.
 
   Context
-    `{Kleisli.TraversableMonad.TraversableMonad T}.
+    `{Kleisli.TraversableMonad.TraversableMonadFull T}.
 
   Lemma double_BatchM_spec : forall A B C,
       double_BatchM T A B C = batch (T C) ⋆3 batch (T B).

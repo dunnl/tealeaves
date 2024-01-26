@@ -175,7 +175,7 @@ Module ToCategorical.
     rewrite (fun_map_id (F := G)).
     rewrite kcom_cobind1.
     change (extract (prod E) (G (E * A))) with (id ∘ (extract (prod E) (G (E * A)))).
-    rewrite (DerivedInstances.kc4_04).
+    rewrite kc4_04.
     fequal. now ext [e ga].
   Qed.
 

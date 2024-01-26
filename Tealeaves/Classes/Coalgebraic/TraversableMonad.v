@@ -6,76 +6,106 @@ From Tealeaves Require Import
 
 Import Applicative.Notations.
 
-#[local] Arguments Done : clear implicits.
-#[local] Arguments Step : clear implicits.
+#[local] Generalizable Variables T.
 
-(** * Traversable monads as coalgebras *)
+(** * Traversable Monads, coalgebraically *)
 (******************************************************************************)
-Class ToBatchM (T : Type -> Type) :=
-  toBatchM : forall A B, T A -> Batch A (T B) (T B).
 
-#[global] Arguments toBatchM (T)%function_scope {ToBatchM} (A B)%type_scope _.
+(** ** <<ToBatch3>> operation *)
+(******************************************************************************)
+Class ToBatch3 (T : Type -> Type) :=
+  toBatch3 : forall A B, T A -> Batch A (T B) (T B).
 
-Fixpoint cojoin_BatchM (T : Type -> Type) `{ToBatchM T} (A B B' C : Type)
-  (b : Batch A (T B) C) : Batch A (T B') (Batch B' (T B) C) :=
-  match b with
-  | Done _ _ _ c => Done A (T B') (Batch B' (T B) C) (Done B' (T B) C c)
-  | Step _ _ _ rest (*:Batch A (T B) (T B -> C)*) a(*:A*) =>
-      Step A (T B') (Batch B' (T B) C)
-        (map (F := Batch A (T B'))
-           (fun (x : Batch B' (T B) (T B -> C)) (t : T B') =>
-              x <⋆> (toBatchM T B' B t : Batch B' (T B) (T B))
-           )
-           (cojoin_BatchM T A B B' (T B -> C) rest))
-        (a : A)
-  end.
+#[global] Arguments toBatch3 {T}%function_scope {ToBatch3} {A B}%type_scope _.
 
+(** ** <<cojoin_Batch3>> operation *)
+(******************************************************************************)
+Section cojoin.
+
+  Context
+    `{ToBatch3 T}
+      (A A' A'' : Type).
+
+  Section auxiliary.
+
+    Variable (R : Type).
+
+    Definition key_function :
+      Batch A' (T A'') (T A'' -> R) ->
+      T A' ->
+      Batch A' (T A'') R :=
+      fun next_batch t =>
+        next_batch <⋆> toBatch3 t.
+
+    Definition cojoin_Batch3_leaf_case :
+      Batch A (T A') (Batch A' (T A'') (T A'' -> R)) -> (* recursive call on cojoin of continuation *)
+      Batch A (T A') (T A' -> Batch A' (T A'') R) := (* new continuation *)
+      fun rec_continue =>
+        map (F := Batch A (T A')) key_function rec_continue.
+
+  End auxiliary.
+
+  Fixpoint cojoin_Batch3 {R : Type}
+    (b : Batch A (T A'') R) :
+    Batch A (T A') (Batch A' (T A'') R) :=
+    match b with
+    | Done r => Done (Done r)
+    | Step continuation a =>
+        let new_continuation :=
+          cojoin_Batch3_leaf_case R (cojoin_Batch3 continuation)
+        in Step new_continuation a
+    end.
+
+End cojoin.
+
+(** ** <<cojoin_Batch3>> alternate specification *)
+(******************************************************************************)
 Section spec.
 
   Context
-    (T : Type -> Type)
-    `{ToBatchM T}.
+    `{ToBatch3 T}.
 
-  Definition double_BatchM (A B C : Type) :
+  Definition double_Batch3 (A B C : Type) :
       A -> Batch A (T B) (Batch B (T C) (T C)) :=
-    map (F := Batch A (T B)) (toBatchM T B C) ∘ batch A (T B).
+    map (F := Batch A (T B)) toBatch3 ∘ batch A (T B).
 
-  Lemma cojoin_BatchM_spec : forall (A B B' : Type),
-      cojoin_BatchM T A B B' =
-        runBatch (Batch A (T B') ∘ Batch B' (T B)) (double_BatchM A B' B).
+  Lemma cojoin_Batch3_spec : forall (A B B' : Type),
+      @cojoin_Batch3 _ _ A B B' =
+        runBatch (Batch A (T B) ∘ Batch B (T B'))
+          (double_Batch3 A B B').
   Proof.
-    intros. ext C b. induction b.
+    intros. ext C. ext b.
+    induction b as [R r |R rest IHrest a].
     - cbn. reflexivity.
-    - cbn. rewrite IHb.
-      fequal.
-      compose near ((runBatch (Batch A (T B') ∘ Batch B' (T B))
-                (double_BatchM A B' B) (T B -> C) b)) on right.
-      rewrite (fun_map_map (F := Batch A (T B'))).
-      compose near ((runBatch (Batch A (T B') ∘ Batch B' (T B))
-                (double_BatchM A B' B) (T B -> C) b)) on right.
-      rewrite (fun_map_map (F := Batch A (T B'))).
-      compose near ((runBatch (Batch A (T B') ∘ Batch B' (T B))
-                (double_BatchM A B' B) (T B -> C) b)) on right.
-      rewrite (fun_map_map (F := Batch A (T B'))).
+    - cbn.
+      rewrite IHrest.
+      do 3
+        (compose near
+           (runBatch (Batch A (T B) ∘ Batch B (T B'))
+              (double_Batch3 A B B') (T B' -> R) rest) on right;
+         rewrite (fun_map_map (F := Batch A (T B)))).
       reflexivity.
   Qed.
 
-  Lemma cojoin_BatchM_batch : forall (A B C : Type),
-      cojoin_BatchM T A C B (T C) ∘ batch A (T C) =
-        double_BatchM A B C.
+  Lemma cojoin_Batch3_batch : forall (A B C : Type),
+      cojoin_Batch3 A B C ∘ batch A (T C) =
+        double_Batch3 A B C.
   Proof.
     intros.
-    rewrite (cojoin_BatchM_spec).
+    rewrite cojoin_Batch3_spec.
     rewrite (runBatch_batch (Batch A (T B) ∘ Batch B (T C)) A (T C)).
     reflexivity.
   Qed.
 
   #[export] Instance AppMor_cojoin_BatchM : forall (A B C : Type),
-      ApplicativeMorphism (Batch A (T C)) (Batch A (T B) ∘ Batch B (T C))
-        (@cojoin_BatchM T _ A C B).
+      ApplicativeMorphism
+        (Batch A (T C))
+        (Batch A (T B) ∘ Batch B (T C))
+        (@cojoin_Batch3 T _ A B C).
   Proof.
     intros.
-    rewrite (@cojoin_BatchM_spec A C B).
+    Set Printing All.
+    rewrite (@cojoin_Batch3_spec A B C).
     apply ApplicativeMorphism_runBatch.
   Qed.
 
@@ -104,12 +134,12 @@ End experiment.
 *)
 
 Class TraversableMonad
-  (T : Type -> Type) `{Return T} `{ToBatchM T} :=
+  (T : Type -> Type) `{Return T} `{ToBatch3 T} :=
   { trfm_ret : forall (A B : Type),
-      toBatchM T A B ∘ ret = batch A (T B);
+      toBatch3 ∘ ret = batch A (T B);
     trfm_extract : forall (A : Type),
-      extract_Batch ∘ mapfst_Batch A (T A) (ret) ∘ toBatchM T A A = @id (T A);
+      extract_Batch ∘ mapfst_Batch A (T A) (ret) ∘ toBatch3 = @id (T A);
     trfm_duplicate : forall (A B C : Type),
-      cojoin_BatchM T A C B (T C) ∘ toBatchM T A C =
-        map (F := Batch A (T B)) (toBatchM T B C) ∘ toBatchM T A B;
+      cojoin_Batch3 A C B ∘ toBatch3 =
+        map (F := Batch A (T C)) toBatch3 ∘ toBatch3;
   }.

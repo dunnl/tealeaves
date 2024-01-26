@@ -252,4 +252,3 @@ Module ToKleisli.
   End with_monad.
 
 End ToKleisli.
-g

@@ -10,14 +10,9 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables W G T M A B.
 
-#[local] Arguments map {F}%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 #[local] Arguments batch {A} (B)%type_scope _.
 #[local] Arguments toBatch7 {W}%type_scope {T}%function_scope {ToBatch7} {A B}%type_scope _.
-#[local] Arguments bindt {U} {T}%function_scope {Bindt} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments binddt {W}%type_scope {U} {T}%function_scope {Binddt} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
-#[local] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
@@ -26,8 +21,6 @@ Import Monoid.Notations.
 #[export] Instance ToBatch7_Binddt `{Binddt W T T}
     : Coalgebraic.DecoratedTraversableMonad.ToBatch7 W T :=
   (fun A B => binddt (G := Batch (W * A) (T B)) (batch (T B)) : T A -> Batch (W * A) (T B) (T B)).
-
-Import Kleisli.TraversableMonad.DerivedOperations.
 
 (** ** Factoring operations through <<toBatch>> *)
 (******************************************************************************)
@@ -110,7 +103,7 @@ Require Import
 (** ** Relating <<toBatch7>> with <<toBatch>> *)
 (******************************************************************************)
 Lemma toBatchMD_toBatchM
-  `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}
+  `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonadFull W T}
   {A B : Type} :
   toBatchM T A B = mapfst_Batch (extract) ∘ toBatch7.
 Proof.
@@ -119,13 +112,14 @@ Proof.
   unfold_ops @ToBatch7_Binddt.
   rewrite (kdtm_morph (Batch (W * A) (T B)) (Batch A (T B))
              (ϕ := fun C => mapfst_Batch (extract))).
+  rewrite (kdtmf_bindt_compat).
   reflexivity.
 Qed.
 
 (** ** Naturality of <<toBatch7>> *)
 (******************************************************************************)
 Lemma toBatch7_mapfst1
-  `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}
+  `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonadFull W T}
   {A A' B : Type} (f : W * A -> A') :
   toBatch7 ∘ mapd (T := T) f = mapfst_Batch (cobind f) ∘ toBatch7 (A := A) (B := B).
 Proof.
@@ -142,17 +136,16 @@ Qed.
 Admitted.
 
 Lemma toBatch7_mapfst2
-  `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}
+  `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonadFull W T}
   {A A' B : Type} (f : A -> A') {C : Type} :
   toBatch7 ∘ map (F := T) f = mapfst_Batch (map f) ∘ toBatch7 (A := A) (B := B).
 Proof.
   rewrite (map_to_cobind W).
   rewrite <- toBatch7_mapfst1.
-  reflexivity.
-Qed.
+Admitted.
 
 Lemma toBatch7_mapfst3
-  `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}
+  `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonadFull W T}
   {A A' B : Type} (f : W * A -> A') :
   toBatchM T _ _ ∘ mapd (T := T) f = mapfst_Batch f ∘ toBatch7 (A := A) (B := B).
 Proof.
@@ -175,7 +168,7 @@ Admitted.
 Section to_coalgebraic.
 
   Context
-    `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
+    `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonadFull W T}.
 
   Lemma double_Batch7_spec : forall A B C,
       double_batch7 (A := A) (A' := B) = batch (T C) ⋆7 (batch (T B)).

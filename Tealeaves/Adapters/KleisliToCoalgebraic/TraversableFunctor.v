@@ -32,7 +32,7 @@ Section laws.
   Context
     `{Kleisli.TraversableFunctor.TraversableFunctorFull T}.
 
-  (** ** Factoring operations through <<toBatch>> *)
+  (** *** Factoring operations through <<toBatch>> *)
   (******************************************************************************)
   Lemma traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
     traverse f = runBatch f ∘ toBatch.
@@ -60,7 +60,7 @@ Section laws.
     reflexivity.
   Qed.
 
-  (** ** Naturality of <<toBatch>> *)
+  (** *** Naturality of <<toBatch>> *)
   (******************************************************************************)
   Lemma toBatch_mapfst : forall (A B : Type) (f : A -> B) (C : Type),
     toBatch (A' := C) ∘ map f = mapfst_Batch f ∘ toBatch.
@@ -73,7 +73,7 @@ Section laws.
     reflexivity.
   Qed.
 
-  (** ** Coalgebra laws *)
+  (** *** Coalgebra laws *)
   (******************************************************************************)
   Lemma toBatch_extract_Kleisli : forall (A : Type),
       extract_Batch ∘ toBatch = @id (T A).

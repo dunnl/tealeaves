@@ -76,7 +76,7 @@ From Tealeaves Require Import
 Lemma toBatch6_toBatch
   `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
   {A B : Type} :
-  toBatch T A B = mapfst_Batch (extract) ∘ toBatch6.
+  toBatch (A := A) (A' := B) = mapfst_Batch extract ∘ toBatch6.
 Proof.
   intros.
   unfold_ops @ToBatch6_Mapdt.
@@ -132,7 +132,7 @@ Qed.
 Lemma toBatch6_mapfst3
   `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
   {A A' B : Type} (f : E * A -> A') :
-  toBatch T A' B ∘ mapd (T := T) f = mapfst_Batch f ∘ toBatch6 (T := T) (A := A) (B := B).
+  toBatch (A := A') (A' := B) ∘ mapd (T := T) f = mapfst_Batch f ∘ toBatch6 (T := T) (A := A) (B := B).
 Proof.
   rewrite toBatch6_toBatch.
   reassociate -> on left.
