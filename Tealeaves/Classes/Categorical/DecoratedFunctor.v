@@ -40,6 +40,15 @@ Section shift_functor_lemmas.
     reflexivity.
   Qed.
 
+  Corollary shift_spec2 {A : Type} :
+    shift F (A := A) = map F (join (T := (W ×))) ∘ strength.
+  Proof.
+    intros.
+    unfold shift.
+    rewrite incr_spec.
+    reflexivity.
+  Qed.
+
   (** If we think of <<shift>> as a function of two arguments,
       then it is natural in its second argument. *)
   Lemma shift_map1 {A B} (t : F (W * A)) (w : W) (f : A -> B) :

@@ -46,7 +46,7 @@ Section derived_instances.
 
   (** ** [map] as a special case of [bind] *)
   (******************************************************************************)
-  #[export] Instance Map_Cobind (W : Type -> Type) `{Extract W} `{Cobind W} : Map W :=
+  #[local] Instance Map_Cobind (W : Type -> Type) `{Extract W} `{Cobind W} : Map W :=
   fun `(f : A -> B) => @cobind W _ A B (f ∘ @extract W _ A).
 
   (** ** Functor instance *)
