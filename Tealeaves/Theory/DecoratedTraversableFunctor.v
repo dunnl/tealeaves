@@ -586,6 +586,25 @@ Section decorated_traversable_functor_theory.
       reflexivity.
     Qed.
 
+    (* TODO
+
+  Theorem in_mapd_iff :
+    forall `(f : W * A -> B) (t : T A) (b : B),
+      b ∈ mapd f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
+  Proof.
+    intros.
+    rewrite in_mapd_iff.
+    reflexivity.
+    change (@Traverse_Binddt W T _ _)
+      with (@DerivedInstances.Traverse_Mapdt _ _ _).
+    rewrite (ind_iff_in).
+    change (@Mapd_Binddt W T _ _)
+      with (@DerivedInstances.Mapd_Mapdt _ _ _).
+    setoid_rewrite (ind_mapd_iff).
+    reflexivity.
+  Qed.
+*)
+
     Lemma mapd_respectful :
       forall A B (t : T A) (f g : E * A -> B),
         (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))

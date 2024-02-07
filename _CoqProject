@@ -107,6 +107,6 @@ Tealeaves/Adapters/MonadToApplicative.v
 Tealeaves/Theory/TraversableFunctor.v
 Tealeaves/Theory/TraversableMonad.v
 Tealeaves/Theory/DecoratedTraversableFunctor.v
-#Tealeaves/Theory/DecoratedTraversableMonad.v
+Tealeaves/Theory/DecoratedTraversableMonad.v
 #Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v

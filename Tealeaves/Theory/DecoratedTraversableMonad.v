@@ -242,7 +242,7 @@ Section lemmas.
     (** ** Corollaries for the rest *)
     (******************************************************************************)
     Corollary ctx_element_ret : forall (A : Type) (a : A),
-        ctx_element_of (ret (T := T) a) = {{ (Ƶ, a) }}.
+        element_ctx_of (ret (T := T) a) = {{ (Ƶ, a) }}.
     Proof.
       intros.
       rewrite ctx_elements_to_foldMapd.
@@ -322,6 +322,28 @@ Section lemmas.
       - intros [x y]. now subst.
     Qed.
 
+    Lemma ind_bindd_iff_core :
+      forall `(f : W * A -> T B),
+        element_ctx_of (F := T) ∘ bindd (T := T) f =
+          bindd (T := ctxset W) (element_ctx_of (F := T) ∘ f) ∘ element_ctx_of (F := T).
+    Proof.
+      intros.
+      rewrite ctx_elements_to_foldMapd.
+      rewrite (foldMapd_bindd).
+      rewrite ctx_elements_to_foldMapd.
+      rewrite foldMapd_morphism.
+      fequal.
+      ext [w a].
+      change_right (bindd (T := ctxset W) (foldMapd (ret (T := subset)) ∘ f) {{(w, a)}}).
+      rewrite bindd_ctxset_one.
+      unfold compose.
+      rewrite (DecoratedFunctor.shift_spec subset (W := W) (op := op) (A := B)).
+      compose near (f (w, a)) on right.
+      rewrite foldMapd_morphism.
+      rewrite (natural (ϕ := @ret subset _)).
+      reflexivity.
+    Qed.
+
   Theorem ind_bindd_iff :
     forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
       (wtotal, b) ∈d bindd f t <->
@@ -330,136 +352,34 @@ Section lemmas.
           /\ wtotal = w1 ● w2.
   Proof.
     intros.
-    unfold_ops @CtxElements_CtxTolist.
-    change_left ((evalAt (wtotal, b) ∘ ctx_element_of (F := env W) ∘ ctx_tolist ∘ bindd (T := T) f) t).
-    change_right ((evalAt (e, b) ∘ mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist) t).
-    split; auto using ind_bindd_iff1, ind_bindd_iff2.
-  Qed.
-
-      Proof.
-      intros.
-      unfold_ops @CtxElements_CtxTolist.
-      change_left ((evalAt (e, b) ∘ element_of (F := list) ∘ ctx_tolist ∘ mapd (T := T) f) t).
-      change_right ((evalAt (e, b) ∘ mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist) t).
-      enough (lemma : element_of (F := list) ∘ ctx_tolist ∘ mapd f =
-                        mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist).
-      change_left ((evalAt (e, b) ∘ (element_of (F := list) ∘ ctx_tolist ∘ mapd f)) t).
-      rewrite lemma. reflexivity.
-      { reassociate -> on left.
-        change (list (prod ?E ?X)) with (env E X). (* hidden *)
-        rewrite <- (mapd_ctx_tolist f).
-        reassociate <- on left.
-        fequal.
-        rewrite (env_mapd_spec).
-        rewrite (ctxset_mapd_spec).
-        change (env ?E ?X) with (list (prod E X)). (* hidden *)
-        rewrite <- (natural (ϕ := @element_of list _)).
-        reflexivity.
-      }
-    Qed.
-
-      (*
-  Theorem ind_bindd_iff :
-    forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
-      (wtotal, b) ∈d bindd W T T A B f t <->
-        exists (w1 w2 : W) (a : A),
-          (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
-          /\ wtotal = w1 ● w2.
-  Proof.
-    split; auto using ind_bindd_iff1, ind_bindd_iff2.
-  Qed.
-
-  Corollary ind_bind_iff :
-    forall `(f : A -> T B) (t : T A) (wtotal : W) (b : B),
-      (wtotal, b) ∈d bind T T A B f t <->
-      exists (w1 w2 : W) (a : A),
-        (w1, a) ∈d t /\ (w2, b) ∈d f a
-        /\ wtotal = w1 ● w2.
-  Proof.
-    intros. apply ind_bindd_iff.
-  Qed.
-  *)
-
-  (** ** Characterizing <<∈d>> *)
-  (******************************************************************************)
-  Theorem ind_mapd_iff :
-    forall `(f : W * A -> B) (t : T A) (w : W) (b : B),
-      (w, b) ∈d mapd W T A B f t <-> exists (a : A), (w, a) ∈d t /\ f (w, a) = b.
-  Proof.
-    intros.
-    rewrite (mapd_to_bindd W T).
-    unfold compose.
-    rewrite ind_bindd_iff.
-    setoid_rewrite (ind_ret_iff).
+    change_left ((evalAt (wtotal, b) ∘ (element_ctx_of (F := T) ∘ bindd (T := T) f)) t).
+    rewrite ind_bindd_iff_core.
+    unfold evalAt, compose.
+    unfold_ops @Bindd_ctxset.
     split.
-    - intros [w1 [w2 [a [h1 [h2 h3]]]]].
-      destruct h2 as [hz heq].
-      subst. simpl_monoid.
-      eauto.
-    - intros [a [h1 h2]].
-      subst.
-      exists w Ƶ a. simpl_monoid. auto.
+    - intros [w1 [a [Ht [w2 [Hf Heq]]]]].
+      exists w1 w2 a. eauto.
+    - intros [w1 [w2 [a [Ht [Hf Heq]]]]].
+      exists w1 a. eauto.
   Qed.
 
-  Corollary ind_map_iff :
-    forall `(f : A -> B) (t : T A) (w : W) (b : B),
-      (w, b) ∈d map T f t <-> exists (a : A), (w, a) ∈d t /\ f a = b.
-  Proof.
-    intros. change_left ((w, b) ∈d mapd W T A B (f ∘ extract (prod W) A) t).
-    rewrite ind_mapd_iff.
-    unfold compose. cbn. splits; eauto.
-  Qed.
-
-  (** ** Characterizing <<∈>> with <<bindd>> *)
-  (******************************************************************************)
   Corollary in_bindd_iff :
     forall `(f : W * A -> T B) (t : T A) (b : B),
-      b ∈ bindd W T T A B f t <->
+      b ∈ bindd f t <->
       exists (w1 : W) (a : A),
         (w1, a) ∈d t /\ b ∈ f (w1, a).
   Proof.
     intros.
-    rewrite (ind_iff_in).
+    rewrite ind_iff_in.
     setoid_rewrite ind_bindd_iff.
-    setoid_rewrite (ind_iff_in).
+    setoid_rewrite ind_iff_in.
     split; intros; preprocess; repeat eexists; eauto.
   Qed.
 
-  (*
-  Corollary in_bind_iff :
-    forall `(f : A -> T B) (t : T A) (b : B),
-      b ∈ bind T T A B f t <-> exists (a : A), a ∈ t /\ b ∈ f a.
-  Proof.
-    change (@Traverse_Binddt W T _ _)
-      with (@DerivedInstances.Traverse_Mapdt _ _ _).
-    intros. setoid_rewrite (ind_iff_in).
-    setoid_rewrite (ind_bindd_iff).
-    intuition.
-    - preprocess. eexists; split; eauto.
-    - preprocess. repeat eexists; eauto.
-  Qed.
-
-  Theorem in_mapd_iff :
-    forall `(f : W * A -> B) (t : T A) (b : B),
-      b ∈ mapd W T A B f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
-  Proof.
-    intros.
-    change (@Traverse_Binddt W T _ _)
-      with (@DerivedInstances.Traverse_Mapdt _ _ _).
-    rewrite (ind_iff_in).
-    change (@Mapd_Binddt W T _ _)
-      with (@DerivedInstances.Mapd_Mapdt _ _ _).
-    setoid_rewrite (ind_mapd_iff).
-    reflexivity.
-  Qed.
-  *)
-
 End section.
 
-
-
 (*
-(** ** Respectfulness for <<bindd>> *)
+(** * Respectfulness for <<bindd>> *)
 (******************************************************************************)
 Section bindd_respectful.
 
@@ -538,7 +458,9 @@ Section bindd_respectful.
   Qed.
 
 End bindd_respectful.
+*)
 
+(*
 (** ** Respectfulness for <<bind>> *)
 (******************************************************************************)
 Section bind_respectful.
@@ -600,8 +522,7 @@ Section bind_respectful.
 End bind_respectful.
  *)
 
-  (*
-
+(*
 (** ** Respectfulness for <<mapd>> *)
 (******************************************************************************)
 Section mapd_respectful.
@@ -648,7 +569,9 @@ Section mapd_respectful.
   Qed.
 
 End mapd_respectful.
+*)
 
+(*
 (** ** Respectfulness for <<map>> *)
 (******************************************************************************)
 Section map_respectful.
@@ -682,3 +605,5 @@ Section map_respectful.
 
 End map_respectful.
 *)
+
+End lemmas.
