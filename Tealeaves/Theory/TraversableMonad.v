@@ -22,9 +22,9 @@ Section traversable_monad_theory.
 
   (** * <<foldMap>> on monads *)
   (******************************************************************************)
-  Lemma foldMap_bindt `{Applicative G} `{Monoid M} : forall `(g : B -> M) `(f : A -> G (T B)),
-      map (foldMap g) ∘ bindt f =
-        foldMap (map (foldMap g) ∘ f).
+  Lemma foldMap_bindt `{Applicative G} `{Monoid M} :
+    forall `(g : B -> M) `(f : A -> G (T B)),
+      map (foldMap g) ∘ bindt f = foldMap (map (foldMap g) ∘ f).
   Proof.
     intros. unfold foldMap.
     rewrite (traverse_bindt (G1 := G) (G2 := const M) A B False).
@@ -148,21 +148,22 @@ Section traversable_monad_theory.
 
   (** * Respectfulness properties *)
   (******************************************************************************)
-  Lemma bindt_respectful : forall (G : Type -> Type)
-                             `{Applicative G} `(f1 : A -> G (T B)) `(f2 : A -> G (T B)) (t : T A),
+  Lemma bindt_respectful :
+    forall (G : Type -> Type)
+      `{Applicative G} `(f1 : A -> G (T B)) `(f2 : A -> G (T B)) (t : T A),
       (forall (a : A), a ∈ t -> f1 a = f2 a) -> bindt f1 t = bindt f2 t.
   Proof.
     introv ? hyp.
-    rewrite bindt_to_runBatch.
-    rewrite bindt_to_runBatch.
+    rewrite bindt_through_runBatch.
+    rewrite bindt_through_runBatch.
     unfold compose at 1 2.
     unfold element_of, Elements_Tolist, tolist, Tolist_Traverse in hyp.
     unfold compose at 1 in hyp.
-    rewrite (foldMap_to_runBatch2 A B) in hyp.
+    rewrite (foldMap_through_runBatch2 A B) in hyp.
     unfold compose at 1 in hyp.
     setoid_rewrite toBatch3_toBatch in hyp.
     rewrite <- runBatch_mapsnd in hyp.
-    induction (toBatch3 T A B t).
+    induction (toBatch3 t).
     - cbn in *.
       reflexivity.
     - cbn.
