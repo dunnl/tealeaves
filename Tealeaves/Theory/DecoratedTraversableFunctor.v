@@ -367,27 +367,27 @@ Section decorated_traversable_functor_theory.
   (******************************************************************************)
   Section tosetd.
 
-    #[export] Instance CtxElements_CtxTolist `{CtxTolist E T} : CtxElements E T :=
-      fun A => ctx_element_of ∘ ctx_tolist.
+    #[export] Instance ElementsCtx_CtxTolist `{CtxTolist E T} : ElementsCtx E T :=
+      fun A => element_ctx_of ∘ ctx_tolist.
 
     (** *** Factoring through <<ctx_tolist>>/<<foldMapd>> *)
     (******************************************************************************)
     Lemma ctx_elements_through_ctx_tolist : forall (A : Type),
-        ctx_element_of (F := T) (A := A) =
+        element_ctx_of (F := T) (A := A) =
           element_of (F := list) ∘ ctx_tolist (F := T).
     Proof.
       reflexivity.
     Qed.
 
     Lemma ctx_elements_through_ctx_tolist2 : forall (A : Type),
-        ctx_element_of (F := T) (A := A) =
-          ctx_element_of (F := env E) ∘ ctx_tolist (F := T).
+        element_ctx_of (F := T) (A := A) =
+          element_ctx_of (F := env E) ∘ ctx_tolist (F := T).
     Proof.
       reflexivity.
     Qed.
 
     Lemma ctx_elements_through_foldMapd : forall (A : Type),
-        ctx_element_of (F := T) (A := A) =
+        element_ctx_of (F := T) (A := A) =
           element_of ∘ foldMapd (ret (T := list)).
     Proof.
       reflexivity.
@@ -396,7 +396,7 @@ Section decorated_traversable_functor_theory.
     (** *** As a special case of <<foldMapd>>/<<mapdt>> *)
     (******************************************************************************)
     Lemma ctx_elements_to_foldMapd : forall (A : Type),
-        ctx_element_of (F := T) (A := A) = foldMapd (ret (T := subset)).
+        element_ctx_of (F := T) (A := A) = foldMapd (ret (T := subset)).
     Proof.
       intros.
       rewrite ctx_elements_through_foldMapd.
@@ -406,7 +406,7 @@ Section decorated_traversable_functor_theory.
     Qed.
 
     Lemma element_to_foldMapd2 : forall (A : Type) (e : E) (a : A) (t : T A),
-        ctx_element_of t (e, a) = foldMapd (op := or) (unit := False) (eq (e, a)) t.
+        element_ctx_of t (e, a) = foldMapd (op := or) (unit := False) (eq (e, a)) t.
     Proof.
       intros.
       rewrite ctx_elements_to_foldMapd.
@@ -416,7 +416,7 @@ Section decorated_traversable_functor_theory.
     Qed.
 
     Corollary ctx_elements_to_mapdt1 : forall (A : Type),
-        ctx_element_of (F := T) = mapdt (G := const (subset (E * A))) (B := False) (ret (T := subset)).
+        element_ctx_of (F := T) = mapdt (G := const (subset (E * A))) (B := False) (ret (T := subset)).
     Proof.
       intros.
       rewrite ctx_elements_to_foldMapd.
@@ -424,7 +424,7 @@ Section decorated_traversable_functor_theory.
     Qed.
 
     Corollary ctx_elements_to_mapdt2 : forall (A fake : Type),
-        ctx_element_of (F := T) =
+        element_ctx_of (F := T) =
           mapdt (G := const (subset (E * A))) (B := fake) (ret (T := subset)).
     Proof.
       intros.
@@ -436,7 +436,7 @@ Section decorated_traversable_functor_theory.
     (** *** Factoring through <<runBatch>> *)
     (******************************************************************************)
     Corollary ctx_elements_through_runBatch1 {A : Type} :
-      ctx_element_of (F := T) = runBatch (B := False) (F := const (subset (E * A)))
+      element_ctx_of (F := T) = runBatch (B := False) (F := const (subset (E * A)))
                   (ret (T := subset)) ∘ toBatch6.
     Proof.
       rewrite (ctx_elements_to_mapdt1 A).
@@ -444,7 +444,7 @@ Section decorated_traversable_functor_theory.
     Qed.
 
     Corollary ctx_elements_through_runBatch2 {A tag : Type} :
-      ctx_element_of (F := T) = runBatch (B := tag) (F := const (subset (E * A)))
+      element_ctx_of (F := T) = runBatch (B := tag) (F := const (subset (E * A)))
                   (ret (T := subset)) ∘ toBatch6.
     Proof.
       rewrite (ctx_elements_to_mapdt2 A tag).
@@ -454,7 +454,7 @@ Section decorated_traversable_functor_theory.
     (** *** Composing <<elementsd>> and <<mapd>>/<<map>> *)
     (******************************************************************************)
     Lemma ctx_elements_mapd : forall `(f : E * A -> B),
-        ctx_element_of (F := T) ∘ mapd f = foldMapd (ret (T := subset) ∘ cobind f).
+        element_ctx_of (F := T) ∘ mapd f = foldMapd (ret (T := subset) ∘ cobind f).
     Proof.
       intros.
       rewrite ctx_elements_to_foldMapd.
@@ -463,7 +463,7 @@ Section decorated_traversable_functor_theory.
     Qed.
 
     Lemma ctx_elements_map : forall `(f : A -> B),
-        ctx_element_of (F := T) ∘ map f = foldMapd (ret (T := subset) ∘ map (F := (E ×)) f).
+        element_ctx_of (F := T) ∘ map f = foldMapd (ret (T := subset) ∘ map (F := (E ×)) f).
     Proof.
       intros.
       rewrite ctx_elements_to_foldMapd.
@@ -485,7 +485,7 @@ Section decorated_traversable_functor_theory.
 
   (** *** <<elementsd>> is natural *)
   (******************************************************************************)
-    #[export] Instance Natural_Elementd_Mapdt : Natural (@ctx_element_of E T _).
+    #[export] Instance Natural_Elementd_Mapdt : Natural (@element_ctx_of E T _).
     Proof.
       constructor.
       - typeclasses eauto.
@@ -510,8 +510,8 @@ Section decorated_traversable_functor_theory.
 
     (** *** Relating <<element_of>> and <<elementsd>> *)
     (******************************************************************************)
-    Lemma element_to_ctx_element_of : forall (A : Type),
-        element_of (F := T) (A := A) = map (F := subset) extract ∘ ctx_element_of.
+    Lemma element_to_element_ctx_of : forall (A : Type),
+        element_of (F := T) (A := A) = map (F := subset) extract ∘ element_ctx_of.
     Proof.
       intros.
       rewrite element_to_foldMap1.
@@ -540,7 +540,7 @@ Section decorated_traversable_functor_theory.
         a ∈ t <-> exists e, (e, a) ∈d t.
     Proof.
       intros.
-      rewrite element_to_ctx_element_of.
+      rewrite element_to_element_ctx_of.
       unfold compose at 1; unfold_ops @Map_subset.
       split.
       - intros [[e a'] [Hin Heq]].
@@ -556,7 +556,7 @@ Section decorated_traversable_functor_theory.
         (e, b) ∈d mapd f t <-> exists (a : A), (e, a) ∈d t /\ f (e, a) = b.
     Proof.
       intros.
-      unfold_ops @CtxElements_CtxTolist.
+      unfold_ops @ElementsCtx_CtxTolist.
       change_left ((evalAt (e, b) ∘ element_of (F := list) ∘ ctx_tolist ∘ mapd (T := T) f) t).
       change_right ((evalAt (e, b) ∘ mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist) t).
       enough (lemma : element_of (F := list) ∘ ctx_tolist ∘ mapd f =
