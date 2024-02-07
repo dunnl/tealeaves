@@ -97,7 +97,7 @@ Section spec.
     reflexivity.
   Qed.
 
-  #[export] Instance AppMor_cojoin_BatchM : forall (A B C : Type),
+  #[export] Instance AppMor_cojoin_Batch3 : forall (A B C : Type),
       ApplicativeMorphism
         (Batch A (T C))
         (Batch A (T B) ∘ Batch B (T C))
@@ -114,21 +114,21 @@ End spec.
 (*
 Section experiment.
 
-  Context (A B B' C : Type) T `{ToBatchM T}.
-  Check toBatchM T A B.
-  Check map (Batch A (T B)) (toBatchM T B C).
-  Check map (Batch A (T B)) (toBatchM T B C) ∘ toBatchM T A B.
+  Context (A B B' C : Type) T `{ToBatch3 T}.
+  Check toBatch3 T A B.
+  Check map (Batch A (T B)) (toBatch3 T B C).
+  Check map (Batch A (T B)) (toBatch3 T B C) ∘ toBatch3 T A B.
   (* T A -> Batch A (T B) (Batch B (T C) (T C)) *)
 
-  Check toBatchM T A C. (* T A -> Batch A (T C) (T C) *)
-  Check cojoin_BatchM T A C B' (T C).
-  Check cojoin_BatchM T A C B' (T C) ∘ toBatchM T A C.
+  Check toBatch3 T A C. (* T A -> Batch A (T C) (T C) *)
+  Check cojoin_Batch3 T A C B' (T C).
+  Check cojoin_Batch3 T A C B' (T C) ∘ toBatch3 T A C.
   (*  T A -> Batch A (T B') (Batch B' (T C) (T C)) *)
-  Check cojoin_BatchM T A (T C) B' C.
-  Check toBatchM T A C.
+  Check cojoin_Batch3 T A (T C) B' C.
+  Check toBatch3 T A C.
 
-  Check cojoin_Batch (B := B) ∘ toBatchM T A C.
-  Check cojoin_Batch (B := B) ∘ toBatchM T A C.
+  Check cojoin_Batch (B := B) ∘ toBatch3 T A C.
+  Check cojoin_Batch (B := B) ∘ toBatch3 T A C.
 
 End experiment.
 *)
@@ -139,7 +139,7 @@ Class TraversableMonad
       toBatch3 ∘ ret = batch A (T B);
     trfm_extract : forall (A : Type),
       extract_Batch ∘ mapfst_Batch A (T A) (ret) ∘ toBatch3 = @id (T A);
-    trfm_duplicate : forall (A B C : Type),
-      cojoin_Batch3 A C B ∘ toBatch3 =
-        map (F := Batch A (T C)) toBatch3 ∘ toBatch3;
+    trfm_duplicate : forall (A A' A'' : Type),
+      cojoin_Batch3 A A' A'' ∘ toBatch3 =
+        map (F := Batch A (T A')) toBatch3 ∘ toBatch3;
   }.

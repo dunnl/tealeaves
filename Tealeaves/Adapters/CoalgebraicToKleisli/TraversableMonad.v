@@ -9,16 +9,16 @@ Import Applicative.Notations.
 
 (** * Coalgebraic to traversable monad *)
 (******************************************************************************)
-Definition bindt_ToBatchM
+Definition bindt_ToBatch3
   (T : Type -> Type)
-  `{ToBatchM T} (A B : Type) F
+  `{ToBatch3 T} (A B : Type) F
   `{Mult F} `{Map F} `{Pure F} (f : A -> F (T B)) :
   T A -> F (T B) :=
-  runBatch F f (T B) ∘ toBatchM T A B.
+  runBatch F f (T B) ∘ toBatch3.
 
-#[export] Instance Bindt_ToBatchM
-  (T : Type -> Type) `{ToBatchM T} : Bindt T T :=
-  fun F _ _ _ A B f => bindt_ToBatchM T A B F f.
+#[export] Instance Bindt_ToBatch3
+  (T : Type -> Type) `{ToBatch3 T} : Bindt T T :=
+  fun F _ _ _ A B f => bindt_ToBatch3 T A B F f.
 
 Section with_algebra.
 
@@ -30,9 +30,9 @@ Section with_algebra.
       bindt (T := T) (G := G) f ∘ ret = f.
   Proof.
     intros.
-    unfold_ops Bindt_ToBatchM; unfold bindt_ToBatchM.
+    unfold_ops Bindt_ToBatch3; unfold bindt_ToBatch3.
     reassociate -> on left.
-    rewrite (trfm_ret).
+    rewrite trfm_ret.
     rewrite (runBatch_batch G).
     reflexivity.
   Qed.
@@ -42,12 +42,11 @@ Section with_algebra.
   Proof.
     intros.
     unfold id. ext t.
-    unfold_ops Bindt_ToBatchM; unfold bindt_ToBatchM.
+    unfold_ops Bindt_ToBatch3; unfold bindt_ToBatch3.
     assert (lemma : @runBatch A (T A) (fun X => X) _ _ _ (@ret T _ A) (T A) =
               extract_Batch ∘ mapfst_Batch A (T A) (@ret T _ A)).
     { rewrite (runBatch_spec (fun A => A)).
-      rewrite <- (TraversableFunctor.map_to_traverse).
-      rewrite <- map_compat_traverse_Batch1.
+      rewrite <- trff_map_to_traverse.
       reflexivity. }
     setoid_rewrite lemma.
     rewrite trfm_extract.
@@ -63,12 +62,12 @@ Section with_algebra.
     (f : A -> G1 (T B)) :
     kc3 (G1 := G1) (G2 := G2) g f =
       runBatch G1 f (G2 (T C)) ∘ map (F := Batch A (T B)) (runBatch G2 g (T C))
-        ∘ double_BatchM T A B C.
+        ∘ double_Batch3 A B C.
   Proof.
     ext a.
     unfold kc3.
     cbn. unfold id, compose.
-    rewrite (map_to_ap).
+    rewrite map_to_ap.
     reflexivity.
   Qed.
 
@@ -79,17 +78,17 @@ Section with_algebra.
             bindt (G := G1 ∘ G2) (kc3 (G1 := G1) (G2 := G2) g f).
   Proof.
     intros.
-    unfold_ops Bindt_ToBatchM; unfold bindt_ToBatchM.
+    unfold_ops Bindt_ToBatch3; unfold bindt_ToBatch3.
     reassociate <- on left.
     rewrite <- (fun_map_map (F := G1)).
     reassociate -> near (runBatch G1 f (T B)).
     rewrite natural.
     reassociate <- on left.
-    reassociate -> near (toBatchM T A B).
-    rewrite <- (trfm_duplicate).
-    rewrite cojoin_BatchM_spec.
+    reassociate -> near toBatch3.
+    rewrite <- trfm_duplicate.
+    rewrite cojoin_Batch3_spec.
     reassociate <- on left.
-    rewrite (natural).
+    rewrite natural.
     rewrite (runBatch_morphism'
                (homomorphism := ApplicativeMorphism_parallel
                         (Batch A (T B)) (Batch B (T C)) G1 G2)).
@@ -103,9 +102,9 @@ Section with_algebra.
         ϕ (T B) ∘ bindt (G := G1) f = bindt (G := G2) (ϕ (T B) ∘ f).
   Proof.
     intros.
-    unfold_ops Bindt_ToBatchM; unfold bindt_ToBatchM.
+    unfold_ops Bindt_ToBatch3; unfold bindt_ToBatch3.
     reassociate <- on left.
-    now rewrite (runBatch_morphism').
+    now rewrite runBatch_morphism'.
   Qed.
 
   #[export] Instance TraversableMonad_Kleisli_Coalgebraic :

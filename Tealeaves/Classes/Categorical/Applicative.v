@@ -553,6 +553,41 @@ Section applicative_compose_laws.
       ((fun A : Type => (fun X => @id (F1 X)) (G2 A) ∘ map (ϕ2 A))).
     apply (ApplicativeMorphism_parallel F1 F2 F1 G2).
   Qed.
+  
+  #[export] Instance ApplicativeMorphism_parallel_left_id
+    (F2 G1 : Type -> Type)
+    `{Applicative G1}
+    `{Applicative F2}
+    `{! ApplicativeMorphism (fun A => A) G1 ϕ1} :
+    ApplicativeMorphism F2 (G1 ∘ F2) (fun A => ϕ1 (F2 A)).
+  Proof.
+    change F2 with ((fun A => A) ∘ F2) at 1.
+    change H3 with (Map_compose (fun X => X) F2) at 1.
+    change H5 with (@mult F2 _) at 1.
+    rewrite <- (Mult_compose_identity2 F2).
+    change H4 with (@pure F2 _) at 1.
+    rewrite <- (Pure_compose_identity2 F2).
+    apply (ApplicativeMorphism_parallel_left
+             (fun X => X) F2 G1).
+  Qed.
+  
+  #[export] Instance ApplicativeMorphism_parallel_right_id
+    (F1 G2 : Type -> Type)
+    `{Applicative G2}
+    `{Applicative F1}
+    `{! ApplicativeMorphism (fun A => A) G2 ϕ2} :
+    ApplicativeMorphism F1 (F1 ∘ G2) (fun A => map (F := F1) (ϕ2 A)).
+  Proof.
+    Set Printing Implicit.
+    change F1 with (F1 ∘ (fun A => A)) at 1.
+    change H3 with (Map_compose F1 (fun X => X)) at 1.
+    change H5 with (@mult F1 _) at 1.
+    rewrite <- (Mult_compose_identity1 F1).
+    change H4 with (@pure F1 _) at 1.
+    rewrite <- (Pure_compose_identity1 F1).
+    apply (ApplicativeMorphism_parallel_right
+             F1 (fun X => X) G2).
+  Qed.
 
 End applicative_compose_laws.
 

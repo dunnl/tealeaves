@@ -160,9 +160,9 @@ Section traversable_monad_theory.
     unfold compose at 1 in hyp.
     rewrite (foldMap_to_runBatch2 A B) in hyp.
     unfold compose at 1 in hyp.
-    setoid_rewrite toBatchM_toBatch in hyp.
+    setoid_rewrite toBatch3_toBatch in hyp.
     rewrite <- runBatch_mapsnd in hyp.
-    induction (toBatchM T A B t).
+    induction (toBatch3 T A B t).
     - cbn in *.
       reflexivity.
     - cbn.

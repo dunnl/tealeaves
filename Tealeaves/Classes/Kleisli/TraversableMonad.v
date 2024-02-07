@@ -502,7 +502,7 @@ Section DerivedInstances.
 
   (** ** Instances *)
   (******************************************************************************)
-  Lemma map_to_bind (A B : Type) (f : A -> B):
+  Lemma ktmf_map_to_bind (A B : Type) (f : A -> B):
     map f = bind (ret ∘ f).
   Proof.
     rewrite ktmf_map_to_bindt.
@@ -510,7 +510,7 @@ Section DerivedInstances.
     reflexivity.
   Qed.
 
-  Lemma map_to_traverse :
+  Lemma ktmf_map_to_traverse :
     @map T _ = @traverse T _ (fun X : Type => X) _ _ _.
   Proof.
     ext A B f.
@@ -526,17 +526,17 @@ Section DerivedInstances.
     |}.
 
   #[export] Instance MonadFull_TraversableMonadFull : MonadFull T :=
-    {| kmonf_map_to_bind := map_to_bind;
+    {| kmonf_map_to_bind := ktmf_map_to_bind;
     |}.
 
-  #[export] Instance TraversableFunctor_TraversableMoandFull : TraversableFunctor T :=
+  #[export] Instance TraversableFunctor_TraversableMonadFull : TraversableFunctor T :=
     {| trf_traverse_id := traverse_id;
        trf_traverse_traverse := @traverse_traverse;
        trf_traverse_morphism := @traverse_morphism;
     |}.
 
-  #[export] Instance TraversableFunctorFull_TraversableMoandFull  : TraversableFunctorFull T :=
-    {| trff_map_to_traverse := map_to_traverse;
+  #[export] Instance TraversableFunctorFull_TraversableMonadFull  : TraversableFunctorFull T :=
+    {| trff_map_to_traverse := ktmf_map_to_traverse;
     |}.
 
   #[export] Instance Functor_TM : Functor T :=

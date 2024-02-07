@@ -83,7 +83,7 @@ Section lemmas.
   Corollary bind_through_runBatch :
     forall (A B : Type) (t : T A)
       (f : A -> T B),
-      bind f = runBatch (F := fun A => A) f ∘ toBatchM T A B.
+      bind f = runBatch (F := fun A => A) f ∘ toBatch3 T A B.
   Proof.
     intros.
     apply bind_through_runBatch.

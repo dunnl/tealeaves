@@ -137,20 +137,20 @@ Module Kleisli_Coalgebraic_Kleisli.
     `{Return T}
     `{! Kleisli.TraversableMonad.TraversableMonad T}.
 
-  #[local] Instance toBatchM' : ToBatchM T :=
-    ToBatchM_Bindt.
+  #[local] Instance toBatch3' : ToBatch3 T :=
+    ToBatch3_Bindt.
 
   #[local] Instance bindt' : Bindt T T :=
-    Bindt_ToBatchM T.
+    Bindt_ToBatch3 T.
 
   Goal forall A B G `{Applicative G}, @bindtT G _ _ _ A B = @bindt' G _ _ _ A B.
   Proof.
     intros. ext f.
-    unfold bindt'. unfold_ops @Bindt_ToBatchM.
-    unfold bindt_ToBatchM.
-    unfold toBatchM.
-    unfold toBatchM'.
-    unfold_ops @ToBatchM_Bindt.
+    unfold bindt'. unfold_ops @Bindt_ToBatch3.
+    unfold bindt_ToBatch3.
+    unfold toBatch3.
+    unfold toBatch3'.
+    unfold_ops @ToBatch3_Bindt.
     erewrite (ktm_morph).
     rewrite (runBatch_batch G).
     reflexivity.
@@ -164,13 +164,13 @@ End Kleisli_Coalgebraic_Kleisli.
 Module Coalgebraic_Kleisli_Coalgebraic.
 
   Context
-    `{toBatchMT : ToBatchM T}
+    `{toBatch3T : ToBatch3 T}
     `{Return T}
     `{! Coalgebraic.TraversableMonad.TraversableMonad T}.
 
-  #[local] Instance bindt' : Bindt T T := @Bindt_ToBatchM T toBatchMT.
+  #[local] Instance bindt' : Bindt T T := @Bindt_ToBatch3 T toBatch3T.
 
-  #[local] Instance toBatchM' : ToBatchM T := @ToBatchM_Bindt T bindt'.
+  #[local] Instance toBatch3' : ToBatch3 T := @ToBatch3_Bindt T bindt'.
 
   Lemma runBatch_batch2 : forall (A B : Type),
       runBatch (Batch A B) (batch A B) B = @id (Batch A B B).
@@ -190,15 +190,15 @@ Module Coalgebraic_Kleisli_Coalgebraic.
       fequal.
   Qed.
 
-  Goal forall A B, @toBatchMT A B = @toBatchM' A B.
+  Goal forall A B, @toBatch3T A B = @toBatch3' A B.
   Proof.
     intros.
-    unfold toBatchM'. unfold_ops @ToBatchM_Bindt.
+    unfold toBatch3'. unfold_ops @ToBatch3_Bindt.
     unfold bindt.
     unfold bindt'.
-    unfold_ops @Bindt_ToBatchM.
-    unfold bindt_ToBatchM.
-    unfold toBatchM.
+    unfold_ops @Bindt_ToBatch3.
+    unfold bindt_ToBatch3.
+    unfold toBatch3.
     rewrite runBatch_batch2.
     reflexivity.
   Qed.
