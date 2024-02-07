@@ -110,3 +110,9 @@ Tealeaves/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Theory/DecoratedTraversableMonad.v
 #Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
+
+# BACKENDS
+Tealeaves/Backends/LN/Atom.v
+Tealeaves/Backends/LN/AtomSet.v
+Tealeaves/Backends/LN/AssocList.v
+#Tealeaves/Backends/LN/LN.v
