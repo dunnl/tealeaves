@@ -16,7 +16,7 @@ Import Monoid.Notations.
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
-(** * Traversals as <<Batch3>> coalgebras *)
+(** * DecoratedTraversableMonads as <<Batch3>> coalgebras *)
 (******************************************************************************)
 #[export] Instance ToBatch7_Binddt `{Binddt W T T}
     : Coalgebraic.DecoratedTraversableMonad.ToBatch7 W T :=
