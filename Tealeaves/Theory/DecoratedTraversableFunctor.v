@@ -125,7 +125,7 @@ Section decorated_traversable_functor_theory.
 
   (** *** <<foldMapd>> a special case of <<runBatch>> *)
   (******************************************************************************)
-  Lemma foldMapd_through_runBatch1 (A : Type) `{Monoid M} : forall `(f : E * A -> M),
+  Lemma foldMapd_through_runBatch1 {A} `{Monoid M} : forall `(f : E * A -> M),
       foldMapd f = runBatch (F := const M) f (C := T False) ∘ toBatch6 (B := False).
   Proof.
     intros.
@@ -547,6 +547,71 @@ Section decorated_traversable_functor_theory.
         cbn in Heq; subst. eauto.
       - intros [e Hin]. eauto.
     Qed.
+
+    Lemma ind_iff_in_ctx_tolist3 : forall (A : Type) (a : A) (e : E) (t : T A),
+        (e, a) ∈d t <-> (e, a) ∈d ctx_tolist t.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
+        a ∈ t <-> a ∈ tolist t.
+    Proof.
+      reflexivity.
+    Qed.
+
+    (** ** Quantification over elements *)
+    (******************************************************************************)
+    Definition Forall_ctx `(P : E * A -> Prop) : T A -> Prop :=
+      @foldMapd T _ Prop Monoid_op_and Monoid_unit_true A P.
+
+    Definition Forany_ctx `(P : E * A -> Prop) : T A -> Prop :=
+      @foldMapd T _ Prop Monoid_op_or Monoid_unit_false A P.
+
+    Lemma forall_ctx_iff `(P : E * A -> Prop) (t : T A) :
+      Forall_ctx P t <-> forall (e : E) (a : A), (e, a) ∈d t -> P (e, a).
+    Proof.
+      unfold Forall_ctx.
+      setoid_rewrite element_to_foldMapd2.
+      rewrite (foldMapd_through_runBatch1 _).
+      assert (lemma : forall (e : E) (a : A),
+                 foldMapd (eq (e, a))
+                   (op := or) (unit := False) t =
+                   (runBatch (B := False)
+          (H0 := @Mult_const Prop Monoid_op_or)
+          (H1 := @Pure_const Prop Monoid_unit_false)
+          (eq (e, a)) ∘ toBatch6) t).
+      { intros; now rewrite (foldMapd_through_runBatch1 _). }
+      setoid_rewrite lemma.
+      unfold compose.
+      induction (toBatch6 t).
+      - split.
+        + intros hyp e a contra.
+          inversion contra.
+        + intros. exact I.
+      - specialize (IHb lemma).
+        rewrite runBatch_rw2.
+        split.
+        + intros [hyp_b hyp_a] e a' hyp.
+          rewrite IHb in hyp_b.
+          rewrite runBatch_rw2 in hyp.
+          inversion hyp; subst; auto.
+        + intro hyp.
+          cbn. split.
+          * rewrite IHb.
+            intros e a' hyp2.
+            apply hyp. now left.
+          * destruct a as [e a'].
+            eapply hyp.
+            rewrite runBatch_rw2.
+            now right.
+    Qed.
+
+    Lemma forany_ctx_iff `(P : E * A -> Prop) (t : T A) :
+      Forany_ctx P t <-> exists (e : E) (a : A), (e, a) ∈d t /\ P (e, a).
+    Proof.
+      intros.
+    Abort.
 
     (** ** Characterizing <<∈d>> and <<mapd>> *)
     (******************************************************************************)
