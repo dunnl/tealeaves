@@ -23,7 +23,6 @@ Tealeaves/Functors/Reader.v
 Tealeaves/Functors/Writer.v
 Tealeaves/Classes/Kleisli/DecoratedFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedMonad.v
-Tealeaves/Functors/Constant.v # Used by DTM.v
 Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
@@ -56,6 +55,7 @@ Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedContainerMonad.v
 #Tealeaves/Classes/Kleisli/DecoratedShapelyMonad.v
 Tealeaves/Functors/Backwards.v
+Tealeaves/Functors/Constant.v
 Tealeaves/Functors/Diagonal.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
