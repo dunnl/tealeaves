@@ -3,8 +3,7 @@ From Tealeaves Require Export
   Classes.Kleisli.DecoratedMonad
   Classes.Kleisli.TraversableFunctor
   Classes.Kleisli.TraversableMonad
-  Classes.Kleisli.DecoratedTraversableFunctor
-  Functors.Constant.
+  Classes.Kleisli.DecoratedTraversableFunctor.
 
 Import Monoid.Notations.
 Import Product.Notations.
@@ -264,25 +263,7 @@ Section properties.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity1 G).
   Qed.
-
-  Lemma binddt_app_const_r :
-    forall {G : Type -> Type} `{Monoid M} {A B : Type} `{Applicative G} (f : W * A -> G M),
-      @binddt W T T _ (G ∘ const M)
-        (Map_compose G (const M))
-        (Pure_compose G (const M))
-        (Mult_compose G (const M)) A B f =
-        binddt (T := T) (G := const (G M)) (B := B) f.
-  Proof.
-    intros. fequal.
-    - ext X Y h x.
-      unfold_ops @Map_compose @Map_const.
-      now rewrite fun_map_id.
-    - ext X Y [x y].
-      unfold_ops @Mult_compose @Mult_const.
-      unfold_ops @Monoid_op_applicative.
-      reflexivity.
-  Qed.
-
+  
 End properties.
 
 (** * Derived Instances *)

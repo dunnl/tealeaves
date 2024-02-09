@@ -5,6 +5,7 @@ From Tealeaves Require Import
   Functors.Writer
   Functors.Batch.
 
+Import Batch.Notations.
 Import Monoid.Notations.
 Import DecoratedTraversableFunctor.Notations.
 Import Product.Notations.
@@ -47,8 +48,17 @@ Section section.
     E * A -> (Batch (E * A) B ∘ Batch (E * B) C) C :=
     fun '(e, a) => (map (F := Batch (E * A) B) (batch (E * B) C ∘ pair e) ∘ batch (E * A) B) (e, a).
 
+  Lemma double_batch6_rw {A B C : Type} :
+    forall '(e, a),
+      @double_batch6 A B C (e, a) =
+        Done (batch (E * B) C ∘ pair e) ⧆ (e, a).
+  Proof.
+    intros [e a].
+    reflexivity.
+  Qed.
+
   (* TODO Cleanup *)
-  Lemma cojoin_Batch6_spec : forall (A B B' : Type),
+  Lemma cojoin_Batch6_to_runBatch : forall (A B B' : Type),
       (@cojoin_Batch6 E T _ A B B') =
         (fun C => runBatch (F := Batch (E * A) B' ∘ Batch (E * B') _)
           (double_batch6 B)).
@@ -79,7 +89,7 @@ Section section.
         double_batch6 C.
   Proof.
     intros.
-    rewrite (cojoin_Batch6_spec).
+    rewrite (cojoin_Batch6_to_runBatch).
     pose (runBatch_batch).
     specialize (e ((Batch (E * A) B ∘ Batch (E * B) C))
                   _ _ _ _).
@@ -93,7 +103,7 @@ Section section.
         (@cojoin_Batch6 E _ _ A C B).
   Proof.
     intros.
-    rewrite (@cojoin_Batch6_spec A C B).
+    rewrite (@cojoin_Batch6_to_runBatch A C B).
     apply ApplicativeMorphism_runBatch.
   Qed.
 

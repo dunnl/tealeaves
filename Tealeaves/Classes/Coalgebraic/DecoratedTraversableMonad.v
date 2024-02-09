@@ -5,6 +5,7 @@ From Tealeaves Require Import
   Functors.Writer
   Functors.Batch.
 
+Import Batch.Notations.
 Import Monoid.Notations.
 Import DecoratedTraversableMonad.Notations.
 Import Product.Notations.
@@ -89,7 +90,16 @@ Section section.
       (map (F := Batch (W * A) (T A'))
          (mapfst_Batch (incr w) ∘ toBatch7) ∘ batch (W * A) (T A')) (w, a).
 
-  Lemma cojoin_Batch7_spec : forall (A A' A'' : Type) (R : Type),
+  Lemma double_batch7_rw {A A' : Type} {R : Type} :
+    forall '(w, a),
+      double_batch7 (A := A) (A' := A') (R := R) (w, a) =
+        Done (mapfst_Batch (incr w) ∘ toBatch7) ⧆ (w, a).
+  Proof.
+    intros [w a].
+    reflexivity.
+  Qed.
+
+  Lemma cojoin_Batch7_to_runBatch : forall (A A' A'' : Type) (R : Type),
       cojoin_Batch7 (A := A) (A' := A') (A'' := A'') (R := R) =
         runBatch (F := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A'))
           double_batch7.
@@ -112,7 +122,7 @@ Section section.
       cojoin_Batch7 (A'' := A') ∘ batch (W * A) (T R) = double_batch7.
   Proof.
     intros.
-    rewrite cojoin_Batch7_spec.
+    rewrite cojoin_Batch7_to_runBatch.
     rewrite (runBatch_batch (Batch (prod W A) (T A') ∘ Batch (prod W A') (T R))).
     reflexivity.
   Qed.
@@ -127,7 +137,7 @@ Section section.
     assert (lemma :
              @cojoin_Batch7 W T op H0 A A' A'' =
                fun R => runBatch (F := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A')) double_batch7).
-    { ext R. now rewrite cojoin_Batch7_spec. }
+    { ext R. now rewrite cojoin_Batch7_to_runBatch. }
     rewrite lemma.
     apply ApplicativeMorphism_runBatch.
   Qed.

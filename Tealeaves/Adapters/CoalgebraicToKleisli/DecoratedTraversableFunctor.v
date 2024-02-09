@@ -10,12 +10,8 @@ Import DecoratedTraversableFunctor.Notations.
 
 #[local] Generalizable Variables E T G ϕ.
 
-#[local] Arguments map {F}%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 #[local] Arguments batch {A} (B)%type_scope _.
-#[local] Arguments toBatch6 {E}%type_scope {T}%function_scope {ToBatch6} {A B}%type_scope _.
-#[local] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
@@ -30,100 +26,85 @@ Section with_algebra.
   Context
     `{Coalgebraic.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-
-  Lemma kdtm_binddt1_T : forall (A : Type),
-      mapdt (G := fun A : Type => A) (extract (W := (E ×))) = @id (T A).
-  Proof.
-    intros. unfold id. ext t.
-    unfold_ops @Mapdt_ToBatch6.
-    rewrite (runBatch_spec (fun A => A)).
-    unfold_ops @Map_I.
-    rewrite <- (TraversableFunctor.map_to_traverse).
-    pose (dtf_extract).
-    specialize (e A).
-    (* TODO Need to deal with mapfst_Batch *)
-  Admitted.
-
-  Lemma kc7_spec :
-    forall (G1 G2 : Type -> Type)
-      `{Applicative G1}
+  Lemma kc6_spec :
+    forall `{Applicative G1}
       `{Applicative G2},
-        forall (A B C : Type)
-          (g : E * B -> G2 (T C)) (f : E * A -> G1 (T B)),
-          runBatch (F := G1) f (C := G2 (T C)) ∘
-            map (F := Batch (E * A) (T B)) (runBatch (F := G2) g (C := T C)) ∘
-            double_batch6 C =
-            g ⋆7 f.
+    forall (A B C : Type)
+      (g : E * B -> G2 C) (f : E * A -> G1 B),
+      g ⋆6 f =
+        runBatch (F := G1) f (C := G2 C) ∘
+          map (F := Batch (E * A) B) (runBatch (F := G2) g (C := C)) ∘
+          double_batch6 C.
   Proof.
-    intros. ext [w a].
-    unfold compose. cbn.
+    intros. ext [e a].
+    unfold compose.
+    rewrite (double_batch6_rw (e, a)).
+    rewrite map_Batch_rw2.
+    rewrite map_Batch_rw1.
+    rewrite runBatch_rw2.
+    rewrite runBatch_rw1.
     rewrite <- (map_to_ap).
-    change (?f ∘ id) with f.
-    reassociate <- on left.
-    fequal.
-    unfold_ops @Binddt_Coalgebra.
-    unfold binddt_ToBatchDM.
-    fequal.
-    unfold compose; ext x; rewrite <- (runBatch_mapfst).
+    reassociate <- on right.
+    rewrite (runBatch_batch G2).
+    rewrite kc6_spec.
     reflexivity.
   Qed.
 
-  Lemma factor :
-    forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Pure G1) (H5 : Mult G1),
-      Applicative G1 ->
-      forall (H7 : Map G2) (H8 : Pure G2) (H9 : Mult G2),
-        Applicative G2 ->
-        forall (A B C : Type) (g : E * B -> G2 (T C)) (f : E * A -> G1 (T B)),
-          map (runBatch (C := T C) g) ∘ runBatch f ∘ runBatch (double_batch6 C) =
-            runBatch (F := G1 ∘ G2) (g ⋆7 f).
+  Lemma kdtf_mapdt1_T : forall (A : Type),
+      mapdt (G := fun A : Type => A) (extract (W := (E ×))) = @id (T A).
   Proof.
     intros.
-    rewrite <- (kc7_spec G1 G2).
-  Admitted.
-
-  Lemma kdtm_binddt2_T :
-    forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Pure G1) (H5 : Mult G1),
-      Applicative G1 ->
-      forall (H7 : Map G2) (H8 : Pure G2) (H9 : Mult G2),
-        Applicative G2 ->
-        forall (A B C : Type) (g : E * B -> G2 (T C)) (f : E * A -> G1 (T B)),
-          map (F := G1) (binddt g) ∘ binddt f =
-            binddt (G := G1 ∘ G2) (g ⋆7 f).
-  Proof.
-    intros.
-    unfold_ops @Binddt_Coalgebra; unfold binddt_ToBatchDM.
-    rewrite <- (fun_map_map (F := G1)).
-    reassociate -> on left.
-    reassociate <- near (map (F := G1) (toBatch6 (A := B) (B := C))).
-    rewrite (natural (ϕ := @runBatch _ _ _ _ _ _ f)).
-    do 2 reassociate <- on left.
-    reassociate -> on left.
-    rewrite <- (dtm_duplicate).
-    rewrite cojoin_BatchDM_spec.
-    repeat reassociate <-.
-    now rewrite factor.
+    unfold_ops @Mapdt_ToBatch6.
+    rewrite (runBatch_spec (fun A => A)).
+    rewrite <- trff_map_to_traverse.
+    rewrite <- dtf_extract.
+    reflexivity.
   Qed.
 
-  Lemma kdtm_morph_T :
+  Lemma kdtf_mapdt2_T :
+    forall `{Applicative G1}
+      `{Applicative G2},
+        forall (A B C : Type) (g : E * B -> G2 C) (f : E * A -> G1 B),
+          map (F := G1) (mapdt g) ∘ mapdt f =
+            mapdt (G := G1 ∘ G2) (g ⋆6 f).
+  Proof.
+    intros.
+    unfold_ops @Mapdt_ToBatch6.
+    reassociate <- on left.
+    rewrite <- (fun_map_map (F := G1)).
+    reassociate -> near (runBatch f).
+    rewrite natural.
+    reassociate <- on left.
+    reassociate -> near toBatch6.
+    rewrite <- dtf_duplicate.
+    rewrite cojoin_Batch6_to_runBatch.
+    reassociate <- on left.
+    rewrite natural.
+    rewrite (runBatch_morphism'
+               (homomorphism := ApplicativeMorphism_parallel
+                        (Batch (E * A) B) (Batch (E * B) C) G1 G2)).
+    rewrite kc6_spec.
+    reflexivity.
+  Qed.
+
+  Lemma kdtf_morph_T :
     forall (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ},
-      forall (A B : Type) (f : E * A -> G1 (T B)),
-        ϕ (T B) ∘ binddt f = binddt (ϕ (T B) ∘ f).
+      forall (A B : Type) (f : E * A -> G1 B),
+        mapdt (ϕ B ∘ f) = ϕ (T B) ∘ mapdt f.
   Proof.
     intros. ext t.
-    unfold_ops @Binddt_Coalgebra.
-    unfold binddt_ToBatchDM.
-    reassociate <- on left.
-    rewrite (runBatch_morphism').
+    unfold_ops @Mapdt_ToBatch6.
+    reassociate <- on right.
+    rewrite runBatch_morphism'.
     reflexivity.
   Qed.
 
 #[export] Instance TraversableFunctor_Kleisli_Coalgebra :
   Classes.Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
   {|
-    kdtm_binddt0 := kdtm_binddt0_T;
-    kdtm_binddt1 := kdtm_binddt1_T;
-    kdtm_binddt2 := kdtm_binddt2_T;
-    kdtm_morph := kdtm_morph_T;
+    kdtfun_mapdt1 := kdtf_mapdt1_T;
+    kdtfun_mapdt2 := @kdtf_mapdt2_T;
+    kdtfun_morph := kdtf_morph_T;
   |}.
 
 End with_algebra.
