@@ -112,8 +112,8 @@ Section to_coalgebraic.
   Context
     `{Kleisli.TraversableMonad.TraversableMonadFull T}.
 
-  Lemma double_Batch3_spec : forall A B C,
-      double_Batch3 A B C = batch (T C) ⋆3 batch (T B).
+  Lemma double_batch3_spec : forall A B C,
+      double_batch3 (A := A) = batch (T C) ⋆3 batch (T B).
   Proof.
     reflexivity.
   Qed.
@@ -157,7 +157,7 @@ Section to_coalgebraic.
     unfold_compose_in_compose.
     rewrite (cojoin_Batch3_batch).
     rewrite (ktm_bindt2 _ _).
-    rewrite double_Batch3_spec.
+    rewrite double_batch3_spec.
     reflexivity.
     Unshelve.
     all:eauto with typeclass_instances.

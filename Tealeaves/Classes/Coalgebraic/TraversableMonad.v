@@ -4,7 +4,9 @@ From Tealeaves Require Import
   Classes.Categorical.Applicative
   Functors.Batch.
 
+Import Batch.Notations.
 Import Applicative.Notations.
+Import TraversableMonad.Notations.
 
 #[local] Generalizable Variables T.
 
@@ -65,16 +67,24 @@ Section spec.
   Context
     `{ToBatch3 T}.
 
-  Definition double_Batch3 (A B C : Type) :
+  Definition double_batch3 {A B C : Type} :
       A -> Batch A (T B) (Batch B (T C) (T C)) :=
     map (F := Batch A (T B)) toBatch3 ∘ batch A (T B).
 
-  Lemma cojoin_Batch3_spec : forall (A B B' : Type),
+  Lemma double_batch3_rw {A B C : Type} (a : A) :
+    double_batch3 (B := B) (C := C) a =
+      Done toBatch3 ⧆ a.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma cojoin_Batch3_to_runBatch : forall (A B B' : Type),
       @cojoin_Batch3 _ _ A B B' =
         runBatch (Batch A (T B) ∘ Batch B (T B'))
-          (double_Batch3 A B B').
+          (double_batch3 (B := B) (C := B')).
   Proof.
-    intros. ext C. ext b.
+    intros.
+    ext C. ext b.
     induction b as [R r |R rest IHrest a].
     - cbn. reflexivity.
     - cbn.
@@ -82,17 +92,17 @@ Section spec.
       do 3
         (compose near
            (runBatch (Batch A (T B) ∘ Batch B (T B'))
-              (double_Batch3 A B B') (T B' -> R) rest) on right;
+              double_batch3 (T B' -> R) rest) on right;
          rewrite (fun_map_map (F := Batch A (T B)))).
       reflexivity.
   Qed.
 
   Lemma cojoin_Batch3_batch : forall (A B C : Type),
       cojoin_Batch3 A B C ∘ batch A (T C) =
-        double_Batch3 A B C.
+        double_batch3.
   Proof.
     intros.
-    rewrite cojoin_Batch3_spec.
+    rewrite cojoin_Batch3_to_runBatch.
     rewrite (runBatch_batch (Batch A (T B) ∘ Batch B (T C)) A (T C)).
     reflexivity.
   Qed.
@@ -104,8 +114,7 @@ Section spec.
         (@cojoin_Batch3 T _ A B C).
   Proof.
     intros.
-    Set Printing All.
-    rewrite (@cojoin_Batch3_spec A B C).
+    rewrite (@cojoin_Batch3_to_runBatch A B C).
     apply ApplicativeMorphism_runBatch.
   Qed.
 
@@ -138,7 +147,7 @@ Class TraversableMonad
   { trfm_ret : forall (A B : Type),
       toBatch3 ∘ ret = batch A (T B);
     trfm_extract : forall (A : Type),
-      extract_Batch ∘ mapfst_Batch A (T A) (ret) ∘ toBatch3 = @id (T A);
+      extract_Batch ∘ mapfst_Batch A (T A) ret ∘ toBatch3 = @id (T A);
     trfm_duplicate : forall (A A' A'' : Type),
       cojoin_Batch3 A A' A'' ∘ toBatch3 =
         map (F := Batch A (T A')) toBatch3 ∘ toBatch3;

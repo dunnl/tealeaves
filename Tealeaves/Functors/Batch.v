@@ -810,6 +810,13 @@ Section parameterized.
     A -> Batch A B (Batch B C C) :=
     map (Batch A B) (batch B C) ∘ (batch A B).
 
+  Lemma double_batch_rw {A B C : Type} (a : A) :
+    double_batch (B := B) (C := C) a =
+      Done A B (B -> Batch B C C) (batch B C) ⧆ a.
+  Proof.
+    reflexivity.
+  Qed.
+
   Lemma double_batch_spec : forall (A B C : Type),
       double_batch = batch B C ⋆2 batch A B.
   Proof.
@@ -1041,16 +1048,6 @@ End parameterized.
 
 (** ** <<cojoin>> as <<runBatch double_batch>> *)
 (******************************************************************************)
-
-
-(*
-Lemma double_batch_spec {A B C : Type} :
-  @double_batch A B C = @cojoin_Batch A B C C ∘ batch C A.
-Proof.
-  reflexivity.
-Qed.
-*)
-
 #[export] Instance AppMor_cojoin : forall (A B C : Type),
     ApplicativeMorphism (Batch A C) (Batch A B ∘ Batch B C) (@cojoin_Batch A B C).
 Proof.

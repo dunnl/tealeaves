@@ -7,8 +7,6 @@ From Tealeaves Require Export
 (** * Traversable Functors: Kleisli to Algebraic *)
 (******************************************************************************)
 
-(** ** Instances *)
-(******************************************************************************)
 Module ToCategorical.
 
   (** ** Operations *)
