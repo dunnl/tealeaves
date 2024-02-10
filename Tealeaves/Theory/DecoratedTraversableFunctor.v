@@ -547,6 +547,14 @@ Section decorated_traversable_functor_theory.
         cbn in Heq; subst. eauto.
       - intros [e Hin]. eauto.
     Qed.
+    
+    Lemma ind_implies_in : forall (A : Type) (e : E) (a : A) (t : T A),
+        (e, a) ∈d t -> a ∈ t.
+    Proof.
+      intros.
+      rewrite ind_iff_in.
+      eauto.
+    Qed.
 
     Lemma ind_iff_in_ctx_tolist3 : forall (A : Type) (a : A) (e : E) (t : T A),
         (e, a) ∈d t <-> (e, a) ∈d ctx_tolist t.
@@ -651,24 +659,15 @@ Section decorated_traversable_functor_theory.
       reflexivity.
     Qed.
 
-    (* TODO
-
-  Theorem in_mapd_iff :
-    forall `(f : W * A -> B) (t : T A) (b : B),
-      b ∈ mapd f t <-> exists (w : W) (a : A), (w, a) ∈d t /\ f (w, a) = b.
-  Proof.
-    intros.
-    rewrite in_mapd_iff.
-    reflexivity.
-    change (@Traverse_Binddt W T _ _)
-      with (@DerivedInstances.Traverse_Mapdt _ _ _).
-    rewrite (ind_iff_in).
-    change (@Mapd_Binddt W T _ _)
-      with (@DerivedInstances.Mapd_Mapdt _ _ _).
-    setoid_rewrite (ind_mapd_iff).
-    reflexivity.
-  Qed.
-*)
+    Theorem in_mapd_iff :
+      forall `(f : E * A -> B) (t : T A) (b : B),
+        b ∈ mapd f t <-> exists (e : E) (a : A), (e, a) ∈d t /\ f (e, a) = b.
+    Proof.
+      intros.
+      rewrite ind_iff_in.
+      setoid_rewrite ind_mapd_iff.
+      reflexivity.
+    Qed.
 
     Lemma mapd_respectful :
       forall A B (t : T A) (f g : E * A -> B),
@@ -689,6 +688,19 @@ Section decorated_traversable_functor_theory.
         + introv hyp2.
           apply hyp.
           now left.
+    Qed.
+
+    Corollary mapd_respectful_id :
+      forall A (t : T A) (f : E * A -> A),
+        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = a)
+        -> mapd f t = t.
+    Proof.
+      introv hyp.
+      change t with (id t) at 2.
+      rewrite <- kdtfun_mapdt1.
+      rewrite <- kdtfunf_mapd_to_mapdt.
+      eapply mapd_respectful.
+      apply hyp.
     Qed.
 
   End tosetd.

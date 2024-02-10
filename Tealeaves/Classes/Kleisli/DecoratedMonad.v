@@ -462,6 +462,27 @@ Section derived_instances.
     reflexivity.
   Qed.
 
+  Lemma bind_to_bindd `(f : A -> T B) :
+    bind f = bindd (f ∘ extract).
+  Proof.
+    rewrite kmondf_bind_compat.
+    reflexivity.
+  Qed.
+
+  Lemma mapd_to_bindd `(f : W * A -> B):
+    mapd f = bindd (ret ∘ f).
+  Proof.
+    rewrite kmondf_mapd_compat.
+    reflexivity.
+  Qed.
+
+  Lemma map_to_bindd `(f : A -> B):
+    map f = bindd (ret ∘ f ∘ extract).
+  Proof.
+    rewrite kmondf_map_compat.
+    reflexivity.
+  Qed.
+
   (** ** Derived typeclass instances *)
   (******************************************************************************)
   #[export] Instance Monad_DecoratedMonad : Monad T :=

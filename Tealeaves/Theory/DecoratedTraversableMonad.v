@@ -346,6 +346,20 @@ Section lemmas.
     split; intros; preprocess; repeat eexists; eauto.
   Qed.
 
+  Corollary ind_bind_iff :
+    forall `(f : A -> T B) (t : T A) (wtotal : W) (b : B),
+      (wtotal, b) ∈d bind f t <->
+        exists (w1 w2 : W) (a : A),
+          (w1, a) ∈d t /\ (w2, b) ∈d f a
+          /\ wtotal = w1 ● w2.
+  Proof.
+    intros.
+    rewrite kdtmf_bind_compat.
+    rewrite <- kdtmf_bindd_compat.
+    rewrite ind_bindd_iff.
+    reflexivity.
+  Qed.
+  
   (** ** Respectfulness for <<bindd>> *)
   (******************************************************************************)
   Lemma bindd_respectful_core :

@@ -182,4 +182,32 @@ Section traversable_monad_theory.
         now left.
   Qed.
 
+  Corollary bind_respectful :
+    forall `(f1 : A -> T B) `(f2 : A -> T B) (t : T A),
+      (forall (a : A), a ∈ t -> f1 a = f2 a) -> bind f1 t = bind f2 t.
+  Proof.
+    introv hyp.
+    rewrite ktmf_bind_to_bindt.
+    now eapply (bindt_respectful (fun A => A)).
+  Qed.
+  
+  Corollary bind_respectful_map :
+    forall `(f1 : A -> T B) `(f2 : A -> B) (t : T A),
+      (forall (a : A), a ∈ t -> f1 a = ret T (f2 a)) -> bind f1 t = map f2 t.
+  Proof.
+    introv hyp.
+    rewrite ktmf_map_to_bind.
+    now eapply bind_respectful.
+  Qed.
+
+  Corollary bind_respectful_id :
+    forall `(f1 : A -> T A) (t : T A),
+      (forall (a : A), a ∈ t -> f1 a = ret T a) -> bind f1 t = t.
+  Proof.
+    introv hyp.
+    change t with (id t) at 2.
+    rewrite <- bind_id.
+    now apply bind_respectful.
+  Qed.
+
 End traversable_monad_theory.
