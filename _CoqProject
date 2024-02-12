@@ -116,3 +116,7 @@ Tealeaves/Backends/LN/AtomSet.v
 Tealeaves/Backends/LN/AssocList.v
 Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN.v
+
+# EXAMPLES
+Tealeaves/Examples/STLC/Syntax.v
+Tealeaves/Examples/STLC/TypeSoundness.v

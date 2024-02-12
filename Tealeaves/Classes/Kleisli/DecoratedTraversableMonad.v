@@ -1651,5 +1651,21 @@ Module MakeFull.
 
   End special_cases.
 
+  #[export] Instance DecoratedTraversableMonad_MakeFull
+    `{Monoid W}
+    `{! DecoratedTraversableMonad W T} :
+    `{DecoratedTraversableMonadFull W T}.
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - intros. now rewrite map_to_binddt.
+    - intros. now rewrite mapd_to_binddt.
+    - intros. now rewrite bind_to_binddt.
+    - intros. now rewrite traverse_to_binddt.
+    - intros. now rewrite mapdt_to_binddt.
+    - intros. ext f. now rewrite bindd_to_binddt.
+    - intros. now rewrite bindt_to_binddt.
+  Qed.
+
   End makefull.
 End MakeFull.
