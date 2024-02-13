@@ -30,7 +30,7 @@ Definition kc1 {T : Type -> Type} `{Return T} `{Bind T T}
 
 (** ** Typeclass *)
 (******************************************************************************)
-Class PreRightModule
+Class RightPreModule
   (T U : Type -> Type)
   `{Return T} `{Bind T T} `{Bind T U} :=
   { kmod_bind1 : forall (A : Type),
@@ -45,7 +45,7 @@ Class Monad (T : Type -> Type)
   { (* left unit law of the monoid *)
     kmon_bind0 : forall (A B : Type) (f : A -> T B),
       @bind T T _ A B f ∘ @ret T _ A = f;
-    kmon_premod :> PreRightModule T T;
+    kmon_premod :> RightPreModule T T;
   }.
 
 (* right unit law of the monoid *)
@@ -79,7 +79,7 @@ Class MonadHom (T U : Type -> Type)
 Class RightModule (T : Type -> Type) (U : Type -> Type)
   `{Return T} `{Bind T T} `{Bind T U} :=
   { kmod_monad :> Monad T;
-    kmod_premod :> PreRightModule T U;
+    kmod_premod :> RightPreModule T U;
   }.
 
 (** * Derived instances *)
@@ -92,7 +92,7 @@ End Map_Bind.
 
 Class Compat_Map_Bind
   (U : Type -> Type)
-  {T : Type -> Type}
+  (T : Type -> Type)
   `{H_map : Map U}
   `{H_return : Return T}
   `{H_bind : Bind T U} : Prop :=
@@ -108,7 +108,7 @@ Qed.
 
 Lemma map_to_bind
   `{Return T} `{Bind T U} `{Map U}
-  `{! Compat_Map_Bind U} : forall `(f : A -> B),
+  `{! Compat_Map_Bind U T} : forall `(f : A -> B),
     @map U _ A B f = @bind T U _ A B (@ret T _ B ∘ f).
 Proof.
   rewrite compat_map_bind.
@@ -120,28 +120,46 @@ Class MonadFull (T : Type -> Type)
   `{Map_inst : Map T}
   `{Bind_inst : Bind T T} :=
   { kmonf_kmon :> Monad T;
-    kmonf_map_to_bind :> Compat_Map_Bind T;
+    kmonf_map_to_bind :> Compat_Map_Bind T T;
   }.
 
 Class RightModuleFull (T : Type -> Type) (U : Type -> Type)
-  `{Return T} `{Bind T T} `{Bind T U}
-  `{Map T} `{Map U}
+  `{Return_inst : Return T}
+  `{Bind_T_inst : Bind T T}
+  `{Bind_U_inst : Bind T U}
+  `{Map_T_inst : Map T}
+  `{Map_U_inst : Map U}
   :=
   { kmodf_mod :> RightModule T U;
-    kmod_compat :> Compat_Map_Bind U;
-    kmod_moncompat :> MonadFull T;
+    kmodf_compat :> Compat_Map_Bind U T;
+    kmodf_monad :> MonadFull T;
   }.
 
-Section MonadFull.
+Section instances.
+
   #[local] Instance MonadFull_Monad (T : Type -> Type)
-    `{Monad T} : MonadFull T (Map_inst := Map_Bind) :=
+    `{Monad_inst : Monad T} :
+  MonadFull T (Map_inst := Map_Bind) :=
   {| kmonf_map_to_bind := _;
   |}.
+
   #[local] Instance RightModule_Monad (T : Type -> Type)
-    `{Monad T} : RightModule T T :=
+    `{Monad_inst : Monad T} :
+    RightModule T T :=
     {| kmod_monad := _;
     |}.
-End MonadFull.
+
+  #[local] Instance RightModuleFull_RightModule
+    (T U : Type -> Type)
+    `{RightMod_inst : RightModule T U} :
+    RightModuleFull T U
+      (Map_T_inst := Map_Bind)
+      (Map_U_inst := Map_Bind) :=
+    {| kmodf_monad :=
+        MonadFull_Monad T (Monad_inst := kmod_monad)
+    |}.
+
+End instances.
 
 (** * Kleisli category laws *)
 (******************************************************************************)
@@ -186,8 +204,8 @@ Section derived_instances.
   Context
     `{module : RightModule T U}
     `{map_U : Map U} `{map_T : Map T}
-    `{! Compat_Map_Bind U}
-    `{! Compat_Map_Bind T}.
+    `{! Compat_Map_Bind U T}
+    `{! Compat_Map_Bind T T}.
 
   (** ** Composition between [bind] and [map] *)
   (******************************************************************************)
