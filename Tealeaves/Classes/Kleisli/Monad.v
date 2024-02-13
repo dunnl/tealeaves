@@ -14,11 +14,11 @@ Import Functor.Notations.
 Class Return (T : Type -> Type) :=
   ret : (fun A => A) ⇒ T.
 
-Class Bind (U T : Type -> Type) :=
-  bind : forall (A B : Type), (A -> U B) -> T A -> T B.
+Class Bind (T U : Type -> Type) :=
+  bind : forall (A B : Type), (A -> T B) -> U A -> U B.
 
 #[global] Arguments ret {T}%function_scope {Return} {A}%type_scope.
-#[global] Arguments bind {U} {T}%function_scope {Bind} {A B}%type_scope _%function_scope _.
+#[global] Arguments bind {T} {U}%function_scope {Bind} {A B}%type_scope _%function_scope _.
 
 (** ** Kleisli composition *)
 (******************************************************************************)
@@ -30,28 +30,37 @@ Definition kc1 {T : Type -> Type} `{Return T} `{Bind T T}
 
 (** ** Typeclass *)
 (******************************************************************************)
+Class PreRightModule
+  (T U : Type -> Type)
+  `{Return T} `{Bind T T} `{Bind T U} :=
+  { kmod_bind1 : forall (A : Type),
+      @bind T U _ A A (@ret T _ A) = @id (U A);
+    kmod_bind2 : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
+      @bind T U _ B C g ∘ @bind T U _ A B f = @bind T U _ A C (g ⋆1 f);
+  }.
+
 Class Monad (T : Type -> Type)
   `{Return_inst : Return T}
   `{Bind_inst : Bind T T} :=
   { (* left unit law of the monoid *)
     kmon_bind0 : forall (A B : Type) (f : A -> T B),
       @bind T T _ A B f ∘ @ret T _ A = f;
-    (* right unit law of the monoid *)
-    kmon_bind1 : forall (A : Type),
-      @bind T T _ A A (@ret T _ A) = @id (T A);
-    (* associativity of the monoid *)
-    kmon_bind2 : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
-      @bind T T _ B C g ∘ @bind T T _ A B f = @bind T T _ A C (g ⋆1 f);
+    kmon_premod :> PreRightModule T T;
   }.
 
-Class MonadFull (T : Type -> Type)
-  `{Return_inst : Return T}
-  `{Map_inst : Map T}
-  `{Bind_inst : Bind T T} :=
-  { kmonf_kmon :> Monad T;
-    kmonf_map_to_bind : forall `(f : A -> B),
-      @map T Map_inst A B f = @bind T T Bind_inst A B (ret ∘ f);
-  }.
+(* right unit law of the monoid *)
+Lemma kmon_bind1 `{Monad T} : forall (A : Type),
+    @bind T T _ A A (@ret T _ A) = @id (T A).
+Proof.
+  apply kmod_bind1.
+Qed.
+
+(* associativity of the monoid *)
+Lemma kmon_bind2 `{Monad T} : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
+    @bind T T _ B C g ∘ @bind T T _ A B f = @bind T T _ A C (g ⋆1 f).
+Proof.
+  apply kmod_bind2.
+Qed.
 
 (** ** Homomorphisms *)
 (******************************************************************************)
@@ -67,14 +76,62 @@ Class MonadHom (T U : Type -> Type)
 
 (** ** Right modules *)
 (******************************************************************************)
-Class RightModule  (T : Type -> Type) (U : Type -> Type)
+Class RightModule (T : Type -> Type) (U : Type -> Type)
   `{Return T} `{Bind T T} `{Bind T U} :=
   { kmod_monad :> Monad T;
-    kmod_bind1 : forall (A : Type),
-      @bind T U _ A A (@ret T _ A) = @id (U A);
-    kmod_bind2 : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
-     @bind T U _ B C g ∘@bind T U _ A B f = @bind T U _ A C (g ⋆1 f);
+    kmod_premod :> PreRightModule T U;
   }.
+
+(** * Derived instances *)
+(******************************************************************************)
+Section Map_Bind.
+  #[local] Instance Map_Bind {T U}
+    `{Return T} `{Bind T U} : Map U :=
+  fun A B (f : A -> B) => @bind T U _ A B (@ret T _ B ∘ f).
+End Map_Bind.
+
+Class Compat_Map_Bind
+  (U : Type -> Type)
+  {T : Type -> Type}
+  `{H_map : Map U}
+  `{H_return : Return T}
+  `{H_bind : Bind T U} : Prop :=
+  compat_map_bind :
+    @map U H_map = @map U (@Map_Bind T U H_return H_bind).
+
+#[export] Instance Compat_Map_Bind_Self
+  `{Return T} `{Bind T U} :
+  @Compat_Map_Bind U T (@Map_Bind T U _ _) _ _.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma map_to_bind `{Return T} `{Bind T U} `{Map U}
+                  `{! Compat_Map_Bind U} : forall `(f : A -> B),
+    @map U _ A B f = @bind T U _ A B (@ret T _ B ∘ f).
+Proof.
+  rewrite compat_map_bind.
+  reflexivity.
+Qed.
+
+Class MonadFull (T : Type -> Type)
+  `{Return_inst : Return T}
+  `{Map_inst : Map T}
+  `{Bind_inst : Bind T T} :=
+  { kmonf_kmon :> Monad T;
+    kmonf_map_to_bind :> Compat_Map_Bind T;
+  }.
+
+Section MonadFull.
+  #[local] Instance MonadFull_Monad (T : Type -> Type)
+    `{Monad T} : MonadFull T (Map_inst := Map_Bind) :=
+  {| kmonf_map_to_bind := _;
+  |}.
+  #[local] Instance RightModule_Monad (T : Type -> Type)
+    `{Monad T} : RightModule T T :=
+    {| kmod_monad := _;
+    |}.
+End MonadFull.
 
 (** * Kleisli category laws *)
 (******************************************************************************)
@@ -112,57 +169,93 @@ Section Monad_kleisli_category.
 
 End Monad_kleisli_category.
 
-(** * Derived instances *)
+(** * Derived functor instance *)
 (******************************************************************************)
 Section derived_instances.
 
   Context
-    (T : Type -> Type)
-    `{MonadFull T}.
+    `{module : RightModule T U}
+    `{map_U : Map U} `{map_T : Map T}
+    `{! Compat_Map_Bind U}
+    `{! Compat_Map_Bind T}.
 
   (** ** Composition between [bind] and [map] *)
   (******************************************************************************)
   Lemma bind_map : forall `(g : B -> T C) `(f : A -> B),
-      bind g ∘ map f = bind (g ∘ f).
+      bind (U := U) g ∘ map f = bind (g ∘ f).
   Proof.
-    intros. rewrite (kmonf_map_to_bind).
-    rewrite (kmon_bind2). unfold kc1.
-    reassociate <-. now rewrite (kmon_bind0).
+    intros.
+    rewrite map_to_bind.
+    rewrite kmod_bind2.
+    unfold kc1.
+    reassociate <-.
+    rewrite kmon_bind0.
+    reflexivity.
   Qed.
 
   Corollary map_bind : forall `(g : B -> C) `(f : A -> T B),
-      map g ∘ bind f = bind (map g ∘ f).
+      map g ∘ bind (U := U) f = bind (map g ∘ f).
   Proof.
-    intros. rewrite (kmonf_map_to_bind).
-    now rewrite (kmon_bind2).
+    intros.
+    rewrite map_to_bind.
+    rewrite kmod_bind2.
+    rewrite map_to_bind.
+    reflexivity.
   Qed.
 
   (** ** Functor laws *)
   (******************************************************************************)
   Lemma map_id : forall (A : Type),
-      map (@id A) = id.
+      map (F := U) (@id A) = id.
   Proof.
     intros.
-    rewrite (kmonf_map_to_bind).
+    rewrite map_to_bind.
     change (?f ∘ id) with f.
-    now rewrite kmon_bind1.
+    rewrite kmod_bind1.
+    reflexivity.
   Qed.
 
   Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
-      map g ∘ map f = map (g ∘ f).
+      map g ∘ map f = map (F := U) (g ∘ f).
   Proof.
     intros.
-    rewrite 3(kmonf_map_to_bind).
-    rewrite (kmon_bind2 (T := T)).
+    rewrite 3(map_to_bind).
+    rewrite kmod_bind2.
     unfold kc1.
     reassociate <- on left.
-    now rewrite (kmon_bind0 (T := T)).
+    rewrite kmon_bind0.
+    reflexivity.
   Qed.
 
-  #[export] Instance Functor_Monad : Functor T :=
+  #[export] Instance Functor_RightModule : Functor U :=
     {| fun_map_id := map_id;
       fun_map_map := map_map;
     |}.
+
+End derived_instances.
+
+(** * Other theory *)
+(******************************************************************************)
+Section theory.
+
+  Context
+    `{MonadFull T}.
+
+  #[export] Instance Functor_Monad : Functor T :=
+    @Functor_RightModule T T _ _ _
+      (RightModule_Monad T) _ _.
+
+  (** ** Naturality of <<ret>> *)
+  (******************************************************************************)
+  #[export] Instance mon_ret_natural :
+    Natural (@ret T _).
+  Proof.
+    constructor; try typeclasses eauto.
+    intros.
+    rewrite map_to_bind.
+    rewrite kmon_bind0.
+    reflexivity.
+  Qed.
 
   (** ** Special cases for Kleisli composition *)
   (******************************************************************************)
@@ -184,7 +277,7 @@ Section derived_instances.
       (ret ∘ g) ⋆1 f = map g ∘ f.
   Proof.
     intros. unfold kc1.
-    rewrite (kmonf_map_to_bind).
+    rewrite map_to_bind.
     reflexivity.
   Qed.
 
@@ -195,7 +288,7 @@ Section derived_instances.
   Proof.
     intros. unfold kc1.
     reassociate <-.
-    rewrite bind_map.
+    rewrite (bind_map (module := RightModule_Monad T)).
     reflexivity.
   Qed.
 
@@ -206,62 +299,26 @@ Section derived_instances.
     reflexivity.
   Qed.
 
-  (** ** Naturality of <<ret>> *)
-  (******************************************************************************)
-  #[export] Instance mon_ret_natural : Natural (@ret T _).
-  Proof.
-    constructor; try typeclasses eauto.
-    intros.
-    rewrite (kmonf_map_to_bind).
-    rewrite (kmon_bind0).
-    reflexivity.
-  Qed.
+End theory.
 
-End derived_instances.
-
-(** ** Naturality of homomorphisms *)
+(** * Naturality of homomorphisms *)
 (******************************************************************************)
-#[export] Instance Natural_MonadHom  `{MonadFull T1} `{MonadFull T2} `{! MonadHom T1 T2 ϕ} : Natural ϕ.
+#[export] Instance Natural_MonadHom
+  `{Monad T1} `{Monad T2}
+  `{Map T1} `{Map T2}
+  `{! MonadFull T1 }
+  `{! MonadFull T2 }
+  `{! MonadHom T1 T2 ϕ} : Natural ϕ.
 Proof.
-  constructor; try typeclasses eauto. intros.
-  rewrite (kmonf_map_to_bind (T := T1)).
-  rewrite (kmonf_map_to_bind (T := T2)).
+  constructor; try typeclasses eauto.
+  intros.
+  rewrite map_to_bind.
+  rewrite map_to_bind.
   rewrite (kmon_hom_bind (T := T1) (U := T2)).
-  reassociate <-.
+  reassociate <- on right.
   rewrite (kmon_hom_ret (T := T1) (U := T2)).
   reflexivity.
 Qed.
-
-#[local] Instance Map_Bind (T : Type -> Type)
-  `{Return T} `{Bind T T} : Map T :=
-  fun A B (f : A -> B) => @bind T T _ A B (@ret T _ B ∘ f).
-
-Class Compat_Map_Bind
-  (T : Type -> Type)
-  `{H_map : Map T}
-  `{H_return : Return T}
-  `{H_bind : Bind T T} : Prop :=
-  compat_map_bind :
-    @map T H_map =
-      @map T (@Map_Bind T H_return H_bind).
-
-#[export] Instance Compat_Map_Bind_Self
-  `{Return T} `{Bind T T} :
-  Compat_Map_Bind T.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma map_to_bind `{Return T} `{Bind T T} : forall `(f : A -> B),
-    @map T _ A B f = @bind T T _ A B (@ret T _ B ∘ f).
-Proof.
-  reflexivity.
-Qed.
-
-#[local] Instance MonadFull_Monad (T : Type -> Type)
-  `{Monad T} : MonadFull T (Map_inst := Map_Bind T) :=
-  {| kmonf_map_to_bind := ltac:(reflexivity);
-  |}.
 
 (** * Notations *)
 (******************************************************************************)
