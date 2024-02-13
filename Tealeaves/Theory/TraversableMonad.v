@@ -88,10 +88,17 @@ Section traversable_monad_theory.
       kmon_hom_bind := tolist_bind;
     |}.
 
+  Section Monad_Hom_Toset.
+
+    Context
+    `{H_elements : Elements T}
+     `{! Compat_Elements_Tolist T}.
+
   Lemma element_of_hom1 : forall (A : Type),
       element_of ∘ ret T = ret subset (A := A).
   Proof.
     intros.
+    rewrite compat_element_tolist.
     unfold_ops @Elements_Tolist.
     unfold_ops @Tolist_Traverse.
     reassociate -> on left.
@@ -103,6 +110,7 @@ Section traversable_monad_theory.
       element_of ∘ bind f = bind (element_of ∘ f) ∘ element_of.
   Proof.
     intros.
+    rewrite compat_element_tolist.
     unfold_ops @Elements_Tolist.
     reassociate -> on left.
     rewrite tolist_bind.
@@ -116,6 +124,8 @@ Section traversable_monad_theory.
     {| kmon_hom_ret := element_of_hom1;
        kmon_hom_bind := element_of_hom2;
     |}.
+
+  End Monad_Hom_Toset.
 
   (** * Characterizing <<∈>> *)
   (******************************************************************************)
@@ -137,15 +147,6 @@ Section traversable_monad_theory.
     reflexivity.
   Qed.
 
-  Corollary in_map_iff :
-    forall `(f : A -> B) (t : T A) (b : B),
-      b ∈ map f t <-> exists a, a ∈ t /\ f a = b.
-  Proof.
-    intros.
-    rewrite in_map_iff.
-    reflexivity.
-  Qed.
-
   (** * Respectfulness properties *)
   (******************************************************************************)
   Lemma bindt_respectful :
@@ -156,10 +157,8 @@ Section traversable_monad_theory.
     introv ? hyp.
     rewrite bindt_through_runBatch.
     rewrite bindt_through_runBatch.
+    rewrite (element_through_runBatch2 A B) in hyp.
     unfold compose at 1 2.
-    unfold element_of, Elements_Tolist, tolist, Tolist_Traverse in hyp.
-    unfold compose at 1 in hyp.
-    rewrite (foldMap_through_runBatch2 A B) in hyp.
     unfold compose at 1 in hyp.
     setoid_rewrite toBatch3_toBatch in hyp.
     rewrite <- runBatch_mapsnd in hyp.
@@ -173,8 +172,9 @@ Section traversable_monad_theory.
         * cbn. unfold compose.
           change (List.In ?a ?l) with (element_of (F := list) l a).
           unfold_ops @Monoid_op_list.
-          autorewrite with tea_list. right.
-          cbv. now left.
+          autorewrite with tea_list.
+          right.
+          reflexivity.
       + intros. apply hyp. cbn.
         change (List.In ?a ?l) with (element_of (F := list) l a).
         unfold_ops @Monoid_op_list.
@@ -190,7 +190,7 @@ Section traversable_monad_theory.
     rewrite ktmf_bind_to_bindt.
     now eapply (bindt_respectful (fun A => A)).
   Qed.
-  
+
   Corollary bind_respectful_map :
     forall `(f1 : A -> T B) `(f2 : A -> B) (t : T A),
       (forall (a : A), a ∈ t -> f1 a = ret T (f2 a)) -> bind f1 t = map f2 t.

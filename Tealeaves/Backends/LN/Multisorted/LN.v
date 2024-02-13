@@ -480,7 +480,6 @@ Section operations_specifications.
         (x ∈ tolist (bind free_loc (toklist S k t))) by
         now (rewrite Tolist_list_id).
       rewrite <- in_iff_in_tolist.
-      About in_bind_iff.
       rewrite in_bind_iff.
       split.
       - intros [l [lin xin]].

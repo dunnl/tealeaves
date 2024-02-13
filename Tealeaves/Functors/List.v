@@ -1097,32 +1097,41 @@ Qed.
 
 (** * Enumerating elements of listable functors *)
 (******************************************************************************)
-Section element_of_via_tolist.
+Section Elements_Tolist.
+  #[local] Instance Elements_Tolist `{Tolist F} : Elements F :=
+  fun A => element_of ∘ tolist.
+End Elements_Tolist.
 
-  Context
-    `{Functor F}
-    `{Tolist F}
-    `{! Natural (@tolist F _)}.
+Class Compat_Elements_Tolist
+  (F : Type -> Type)
+  `{H_element_of : Elements F}
+  `{H_tolist : Tolist F} : Prop :=
+  compat_element_tolist :
+    @element_of F H_element_of =
+      @element_of F (@Elements_Tolist F H_tolist).
 
-  #[export] Instance Elements_Tolist `{Tolist F} : Elements F :=
-    fun A => element_of ∘ tolist.
+Lemma element_of_to_tolist `{Compat_Elements_Tolist F} :
+  forall (A : Type),
+    element_of (F := F) (A := A) = element_of (F := list) ∘ tolist.
+Proof.
+  now rewrite compat_element_tolist.
+Qed.
 
-  #[export] Instance Natural_Element_Tolist:
-    forall `{ShapelyFunctor F}, Natural (@element_of F _).
-  Proof.
-    constructor; try typeclasses eauto.
-    intros A B f. unfold element_of, Elements_Tolist. ext t.
-    reassociate <- on left. rewrite (natural (G := subset)).
-    reassociate -> on left. now rewrite natural.
-  Qed.
+Theorem in_iff_in_tolist `{Compat_Elements_Tolist F} :
+  forall (A : Type) (t : F A) (a : A),
+    a ∈ t <-> a ∈ tolist t.
+Proof.
+  now rewrite compat_element_tolist.
+Qed.
 
-  Theorem in_iff_in_list `{Tolist F} : forall (A : Type) (t : F A) (a : A),
-      a ∈ t <-> a ∈ tolist t.
-  Proof.
-    reflexivity.
-  Qed.
-
-End element_of_via_tolist.
+#[export] Instance Natural_Element_Tolist :
+  forall `{ShapelyFunctor F}, Natural (@element_of F Elements_Tolist).
+Proof.
+  constructor; try typeclasses eauto.
+  intros A B f. unfold element_of, Elements_Tolist. ext t.
+  reassociate <- on left. rewrite (natural (G := subset)).
+  reassociate -> on left. now rewrite natural.
+Qed.
 
 (** * Shapely functors are container-like *)
 (******************************************************************************)
@@ -1153,13 +1162,27 @@ Section ShapelyFunctor_setlike.
       auto.
   Qed.
 
+  Context
+    `{Elements F}
+      `{! Compat_Elements_Tolist F}.
+
+  Lemma compat_element_tolist_natural :
+    `{Natural (@element_of F _)}.
+  Proof.
+    constructor; try typeclasses eauto.
+    intros.
+    rewrite compat_element_tolist.
+    rewrite (natural (Natural := Natural_Element_Tolist)).
+    reflexivity.
+  Qed.
+
   Theorem shapely_pointwise_iff :
     forall (A B : Type) (t : F A) (f g : A -> B),
       (forall (a : A), a ∈ t -> f a = g a) <-> map f t = map g t.
   Proof.
     introv.
     rewrite shapely_map_eq_iff.
-    setoid_rewrite in_iff_in_list.
+    setoid_rewrite in_iff_in_tolist.
     rewrite map_rigidly_respectful_list.
     reflexivity.
   Qed.
@@ -1169,20 +1192,12 @@ Section ShapelyFunctor_setlike.
       (forall (a : A), a ∈ t -> f a = g a) -> map f t = map g t.
   Proof.
    introv. rewrite shapely_pointwise_iff. auto.
- Qed.
-
-  #[export] Instance ContainerFunctor_Shapely : ContainerFunctor F :=
-    {| cont_pointwise := shapely_pointwise; |}.
-
-  Corollary shapely_map_id_iff :
-    forall (A : Type) (t : F A) (f : A -> A),
-      (forall (a : A), a ∈ t -> f a = a) <-> map f t = t.
-  Proof.
-    intros.
-    replace t with (map id t) at 2
-      by now rewrite (fun_map_id (F := F)).
-    now rewrite shapely_pointwise_iff.
   Qed.
+
+  #[export] Instance ContainerFunctor_Shapely :
+    ContainerFunctor F :=
+    {| cont_natural := compat_element_tolist_natural;
+       cont_pointwise := shapely_pointwise; |}.
 
 End ShapelyFunctor_setlike.
 

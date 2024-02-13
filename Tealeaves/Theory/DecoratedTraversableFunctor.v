@@ -475,7 +475,7 @@ Section decorated_traversable_functor_theory.
         element_of ∘ mapd f = foldMapd (ret (T := subset) ∘ f).
     Proof.
       intros.
-      rewrite element_to_foldMap1.
+      rewrite element_to_foldMap.
       rewrite foldMap_to_foldMapd.
       rewrite foldMapd_mapd.
       reassociate -> on left.
@@ -514,7 +514,7 @@ Section decorated_traversable_functor_theory.
         element_of (F := T) (A := A) = map (F := subset) extract ∘ element_ctx_of.
     Proof.
       intros.
-      rewrite element_to_foldMap1.
+      rewrite element_to_foldMap.
       rewrite foldMap_to_foldMapd.
       rewrite ctx_elements_to_foldMapd.
       rewrite (foldMapd_morphism).
@@ -558,12 +558,6 @@ Section decorated_traversable_functor_theory.
 
     Lemma ind_iff_in_ctx_tolist3 : forall (A : Type) (a : A) (e : E) (t : T A),
         (e, a) ∈d t <-> (e, a) ∈d ctx_tolist t.
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma in_iff_in_tolist : forall (A : Type) (a : A) (t : T A),
-        a ∈ t <-> a ∈ tolist t.
     Proof.
       reflexivity.
     Qed.

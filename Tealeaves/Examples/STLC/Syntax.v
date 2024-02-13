@@ -526,8 +526,8 @@ Section term_list_rewrite.
       y ∈ (app t1 t2) <-> y ∈ t1 \/ y ∈ t2.
   Proof.
     intros. cbn.
-    change_left (y ∈ (tolist t1 ● tolist t2)).
-    autorewrite with tea_list tea_set.
+    unfold_ops @Pure_const @Mult_const.
+    simpl_monoid.
     reflexivity.
   Qed.
 

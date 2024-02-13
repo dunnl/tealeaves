@@ -359,7 +359,7 @@ Section locally_nameless_basic_principles.
     reassociate -> on left.
     rewrite (foldMap_morphism (list atom) (subset atom)).
     rewrite (foldMap_morphism (subset atom) Prop).
-    rewrite element_to_foldMap2.
+    rewrite in_iff_foldMap.
     fequal.
     ext y.
     apply in_free_iff_local.

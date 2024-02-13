@@ -274,7 +274,7 @@ Section lemmas.
         foldMapd (fun '(w, a) => foldMap (ret (T := subset)) (f (w, a))).
   Proof.
     intros.
-    rewrite element_to_foldMap1.
+    rewrite element_to_foldMap.
     rewrite foldMap_bindd.
     reflexivity.
   Qed.
