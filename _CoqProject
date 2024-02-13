@@ -48,7 +48,7 @@ Tealeaves/Functors/Subset.v
 Tealeaves/Functors/List.v
 Tealeaves/Functors/Ctxset.v
 Tealeaves/Functors/Environment.v
-##Tealeaves/Classes/Kleisli/ContainerMonad.v
+Tealeaves/Classes/Kleisli/ContainerMonad.v
 ##Tealeaves/Classes/Kleisli/ShapelyMonad.v
 Tealeaves/Classes/Kleisli/DecoratedContainerFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
@@ -126,3 +126,7 @@ Tealeaves/Examples/STLC/TypeSoundness.v
 Tealeaves/Classes/Multisorted/Multifunctor.v
 Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
 Tealeaves/Backends/LN/Multisorted/LN.v
+
+# EXAMPLES
+#Tealeaves/Examples/SystemF/Syntax.v
+#Tealeaves/Examples/SystemF/Rewriting.v

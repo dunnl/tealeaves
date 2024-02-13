@@ -485,18 +485,6 @@ Section traversable_functor_theory.
       reflexivity.
     Qed.
 
-    (** *** Relating <<element_of>> to <<map>> *)
-    (******************************************************************************)
-    Lemma in_map_iff_core : forall (A B : Type) (f : A -> B),
-        element_of (F := T) ∘ map (F := T) f =
-          map f ∘ element_of (F := T).
-    Proof.
-      intros.
-      rewrite compat_element_traverse.
-      rewrite (natural (ϕ := @element_of T _)).
-      reflexivity.
-    Qed.
-
     (** * Pointwise reasoning for operations *)
     (******************************************************************************)
     Lemma traverse_respectful :
@@ -559,6 +547,15 @@ Section traversable_functor_theory.
       assumption.
     Qed.
 
+    #[export] Instance ContainerFunctor_Traverse :
+      ContainerFunctor T.
+    Proof.
+      constructor.
+      - rewrite compat_element_traverse.
+        typeclasses eauto.
+      - typeclasses eauto.
+      - intros. now apply map_respectful.
+    Qed.
   End elements.
 
   (*

@@ -236,6 +236,22 @@ Qed.
   `{Return T} `{Bind T T} : Map T :=
   fun A B (f : A -> B) => @bind T T _ A B (@ret T _ B ∘ f).
 
+Class Compat_Map_Bind
+  (T : Type -> Type)
+  `{H_map : Map T}
+  `{H_return : Return T}
+  `{H_bind : Bind T T} : Prop :=
+  compat_map_bind :
+    @map T H_map =
+      @map T (@Map_Bind T H_return H_bind).
+
+#[export] Instance Compat_Map_Bind_Self
+  `{Return T} `{Bind T T} :
+  Compat_Map_Bind T.
+Proof.
+  reflexivity.
+Qed.
+
 Lemma map_to_bind `{Return T} `{Bind T T} : forall `(f : A -> B),
     @map T _ A B f = @bind T T _ A B (@ret T _ B ∘ f).
 Proof.

@@ -1,5 +1,6 @@
 From Tealeaves Require Export
   Classes.Kleisli.TraversableMonad
+  Classes.Kleisli.ContainerMonad
   Adapters.KleisliToCoalgebraic.TraversableMonad
   Theory.TraversableFunctor
   Functors.Subset.
@@ -127,26 +128,6 @@ Section traversable_monad_theory.
 
   End Monad_Hom_Toset.
 
-  (** * Characterizing <<∈>> *)
-  (******************************************************************************)
-  Theorem in_ret_iff :
-    forall (A : Type) (a1 a2 : A), a1 ∈ ret T a2 <-> a1 = a2.
-  Proof.
-    intros.
-    compose near a2 on left.
-    rewrite (kmon_hom_ret (ϕ := @element_of T _)).
-    easy.
-  Qed.
-
-  Theorem in_bind_iff :
-    forall `(f : A -> T B) (t : T A) (b : B),
-      b ∈ bind f t <-> exists a, a ∈ t /\ b ∈ f a.
-  Proof.
-    intros. compose near t on left.
-    rewrite (kmon_hom_bind (ϕ := @element_of T _)).
-    reflexivity.
-  Qed.
-
   (** * Respectfulness properties *)
   (******************************************************************************)
   Lemma bindt_respectful :
@@ -191,6 +172,18 @@ Section traversable_monad_theory.
     now eapply (bindt_respectful (fun A => A)).
   Qed.
 
+
+  #[export] Instance ContainerMonad_Traversable :
+    ContainerMonad T.
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - typeclasses eauto.
+    - intros. now apply bind_respectful.
+  Qed.
+
+  (* TODO Below corollaries can be cut *)
+
   Corollary bind_respectful_map :
     forall `(f1 : A -> T B) `(f2 : A -> B) (t : T A),
       (forall (a : A), a ∈ t -> f1 a = ret T (f2 a)) -> bind f1 t = map f2 t.
@@ -208,6 +201,18 @@ Section traversable_monad_theory.
     change t with (id t) at 2.
     rewrite <- bind_id.
     now apply bind_respectful.
+  Qed.
+
+  Lemma ret_injective : forall (A : Type) (a a' : A),
+      ret T a = ret T a' -> a = a'.
+  Proof.
+    introv hyp.
+    cut (toBatch3 (B := False) (ret T a) = toBatch3 (ret T a')).
+    compose near a.
+    compose near a'.
+    rewrite trfm_ret.
+    now inversion 1.
+    now rewrite hyp.
   Qed.
 
 End traversable_monad_theory.
