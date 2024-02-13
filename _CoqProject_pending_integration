@@ -23,16 +23,7 @@ Tealeaves/Theory/DT/Functor.v
 Tealeaves/Theory/DT/Monad.v
 Tealeaves/Theory/List.v
 
-# MULTISORTED TEALEAVES
-Tealeaves/Classes/Multisorted/Multifunctor.v
-Tealeaves/Classes/Multisorted/DTM.v
-
 # BACKENDS
-Tealeaves/Backends/LN/Atom.v
-Tealeaves/Backends/LN/AtomSet.v
-Tealeaves/Backends/LN/AssocList.v
-Tealeaves/Backends/LN/LN.v
-Tealeaves/Backends/LN.v
 #Tealeaves/Backends/Multisorted/LN.v
 
 # TOP-LEVEL EXPORTS?

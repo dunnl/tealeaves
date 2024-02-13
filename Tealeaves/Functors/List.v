@@ -511,6 +511,16 @@ End foldMap_list_rw.
 #[export] Hint Rewrite @foldMap_list_nil @foldMap_list_cons
   @foldMap_list_one @foldMap_list_app : tea_list.
 
+Lemma foldMap_list_ret_id : forall A, foldMap (@ret list _ A) = id.
+Proof.
+  intros.
+  ext l.
+  induction l as [|x rest IHrest];
+    autorewrite with tea_list.
+  reflexivity.
+  now rewrite IHrest.
+Qed.
+
 (** *** Monoids form list (monad-)algebras *)
 (** In fact, list algebras are precisely monoids. *)
 (******************************************************************************)

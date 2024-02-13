@@ -248,8 +248,30 @@ Section traversable_functor_theory.
   (******************************************************************************)
   Section tolist.
 
-    #[export] Instance Tolist_Traverse `{Traverse T} : Tolist T :=
+    #[export] Instance Tolist_Traverse {T} `{Traverse T} : Tolist T :=
     fun A => foldMap (ret (T := list)).
+
+    Lemma foldMap_list_eq `{Monoid M} : forall (A : Type) (f : A -> M),
+        foldMap f = List.foldMap f.
+    Proof.
+      intros. ext l. induction l.
+      - cbn. reflexivity.
+      - cbn. change (monoid_op ?x ?y) with (x ● y).
+        unfold_ops @Pure_const.
+        rewrite monoid_id_r.
+        rewrite IHl.
+        reflexivity.
+    Qed.
+
+    Lemma Tolist_list_id : forall (A : Type),
+        @tolist list (@Tolist_Traverse list Traverse_list) A = @id (list A).
+    Proof.
+      intros.
+      unfold_ops @Tolist_Traverse.
+      rewrite foldMap_list_eq.
+      rewrite foldMap_list_ret_id.
+      reflexivity.
+    Qed.
 
     Corollary tolist_to_foldMap : forall (A : Type),
         tolist (F := T) = foldMap (ret (T := list) (A := A)).
@@ -281,19 +303,7 @@ Section traversable_functor_theory.
       rewrite (natural (ϕ := @ret list _)).
       reflexivity.
     Qed.
-
-    Lemma foldMap_list_eq `{Monoid M} : forall (A : Type) (f : A -> M),
-        foldMap f = List.foldMap f.
-    Proof.
-      intros. ext l. induction l.
-      - cbn. reflexivity.
-      - cbn. change (monoid_op ?x ?y) with (x ● y).
-        unfold_ops @Pure_const.
-        rewrite monoid_id_r.
-        rewrite IHl.
-        reflexivity.
-    Qed.
-
+    
     (** *** Factoring through <<runBatch>> *)
     (******************************************************************************)
     Corollary tolist_through_runBatch {A : Type} (tag : Type) `(t : T A) :
@@ -355,7 +365,7 @@ Section traversable_functor_theory.
     (** *** Factoring through <<tolist>> *)
     (******************************************************************************)
     Lemma element_through_tolist : forall (A : Type),
-        element_of (A := A) = element_of ∘ tolist.
+        element_of (F := T) (A := A) = element_of ∘ tolist.
     Proof.
       reflexivity.
     Qed.
@@ -464,7 +474,8 @@ Section traversable_functor_theory.
   (** ** Proof that traversable functors are shapely over lists *)
   (******************************************************************************)
   Lemma shapeliness_tactical : forall (A : Type) (b1 b2 : Batch A A (T A)),
-      runBatch (const (list A)) (ret (T := list)) _ b1 = runBatch (const (list A)) (ret (T := list) (A := A)) _ b2 ->
+      runBatch (const (list A)) (ret (T := list)) _ b1 =
+        runBatch (const (list A)) (ret (T := list) (A := A)) _ b2 ->
       mapfst_Batch A unit (const tt) b1 = mapfst_Batch A unit (const tt) b2 ->
       runBatch (fun A => A) id (T A) b1 = runBatch (fun A => A) id (T A) b2.
   Proof.
@@ -510,6 +521,7 @@ Section traversable_functor_theory.
     do 2 rewrite traverse_through_runBatch.
     rewrite (element_through_runBatch2 A B) in hyp.
     unfold compose in *.
+    unfold ret in *.
     induction (toBatch t).
     - reflexivity.
     - cbn. fequal.
