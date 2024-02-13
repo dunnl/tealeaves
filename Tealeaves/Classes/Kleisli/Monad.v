@@ -106,8 +106,9 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma map_to_bind `{Return T} `{Bind T U} `{Map U}
-                  `{! Compat_Map_Bind U} : forall `(f : A -> B),
+Lemma map_to_bind
+  `{Return T} `{Bind T U} `{Map U}
+  `{! Compat_Map_Bind U} : forall `(f : A -> B),
     @map U _ A B f = @bind T U _ A B (@ret T _ B ∘ f).
 Proof.
   rewrite compat_map_bind.
@@ -120,6 +121,15 @@ Class MonadFull (T : Type -> Type)
   `{Bind_inst : Bind T T} :=
   { kmonf_kmon :> Monad T;
     kmonf_map_to_bind :> Compat_Map_Bind T;
+  }.
+
+Class RightModuleFull (T : Type -> Type) (U : Type -> Type)
+  `{Return T} `{Bind T T} `{Bind T U}
+  `{Map T} `{Map U}
+  :=
+  { kmodf_mod :> RightModule T U;
+    kmod_compat :> Compat_Map_Bind U;
+    kmod_moncompat :> MonadFull T;
   }.
 
 Section MonadFull.
