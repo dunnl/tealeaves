@@ -2525,10 +2525,6 @@ Section DTM_tolist.
   Lemma in_iff_in_toklist : forall (A : Type) (k : K) (a : A) (t : S A),
       (k, a) ∈m t <-> a ∈ toklist S k t.
   Proof.
-    Set Printing All.
-    Print Instances Elements.
-    Print Elements_Tolist.
-            
     intros. unfold toklist. unfold compose.
     rewrite (in_map_iff list). split.
     - intro hyp. rewrite ind_iff_in in hyp.
