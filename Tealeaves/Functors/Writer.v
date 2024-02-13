@@ -61,10 +61,14 @@ Section writer_monad.
     cbn. unfold id. now simpl_monoid.
   Qed.
 
+  #[export] Instance PreRightModule_writer :
+    Kleisli.Monad.PreRightModule (W ×) (W ×) :=
+    {| kmod_bind1 := Writer_kmon_bind1;
+       kmod_bind2 := Writer_kmon_bind2;
+    |}.
+
   #[export] Instance Monad_writer : Kleisli.Monad.Monad (W ×) :=
     {| kmon_bind0 := Writer_kmon_bind0;
-      kmon_bind1 := Writer_kmon_bind1;
-      kmon_bind2 := Writer_kmon_bind2;
     |}.
 
   (** ** Miscellaneous properties *)
