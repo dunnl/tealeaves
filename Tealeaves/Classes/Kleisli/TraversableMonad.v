@@ -7,7 +7,7 @@ From Tealeaves Require Export
 Import Monad.Notations.
 Import TraversableFunctor.Notations.
 
-#[local] Generalizable Variables T G A B C D ϕ M f.
+#[local] Generalizable Variables U T G A B C D ϕ M f.
 
 (** * Traversable monad *)
 (******************************************************************************)
@@ -15,13 +15,13 @@ Import TraversableFunctor.Notations.
 (** ** [bindt] operation *)
 (******************************************************************************)
 Class Bindt
-  (U : Type -> Type)
   (T : Type -> Type)
+  (U : Type -> Type)
   := bindt :
     forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-      (A B : Type), (A -> G (U B)) -> T A -> G (T B).
+      (A B : Type), (A -> G (T B)) -> U A -> G (U B).
 
-#[global] Arguments bindt {U T}%function_scope {Bindt} {G}%function_scope
+#[global] Arguments bindt {T U}%function_scope {Bindt} {G}%function_scope
   {H H0 H1} {A B}%type_scope _%function_scope _.
 
 (** ** Kleisli composition *)
@@ -42,40 +42,260 @@ Definition kc3
 
 (** ** Typeclass *)
 (******************************************************************************)
-Class TraversableMonad (T : Type -> Type) `{Return T} `{Bindt T T} :=
-  { ktm_bindt0 : forall `{Applicative G} (A B : Type) (f : A -> G (T B)),
-      bindt f ∘ ret = f;
-    ktm_bindt1 : forall (A : Type),
-      bindt (G := fun A => A) (ret (T := T)) = @id (T A);
-    ktm_bindt2 : forall `{Applicative G1} `{Applicative G2} {A B C : Type}
-                   (g : B -> G2 (T C)) (f : A -> G1 (T B)),
-      map (F := G1) (A := T B) (B := G2 (T C)) (bindt g) ∘ bindt f =
-        bindt (kc3 (G1 := G1) (G2 := G2) g f);
+Class TraversableRightPreModule
+  (T U : Type -> Type)
+  `{Return_inst : Return T}
+  `{Bindt_T_inst : Bindt T T}
+  `{Bindt_U_inst : Bindt T U} :=
+  { ktm_bindt1 : forall (A : Type),
+      bindt (U := U) (G := fun A => A) (ret (T := T)) = @id (U A);
+    ktm_bindt2 :
+    forall `{Applicative G1} `{Applicative G2} {A B C : Type}
+      (g : B -> G2 (T C)) (f : A -> G1 (T B)),
+      map (F := G1) (bindt g) ∘ bindt (U := U) f =
+        bindt (U := U) (kc3 (G1 := G1) (G2 := G2) g f);
     ktm_morph : forall `{morphism : ApplicativeMorphism G1 G2 ϕ} {A B : Type} `(f : A -> G1 (T B)),
-      ϕ (T B) ∘ bindt f = bindt (ϕ (T B) ∘ f);
+      ϕ (U B) ∘ bindt (U := U) f = bindt (ϕ (T B) ∘ f);
   }.
 
-Class TraversableMonadFull
-  (T : Type -> Type) `{Return T} `{Bindt T T} `{Bind T T} `{Traverse T} `{Map T} :=
-  { ktmf_ktm :> TraversableMonad T;
-    ktmf_bind_to_bindt : `(@bind T T _ A B = @bindt T T _ (fun A => A) _ _ _ A B);
-    ktmf_traverse_to_bindt :
-    forall {G : Type -> Type} `{Mult G} `{Map G} `{Pure G} `{! Applicative G},
-      `(@traverse T _ G _ _ _ A B f = @bindt T T _ G _ _ _ A B (map ret ∘ f));
-    ktmf_map_to_bindt :
-    `(@map T _ A B f = @bindt T T _ (fun A => A) _ _ _ A B (ret ∘ f));
+Class TraversableMonad (T : Type -> Type)
+  `{Return_inst : Return T}
+  `{Bindt_inst : Bindt T T} :=
+  { ktm_bindt0 : forall `{Applicative G} (A B : Type) (f : A -> G (T B)),
+      bindt f ∘ ret = f;
+    ktm_premod :> TraversableRightPreModule T T;
   }.
+
+Class TraversableRightModule (T U : Type -> Type)
+  `{Return_inst : Return T}
+  `{Bindt_T_inst : Bindt T T}
+  `{Bindt_T_inst : Bindt T U} :=
+  { ktmod_monad :> TraversableMonad T;
+    ktmod_premod :> TraversableRightPreModule T U;
+  }.
+
+(** * Derived instances *)
+(******************************************************************************)
+Section derived.
+
+  Section operations.
+
+    Context
+      T U
+      `{Return_inst : Return T}
+      `{Bindt_inst : Bindt T U}.
+
+    #[local] Instance Map_Bindt : Map U :=
+      fun (A B : Type) (f : A -> B) => bindt (G := fun A => A) (ret (T := T) ∘ f).
+    #[local] Instance Bind_Bindt: Bind T U
+      := fun A B f => bindt (T := T) (G := fun A => A) f.
+    #[local] Instance Traverse_Bindt: Traverse U
+      := fun G _ _ _ A B f => bindt (map (F := G) (ret (T := T)) ∘ f).
+
+  End operations.
+
+  Section compat.
+
+    Context
+      T U
+    `{Return_inst : Return T}
+    `{Map_inst : Map U}
+    `{Traverse_inst : Traverse U}
+    `{Bind_inst : Bind T U}
+    `{Bindt_inst : Bindt T U}.
+
+    Class Compat_Map_Bindt : Prop :=
+      compat_map_bindt :
+        @map U Map_inst = @map U (@Map_Bindt T U Return_inst Bindt_inst).
+
+    Class Compat_Bind_Bindt : Prop :=
+      compat_bind_bindt :
+        @bind T U Bind_inst = @bind T U (@Bind_Bindt T U Bindt_inst).
+
+    Class Compat_Traverse_Bindt : Prop :=
+      compat_traverse_bindt :
+        @traverse U Traverse_inst = @traverse U (@Traverse_Bindt T U Return_inst Bindt_inst).
+
+  End compat.
+
+  Section self.
+
+    Context
+    `{Return_inst : Return T}
+    `{Bindt_inst : Bindt T U}.
+
+    #[export] Instance Compat_Map_Bindt_Self:
+      Compat_Map_Bindt T U (Map_inst := Map_Bindt T U).
+    Proof.
+      reflexivity.
+    Qed.
+
+    #[export] Instance Compat_Bind_Bindt_Self:
+      Compat_Bind_Bindt T U (Bind_inst := Bind_Bindt T U).
+    Proof.
+      reflexivity.
+    Qed.
+
+    #[export] Instance Compat_Traverse_Bindt_Self:
+      Compat_Traverse_Bindt T U (Traverse_inst := Traverse_Bindt T U).
+    Proof.
+      reflexivity.
+    Qed.
+
+    #[export] Instance Compat_Map_Bind_Bindt
+     `{Map U} `{Bind T U}
+      `{! Compat_Bind_Bindt T U}
+      `{! Compat_Map_Bindt T U} :
+      Compat_Map_Bind U T.
+    Proof.
+      hnf.
+      rewrite (compat_map_bindt T U).
+      unfold_ops @Map_Bind.
+      rewrite (compat_bind_bindt T U).
+      reflexivity.
+    Qed.
+
+    #[export] Instance Compat_Map_Traverse_Bindt
+      `{Map U} `{Traverse U}
+      `{! Compat_Traverse_Bindt T U}
+      `{! Compat_Map_Bindt T U} :
+      Compat_Map_Traverse U.
+    Proof.
+      hnf.
+      rewrite (compat_map_bindt T U).
+      unfold_ops @Map_Traverse.
+      rewrite (compat_traverse_bindt T U).
+      reflexivity.
+    Qed.
+
+  End self.
+
+  Section compat_laws.
+
+    Context
+    `{Return_inst : Return T}
+    `{Map_inst : Map U}
+    `{Traverse_inst : Traverse U}
+    `{Bind_inst : Bind T U}
+    `{Bindt_inst : Bindt T U}.
+
+    Lemma map_to_bindt `{! Compat_Map_Bindt T U} :
+      forall `(f : A -> B), map (F := U) f = bindt (G := fun A => A) (ret (T := T) ∘ f).
+    Proof.
+      rewrite (compat_map_bindt T U).
+      reflexivity.
+    Qed.
+
+    Lemma bind_to_bindt `{! Compat_Bind_Bindt T U} `(f : A -> T B):
+      bind (U := U) f = bindt (G := fun A => A) f.
+    Proof.
+      rewrite (compat_bind_bindt T U).
+      reflexivity.
+    Qed.
+
+    Lemma traverse_to_bindt `{! Compat_Traverse_Bindt T U}
+      `{Applicative G} `(f : A -> G B):
+      traverse (G := G) (T := U) f = bindt (U := U) (map (F := G) (ret (T := T)) ∘ f).
+    Proof.
+      rewrite (compat_traverse_bindt T U).
+      reflexivity.
+    Qed.
+
+  End compat_laws.
+
+End derived.
+
+Class TraversableMonadFull
+  (T : Type -> Type)
+  `{ret_inst : Return T}
+  `{Map_inst : Map T}
+  `{Traverse_inst : Traverse T}
+  `{Bind_inst : Bind T T}
+  `{Bindt_inst : Bindt T T} :=
+  { ktmf_ktm :> TraversableMonad T;
+    ktmf_map_compat :> Compat_Map_Bindt T T;
+    ktmf_bind_compat :> Compat_Bind_Bindt T T;
+    ktmf_traverse_compat :> Compat_Traverse_Bindt T T;
+  }.
+
+Class TraversableRightModuleFull
+  (T : Type -> Type)
+  (U : Type -> Type)
+  `{ret_inst : Return T}
+  `{Map_T_inst : Map T}
+  `{Traverse_T_inst : Traverse T}
+  `{Bind_T_inst : Bind T T}
+  `{Bindt_T_inst : Bindt T T}
+  `{Map_U_inst : Map U}
+  `{Traverse_U_inst : Traverse U}
+  `{Bind_U_inst : Bind T U}
+  `{Bindt_U_inst : Bindt T U} :=
+  { ktmodf_kmond :> TraversableMonadFull T;
+    ktmodf_mod :> TraversableRightModule T U;
+    ktmodf_map_compat :> Compat_Map_Bindt T U;
+    ktmodf_traverse_compat :> Compat_Traverse_Bindt T U;
+    ktmodf_bind_compat :> Compat_Bind_Bindt T U;
+  }.
+
+Section instances.
+
+  #[local] Instance
+    TraversableMonadFull_TraversableMonad
+    (T : Type -> Type)
+    `{Monad_inst : TraversableMonad T} :
+  TraversableMonadFull T
+    (Map_inst := Map_Bindt T T)
+    (Traverse_inst := Traverse_Bindt T T)
+    (Bind_inst := Bind_Bindt T T)
+  :=
+  {| ktmf_ktm := _
+  |}.
+
+  #[local] Instance TraversableRightModuleFull_TraversableRightModule
+    (W : Type) (T : Type -> Type) (U : Type -> Type)
+    `{Module_inst : TraversableRightModule T U} :
+    TraversableRightModuleFull T U
+    (Map_T_inst := Map_Bindt T T)
+    (Traverse_T_inst := Traverse_Bindt T T)
+    (Bind_T_inst := Bind_Bindt T T)
+    (Map_U_inst := Map_Bindt T U)
+    (Traverse_U_inst := Traverse_Bindt T U)
+    (Bind_U_inst := Bind_Bindt T U) :=
+    {| ktmodf_kmond := _;
+    |}.
+
+  #[local] Instance TraversableRightModule_TraversableMonad
+    (T : Type -> Type)
+    `{Monad_inst : TraversableMonad T} :
+    TraversableRightModule T T :=
+    {| ktmod_premod := _ ; |}.
+
+  #[local] Instance TraversableRightModuleFull_TraversableMonadFull
+    (T : Type -> Type)
+    `{Monad_inst : TraversableMonadFull T} :
+    TraversableRightModuleFull T T.
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - apply TraversableRightModule_TraversableMonad.
+      apply ktmf_ktm.
+    - typeclasses eauto.
+    - typeclasses eauto.
+    - typeclasses eauto.
+  Qed.
+
+End instances.
 
 (** * Interaction of [traverse] with functor composition *)
 (******************************************************************************)
 Section properties.
 
   Context
-    `{TraversableMonad T}.
+    `{TraversableRightModule T U}.
 
   Lemma bindt_app_l :
     forall {A B : Type} `{Applicative G} (f : A -> G (T B)),
-      @bindt T T _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G)
+      @bindt T U _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G)
         (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f = bindt f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity2 G).
@@ -83,7 +303,7 @@ Section properties.
 
   Lemma bindt_app_r :
     forall {A B : Type} `{Applicative G} (f : A -> G (T B)),
-      @bindt T T _ (G ∘ (fun A => A)) (Map_compose G (fun A => A))
+      @bindt T U _ (G ∘ (fun A => A)) (Map_compose G (fun A => A))
         (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f = bindt f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity1 G).
@@ -96,7 +316,22 @@ End properties.
 Section DerivedInstances.
 
   Context
-    `{TraversableMonadFull T}.
+    `{ret_inst : Return T}
+    `{Map_T_inst : Map T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{! Compat_Map_Bindt T T}
+    `{! Compat_Traverse_Bindt T T}
+    `{! Compat_Bind_Bindt T T}
+    `{Map_U_inst : Map U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{! Compat_Map_Bindt T U}
+    `{! Compat_Traverse_Bindt T U}
+    `{! Compat_Bind_Bindt T U}
+    `{Monad_inst : ! TraversableRightModule T U}.
 
   (** ** Special cases for Kleisli composition *)
   (******************************************************************************)
@@ -127,7 +362,7 @@ Section DerivedInstances.
         kc3 (G1 := fun A => A) (G2 := fun A => A) g f = (g ⋆1 f).
     Proof.
       intros. unfold kc3, kc1.
-      rewrite (ktmf_bind_to_bindt (T := T)).
+      rewrite (bind_to_bindt (T := T)).
       reflexivity.
     Qed.
 
@@ -172,7 +407,7 @@ Section DerivedInstances.
         map ret ∘ g ⋆3 f = map (traverse g) ∘ f.
     Proof.
       intros.
-      rewrite ktmf_traverse_to_bindt.
+      rewrite traverse_to_bindt.
       reflexivity.
     Qed.
 
@@ -180,7 +415,7 @@ Section DerivedInstances.
         kc3 (G2 := fun A => A) g f = map (F := G1) (bind (T := T) g) ∘ f.
     Proof.
       intros.
-      rewrite ktmf_bind_to_bindt.
+      rewrite (bind_to_bindt (T := T)).
       reflexivity.
     Qed.
 
@@ -188,7 +423,7 @@ Section DerivedInstances.
         kc3 (T := T) (G2 := fun A => A) (ret ∘ g) f = map (map g) ∘ f.
     Proof.
       intros.
-      rewrite (ktmf_map_to_bindt (T := T)).
+      rewrite (map_to_bindt (T := T) (U := T)).
       reflexivity.
     Qed.
 
@@ -197,7 +432,7 @@ Section DerivedInstances.
     Proof.
       intros.
       unfold kc3.
-      rewrite ktmf_traverse_to_bindt.
+      rewrite traverse_to_bindt.
       reflexivity.
     Qed.
 
@@ -242,7 +477,7 @@ Section DerivedInstances.
     Proof.
       intros.
       unfold kc3.
-      rewrite (ktmf_map_to_bindt (T := T)).
+      rewrite (map_to_bindt (U := T) (T := T)).
       reflexivity.
     Qed.
 
@@ -290,7 +525,7 @@ Section DerivedInstances.
       intros.
       change ret with (ret ∘ @id B).
       rewrite kc3_03.
-      rewrite (ktmf_map_to_bindt (T := T)).
+      rewrite (map_to_bindt (U := T) (T := T)).
       change (ret ∘ @id B) with (ret (A := B)).
       rewrite ktm_bindt1.
       rewrite fun_map_id.
@@ -328,19 +563,20 @@ Section DerivedInstances.
     (******************************************************************************)
     Lemma traverse_bindt : forall (A B C : Type) (g : B -> G2 C) (f : A -> G1 (T B)),
         map (traverse g) ∘ bindt f =
-          bindt (G := G1 ∘ G2) (map (traverse g) ∘ f).
+          bindt (U := U) (G := G1 ∘ G2) (map (traverse g) ∘ f).
     Proof.
       intros.
-      rewrite ktmf_traverse_to_bindt.
+      rewrite traverse_to_bindt.
+      rewrite traverse_to_bindt.
       rewrite ktm_bindt2.
       reflexivity.
     Qed.
 
     Lemma bindt_traverse : forall (A B C : Type) (g : B -> G2 (T C)) (f : A -> G1 B),
-        map (bindt g) ∘ traverse f = bindt (G := G1 ∘ G2) (map g ∘ f).
+        map (bindt g) ∘ traverse f = bindt (U := U) (G := G1 ∘ G2) (map g ∘ f).
     Proof.
       intros.
-      rewrite ktmf_traverse_to_bindt.
+      rewrite traverse_to_bindt.
       rewrite ktm_bindt2.
       rewrite kc3_32.
       reflexivity.
@@ -349,21 +585,23 @@ Section DerivedInstances.
     (** *** Composition with <<bind>> *)
     (******************************************************************************)
     Lemma bind_bindt : forall (A B C : Type) (g : B -> T C) (f : A -> G1 (T B)),
-        map (bind g) ∘ bindt f = bindt (map (bind g) ∘ f).
+        map (bind g) ∘ bindt f = bindt (U := U) (map (bind g) ∘ f).
     Proof.
       intros.
-      rewrite ktmf_bind_to_bindt.
+      rewrite (bind_to_bindt (U := T)).
+      rewrite (bind_to_bindt (U := U)).
       rewrite (ktm_bindt2 (G2 := fun A => A)).
       rewrite bindt_app_r.
       reflexivity.
     Qed.
 
     Lemma bindt_bind : forall (A B C : Type) (g : B -> G2 (T C)) (f : A -> T B),
-          bindt g ∘ bind f = bindt (bindt g ∘ f).
+          bindt g ∘ bind f = bindt (U := U) (bindt g ∘ f).
     Proof.
       intros.
-      rewrite ktmf_bind_to_bindt.
-      change (bindt g) with (map (F := fun A => A) (bindt g)).
+      rewrite bind_to_bindt.
+      change (bindt (U := U) g) with
+        (map (F := fun A => A) (bindt (U := U) g)).
       rewrite (ktm_bindt2 (G1 := fun A => A)).
       rewrite bindt_app_l.
       reflexivity.
@@ -375,17 +613,18 @@ Section DerivedInstances.
         map (map g) ∘ bindt f = bindt (map (map g) ∘ f).
     Proof.
       intros.
-      rewrite (ktmf_map_to_bindt (T := T)).
+      rewrite (map_to_bindt (U := T)).
+      rewrite (map_to_bindt (U := U)).
       rewrite (ktm_bindt2 (G2 := fun A => A)).
       rewrite bindt_app_r.
       reflexivity.
     Qed.
 
     Lemma bindt_map : forall (A B C : Type) (g : B -> G2 (T C)) (f : A -> B),
-        bindt g ∘ map f = bindt (g ∘ f).
+        bindt g ∘ map f = bindt (U := U) (g ∘ f).
     Proof.
       intros.
-      rewrite (ktmf_map_to_bindt (T := T)).
+      rewrite (map_to_bindt (T := T) (U := U)).
       change (bindt g) with (map (F := fun A => A) (bindt g)).
       rewrite (ktm_bindt2 (G1 := fun A => A)).
       rewrite bindt_app_l.
@@ -399,13 +638,13 @@ Section DerivedInstances.
         traverse g ∘ bind f = bindt (traverse g ∘ f).
     Proof.
       intros.
-      rewrite ktmf_traverse_to_bindt.
-      rewrite ktmf_bind_to_bindt.
+      rewrite traverse_to_bindt.
+      rewrite (bind_to_bindt (U := U)).
       change (bindt ?g) with (map (F := fun A => A) (bindt g)) at 1.
       rewrite (ktm_bindt2 (G1 := fun A => A)).
       rewrite bindt_app_l.
       rewrite kc3_21.
-      rewrite ktmf_traverse_to_bindt.
+      rewrite traverse_to_bindt.
       reflexivity.
     Qed.
 
@@ -413,8 +652,8 @@ Section DerivedInstances.
         map (bind g) ∘ traverse f = bindt (map g ∘ f).
     Proof.
       intros.
-      rewrite ktmf_traverse_to_bindt.
-      rewrite ktmf_bind_to_bindt.
+      rewrite traverse_to_bindt.
+      rewrite (bind_to_bindt (U := U)).
       rewrite (ktm_bindt2 (G2 := fun A => A)).
       rewrite bindt_app_r.
       rewrite kc3_12.
@@ -431,7 +670,7 @@ Section DerivedInstances.
         bind f ∘ ret = f.
     Proof.
       intros.
-      rewrite ktmf_bind_to_bindt.
+      rewrite bind_to_bindt.
       rewrite (ktm_bindt0 (G := fun A => A)).
       reflexivity.
     Qed.
@@ -440,7 +679,7 @@ Section DerivedInstances.
         bind ret = @id (T A).
     Proof.
       intros.
-      rewrite ktmf_bind_to_bindt.
+      rewrite bind_to_bindt.
       rewrite ktm_bindt1.
       reflexivity.
     Qed.
@@ -449,75 +688,81 @@ Section DerivedInstances.
         bind g ∘ bind f = bind (g ⋆1 f).
     Proof.
       intros.
-      do 2 rewrite ktmf_bind_to_bindt.
+      do 2 rewrite bind_to_bindt.
       change (bindt g) with (map (F := fun A => A) (bindt g)).
       change ((fun A => A) ?x) with x.
       rewrite (ktm_bindt2 (G1 := fun A => A) (G2 := fun A => A)).
       rewrite bindt_app_r.
       rewrite kc3_11.
-      rewrite ktmf_bind_to_bindt.
+      rewrite bind_to_bindt.
       reflexivity.
     Qed.
 
     (** ** Traversable instance *)
     (******************************************************************************)
     Lemma traverse_id : forall (A : Type),
-        traverse (G := fun A => A) (@id A) = @id (T A).
+        traverse (G := fun A => A) (@id A) = @id (U A).
     Proof.
       intros.
-      rewrite (ktmf_traverse_to_bindt (G := fun A => A)).
+      rewrite (traverse_to_bindt (G := fun A => A)).
       change (?g ∘ id) with g.
       change (map (F := fun A => A) ?f) with f.
       rewrite ktm_bindt1.
       reflexivity.
     Qed.
 
-    Lemma traverse_traverse `{Applicative G1} `{Applicative G2} :
+    Lemma traverse_traverse G1 `{Applicative G1} G2 `{Applicative G2} :
       forall {A B C : Type} (g : B -> G2 C) (f : A -> G1 B),
-        map (traverse g) ∘ traverse f = traverse (G := G1 ∘ G2) (map g ∘ f).
+        map (traverse g) ∘ traverse f =
+          traverse (T := U) (G := G1 ∘ G2) (map g ∘ f).
     Proof.
       intros.
-      rewrite ktmf_traverse_to_bindt.
-      rewrite ktmf_traverse_to_bindt.
+      rewrite traverse_to_bindt.
+      rewrite traverse_to_bindt.
       rewrite ktm_bindt2.
       rewrite kc3_22.
-      rewrite ktmf_traverse_to_bindt.
+      rewrite traverse_to_bindt.
       reflexivity.
     Qed.
 
-    Lemma traverse_morphism : forall `{ApplicativeMorphism G1 G2 ϕ} (A B : Type) (f : A -> G1 B),
-        ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f).
+    Lemma traverse_morphism : forall G1 G2 `{ApplicativeMorphism G1 G2 ϕ} (A B : Type) (f : A -> G1 B),
+        ϕ (U B) ∘ traverse f = traverse (ϕ B ∘ f).
     Proof.
       intros.
       infer_applicative_instances.
-      rewrite ktmf_traverse_to_bindt.
-      rewrite ktmf_traverse_to_bindt.
+      rewrite traverse_to_bindt.
+      rewrite traverse_to_bindt.
       rewrite ktm_morph.
-      reassociate <-. (* TODO cleanup below *)
+      reassociate <-.
+      (* TODO cleanup below *)
       { fequal. ext a. unfold compose. rewrite appmor_natural.
         reflexivity. }
     Qed.
 
   End derived_classes.
+End DerivedInstances.
 
-  (** ** Instances *)
-  (******************************************************************************)
-  Lemma ktmf_map_to_bind (A B : Type) (f : A -> B):
-    map f = bind (ret ∘ f).
-  Proof.
-    rewrite ktmf_map_to_bindt.
-    rewrite ktmf_bind_to_bindt.
-    reflexivity.
-  Qed.
+Section instances.
 
-  Lemma ktmf_map_to_traverse :
-    @map T _ = @traverse T _ (fun X : Type => X) _ _ _.
-  Proof.
-    ext A B f.
-    rewrite ktmf_map_to_bindt.
-    rewrite ktmf_traverse_to_bindt.
-    reflexivity.
-  Qed.
+  Context
+    `{ret_inst : Return T}
+    `{Map_T_inst : Map T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{! Compat_Map_Bindt T T}
+    `{! Compat_Traverse_Bindt T T}
+    `{! Compat_Bind_Bindt T T}
+    `{Map_U_inst : Map U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{! Compat_Map_Bindt T U}
+    `{! Compat_Traverse_Bindt T U}
+    `{! Compat_Bind_Bindt T U}
+    `{Monad_inst : ! TraversableRightModule T U}.
+
+  #[local] Existing Instance TraversableRightModule_TraversableMonad.
 
   #[export] Instance RightPreModule_TraversableMonad : RightPreModule T T :=
     {| kmod_bind1 := bind_id;
@@ -528,55 +773,37 @@ Section DerivedInstances.
     {| kmon_bind0 := bind_ret;
     |}.
 
-  (*
-  #[export] Instance MonadFull_TraversableMonadFull : MonadFull T :=
-    {| kmonf_map_to_bind := ktmf_map_to_bind;
+  #[export] Instance RightModule_TraversableRightModule : RightModule T T :=
+    {| kmod_monad := _
     |}.
-   *)
 
-  #[export] Instance TraversableFunctor_TraversableMonadFull : TraversableFunctor T :=
+  #[export] Instance TraversableFunctor_TraversableRightModule :
+    TraversableFunctor U :=
     {| trf_traverse_id := traverse_id;
-       trf_traverse_traverse := @traverse_traverse;
-       trf_traverse_morphism := @traverse_morphism;
+      trf_traverse_traverse := traverse_traverse;
+      trf_traverse_morphism := traverse_morphism;
     |}.
 
-  #[export] Instance TraversableFunctorFull_TraversableMonadFull  : TraversableFunctorFull T :=
-    {| trff_map_to_traverse := ktmf_map_to_traverse;
+  #[export] Instance TraversableFunctor_TraversableMonad : TraversableFunctor T :=
+    {| trf_traverse_id := traverse_id;
+      trf_traverse_traverse := traverse_traverse;
+      trf_traverse_morphism := traverse_morphism;
     |}.
 
-  #[export] Instance Functor_TM : Functor T :=
+  #[export] Instance Functor_TraversableMonad : Functor T :=
     {| fun_map_id := map_id;
        fun_map_map := map_map;
     |}.
 
-End DerivedInstances.
+  #[export] Instance Functor_TraversableRightModule: Functor U :=
+    {| fun_map_id := map_id;
+       fun_map_map := map_map;
+    |}.
+
+End instances.
 
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
   Infix "⋆3" := (kc3) (at level 60) : tealeaves_scope.
 End Notations.
-
-(** * <<TraversableMonad>> to <<TraversableMonadFull>> *)
-(******************************************************************************)
-Module MakeFull.
-  Section makefull.
-
-    Context
-      `{Bindt T T}
-      `{Return T}.
-
-    #[export] Instance Map_Bindt : Map T | 13 :=
-      fun (A B : Type) (f : A -> B) => bindt (U := T) (T := T) (G := fun A => A) (ret ∘ f).
-
-    #[export] Instance Bind_Bindt: Bind T T | 13 :=
-      fun A B f => bindt (G := fun A => A) f.
-
-    #[export] Instance Traverse_Bindt: Traverse T | 13 :=
-      fun G _ _ _ A B f => bindt (map ret ∘ f).
-
-    #[export, program] Instance MakeFull_TraversableMonad
-      `{! TraversableMonad T} : TraversableMonadFull T.
-
-  End makefull.
-End MakeFull.

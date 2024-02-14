@@ -57,10 +57,10 @@ Class TraversableMorphism
 (******************************************************************************)
 Section derived.
 
-  Definition Map_Traverse `{Traverse_inst : Traverse T} : Map T :=
+  Definition Map_Traverse T `{Traverse_inst : Traverse T} : Map T :=
     fun (A B : Type) (f : A -> B) => traverse (G := fun A => A) f.
 
-  Class Compat_Map_Traverse
+  Class Compat_Map_Traverse T
     `{Map_inst : Map T}
     `{Traverse_inst : Traverse T} : Prop :=
     compat_map_traverse :
@@ -68,7 +68,7 @@ Section derived.
 
   #[export] Instance Compat_Map_Traverse_Self
     `{Traverse T} :
-    Compat_Map_Traverse (Map_inst := Map_Traverse).
+    Compat_Map_Traverse T (Map_inst := Map_Traverse T).
   Proof.
     reflexivity.
   Qed.
@@ -87,7 +87,7 @@ Class TraversableFunctorFull (T : Type -> Type)
   `{Traverse_inst : Traverse T}
   `{Map_inst : Map T} :=
   { trff_trf :> TraversableFunctor T;
-    trff_map_compat :> Compat_Map_Traverse;
+    trff_map_compat :> Compat_Map_Traverse T;
   }.
 
 (** * Interaction of [traverse] with functor composition *)
@@ -130,7 +130,7 @@ Section derived_instances.
     Context
       `{TraversableFunctor T}
       `{Map T}
-      `{! Compat_Map_Traverse }.
+      `{! Compat_Map_Traverse T }.
 
     Context
       {G1 G2 : Type -> Type}
