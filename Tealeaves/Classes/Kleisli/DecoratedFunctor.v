@@ -31,12 +31,6 @@ Class DecoratedFunctor (E : Type) (T : Type -> Type) `{Mapd E T} :=
       @mapd E T _ B C g ∘ @mapd E T _ A B f = @mapd E T _ A C (g ⋆4 f);
   }.
 
-Class DecoratedFunctorFull (E : Type) (T : Type -> Type) `{Mapd E T} `{Map T} :=
-  { dfunf_df :> DecoratedFunctor E T;
-    dfunf_map_to_mapd : forall (A B : Type) (f : A -> B),
-      map f = mapd (f ∘ extract);
-  }.
-
 (** ** Decoration-preserving natural transformations *)
 (******************************************************************************)
 Class DecoratedNatural
@@ -51,8 +45,51 @@ Class DecoratedNatural
 (******************************************************************************)
 Section derived_instances.
 
+  Definition Map_Mapd `{Mapd_inst : Mapd E T} : Map T :=
+  fun (A B : Type) (f : A -> B) => @mapd E T _ A B (f ∘ extract).
+
+  Class Compat_Map_Mapd
+    `{Map_inst : Map T}
+    `{Mapd_inst : Mapd E T} : Prop :=
+    compat_map_mapd :
+      @map T Map_inst = @map T (@Map_Mapd E T Mapd_inst).
+
+  #[export] Instance Compat_Map_Mapd_Self
+    `{Mapd E T} :
+    Compat_Map_Mapd (Map_inst := Map_Mapd).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Corollary map_to_mapd
+    `{Compat_Map_Mapd E T} : forall (A B : Type) (f : A -> B),
+      map f = mapd (f ∘ extract).
+  Proof.
+    rewrite compat_map_mapd.
+    reflexivity.
+  Qed.
+
+End derived_instances.
+
+Class DecoratedFunctorFull (E : Type) (T : Type -> Type)
+  `{Mapd E T} `{Map T} :=
+  { dfunf_df :> DecoratedFunctor E T;
+    dfunf_map_compat :> Compat_Map_Mapd;
+  }.
+
+Definition DecoratedFunctorFull_DecoratedFunctor
+  `{DecoratedFunctor E T} :
+  `{DecoratedFunctorFull E T} :=
+  {| dfunf_df := _ |}.
+
+(** * Derived instances *)
+(******************************************************************************)
+Section derived_instances.
+
   Context
-    `{DecoratedFunctorFull E T}.
+    `{DecoratedFunctor E T}
+    `{Map_inst : Map T}
+    `{! Compat_Map_Mapd}.
 
   (** ** Composition in special cases *)
   (******************************************************************************)
@@ -63,7 +100,7 @@ Section derived_instances.
       map g ∘ mapd f = mapd (g ∘ f).
   Proof.
     intros.
-    rewrite dfunf_map_to_mapd.
+    rewrite map_to_mapd.
     rewrite dfun_mapd2.
     rewrite kc4_04.
     reflexivity.
@@ -75,7 +112,7 @@ Section derived_instances.
       mapd g ∘ map f = mapd (g ∘ map f).
   Proof.
     intros.
-    rewrite dfunf_map_to_mapd.
+    rewrite map_to_mapd.
     rewrite dfun_mapd2.
     rewrite kc4_40.
     reflexivity.
@@ -85,7 +122,7 @@ Section derived_instances.
       map g ∘ map f = map (F := T) (g ∘ f).
   Proof.
     intros.
-    do 3 rewrite dfunf_map_to_mapd.
+    do 3 rewrite map_to_mapd.
     rewrite dfun_mapd2.
     rewrite kc4_00.
     reflexivity.
@@ -95,7 +132,7 @@ Section derived_instances.
       map (@id A) = @id (T A).
   Proof.
     intros.
-    rewrite dfunf_map_to_mapd.
+    rewrite map_to_mapd.
     unfold id, compose.
     rewrite dfun_mapd1.
     reflexivity.
@@ -109,26 +146,3 @@ Section derived_instances.
     |}.
 
 End derived_instances.
-
-(** * <<DecoratedFunctor>> to <<DecoratedFunctorFull>> *)
-(******************************************************************************)
-Module MakeFull.
-
-  (** ** [map] as a special case of [mapd] *)
-  (******************************************************************************)
-  #[export] Instance Map_Mapd (E : Type) (T : Type -> Type) `{Mapd E T} : Map T :=
-  fun (A B : Type) (f : A -> B) => @mapd E T _ A B (f ∘ extract).
-
-  Corollary map_to_mapd (E : Type) (T : Type -> Type) `{Mapd E T} :
-    forall (A B : Type) (f : A -> B),
-      map f = mapd (f ∘ extract).
-  Proof.
-    reflexivity.
-  Qed.
-
-  #[export] Instance DecoratedFunctor_Fill
-    `{DecoratedFunctor E T} :
-    `{DecoratedFunctorFull E T} :=
-    {| dfunf_map_to_mapd := map_to_mapd E T |}.
-
-End MakeFull.
