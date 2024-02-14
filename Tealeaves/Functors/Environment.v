@@ -119,6 +119,30 @@ Proof.
   simple_env_tactic.
 Qed.
 
+#[export] Instance Compat_Traverse_Mapdt_env {E: Type}:
+  Compat_Traverse_Mapdt (E := E).
+Proof.
+  hnf. intros. ext A B f.
+  rewrite (env_traverse_compat E).
+  reflexivity.
+Qed.
+
+#[export] Instance Compat_Map_Mapdt_env {E: Type}:
+  Compat_Map_Mapdt (E := E).
+Proof.
+  hnf. ext A B f.
+  rewrite env_map_compat.
+  reflexivity.
+Qed.
+
+#[export] Instance Compat_Mapd_Mapdt_env {E: Type}:
+  Compat_Mapd_Mapdt (E := E).
+Proof.
+  hnf. ext A B f.
+  rewrite env_mapd_compat.
+  reflexivity.
+Qed.
+
 (** ** Rewriting lemmas for <<bindt>> *)
 (******************************************************************************)
 Section mapdt_rewriting_lemmas.
@@ -283,13 +307,6 @@ End env_laws.
   {| kdtfun_mapdt1 := env_mapdt1 E;
      kdtfun_mapdt2 := @env_mapdt2 E;
      kdtfun_morph := @env_mapdt_morph E;
-  |}.
-
-#[export] Instance DTF_Full_env (E : Type) :
-  DecoratedTraversableFunctorFull E (env E) :=
-  {| kdtfunf_map_to_mapdt := env_map_compat E;
-     kdtfunf_mapd_to_mapdt := env_mapd_compat E;
-     kdtfunf_traverse_to_mapdt := @env_traverse_compat E;
   |}.
 
 (** * The [env] DTM, Kleisli-style *)

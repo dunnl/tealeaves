@@ -182,6 +182,7 @@ Section traversable_monad_theory.
     - intros. now apply bind_respectful.
   Qed.
 
+  (*
   (* TODO Below corollaries can be cut *)
 
   Corollary bind_respectful_map :
@@ -214,5 +215,6 @@ Section traversable_monad_theory.
     now inversion 1.
     now rewrite hyp.
   Qed.
+  *)
 
 End traversable_monad_theory.

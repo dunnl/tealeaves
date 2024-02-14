@@ -89,8 +89,14 @@ Section derived.
 
     Class Compat_Traverse_Mapdt: Prop :=
       compat_traverse_mapdt:
-        @traverse T Traverse_inst =
-          @traverse T (@Traverse_Mapdt E T Mapdt_inst).
+        forall {G : Type -> Type}
+          `{Map_inst : Map G}
+          `{Mult_inst : Mult G}
+          `{Pure_inst : Pure G}
+          `{! Applicative G},
+        @traverse T Traverse_inst G Map_inst Pure_inst Mult_inst =
+          @traverse T (@Traverse_Mapdt E T Mapdt_inst)
+            G Map_inst Pure_inst Mult_inst.
 
     Section rewrite.
 
@@ -141,7 +147,8 @@ Section derived.
     Compat_Mapd_Mapdt (Mapd_inst := Mapd_Mapdt) := ltac:(reflexivity).
 
   #[export] Instance Compat_Traverse_Mapdt_Self `{Mapdt_inst : Mapdt E T} :
-    Compat_Traverse_Mapdt (Traverse_inst := Traverse_Mapdt) := ltac:(reflexivity).
+    Compat_Traverse_Mapdt (Traverse_inst := Traverse_Mapdt) :=
+    ltac:(hnf; reflexivity).
 
   #[export] Instance Compat_Map_Mapd_Mapdt
     `{Map_inst : Map T}

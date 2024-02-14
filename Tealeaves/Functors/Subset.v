@@ -76,20 +76,21 @@ Proof.
     exists b; split; [exists a'; split; assumption | assumption].
 Qed.
 
-#[export] Instance Monad_set : Monad subset :=
-  {| kmon_bind0 := set_bind0;
-    kmon_bind1 := set_bind1;
-    kmon_bind2 := set_bind2;
+#[export] Instance RightPreModule_subset : RightPreModule subset subset :=
+  {| kmod_bind1 := set_bind1;
+    kmod_bind2 := set_bind2;
   |}.
 
-Lemma set_map_bind_compat : forall (A B : Type) (f : A -> B),
-    map (F := subset) f = bind (ret ∘ f).
-Proof.
-  reflexivity.
-Qed.
+#[export] Instance Monad_subset : Monad subset :=
+  {| kmon_bind0 := set_bind0;
+  |}.
 
-#[export] Instance MonadFull_set : MonadFull subset :=
-  {| kmonf_map_to_bind := set_map_bind_compat; |}.
+#[export] Instance RightModule_subset : RightModule subset subset :=
+  {| kmod_monad := _;
+  |}.
+
+#[export] Instance Compat_Map_Bind_subset :
+  `{Compat_Map_Bind subset subset} := ltac:(reflexivity).
 
 (** ** <<bind>> is a monoid homomorphism *)
 (******************************************************************************)

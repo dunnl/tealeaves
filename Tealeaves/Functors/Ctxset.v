@@ -91,10 +91,13 @@ Section ctxset.
        dfun_mapd2 := dfun_subset_mapd2;
     |}.
 
-  #[export] Instance DTF_Full_ctxset :
-    DecoratedFunctorFull E (ctxset E) :=
-    {| dfunf_map_to_mapd := ctxset_map_to_mapd;
-    |}.
+  #[export] Instance Compat_Map_Mapd_ctxset :
+    `{Compat_Map_Mapd}.
+  Proof.
+    hnf.
+    ext A B f.
+    now rewrite ctxset_map_to_mapd.
+  Qed.
 
   (** ** Monoid instances *)
   (******************************************************************************)
@@ -183,7 +186,7 @@ Section ctxset.
     intros.
     rewrite ctxset_mapd_spec.
     rewrite ctxset_bindd_spec.
-    rewrite set_map_bind_compat.
+    rewrite Monad.map_to_bind.
     fequal.
     rewrite ctxset_ret_spec.
     unfold_ops @Return_subset @Return_Writer.
@@ -214,6 +217,28 @@ Section ctxset.
     rewrite ctxset_bind_to_bindd.
     rewrite ctxset_bindd_spec.
     rewrite map_to_cobind.
+    reflexivity.
+  Qed.
+
+  #[export] Instance Compat_Bind_Bindd_ctxset :
+    Compat_Bind_Bindd W (ctxset W) (ctxset W).
+  Proof.
+    reflexivity.
+  Qed.
+
+  #[export] Instance Compat_Map_Bindd_ctxset :
+    Compat_Map_Bindd W (ctxset W) (ctxset W).
+  Proof.
+    hnf. ext A B f.
+    rewrite ctxset_map_to_bindd.
+    reflexivity.
+  Qed.
+
+  #[export] Instance Compat_Mapd_Bindd_ctxset :
+    Compat_Mapd_Bindd W (ctxset W) (ctxset W).
+  Proof.
+    hnf. ext A B f.
+    rewrite ctxset_mapd_to_bindd.
     reflexivity.
   Qed.
 
@@ -301,8 +326,8 @@ Section ctxset.
     rewrite (DecoratedFunctor.shift_spec subset).
     rewrite (DecoratedFunctor.shift_spec subset).
     compose near (f (w, a)).
-    rewrite (bind_map subset).
-    rewrite (map_bind subset).
+    rewrite (bind_map (U := subset)).
+    rewrite (map_bind (U := subset)).
     fequal. ext [w' b].
     unfold shift.
     do 2 reassociate <- on right.
@@ -327,19 +352,20 @@ Section ctxset.
     reflexivity.
   Qed.
 
+  #[export] Instance DecoratedRightPreModule_ctxset :
+    DecoratedRightPreModule W (ctxset W) (ctxset W) :=
+    {| kmodd_bindd1 := ctxset_bindd1;
+       kmodd_bindd2 := ctxset_bindd2;
+    |}.
+
   #[export] Instance DecoratedMonad_ctxset :
     DecoratedMonad W (ctxset W) :=
     {| kmond_bindd0 := ctxset_bindd0;
-      kmond_bindd1 := ctxset_bindd1;
-      kmond_bindd2 := ctxset_bindd2;
     |}.
 
-  #[export] Instance DecoratedMonadFull_ctxset :
-    DecoratedMonadFull W (ctxset W) :=
-    {| kmondf_map_compat := ctxset_map_to_bindd;
-      kmondf_mapd_compat := ctxset_mapd_to_bindd;
-      kmondf_bind_compat := ctxset_bind_to_bindd;
-    |}.
+  #[export] Instance DecoratedRightModule_ctxset :
+    DecoratedRightModule W (ctxset W) (ctxset W) :=
+    {| kmodd_monad := _ |}.
 
   (** * <<bindd>> is a monoid homomorphism *)
   (******************************************************************************)

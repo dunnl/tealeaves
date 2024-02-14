@@ -135,35 +135,35 @@ Fixpoint traverse_list (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Ty
 #[export] Instance Bind_list : Bind list list := @bind_list.
 #[export] Instance Traverse_list : Traverse list := @traverse_list.
 
-Lemma list_bind_compat : forall (A B : Type),
-    bind =
-      @TraversableMonad.MakeFull.Bind_Bindt list _ A B.
+#[export] Instance Comat_Bind_Bindt_list:
+  Compat_Bind_Bindt list list.
 Proof.
-  intros. ext f l. induction l as [|a rest IHrest].
+  hnf. ext A B f l.
+  induction l as [|a rest IHrest].
   - reflexivity.
   - cbn. now rewrite IHrest.
 Qed.
 
-Lemma list_traverse_compat :
-  forall (G : Type -> Type) `{Mult G} `{Map G} `{Pure G}
-    `{! Applicative G} (A B : Type) (f : A -> G B),
-    traverse f =
-      @TraversableMonad.MakeFull.Traverse_Bindt list _ _ G _ _ _ A B f.
+#[export] Instance Comat_Traverse_Bindt_list:
+  Compat_Traverse_Bindt list list.
 Proof.
-  intros. ext l. induction l as [| a rest IHrest].
+  hnf. intros.
+  ext A B f l.
+  induction l as [| a rest IHrest].
   - reflexivity.
-  - cbn. rewrite IHrest.
+  - cbn.
+    rewrite IHrest.
     unfold compose at 1.
     rewrite pure_ap_map.
     rewrite map_to_ap.
     reflexivity.
 Qed.
 
-Lemma list_map_compat : forall (A B : Type) (f : A -> B),
-    map (F := list) f =
-      @TraversableMonad.MakeFull.Map_Bindt list _ _ A B f.
+#[export] Instance Comat_Map_Bindt_list:
+  Compat_Map_Bindt list list.
 Proof.
-  intros. ext l. induction l as [|a rest IHrest].
+  hnf. ext A B f l.
+  induction l as [|a rest IHrest].
   - reflexivity.
   - cbn. now rewrite IHrest.
 Qed.
@@ -362,21 +362,21 @@ Proof.
     reflexivity.
 Qed.
 
-#[export] Instance TM_list : TraversableMonad list :=
-  {| ktm_bindt0 := list_bindt0;
-    ktm_bindt1 := list_bindt1;
-    ktm_bindt2 := @list_bindt2;
-    ktm_morph := @list_morph;
+#[export] Instance TraversableRightPreModule_list:
+  TraversableRightPreModule list list :=
+  {| ktm_bindt1 := list_bindt1;
+     ktm_bindt2 := @list_bindt2;
+     ktm_morph := @list_morph;
   |}.
 
-(** ** Derived typeclass instances *)
-(******************************************************************************)
-#[program, export]
-  Instance TraversableMonadFull_list : TraversableMonadFull list :=
-  {| ktmf_map_to_bindt := list_map_compat;
-    ktmf_bind_to_bindt := @list_bind_compat;
-    ktmf_traverse_to_bindt := @list_traverse_compat;
+#[export] Instance TraversableMonad_list:
+  TraversableMonad list :=
+  {| ktm_bindt0 := list_bindt0;
   |}.
+
+#[export] Instance TraversableRightModule_list:
+  TraversableRightModule list list :=
+  {| ktmod_monad := _; |}.
 
 (** * List algebras and folds *)
 (******************************************************************************)

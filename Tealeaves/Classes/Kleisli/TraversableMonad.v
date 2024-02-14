@@ -114,7 +114,14 @@ Section derived.
 
     Class Compat_Traverse_Bindt : Prop :=
       compat_traverse_bindt :
-        @traverse U Traverse_inst = @traverse U (@Traverse_Bindt T U Return_inst Bindt_inst).
+        forall {G : Type -> Type}
+          `{Map_inst : Map G}
+          `{Mult_inst : Mult G}
+          `{Pure_inst : Pure G}
+          `{! Applicative G},
+          @traverse U Traverse_inst G Map_inst Pure_inst Mult_inst =
+            @traverse U (@Traverse_Bindt T U Return_inst Bindt_inst)
+              G Map_inst Pure_inst Mult_inst.
 
   End compat.
 
@@ -139,6 +146,7 @@ Section derived.
     #[export] Instance Compat_Traverse_Bindt_Self:
       Compat_Traverse_Bindt T U (Traverse_inst := Traverse_Bindt T U).
     Proof.
+      hnf. intros.
       reflexivity.
     Qed.
 
