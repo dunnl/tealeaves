@@ -11,6 +11,8 @@ Import Functor.Notations.
 Import Subset.Notations.
 Import List.ListNotations.
 
+#[local] Generalizable Variables E T.
+
 (** * Container-like functors with context *)
 (******************************************************************************)
 
@@ -25,6 +27,40 @@ Class ElementsCtx (E : Type) (F : Type -> Type) :=
 #[local] Notation "x ∈d t" :=
   (element_ctx_of t x) (at level 50) : tealeaves_scope.
 
+Section compat.
+
+  Context
+    `{ElementsCtx_inst : ElementsCtx E T}.
+
+  Definition Elements_ElementsCtx : Elements T :=
+    fun A => map (F := subset) extract ∘ element_ctx_of.
+
+  Class Compat_Elements_ElementsCtx
+    `{Elements_inst : Elements T} : Prop :=
+    compat_elements_elements_ctx :
+      @element_of T Elements_inst =
+        @element_of T Elements_ElementsCtx.
+
+  Lemma element_ctx_iff_element
+    `{Compat_Elements_ElementsCtx}:
+    forall (A : Type) (t : T A) (a : A),
+      a ∈ t <-> exists (e: E), (e, a) ∈d t.
+  Proof.
+    intros.
+    change_left ((evalAt a ∘ element_of) t).
+    rewrite compat_elements_elements_ctx.
+    unfold_ops @Elements_ElementsCtx.
+    unfold_ops @Map_subset.
+    unfold evalAt, compose.
+    split.
+    - intros [[e a'] [Hin Heq]].
+      cbn in Heq. subst. eauto.
+    - intros [e Hin].
+      eauto.
+  Qed.
+
+End compat.
+
 (** ** Typeclass *)
 (******************************************************************************)
 Class DecoratedContainerFunctor
@@ -38,12 +74,12 @@ Class DecoratedContainerFunctor
 
 Class DecoratedContainerFunctorFull
   (E : Type) (F : Type -> Type)
-  `{Map F} `{Mapd E F} `{Elements F} `{ElementsCtx E F} :=
+  `{Map F} `{Mapd E F}
+  `{Elements F}
+  `{ElementsCtx E F} :=
   { dcontf_functor :> DecoratedFunctorFull E F;
     dcontf_dcont :> DecoratedContainerFunctor E F;
-    dcontf_element_compat : forall A,
-      element_of (F := F) (A := A) =
-        map (F := subset) extract ∘ element_ctx_of (F := F);
+    dcontf_compat :> Compat_Elements_ElementsCtx;
   }.
 
 (** ** [ElementsCtx]-preserving Natural transformations *)
@@ -100,34 +136,24 @@ Section setlike_functor_theory.
   Context
     (E : Type)
     (F : Type -> Type)
-    `{DecoratedContainerFunctorFull E F}
+    `{DecoratedFunctor E T}
+    `{Map_inst : Map T}
+    `{! Compat_Map_Mapd}
+    `{ElementsCtx E T}
+    `{Elements_inst : Elements T}
+    `{! Compat_Elements_ElementsCtx}
+    `{! DecoratedContainerFunctor E T}
     {A B : Type}.
 
-  Implicit Types (t : F A) (b : B) (e : E) (a : A).
-
-  (** ** Relating (∈d) and <<∈>> *)
-  (******************************************************************************)
-  Lemma element_ctx_iff_element : forall (A : Type) (t : F A) (a : A),
-      a ∈ t <-> exists e, (e, a) ∈d t.
-  Proof.
-    intros.
-    rewrite dcontf_element_compat.
-    unfold compose.
-    unfold_ops @Map_subset.
-    split.
-    - intros [[w a'] [Hin Heq]].
-      cbn in Heq. subst.
-      eauto.
-    - intros [w Hin].
-      eauto.
-  Qed.
+  Implicit Types (t : T A) (b : B) (e : E) (a : A).
 
   (** ** Interaction between (∈d) and <<mapd>> *)
   (******************************************************************************)
   Theorem ind_mapd_iff : forall e t f b,
       (e, b) ∈d mapd f t <-> exists a : A, (e, a) ∈d t /\ f (e, a) = b.
   Proof.
-    introv. compose near t on left.
+    introv.
+    compose near t on left.
     rewrite <- dec_natural.
     reflexivity.
   Qed.
@@ -145,7 +171,7 @@ Section setlike_functor_theory.
       (e, b) ∈d map f t <-> exists a : A, (e, a) ∈d t /\ f a = b.
   Proof.
     introv.
-    rewrite dfunf_map_to_mapd.
+    rewrite DecoratedFunctor.map_to_mapd.
     rewrite ind_mapd_iff.
     reflexivity.
   Qed.
@@ -171,9 +197,10 @@ Section setlike_functor_theory.
   Corollary mapd_respectful_id : forall t (f : E * A -> A),
       (forall e a, (e, a) ∈d t -> f (e, a) = a) -> mapd f t = t.
   Proof.
-    introv hyp. change t with (id t) at 2.
-    rewrite <- (fun_map_id).
-    rewrite (dfunf_map_to_mapd).
+    introv hyp.
+    change t with (id t) at 2.
+    rewrite <- fun_map_id.
+    rewrite DecoratedFunctor.map_to_mapd.
     apply dcont_pointwise.
     apply hyp.
   Qed.
@@ -188,7 +215,6 @@ Module Notations.
     (element_ctx_of t x) (at level 50) : tealeaves_scope.
 
 End Notations.
-
 
 (** * Instance for <<env>> *)
 (******************************************************************************)
@@ -235,7 +261,7 @@ Qed.
 Proof.
   constructor.
   - typeclasses eauto.
-  - typeclasses eauto.
+  - constructor.
 Abort.
 
 End env_instance.

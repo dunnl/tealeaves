@@ -82,6 +82,23 @@ Class RightModule (T : Type -> Type) (U : Type -> Type)
     kmod_premod :> RightPreModule T U;
   }.
 
+(** ** Homomorphisms *)
+(******************************************************************************)
+Class RightModuleHom (T U V : Type -> Type)
+  `{Return T} `{Bind T U} `{Bind T V}
+  (ϕ : forall (A : Type), U A -> V A) :=
+  { kmod_hom_bind : forall (A B : Type) (f : A -> T B),
+      ϕ B ∘ @bind T U _ A B f = @bind T V _ A B f ∘ ϕ A;
+  }.
+
+Class ParallelRightModuleHom (T T' U V : Type -> Type)
+  `{Return T} `{Bind T U} `{Bind T' V}
+  (ψ : forall (A : Type), T A -> T' A)
+  (ϕ : forall (A : Type), U A -> V A) :=
+  { kmodpar_hom_bind : forall (A B : Type) (f : A -> T B),
+      ϕ B ∘ @bind T U _ A B f = @bind T' V _ A B (ψ B ∘ f) ∘ ϕ A;
+  }.
+
 (** * Derived instances *)
 (******************************************************************************)
 Section Map_Bind.

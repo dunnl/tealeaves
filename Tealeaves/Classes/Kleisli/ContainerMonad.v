@@ -6,7 +6,7 @@ From Tealeaves Require Export
 Import Subset.Notations.
 Import ContainerFunctor.Notations.
 
-#[local] Generalizable Variables T A B.
+#[local] Generalizable Variables T U A B.
 
 Class ContainerMonad
   (T : Type -> Type)
@@ -17,12 +17,27 @@ Class ContainerMonad
       (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t;
   }.
 
+Class ContainerRightModule
+  (T U : Type -> Type)
+  `{Bind T T}
+  `{Bind T U}
+  `{Return T}
+  `{Elements T}
+  `{Elements U} :=
+  { contmod_module :> RightModule T U;
+    contmod_hom :> ParallelRightModuleHom T subset U subset
+      (@element_of T _)
+      (@element_of U _);
+    contmod_pointwise : forall (A B : Type) (t : U A) (f g : A -> T B),
+      (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t;
+  }.
+
 Section corollaries.
 
   Context
     `{ContainerMonad T}
-      `{H_map : Map T}
-      `{! Compat_Map_Bind T}.
+    `{Map_inst : Map T}
+    `{! Compat_Map_Bind T T}.
 
   Lemma ret_injective : forall (A : Type) (a a' : A),
       ret a = ret a' -> a = a'.
@@ -77,6 +92,51 @@ Section corollaries.
     change t with (id t) at 2.
     rewrite <- kmon_bind1.
     now apply bind_respectful.
+  Qed.
+
+End corollaries.
+
+Section corollaries.
+
+  Context
+    `{Module_inst: ContainerRightModule T U}
+    `{Map_U_inst: Map U}
+    `{! Compat_Map_Bind U T}.
+
+  Theorem mod_in_bind_iff :
+    forall `(f : A -> T B) (t : U A) (b : B),
+      b ∈ bind f t <-> exists a, a ∈ t /\ b ∈ f a.
+  Proof.
+    intros.
+    compose near t on left.
+    rewrite (kmodpar_hom_bind (ϕ := @element_of U _)).
+    reflexivity.
+  Qed.
+
+  Corollary mod_bind_respectful : forall (A B : Type) (t : U A) (f g : A -> T B),
+      (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t.
+  Proof.
+    apply contmod_pointwise.
+  Qed.
+
+  Corollary mod_bind_respectful_map :
+    forall `(f1 : A -> T B) `(f2 : A -> B) (t : U A),
+      (forall (a : A), a ∈ t -> f1 a = ret (f2 a)) -> bind f1 t = map f2 t.
+  Proof.
+    introv hyp.
+    rewrite compat_map_bind.
+    now eapply mod_bind_respectful.
+  Qed.
+
+  Corollary mod_bind_respectful_id :
+    forall `(f1 : A -> T A) (t : U A),
+      (forall (a : A), a ∈ t -> f1 a = ret a) ->
+      bind f1 t = t.
+  Proof.
+    introv hyp.
+    change t with (id t) at 2.
+    rewrite <- (kmod_bind1 (U := U) (T := T)).
+    now apply mod_bind_respectful.
   Qed.
 
 End corollaries.
