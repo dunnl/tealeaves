@@ -15,10 +15,7 @@ Import Product.Notations.
 (** * Decorated traversable functors *)
 (******************************************************************************)
 
-(** ** Typeclass *)
-(******************************************************************************)
-
-(** *** Operation *)
+(** ** Operation *)
 (******************************************************************************)
 Class Mapdt (E : Type) (T : Type -> Type) :=
   mapdt : forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
@@ -28,7 +25,7 @@ Class Mapdt (E : Type) (T : Type -> Type) :=
 #[global] Arguments mapdt {E}%type_scope {T}%function_scope {Mapdt}
   {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 
-(** *** Kleisli composition *)
+(** ** Kleisli composition *)
 (******************************************************************************)
 Definition kc6
   {E A B C : Type}
@@ -42,7 +39,7 @@ Definition kc6
 
 #[local] Infix "⋆6" := kc6 (at level 60) : tealeaves_scope.
 
-(** *** Typeclass *)
+(** ** Typeclass *)
 (******************************************************************************)
 Class DecoratedTraversableFunctor
   (E : Type) (T : Type -> Type) `{Mapdt E T} :=
@@ -56,25 +53,156 @@ Class DecoratedTraversableFunctor
       mapdt (ϕ B ∘ f) = ϕ (T B) ∘ mapdt f;
   }.
 
+(** * Derived operations *)
+(******************************************************************************)
+Section derived.
+
+  Section operations.
+
+    Context
+      `{Mapdt_inst : Mapdt E T}.
+
+    #[local] Instance Mapd_Mapdt: Mapd E T := fun A B f => mapdt (G := fun A => A) f.
+    #[local] Instance Traverse_Mapdt: Traverse T := fun G _ _ _ A B f => mapdt (f ∘ extract).
+    #[local] Instance Map_Mapdt: Map T := fun A B f => mapdt (G := fun A => A) (f ∘ extract).
+
+  End operations.
+
+  Section compat.
+
+    Context
+      {E: Type} {T: Type -> Type}
+      `{Map_inst: Map T}
+      `{Mapd_inst: Mapd E T}
+      `{Traverse_inst: Traverse T}
+      `{Mapdt_inst: Mapdt E T}.
+
+    Class Compat_Map_Mapdt: Prop :=
+      compat_map_mapdt:
+        @map T Map_inst =
+          @map T (@Map_Mapdt E T Mapdt_inst).
+
+    Class Compat_Mapd_Mapdt: Prop :=
+      compat_mapd_mapdt:
+        @mapd E T Mapd_inst =
+          @mapd E T (@Mapd_Mapdt E T Mapdt_inst).
+
+    Class Compat_Traverse_Mapdt: Prop :=
+      compat_traverse_mapdt:
+        @traverse T Traverse_inst =
+          @traverse T (@Traverse_Mapdt E T Mapdt_inst).
+
+    Section rewrite.
+
+      Context
+        `{! Compat_Map_Mapdt}
+        `{! Compat_Mapd_Mapdt}
+        `{! Compat_Traverse_Mapdt}.
+
+      Definition traverse_to_mapdt
+        `{Applicative G}: forall `(f: A -> G B),
+          traverse (T := T) f = mapdt (f ∘ extract) :=
+        ltac:(now rewrite compat_traverse_mapdt).
+
+      Definition mapd_to_mapdt: forall `(f: E * A -> B),
+          mapd f = mapdt (T := T) (G := fun A => A) f :=
+        ltac:(now rewrite compat_mapd_mapdt).
+
+      Definition map_to_mapdt: forall `(f: A -> B),
+          map f = mapdt (T := T) (G := fun A => A) (f ∘ extract) :=
+        ltac:(now rewrite compat_map_mapdt).
+
+      Corollary map_to_mapd: forall `(f: A -> B),
+          map f = mapd (T := T) (f ∘ extract).
+      Proof.
+        intros.
+        rewrite map_to_mapdt.
+        rewrite mapd_to_mapdt.
+        reflexivity.
+      Qed.
+
+      Corollary map_to_traverse: forall `(f: A -> B),
+          map f = traverse (T := T) (G := fun A => A) f.
+      Proof.
+        intros.
+        rewrite map_to_mapdt.
+        rewrite traverse_to_mapdt.
+        reflexivity.
+      Qed.
+
+    End rewrite.
+
+  End compat.
+
+  #[export] Instance Compat_Map_Mapdt_Self `{Mapdt_inst : Mapdt E T} :
+    Compat_Map_Mapdt (Map_inst := Map_Mapdt) := ltac:(reflexivity).
+
+  #[export] Instance Compat_Mapd_Mapdt_Self `{Mapdt_inst : Mapdt E T} :
+    Compat_Mapd_Mapdt (Mapd_inst := Mapd_Mapdt) := ltac:(reflexivity).
+
+  #[export] Instance Compat_Traverse_Mapdt_Self `{Mapdt_inst : Mapdt E T} :
+    Compat_Traverse_Mapdt (Traverse_inst := Traverse_Mapdt) := ltac:(reflexivity).
+
+  #[export] Instance Compat_Map_Mapd_Mapdt
+    `{Map_inst : Map T}
+    `{Mapd_inst : Mapd E T}
+    `{Mapdt_inst : Mapdt E T}
+    `{! Compat_Map_Mapdt}
+    `{! Compat_Mapd_Mapdt} :
+    Compat_Map_Mapd.
+  Proof.
+    hnf.
+    rewrite compat_map_mapdt.
+    unfold_ops @Map_Mapd.
+    rewrite compat_mapd_mapdt.
+    reflexivity.
+  Qed.
+
+  #[export] Instance Compat_Map_Traverse_Mapdt
+    `{Map_inst : Map T}
+    `{Traverse_inst : Traverse T}
+    `{Mapdt_inst : Mapdt E T}
+    `{! Compat_Map_Mapdt}
+    `{! Compat_Traverse_Mapdt} :
+    Compat_Map_Traverse T.
+  Proof.
+    hnf.
+    rewrite compat_map_mapdt.
+    unfold_ops @Map_Traverse.
+    rewrite compat_traverse_mapdt.
+    reflexivity.
+  Qed.
+
+End derived.
+
 (** *** "Full" typeclass *)
 (******************************************************************************)
-Class DecoratedTraversableFunctorFull (E : Type) (T : Type -> Type)
-  `{Mapdt E T} `{Mapd E T} `{Traverse T} `{Map T} :=
+Class DecoratedTraversableFunctorFull
+  (E : Type) (T : Type -> Type)
+  `{Map_inst: Map T}
+  `{Mapd_inst: Mapd E T}
+  `{Traverse_inst: Traverse T}
+  `{Mapdt_inst: Mapdt E T} :=
   { kdtfunf_dtf :> DecoratedTraversableFunctor E T;
-    kdtfunf_map_to_mapdt : forall `(f : A -> B),
-      @map T _ A B f = @mapdt E T _ (fun A => A) Map_I Pure_I Mult_I A B (f ∘ extract (W := (E ×)));
-    kdtfunf_mapd_to_mapdt : forall `(f : E * A -> B),
-      @mapd E T _ A B f = @mapdt E T _ (fun A => A) Map_I Pure_I Mult_I A B f;
-    kdtfunf_traverse_to_mapdt : forall `{Applicative G} `(f : A -> G B),
-    @traverse T _ G _ _ _ A B f = @mapdt E T _ G _ _ _ A B (f ∘ extract (W := (E ×)));
+    kdtfunf_map_compat :> Compat_Map_Mapdt;
+    kdtfunf_mapd_compat :> Compat_Mapd_Mapdt;
+    kdtfunf_traverse_compat :> Compat_Traverse_Mapdt;
   }.
 
-(** ** Theory *)
+(** * Theory *)
 (******************************************************************************)
 Section theory.
 
   Context
-    `{DecoratedTraversableFunctorFull E T}.
+    {E: Type} {T: Type -> Type}
+      `{Map_inst: Map T}
+      `{Mapd_inst: Mapd E T}
+      `{Traverse_inst: Traverse T}
+      `{Mapdt_inst: Mapdt E T}
+      `{! Compat_Map_Mapdt}
+      `{! Compat_Mapd_Mapdt}
+      `{! Compat_Traverse_Mapdt}
+      `{! DecoratedTraversableFunctor E T}.
 
   Lemma map_strength_cobind_spec
     `{Functor G} : forall (A B C : Type) (f : E * A -> G B) (g : E * B -> C),
@@ -347,7 +475,7 @@ Section theory.
         map (traverse g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (map g ∘ f).
     Proof.
       intros.
-      rewrite (kdtfunf_traverse_to_mapdt).
+      rewrite traverse_to_mapdt.
       rewrite kdtfun_mapdt2.
       rewrite kc6_26.
       reflexivity.
@@ -357,7 +485,7 @@ Section theory.
         map (mapd g) ∘ mapdt f = mapdt (map g ∘ σ ∘ cobind f).
     Proof.
       intros.
-      rewrite (kdtfunf_mapd_to_mapdt).
+      rewrite mapd_to_mapdt.
       rewrite (kdtfun_mapdt2 (G2 := fun A => A)).
       rewrite mapdt_app_r.
       reflexivity.
@@ -367,7 +495,7 @@ Section theory.
         map (map g) ∘ mapdt f = mapdt (map g ∘ f).
     Proof.
       intros.
-      rewrite (kdtfunf_map_to_mapdt (T := T)).
+      rewrite (map_to_mapdt (T := T)).
       rewrite (kdtfun_mapdt2 (G2 := fun A => A)).
       rewrite mapdt_app_r.
       rewrite kc6_06.
@@ -382,7 +510,7 @@ Section theory.
             (map g ∘ σ ∘ map (F := prod E) f).
     Proof.
       intros.
-      rewrite (kdtfunf_traverse_to_mapdt).
+      rewrite traverse_to_mapdt.
       rewrite kdtfun_mapdt2.
       rewrite kc6_62.
       reflexivity.
@@ -392,7 +520,7 @@ Section theory.
         mapdt g ∘ mapd f = mapdt (g ⋆4 f).
     Proof.
       intros.
-      rewrite (kdtfunf_mapd_to_mapdt).
+      rewrite mapd_to_mapdt.
       change (mapdt g)
         with (map (F := fun A => A) (mapdt g)).
       rewrite (kdtfun_mapdt2 (G1 := fun A => A)).
@@ -405,7 +533,7 @@ Section theory.
         mapdt g ∘ map f = mapdt (g ∘ map f).
     Proof.
       intros.
-      rewrite (kdtfunf_map_to_mapdt).
+      rewrite map_to_mapdt.
       change (mapdt g)
         with (map (F := fun A => A) (mapdt g)).
       rewrite (kdtfun_mapdt2 (G1 := fun A => A)).
@@ -420,8 +548,8 @@ Section theory.
         map g ∘ mapd f = mapd (g ∘ f).
     Proof.
       intros.
-      rewrite (kdtfunf_map_to_mapdt).
-      do 2 rewrite (kdtfunf_mapd_to_mapdt).
+      rewrite map_to_mapdt.
+      do 2 rewrite mapd_to_mapdt.
       change (mapdt ?g)
         with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
       rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
@@ -434,8 +562,8 @@ Section theory.
         mapd g ∘ map f = mapd (g ∘ map f).
     Proof.
       intros.
-      do 2 rewrite (kdtfunf_mapd_to_mapdt).
-      rewrite (kdtfunf_map_to_mapdt).
+      do 2 rewrite mapd_to_mapdt.
+      rewrite map_to_mapdt.
       change (mapdt ?g)
         with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
       rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
@@ -448,13 +576,13 @@ Section theory.
         mapd g ∘ mapd f = mapd (g ⋆4 f).
     Proof.
       intros.
-      do 2 rewrite (kdtfunf_mapd_to_mapdt).
+      do 2 rewrite mapd_to_mapdt.
       change (mapdt ?g)
         with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
       rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
       rewrite mapdt_app_l.
       rewrite kc6_44.
-      rewrite (kdtfunf_mapd_to_mapdt).
+      rewrite mapd_to_mapdt.
       reflexivity.
     Qed.
 
@@ -462,7 +590,7 @@ Section theory.
         map (F := G1) (traverse g) ∘ traverse f = traverse (G := G1 ∘ G2) (g ⋆2 f).
     Proof.
       intros.
-      do 3 rewrite (kdtfunf_traverse_to_mapdt).
+      do 3 rewrite traverse_to_mapdt.
       rewrite kdtfun_mapdt2.
       rewrite kc6_22.
       reflexivity.
@@ -472,7 +600,7 @@ Section theory.
         map g ∘ map f = map (F := T) (g ∘ f).
     Proof.
       intros.
-      do 3 rewrite (kdtfunf_map_to_mapdt).
+      do 3 rewrite map_to_mapdt.
       change_left (map (F := fun A => A)
                      (mapdt (T := T) (g ∘ extract)) ∘ mapdt (T := T) (f ∘ extract)).
       rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
@@ -487,7 +615,7 @@ Section theory.
         traverse (G := fun A => A) id = @id (T A).
     Proof.
       intros.
-      rewrite (kdtfunf_traverse_to_mapdt).
+      rewrite traverse_to_mapdt.
       change (id ∘ ?f) with f.
       now rewrite kdtfun_mapdt1.
     Qed.
@@ -496,7 +624,7 @@ Section theory.
       mapd extract = @id (T A).
     Proof.
       intros.
-      rewrite (kdtfunf_mapd_to_mapdt).
+      rewrite mapd_to_mapdt.
       rewrite kdtfun_mapdt1.
       reflexivity.
     Qed.
@@ -505,7 +633,7 @@ Section theory.
       map (@id A) = @id (T A).
     Proof.
       intros.
-      rewrite (kdtfunf_map_to_mapdt).
+      rewrite map_to_mapdt.
       change (id ∘ ?f) with f.
       rewrite kdtfun_mapdt1.
       reflexivity.
@@ -520,7 +648,7 @@ Section theory.
     Proof.
       intros.
       infer_applicative_instances.
-      do 2 rewrite (kdtfunf_traverse_to_mapdt).
+      do 2 rewrite traverse_to_mapdt.
       rewrite <- kdtfun_morph.
       reflexivity.
     Qed.
@@ -529,96 +657,24 @@ Section theory.
 
   (** *** Derived typeclass instances *)
   (******************************************************************************)
-  #[export] Instance Functor_DT : Functor T :=
-    {| fun_map_id := map_id;
-      fun_map_map := @map_map;
-    |}.
-
-  #[export] Instance DF_DT : DecoratedFunctor E T :=
+  #[export] Instance DecoratedFunctor_DecoratedTraversableFunctor:
+    DecoratedFunctor E T :=
     {| dfun_mapd1 := mapd_id;
       dfun_mapd2 := @mapd_mapd;
     |}.
 
-  #[export] Instance DF_DT_Full : DecoratedFunctorFull E T.
-  Proof.
-    constructor.
-    - apply DF_DT.
-    - intros. now rewrite kdtfunf_map_to_mapdt,
-        kdtfunf_mapd_to_mapdt.
-  Qed.
-
-  #[export] Instance Traversable_DT : TraversableFunctor T :=
+  #[export] Instance TraversableFunctor_DecoratedTraversableFunctor:
+    TraversableFunctor T :=
     {| trf_traverse_id := traverse_id;
       trf_traverse_traverse := @traverse_traverse;
       trf_traverse_morphism := @traverse_morphism;
     |}.
 
-  #[export] Instance Traversable_DT_Full : TraversableFunctorFull T.
-  Proof.
-    constructor.
-    - apply Traversable_DT.
-    - ext A B f. now rewrite kdtfunf_map_to_mapdt,
-        kdtfunf_traverse_to_mapdt.
-  Qed.
+  (* TODO do we really need to export this? Probably not *)
+  #[export] Instance Functor_DecoratedTraversableFunctor:
+    Functor T := ltac:(typeclasses eauto).
 
 End theory.
-
-(** ** Derived operations *)
-(******************************************************************************)
-Module DerivedOperations.
-
-  Section operations.
-
-    Context
-      `{Mapdt E T}.
-
-    #[export] Instance Mapd_Mapdt: Mapd E T := fun A B f => mapdt (G := fun A => A) f.
-    #[export] Instance Traverse_Mapdt: Traverse T := fun G _ _ _ A B f => mapdt (f ∘ extract).
-    #[export] Instance Map_Mapdt: Map T := fun A B f => mapdt (G := fun A => A) (f ∘ extract).
-
-    Context
-      `{Applicative G}.
-
-    Corollary traverse_to_mapdt : forall `(f : A -> G B),
-        traverse f = mapdt (f ∘ extract).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Corollary mapd_to_mapdt : forall `(f : E * A -> B),
-        mapd f = mapdt (T := T) (G := fun A => A) f.
-    Proof.
-      reflexivity.
-    Qed.
-
-    Corollary map_to_mapdt : forall `(f : A -> B),
-        map f = mapdt (T := T) (G := fun A => A) (f ∘ extract).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Corollary map_to_mapd : forall `(f : A -> B),
-        map f = mapd (T := T) (f ∘ extract).
-    Proof.
-      reflexivity.
-    Qed.
-
-    Corollary map_to_traverse : forall `(f : A -> B),
-        map f = traverse (T := T) (G := fun A => A) f.
-    Proof.
-      reflexivity.
-    Qed.
-
-  End operations.
-
-  #[local] Instance MakeFull_DecoratedTraversableFunctor
-    `{DecoratedTraversableFunctor E T} :
-    DecoratedTraversableFunctorFull E T.
-  Proof.
-    now constructor.
-  Qed.
-
-End DerivedOperations.
 
 (** * Notations *)
 (******************************************************************************)

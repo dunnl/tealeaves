@@ -130,23 +130,23 @@ Section derived.
 
     Context
       W T U
-      `{Return_inst : Return T}
-      `{Bindd_inst : Binddt W T U}.
+        `{Return_inst : Return T}
+        `{Bindd_inst : Binddt W T U}.
 
-  #[local] Instance Map_Binddt : Map U :=
-    fun (A B : Type) (f : A -> B) => binddt (G := fun A => A) (ret (T := T) ∘ f ∘ extract (W := (W ×))).
-  #[local] Instance Mapdt_Binddt: Mapdt W U
-    := fun G _ _ _ A B f => binddt (map (F := G) (ret (T := T)) ∘ f).
-  #[local] Instance Bindd_Binddt: Bindd W T U
-    := fun A B f => binddt (G := fun A => A) f.
-  #[local] Instance Bindt_Binddt: Bindt T U
-    := fun G _ _ _ A B f => binddt (f ∘ extract (W := (W ×))).
-  #[local] Instance Bind_Binddt: Bind T U
-    := fun A B f => binddt (T := T) (G := fun A => A) (f ∘ extract (W := (W ×))).
-  #[local] Instance Mapd_Binddt: Mapd W U
-    := fun A B f => binddt (G := fun A => A) (ret (T := T) ∘ f).
-  #[local] Instance Traverse_Binddt: Traverse U
-    := fun G _ _ _ A B f => binddt (T := T) (map (F := G) (ret (T := T)) ∘ f ∘ extract (W := (W ×))).
+    #[local] Instance Map_Binddt : Map U :=
+      fun (A B : Type) (f : A -> B) => binddt (G := fun A => A) (ret (T := T) ∘ f ∘ extract (W := (W ×))).
+    #[local] Instance Mapdt_Binddt: Mapdt W U
+      := fun G _ _ _ A B f => binddt (map (F := G) (ret (T := T)) ∘ f).
+    #[local] Instance Bindd_Binddt: Bindd W T U
+      := fun A B f => binddt (G := fun A => A) f.
+    #[local] Instance Bindt_Binddt: Bindt T U
+      := fun G _ _ _ A B f => binddt (f ∘ extract (W := (W ×))).
+    #[local] Instance Bind_Binddt: Bind T U
+      := fun A B f => binddt (T := T) (G := fun A => A) (f ∘ extract (W := (W ×))).
+    #[local] Instance Mapd_Binddt: Mapd W U
+      := fun A B f => binddt (G := fun A => A) (ret (T := T) ∘ f).
+    #[local] Instance Traverse_Binddt: Traverse U
+      := fun G _ _ _ A B f => binddt (T := T) (map (F := G) (ret (T := T)) ∘ f ∘ extract (W := (W ×))).
 
   End operations.
 
@@ -255,18 +255,18 @@ Section derived.
       reflexivity.
     Qed.
 
-    (*
-    #[export] Instance Compat_Map_Traverse_Bindd
+    #[export] Instance Compat_Map_Traverse_Binddt
      `{Map U} `{Traverse U}
       `{! Compat_Map_Binddt W T U}
       `{! Compat_Traverse_Binddt W T U} :
-      Compat_Map_Traverse U T.
+      Compat_Map_Traverse U.
     Proof.
       hnf.
-      ...
+      rewrite (compat_map_binddt W T U).
+      unfold_ops @Map_Traverse.
+      rewrite (compat_traverse_binddt W T U).
       reflexivity.
     Qed.
-     *)
 
     #[export] Instance Compat_Map_Bindd_Binddt
      `{Map U} `{Bindd W T U}
@@ -398,7 +398,7 @@ Section derived.
     Lemma bindt_to_binddt `{! Compat_Bindt_Binddt W T U}
       `{Applicative G} `(f : A -> G (T B)):
       (* TODO Swap arguments to bindt *)
-      bindt (G := G) (T := U) (U := T) f =
+      bindt (G := G) f =
         binddt (U := U) (f ∘ extract).
     Proof.
       rewrite (compat_bindt_binddt W T U).
@@ -845,7 +845,7 @@ Section derived_instances.
 
     Lemma bindt_morph:
       forall (A B : Type) (f : A -> G1 (T B)),
-        ϕ (U B) ∘ bindt (U := T) f = bindt (ϕ (T B) ∘ f).
+        ϕ (U B) ∘ bindt f = bindt (ϕ (T B) ∘ f).
     Proof.
       intros.
       inversion Hmorph.
@@ -1090,7 +1090,7 @@ Section derived_instances.
     Lemma bindt_bindt :
       forall (g : B -> G2 (T C)) (f : A -> G1 (T B)),
         map (F := G1) (bindt g) ∘ bindt f =
-          bindt (U := T) (G := G1 ∘ G2) (g ⋆3 f).
+          bindt (U := U) (G := G1 ∘ G2) (g ⋆3 f).
     Proof.
       intros.
       do 2 rewrite bindt_to_binddt.
@@ -1194,7 +1194,8 @@ Section derived_instances.
 
   (** ** Derived typeclass instances *)
   (******************************************************************************)
-  #[local] Existing Instance DecoratedTraversableRightModule_DecoratedTraversableMonad.
+    #[local] Existing Instance
+      DecoratedTraversableRightModule_DecoratedTraversableMonad.
 
   #[export] Instance: DecoratedRightPreModule W T U :=
     {| kmodd_bindd1 := bindd_id;
@@ -1214,14 +1215,27 @@ Section derived_instances.
     {| kmodd_monad := _
     |}.
 
-  #[export] Instance KTM_KDTM: TraversableMonad T :=
-    {| ktm_bindt0 := bindt_ret;
-      ktm_bindt1 := bindt_id;
+  #[export] Instance: TraversableRightPreModule T U :=
+    {| ktm_bindt1 := bindt_id;
       ktm_bindt2 := bindt_bindt;
       ktm_morph := bindt_morph;
     |}.
 
-  #[export] Instance KDT_KDTM: DecoratedTraversableFunctor W T :=
+  #[export] Instance: TraversableRightPreModule T T :=
+    {| ktm_bindt1 := bindt_id;
+      ktm_bindt2 := bindt_bindt;
+      ktm_morph := bindt_morph;
+    |}.
+
+  #[export] Instance: TraversableMonad T :=
+    {| ktm_bindt0 := bindt_ret;
+    |}.
+
+  #[export] Instance: TraversableRightModule T U :=
+    {| ktmod_monad := _
+    |}.
+
+  #[export] Instance: DecoratedTraversableFunctor W T :=
     {| kdtfun_mapdt1 := mapdt_id;
       kdtfun_mapdt2 := mapdt_mapdt;
       kdtfun_morph := mapdt_morph;
