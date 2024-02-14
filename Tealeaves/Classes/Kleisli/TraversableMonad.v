@@ -177,7 +177,7 @@ Section DerivedInstances.
     Qed.
 
     Lemma kc3_13 : forall `(g : B -> T C) `(f : A -> G1 (T B)),
-        kc3 (G2 := fun A => A) g f = map (bind (T := T) g) ∘ f.
+        kc3 (G2 := fun A => A) g f = map (F := G1) (bind (T := T) g) ∘ f.
     Proof.
       intros.
       rewrite ktmf_bind_to_bindt.
@@ -519,15 +519,20 @@ Section DerivedInstances.
     reflexivity.
   Qed.
 
-  #[export] Instance Monad_TraversableMonad : Monad T :=
-    {| kmon_bind0 := bind_ret;
-       kmon_bind1 := bind_id;
-       kmon_bind2 := bind_bind;
+  #[export] Instance RightPreModule_TraversableMonad : RightPreModule T T :=
+    {| kmod_bind1 := bind_id;
+       kmod_bind2 := bind_bind;
     |}.
 
+  #[export] Instance Monad_TraversableMonad : Monad T :=
+    {| kmon_bind0 := bind_ret;
+    |}.
+
+  (*
   #[export] Instance MonadFull_TraversableMonadFull : MonadFull T :=
     {| kmonf_map_to_bind := ktmf_map_to_bind;
     |}.
+   *)
 
   #[export] Instance TraversableFunctor_TraversableMonadFull : TraversableFunctor T :=
     {| trf_traverse_id := traverse_id;

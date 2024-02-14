@@ -762,6 +762,7 @@ End derived_instances.
 Section derived_instances.
 
   Context
+    W T U
     `{ret_inst : Return T}
       `{Bindd_T_inst : Bindd W T T}
       `{Bindd_U_inst : Bindd W T U}
