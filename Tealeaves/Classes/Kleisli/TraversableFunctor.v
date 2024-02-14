@@ -40,10 +40,54 @@ Class TraversableFunctor (T : Type -> Type) `{Traverse T} :=
       ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f);
   }.
 
-Class TraversableFunctorFull (T : Type -> Type) `{Traverse T} `{Map T} :=
+(** ** Homomorphisms *)
+(******************************************************************************)
+Class TraversableMorphism
+  (T U : Type -> Type)
+  `{Traverse T}
+  `{Traverse U}
+  (ϕ : forall (A : Type), T A -> U A) :=
+  { trvmon_hom : forall `{Applicative G}
+      `(f : A -> G B),
+      map (F := G) (ϕ B) ∘ @traverse T _ G _ _ _ A B f =
+        @traverse U _ G _ _ _ A B f ∘ ϕ A;
+  }.
+
+(** * Derived instances *)
+(******************************************************************************)
+Section derived.
+
+  Definition Map_Traverse `{Traverse_inst : Traverse T} : Map T :=
+    fun (A B : Type) (f : A -> B) => traverse (G := fun A => A) f.
+
+  Class Compat_Map_Traverse
+    `{Map_inst : Map T}
+    `{Traverse_inst : Traverse T} : Prop :=
+    compat_map_traverse :
+      @map T Map_inst = @map T (@Map_Traverse T Traverse_inst).
+
+  #[export] Instance Compat_Map_Traverse_Self
+    `{Traverse T} :
+    Compat_Map_Traverse (Map_inst := Map_Traverse).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Corollary map_to_traverse
+    `{Compat_Map_Traverse T} : forall `(f : A -> B),
+      map (F := T) f = traverse (G := fun A => A) f.
+  Proof.
+    rewrite compat_map_traverse.
+    reflexivity.
+  Qed.
+
+End derived.
+
+Class TraversableFunctorFull (T : Type -> Type)
+  `{Traverse_inst : Traverse T}
+  `{Map_inst : Map T} :=
   { trff_trf :> TraversableFunctor T;
-    trff_map_to_traverse :
-    @map T _ = @traverse T _ (fun A => A) Map_I Pure_I Mult_I;
+    trff_map_compat :> Compat_Map_Traverse;
   }.
 
 (** * Interaction of [traverse] with functor composition *)
@@ -84,10 +128,14 @@ End properties.
 Section derived_instances.
 
     Context
-    `{TraversableFunctorFull T}
-    {G1 G2 : Type -> Type}
-    `{Applicative G2}
-    `{Applicative G1}.
+      `{TraversableFunctor T}
+      `{Map T}
+      `{! Compat_Map_Traverse }.
+
+    Context
+      {G1 G2 : Type -> Type}
+      `{Applicative G2}
+      `{Applicative G1}.
 
     (** ** Composition between <<traverse>> and <<map>> *)
     (******************************************************************************)
@@ -96,7 +144,7 @@ Section derived_instances.
           traverse (map g ∘ f).
     Proof.
       intros.
-      rewrite (trff_map_to_traverse (T := T)).
+      rewrite (map_to_traverse (T := T)).
       rewrite (trf_traverse_traverse (G2 := fun A => A)).
       rewrite traverse_app_r.
       reflexivity.
@@ -106,7 +154,7 @@ Section derived_instances.
         traverse g ∘ map f = traverse (g ∘ f).
     Proof.
       intros.
-      rewrite (trff_map_to_traverse (T := T)).
+      rewrite (map_to_traverse (T := T)).
       change (traverse g)
         with (map (F := fun A => A) (traverse g)).
       rewrite (trf_traverse_traverse (G1 := fun A => A)).
@@ -120,7 +168,9 @@ Section derived_instances.
         map g ∘ map f = map (F := T) (g ∘ f).
     Proof.
       intros.
-      rewrite (trff_map_to_traverse (T := T)).
+      rewrite (map_to_traverse (T := T)).
+      rewrite (map_to_traverse (T := T)).
+      rewrite (map_to_traverse (T := T)).
       change (traverse (G := fun A => A) g)
         with (map (F := fun A => A) (traverse (G := fun A => A) g)).
       rewrite (trf_traverse_traverse (G1 := fun A => A) (G2 := fun A => A)).
@@ -132,7 +182,7 @@ Section derived_instances.
         map id = @id (T A).
     Proof.
       intros.
-      rewrite trff_map_to_traverse.
+      rewrite map_to_traverse.
       rewrite trf_traverse_id.
       reflexivity.
     Qed.
@@ -141,7 +191,7 @@ Section derived_instances.
     (******************************************************************************)
     #[export] Instance Functor_TraversableFunctor : Functor T :=
       {| fun_map_id := map_id;
-         fun_map_map := map_map;
+        fun_map_map := map_map;
       |}.
 
 End derived_instances.
@@ -151,30 +201,3 @@ End derived_instances.
 Module Notations.
   Infix "⋆2" := (kc2) (at level 60) : tealeaves_scope.
 End Notations.
-
-(** * <<TraversableFunctor>> to <<TraversableFunctorFull>> *)
-(******************************************************************************)
-Module MakeFull.
-
-  #[export] Instance Map_Traverse (T : Type -> Type)
-    `{Traverse T} : Map T :=
-  fun (A B : Type) (f : A -> B) => traverse (G := fun A => A) f.
-
-  Corollary map_to_traverse (T : Type -> Type)
-    `{Traverse T} (A B : Type) : forall (f : A -> B),
-      map (F := T) f = traverse (G := fun A => A) f.
-  Proof.
-    reflexivity.
-  Qed.
-
-  #[export] Instance DecoratedFunctor_Fill
-    (T : Type -> Type)
-    (traverse : Traverse T)
-    (traverse_laws : @TraversableFunctor T traverse) :
-    @TraversableFunctorFull T traverse (Map_Traverse T) :=
-    {| trff_trf := traverse_laws;
-       trff_map_to_traverse :=
-        ltac:(reflexivity);
-    |}.
-
-End MakeFull.
