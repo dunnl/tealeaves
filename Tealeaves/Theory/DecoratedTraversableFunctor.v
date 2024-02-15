@@ -25,7 +25,15 @@ Import DecoratedContainerFunctor.Notations.
 Section decorated_traversable_functor_theory.
 
   Context
-    `{DecoratedTraversableFunctorFull E T}.
+    {E: Type} {T: Type -> Type}
+      `{Map_inst: Map T}
+      `{Mapd_inst: Mapd E T}
+      `{Traverse_inst: Traverse T}
+      `{Mapdt_inst: Mapdt E T}
+      `{! Compat_Map_Mapdt}
+      `{! Compat_Mapd_Mapdt}
+      `{! Compat_Traverse_Mapdt}
+      `{! DecoratedTraversableFunctor E T}.
 
   (** ** <<mapdt>> with constant applicative functors *)
   (******************************************************************************)
@@ -74,7 +82,7 @@ Section decorated_traversable_functor_theory.
   Corollary traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
     traverse f = runBatch (f ∘ extract (W := (E ×))) ∘ toBatch6.
   Proof.
-    rewrite kdtfunf_traverse_to_mapdt.
+    rewrite traverse_to_mapdt.
     rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
@@ -83,7 +91,7 @@ Section decorated_traversable_functor_theory.
       mapd f = runBatch (F := fun A => A) f ∘ toBatch6.
   Proof.
     intros.
-    rewrite kdtfunf_mapd_to_mapdt.
+    rewrite mapd_to_mapdt.
     rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
@@ -92,7 +100,7 @@ Section decorated_traversable_functor_theory.
       map f = runBatch (F := fun A => A) (f ∘ extract) ∘ toBatch6.
   Proof.
     intros.
-    rewrite kdtfunf_map_to_mapdt.
+    rewrite map_to_mapdt.
     rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
@@ -160,11 +168,11 @@ Section decorated_traversable_functor_theory.
       foldMapd g ∘ map f = foldMapd (g ∘ map (F := prod E) f).
   Proof.
     intros.
-    rewrite (kdtfunf_map_to_mapdt).
+    rewrite map_to_mapdt.
     replace (mapdt (G := fun A => A) (f ∘ extract)) with (mapd (f ∘ extract)).
-    - rewrite (foldMapd_mapd).
+    - rewrite foldMapd_mapd.
       reflexivity.
-    - rewrite kdtfunf_mapd_to_mapdt.
+    - rewrite mapd_to_mapdt.
       reflexivity.
   Qed.
 
@@ -189,7 +197,7 @@ Section decorated_traversable_functor_theory.
   Proof.
     intros.
     rewrite foldMap_to_traverse1.
-    rewrite kdtfunf_traverse_to_mapdt.
+    rewrite traverse_to_mapdt.
     reflexivity.
   Qed.
 
@@ -475,7 +483,7 @@ Section decorated_traversable_functor_theory.
         element_of ∘ mapd f = foldMapd (ret (T := subset) ∘ f).
     Proof.
       intros.
-      rewrite element_to_foldMap.
+      rewrite element_of_to_foldMap.
       rewrite foldMap_to_foldMapd.
       rewrite foldMapd_mapd.
       reassociate -> on left.
@@ -489,7 +497,7 @@ Section decorated_traversable_functor_theory.
     Proof.
       constructor.
       - typeclasses eauto.
-      - typeclasses eauto.
+      - apply Functor_instance_0.
       - intros.
         (* LHS *)
         rewrite ctx_elements_to_foldMapd.
@@ -514,11 +522,20 @@ Section decorated_traversable_functor_theory.
         element_of (F := T) (A := A) = map (F := subset) extract ∘ element_ctx_of.
     Proof.
       intros.
-      rewrite element_to_foldMap.
+      rewrite element_of_to_foldMap.
       rewrite foldMap_to_foldMapd.
       rewrite ctx_elements_to_foldMapd.
-      rewrite (foldMapd_morphism).
+      rewrite foldMapd_morphism.
       rewrite (natural (ϕ := @ret subset _)).
+      reflexivity.
+    Qed.
+
+    #[export] Instance Compat_Elements_ElementsCtx_Mapdt:
+      `{Compat_Elements_ElementsCtx (E := E) (T := T)}.
+    Proof.
+      hnf.
+      ext A B.
+      rewrite element_to_element_ctx_of.
       reflexivity.
     Qed.
 
@@ -531,32 +548,6 @@ Section decorated_traversable_functor_theory.
     Qed.
 
     Lemma ind_iff_in_ctx_tolist2 : forall (A : Type) (e : E) (a : A) (t : T A),
-        (e, a) ∈d t <-> (e, a) ∈d ctx_tolist t.
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma ind_iff_in : forall (A : Type) (a : A) (t : T A),
-        a ∈ t <-> exists e, (e, a) ∈d t.
-    Proof.
-      intros.
-      rewrite element_to_element_ctx_of.
-      unfold compose at 1; unfold_ops @Map_subset.
-      split.
-      - intros [[e a'] [Hin Heq]].
-        cbn in Heq; subst. eauto.
-      - intros [e Hin]. eauto.
-    Qed.
-    
-    Lemma ind_implies_in : forall (A : Type) (e : E) (a : A) (t : T A),
-        (e, a) ∈d t -> a ∈ t.
-    Proof.
-      intros.
-      rewrite ind_iff_in.
-      eauto.
-    Qed.
-
-    Lemma ind_iff_in_ctx_tolist3 : forall (A : Type) (a : A) (e : E) (t : T A),
         (e, a) ∈d t <-> (e, a) ∈d ctx_tolist t.
     Proof.
       reflexivity.
@@ -617,7 +608,6 @@ Section decorated_traversable_functor_theory.
 
     (** ** Characterizing <<∈d>> and <<mapd>> *)
     (******************************************************************************)
-
     Theorem ind_mapd_iff :
       forall `(f : E * A -> B) (t : T A) (e : E) (b : B),
         (e, b) ∈d mapd f t <-> exists (a : A), (e, a) ∈d t /\ f (e, a) = b.
@@ -643,26 +633,6 @@ Section decorated_traversable_functor_theory.
       }
     Qed.
 
-    Corollary ind_map_iff :
-      forall `(f : A -> B) (t : T A) (e : E) (b : B),
-        (e, b) ∈d map f t <-> exists (a : A), (e, a) ∈d t /\ f a = b.
-    Proof.
-      intros.
-      rewrite (dfunf_map_to_mapd).
-      rewrite ind_mapd_iff.
-      reflexivity.
-    Qed.
-
-    Theorem in_mapd_iff :
-      forall `(f : E * A -> B) (t : T A) (b : B),
-        b ∈ mapd f t <-> exists (e : E) (a : A), (e, a) ∈d t /\ f (e, a) = b.
-    Proof.
-      intros.
-      rewrite ind_iff_in.
-      setoid_rewrite ind_mapd_iff.
-      reflexivity.
-    Qed.
-
     Lemma mapd_respectful :
       forall A B (t : T A) (f g : E * A -> B),
         (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))
@@ -682,19 +652,6 @@ Section decorated_traversable_functor_theory.
         + introv hyp2.
           apply hyp.
           now left.
-    Qed.
-
-    Corollary mapd_respectful_id :
-      forall A (t : T A) (f : E * A -> A),
-        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = a)
-        -> mapd f t = t.
-    Proof.
-      introv hyp.
-      change t with (id t) at 2.
-      rewrite <- kdtfun_mapdt1.
-      rewrite <- kdtfunf_mapd_to_mapdt.
-      eapply mapd_respectful.
-      apply hyp.
     Qed.
 
   End tosetd.

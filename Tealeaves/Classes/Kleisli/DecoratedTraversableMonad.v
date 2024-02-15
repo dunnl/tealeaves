@@ -16,6 +16,9 @@ Import DecoratedTraversableFunctor.Notations.
 
 #[local] Generalizable Variables ϕ U T W G A B C D F M.
 
+(* TODO Find a better way to avoid cycles *)
+#[local] Set Typeclasses Depth 5.
+
 (** * Decorated traversable monads *)
 (******************************************************************************)
 
@@ -307,21 +310,44 @@ Section derived.
       reflexivity.
     Qed.
 
-    (*
-    #[export] Instance Compat_Map_Mapd_Bindd
+    #[export] Instance Compat_Map_Mapd_Binddt
      `{Map U} `{Mapd W U}
-      `{! Compat_Mapd_Bindd W T U}
-      `{! Compat_Map_Bindd W T U} :
-      Compat_Map_Mapd W U.
+      `{! Compat_Mapd_Binddt W T U}
+      `{! Compat_Map_Binddt W T U} :
+      Compat_Map_Mapd.
     Proof.
       hnf.
-      ...
+      rewrite (compat_map_binddt W T U).
+      unfold_ops @Map_Mapd.
+      rewrite (compat_mapd_binddt W T U).
       reflexivity.
     Qed.
 
-    ...
+    #[export] Instance Compat_Map_Mapdt_Binddt
+     `{Map U} `{Mapdt W U}
+      `{! Compat_Mapdt_Binddt W T U}
+      `{! Compat_Map_Binddt W T U} :
+      Compat_Map_Mapdt.
+    Proof.
+      hnf.
+      rewrite (compat_map_binddt W T U).
+      unfold_ops @Map_Mapdt.
+      rewrite (compat_mapdt_binddt W T U).
+      reflexivity.
+    Qed.
 
-    *)
+    #[export] Instance Compat_Traverse_Mapdt_Binddt
+     `{Traverse U} `{Mapdt W U}
+      `{! Compat_Traverse_Binddt W T U}
+      `{! Compat_Mapdt_Binddt W T U} :
+      Compat_Traverse_Mapdt.
+    Proof.
+      hnf.
+      rewrite (compat_traverse_binddt W T U).
+      unfold_ops @Traverse_Mapdt.
+      rewrite (compat_mapdt_binddt W T U).
+      reflexivity.
+    Qed.
 
   End self.
 
@@ -613,6 +639,7 @@ Section kc7.
 
   (** ** Kleisi category laws *)
   (******************************************************************************)
+  #[local] Set Typeclasses Iterative Deepening.
 
   (** *** Left identity *)
   (******************************************************************************)
@@ -623,7 +650,7 @@ Section kc7.
     rewrite preincr_assoc.
     rewrite extract_preincr.
     rewrite kdtm_binddt1.
-    rewrite fun_map_id.
+    rewrite (fun_map_id (F := G)).
     reflexivity.
   Qed.
 
@@ -649,7 +676,8 @@ Section kc7.
     setup.
     unfold_ops @Map_compose.
     compose near (f (w, a)) on left.
-    rewrite fun_map_map.
+    inversion H8.
+    rewrite (fun_map_map (F := G1)).
     rewrite kdtm_binddt2.
     rewrite kc7_preincr.
     reflexivity.
@@ -714,6 +742,7 @@ Section derived_instances.
     `{! Compat_Mapdt_Binddt W T T}
     `{! Compat_Bindd_Binddt W T T}
     `{! Compat_Bindt_Binddt W T T}
+    `{Monad_inst : ! DecoratedTraversableMonad W T}
     `{Map_U_inst : Map U}
     `{Mapd_U_inst : Mapd W U}
     `{Traverse_U_inst : Traverse U}
@@ -729,7 +758,7 @@ Section derived_instances.
     `{! Compat_Mapdt_Binddt W T U}
     `{! Compat_Bindd_Binddt W T U}
     `{! Compat_Bindt_Binddt W T U}
-    `{Monad_inst : ! DecoratedTraversableRightModule W T U}.
+    `{Module_inst : ! DecoratedTraversableRightPreModule W T U}.
 
   (** ** Identity laws *)
   (******************************************************************************)
@@ -1041,9 +1070,9 @@ Section derived_instances.
     Lemma mapdt_mapdt: forall
         (g : W * B -> G2 C)
         (f : W * A -> G1 B),
-        map (F := G1) (A := T B) (B := G2 (T C))
-          (mapdt g) ∘ mapdt f =
-          mapdt (G := G1 ∘ G2) (g ⋆6 f).
+        map (F := G1) (A := U B) (B := G2 (U C))
+          (mapdt (T := U) g) ∘ mapdt (T := U) f =
+          mapdt (T := U) (G := G1 ∘ G2) (g ⋆6 f).
     Proof.
       intros.
       do 2 rewrite mapdt_to_binddt.
@@ -1236,6 +1265,12 @@ Section derived_instances.
     |}.
 
   #[export] Instance: DecoratedTraversableFunctor W T :=
+    {| kdtfun_mapdt1 := mapdt_id;
+      kdtfun_mapdt2 := mapdt_mapdt;
+      kdtfun_morph := mapdt_morph;
+    |}.
+
+  #[export] Instance: DecoratedTraversableFunctor W U :=
     {| kdtfun_mapdt1 := mapdt_id;
       kdtfun_mapdt2 := mapdt_mapdt;
       kdtfun_morph := mapdt_morph;

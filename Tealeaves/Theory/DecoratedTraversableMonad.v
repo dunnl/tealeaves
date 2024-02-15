@@ -15,7 +15,7 @@ Import ContainerFunctor.Notations.
 Import DecoratedContainerFunctor.Notations.
 Import DecoratedTraversableMonad.Notations.
 
-#[local] Generalizable Variables M W T G A B C.
+#[local] Generalizable Variables M U W T G A B C.
 
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope
   {H H0 H1} ϕ%function_scope {C}%type_scope b.
@@ -25,7 +25,40 @@ Import DecoratedTraversableMonad.Notations.
 Section lemmas.
 
   Context
-    `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonadFull W T}.
+    `{op : Monoid_op W}
+    `{unit : Monoid_unit W}
+    `{ret_inst : Return T}
+    `{Map_T_inst : Map T}
+    `{Mapd_T_inst : Mapd W T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Mapdt_T_inst : Mapdt W T}
+    `{Bindd_T_inst : Bindd W T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{Binddt_T_inst : Binddt W T T}
+    `{! Compat_Map_Binddt W T T}
+    `{! Compat_Mapd_Binddt W T T}
+    `{! Compat_Traverse_Binddt W T T}
+    `{! Compat_Bind_Binddt W T T}
+    `{! Compat_Mapdt_Binddt W T T}
+    `{! Compat_Bindd_Binddt W T T}
+    `{! Compat_Bindt_Binddt W T T}
+    `{Map_U_inst : Map U}
+    `{Mapd_U_inst : Mapd W U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Mapdt_U_inst : Mapdt W U}
+    `{Bindd_U_inst : Bindd W T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{Binddt_U_inst : Binddt W T U}
+    `{! Compat_Map_Binddt W T U}
+    `{! Compat_Mapd_Binddt W T U}
+    `{! Compat_Traverse_Binddt W T U}
+    `{! Compat_Bind_Binddt W T U}
+    `{! Compat_Mapdt_Binddt W T U}
+    `{! Compat_Bindd_Binddt W T U}
+    `{! Compat_Bindt_Binddt W T U}
+    `{Monad_inst : ! DecoratedTraversableRightModule W T U}.
 
   Lemma toBatch6_to_toBatch7 : forall A A' t,
       toBatch6 (A := A) (B := A') t =
@@ -34,7 +67,7 @@ Section lemmas.
     intros.
     unfold_ops @ToBatch6_Mapdt.
     unfold_ops @ToBatch7_Binddt.
-    rewrite kdtmf_mapdt_compat.
+    rewrite mapdt_to_binddt.
     compose near t on right.
     rewrite (kdtm_morph (A := A) (T := T)
                (Batch _ (T A'))
@@ -48,16 +81,16 @@ Section lemmas.
   (******************************************************************************)
   Lemma binddt_app_const_r :
     forall {G : Type -> Type} `{Monoid M} {A B : Type} `{Applicative G} (f : W * A -> G M),
-      @binddt W T T _ (G ∘ const M)
+      @binddt W T U _ (G ∘ const M)
         (Map_compose G (const M))
         (Pure_compose G (const M))
         (Mult_compose G (const M)) A B f =
-        binddt (T := T) (G := const (G M)) (B := B) f.
+        binddt (U := U) (G := const (G M)) (B := B) f.
   Proof.
     intros. fequal.
     - ext X Y h x.
       unfold_ops @Map_compose @Map_const.
-      now rewrite fun_map_id.
+      now rewrite (fun_map_id (Functor := app_functor)).
     - ext X Y [x y].
       unfold_ops @Mult_compose @Mult_const.
       unfold_ops @Monoid_op_applicative.
@@ -75,18 +108,20 @@ Section lemmas.
 
     Lemma binddt_constant_applicative1 {A B : Type}
       `(f : W * A -> const M (T B)) :
-      binddt (U := T) f = binddt (U := T) (B := False) f.
+      binddt (T := T) (U := U) f =
+        binddt (T := T) (U := U) (B := False) f.
     Proof.
-      change_right (map (F := const M) (A := T False) (B := T B)
-                      (map (F := T) (A := False) (B := B) exfalso)
-                      ∘ binddt (U := T) (B := False) f).
+      change_right (map (F := const M) (A := U False) (B := U B)
+                      (map (F := U) (A := False) (B := B) exfalso)
+                      ∘ binddt (T := T) (U := U) (B := False) f).
       rewrite (map_binddt (G1 := const M)).
       reflexivity.
     Qed.
 
     Lemma binddt_constant_applicative2 (fake1 fake2 : Type)
       `(f : W * A -> const M (T B)) :
-      binddt (U := T) (B := fake1) f = binddt (U := T) (B := fake2) f.
+      binddt (T := T) (U := U) (B := fake1) f =
+        binddt (T := T) (U := U) (B := fake2) f.
     Proof.
       intros.
       rewrite (binddt_constant_applicative1 (B := fake1)).
@@ -100,7 +135,7 @@ Section lemmas.
   (******************************************************************************)
   Theorem binddt_through_runBatch :
     forall `{Applicative G} (A B : Type) (f : W * A -> G (T B)),
-      binddt f = runBatch f ∘ toBatch7.
+      binddt (U := U) f = runBatch f ∘ toBatch7.
   Proof.
     intros.
     unfold_ops @ToBatch7_Binddt.
@@ -111,10 +146,10 @@ Section lemmas.
 
   Theorem bindd_through_runBatch :
     forall (A B : Type) (f : W * A -> T B),
-      bindd f = runBatch (F := fun A => A) f ∘ toBatch7.
+      bindd (U := U) f = runBatch (F := fun A => A) f ∘ toBatch7.
   Proof.
     intros.
-    rewrite kdtmf_bindd_compat.
+    rewrite bindd_to_binddt.
     rewrite binddt_through_runBatch.
     reflexivity.
   Qed.
@@ -129,8 +164,8 @@ Section lemmas.
   Proof.
     intros.
     rewrite foldMapd_to_mapdt1. (* todo get rid of this arg *)
-    rewrite kdtmf_mapdt_compat.
-    rewrite (kdtm_binddt0 (G := const M) A False).
+    rewrite mapdt_to_binddt.
+    rewrite (kdtm_binddt0 (G := const M) (A := A) (B := False)).
     reflexivity.
   Qed.
 
@@ -141,13 +176,16 @@ Section lemmas.
   Proof.
     intros.
     rewrite foldMapd_to_mapdt1.
-    rewrite kdtmf_mapdt_compat.
-    rewrite (kdtm_binddt2 (G2 := const M) (G1 := G) A B False). (* TODO args *)
+    rewrite mapdt_to_binddt.
+    rewrite (kdtm_binddt2 (G2 := const M) (G1 := G)). (* TODO args *)
     rewrite foldMapd_to_mapdt1.
-    rewrite kdtmf_mapdt_compat.
+    rewrite mapdt_to_binddt.
     rewrite binddt_app_const_r.
     unfold foldMapd.
-    rewrite kdtmf_mapdt_compat'.
+    (* TODO Make mapdt_to_binddt work immediately here *)
+    fequal. ext [w a].
+    unfold compose. cbn.
+    rewrite mapdt_to_binddt.
     reflexivity.
   Qed.
 
@@ -157,6 +195,9 @@ Section lemmas.
         foldMapd (fun '(w, a) => map (foldMap g) (f (w, a))).
   Proof.
     intros.
+    Print Instances Compat_Traverse_Mapdt.
+    rewrite foldMap_to_foldMapd.
+
     rewrite foldMap_to_foldMapd.
     rewrite foldMapd_binddt.
     fequal; ext [w a].
@@ -165,11 +206,11 @@ Section lemmas.
   Qed.
 
   Corollary foldMapd_binddt_I `{Monoid M} : forall `(g : W * B -> M) `(f : W * A -> T B),
-      foldMapd g ∘ binddt (T := T) (G := fun A => A) f =
-        foldMapd (fun '(w, a) => foldMapd (g ⦿ w) (f (w, a))).
+      foldMapd g ∘ binddt (U := U) (G := fun A => A) f =
+        foldMapd (T := U) (fun '(w, a) => foldMapd (g ⦿ w) (f (w, a))).
   Proof.
     intros.
-    change (foldMapd g) with (map (F := fun A => A) (foldMapd (T := T) g)).
+    change (foldMapd g) with (map (F := fun A => A) (foldMapd (T := U) g)).
     rewrite (foldMapd_binddt (G := fun A => A)).
     reflexivity.
   Qed.
@@ -179,7 +220,7 @@ Section lemmas.
         foldMapd (fun '(w, a) => foldMapd (g ⦿ w) (f (w, a))).
   Proof.
     intros.
-    rewrite kdtmf_bindd_compat.
+    rewrite bindd_to_binddt.
     rewrite foldMapd_binddt_I.
     reflexivity.
   Qed.
@@ -189,11 +230,12 @@ Section lemmas.
         foldMapd (fun '(w, a) => foldMap g (f (w, a))).
   Proof.
     intros.
-    rewrite kdtmf_bindd_compat.
+    rewrite bindd_to_binddt.
     rewrite foldMap_to_foldMapd.
     rewrite foldMapd_binddt_I.
     fequal; ext [w a].
     rewrite extract_preincr2.
+    rewrite foldMap_to_foldMapd.
     reflexivity.
   Qed.
 
@@ -214,7 +256,8 @@ Section lemmas.
 
   Lemma ctx_tolist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
       map (F := G) ctx_tolist ∘ binddt (G := G) f =
-        foldMapd (T := T) (fun '(w, a) => map (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
+        foldMapd (T := U)
+          (fun '(w, a) => map (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
   Proof.
     intros.
     rewrite ctx_tolist_to_foldMapd.
@@ -226,7 +269,7 @@ Section lemmas.
   (******************************************************************************)
   Lemma ctx_tolist_bindd : forall `(f : W * A -> T B),
       ctx_tolist ∘ bindd f =
-        foldMapd (T := T) (fun '(w, a) => (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
+        foldMapd (T := U) (fun '(w, a) => (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
   Proof.
     intros.
     rewrite ctx_tolist_to_foldMapd.
@@ -247,7 +290,7 @@ Section lemmas.
   Qed.
 
   Corollary tolist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
-      map tolist ∘ binddt f = foldMapd (T := T) (map tolist ∘ f).
+      map tolist ∘ binddt f = foldMapd (T := U) (map tolist ∘ f).
   Proof.
     intros.
     rewrite tolist_to_foldMap.
@@ -274,7 +317,7 @@ Section lemmas.
         foldMapd (fun '(w, a) => foldMap (ret (T := subset)) (f (w, a))).
   Proof.
     intros.
-    rewrite element_to_foldMap.
+    rewrite element_of_to_foldMap.
     rewrite foldMap_bindd.
     reflexivity.
   Qed.
@@ -294,12 +337,13 @@ Section lemmas.
 
   Lemma ind_bindd_iff_core :
     forall `(f : W * A -> T B),
-      element_ctx_of (F := T) ∘ bindd (T := T) f =
-        bindd (T := ctxset W) (element_ctx_of (F := T) ∘ f) ∘ element_ctx_of (F := T).
+      element_ctx_of ∘ bindd (T := T) (U := U) f =
+        bindd (U := ctxset W) (element_ctx_of (F := T) ∘ f) ∘ element_ctx_of (F := U).
   Proof.
     intros.
     rewrite ctx_elements_to_foldMapd.
     rewrite (foldMapd_bindd).
+    rewrite ctx_elements_to_foldMapd.
     rewrite ctx_elements_to_foldMapd.
     rewrite foldMapd_morphism.
     fequal.
@@ -314,56 +358,10 @@ Section lemmas.
     reflexivity.
   Qed.
 
-  Theorem ind_bindd_iff :
-    forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
-      (wtotal, b) ∈d bindd f t <->
-        exists (w1 w2 : W) (a : A),
-          (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
-          /\ wtotal = w1 ● w2.
-  Proof.
-    intros.
-    change_left ((evalAt (wtotal, b) ∘ (element_ctx_of (F := T) ∘ bindd (T := T) f)) t).
-    rewrite ind_bindd_iff_core.
-    unfold evalAt, compose.
-    unfold_ops @Bindd_ctxset.
-    split.
-    - intros [w1 [a [Ht [w2 [Hf Heq]]]]].
-      exists w1 w2 a. eauto.
-    - intros [w1 [w2 [a [Ht [Hf Heq]]]]].
-      exists w1 a. eauto.
-  Qed.
-
-  Corollary in_bindd_iff :
-    forall `(f : W * A -> T B) (t : T A) (b : B),
-      b ∈ bindd f t <->
-        exists (w1 : W) (a : A),
-          (w1, a) ∈d t /\ b ∈ f (w1, a).
-  Proof.
-    intros.
-    rewrite ind_iff_in.
-    setoid_rewrite ind_bindd_iff.
-    setoid_rewrite ind_iff_in.
-    split; intros; preprocess; repeat eexists; eauto.
-  Qed.
-
-  Corollary ind_bind_iff :
-    forall `(f : A -> T B) (t : T A) (wtotal : W) (b : B),
-      (wtotal, b) ∈d bind f t <->
-        exists (w1 w2 : W) (a : A),
-          (w1, a) ∈d t /\ (w2, b) ∈d f a
-          /\ wtotal = w1 ● w2.
-  Proof.
-    intros.
-    rewrite kdtmf_bind_compat.
-    rewrite <- kdtmf_bindd_compat.
-    rewrite ind_bindd_iff.
-    reflexivity.
-  Qed.
-  
   (** ** Respectfulness for <<bindd>> *)
   (******************************************************************************)
   Lemma bindd_respectful_core :
-    forall A B (t : T A) (f g : W * A -> T B),
+    forall A B (t : U A) (f g : W * A -> T B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a)) =
         Forall_ctx (fun '(w, a) => f (w, a) = g (w, a)) t.
     intros.
@@ -373,9 +371,9 @@ Section lemmas.
   Qed.
 
   Theorem bindd_respectful :
-    forall A B (t : T A) (f g : W * A -> T B),
+    forall A B (t : U A) (f g : W * A -> T B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a))
-      -> bindd f t = bindd g t.
+      -> bindd f t = bindd (U := U) g t.
   Proof.
     introv.
     rewrite (bindd_respectful_core A B t f g).
@@ -392,57 +390,6 @@ Section lemmas.
       intros [hyp1 hyp2].
       rewrite hyp2.
       rewrite IHb; auto.
-  Qed.
-
-  (** *** For equalities with special cases *)
-  (** Corollaries with conclusions of the form <<bindd t = f t>> for
-  other <<m*>> operations *)
-  (******************************************************************************)
-  Corollary bindd_respectful_bind :
-    forall A B (t : T A) (f : W * A -> T B) (g : A -> T B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g a)
-      -> bindd f t = bind g t.
-  Proof.
-    introv hyp.
-    rewrite kmondf_bind_compat.
-    apply bindd_respectful.
-    introv Hin.
-    eauto.
-  Qed.
-
-  Corollary bindd_respectful_mapd :
-    forall A B (t : T A) (f : W * A -> T B) (g : W * A -> B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret (g (w, a)))
-      -> bindd f t = mapd g t.
-  Proof.
-    introv hyp.
-    rewrite kmondf_mapd_compat.
-    apply bindd_respectful.
-    introv Hin.
-    eauto.
-  Qed.
-
-  Corollary bindd_respectful_map :
-    forall A B (t : T A) (f : W * A -> T B) (g : A -> B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret (g a))
-      -> bindd f t = map g t.
-  Proof.
-    introv hyp.
-    rewrite kmondf_map_compat.
-    apply bindd_respectful.
-    introv Hin.
-    eauto.
-  Qed.
-
-  Corollary bindd_respectful_id :
-    forall A (t : T A) (f : W * A -> T A),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret a)
-      -> bindd f t = t.
-  Proof.
-    intros. change t with (id t) at 2.
-    rewrite <- kmond_bindd1.
-    eapply bindd_respectful.
-    eauto.
   Qed.
 
 End lemmas.

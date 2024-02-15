@@ -9,7 +9,7 @@ Import Applicative.Notations.
 Import Product.Notations.
 Import DecoratedTraversableMonad.Notations.
 
-#[local] Generalizable Variables W T G ϕ.
+#[local] Generalizable Variables U W T G ϕ.
 
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 #[local] Arguments batch {A} (B)%type_scope _.
@@ -19,8 +19,8 @@ Import DecoratedTraversableMonad.Notations.
 (** * Coalgebraic DTMs to Kleisli DTM *)
 (******************************************************************************)
 #[export] Instance Binddt_ToBatch7
-  (W : Type) (T : Type -> Type) `{ToBatch7 W T} : Binddt W T T :=
-  fun F _ _ _ A B f => runBatch f (C := T B) ∘ toBatch7.
+  (W : Type) (T : Type -> Type) `{ToBatch7 W T U} : Binddt W T U :=
+  fun F _ _ _ A B f => runBatch f (C := U B) ∘ toBatch7.
 
 Section with_algebra.
 
@@ -90,7 +90,7 @@ Section with_algebra.
     intros.
     unfold_ops @Binddt_ToBatch7.
     reassociate <- on left.
-    rewrite <- (fun_map_map (F := G1)).
+    rewrite <- (fun_map_map (F := G1) (Functor := app_functor)).
     reassociate -> near (runBatch f).
     rewrite natural.
     reassociate <- on left.

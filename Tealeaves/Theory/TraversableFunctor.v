@@ -1,9 +1,9 @@
 From Tealeaves Require Export
-  Classes.Kleisli.TraversableFunctor
   Classes.Coalgebraic.TraversableFunctor
   Classes.Categorical.ContainerFunctor
   Classes.Categorical.ShapelyFunctor
   Adapters.KleisliToCoalgebraic.TraversableFunctor
+  Classes.Kleisli.TraversableFunctor
   Functors.List
   Functors.ProductFunctor
   Functors.Constant
@@ -25,7 +25,9 @@ Import Monoid.Notations.
 Section traversable_functor_theory.
 
   Context
-    `{TraversableFunctorFull T}.
+    `{TraversableFunctor T}
+    `{Map T}
+    `{! Compat_Map_Traverse T}.
 
   (** ** Lemmas for particular applicative functors *)
   (******************************************************************************)
@@ -357,11 +359,11 @@ Section traversable_functor_theory.
 
     Class Compat_Elements_Traverse
       (T : Type -> Type)
-      `{H_element_of : Elements T}
-      `{H_traverse : Traverse T} : Prop :=
+      `{Elements_inst : Elements T}
+      `{Traverse_inst : Traverse T} : Prop :=
       compat_element_traverse :
-        @element_of T H_element_of =
-          @element_of T (@Elements_Traverse T H_traverse).
+        @element_of T Elements_inst =
+          @element_of T (@Elements_Traverse T Traverse_inst).
 
     #[export] Instance Compat_Elements_Traverse_Self :
       @Compat_Elements_Traverse T Elements_Traverse _.
@@ -369,42 +371,31 @@ Section traversable_functor_theory.
       reflexivity.
     Qed.
 
-    Section compat_elements_traverse.
+    Lemma element_of_to_foldMap
+      `{Elements T}
+      `{! Compat_Elements_Traverse T}:
+      forall (A : Type),
+      @element_of T _ A = foldMap (ret (T := subset)) (A := A).
+    Proof.
+      rewrite compat_element_traverse.
+      reflexivity.
+    Qed.
 
-      Context
-        `{H_elements : Elements T}
-        `{! Compat_Elements_Traverse T}.
-
-      Lemma element_of_to_traverse :
-        forall (A : Type),
-          element_of (F := T) (A := A) = foldMap (ret (T := subset)).
-      Proof.
-        now rewrite compat_element_traverse.
-      Qed.
-
-      Lemma element_to_foldMap : forall (A : Type),
-          element_of (F := T) (A := A) = foldMap (ret (T := subset)).
-      Proof.
-        intros.
-        rewrite element_of_to_traverse.
-        reflexivity.
-      Qed.
-
-      Lemma in_iff_foldMap : forall (A : Type) (a : A) (t : T A),
-          a ∈ t = foldMap (op := or) (unit := False) (eq a) t.
-      Proof.
-        intros.
-        change_left (evalAt a (element_of (F := T) t)).
-        rewrite compat_element_traverse.
-        unfold_ops @Elements_Traverse.
-        compose near t on left.
-        rewrite (foldMap_morphism
-                   (subset A) Prop (ϕ := evalAt a)
-                   (ret (T := subset))).
-        fequal. ext b. cbv. now propext.
-      Qed.
-
-    End compat_elements_traverse.
+    Lemma in_to_foldMap
+      `{Elements T}
+      `{! Compat_Elements_Traverse T}:
+      forall (A : Type) (t : T A),
+        forall (a : A), a ∈ t = foldMap (op := or) (unit := False) (eq a) t.
+    Proof.
+      intros.
+      rewrite element_of_to_foldMap.
+      change_left (evalAt a (foldMap (ret (T := subset)) t)).
+      compose near t on left.
+      rewrite (foldMap_morphism
+                 (subset A) Prop (ϕ := evalAt a)
+                 (ret (T := subset))).
+      fequal. ext b. cbv. now propext.
+    Qed.
 
     #[export] Instance Natural_Element_Traverse :
       Natural (@element_of T Elements_Traverse).
@@ -436,7 +427,7 @@ Section traversable_functor_theory.
 
     Context
       `{Elements T}
-        `{! Compat_Elements_Traverse T}.
+      `{! Compat_Elements_Traverse T}.
 
     (** *** Factoring through <<runBatch>> *)
     (******************************************************************************)
@@ -445,7 +436,7 @@ Section traversable_functor_theory.
                        (ret (T := subset) (A := A)) (T False) ∘ toBatch (A' := False).
     Proof.
       intros.
-      rewrite element_to_foldMap.
+      rewrite element_of_to_foldMap.
       rewrite foldMap_through_runBatch1.
       reflexivity.
     Qed.
@@ -455,7 +446,7 @@ Section traversable_functor_theory.
                        (ret (T := subset)) (T tag) ∘ toBatch (A' := tag).
     Proof.
       intros.
-      rewrite element_to_foldMap.
+      rewrite element_of_to_foldMap.
       rewrite (foldMap_through_runBatch2 A tag).
       reflexivity.
     Qed.

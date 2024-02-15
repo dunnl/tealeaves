@@ -339,7 +339,8 @@ Section DerivedInstances.
     `{! Compat_Map_Bindt T U}
     `{! Compat_Traverse_Bindt T U}
     `{! Compat_Bind_Bindt T U}
-    `{Module_inst : ! TraversableRightModule T U}.
+    `{Monad_inst : ! TraversableMonad T}
+    `{Module_inst : ! TraversableRightPreModule T U}.
 
   (** ** Special cases for Kleisli composition *)
   (******************************************************************************)
@@ -797,7 +798,7 @@ Section instances.
     `{! Compat_Map_Bindt T U}
     `{! Compat_Traverse_Bindt T U}
     `{! Compat_Bind_Bindt T U}
-    `{Module_inst : ! TraversableRightModule T U}.
+    `{Module_inst : ! TraversableRightPreModule T U}.
 
   #[export] Instance TraversableFunctor_TraversableRightModule :
     TraversableFunctor U :=

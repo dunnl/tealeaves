@@ -64,7 +64,7 @@ Module ToKleisli.
       unfold compose at 6. cbn.
       unfold compose at 6.
       cbn. compose near (f (w, a)) on right.
-      rewrite (fun_map_map (F := G1)).
+      rewrite (fun_map_map (F := G1) (Functor := app_functor)).
       repeat fequal.
       ext t.
       unfold compose. cbn.
@@ -116,9 +116,9 @@ Module ToKleisli.
       reassociate <- on left.
       reassociate -> near (η (A := G (T B))).
       rewrite (trvmon_ret (T := T)).
-      rewrite (fun_map_map (F := G)).
+      rewrite (fun_map_map (F := G) (Functor := app_functor)).
       rewrite (mon_join_ret (T := T)).
-      rewrite (fun_map_id (F := G)).
+      rewrite (fun_map_id (F := G) (Functor := app_functor)).
       reflexivity.
     Qed.
 
@@ -140,17 +140,17 @@ Module ToKleisli.
         map G1 (binddt (G := G2) g) ∘ binddt (G := G1) f = binddt (G := G1 ∘ G2) (g ⋆7 f).
       Proof.
         unfold binddt at 1 2; unfold Binddt_categorical.
-        rewrite <- (fun_map_map (F := G1)).
+        rewrite <- (fun_map_map (F := G1) (Functor := app_functor)).
         do 3 reassociate <-.
         reassociate -> near (map G1 (μ B)).
-        rewrite (fun_map_map (F := G1)).
+        rewrite (fun_map_map (F := G1) (Functor := app_functor)).
         rewrite dmon_join.
         (* Rearrange right of <<shift>> *)
         reassociate -> near (map T (dec T B)).
         rewrite <- (natural (ϕ := @dec W T _)).
         reassociate <- on left.
         rewrite <- (fun_map_map
-                     (F := G1) (map_instance := H5)
+                     (F := G1) (Functor := app_functor)
                      _ _ _
                      (dec T (T B))
                      (μ (W * B) ∘ map T (shift T) ∘ map (T ○ prod W) (dec T B))).
@@ -172,7 +172,7 @@ Module ToKleisli.
         rewrite (fun_map_map (F := T)).
         (* Rearrange left of <<shift>> *)
         change (map (T ○ prod W) (dec T B)) with (map T (map (prod W) (dec T B))).
-        rewrite (fun_map_map (F := G1)).
+        rewrite (fun_map_map (F := G1) (Functor := app_functor)).
         do 2 reassociate <- on left.
         bring (map T g) and (μ (W * B)) together.
         rewrite (natural (ϕ := @join T _)).
@@ -180,9 +180,9 @@ Module ToKleisli.
         bring (δ T G2 (T C)) and (μ (G2 (T C))) together.
         rewrite trvmon_join.
         do 2 reassociate <- on left.
-        rewrite (fun_map_map (F := G2)).
+        rewrite (fun_map_map (F := G2) (Functor := app_functor)).
         rewrite (mon_join_join (T := T)).
-        rewrite <- (fun_map_map (F := G2)).
+        rewrite <- (fun_map_map (F := G2) (Functor := app_functor)).
         reassociate -> near (δ T G2 (T (T C))).
         change (map G2 (map T ?f)) with (map (G2 ∘ T) f).
         unfold_compose_in_compose.
@@ -192,12 +192,12 @@ Module ToKleisli.
         do 7 reassociate -> on left.
         do 4 rewrite (fun_map_map (F := T)).
         repeat reassociate <- on left.
-        rewrite <- (fun_map_map (F := G1)).
+        rewrite <- (fun_map_map (F := G1) (Functor := app_functor)).
         change (map G1 (map T ?f)) with (map (G1 ○ T) f).
         reassociate -> near (δ T G1 (W * T B)).
         rewrite (natural (ϕ := @dist T _ G1 _ _ _)).
 
-        rewrite <- (fun_map_map (F := G1)).
+        rewrite <- (fun_map_map (F := G1) (Functor := app_functor)).
         change (map G1 (map G2 ?f)) with (map (G1 ∘ G2) f).
         reassociate <- on left.
         change (map (T ○ G1) ?f) with (map T (map G1 f)).
@@ -216,7 +216,7 @@ Module ToKleisli.
         ext [w a].
         do 2 (unfold compose; cbn).
         compose near (f (w, a)) on left.
-        rewrite (fun_map_map (F := G1)).
+        rewrite (fun_map_map (F := G1) (Functor := app_functor)).
         fequal.
         unfold compose; cbn.
 

@@ -144,6 +144,22 @@ Section decorated_container_monad_theory.
     reflexivity.
   Qed.
 
+  Theorem ind_bindd_iff' :
+    forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
+      (wtotal, b) ∈d bindd f t <->
+        exists (w1 w2 : W) (a : A),
+          (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
+          /\ wtotal = w1 ● w2.
+  Proof.
+    intros.
+    rewrite ind_bindd_iff.
+    intuition.
+    preprocess.
+    do 3 eexists. eauto.
+    preprocess.
+    do 2 eexists. eauto.
+  Qed.
+
   Corollary ind_bind_iff : forall w t f b,
       (w, b) ∈d bind f t <->
         exists (wa : W) (a : A), (wa, a) ∈d t /\
@@ -162,13 +178,69 @@ Section decorated_container_monad_theory.
           (wa, a) ∈d t /\ b ∈ f (wa, a).
   Proof.
     introv.
-    setoid_rewrite element_ctx_iff_element.
+    setoid_rewrite ind_iff_in.
     setoid_rewrite ind_bindd_iff.
     split.
     - intros [w [wa [a [Hin [wb [Hin' Heq]]]]]].
       eauto.
     - intros [wa [a [Hin [w rest]]]].
       exists (wa ● w) wa a. eauto.
+  Qed.
+
+  (******************************************************************************)
+  Corollary bindd_respectful :
+    forall A B (t : T A) (f : W * A -> T B) (g : W * A -> T B),
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a))
+      -> bindd f t = bindd g t.
+  Proof.
+    introv hyp.
+    apply dconm_pointwise.
+    assumption.
+  Qed.
+
+  Corollary bindd_respectful_bind :
+    forall A B (t : T A) (f : W * A -> T B) (g : A -> T B),
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g a)
+      -> bindd f t = bind g t.
+  Proof.
+    introv hyp.
+    rewrite bind_to_bindd.
+    apply bindd_respectful.
+    introv Hin.
+    eauto.
+  Qed.
+
+  Corollary bindd_respectful_mapd :
+    forall A B (t : T A) (f : W * A -> T B) (g : W * A -> B),
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret (g (w, a)))
+      -> bindd f t = mapd g t.
+  Proof.
+    introv hyp.
+    rewrite mapd_to_bindd.
+    apply bindd_respectful.
+    assumption.
+  Qed.
+
+  Corollary bindd_respectful_map :
+    forall A B (t : T A) (f : W * A -> T B) (g : A -> B),
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret (g a))
+      -> bindd f t = map g t.
+  Proof.
+    introv hyp.
+    rewrite map_to_bindd.
+    apply bindd_respectful.
+    assumption.
+  Qed.
+
+  Corollary bindd_respectful_id :
+    forall A (t : T A) (f : W * A -> T A),
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret a)
+      -> bindd f t = t.
+  Proof.
+    intros. change t with (id t) at 2.
+    rewrite <- kmond_bindd1.
+    eapply bindd_respectful.
+    eauto.
   Qed.
 
 End decorated_container_monad_theory.

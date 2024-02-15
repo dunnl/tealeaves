@@ -25,6 +25,26 @@ Import Kleisli.TraversableFunctor.Notations.
   (fun A B => traverse (G := Batch A B) (batch B) :
      T A -> Batch A B (T B)).
 
+Class Compat_ToBatch_Traverse
+  `{Traverse_inst : Traverse T}
+  `{ToBatch_inst : ToBatch T} :=
+  compat_toBatch_traverse :
+  forall A B, @toBatch T ToBatch_inst A B =
+           @traverse T Traverse_inst (Batch A B) _ _ _ A B (batch B).
+
+Lemma toBatch_to_traverse
+  `{Compat_ToBatch_Traverse T} :
+  forall A B, toBatch (T := T) =
+           traverse (G := Batch A B) (batch B).
+Proof.
+  intros.
+  rewrite compat_toBatch_traverse.
+  reflexivity.
+Qed.
+
+#[export] Instance Compat_ToBatch_Traverse_Self
+  `{Traverse T} : Compat_ToBatch_Traverse := ltac:(hnf; reflexivity).
+
 (** ** Laws *)
 (******************************************************************************)
 Section laws.
@@ -32,14 +52,16 @@ Section laws.
   Context
     `{Kleisli.TraversableFunctor.TraversableFunctor T}
     `{Map T}
-    `{! Compat_Map_Traverse T }.
+    `{! Compat_Map_Traverse T}
+    `{ToBatch T}
+    `{! Compat_ToBatch_Traverse}.
 
   (** *** Factoring operations through <<toBatch>> *)
   (******************************************************************************)
   Lemma traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
     traverse f = runBatch f ∘ toBatch.
   Proof.
-    unfold_ops @ToBatch_Traverse.
+    rewrite toBatch_to_traverse.
     rewrite trf_traverse_morphism.
     rewrite (runBatch_batch G).
     reflexivity.
@@ -68,8 +90,9 @@ Section laws.
     toBatch (A' := C) ∘ map f = mapfst_Batch f ∘ toBatch.
   Proof.
     intros.
-    unfold_ops @ToBatch_Traverse.
+    rewrite toBatch_to_traverse.
     rewrite traverse_map.
+    rewrite toBatch_to_traverse.
     rewrite (trf_traverse_morphism (morphism := mapfst_Batch1_Hom f)).
     rewrite ret_natural.
     reflexivity.
@@ -81,7 +104,7 @@ Section laws.
       extract_Batch ∘ toBatch = @id (T A).
   Proof.
     intros.
-    unfold_ops @ToBatch_Traverse.
+    rewrite toBatch_to_traverse.
     rewrite (trf_traverse_morphism (ϕ := @extract_Batch A)).
     rewrite extract_Batch_batch.
     rewrite trf_traverse_id.
@@ -93,9 +116,11 @@ Section laws.
         map (F := Batch A B) (toBatch (A' := C)) ∘ toBatch (A' := B).
   Proof.
     intros.
-    unfold_ops @ToBatch_Traverse.
+    rewrite toBatch_to_traverse.
     rewrite (trf_traverse_morphism (ϕ := @cojoin_Batch A B C)).
     rewrite cojoin_Batch_batch.
+    rewrite toBatch_to_traverse.
+    rewrite toBatch_to_traverse.
     rewrite (trf_traverse_traverse (G1 := Batch A B) (G2 := Batch B C)).
     reflexivity.
   Qed.

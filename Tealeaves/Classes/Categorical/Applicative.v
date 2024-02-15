@@ -553,7 +553,7 @@ Section applicative_compose_laws.
       ((fun A : Type => (fun X => @id (F1 X)) (G2 A) ∘ map (ϕ2 A))).
     apply (ApplicativeMorphism_parallel F1 F2 F1 G2).
   Qed.
-  
+
   #[export] Instance ApplicativeMorphism_parallel_left_id
     (F2 G1 : Type -> Type)
     `{Applicative G1}
@@ -570,7 +570,7 @@ Section applicative_compose_laws.
     apply (ApplicativeMorphism_parallel_left
              (fun X => X) F2 G1).
   Qed.
-  
+
   #[export] Instance ApplicativeMorphism_parallel_right_id
     (F1 G2 : Type -> Type)
     `{Applicative G2}

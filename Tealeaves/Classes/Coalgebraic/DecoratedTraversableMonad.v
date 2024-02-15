@@ -19,10 +19,10 @@ Import Applicative.Notations.
 
 (** * Traversable monads as coalgebras *)
 (******************************************************************************)
-Class ToBatch7 (W : Type) (T : Type -> Type) :=
-  toBatch7 : forall A B, T A -> Batch (W * A) (T B) (T B).
+Class ToBatch7 (W : Type) (T U : Type -> Type) :=
+  toBatch7 : forall A B, U A -> Batch (W * A) (T B) (U B).
 
-#[global] Arguments toBatch7 {W}%type_scope {T}%function_scope {ToBatch7} {A B}%type_scope _.
+#[global] Arguments toBatch7 {W}%type_scope {T U}%function_scope {ToBatch7} {A B}%type_scope _.
 
 Section cojoin.
 
@@ -30,7 +30,7 @@ Section cojoin.
     {W : Type}
     {T : Type -> Type}
     `{Monoid_op W}
-    `{ToBatch7 W T}.
+    `{ToBatch7 W T T}.
 
   Context
     {A : Type} (* original leaves *)
@@ -82,7 +82,7 @@ Section section.
 
   Context
     `{Monoid W}
-    `{ToBatch7 W T}.
+    `{ToBatch7 W T T}.
 
   Definition double_batch7 {A A' : Type} {R : Type} :
     W * A -> Batch (W * A) (T A') (Batch (W * A') (T R) (T R)) :=
@@ -145,7 +145,7 @@ Section section.
 End section.
 
 Class DecoratedTraversableMonad (W : Type) (T : Type -> Type)
-  `{Monoid_op W} `{Monoid_unit W} `{Return T} `{ToBatch7 W T} :=
+  `{Monoid_op W} `{Monoid_unit W} `{Return T} `{ToBatch7 W T T} :=
   { dtm_monoid :> Monoid W;
     dtm_ret : forall (A B : Type),
       toBatch7 ∘ ret (T := T) (A := A) = Step (Done (@id (T B))) ∘ ret (T := (W ×));

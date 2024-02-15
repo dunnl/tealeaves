@@ -8,19 +8,19 @@ Import Kleisli.DecoratedTraversableMonad.Notations.
 Import Batch.Notations.
 Import Monoid.Notations.
 
-#[local] Generalizable Variables W G T M A B.
+#[local] Generalizable Variables U W G T M A B.
 
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 #[local] Arguments batch {A} (B)%type_scope _.
-#[local] Arguments toBatch7 {W}%type_scope {T}%function_scope {ToBatch7} {A B}%type_scope _.
+#[local] Arguments toBatch7 {W}%type_scope {T U}%function_scope {ToBatch7} {A B}%type_scope _.
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
 (** * DecoratedTraversableMonads as <<Batch3>> coalgebras *)
 (******************************************************************************)
-#[export] Instance ToBatch7_Binddt `{Binddt W T T}
-    : Coalgebraic.DecoratedTraversableMonad.ToBatch7 W T :=
-  (fun A B => binddt (G := Batch (W * A) (T B)) (batch (T B)) : T A -> Batch (W * A) (T B) (T B)).
+#[export] Instance ToBatch7_Binddt `{Binddt W T U}
+    : Coalgebraic.DecoratedTraversableMonad.ToBatch7 W T U :=
+  (fun A B => binddt (G := Batch (W * A) (T B)) (batch (T B)) : U A -> Batch (W * A) (T B) (U B)).
 
 (** ** Factoring operations through <<toBatch>> *)
 (******************************************************************************)

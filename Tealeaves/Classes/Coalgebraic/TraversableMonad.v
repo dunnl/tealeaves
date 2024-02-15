@@ -8,24 +8,24 @@ Import Batch.Notations.
 Import Applicative.Notations.
 Import TraversableMonad.Notations.
 
-#[local] Generalizable Variables T.
+#[local] Generalizable Variables T U.
 
 (** * Traversable Monads, coalgebraically *)
 (******************************************************************************)
 
 (** ** <<ToBatch3>> operation *)
 (******************************************************************************)
-Class ToBatch3 (T : Type -> Type) :=
-  toBatch3 : forall A B, T A -> Batch A (T B) (T B).
+Class ToBatch3 (T U : Type -> Type) :=
+  toBatch3 : forall A B, U A -> Batch A (T B) (U B).
 
-#[global] Arguments toBatch3 {T}%function_scope {ToBatch3} {A B}%type_scope _.
+#[global] Arguments toBatch3 {T U}%function_scope {ToBatch3} {A B}%type_scope _.
 
 (** ** <<cojoin_Batch3>> operation *)
 (******************************************************************************)
 Section cojoin.
 
   Context
-    `{ToBatch3 T}
+    `{ToBatch3 T T}
       (A A' A'' : Type).
 
   Section auxiliary.
@@ -65,7 +65,7 @@ End cojoin.
 Section spec.
 
   Context
-    `{ToBatch3 T}.
+    `{ToBatch3 T T}.
 
   Definition double_batch3 {A B C : Type} :
       A -> Batch A (T B) (Batch B (T C) (T C)) :=
@@ -142,13 +142,26 @@ Section experiment.
 End experiment.
 *)
 
+Class TraversableRightPreModule
+  (T U : Type -> Type) `{Return T}
+   `{ToBatch3 T T} `{ToBatch3 T U} :=
+  { trfm_extract : forall (A : Type),
+      extract_Batch ∘ mapfst_Batch A (T A) ret ∘ toBatch3 = @id (U A);
+    trfm_duplicate : forall (A A' A'' : Type),
+      cojoin_Batch3 A A' A'' ∘ toBatch3 (U := U) =
+        map (F := Batch A (T A')) (toBatch3 (U := U)) ∘ toBatch3 (U := U);
+  }.
+
 Class TraversableMonad
-  (T : Type -> Type) `{Return T} `{ToBatch3 T} :=
+  (T : Type -> Type) `{Return T} `{ToBatch3 T T} :=
   { trfm_ret : forall (A B : Type),
       toBatch3 ∘ ret = batch A (T B);
-    trfm_extract : forall (A : Type),
-      extract_Batch ∘ mapfst_Batch A (T A) ret ∘ toBatch3 = @id (T A);
-    trfm_duplicate : forall (A A' A'' : Type),
-      cojoin_Batch3 A A' A'' ∘ toBatch3 =
-        map (F := Batch A (T A')) toBatch3 ∘ toBatch3;
+    trfm_premod :> TraversableRightPreModule T T;
+  }.
+
+Class TraversableRightModule
+  (T U : Type -> Type) `{Return T}
+   `{ToBatch3 T T} `{ToBatch3 T U} :=
+  { trfmod_monad :> TraversableMonad T;
+    trfmod_premod :> TraversableRightPreModule T U;
   }.

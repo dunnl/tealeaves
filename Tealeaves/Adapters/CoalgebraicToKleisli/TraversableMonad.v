@@ -12,8 +12,8 @@ Import TraversableMonad.Notations.
 (** * Coalgebraic to traversable monad *)
 (******************************************************************************)
 #[export] Instance Bindt_ToBatch3
-  (T : Type -> Type) `{ToBatch3 T} : Bindt T T :=
-  fun F _ _ _ A B f => runBatch F f (T B) ∘ toBatch3.
+  (T U : Type -> Type) `{ToBatch3 T U} : Bindt T U :=
+  fun F _ _ _ A B f => runBatch F f (U B) ∘ toBatch3.
 
 Section with_algebra.
 

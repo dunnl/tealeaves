@@ -41,7 +41,7 @@ Section compat.
       @element_of T Elements_inst =
         @element_of T Elements_ElementsCtx.
 
-  Lemma element_ctx_iff_element
+  Lemma ind_iff_in
     `{Compat_Elements_ElementsCtx}:
     forall (A : Type) (t : T A) (a : A),
       a ∈ t <-> exists (e: E), (e, a) ∈d t.
@@ -57,6 +57,16 @@ Section compat.
       cbn in Heq. subst. eauto.
     - intros [e Hin].
       eauto.
+  Qed.
+
+  Lemma ind_implies_in
+    `{Compat_Elements_ElementsCtx}:
+    forall (A : Type) (e : E) (a : A) (t : T A),
+      (e, a) ∈d t -> a ∈ t.
+  Proof.
+    intros.
+    rewrite ind_iff_in.
+    eauto.
   Qed.
 
 End compat.
@@ -162,7 +172,7 @@ Section setlike_functor_theory.
       b ∈ mapd f t <-> exists (e : E) (a : A), (e, a) ∈d t /\ f (e, a) = b.
   Proof.
     introv.
-    rewrite element_ctx_iff_element.
+    rewrite ind_iff_in.
     setoid_rewrite ind_mapd_iff.
     reflexivity.
   Qed.
@@ -199,7 +209,7 @@ Section setlike_functor_theory.
   Proof.
     introv hyp.
     change t with (id t) at 2.
-    rewrite <- fun_map_id.
+    rewrite <- (fun_map_id (Functor := Functor_instance_0)).
     rewrite DecoratedFunctor.map_to_mapd.
     apply dcont_pointwise.
     apply hyp.
