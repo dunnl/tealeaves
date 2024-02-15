@@ -26,7 +26,15 @@ Import Batch.Notations.
 Section runBatch.
 
   Context
-    `{Kleisli.TraversableMonad.TraversableMonadFull T}.
+    `{ret_inst : Return T}
+    `{Map_T_inst : Map T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{! Compat_Map_Bindt T T}
+    `{! Compat_Traverse_Bindt T T}
+    `{! Compat_Bind_Bindt T T}
+    `{! Kleisli.TraversableMonad.TraversableMonad T}.
 
   Lemma bindt_through_runBatch `{Applicative G} `(f : A -> G (T B)) :
     bindt f = runBatch f ∘ toBatch3 B.
@@ -40,7 +48,7 @@ Section runBatch.
   Lemma traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
     traverse (T := T) f = runBatch (map ret ∘ f) ∘ toBatch3 B.
   Proof.
-    rewrite ktmf_traverse_to_bindt.
+    rewrite traverse_to_bindt.
     rewrite bindt_through_runBatch.
     reflexivity.
   Qed.
@@ -48,7 +56,7 @@ Section runBatch.
   Corollary map_through_runBatch `(f : A -> B) :
     map (F := T) f = runBatch (F := fun A => A) (ret (T := T) ∘ f) ∘ toBatch3 B.
   Proof.
-    rewrite trff_map_to_traverse.
+    rewrite map_to_traverse.
     rewrite traverse_through_runBatch.
     reflexivity.
   Qed.
@@ -64,18 +72,23 @@ Section runBatch.
 
 End runBatch.
 
-From Tealeaves Require Import Adapters.KleisliToCoalgebraic.TraversableFunctor.
+From Tealeaves Require Import
+  Adapters.KleisliToCoalgebraic.TraversableFunctor.
 
 (** ** Relating <<toBatch3>> with <<toBatch>> *)
 (******************************************************************************)
 Lemma toBatch3_toBatch
-  `{Kleisli.TraversableMonad.TraversableMonadFull T}
-  {A B : Type} (t : T A) :
+  `{Traverse_inst : Traverse T}
+  `{Bindt_inst : Bindt T T}
+  `{Return_inst : Return T}
+  `{! Compat_Traverse_Bindt T T}
+  `{! Kleisli.TraversableMonad.TraversableMonad T}
+  {A B: Type} (t: T A) :
   toBatch B t = mapsnd_Batch (ret (T := T)) (toBatch3 B t).
 Proof.
   intros.
   unfold_ops @ToBatch_Traverse.
-  rewrite ktmf_traverse_to_bindt.
+  rewrite traverse_to_bindt.
   unfold_ops @ToBatch3_Bindt.
   compose near t on right.
   rewrite (ktm_morph (G1 := Batch A (T B)) (G2 := Batch A B)
@@ -87,12 +100,18 @@ Qed.
 (** ** Naturality of <<toBatch>> *)
 (******************************************************************************)
 Lemma toBatch3_mapfst (T : Type -> Type)
-  `{Kleisli.TraversableMonad.TraversableMonadFull T}
+  `{Map_inst : Map T}
+  `{Bindt_inst : Bindt T T}
+  `{Return_inst : Return T}
+  `{! Compat_Map_Bindt T T}
+  `{! Kleisli.TraversableMonad.TraversableMonad T}
   {A B : Type} (f : A -> B) {C : Type} :
   toBatch3 C ∘ map (F := T) f = mapfst_Batch f ∘ toBatch3 C.
 Proof.
   unfold_ops @ToBatch3_Bindt.
-  rewrite (bindt_map (G2 := Batch B (T C))).
+  About bindt_map.
+  rewrite (bindt_map (Module_inst := TraversableRightModule_TraversableMonad T)
+             (G2 := Batch B (T C))).
   rewrite (bindt_through_runBatch (G := Batch B (T C))).
   rewrite (bindt_through_runBatch (G := Batch A (T C))).
   ext t.
@@ -110,7 +129,9 @@ Qed.
 Section to_coalgebraic.
 
   Context
-    `{Kleisli.TraversableMonad.TraversableMonadFull T}.
+    `{Map_inst : Map T}
+    `{Compat_Map_Bindt T T}
+    `{! Kleisli.TraversableMonad.TraversableMonad T}.
 
   Lemma double_batch3_spec : forall A B C,
       double_batch3 (A := A) = batch (T C) ⋆3 batch (T B).
@@ -134,7 +155,8 @@ Section to_coalgebraic.
     reassociate -> on left.
     rewrite <- (toBatch3_mapfst T).
     unfold_ops @ToBatch3_Bindt.
-    rewrite (bindt_map (G2 := Batch (T A) (T A))).
+    rewrite (bindt_map (Module_inst := TraversableRightModule_TraversableMonad T)
+               (G2 := Batch (T A) (T A))).
     rewrite (ktm_morph (ϕ := @extract_Batch (T A))).
     reassociate <- on left.
     rewrite extract_Batch_batch.

@@ -45,7 +45,7 @@ Module ToCategorical.
       (T : Type -> Type)
       `{Kleisli.DecoratedMonad.DecoratedMonad W T}.
 
-    Import DecoratedMonad.MakeFull.
+    Existing Instances Map_Bindd Join_Bindd Decorate_Bindd.
 
     (** *** Functor laws *)
     (******************************************************************************)

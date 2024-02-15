@@ -13,7 +13,8 @@ Module ToKleisli.
 
   Export Kleisli.Monad.
   Import Kleisli.Monad.Notations.
-  #[local] Arguments bind {U} (T)%function_scope {Bind} {A B}%type_scope _%function_scope _.
+  #[local] Arguments bind {T} (U)%function_scope
+    {Bind} {A B}%type_scope _%function_scope _.
 
   Section operation.
 
@@ -73,10 +74,12 @@ Module ToKleisli.
       now rewrite (mon_join_ret (T := T)).
     Qed.
 
-    #[export] Instance Kleisli_Monad : Kleisli.Monad.Monad T :=
+    #[export] Instance: Kleisli.Monad.RightPreModule T T :=
+      {| kmod_bind1 := @mon_bind_id;
+         kmod_bind2 := @mon_bind_bind;
+      |}.
+    #[export] Instance: Kleisli.Monad.Monad T :=
       {| kmon_bind0 := @mon_bind_comp_ret;
-        kmon_bind1 := @mon_bind_id;
-        kmon_bind2 := @mon_bind_bind;
       |}.
 
   End with_monad.
@@ -187,8 +190,9 @@ Module ToKleisliRightModule.
 
   End Monad_kleisli_laws.
 
-  #[local] Instance Kleisli_RightModule {F T} `{Categorical.RightModule.RightModule F T}
-    : Kleisli.Monad.RightModule T F :=
+  #[local] Instance Kleisli_RightModule {F T}
+    `{Categorical.RightModule.RightModule F T}
+    : Kleisli.Monad.RightPreModule T F :=
     {| kmod_bind1 := @bind_id T F _ _ _ _ _ _;
       kmod_bind2 := @bind_bind T F _ _ _ _ _ _;
     |}.

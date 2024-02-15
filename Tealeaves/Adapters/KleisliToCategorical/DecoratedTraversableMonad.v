@@ -20,7 +20,7 @@ Import Comonad.Notations.
   {A B}%type_scope _%function_scope _.
 #[local] Arguments mapdt {E}%type_scope T%function_scope {Mapdt}
   G%function_scope {H H0 H1} {A B}%type_scope _%function_scope.
-#[local] Arguments bindd {W}%type_scope {U} (T)%function_scope {Bindd} {A B}%type_scope _ _.
+#[local] Arguments bindd {W}%type_scope {T} (U)%function_scope {Bindd} {A B}%type_scope _ _.
 #[local] Arguments traverse T%function_scope {Traverse} G%function_scope
   {H H0 H1} {A B}%type_scope _%function_scope _.
 
@@ -38,7 +38,8 @@ Module ToCategorical.
       `{Binddt W T T}
       `{Return T}.
 
-    #[export] Instance Join_Binddt: Join T := fun A => binddt T (fun A => A) (B := A) (A := T A) (extract (W ×) (T A)).
+    #[export] Instance Join_Binddt: Join T :=
+      fun A => binddt (fun A => A) (B := A) (A := T A) (extract (W ×) (T A)).
     #[export] Instance Decorate_Binddt: Decorate W T := fun A => binddt T (fun A => A) (ret T (W * A)).
     #[export] Instance Dist_Binddt: ApplicativeDist T := fun G _ _ _ A => binddt T G (map G (ret T A) ∘ extract (W ×) (G A)).
 
@@ -53,7 +54,8 @@ Module ToCategorical.
       (T : Type -> Type)
       `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
-    Import DecoratedTraversableMonad.DerivedInstances.
+    Existing Instances
+      Map_Binddt.
 
     #[local] Tactic Notation "unfold_everything" :=
       unfold_ops @Map_compose;

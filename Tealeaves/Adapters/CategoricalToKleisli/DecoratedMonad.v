@@ -15,9 +15,9 @@ Import Classes.Kleisli.DecoratedMonad.Notations.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 #[local] Arguments dec {E}%type_scope F%function_scope {Decorate} {A}%type_scope _.
 #[local] Arguments extract W%function_scope {Extract} {A}%type_scope _.
-#[local] Arguments bind {U} (T)%function_scope {Bind} {A B}%type_scope _%function_scope _.
+#[local] Arguments bind {T} (U)%function_scope {Bind} {A B}%type_scope _%function_scope _.
 #[local] Arguments join (T)%function_scope {Join} {A}%type_scope _.
-#[local] Arguments bindd {W}%type_scope {U} (T)%function_scope {Bindd} {A B}%type_scope _ _.
+#[local] Arguments bindd {W}%type_scope {T} (U)%function_scope {Bindd} {A B}%type_scope _ _.
 
 (** * Algebraic decorated monad to Kleisli decorated monad *)
 (******************************************************************************)
@@ -122,10 +122,13 @@ Module ToKleisli.
       reflexivity.
     Qed.
 
+    #[export] Instance: Kleisli.DecoratedMonad.DecoratedRightPreModule W T T :=
+      {| kmodd_bindd1 := @bindd_id;
+        kmodd_bindd2 := @bindd_bindd;
+      |}.
+
     #[export] Instance: Kleisli.DecoratedMonad.DecoratedMonad W T :=
       {| kmond_bindd0 := @bindd_comp_ret;
-        kmond_bindd1 := @bindd_id;
-        kmond_bindd2 := @bindd_bindd;
       |}.
 
   End with_monad.

@@ -11,7 +11,7 @@ Import Categorical.Monad.Notations.
 Import Categorical.TraversableFunctor.Notations.
 Import Strength.Notations.
 
-#[local] Generalizable Variables W T G ϕ.
+#[local] Generalizable Variables W T G ϕ A B C.
 
 (** * Kleisli presentation of D-T monads *)
 (******************************************************************************)
@@ -125,11 +125,11 @@ Module ToKleisli.
     Section binddt_binddt.
 
       Context
-        (G1 G2 : Type -> Type)
+        (G1 : Type -> Type)
           `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
+          (G2 : Type -> Type)
           `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}
-        {A B C : Type}
-        (g : W * B -> G2 (T C)) (f : W * A -> G1 (T B)).
+          `(g : W * B -> G2 (T C)) `(f : W * A -> G1 (T B)).
 
       #[local] Arguments map (F)%function_scope {Map} {A B}%type_scope f%function_scope _.
       #[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope {H H0 H1} (A)%type_scope _.
@@ -242,11 +242,15 @@ Module ToKleisli.
       now rewrite (fun_map_map (F := T)).
     Qed.
 
-    #[export] Instance: Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
-      {| kdtm_binddt0 := @kdtm_binddt0_T;
+    #[export] Instance: Kleisli.DecoratedTraversableMonad.DecoratedTraversableRightPreModule W T T :=
+      {|
         kdtm_binddt1 := @kdtm_binddt1_T;
         kdtm_binddt2 := @kdtm_binddt2_T;
         kdtm_morph := @kdtm_morph_T;
+      |}.
+
+    #[export] Instance: Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
+      {| kdtm_binddt0 := @kdtm_binddt0_T;
       |}.
 
   End with_monad.

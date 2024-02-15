@@ -84,8 +84,8 @@ Tealeaves/Adapters/KleisliToCategorical/Monad.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedMonad.v
 Tealeaves/Adapters/KleisliToCategorical/TraversableFunctor.v
-Tealeaves/Adapters/KleisliToCategorical/TraversableMonad.v
-Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableFunctor.v
+#Tealeaves/Adapters/KleisliToCategorical/TraversableMonad.v
+#Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableFunctor.v
 #Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableMonad.v
 Tealeaves/Adapters/KleisliToCoalgebraic/TraversableFunctor.v
 Tealeaves/Adapters/KleisliToCoalgebraic/TraversableMonad.v

@@ -35,7 +35,9 @@ Module ToCategorical.
     Context
       `{Kleisli.TraversableMonad.TraversableMonad T}.
 
-    Import TraversableMonad.MakeFull.
+    Existing Instance Map_Bindt.
+    Existing Instance Traverse_Bindt.
+    Existing Instance TraversableFunctor_TraversableMonad.
 
     (** *** Traversable functor instance *)
     (******************************************************************************)

@@ -36,9 +36,6 @@ Module ToCategorical.
       (T : Type -> Type)
       `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-    Import DecoratedTraversableFunctor.DerivedOperations.
-    #[local] Existing Instance MakeFull_DecoratedTraversableFunctor.
-
     #[local] Tactic Notation "unfold_everything" :=
          unfold_ops @Map_compose;
          unfold_ops @Decorate_Mapdt;

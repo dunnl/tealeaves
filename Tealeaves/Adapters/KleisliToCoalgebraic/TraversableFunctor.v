@@ -30,7 +30,9 @@ Import Kleisli.TraversableFunctor.Notations.
 Section laws.
 
   Context
-    `{Kleisli.TraversableFunctor.TraversableFunctorFull T}.
+    `{Kleisli.TraversableFunctor.TraversableFunctor T}
+    `{Map T}
+    `{! Compat_Map_Traverse T }.
 
   (** *** Factoring operations through <<toBatch>> *)
   (******************************************************************************)
@@ -46,7 +48,7 @@ Section laws.
   Corollary map_through_runBatch {A B : Type} (f : A -> B) :
     map f = runBatch (F := fun A => A) f ∘ toBatch.
   Proof.
-    rewrite trff_map_to_traverse.
+    rewrite map_to_traverse.
     rewrite traverse_through_runBatch.
     reflexivity.
   Qed.
@@ -55,7 +57,7 @@ Section laws.
       id = runBatch (F := fun A => A) id ∘ toBatch (T := T) (A' := A).
   Proof.
     intros.
-    rewrite <- (trf_traverse_id (T := T)).
+    rewrite <- trf_traverse_id.
     rewrite (traverse_through_runBatch (G := fun A => A)).
     reflexivity.
   Qed.

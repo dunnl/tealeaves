@@ -10,11 +10,8 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables E G T M A B.
 
-#[local] Arguments map {F}%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 #[local] Arguments batch {A} (B)%type_scope _.
-#[local] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
@@ -29,7 +26,12 @@ Import Monoid.Notations.
 Section runBatch.
 
   Context
-    `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}.
+    `{Map_inst: Map T}
+    `{Traverse_inst: Traverse T}
+    `{Mapdt_inst: Mapdt E T}
+    `{! Compat_Map_Mapdt}
+    `{! Compat_Traverse_Mapdt}
+    `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
   Lemma mapdt_to_runBatch `{Applicative G} `(f : E * A -> G B) :
     mapdt f = runBatch f ∘ toBatch6.
@@ -43,7 +45,7 @@ Section runBatch.
   Lemma traverse_to_runBatch `{Applicative G} `(f : A -> G B) :
     traverse f = runBatch (f ∘ extract) ∘ toBatch6.
   Proof.
-    rewrite kdtfunf_traverse_to_mapdt.
+    rewrite traverse_to_mapdt.
     rewrite mapdt_to_runBatch.
     reflexivity.
   Qed.
@@ -51,7 +53,7 @@ Section runBatch.
   Corollary map_to_runBatch `(f : A -> B) :
     map f = runBatch (F := fun A => A) (f ∘ extract) ∘ toBatch6.
   Proof.
-    rewrite kdtfunf_map_to_mapdt.
+    rewrite map_to_mapdt.
     rewrite mapdt_to_runBatch.
     reflexivity.
   Qed.
@@ -74,14 +76,17 @@ From Tealeaves Require Import
 (** ** Relating <<toBatch6>> with <<toBatch>> *)
 (******************************************************************************)
 Lemma toBatch6_toBatch
-  `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
+  `{Traverse_inst: Traverse T}
+  `{Mapdt_inst: Mapdt E T}
+  `{! Compat_Traverse_Mapdt}
+  `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}
   {A B : Type} :
   toBatch (A := A) (A' := B) = mapfst_Batch extract ∘ toBatch6.
 Proof.
   intros.
   unfold_ops @ToBatch6_Mapdt.
   unfold_ops @ToBatch_Traverse.
-  rewrite (kdtfunf_traverse_to_mapdt).
+  rewrite traverse_to_mapdt.
   rewrite <- (kdtfun_morph
                (G1 := Batch (E * A) B)
                (G2 := Batch A B)
@@ -91,19 +96,47 @@ Proof.
 Qed.
 
 Lemma runBatch_toBatch6
-  `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T} `{Applicative G} `(f : E * A -> G B) :
+  `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}
+  `{Applicative G} `(f : E * A -> G B) :
   runBatch f ∘ toBatch6 = mapdt (E := E) (T := T) f.
 Proof.
-  intros. unfold toBatch6. unfold ToBatch6_Mapdt.
-  rewrite <- (kdtfun_morph).
+  intros.
+  unfold_ops @ToBatch6_Mapdt.
+  rewrite <- kdtfun_morph.
   rewrite (runBatch_batch G).
   reflexivity.
 Qed.
 
 (** ** Naturality of <<toBatchDM>> *)
-(******************************************************************************)
+(******************************************************************************)Lemma toBatch6_mapdt
+  `{Mapdt_inst: Mapdt E T}
+  `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}
+  `{Applicative G}
+  {A A' B : Type} (f : E * A -> G A') :
+  map (F := G) (toBatch6 (A := A') (B := B)) ∘ mapdt (T := T) f =
+    traverse (T := BATCH1 B (T B)) (strength ∘ cobind f) ∘ toBatch6.
+Proof.
+  intros.
+  unfold_ops @ToBatch6_Mapdt.
+  rewrite kdtfun_mapdt2.
+  unfold kc6.
+  Set Printing Implicit.
+
+  rewrite map_strength_cobind_spec.
+  Print traverse_Batch.
+  Check traverse_Batch _ _ _ _ _ (strength ∘ cobind f) ∘ toBatch6.
+  Check
+  map (F := G) (toBatch6 (A := A') (B := B)) ∘ mapdt (T := T) f.
+  Search map strength.
+  Set Printing Implicit.
+  Print toBatch6.
+  Print ToBatch6_Mapdt.
+
 Lemma toBatch6_mapd
-  `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
+  `{Mapd_inst: Mapd E T}
+  `{Mapdt_inst: Mapdt E T}
+  `{! Compat_Mapd_Mapdt}
+  `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}
   {A A' B : Type} (f : E * A -> A') :
   toBatch6 ∘ mapd (T := T) f =
     mapfst_Batch (cobind f) ∘ toBatch6 (A := A) (B := B).
@@ -118,14 +151,18 @@ Proof.
 Qed.
 
 Lemma toBatch6_map
-  `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
+  `{Map_inst: Map T}
+  `{Mapdt_inst: Mapdt E T}
+  `{! Compat_Map_Mapdt}
+  `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}
   {A A' B : Type} (f : A -> A') {C : Type} :
   toBatch6 ∘ map (F := T) f = mapfst_Batch (map f) ∘ toBatch6 (A := A) (B := B).
 Proof.
   rewrite (map_to_cobind E).
-  rewrite <- toBatch6_mapd.
-  rewrite (kdtfunf_map_to_mapdt).
-  rewrite (kdtfunf_mapd_to_mapdt).
+  rewrite map_to_mapdt.
+  rewrite <- toBatch6_map.
+  rewrite map_to_mapdt.
+  rewrite mapd_to_mapdt.
   reflexivity.
 Qed.
 

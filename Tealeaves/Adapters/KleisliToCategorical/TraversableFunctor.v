@@ -23,7 +23,7 @@ Module ToCategorical.
     (T : Type -> Type)
     `{Kleisli.TraversableFunctor.TraversableFunctor T}.
 
-  Import TraversableFunctor.MakeFull.
+  Existing Instance Map_Traverse.
 
   (** *** Traversable functor instance *)
   (******************************************************************************)

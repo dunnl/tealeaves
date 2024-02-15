@@ -151,11 +151,16 @@ Module ToKleisli.
       now rewrite app_pure_natural.
     Qed.
 
-    #[export] Instance TravMon_ToKleisli: Kleisli.TraversableMonad.TraversableMonad T :=
-      {| ktm_bindt0 := @ktm_bindt0_T;
-        ktm_bindt1 := @ktm_bindt1_T;
+    #[export] Instance TravMon_ToKleisli:
+      Kleisli.TraversableMonad.TraversableRightPreModule T T :=
+      {|ktm_bindt1 := @ktm_bindt1_T;
         ktm_bindt2 := @ktm_bindt2_T;
         ktm_morph := @ktm_morph_T;
+      |}.
+
+    #[export] Instance:
+      Kleisli.TraversableMonad.TraversableMonad T :=
+      {| ktm_bindt0 := @ktm_bindt0_T;
       |}.
 
   End with_monad.
