@@ -116,21 +116,14 @@ Qed.
   map (F := G) (toBatch6 (A := A') (B := B)) ∘ mapdt (T := T) f =
     traverse (T := BATCH1 B (T B)) (strength ∘ cobind f) ∘ toBatch6.
 Proof.
-  intros.
+  rewrite (traverse_spec G).
+  rewrite (runBatch_toBatch6 (A := A) (E := E) (T := T)
+             (B := B) (G := G ∘ Batch (E * A') B)).
   unfold_ops @ToBatch6_Mapdt.
   rewrite kdtfun_mapdt2.
   unfold kc6.
-  Set Printing Implicit.
-
-  rewrite map_strength_cobind_spec.
-  Print traverse_Batch.
-  Check traverse_Batch _ _ _ _ _ (strength ∘ cobind f) ∘ toBatch6.
-  Check
-  map (F := G) (toBatch6 (A := A') (B := B)) ∘ mapdt (T := T) f.
-  Search map strength.
-  Set Printing Implicit.
-  Print toBatch6.
-  Print ToBatch6_Mapdt.
+  reflexivity.
+Qed.
 
 Lemma toBatch6_mapd
   `{Mapd_inst: Mapd E T}
@@ -158,11 +151,11 @@ Lemma toBatch6_map
   {A A' B : Type} (f : A -> A') {C : Type} :
   toBatch6 ∘ map (F := T) f = mapfst_Batch (map f) ∘ toBatch6 (A := A) (B := B).
 Proof.
-  rewrite (map_to_cobind E).
-  rewrite map_to_mapdt.
-  rewrite <- toBatch6_map.
-  rewrite map_to_mapdt.
-  rewrite mapd_to_mapdt.
+  unfold_ops @ToBatch6_Mapdt.
+  rewrite mapdt_map.
+  rewrite <- (kdtfun_morph (H6 := mapfst_Batch1_Hom (map f))
+               (ϕ := fun C => mapfst_Batch (map f))).
+  rewrite ret_natural.
   reflexivity.
 Qed.
 

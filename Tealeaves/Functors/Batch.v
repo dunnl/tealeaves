@@ -1100,6 +1100,62 @@ Fixpoint traverse_Batch (B C : Type) (G : Type -> Type)
 #[export] Instance Traverse_Batch1 :
   forall (B C : Type), Traverse (BATCH1 B C) := traverse_Batch.
 
+Lemma traverse_Batch_rw1:
+  forall (B C : Type)
+  (G : Type -> Type)
+  `{Map G} `{Pure G} `{Mult G}
+  (A A' : Type) (f : A -> G A') (c : C),
+    traverse f (Done A B C c) =
+      pure G (Done A' B C c).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma traverse_Batch_rw1':
+  forall (B C : Type)
+  (G : Type -> Type)
+  `{Map G} `{Pure G} `{Mult G}
+  (A A' : Type) (f : A -> G A'),
+    (traverse f ∘ pure (Batch A B)) =
+      pure (G ∘ Batch A' B) (A := C).
+Proof.
+  intros.
+  unfold_ops @Pure_Batch.
+  unfold_ops @Pure_compose.
+  unfold pure at 2.
+  unfold compose at 1; ext c.
+  rewrite traverse_Batch_rw1.
+  reflexivity.
+Qed.
+
+Lemma traverse_Batch_rw2:
+  forall`{Map G} `{Pure G} `{Mult G}
+    `{! Applicative G}
+     (B C : Type)
+  (A A' : Type) (f : A -> G A')
+  (k : Batch A B (B -> C)) (a : A),
+    traverse f (k ⧆ a) =
+      map G (Step A' B C) (traverse (G := G) f k) <⋆> f a.
+Proof.
+  intros. cbn.
+  rewrite <- map_to_ap.
+  reflexivity.
+Qed.
+
+Lemma traverse_Batch_rw2':
+  forall`{Map G} `{Pure G} `{Mult G}
+    `{! Applicative G}
+     (B C : Type)
+  (A A' : Type) (f : A -> G A')
+  (k : Batch A B (B -> C)) (a : A),
+    traverse f (k ⧆ a) =
+      map G (Step A' B C) (traverse (G := G) f k) <⋆> f a.
+Proof.
+  intros.
+  rewrite traverse_Batch_rw2.
+  reflexivity.
+Qed.
+
 Lemma trf_traverse_id_Batch :
   forall B C A : Type, traverse (T := BATCH1 B C) (G := fun X : Type => X) (@id A) = id.
 Proof.
@@ -1205,17 +1261,19 @@ Proof.
     reflexivity.
 Qed.
 
-#[export] Instance TraversableFunctorFull_Batch (B C : Type) :
-    TraversableFunctorFull (BATCH1 B C) :=
-  {| trff_map_to_traverse := map_compat_traverse_Batch1 B C;
-  |}.
+#[export] Instance: forall B C, @Compat_Map_Traverse (BATCH1 B C) _ _.
+Proof.
+  intros. hnf.
+  rewrite map_compat_traverse_Batch1.
+  reflexivity.
+Qed.
 
 (** ** Specification for <<runBatch>> *)
 (******************************************************************************)
 Lemma runBatch_spec {A B : Type}
-  (F : Type -> Type) `{Map F} `{Mult F} `{Pure F} `{! Applicative F}
+  {F : Type -> Type} `{Map F} `{Mult F} `{Pure F} `{! Applicative F}
   (ϕ : A -> F B) (C : Type) :
-  runBatch F ϕ C = map F extract_Batch ∘ traverse (T := BATCH1 B C) ϕ.
+  runBatch F ϕ C = map F extract_Batch ∘ traverse (G := F) (T := BATCH1 B C) ϕ.
 Proof.
   intros. ext b.
   induction b as [C c | C rest IHrest].
@@ -1232,6 +1290,43 @@ Proof.
     rewrite map_to_ap.
     reflexivity.
 Qed.
+
+(*
+Instance: forall B, Pure (BATCH1 B B).
+Proof.
+  unfold Pure.
+  intros B A.
+  apply batch.
+Defined.
+
+Instance: forall B, Mult (BATCH1 B B).
+Proof.
+  unfold Mult.
+  intros B A A'.
+  apply batch.
+Defined.
+
+Arguments extract_Batch (A B)%type_scope b : clear implicits.
+Arguments traverse T%function_scope {Traverse} (G)%function_scope
+  {H H0 H1} (A B)%type_scope _%function_scope _.
+*)
+
+Lemma traverse_spec
+  (F : Type -> Type) `{Map F} `{Mult F} `{Pure F} `{! Applicative F}
+  `(ϕ : A -> F A') (B C : Type) :
+  traverse (T := BATCH1 B C) (G := F) ϕ =
+    runBatch (F ∘ Batch A' B) (map F (batch A' B) ∘ ϕ) (A := A) (B := B) C.
+Proof.
+  intros.
+  ext b.
+  induction b as [C c | C rest IHrest].
+  - rewrite runBatch_rw1.
+    rewrite traverse_Batch_rw1.
+    reflexivity.
+  - rewrite runBatch_rw2.
+    rewrite traverse_Batch_rw2'.
+    rewrite IHrest.
+Admitted.
 
 (** * <<Batch _ B C>> is a traversable monad *)
 (******************************************************************************)

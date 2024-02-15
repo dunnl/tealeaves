@@ -284,7 +284,9 @@ End derived_instances.
 Section theory.
 
   Context
-    `{MonadFull T}.
+    `{Monad T}
+     `{Map_inst : Map T}
+    `{! Compat_Map_Bind T T}.
 
   #[export] Instance Functor_Monad : Functor T :=
     @Functor_RightModule T T _ _ _

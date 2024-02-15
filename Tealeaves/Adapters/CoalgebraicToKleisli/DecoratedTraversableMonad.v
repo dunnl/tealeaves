@@ -73,8 +73,8 @@ Section with_algebra.
   Proof.
     intros.
     unfold_ops @Binddt_ToBatch7.
-    rewrite (runBatch_spec (fun A => A)).
-    rewrite <- trff_map_to_traverse.
+    rewrite (runBatch_spec (F := fun A => A)).
+    rewrite <- map_to_traverse.
     apply dtm_extract.
   Qed.
 
@@ -118,13 +118,21 @@ Section with_algebra.
     reflexivity.
   Qed.
 
-#[export] Instance TraversableMonad_Kleisli_Coalgebra :
-  Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
-  {|
-    kdtm_binddt0 := kdtm_binddt0_T;
-    kdtm_binddt1 := kdtm_binddt1_T;
-    kdtm_binddt2 := kdtm_binddt2_T;
-    kdtm_morph := kdtm_morph_T;
-  |}.
+(* TODO
+
+  #[export] Instance DecoratedTraversableRightPreModule_Kleisli_Coalgebra :
+    Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
+    {|
+      kdtm_binddt1 := kdtm_binddt1_T;
+      kdtm_binddt2 := kdtm_binddt2_T;
+      kdtm_morph := kdtm_morph_T;
+    |}.
+
+  #[export] Instance DecoratedTraversableMonad_Kleisli_Coalgebra :
+    Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
+    {|
+      kdtm_binddt0 := kdtm_binddt0_T;
+    |}.
+    *)
 
 End with_algebra.

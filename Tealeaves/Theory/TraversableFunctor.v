@@ -27,31 +27,6 @@ Section traversable_functor_theory.
   Context
     `{TraversableFunctorFull T}.
 
-  (** ** Interaction between <<traverse>> and <<pure>> *)
-  (******************************************************************************)
-  Theorem traverse_purity1 :
-    forall `{Applicative G},
-      `(traverse (G := G) pure = @pure G _ (T A)).
-  Proof.
-    intros.
-    change (@pure G _ A) with (@pure G _ A ∘ id).
-    rewrite <- (trf_traverse_morphism (G1 := fun A => A) (G2 := G)).
-    rewrite trf_traverse_id.
-    reflexivity.
-  Qed.
-
-  Lemma traverse_purity2 :
-    forall `{Applicative G2}
-      `{Applicative G1}
-      `(f : A -> G1 B),
-      traverse (G := G2 ∘ G1) (pure (F := G2) ∘ f) = pure (F := G2) ∘ traverse f.
-  Proof.
-    intros.
-    rewrite <- (trf_traverse_morphism (G1 := G1) (G2 := G2 ∘ G1)
-                 (ϕ := fun A => @pure G2 _ (G1 A))).
-    reflexivity.
-  Qed.
-
   (** ** Lemmas for particular applicative functors *)
   (******************************************************************************)
 
@@ -225,7 +200,7 @@ Section traversable_functor_theory.
       foldMap g ∘ map f = foldMap (g ∘ f).
   Proof.
     intros.
-    rewrite (trff_map_to_traverse (T := T)).
+    rewrite map_to_traverse.
     change (foldMap g) with (map (F := fun A => A) (A := T B) (B := M) (foldMap g)).
     now rewrite (foldMap_traverse (fun X => X)).
   Qed.
@@ -542,7 +517,8 @@ Section traversable_functor_theory.
         (forall (a : A), a ∈ t -> f1 a = f2 a) -> map f1 t = map f2 t.
     Proof.
       introv hyp.
-      rewrite trff_map_to_traverse.
+      rewrite map_to_traverse.
+      rewrite map_to_traverse.
       apply (traverse_respectful (fun A => A)).
       assumption.
     Qed.

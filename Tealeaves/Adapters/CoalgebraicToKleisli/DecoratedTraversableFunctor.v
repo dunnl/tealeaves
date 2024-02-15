@@ -55,8 +55,8 @@ Section with_algebra.
   Proof.
     intros.
     unfold_ops @Mapdt_ToBatch6.
-    rewrite (runBatch_spec (fun A => A)).
-    rewrite <- trff_map_to_traverse.
+    rewrite (runBatch_spec (F := fun A => A)).
+    rewrite <- map_to_traverse.
     rewrite <- dtf_extract.
     reflexivity.
   Qed.

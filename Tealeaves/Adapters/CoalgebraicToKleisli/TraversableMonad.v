@@ -59,8 +59,8 @@ Section with_algebra.
   Proof.
     intros.
     unfold_ops Bindt_ToBatch3.
-    rewrite (runBatch_spec (fun A => A)).
-    rewrite <- trff_map_to_traverse.
+    rewrite (runBatch_spec (F := fun A => A)).
+    rewrite <- map_to_traverse.
     unfold_ops @Map_I.
     rewrite <- trfm_extract.
     reflexivity.
@@ -102,12 +102,16 @@ Section with_algebra.
     now rewrite runBatch_morphism'.
   Qed.
 
+  #[export] Instance:
+    Kleisli.TraversableMonad.TraversableRightPreModule T T :=
+    {| ktm_bindt1 := ktm_bindt1_T;
+       ktm_bindt2 := @ktm_bindt2_T;
+       ktm_morph := @ktm_morph_T;
+    |}.
+
   #[export] Instance TraversableMonad_Kleisli_Coalgebraic :
     Kleisli.TraversableMonad.TraversableMonad T :=
     {| ktm_bindt0 := @ktm_bindt0_T;
-      ktm_bindt1 := ktm_bindt1_T;
-      ktm_bindt2 := @ktm_bindt2_T;
-      ktm_morph := @ktm_morph_T;
     |}.
 
 End with_algebra.

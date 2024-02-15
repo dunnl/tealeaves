@@ -339,7 +339,7 @@ Section DerivedInstances.
     `{! Compat_Map_Bindt T U}
     `{! Compat_Traverse_Bindt T U}
     `{! Compat_Bind_Bindt T U}
-    `{Monad_inst : ! TraversableRightModule T U}.
+    `{Module_inst : ! TraversableRightModule T U}.
 
   (** ** Special cases for Kleisli composition *)
   (******************************************************************************)
@@ -761,16 +761,15 @@ Section instances.
     `{! Compat_Map_Bindt T T}
     `{! Compat_Traverse_Bindt T T}
     `{! Compat_Bind_Bindt T T}
-    `{Map_U_inst : Map U}
-    `{Traverse_U_inst : Traverse U}
-    `{Bind_U_inst : Bind T U}
-    `{Bindt_U_inst : Bindt T U}
-    `{! Compat_Map_Bindt T U}
-    `{! Compat_Traverse_Bindt T U}
-    `{! Compat_Bind_Bindt T U}
-    `{Monad_inst : ! TraversableRightModule T U}.
+    `{Monad_inst : ! TraversableMonad T}.
 
   #[local] Existing Instance TraversableRightModule_TraversableMonad.
+
+  #[export] Instance TraversableFunctor_TraversableMonad : TraversableFunctor T :=
+    {| trf_traverse_id := traverse_id;
+      trf_traverse_traverse := traverse_traverse;
+      trf_traverse_morphism := traverse_morphism;
+    |}.
 
   #[export] Instance RightPreModule_TraversableMonad : RightPreModule T T :=
     {| kmod_bind1 := bind_id;
@@ -785,22 +784,26 @@ Section instances.
     {| kmod_monad := _
     |}.
 
+  #[export] Instance Functor_TraversableMonad : Functor T.
+  Proof.
+    typeclasses eauto.
+  Qed.
+
+  Context
+    `{Map_U_inst : Map U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{! Compat_Map_Bindt T U}
+    `{! Compat_Traverse_Bindt T U}
+    `{! Compat_Bind_Bindt T U}
+    `{Module_inst : ! TraversableRightModule T U}.
+
   #[export] Instance TraversableFunctor_TraversableRightModule :
     TraversableFunctor U :=
     {| trf_traverse_id := traverse_id;
       trf_traverse_traverse := traverse_traverse;
       trf_traverse_morphism := traverse_morphism;
-    |}.
-
-  #[export] Instance TraversableFunctor_TraversableMonad : TraversableFunctor T :=
-    {| trf_traverse_id := traverse_id;
-      trf_traverse_traverse := traverse_traverse;
-      trf_traverse_morphism := traverse_morphism;
-    |}.
-
-  #[export] Instance Functor_TraversableMonad : Functor T :=
-    {| fun_map_id := map_id;
-       fun_map_map := map_map;
     |}.
 
   #[export] Instance Functor_TraversableRightModule: Functor U :=

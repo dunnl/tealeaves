@@ -196,6 +196,38 @@ Section derived_instances.
 
 End derived_instances.
 
+Section traversable_purity.
+
+  Context
+    `{TraversableFunctor T}.
+
+  (** ** Interaction between <<traverse>> and <<pure>> *)
+  (******************************************************************************)
+  Theorem traverse_purity1 :
+    forall `{Applicative G},
+      `(traverse (G := G) pure = @pure G _ (T A)).
+  Proof.
+    intros.
+    change (@pure G _ A) with (@pure G _ A ∘ id).
+    rewrite <- (trf_traverse_morphism (G1 := fun A => A) (G2 := G)).
+    rewrite trf_traverse_id.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_purity2 :
+    forall `{Applicative G2}
+      `{Applicative G1}
+      `(f : A -> G1 B),
+      traverse (G := G2 ∘ G1) (pure (F := G2) ∘ f) = pure (F := G2) ∘ traverse f.
+  Proof.
+    intros.
+    rewrite <- (trf_traverse_morphism (G1 := G1) (G2 := G2 ∘ G1)
+                 (ϕ := fun A => @pure G2 _ (G1 A))).
+    reflexivity.
+  Qed.
+
+End traversable_purity.
+
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
