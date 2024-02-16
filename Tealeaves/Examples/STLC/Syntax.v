@@ -421,14 +421,36 @@ a restriction on implementations of `binddt` (cite Gibbons).
       reflexivity.
   Qed.
 
-  #[export] Instance DTMPre_STLC: DecoratedTraversableRightPreModule nat term term :=
+  #[export] Instance DTMPre_STLC:
+    DecoratedTraversableRightPreModule nat term term :=
     {| kdtm_binddt1 := dtm2_stlc;
        kdtm_binddt2 := @dtm3_stlc;
        kdtm_morph := @dtm4_stlc;
     |}.
-  #[export] Instance DTM_STLC: DecoratedTraversableMonad nat term :=
+
+  #[export] Instance DTM_STLC:
+    DecoratedTraversableMonad nat term :=
     {| kdtm_binddt0 := @dtm1_stlc;
     |}.
+
+  #[export] Instance Map_STLC: Map term
+    := Map_Binddt nat term term.
+  #[export] Instance Mapd_STLC: Mapd nat term
+    := Mapd_Binddt nat term term.
+  #[export] Instance Traverse_STLC: Traverse term
+    := Traverse_Binddt nat term term.
+  #[export] Instance Mapdt_STLC: Mapdt nat term
+    := Mapdt_Binddt nat term term.
+  #[export] Instance Bind_STLC: Bind term term
+    := Bind_Binddt nat term term.
+  #[export] Instance Bindd_STLC: Bindd nat term term
+    := Bindd_Binddt nat term term.
+  #[export] Instance Bindt_STLC: Bindt term term
+    := Bindt_Binddt nat term term.
+
+  #[export] Instance DTMFull_STLC:
+    DecoratedTraversableMonadFull nat term
+    := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat term.
 
 End laws.
 
@@ -453,10 +475,6 @@ Definition ctx := list (atom * typ).
 
 Reserved Notation "Γ ⊢ t : S" (at level 90, t at level 99).
 
-(*
-#[local] Existing Instance Bindd_Binddt.
-
-
 Inductive Judgment : ctx -> term LN -> typ -> Prop :=
 | j_var :
     forall (Γ : ctx) (x : atom) (A : typ),
@@ -473,7 +491,6 @@ Inductive Judgment : ctx -> term LN -> typ -> Prop :=
       Γ ⊢ t2 : A ->
       Γ ⊢ [t1]@[t2] : B
 where "Γ ⊢ t : A" := (Judgment Γ t A).
-
 
 (** * Rewriting lemmas for high-level operations *)
 (******************************************************************************)
@@ -498,10 +515,18 @@ Section term_list_rewrite.
     reflexivity.
   Qed.
 
+  Lemma map_const_rw: forall A B (f: A -> B) X,
+      map (F := const X) f = @id X.
+  Proof.
+    reflexivity.
+  Qed.
+
   Lemma tolist_term_2 : forall (X : typ) (t : term A),
     tolist (lam X t) = tolist t.
   Proof.
-    intros. cbn. rewrite dtm2_helper.
+    intros.
+    cbn.
+    rewrite extract_preincr2.
     reflexivity.
   Qed.
 
@@ -799,4 +824,3 @@ Proof.
   intros. unfold locally_closed.
   now setoid_rewrite term_lc_gap3.
 Qed.
-*)

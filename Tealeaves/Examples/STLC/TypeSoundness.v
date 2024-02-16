@@ -5,9 +5,6 @@ From Tealeaves Require Export
 
 Export STLC.Syntax.Notations.
 
-Import DecoratedTraversableMonad.MakeFull.
-#[local] Existing Instance DecoratedTraversableMonad_MakeFull.
-
 (** * Inversion lemmas *)
 (******************************************************************************)
 Lemma inversion11 : forall (A : typ) (x : atom) (Γ : ctx),
