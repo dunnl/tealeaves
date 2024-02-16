@@ -1,5 +1,6 @@
 From Tealeaves Require Export
-  Classes.Kleisli.Monad.
+  Classes.Kleisli.Monad
+  Classes.Categorical.Applicative.
 
 (** * [option] monad *)
 (******************************************************************************)
@@ -27,7 +28,36 @@ Proof.
 Qed.
 
 #[export] Instance Return_option : Return option :=
-  fun A => Some.
+  @Some.
+
+#[export] Instance Pure_option : Pure option :=
+  @Some.
+
+#[export] Instance Mult_option : Mult option.
+Proof.
+  hnf.
+  intros A B [[a|] [b|]].
+  - exact (Some (a, b)).
+  - exact None.
+  - exact None.
+  - exact None.
+Defined.
+
+#[export] Instance Applicative_option : Applicative option.
+Proof.
+  constructor; try typeclasses eauto.
+  - reflexivity.
+  - destruct x as [x|];
+      destruct y as [y|];
+      reflexivity.
+  - destruct x as [x|];
+      destruct y as [y|];
+      destruct z as [z|];
+      reflexivity.
+  - destruct x as [x|]; reflexivity.
+  - destruct x as [x|]; reflexivity.
+  - reflexivity.
+Qed.
 
 (*
 #[export] Instance Join_option : Join option :=
