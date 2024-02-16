@@ -18,3 +18,4 @@ result
 ignore/
 # Ignore result of building examples with alectryon
 html-examples/
+/REMOVED/
