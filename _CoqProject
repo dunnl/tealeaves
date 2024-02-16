@@ -133,3 +133,7 @@ Tealeaves/Backends/LN/Multisorted/LN.v
 #Tealeaves/Examples/SystemF/Rewriting.v
 #Tealeaves/Examples/SystemF/Contexts.v
 #Tealeaves/Examples/SystemF/TypeSoundness.v
+
+
+# EXPERIMENTAL BACKENDS
+Tealeaves/Backends/LN/Parallel.v
