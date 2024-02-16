@@ -1501,6 +1501,20 @@ Section other_composition_laws.
       `{Applicative G2}
       {A B C : Type}.
 
+    (** *** <<binddt>> purity *)
+    (******************************************************************************)
+    Lemma binddt_pure:
+      forall (A : Type) `{Applicative G},
+        binddt (pure (F := G) ∘ ret (T := T) (A := A) ∘ extract) =
+          pure (F := G).
+    Proof.
+      intros.
+      reassociate -> on left.
+      rewrite <- (kdtm_morph (fun A => A) G (ϕ := @pure G _)).
+      rewrite kdtm_binddt1.
+      reflexivity.
+    Qed.
+
     (** *** <<binddt>> on the right *)
     (******************************************************************************)
     (* composition_67 *)

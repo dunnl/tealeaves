@@ -357,6 +357,55 @@ Section lemmas.
     reflexivity.
   Qed.
 
+  (** ** Respectfulness for <<binddt>> *)
+  (******************************************************************************)
+  Lemma binddt_respectful_core :
+    forall A B (t : U A) G `{Mult G} `{Map G} `{Pure G} (f g : W * A -> G (T B)),
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a)) =
+        Forall_ctx (fun '(w, a) => f (w, a) = g (w, a)) t.
+  Proof.
+    intros.
+    apply propositional_extensionality.
+    rewrite forall_ctx_iff.
+    reflexivity.
+  Qed.
+
+  Theorem binddt_respectful :
+    forall A B (t : U A) G `{Mult G} `{Map G} `{Pure G} `{! Applicative G}
+      (f g : W * A -> G (T B)),
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a))
+      -> binddt f t = binddt (U := U) g t.
+  Proof.
+    introv App_inst.
+    intros f g.
+    rewrite (binddt_respectful_core A B t G f g).
+    unfold Forall_ctx.
+    rewrite (foldMapd_through_runBatch2 A B).
+    do 2 rewrite binddt_through_runBatch.
+    unfold compose.
+    rewrite toBatch6_to_toBatch7.
+    rewrite <- runBatch_mapsnd.
+    induction (toBatch7 t).
+    - cbn. reflexivity.
+    - destruct a as [w a].
+      cbn.
+      intros [hyp1 hyp2].
+      rewrite hyp2.
+      rewrite IHb; auto.
+  Qed.
+
+  Theorem binddt_respectful_pure :
+    forall A (t : U A) {G} `{Mult G} `{Map G} `{Pure G} `{! Applicative G}
+      (f : W * A -> G (T A)),
+      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = pure (F := G) (ret (T := T) a))
+      -> binddt f t = pure t.
+  Proof.
+    intros.
+    rewrite <- (binddt_pure A).
+    apply binddt_respectful;
+    assumption.
+  Qed.
+
   (** ** Respectfulness for <<bindd>> *)
   (******************************************************************************)
   Lemma bindd_respectful_core :
