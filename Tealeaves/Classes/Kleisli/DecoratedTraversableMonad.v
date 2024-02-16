@@ -245,124 +245,98 @@ Section derived.
       reflexivity.
     Qed.
 
-    #[export] Instance Compat_Map_Bind_Bindd
-     `{Map U} `{Bind T U}
-      `{! Compat_Bind_Binddt W T U}
-      `{! Compat_Map_Binddt W T U} :
-      Compat_Map_Bind U T.
-    Proof.
-      hnf.
-      rewrite (compat_map_binddt W T U).
-      unfold_ops @Map_Bind.
-      rewrite (compat_bind_binddt W T U).
-      reflexivity.
-    Qed.
+    Ltac normalize_binddt :=
+      repeat (rewrite (compat_map_binddt W T U) ||
+                rewrite (compat_mapd_binddt W T U) ||
+                  rewrite (compat_traverse_binddt W T U) ||
+                    rewrite (compat_mapdt_binddt W T U) ||
+                      rewrite (compat_bind_binddt W T U) ||
+                        rewrite (compat_bindd_binddt W T U) ||
+                          rewrite (compat_bindt_binddt W T U)).
 
-    #[export] Instance Compat_Map_Traverse_Binddt
-     `{Map U} `{Traverse U}
-      `{! Compat_Map_Binddt W T U}
-      `{! Compat_Traverse_Binddt W T U} :
-      Compat_Map_Traverse U.
-    Proof.
-      hnf.
-      rewrite (compat_map_binddt W T U).
-      unfold_ops @Map_Traverse.
-      rewrite (compat_traverse_binddt W T U).
+    Ltac solve_compat :=
+      hnf;
+      normalize_binddt;
+      unfold_ops @Map_Bind @Map_Traverse @Map_Mapd;
+      unfold_ops @Map_Mapdt @Mapd_Mapdt @Traverse_Mapdt;
+      unfold_ops @Map_Bindd @Mapd_Bindd @Bind_Bindd;
+      unfold_ops @Map_Bindt @Traverse_Bindt @Bind_Bindt;
+      normalize_binddt;
       reflexivity.
-    Qed.
 
-    #[export] Instance Compat_Map_Bindd_Binddt
-     `{Map U} `{Bindd W T U}
-      `{! Compat_Bindd_Binddt W T U}
-      `{! Compat_Map_Binddt W T U} :
-      Compat_Map_Bindd W T U.
-    Proof.
-      hnf.
-      rewrite (compat_map_binddt W T U).
-      unfold_ops @Map_Bindd.
-      rewrite (compat_bindd_binddt W T U).
-      reflexivity.
-    Qed.
+    Section pairwise_compatibility.
 
-    #[export] Instance Compat_Mapd_Bindd_Binddt
-     `{Mapd W U} `{Bindd W T U}
-      `{! Compat_Mapd_Binddt W T U}
-      `{! Compat_Bindd_Binddt W T U} :
-        Compat_Mapd_Bindd W T U.
-    Proof.
-      hnf.
-      rewrite (compat_mapd_binddt W T U).
-      unfold_ops @Mapd_Bindd.
-      rewrite (compat_bindd_binddt W T U).
-      reflexivity.
-    Qed.
+      Context
+        `{Map_inst: Map U}
+        `{Mapd_inst: Mapd W U}
+        `{Traverse_inst: Traverse U}
+        `{Mapdt_inst: Mapdt W U}
+        `{Bind_inst: Bind T U}
+        `{Bindd_inst: Bindd W T U}
+        `{Bindt_inst: Bindt T U}
+        `{! Compat_Map_Binddt W T U}
+        `{! Compat_Mapd_Binddt W T U}
+        `{! Compat_Traverse_Binddt W T U}
+        `{! Compat_Mapdt_Binddt W T U}
+        `{! Compat_Bind_Binddt W T U}
+        `{! Compat_Bindd_Binddt W T U}
+        `{! Compat_Bindt_Binddt W T U}.
 
-    #[export] Instance Compat_Bind_Bindd_Binddt
-     `{Bind T U} `{Bindd W T U}
-      `{! Compat_Bind_Binddt W T U}
-      `{! Compat_Bindd_Binddt W T U} :
-        Compat_Bind_Bindd W T U.
-    Proof.
-      hnf.
-      rewrite (compat_bind_binddt W T U).
-      unfold_ops @Bind_Bindd.
-      rewrite (compat_bindd_binddt W T U).
-      reflexivity.
-    Qed.
+    #[export] Instance Compat_Map_Bind_Bindd:
+      Compat_Map_Bind U T := ltac:(solve_compat).
 
-    #[export] Instance Compat_Map_Mapd_Binddt
-     `{Map U} `{Mapd W U}
-      `{! Compat_Mapd_Binddt W T U}
-      `{! Compat_Map_Binddt W T U} :
-      Compat_Map_Mapd.
-    Proof.
-      hnf.
-      rewrite (compat_map_binddt W T U).
-      unfold_ops @Map_Mapd.
-      rewrite (compat_mapd_binddt W T U).
-      reflexivity.
-    Qed.
+    (** ** Compatibility with <<traverse>>, <<mapd>>, and <<bind>>.*)
+    #[export] Instance Compat_Map_Traverse_Binddt:
+      Compat_Map_Traverse U := ltac:(solve_compat).
 
-    #[export] Instance Compat_Map_Mapdt_Binddt
-     `{Map U} `{Mapdt W U}
-      `{! Compat_Mapdt_Binddt W T U}
-      `{! Compat_Map_Binddt W T U} :
-      Compat_Map_Mapdt.
-    Proof.
-      hnf.
-      rewrite (compat_map_binddt W T U).
-      unfold_ops @Map_Mapdt.
-      rewrite (compat_mapdt_binddt W T U).
-      reflexivity.
-    Qed.
+    #[export] Instance Compat_Map_Mapd_Binddt:
+      Compat_Map_Mapd := ltac:(solve_compat).
 
-    #[export] Instance Compat_Traverse_Mapdt_Binddt
-     `{Traverse U} `{Mapdt W U}
-      `{! Compat_Traverse_Binddt W T U}
-      `{! Compat_Mapdt_Binddt W T U} :
-      Compat_Traverse_Mapdt.
-    Proof.
-      hnf.
-      rewrite (compat_traverse_binddt W T U).
-      unfold_ops @Traverse_Mapdt.
-      rewrite (compat_mapdt_binddt W T U).
-      reflexivity.
-    Qed.
+    #[export] Instance Compat_Map_Bind_Binddt:
+      Compat_Map_Bind U T := ltac:(solve_compat).
 
-  End self.
+    (** ** Compatibility with <<bindd>> *)
+    #[export] Instance Compat_Map_Bindd_Binddt:
+      Compat_Map_Bindd W T U := ltac:(solve_compat).
+
+    #[export] Instance Compat_Mapd_Bindd_Binddt:
+      Compat_Mapd_Bindd W T U := ltac:(solve_compat).
+
+    #[export] Instance Compat_Bind_Bindd_Binddt:
+      Compat_Bind_Bindd W T U := ltac:(solve_compat).
+
+    (** ** Compatibility with <<bindt>> *)
+    #[export] Instance Compat_Map_Bindt_Bindtt:
+      Compat_Map_Bindt T U := ltac:(solve_compat).
+
+    #[export] Instance Compat_Traverse_Bindt_Bindtt:
+      Compat_Traverse_Bindt T U := ltac:(solve_compat).
+
+    #[export] Instance Compat_Bind_Bindt_Bindtt:
+        Compat_Bind_Bindt T U := ltac:(solve_compat).
+
+    (** ** Compatibility with <<mapdt>> *)
+    #[export] Instance Compat_Map_Mapdt_Binddt:
+      Compat_Map_Mapdt := ltac:(solve_compat).
+
+    #[export] Instance Compat_Mapd_Mapdt_Binddt:
+      Compat_Mapd_Mapdt := ltac:(solve_compat).
+
+    #[export] Instance Compat_Traverse_Mapdt_Binddt:
+      Compat_Traverse_Mapdt := ltac:(solve_compat).
+
+  End pairwise_compatibility.
 
   Section compat_laws.
 
     Context
-    `{Return_inst : Return T}
     `{Map_inst : Map U}
     `{Mapd_inst : Mapd W U}
     `{Traverse_inst : Traverse U}
     `{Bind_inst : Bind T U}
     `{Mapdt_inst : Mapdt W U}
     `{Bindd_inst : Bindd W T U}
-    `{Bindt_inst : Bindt T U}
-    `{Binddt_inst : Binddt W T U}.
+    `{Bindt_inst : Bindt T U}.
 
     Lemma map_to_binddt `{! Compat_Map_Binddt W T U} :
       forall `(f : A -> B), map (F := U) f = binddt (G := fun A => A) (ret (T := T) ∘ f ∘ extract).
@@ -386,7 +360,7 @@ Section derived.
       reflexivity.
     Qed.
 
-    Lemma bind_to_binddt  `{! Compat_Bind_Binddt W T U} `(f : A -> T B):
+    Lemma bind_to_binddt `{! Compat_Bind_Binddt W T U} `(f : A -> T B):
       bind (U := U) f = binddt (U := U) (f ∘ extract).
     Proof.
       rewrite (compat_bind_binddt W T U).
@@ -453,6 +427,8 @@ Section derived.
     Qed.
 
   End compat_laws.
+
+  End self.
 
 End derived.
 
@@ -1204,6 +1180,7 @@ Section derived_instances.
       `{! Compat_Mapdt_Binddt W T T}
       `{! Compat_Bindd_Binddt W T T}
       `{! Compat_Bindt_Binddt W T T}
+      `{Monad_inst : ! DecoratedTraversableMonad W T}
       `{Map_U_inst : Map U}
       `{Mapd_U_inst : Mapd W U}
       `{Traverse_U_inst : Traverse U}
@@ -1219,13 +1196,10 @@ Section derived_instances.
       `{! Compat_Mapdt_Binddt W T U}
       `{! Compat_Bindd_Binddt W T U}
       `{! Compat_Bindt_Binddt W T U}
-      `{Monad_inst : ! DecoratedTraversableRightModule W T U}.
+      `{Module_inst : ! DecoratedTraversableRightPreModule W T U}.
 
   (** ** Derived typeclass instances *)
   (******************************************************************************)
-    #[local] Existing Instance
-      DecoratedTraversableRightModule_DecoratedTraversableMonad.
-
   #[export] Instance: DecoratedRightPreModule W T U :=
     {| kmodd_bindd1 := bindd_id;
        kmodd_bindd2 := bindd_bindd;
@@ -1241,6 +1215,10 @@ Section derived_instances.
     |}.
 
   #[export] Instance: DecoratedRightModule W T T :=
+    {| kmodd_monad := _
+    |}.
+
+  #[export] Instance: DecoratedRightModule W T U :=
     {| kmodd_monad := _
     |}.
 
@@ -1301,6 +1279,7 @@ Section other_composition_laws.
     `{! Compat_Mapdt_Binddt W T T}
     `{! Compat_Bindd_Binddt W T T}
     `{! Compat_Bindt_Binddt W T T}
+    `{Monad_inst : ! DecoratedTraversableMonad W T}
     `{Map_U_inst : Map U}
     `{Mapd_U_inst : Mapd W U}
     `{Traverse_U_inst : Traverse U}
@@ -1316,7 +1295,7 @@ Section other_composition_laws.
     `{! Compat_Mapdt_Binddt W T U}
     `{! Compat_Bindd_Binddt W T U}
     `{! Compat_Bindt_Binddt W T U}
-    `{Monad_inst : ! DecoratedTraversableRightModule W T U}.
+    `{Module_inst : ! DecoratedTraversableRightPreModule W T U}.
 
   (** ** Rewriting rules for special cases of <<kc7>> *)
   (******************************************************************************)
@@ -1884,10 +1863,13 @@ Section other_composition_laws.
         binddt (U := U) (fun '(w, a) => map (F := G1) (mapd (g ⦿ w)) (f a)).
     Proof.
       introv.
-      Fail rewrite mapd_to_mapdt. (* TODO Solve this part *)
-      Fail rewrite mapdt_bindt.
-    Abort.
-
+      rewrite mapd_to_mapdt.
+      rewrite (mapdt_bindt (G2 := fun A => A)).
+      rewrite binddt_app_r.
+      fequal. ext [w a].
+      rewrite mapd_to_mapdt.
+      reflexivity.
+    Qed.
     (* composition_34 *)
     (* TODO bindt_mapd *)
 

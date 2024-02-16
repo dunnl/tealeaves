@@ -90,6 +90,25 @@ Class DecoratedRightModule
     kmodd_premod :> DecoratedRightPreModule W T U;
   }.
 
+(** ** Homomorphisms *)
+(******************************************************************************)
+Class DecoratedRightModuleHom (T U V : Type -> Type)
+  `{Monoid_op W} `{Monoid_unit W}
+  `{Return T} `{Bindd W T U} `{Bindd W T V}
+  (ϕ : forall (A : Type), U A -> V A) :=
+  { kmodd_hom_bind : forall (A B : Type) (f : W * A -> T B),
+      ϕ B ∘ @bindd W T U _ A B f = @bindd W T V _ A B f ∘ ϕ A;
+  }.
+
+Class ParallelDecoratedRightModuleHom
+  (T T' U V : Type -> Type)
+  `{Return T} `{Bindd W T U} `{Bindd W T' V}
+  (ψ : forall (A : Type), T A -> T' A)
+  (ϕ : forall (A : Type), U A -> V A) :=
+  { kmoddpar_hom_bind : forall (A B : Type) (f : W * A -> T B),
+      ϕ B ∘ @bindd W T U _ A B f = @bindd W T' V _ A B (ψ B ∘ f) ∘ ϕ A;
+  }.
+
 (** * Kleisli category *)
 (******************************************************************************)
 Section DecoratedMonad_kleisli_category.

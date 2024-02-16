@@ -22,7 +22,11 @@ Import
   DecoratedTraversableMonad.Notations
   LN.AtomSet.Notations.
 
-#[local] Generalizable Variable T.
+#[local] Generalizable Variables T U.
+
+Instance todo `{Elements U} `{Elements T} `{Bind T T} `{Bind T U} `{DecoratedTraversableRightPreModule nat T U}:
+  ContainerRightModule T U.
+Admitted.
 
 (** * Locally nameless variables *)
 (******************************************************************************)
@@ -138,27 +142,27 @@ End locally_nameless_local_operations.
 Section locally_nameless_operations.
 
   Context
-    `{DecoratedTraversableMonadFull nat T}.
+    `{DecoratedTraversableRightModuleFull nat T U}.
 
-  Definition open (u : T LN) : T LN -> T LN  :=
+  Definition open (u : T LN) : U LN -> U LN  :=
     bindd (open_loc u).
 
   Definition close x : T LN -> T LN :=
     mapd (close_loc x).
 
-  Definition subst x (u : T LN) : T LN -> T LN :=
+  Definition subst x (u : T LN) : U LN -> U LN :=
     bind (subst_loc x u).
 
   Definition free : T LN -> list atom :=
-    fun t => foldMap free_loc t.
+    foldMap free_loc.
 
   Definition freeset : T LN -> AtomSet.t :=
-    fun t => LN.AtomSet.atoms (free t).
+    LN.AtomSet.atoms ○ free.
 
-  Definition locally_closed_gap (gap : nat) : T LN -> Prop :=
+  Definition locally_closed_gap (gap : nat) : U LN -> Prop :=
     fun t => forall w l, (w, l) ∈d t -> is_bound_or_free gap (w, l).
 
-  Definition locally_closed : T LN -> Prop :=
+  Definition locally_closed : U LN -> Prop :=
     locally_closed_gap 0.
 
   Definition scoped : T LN -> AtomSet.t -> Prop :=
@@ -211,11 +215,43 @@ Section locally_nameless_basic_principles.
   Import Notations.
 
   Context
-    `{DecoratedTraversableMonadFull nat T
+    `{ret_inst : Return T}
+    `{Map_T_inst : Map T}
+    `{Mapd_T_inst : Mapd nat T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Mapdt_T_inst : Mapdt nat T}
+    `{Bindd_T_inst : Bindd nat T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{Binddt_T_inst : Binddt nat T T}
+    `{! Compat_Map_Binddt nat T T}
+    `{! Compat_Mapd_Binddt nat T T}
+    `{! Compat_Traverse_Binddt nat T T}
+    `{! Compat_Bind_Binddt nat T T}
+    `{! Compat_Mapdt_Binddt nat T T}
+    `{! Compat_Bindd_Binddt nat T T}
+    `{! Compat_Bindt_Binddt nat T T}
+    `{Monad_inst : ! DecoratedTraversableMonad nat T}
+    `{Map_U_inst : Map U}
+    `{Mapd_U_inst : Mapd nat U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Mapdt_U_inst : Mapdt nat U}
+    `{Bindd_U_inst : Bindd nat T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{Binddt_U_inst : Binddt nat T U}
+    `{! Compat_Map_Binddt nat T U}
+    `{! Compat_Mapd_Binddt nat T U}
+    `{! Compat_Traverse_Binddt nat T U}
+    `{! Compat_Bind_Binddt nat T U}
+    `{! Compat_Mapdt_Binddt nat T U}
+    `{! Compat_Bindd_Binddt nat T U}
+    `{! Compat_Bindt_Binddt nat T U}
+    `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
 
-  Implicit Types (l : LN) (n : nat) (t : T LN) (x : atom).
+  Implicit Types (l : LN) (n : nat) (t : U LN) (x : atom).
 
   (** ** Reasoning principles for proving equalities *)
   (******************************************************************************)
@@ -227,6 +263,7 @@ Section locally_nameless_basic_principles.
       t '(u1) = t '(u2).
   Proof.
     intros. unfold open.
+    About bindd_respectful.
     now apply bindd_respectful.
   Qed.
 
@@ -258,7 +295,7 @@ Section locally_nameless_basic_principles.
 
   (** *** <<subst>> *)
   (******************************************************************************)
-  Lemma subst_eq : forall t x y u1 u2,
+  Lemma subst_eq : forall t x y (u1 u2 : T LN),
       (forall l, l ∈ t -> subst_loc x u1 l = subst_loc y u2 l) ->
       t '{x ~> u1} = t '{y ~> u2}.
   Proof.
@@ -271,7 +308,7 @@ Section locally_nameless_basic_principles.
       t '{x ~> u} = t.
   Proof.
     intros. unfold subst.
-    now apply bind_respectful_id.
+    now apply mod_bind_respectful_id.
   Qed.
 
   (** ** Occurrence analysis lemmas *)
@@ -284,7 +321,7 @@ Section locally_nameless_basic_principles.
         (n1, l1) ∈d t /\ (n2, l) ∈d open_loc u (n1, l1) /\ n = n1 ● n2.
   Proof.
     intros. unfold open.
-    now rewrite ind_bindd_iff.
+    now rewrite ind_bindd_iff'.
   Qed.
 
   Lemma in_open_iff : forall l u t,
@@ -302,7 +339,9 @@ Section locally_nameless_basic_principles.
         (n, l1) ∈d t /\ close_loc x (n, l1) = l.
   Proof.
     intros. unfold close.
-    now rewrite ind_mapd_iff.
+    About ind_mapd_iff.
+    rewrite ind_mapd_iff.
+    easy.
   Qed.
 
   Lemma in_close_iff : forall l x t,
@@ -320,7 +359,7 @@ Section locally_nameless_basic_principles.
         (n1, l1) ∈d t /\ (n2, l) ∈d subst_loc x u l1 /\ n = n1 ● n2.
   Proof.
     intros. unfold subst.
-    now rewrite ind_bind_iff.
+    now rewrite ind_bind_iff'.
   Qed.
 
   Lemma in_subst_iff : forall l u t x,
@@ -328,7 +367,7 @@ Section locally_nameless_basic_principles.
        l1 ∈ t /\ l ∈ subst_loc x u l1.
   Proof.
     intros. unfold subst.
-    now rewrite in_bind_iff.
+    now rewrite mod_in_bind_iff.
   Qed.
 
   (** ** Free variables *)
@@ -336,11 +375,11 @@ Section locally_nameless_basic_principles.
 
   (** *** Specifications for [free] and [freeset] *)
   (******************************************************************************)
-  Lemma in_free_iff_local : forall (x : atom) (y : LN),
-      x ∈ free_loc y = (Fr x = y).
+  Lemma in_free_iff_local : forall x l,
+      x ∈ free_loc l = (Fr x = l).
   Proof.
     intros.
-    destruct y.
+    destruct l.
     - cbv. propext.
       + intros [hyp|hyp].
         * now subst.
@@ -351,7 +390,7 @@ Section locally_nameless_basic_principles.
       + inversion 1.
   Qed.
 
-  Theorem in_free_iff : forall (t : T LN) (x : atom),
+  Theorem in_free_iff : forall t x,
       x ∈ free t = Fr x ∈ t.
   Proof.
     intros. unfold free.
@@ -359,13 +398,27 @@ Section locally_nameless_basic_principles.
     reassociate -> on left.
     rewrite (foldMap_morphism (list atom) (subset atom)).
     rewrite (foldMap_morphism (subset atom) Prop).
-    rewrite in_iff_foldMap.
+    rewrite in_to_foldMap.
     fequal.
     ext y.
     apply in_free_iff_local.
   Qed.
 
-  Theorem free_iff_freeset : forall (t : T LN) (x : atom),
+  Theorem in_free_iff_T : forall (t : T LN) x,
+      x ∈ free t = Fr x ∈ t.
+  Proof.
+    intros. unfold free.
+    change_left ((evalAt x ∘ element_of ∘ foldMap free_loc) t).
+    reassociate -> on left.
+    rewrite (foldMap_morphism (list atom) (subset atom)).
+    rewrite (foldMap_morphism (subset atom) Prop).
+    rewrite in_to_foldMap.
+    fequal.
+    ext y.
+    apply in_free_iff_local.
+  Qed.
+
+  Theorem free_iff_freeset : forall t x,
       x ∈ free t <-> x ∈@ freeset t.
   Proof.
     intros.
@@ -382,7 +435,7 @@ Section locally_nameless_basic_principles.
   Proof.
     intros.
     rewrite in_free_iff.
-    setoid_rewrite in_free_iff.
+    setoid_rewrite (in_free_iff_T).
     now rewrite in_open_iff.
   Qed.
 
@@ -405,7 +458,7 @@ Section locally_nameless_basic_principles.
   Proof.
     intros.
     rewrite in_free_iff.
-    setoid_rewrite in_free_iff.
+    setoid_rewrite in_free_iff_T.
     now rewrite in_subst_iff.
   Qed.
 
@@ -416,7 +469,39 @@ End locally_nameless_basic_principles.
 Section locally_nameless_utilities.
 
   Context
-    `{DecoratedTraversableMonadFull nat T
+    `{ret_inst : Return T}
+    `{Map_T_inst : Map T}
+    `{Mapd_T_inst : Mapd nat T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Mapdt_T_inst : Mapdt nat T}
+    `{Bindd_T_inst : Bindd nat T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{Binddt_T_inst : Binddt nat T T}
+    `{! Compat_Map_Binddt nat T T}
+    `{! Compat_Mapd_Binddt nat T T}
+    `{! Compat_Traverse_Binddt nat T T}
+    `{! Compat_Bind_Binddt nat T T}
+    `{! Compat_Mapdt_Binddt nat T T}
+    `{! Compat_Bindd_Binddt nat T T}
+    `{! Compat_Bindt_Binddt nat T T}
+    `{Monad_inst : ! DecoratedTraversableMonad nat T}
+    `{Map_U_inst : Map U}
+    `{Mapd_U_inst : Mapd nat U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Mapdt_U_inst : Mapdt nat U}
+    `{Bindd_U_inst : Bindd nat T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{Binddt_U_inst : Binddt nat T U}
+    `{! Compat_Map_Binddt nat T U}
+    `{! Compat_Mapd_Binddt nat T U}
+    `{! Compat_Traverse_Binddt nat T U}
+    `{! Compat_Bind_Binddt nat T U}
+    `{! Compat_Mapdt_Binddt nat T U}
+    `{! Compat_Bindd_Binddt nat T U}
+    `{! Compat_Bindt_Binddt nat T U}
+    `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
 
@@ -499,7 +584,7 @@ Section locally_nameless_utilities.
 
   (** ** [Miscellaneous utilities] *)
   (******************************************************************************)
-  Lemma ninf_in_neq : forall x l (t : T LN),
+  Lemma ninf_in_neq : forall x l (t : U LN),
       ~ x ∈ free t ->
       l ∈ t ->
       Fr x <> l.
@@ -545,7 +630,39 @@ Tactic Notation "simpl_local" := (autorewrite* with tea_local).
 Section locally_nameless_metatheory.
 
   Context
-    `{DecoratedTraversableMonadFull nat T
+    `{ret_inst : Return T}
+    `{Map_T_inst : Map T}
+    `{Mapd_T_inst : Mapd nat T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Mapdt_T_inst : Mapdt nat T}
+    `{Bindd_T_inst : Bindd nat T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{Binddt_T_inst : Binddt nat T T}
+    `{! Compat_Map_Binddt nat T T}
+    `{! Compat_Mapd_Binddt nat T T}
+    `{! Compat_Traverse_Binddt nat T T}
+    `{! Compat_Bind_Binddt nat T T}
+    `{! Compat_Mapdt_Binddt nat T T}
+    `{! Compat_Bindd_Binddt nat T T}
+    `{! Compat_Bindt_Binddt nat T T}
+    `{Monad_inst : ! DecoratedTraversableMonad nat T}
+    `{Map_U_inst : Map U}
+    `{Mapd_U_inst : Mapd nat U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Mapdt_U_inst : Mapdt nat U}
+    `{Bindd_U_inst : Bindd nat T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{Binddt_U_inst : Binddt nat T U}
+    `{! Compat_Map_Binddt nat T U}
+    `{! Compat_Mapd_Binddt nat T U}
+    `{! Compat_Traverse_Binddt nat T U}
+    `{! Compat_Bind_Binddt nat T U}
+    `{! Compat_Mapdt_Binddt nat T U}
+    `{! Compat_Bindd_Binddt nat T U}
+    `{! Compat_Bindt_Binddt nat T U}
+    `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
 
@@ -561,7 +678,7 @@ Section locally_nameless_metatheory.
 
   Implicit Types
            (l : LN) (p : LN)
-           (x : atom) (t : T LN)
+           (x : atom) (t : U LN)
            (w : nat) (n : nat).
 
   (** ** LN analysis: substitution with contexts *)
@@ -618,8 +735,10 @@ Section locally_nameless_metatheory.
       y ∈ free (t '{x ~> u}) <->
       y ∈ free t /\ y <> x \/ x ∈ free t /\ y ∈ free u.
   Proof.
-    intros. repeat rewrite in_free_iff.
-    rewrite in_subst_iff'. now simpl_local.
+    intros.
+    do 4 rewrite in_free_iff.
+    rewrite in_subst_iff'.
+    now simpl_local.
   Qed.
 
   Corollary in_freeset_subst_iff : forall t u x y,
@@ -627,8 +746,10 @@ Section locally_nameless_metatheory.
       y ∈@ freeset t /\ y <> x \/
       x ∈@ freeset t /\ y ∈@ freeset u.
   Proof.
-    intros. repeat rewrite <- free_iff_freeset.
-    apply in_free_subst_iff.
+    intros.
+    do 4 rewrite <- free_iff_freeset.
+    rewrite in_free_subst_iff.
+    reflexivity.
   Qed.
 
   (** ** Upper and lower bounds for leaves after substitution *)
@@ -645,11 +766,13 @@ Section locally_nameless_metatheory.
       y ∈ free (t '{x ~> u}) ->
       (y ∈ free t /\ y <> x) \/ y ∈ free u.
   Proof.
-    introv. rewrite ?(in_free_iff). rewrite in_subst_iff'.
-    rewrite Fr_injective_not_iff. tauto.
+    introv.
+    do 3 rewrite in_free_iff.
+    rewrite in_subst_iff'.
+    rewrite Fr_injective_not_iff.
+    tauto.
   Qed.
 
- 
   Corollary freeset_subst_upper : forall t u x,
       freeset (t '{x ~> u}) ⊆
               (freeset t \\ {{x}} ∪ freeset u)%set.
@@ -701,7 +824,17 @@ Section locally_nameless_metatheory.
       t '{x ~> u} = t.
   Proof.
     intros. apply subst_id. intros.
-    assert (Fr x <> l). eapply (@ninf_in_neq T); eauto.
+    assert (Fr x <> l) by (eapply ninf_in_neq; eauto).
+    now simpl_local.
+  Qed.
+
+  Theorem subst_fresh_T : forall (t : T LN) x u,
+      ~ x ∈ free t ->
+      t '{x ~> u} = t.
+  Proof.
+    intros.
+    apply subst_id. intros.
+    assert (Fr x <> l) by (apply (ninf_in_neq x l t); eauto).
     now simpl_local.
   Qed.
 
@@ -714,20 +847,38 @@ Section locally_nameless_metatheory.
 
   (** ** Composing substitutions *)
   (******************************************************************************)
-  Lemma subst_subst_local : forall (u1 u2 : T LN) x1 x2,
+  Lemma subst_subst_local : forall (u1 : T LN) (u2 : T LN) x1 x2,
       ~ x1 ∈ free u2 ->
       x1 <> x2 ->
-      subst x2 u2 ∘ subst_loc x1 u1 =
-      subst x1 (subst x2 u2 u1) ∘ subst_loc x2 u2.
-  Proof with auto.
-    intros. ext l. unfold compose. compare l to atom x1.
-    - rewrite subst_loc_eq, subst_loc_neq,
-      subst_in_ret, subst_loc_eq...
+      subst_loc x2 u2 ⋆1 subst_loc x1 u1 =
+    subst_loc x1 (subst x2 u2 u1) ⋆1 subst_loc x2 u2.
+  Proof with try assumption.
+    intros. ext l. unfold kc1, compose.
+    change_left (subst x2 u2 (subst_loc x1 u1 l)).
+    change_right (subst x1 (subst x2 u2 u1) (subst_loc x2 u2 l)).
+    compare l to atom x1.
+    - rewrite subst_loc_eq.
+      rewrite subst_loc_neq...
+      rewrite subst_in_ret.
+      rewrite subst_loc_eq.
+      reflexivity.
     - rewrite subst_loc_neq...
       compare values x2 and a.
-      + rewrite subst_in_ret, subst_loc_eq, subst_fresh...
-      + rewrite subst_loc_neq, 2(subst_in_ret), 2(subst_loc_neq)...
-    - rewrite 2(subst_loc_b), 2(subst_in_ret), 2(subst_loc_b)...
+      + rewrite subst_in_ret.
+        rewrite subst_loc_eq.
+        rewrite subst_fresh_T...
+        reflexivity.
+      + rewrite subst_in_ret.
+        rewrite subst_loc_neq...
+        rewrite subst_in_ret.
+        rewrite subst_loc_neq...
+        reflexivity.
+    - rewrite subst_loc_b.
+      rewrite subst_in_ret.
+      rewrite subst_loc_b.
+      rewrite subst_in_ret.
+      rewrite subst_loc_b.
+      reflexivity.
   Qed.
 
   Theorem subst_subst : forall u1 u2 t (x1 x2 : atom),
@@ -735,11 +886,14 @@ Section locally_nameless_metatheory.
       x1 <> x2 ->
       t '{x1 ~> u1} '{x2 ~> u2} =
       t '{x2 ~> u2} '{x1 ~> u1 '{x2 ~> u2} }.
-  Proof.
-    intros. unfold subst.
+  Proof with try assumption.
+    intros.
+    unfold subst.
     compose near t.
-    rewrite 2(kmon_bind2).
-    fequal. now apply subst_subst_local.
+    rewrite kmod_bind2.
+    rewrite subst_subst_local...
+    rewrite kmod_bind2.
+    reflexivity.
   Qed.
 
   (** ** Commuting two substitutions *)
@@ -750,9 +904,11 @@ Section locally_nameless_metatheory.
       ~ x2 ∈ free u1 ->
       t '{x1 ~> u1} '{x2 ~> u2} =
       t '{x2 ~> u2} '{x1 ~> u1}.
-  Proof.
-    intros. rewrite subst_subst; auto.
-    rewrite (subst_fresh u1 x2 u2); auto.
+  Proof with try assumption.
+    intros.
+    rewrite subst_subst...
+    rewrite (subst_fresh_T u1 x2 u2)...
+    reflexivity.
   Qed.
 
   (** ** Local closure is preserved by substitution *)
@@ -810,8 +966,9 @@ Section locally_nameless_metatheory.
       subst x (ret l) = map (subst_loc_LN x l).
   Proof.
     intros. unfold subst. ext t.
-    apply (bind_respectful_map).
-    intros l' l'in. destruct l'.
+    apply mod_bind_respectful_map.
+    intros l' l'in.
+    destruct l'.
     - cbn. compare values x and a.
     - reflexivity.
   Qed.

@@ -608,7 +608,27 @@ Section decorated_traversable_functor_theory.
 
     (** ** Characterizing <<∈d>> and <<mapd>> *)
     (******************************************************************************)
-    Theorem ind_mapd_iff :
+    Theorem ind_mapd_iff_core:
+      forall `(f : E * A -> B),
+        mapd f ∘ element_ctx_of = element_ctx_of ∘ mapd (T := T) f.
+    Proof.
+      intros.
+      rewrite ctx_elements_through_ctx_tolist.
+      rewrite ctx_elements_through_ctx_tolist.
+      reassociate -> on right.
+      change (list (prod ?E ?X)) with (env E X). (* hidden *)
+      rewrite <- (mapd_ctx_tolist f).
+      rewrite env_mapd_spec.
+      reassociate <- on right.
+      rewrite ctxset_mapd_spec.
+      change (env ?E ?X) with (list (prod E X)). (* hidden *)
+      unfold ctxset.
+      rewrite <- (natural (ϕ := @element_of list _)).
+      reflexivity.
+    Qed.
+
+    (*
+    Theorem ind_mapd_iff:
       forall `(f : E * A -> B) (t : T A) (e : E) (b : B),
         (e, b) ∈d mapd f t <-> exists (a : A), (e, a) ∈d t /\ f (e, a) = b.
     Proof.
@@ -624,7 +644,6 @@ Section decorated_traversable_functor_theory.
         change (list (prod ?E ?X)) with (env E X). (* hidden *)
         rewrite <- (mapd_ctx_tolist f).
         reassociate <- on left.
-        fequal.
         rewrite (env_mapd_spec).
         rewrite (ctxset_mapd_spec).
         change (env ?E ?X) with (list (prod E X)). (* hidden *)
@@ -632,6 +651,7 @@ Section decorated_traversable_functor_theory.
         reflexivity.
       }
     Qed.
+    *)
 
     Lemma mapd_respectful :
       forall A B (t : T A) (f g : E * A -> B),
@@ -655,5 +675,17 @@ Section decorated_traversable_functor_theory.
     Qed.
 
   End tosetd.
+
+  #[export] Instance: DecoratedContainerFunctor E T.
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - constructor.
+      intros.
+      apply ind_mapd_iff_core.
+    - intros.
+      apply mapd_respectful.
+      assumption.
+  Qed.
 
 End decorated_traversable_functor_theory.

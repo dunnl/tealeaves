@@ -2,7 +2,7 @@ From Tealeaves Require Export
   Adapters.KleisliToCoalgebraic.TraversableMonad
   Adapters.KleisliToCoalgebraic.DecoratedTraversableMonad
   Classes.Kleisli.DecoratedTraversableMonad
-  Classes.Kleisli.DecoratedContainerFunctor
+  Classes.Kleisli.DecoratedContainerMonad
   Theory.DecoratedTraversableFunctor
   Theory.TraversableMonad.
 
@@ -43,6 +43,7 @@ Section lemmas.
     `{! Compat_Mapdt_Binddt W T T}
     `{! Compat_Bindd_Binddt W T T}
     `{! Compat_Bindt_Binddt W T T}
+    `{Monad_inst : ! DecoratedTraversableMonad W T}
     `{Map_U_inst : Map U}
     `{Mapd_U_inst : Mapd W U}
     `{Traverse_U_inst : Traverse U}
@@ -58,7 +59,7 @@ Section lemmas.
     `{! Compat_Mapdt_Binddt W T U}
     `{! Compat_Bindd_Binddt W T U}
     `{! Compat_Bindt_Binddt W T U}
-    `{Monad_inst : ! DecoratedTraversableRightModule W T U}.
+    `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
 
   Lemma toBatch6_to_toBatch7 : forall A A' t,
       toBatch6 (A := A) (B := A') t =
@@ -195,9 +196,7 @@ Section lemmas.
         foldMapd (fun '(w, a) => map (foldMap g) (f (w, a))).
   Proof.
     intros.
-    Print Instances Compat_Traverse_Mapdt.
     rewrite foldMap_to_foldMapd.
-
     rewrite foldMap_to_foldMapd.
     rewrite foldMapd_binddt.
     fequal; ext [w a].
@@ -390,6 +389,18 @@ Section lemmas.
       intros [hyp1 hyp2].
       rewrite hyp2.
       rewrite IHb; auto.
+  Qed.
+
+  #[export] Instance: DecoratedContainerRightModule W T U.
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - constructor.
+      intros.
+      apply ind_bindd_iff_core.
+    - intros.
+      apply bindd_respectful.
+      assumption.
   Qed.
 
 End lemmas.

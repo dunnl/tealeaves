@@ -27,6 +27,21 @@ Class DecoratedContainerMonad
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> bindd f t = bindd g t;
   }.
 
+Class DecoratedContainerRightModule
+  (W : Type) (T U : Type -> Type)
+  `{Monoid_op W} `{Monoid_unit W}
+  `{Bindd W T T} `{Return T}
+  `{Bindd W T U}
+  `{ElementsCtx W T}
+  `{ElementsCtx W U} :=
+  { dconmod_module :> DecoratedRightModule W T U;
+    dconmod_hom :> ParallelDecoratedRightModuleHom T (ctxset W) U (ctxset W)
+      (@element_ctx_of W T _)
+      (@element_ctx_of W U _);
+    dconmod_pointwise : forall (A B : Type) (t : U A) (f g : W * A -> T B),
+      (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> bindd f t = bindd (U := U) g t;
+  }.
+
 Class DecoratedContainerMonadFull
   (W : Type) (T : Type -> Type)
   `{Map T}
@@ -79,47 +94,41 @@ Admitted.
 Section decorated_container_monad_theory.
 
   Context
-    `{ret_inst : Return T}
-      `{Bindd_T_inst : Bindd W T T}
-      `{Bindd_U_inst : Bindd W T U}
-      `{Mapd_T_inst : Mapd W T}
-      `{Mapd_U_inst : Mapd W U}
-      `{Bind_T_inst : Bind T T}
-      `{Bind_U_inst : Bind T U}
-      `{Map_T_inst : Map T}
-      `{Map_U_inst : Map U}
-      `{op : Monoid_op W}
+    `{op : Monoid_op W}
       `{unit : Monoid_unit W}
+      `{ret_inst : Return T}
+      `{Bindd_T_inst : Bindd W T T}
+      `{Mapd_T_inst : Mapd W T}
+      `{Bind_T_inst : Bind T T}
+      `{Map_T_inst : Map T}
       `{Map_Bindd_T_inst : ! Compat_Map_Bindd W T T}
       `{Bind_Bindd_T_inst : ! Compat_Bind_Bindd W T T}
       `{Mapd_Bindd_T_inst : ! Compat_Mapd_Bindd W T T}
+      `{ElementsCtx_T_inst : ElementsCtx W T}
+      `{Elements_T_inst : Elements T}
+      `{! Compat_Elements_ElementsCtx (E := W) (T := T)}
+      `{! DecoratedContainerMonad W T}
+      `{Mapd_U_inst : Mapd W U}
+      `{Bind_U_inst : Bind T U}
+      `{Map_U_inst : Map U}
+      `{Bindd_U_inst : Bindd W T U}
       `{Map_Bindd_inst : ! Compat_Map_Bindd W T U}
       `{Bind_Bindd_inst : ! Compat_Bind_Bindd W T U}
       `{Mapd_Bindd_inst : ! Compat_Mapd_Bindd W T U}
-      `{Module_inst : ! DecoratedRightModule W T U}
-      `{ElementsCtx_T_inst : ElementsCtx W T}
       `{ElementsCtx_U_inst : ElementsCtx W U}
-      `{Elements_T_inst : Elements T}
       `{Elements_U_inst : Elements U}
-      `{Monad_inst : ! DecoratedContainerMonad W T}
-      `{! Compat_Elements_ElementsCtx (E := W) (T := T)}.
+      `{! Compat_Elements_ElementsCtx (E := W) (T := U)}
+      `{Module_inst : ! DecoratedContainerRightModule W T U}.
 
   Variables (A B : Type).
 
-  Implicit Types (t : T A) (b : B) (w : W) (a : A).
+  Implicit Types (t : U A) (b : B) (w : W) (a : A).
 
   Lemma dconm_morphism_ret : forall (A : Type),
       element_ctx_of ∘ ret (T := T) (A := A) =
         ret (T := ctxset W).
   Proof.
     apply kmond_hom_ret.
-  Qed.
-
-  Lemma dconm_morphism_bind : forall (A B : Type) (f : W * A -> T B),
-      element_ctx_of ∘ bindd f =
-        bindd (U := ctxset W) (element_ctx_of ∘ f) ∘ element_ctx_of (F := T).
-  Proof.
-    apply kmond_hom_bind.
   Qed.
 
   Theorem ind_ret_iff : forall {A : Type} (w : W) (a1 a2 : A),
@@ -132,20 +141,27 @@ Section decorated_container_monad_theory.
     intuition.
   Qed.
 
+  Lemma dconm_morphism_bind : forall (A B : Type) (f : W * A -> T B),
+      element_ctx_of ∘ bindd (U := U) f =
+        bindd (U := ctxset W) (element_ctx_of ∘ f) ∘ element_ctx_of (F := U).
+  Proof.
+    apply kmoddpar_hom_bind.
+  Qed.
+
   Theorem ind_bindd_iff : forall w t f b,
-      (w, b) ∈d bindd f t <->
+      (w, b) ∈d bindd (U := U) f t <->
         exists (wa : W) (a : A), (wa, a) ∈d t /\
-                   exists wb : W, (wb, b) ∈d f (wa, a) /\
-                               w = wa ● wb.
+                              exists wb : W, (wb, b) ∈d f (wa, a) /\
+                                          w = wa ● wb.
   Proof.
     introv.
     compose near t on left.
-    rewrite kmond_hom_bind.
+    rewrite kmoddpar_hom_bind.
     reflexivity.
   Qed.
 
   Theorem ind_bindd_iff' :
-    forall `(f : W * A -> T B) (t : T A) (wtotal : W) (b : B),
+    forall `(f : W * A -> T B) (t : U A) (wtotal : W) (b : B),
       (wtotal, b) ∈d bindd f t <->
         exists (w1 w2 : W) (a : A),
           (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
@@ -153,11 +169,8 @@ Section decorated_container_monad_theory.
   Proof.
     intros.
     rewrite ind_bindd_iff.
-    intuition.
-    preprocess.
-    do 3 eexists. eauto.
-    preprocess.
-    do 2 eexists. eauto.
+    splits; intros ?; preprocess;
+      (repeat eexists); eauto.
   Qed.
 
   Corollary ind_bind_iff : forall w t f b,
@@ -172,14 +185,28 @@ Section decorated_container_monad_theory.
     reflexivity.
   Qed.
 
+  Corollary ind_bind_iff': forall w t f b,
+      (w, b) ∈d bind f t <->
+        exists (wa wb : W) (a : A),
+          (wa, a) ∈d t /\
+            (wb, b) ∈d f a /\
+            w = wa ● wb.
+  Proof.
+    introv.
+    rewrite ind_bind_iff.
+    splits; intros ?; preprocess;
+      (repeat eexists); eauto.
+  Qed.
+
   Corollary in_bindd_iff : forall t f b,
-      b ∈ bindd (U := T) f t <->
+      b ∈ bindd (U := U) f t <->
         exists (wa : W) (a : A),
           (wa, a) ∈d t /\ b ∈ f (wa, a).
   Proof.
     introv.
-    setoid_rewrite ind_iff_in.
+    rewrite ind_iff_in.
     setoid_rewrite ind_bindd_iff.
+    setoid_rewrite ind_iff_in.
     split.
     - intros [w [wa [a [Hin [wb [Hin' Heq]]]]]].
       eauto.
@@ -189,17 +216,17 @@ Section decorated_container_monad_theory.
 
   (******************************************************************************)
   Corollary bindd_respectful :
-    forall A B (t : T A) (f : W * A -> T B) (g : W * A -> T B),
+    forall A B (t : U A) (f : W * A -> T B) (g : W * A -> T B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a))
       -> bindd f t = bindd g t.
   Proof.
     introv hyp.
-    apply dconm_pointwise.
+    apply dconmod_pointwise.
     assumption.
   Qed.
 
   Corollary bindd_respectful_bind :
-    forall A B (t : T A) (f : W * A -> T B) (g : A -> T B),
+    forall A B (t : U A) (f : W * A -> T B) (g : A -> T B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g a)
       -> bindd f t = bind g t.
   Proof.
@@ -211,7 +238,7 @@ Section decorated_container_monad_theory.
   Qed.
 
   Corollary bindd_respectful_mapd :
-    forall A B (t : T A) (f : W * A -> T B) (g : W * A -> B),
+    forall A B (t : U A) (f : W * A -> T B) (g : W * A -> B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret (g (w, a)))
       -> bindd f t = mapd g t.
   Proof.
@@ -222,7 +249,7 @@ Section decorated_container_monad_theory.
   Qed.
 
   Corollary bindd_respectful_map :
-    forall A B (t : T A) (f : W * A -> T B) (g : A -> B),
+    forall A B (t : U A) (f : W * A -> T B) (g : A -> B),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret (g a))
       -> bindd f t = map g t.
   Proof.
@@ -233,12 +260,12 @@ Section decorated_container_monad_theory.
   Qed.
 
   Corollary bindd_respectful_id :
-    forall A (t : T A) (f : W * A -> T A),
+    forall A (t : U A) (f : W * A -> T A),
       (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret a)
       -> bindd f t = t.
   Proof.
     intros. change t with (id t) at 2.
-    rewrite <- kmond_bindd1.
+    rewrite <- kmodd_bindd1.
     eapply bindd_respectful.
     eauto.
   Qed.

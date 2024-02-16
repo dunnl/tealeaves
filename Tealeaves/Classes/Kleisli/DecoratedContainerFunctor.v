@@ -144,8 +144,6 @@ End Container_ctxset.
 Section setlike_functor_theory.
 
   Context
-    (E : Type)
-    (F : Type -> Type)
     `{DecoratedFunctor E T}
     `{Map_inst : Map T}
     `{! Compat_Map_Mapd}
