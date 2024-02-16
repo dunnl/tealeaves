@@ -124,9 +124,9 @@ Tealeaves/Examples/STLC/SyntaxCategorical.v
 Tealeaves/Examples/STLC/TypeSoundness.v
 
 # MULTISORTED
-#Tealeaves/Classes/Multisorted/Multifunctor.v
-#Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
-#Tealeaves/Backends/LN/Multisorted/LN.v
+Tealeaves/Classes/Multisorted/Multifunctor.v
+Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
+Tealeaves/Backends/LN/Multisorted/LN.v
 
 # EXAMPLES
 #Tealeaves/Examples/SystemF/Syntax.v

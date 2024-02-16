@@ -483,10 +483,8 @@ Section operations_specifications.
       rewrite in_bind_iff.
       split.
       - intros [l [lin xin]].
+        rewrite in_iff_in_toklist.
         (*
-        Set Printing All.
-        About in_iff_in_toklist.
-        About Elements_list.
         rewrite <- (in_iff_in_toklist) in lin.
         destruct l as [a|n].
         + cbv in xin. destruct xin as [?|[]].
