@@ -66,7 +66,7 @@ End Notations.
 
 Import Notations.
 
-#[export] Instance: Return term := tvar.
+#[export] Instance Return_STLC: Return term := tvar.
 
 (*|
 ========================================
@@ -81,7 +81,7 @@ Fixpoint binddt_term (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
   | app t1 t2 => pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
   end.
 
-#[export] Instance: Binddt nat term term := @binddt_term.
+#[export] Instance Binddt_STLC: Binddt nat term term := @binddt_term.
 
 (*|
 ========================================
@@ -276,8 +276,8 @@ A close comparison shows the rules differ in two respects:
   Set Keyed Unification.
 
   Theorem dtm3_stlc :
-    forall G1 G2 `{Applicative G1} `{Applicative G2} (A B C : Type),
-        forall (g : nat * B -> G2 (term C)) (f : nat * A -> G1 (term B)),
+    forall `{Applicative G1} `{Applicative G2},
+        forall `(g : nat * B -> G2 (term C)) `(f : nat * A -> G1 (term B)),
           map (binddt g) ∘ binddt f = binddt (G := G1 ∘ G2) (g ⋆7 f).
   Proof.
     intros. ext t.
@@ -421,11 +421,13 @@ a restriction on implementations of `binddt` (cite Gibbons).
       reflexivity.
   Qed.
 
-  #[export] Instance: DecoratedTraversableMonad nat term :=
-    {| kdtm_binddt0 := @dtm1_stlc;
-       kdtm_binddt1 := dtm2_stlc;
+  #[export] Instance DTMPre_STLC: DecoratedTraversableRightPreModule nat term term :=
+    {| kdtm_binddt1 := dtm2_stlc;
        kdtm_binddt2 := @dtm3_stlc;
        kdtm_morph := @dtm4_stlc;
+    |}.
+  #[export] Instance DTM_STLC: DecoratedTraversableMonad nat term :=
+    {| kdtm_binddt0 := @dtm1_stlc;
     |}.
 
 End laws.
@@ -451,8 +453,9 @@ Definition ctx := list (atom * typ).
 
 Reserved Notation "Γ ⊢ t : S" (at level 90, t at level 99).
 
-Import DecoratedTraversableMonad.MakeFull.
-#[local] Existing Instance DecoratedTraversableMonad_MakeFull.
+(*
+#[local] Existing Instance Bindd_Binddt.
+
 
 Inductive Judgment : ctx -> term LN -> typ -> Prop :=
 | j_var :
@@ -595,7 +598,7 @@ Section term_free_rewrite.
   Qed.
 
   Open Scope set_scope.
-  
+
   Lemma term_freeset11 : forall (b : nat) (x : atom),
       freeset (tvar (Bd b)) [=] ∅.
   Proof.
@@ -796,3 +799,4 @@ Proof.
   intros. unfold locally_closed.
   now setoid_rewrite term_lc_gap3.
 Qed.
+*)

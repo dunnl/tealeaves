@@ -135,6 +135,15 @@ Section locally_nameless_local_operations.
             end
           end.
 
+  Definition is_bound_or_free_b (gap : nat) : nat * LN -> bool :=
+    fun p => match p with
+          | (w, l) =>
+            match l with
+            | Fr x => true
+            | Bd n => Nat.ltb n (w + gap)
+            end
+          end.
+
 End locally_nameless_local_operations.
 
 (** ** Extended operations *)
@@ -158,6 +167,12 @@ Section locally_nameless_operations.
 
   Definition freeset : T LN -> AtomSet.t :=
     LN.AtomSet.atoms ○ free.
+
+  Definition locally_closed_gap_b (gap : nat) : U LN -> bool :=
+    fun t => foldMapd (is_bound_or_free_b gap) t.
+
+  Definition locally_closed_b : U LN -> bool :=
+    locally_closed_gap_b 0.
 
   Definition locally_closed_gap (gap : nat) : U LN -> Prop :=
     fun t => forall w l, (w, l) ∈d t -> is_bound_or_free gap (w, l).
@@ -799,8 +814,8 @@ Section locally_nameless_metatheory.
     apply in_subst_lower; now simpl_local.
   Qed.
 
-  Corollary freeset_subst_lower : forall t (u : T LN) x,
-      freeset t \\ {{ x }} ⊆ freeset (t '{x ~> u}).
+  Corollary freeset_subst_lower : forall (t : T LN) u x,
+      freeset u \\ {{ x }} ⊆ freeset (u '{x ~> t}).
   Proof.
     introv. intro a.
     rewrite AtomSet.diff_spec, AtomSet.singleton_spec.
