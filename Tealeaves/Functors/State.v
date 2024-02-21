@@ -43,6 +43,20 @@ Section state_monad.
   #[export] Instance Return_State : Return (State S) :=
     fun A (a : A) => mkState (fun s => (s, a)).
 
+  #[export] Instance Bind_State : Bind (State S) (State S) :=
+    fun A B (f: A -> State S B) (st1: State S A) =>
+      match st1 with
+      | mkState action =>
+          mkState
+            (fun s => match (action s) with
+                     (s', a) => runState (f a) s'
+                   end)
+      end.
+
+  #[export] Instance Monad_State : Monad (State S).
+  Proof.
+  Admitted.
+
   (*
   #[export] Instance Join_State : Join (State S) :=
     fun A (st : State S (State S A)) =>
