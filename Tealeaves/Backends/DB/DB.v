@@ -5,6 +5,18 @@ From Tealeaves.Theory Require Import
   DecoratedTraversableFunctor
   DecoratedTraversableMonad.
 
+
+From Tealeaves Require Import
+  Backends.LN.
+From Tealeaves.Adapters Require Import
+  MonadToApplicative
+  KleisliToCategorical.Monad.
+From Tealeaves.Functors Require Import
+  State
+  Option.
+
+Open Scope nat_scope.
+
 Import PeanoNat.Nat.
 
 Import
@@ -33,7 +45,7 @@ Section ops.
   Context
     `{ret_inst : Return T}
       `{Mapd_T_inst : Mapd nat T}
-      `{Bindd_T_inst : Bindd nat T T}.
+      `{Bindd_U_inst : Bindd nat T U}.
 
   Definition bound_in: nat -> nat -> bool :=
     fun ix depth => ix <? depth.
@@ -56,26 +68,20 @@ Section ops.
        (<<ix - depth>> is the index into σ,
        adjusted to account for bound variables in scope
    *)
+  (* TODO: Decrement free variables if necessary *)
   Definition scoot : nat -> (nat -> T nat) -> (nat -> T nat)  :=
     fun depth σ ix =>
       if bound_in ix depth
       then ret ix
       else mapd (lift depth) (σ (ix - depth)).
 
-  Definition open (σ : nat -> T nat) : T nat -> T nat :=
+  Definition open (σ : nat -> T nat) : U nat -> U nat :=
     bindd (fun '(depth, ix) => scoot depth σ ix).
-
 
   Definition one (u: T nat): nat -> T nat :=
     fun n => if n =? 0 then u else ret n.
 
-  (*
-  Definition one (u: T nat): nat * nat -> T nat :=
-    fun '(depth, ix) =>
-      if ix <=? depth then ret ix else u.
-   *)
-
-  Definition open_by (u : T nat) : T nat -> T nat :=
+  Definition open_by (u : T nat) : U nat -> U nat :=
     open (one u).
 
 End ops.
@@ -215,18 +221,6 @@ Section theory.
   Qed.
 
 End theory.
-
-From Tealeaves Require Import
-  Backends.LN.
-From Tealeaves.Adapters Require Import
-  MonadToApplicative
-  KleisliToCategorical.Monad.
-From Tealeaves.Functors Require Import
-  State
-  Option.
-
-Open Scope nat_scope.
-
 
 Module FMap.
 
@@ -579,7 +573,7 @@ Module toDB.
     Proof.
     Admitted.
 
-    Definition tokey (t: T LN): key :=
+    Definition tokey (t: U LN): key :=
       tokey_loc nil (tolist t).
 
     Definition toLN_loc (k: key) '(depth, ix) : option LN :=
@@ -588,16 +582,16 @@ Module toDB.
       else
         map (F := option) Fr (get_atom k (ix - depth)).
 
-    Definition toDB_from_key (k: key): T LN -> option (T nat) :=
-      @mapdt nat T Mapdt_T_inst
+    Definition toDB_from_key (k: key): U LN -> option (U nat) :=
+      @mapdt nat U Mapdt_U_inst
         option Map_option Pure_option Mult_option
         LN nat (toDB_loc k).
 
-    Definition toDB: T LN -> option (T nat) :=
+    Definition toDB: U LN -> option (U nat) :=
       fun t => toDB_from_key (tokey t) t.
 
-    Definition toLN_from_key (k: key): T nat -> option (T LN) :=
-      @mapdt nat T Mapdt_T_inst
+    Definition toLN_from_key (k: key): U nat -> option (U LN) :=
+      @mapdt nat U Mapdt_U_inst
         option Map_option Pure_option Mult_option
         nat LN (toLN_loc k).
 
@@ -614,9 +608,9 @@ Module toDB.
     Proof.
     Admitted.
 
-    Goal forall (t: T LN) (k : key),
+    Goal forall (t: U LN) (k : key),
       (forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom)) ->
-      exists (t': T nat), toDB_from_key k t = Some t'.
+      exists (t': U nat), toDB_from_key k t = Some t'.
     Proof.
       intros.
       unfold toDB_from_key.
@@ -647,7 +641,7 @@ Module toDB.
           Search mapdt pure.
           rewrite mapdt_to_binddt.
           Search binddt pure.
-          pose (binddt_respectful_pure (W := nat) (U := T) (T := T)).
+          pose (binddt_respectful_pure (W := nat) (U := U) (T := T)).
           specialize (e LN t).
           specialize (e option _ _ _ _).
 
@@ -701,8 +695,59 @@ Module toDB.
           cbn; eauto.
     Qed.
 
-    Goal forall (t: T LN),
-      exists (t': T nat), toDB t = Some t'.
+    Lemma mapdt_respectful_pure {G} `{Applicative G} :
+      forall A (t : U A) (f : nat * A -> G A),
+        (forall (e : nat) (a : A), (e, a) ∈d t -> f (e, a) = pure a)
+        -> mapdt (G := G) (T := U) f t = pure (F := G) t.
+    Proof.
+      introv hyp.
+    Admitted.
+
+    Goal forall (t: U LN) (k : key),
+      (forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom)) ->
+      exists (t': U nat), toDB_from_key k t = Some t'.
+    Proof.
+      intros.
+      unfold toDB_from_key.
+      eexists.
+      change (Some ?t') with (pure t').
+    Abort.
+
+    Goal forall (u : T nat) (t: U LN) (k : key),
+        (forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom)) ->
+        exists (t': U nat), map (F := option) (open_by u) (toDB_from_key k t) = Some t'.
+    Proof.
+      intros.
+      unfold open_by.
+      unfold open_by, open, toDB_from_key.
+      compose near t.
+      rewrite bindd_mapdt.
+      change (Some ?t') with (pure t').
+      rewrite binddt_through_runBatch.
+      rewrite (element_through_runBatch2 _ nat) in H.
+      Search toBatch7.
+    Abort.
+
+    Goal forall (u : T nat) (u_pre : T LN) (t: U LN) (k : key),
+        (forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom)) ->
+        map (F := option) (open_by u) (toDB_from_key k t) =
+          toDB_from_key k (LN.open (U := U) u_pre t).
+    Proof.
+      intros.
+      unfold open_by, open.
+      unfold toDB_from_key.
+      unfold LN.open.
+      compose near t.
+      rewrite bindd_mapdt.
+      rewrite mapdt_bindd.
+      apply binddt_respectful.
+      - typeclasses eauto.
+      - introv Hin.
+    Abort.
+
+
+    Goal forall (t: U LN),
+      exists (t': U nat), toDB t = Some t'.
     Proof.
       intros t.
       unfold toDB.
@@ -730,8 +775,8 @@ Module toDB.
     Abort.
 
 
-    Goal forall (t: T nat) (k : key),
-      exists (t': T LN), toLN_from_key k t = Some t'.
+    Goal forall (t: U nat) (k : key),
+      exists (t': U LN), toLN_from_key k t = Some t'.
     Proof.
       intros.
       unfold toLN_from_key.
@@ -787,13 +832,6 @@ Module toDB.
          *)
     Abort.
 
-    Lemma mapdt_respectful_pure {G} `{Applicative G} :
-      forall A (t : T A) (f : nat * A -> G A),
-        (forall (e : nat) (a : A), (e, a) ∈d t -> f (e, a) = pure a)
-        -> mapdt (G := G) (T := T) f t = pure (F := G) t.
-    Proof.
-      introv hyp.
-    Admitted.
 
 
     Lemma lc_bound: forall t e n,
@@ -804,22 +842,21 @@ Module toDB.
     Admitted.
 
     Lemma main: forall t k e a,
+        (forall x : atom, Fr x ∈ t -> x ∈ k) ->
         locally_closed t ->
         (e, a) ∈d t ->
         kc6 (toLN_loc k) (toDB_loc k) (e, a) = pure (F := option ∘ option) a.
     Proof.
-      introv Hlc Hin.
+      introv Hcont Hlc Hin.
       cbn.
-      assert ((forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom))).
-      admit.
       unfold kc6.
       rewrite map_strength_cobind_spec.
       destruct a.
       - cbn.
         assert (Hin': Fr a ∈ t).
         admit.
-        specialize (H a Hin').
-        pose (lemma:= get_index_in a k H).
+        specialize (Hcont a Hin').
+        pose (lemma:= get_index_in a k Hcont).
         destruct lemma as [ix hyp].
         rewrite  hyp.
         change (map ?f (Some ?x)) with (Some (f x)).
@@ -851,6 +888,7 @@ Module toDB.
     Admitted.
 
     Goal forall (t : U LN) (k: key),
+        (forall x : atom, Fr x ∈ t -> x ∈ k) ->
         locally_closed t ->
         map (F := option) (toLN_from_key k) (toDB_from_key k t) =
           Some (Some t).
@@ -864,16 +902,14 @@ Module toDB.
       change (Some (Some t)) with (pure (F := option ∘ option) t).
       apply (mapdt_respectful_pure (G := option ∘ option)).
       intros.
-      rewrite (main t).
+      now rewrite (main t).
+    Qed.
 
-
-      unfold kc6
-      unfold compose. cbn.
-      destruct a.
-      - destruct (get_index a k).
-        + cbn.
-      Search mapdt pure.
-      unfold
+    Goal forall (t : U LN) (k: key),
+        (forall x : atom, Fr x ∈ t -> x ∈ k) ->
+        locally_closed t ->
+        map (F := option) (toLN_from_key k) (toDB_from_key k t) =
+          Some (Some t).
 
     (*
     Definition tokey_loc '(depth, l): State key unit :=
