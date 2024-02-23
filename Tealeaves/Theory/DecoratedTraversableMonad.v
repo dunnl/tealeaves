@@ -59,7 +59,11 @@ Section lemmas.
     `{! Compat_Mapdt_Binddt W T U}
     `{! Compat_Bindd_Binddt W T U}
     `{! Compat_Bindt_Binddt W T U}
-    `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
+    `{Module_inst: ! DecoratedTraversableRightPreModule W T U}
+    `{Elements_T_inst: Elements T}
+    `{! Compat_Elements_Traverse T}
+    `{Elements_U_inst: Elements U}
+    `{! Compat_Elements_Traverse U}.
 
   Lemma toBatch6_to_toBatch7 : forall A A' t,
       toBatch6 (A := A) (B := A') t =

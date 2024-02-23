@@ -33,7 +33,9 @@ Section decorated_traversable_functor_theory.
       `{! Compat_Map_Mapdt}
       `{! Compat_Mapd_Mapdt}
       `{! Compat_Traverse_Mapdt}
-      `{! DecoratedTraversableFunctor E T}.
+      `{! DecoratedTraversableFunctor E T}
+      `{Elements_inst: Elements T}
+      `{! Compat_Elements_Traverse T}.
 
   (** ** <<mapdt>> with constant applicative functors *)
   (******************************************************************************)

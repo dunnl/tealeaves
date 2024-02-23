@@ -262,6 +262,10 @@ Section locally_nameless_basic_principles.
     `{! Compat_Mapdt_Binddt nat T U}
     `{! Compat_Bindd_Binddt nat T U}
     `{! Compat_Bindt_Binddt nat T U}
+    `{Elements_T_inst : Elements T}
+    `{Elements_U_inst : Elements U}
+    `{! Compat_Elements_Traverse T}
+    `{! Compat_Elements_Traverse U}
     `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
@@ -518,7 +522,11 @@ Section locally_nameless_utilities.
     `{! Compat_Bindt_Binddt nat T U}
     `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
-     (op := Monoid_op_plus)}.
+     (op := Monoid_op_plus)}
+    `{Elements_T_inst : Elements T}
+    `{Elements_U_inst : Elements U}
+    `{! Compat_Elements_Traverse T}
+    `{! Compat_Elements_Traverse U}.
 
   Import Notations.
 
@@ -679,7 +687,11 @@ Section locally_nameless_metatheory.
     `{! Compat_Bindt_Binddt nat T U}
     `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
-     (op := Monoid_op_plus)}.
+     (op := Monoid_op_plus)}
+    `{Elements_T_inst : Elements T}
+    `{Elements_U_inst : Elements U}
+    `{! Compat_Elements_Traverse T}
+    `{! Compat_Elements_Traverse U}.
 
   Open Scope set_scope.
 

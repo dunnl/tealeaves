@@ -436,10 +436,8 @@ Section rw_tomsetd_type.
   Lemma rw_tomsetd_type4 : forall w a (body : typ A), (w, (k, a)) ∈md (ty_univ body) <-> exists w', (w', (k, a)) ∈md body /\ w = (cons KType w').
   Proof.
     intros. unfold tomsetd, compose. autorewrite with sysf_rw.
-    About in_map_iff.
-    Search "in_map_iff".
-    Search "in_map_iff".
-    rewrite (in_map_iff (T := list)). splits.
+    rewrite (in_map_iff list).
+    splits.
     - intros [[w'' [j a']] [rest1 rest2]]. cbn in *. inverts rest2. eauto.
     - intros [w' rest]. exists (w', (k, a)). now inverts rest.
   Qed.
@@ -1060,8 +1058,10 @@ Section rw_tomlistd_type.
     intros. unfold tomlistd, tomlistd_gen. rewrite rw_mmapdt_term2. fequal.
     compose near t on right. unfold mmapdt.
     rewrite (dtp_mbinddt_morphism
-               (list (@K I2)) term SystemF (const (list _)) (const (list _)) (ϕ := (fun _ => map (F := list) (incr [KTerm])))
-               (fun (k : @K I2) => map (const (list (list K2 * (K2 * A)))) (mret SystemF k) ∘ (fun '(w, a) => [(w, (k, a))]))).
+               (list (@K I2)) term SystemF (const (list (list K2 * (K * A))))
+               (const (list _)) (ϕ := (fun _ => map (F := list) (incr [KTerm])))
+               (fun (k : @K I2) => map (F := const (list (list K2 * (K * A))))
+                                  (mret SystemF k) ∘ (fun '(w, a) => [(w, (k, a))]))).
     fequal. now ext k [w a].
   Qed.
 
@@ -1075,7 +1075,7 @@ Section rw_tomlistd_type.
     compose near t on right. unfold mmapdt.
     rewrite (dtp_mbinddt_morphism
                (list (@K I2)) term SystemF (const (list _)) (const (list _)) (ϕ := (fun _ => map (F := list) (incr [KType])))
-               (fun (k : @K I2) => map (const (list (list K2 * (K2 * A)))) (mret SystemF k) ∘ (fun '(w, a) => [(w, (k, a))]))).
+               (fun (k : @K I2) => map (F := const (list (list K2 * (K2 * A)))) (mret SystemF k) ∘ (fun '(w, a) => [(w, (k, a))]))).
     fequal. now ext k [w a].
   Qed.
 
@@ -1273,7 +1273,7 @@ Section rw_tomsetd_type.
       (w, (k, a)) ∈md τ \/ exists w', (w', (k, a)) ∈md t /\ w = KTerm :: w'.
   Proof.
     intros. unfold tomsetd, compose. autorewrite with sysf_rw tea_list.
-    rewrite (Setlike.Functor.in_map_iff list). split.
+    rewrite (in_map_iff list). split.
     - intros [hyp | hyp].
       + now left.
       + right. destruct hyp as [[w' [j a'']] [hyp1 hyp2]].
@@ -1293,7 +1293,7 @@ Section rw_tomsetd_type.
   Lemma rw_tomsetd_term4 : forall w a (t : term A), (w, (k, a)) ∈md (tm_tab t) <-> exists w', (w', (k, a)) ∈md t /\ w = KType :: w'.
   Proof.
     intros. unfold tomsetd, compose. autorewrite with sysf_rw.
-    rewrite (Setlike.Functor.in_map_iff list). splits.
+    rewrite (in_map_iff list). splits.
     - intros [[w'' [j a']] [rest1 rest2]]. cbn in *. inverts rest2. eauto.
     - intros [w' rest]. exists (w', (k, a)). now inverts rest.
   Qed.

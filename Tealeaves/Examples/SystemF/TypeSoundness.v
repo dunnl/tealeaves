@@ -1,21 +1,12 @@
-From Tealeaves Require Import
+From Tealeaves Require Export
   Examples.SystemF.Syntax
   Examples.SystemF.Rewriting
-  Examples.SystemF.Contexts
-  Backends.LN.AssocList
-  Classes.Traversable.Monad. (* bind for lists *)
+  Examples.SystemF.Contexts.
 
 From Coq Require Import
   Sorting.Permutation.
 
 Implicit Types (x : atom).
-
-From Tealeaves Require Import Classes.Kleisli.Monad.
-
-Import Classes.Setlike.Functor.Notations.
-Import DTM.Notations.
-Import LN.AssocList.Notations.
-Import List.ListNotations.
 
 Lemma rw_subst_type_var_neq {x y} {τ'} :
   x <> y ->
@@ -160,18 +151,25 @@ Proof.
   introv j. induction j; try assumption.
   - cleanup_cofinite. eauto using ok_type_ctx_inv_app_l.
   - rename H0 into IH.
-    pick fresh e for (L ∪ atoms (bind list (fun '(x, t) => free typ KType t) Γ)).
+    pick fresh e for (L ∪ atoms (bind (T := list) (fun '(x, t) => free typ KType t) Γ)).
     specialize_cof IH e.
     apply (ok_type_ctx_stren1) with (x := e).
     + assumption.
     + introv Hin.
-      enough (lemma : ~ e ∈ (bind list (fun '(x, t) => free typ KType t) Γ)).
-      { rewrite (in_bind_list_iff) in lemma.
+      enough (lemma : ~ e ∈ (bind (T := list) (fun '(x, t) => free typ KType t) Γ)).
+      { Search "in_bind".
+        Print Instances ContainerMonad.
+        Print Instances TraversableMonad.
+        assert (ContainerMonad list).
+        eapply @ContainerMonad_Traversable.
+        all: try typeclasses eauto.
+        admit.
+        rewrite (in_bind_iff) in lemma.
         rewrite in_range_iff in Hin. destruct Hin as [x Hin].
         contradict lemma. exists (x, t0). split; [assumption|].
         now apply free_iff_freeset. }
       { rewrite in_atoms_iff. fsetdec. }
-Qed.
+Admitted.
 
 (** *** Tactical corollaries *)
 (******************************************************************************)
@@ -204,7 +202,8 @@ Proof.
     + eauto using ok_kind_ctx_perm.
     + rewrite ok_type_ctx_perm_gamma;
         eauto using Permutation_sym.
-    + symmetry in Hperm. erewrite List.perm_set_eq; eauto.
+    + symmetry in Hperm.
+      erewrite List.permutation_spec; eauto.
   - econstructor; eauto using Permutation_app_tail.
 Qed.
 

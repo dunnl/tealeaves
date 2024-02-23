@@ -476,6 +476,7 @@ Section operations_specifications.
         x ∈ free S k t <-> (k, Fr x) ∈m t.
     Proof.
       intros. unfold free.
+      (*
       replace (x ∈ bind free_loc (toklist S k t)) with
         (x ∈ tolist (bind free_loc (toklist S k t))) by
         now (rewrite Tolist_list_id).
@@ -484,6 +485,7 @@ Section operations_specifications.
       split.
       - intros [l [lin xin]].
         rewrite in_iff_in_toklist.
+       *)
         (*
         rewrite <- (in_iff_in_toklist) in lin.
         destruct l as [a|n].

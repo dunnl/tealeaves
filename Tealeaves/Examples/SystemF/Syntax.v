@@ -438,6 +438,7 @@ Proof.
     rewrite <- (ap_map (G := F)).
     do 2 rewrite map_ap.
     do 2 rewrite map_ap.
+    assert (Functor F) by apply app_functor.
     do 3 (compose near (pure (F := (F ∘ G)) (ty_ar (V := C)));
           rewrite (fun_map_map (F := F))).
     unfold_ops @Pure_compose.
@@ -449,7 +450,8 @@ Proof.
     rewrite (ap_compose2 G F).
     rewrite <- (ap_map (G := F)).
     compose near (pure (F := F ∘ G) (ty_univ (V := C))).
-    rewrite (fun_map_map).
+    assert (Functor F) by apply app_functor.
+    rewrite (fun_map_map (F := F)).
     unfold_ops @Pure_compose.
     rewrite (app_pure_natural).
     rewrite map_ap.
@@ -468,7 +470,8 @@ Lemma mbinddt_mbinddt_term :
     mbinddt term (F ∘ G) (g ⋆dtm f).
 Proof.
   intros. ext t. generalize dependent f. generalize dependent g.
-  unfold compose at 1. induction t; intros g f.
+  unfold compose at 1. induction t; intros g f;
+    assert (Functor F) by apply app_functor.
   - cbn.
     change (MBind_term ?G H3 H4 H5 ?A ?B) with (mbinddt term G (A := A) (B := B)).
     fequal. fequal. now ext k [w a].

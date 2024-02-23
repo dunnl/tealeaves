@@ -576,5 +576,3 @@ End traversable_functor_theory.
 Module Notations.
   Notation "f <◻> g" := (applicative_arrow_combine f g) (at level 60) : tealeaves_scope.
 End Notations.
-
-#[export] Existing Instance Elements_Traverse.

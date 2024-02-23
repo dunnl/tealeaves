@@ -447,6 +447,8 @@ a restriction on implementations of `binddt` (cite Gibbons).
     := Bindd_Binddt nat term term.
   #[export] Instance Bindt_STLC: Bindt term term
     := Bindt_Binddt nat term term.
+  #[export] Instance Elements_STLC: Elements term
+    := Elements_Traverse.
 
   #[export] Instance DTMFull_STLC:
     DecoratedTraversableMonadFull nat term
@@ -495,6 +497,15 @@ where "Γ ⊢ t : A" := (Judgment Γ t A).
 (** * Rewriting lemmas for high-level operations *)
 (******************************************************************************)
 
+Ltac simplify_to_monoid :=
+  unfold_ops @Pure_const @Mult_const; simpl_monoid.
+
+Ltac extract_preincr :=
+    match goal with
+      |- context[((?f ∘ extract) ⦿ ?w)] =>
+        rewrite extract_preincr2
+    end.
+
 (** ** Rewriting lemmas for <<tolist>>, <<toset>> *)
 (******************************************************************************)
 Section term_list_rewrite.
@@ -526,7 +537,7 @@ Section term_list_rewrite.
   Proof.
     intros.
     cbn.
-    rewrite extract_preincr2.
+    extract_preincr.
     reflexivity.
   Qed.
 
@@ -539,7 +550,9 @@ Section term_list_rewrite.
   Lemma in_term_1 : forall (x y : A),
       x ∈ tvar y <-> x = y.
   Proof.
-    intros. cbv. intuition.
+    intros.
+    cbn.
+    cbv. intuition.
   Qed.
 
   Lemma in_term_2 : forall (y : A) (X : typ) (t : term A),

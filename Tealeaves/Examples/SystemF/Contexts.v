@@ -1,26 +1,16 @@
 From Tealeaves Require Import
   Functors.List
-  Backends.LN.Atom
-  Backends.LN.AtomSet
-  Backends.LN.AssocList
   LN.Multisorted.LN
-  Multisorted.Classes.DTM
   Examples.SystemF.Syntax
   Examples.SystemF.Rewriting.
 
 From Coq Require Import
   Sorting.Permutation.
 
-(*
-From Tealeaves.Examples Require Import
-  SystemF.Syntax.
-  SystemF.Rewriting.
-*)
-
 Implicit Types (x : atom).
 
 Import AtomSet.Notations.
-Import Classes.Setlike.Functor.Notations.
+Import ContainerFunctor.Notations.
 Import LN.AssocList.Notations.
 Import List.ListNotations.
 
@@ -61,8 +51,8 @@ Section scope_lemmas.
 
   Context
     (S : Type -> Type)
-    `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
-    `{! DTM (list K) T}.
+    `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    `{! MultiDecoratedTraversableMonad (list K) T}.
 
   (** *** Permutation *)
   (******************************************************************************)
@@ -203,7 +193,7 @@ Section scope_lemmas.
       scoped S k t1 (domset (envmap f γ1)).
   Proof.
     introv Hscope. unfold scoped in *.
-    now rewrite domset_fmap.
+    now rewrite domset_map.
   Qed.
 
 End scope_lemmas.
@@ -596,7 +586,7 @@ Lemma ok_type_ctx_sub : forall Δ1 Δ2 x Γ τ,
     ok_type_ctx (Δ1 ++ Δ2) (envmap (subst typ KType x τ) Γ).
 Proof.
   introv [hunit hok] Hscope lc. unfold ok_type_ctx. split.
-  - now apply uniq_fmap2.
+  - now apply uniq_map2.
   - intros τ2 τ2in.
     rewrite in_range_iff in τ2in.
     setoid_rewrite in_envmap_iff in τ2in.
