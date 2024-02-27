@@ -641,19 +641,19 @@ End runBatch_monoid.
 (******************************************************************************)
 Section length.
 
-  Context (A B : Type).
+  Context {A B : Type}.
 
   #[local] Unset Implicit Arguments.
 
-  Fixpoint length_Batch (C : Type) (b : Batch A B C) : nat :=
+  Fixpoint length_Batch {C : Type} (b : Batch A B C) : nat :=
     match b with
     | Done _ _ _ _ => 0
-    | Step _ _ _ rest a => S (length_Batch (B -> C) rest)
+    | Step _ _ _ rest a => S (length_Batch (C := B -> C) rest)
     end.
 
  (* The length of a batch is the same as the length of the list we can extract from it *)
-  Lemma batch_length1 : forall (C : Type) (b : Batch A B C),
-      length_Batch C b =
+  Lemma batch_length1 : forall {C : Type} (b : Batch A B C),
+      length_Batch b =
         length (runBatch (const (list A)) (ret list A) _ b).
   Proof.
     intros C b.
@@ -1359,26 +1359,76 @@ Module Notations.
   Infix "⧆" := (Step _ _ _) (at level 51, left associativity) : tealeaves_scope.
 End Notations.
 
+From Tealeaves Require Import
+    Functors.Vector.
 
-(*
-(** ** Misc *)
+(** * Deconstructing <<Batch A B C>> into shape and contents *)
 (******************************************************************************)
-Fixpoint batch_length {A B C : Type} (b : Batch A B C) : nat :=
-  match b with
-  | Done _ => 0
-  | Step b' rest => S (batch_length b')
-  end.
+Section deconstruction.
 
-Lemma batch_length1 : forall (A B C : Type) (b : Batch A B C),
-    length (runBatch (F := const (list A)) (ret list (A := A)) b) = batch_length b.
-Proof.
-  intros.
-  induction b.
-  - reflexivity.
-  - cbn. rewrite <- IHb.
-    unfold_ops @Monoid_op_list.
-    Search length app.
-    rewrite List.app_length.
-    cbn. lia.
-Qed.
-*)
+  Context {A B: Type}.
+
+  Fixpoint Batch_to_contents {C} (b: Batch A B C):
+    Vector.t A (length_Batch b) :=
+    match b return (Vector.t A (length_Batch b)) with
+    | Done _ _ _ c =>
+        Vector.nil A
+    | Step _ _ _ rest a =>
+        Vector.cons A a (length_Batch rest) (Batch_to_contents rest)
+    end.
+
+  Print Vector.cons.
+
+  Fixpoint Batch_to_makeFn {C} (b: Batch A B C):
+    Vector.t B (length_Batch b) -> C :=
+    match b return (Vector.t B (length_Batch b) -> C) with
+    | Done _ _ _ c =>
+        const c
+    | Step _ _ _ rest a =>
+        fun (v: Vector.t B (S (length_Batch rest))) =>
+          match (Vector.uncons v) with
+          | (b, v_rest) => Batch_to_makeFn rest v_rest b
+          end
+    end.
+
+  Lemma Batch_to_contents_rw2: forall {C} (b: Batch A B (B -> C)) (a: A),
+      Batch_to_contents (b ⧆ a) =
+        Vector.cons A a (length_Batch b) (Batch_to_contents b).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma Batch_to_makeFn_rw2: forall {C} (a: A) (b: Batch A B (B -> C)),
+      Batch_to_makeFn (b ⧆ a) =
+        fun (v:Vector.t B (S (length_Batch b))) =>
+          match (Vector.uncons v) with
+          | (b', v') => Batch_to_makeFn b v' b'
+          end.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma runBatch_repr `{Applicative G} {C}: forall (f: A -> G B) (b: Batch A B C),
+      runBatch G f C b =
+      pure G (Batch_to_makeFn b) <⋆>
+                traverse (T := VEC (length_Batch b)) f (Batch_to_contents b).
+  Proof.
+    intros.
+    induction b.
+    - cbn.
+      rewrite ap2.
+      reflexivity.
+    - rewrite runBatch_rw2.
+      rewrite Batch_to_contents_rw2.
+      rewrite Batch_to_makeFn_rw2.
+      cbn.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite IHb.
+      reflexivity.
+  Qed.
+
+End deconstruction.
