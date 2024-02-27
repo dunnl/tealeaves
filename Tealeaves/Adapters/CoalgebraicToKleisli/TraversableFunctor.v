@@ -4,7 +4,7 @@ From Tealeaves Require Export
 
 Import Batch.Notations.
 Import Applicative.Notations.
-Import TraversableFunctor.Notations.
+Import Kleisli.TraversableFunctor.Notations.
 
 #[local] Generalizable Variables ϕ T G A B C.
 
@@ -84,12 +84,12 @@ Section with_algebra.
     rewrite (runBatch_morphism').
     reflexivity.
   Qed.
-  
+
   #[export] Instance TraversableFunctor_Kleisli_From_Coalgebraic :
     Kleisli.TraversableFunctor.TraversableFunctor T :=
     {| trf_traverse_id := traverse_id;
       trf_traverse_traverse := @traverse_traverse;
       trf_traverse_morphism := @traverse_morphism;
     |}.
-  
+
 End with_algebra.

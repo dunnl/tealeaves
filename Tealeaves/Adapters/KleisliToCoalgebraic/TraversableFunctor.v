@@ -131,4 +131,43 @@ Section laws.
        trf_duplicate := toBatch_duplicate_Kleisli;
     |}.
 
+  (** *** Representation theorem *)
+  (******************************************************************************)
+
+  Definition length_gen {A B}: T A -> nat :=
+    length_Batch ∘ toBatch (A' := B).
+
+  Lemma length_gen1: forall {A B B'} (t: T A),
+      length_gen (B := B) t = length_gen (B := B') t.
+  Proof.
+    intros.
+    unfold length_gen.
+    unfold compose.
+  Abort.
+
+  Definition to_contents_gen {A B}:
+    forall (t: T A), Vector.t A (length_gen (B := B) t) :=
+    fun t => Batch_to_contents (toBatch (A' := B) t).
+
+  Definition to_makeFn_gen {A B}:
+    forall (t: T A), Vector.t B (length_gen (B := B) t) -> T B :=
+    fun t => Batch_to_makeFn (toBatch (A' := B) t).
+
+  Import Applicative.Notations.
+  Import Functors.Vector.
+
+  Theorem traverse_repr `{Applicative G} {A B C : Type}:
+    forall (f: A -> G B) (t: T A),
+      traverse f t =
+        pure (to_makeFn_gen t) <⋆>
+            traverse (T := VEC (length_gen (B := B) t)) f
+                     (to_contents_gen t).
+  Proof.
+    intros.
+    rewrite traverse_through_runBatch.
+    unfold compose at 1.
+    rewrite runBatch_repr.
+    reflexivity.
+  Qed.
+
 End laws.
