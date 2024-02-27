@@ -1358,3 +1358,27 @@ Definition bindt_Batch (B C : Type) (G : Type -> Type)
 Module Notations.
   Infix "⧆" := (Step _ _ _) (at level 51, left associativity) : tealeaves_scope.
 End Notations.
+
+
+(*
+(** ** Misc *)
+(******************************************************************************)
+Fixpoint batch_length {A B C : Type} (b : Batch A B C) : nat :=
+  match b with
+  | Done _ => 0
+  | Step b' rest => S (batch_length b')
+  end.
+
+Lemma batch_length1 : forall (A B C : Type) (b : Batch A B C),
+    length (runBatch (F := const (list A)) (ret list (A := A)) b) = batch_length b.
+Proof.
+  intros.
+  induction b.
+  - reflexivity.
+  - cbn. rewrite <- IHb.
+    unfold_ops @Monoid_op_list.
+    Search length app.
+    rewrite List.app_length.
+    cbn. lia.
+Qed.
+*)
