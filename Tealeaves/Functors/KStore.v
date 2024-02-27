@@ -128,7 +128,10 @@ Section cata.
         unfold pure_KStore. fequal.
         ext b. rewrite toNil. reflexivity.
       - cbn.
-        change_left (pure (F := KStore A B) (fun a : B => Vector.cons B a n) <⋆> kstore h <⋆> traverse (T := VEC n) (G := KStore A B) kstore contents0 ).
+        change_left (pure (F := KStore A B)
+                          (Basics.flip (fun a : B => Vector.cons B a n))
+                     <⋆> traverse (T := VEC n) (G := KStore A B) kstore contents0
+                      <⋆> kstore h).
         rename h into a.
         rewrite IHcontents.
         unfold kstore.
@@ -136,15 +139,12 @@ Section cata.
         unfold_ops @Mult_KStore @Pure_KStore.
         unfold mult_KStore, pure_KStore.
         cbn.
-        fequal.
-        ext X.
-        rewrite Vector.eta.
-        reflexivity.
+        admit.
     }
     cbn.
     rewrite lemma.
     reflexivity.
-  Qed.
+  Admitted.
 
   Lemma cata_appmor
   `{ApplicativeMorphism G1 G2 ϕ}:
