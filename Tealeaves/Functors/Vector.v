@@ -1,6 +1,6 @@
 From Tealeaves Require Export
-  Functors.Batch
   Classes.Categorical.Applicative
+  Classes.Kleisli.TraversableFunctor
   Classes.Categorical.TraversableFunctor.
 
 From Tealeaves Require Import
@@ -79,7 +79,12 @@ Fixpoint dist_Vector (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
   match v in Vector.t _ n return G (Vector.t A n) with
   | Vector.nil _(*=A*) => pure (F := G) (Vector.nil A)
   | Vector.cons _(*=A*) a(*:FA*) m(*n = S m*) rest =>
+      pure (F := G) (Basics.flip (fun a => Vector.cons A a m))
+      <⋆> dist_Vector m G rest
+      <⋆> a
+      (*
       pure (F := G) (fun a => Vector.cons A a m) <⋆> a <⋆> dist_Vector m G rest
+       *)
   end.
 
 #[export] Instance Dist_Vector (n : nat):
@@ -118,7 +123,7 @@ Proof.
     rewrite <- (ap_map).
     rewrite <- (ap_map).
     rewrite (map_ap).
-    compose near (pure (F := G) (fun a0 : B => Vector.cons B a0 n)).
+    compose near (pure (F := G) (Basics.flip (fun a0 : B => Vector.cons B a0 n))).
     rewrite (fun_map_map (F := G)).
     rewrite (app_pure_natural).
     reflexivity.
@@ -175,13 +180,14 @@ Proof.
     rewrite <- (ap_map (G := G1)).
     rewrite (map_ap (G := G1)).
     rewrite (map_ap (G := G1)).
-    compose near (pure (F := G1) (pure (F := G2) (fun a0 : A => Vector.cons A a0 n))).
+    compose near (pure (F := G1) (pure (F := G2)
+                                       (Basics.flip (fun a0 : A => Vector.cons A a0 n)))).
     rewrite (fun_map_map (F := G1)).
-    compose near (pure (F := G1) (pure (F := G2) (fun a0 : A => Vector.cons A a0 n))).
+    compose near (pure (F := G1) (pure (F := G2)
+                                       (Basics.flip (fun a0 : A => Vector.cons A a0 n)))).
     rewrite (fun_map_map (F := G1)).
     rewrite (app_pure_natural (G := G1)).
     (* RHS *)
-    rewrite (map_ap (G := G1)).
     rewrite (map_ap (G := G1)).
     rewrite (app_pure_natural (G := G1)).
     reflexivity.
