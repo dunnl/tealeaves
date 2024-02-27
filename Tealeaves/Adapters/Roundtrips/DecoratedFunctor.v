@@ -8,8 +8,6 @@ Import Kleisli.Monad.Notations.
 
 #[local] Generalizable Variable T.
 
-Import Kleisli.DecoratedFunctor.DerivedInstances.
-
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
 Module Roundtrip1.
@@ -23,7 +21,7 @@ Module Roundtrip1.
 
   #[local] Instance mapd' : Mapd E T := ToKleisli.Mapd_dec E T.
 
-  Definition map' : Map T := Map_Mapd E T.
+  Definition map' : Map T := Map_Mapd.
   Definition dec' : Decorate E T := Decorate_Mapd E T.
 
   Goal mapT = map'.
@@ -60,7 +58,7 @@ Module Roundtrip2.
     `{mapdT : Mapd E T}
     `{! Kleisli.DecoratedFunctor.DecoratedFunctor E T}.
 
-  #[local] Instance map' : Map T := Map_Mapd E T.
+  #[local] Instance map' : Map T := Map_Mapd.
   #[local] Instance dec' : Decorate E T := Decorate_Mapd E T.
 
   Definition mapd' : Mapd E T := ToKleisli.Mapd_dec E T.
@@ -74,7 +72,7 @@ Module Roundtrip2.
     ext A B f.
     unfold_compose_in_compose.
     rewrite (dfun_mapd2 (E := E) (T := T)).
-    rewrite DerivedInstances.kc4_04.
+    rewrite kc4_04.
     reflexivity.
   Qed.
 

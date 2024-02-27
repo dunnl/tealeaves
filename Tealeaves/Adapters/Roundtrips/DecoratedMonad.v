@@ -8,8 +8,6 @@ Import Kleisli.Monad.Notations.
 
 #[local] Generalizable Variable T W.
 
-Import Kleisli.DecoratedMonad.DerivedInstances.
-
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
 Module Roundtrip1.
@@ -24,7 +22,7 @@ Module Roundtrip1.
 
   #[local] Instance bindd' : Bindd W T T := ToKleisli.Bindd_dec W T.
 
-  Definition map' : Map T := Map_Bindd (W := W) (T := T).
+  Definition map' : Map T := Map_Bindd W T.
   Definition dec' : Decorate W T := Decorate_Bindd W T.
   Definition join' : Join T := Join_Bindd W T.
 
@@ -77,7 +75,7 @@ Module Roundtrip2.
     `{Monoid W}
     `{@Kleisli.DecoratedMonad.DecoratedMonad W T retT binddT _ _}.
 
-  #[local] Instance map' : Map T := Map_Bindd (W := W) (T := T).
+  #[local] Instance map' : Map T := Map_Bindd W T.
   #[local] Instance dec' : Decorate W T := Decorate_Bindd W T.
   #[local] Instance join' : Join T := Join_Bindd W T.
 
@@ -101,7 +99,7 @@ Module Roundtrip2.
     change (Map_reader ?x) with (Map_prod x) in *.
     (* TODO ^^ Fix this *)
     rewrite <- (natural (ϕ := @extract (W ×) _)).
-    rewrite (DerivedInstances.kc4_04).
+    rewrite kc4_04.
     reflexivity.
   Qed.
 

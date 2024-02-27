@@ -282,7 +282,6 @@ Section locally_nameless_basic_principles.
       t '(u1) = t '(u2).
   Proof.
     intros. unfold open.
-    About bindd_respectful.
     now apply bindd_respectful.
   Qed.
 

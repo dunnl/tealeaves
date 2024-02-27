@@ -33,7 +33,7 @@ Module ToCategorical.
   Section with_monad.
 
     Context
-      `{Kleisli.TraversableMonad.TraversableMonad T}.
+      `{Kleisli.TraversableMonad.TraversableMonadFull T}.
 
     Existing Instance Map_Bindt.
     Existing Instance Traverse_Bindt.
@@ -108,7 +108,8 @@ Module ToCategorical.
       constructor.
       - typeclasses eauto.
       - typeclasses eauto.
-      - intros. unfold_ops @Map_Bindt.
+      - intros.
+        rewrite map_to_bindt.
         rewrite (ktm_bindt0 (T := T) (G := fun A => A)).
         reflexivity.
     Qed.
@@ -120,11 +121,11 @@ Module ToCategorical.
       - typeclasses eauto.
       - intros.
         unfold_ops @Map_compose @Join_Bindt.
-        rewrite <- ktmf_bind_to_bindt.
-        rewrite <- ktmf_bind_to_bindt.
+        rewrite <- bind_to_bindt.
+        rewrite <- bind_to_bindt.
         unfold_compose_in_compose.
-        rewrite (map_bind T).
-        rewrite (bind_map T).
+        rewrite map_bind.
+        rewrite bind_map.
         reflexivity.
     Qed.
 
@@ -132,31 +133,32 @@ Module ToCategorical.
     Proof.
       intros. unfold_ops @Join_Bindt.
       unfold_compose_in_compose.
-      change_left (bind (B := A) id ∘ ret (T := T) (A := T A)).
-      now rewrite (kmon_bind0 (T := T)).
+      rewrite <- bind_to_bindt.
+      rewrite kmon_bind0.
+      reflexivity.
     Qed.
 
      Lemma mon_join_map_ret_T : forall A : Type, join (T := T) ∘ map (F := T) ret = @id (T A).
     Proof.
       intros.
       unfold_ops @Join_Bindt @Map_Bindt.
-      change_left (bind (U := T) (T := T) (@id (T A)) ∘ map (F := T) (ret (T := T) (A := A))).
-      rewrite (bind_map T).
+      rewrite <- bind_to_bindt.
+      unfold_compose_in_compose.
+      rewrite bind_map.
       change (id ∘ ?g) with g.
-      now rewrite (kmon_bind1 (T := T)).
+      rewrite kmon_bind1.
+      reflexivity.
     Qed.
 
     Lemma mon_join_join_T : forall A : Type, join (T := T) (A := A) ∘ join (T := T) = join ∘ map (F := T) (join (T := T)).
     Proof.
       intros.
       unfold_ops @Join_Bindt @Map_Bindt.
-      rewrite <- ktmf_bind_to_bindt.
-      rewrite <- ktmf_bind_to_bindt.
-      rewrite <- ktmf_bind_to_bindt.
+      rewrite <- bind_to_bindt.
+      rewrite <- bind_to_bindt.
       unfold_compose_in_compose.
-      rewrite (kmon_bind2 (T := T)).
-      rewrite (kmon_bind2 (T := T)).
-      rewrite (kc1_10 T).
+      rewrite kmon_bind2.
+      rewrite bind_map.
       reflexivity.
     Qed.
 
@@ -180,7 +182,7 @@ Module ToCategorical.
                                       map (F := G) (join (T := T)) ∘ dist T G ∘ map (F := T) (dist T G).
     Proof.
       intros. unfold_ops @Dist_Bindt @Join_Bindt.
-      do 2 rewrite <- ktmf_bind_to_bindt.
+      do 2 rewrite <- bind_to_bindt.
       unfold_compose_in_compose.
       rewrite bindt_bind.
       unfold compose at 5.

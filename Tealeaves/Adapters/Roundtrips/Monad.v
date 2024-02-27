@@ -21,7 +21,7 @@ Module Roundtrip1.
   #[local] Instance bind_derived: Bind T T :=
     CategoricalToKleisli.Monad.ToKleisli.Bind_Join T.
 
-  Definition map2 :=  Map_Bind T.
+  Definition map2 :=  Map_Bind.
   Definition join2 := Join_Bind T.
 
   Goal map1 = map2.
@@ -57,7 +57,7 @@ Section RoundTrip2.
 
   Definition map_derived := Map_Bind.
   Definition join_derived := Join_Bind.
-  Definition bind2 : Bind T T := ToKleisli.Bind_Join T (H := Map_Bind T).
+  Definition bind2 : Bind T T := ToKleisli.Bind_Join T (H := Map_Bind).
 
   Goal bind1 = bind2.
   Proof.

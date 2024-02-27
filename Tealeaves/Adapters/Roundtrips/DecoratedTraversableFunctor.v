@@ -8,8 +8,6 @@ Import Kleisli.Monad.Notations.
 
 #[local] Generalizable Variable T.
 
-Import Kleisli.DecoratedFunctor.DerivedInstances.
-
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
 Module Roundtrip1.
@@ -24,13 +22,13 @@ Module Roundtrip1.
 
   #[local] Instance mapdt' : Mapdt E T := ToKleisli.Mapdt_distdec E T.
 
-  Definition map' : Map T := DerivedInstances.Map_Mapdt E T.
+  Definition map' : Map T := Map_Mapdt.
   Definition decorate' : Decorate E T := ToCategorical.Decorate_Mapdt E T.
   Definition dist' : ApplicativeDist T := ToCategorical.Dist_Mapdt E T.
 
   Goal mapT = map'.
   Proof.
-    unfold map'. unfold_ops @DerivedInstances.Map_Mapdt.
+    unfold map'. unfold_ops @Map_Mapdt.
     unfold mapdt, mapdt'.
     unfold_ops @ToKleisli.Mapdt_distdec.
     ext A B f.
@@ -73,15 +71,13 @@ Module Roundtrip2.
     (E : Type)
     (T : Type -> Type)
     `{mapdtT : Mapdt E T}
-    `{@Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T _}.
+    `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-  #[local] Instance map' : Map T := DerivedInstances.Map_Mapdt E T.
+  #[local] Instance map' : Map T := Map_Mapdt.
   #[local] Instance dist' : ApplicativeDist T := ToCategorical.Dist_Mapdt E T.
   #[local] Instance decorate' : Decorate E T := ToCategorical.Decorate_Mapdt E T.
 
   Definition mapdt' : Mapdt E T := ToKleisli.Mapdt_distdec E T.
-
-  Import DerivedInstances.
 
   Goal forall G `{Applicative G}, @mapdtT G _ _ _ = @mapdt' G _ _ _.
   Proof.
@@ -90,15 +86,19 @@ Module Roundtrip2.
     unfold map, map', dist, dist', dec, decorate'.
     ext A B f.
     unfold_ops @ToCategorical.Dist_Mapdt.
-    unfold_ops @DerivedInstances.Map_Mapdt.
+    unfold_ops @Map_Mapdt.
     unfold_ops @ToCategorical.Decorate_Mapdt.
-    change_right (mapdt T G (extract (prod E) (G B)) ∘
-                    map T f ∘
-                    mapd T id).
-    unfold map'.
-    rewrite (mapdt_map T G).
-    rewrite (mapdt_mapd T G).
-    fequal. ext [e a]. reflexivity.
+    rewrite <- map_to_mapdt.
+    rewrite mapdt_map.
+    change (mapdt (extract ∘ map f))
+      with (map (F := fun A => A) (mapdt (extract ∘ map f))).
+    rewrite (kdtfun_mapdt2 (G2 := G) (G1 := fun A => A)).
+    rewrite mapdt_app_l.
+    fequal.
+    unfold kc6.
+    unfold_ops @Map_I.
+    ext [w a].
+    reflexivity.
   Qed.
 
 End Roundtrip2.

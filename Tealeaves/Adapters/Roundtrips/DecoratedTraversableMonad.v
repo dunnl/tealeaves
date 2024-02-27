@@ -7,7 +7,6 @@ Import Kleisli.Monad.Notations.
 
 #[local] Generalizable Variable T W.
 
-Import Kleisli.DecoratedTraversableMonad.DerivedInstances.
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
 Module Roundtrip1.
@@ -21,18 +20,18 @@ Module Roundtrip1.
     `{Return T}
     `{! Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
-  #[local] Instance binddt' : Binddt W T T := ToKleisli.Binddt_ddj W T.
+  #[local] Instance binddt' : Binddt W T T := ToKleisli.Binddt_categorical W T.
 
-  Definition map' : Map T := DerivedInstances.Map_Binddt W T.
+  Definition map' : Map T := Map_Binddt W T T.
   Definition join' : Join T := ToCategorical.Join_Binddt W T.
   Definition decorate' : Decorate W T := ToCategorical.Decorate_Binddt W T.
   Definition dist' : ApplicativeDist T := ToCategorical.Dist_Binddt W T.
 
   Goal mapT = map'.
   Proof.
-    unfold map'. unfold_ops @DerivedInstances.Map_Binddt.
+    unfold map'. unfold_ops @Map_Binddt.
     unfold binddt, binddt'.
-    unfold_ops @ToKleisli.Binddt_ddj.
+    unfold_ops @ToKleisli.Binddt_categorical.
     ext A B f.
     unfold_ops @Map_I.
     rewrite (dist_unit (F := T)).
@@ -51,17 +50,18 @@ Module Roundtrip1.
     intros.
     unfold dist'. unfold_ops @ToCategorical.Dist_Binddt.
     unfold binddt, binddt'.
-    unfold_ops @ToKleisli.Binddt_ddj.
+    unfold_ops @ToKleisli.Binddt_categorical.
     ext A.
     rewrite <- (fun_map_map (F := T)).
     unfold_compose_in_compose.
     reassociate <- on right.
-    reassociate -> near (map T (map G (ret T A))).
-    change (map T (map G (ret T A)))
-      with ((map (T ○ G) (ret T A))).
+    reassociate -> near (map (map (ret))).
+    change (map (map (ret)))
+      with ((map (F := T ○ G) (ret (A := A)))).
     rewrite <- (natural (ϕ := @dist T _ G _ _ _)).
     unfold_ops @Map_compose.
     reassociate <- on right.
+    inversion H5.
     rewrite (fun_map_map (F := G)).
     rewrite (mon_join_map_ret (T := T)).
     rewrite (fun_map_id (F := G)).
@@ -74,7 +74,7 @@ Module Roundtrip1.
   Proof.
     unfold join'. unfold_ops @ToCategorical.Join_Binddt.
     unfold binddt, binddt'.
-    unfold_ops @ToKleisli.Binddt_ddj.
+    unfold_ops @ToKleisli.Binddt_categorical.
     ext A.
     rewrite (dist_unit (F := T)).
     reassociate -> on right.
@@ -86,7 +86,7 @@ Module Roundtrip1.
   Proof.
     unfold decorate'. unfold_ops @ToCategorical.Decorate_Binddt.
     unfold binddt, binddt'.
-    unfold_ops @ToKleisli.Binddt_ddj @Map_I.
+    unfold_ops @ToKleisli.Binddt_categorical @Map_I.
     ext A.
     rewrite (dist_unit (F := T)).
     change (?f ∘ id) with f.
@@ -101,52 +101,52 @@ End Roundtrip1.
 Module Roundtrip2.
 
   Context
-    `{binddtT : Binddt W T T}
-    `{Monoid W}
-    `{Return T}
-    `{! Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
+    `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonadFull W T}.
 
-  #[local] Instance map' : Map T := DerivedInstances.Map_Binddt W T.
+  #[local] Instance map' : Map T := Map_Binddt W T T.
   #[local] Instance dist' : ApplicativeDist T := ToCategorical.Dist_Binddt W T.
   #[local] Instance join' : Join T := ToCategorical.Join_Binddt W T.
   #[local] Instance decorate' : Decorate W T := ToCategorical.Decorate_Binddt W T.
 
-  Definition binddt' : Binddt W T T := ToKleisli.Binddt_ddj W T.
+  Definition binddt' : Binddt W T T := ToKleisli.Binddt_categorical W T.
 
-    #[local] Tactic Notation "binddt_to_bindd" :=
-    change (binddt T (fun A0 : Type => A0) ?f) with (bindd T (U := T) f).
-    #[local] Tactic Notation "binddt_to_bindt" :=
-      change (binddt T ?G (?f ∘ extract (prod W) _)) with (bindt G _ _ f).
-    #[local] Tactic Notation "bindd_to_map" :=
-      change (bindd T (ret T _ ∘ ?f ∘ extract (prod W) _)) with (map T f).
+  #[local] Tactic Notation "binddt_to_bindd" :=
+    rewrite <- bindd_to_binddt.
+  #[local] Tactic Notation "binddt_to_bindt" :=
+    rewrite <- bindt_to_binddt.
+  #[local] Tactic Notation "bindd_to_map" :=
+    rewrite <- map_to_bindd.
 
-  Goal forall G `{Applicative G}, @binddtT G _ _ _ = @binddt' G _ _ _ .
+  Goal forall G `{Applicative G}, @binddt W T T Binddt_inst G _ _ _ = @binddt' G _ _ _ .
   Proof.
     intros.
-    unfold binddt'. unfold_ops @ToKleisli.Binddt_ddj.
+    unfold binddt'. unfold_ops @ToKleisli.Binddt_categorical.
     ext A B f.
     unfold map at 2, map', Map_Binddt.
     unfold dist, dist', ToCategorical.Dist_Binddt.
     unfold dec, decorate', ToCategorical.Decorate_Binddt.
     binddt_to_bindd.
+    binddt_to_bindd.
     binddt_to_bindt.
     bindd_to_map.
     unfold map'.
     reassociate -> on right.
-    rewrite (DerivedInstances.map_bindd W T).
+    rewrite (map_bindd).
     reassociate -> on right.
     unfold_compose_in_compose.
-    rewrite (DerivedInstances.bindt_bindd W T G).
+    rewrite (bindt_bindd).
     reassociate <- on right.
-    rewrite (DecoratedTraversableMonad.DerivedInstances.bindt_map W T G).
-    rewrite (ktm_bindt0 G).
+    rewrite (bindt_map).
+    rewrite (ktm_bindt0).
     unfold join, join'; unfold_ops @ToCategorical.Join_Binddt.
-    rewrite (kdtm_binddt2 W T G (fun A => A)).
-    change_left (binddt T G f).
-    rewrite (binddt_app_r T G).
-    rewrite (kc7_76 W T).
-    change (extract (W ×) (T B)) with (id ∘ extract (W ×) (T B)).
-    rewrite (DecoratedTraversableFunctor.DerivedInstances.kc6_06 G).
+    unfold compose at 2.
+    rewrite (kdtm_binddt2 (G1 := G) (G2 := fun A => A)).
+    rewrite (binddt_app_r).
+    rewrite (kc7_76).
+    change (extract (W := (W ×)) (A := T B))
+      with (id ∘ extract (W := (W ×)) (A := T B)).
+    rewrite (kc6_06).
+    inversion H3.
     rewrite (fun_map_id (F := G)).
     reflexivity.
   Qed.

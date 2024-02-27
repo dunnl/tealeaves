@@ -34,27 +34,15 @@ Module ToCategorical.
     Context
       (E : Type)
       (T : Type -> Type)
-      `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
-
-    #[local] Tactic Notation "unfold_everything" :=
-         unfold_ops @Map_compose;
-         unfold_ops @Decorate_Mapdt;
-         unfold_ops @Map_Mapdt;
-         unfold_ops @Dist_Mapdt.
-
-    #[local] Tactic Notation "mapdt_to_mapd" :=
-      change (mapdt T (fun A => A) (A := ?A) (B := ?B)) with (mapd T (A := A) (B := B)).
-
-    #[local] Tactic Notation "mapd_to_map" :=
-      change (mapd T (?f ∘ extract (prod E) ?A)) with (map T f).
+      `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}.
 
       Lemma dec_dec : forall (A : Type),
         dec T ∘ dec T = map T (cojoin (E ×)) ∘ dec T (A := A).
     Proof.
       intros.
-      unfold_everything.
-      mapdt_to_mapd.
-      mapd_to_map.
+      unfold_ops @Decorate_Mapdt.
+      rewrite <- mapd_to_mapdt.
+      rewrite <- mapd_to_mapdt.
       rewrite (dfun_mapd2 (E := E) (T := T)).
       rewrite map_mapd.
       reflexivity.
@@ -64,11 +52,11 @@ Module ToCategorical.
         map T (extract (E ×) A) ∘ dec T = @id (T A).
     Proof.
       intros.
-      unfold_everything.
-      mapdt_to_mapd.
-      mapd_to_map.
+      unfold_ops @Decorate_Mapdt.
+      rewrite <- mapd_to_mapdt.
       rewrite map_mapd.
-      rewrite (dfun_mapd1 (E := E) (T := T)).
+      change (?f ∘ id) with f.
+      rewrite dfun_mapd1.
       reflexivity.
     Qed.
 
@@ -78,9 +66,10 @@ Module ToCategorical.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros.
-        unfold_everything.
-        mapdt_to_mapd.
-        mapd_to_map.
+        unfold_ops @Map_compose.
+        unfold_ops @Decorate_Mapdt.
+        rewrite <- mapd_to_mapdt.
+        rewrite <- mapd_to_mapdt.
         rewrite map_mapd.
         rewrite mapd_map.
         reflexivity.
@@ -101,9 +90,8 @@ Module ToCategorical.
     - typeclasses eauto.
     - typeclasses eauto.
     - intros.
-      unfold_everything.
-      mapdt_to_mapd.
-      mapd_to_map.
+      unfold_ops @Map_compose.
+      unfold_ops @Dist_Mapdt.
       rewrite map_mapdt.
       rewrite mapdt_map.
       (* TODO Fix this *)
@@ -116,9 +104,8 @@ Module ToCategorical.
     forall A : Type, dist T G2 ∘ map T (ϕ A) = ϕ (T A) ∘ dist T G1.
   Proof.
     intros.
-    unfold_everything.
-    mapdt_to_mapd.
-    mapd_to_map.
+    unfold_ops @Map_compose.
+    unfold_ops @Dist_Mapdt.
     infer_applicative_instances.
     rewrite mapdt_map.
     (* TODO Fix this *)
@@ -132,7 +119,7 @@ Module ToCategorical.
       dist T (fun A0 : Type => A0) = @id (T A).
   Proof.
     intros.
-    unfold_everything.
+    unfold_ops @Dist_Mapdt.
     now rewrite (kdtfun_mapdt1 (E := E) (T := T)).
   Qed.
 
@@ -142,7 +129,7 @@ Module ToCategorical.
         Applicative G2 -> forall A : Type, dist T (G1 ∘ G2) (A := A) = map G1 (dist T G2) ∘ dist T G1.
   Proof.
     intros.
-    unfold_everything.
+    unfold_ops @Dist_Mapdt.
     rewrite (kdtfun_mapdt2 (E := E) (T := T)).
     change (extract (E ×) ?f) with (id ∘ extract (E ×) f) at 2.
     rewrite kc6_26.
@@ -163,17 +150,19 @@ Module ToCategorical.
         dist T G ∘ map T strength ∘ dec (A := G A) T = map G (dec T) ∘ dist T G.
   Proof.
     intros.
-
-    unfold_everything.
-    mapdt_to_mapd.
-    rewrite mapdt_mapd.
+    unfold_ops @Dist_Mapdt @Decorate_Mapdt.
+    rewrite <- mapd_to_mapdt.
+    reassociate -> on left.
+    rewrite map_mapd.
+    rewrite <- mapd_to_mapdt.
     rewrite mapdt_mapd.
     rewrite mapd_mapdt.
     rewrite (fun_map_id (F := G)).
     rewrite kcom_cobind1.
-    change (extract (prod E) (G (E * A))) with (id ∘ (extract (prod E) (G (E * A)))).
+    change (extract (prod E) (G (E * A))) with
+      (id ∘ (extract (prod E) (G (E * A)))).
     rewrite kc4_04.
-    fequal. now ext [e ga].
+    reflexivity.
   Qed.
 
   #[export] Instance: Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
