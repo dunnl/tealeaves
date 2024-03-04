@@ -1326,7 +1326,25 @@ Proof.
   - rewrite runBatch_rw2.
     rewrite traverse_Batch_rw2'.
     rewrite IHrest.
-Admitted.
+    unfold compose at 6.
+    rewrite (ap_compose2 (Batch A' B) F).
+    rewrite <- ap_map.
+    compose near (runBatch (F ∘ Batch A' B) (map F (batch A' B) ∘ ϕ) (B -> C) rest) on right.
+    rewrite (fun_map_map (F := F)).
+    repeat fequal.
+    ext b.
+    unfold precompose, ap, compose.
+    cbn.
+    compose near b on right.
+    rewrite (fun_map_map (F := Batch A' B)).
+    compose near b on right.
+    rewrite (fun_map_map (F := Batch A' B)).
+    unfold compose. cbn.
+    fequal.
+    change (?f ○ id) with f.
+    rewrite (fun_map_id).
+    reflexivity.
+Qed.
 
 (** * <<Batch _ B C>> is a traversable monad *)
 (******************************************************************************)
