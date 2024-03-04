@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Misc.NaturalNumbers
   Functors.List
+  Adapters.Isomorphisms.BatchtoKStore
   Theory.DecoratedTraversableMonad.
 
 Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
@@ -116,7 +117,7 @@ Fixpoint binddt_term
       | nil => pure nil
       | cons d0 drest =>
           pure cons <⋆> binddt_term f d0 <⋆> F drest
-      end) defs) <⋆> binddt_term (f ⦿ length defs) body
+      end) defs) <⋆> binddt_term (f ⦿ List.length defs) body
   | app t1 t2 =>
       pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
   end.
@@ -128,7 +129,7 @@ Lemma binddt_rw_letin: forall `{Applicative G} (v1 v2 : Type)
   forall f : nat * v1 -> G (term v2),
     binddt_term f (letin l body) =
       pure (@letin v2) <⋆> traverse (binddt_term f) l <⋆>
-        binddt_term (f ⦿ length l) body.
+        binddt_term (f ⦿ List.length l) body.
 Proof.
   intros.
   destruct l.
@@ -145,16 +146,61 @@ Proof.
 Qed.
 
 Lemma binddt_helper_letin
-        `{Applicative G1}
         `{Applicative G2}
-        A B C
-    (f : nat * A -> G1 (term B))
+        B C (l : list (term B))
     (g : nat * B -> G2 (term C)):
-    pure (compose (binddt_term g) ∘ letin (v:=B)) =
-      pure (compose (binddt_term g) ∘ letin (v:=B)).
+  binddt_term g ∘ letin (v:=B) l =
+    (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) (pure (letin (v:=C)) <⋆> (traverse (binddt_term g) l)).
+(*
+    (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) (pure (letin (v:=C)) <⋆> (traverse (binddt_term g) l)).
+
+   (compose (precompose (binddt_term g) ∘ ap G2) ∘ precompose (traverse (T := list) (binddt_term g)) ∘ ap G2 ∘ pure (F := G2))
+*)
 Proof.
-  unfold compose.
-Abort.
+  unfold precompose, compose.
+  ext body.
+  rewrite binddt_rw_letin.
+  reflexivity.
+Qed.
+
+
+Lemma length_helper: forall A B (l:list A) l',
+    Datatypes.length (to_makeFn_gen (B := B) l l') = List.length l.
+Proof.
+  intros.
+Admitted.
+
+Lemma binddt_helper_letin2
+        `{Applicative G2}
+        A B C (l : list (term A))
+    (g : nat * B -> G2 (term C)):
+  compose (binddt_term g) ∘ letin (v:=B) ∘ to_makeFn_gen l =
+    ((compose (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) ∘
+             precompose (traverse (T := list) (binddt_term g)) ∘
+             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ to_makeFn_gen l.
+    (*
+    (compose (precompose (binddt_term g) ∘ ap G2) ∘
+             precompose (traverse (T := list) (binddt_term g)) ∘ ap G2 ∘ pure (F := G2)) (letin (v:=B)).
+     *)
+Proof.
+  intros.
+  Check compose (binddt_term g) ∘ letin (v:=B) ∘ to_makeFn_gen l.
+  (* : Vector.t (term B) (length_gen l) -> term B -> G2 (term C) *)
+  Check
+    (compose (precompose (binddt_term g) ∘ ap G2) ∘
+             precompose (traverse (T := list) (binddt_term g)) ∘
+             ap G2 ∘ pure (F := G2)) (letin (v:=C)).
+  (* : list (term B) -> term B -> G2 (term C) *)
+  Check
+    ((compose (precompose (binddt_term g) ∘ ap G2) ∘
+             precompose (traverse (T := list) (binddt_term g)) ∘
+             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ to_makeFn_gen l.
+  ext l'.
+  change_left (binddt_term g ∘ letin (to_makeFn_gen l l')).
+  rewrite binddt_helper_letin.
+  rewrite length_helper.
+  reflexivity.
+Qed.
 
 Theorem dtm1_lam:
   forall `{Applicative G} (A B : Type),
@@ -192,8 +238,10 @@ Proof.
   induction t; intros f g.
   - cbn. change (preincr g 0) with (preincr g Ƶ).
     now rewrite preincr_zero.
-  - specialize (IHt (f ⦿ length l) (g ⦿ length l)).
-    rewrite kc7_preincr in IHt.
+  - do 2 rewrite binddt_rw_letin.
+
+    pose (IHt' := IHt (f ⦿ List.length l) (g ⦿ List.length l)).
+    rewrite kc7_preincr in IHt'.
     (* left *)
     rewrite binddt_rw_letin.
     rewrite map_ap.
@@ -201,10 +249,32 @@ Proof.
     rewrite app_pure_natural.
     (* right *)
     rewrite binddt_rw_letin.
+    rewrite (traverse_repr (C := B)).
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite binddt_helper_letin2.
+
+    rewrite <- map_to_ap.
+    assert (Functor G1) by (now inversion H2).
+    rewrite <- (fun_map_map (F := G1)).
+    unfold compose at 1.
+    rewrite (map_to_ap (to_makeFn_gen l)).
+    rewrite <- (traverse_repr (C := False) (binddt_term f)).
 
     Set Keyed Unification.
-    rewrite <- IHt.
-    unfold compose at 1.
+    rewrite <- IHt'.
+    rewrite_strat innermost (terms (ap_compose2 G2 G1)).
+    repeat rewrite map_ap.
+    rewrite (app_pure_natural (G := G1)).
+    repeat rewrite <- ap_map.
+    rewrite_strat innermost (terms (ap_compose2 G2 G1)).
+    repeat rewrite map_ap.
+    repeat rewrite (app_pure_natural (G := G1)).
+    rewrite <- ap_map.
+    repeat rewrite map_ap.
+    repeat rewrite (app_pure_natural (G := G1)).
+
 Abort.
 
 Theorem dtm4_stlc :
