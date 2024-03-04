@@ -264,12 +264,20 @@ Proof.
         intuition.
 Qed.
 
-#[export] Instance Natural_Elementd_Mapdt :
+#[export] Instance Natural_Elementd_env :
   Natural (@element_ctx_of E (env E) _).
 Proof.
   constructor.
   - typeclasses eauto.
-  - constructor.
-Abort.
+  - typeclasses eauto.
+  - unfold_ops @ElementsCtx_env.
+    intros.
+    rewrite ctxset_map_spec.
+    rewrite (natural (A := E * A)
+                     (B := E * B)
+                     (ϕ := @element_of list _)).
+    rewrite env_map_spec.
+    reflexivity.
+Qed.
 
 End env_instance.

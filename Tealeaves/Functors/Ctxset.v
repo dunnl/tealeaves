@@ -99,6 +99,12 @@ Section ctxset.
     now rewrite ctxset_map_to_mapd.
   Qed.
 
+  #[export] Instance Functor_ctxset :
+    Functor (ctxset E).
+  Proof.
+    typeclasses eauto.
+  Qed.
+
   (** ** Monoid instances *)
   (******************************************************************************)
   Instance Monoid_ctxset : forall A, Monoid (ctxset E A) := ltac:(typeclasses eauto).

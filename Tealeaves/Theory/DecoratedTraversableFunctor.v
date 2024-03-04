@@ -15,7 +15,7 @@ Import Subset.Notations.
 Import ContainerFunctor.Notations.
 Import DecoratedContainerFunctor.Notations.
 
-#[local] Generalizable Variables M E T G A B C ϕ.
+#[local] Generalizable Variables F M E T G A B C ϕ.
 
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope
   {H H0 H1} ϕ%function_scope {C}%type_scope b.
@@ -69,43 +69,6 @@ Section decorated_traversable_functor_theory.
     Qed.
 
   End constant_applicatives.
-
-  (** ** Factoring <<mapdt>> through <<runBatch>> *)
-  (******************************************************************************)
-  Theorem mapdt_through_runBatch `{Applicative G} `(f : E * A -> G B) :
-      mapdt f = runBatch f ∘ toBatch6.
-  Proof.
-    intros. unfold_ops @ToBatch6_Mapdt.
-    rewrite <- kdtfun_morph.
-    rewrite (runBatch_batch G).
-    reflexivity.
-  Qed.
-
-  Corollary traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
-    traverse f = runBatch (f ∘ extract (W := (E ×))) ∘ toBatch6.
-  Proof.
-    rewrite traverse_to_mapdt.
-    rewrite mapdt_through_runBatch.
-    reflexivity.
-  Qed.
-
-  Corollary mapd_through_runBatch `(f : E * A -> B) :
-      mapd f = runBatch (F := fun A => A) f ∘ toBatch6.
-  Proof.
-    intros.
-    rewrite mapd_to_mapdt.
-    rewrite mapdt_through_runBatch.
-    reflexivity.
-  Qed.
-
-  Corollary map_through_runBatch `(f : A -> B) :
-      map f = runBatch (F := fun A => A) (f ∘ extract) ∘ toBatch6.
-  Proof.
-    intros.
-    rewrite map_to_mapdt.
-    rewrite mapdt_through_runBatch.
-    reflexivity.
-  Qed.
 
   (** ** The <<foldmapd>> operation *)
   (******************************************************************************)
@@ -235,12 +198,12 @@ Section decorated_traversable_functor_theory.
 
     (** *** Factoring through <<runBatch>> *)
     (******************************************************************************)
-    Corollary ctx_tolist_to_runBatch6 {A : Type} (tag : Type) :
+    Corollary ctx_tolist_through_runBatch6 {A : Type} (tag : Type) :
       ctx_tolist = runBatch (B := tag) (F := const (list (E * A))) (ret (T := list))
                   ∘ toBatch6.
     Proof.
       rewrite (ctx_tolist_to_mapdt2 A tag).
-      now rewrite mapdt_to_runBatch.
+      now rewrite mapdt_through_runBatch.
     Qed.
 
     (** *** <<ctx_tolist>> is a natural transformation *)
@@ -450,7 +413,7 @@ Section decorated_traversable_functor_theory.
                   (ret (T := subset)) ∘ toBatch6.
     Proof.
       rewrite (ctx_elements_to_mapdt1 A).
-      now rewrite (mapdt_to_runBatch).
+      now rewrite (mapdt_through_runBatch).
     Qed.
 
     Corollary ctx_elements_through_runBatch2 {A tag : Type} :
@@ -458,7 +421,7 @@ Section decorated_traversable_functor_theory.
                   (ret (T := subset)) ∘ toBatch6.
     Proof.
       rewrite (ctx_elements_to_mapdt2 A tag).
-      now rewrite (mapdt_to_runBatch).
+      now rewrite (mapdt_through_runBatch).
     Qed.
 
     (** *** Composing <<elementsd>> and <<mapd>>/<<map>> *)
@@ -493,30 +456,36 @@ Section decorated_traversable_functor_theory.
       reflexivity.
     Qed.
 
-  (** *** <<elementsd>> is natural *)
-  (******************************************************************************)
+    (** *** <<elementsd>> is natural *)
+    (******************************************************************************)
+
+    (* TODO Relocate this instance *)
+    Import Functor.Notations.
+    #[export] Instance Natural_compose_Natural
+     `{Map F1} `{Map F2} `{Map F3}
+     (ϕ1: F1 ⇒ F2)
+     (ϕ2: F2 ⇒ F3)
+     `{! Natural ϕ1}
+     `{! Natural ϕ2}:
+      Natural (F := F1) (G := F3) (fun A => ϕ2 A ∘ ϕ1 A).
+    Proof.
+      assert (Functor F1) by now inversion Natural0.
+      assert (Functor F3) by now inversion Natural1.
+      constructor; try typeclasses eauto.
+      intros.
+      reassociate <- on left.
+      rewrite (natural (ϕ := ϕ2)).
+      reassociate -> on left.
+      rewrite (natural (ϕ := ϕ1)).
+      reflexivity.
+    Qed.
+
     #[export] Instance Natural_Elementd_Mapdt : Natural (@element_ctx_of E T _).
     Proof.
-      constructor.
-      - typeclasses eauto.
-      - apply Functor_instance_0.
-      - intros.
-        (* LHS *)
-        rewrite ctx_elements_to_foldMapd.
-        assert (Monoid_Morphism (subset (E * A)) (subset (E * B)) (map f)).
-        { constructor; try typeclasses eauto.
-          admit. admit.
-        }
-        rewrite (foldMapd_morphism (M1 := subset (E * A)) (M2 := subset (E * B))).
-        (*
-        rewrite env_map_spec.
-        rewrite (natural (ϕ := @ret list _)); unfold_ops @Map_I.
-        (* RHS *)
-        rewrite ctx_tolist_to_foldMapd.
-        rewrite foldMapd_map.
-        reflexivity.
-         *)
-    Admitted.
+      apply Natural_compose_Natural.
+      typeclasses eauto.
+      typeclasses eauto.
+    Qed.
 
     (** *** Relating <<element_of>> and <<elementsd>> *)
     (******************************************************************************)

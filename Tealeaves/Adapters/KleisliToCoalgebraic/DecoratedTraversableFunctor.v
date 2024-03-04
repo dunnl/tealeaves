@@ -27,43 +27,46 @@ Section runBatch.
 
   Context
     `{Map_inst: Map T}
-    `{Traverse_inst: Traverse T}
-    `{Mapdt_inst: Mapdt E T}
-    `{! Compat_Map_Mapdt}
-    `{! Compat_Traverse_Mapdt}
-    `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
+     `{Mapd_inst: Mapd E T}
+     `{Traverse_inst: Traverse T}
+     `{Mapdt_inst: Mapdt E T}
+     `{! Compat_Map_Mapdt}
+     `{! Compat_Mapd_Mapdt}
+     `{! Compat_Traverse_Mapdt}
+     `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-  Lemma mapdt_to_runBatch `{Applicative G} `(f : E * A -> G B) :
+  Theorem mapdt_through_runBatch `{Applicative G} `(f : E * A -> G B) :
     mapdt f = runBatch f ∘ toBatch6.
   Proof.
-    unfold_ops @ToBatch6_Mapdt.
-    rewrite <- (kdtfun_morph (ϕ := @runBatch _ _ G _ _ _ f)).
+    intros. unfold_ops @ToBatch6_Mapdt.
+    rewrite <- kdtfun_morph.
     rewrite (runBatch_batch G).
     reflexivity.
   Qed.
 
-  Lemma traverse_to_runBatch `{Applicative G} `(f : A -> G B) :
-    traverse f = runBatch (f ∘ extract) ∘ toBatch6.
+  Corollary traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
+    traverse f = runBatch (f ∘ extract (W := (E ×))) ∘ toBatch6.
   Proof.
     rewrite traverse_to_mapdt.
-    rewrite mapdt_to_runBatch.
+    rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
 
-  Corollary map_to_runBatch `(f : A -> B) :
-    map f = runBatch (F := fun A => A) (f ∘ extract) ∘ toBatch6.
-  Proof.
-    rewrite map_to_mapdt.
-    rewrite mapdt_to_runBatch.
-    reflexivity.
-  Qed.
-
-  Corollary id_to_runBatch : forall (A : Type),
-      id (A := T A) = runBatch (F := fun A => A) extract ∘ toBatch6.
+  Corollary mapd_through_runBatch `(f : E * A -> B) :
+      mapd f = runBatch (F := fun A => A) f ∘ toBatch6.
   Proof.
     intros.
-    rewrite <- kdtfun_mapdt1.
-    rewrite mapdt_to_runBatch.
+    rewrite mapd_to_mapdt.
+    rewrite mapdt_through_runBatch.
+    reflexivity.
+  Qed.
+
+  Corollary map_through_runBatch `(f : A -> B) :
+      map f = runBatch (F := fun A => A) (f ∘ extract) ∘ toBatch6.
+  Proof.
+    intros.
+    rewrite map_to_mapdt.
+    rewrite mapdt_through_runBatch.
     reflexivity.
   Qed.
 
