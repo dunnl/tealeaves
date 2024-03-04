@@ -156,7 +156,7 @@ Section laws.
   Import Applicative.Notations.
   Import Functors.Vector.
 
-  Theorem traverse_repr `{Applicative G} {A B C : Type}:
+  Theorem traverse_repr `{Applicative G} {A B : Type}:
     forall (f: A -> G B) (t: T A),
       traverse f t =
         pure (to_makeFn_gen t) <⋆>
