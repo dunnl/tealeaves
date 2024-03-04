@@ -58,37 +58,6 @@ Class DecoratedContainerMonadFull
     dconmf_element_compat :> Compat_Elements_ElementsCtx;
   }.
 
-(*
-#[local] Instance tmp `{DecoratedContainerMonadFull W T} :
-  DecoratedContainerFunctorFull W T.
-Proof.
-  constructor.
-  - admit.
-  - constructor.
-    + admit.
-    + constructor.
-      intros.
-      assert (lemma : mapd f = bindd (ret ∘ f)). admit.
-      rewrite lemma.
-      rewrite dconm_morphism_bind.
-      fequal.
-      ext p.
-      rewrite (@ctxset_mapd_to_bindd W _ _).
-      2: admit.
-      fequal.
-      reassociate <- on right.
-      rewrite dconm_morphism_ret.
-      reflexivity.
-    + intros.
-      assert (lemma : mapd f = bindd (ret ∘ f)). admit.
-      assert (lemma2 : mapd g = bindd (ret ∘ g)). admit.
-      rewrite lemma.
-      rewrite lemma2.
-      apply dconm_pointwise.
-      admit.
-Admitted.
-     *)
-
 (** * Basic properties of containers *)
 (******************************************************************************)
 Section decorated_container_monad_theory.
