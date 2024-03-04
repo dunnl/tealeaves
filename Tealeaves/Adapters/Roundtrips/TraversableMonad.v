@@ -201,7 +201,6 @@ Module Coalgebraic_Kleisli_Coalgebraic.
     unfold bindt.
     unfold bindt'.
     unfold_ops @Bindt_ToBatch3.
-    Search runBatch batch.
     rewrite runBatch_batch2.
     reflexivity.
   Qed.

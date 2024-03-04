@@ -357,7 +357,6 @@ Section locally_nameless_basic_principles.
         (n, l1) ∈d t /\ close_loc x (n, l1) = l.
   Proof.
     intros. unfold close.
-    About ind_mapd_iff.
     rewrite ind_mapd_iff.
     easy.
   Qed.
