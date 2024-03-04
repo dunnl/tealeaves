@@ -139,88 +139,102 @@ Module ToKleisli.
       Theorem kdtm_binddt2_T :
         map G1 (binddt (G := G2) g) ∘ binddt (G := G1) f = binddt (G := G1 ∘ G2) (g ⋆7 f).
       Proof.
+        rewrite (equiv' _ _ g f).
+        unfold kcompose_dtm_alt.
+        (* ********** *)
         unfold binddt at 1 2; unfold Binddt_categorical.
-        rewrite <- (fun_map_map (F := G1) (Functor := app_functor)).
+        assert (Functor G1) by now inversion Applicative0.
+        assert (Functor G2) by now inversion Applicative1.
+        (* Normalize associativity *)
         do 3 reassociate <-.
-        reassociate -> near (map G1 (μ B)).
+        (* Bring together <<map G1 (dec T B)>> and <<map G1 (μ B)>> *)
+        rewrite <- (fun_map_map (F := G1) (Functor := app_functor)).
+        bring (map G1 (dec T B)) and (map G1 (μ B)) together.
         rewrite (fun_map_map (F := G1) (Functor := app_functor)).
         rewrite dmon_join.
-        (* Rearrange right of <<shift>> *)
+        (* Move <<dec T (T (W * B))>> towards <<dec T A>> *)
         reassociate -> near (map T (dec T B)).
         rewrite <- (natural (ϕ := @dec W T _)).
         reassociate <- on left.
         rewrite <- (fun_map_map
-                     (F := G1) (Functor := app_functor)
+                     (F := G1)
                      _ _ _
-                     (dec T (T B))
-                     (μ (W * B) ∘ map T (shift T) ∘ map (T ○ prod W) (dec T B))).
+                     (dec T (T B))).
         reassociate <- on left.
-        reassociate -> near (δ T G1 (T B)).
+        bring (map G1 (dec T (T B))) and (δ T G1 (T B)) together.
         rewrite <- (dtfun_compat (F := T) (G := G1)).
-        reassociate <- on left.
-        reassociate -> near (map T f).
+        do 2 reassociate <- on left.
+        bring (dec T (G1 (T B))) and (map T f) together.
         rewrite <- (natural (ϕ := @dec W T _)).
+        change (map (T ○ prod W) f) with (map (T ∘ prod W) f).
         reassociate <- on left.
         reassociate -> near (dec T A).
+        (* Change decorate-then-decorate into decorate-then-duplicate *)
         rewrite dfun_dec_dec.
         reassociate <- on left.
-        reassociate -> near (map T cojoin).
-        change (map (T ○ prod W) f) with (map T (map (prod W) f)).
-        rewrite (fun_map_map (F := T)).
+        (* Now move <<μ B>> towards <<μ C>> *)
+        unfold shift; rewrite incr_spec.
+        change (μ (W * B) ∘ map T (map T (μ B) ∘ σ) ∘ map (T ○ prod W) (dec T B)) with
+          (μ (W * B) ∘ (map T (map T (μ B) ∘ σ) ∘ map (T ○ prod W) (dec T B))).
+        rewrite <- (fun_map_map (F := G1) (Functor := app_functor) _ _ _ _ (μ (W * B))).
         reassociate <- on left.
-        reassociate -> near (map T (map (prod W) f ∘ cojoin)).
-        rewrite (fun_map_map (F := T)).
-        (* Rearrange left of <<shift>> *)
-        change (map (T ○ prod W) (dec T B)) with (map T (map (prod W) (dec T B))).
-        rewrite (fun_map_map (F := G1) (Functor := app_functor)).
-        do 2 reassociate <- on left.
-        bring (map T g) and (μ (W * B)) together.
-        rewrite (natural (ϕ := @join T _)).
+        rewrite (fun_map_map (F := G1) _ _ _ (μ (W * B))).
+        reassociate -> near (μ (W * B)).
+        rewrite (natural (ϕ := join)).
         reassociate <- on left.
         bring (δ T G2 (T C)) and (μ (G2 (T C))) together.
         rewrite trvmon_join.
         do 2 reassociate <- on left.
-        rewrite (fun_map_map (F := G2) (Functor := app_functor)).
+        rewrite (fun_map_map (F := G2)).
+        (* Change map-join-then-join into join-then-join *)
         rewrite (mon_join_join (T := T)).
-        rewrite <- (fun_map_map (F := G2) (Functor := app_functor)).
-        reassociate -> near (δ T G2 (T (T C))).
-        change (map G2 (map T ?f)) with (map (G2 ∘ T) f).
-        unfold_compose_in_compose.
-        rewrite (natural (ϕ := @dist T _ G2 _ _ _)).
-        change (map (T ○ G2) ?f) with (map T (map G2 f)).
-        change (map (T ∘ T) ?g) with (map T (map T g)).
-        do 7 reassociate -> on left.
-        do 4 rewrite (fun_map_map (F := T)).
-        repeat reassociate <- on left.
-        rewrite <- (fun_map_map (F := G1) (Functor := app_functor)).
-        change (map G1 (map T ?f)) with (map (G1 ○ T) f).
-        reassociate -> near (δ T G1 (W * T B)).
-        rewrite (natural (ϕ := @dist T _ G1 _ _ _)).
-
-        rewrite <- (fun_map_map (F := G1) (Functor := app_functor)).
+        (* Now rearrange to match RHS *)
+        rewrite <- (fun_map_map (F := G2)).
+        change (map G2 (μ C) ∘ map G2 (map T (μ C)) ∘ δ T G2 (T (T C)) ∘ map T (δ T G2 (T C)) ∘ map (T ∘ T) g)
+          with (map G2 (μ C) ∘ (map G2 (map T (μ C)) ∘ δ T G2 (T (T C)) ∘ map T (δ T G2 (T C)) ∘ map (T ∘ T) g)).
+        rewrite <- (fun_map_map (F := G1)).
         change (map G1 (map G2 ?f)) with (map (G1 ∘ G2) f).
-        reassociate <- on left.
-        change (map (T ○ G1) ?f) with (map T (map G1 f)).
-        reassociate -> near (map T (σ ∘ map (prod W) f ∘ cojoin)).
+        change (map G2 (map T ?mu)) with (map (G2 ∘ T) mu).
+        rewrite (natural (ϕ := dist T G2)).
+        change (map (T ○ G2) ?f) with (map T (map G2 f)).
+        reassociate -> near (map T (δ T G2 (T C))).
         rewrite (fun_map_map (F := T)).
-        unfold strength.
-
-
-
-        unfold binddt.
-        unfold_compose_in_compose.
-        rewrite (dist_linear( F:= T) (G1 := G1) (G2 := G2) (T C)).
-        unfold kc7.
-        unfold binddt.
-        repeat fequal.
+        change (map (T ○ prod W) ?f) with (map T (map (W ×) f)).
+        rewrite (fun_map_map (F := T)).
+        reassociate -> near (δ T G1 (W * T B)).
+        change (map G1 (map T ?f)) with (map (G1 ○ T) f).
+        rewrite (natural (ϕ := dist T G1) (A := (W * T B)) (B := (T (W * B)))).
+        reassociate <- on left.
+        change (map (T ∘ T) ?g) with (map T (map T g)).
+        reassociate -> near (map T (map T g)).
+        rewrite (fun_map_map (F := T)).
+        rewrite <- (fun_map_map (F := G1)).
+        reassociate <- on left.
+        change (map G1 (map T ?f)) with (map (G1 ○ T) f).
+        reassociate -> near (δ T G1 (T (W * B))).
+        rewrite (natural (ϕ := δ T G1)).
+        reassociate <- on left.
+        reassociate -> near (map (T ○ G1) (map T (μ B) ∘ σ ∘ map (prod W) (dec T B))).
+        rewrite (fun_map_map (F := T ○ G1)).
+        change (map (T ∘ prod W) f) with (map T (map (prod W) f)).
+        change (map (T ○ G1) ?f) with (map T (map G1 f)).
+        reassociate -> near (map T cojoin).
+        rewrite (fun_map_map (F := T)).
+        reassociate -> near (map T (map (prod W) f ∘ cojoin)).
+        rewrite (fun_map_map (F := T)).
+        reassociate -> near (map T (σ ∘ (map (prod W) f ∘ cojoin))).
+        rewrite (fun_map_map (F := T)).
+        (* ********** *)
+        unfold binddt, kc7, binddt.
+        rewrite dist_linear.
+        do 4 reassociate <- on left.
+        reassociate -> near (map T (μ B)).
+        rewrite (fun_map_map (F := T)).
+        replace (cobind f) with (map (prod W) f ∘ cojoin).
+        reflexivity.
         ext [w a].
-        do 2 (unfold compose; cbn).
-        compose near (f (w, a)) on left.
-        rewrite (fun_map_map (F := G1) (Functor := app_functor)).
-        fequal.
-        unfold compose; cbn.
-
-      Admitted.
+        reflexivity.
+      Qed.
 
     End binddt_binddt.
 
