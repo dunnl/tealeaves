@@ -91,6 +91,20 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma mapsnd_Batch_rw1 {A B B' C : Type} `(f : B' -> B) (c : C) :
+  mapsnd_Batch B' B f (Done A B C c) = Done A B' C c.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma mapsnd_Batch_rw2 {A B B' C : Type} `(f : B -> B')
+                       (a : A) (b : Batch A B' (B' -> C)) :
+  mapsnd_Batch B B' f (b ⧆ a) =
+    map (Batch A B) (precompose f) (mapsnd_Batch B B' f b) ⧆ a.
+Proof.
+  reflexivity.
+Qed.
+
 (** *** Functor laws *)
 (******************************************************************************)
 Lemma map_id_Batch : forall (A B C : Type),
@@ -610,16 +624,17 @@ End runBatch_morphism.
 Section runBatch_monoid.
 
   Context
-    `{Monoid M}
-    {A B : Type}.
+    `{Monoid M}.
 
-  Fixpoint runBatch_monoid `(ϕ : A -> M) `(b : Batch A B C) : M :=
+  Fixpoint runBatch_monoid
+             {A B: Type} `(ϕ : A -> M) `(b : Batch A B C) : M :=
     match b with
     | Done _ _ _ c => monoid_unit M
     | Step _ _ _ rest a => runBatch_monoid (ϕ : A -> M) rest ● ϕ a
     end.
 
-  Lemma runBatch_monoid1 : forall (ϕ : A -> M) `(b : Batch A B C),
+  Lemma runBatch_monoid1
+          {A B: Type} : forall (ϕ : A -> M) `(b : Batch A B C),
       runBatch_monoid ϕ b = unconst (runBatch (Const M) (mkConst (tag := B) ∘ ϕ) _ b).
   Proof.
     intros. induction b.
@@ -627,9 +642,37 @@ Section runBatch_monoid.
     - cbn. now rewrite IHb.
   Qed.
 
-  Lemma runBatch_monoid2 : forall (ϕ : A -> M) `(b : Batch A B C),
+  Lemma runBatch_monoid2 {A B} : forall (ϕ : A -> M) `(b : Batch A B C),
       runBatch_monoid ϕ b = runBatch (const M) (ϕ : A -> const M B) _ b.
   Proof.
+    intros. induction b.
+    - easy.
+    - cbn. now rewrite IHb.
+  Qed.
+
+  Lemma runBatch_monoid_map
+          {A B C C'} : forall (ϕ : A -> M) `(f : C -> C') (b : Batch A B C),
+      runBatch_monoid ϕ b =
+        runBatch_monoid ϕ (map (Batch A B) f b).
+  Proof.
+    intros.
+    generalize dependent C'.
+    induction b; intros.
+    - reflexivity.
+    - cbn.
+      rewrite <- IHb.
+      reflexivity.
+  Qed.
+
+  Lemma runBatch_monoid_mapsnd
+          {A B B'} : forall (ϕ : A -> M) `(f : B' -> B) `(b : Batch A B C),
+      runBatch_monoid ϕ b =
+        runBatch_monoid ϕ (mapsnd_Batch B' B f b).
+  Proof.
+    intros.
+    rewrite runBatch_monoid2.
+    rewrite runBatch_monoid2.
+    rewrite <- runBatch_mapsnd.
     intros. induction b.
     - easy.
     - cbn. now rewrite IHb.
@@ -641,28 +684,69 @@ End runBatch_monoid.
 (******************************************************************************)
 Section length.
 
-  Context {A B : Type}.
-
-  #[local] Unset Implicit Arguments.
-
-  Fixpoint length_Batch {C : Type} (b : Batch A B C) : nat :=
+  Fixpoint length_Batch {A B C : Type} (b : Batch A B C) : nat :=
     match b with
     | Done _ _ _ _ => 0
     | Step _ _ _ rest a => S (length_Batch (C := B -> C) rest)
     end.
 
  (* The length of a batch is the same as the length of the list we can extract from it *)
-  Lemma batch_length1 : forall {C : Type} (b : Batch A B C),
+  Lemma batch_length1 : forall {A B C : Type} (b : Batch A B C),
       length_Batch b =
         length (runBatch (const (list A)) (ret list A) _ b).
   Proof.
-    intros C b.
+    intros.
     induction b as [C c | C b IHb a].
     - reflexivity.
     - cbn. rewrite IHb.
       unfold_ops @Monoid_op_list.
       rewrite List.app_length.
       cbn. lia.
+  Qed.
+
+  Lemma batch_length_map:
+    forall {A B C C': Type}
+      (f : C -> C') (b : Batch A B C),
+      length_Batch b =
+        length_Batch (map (Batch A B) f b).
+  Proof.
+    intros.
+    generalize dependent C'.
+    induction b as [C c | C b IHb a]; intros.
+    - reflexivity.
+    - cbn.
+      fequal.
+      specialize (IHb _ (compose f)).
+      auto.
+  Qed.
+
+  Lemma batch_length_mapfst:
+    forall {A A' B C: Type}
+      (f : A -> A') (b : Batch A B C),
+      length_Batch b =
+        length_Batch (mapfst_Batch A A' f b).
+  Proof.
+    intros.
+    induction b as [C c | C b IHb a].
+    - reflexivity.
+    - cbn. rewrite IHb.
+      reflexivity.
+  Qed.
+
+  Lemma batch_length_mapsnd:
+    forall {A B B' C: Type}
+      (f : B' -> B) (b : Batch A B C),
+      length_Batch b =
+        length_Batch (mapsnd_Batch B' B f b).
+  Proof.
+    intros.
+    induction b as [C c | C b IHb a]; intros.
+    - reflexivity.
+    - cbn.
+      fequal.
+      rewrite IHb.
+      rewrite (batch_length_map ((precompose f))).
+      reflexivity.
   Qed.
 
 End length.
@@ -1376,8 +1460,6 @@ Section deconstruction.
     | Step _ _ _ rest a =>
         Vector.cons A a (length_Batch rest) (Batch_to_contents rest)
     end.
-
-  Print Vector.cons.
 
   Fixpoint Batch_to_makeFn {C} (b: Batch A B C):
     Vector.t B (length_Batch b) -> C :=
