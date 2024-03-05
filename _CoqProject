@@ -4,6 +4,7 @@ Tealeaves/Axioms.v
 Tealeaves/Tactics/LibTactics.v
 Tealeaves/Tactics/Prelude.v
 Tealeaves/Misc/Product.v #Required by comonoid.v
+Tealeaves/Misc/Setoids.v
 Tealeaves/Classes/EqDec_eq.v
 Tealeaves/Classes/Category.v
 Tealeaves/Classes/Monoid.v

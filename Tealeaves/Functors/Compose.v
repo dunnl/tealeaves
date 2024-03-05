@@ -29,7 +29,10 @@ Section Functor_composition.
   #[export] Instance Map_compose : Map (G ∘ F) | 3 :=
     fun A B f => map (F := G) (map (F := F) f).
 
-  #[export, program] Instance Functor_compose : Functor (G ∘ F).
+  #[export] Instance Functor_compose : Functor (G ∘ F).
+  Proof.
+    constructor.
+    -
 
   Solve Obligations with
     (intros; unfold transparent tcs;
