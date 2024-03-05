@@ -499,12 +499,13 @@ Section traversable_functor_theory.
     Qed.
 
     Corollary traverse_respectful_id {A} :
-      forall (G : Type -> Type)
-        `{Applicative G} (t : T A) (f : A -> G A),
-        (forall a, a ∈ t -> f a = pure a) -> traverse f t = pure t.
+      forall (t : T A) (f : A -> A),
+        (forall a, a ∈ t -> f a = id a) -> traverse (G := fun A => A) f t = t.
     Proof.
-      intros. rewrite <- traverse_purity1.
-      now apply traverse_respectful.
+      intros.
+      change t with (pure (F := fun A => A) t) at 2.
+      apply (traverse_respectful_pure (fun A => A)).
+      assumption.
     Qed.
 
     Corollary map_respectful : forall `(f1 : A -> B) `(f2 : A -> B) (t : T A),
