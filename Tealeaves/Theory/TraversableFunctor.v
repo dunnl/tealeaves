@@ -3,6 +3,7 @@ From Tealeaves Require Export
   Classes.Categorical.ContainerFunctor
   Classes.Categorical.ShapelyFunctor
   Adapters.KleisliToCoalgebraic.TraversableFunctor
+  Adapters.Isomorphisms.Deconstruction
   Classes.Kleisli.TraversableFunctor
   Functors.List
   Functors.ProductFunctor
@@ -572,6 +573,135 @@ Section traversable_functor_theory.
   *)
 
 End traversable_functor_theory.
+
+(** * Element-wise operations *)
+(******************************************************************************)
+Require Import ContainerFunctor.
+
+Import ContainerFunctor.Notations.
+Import Applicative.Notations.
+
+#[export] Instance Elements_Batch1 {B C}: Elements (BATCH1 B C) :=
+  Elements_Traverse.
+
+Section pw.
+
+  Lemma foldMap_Batch_rw2: forall {A B C: Type} `{Monoid M}
+      (f : A -> M) (a: A) (rest: Batch A B (B -> C)),
+      foldMap (T := BATCH1 B C) f (rest ⧆ a) =
+        foldMap f rest ● f a.
+  Proof.
+    intros.
+    unfold foldMap.
+    rewrite traverse_Batch_rw2.
+    reflexivity.
+  Qed.
+
+  Definition element_of_Step1 {A B C:Type}:
+    forall (a' : A) (rest: Batch A B (B -> C)),
+      forall (a : A),
+      element_of (F := BATCH1 B (B -> C)) rest a ->
+      element_of (F := BATCH1 B C) (Step rest a') a.
+  Proof.
+    introv.
+    unfold_ops @Elements_Batch1 @Elements_Traverse.
+    introv Hin.
+    change ((evalAt a ∘ foldMap (T := BATCH1 B (B -> C))
+                    (ret (T := subset))) rest) in Hin.
+    change ((evalAt a ∘ foldMap (T := BATCH1 B C)
+                    (ret (T := subset))) (rest ⧆ a')).
+    rewrite (foldMap_morphism
+               (T := BATCH1 B (B -> C))
+               _ _ (ϕ := evalAt a)) in Hin.
+    rewrite (foldMap_morphism
+               (T := BATCH1 B C)
+               _ _ (ϕ := evalAt a)).
+    rewrite foldMap_Batch_rw2.
+    now left.
+  Defined.
+
+  Definition element_of_Step2 {A B C:Type}:
+    forall (rest: Batch A B (B -> C)) (a: A),
+      element_of (F := BATCH1 B C) (Step rest a) a.
+  Proof.
+    intros.
+    unfold_ops @Elements_Batch1 @Elements_Traverse.
+    change ((evalAt a ∘ foldMap (T := BATCH1 B C)
+                    (ret (T := subset))) (rest ⧆ a)).
+    rewrite (foldMap_morphism
+               (T := BATCH1 B C)
+               _ _ (ϕ := evalAt a)).
+    rewrite foldMap_Batch_rw2.
+    now right.
+  Qed.
+
+  Definition sigMapP (A: Type) (P Q: A -> Prop) (Himpl: forall a, P a -> Q a):
+    sig P -> sig Q :=
+    fun σ => match σ with
+          | exist _ a h => exist Q a (Himpl a h)
+          end.
+
+  Fixpoint elt_decorate
+   {A B C: Type}
+   (b : Batch A B C):
+    Batch {a|element_of (F := BATCH1 B C) b a} B C :=
+    match b with
+    | Done c => Done c
+    | Step rest a =>
+        Step (map (F := BATCH1 B (B -> C))
+                  (sigMapP A
+                           (element_of (F := BATCH1 B (B -> C)) rest)
+                           (element_of (F := BATCH1 B C) (Step rest a))
+                           (element_of_Step1 a rest)
+                  )
+                  (elt_decorate rest))
+             (exist _ a (element_of_Step2 rest a))
+    end.
+
+  Context
+    `{TraversableFunctor T}
+    `{Map T}
+    `{! Compat_Map_Traverse T}.
+
+  Existing Instance Elements_Traverse.
+
+  Definition traverse_pw
+               {A B} (G : Type -> Type)
+               `{Applicative G} : forall (t: T A) `(f1 : {a | a ∈ t} -> G B), G (T B).
+  Proof.
+    intro t.
+    change t with (id t).
+    rewrite id_through_runBatch.
+    unfold compose.
+    destruct (@toBatch T _ A A t).
+    intro. cbn in f1.
+    -
+  Abort.
+
+  Lemma toLen2: forall A B B', toLen T (A := A) B = toLen T B'.
+  Proof.
+    intros.
+    ext t.
+    unfold toLen.
+    rewrite toBatch_to_traverse.
+    rewrite toBatch_to_traverse.
+    rewrite batch_length1.
+    rewrite batch_length1.
+    compose near t.
+    rewrite (trf_traverse_morphism
+               (G1 := Batch A B)
+               (G2 := const (list A))).
+    rewrite (trf_traverse_morphism
+               (G1 := Batch A B')
+               (G2 := const (list A))).
+    rewrite runBatch_batch; try typeclasses eauto.
+    rewrite runBatch_batch; try typeclasses eauto.
+    rewrite <- (traverse_const1 (M := list A) (T := T) B).
+    rewrite <- (traverse_const1 (M := list A) (T := T) B').
+    reflexivity.
+  Qed.
+
+End pw.
 
 (** * Notations *)
 (******************************************************************************)
