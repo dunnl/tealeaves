@@ -30,6 +30,8 @@ Print term_rect.
 
 Section term_induction.
 
+  Section term_mut_ind.
+
   Variables
     (v : Type)
     (P : term v -> Prop).
@@ -43,8 +45,7 @@ Section term_induction.
     (app_case : forall t: term v, P t -> forall u: term v, P u -> P (app t u)).
 
 
-  Print term_rect.
-  #[program] Definition term_mut_ind: forall t, P t.
+  #[program] Definition term_mut_ind_program: forall t, P t.
   refine (fix F t := match t with
           | tvar v => tvar_case v
           | letin defs body =>
@@ -52,56 +53,96 @@ Section term_induction.
               | nil => @letin_nil_case body (F body)
               | cons u rest =>
                   @letin_cons_case u rest body
-                                   (F u) _ (F body)
+                                   (F u)
+                                   _
+                                   (F body)
               end
           | app t1 t2 =>
               @app_case t1 (F t1) t2 (F t2)
                      end).
-  admit.
-  Admitted.
+  induction rest.
+  - apply List.Forall_nil.
+  - apply List.Forall_cons; auto.
+  Defined.
 
-End term_induction.
+  Definition term_mut_ind: forall t, P t :=
+    fix F t :=
+      match t with
+      | tvar v => tvar_case v
+      | letin defs body =>
+          match defs with
+          | nil => @letin_nil_case body (F body)
+          | cons u rest =>
+              @letin_cons_case u rest body
+                               (F u)
+                               ((fix G l : List.Forall P l
+                                 := match l with
+                                    | nil =>
+                                        List.Forall_nil P
+                                    | cons x xs =>
+                                        List.Forall_cons x (l := xs) (F x) (G xs)
+                                    end) rest)
+                               (F body)
+          end
+      | app t1 t2 =>
+          @app_case t1 (F t1) t2 (F t2)
+      end.
 
-(*
-Section term_induction.
+  End term_mut_ind.
+
+  Section term_mut_ind.
+
+    Lemma Forall_compat_list: forall (A: Type) (l : list A) (P: A -> Prop),
+        List.Forall P l <-> Forall_List P l.
+    Proof.
+      intros.
+      induction l.
+      - split.
+        + intros _. exact I.
+        + intros. apply List.Forall_nil.
+      - split.
+        + intro H.
+          inversion H; subst.
+          cbn. split. assumption. now apply IHl.
+        + intro H.
+          inversion H.
+          apply List.Forall_cons. assumption. now apply IHl.
+    Qed.
 
   Variables
     (v : Type)
-    (P : term v -> Type).
+      (P : term v -> Prop).
 
   Hypotheses
     (tvar_case : forall v, P (tvar v))
-    (letin_case : forall (l : list (term v)) (t : term v)
-                      (rec: forall t, t ∈ l -> P t),
-          P t -> P (letin l t))
-    (app_case : forall t: term v, P t -> forall u: term v, P u -> P (app t u)).
+      (letin_case : forall (defs: list (term v))
+                      (body: term v)
+                      (IHdefs: forall (t : term v), t ∈ defs -> P t)
+                      (IHbody: P body),
+          P (letin defs body))
+      (app_case : forall t: term v, P t -> forall u: term v, P u -> P (app t u)).
 
+  Definition term_mut_ind2: forall t, P t.
+  Proof.
+    intros.
+    induction t using term_mut_ind.
+    - auto.
+    - apply letin_case.
+      + inversion 1.
+      + assumption.
+    - apply letin_case.
+      + introv Hin.
+        autorewrite with tea_list in Hin.
+        inversion Hin.
+        * now subst.
+        * rewrite Forall_compat_list in IHl.
+          rewrite List.forall_iff in IHl.
+          now apply IHl.
+      + assumption.
+    - auto.
+  Qed.
 
-  #[program] Definition term_mut_rect: forall t, P t.
-  refine (fix F t :=
-      match t with
-      | tvar v =>
-          tvar_case v
-      | letin defs body =>
-          @letin_case defs body
-                      ((fix G (ls : list (term v)): forall t, t ∈ ls -> P t :=
-                          match ls with
-                          | nil => _
-                          | cons x rest => _
-                          end
-                       ) defs)
-                      (F body)
-      | app t u =>
-          @app_case t (F t) u (F u)
-      end).
-  - inversion 1.
-  - intros t' t_in.
-    cbn in t_in.
-    admit.
-  Admitted.
-
-End term_induction.
-*)
+End term_mut_ind.
 
 Fixpoint binddt_term
            (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
@@ -127,9 +168,9 @@ Fixpoint binddt_term
 Lemma binddt_rw_letin: forall `{Applicative G} (v1 v2 : Type)
                          (l : list (term v1)) (body: term v1),
   forall f : nat * v1 -> G (term v2),
-    binddt_term f (letin l body) =
-      pure (@letin v2) <⋆> traverse (binddt_term f) l <⋆>
-        binddt_term (f ⦿ List.length l) body.
+    binddt f (letin l body) =
+      pure (@letin v2) <⋆> traverse (binddt f) l <⋆>
+        binddt (f ⦿ List.length l) body.
 Proof.
   intros.
   destruct l.
@@ -148,14 +189,10 @@ Qed.
 Lemma binddt_helper_letin
         `{Applicative G2}
         B C (l : list (term B))
-    (g : nat * B -> G2 (term C)):
-  binddt_term g ∘ letin (v:=B) l =
-    (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) (pure (letin (v:=C)) <⋆> (traverse (binddt_term g) l)).
-(*
-    (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) (pure (letin (v:=C)) <⋆> (traverse (binddt_term g) l)).
-
-   (compose (precompose (binddt_term g) ∘ ap G2) ∘ precompose (traverse (T := list) (binddt_term g)) ∘ ap G2 ∘ pure (F := G2))
-*)
+        (g : nat * B -> G2 (term C)):
+  binddt g ∘ letin (v:=B) l =
+    (precompose (binddt (g ⦿ List.length l)) ∘ ap G2)
+      (pure (letin (v:=C)) <⋆> (traverse (binddt g) l)).
 Proof.
   unfold precompose, compose.
   ext body.
@@ -163,28 +200,17 @@ Proof.
   reflexivity.
 Qed.
 
-
-Lemma length_helper: forall A B (l:list A) l',
-    Datatypes.length (to_makeFn_gen (B := B) l l') = List.length l.
-Proof.
-  intros.
-Admitted.
-
 Lemma binddt_helper_letin2
         `{Applicative G2}
         A B C (l : list (term A))
     (g : nat * B -> G2 (term C)):
-  compose (binddt_term g) ∘ letin (v:=B) ∘ to_makeFn_gen l =
+  compose (binddt_term g) ∘ letin (v:=B) ∘ toMake_mono list l (term B) =
     ((compose (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) ∘
              precompose (traverse (T := list) (binddt_term g)) ∘
-             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ to_makeFn_gen l.
-    (*
-    (compose (precompose (binddt_term g) ∘ ap G2) ∘
-             precompose (traverse (T := list) (binddt_term g)) ∘ ap G2 ∘ pure (F := G2)) (letin (v:=B)).
-     *)
+             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake_mono list l (term B).
 Proof.
   intros.
-  Check compose (binddt_term g) ∘ letin (v:=B) ∘ to_makeFn_gen l.
+  Check compose (binddt_term g) ∘ letin (v:=B) ∘ toMake list l (term B).
   (* : Vector.t (term B) (length_gen l) -> term B -> G2 (term C) *)
   Check
     (compose (precompose (binddt_term g) ∘ ap G2) ∘
@@ -194,11 +220,13 @@ Proof.
   Check
     ((compose (precompose (binddt_term g) ∘ ap G2) ∘
              precompose (traverse (T := list) (binddt_term g)) ∘
-             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ to_makeFn_gen l.
+             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake list l (term B).
   ext l'.
-  change_left (binddt_term g ∘ letin (to_makeFn_gen l l')).
+  change_left (binddt_term g ∘ letin (toMake_mono list l (term B) l')).
+  ext body.
+
   rewrite binddt_helper_letin.
-  rewrite length_helper.
+  rewrite length_helper_mono.
   reflexivity.
 Qed.
 
@@ -214,90 +242,136 @@ Theorem dtm2_term : forall A : Type,
     binddt (T := term) (U := term)
            (G := fun A => A) (ret (T := term) ∘ extract (W := (nat ×))) = @id (term A).
 Proof.
-  intros. ext t. unfold id.
-  induction t using term_mut_ind.
+  intros. ext t.
+  induction t using term_mut_ind2.
   - cbn. reflexivity.
-  - cbn.
-    change 0 with (Ƶ:nat).
-    rewrite preincr_zero.
-    rewrite IHt.
-    reflexivity.
-  - cbn.
+  - rewrite binddt_rw_letin.
     rewrite extract_preincr2.
-Admitted.
+    rewrite IHt.
+    unfold_ops @Pure_I; unfold id.
+    fequal.
+    apply (traverse_respectful_id (T := list)).
+    assumption.
+  - cbn.
+    rewrite IHt1, IHt2.
+    reflexivity.
+Qed.
 
 Theorem dtm3_term:
   forall `{Applicative G1} `{Applicative G2},
   forall `(g : nat * B -> G2 (term C)) `(f : nat * A -> G1 (term B)),
-    map (binddt_term g) ∘ binddt_term f = binddt_term (G := G1 ∘ G2) (g ⋆7 f).
+    map (binddt g) ∘ binddt f = binddt (G := G1 ∘ G2) (g ⋆7 f).
 Proof.
   intros. ext t.
   generalize dependent g.
   generalize dependent f.
+  assert (Functor G1) by (now inversion H2).
+  assert (Functor G2) by (now inversion H6).
   unfold compose at 1.
-  induction t; intros f g.
-  - cbn. change (preincr g 0) with (preincr g Ƶ).
+  induction t using term_mut_ind2; intros f g.
+  - cbn.
+    change (preincr g 0) with (preincr g Ƶ).
     now rewrite preincr_zero.
   - do 2 rewrite binddt_rw_letin.
-
-    pose (IHt' := IHt (f ⦿ List.length l) (g ⦿ List.length l)).
+    pose (IHt' := IHt (f ⦿ List.length defs) (g ⦿ List.length defs)).
     rewrite kc7_preincr in IHt'.
     (* left *)
-    rewrite binddt_rw_letin.
     rewrite map_ap.
     rewrite map_ap.
     rewrite app_pure_natural.
-    (* right *)
-    rewrite binddt_rw_letin.
-    rewrite (traverse_repr (C := B)).
+    erewrite traverse_repr;
+      try typeclasses eauto.
     rewrite <- ap4.
     rewrite ap2.
     rewrite ap2.
     rewrite binddt_helper_letin2.
-
     rewrite <- map_to_ap.
-    assert (Functor G1) by (now inversion H2).
     rewrite <- (fun_map_map (F := G1)).
     unfold compose at 1.
-    rewrite (map_to_ap (to_makeFn_gen l)).
-    rewrite <- (traverse_repr (C := False) (binddt_term f)).
-
-    Set Keyed Unification.
-    rewrite <- IHt'.
+    rewrite (map_to_ap (toMake_mono list defs _)).
+    rewrite <- (traverse_repr list G1 defs (term B) (binddt f)).
+    rewrite (map_to_ap).
+    (* right *)
+    unfold_ops @Pure_compose.
+    assert (Heqdefs: traverse (binddt (G := G1 ∘ G2) (g ⋆7 f)) defs =
+              map (F := G1)
+                  (traverse (T := list) (binddt (G := G2) g))
+                  (traverse (T := list) (binddt (G := G1) f) defs)).
+    { compose near defs on right.
+      rewrite traverse_traverse.
+      all: try typeclasses eauto.
+      apply traverse_respectful.
+      typeclasses eauto.
+      symmetry.
+      now apply IHdefs. }
+    #[local] Set Keyed Unification.
     rewrite_strat innermost (terms (ap_compose2 G2 G1)).
-    repeat rewrite map_ap.
-    rewrite (app_pure_natural (G := G1)).
-    repeat rewrite <- ap_map.
-    rewrite_strat innermost (terms (ap_compose2 G2 G1)).
-    repeat rewrite map_ap.
-    repeat rewrite (app_pure_natural (G := G1)).
+    rewrite app_pure_natural.
+    rewrite Heqdefs.
     rewrite <- ap_map.
-    repeat rewrite map_ap.
-    repeat rewrite (app_pure_natural (G := G1)).
-
-Abort.
+    rewrite app_pure_natural.
+    rewrite_strat innermost (terms (ap_compose2 G2 G1)).
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- IHt'.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    reflexivity.
+  - cbn.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    unfold_ops @Pure_compose.
+    rewrite_strat innermost (terms (ap_compose2 G2 G1)).
+    rewrite app_pure_natural.
+    rewrite <- IHt1.
+    rewrite <- ap_map.
+    rewrite app_pure_natural.
+    rewrite_strat innermost (terms (ap_compose2 G2 G1)).
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- IHt2.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    reflexivity.
+    #[local] Unset Keyed Unification.
+Qed.
 
 Theorem dtm4_stlc :
   forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Mult G1) (H3 : Pure G1) (H4 : Map G2) (H5 : Mult G2) (H6 : Pure G2)
-    (ϕ : forall A : Type, G1 A -> G2 A), ApplicativeMorphism G1 G2 ϕ ->
-                                   forall (A B : Type) (f : nat * A -> G1 (term B)),
-                                     ϕ (term B) ∘ binddt f = binddt (ϕ (term B) ∘ f).
+    (ϕ : forall A : Type, G1 A -> G2 A),
+    ApplicativeMorphism G1 G2 ϕ ->
+    forall (A B : Type) (f : nat * A -> G1 (term B)),
+      ϕ (term B) ∘ binddt f = binddt (ϕ (term B) ∘ f).
 Proof.
   intros. ext t.
   inversion H.
   generalize dependent f.
   unfold compose at 1.
-  induction t; intro f. (* .unfold *)
+  induction t using term_mut_ind2; intro f. (* .unfold *)
   - reflexivity.
-  - cbn.
+  - do 2 rewrite binddt_rw_letin.
     repeat rewrite ap_morphism_1.
     rewrite appmor_pure.
     rewrite IHt.
-    admit.
+    change (ϕ (list (term B)) (traverse (binddt f) defs))
+      with ((ϕ (list (term B)) ∘ traverse (binddt f)) defs).
+    rewrite (trf_traverse_morphism).
+    assert (Heqdefs: (traverse (ϕ (term B) ∘ binddt f) defs) =
+                       traverse (binddt (ϕ (term B) ∘ f)) defs).
+    { apply traverse_respectful.
+      typeclasses eauto.
+      intros.
+      unfold compose.
+      now apply IHdefs. }
+    rewrite Heqdefs.
+    reflexivity.
   - cbn.
     repeat rewrite ap_morphism_1.
     rewrite appmor_pure.
     rewrite IHt1.
     rewrite IHt2.
     reflexivity.
-Abort.
+Qed.
