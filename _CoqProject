@@ -68,7 +68,6 @@ Tealeaves/Functors/Vector.v
 Tealeaves/Functors/Batch.v
 Tealeaves/Functors/KStore.v
 Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
-Tealeaves/Adapters/Isomorphisms/Deconstruction.v
 Tealeaves/Categories/Type.v
 Tealeaves/Categories/TypeFamily.v
 Tealeaves/Categories/DecoratedFunctor.v

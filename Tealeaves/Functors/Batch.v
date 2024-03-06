@@ -682,6 +682,8 @@ End runBatch_monoid.
 
 (** * Length *)
 (******************************************************************************)
+From Tealeaves Require Import Misc.NaturalNumbers.
+
 Section length.
 
   Fixpoint length_Batch {A B C : Type} (b : Batch A B C) : nat :=
@@ -689,6 +691,17 @@ Section length.
     | Done _ _ _ _ => 0
     | Step _ _ _ rest a => S (length_Batch (C := B -> C) rest)
     end.
+
+  Lemma length_Batch_spec {A B C : Type} (b : Batch A B C):
+    length_Batch b = runBatch (const nat) (fun _ => 1) _ b.
+  Proof.
+    intros.
+    induction b.
+    - reflexivity.
+    - cbn. rewrite IHb.
+      unfold_ops @Monoid_op_plus.
+      lia.
+  Qed.
 
  (* The length of a batch is the same as the length of the list we can extract from it *)
   Lemma batch_length1 : forall {A B C : Type} (b : Batch A B C),
@@ -1450,23 +1463,25 @@ From Tealeaves Require Import
 (******************************************************************************)
 Section deconstruction.
 
+  #[local] Arguments Done {A B C}%type_scope _.
+  #[local] Arguments Step {A B C}%type_scope _.
+
   Context {A B: Type}.
 
   Fixpoint Batch_to_contents {C} (b: Batch A B C):
     Vector.t A (length_Batch b) :=
     match b return (Vector.t A (length_Batch b)) with
-    | Done _ _ _ c =>
-        Vector.nil A
-    | Step _ _ _ rest a =>
+    | Done c => Vector.nil A
+    | Step rest a =>
         Vector.cons A a (length_Batch rest) (Batch_to_contents rest)
     end.
 
   Fixpoint Batch_to_makeFn {C} (b: Batch A B C):
     Vector.t B (length_Batch b) -> C :=
     match b return (Vector.t B (length_Batch b) -> C) with
-    | Done _ _ _ c =>
+    | Done c =>
         const c
-    | Step _ _ _ rest a =>
+    | Step rest a =>
         fun (v: Vector.t B (S (length_Batch rest))) =>
           match (Vector.uncons v) with
           | (b, v_rest) => Batch_to_makeFn rest v_rest b
