@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Classes.Functor
-  Applicative.
+  Classes.Categorical.Applicative.
 
 Import Functor.Notations.
 Import Applicative.Notations.
