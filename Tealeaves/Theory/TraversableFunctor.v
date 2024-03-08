@@ -935,6 +935,7 @@ Section polymorphic.
     reflexivity.
   Qed.
 
+  (* put get *)
   Lemma repr1 {A}: forall `(t : T A),
       t = toMake_mono t A (toContents_poly A t).
   Proof.
@@ -957,6 +958,20 @@ Section polymorphic.
       rewrite Heq.
       reflexivity.
   Qed.
+
+  Lemma put_put {A} (n: nat) (t: T A) (Heq: toLen t = n)
+                (B C: Type)
+                (v: Vector.t B n)
+                (Heq': toLen (toMake_generic2 t B n Heq v) = n):
+      toMake_generic2 t C n Heq =
+        toMake_generic2
+          (toMake_generic2 t B n Heq v) C n Heq'.
+  Proof.
+    intros.
+    unfold toMake_generic2.
+    induction v.
+    - cbn.
+  Abort.
 
   Lemma repr2 {A}: forall `(t : T A),
       t = toMake_generic3 t A (toContents t).
@@ -1025,7 +1040,7 @@ Section polymorphic.
     unfold toLen.
     rewrite batch_length1.
     rewrite batch_length1.
-    compose near t.
+    (*
     rewrite <- (foldMap_through_runBatch2
                  A False (M := list A)
                  (ret (T := list))
@@ -1035,7 +1050,8 @@ Section polymorphic.
                  B False (M := list B)
                  (ret (T := list))
               ).
-  Admitted.
+     *)
+  Abort.
 
 End polymorphic.
 
@@ -1073,18 +1089,14 @@ Lemma toMake_helper: forall A B (l:list A) (l' : Vector.t B (toLen_poly list B l
     toMake_mono list l B l' = Vector.to_list l'.
 Proof.
   intros.
-  assert (l = Vector.to_list (toContents list l)).
-  { intros.
-    induction l.
-    - reflexivity.
-    - Check toContents list (a :: l).
+  unfold toMake_mono.
 Abort.
 
 Lemma length_helper: forall A B (l:list A) (l' : Vector.t B (toLen list l)),
     length (toMake list l B l') = length l.
 Proof.
   intros.
-  rewrite (repr list l) at 2.
+  rewrite (repr1 list l) at 2.
 Admitted.
 
 
@@ -1194,12 +1206,49 @@ Section pw.
     change t with (id t).
     rewrite id_through_runBatch.
     unfold compose.
-    destruct (@toBatch T _ A A t).
-    intro. cbn in f1.
-    -
+    remember (@toBatch T _ A A t).
+    destruct b.
+    - intro f.
+      cbn in f.
   Abort.
 
-End pw.
+  Lemma in_Batch_iff {A} (A':Type) (t: T A):
+    forall a, a ∈ t <-> a ∈ (toBatch (A':=A') t).
+  Proof.
+    intros.
+    rewrite (element_through_runBatch2 A A').
+    unfold compose.
+    induction (toBatch t).
+    - cbv. intuition.
+    -
+      cbn.
+      unfold_ops @Monoid_op_subset.
+      autorewrite with tea_set.
+      unfold_ops @Pure_const.
+      unfold_ops @Monoid_unit_subset.
+      intuition.
+  Qed.
+
+  Definition traverse_fuse
+               {A} (G : Type -> Type)
+               `{Applicative G}
+               (t: T A) (P: A -> Prop) (Hp: forall a, a ∈ t -> P a):
+    T ({a : A| P a}).
+  Proof.
+    intros.
+    setoid_rewrite (in_Batch_iff {a: A | P a}) in Hp.
+    cbn in *.
+    induction (toBatch t).
+    - exact c.
+    - apply IHb.
+      + intros a' Hin_a'.
+        specialize (Hp a').
+        apply Hp.
+        apply element_of_Step1.
+          assumption.
+        + specialize (Hp a ltac:(now apply element_of_Step2)).
+          exists a. apply Hp.
+  Defined.
 
 #[export] Instance Compat_Elements_Traverse_List :
   @Compat_Elements_Traverse list Elements_list Traverse_list.
@@ -1217,6 +1266,8 @@ Proof.
     rewrite IHl.
     firstorder.
 Qed.
+
+End pw.
 
 (** * Notations *)
 (******************************************************************************)

@@ -114,6 +114,10 @@ Tealeaves/Theory/DecoratedTraversableMonad.v
 #Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
 
+# EXPERIMENTAL VECTORS
+Tealeaves/Classes/Kleisli/KApplicative.v
+Tealeaves/Functors/VectorRefinement.v
+
 # BACKENDS
 Tealeaves/Backends/LN/Atom.v
 Tealeaves/Backends/LN/AtomSet.v
