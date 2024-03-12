@@ -787,6 +787,160 @@ Section polymorphic.
     reflexivity.
   Qed.
 
+  (** ** New length *)
+  (******************************************************************************)
+  Definition plength: forall {A}, T A -> nat :=
+    fun A => foldMap (fun _ => 1).
+
+  Lemma plength_eq_length: forall {A} (t: T A),
+      plength t = length_Batch (toBatch (A' := False) t).
+  Proof.
+    intros.
+    unfold plength.
+    rewrite foldMap_through_runBatch1.
+    unfold compose.
+    induction (toBatch t).
+    - reflexivity.
+    - cbn.
+      rewrite IHb.
+      unfold_ops @NaturalNumbers.Monoid_op_plus.
+      lia.
+  Qed.
+
+  Lemma plength_eq_length': forall {A} {B} (t: T A),
+      plength t = length_Batch (toBatch (A' := B) t).
+  Proof.
+    intros.
+    unfold plength.
+    rewrite (foldMap_through_runBatch2 A B).
+    unfold compose.
+    induction (toBatch t).
+    - reflexivity.
+    - cbn.
+      rewrite IHb.
+      unfold_ops @NaturalNumbers.Monoid_op_plus.
+      lia.
+  Qed.
+
+  (*
+  Inductive package {A} (t: T A) : Type :=
+    pack : forall (n: nat) (pf: plength t = n)
+        (contents: Vector.t A n), package t.
+
+  #[program] Definition toPackage {A}: forall (t : T A),
+      package t.
+  Proof.
+    intros.
+    apply (pack t (length_Batch (toBatch (A' := False) t))).
+    - apply plength_eq_length.
+    - apply Batch_to_contents.
+  Qed.
+   *)
+
+  Inductive package {A} (t: T A) : Type :=
+    pack : forall (n: nat) (pf: plength t = n)
+             (contents: Vector.t A n)
+             (make: forall B, Vector.t B n -> T B)
+             (Heq: make A contents = t)
+      , package t.
+
+  Lemma Batch_repr {A C}:
+    forall (b: Batch A A C),
+      Batch_to_makeFn b (Batch_to_contents b) = extract_Batch b.
+  Proof.
+    intros.
+    induction b.
+    - reflexivity.
+    - cbn.
+      rewrite IHb.
+      reflexivity.
+  Qed.
+
+  #[program] Definition toMake {A}: forall (t : T A),
+    forall B, Vector.t B (length_Batch (toBatch (A' := A) t)) -> T B.
+  Proof.
+    intros.
+    rewrite (length_Batch2 A A B) in X.
+    eapply Batch_to_makeFn.
+    apply X.
+  Defined.
+
+  Lemma toMake_repr {A} (t: T A):
+    toMake t A (Batch_to_contents (toBatch t)) = t.
+  Proof.
+    intros.
+    unfold toMake.
+    rewrite (proof_irrelevance _ (length_Batch2 A A A t) eq_refl).
+    cbn.
+    pose (Batch_repr (toBatch t)).
+    rewrite e.
+    compose near t on left.
+    rewrite toBatch_extract_Kleisli.
+    reflexivity.
+  Qed.
+
+  #[program] Definition toPackage {A}: forall (t : T A),
+      package t.
+  Proof.
+    intros.
+    pose (pack t (length_Batch (toBatch (A' := A) t))).
+    specialize (p (plength_eq_length' t)).
+    specialize (p (Batch_to_contents (toBatch (A' := A) t))).
+    specialize (p (toMake t)).
+    specialize (p (toMake_repr t)).
+    apply p.
+  Qed.
+
+  #[program] Definition toContents {A}: forall (t : T A),
+      Vector.t A (plength t) :=
+    fun t =>
+      match (toBatch (A' := False) t) with
+      | Done _ => @Vector.nil A
+      | Step _ _ => _
+      end.
+
+  Next Obligation.
+    unfold plength.
+    rewrite foldMap_through_runBatch1.
+    unfold compose.
+    induction (toBatch t).
+    cbn.
+    reflexivity.
+    inversion Heq_anonymous.
+  Qed.
+
+  Next Obligation.
+  Admitted.
+
+  Compute toContents (A := bool).
+  Check Vector.nil bool.
+  Check toContents_obligation_1 bool.
+  About H3.
+    intros. apply fold
+
+  Definition toContents {A}: forall (B: Type) (t : T A),
+      Vector.t A (plength t).
+  Proof.
+    intros B t.
+    unfold plength.
+    rewrite foldMap_through_runBatch1.
+    unfold compose.
+    induction (toBatch t).
+    - cbn.
+      apply Vector.nil.
+    - cbn.
+      assert (Heq: (runBatch (@const Type Type nat) (fun _ : A => 1) (False -> C) b + 1 =
+                S (runBatch (@const Type Type nat) (fun _ : A => 1) (False -> C) b)             )%nat).
+      lia.
+      unfold monoid_op.
+      unfold NaturalNumbers.Monoid_op_plus at 1.
+      rewrite Heq.
+      eapply Vector.cons;
+      eassumption.
+  Defined.
+
+  Compute toContents.
+
   (** ** Contents *)
   (******************************************************************************)
   Definition toContents_poly {A}: forall (B: Type) (t : T A),
@@ -1097,6 +1251,16 @@ Lemma length_helper: forall A B (l:list A) (l' : Vector.t B (toLen list l)),
 Proof.
   intros.
   rewrite (repr1 list l) at 2.
+  induction l.
+  - cbn in *.
+    unfold toMake.
+    unfold toMake_poly.
+    unfold eq_rect_r.
+    unfold eq_rec.
+
+    unfold toBatch.
+    assert (eq_sym (toLen_poly2 list A False B) = eq_refl).
+
 Admitted.
 
 

@@ -13,12 +13,31 @@ About length_Batch.
 
 Section batch_to.
 
-  Context {A B C : Type}.
-
-  Definition Batch_to_KStore: Batch A B C -> KStore A B C.
+  Definition Batch_to_KStore {A B C}: Batch A B C -> KStore A B C.
   Proof.
     eapply (runBatch (KStore A B) kstore).
   Defined.
+
+  Definition KStore_length: forall A B C,
+      KStore A B C -> nat.
+    intros. destruct X.
+    assumption.
+  Defined.
+
+  Generalizable All Variables.
+
+  Lemma yo : forall `(b : Batch A B C),
+      length_Batch b = KStore.length A B C (Batch_to_KStore b).
+    intros.
+    induction b.
+    - reflexivity.
+    - cbn.
+      unfold ap.
+      unfold length.
+      rewrite IHb.
+      unfold
+      fequal.
+
 
   Definition Batch_to_Vector:
     Batch A B C -> @sigT nat (Vector.t A).

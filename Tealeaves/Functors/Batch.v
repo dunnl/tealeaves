@@ -693,7 +693,7 @@ Section length.
     end.
 
   Lemma length_Batch_spec {A B C : Type} (b : Batch A B C):
-    length_Batch b = runBatch (const nat) (fun _ => 1) _ b.
+    length_Batch b = runBatch (@const Type Type nat) (fun _ => 1) _ b.
   Proof.
     intros.
     induction b.
