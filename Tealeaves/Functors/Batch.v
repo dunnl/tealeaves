@@ -1365,6 +1365,112 @@ Proof.
   reflexivity.
 Qed.
 
+(** ** Elements of <<Batch>> *)
+(******************************************************************************)
+Require Import ContainerFunctor.
+
+Import ContainerFunctor.Notations.
+Import Applicative.Notations.
+
+#[export] Instance Elements_Batch1 {B C}: Elements (BATCH1 B C) :=
+  Elements_Traverse.
+
+Section pw.
+
+  Lemma foldMap_Batch_rw2: forall {A B C: Type} `{Monoid M}
+      (f : A -> M) (a: A) (rest: Batch A B (B -> C)),
+      foldMap (T := BATCH1 B C) f (rest ⧆ a) =
+        foldMap f rest ● f a.
+  Proof.
+    intros.
+    unfold foldMap.
+    rewrite traverse_Batch_rw2.
+    reflexivity.
+  Qed.
+
+  Definition element_of_Step1 {A B C:Type}:
+    forall (a' : A) (rest: Batch A B (B -> C)),
+      forall (a : A),
+      element_of (F := BATCH1 B (B -> C)) rest a ->
+      element_of (F := BATCH1 B C) (Step rest a') a.
+  Proof.
+    introv.
+    unfold_ops @Elements_Batch1 @Elements_Traverse.
+    introv Hin.
+    change ((evalAt a ∘ foldMap (T := BATCH1 B (B -> C))
+                    (ret (T := subset))) rest) in Hin.
+    change ((evalAt a ∘ foldMap (T := BATCH1 B C)
+                    (ret (T := subset))) (rest ⧆ a')).
+    rewrite (foldMap_morphism
+               (T := BATCH1 B (B -> C))
+               _ _ (ϕ := evalAt a)) in Hin.
+    rewrite (foldMap_morphism
+               (T := BATCH1 B C)
+               _ _ (ϕ := evalAt a)).
+    rewrite foldMap_Batch_rw2.
+    now left.
+  Defined.
+
+  Definition element_of_Step2 {A B C:Type}:
+    forall (rest: Batch A B (B -> C)) (a: A),
+      element_of (F := BATCH1 B C) (Step rest a) a.
+  Proof.
+    intros.
+    unfold_ops @Elements_Batch1 @Elements_Traverse.
+    change ((evalAt a ∘ foldMap (T := BATCH1 B C)
+                    (ret (T := subset))) (rest ⧆ a)).
+    rewrite (foldMap_morphism
+               (T := BATCH1 B C)
+               _ _ (ϕ := evalAt a)).
+    rewrite foldMap_Batch_rw2.
+    now right.
+  Qed.
+
+  Definition sigMapP (A: Type) (P Q: A -> Prop) (Himpl: forall a, P a -> Q a):
+    sig P -> sig Q :=
+    fun σ => match σ with
+          | exist _ a h => exist Q a (Himpl a h)
+          end.
+
+  Fixpoint elt_decorate
+   {A B C: Type}
+   (b : Batch A B C):
+    Batch {a|element_of (F := BATCH1 B C) b a} B C :=
+    match b with
+    | Done c => Done c
+    | Step rest a =>
+        Step (map (F := BATCH1 B (B -> C))
+                  (sigMapP A
+                           (element_of (F := BATCH1 B (B -> C)) rest)
+                           (element_of (F := BATCH1 B C) (Step rest a))
+                           (element_of_Step1 a rest)
+                  )
+                  (elt_decorate rest))
+             (exist _ a (element_of_Step2 rest a))
+    end.
+
+
+  Definition runBatch_pw
+               {A B C} (G : Type -> Type)
+               `{Applicative G}:
+    forall (b: Batch A B C) `(f1 : {a | element_of (F := BATCH1 B C) b a} -> G B), G C.
+  Proof.
+    intros.
+    induction b.
+    - apply (pure c).
+    - apply (ap G (A := B)).
+      apply IHb.
+      + intros [a' a'in].
+        apply f1.
+        exists a'.
+        left. admit.
+      + apply f1.
+        exists a. now right.
+  Admitted.
+
+Lemma element_of_Batch1: forall `(b: Batch A B (B -> C)) (a: A),
+    element_of (F := BATCH1 B C) (b ⧆ a).
+
 (** ** Specification for <<runBatch>> *)
 (******************************************************************************)
 Lemma runBatch_spec {A B : Type}
@@ -1466,9 +1572,7 @@ Section deconstruction.
   #[local] Arguments Done {A B C}%type_scope _.
   #[local] Arguments Step {A B C}%type_scope _.
 
-  Context {A B: Type}.
-
-  Fixpoint Batch_to_contents {C} (b: Batch A B C):
+  Fixpoint Batch_to_contents {A B C} (b: Batch A B C):
     Vector.t A (length_Batch b) :=
     match b return (Vector.t A (length_Batch b)) with
     | Done c => Vector.nil A
@@ -1476,7 +1580,7 @@ Section deconstruction.
         Vector.cons A a (length_Batch rest) (Batch_to_contents rest)
     end.
 
-  Fixpoint Batch_to_makeFn {C} (b: Batch A B C):
+  Fixpoint Batch_to_makeFn {A B C} (b: Batch A B C):
     Vector.t B (length_Batch b) -> C :=
     match b return (Vector.t B (length_Batch b) -> C) with
     | Done c =>
@@ -1488,14 +1592,14 @@ Section deconstruction.
           end
     end.
 
-  Lemma Batch_to_contents_rw2: forall {C} (b: Batch A B (B -> C)) (a: A),
+  Lemma Batch_to_contents_rw2: forall {A B C} (b: Batch A B (B -> C)) (a: A),
       Batch_to_contents (b ⧆ a) =
         Vector.cons A a (length_Batch b) (Batch_to_contents b).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma Batch_to_makeFn_rw2: forall {C} (a: A) (b: Batch A B (B -> C)),
+  Lemma Batch_to_makeFn_rw2: forall {A B C} (a: A) (b: Batch A B (B -> C)),
       Batch_to_makeFn (b ⧆ a) =
         fun (v:Vector.t B (S (length_Batch b))) =>
           match (Vector.uncons v) with
@@ -1505,7 +1609,20 @@ Section deconstruction.
     reflexivity.
   Qed.
 
-  Lemma runBatch_repr `{Applicative G} {C}: forall (f: A -> G B) (b: Batch A B C),
+  Lemma Batch_repr {A C}:
+    forall (b: Batch A A C),
+      Batch_to_makeFn b (Batch_to_contents b) = extract_Batch b.
+  Proof.
+    intros.
+    induction b.
+    - reflexivity.
+    - cbn.
+      rewrite IHb.
+      reflexivity.
+  Qed.
+
+  Lemma runBatch_repr `{Applicative G} {A B C}:
+    forall (f: A -> G B) (b: Batch A B C),
       runBatch G f C b =
       pure G (Batch_to_makeFn b) <⋆>
                 traverse (T := VEC (length_Batch b)) f (Batch_to_contents b).

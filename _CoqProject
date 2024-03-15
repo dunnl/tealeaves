@@ -107,6 +107,12 @@ Tealeaves/Adapters/Roundtrips/TraversableMonad.v
 Tealeaves/Adapters/Roundtrips/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
 Tealeaves/Adapters/MonadToApplicative.v
+
+# EXPERIMENTAL VECTORS
+Tealeaves/Classes/Kleisli/KApplicative.v
+Tealeaves/Functors/VectorRefinement.v
+
+#
 Tealeaves/Theory/TraversableFunctor.v
 Tealeaves/Theory/TraversableMonad.v
 Tealeaves/Theory/DecoratedTraversableFunctor.v
@@ -114,9 +120,6 @@ Tealeaves/Theory/DecoratedTraversableMonad.v
 #Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
 
-# EXPERIMENTAL VECTORS
-Tealeaves/Classes/Kleisli/KApplicative.v
-Tealeaves/Functors/VectorRefinement.v
 
 # BACKENDS
 Tealeaves/Backends/LN/Atom.v

@@ -6,10 +6,12 @@ From Tealeaves Require Export
 From Coq Require Import
   Logic.ProofIrrelevance.
 
-#[local] Generalizable Variables ϕ T G A M F.
+#[local] Generalizable Variables ϕ T G A M F n m.
 
 Import Applicative.Notations.
 
+(** * Random lemmas *)
+(******************************************************************************)
 Lemma S_uncons: forall (n m: nat),
     S n = S m -> n = m.
 Proof.
@@ -34,9 +36,25 @@ Proof.
   now inversion 1.
 Qed.
 
+Lemma list_cons_eq:
+  forall (A: Type) (n: nat)
+    (v: list A) (vlen: length v = S n),
+    exists (a: A) (v': list A),
+    v = cons a v'.
+Proof.
+  intros.
+  destruct v.
+  - inversion vlen.
+  - exists a v. reflexivity.
+Qed.
+
+(** * Refinement-style vectors *)
+(******************************************************************************)
 Definition Vector (n: nat) (A: Type) : Type :=
   {l : list A | length l = n}.
 
+(** ** Basic properties vectors *)
+(******************************************************************************)
 Lemma Vector_eq_iff:
   forall (A: Type) (n: nat) (l1 l2 : list A)
     (p1 : length l1 = n)
@@ -54,8 +72,9 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma Vector_eq: forall (A: Type) (n: nat)
-                       (v1 v2: Vector n A),
+Lemma Vector_eq:
+  forall (A: Type) (n: nat)
+    (v1 v2: Vector n A),
     proj1_sig v1 = proj1_sig v2 ->
     v1 = v2.
 Proof.
@@ -67,18 +86,8 @@ Proof.
   eassumption.
 Defined.
 
-Definition vunone {A : Type} : Vector 1 A -> A.
-Proof.
-  intros v.
-  destruct v.
-  destruct x.
-  - inversion e.
-  - cbn in e.
-    destruct x.
-    + exact a.
-    + inversion e.
-Defined.
-
+(** ** Derived constructors *)
+(******************************************************************************)
 Definition vnil {A}: {l : list A | length l = 0} :=
   exist _ nil eq_refl.
 
@@ -100,20 +109,13 @@ Lemma Vector_nil_eq:
 Proof.
   intros.
   destruct v as [vlist vlen].
-  unfold vnil.
+  assert (vlist = @nil A).
+  { rewrite <- (List.length_zero_iff_nil vlist).
+    assumption. }
+  subst.
   apply Vector_eq.
-  cbn.
-  rewrite <- List.length_zero_iff_nil.
-  assumption.
+  reflexivity.
 Qed.
-
-Lemma list_cons_eq:
-  forall (A: Type) (n: nat)
-    (v: list A) (vlen: length v = S n),
-    exists (a: A) (v': list A),
-    v = cons a v'.
-Proof.
-Admitted.
 
 Lemma proj_vcons: forall (n: nat) `(a: A) (v: Vector n A),
     proj1_sig (vcons n a v) = cons a (proj1_sig v).
@@ -162,9 +164,11 @@ Proof.
     apply proof_irrelevance.
 Qed.
 
+(** ** Induction *)
+(******************************************************************************)
 Lemma Vector_induction:
   forall (A: Type) (P: forall m, Vector m A -> Prop)
-    (IHnil: P 0 (vnil))
+    (IHnil: P 0 vnil)
     (IHcons:
       forall a m (v: Vector m A), P m v -> P (S m) (vcons m a v)),
   forall m (v: Vector m A), P m v.
@@ -179,6 +183,16 @@ Proof.
     apply IHm.
 Qed.
 
+Lemma Vector_induction_alt:
+  forall (m: nat) (A: Type) (P: forall m, Vector m A -> Prop)
+    (IHnil: P 0 vnil)
+    (IHcons:
+      forall a m (v: Vector m A), P m v -> P (S m) (vcons m a v)),
+  forall (v: Vector m A), P m v.
+Proof.
+  intros.
+  apply Vector_induction; eauto.
+Qed.
 
 Lemma Vector_induction2:
   forall (A: Type) (P: forall m, Vector m A -> Vector m A -> Prop)
@@ -204,6 +218,8 @@ Proof.
     apply IHm.
 Qed.
 
+(** ** Inversion *)
+(******************************************************************************)
 Definition vuncons (n:nat) {A}:
   {l: list A | length l = S n} ->
   A * {l:list A | length l = n}.
@@ -296,6 +312,20 @@ Proof.
   apply vuncons.
 Defined.
 
+Definition vunone {A : Type} : Vector 1 A -> A.
+Proof.
+  intros v.
+  destruct v.
+  destruct x.
+  - inversion e.
+  - cbn in e.
+    destruct x.
+    + exact a.
+    + inversion e.
+Defined.
+
+(** ** to_list *)
+(******************************************************************************)
 Section sec.
 
   Context (A: Type).
@@ -304,6 +334,20 @@ Section sec.
   Proof.
     intros. apply proj1_sig in X. assumption.
   Defined.
+
+  Lemma to_list_vnil:
+    to_list vnil = @nil A.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma to_list_vcons {a} {n} {v: Vector n A}:
+    to_list (vcons _ a v) = a :: to_list v.
+  Proof.
+    destruct v.
+    unfold vcons.
+    reflexivity.
+  Qed.
 
   Definition decide_length: forall (n: nat) (l: list A),
       {length l = n} + { length l = n -> False}.
@@ -328,6 +372,19 @@ Section sec.
       | right _ => x
       end.
 
+  Lemma artificial_surjection_inv n (x:Vector n A) (l:list A) (Heq: length l = n):
+    proj1_sig (artificial_surjection x l) = l.
+  Proof.
+    unfold artificial_surjection.
+    assert (decide_length n l = left Heq).
+    { destruct (decide_length n l).
+      + fequal. apply proof_irrelevance.
+      + contradiction.
+    }
+    rewrite H.
+    reflexivity.
+  Qed.
+
   Lemma to_list_length: forall (n:nat) (x: Vector n A),
       length (to_list x) = n.
   Proof.
@@ -342,15 +399,13 @@ Section sec.
     intros.
     ext v.
     unfold compose.
-    unfold artificial_surjection.
-    destruct v as [lv Heq].
-    cbn.
-    assert (decide_length n lv = left Heq).
-    { unfold decide_length.
-      admit. }
-    rewrite H.
-    reflexivity.
-  Admitted.
+    destruct v.
+    apply Vector_eq.
+    rewrite artificial_surjection_inv.
+    - reflexivity.
+    - rewrite to_list_length.
+      reflexivity.
+  Qed.
 
   Lemma Vector_pres_inj {n:nat} (v: Vector n A) `{Functor F}:
     forall (x y: F (Vector n A)),
@@ -378,8 +433,9 @@ End sec.
 Definition map_Vector (n : nat) {A B : Type} (f : A -> B)
                       (v : Vector n A): Vector n B :=
   match v with
-  | exist _ l p => exist _ (map (F := list) f l)
-                        (eq_trans (map_preserve_length A B f l) p)
+  | exist _ l p =>
+      exist _ (map (F := list) f l)
+            (eq_trans (map_preserve_length A B f l) p)
   end.
 
 #[export] Instance Map_Vector (n: nat) : Map (Vector n) := @map_Vector n.
@@ -618,37 +674,45 @@ Proof.
 Defined.
 
 
- Definition traverse_Vector_manual
- (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
- {A B : Type} (f : A -> G B)
- (v : Vector n A) : G (Vector n B).
+Definition traverse_Vector_alt
+             (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+             {A B : Type} (f : A -> G B)
+             (v : Vector n A) : G (Vector n B).
+Proof.
+  unfold Vector in *.
+  destruct v as [l Heq].
+  generalize dependent n.
+  induction l; intros n Heq.
+  - apply pure.
+    subst.
+    cbn.
+    apply vnil.
+  - cbn in Heq.
+    assert (n = S (n - 1)).
+    { lia. }
+    rewrite H2.
+    apply ((ap G) ∘ ap G (pure (vcons (n - 1))) (A := B)).
+    + apply f. assumption.
+    + apply IHl.
+      lia.
+Defined.
 
- Proof.
-   unfold Vector in *.
-   destruct v as [l Heq].
-   induction l.
-   - subst. exact (pure (exist _ nil eq_refl)).
-   - destruct n.
-     + cbn in Heq. false.
-     + inversion Heq.
- Abort.
+Definition traverse_Vector_manual
+             (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+             {A B : Type} (f : A -> G B)
+             (v : Vector n A) : G (Vector n B).
 
- Definition traverse_Vector_manual
- (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
- {A B : Type} (f : A -> G B)
- (v : Vector n A) : G (Vector n B).
+Proof.
+  unfold Vector in *.
+  destruct v as [l Heq].
+  symmetry in Heq.
+  subst.
+Abort.
 
- Proof.
-   unfold Vector in *.
-   destruct v as [l Heq].
-   symmetry in Heq.
-   subst.
- Abort.
-
- #[local] Instance Trav_Vec {n}: Traverse (Vector n) := traverse_Vector n.
+#[export] Instance Traverse_Vector {n}: Traverse (Vector n) := traverse_Vector n.
 
 
-  (*
+(*
  Lemma traverse_Vector_projT1:
    forall (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
      {A B : Type} (f : A -> G B)
@@ -695,59 +759,175 @@ Defined.
      destruct e.
      reflexivity.
  Qed.
-   *)
+ *)
 
- Lemma traverse_Vector_rw2:
-   forall (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-     {A B : Type} (f : A -> G B)
-     (a : A) (l: list A)
-     (p : length (a :: l) = S n),
-     traverse f (exist _ (a :: l) p) =
-       pure (Basics.flip (vcons n)) <⋆> traverse f (exist (fun l => length l = n) l (length_uncons a l n p)) <⋆> f a.
- Proof.
-   intros.
-   assert (n = length l).
-   inversion p.
-   subst.
-   cbn in p.
-   reflexivity.
-   subst.
-   cbn in p.
-   assert (p = eq_refl).
-   apply proof_irrelevance.
-   rewrite H2 at 1.
-   cbn.
-   subst.
-   cbn.
-   fequal.
-   fequal.
-   fequal.
-   apply proof_irrelevance.
- Qed.
+Lemma traverse_Vector_rw1:
+  forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    {A B : Type} (f : A -> G B),
+    traverse f vnil = pure vnil.
+Proof.
+  intros.
+  reflexivity.
+Qed.
 
- Lemma traverse_Vector_vcons:
-   forall (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-     {A B : Type} (f : A -> G B)
-     (v : Vector n A) (a : A),
-     traverse f (vcons n a v) =
-       pure (Basics.flip (vcons n)) <⋆> traverse f v <⋆> f a.
- Proof.
-   intros.
-   unfold vcons.
-   destruct v.
-   rewrite traverse_Vector_rw2.
-   fequal.
-   fequal.
-   fequal.
-   fequal.
-   apply proof_irrelevance.
- Qed.
+Lemma traverse_Vector_rw2:
+  forall (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    {A B : Type} (f : A -> G B)
+    (a : A) (l: list A)
+    (p : length (a :: l) = S n),
+    traverse f (exist _ (a :: l) p) =
+      pure (Basics.flip (vcons n)) <⋆>
+        traverse f (exist (fun l => length l = n) l (length_uncons a l n p)) <⋆> f a.
+Proof.
+  intros.
+  assert (n = length l).
+  inversion p.
+  subst.
+  cbn in p.
+  reflexivity.
+  subst.
+  cbn in p.
+  assert (p = eq_refl).
+  apply proof_irrelevance.
+  rewrite H2 at 1.
+  cbn.
+  subst.
+  cbn.
+  fequal.
+  fequal.
+  fequal.
+  apply proof_irrelevance.
+Qed.
 
+Lemma traverse_Vector_vcons:
+  forall (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    {A B : Type} (f : A -> G B)
+    (v : Vector n A) (a : A),
+    traverse f (vcons n a v) =
+      pure (Basics.flip (vcons n)) <⋆> traverse f v <⋆> f a.
+Proof.
+  intros.
+  unfold vcons.
+  destruct v.
+  rewrite traverse_Vector_rw2.
+  fequal.
+  fequal.
+  fequal.
+  fequal.
+  apply proof_irrelevance.
+Qed.
+
+Lemma traverse_Vector_id `{v : Vector n A}:
+  traverse (G := fun A => A) id v = v.
+Proof.
+  induction v using Vector_induction_alt.
+  - rewrite traverse_Vector_rw1.
+    reflexivity.
+  - rewrite traverse_Vector_vcons.
+    rewrite IHv.
+    reflexivity.
+Qed.
+
+Lemma trf_traverse_traverse_Vector:
+  forall (G1 : Type -> Type)
+    (H0 : Map G1) (H1 : Pure G1)
+    (H2 : Mult G1),
+    Applicative G1 ->
+    forall (G2 : Type -> Type)
+      (H4 : Map G2) (H5 : Pure G2)
+      (H6 : Mult G2),
+      Applicative G2 ->
+      forall (A B C : Type) (g : B -> G2 C) (f : A -> G1 B),
+      forall `{v : Vector n A},
+        (map (traverse (G := G2) g) ∘ traverse (G := G1) f) v =
+          traverse (T := Vector n) (G := G1 ∘ G2) (kc2 g f) v.
+Proof.
+  intros.
+  unfold compose at 1.
+  induction v using Vector_induction_alt.
+  - do 2 rewrite traverse_Vector_rw1.
+    rewrite app_pure_natural.
+    rewrite traverse_Vector_rw1.
+    reflexivity.
+  - rewrite traverse_Vector_vcons.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite traverse_Vector_vcons.
+    rewrite <- IHv.
+    rewrite (ap_compose2 G2 G1).
+    rewrite (ap_compose2 G2 G1).
+    unfold_ops @Pure_compose.
+    repeat rewrite map_ap;
+      rewrite (app_pure_natural (G := G1));
+      rewrite <- ap_map;
+      repeat rewrite map_ap;
+      rewrite (app_pure_natural (G := G1)).
+    rewrite app_pure_natural.
+    unfold kc2.
+    unfold compose at 4.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite (app_pure_natural (G := G1)).
+    { repeat fequal.
+      ext w z.
+      unfold compose, precompose.
+      unfold Basics.flip.
+      fold (Vector m C).
+      rewrite traverse_Vector_vcons.
+      reflexivity.
+    }
+Qed.
+
+Lemma trf_traverse_morphism_Vector :
+  forall (G1 G2 : Type -> Type)
+    (H0 : Map G1) (H1 : Mult G1)
+    (H2 : Pure G1) (H3 : Map G2)
+    (H4 : Mult G2) (H5 : Pure G2)
+    (ϕ : forall A : Type, G1 A -> G2 A),
+    ApplicativeMorphism G1 G2 ϕ ->
+    forall (A B : Type) (f : A -> G1 B),
+    forall `{v : Vector n A},
+      ϕ (_ B) (traverse f v) = traverse (ϕ B ∘ f) v.
+Proof.
+  intros.
+  induction v using Vector_induction_alt.
+  - do 2 rewrite traverse_Vector_rw1.
+    rewrite appmor_pure.
+    reflexivity.
+  - rewrite traverse_Vector_vcons.
+    rewrite traverse_Vector_vcons.
+    inversion H.
+    rewrite <- appmor_pure.
+    rewrite <- IHv.
+    unfold compose at 1.
+    do 2 rewrite ap_morphism_1.
+    reflexivity.
+Qed.
+
+#[export] Instance TraversableFunctor_Vector {n:nat}:
+  TraversableFunctor (Vector n).
+Proof.
+  constructor.
+  - intros.
+    apply functional_extensionality.
+    intros.
+    apply traverse_Vector_id.
+  - intros.
+    apply functional_extensionality.
+    intros.
+    apply trf_traverse_traverse_Vector; auto.
+  - intros.
+    apply functional_extensionality.
+    intros.
+    apply trf_traverse_morphism_Vector.
+    auto.
+Qed.
 
 Lemma runBatch_repr {A B C} `{Applicative G}:
   forall (b: Batch A B C) (f: A -> G B),
-  map (F := G) (Batch_to_Make2 b) (traverse (T := Vector (length_Batch b)) f (Batch_to_Vector2 b)) =
-        runBatch G f _ b.
+    map (F := G) (Batch_to_Make2 b) (traverse (T := Vector (length_Batch b)) f (Batch_to_Vector2 b)) =
+      runBatch G f _ b.
 Proof.
   intros.
   induction b.
@@ -775,545 +955,3 @@ Proof.
     + symmetry.
       apply vuncons_surj_hd.
 Qed.
-
-
-Require Import
-
-          Classes.Coalgebraic.TraversableFunctor
-          Adapters.KleisliToCoalgebraic.TraversableFunctor.
-
-Section deconstruction.
-
-  Context
-    `{Kleisli.TraversableFunctor.TraversableFunctor T}
-    `{Map T}
-    `{! Compat_Map_Traverse T}
-    `{ToBatch T}
-    `{! Compat_ToBatch_Traverse}.
-
-  Definition toContents {A B} (t: T A):
-    Vector (length_Batch (toBatch (A' := B) t)) A :=
-    Batch_to_Vector2 (toBatch t).
-
-  Definition toMake {A} (t: T A) B:
-    Vector (length_Batch (toBatch (A' := B) t)) B -> (T B) :=
-    Batch_to_Make2 (toBatch t).
-
-  Definition plength: forall {A}, T A -> nat :=
-    fun A => traverse (B := False) (G := const nat) (fun _ => 1).
-
-  Lemma plength_eq_length: forall {A} (t: T A),
-      plength t = length_Batch (toBatch (A' := False) t).
-  Proof.
-    intros.
-    unfold plength.
-    rewrite traverse_through_runBatch.
-    unfold compose.
-    induction (toBatch t).
-    - reflexivity.
-    - cbn.
-      rewrite IHb.
-      unfold_ops @NaturalNumbers.Monoid_op_plus.
-      lia.
-  Qed.
-
-  Lemma plength_eq_length': forall {A} {B} (t: T A),
-      plength t = length_Batch (toBatch (A' := B) t).
-  Proof.
-    intros.
-    unfold plength.
-    rewrite traverse_through_runBatch.
-    unfold compose.
-  Admitted.
-
-  Lemma toMake_toContents {A} (t: T A):
-    toMake t A (toContents t) = t.
-  Proof.
-    unfold toMake.
-    unfold toContents.
-    rewrite Batch_repr.
-    compose near t on left.
-    rewrite trf_extract.
-    reflexivity.
-  Qed.
-
-  (*
-  Lemma toMake_shape : forall A (t: T A) B,
-      toMake t B = toMake (map (F := T) (const tt) t) B.
-*)
-
-
-  Lemma traverse_repr {A} (t: T A) {B} `{Applicative G} `(f: A -> G B):
-    traverse f t =
-      map (toMake t B) (traverse f (toContents t)).
-  Proof.
-    rewrite traverse_through_runBatch.
-    unfold compose.
-    rewrite <- VectorRefinement.runBatch_repr.
-    reflexivity.
-  Qed.
-
-  Lemma unnamed: forall `(t: T A) B,
-      mapsnd_Batch B unit (const tt) (toBatch (A' := unit) t) =
-        mapsnd_Batch B unit (const tt) (toBatch (A' := unit) t).
-  Proof.
-    intros.
-    Check map (const tt) (mapsnd_Batch B unit (const tt) (toBatch (A' := unit) t)).
-  Abort.
-
-  Section constant_applicatives.
-
-    Context
-      `{Monoid M}.
-
-    Lemma traverse_const1: forall {A : Type} (B : Type) `(f : A -> M),
-        traverse (G := const M) (B := False) f =
-          traverse (G := const M) (B := B) f.
-    Proof.
-      intros.
-      change_left (map (F := const M) (A := T False)
-                     (B := T B) (map (F := T) (A := False) (B := B) exfalso)
-                     ∘ traverse (T := T) (G := const M)
-                     (B := False) (f : A -> const M False)).
-      rewrite (map_traverse (G1 := const M)).
-      reflexivity.
-    Qed.
-
-    Lemma traverse_const2: forall {A : Type} (f : A -> M) (fake1 fake2 : Type),
-        traverse (G := const M) (B := fake1) f =
-          traverse (G := const M) (B := fake2) f.
-    Proof.
-      intros.
-      rewrite <- (traverse_const1 fake1).
-      rewrite -> (traverse_const1 fake2).
-      reflexivity.
-    Qed.
-
-  End constant_applicatives.
-
-  Lemma unnamed: forall `(t: T A) B C,
-      length_Batch (toBatch (A' := B) t) =
-        length_Batch (toBatch (A' := C) t).
-  Proof.
-    intros.
-    rewrite length_Batch_spec.
-    rewrite length_Batch_spec.
-    compose near t on left.
-    compose near t on right.
-    rewrite <- traverse_through_runBatch.
-    rewrite <- traverse_through_runBatch.
-    rewrite (traverse_const2 _ B C).
-    reflexivity.
-  Qed.
-
-  Goal forall `{Applicative G} A B C (t: T A) v1  (f: B -> G C),
-      traverse f (toMake t B v1) =
-        traverse f (toMake t B v1).
-    intros.
-    Check  (traverse (T := Vector (length_Batch (toBatch t))) f v1).
-    About toBatch.
-    (* G (Vector (length_Batch (toBatch t)) C) *)
-    Check  map (F := G) (toMake t C).
-    (*  G (Vector (length_Batch (toBatch t)) C) -> G (T C) *)
-    Fail Check map (F := G) (toMake t C)
-              (traverse (G := G) (T := Vector (length_Batch (toBatch t))) f v1).
-  Abort.
-
-  Goal forall A (t: T A) B v1,
-      plength (toMake t B v1) = length_Batch (toBatch (A' := B) t).
-  Proof.
-    intros.
-    unfold plength.
-    unfold toMake.
-    destruct (toBatch (A' := B) t).
-  Abort.
-
-  Goal forall A (t: T A) B v,
-      plength (toMake t B v) = plength t.
-  Proof.
-    intros.
-    rewrite <- (toMake_toContents t) at 2.
-    rewrite plength_eq_length.
-    rewrite plength_eq_length.
-    Search length_Batch toBatch.
-  Abort.
-
-Lemma Vector_trav_eq_eq:
-  forall (A: Type) (n: nat) (l1 l2 : list A)
-    (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    {B : Type} (f : A -> G B)
-    (p1 : length l1 = n)
-    (p2 : length l2 = n),
-    (traverse f l1 = traverse f l2) <->
-      traverse f (exist (fun l => length l = n) l1 p1) =
-        traverse f (exist _ l2 p2).
-Proof.
-  dup.
-  { intros.
-    assert (length l1 = length l2).
-    now subst.
-    subst.
-    split.
-    2: admit.
-    intros Heq.
-    subst.
-    destruct l1.
-    assert (l2 = nil).
-    { cbn in p2. destruct l2; now inverts p2. }
-    subst.
-    rewrite (UIP_refl _ _ p2).
-    reflexivity.
-    admit.
-  }
-  intros.
-  generalize dependent n.
-  destruct l1; intros n p1 p2.
-  - induction l2.
-    2:{ cbn in p1. subst. inversion p2. }
-    split.
-    + intros. cbn.
-      fequal.
-      fequal.
-      apply proof_irrelevance.
-    + reflexivity.
-  - generalize dependent n.
-    induction l2; intros n p1 p2.
-    1:{ cbn in p2. subst. inversion p2. }
-    cbn in p1, p2.
-    split.
-    + intros.
-      cbn.
-      cbn.
-Admitted.
-
-Lemma Vector_trav_eq: forall
-    (A: Type) (n: nat)
-    (v1 v2: Vector n A)
-    (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    {B : Type} (f : A -> G B),
-    traverse f (proj1_sig v1) = traverse f (proj1_sig v2) ->
-    traverse f v1 = traverse f v2.
-Proof.
-  intros.
-  destruct v1.
-  destruct v2.
-  cbn in H.
-  erewrite <- Vector_trav_eq_eq.
-  exact H2.
-Defined.
-
-Lemma Vector_trav_eq_correct: forall
-    (A: Type) (n: nat)
-    (v1 v2: Vector n A)
-    (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    {B : Type} (f : A -> G B),
-    traverse f (proj1_sig v1) = traverse f (proj1_sig v2) ->
-    traverse f v1 = traverse f v2.
-Proof.
-  introv Heq.
-  About Vector_induction2.
-  pose (Vector_induction2 A (fun m v1 v2 =>
-                               traverse f (proj1_sig v1) = traverse f (proj1_sig v2) ->
-                               traverse f v1 = traverse f v2)).
-  apply e; clear e.
-  - reflexivity.
-  - intros m a1 a2 v1' v2' Heq' Heq''.
-    rewrite traverse_Vector_vcons.
-    rewrite traverse_Vector_vcons.
-    rewrite proj_vcons in Heq''.
-    rewrite proj_vcons in Heq''.
-    cbn in Heq''.
-    assert (traverse f v1' = traverse f v2').
-    fequal.
-    + fequal. admit.
-Abort.
-
-#[local] Instance TF_Vec {n}: TraversableFunctor (Vector n).
-Proof.
-  constructor.
-  - intros.
-    ext v.
-    unfold id at 2.
-    specialize (Vector_induction A (fun m v' => traverse (G := fun A => A) id v' = v')).
-    intros.
-    apply H.
-    + reflexivity.
-    + intros a m w heq.
-      rewrite traverse_Vector_vcons.
-      rewrite heq.
-      reflexivity.
-  -
-Admitted.
-
-
-#[local] Instance TF_Vec {n}: TraversableFunctor (Vector n).
-Proof.
-  constructor.
-  - intros.
-    ext [l Heq].
-    generalize dependent n.
-    induction l; intros n Heq.
-    + apply Vector_eq.
-      reflexivity.
-    + cbn in *.
-      cbn.
-      specialize (IHl _ eq_refl).
-      rewrite (IHl).
-      cbn.
-      rewrite <- Heq.
-      reflexivity.
-  - intros.
-    ext [l Heq].
-    generalize dependent n.
-    unfold compose.
-    intros.
-    About Vector_eq.
-    eapply Vector_eq.
-    induction l; intros n Heq.
-    + cbn.
-      rewrite <- pure_appmor_1.
-      cbn.
-      reflexivity.
-    + cbn.
-      rewrite map_pure.
-      apply Vector_eq.
-      reflexivity.
-    + cbn in *.
-      cbn.
-      specialize (IHl _ eq_refl).
-      rewrite (IHl).
-      cbn.
-      rewrite <- Heq.
-      reflexivity.
-    cbn.
-    subst.
-    cbn.
-  unfold Vector.
-  pose (t := traverse (T := list) f l).
-  induction l.
-  - exist (
-
-  - Check traverse (T := list) f x.
-
-  match v in Vector.t _ n return G (Vector.t A n) with
-  | Vector.nil _(*=A*) => pure (F := G) (Vector.nil A)
-  | Vector.cons _(*=A*) a(*:FA*) m(*n = S m*) rest =>
-      pure (F := G) (Basics.flip (fun a => Vector.cons A a m))
-      <⋆> dist_Vector m G rest
-      <⋆> a
-      (*
-      pure (F := G) (fun a => Vector.cons A a m) <⋆> a <⋆> dist_Vector m G rest
-       *)
-  end.
-
-#[export] Instance Dist_Vector (n : nat):
-  ApplicativeDist (Vector n) := @dist_Vector n.
-
-Tactic Notation "cleanup_Vector" :=
-  repeat (change (map_Vector ?n (A := ?x) (B := ?y))
-           with (map (F := Vector n) (A := x) (B := y)) +
-                  change (dist_Vector ?n ?G (A := ?x))
-             with (dist (Vector n) G (A := x))).
-
-Tactic Notation "cleanup_Vector_*" :=
-  repeat ((change (map_Vector ?n (A := ?x) (B := ?y))
-            with (map (F := Vector n) (A := x) (B := y)) in *) ||
-                   change (dist_Vector ?n ?G (A := ?x))
-              with (dist (Vector n) G (A := x)) in *).
-
-Lemma dist_natural_Vector (n : nat) :
-  forall (G : Type -> Type) (H1 : Map G)
-    (H2 : Pure G) (H3 : Mult G),
-    Applicative G -> Natural (F := (Vector n ∘ G)) (G := (G ∘ Vector n)) (@dist_Vector n G _ _ _).
-Proof.
-  intros. constructor; try typeclasses eauto.
-  intros. unfold_ops @Map_compose. unfold compose at 3 7.
-  ext v. induction v.
-  - cbn. compose near (Vector.nil A).
-    apply (app_pure_natural (G := G)).
-  - cbn.
-    (* LHS *)
-    rewrite (map_ap).
-    rewrite (map_ap).
-    rewrite (app_pure_natural (G := G)).
-    (* RHS *)
-    cleanup_Vector_*.
-    rewrite <- IHv.
-    rewrite <- (ap_map).
-    rewrite <- (ap_map).
-    rewrite (map_ap).
-    compose near (pure (F := G) (Basics.flip (fun a0 : B => Vector.cons B a0 n))).
-    rewrite (fun_map_map (F := G)).
-    rewrite (app_pure_natural).
-    reflexivity.
-Qed.
-
-Lemma dist_morph_Vector (n : nat) :
-  forall (G1 G2 : Type -> Type) (H1 : Map G1) (H3 : Mult G1) (H2 : Pure G1) (H4 : Map G2)
-    (H6 : Mult G2) (H5 : Pure G2) (ϕ : forall A : Type, G1 A -> G2 A),
-    ApplicativeMorphism G1 G2 ϕ -> forall A : Type,
-      dist (Vector n) G2 ∘ map (F := Vector n) (ϕ A) = ϕ (Vector n A) ∘ dist (Vector n) G1.
-Proof.
-  intros. unfold compose at 1 2.
-  ext v. induction v.
-  - cbn. rewrite (appmor_pure (F := G1) (G := G2)). reflexivity.
-  - cbn. cleanup_Vector.
-    (* LHS *)
-    rewrite IHv.
-    inversion H.
-    (* RHS *)
-    rewrite (ap_morphism_1).
-    rewrite (ap_morphism_1).
-    rewrite (appmor_pure).
-    reflexivity.
-Qed.
-
-Lemma dist_unit_Vector (n : nat) : forall A : Type, dist (A := A) (Vector n) (fun A : Type => A) = id.
-Proof.
-  intros. ext v. induction v.
-  - cbn. reflexivity.
-  - cbn. cleanup_Vector.
-    (* LHS *)
-    rewrite IHv.
-    reflexivity.
-Qed.
-
-Lemma dist_linear_Vector (n : nat) :
-  forall (G1 : Type -> Type) (H1 : Map G1) (H2 : Pure G1) (H3 : Mult G1),
-    Applicative G1 ->
-    forall (G2 : Type -> Type) (H5 : Map G2) (H6 : Pure G2) (H7 : Mult G2),
-      Applicative G2 ->
-      forall A : Type, dist (A := A) (Vector n) (G1 ∘ G2) = map (F := G1) (dist (Vector n) G2) ∘ dist (Vector n) G1.
-Proof.
-  intros. unfold compose at 4.
-  ext v. induction v.
-  - cbn. unfold_ops @Pure_compose.
-    rewrite (app_pure_natural (G := G1)).
-    reflexivity.
-  - cbn. cleanup_Vector.
-    (* LHS *)
-    rewrite IHv.
-    unfold_ops @Pure_compose.
-    rewrite (ap_compose2 G2 G1).
-    rewrite (ap_compose2 G2 G1).
-    rewrite <- (ap_map (G := G1)).
-    rewrite (map_ap (G := G1)).
-    rewrite (map_ap (G := G1)).
-    compose near (pure (F := G1) (pure (F := G2)
-                                       (Basics.flip (fun a0 : A => Vector.cons A a0 n)))).
-    rewrite (fun_map_map (F := G1)).
-    compose near (pure (F := G1) (pure (F := G2)
-                                       (Basics.flip (fun a0 : A => Vector.cons A a0 n)))).
-    rewrite (fun_map_map (F := G1)).
-    rewrite (app_pure_natural (G := G1)).
-    (* RHS *)
-    rewrite (map_ap (G := G1)).
-    rewrite (app_pure_natural (G := G1)).
-    reflexivity.
-Qed.
-
-#[export] Instance TraversableFunctor_Vector (n : nat):
-  Categorical.TraversableFunctor.TraversableFunctor (Vector n) :=
-  {| dist_natural := dist_natural_Vector n;
-    dist_morph := dist_morph_Vector n;
-    dist_unit := dist_unit_Vector n;
-    dist_linear := dist_linear_Vector n;
-  |}.
-
-#[export] Instance Traverse_Vector (n : nat): Traverse (Vector n) :=
-  Adapters.CategoricalToKleisli.TraversableFunctor.ToKleisli.Traverse_dist (Vector n).
-
-
-#[export] Instance KleisliTraversableFunctor_Vector (n : nat):
-  Kleisli.TraversableFunctor.TraversableFunctor (Vector n) :=
-  Adapters.CategoricalToKleisli.TraversableFunctor.ToKleisli.TraversableFunctor_instance_0.
-
-Require Import Functors.Batch.
-
-Import Batch.Notations.
-
-(** * Deconstructing <<Batch A B C>> into shape and contents *)
-(******************************************************************************)
-Section deconstruction.
-
-  #[local] Arguments Done {A B C}%type_scope _.
-  #[local] Arguments Step {A B C}%type_scope _.
-
-  Context {A B: Type}.
-
-  Fixpoint Batch_to_contents {C} (b: Batch A B C):
-    Vector (length_Batch b) A :=
-    match b return (Vector (length_Batch b) A) with
-    | Done c => vnil
-    | Step rest a => vcons (length_Batch rest) a (Batch_to_contents rest)
-    end.
-
-  #[program] Fixpoint Batch_to_makeFn {C} (b: Batch A B C):
-    Vector (length_Batch b) B -> C :=
-    match b return (Vector (length_Batch b) B -> C) with
-    | Done c =>
-        const c
-    | Step rest a =>
-        fun (v: Vector (S (length_Batch rest)) B) =>
-          (_ (Batch_to_makeFn rest))
-    end.
-
-  Next Obligation.
-    destruct (vuncons _ v).
-    apply x.
-    exact s. assumption.
-  Defined.
-
-  Lemma Batch_to_contents_rw2: forall {C} (b: Batch A B (B -> C)) (a: A),
-      Batch_to_contents (b ⧆ a) =
-        Vector.cons A a (length_Batch b) (Batch_to_contents b).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma Batch_to_makeFn_rw2: forall {C} (a: A) (b: Batch A B (B -> C)),
-      Batch_to_makeFn (b ⧆ a) =
-        fun (v:Vector.t B (S (length_Batch b))) =>
-          match (Vector.uncons v) with
-          | (b', v') => Batch_to_makeFn b v' b'
-          end.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma runBatch_repr `{Applicative G} {C}: forall (f: A -> G B) (b: Batch A B C),
-      runBatch G f C b =
-      pure G (Batch_to_makeFn b) <⋆>
-                traverse (T := Vector (length_Batch b)) f (Batch_to_contents b).
-  Proof.
-    intros.
-    induction b.
-    - cbn.
-      rewrite ap2.
-      reflexivity.
-    - rewrite runBatch_rw2.
-      rewrite Batch_to_contents_rw2.
-      rewrite Batch_to_makeFn_rw2.
-      cbn.
-      rewrite <- ap4.
-      rewrite ap2.
-      rewrite <- ap4.
-      rewrite ap2.
-      rewrite ap2.
-      rewrite IHb.
-      reflexivity.
-  Qed.
-
-End deconstruction.
-
-
-
-
-
-
-
-
-
-
-
-

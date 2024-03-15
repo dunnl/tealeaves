@@ -530,12 +530,36 @@ Section traversable_functor_theory.
       - typeclasses eauto.
       - intros. now apply map_respectful.
     Qed.
+
   End elements.
 
-  (*
+  (** ** New length *)
+  (******************************************************************************)
+  Definition plength: forall {A}, T A -> nat :=
+    fun A => foldMap (fun _ => 1).
+
+  Lemma plength_eq_length: forall {A} {B} (t: T A),
+      plength t = length_Batch (toBatch (A' := B) t).
+  Proof.
+    intros.
+    unfold plength.
+    rewrite (foldMap_through_runBatch2 A B).
+    unfold compose.
+    induction (toBatch t).
+    - reflexivity.
+    - cbn.
+      rewrite IHb.
+      unfold_ops @NaturalNumbers.Monoid_op_plus.
+      lia.
+  Qed.
+
   (** ** Quantification over elements *)
   (******************************************************************************)
   Section quantification.
+
+    Context
+      `{Elements T}
+      `{! Compat_Elements_Traverse T}.
 
     #[local] Arguments foldMap T%function_scope M%type_scope op unit
       {H1} {A}%type_scope f%function_scope _ : rename.
@@ -549,32 +573,46 @@ Section traversable_functor_theory.
     Lemma forall_iff `(P : A -> Prop) (t : T A) :
       Forall P t <-> forall (a : A), a ∈ t -> P a.
     Proof.
-      unfold_ops @Elements_Tolist.
-      unfold compose at 1.
-      rewrite <- forall_iff.
-      unfold Forall_List.
-      rewrite <- foldMap_list_eq.
-      compose near t on right;
-        rewrite <- foldMap_through_tolist.
-      reflexivity.
+      unfold Forall.
+      rewrite foldMap_through_runBatch1.
+      rewrite element_through_runBatch1.
+      unfold compose.
+      induction (toBatch t).
+      - cbn. split.
+        + cbv. intuition.
+        + cbv. intuition.
+      - rewrite runBatch_rw2.
+        rewrite runBatch_rw2.
+        rewrite IHb.
+        unfold ap.
+        unfold_ops @Mult_const @Monoid_op_and.
+        unfold_ops @Monoid_op_subset @Return_subset.
+        unfold subset_add.
+        firstorder subst; auto.
     Qed.
 
     Lemma forany_iff `(P : A -> Prop) (t : T A) :
       Forany P t <-> exists (a : A), a ∈ t /\ P a.
     Proof.
-      unfold_ops @Elements_Tolist.
-      unfold compose at 1.
-      rewrite <- forany_iff.
       unfold Forany.
-      unfold Forany_List.
-      rewrite <- foldMap_list_eq.
-      compose near t on right;
-        rewrite <- foldMap_through_tolist.
-      reflexivity.
+      rewrite foldMap_through_runBatch1.
+      rewrite element_through_runBatch1.
+      unfold compose.
+      induction (toBatch t).
+      - cbn. split.
+        + cbv. intuition.
+        + cbv. firstorder.
+      - rewrite runBatch_rw2.
+        rewrite runBatch_rw2.
+        rewrite IHb.
+        unfold ap.
+        unfold_ops @Mult_const @Monoid_op_or.
+        unfold_ops @Monoid_op_subset @Return_subset.
+        unfold subset_add.
+        firstorder subst; auto.
     Qed.
 
   End quantification.
-  *)
 
 End traversable_functor_theory.
 
@@ -647,7 +685,7 @@ Section polymorphic.
       `{! Compat_Map_Traverse T}
       `{! Compat_ToBatch_Traverse}.
 
-  Lemma length_Batch1: forall (A B: Type) (t : T A),
+  Lemma length_toBatch1: forall (A B: Type) (t : T A),
       length_Batch (B := B) (toBatch t) =
         length_Batch (B := B) (toBatch (map (fun _ => tt) t)).
   Proof.
@@ -660,7 +698,7 @@ Section polymorphic.
     reflexivity.
   Qed.
 
-  Lemma length_Batch2: forall (A B B': Type) (t : T A),
+  Lemma length_toBatch2: forall (A B B': Type) (t : T A),
       length_Batch (B := B) (toBatch t) =
         length_Batch (B := B') (toBatch t).
   Proof.
@@ -682,16 +720,6 @@ Section polymorphic.
     rewrite <- (traverse_const1 (M := list A) (T := T) B').
     reflexivity.
   Defined.
-
-  Lemma contents_Batch1: forall (A B B': Type) (t : T A),
-      Batch_to_contents (B := B) (toBatch t) =
-        @eq_rect nat (@length_Batch A B' (T B') (@toBatch T H6 A B' t))
-                 (fun n : nat => Vector.t A n)
-                 (Batch_to_contents (B := B') (toBatch t))
-                 (@length_Batch A B (T B) (@toBatch T H6 A B t))
-                 (length_Batch2 A B' B t).
-  Proof.
-  Abort.
 
   Lemma toBatch_mapsnd : forall (A B B' : Type) (f : B -> B'),
       mapsnd_Batch B B' f ∘ toBatch (A := A) (A' := B') =
@@ -716,13 +744,10 @@ Section polymorphic.
                 Vector.t A m :=
     fun A n => @eq_rect_r _ n (Vector.t A).
 
-
   Lemma coerce_Vector_length_eq_refl: forall (A: Type) (n: nat)
       (v: Vector.t A n),
       coerce_Vector_length A n v n eq_refl = v.
   Proof.
-    intros.
-    cbn.
     reflexivity.
   Qed.
 
@@ -740,6 +765,14 @@ Section polymorphic.
 
   (** ** Length *)
   (******************************************************************************)
+
+  (* length_Batch with a fixed B *)
+  Definition toLen {A}: forall (t : T A), nat.
+    intro t.
+    exact (length_Batch (B := False) (toBatch t)).
+  Defined.
+
+  (* length_Batch with B given *)
   Definition toLen_poly {A} (B: Type): forall (t : T A), nat.
     intro t.
     exact (length_Batch (B := B) (toBatch t)).
@@ -752,7 +785,7 @@ Section polymorphic.
     intros.
     ext t.
     unfold toLen_poly.
-    rewrite length_Batch1.
+    rewrite length_toBatch1.
     reflexivity.
   Qed.
 
@@ -761,14 +794,9 @@ Section polymorphic.
     intros.
     ext t.
     unfold toLen_poly.
-    erewrite length_Batch2.
+    erewrite length_toBatch2.
     reflexivity.
   Qed.
-
-  Definition toLen {A}: forall (t : T A), nat.
-    intro t.
-    exact (length_Batch (B := False) (toBatch t)).
-  Defined.
 
   Corollary toLen_toLen_poly: forall (A B: Type) (t: T A),
       toLen t = toLen_poly B t.
@@ -778,49 +806,17 @@ Section polymorphic.
   Qed.
 
   Lemma toLen_foldMap: forall (A: Type) (t: T A),
-      toLen t = foldMap (fun _ => 1) t.
+      toLen t = plength t.
   Proof.
     intros.
     unfold toLen.
     rewrite length_Batch_spec.
+    unfold plength.
     rewrite foldMap_through_runBatch1.
     reflexivity.
   Qed.
 
-  (** ** New length *)
-  (******************************************************************************)
-  Definition plength: forall {A}, T A -> nat :=
-    fun A => foldMap (fun _ => 1).
-
-  Lemma plength_eq_length: forall {A} (t: T A),
-      plength t = length_Batch (toBatch (A' := False) t).
-  Proof.
-    intros.
-    unfold plength.
-    rewrite foldMap_through_runBatch1.
-    unfold compose.
-    induction (toBatch t).
-    - reflexivity.
-    - cbn.
-      rewrite IHb.
-      unfold_ops @NaturalNumbers.Monoid_op_plus.
-      lia.
-  Qed.
-
-  Lemma plength_eq_length': forall {A} {B} (t: T A),
-      plength t = length_Batch (toBatch (A' := B) t).
-  Proof.
-    intros.
-    unfold plength.
-    rewrite (foldMap_through_runBatch2 A B).
-    unfold compose.
-    induction (toBatch t).
-    - reflexivity.
-    - cbn.
-      rewrite IHb.
-      unfold_ops @NaturalNumbers.Monoid_op_plus.
-      lia.
-  Qed.
+  (* Package *)
 
   (*
   Inductive package {A} (t: T A) : Type :=
@@ -835,32 +831,19 @@ Section polymorphic.
     - apply plength_eq_length.
     - apply Batch_to_contents.
   Qed.
-   *)
+  *)
 
   Inductive package {A} (t: T A) : Type :=
     pack : forall (n: nat) (pf: plength t = n)
              (contents: Vector.t A n)
              (make: forall B, Vector.t B n -> T B)
-             (Heq: make A contents = t)
       , package t.
-
-  Lemma Batch_repr {A C}:
-    forall (b: Batch A A C),
-      Batch_to_makeFn b (Batch_to_contents b) = extract_Batch b.
-  Proof.
-    intros.
-    induction b.
-    - reflexivity.
-    - cbn.
-      rewrite IHb.
-      reflexivity.
-  Qed.
 
   #[program] Definition toMake {A}: forall (t : T A),
     forall B, Vector.t B (length_Batch (toBatch (A' := A) t)) -> T B.
   Proof.
     intros.
-    rewrite (length_Batch2 A A B) in X.
+    rewrite (length_toBatch2 A A B) in X.
     eapply Batch_to_makeFn.
     apply X.
   Defined.
@@ -870,7 +853,7 @@ Section polymorphic.
   Proof.
     intros.
     unfold toMake.
-    rewrite (proof_irrelevance _ (length_Batch2 A A A t) eq_refl).
+    rewrite (proof_irrelevance _ (length_toBatch2 A A A t) eq_refl).
     cbn.
     pose (Batch_repr (toBatch t)).
     rewrite e.
@@ -884,41 +867,38 @@ Section polymorphic.
   Proof.
     intros.
     pose (pack t (length_Batch (toBatch (A' := A) t))).
-    specialize (p (plength_eq_length' t)).
+    specialize (p (plength_eq_length t)).
     specialize (p (Batch_to_contents (toBatch (A' := A) t))).
     specialize (p (toMake t)).
-    specialize (p (toMake_repr t)).
     apply p.
   Qed.
 
-  #[program] Definition toContents {A}: forall (t : T A),
-      Vector.t A (plength t) :=
-    fun t =>
-      match (toBatch (A' := False) t) with
-      | Done _ => @Vector.nil A
-      | Step _ _ => _
-      end.
+  (** ** Contents *)
+  (******************************************************************************)
+  Definition toContents_poly {A}: forall (B: Type) (t : T A),
+      Vector.t A (toLen_poly B t).
+  Proof.
+    intros B t.
+    apply (Batch_to_contents (toBatch t)).
+  Defined.
 
-  Next Obligation.
-    unfold plength.
-    rewrite foldMap_through_runBatch1.
-    unfold compose.
-    induction (toBatch t).
-    cbn.
-    reflexivity.
-    inversion Heq_anonymous.
-  Qed.
+  Definition toContents {A}: forall (t : T A),
+      Vector.t A (toLen t).
+  Proof.
+    intro t.
+    apply (Batch_to_contents (toBatch t)).
+  Defined.
 
-  Next Obligation.
-  Admitted.
+  Definition toContents_param {A}:
+    forall (t : T A) (n : nat) (Heq: n = toLen t),
+      Vector.t A n.
+  Proof.
+    intros.
+    rewrite Heq.
+    apply (Batch_to_contents (toBatch t)).
+  Defined.
 
-  Compute toContents (A := bool).
-  Check Vector.nil bool.
-  Check toContents_obligation_1 bool.
-  About H3.
-    intros. apply fold
-
-  Definition toContents {A}: forall (B: Type) (t : T A),
+  Definition toContents_plength {A}: forall (B: Type) (t : T A),
       Vector.t A (plength t).
   Proof.
     intros B t.
@@ -939,43 +919,6 @@ Section polymorphic.
       eassumption.
   Defined.
 
-  Compute toContents.
-
-  (** ** Contents *)
-  (******************************************************************************)
-  Definition toContents_poly {A}: forall (B: Type) (t : T A),
-      Vector.t A (toLen_poly B t).
-  Proof.
-    intros B t.
-    apply (Batch_to_contents (toBatch t)).
-  Defined.
-
-  Definition toContents {A}: forall (t : T A),
-      Vector.t A (toLen t).
-  Proof.
-    intro t.
-    apply (Batch_to_contents (toBatch t)).
-  Defined.
-
-  Definition toContents_generic {A}:
-    forall (t : T A) (n : nat) (Heq: n = toLen t),
-      Vector.t A n.
-  Proof.
-    intros.
-    rewrite Heq.
-    apply (Batch_to_contents (toBatch t)).
-  Defined.
-
-  Definition toContents_generic2 {A}:
-    forall (t : T A) (n : nat) (Heq: n = toLen t),
-      Vector.t A n.
-  Proof.
-    intros.
-    eapply coerce_Vector_length.
-    eapply (Batch_to_contents (toBatch t)).
-    apply Heq.
-  Defined.
-
   (** ** Make *)
   (******************************************************************************)
   Definition toMake_poly {A}: forall (t : T A) (B C: Type),
@@ -993,7 +936,7 @@ Section polymorphic.
     apply (Batch_to_makeFn (toBatch t)).
   Defined.
 
-  Definition toMake {A}: forall (t : T A) (B: Type),
+  Definition toMake_ {A}: forall (t : T A) (B: Type),
       Vector.t B (toLen t) -> (T B).
   Proof.
     intros t B.
@@ -1025,7 +968,7 @@ Section polymorphic.
     assert (Heq': length_Batch (toBatch (A' := B) t) = n).
     rewrite <- Heq.
     unfold toLen.
-    erewrite length_Batch2.
+    erewrite length_toBatch2.
     reflexivity.
     apply (coerce_Vector_length B n v _ Heq').
   Defined.
@@ -1038,7 +981,7 @@ Section polymorphic.
     eapply coerce_Vector_length.
     eassumption.
     unfold toLen.
-    erewrite length_Batch2.
+    erewrite length_toBatch2.
     reflexivity.
   Defined.
 
@@ -1048,11 +991,11 @@ Section polymorphic.
   Proof.
     intros.
     unfold toLen.
-    rewrite length_Batch1.
+    rewrite length_toBatch1.
     compose near t on left.
     rewrite (fun_map_map (F := T)).
     change ((fun _ : A' => tt) ∘ f) with (fun _:A => tt).
-    rewrite (length_Batch1 _ _ t).
+    rewrite (length_toBatch1 _ _ t).
     reflexivity.
   Qed.
 
@@ -1124,49 +1067,13 @@ Section polymorphic.
     intros.
     unfold toMake_generic2.
     induction v.
-    - cbn.
   Abort.
-
-  Lemma repr2 {A}: forall `(t : T A),
-      t = toMake_generic3 t A (toContents t).
-  Proof.
-    intros.
-    change t with (id t) at 1.
-    rewrite <- trf_extract.
-    unfold compose at 1.
-    unfold toMake_generic3.
-    unfold toContents.
-    unfold toLen.
-    unfold length_Batch2 at 1.
-  Abort.
-  (*
-  Lemma toLen_toMake_generic {A B}:
-    forall (t : T A)
-      (n m : nat)
-      (v1: Vector.t B m)
-      (v2: Vector.t B m)
-      (Heq: n = m),
-      toLen (toMake_generic t B n Heq v1) =
-        toLen (toMake_generic t B n Heq v2).
-  Proof.
-    intros.
-    generalize dependent n.
-    apply (Vector.rect2
-             (P := fun n =>
-    induction v.
-    - replace (@toLen A t) with 0.
-      assert (
-      destruct Heq.
-    unfold toMake_generic
-    cbn.
-   *)
 
   Lemma toLen_toMake {A B}:
     forall (t : T A) (v: Vector.t B (toLen_poly B t)),
       toLen (toMake_mono t B v) = toLen t.
   Proof.
     intros.
-    Search toLen.
     unfold toLen.
     rewrite batch_length1.
     rewrite batch_length1.
@@ -1180,7 +1087,7 @@ Section polymorphic.
                  B False (M := list B)
                  (ret (T := list))
               ).
-  Admitted.
+  Abort.
 
   Lemma toLen_toMake2 {A B}:
     forall (t : T A) (v: Vector.t B (toLen t)),
@@ -1190,7 +1097,6 @@ Section polymorphic.
     unfold toMake_generic2.
 
     unfold toMake_poly.
-    Search toLen.
     unfold toLen.
     rewrite batch_length1.
     rewrite batch_length1.
@@ -1210,13 +1116,15 @@ Section polymorphic.
 End polymorphic.
 
 From Tealeaves Require Import
-               Misc.NaturalNumbers
-               Classes.Kleisli.TraversableMonad.
+  Misc.NaturalNumbers
+  Classes.Kleisli.TraversableMonad.
 
 Lemma length_foldMap: forall `(l: list A),
-    length l = foldMap (fun _ => 1) l.
+    length l = plength l.
 Proof.
-  intros. induction l.
+  intros.
+  unfold plength.
+  induction l.
   - reflexivity.
   - rewrite foldMap_list_eq.
     rewrite foldMap_list_cons.
@@ -1230,11 +1138,12 @@ Lemma list_toLen: forall (A B: Type) (l: list A),
 Proof.
   intros.
   rewrite length_foldMap.
+  unfold plength.
   unfold toLen_poly.
   rewrite foldMap_to_traverse1.
   rewrite traverse_through_runBatch.
   unfold compose.
-  rewrite (length_Batch2 list A B False).
+  rewrite (length_toBatch2 list A B False).
   rewrite length_Batch_spec.
   reflexivity.
 Qed.
@@ -1247,113 +1156,27 @@ Proof.
 Abort.
 
 Lemma length_helper: forall A B (l:list A) (l' : Vector.t B (toLen list l)),
-    length (toMake list l B l') = length l.
+    length (toMake_ list l B l') = length l.
 Proof.
   intros.
-  rewrite (repr1 list l) at 2.
   induction l.
-  - cbn in *.
-    unfold toMake.
-    unfold toMake_poly.
-    unfold eq_rect_r.
-    unfold eq_rec.
-
-    unfold toBatch.
-    assert (eq_sym (toLen_poly2 list A False B) = eq_refl).
-
-Admitted.
-
+  - assert (Heq: l' = Vector.nil B).
+    { cbn in l'. Search Vector.t 0.
+      apply (Vector.toNil l'). }
+    admit.
+  - cbn.
+    admit.
+Abort.
 
 Lemma length_helper_mono: forall A B (l:list A) (l' : Vector.t B (toLen_poly list B l)),
     length (toMake_mono list l B l') = length l.
 Proof.
   intros.
-Admitted.
-
+Abort.
 
 (** * Element-wise operations *)
 (******************************************************************************)
-Require Import ContainerFunctor.
-
-Import ContainerFunctor.Notations.
-Import Applicative.Notations.
-
-#[export] Instance Elements_Batch1 {B C}: Elements (BATCH1 B C) :=
-  Elements_Traverse.
-
 Section pw.
-
-  Lemma foldMap_Batch_rw2: forall {A B C: Type} `{Monoid M}
-      (f : A -> M) (a: A) (rest: Batch A B (B -> C)),
-      foldMap (T := BATCH1 B C) f (rest ⧆ a) =
-        foldMap f rest ● f a.
-  Proof.
-    intros.
-    unfold foldMap.
-    rewrite traverse_Batch_rw2.
-    reflexivity.
-  Qed.
-
-  Definition element_of_Step1 {A B C:Type}:
-    forall (a' : A) (rest: Batch A B (B -> C)),
-      forall (a : A),
-      element_of (F := BATCH1 B (B -> C)) rest a ->
-      element_of (F := BATCH1 B C) (Step rest a') a.
-  Proof.
-    introv.
-    unfold_ops @Elements_Batch1 @Elements_Traverse.
-    introv Hin.
-    change ((evalAt a ∘ foldMap (T := BATCH1 B (B -> C))
-                    (ret (T := subset))) rest) in Hin.
-    change ((evalAt a ∘ foldMap (T := BATCH1 B C)
-                    (ret (T := subset))) (rest ⧆ a')).
-    rewrite (foldMap_morphism
-               (T := BATCH1 B (B -> C))
-               _ _ (ϕ := evalAt a)) in Hin.
-    rewrite (foldMap_morphism
-               (T := BATCH1 B C)
-               _ _ (ϕ := evalAt a)).
-    rewrite foldMap_Batch_rw2.
-    now left.
-  Defined.
-
-  Definition element_of_Step2 {A B C:Type}:
-    forall (rest: Batch A B (B -> C)) (a: A),
-      element_of (F := BATCH1 B C) (Step rest a) a.
-  Proof.
-    intros.
-    unfold_ops @Elements_Batch1 @Elements_Traverse.
-    change ((evalAt a ∘ foldMap (T := BATCH1 B C)
-                    (ret (T := subset))) (rest ⧆ a)).
-    rewrite (foldMap_morphism
-               (T := BATCH1 B C)
-               _ _ (ϕ := evalAt a)).
-    rewrite foldMap_Batch_rw2.
-    now right.
-  Qed.
-
-  Definition sigMapP (A: Type) (P Q: A -> Prop) (Himpl: forall a, P a -> Q a):
-    sig P -> sig Q :=
-    fun σ => match σ with
-          | exist _ a h => exist Q a (Himpl a h)
-          end.
-
-  Fixpoint elt_decorate
-   {A B C: Type}
-   (b : Batch A B C):
-    Batch {a|element_of (F := BATCH1 B C) b a} B C :=
-    match b with
-    | Done c => Done c
-    | Step rest a =>
-        Step (map (F := BATCH1 B (B -> C))
-                  (sigMapP A
-                           (element_of (F := BATCH1 B (B -> C)) rest)
-                           (element_of (F := BATCH1 B C) (Step rest a))
-                           (element_of_Step1 a rest)
-                  )
-                  (elt_decorate rest))
-             (exist _ a (element_of_Step2 rest a))
-    end.
 
   Context
     `{TraversableFunctor T}
@@ -1366,15 +1189,10 @@ Section pw.
                {A B} (G : Type -> Type)
                `{Applicative G} : forall (t: T A) `(f1 : {a | a ∈ t} -> G B), G (T B).
   Proof.
-    intro t.
-    change t with (id t).
-    rewrite id_through_runBatch.
-    unfold compose.
-    remember (@toBatch T _ A A t).
-    destruct b.
-    - intro f.
-      cbn in f.
-  Abort.
+    intros t f.
+    apply (runBatch_pw G (toBatch (A' := B) t)).
+    rewrite (element_through_runBatch2 (T := T) A B) in f.
+  Admitted.
 
   Lemma in_Batch_iff {A} (A':Type) (t: T A):
     forall a, a ∈ t <-> a ∈ (toBatch (A':=A') t).
@@ -1432,6 +1250,235 @@ Proof.
 Qed.
 
 End pw.
+
+
+(** * Deconstructing with refinement-type vectors *)
+(******************************************************************************)
+Require Import Functors.VectorRefinement.
+
+Module deconstruction.
+
+  Context
+    `{Traverse T}
+    `{! Kleisli.TraversableFunctor.TraversableFunctor T}
+    `{Map T}
+    `{! Compat_Map_Traverse T}
+    `{ToBatch T}
+    `{! Compat_ToBatch_Traverse}.
+
+  Definition toContents {A B} (t: T A):
+    Vector (length_Batch (toBatch (A' := B) t)) A :=
+    Batch_to_Vector2 (toBatch t).
+
+  Definition toMake {A} (t: T A) B:
+    Vector (length_Batch (toBatch (A' := B) t)) B -> (T B) :=
+    Batch_to_Make2 (toBatch t).
+
+  Lemma tolist_toContents {A B} (t: T A):
+    to_list A (toContents (B := B) t) = List.rev (tolist t).
+  Proof.
+    intros.
+    unfold toContents.
+    rewrite (tolist_through_runBatch B).
+    induction (toBatch t).
+    - reflexivity.
+    - rewrite runBatch_rw2.
+      rewrite Batch_to_Vector2_rw2.
+      cbn. (* hidden evaluation of Batch_length *)
+      rewrite to_list_vcons.
+      rewrite IHb.
+      unfold_ops @Monoid_op_list.
+      unfold_ops @Return_list.
+      rewrite List.rev_unit.
+      reflexivity.
+  Qed.
+
+  Definition plength: forall {A}, T A -> nat :=
+    fun A => traverse (B := False) (G := const nat) (fun _ => 1).
+
+  Lemma plength_eq_length: forall {A} (t: T A),
+      plength t = length_Batch (toBatch (A' := False) t).
+  Proof.
+    intros.
+    unfold plength.
+    rewrite traverse_through_runBatch.
+    unfold compose.
+    induction (toBatch t).
+    - reflexivity.
+    - cbn.
+      rewrite IHb.
+      unfold_ops @NaturalNumbers.Monoid_op_plus.
+      lia.
+  Qed.
+
+  Lemma plength_eq_length': forall {A} {B} (t: T A),
+      plength t = length_Batch (toBatch (A' := B) t).
+  Proof.
+    intros.
+    unfold plength.
+    rewrite traverse_through_runBatch.
+    unfold compose.
+  Admitted.
+
+  Lemma toMake_toContents {A} (t: T A):
+    toMake t A (toContents t) = t.
+  Proof.
+    unfold toMake.
+    unfold toContents.
+    rewrite Batch_repr.
+    compose near t on left.
+    rewrite trf_extract.
+    reflexivity.
+  Qed.
+
+  (*
+  Lemma toMake_shape : forall A (t: T A) B,
+      toMake t B = toMake (map (F := T) (const tt) t) B.
+*)
+
+  Print Instances Traverse.
+  Existing Instance Traverse_Vector.
+
+  Lemma traverse_repr {A} (t: T A) {B} `{Applicative G} `(f: A -> G B):
+    traverse f t =
+      map (toMake t B) (traverse f (toContents t)).
+  Proof.
+    rewrite traverse_through_runBatch.
+    unfold compose.
+    rewrite <- VectorRefinement.runBatch_repr.
+    reflexivity.
+  Qed.
+
+  Lemma length_Batch_independent: forall `(t: T A) B C,
+      length_Batch (toBatch (A' := B) t) =
+        length_Batch (toBatch (A' := C) t).
+  Proof.
+    intros.
+    rewrite length_Batch_spec.
+    rewrite length_Batch_spec.
+    compose near t on left.
+    compose near t on right.
+    rewrite <- traverse_through_runBatch.
+    rewrite <- traverse_through_runBatch.
+    rewrite (traverse_const2 _ B C).
+    reflexivity.
+  Qed.
+
+  Goal forall `{Applicative G} A B C (t: T A) v1  (f: B -> G C),
+      traverse f (toMake t B v1) =
+        traverse f (toMake t B v1).
+    intros.
+    Check  (traverse (T := Vector (length_Batch (toBatch t))) f v1).
+    About toBatch.
+    (* G (Vector (length_Batch (toBatch t)) C) *)
+    Check  map (F := G) (toMake t C).
+    (*  G (Vector (length_Batch (toBatch t)) C) -> G (T C) *)
+    Fail Check map (F := G) (toMake t C)
+              (traverse (G := G) (T := Vector (length_Batch (toBatch t))) f v1).
+  Abort.
+
+  Goal forall A (t: T A) B v1,
+      plength (toMake t B v1) = length_Batch (toBatch (A' := B) t).
+  Proof.
+    intros.
+    unfold plength.
+    unfold toMake.
+    destruct (toBatch (A' := B) t).
+  Abort.
+
+  Goal forall A (t: T A) B v,
+      plength (toMake t B v) = plength t.
+  Proof.
+    intros.
+    rewrite <- (toMake_toContents t) at 2.
+    rewrite plength_eq_length.
+    rewrite plength_eq_length.
+    Search length_Batch toBatch.
+  Abort.
+
+Lemma Vector_trav_eq_eq:
+  forall (A: Type) (n: nat) (l1 l2 : list A)
+    (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    {B : Type} (f : A -> G B)
+    (p1 : length l1 = n)
+    (p2 : length l2 = n),
+    (traverse f l1 = traverse f l2) <->
+      traverse f (exist (fun l => length l = n) l1 p1) =
+        traverse f (exist _ l2 p2).
+Proof.
+  dup.
+  { intros.
+    assert (Vector_induction2_alt:
+  forall m (A: Type) (P: forall m, Vector m A -> Vector m A -> Prop)
+    (IHnil: P 0 vnil vnil)
+    (IHcons:
+      forall m (a1 a2: A) (v1 v2: Vector m A),
+        P m v1 v2 ->
+        P (S m) (vcons m a1 v1) (vcons m a2 v2)),
+  forall (v1 v2: Vector m A), P m v1 v2).
+    { intros. apply Vector_induction2; eauto. }
+    split.
+    - intros.
+      apply (Vector_induction2_alt n A
+                                   (fun m v1 v2 =>
+                                           traverse f v1 =
+                                             traverse f v2)).
+      + reflexivity.
+      + intros.
+        rewrite traverse_Vector_vcons.
+        rewrite traverse_Vector_vcons.
+        rewrite H8.
+        admit.
+Admitted.
+
+Lemma Vector_trav_eq: forall
+    (A: Type) (n: nat)
+    (v1 v2: Vector n A)
+    (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    {B : Type} (f : A -> G B),
+    traverse f (proj1_sig v1) = traverse f (proj1_sig v2) ->
+    traverse f v1 = traverse f v2.
+Proof.
+  introv hyp.
+  destruct v1.
+  destruct v2.
+  erewrite <- Vector_trav_eq_eq.
+  apply hyp.
+Defined.
+
+(** * Deconstructing <<Batch A B C>> into shape and contents *)
+(******************************************************************************)
+Section deconstruction.
+
+  #[local] Arguments Done {A B C}%type_scope _.
+  #[local] Arguments Step {A B C}%type_scope _.
+
+  Context {A B: Type}.
+
+  Fixpoint Batch_to_contents {C} (b: Batch A B C):
+    Vector (length_Batch b) A :=
+    match b return (Vector (length_Batch b) A) with
+    | Done c => vnil
+    | Step rest a => vcons (length_Batch rest) a (Batch_to_contents rest)
+    end.
+
+  #[program] Fixpoint Batch_to_makeFn {C} (b: Batch A B C):
+    Vector (length_Batch b) B -> C :=
+    match b return (Vector (length_Batch b) B -> C) with
+    | Done c =>
+        const c
+    | Step rest a =>
+        fun (v: Vector (S (length_Batch rest)) B) =>
+          (_ (Batch_to_makeFn rest))
+    end.
+
+  Next Obligation.
+    destruct (vuncons _ v).
+    apply x.
+    exact s. assumption.
+  Defined.
+
+End deconstruction.
 
 (** * Notations *)
 (******************************************************************************)

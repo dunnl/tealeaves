@@ -60,7 +60,7 @@ Section Derived.
       end.
 
   #[local] Instance CatApp_App
-    `{! Applicative.Applicative G}:
+    `{! KApplicative.Applicative G}:
     Categorical.Applicative.Applicative G.
   Proof.
     constructor.

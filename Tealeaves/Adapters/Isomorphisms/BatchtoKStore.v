@@ -35,9 +35,10 @@ Section batch_to.
       unfold ap.
       unfold length.
       rewrite IHb.
-      unfold
-      fequal.
+  Abort.
 
+
+  Context (A B C: Type).
 
   Definition Batch_to_Vector:
     Batch A B C -> @sigT nat (Vector.t A).
