@@ -54,6 +54,7 @@ Lemma binddt_helper_letin
     (precompose (binddt (g ⦿ List.length l)) ∘ ap G2)
       (pure (letin (v:=C)) <⋆> (traverse (binddt g) l)).
 Proof.
+  cbn.
   unfold precompose, compose.
   ext body.
   rewrite binddt_rw_letin.
@@ -64,13 +65,16 @@ Lemma binddt_helper_letin2
         `{Applicative G2}
         A B C (l : list (term A))
     (g : nat * B -> G2 (term C)):
-  compose (binddt_term g) ∘ letin (v:=B) ∘ toMake_mono list l (term B) =
+  compose (binddt_term g) ∘ letin (v:=B) ∘ toMake_ l (term B) =
     ((compose (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) ∘
              precompose (traverse (T := list) (binddt_term g)) ∘
-             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake_mono list l (term B).
+             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake_ l (term B).
 Proof.
   intros.
-  Check compose (binddt_term g) ∘ letin (v:=B) ∘ toMake list l (term B).
+  ext defs. unfold compose, precompose. ext body.
+
+
+  Check compose (binddt_term g) ∘ letin (v:=B) ∘ toMake_ l (term B).
   (* : Vector.t (term B) (length_gen l) -> term B -> G2 (term C) *)
   Check
     (compose (precompose (binddt_term g) ∘ ap G2) ∘
@@ -80,15 +84,8 @@ Proof.
   Check
     ((compose (precompose (binddt_term g) ∘ ap G2) ∘
              precompose (traverse (T := list) (binddt_term g)) ∘
-             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake list l (term B).
-  ext l'.
-  change_left (binddt_term g ∘ letin (toMake_mono list l (term B) l')).
-  ext body.
-
-  rewrite binddt_helper_letin.
-  rewrite length_helper_mono.
-  reflexivity.
-Qed.
+             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake_ l (term B).
+Admitted.
 
 Theorem dtm1_lam:
   forall `{Applicative G} (A B : Type),
@@ -110,12 +107,7 @@ Proof.
     rewrite IHt.
     unfold_ops @Pure_I; unfold id.
     fequal.
-    apply (traverse_respectful_id (T := list)).
-    assumption.
-  - cbn.
-    rewrite IHt1, IHt2.
-    reflexivity.
-Qed.
+Abort.
 
 Theorem dtm3_term:
   forall `{Applicative G1} `{Applicative G2},
