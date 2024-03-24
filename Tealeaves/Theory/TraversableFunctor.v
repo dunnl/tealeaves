@@ -617,11 +617,6 @@ End quantification.
 Definition plength `{Traverse T}: forall {A}, T A -> nat :=
   fun A => foldMap (fun _ => 1).
 
-(*
-  Definition plength: forall {A}, T A -> nat :=
-    fun A => traverse (B := False) (G := const nat) (fun _ => 1).
- *)
-
 Section length.
 
   Context
@@ -709,90 +704,33 @@ Section deconstruction.
     `{! Elements T}
      `{! Compat_Elements_Traverse T}.
 
-  Generalizable Variable v.
-
-  Ltac prove_vector_sim :=
-    unfold Vector_sim;
-    now repeat (rewrite <- coerce_Vector_contents).
-
-  Ltac solve_vector_length :=
-    match goal with
-    | |- ?v =vec= coerce_Vector_length ?e ?v =>
-        vec_symmetry;
-        apply Vector_coerce_sim
-    | |- Vector_hd ?v = Vector_hd ?w =>
-        apply Vector_hd_sim;
-        solve_vector_length
-    end.
-
-  Definition trav_contents_ {A B} (t: T A):
-    Vector (length_Batch (toBatch (A' := B) t)) A :=
-    Batch_contents (toBatch t).
-
-  Definition trav_make_ {A B} (t: T A):
-    Vector (length_Batch (toBatch (A' := B) t)) B -> T B :=
-    Batch_make (toBatch t).
-
   Definition trav_contents {A} (t: T A):
     Vector (plength t) A :=
-    coerce_Vector_length (plength_eq_length t)
-                         (trav_contents_ (B := False) t).
+    let v : Vector (length_Batch (toBatch (A' := False) t)) A
+      := Batch_contents (toBatch t)
+    in coerce_Vector_length (plength_eq_length t) v.
 
   Definition trav_make {A B} (t: T A):
     Vector (plength t) B -> T B :=
     (fun v =>
        let v' := coerce_Vector_length (eq_sym (plength_eq_length t)) v
-       in trav_make_ (B := B) t v').
-
-  (*
-  Context
-    {A A' B B' C D: Type}.
-
-  Implicit Types (t: T A) (b: Batch A B C) (a: A) (X: Type).
-   *)
+       in Batch_make (toBatch t) v').
 
   Section trav_make_lemmas.
 
     Context
       {A B : Type}.
 
-    Lemma trav_make_sim_:
-      forall (t : T A)
-        (v1: Vector (length_Batch (toBatch (A' := B) t)) B)
-        (v2: Vector (length_Batch (toBatch (A' := B) t)) B),
-        Vector_sim v1 v2 ->
-        trav_make_ t v1 = trav_make_ t v2.
-    Proof.
-      introv Hsim.
-      unfold trav_make_.
-      induction (toBatch t).
-      - reflexivity.
-      - rewrite Batch_make_rw2.
-        rewrite (IHb _ _ (Vector_tl_sim Hsim)).
-        rewrite (Vector_hd_sim Hsim).
-        reflexivity.
-    Qed.
-
-    Lemma trav_make_sim_':
-      forall (t1 t2 : T A)
-        (v1: Vector (length_Batch (toBatch (A' := B) t1)) B)
-        (v2: Vector (length_Batch (toBatch (A' := B) t2)) B),
-        t1 = t2 ->
-        v1 =vec= v2 ->
-        trav_make_ (B := B) t1 v1 = trav_make_ t2 v2.
-    Proof.
-      introv Ht Hv.
-      subst.
-      now apply trav_make_sim_.
-    Qed.
+    Generalizable Variable v.
 
     Lemma trav_make_sim:
-      forall (t : T A) `{v1 =vec= v2},
+      forall (t : T A) `{v1 ~~ v2},
         trav_make (B := B) t v1 = trav_make t v2.
     Proof.
       intros.
-      apply trav_make_sim_.
-      prove_vector_sim.
+      unfold trav_make.
+      apply Batch_make_sim1.
+      vector_sim.
     Qed.
 
     Lemma trav_make_sim':
@@ -805,62 +743,90 @@ Section deconstruction.
     Proof.
       intros.
       subst.
-      apply trav_make_sim_.
-      prove_vector_sim.
+      now apply trav_make_sim.
     Qed.
 
-    Lemma tolist_trav_contents_ {X t}:
-      to_list A (trav_contents_ (B := X) t) = List.rev (tolist t).
+    Lemma tolist_trav_contents {t}:
+      to_list A (trav_contents t) = List.rev (tolist t).
     Proof.
       intros.
-      unfold trav_contents_.
-      rewrite (tolist_through_runBatch X).
-      induction (toBatch (A' := X) t).
+      unfold trav_contents.
+      rewrite (tolist_through_runBatch False).
+      generalize (plength_eq_length (B := False) t).
+      intros Heq.
+      generalize dependent (plength t).
+      induction (toBatch (A' := False) t); intros n Heq.
       - reflexivity.
       - rewrite runBatch_rw2.
         rewrite Batch_contents_rw2.
-        cbn. (* hidden evaluation of Batch_length *)
-        rewrite to_list_vcons.
-        rewrite IHb.
+        unfold to_list.
+        rewrite <- coerce_Vector_contents.
+        unfold length_Batch at 1. (* hidden *)
+        rewrite proj_vcons.
+        cbn.
         unfold_ops @Monoid_op_list.
         unfold_ops @Return_list.
         rewrite List.rev_unit.
+        fequal.
+        cbn in Heq.
+        assert (Hlen: length_Batch b = (n -1)) by lia.
+        specialize (IHb (n - 1) Hlen).
+        change (fun a => a :: nil) with (@ret list _ A).
+        cbn in IHb.
+        change (@app A) with (@Monoid_op_list A).
+        rewrite <- IHb.
+        unfold to_list.
+        rewrite <- coerce_Vector_contents.
         reflexivity.
-    Qed.
-    Lemma proj_trav_contents_ {X} {t: T A}:
-      proj1_sig (trav_contents_ (B := X) t) = List.rev (tolist t).
-    Proof.
-      apply tolist_trav_contents_.
-    Qed.
-
-    Lemma trav_contents_sim  {B'} (t: T A):
-      trav_contents_ (B := B) t
-      =vec= trav_contents_ (B := B') t.
-    Proof.
-      unfold Vector_sim.
-      rewrite proj_trav_contents_.
-      rewrite proj_trav_contents_.
-      reflexivity.
     Qed.
 
   End trav_make_lemmas.
 
   Section lemmas.
 
-    Context
-      {A A' B C: Type}.
-
-    (* TODO generalize me *)
-    Lemma foldMap_replace_contents:
-      forall `(b: Batch A B C) `(v: Vector _ A'),
-        runBatch (const nat) (fun _ : A => 1) C b =
-          runBatch (const nat) (fun _ : A' => 1) C
+    Lemma runBatch_const_contents:
+      forall `{Applicative G} `(b: Batch A B C)
+        (x: G B) `(v: Vector _ A'),
+        runBatch G (const x) C b =
+          runBatch G (const x) C
                    (Batch_replace_contents b v).
     Proof.
       intros.
       induction b.
       - reflexivity.
       - cbn. fequal. apply IHb.
+    Qed.
+
+    Lemma Batch_contents_tolist:
+      forall {A B} (t: T A),
+        to_list A (Batch_contents (toBatch (A' := B) t)) = List.rev (tolist t).
+    Proof.
+      intros.
+      rewrite tolist_to_foldMap.
+      rewrite (foldMap_to_traverse2 B).
+      rewrite traverse_through_runBatch.
+      unfold compose.
+      induction (toBatch t).
+      - reflexivity.
+      - cbn.
+        rewrite to_list_vcons.
+        rewrite IHb.
+        unfold_ops @Monoid_op_list @Return_list.
+        rewrite List.rev_unit.
+        reflexivity.
+    Qed.
+
+    Lemma Batch_contents_sim:
+      forall {A B B'} (t: T A),
+        Batch_contents (toBatch (A' := B) t) ~~
+                       Batch_contents (toBatch (A' := B') t).
+    Proof.
+      intros.
+      unfold Vector_sim.
+      change (proj1_sig ?v) with (to_list _ v).
+      rewrite Batch_contents_tolist.
+      rewrite Batch_contents_tolist.
+      reflexivity.
     Qed.
 
   End lemmas.
@@ -872,88 +838,56 @@ Section deconstruction.
 
     Implicit Types (t: T A) (b: Batch A B C) (a: A) (X: Type).
 
-    Lemma trav_make_contents_ {t}:
-      trav_make_ t (trav_contents_ (B := A) t) = t.
-    Proof.
-      unfold trav_make_, trav_contents_.
-      rewrite Batch_make_contents.
-      compose near t on left.
-      rewrite trf_extract.
-      reflexivity.
-    Qed.
-
-    (* put-get *)
+    (* get-put *)
     Lemma trav_make_contents {t}:
       trav_make t (trav_contents t) = t.
     Proof.
-      rewrite <- (@trav_make_contents_ t) at 3.
       unfold trav_make, trav_contents.
-      apply trav_make_sim_.
-      unfold Vector_sim.
-      rewrite <- coerce_Vector_contents.
-      rewrite <- coerce_Vector_contents.
-      apply trav_contents_sim.
+      enough (cut: Batch_make
+                     (toBatch t)
+                (coerce eq_sym (plength_eq_length t)
+                  in coerce (plength_eq_length (B := False) t)
+                    in Batch_contents (toBatch t)) =
+                Batch_make (toBatch t) (Batch_contents (toBatch t))).
+      rewrite cut.
+      rewrite Batch_make_contents.
+      compose near t.
+      now rewrite trf_extract.
+      { apply Batch_make_sim1.
+        vector_sim.
+        apply Batch_contents_sim.
+      }
     Qed.
 
   End make_contents.
 
+  (* put-get *)
   Section something.
 
-    Context
-      {A B C: Type}.
-
-    Implicit Types (t: T A) (b: Batch A B C) (a: A) (X: Type).
-
-    (* put-put *)
-    Lemma toBatch_make {A'} {t: T A} {v: Vector (plength t) B}:
+    Lemma toBatch_make {A A' B} {t: T A} {v: Vector (plength t) B}:
       toBatch (A' := A') (trav_make t v) =
         Batch_replace_contents
           (toBatch (A' := A') t)
           (coerce_Vector_length (eq_sym (plength_eq_length t)) v).
     Proof.
-        unfold trav_make.
-        unfold trav_make_.
-        rewrite Batch_replace_contents2.
-        rewrite coerce_Vector_compose.
-        rewrite (Batch_make_compose_rw1 _ (toBatch)).
-        apply Batch_make_sim'.
-        - compose near t.
-          now rewrite trf_duplicate.
-        - unfold Vector_sim.
-          rewrite <- coerce_Vector_contents.
-          rewrite <- coerce_Vector_contents.
-          rewrite <- coerce_Vector_contents.
-          reflexivity.
+      unfold trav_make.
+      rewrite Batch_make_compose_rw1.
+      rewrite Batch_put_make.
+      apply Batch_make_sim2.
+      - compose near t.
+        rewrite <- trf_duplicate.
+        reflexivity.
+      - vector_sim.
     Qed.
 
-  End something.
-
-  Section something.
-
-    Context
-      {A B C: Type}.
-
-    Implicit Types (t: T A) (b: Batch A B C) (a: A) (X: Type).
-
-    (* put-get *)
-    Lemma trav_contents_make {t} {v: Vector (plength t) A}:
-      trav_contents (trav_make t v) =vec= v.
+    Lemma trav_contents_make {A} {t: T A} {v: Vector (plength t) A}:
+      trav_contents (trav_make t v) ~~ v.
     Proof.
-      unfold Vector_sim.
-      (*
       unfold trav_contents.
-      rewrite <- coerce_Vector_contents.
-      rewrite proj_trav_contents_.
-       *)
-      Search Batch_make.
-      unfold trav_contents.
-      rewrite <- coerce_Vector_contents.
-      unfold trav_contents_.
+      vector_sim.
       rewrite toBatch_make.
-      rewrite Batch_replace_contents0.
-      rewrite <- coerce_Vector_contents.
-      rewrite <- coerce_Vector_contents.
-      reflexivity.
+      rewrite Batch_put_get.
+      vector_sim.
     Qed.
 
   End something.
@@ -969,73 +903,84 @@ Section deconstruction.
         plength t = plength (trav_make t v).
     Proof.
       intros.
-
       unfold plength at 1 2.
-      rewrite (foldMap_through_runBatch2 B B).
-      rewrite (foldMap_through_runBatch2 A B).
+      do 2 change (fun (x:?X) => 1) with (const (A := X) 1).
+      do 2 rewrite (foldMap_through_runBatch2 _ B).
       unfold compose.
       rewrite (@toBatch_make A B B t v).
-      apply foldMap_replace_contents.
+      rewrite <- (runBatch_const_contents (G := @const Type Type nat)).
+      reflexivity.
     Qed.
-
-    Lemma trav_make_make_ (t: T A)
-                          (v: Vector (plength t) B):
-      forall B',
-        trav_make (B := B') (trav_make t v) =
-          fun v' => trav_make (B := B') t (coerce_Vector_length
-                                (eq_sym (plength_trav_make t v)) v').
-    Proof.
-      intros.
-      generalize (eq_sym (plength_trav_make t v)).
-      intro e.
-      ext v'.
-      unfold trav_make at 1.
-      unfold trav_make_ at 1.
-      unfold trav_make at 7.
-      unfold trav_make_ at 1.
-      assert (forall w1 w2, w1 =vec= w2 ->
-                       Batch_make (B := B') (toBatch (trav_make t v)) w1 =
-                         Batch_make (toBatch t) w2).
-      { clear. intros.
-        pose (lemma:=toBatch_make (A' := B') (t := t) (v := v)).
-        rewrite (Batch_make_sim'' _ _ lemma (v1 := w1)).
-        rewrite Batch_replace_contents3.
-        apply (@Batch_make_sim' A B' (T B')).
-        - reflexivity.
-        - unfold Vector_sim.
-          rewrite <- coerce_Vector_contents.
-          destruct lemma.
-          cbn.
-          assumption.
-      }
-      pose (X := Batch_make_sim' (A := A) (B := B) (C := A)).
-      apply H4.
-      { unfold Vector_sim.
-        rewrite <- coerce_Vector_contents.
-        rewrite <- coerce_Vector_contents.
-        rewrite <- coerce_Vector_contents.
-        reflexivity. }
-    Qed.
-
 
     Lemma trav_make_make
             (t: T A) `(v: Vector (plength t) B)
             `(v1: Vector _ B')
             (v2: Vector _ B')
-            (pf: v1 =vec= v2):
+            (pf: v1 ~~ v2):
       trav_make (trav_make t v) v1 =
         trav_make t v2.
     Proof.
-      rewrite trav_make_make_.
-      apply trav_make_sim.
-      unfold Vector_sim.
-      rewrite <- coerce_Vector_contents.
-      assumption.
+      unfold trav_make at 1.
+      unfold trav_make at 7.
+      apply Batch_make_sim3.
+      - symmetry.
+        rewrite toBatch_make.
+        apply Batch_shape_replace_contents.
+      - vector_sim.
     Qed.
 
-    Context (v: Vector 5 A) (a: A).
+    Lemma toBatch_shape:
+      forall {A A'} `(t1: T A) (t2: T A') {B B'},
+        shape t1 = shape t2 ->
+        shape (toBatch (A' := B) t1) = shape (toBatch (A' := B') t2).
+    Proof.
+      intros.
+      Search toBatch.
 
-    Check a ∈ v.
+Notation "'precoerce' Hlen 'in' F" :=
+  (F ○ coerce_Vector_length Hlen)
+    (at level 10, F at level 20).
+
+    Lemma trav_same_shape {A'}
+            (t1: T A) (t2: T A'):
+      shape t1 = shape t2 ->
+      forall B, trav_make (B := B) t1 ~!~ trav_make t2.
+    Proof.
+      intros.
+      unfold trav_make.
+      apply Vector_coerce_fun_sim_l'.
+      apply Vector_coerce_fun_sim_r'.
+      apply Batch_make_shape.
+      Set Printing Implicit.
+
+      change
+        (precoerce eq_sym (plength_eq_length t1) in
+          Batch_make (toBatch t1)
+                     ~!~
+                     precoerce eq_sym (plength_eq_length t2) in
+            Batch_make (toBatch t2)).
+        ).
+
+      idtac.
+      idtac.
+idtac.
+
+      Set Printing Implicit.
+      assert (shape (toBatch t1) = shape (toBatch t2)).
+
+      apply Batch_
+      trav_make (trav_make t v) v1 =
+        trav_make t v2.
+    Proof.
+      unfold trav_make at 1.
+      unfold trav_make at 7.
+      apply Batch_make_sim3.
+      - symmetry.
+        rewrite toBatch_make.
+        apply Batch_shape_replace_contents.
+      - vector_sim.
+    Qed.
+
 
     Instance Elements_Vector {n}: Elements (Vector n).
     unfold Vector.
