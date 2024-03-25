@@ -1210,3 +1210,174 @@ Theorem permutation_spec : forall {A} {l1 l2 : list A},
 Proof.
   introv perm. induction perm; firstorder.
 Qed.
+
+(** * Misc *)
+(******************************************************************************)
+Lemma map_preserve_length:
+  forall (A B: Type) (f: A -> B) (l: list A),
+    length (map f l) = length l.
+Proof.
+  intros.
+  induction l.
+  - reflexivity.
+  - cbn.
+    rewrite <- IHl.
+    reflexivity.
+Qed.
+
+Definition decide_length {A}: forall (n: nat) (l: list A),
+    {length l = n} + { length l = n -> False}.
+Proof.
+  intros.
+  remember (Nat.eqb (length l) n) as b.
+  symmetry in Heqb.
+  destruct b.
+  - left.
+    apply (PeanoNat.Nat.eqb_eq (length l) n).
+    assumption.
+  - right.
+    apply (PeanoNat.Nat.eqb_neq (length l) n).
+    assumption.
+Defined.
+
+(** * Un-con-sing non-empty lists *)
+(******************************************************************************)
+Lemma S_uncons {n m}: S n = S m -> n = m.
+Proof.
+  now inversion 1.
+Defined.
+
+Definition zero_not_S {n} {anything}:
+  0 = S n -> anything :=
+  fun pf => match pf with
+         | eq_refl =>
+             let false : False :=
+               eq_ind 0 (fun e : nat => match e with
+                           | 0 => True
+                           | S _ => False
+                           end) I (S n) pf
+             in (False_rect anything false)
+         end.
+
+Lemma list_uncons_exists:
+  forall (A: Type) (n: nat)
+    (v: list A) (vlen: length v = S n),
+    exists (a: A) (v': list A),
+    v = cons a v'.
+Proof.
+  intros.
+  destruct v.
+  - inversion vlen.
+  - exists a v. reflexivity.
+Qed.
+
+Definition list_uncons {n A} (l: list A) (vlen: length l = S n):
+  A * list A :=
+  match l return (length l = S n -> A * list A) with
+  | nil => zero_not_S
+  | cons a rest => fun vlen => (a, rest)
+  end vlen.
+
+Definition list_uncons_sigma {n A} (l: list A) (vlen: length l = S n):
+  A * {l : list A | length l = n} :=
+  match l return (length l = S n -> A * {l: list A | length l = n}) with
+  | nil => zero_not_S
+  | cons hd tl => fun vlen => (hd, exist _ tl (S_uncons vlen))
+  end vlen.
+
+Definition list_uncons_sigma2 {n A} (l: list A) (vlen: length l = S n):
+  {p: A * list A | l = uncurry cons p} :=
+  match l return (length l = S n -> {p: A * list A | l = uncurry cons p}) with
+  | nil => zero_not_S
+  | cons hd tl => fun vlen => exist _ (hd, tl) eq_refl
+  end vlen.
+
+(** ** Total list head and tail functions for non-empty lists *)
+(******************************************************************************)
+Definition list_hd {n A} :=
+  fun (l: list A) (vlen: length l = S n) =>
+  fst (list_uncons l vlen).
+
+Definition list_tl {n A} :=
+  fun (l: list A) (vlen: length l = S n) =>
+    snd (list_uncons l vlen).
+
+(** *** Proof independence and rewriting laws *)
+(******************************************************************************)
+Lemma list_hd_proof_irrelevance
+        {n m A}
+        (l: list A)
+        (vlen1: length l = S n)
+        (vlen2: length l = S m):
+  list_hd l vlen1 = list_hd l vlen2.
+Proof.
+  induction l.
+  - inversion vlen1.
+  - reflexivity.
+Qed.
+
+Lemma list_tl_proof_irrelevance
+        {n m A}
+        (l: list A)
+        (vlen1: length l = S n)
+        (vlen2: length l = S m):
+  list_tl l vlen1 = list_tl l vlen2.
+Proof.
+  induction l.
+  - inversion vlen1.
+  - reflexivity.
+Qed.
+
+Import EqNotations.
+
+(** Rewrite a [list_hd] subterm by pushing a type coercion into the
+    length proof *)
+Lemma list_hd_rw
+        {n A}
+        {l1 l2: list A}
+        (Heq: l1 = l2)
+        {vlen: length l1 = S n}:
+  list_hd l1 vlen = list_hd l2 (rew [fun l1 => length l1 = S n] Heq in vlen).
+Proof.
+  subst.
+  apply list_hd_proof_irrelevance.
+Qed.
+
+(** Rewrite a [list_tl] subterm by pushing a type coercion into the
+    length proof *)
+Lemma list_tl_rw
+        {n A}
+        {l1 l2: list A}
+        (Heq: l1 = l2)
+        {vlen: length l1 = S n}:
+  list_tl l1 vlen = list_tl l2 (rew [fun l1 => length l1 = S n] Heq in vlen).
+Proof.
+  subst.
+  apply list_tl_proof_irrelevance.
+Qed.
+
+Lemma list_tl_length {n} `(l: list A) (vlen: length l = S n):
+  length (list_tl l vlen) = n.
+Proof.
+  destruct l.
+  - inversion vlen.
+  - cbn. now inversion vlen.
+Qed.
+
+(** *** Surjective pairing properties *)
+(******************************************************************************)
+Lemma list_surjective_pairing {n} `(l: list A) `(vlen: length l = S n):
+  list_uncons l vlen = (list_hd l vlen, list_tl l vlen).
+Proof.
+  destruct l.
+  - inversion vlen.
+  - reflexivity.
+Qed.
+
+Lemma list_surjective_pairing2 {n} `(l: list A) `(vlen: length l = S n):
+  l = cons (list_hd l vlen) (list_tl l vlen).
+Proof.
+  destruct l.
+  - inversion vlen.
+  - reflexivity.
+Qed.

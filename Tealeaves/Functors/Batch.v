@@ -6,7 +6,8 @@ From Tealeaves.Classes Require Export
 
 From Tealeaves.Functors Require Export
   Constant
-  List.
+  List
+  VectorRefinement.
 
 Import Monoid.Notations.
 Import Applicative.Notations.
@@ -1141,6 +1142,20 @@ Section parameterized.
 
   (* TODO Finish rest of the parameterized comonad structure. *)
 
+  (** ** Misc *)
+  (******************************************************************************)
+  Lemma length_cojoin_Batch:
+    forall {A A' B C} (b: Batch A B C),
+      length_Batch b = length_Batch (cojoin_Batch (B := A') b).
+  Proof.
+    induction b.
+    - reflexivity.
+    - cbn. fequal.
+      rewrite IHb.
+      rewrite <- batch_length_map.
+      reflexivity.
+  Qed.
+
 End parameterized.
 
 (** ** <<cojoin>> as <<runBatch double_batch>> *)
@@ -1540,3 +1555,696 @@ Section deconstruction.
   Qed.
 
 End deconstruction.
+
+
+(** ** Batch *)
+(******************************************************************************)
+
+(** Extract the contents of <<Batch>> as a vector *)
+Fixpoint Batch_contents `(b: Batch A B C):
+  Vector (length_Batch b) A :=
+  match b with
+  | Done c => vnil
+  | Step b a => vcons (length_Batch b) a (Batch_contents b)
+  end.
+
+(** Obtain the build function of <<Batch>>. Note that
+ <<Batch_make b v>> in general has type <<C>>, not another <<Batch>>.
+ That is, this is not <<make>> in the sense of <<put>> *)
+Fixpoint Batch_make `(b: Batch A B C):
+  Vector (length_Batch b) B -> C :=
+  match b return Vector (length_Batch b) B -> C with
+  | Done c => fun v => c
+  | Step b a => fun v =>
+        Batch_make b (Vector_tl v) (Vector_hd v)
+  end.
+
+(** This is <<make>> in the sense of <<put>>. *)
+Fixpoint Batch_replace_contents
+           `(b: Batch A B C)
+           `(v: Vector (length_Batch b) A')
+           : Batch A' B C :=
+  match b return (Vector (length_Batch b) A' -> Batch A' B C) with
+  | Done c => fun v => Done c
+  | Step rest a =>
+      fun v => Step (Batch_replace_contents rest (Vector_tl v))
+           (Vector_hd v)
+  end v.
+
+Section Batch.
+
+  Section rw.
+
+    Context {A B C: Type}.
+
+    Implicit Types (a: A) (b: Batch A B (B -> C)) (c: C).
+
+    Lemma Batch_contents_rw1 {c}:
+      Batch_contents (@Done A B C c) = vnil.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma Batch_contents_rw2 {b a}:
+      Batch_contents (Step b a) =
+        vcons (length_Batch b) a (Batch_contents b).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma Batch_make_rw1 {c}:
+      Batch_make (@Done A B C c) = const c.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma Batch_make_rw2 {b a}:
+      Batch_make (Step b a) =
+        fun v => Batch_make b (Vector_tl v) (Vector_hd v).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma Batch_replace_rw1 {c} `{v: Vector _ A'}:
+      Batch_replace_contents (@Done A B C c) v = Done c.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma Batch_replace_rw2 {b a} `{v: Vector _ A'}:
+      Batch_replace_contents (Step b a) v =
+        Step (Batch_replace_contents b (Vector_tl v)) (Vector_hd v).
+    Proof.
+      reflexivity.
+    Qed.
+
+  End rw.
+
+  (** ** Lemmas for <<Batch_make>> *)
+  (******************************************************************************)
+  Section Batch_make.
+
+    (*
+    Lemma Batch_length_ind:
+      forall (A1 A2 B : Type)
+        (P : forall C : Type,
+            Batch A1 B C ->
+            Batch A2 B C ->
+            Prop)
+        (IHdone: forall (C : Type) (c : C), P C (Done c) (Done c))
+        (IHstep: forall (C : Type)
+                   (b1 : Batch A1 B (B -> C))
+                   (b2 : Batch A2 B (B -> C)),
+            P (B -> C) b1 b2 ->
+            forall (a1 : A1) (a2: A2)
+              (Hlen: length_Batch (Step b1 a1) = length_Batch (Step b2 a2)),
+              P C (Step b1 a1) (Step b2 a2)),
+      forall (C : Type) (b1: Batch A1 B C) (b2: Batch A2 B C)
+        (Hlen: length_Batch b1 = length_Batch b2), P C b1 b2.
+    Proof.
+      intros.
+      induction b1.
+      - induction b2.
+        +
+        + false.
+      - induction b2.
+        + false.
+        + apply IHstep.
+          * apply IHb1.
+            now inversion Hlen.
+          * apply Hlen.
+    Qed.
+    *)
+
+    Lemma Batch_shape_ind:
+      forall (A1 A2 B : Type)
+        (P : forall C : Type,
+            Batch A1 B C ->
+            Batch A2 B C ->
+            Prop)
+        (IHdone: forall (C : Type) (c : C), P C (Done c) (Done c))
+        (IHstep: forall (C : Type)
+                   (b1 : Batch A1 B (B -> C))
+                   (b2 : Batch A2 B (B -> C)),
+            P (B -> C) b1 b2 ->
+            forall (a1 : A1) (a2: A2)
+              (Hshape: shape (Step b1 a1) = shape (Step b2 a2)),
+              P C (Step b1 a1) (Step b2 a2)),
+      forall (C : Type) (b1: Batch A1 B C) (b2: Batch A2 B C)
+        (Hshape: shape b1 = shape b2), P C b1 b2.
+    Proof.
+      intros.
+      induction b1.
+      - induction b2.
+        + now inversion Hshape.
+        + false.
+      - induction b2.
+        + false.
+        + apply IHstep.
+          * apply IHb1.
+            now inversion Hshape.
+          * apply Hshape.
+    Qed.
+
+    (* Equivalence of shape is equivalent to
+       saying the <<Batch>> values have the same length
+       and the same make function *)
+    Lemma length_Batch_shape:
+      forall `(b1: Batch A1 B C)
+        `(b2: Batch A2 B C),
+        shape b1 = shape b2 ->
+        length_Batch b1 = length_Batch b2.
+    Proof.
+      introv Hshape.
+      induction b1.
+      - destruct b2.
+        + now inversion Hshape.
+        + false.
+      - destruct b2.
+        + false.
+        + cbn. fequal.
+          apply IHb1.
+          now inversion Hshape.
+    Qed.
+
+    Lemma Batch_make_shape:
+      forall `(b1: Batch A B C) `(b2: Batch A' B C),
+        shape b1 = shape b2 ->
+        Batch_make b1 ~!~ Batch_make b2.
+    Proof.
+      intros.
+      apply (@Batch_shape_ind
+               A A' B
+               (fun C b1 b2 => Batch_make b1 ~!~ Batch_make b2)).
+      - clear. intros.
+        split; auto.
+      - clear. introv Hsim; introv Hshape.
+        do 2 rewrite Batch_make_rw2.
+        unfold Vector_fun_sim.
+        split.
+        + apply length_Batch_shape. assumption.
+        + introv Hsim'.
+          rewrite (Vector_hd_sim Hsim').
+          enough (Batch_make b1 (Vector_tl v1) =
+                    Batch_make b2 (Vector_tl v2)).
+          { rewrite H. reflexivity. }
+          apply Vector_fun_sim_eq.
+          assumption.
+          apply Vector_tl_sim.
+          assumption.
+      - assumption.
+    Qed.
+
+    (* This is true, but to prove it we need more lemmas *)
+    Lemma Batch_make_shape_rev:
+      forall `(b1: Batch A B C) `(b2: Batch A' B C),
+        Batch_make b1 ~!~ Batch_make b2 ->
+          shape b1 = shape b2.
+    Proof.
+    Abort.
+
+    Lemma Batch_replace_shape {A'}:
+      forall `(b1: Batch A1 B C) `(b2: Batch A2 B C),
+        shape b1 = shape b2 ->
+        Batch_replace_contents (A' := A') b1
+          ~!~ Batch_replace_contents (A' := A') b2.
+    Proof.
+      intros.
+      apply (@Batch_shape_ind
+               _ _ _
+               (fun C b1 b2 => Batch_replace_contents b1 ~!~ Batch_replace_contents b2)). 3:auto. all:clear.
+      - intros. split. reflexivity. reflexivity.
+      - intros. split.
+        + auto using length_Batch_shape.
+        + introv Hsim.
+          cbn.
+          fequal.
+          apply H.
+          now apply Vector_tl_sim.
+          now apply Vector_hd_sim.
+    Qed.
+
+    Lemma shape_spec:
+      forall `(b: Batch A B C),
+        shape b =
+          Batch_replace_contents b (Vector_tt (length_Batch b)).
+    Proof.
+      intros.
+      induction b.
+      - reflexivity.
+      - cbn.
+        rewrite Vector_tl_vcons.
+        rewrite Vector_hd_vcons.
+        fequal.
+        apply IHb.
+    Qed.
+
+    Lemma Batch_make_sim1
+            `(b: Batch A B C)
+            `{v1: Vector (length_Batch b) B}
+            `{v2: Vector (length_Batch b) B}
+            (Hsim: v1 ~~ v2):
+      Batch_make b v1 = Batch_make b v2.
+    Proof.
+      induction b.
+      - reflexivity.
+      - rewrite Batch_make_rw2.
+        rewrite (IHb _ _ (Vector_tl_sim Hsim)).
+        rewrite (Vector_hd_sim Hsim).
+        reflexivity.
+    Qed.
+
+    (* This sort of lemma is very useful when the complexity of expression
+     <<v1>> and <<v2>> obstructs tactics like <<rewrite>> *)
+    Lemma Batch_make_sim2
+            `(b1: Batch A B C)
+            `(b2: Batch A B C)
+            `{v1: Vector (length_Batch b1) B}
+            `{v2: Vector (length_Batch b2) B}
+            (Heq: b1 = b2)
+            (Hsim: Vector_sim v1 v2):
+      Batch_make b1 v1 = Batch_make b2 v2.
+    Proof.
+      now (subst; apply Batch_make_sim1).
+    Qed.
+
+    Lemma Batch_make_sim3
+            `(b1: Batch A1 B C)
+            `(b2: Batch A2 B C)
+            `{v1: Vector (length_Batch b1) B}
+            `{v2: Vector (length_Batch b2) B}
+            (Heq: shape b1 = shape b2)
+            (Hsim: v1 ~~ v2):
+      Batch_make b1 v1 = Batch_make b2 v2.
+    Proof.
+      apply Vector_fun_sim_eq.
+      apply Batch_make_shape.
+      auto. assumption.
+    Qed.
+
+    Lemma Batch_make_coerce
+            `(b: Batch A B C)
+            `{v1: Vector (length_Batch b) B}
+            `{v2: Vector n B}
+            (Heq: n = length_Batch b):
+                v1 ~~ v2 ->
+      Batch_make b v1 = Batch_make b (coerce Heq in v2).
+    Proof.
+      subst.
+      intros.
+      apply Batch_make_sim1.
+      rewrite coerce_Vector_eq_refl.
+      assumption.
+    Qed.
+
+    (** Rewrite the <<Batch>> argument to an equal one by
+      coercing the length proof in the vector. *)
+    Lemma Batch_make_rw
+            `(b1: Batch A B C)
+            `(b2: Batch A B C)
+            `{v1: Vector (length_Batch b1) B}
+            (Heq: b1 = b2):
+      Batch_make b1 v1 =
+        Batch_make b2 (rew [fun b => Vector (length_Batch b) B]
+                           Heq in v1).
+    Proof.
+      now (subst; apply Batch_make_sim1).
+    Qed.
+
+    Lemma Batch_make_compose `(b: Batch A B C) `(f: C -> D)
+                             `(Hsim: v1 ~~ v2):
+      f (Batch_make b v1) =
+        Batch_make (map (F := Batch A B) f b) v2.
+    Proof.
+      generalize dependent v2.
+      generalize dependent v1.
+      generalize dependent D.
+      induction b as [C c | C rest IHrest].
+      - reflexivity.
+      - intros D f v1 v2 Hsim.
+        change (map f (Step rest a)) with
+          (Step (map (compose f) rest) a) in *.
+        cbn in v2, v1.
+        do 2 rewrite Batch_make_rw2.
+        rewrite <- (Vector_hd_sim Hsim).
+        change_left ((f ∘ Batch_make rest (Vector_tl v1)) (Vector_hd v1)).
+        specialize (IHrest _ (compose f)).
+        rewrite (IHrest (Vector_tl v1) (Vector_tl v2) (Vector_tl_sim Hsim)).
+        reflexivity.
+    Qed.
+
+    Lemma Batch_make_compose_rw1 `(b: Batch A B C) `(f: C -> D) v:
+      f (Batch_make b v) =
+        Batch_make (map (F := Batch A B) f b)
+                   (coerce_Vector_length (batch_length_map _ _) v).
+    Proof.
+      now rewrite (
+              Batch_make_compose
+                b f
+                (v1 := v)
+                (v2 :=coerce_Vector_length (batch_length_map _ _) v)
+            ) by vector_sim.
+    Qed.
+
+    Lemma Batch_make_compose_rw2 `(b: Batch A B C) `(f: C -> D) v:
+      Batch_make (map (F := Batch A B) f b) v =
+        f (Batch_make b (coerce_Vector_length (eq_sym (batch_length_map _ _)) v)).
+    Proof.
+      rewrite (Batch_make_compose_rw1 b f).
+      apply Batch_make_sim1.
+      vector_sim.
+    Qed.
+
+    Lemma Batch_replace_sim1
+            `(b: Batch A B C)
+            `{v1: Vector (length_Batch b) A'}
+            `{v2: Vector (length_Batch b) A'}
+            (Hsim: v1 ~~ v2):
+      Batch_replace_contents b v1 = Batch_replace_contents b v2.
+    Proof.
+      induction b.
+      - reflexivity.
+      - do 2 rewrite Batch_replace_rw2.
+        rewrite (IHb _ _ (Vector_tl_sim Hsim)).
+        rewrite (Vector_hd_sim Hsim).
+        reflexivity.
+    Qed.
+
+    Lemma Batch_replace_sim2
+            `(b1: Batch A B C)
+            `(b2: Batch A B C)
+            `{v1: Vector (length_Batch b1) A'}
+            `{v2: Vector (length_Batch b2) A'}
+            (Heq: b1 = b2)
+            (Hsim: Vector_sim v1 v2):
+      Batch_replace_contents b1 v1 = Batch_replace_contents b2 v2.
+    Proof.
+      now (subst; apply Batch_replace_sim1).
+    Qed.
+
+    Lemma Batch_replace_sim3
+            `(b1: Batch A1 B C)
+            `(b2: Batch A2 B C)
+            `{v1: Vector (length_Batch b1) A'}
+            `{v2: Vector (length_Batch b2) A'}
+            (Heq: shape b1 = shape b2)
+            (Hsim: v1 ~~ v2):
+      Batch_replace_contents b1 v1 = Batch_replace_contents b2 v2.
+    Proof.
+      apply Vector_fun_sim_eq;
+        auto using Batch_replace_shape.
+    Qed.
+
+  End Batch_make.
+
+  Lemma length_replace_contents:
+    forall {A B C: Type} (b: Batch A B C) `(v: Vector _ A'),
+      length_Batch b = length_Batch (Batch_replace_contents b v).
+  Proof.
+    intros.
+    induction b.
+    - reflexivity.
+    - cbn. fequal.
+      apply (IHb (Vector_tl v)).
+  Qed.
+
+  Lemma Batch_shape_replace_contents:
+    forall {A A' B C: Type} (b: Batch A B C) `(v: Vector _ A'),
+      shape b = shape (Batch_replace_contents b v).
+  Proof.
+    intros.
+    induction b.
+    - reflexivity.
+    - cbn. fequal.
+      apply (IHb (Vector_tl v)).
+  Qed.
+
+  Section lens_laws.
+
+    Context {A A' B C: Type}.
+
+    Lemma Batch_make_contents:
+      forall (b: Batch A A C),
+        Batch_make b (Batch_contents b) = extract_Batch b.
+    Proof.
+      intros.
+      induction b.
+      - reflexivity.
+      - rewrite Batch_make_rw2.
+        rewrite Batch_contents_rw2.
+        rewrite Vector_tl_vcons.
+        rewrite Vector_hd_vcons.
+        rewrite IHb.
+        reflexivity.
+    Qed.
+
+    Lemma Batch_get_put:
+      forall (b: Batch A B C),
+        Batch_replace_contents b (Batch_contents b) = b.
+    Proof.
+      intros.
+      induction b.
+      - reflexivity.
+      - cbn.
+        rewrite Vector_tl_vcons.
+        rewrite Vector_hd_vcons.
+        rewrite IHb.
+        reflexivity.
+    Qed.
+
+    Lemma Batch_put_get:
+      forall (b: Batch A B C) (v: Vector _ A'),
+        Batch_contents (Batch_replace_contents b v) =
+          coerce length_replace_contents b v in v.
+    Proof.
+      intros.
+      generalize (length_replace_contents b v).
+      intros Heq.
+      induction b.
+      - cbn. symmetry.
+        apply Vector_nil_eq.
+      - cbn in *.
+        rewrite Vector_surjective_pairing2.
+        rewrite <- (Vector_hd_coerce_eq (Heq := Heq) (v := v)).
+        specialize (IHb (Vector_tl v) (S_uncons Heq)).
+        fold (@length_Batch A B).
+        (* ^^ I have no idea why this got expanded but it blocks rewriting *)
+        rewrite IHb.
+        fequal.
+        apply Vector_sim_eq.
+        vector_sim.
+    Qed.
+
+    Lemma Batch_put_make:
+      forall (b: Batch A B C),
+        Batch_replace_contents b =
+          precoerce (length_cojoin_Batch b)
+                   in Batch_make (cojoin_Batch b (B := A')).
+    Proof.
+      intros b. ext v.
+      generalize (length_cojoin_Batch (A' := A') b).
+      intros Heq.
+      induction b.
+      - reflexivity.
+      - rewrite Batch_replace_rw2.
+        cbn.
+        rewrite Batch_make_compose_rw2.
+        rewrite <- (Vector_hd_coerce_eq (Heq := Heq)).
+        fequal.
+        specialize (IHb (Vector_tl v) (length_cojoin_Batch b)).
+        rewrite IHb.
+        apply Batch_make_sim1.
+        vector_sim.
+    Qed.
+
+    Lemma Batch_make_replace_contents:
+      forall (b: Batch A B C) (v: Vector (length_Batch b) A'),
+        Batch_make (Batch_replace_contents b v) =
+          precoerce (eq_sym (length_replace_contents b v))
+        in (Batch_make (B := B) b).
+    Proof.
+      intros.
+      ext v'.
+      generalize (eq_sym (length_replace_contents b v)).
+      intro e.
+      induction b.
+      - reflexivity.
+      - cbn.
+        specialize (IHb (Vector_tl v) (Vector_tl v')).
+        specialize (IHb (eq_sym (length_replace_contents b (Vector_tl v)))).
+        replace (Vector_hd (coerce_Vector_length e v'))
+          with (Vector_hd v') at 1.
+        Set Keyed Unification.
+        rewrite IHb.
+        Unset Keyed Unification.
+        fequal.
+        { apply Vector_eq.
+          rewrite <- coerce_Vector_contents.
+          apply Vector_tl_coerce_sim.
+        }
+        apply Vector_hd_coerce_eq.
+    Qed.
+
+  End lens_laws.
+
+  Section length_shape.
+
+    Context {A A' B C: Type}.
+
+
+    Lemma Batch_make_shape_rev:
+      forall `(b1: Batch A B C) `(b2: Batch A' B C),
+        Batch_make b1 ~!~ Batch_make b2 ->
+          shape b1 = shape b2.
+    Proof.
+      intros.
+      unfold Vector_fun_sim in *.
+      destruct H as [Hlen Hsim].
+      induction b1.
+      - destruct b2.
+        * cbn in *.
+          specialize (Hsim vnil vnil ltac:(reflexivity)).
+          now inversion Hsim.
+        * false.
+      - destruct b2.
+        + false.
+        + cbn. fequal. apply IHb1.
+          * now inversion Hlen.
+          * intros v1 v2 Vsim.
+            ext b.
+            assert (Vsim': vcons _ b v1 ~~ vcons _ b v2).
+            now apply vcons_sim.
+            specialize (Hsim _ _ Vsim').
+            cbn in Hsim.
+            do 2 rewrite Vector_tl_vcons in Hsim.
+            do 2 rewrite Vector_hd_vcons in Hsim.
+            assumption.
+    Qed.
+
+    Corollary Batch_make_shape_iff:
+      forall `(b1: Batch A B C) `(b2: Batch A' B C),
+        shape b1 = shape b2 <->
+          Batch_make b1 ~!~ Batch_make b2.
+    Proof.
+      intros.
+      split; auto using Batch_make_shape,
+        Batch_make_shape_rev.
+    Qed.
+
+    Lemma Batch_make_replace_sim:
+      forall `(b1: Batch A B C) `(b2: Batch A' B C) {A''},
+      Batch_make b1 ~!~ Batch_make b2 ->
+      Batch_replace_contents (A' := A'') b1 ~!~ Batch_replace_contents b2.
+    Proof.
+      intros.
+      rewrite <- Batch_make_shape_iff in H.
+      apply (Batch_shape_ind
+               A A' B
+               (fun C b1 b2 =>
+                  @Batch_replace_contents
+                    A B C b1 A''
+                    ~!~ @Batch_replace_contents
+                    A' B C b2 A'')); try assumption; clear.
+      - intros. split.
+        + reflexivity.
+        + intros v1 v2 Hsim.
+          reflexivity.
+      - intros. split.
+        + auto using length_Batch_shape.
+        + intros. cbn.
+          fequal.
+          * destruct H as [Hlen Hsim].
+            apply Hsim.
+            now apply Vector_tl_sim.
+          * now apply Vector_hd_sim.
+    Qed.
+
+  End length_shape.
+
+  Section spec.
+
+    Lemma Batch_eq_iff:
+      forall `(b1: Batch A B C) `(b2: Batch A B C),
+        b1 = b2 <->
+          Batch_make b1 ~!~ Batch_make b2 /\
+            Batch_contents b1 ~~ Batch_contents b2.
+    Proof.
+      intros. split.
+      - intros; subst. split.
+        2: reflexivity.
+        unfold Vector_fun_sim.
+        split; try reflexivity.
+        introv Hsim.
+        auto using Batch_make_sim1.
+      - intros [Hmake Hcontents].
+        rewrite <- (Batch_get_put b1).
+        rewrite <- (Batch_get_put b2).
+        apply Batch_replace_sim3.
+        now apply Batch_make_shape_rev.
+        assumption.
+    Qed.
+
+    Lemma runBatch_repr1 `{Applicative G}:
+      forall `(b: Batch A B C) (f: A -> G B),
+        map (F := G) (Batch_make b)
+            (traverse (T := Vector (length_Batch b)) f (Batch_contents b)) =
+          forwards (runBatch (Backwards G) (mkBackwards ∘ f) _ b).
+    Proof.
+      intros.
+      induction b.
+      - cbn.
+        rewrite app_pure_natural.
+        reflexivity.
+      - rewrite Batch_contents_rw2.
+        unfold length_Batch at 2. (* hidden *)
+        rewrite traverse_Vector_vcons.
+        rewrite runBatch_rw2.
+        rewrite forwards_ap.
+        rewrite map_ap.
+        rewrite map_ap.
+        rewrite app_pure_natural.
+        rewrite <- IHb.
+        rewrite map_to_ap.
+        rewrite <- ap_map.
+        rewrite map_ap.
+        rewrite app_pure_natural.
+        fequal.
+        fequal.
+        fequal.
+        ext b' v'.
+        unfold compose, precompose, evalAt.
+        cbn.
+        rewrite Vector_tl_vcons.
+        rewrite Vector_hd_vcons.
+        reflexivity.
+    Qed.
+
+    Lemma runBatch_repr2 `{Applicative G}:
+      forall `(b: Batch A B C) (f: A -> G B),
+        runBatch G f _ b =
+          map (F := G) (Batch_make b)
+              (forwards (traverse (G := (Backwards G))
+                                  (T := Vector (length_Batch b))
+                                  (mkBackwards ∘ f)
+                                  (Batch_contents b))).
+    Proof.
+      intros.
+      symmetry.
+      change_left
+        (forwards
+           (map (F := Backwards G) (Batch_make b)
+                (traverse (G := Backwards G) (mkBackwards ∘ f) (Batch_contents b)))).
+      rewrite runBatch_repr1.
+      rewrite runBatch_spec.
+      rewrite runBatch_spec.
+      change_left
+        (map (F := G) extract_Batch
+             (forwards (
+                  forwards (
+                      traverse (G := Backwards (Backwards G))
+                               (mkBackwards ∘ (mkBackwards ∘ f)) b)))).
+      rewrite traverse_double_backwards.
+      reflexivity.
+    Qed.
+
+  End spec.

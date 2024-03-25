@@ -16,6 +16,8 @@ Section Backwards.
   #[global] Arguments mkBackwards {F}%function_scope {A}%type_scope forwards.
   #[global] Arguments forwards {F}%function_scope {A}%type_scope b.
 
+  (** ** Functor instance *)
+  (******************************************************************************)
   Section functor.
 
     Context `{Functor F}.
@@ -38,6 +40,8 @@ Section Backwards.
 
   End functor.
 
+  (** ** Applicative instance *)
+  (******************************************************************************)
   Section applicative.
 
     Context
@@ -109,79 +113,102 @@ Section Backwards.
 
   End applicative.
 
-  Context
-    {T G : Type -> Type}
-      `{TraversableFunctor T}
-      `{Applicative G}.
+  (** ** Involutive properties *)
+  (******************************************************************************)
+  Section involution.
 
-  Instance double_forwards:
-    ApplicativeMorphism (Backwards (Backwards G)) G
-                        (fun A => forwards ∘ forwards).
-  Proof.
-    constructor;
-      try typeclasses eauto;
-      intros;
-      repeat (match goal with
-              | x : Backwards (Backwards G) ?A
-                |- _ =>
-                  destruct x as [[x]]
-              end);
-      try easy; cbn.
-    compose near (x ⊗ y).
-    rewrite fun_map_map.
-    replace (swap ∘ swap) with (@id (A * B)).
-    now rewrite fun_map_id.
-    now ext [a b].
-  Qed.
+    Context
+      {T G : Type -> Type}
+        `{TraversableFunctor T}
+        `{Applicative G}.
 
-  Instance double_backwards:
-    ApplicativeMorphism G (Backwards (Backwards G))
-                        (fun A => mkBackwards ∘ mkBackwards).
-  Proof.
-    constructor;
-      try typeclasses eauto;
-      intros;
-      repeat (match goal with
-              | x : Backwards (Backwards G) ?A
-                |- _ =>
-                  destruct x as [[x]]
-              end);
-      try easy; cbn.
-    unfold compose.
-    unfold_ops @Mult_Backwards.
-    unfold mult_Backwards.
-    cbn.
-    fequal.
-    unfold_ops @Map_Backwards.
-    cbn.
-    do 2 fequal.
-    compose near (x ⊗ y).
-    rewrite fun_map_map.
-    replace (swap ∘ swap) with (@id (A * B)).
-    now rewrite fun_map_id.
-    now ext [a b].
-  Qed.
+    Instance double_forwards:
+      ApplicativeMorphism (Backwards (Backwards G)) G
+                          (fun A => forwards ∘ forwards).
+    Proof.
+      constructor;
+        try typeclasses eauto;
+        intros;
+        repeat (match goal with
+                | x : Backwards (Backwards G) ?A
+                  |- _ =>
+                    destruct x as [[x]]
+                end);
+        try easy; cbn.
+      compose near (x ⊗ y).
+      rewrite fun_map_map.
+      replace (swap ∘ swap) with (@id (A * B)).
+      now rewrite fun_map_id.
+      now ext [a b].
+    Qed.
 
-  Context
+    Instance double_backwards:
+      ApplicativeMorphism G (Backwards (Backwards G))
+                          (fun A => mkBackwards ∘ mkBackwards).
+    Proof.
+      constructor;
+        try typeclasses eauto;
+        intros;
+        repeat (match goal with
+                | x : Backwards (Backwards G) ?A
+                  |- _ =>
+                    destruct x as [[x]]
+                end);
+        try easy; cbn.
+      unfold compose.
+      unfold_ops @Mult_Backwards.
+      unfold mult_Backwards.
+      cbn.
+      fequal.
+      unfold_ops @Map_Backwards.
+      cbn.
+      do 2 fequal.
+      compose near (x ⊗ y).
+      rewrite fun_map_map.
+      replace (swap ∘ swap) with (@id (A * B)).
+      now rewrite fun_map_id.
+      now ext [a b].
+    Qed.
+
+    Context
       {A B: Type}
-      {f: A -> G B}
-      (t: T A).
+        {f: A -> G B}
+        (t: T A).
 
-  Lemma traverse_double_backwards:
-    forwards (forwards
-                (traverse (G := Backwards (Backwards G))
-                   (mkBackwards ∘ (mkBackwards ∘ f)) t)) =
-      traverse f t.
+    Lemma traverse_double_backwards:
+      forwards (forwards
+                  (traverse (G := Backwards (Backwards G))
+                            (mkBackwards ∘ (mkBackwards ∘ f)) t)) =
+        traverse f t.
+    Proof.
+      intros.
+      compose near t on left.
+      change_left (((forwards ∘ forwards)
+                      ∘ traverse (T := T)
+                      (G := Backwards (Backwards G))
+                      (mkBackwards ∘ (mkBackwards ∘ f))) t).
+      rewrite (trf_traverse_morphism (morphism := double_forwards)).
+      reflexivity.
+    Qed.
+
+  End involution.
+
+  (** ** Misc *)
+  (******************************************************************************)
+  Lemma forwards_ap {G} `{Applicative G}:
+    forall {A B: Type} (f: (Backwards G) (A -> B)) (a : (Backwards G) A),
+      forwards (f <⋆> a) =
+        ap G (map (F := G) (fun a => evalAt (A := A) a (B := B))
+                  (forwards a)) (forwards f).
   Proof.
-    About forwards.
     intros.
-    compose near t on left.
-    change_left (((forwards ∘ forwards)
-                    ∘ traverse (T := T)
-                    (G := Backwards (Backwards G))
-                    (mkBackwards ∘ (mkBackwards ∘ f))) t).
-    rewrite (trf_traverse_morphism (morphism := double_forwards)).
-    reflexivity.
+    cbn.
+    unfold ap.
+    rewrite (app_mult_natural_l G).
+    compose near (forwards a ⊗ forwards  f).
+    do 2 rewrite (fun_map_map).
+    fequal.
+    now ext [p q].
   Qed.
 
 End Backwards.

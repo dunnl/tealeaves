@@ -65,6 +65,7 @@ Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
 Tealeaves/Functors/ListHistory.v
 Tealeaves/Functors/Vector.v
+Tealeaves/Functors/VectorRefinement.v
 Tealeaves/Functors/Batch.v
 Tealeaves/Functors/KStore.v
 Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
@@ -110,7 +111,6 @@ Tealeaves/Adapters/MonadToApplicative.v
 
 # EXPERIMENTAL VECTORS
 Tealeaves/Classes/Kleisli/KApplicative.v
-Tealeaves/Functors/VectorRefinement.v
 
 #
 Tealeaves/Theory/TraversableFunctor.v
