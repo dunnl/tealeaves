@@ -929,20 +929,37 @@ Section deconstruction.
       - vector_sim.
     Qed.
 
-    Lemma toBatch_shape:
-      forall {A A'} `(t1: T A) (t2: T A') {B B'},
-        shape t1 = shape t2 ->
-        shape (toBatch (A' := B) t1) = shape (toBatch (A' := B') t2).
+    Lemma shape_toBatch_spec: forall (A B: Type) (t: T A),
+        shape (toBatch (A' := B) t) =
+          toBatch (A' := B) (shape t).
     Proof.
       intros.
-      Search toBatch.
+      compose near t on right.
+      unfold shape at 2.
+      rewrite toBatch_mapfst.
+      reflexivity.
+    Qed.
 
-Notation "'precoerce' Hlen 'in' F" :=
-  (F ○ coerce_Vector_length Hlen)
-    (at level 10, F at level 20).
+    Lemma toBatch_shape:
+      forall {A'} `(t1: T A) (t2: T A'),
+        shape t1 = shape t2 ->
+        shape (F := BATCH1 B (T B))
+              (toBatch (A' := B) t1) =
+          shape (F := BATCH1 B (T B))
+                (toBatch (A' := B) t2).
+    Proof.
+      introv Hshape.
+      do 2 rewrite shape_toBatch_spec.
+      rewrite Hshape.
+      reflexivity.
+    Qed.
+
+    Notation "'precoerce' Hlen 'in' F" :=
+      (F ○ coerce_Vector_length Hlen)
+        (at level 10, F at level 20).
 
     Lemma trav_same_shape {A'}
-            (t1: T A) (t2: T A'):
+                          (t1: T A) (t2: T A'):
       shape t1 = shape t2 ->
       forall B, trav_make (B := B) t1 ~!~ trav_make t2.
     Proof.
@@ -951,36 +968,8 @@ Notation "'precoerce' Hlen 'in' F" :=
       apply Vector_coerce_fun_sim_l'.
       apply Vector_coerce_fun_sim_r'.
       apply Batch_make_shape.
-      Set Printing Implicit.
-
-      change
-        (precoerce eq_sym (plength_eq_length t1) in
-          Batch_make (toBatch t1)
-                     ~!~
-                     precoerce eq_sym (plength_eq_length t2) in
-            Batch_make (toBatch t2)).
-        ).
-
-      idtac.
-      idtac.
-idtac.
-
-      Set Printing Implicit.
-      assert (shape (toBatch t1) = shape (toBatch t2)).
-
-      apply Batch_
-      trav_make (trav_make t v) v1 =
-        trav_make t v2.
-    Proof.
-      unfold trav_make at 1.
-      unfold trav_make at 7.
-      apply Batch_make_sim3.
-      - symmetry.
-        rewrite toBatch_make.
-        apply Batch_shape_replace_contents.
-      - vector_sim.
-    Qed.
-
+      Fail apply toBatch_shape.
+    Admitted.
 
     Instance Elements_Vector {n}: Elements (Vector n).
     unfold Vector.
@@ -991,77 +980,18 @@ idtac.
     Defined.
 
 
-    Lemma trav_induction:
-      forall (P: A -> Prop) (Q: T A -> Prop)
-        (t: T A)
-        (Hcontents: forall a, a ∈ t -> P a)
-        (Hmake:
-          forall (v: Vector (plength t) A),
-            (forall (a: A), a ∈ v -> P a) -> Q (trav_make t v)),
-        Q t.
+    Lemma traverse_repr:
+      forall `{Applicative G} (A B: Type) (t: T A) (f: A -> G B),
+    traverse f t =
+      map (trav_make t) (traverse f (trav_contents t)).
     Proof.
       intros.
-      rewrite <- trav_make_contents.
-      apply Hmake.
-      intros.
-      assert (a0 ∈ t). admit.
-      apply Hcontents.
-      assumption.
-    Admitted.
-
-
-  (*
-  Require Import Coq.Program.Equality.
-
-  Lemma toMake_length {A B} (t: T A) v:
-    length_Batch (B := B)
-                 (toBatch (toMake_ t B v)) =
-      length_Batch (B := B) (toBatch t).
-  Proof.
-    unfold toMake_.
-    remember ((toBatch (A' := B) t)) as batched.
-    dependent induction batched.
-    cbn.
-    unfold const.
-    induction (toBatch (A' := B) (A := B) c).
-    - easy.
-    - cbn in *.
-      specialize (IHb c).
-      specialize (IHb Heqbatched).
-      specialize (IHb vnil).
-      rewrite IHb.
-    Search toBatch toMake_.
-    unfold const.
-    Search Vector "nil".
-    rewrite Vector_nil_eq
-    unfold toBatch.
-    reflexivity.
-
-  Abort.
-
-
-  Lemma toContents_toMake {A} (t: T A) v:
-    coerce_Vector_length _ _ (toMake_length t v)
-                         (toContents_ (toMake_ t A v)) = v.
-  Proof.
-    apply Vector_eq.
-    rewrite <- coerce_Vector_contents.
-    destruct v.
-    cbn.
-    unfold toContents_.
-    rewrite unnamed.
-  Abort.
-  *)
-
-  Lemma traverse_repr {A} (t: T A) {B} `{Applicative G} `(f: A -> G B):
-    traverse f t =
-      map (toMake_ t B) (traverse f (toContents_ t)).
-  Proof.
-    rewrite traverse_through_runBatch.
-    unfold compose.
-    rewrite <- VectorRefinement.runBatch_repr.
-    reflexivity.
-  Qed.
+      rewrite traverse_through_runBatch.
+      unfold compose.
+      unfold compose.
+      rewrite <- VectorRefinement.runBatch_repr.
+      reflexivity.
+    Qed.
 
   Definition toContents {A} (t: T A):
     Vector (plength t) A :=
