@@ -36,7 +36,6 @@ Section batch_to.
       rewrite IHb.
   Abort.
 
-
   Context (A B C: Type).
 
   Definition Batch_to_Vector:
@@ -88,6 +87,7 @@ Section batch_to.
 
 End batch_to.
 
+(*
 (** ** <<KStore>> to <<Batch>> *)
 (******************************************************************************)
 Section toBatch.
@@ -174,3 +174,4 @@ Section isos.
   Abort.
 
 End isos.
+*)

@@ -931,7 +931,7 @@ Qed.
     fun_map_map := fun_map_map_Vector n;
   |}.
 
-(** ** Traversable instance *)
+(** * Traversable instance *)
 (******************************************************************************)
 Definition traverse_Vector_core
              {G} `{Map G} `{Pure G} `{Mult G}
@@ -968,50 +968,9 @@ Definition traverse_Vector
 #[export] Instance Traverse_Vector {n}: Traverse (Vector n)
   := traverse_Vector n.
 
-Lemma traverse_Vector_rw
-  (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-          {A B : Type} (f : A -> G B)
-          (a: A) (l: list A) (pf: length (a :: l) = n):
-    traverse f (exist (fun l => length l = n) (a :: l) pf) =
-      traverse f (exist (fun l => length l = n) (a :: l) pf).
-Proof.
-  cbn.
-Abort.
 
- Lemma traverse_Vector_contents:
-   forall (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-     {A B : Type} (f : A -> G B)
-     `{! Applicative G}
-     (v : Vector n A),
-     map (F := G)
-             (@proj1_sig (list B) (fun l => length l = n))
-             (traverse (T := Vector n) f v) =
-       traverse f (proj1_sig v).
- Proof.
-   intros.
-   destruct v as [vlist vlen].
-   generalize dependent n.
-   induction vlist; intros n vlen.
-   - cbn. rewrite app_pure_natural. reflexivity.
-   - cbn. destruct n.
-     + false.
-     + cbn in IHvlist.
-       rewrite <- (IHvlist n (S_uncons vlen)).
-       rewrite map_ap.
-       rewrite map_ap.
-       rewrite app_pure_natural.
-       rewrite <- ap_map.
-       rewrite map_ap.
-       rewrite app_pure_natural.
-       fequal.
-       fequal.
-       fequal.
-       ext b vb.
-       unfold compose, precompose.
-       rewrite proj_vcons.
-       reflexivity.
- Qed.
-
+(** ** Rewriting rules *)
+(******************************************************************************)
 Lemma traverse_Vector_rw1:
   forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
     {A B : Type} (f : A -> G B),
@@ -1050,6 +1009,54 @@ Proof.
   fequal.
   apply proof_irrelevance.
 Qed.
+
+(*
+Lemma traverse_Vector_rw
+  (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+          {A B : Type} (f : A -> G B)
+          (a: A) (l: list A) (pf: length (a :: l) = n):
+    traverse f (exist (fun l => length l = n) (a :: l) pf) =
+      traverse f (exist (fun l => length l = n) (a :: l) pf).
+Proof.
+  cbn.
+Abort.
+ *)
+
+(** ** Miscellaneous *)
+(******************************************************************************)
+ Lemma traverse_Vector_contents:
+   forall (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+     {A B : Type} (f : A -> G B)
+     `{! Applicative G}
+     (v : Vector n A),
+     map (F := G)
+             (@proj1_sig (list B) (fun l => length l = n))
+             (traverse (T := Vector n) f v) =
+       traverse f (proj1_sig v).
+ Proof.
+   intros.
+   destruct v as [vlist vlen].
+   generalize dependent n.
+   induction vlist; intros n vlen.
+   - cbn. rewrite app_pure_natural. reflexivity.
+   - cbn. destruct n.
+     + false.
+     + cbn in IHvlist.
+       rewrite <- (IHvlist n (S_uncons vlen)).
+       rewrite map_ap.
+       rewrite map_ap.
+       rewrite app_pure_natural.
+       rewrite <- ap_map.
+       rewrite map_ap.
+       rewrite app_pure_natural.
+       fequal.
+       fequal.
+       fequal.
+       ext b vb.
+       unfold compose, precompose.
+       rewrite proj_vcons.
+       reflexivity.
+ Qed.
 
 Lemma traverse_Vector_coerce:
   forall (n m : nat) `{Applicative G}
@@ -1107,6 +1114,8 @@ Proof.
     + assumption.
 Qed.
 
+(** ** Traversal laws *)
+(******************************************************************************)
 Lemma traverse_Vector_id `{v : Vector n A}:
   traverse (G := fun A => A) id v = v.
 Proof.

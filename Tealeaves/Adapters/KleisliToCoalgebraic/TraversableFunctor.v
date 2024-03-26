@@ -134,6 +134,7 @@ Section laws.
   (** *** Representation theorem *)
   (******************************************************************************)
 
+  (*
   Definition length_gen {A B}: T A -> nat :=
     length_Batch ∘ toBatch (A' := B).
 
@@ -169,5 +170,6 @@ Section laws.
     rewrite runBatch_repr.
     reflexivity.
   Qed.
+  *)
 
 End laws.

@@ -3,8 +3,10 @@ From Tealeaves Require Export
   Classes.Kleisli.TraversableFunctor
   Classes.Categorical.TraversableFunctor.
 
+(*
 From Tealeaves Require Import
   Adapters.CategoricalToKleisli.TraversableFunctor.
+*)
 
 #[local] Generalizable Variables ϕ T G A M F.
 
@@ -201,10 +203,11 @@ Qed.
     dist_linear := dist_linear_Vector n;
   |}.
 
+(*
 #[export] Instance Traverse_Vector (n : nat): Traverse (VEC n) :=
   Adapters.CategoricalToKleisli.TraversableFunctor.ToKleisli.Traverse_dist (VEC n).
-
 
 #[export] Instance KleisliTraversableFunctor_Vector (n : nat):
   Kleisli.TraversableFunctor.TraversableFunctor (VEC n) :=
   Adapters.CategoricalToKleisli.TraversableFunctor.ToKleisli.TraversableFunctor_instance_0.
+*)

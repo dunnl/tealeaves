@@ -14,6 +14,7 @@ Import List.ListNotations.
 Import Monoid.Notations.
 Import Subset.Notations.
 Import Applicative.Notations.
+Export EqNotations.
 
 #[local] Generalizable Variables M A B G ϕ.
 
@@ -1327,8 +1328,6 @@ Proof.
   - inversion vlen1.
   - reflexivity.
 Qed.
-
-Import EqNotations.
 
 (** Rewrite a [list_hd] subterm by pushing a type coercion into the
     length proof *)
