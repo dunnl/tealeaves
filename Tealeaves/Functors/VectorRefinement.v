@@ -433,6 +433,43 @@ Proof.
   - intros. auto using vcons_sim'.
 Qed.
 
+(** ** Reversing vectors *)
+(******************************************************************************)
+Definition Vector_rev {n: nat} {A: Type}:
+  Vector n A -> Vector n A :=
+  fun v => match v with
+        | exist _ vlist vlen =>
+            exist _ (List.rev vlist) (eq_trans (List.rev_length vlist) vlen)
+        end.
+
+Lemma Vector_rev_inv
+        {n: nat} {A: Type}
+        (v: Vector n A):
+  Vector_rev (Vector_rev v) ~~ v.
+Proof.
+  destruct v as [vlist vlen].
+  unfold Vector_sim.
+  apply (List.rev_involutive vlist).
+Qed.
+
+Lemma Vector_rev_vnil: forall {A: Type},
+    Vector_rev (@vnil A) = vnil.
+Proof.
+  unfold vnil.
+  cbn.
+  intros. fequal.
+  apply proof_irrelevance.
+Qed.
+
+Lemma Vector_rev_vcons: forall {A: Type} {a: A} `{rest: Vector n A},
+    Vector_rev (vcons n a rest) =
+      Vector_rev (vcons n a rest).
+Proof.
+  intros.
+  unfold Vector_rev.
+  destruct (vcons n a rest).
+Abort.
+
 (** ** Inversion/un-consing non-empty vectors *)
 (******************************************************************************)
 Section inversion.
@@ -751,17 +788,17 @@ Section sec.
 
   Context (A: Type).
 
-  Definition to_list {n:nat}: Vector n A -> list A :=
+  Definition Vector_to_list {n:nat}: Vector n A -> list A :=
     @proj1_sig (list A) _.
 
-  Lemma to_list_vnil:
-    to_list vnil = @nil A.
+  Lemma Vector_to_list_vnil:
+    Vector_to_list vnil = @nil A.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma to_list_vcons {a} {n} {v: Vector n A}:
-    to_list (vcons _ a v) = a :: to_list v.
+  Lemma Vector_to_list_vcons {a} {n} {v: Vector n A}:
+    Vector_to_list (vcons _ a v) = a :: Vector_to_list v.
   Proof.
     destruct v.
     unfold vcons.
@@ -789,8 +826,8 @@ Section sec.
     reflexivity.
   Qed.
 
-  Lemma to_list_length: forall (n:nat) (x: Vector n A),
-      length (to_list x) = n.
+  Lemma Vector_to_list_length: forall (n:nat) (x: Vector n A),
+      length (Vector_to_list x) = n.
   Proof.
     intros.
     destruct x.
@@ -798,7 +835,7 @@ Section sec.
   Qed.
 
   Lemma artificial_iso {n:nat}(x: Vector n A):
-    artificial_surjection x ∘ to_list = id.
+    artificial_surjection x ∘ Vector_to_list = id.
   Proof.
     intros.
     ext v.
@@ -807,7 +844,7 @@ Section sec.
     apply Vector_eq.
     rewrite artificial_surjection_inv.
     - reflexivity.
-    - rewrite to_list_length.
+    - rewrite Vector_to_list_length.
       reflexivity.
   Qed.
 
@@ -874,12 +911,12 @@ Section sec.
 
   Lemma Vector_pres_inj {n:nat} (v: Vector n A) `{Functor F}:
     forall (x y: F (Vector n A)),
-      map to_list x = map to_list y ->
+      map Vector_to_list x = map Vector_to_list y ->
       x = y.
   Proof.
     introv Heq.
-    assert (map (artificial_surjection v) (map to_list x)
-            = map (artificial_surjection v) (map to_list y)).
+    assert (map (artificial_surjection v) (map Vector_to_list x)
+            = map (artificial_surjection v) (map Vector_to_list y)).
     { now rewrite Heq. }
     generalize H0.
     compose near x.
@@ -1219,3 +1256,26 @@ Proof.
     apply trf_traverse_morphism_Vector.
     auto.
 Qed.
+
+(** ** Traversals and reversals *)
+(******************************************************************************)
+From Tealeaves Require Export
+  Functors.Backwards.
+
+Lemma Vector_traverse_rev
+        `{Applicative G}
+        {n: nat} {A B: Type}
+        (f: A -> G B)
+        (v: Vector n A):
+  forwards (traverse (G := Backwards G) (mkBackwards ∘ f) v) =
+    traverse f (Vector_rev v).
+Proof.
+  induction v using Vector_induction.
+  - rewrite traverse_Vector_rw1.
+    unfold vnil.
+    cbn.
+    repeat fequal.
+    apply proof_irrelevance.
+  - rewrite traverse_Vector_vcons.
+    cbn.
+Abort.

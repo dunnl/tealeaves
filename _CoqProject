@@ -64,6 +64,7 @@ Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
 Tealeaves/Functors/ListHistory.v
+Tealeaves/Functors/List_Telescoping.v
 Tealeaves/Functors/Vector.v
 Tealeaves/Functors/VectorRefinement.v
 Tealeaves/Functors/Batch.v

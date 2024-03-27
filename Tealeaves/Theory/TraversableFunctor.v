@@ -684,6 +684,12 @@ Section deconstruction.
       := Batch_contents (toBatch t)
     in coerce_Vector_length (plength_eq_length t) v.
 
+  Definition trav_contents_list {A} (t: T A):
+    Vector (plength t) A :=
+    let v : Vector (length_Batch (toBatch (A' := False) t)) A
+      := Batch_contents (toBatch t)
+    in coerce_Vector_length (plength_eq_length t) v.
+
   Definition trav_make {A B} (t: T A):
     Vector (plength t) B -> T B :=
     (fun v =>
@@ -729,7 +735,7 @@ Section deconstruction.
   Section list.
 
     Lemma tolist_trav_contents `{t: T A}:
-      to_list A (trav_contents t) = List.rev (tolist t).
+      Vector_to_list A (trav_contents t) = List.rev (tolist t).
     Proof.
       intros.
       unfold trav_contents.
@@ -741,7 +747,7 @@ Section deconstruction.
       - reflexivity.
       - rewrite runBatch_rw2.
         rewrite Batch_contents_rw2.
-        unfold to_list.
+        unfold Vector_to_list.
         rewrite <- coerce_Vector_contents.
         unfold length_Batch at 1. (* hidden *)
         rewrite proj_vcons.
@@ -757,14 +763,15 @@ Section deconstruction.
         cbn in IHb.
         change (@app A) with (@Monoid_op_list A).
         rewrite <- IHb.
-        unfold to_list.
+        unfold Vector_to_list.
         rewrite <- coerce_Vector_contents.
         reflexivity.
     Qed.
 
     Lemma Batch_contents_tolist:
       forall {A B} (t: T A),
-        to_list A (Batch_contents (toBatch (A' := B) t)) = List.rev (tolist t).
+        Vector_to_list A (Batch_contents (toBatch (A' := B) t)) =
+          List.rev (tolist t).
     Proof.
       intros.
       rewrite tolist_to_foldMap.
@@ -773,7 +780,7 @@ Section deconstruction.
       induction (toBatch t).
       - reflexivity.
       - cbn.
-        rewrite to_list_vcons.
+        rewrite Vector_to_list_vcons.
         rewrite IHb.
         unfold_ops @Monoid_op_list @Return_list.
         rewrite List.rev_unit.
@@ -788,7 +795,7 @@ Section deconstruction.
     Proof.
       intros.
       unfold Vector_sim.
-      change (proj1_sig ?v) with (to_list _ v).
+      change (proj1_sig ?v) with (Vector_to_list _ v).
       rewrite Batch_contents_tolist.
       rewrite Batch_contents_tolist.
       reflexivity.

@@ -1,5 +1,6 @@
 From Tealeaves Require Export
-  Examples.VariadicLet.Terms.
+  Examples.VariadicLet.Terms
+  Functors.List_Telescoping.
 
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
@@ -25,85 +26,14 @@ Fixpoint binddt_term
 
 #[export] Instance Binddt_Lam: Binddt nat term term := @binddt_term.
 
-Module TelescopingList.
-
-  Fixpoint mapdt_list_rec (acc: nat)
-             (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-             (A B : Type) (f : nat * A -> G B) (l : list A)
-    : G (list B) :=
-    match l with
-    | nil => pure (@nil B)
-    | x :: xs =>
-        pure (@List.cons B) <⋆> f (acc, x) <⋆>
-          mapdt_list_rec (S acc) _ f xs
-    end.
-
-  Definition mapdt_list
-             (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-             (A B : Type) (f : nat * A -> G B) (l : list A)
-    : G (list B) := mapdt_list_rec 0 B f l.
-
-  #[export] Instance Mapdt_List_Telescope: Mapdt nat list := @mapdt_list.
-  #[export] Instance Mapd_List_Telescope: Mapd nat list := Mapd_Mapdt.
-  #[export] Instance: Compat_Mapd_Mapdt.
-  typeclasses eauto.
-  Qed.
-  #[export] Instance: @Compat_Map_Mapdt nat list _ _.
-  Admitted.
-
-  #[export] Instance:
-    @Compat_Elements_ElementsCtx nat list
-                                 (@ElementsCtx_CtxTolist nat list
-                                                         (@CtxTolist_Mapdt nat list Mapdt_List_Telescope)) _.
-  Admitted.
-
-  #[export] Instance: @DecoratedTraversableFunctor
-                        nat list Mapdt_List_Telescope.
-  Proof.
-    constructor;
-      unfold_ops Mapdt_List_Telescope;
-      unfold mapdt_list;
-      intros; ext l; generalize 0.
-    - induction l; intros.
-      + reflexivity.
-      + cbn. rewrite IHl.
-        reflexivity.
-    - unfold compose; induction l;
-        intros.
-      + cbn.
-        rewrite app_pure_natural.
-        reflexivity.
-      + cbn.
-        rewrite map_ap.
-        rewrite map_ap.
-        rewrite app_pure_natural.
-        change (fun a => G1 (G2 a)) with (G1 ∘ G2).
-        rewrite_strat innermost (terms (ap_compose2 G2 G1)).
-        unfold_ops @Pure_compose.
-        rewrite app_pure_natural.
-        unfold kc6.
-        rewrite_strat innermost (terms (ap_compose2 G2 G1)).
-        rewrite <- IHl.
-        rewrite <- ap_map.
-        rewrite map_ap.
-        rewrite map_ap.
-        rewrite app_pure_natural.
-        rewrite app_pure_natural.
-        admit.
-    - admit.
-  Admitted.
-
-End TelescopingList.
-
-Import TelescopingList.
-
+About mapdt.
 Lemma binddt_rw_letin:
   forall `{Applicative G} (v1 v2 : Type)
     (l : list (term v1)) (body: term v1),
   forall f : nat * v1 -> G (term v2),
     binddt f (letin l body) =
       pure (@letin v2) <⋆>
-          mapdt (E := nat) (T := list)
+          mapdt (E := nat) (T := list) (Mapdt := Mapdt_List_Telescope)
                 (fun '(n, t) => (binddt (T := term) (f ⦿ n)) t) l <⋆>
         binddt (f ⦿ List.length l) body.
 Proof.
@@ -123,7 +53,13 @@ Proof.
       reflexivity.
     + cbn.
       rewrite IHl.
+      change 0 with (Ƶ : nat) at 1.
+      rewrite monoid_id_l.
+      rewrite preincr_preincr.
+      replace (n ● 1) with (S n).
       reflexivity.
+      unfold_ops @Monoid_op_plus.
+      lia.
 Qed.
 
 Lemma binddt_helper_letin
@@ -133,6 +69,7 @@ Lemma binddt_helper_letin
   binddt g ∘ letin (v:=B) l =
     (precompose (binddt (g ⦿ List.length l)) ∘ ap G2)
       (pure (letin (v:=C)) <⋆> mapdt (E := nat) (T := list)
+                                     (Mapdt := Mapdt_List_Telescope)
                                      (fun '(n, t) => (binddt (T := term) (g ⦿ n)) t) l).
 Proof.
   unfold precompose, compose.
@@ -141,17 +78,28 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma list_plength_length: forall (A: Type) (l: list A),
+    plength l = length l.
+Proof.
+  intros.
+  induction l.
+  - reflexivity.
+  - cbn. now rewrite IHl.
+Qed.
+
 Lemma binddt_helper_letin2
         `{Applicative G2}
         A B C (l : list (term A))
     (g : nat * B -> G2 (term C)):
-  compose (binddt_term g) ∘ letin (v:=B) ∘ toMake_mono list l (term B) =
+  compose (binddt_term g) ∘ letin (v:=B) ∘ trav_make l =
     ((compose (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) ∘
-             precompose (mapdt (fun '(n, t) => binddt (g ⦿ n) t)) ∘
-             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake_mono list l (term B).
+              precompose (mapdt (Mapdt := Mapdt_List_Telescope)
+                                (fun '(n, t) => binddt (g ⦿ n) t)) ∘
+             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ trav_make l.
 Proof.
   intros.
-  Check compose (binddt_term g) ∘ letin (v:=B) ∘ toMake list l (term B).
+  (*
+  Check compose (binddt_term g) ∘ letin (v:=B) ∘ trav_make l.
   (* : Vector.t (term B) (length_gen l) -> term B -> G2 (term C) *)
   Check
     (compose (precompose (binddt_term g) ∘ ap G2) ∘
@@ -161,12 +109,16 @@ Proof.
   Check
     ((compose (precompose (binddt_term g) ∘ ap G2) ∘
              precompose (traverse (T := list) (binddt_term g)) ∘
-             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake list l (term B).
+             ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ trav_make l.
+  (* : Vector (plength l) (term B) -> term B -> G2 (term C) *)
+  *)
   ext l'.
-  change_left (binddt_term g ∘ letin (toMake_mono list l (term B) l')).
+  change_left (binddt_term g ∘ letin (trav_make l l')).
   ext body.
   rewrite binddt_helper_letin.
-  rewrite length_helper_mono.
+  rewrite <- list_plength_length.
+  rewrite <- list_plength_length.
+  rewrite <- plength_trav_make.
   reflexivity.
 Qed.
 
@@ -222,6 +174,14 @@ Proof.
     rewrite map_ap.
     rewrite map_ap.
     rewrite app_pure_natural.
+    (* traversal business *)
+    rewrite <- map_to_ap.
+    unfold_ops @Mapdt_List_Telescope.
+    About mapdt_list.
+
+    Search "trav" "get".
+
+    rewrite traverse_get_put.
     erewrite traverse_repr;
       try typeclasses eauto.
     rewrite <- ap4.

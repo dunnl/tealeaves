@@ -16,8 +16,8 @@ Fixpoint binddt_term
       ((fix F ls :=
       match ls with
       | nil => pure nil
-      | cons d0 drest =>
-          pure cons <⋆> binddt_term f d0 <⋆> F drest
+      | cons d drest =>
+          pure cons <⋆> binddt_term f d <⋆> F drest
       end) defs) <⋆> binddt_term (f ⦿ List.length defs) body
   | app t1 t2 =>
       pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2

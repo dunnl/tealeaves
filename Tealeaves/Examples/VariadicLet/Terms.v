@@ -1,7 +1,6 @@
 From Tealeaves Require Export
   Misc.NaturalNumbers
   Functors.List
-  Adapters.Isomorphisms.BatchtoKStore
   Theory.DecoratedTraversableMonad.
 
 Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
