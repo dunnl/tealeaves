@@ -1,25 +1,4 @@
 
-(* Iterate an endofunction <<n>> times *)
-Fixpoint iterate (n : nat) {A : Type} (f : A -> A) :=
-  match n with
-  | 0 => @id A
-  | S n' => iterate n' f ∘ f
-  end.
-
-Lemma iterate_rw0 : forall {A : Type} (f : A -> A),
-    iterate 0 f = id.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma iterate_rw1 : forall (n : nat) {A : Type} (f : A -> A),
-    iterate (S n) f = (iterate n f) ∘ f.
-Proof.
-  intros.
-  cbn.
-  reflexivity.
-Qed.
-
 (** ** De Bruijn operations as defined by Tealeaves *)
 (******************************************************************************)
 Module DB1.

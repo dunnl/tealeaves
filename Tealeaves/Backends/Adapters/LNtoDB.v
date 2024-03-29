@@ -30,6 +30,7 @@ Import
   ContainerFunctor.Notations
   DecoratedMonad.Notations
   DecoratedContainerFunctor.Notations
+  DecoratedTraversableFunctor.Notations
   DecoratedTraversableMonad.Notations.
 
 Import Coq.Init.Nat. (* Nat notations *)
@@ -101,37 +102,58 @@ Module toDB.
       match l with
       | Bd n => Some n
       | Fr x =>
-          match get_index x k with
+          match key_lookup_atom k x with
           | None => None
           | Some ix => Some (ix + depth)%nat
           end
       end.
 
     Lemma toDB_loc_insert_Bd (k: key) (a: atom) depth (n: nat):
-      toDB_loc (insert k a) (depth, Bd n) = Some n.
+      toDB_loc (key_insert_atom k a) (depth, Bd n) = Some n.
     Proof.
       reflexivity.
     Qed.
 
     Lemma toDB_loc_insert_Fr (k: key) (a: atom) depth (x: atom):
-      toDB_loc (insert k a) (depth, Fr x) =
-        toDB_loc (insert k a) (depth, Fr x).
+      toDB_loc (key_insert_atom k a) (depth, Fr x) =
+        toDB_loc (key_insert_atom k a) (depth, Fr x).
     Proof.
-      cbn.
     Abort.
 
-    Fixpoint tokey_loc (k: key) (l: list LN): key :=
+    (* Give a list of LN variables,
+       build a key containing every atom *)
+    Fixpoint LN_to_key_loc (l: list LN): key :=
       match l with
-      | nil => k
+      | nil => nil
       | cons ln rest =>
           match ln with
           | Bd n =>
-              tokey_loc k rest
+              LN_to_key_loc rest
           | Fr x =>
-              tokey_loc (insert k x) rest
+              key_insert_atom (LN_to_key_loc rest) x
           end
       end.
 
+    Lemma LN_to_key_unique: forall l,
+        unique (LN_to_key_loc l).
+    Proof.
+      intros l. induction l.
+      - exact I.
+      - cbn. destruct a.
+        + now apply key_insert_unique.
+        + assumption.
+    Qed.
+
+    Lemma LN_key_bijection: forall l ix a,
+        key_lookup_index (LN_to_key_loc l) ix = Some a <->
+          key_lookup_atom (LN_to_key_loc l) a = Some ix.
+    Proof.
+      intros.
+      apply key_bijection.
+      apply LN_to_key_unique.
+    Qed.
+
+    (*
     Lemma tokey_loc_rw_app1 (k: key) (l1: list LN) (n: nat):
       tokey_loc k (l1 ++ ret (T := list) (Bd n)) = tokey_loc k l1.
     Proof.
@@ -142,15 +164,16 @@ Module toDB.
         insert (tokey_loc k l1) a.
     Proof.
     Admitted.
+      *)
 
-    Definition tokey (t: U LN): key :=
-      tokey_loc nil (tolist t).
+    Definition LN_to_key (t: U LN): key :=
+      LN_to_key_loc (tolist t).
 
     Definition toLN_loc (k: key) '(depth, ix) : option LN :=
       if bound_in ix depth then
         Some (Bd ix)
       else
-        map (F := option) Fr (get_atom k (ix - depth)).
+        map (F := option) Fr (key_lookup_index k (ix - depth)).
 
     Definition toDB_from_key (k: key): U LN -> option (U nat) :=
       @mapdt nat U Mapdt_U_inst
@@ -158,7 +181,7 @@ Module toDB.
         LN nat (toDB_loc k).
 
     Definition toDB: U LN -> option (U nat) :=
-      fun t => toDB_from_key (tokey t) t.
+      fun t => toDB_from_key (LN_to_key t) t.
 
     Definition toLN_from_key (k: key): U nat -> option (U LN) :=
       @mapdt nat U Mapdt_U_inst
@@ -171,28 +194,40 @@ Module toDB.
       a ∈ (k : list atom) ->
       exists ix, toDB_loc k (n, Fr a) = Some ix.
     Proof.
-    Admitted.
+      intros.
+      unfold toDB_loc.
+      destruct (key_lookup_in1 _ _ H) as [m Hin].
+      exists (m + n). now rewrite Hin.
+    Qed.
 
     Lemma toDB_Bd: forall n (m: nat) k,
       exists ix, toDB_loc k (n, Bd m) = Some ix.
     Proof.
-    Admitted.
-
-    Goal forall (t: U LN) (k : key),
-      (forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom)) ->
-      exists (t': U nat), toDB_from_key k t = Some t'.
-    Proof.
       intros.
+      unfold toDB_loc.
+      eauto.
+    Qed.
+
+    Definition whole_key (t: U LN) k :=
+      forall x : atom, Fr x ∈ t -> x ∈ k.
+
+    Lemma to_DB_from_key_total:
+      forall (t: U LN) (k : key),
+        whole_key t k ->
+        exists (t': U nat), toDB_from_key k t = Some t'.
+    Proof.
+      introv Hin.
       unfold toDB_from_key.
       rewrite mapdt_through_runBatch.
       unfold compose at 1.
-      rewrite (element_through_runBatch2 _ nat) in H.
-      rewrite toBatch6_toBatch in H.
-      unfold compose in H.
+      unfold whole_key in Hin.
+      rewrite (element_through_runBatch2 _ nat) in Hin.
+      rewrite toBatch6_toBatch in Hin.
+      unfold compose in Hin.
       induction (toBatch6 t).
       - cbv. eauto.
       - rewrite runBatch_rw2.
-        assert ( (forall x : atom,
+        assert (H: (forall x : atom,
          @runBatch LN nat (@const Type Type (LN -> Prop))
            (@Map_const (LN -> Prop))
            (@Mult_const (LN -> Prop) (@Monoid_op_subset LN))
@@ -202,25 +237,25 @@ Module toDB.
               (@extract (prod nat) (Extract_reader nat) LN) b)
            (Fr x) -> x ∈ k)).
         { intros x.
-          specialize (H x).
+          specialize (Hin x).
           intros hyp.
-          apply H.
+          apply Hin.
           left.
           assumption. }
-        specialize (IHb H0).
+        specialize (IHb H).
         destruct IHb as [f Hfeq].
         rewrite Hfeq.
         destruct a as [depth l].
         destruct l.
         + pose toDB_Fr.
           specialize (e depth a k).
-          enough (a ∈ k).
-          { specialize (e H1).
+          enough (H_a_in_k: a ∈ k).
+          { specialize (e H_a_in_k).
             destruct e as [ix Hixeq].
             rewrite Hixeq.
             cbn.
             eauto. }
-          apply H.
+          apply Hin.
           cbn. right.
           reflexivity.
         + pose toDB_Bd.
@@ -247,21 +282,21 @@ Module toDB.
         rewrite ind_iff_in.
         eexists. eassumption.
         specialize (Hcont a Hin').
-        pose (lemma:= get_index_in a k Hcont).
-        destruct lemma as [ix hyp].
-        rewrite  hyp.
+        specialize (key_lookup_in1 k a Hcont).
+        intros [m Hlookup].
+        rewrite Hlookup.
         change (map ?f (Some ?x)) with (Some (f x)).
         unfold_ops @Pure_compose @Pure_option.
         fequal. unfold compose.
         { unfold toLN_loc.
           unfold bound_in.
-          assert (Hlt: ix + e <? e = false).
+          assert (Hlt: m + e <? e = false).
           { rewrite ltb_ge.
             lia. }
           rewrite Hlt.
-          replace (ix + e - e) with ix by lia.
-          apply key_bijection1 in hyp.
-          rewrite hyp.
+          replace (m + e - e) with m by lia.
+          apply key_bijection1 in Hlookup.
+          rewrite Hlookup.
           reflexivity.
         }
       - compose near (e, Bd n).
@@ -277,7 +312,7 @@ Module toDB.
         reflexivity.
     Qed.
 
-    Theorem translation_inv:
+    Theorem translation_inv1:
       forall (t : U LN) (k: key),
         (forall x : atom, Fr x ∈ t -> x ∈ k) ->
         locally_closed t ->
