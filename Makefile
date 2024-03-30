@@ -61,5 +61,19 @@ $(COQ_VS): #force
 showvars:
 	@echo $(COQ_VS)
 
+examples-stlc:
+	mkdir -p html-examples/STLC
+	mkdir -p html-examples/SystemF
+	alectryon Tealeaves/Examples/STLC/Syntax.v            --output-directory ./html-examples -o ./html-examples/STLC/Syntax.html
+	alectryon Tealeaves/Examples/STLC/SyntaxCategorical.v --output-directory ./html-examples -o ./html-examples/STLC/SyntaxCategorical.html
+	alectryon Tealeaves/Examples/STLC/TypeSoundness.v     --output-directory ./html-examples -o ./html-examples/STLC/TypeSoundness.html
+	alectryon Tealeaves/Examples/SystemF/Syntax.v         --output-directory ./html-examples -o ./html-examples/SystemF/Syntax.html
+
+examples-install:
+	cp html-examples/* ${out} -r
+
+examples-clean:
+	rm -Rf html-examples/
+
 force: ;
 .PHONY: clean all force showvars clean-repo
