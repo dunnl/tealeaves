@@ -12,7 +12,6 @@ From Tealeaves.Classes Require Import
 Import
   Product.Notations
   Monoid.Notations
-  Batch.Notations
   List.ListNotations
   Subset.Notations
   Kleisli.Monad.Notations
