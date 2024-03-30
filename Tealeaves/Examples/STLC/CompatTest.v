@@ -21,6 +21,8 @@ Export DecoratedContainerFunctor.Notations. (* ∈d *)
 
 #[local] Set Implicit Arguments.
 
+Inductive typ := Mktyp.
+
 (** * Language definition *)
 (******************************************************************************)
 Inductive term :=
@@ -28,16 +30,6 @@ Inductive term :=
 | ix  : nat -> term
 | lam : typ -> term -> term
 | app : term -> term -> term.
-
-(** ** Notations and automation *)
-(******************************************************************************)
-Module Notations.
-  Notation "'fun'" := (lam) (at level 45).
-  Notation "[ t1 ]@[ t2 ]" := (app t1 t2) (at level 80).
-  Notation "A ⟹ B" := (arr A B) (at level 40).
-End Notations.
-
-Import Notations.
 
 (** ** Instantiate Tealeaves *)
 (******************************************************************************)
