@@ -10,9 +10,7 @@ stdenv.mkDerivation {
       "*.lock"
       "*.nix"
       "*.md"
-      "Makefile"
     ] ./.;
-  makefile = ./Makefile.examples;
   nativeBuildInputs = [
     coq
     ocamlPackages.findlib
