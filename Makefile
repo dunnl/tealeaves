@@ -23,7 +23,7 @@ clean: $(COQMAKEFILE)
 
 # Warning: this destroys all files not under version control
 clean-repo: clean
-	git clean -xi -e Makefile.coq.conf
+	git clean -xdi -e Makefile.coq.conf -e ".*"
 
 html: $(COQMAKEFILE) $(COQ_VS)
 	rm -fr html
