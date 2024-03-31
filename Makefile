@@ -1,15 +1,20 @@
-COQDOC_EXTRA_DIR:=extra/CoqdocJS
-COQDOCFLAGS:= \
-  --toc --toc-depth 2 --html --interpolate \
-  --index indexpage --no-lib-name --parse-comments \
+SHELL = bash
+COQDOC_EXTRA_DIR := extra/CoqdocJS
+COQDOCEXTRAFLAGS := \
+  --toc-depth 2 \
+  --index indexpage \
+  --no-lib-name \
+  --parse-comments \
   --with-header $(COQDOC_EXTRA_DIR)/header.html \
   --with-footer $(COQDOC_EXTRA_DIR)/footer.html
-export COQDOCFLAGS
-COQMAKEFILE:=Makefile.coq
-COQ_PROJ:=_CoqProject
-COQ_VS := $(shell find Tealeaves/ -name "*.v")
-RM_ARTIFACTS := find . -type f -regextype posix-egrep -iregex '.*\.(vo|vos|vok|aux|glob|cache)$$' -delete
-
+export COQDOCEXTRAFLAGS
+COQMAKEFILE  := Makefile.coq
+COQ_PROJ     := _CoqProject
+COQ_VS       := $(shell find Tealeaves/ -name "*.v")
+RM_ARTIFACTS := extra/remove_artifacts.sh
+CLEANUP_CSS  := extra/format_css.sh
+HIDE =
+export HIDE
 all: html
 
 # The last command requires GNU find and deletes empty directories
@@ -17,22 +22,18 @@ all: html
 clean: $(COQMAKEFILE)
 	$(MAKE) -f $(COQMAKEFILE) $@
 	rm -f $(COQMAKEFILE)
-	rm -fr html
 	$(RM_ARTIFACTS)
 	find Tealeaves/ . -type d -empty -delete
 
-# Warning: this destroys all files not under version control
-clean-repo: clean
-	git clean -xdi -e Makefile.coq.conf -e ".*"
-
-html: $(COQMAKEFILE) $(COQ_VS)
+clean-html:
 	rm -fr html
-	$(MAKE) -f $(COQMAKEFILE) $@
-	cp $(COQDOC_EXTRA_DIR)/resources/* html
 
-#alectryon: $(COQMAKEFILE) $(COQMF_VFILES)
-#	rm -fr html-alectryon
-#	alectryon --output-directory html-alectryon $(COQMF_VFILES)
+clean-all: clean clean-html
+
+# Warning: this interactively destroys all files not under version
+# control
+clean-repo: clean
+	git clean -xdi -e Makefile.coq.conf -e Makefile.coq.local -e ".*"
 
 # Generate Makefile.coq from _CoqProject and .v files
 # A "force" dependency regenerates the Makefile every time
@@ -41,6 +42,14 @@ html: $(COQMAKEFILE) $(COQ_VS)
 $(COQMAKEFILE): $(COQ_PROJ) $(COQ_VS)
 	@echo "Generating Makefile.coq" #with $(COQ_VS)"
 	coq_makefile -f $(COQ_PROJ) -o $@
+
+build: $(COQMAKEFILE)
+	$(MAKE) -f $(COQMAKEFILE) $@
+
+# Generate nicely formatted HTML with CoqdocJS
+html: $(COQMAKEFILE)
+	$(MAKE) -f $(COQMAKEFILE) $@
+	cp $(COQDOC_EXTRA_DIR)/resources/* html
 
 # Any target not matched above will be passed to Makefile.coq
 %: $(COQMAKEFILE) force
@@ -61,19 +70,21 @@ $(COQ_VS): #force
 showvars:
 	@echo $(COQ_VS)
 
-examples-stlc:
+examples-clean:
+	rm -Rf html-examples/
+
+examples-html:
 	mkdir -p html-examples/STLC
 	mkdir -p html-examples/SystemF
+	alectryon Tealeaves/Backends/LN/LN.v                  --output-directory ./html-examples -o ./html-examples/LN/LN.html
 	alectryon Tealeaves/Examples/STLC/Syntax.v            --output-directory ./html-examples -o ./html-examples/STLC/Syntax.html
 	alectryon Tealeaves/Examples/STLC/SyntaxCategorical.v --output-directory ./html-examples -o ./html-examples/STLC/SyntaxCategorical.html
 	alectryon Tealeaves/Examples/STLC/TypeSoundness.v     --output-directory ./html-examples -o ./html-examples/STLC/TypeSoundness.html
-	alectryon Tealeaves/Examples/SystemF/Syntax.v         --output-directory ./html-examples -o ./html-examples/SystemF/Syntax.html
+	#alectryon Tealeaves/Examples/SystemF/Syntax.v         --output-directory ./html-examples -o ./html-examples/SystemF/Syntax.html
+	./$(CLEANUP_CSS)
 
 examples-install:
 	cp html-examples/* ${out} -r
 
-examples-clean:
-	rm -Rf html-examples/
-
 force: ;
-.PHONY: clean all force showvars clean-repo
+.PHONY: clean all force showvars clean-repo examples-html examples-clean examples-install
