@@ -1,1 +1,1 @@
-find . -type f -regextype posix-egrep -iregex '.*\.(vo|vos|vok|aux|glob|cache)$$' -delete
+find . -type f -regextype posix-egrep -iregex '.*\.(vo|vos|vok|aux|glob|cache)$' -delete
