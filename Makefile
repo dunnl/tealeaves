@@ -13,8 +13,8 @@ COQ_PROJ     := _CoqProject
 COQ_VS       := $(shell find Tealeaves/ -name "*.v")
 RM_ARTIFACTS := extra/remove_artifacts.sh
 CLEANUP_CSS  := extra/format_css.sh
-HIDE =
-export HIDE
+ALECTRYON    := alectryon -R Tealeaves/ Tealeaves
+
 all: html
 
 # The last command requires GNU find and deletes empty directories
@@ -42,9 +42,6 @@ clean-repo: clean
 $(COQMAKEFILE): $(COQ_PROJ) $(COQ_VS)
 	@echo "Generating Makefile.coq" #with $(COQ_VS)"
 	coq_makefile -f $(COQ_PROJ) -o $@
-
-build: $(COQMAKEFILE)
-	$(MAKE) -f $(COQMAKEFILE) $@
 
 # Generate nicely formatted HTML with CoqdocJS
 html: $(COQMAKEFILE)
@@ -76,11 +73,11 @@ examples-clean:
 examples-html:
 	mkdir -p html-examples/STLC
 	mkdir -p html-examples/SystemF
-	alectryon Tealeaves/Backends/LN/LN.v                  --output-directory ./html-examples -o ./html-examples/LN/LN.html
-	alectryon Tealeaves/Examples/STLC/Syntax.v            --output-directory ./html-examples -o ./html-examples/STLC/Syntax.html
-	alectryon Tealeaves/Examples/STLC/SyntaxCategorical.v --output-directory ./html-examples -o ./html-examples/STLC/SyntaxCategorical.html
-	alectryon Tealeaves/Examples/STLC/TypeSoundness.v     --output-directory ./html-examples -o ./html-examples/STLC/TypeSoundness.html
-	#alectryon Tealeaves/Examples/SystemF/Syntax.v         --output-directory ./html-examples -o ./html-examples/SystemF/Syntax.html
+	$(ALECTRYON) Tealeaves/Backends/LN/LN.v                  --output-directory ./html-examples -o ./html-examples/LN/LN.html
+	$(ALECTRYON) Tealeaves/Examples/STLC/Syntax.v            --output-directory ./html-examples -o ./html-examples/STLC/Syntax.html
+	$(ALECTRYON) Tealeaves/Examples/STLC/SyntaxCategorical.v --output-directory ./html-examples -o ./html-examples/STLC/SyntaxCategorical.html
+	$(ALECTRYON) Tealeaves/Examples/STLC/TypeSoundness.v     --output-directory ./html-examples -o ./html-examples/STLC/TypeSoundness.html
+	$(ALECTRYON) Tealeaves/Examples/SystemF/Syntax.v         --output-directory ./html-examples -o ./html-examples/SystemF/Syntax.html
 	./$(CLEANUP_CSS)
 
 examples-install:
