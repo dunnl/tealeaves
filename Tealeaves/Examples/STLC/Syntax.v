@@ -25,9 +25,9 @@ From Tealeaves Require Export
   Functors.List
   Theory.DecoratedTraversableMonad.
 
+Export Monoid.Notations. (* Ƶ and ● *)
 Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
-Import Monoid.Notations. (* Ƶ and ● *)
-Import Misc.Subset.Notations. (* ∪ *)
+Export Misc.Subset.Notations. (* ∪ *)
 Export Applicative.Notations. (* <⋆> *)
 Export List.ListNotations. (* [] :: *)
 Export LN.Notations. (* operations *)
@@ -38,11 +38,16 @@ Export ContainerFunctor.Notations. (* ∈ *)
 Export DecoratedContainerFunctor.Notations. (* ∈d *)
 
 #[local] Generalizable Variables G.
-
 #[local] Set Implicit Arguments.
 
-(** * Language definition *)
-(******************************************************************************)
+Open Scope set_scope.
+
+(*|
+========================================
+Using Tealeaves with STLC
+========================================
+|*)
+
 Parameter base_typ : Type.
 
 Inductive typ :=
@@ -56,8 +61,12 @@ Inductive term (v : Type) :=
 | lam : typ -> term v -> term v
 | app : term v -> term v -> term v.
 
-(** ** Notations and automation *)
-(******************************************************************************)
+(*|
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Notations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+|*)
+
 Module Notations.
   Notation "'λ'" := (lam) (at level 45).
   Notation "[ t1 ]@[ t2 ]" := (app t1 t2) (at level 80).
@@ -65,8 +74,6 @@ Module Notations.
 End Notations.
 
 Import Notations.
-
-#[export] Instance Return_STLC: Return term := tvar.
 
 (*|
 ========================================
@@ -81,36 +88,35 @@ Fixpoint binddt_term (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
   | app t1 t2 => pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
   end.
 
+#[export] Instance Return_STLC: Return term := tvar.
 #[export] Instance Binddt_STLC: Binddt nat term term := @binddt_term.
 
 (*|
-========================================
-Some rewriting principles for binddt
-========================================
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Helper lemmas for proving the DTM laws
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These definitional equalities help prove the composition law later.
-
 |*)
+
+#[local] Notation "'P'" := pure.
+#[local]  Notation "'BD'" := binddt.
 
 Section binddt_helpers.
 
-  Generalizable Variable F.
   Context
-    `{Applicative F}
-      {v1 v2 v3 : Type}
-      (f : nat * v1 -> F (term v2)).
-
-  Notation "'P'" := pure.
-  Notation "'BD'" := binddt.
+    `{Applicative G}
+      {v1 v2: Type}
+      (f : nat * v1 -> G (term v2)).
 
   Lemma binddt_lam :
-    forall (τ : typ), BD f ∘ (@lam v1 τ) = (precompose (BD (preincr f 1)) ∘ ap F ∘ P) (@lam v2 τ).
+    forall (τ : typ), BD f ∘ (@lam v1 τ) = (precompose (BD (f ⦿ 1)) ∘ ap G ∘ P) (@lam v2 τ).
   Proof.
     reflexivity.
   Qed.
 
   Lemma binddt_app :
-      compose (BD f) ∘ @app v1 = (compose (precompose (BD f) ∘ ap F) ∘ precompose (BD f) ∘ ap F ∘ P) (@app v2).
+      compose (BD f) ∘ @app v1 = (compose (precompose (BD f) ∘ ap G) ∘ precompose (BD f) ∘ ap G ∘ P) (@app v2).
   Proof.
     reflexivity.
   Qed.
@@ -257,9 +263,6 @@ A close comparison shows the rules differ in two respects:
    :name: dtm3
 |*)
 
-  Notation "'P'" := pure.
-  Notation "'F'" := map.
-  Notation "'BD'" := (binddt term).
 
   Ltac dtm3_lhs_step G1 :=
     repeat rewrite map_ap; (* Bring LHS <<map>> up to the constructor *)
@@ -273,7 +276,7 @@ A close comparison shows the rules differ in two respects:
     repeat rewrite map_ap;
     rewrite (app_pure_natural (G := G1)).
 
-  Set Keyed Unification.
+  #[local] Set Keyed Unification.
 
   Theorem dtm3_stlc :
     forall `{Applicative G1} `{Applicative G2},
@@ -493,347 +496,3 @@ Inductive Judgment : ctx -> term LN -> typ -> Prop :=
       Γ ⊢ t2 : A ->
       Γ ⊢ [t1]@[t2] : B
 where "Γ ⊢ t : A" := (Judgment Γ t A).
-
-(** * Rewriting lemmas for high-level operations *)
-(******************************************************************************)
-
-Ltac simplify_to_monoid :=
-  unfold_ops @Pure_const @Mult_const; simpl_monoid.
-
-Ltac extract_preincr :=
-    match goal with
-      |- context[((?f ∘ extract) ⦿ ?w)] =>
-        rewrite extract_preincr2
-    end.
-
-(** ** Rewriting lemmas for <<tolist>>, <<toset>> *)
-(******************************************************************************)
-Section term_list_rewrite.
-
-  Variable
-    (A : Type).
-
-  Ltac solve_in_term :=
-    unfold_ops @Pure_const;
-    repeat rewrite (@map_const_spec (A -> Prop) _ _ (ret term));
-    simpl_monoid;
-    repeat rewrite (dtm2_helper);
-    try reflexivity.
-
-  Lemma tolist_term_1 : forall (x : A),
-    tolist (tvar x) = [x].
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma map_const_rw: forall A B (f: A -> B) X,
-      map (F := const X) f = @id X.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma tolist_term_2 : forall (X : typ) (t : term A),
-    tolist (lam X t) = tolist t.
-  Proof.
-    intros.
-    cbn.
-    extract_preincr.
-    reflexivity.
-  Qed.
-
-  Lemma tolist_term_3 : forall (t1 t2 : term A),
-      tolist (app t1 t2) = tolist t1 ++ tolist t2.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma in_term_1 : forall (x y : A),
-      x ∈ tvar y <-> x = y.
-  Proof.
-    intros.
-    cbn.
-    cbv. intuition.
-  Qed.
-
-  Lemma in_term_2 : forall (y : A) (X : typ) (t : term A),
-    y ∈ (lam X t) <-> y ∈ t.
-  Proof.
-    intros. cbn. rewrite dtm2_helper.
-    unfold_ops @Pure_const; simpl_monoid.
-    reflexivity.
-  Qed.
-
-  Lemma in_term_3 : forall (t1 t2 : term A) (y : A),
-      y ∈ (app t1 t2) <-> y ∈ t1 \/ y ∈ t2.
-  Proof.
-    intros. cbn.
-    unfold_ops @Pure_const @Mult_const.
-    simpl_monoid.
-    reflexivity.
-  Qed.
-
-End term_list_rewrite.
-
-(** ** Rewriting lemmas for <<free>>, <<freeset>> *)
-(******************************************************************************)
-Section term_free_rewrite.
-
-  Variable (A : Type).
-
-  Lemma term_free11 : forall (b : nat) (x : atom),
-      x ∈ free (tvar (Bd b)) <-> False.
-  Proof.
-    intros. reflexivity.
-  Qed.
-
-  Lemma term_free12 : forall (y : atom) (x : atom),
-      x ∈ free (tvar (Fr y)) <-> x = y.
-  Proof.
-    intros. cbn.
-    intuition.
-  Qed.
-
-  Lemma term_free2 : forall (x : atom) (t : term LN) (X : typ),
-      x ∈ free (lam X t) <-> x ∈ free t.
-  Proof.
-    intros.
-    rewrite in_free_iff.
-    rewrite in_term_2.
-    now rewrite <- in_free_iff.
-  Qed.
-
-  Lemma term_free3 : forall (x : atom) (t1 t2 : term LN),
-      x ∈ free (app t1 t2) <-> x ∈ free t1 \/ x ∈ free t2.
-  Proof.
-    intros. rewrite in_free_iff. rewrite in_term_3.
-    now rewrite <- 2(in_free_iff).
-  Qed.
-
-  Lemma term_in_freeset11 : forall (b : nat) (x : atom),
-      AtomSet.In x (freeset (tvar (Bd b))) <-> False.
-  Proof.
-    intros. rewrite <- free_iff_freeset.
-    now rewrite term_free11.
-  Qed.
-
-  Lemma term_in_freeset12 : forall (y : atom) (x : atom),
-      AtomSet.In x (freeset (tvar (Fr y))) <-> x = y.
-  Proof.
-    intros. rewrite <- free_iff_freeset.
-    now rewrite term_free12.
-  Qed.
-
-  Lemma term_in_freeset2 : forall (x : atom) (t : term LN) (X : typ),
-      AtomSet.In x (freeset (lam X t)) <-> AtomSet.In x (freeset t).
-  Proof.
-    intros. rewrite <- 2(free_iff_freeset). now rewrite term_free2.
-  Qed.
-
-  Lemma term_in_freeset3 : forall (x : atom) (t1 t2 : term LN),
-      AtomSet.In x (freeset (app t1 t2)) <-> AtomSet.In x (freeset t1) \/ AtomSet.In x (freeset t2).
-  Proof.
-    intros. rewrite <- 3(free_iff_freeset). now rewrite term_free3.
-  Qed.
-
-  Open Scope set_scope.
-
-  Lemma term_freeset11 : forall (b : nat) (x : atom),
-      freeset (tvar (Bd b)) [=] ∅.
-  Proof.
-    intros. fsetdec.
-  Qed.
-
-  Lemma term_freeset12 : forall (y : atom),
-      freeset (tvar (Fr y)) [=] {{ y }}.
-  Proof.
-    intros. cbn. fsetdec.
-  Qed.
-
-  Lemma term_freeset2 : forall (t : term LN) (X : typ),
-      freeset (lam X t) [=] freeset t.
-  Proof.
-    intros. unfold AtomSet.Equal; intro x.
-    rewrite term_in_freeset2. reflexivity.
-  Qed.
-
-  Lemma term_freeset3 : forall (t1 t2 : term LN),
-      freeset (app t1 t2) [=] freeset t1 ∪ freeset t2.
-  Proof.
-    intros. unfold AtomSet.Equal; intro x.
-    rewrite term_in_freeset3. fsetdec.
-  Qed.
-
-End term_free_rewrite.
-
-(** ** Rewriting lemmas for <<foldMapd>> *)
-(******************************************************************************)
-Section term_foldMapd_rewrite.
-
-  Context {A M : Type} (f : nat * A -> M) `{Monoid M}.
-
-  Lemma term_foldMapd1 : forall (a : A),
-      foldMapd f (tvar a) = f (Ƶ, a).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma term_foldMapd2 : forall X (t : term A),
-      foldMapd f (λ X t) = foldMapd (preincr f 1) t.
-  Proof.
-    intros. cbv. change (op unit0 ?f) with (Ƶ ● f).
-    now simpl_monoid.
-  Qed.
-
-  Lemma term_foldMapd3 : forall (t1 t2 : term A),
-      foldMapd f ([t1]@[t2]) = foldMapd f t1 ● foldMapd f t2.
-  Proof.
-    intros. cbv. change (op unit0 ?f) with (Ƶ ● f).
-    now simpl_monoid.
-  Qed.
-
-End term_foldMapd_rewrite.
-
-(** ** Rewriting lemmas for <<∈d>> *)
-(******************************************************************************)
-Section term_ind_rewrite.
-
-  Lemma term_ind1 : forall (l1 l2 : LN) (n : nat),
-      (n, l1) ∈d (tvar l2) <-> n = Ƶ /\ l1 = l2.
-  Proof.
-    introv.
-    rewrite ctx_elements_to_foldMapd.
-    rewrite term_foldMapd1.
-    split.
-    - now inversion 1.
-    - inversion 1. now subst.
-  Qed.
-
-  Lemma term_ind2 : forall (t : term LN) (l : LN) (n : nat) (X : typ),
-      (n, l) ∈d t = (S n, l) ∈d (λ X t).
-  Proof.
-    intros.
-    rewrite ctx_elements_to_foldMapd.
-    rewrite (term_foldMapd2 _).
-    change_left ((evalAt (n, l) ∘ foldMapd (ret (T := subset))) t).
-    rewrite foldMapd_morphism.
-    change_right ((evalAt (S n, l) ∘ foldMapd (ret (T := subset) ⦿ 1)) t).
-    rewrite foldMapd_morphism.
-    fequal.
-    ext [n' l'].
-    cbv.
-    propext.
-    now inversion 1.
-    now inversion 1.
-  Qed.
-
-  Lemma term_ind2' : forall (t : term LN) (l : LN) (n : nat) (X : typ),
-      (n, l) ∈d (λ X t) = ((n - 1, l) ∈d t /\ n <> 0).
-  Proof.
-    intros.
-    rewrite ctx_elements_to_foldMapd.
-    rewrite (term_foldMapd2 _).
-    change_left ((evalAt (n, l) ∘ foldMapd (ret (T := subset) ⦿ 1)) t).
-    rewrite foldMapd_morphism.
-    change_right ((evalAt (n-1, l) ∘ foldMapd (ret (T := subset))) t /\ n <> 0).
-    rewrite foldMapd_morphism.
-    (*
-    assert (evalAt (n, l) ∘ ret ⦿ 1 = (evalAt (n - 1, l) ∘ ret /\ n <> 0)).
-    { unfold evalAt, preincr, incr, ret, Return_subset, compose.
-      unfold_ops @Monoid_op_plus.
-      propext.
-      apply propositional_extensionality.
-      ext [n' l'].
-      propext.
-      - inversion 1. cbn.
-        assert (n <> 0).
-        lia. fequal. lia.
-      - inversion 1. cbn.
-        fequal.
-     *)
-  Admitted.
-
-  Lemma term_ind3 : forall (t1 t2 : term LN) (n : nat) (l : LN),
-      (n, l) ∈d ([t1]@[t2]) <-> (n, l) ∈d t1 \/ (n, l) ∈d t2.
-  Proof.
-    introv.
-    rewrite ctx_elements_to_foldMapd.
-    rewrite (term_foldMapd3 _).
-    reflexivity.
-  Qed.
-
-End term_ind_rewrite.
-
-(** ** Rewriting lemmas for <<subst>> *)
-(******************************************************************************)
-
-(** ** Rewriting lemmas for <<locally_closed>> *)
-(******************************************************************************)
-Theorem term_lc_gap11 : forall (n : nat) (m : nat),
-    locally_closed_gap m (tvar (Bd n)) <-> n < m.
-Proof.
-  intros. unfold locally_closed_gap.
-  split.
-  - intros. specialize (H 0 (Bd n)).
-    rewrite term_ind1 in H. specialize (H (ltac:(intuition))).
-    apply H.
-  - intros. cbn. rewrite term_ind1 in H0. destruct H0; subst.
-    now simpl_monoid.
-Qed.
-
-Theorem term_lc_gap12 : forall (x : atom) (m : nat),
-    locally_closed_gap m (tvar (Fr x)) <-> True.
-Proof.
-  intros. unfold locally_closed, locally_closed_gap.
-  setoid_rewrite term_ind1. intuition.
-  now subst.
-Qed.
-
-Theorem term_lc_gap2 : forall (X : typ) (t : term LN) (m : nat),
-    locally_closed_gap m (lam X t) <-> locally_closed_gap (S m) t.
-Proof.
-  intros. unfold locally_closed, locally_closed_gap.
-  setoid_rewrite term_ind2'. split.
-  - introv premise hypothesis. destruct l; [easy|].
-    cbn. specialize (premise (S w) (Bd n)).
-    cbn in premise.
-    replace (w - 0) with w in premise by lia.
-    assert (H : S w <> 0) by lia.
-    specialize (premise (conj hypothesis H)).
-    unfold_lia.
-  - introv premise [hypothesis neq0].
-    destruct l; [easy|].
-    specialize(premise (w - 1) (Bd n) hypothesis).
-    cbn in *. unfold_lia.
-Qed.
-
-Theorem term_lc_gap3 : forall (t1 t2 : term LN) (m : nat),
-    locally_closed_gap m ([t1]@[t2]) <-> locally_closed_gap m t1 /\ locally_closed_gap m t2.
-Proof.
-  intros. unfold locally_closed, locally_closed_gap.
-  setoid_rewrite term_ind3. intuition.
-Qed.
-
-Theorem term_lc11 : forall (n : nat),
-    locally_closed (tvar (Bd n)) <-> False.
-Proof.
-  intros. unfold locally_closed. now (rewrite term_lc_gap11).
-Qed.
-
-Theorem term_lc12 : forall (x : atom),
-    locally_closed (tvar (Fr x)) <-> True.
-Proof.
-  intros. unfold locally_closed. now (rewrite term_lc_gap12).
-Qed.
-
-Theorem term_lc2 : forall (X : typ) (t : term LN),
-    locally_closed (lam X t) <-> locally_closed_gap 1 t.
-Proof.
-  intros. unfold locally_closed. now (rewrite term_lc_gap2).
-Qed.
-
-Theorem term_lc3 : forall (t1 t2 : term LN),
-    locally_closed ([t1]@[t2]) <-> locally_closed t1 /\ locally_closed t2.
-Proof.
-  intros. unfold locally_closed.
-  now setoid_rewrite term_lc_gap3.
-Qed.

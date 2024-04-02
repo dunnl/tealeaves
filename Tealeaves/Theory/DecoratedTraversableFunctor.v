@@ -378,7 +378,7 @@ Section decorated_traversable_functor_theory.
       reflexivity.
     Qed.
 
-    Lemma element_to_foldMapd2 : forall (A : Type) (e : E) (a : A) (t : T A),
+    Lemma ind_to_foldMapd : forall (A : Type) (e : E) (a : A) (t : T A),
         element_ctx_of t (e, a) = foldMapd (op := or) (unit := False) (eq (e, a)) t.
     Proof.
       intros.
@@ -536,7 +536,7 @@ Section decorated_traversable_functor_theory.
       Forall_ctx P t <-> forall (e : E) (a : A), (e, a) ∈d t -> P (e, a).
     Proof.
       unfold Forall_ctx.
-      setoid_rewrite element_to_foldMapd2.
+      setoid_rewrite ind_to_foldMapd.
       rewrite (foldMapd_through_runBatch1 _).
       assert (lemma : forall (e : E) (a : A),
                  foldMapd (eq (e, a))

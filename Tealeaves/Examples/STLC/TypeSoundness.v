@@ -1,20 +1,19 @@
 From Tealeaves Require Export
-  Backends.LN
-  Theory.DecoratedTraversableMonad
-  Examples.STLC.Syntax.
+  Examples.STLC.Syntax
+  Examples.STLC.Simplification.
 
 Export STLC.Syntax.Notations.
 
 (** * Inversion lemmas *)
 (******************************************************************************)
 Lemma inversion11 : forall (A : typ) (x : atom) (Γ : ctx),
-    Γ ⊢ (tvar (Fr x)) : A -> (x, A) ∈ Γ.
+    Γ ⊢ tvar (Fr x) : A -> (x, A) ∈ Γ.
 Proof.
   inversion 1; auto.
 Qed.
 
 Lemma inversion12 : forall (A : typ) (n : nat) (Γ : ctx),
-    Γ ⊢ (tvar (Bd n)) : A -> False.
+    Γ ⊢ tvar (Bd n) : A -> False.
 Proof.
   inversion 1; auto.
 Qed.
@@ -75,7 +74,8 @@ Proof.
     intro y. rewrite AtomSet.singleton_spec. intro; subst.
     rewrite in_domset_iff. eauto.
   - rename H0 into IH; rename H into premise.
-    specialize_freshly IH. unfold scoped in *.
+    specialize_freshly IH.
+    unfold scoped in *.
     rewrite term_freeset2.
     assert (step1 : freeset t ⊆ freeset (t '(tvar (Fr e))))
       by apply freeset_open_lower.

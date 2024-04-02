@@ -119,6 +119,7 @@ Tealeaves/Backends/LN.v
 
 # EXAMPLES
 Tealeaves/Examples/STLC/Syntax.v
+Tealeaves/Examples/STLC/Simplification.v
 Tealeaves/Examples/STLC/CompatTest.v
 Tealeaves/Examples/STLC/SyntaxCategorical.v
 Tealeaves/Examples/STLC/TypeSoundness.v
