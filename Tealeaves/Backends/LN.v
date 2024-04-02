@@ -41,7 +41,7 @@ Module Type TheorySIG.
     (open : iterm -> oterm -> oterm)
     (close : atom -> oterm -> oterm)
     (subst : atom -> iterm -> oterm -> oterm)
-    (locally_closed_b : oterm -> bool).
+    (locally_closed_bool : oterm -> bool).
 End TheorySIG.
 
 Module MakeTheory_Hetero
@@ -87,8 +87,8 @@ Module MakeTheory_Hetero
   Definition locally_closed : oterm -> Prop :=
     fun u => locally_closed (U := U) u.
 
-  Definition locally_closed_b : oterm -> bool :=
-    fun u => locally_closed_b (U := U) u.
+  Definition locally_closed_bool : oterm -> bool :=
+    fun u => locally_closed_bool (U := U) u.
 
   Definition scoped : oterm -> AtomSet.t -> Prop :=
     fun t γ => freeset t ⊆ γ.

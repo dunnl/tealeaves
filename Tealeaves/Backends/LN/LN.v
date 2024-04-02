@@ -135,7 +135,7 @@ Section locally_nameless_local_operations.
             end
           end.
 
-  Definition is_bound_or_free_b (gap : nat) : nat * LN -> bool :=
+  Definition is_bound_or_free_bool (gap : nat) : nat * LN -> bool :=
     fun p => match p with
           | (w, l) =>
             match l with
@@ -168,11 +168,11 @@ Section locally_nameless_operations.
   Definition freeset : T LN -> AtomSet.t :=
     LN.AtomSet.atoms ○ free.
 
-  Definition locally_closed_gap_b (gap : nat) : U LN -> bool :=
-    fun t => foldMapd (is_bound_or_free_b gap) t.
+  Definition locally_closed_gap_bool (gap : nat) : U LN -> bool :=
+    foldMapd (is_bound_or_free_bool gap).
 
-  Definition locally_closed_b : U LN -> bool :=
-    locally_closed_gap_b 0.
+  Definition locally_closed_bool : U LN -> bool :=
+    locally_closed_gap_bool 0.
 
   Definition locally_closed_gap (gap : nat) : U LN -> Prop :=
     fun t => forall w l, (w, l) ∈d t -> is_bound_or_free gap (w, l).
@@ -271,6 +271,76 @@ Section locally_nameless_basic_principles.
      (op := Monoid_op_plus)}.
 
   Implicit Types (l : LN) (n : nat) (t : U LN) (x : atom).
+
+  (** ** Local closure spec *)
+  (******************************************************************************)
+  Lemma locally_closed_gap_spec: forall gap,
+      locally_closed_gap gap = Forall_ctx (is_bound_or_free gap).
+  Proof.
+    intro. ext t.
+    apply propositional_extensionality.
+    rewrite forall_ctx_iff.
+    reflexivity.
+  Qed.
+
+  Definition locally_closed_spec:
+    locally_closed = Forall_ctx (is_bound_or_free 0).
+  Proof.
+    ext t.
+    apply propositional_extensionality.
+    rewrite forall_ctx_iff.
+    reflexivity.
+  Qed.
+
+  Lemma is_bound_or_free_preincr: forall n m,
+      is_bound_or_free n ⦿ m =
+        is_bound_or_free (n + m).
+  Proof.
+    intros.
+    ext [w l].
+    destruct l.
+    - reflexivity.
+    - cbn. unfold_monoid. propext; lia.
+  Qed.
+
+  Lemma is_bound_or_free_S: forall n,
+      is_bound_or_free n ⦿ 1 =
+        is_bound_or_free (S n).
+  Proof.
+    intros.
+    rewrite is_bound_or_free_preincr.
+    fequal. lia.
+  Qed.
+
+  Lemma is_bound_or_free_nBd: forall n w b,
+      is_bound_or_free n (w, Bd b) = (b < w + n).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma is_bound_or_free_0Bd: forall w b,
+      is_bound_or_free 0 (w, Bd b) = (b < w).
+  Proof.
+    intros.
+    cbn.
+    unfold_monoid.
+    propext; lia.
+  Qed.
+
+  Lemma is_bound_or_free_00Bd: forall b,
+      is_bound_or_free 0 (0, Bd b) = False.
+  Proof.
+    intros.
+    rewrite is_bound_or_free_0Bd.
+    propext; lia.
+  Qed.
+
+  Lemma is_bound_or_free_Fr: forall n w x,
+      is_bound_or_free n (w, Fr x) = True.
+  Proof.
+    intros.
+    reflexivity.
+  Qed.
 
   (** ** Reasoning principles for proving equalities *)
   (******************************************************************************)
@@ -645,6 +715,22 @@ End locally_nameless_utilities.
      using typeclasses eauto : tea_local.
 
 Tactic Notation "simpl_local" := (autorewrite* with tea_local).
+
+Ltac simplify_is_bound_or_free :=
+  match goal with
+  | |- context[is_bound_or_free ?n ⦿ 1] =>
+      rewrite is_bound_or_free_S
+  | |- context[is_bound_or_free ?n ⦿ ?m] =>
+      rewrite is_bound_or_free_preincr
+  | |- context[is_bound_or_free ?n (?w, Fr ?x)] =>
+      rewrite is_bound_or_free_Fr
+  | |- context[is_bound_or_free 0 (0, Bd ?b)] =>
+      rewrite is_bound_or_free_00Bd
+  | |- context[is_bound_or_free 0 (?w, Bd ?b)] =>
+      rewrite is_bound_or_free_0Bd
+  | |- context[is_bound_or_free ?n (?w, Bd ?b)] =>
+      rewrite is_bound_or_free_nBd
+  end.
 
 (** * Locally nameless metatheory *)
 (******************************************************************************)
