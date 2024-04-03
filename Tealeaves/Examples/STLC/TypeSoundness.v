@@ -3,6 +3,7 @@ From Tealeaves Require Export
   Examples.STLC.Simplification.
 
 Export STLC.Syntax.Notations.
+#[local] Open Scope set_scope.
 
 (** * Inversion lemmas *)
 (******************************************************************************)
