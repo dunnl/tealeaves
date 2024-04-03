@@ -118,6 +118,28 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma eq_pair_preincr: forall (n: nat) {A} (a: A),
+    eq (S n, a) ⦿ 1 = eq (n, a).
+Proof.
+  intros.
+  ext [n' a'].
+  unfold preincr, compose, incr.
+  apply propositional_extensionality.
+  rewrite pair_equal_spec.
+  rewrite pair_equal_spec.
+  intuition.
+Qed.
+
+Ltac rewrite_core_ops_to_binddt :=
+  match goal with
+  | |- context[bind ?f ?t] =>
+      debug "bind_to_binddt";
+      rewrite bind_to_binddt
+  | |- context[bindd ?f ?t] =>
+      debug "bindd_to_binddt";
+      rewrite bindd_to_binddt
+  end.
+
 Ltac rewrite_ops_to_binddt :=
   match goal with
   | |- context[?x ∈ ?t] =>
@@ -227,6 +249,10 @@ Ltac simplify_locally_nameless_top_level :=
   | |- context[is_bound_or_free] =>
       debug "simplify_bound_or_free";
       simplify_is_bound_or_free
+  | |- context[subst] =>
+      unfold subst
+  | |- context[open] =>
+      unfold open
   end.
 
 Ltac simplify_locally_nameless_leaves :=
@@ -248,13 +274,19 @@ Ltac simplify_misc :=
   | |- context[(?a, ?b) = (?c, ?d)] =>
       (* This form occurs when reasoning about ∈d at <<ret>> *)
       rewrite pair_equal_spec
+  | |- context[eq (S ?n, ?a) ⦿ 1] =>
+      rewrite eq_pair_preincr
   end.
 
-Ltac simplify2 :=
-  first [ step_binddt_term
-        | simplify_locally_nameless_top_level
-        | simplify_locally_nameless_leaves
+Ltac simplify_pass1 :=
+  first [ simplify_locally_nameless_top_level
+        | rewrite_core_ops_to_binddt
         | rewrite_ops_to_binddt
+        | step_binddt_term
+    ].
+
+Ltac simplify_pass2 :=
+  first [ simplify_locally_nameless_leaves
         | simplify_const_functor
         | simplify_monoid_units
         (* ^ monoid_units should be after const_functor,
@@ -277,9 +309,10 @@ Ltac handle_atoms :=
 
 Ltac derive :=
   intros;
-  repeat simplify2;
+  repeat simplify_pass1;
+  repeat simplify_pass2;
   try handle_atoms;
-  (trivial || reflexivity || easy).
+  (trivial || reflexivity).
 
 (* I don't entirely know why this is required. *)
 #[local] Typeclasses Transparent Monoid_op.
@@ -472,25 +505,13 @@ Section term_ind_rewrite.
     derive.
   Qed.
 
-  Lemma eq_pair_preincr: forall (n: nat) {A} (a: A),
-      eq (n, a) = eq (S n, a) ⦿ 1.
-  Proof.
-    intros.
-    ext [n' a'].
-    unfold preincr, compose, incr.
-    apply propositional_extensionality.
-    rewrite pair_equal_spec.
-    rewrite pair_equal_spec.
-    intuition.
-  Qed.
-
   Lemma term_ind2 : forall (t : term LN) (l : LN) (n : nat) (X : typ),
       (n, l) ∈d t = (S n, l) ∈d (λ X t).
   Proof.
     intros.
-    do 2 rewrite ind_to_foldMapd.
-    repeat simplify2.
-    rewrite eq_pair_preincr.
+    repeat simplify_pass1.
+    repeat simplify_pass2.
+    rewrite <- eq_pair_preincr.
     reflexivity.
   Qed.
 
@@ -498,24 +519,24 @@ Section term_ind_rewrite.
       (n, l) ∈d (λ X t) -> (n <> 0).
   Proof.
     introv.
-    rewrite ind_to_foldMapd.
-    repeat simplify2.
+    repeat simplify_pass1.
+    repeat simplify_pass2.
     assert (Hgt: 1 > 0) by lia; generalize dependent Hgt.
     generalize 1 as m.
-    induction t; intros m Hgt.
-    - simplify2.
-      unfold preincr, compose, incr; cbn.
+    induction t;
+      intros m Hgt;
+      simplify_pass1;
+      repeat simplify_pass2.
+    - unfold preincr, compose, incr; cbn.
       rewrite pair_equal_spec.
       change (?m ● ?x) with (m + x)%nat. lia.
-    - repeat simplify2.
-      rewrite preincr_preincr.
+    - rewrite preincr_preincr.
       intro hyp.
       eapply IHt.
       2: eauto.
       change (?m ● ?x) with (m + x)%nat.
       lia.
-    - repeat simplify2.
-      intros [hyp|hyp]; eauto.
+    - intros [hyp|hyp]; eauto.
   Qed.
 
   Lemma term_ind2_nZ2: forall t n l,
@@ -526,21 +547,21 @@ Section term_ind_rewrite.
     introv.
     assert (Hgt: 1 > 0) by lia; generalize dependent Hgt.
     generalize 1 as m.
-    induction t; intros m Hgt.
-    - simplify2.
-      unfold preincr, compose, incr; cbn.
+    induction t;
+      intros m Hgt;
+      simplify_pass1;
+      repeat simplify_pass2.
+    - unfold preincr, compose, incr; cbn.
       rewrite pair_equal_spec.
       change (?m ● ?x) with (m + x)%nat.
       lia.
-    - repeat simplify2.
-      rewrite preincr_preincr.
+    - rewrite preincr_preincr.
       intro hyp.
       eapply IHt.
       2: eauto.
       change (?m ● ?x) with (m + x)%nat.
       lia.
-    - repeat simplify2.
-      intros [hyp|hyp]; eauto.
+    - intros [hyp|hyp]; eauto.
   Qed.
 
   (*
@@ -584,8 +605,37 @@ Section term_ind_rewrite.
 
 End term_ind_rewrite.
 
+(** ** Rewriting lemmas for <<open>> *)
+(******************************************************************************)
+Lemma open_term_rw2: forall (t1 t2: term LN) u,
+    open u (app t1 t2) =
+      app (open u t1) (open u t2).
+Proof.
+  derive.
+Qed.
+
+Lemma open_term_rw3: forall τ (t: term LN) u,
+    open u (λ τ t) =
+      λ τ (bindd (open_loc u ⦿ 1) t).
+Proof.
+  derive.
+Qed.
+
 (** ** Rewriting lemmas for <<subst>> *)
 (******************************************************************************)
+Lemma subst_term_rw2: forall (t1 t2: term LN) x u,
+    subst x u (app t1 t2) =
+      app (subst x u t1) (subst x u t2).
+Proof.
+  derive.
+Qed.
+
+Lemma subst_term_rw3: forall τ (t: term LN) x u,
+    subst x u (λ τ t) =
+      λ τ (subst x u t).
+Proof.
+  derive.
+Qed.
 
 (** ** Rewriting lemmas for <<locally_closed>> *)
 (******************************************************************************)

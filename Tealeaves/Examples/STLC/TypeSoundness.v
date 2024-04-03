@@ -70,9 +70,11 @@ Theorem j_wf : forall Γ (t : term LN) (A : typ),
     Γ ⊢ t : A -> scoped t (domset Γ).
 Proof.
   introv J. induction J.
-  - unfold scoped. rewrite term_freeset12.
-    intro y. rewrite AtomSet.singleton_spec. intro; subst.
-    rewrite in_domset_iff. eauto.
+  - rename H0 into Hin.
+    unfold scoped.
+    rewrite term_freeset12.
+    apply in_in_domset in Hin.
+    fsetdec.
   - rename H0 into IH; rename H into premise.
     specialize_freshly IH.
     unfold scoped in *.
@@ -82,9 +84,12 @@ Proof.
     assert (step2 : forall x, x ∈@ (freeset t) -> x ∈@ (domset (Γ ++ e ~ τ1)))
       by fsetdec.
     intros x xin. assert (x <> e) by fsetdec.
-    specialize (step2 x xin). rewrite domset_app in step2.
+    specialize (step2 x xin).
+    rewrite domset_app in step2.
     cbn in step2. fsetdec.
-  - unfold scoped in *. rewrite term_freeset3. fsetdec.
+  - unfold scoped in *.
+    rewrite term_freeset3.
+    fsetdec.
 Qed.
 
 Theorem is_bound_or_free_monotone : forall (k w1 w2 : nat) (l : LN),
