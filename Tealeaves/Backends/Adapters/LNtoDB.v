@@ -331,6 +331,7 @@ Module toDB.
       now rewrite (main t).
     Qed.
 
+    (*
     Goal forall (u : T nat) (t: U LN) (k : key),
         (forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom)) ->
         exists (t': U nat), map (F := option) (open_by u) (toDB_from_key k t) = Some t'.
@@ -447,6 +448,7 @@ Module toDB.
           cbn; eauto.
          *)
     Abort.
+    *)
 
   End translate.
 End toDB.
