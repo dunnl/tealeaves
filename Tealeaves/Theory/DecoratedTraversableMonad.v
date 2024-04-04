@@ -325,6 +325,56 @@ Section lemmas.
     reflexivity.
   Qed.
 
+  Corollary tolist_to_binddt : forall (A : Type),
+      tolist = binddt (G := const (list A))
+                 (B := False) (ret (T := list) ∘ extract).
+  Proof.
+    intros.
+    rewrite tolist_to_traverse1.
+    rewrite traverse_to_binddt.
+    reflexivity.
+  Qed.
+
+  Corollary element_of_to_binddt : forall (A: Type),
+      element_of = binddt (G := const (subset A))
+                     (B := False) (ret (T := subset) ∘ extract).
+  Proof.
+    intros.
+    rewrite element_of_to_foldMap.
+    rewrite foldMap_to_traverse1.
+    rewrite traverse_to_binddt.
+    reflexivity.
+  Qed.
+
+  Corollary element_ctx_of_to_binddt : forall (A: Type),
+      element_ctx_of (F := U) = binddt (G := const (subset (W * A)))
+                     (B := False) (ret (T := subset)).
+  Proof.
+    intros.
+    rewrite ctx_elements_to_foldMapd.
+    rewrite foldMapd_to_mapdt1.
+    rewrite mapdt_to_binddt.
+    reflexivity.
+  Qed.
+
+  Corollary in_to_binddt: forall (A: Type) (t: U A) (a: A),
+      a ∈ t = binddt (G := const (subset A))
+                (B := False) (ret (T := subset) ∘ extract) t a.
+  Proof.
+    intros.
+    rewrite element_of_to_binddt.
+    reflexivity.
+  Qed.
+
+  Corollary ind_to_binddt: forall (A: Type) (t: U A) (w: W) (a: A),
+      (w, a) ∈d t = binddt (G := const (subset (W * A)))
+                (B := False) (ret (T := subset)) t (w, a).
+  Proof.
+    intros.
+    rewrite element_ctx_of_to_binddt.
+    reflexivity.
+  Qed.
+
   (** ** Characterizing <<∈d>> *)
   (******************************************************************************)
   Lemma ind_ret_iff : forall {A : Type} (w : W) (a1 a2 : A),

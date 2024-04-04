@@ -48,19 +48,6 @@ Open Scope set_scope.
 Simplification support
 ========================================
 |*)
-
-Ltac tolist_to_binddt :=
-  rewrite tolist_to_traverse1, traverse_to_binddt.
-
-Ltac element_of_to_binddt :=
-  rewrite element_of_to_foldMap, foldMap_to_traverse1, traverse_to_binddt.
-
-Ltac in_to_binddt :=
-  rewrite in_to_foldMap, foldMap_to_traverse1, traverse_to_binddt.
-
-Ltac ind_to_binddt :=
-  rewrite ind_to_foldMapd, foldMapd_to_mapdt1, mapdt_to_binddt.
-
 Lemma pure_const_rw: forall {A} {a:A} {M} {unit:Monoid_unit M},
     pure (F := const M) (Pure := @Pure_const _ unit) a = Ƶ.
   reflexivity.
@@ -123,16 +110,16 @@ Ltac rewrite_ops_to_binddt :=
   match goal with
   | |- context[?x ∈ ?t] =>
       debug "in_to_binddt";
-      in_to_binddt
+      rewrite in_to_binddt
   | |- context[(?n, ?l) ∈d ?t] =>
       debug "ind_to_binddt";
-      ind_to_binddt
+      rewrite ind_to_binddt
   | |- context[tolist ?t] =>
       debug "tolist_to_binddt";
-      tolist_to_binddt
+      rewrite tolist_to_binddt
   | |- context[element_of ?t] =>
       debug "element_of_to_binddt";
-      element_of_to_binddt
+      rewrite element_of_to_binddt
   | |- context[foldMap ?t] =>
       debug "foldMap_to_binddt";
       rewrite foldMap_to_traverse1, traverse_to_binddt
