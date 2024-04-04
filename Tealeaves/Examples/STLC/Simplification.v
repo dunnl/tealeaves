@@ -6,12 +6,37 @@ Import STLC.Syntax.Notations.
 #[local]  Notation "'BD'" := binddt.
 #[local] Open Scope tealeaves_scope.
 
+
+
+Ltac simplify_subset_reasoning_leaves :=
+  match goal with
+  | |- context[(?a, ?b) = (?c, ?d)] =>
+      (* This form occurs when reasoning about ∈d at <<ret>> *)
+      rewrite pair_equal_spec
+  | |- context[eq (S ?n, ?a) ⦿ 1] =>
+      rewrite eq_pair_preincr
+  end.
+
+
+Ltac simplify_final_pass :=
+  first [ simpl_subset
+        | simpl_list
+    ].
+
+Ltac derive_final_cleanup :=
+  solve [ reflexivity
+        | trivial
+        | intuition
+        | now handle_atoms
+        | now simplify_subset_reasoning_leaves
+    ].
+
 Ltac derive :=
   intros;
   repeat simplify_pass1;
   repeat simplify_pass2;
-  try handle_atoms;
-  (trivial || reflexivity).
+  repeat simplify_final_pass;
+  derive_final_cleanup.
 
 (** ** Rewriting lemmas for <<tolist>>, <<toset>>, <<∈>> *)
 (******************************************************************************)
@@ -192,6 +217,10 @@ Section term_ind_rewrite.
   Lemma term_ind2 : forall (t : term LN) (l : LN) (n : nat) (X : typ),
       (n, l) ∈d t = (S n, l) ∈d (λ X t).
   Proof.
+    introv.
+    repeat simplify_pass1.
+    repeat simplify_pass2.
+
     derive.
   Qed.
 

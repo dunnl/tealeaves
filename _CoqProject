@@ -1,6 +1,7 @@
 -R Tealeaves/ Tealeaves
 
 Tealeaves/Axioms.v
+Tealeaves/Tactics/Debug.v
 Tealeaves/Tactics/LibTactics.v
 Tealeaves/Tactics/Prelude.v
 Tealeaves/Misc/Product.v #Required by comonoid.v
@@ -118,7 +119,6 @@ Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN.v
 
 # EXAMPLES
-Tealeaves/Examples/Debug.v
 Tealeaves/Examples/STLC/Syntax.v
 Tealeaves/Examples/STLC/Simplification.v
 Tealeaves/Examples/STLC/CompatTest.v

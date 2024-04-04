@@ -23,8 +23,7 @@ From Tealeaves Require Export
   Backends.LN
   Misc.NaturalNumbers
   Functors.List
-  Theory.DecoratedTraversableMonad
-  Examples.Debug.
+  Theory.DecoratedTraversableMonad.
 
 Export Monoid.Notations. (* Ƶ and ● *)
 Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
@@ -76,14 +75,6 @@ Proof.
   reflexivity.
 Qed.
 
-(*
-Lemma free_to_foldMap: forall t,
-    free t = foldMap free_loc t.
-Proof.
-  reflexivity.
-Qed.
-*)
-
 Lemma eq_pair_preincr: forall (n: nat) {A} (a: A),
     eq (S n, a) ⦿ 1 = eq (n, a).
 Proof.
@@ -104,31 +95,6 @@ Ltac rewrite_core_ops_to_binddt :=
   | |- context[bindd ?f ?t] =>
       debug "bindd_to_binddt";
       progress (rewrite bindd_to_binddt)
-  end.
-
-Ltac rewrite_ops_to_binddt :=
-  match goal with
-  | |- context[?x ∈ ?t] =>
-      debug "in_to_binddt";
-      rewrite in_to_binddt
-  | |- context[(?n, ?l) ∈d ?t] =>
-      debug "ind_to_binddt";
-      rewrite ind_to_binddt
-  | |- context[tolist ?t] =>
-      debug "tolist_to_binddt";
-      rewrite tolist_to_binddt
-  | |- context[element_of ?t] =>
-      debug "element_of_to_binddt";
-      rewrite element_of_to_binddt
-  | |- context[foldMap ?t] =>
-      debug "foldMap_to_binddt";
-      rewrite foldMap_to_traverse1, traverse_to_binddt
-  | |- context[foldMapd ?t] =>
-      debug "foldMap_to_binddt";
-      rewrite foldMapd_to_mapdt1, mapdt_to_binddt
-  | |- context[Forall_ctx ?P] =>
-      debug "Forall_to_foldMapd";
-      unfold Forall_ctx
   end.
 
 Ltac simplify_monoid_units :=
@@ -206,62 +172,12 @@ Ltac simplify_distribute_list_ops :=
       progress (autorewrite with tea_set)
   end.
 
-Ltac simplify_locally_nameless_top_level :=
-  match goal with
-  | |- context[free ?t] =>
-      debug "free_to_foldMap";
-      unfold free
-      (*
-      rewrite free_to_foldMap
-      *)
-  | |- context[freeset ?t] =>
-      debug "unfold_freeset";
-      unfold freeset;
-      unfold free
-      (*
-      rewrite free_to_foldMap
-      *)
-  | |- context[locally_closed] =>
-      idtac "locally_closed_spec";
-      rewrite locally_closed_spec
-  | |- context[locally_closed_gap] =>
-      idtac "locally_closed_gap_spec";
-      rewrite locally_closed_gap_spec
-  | |- context[is_bound_or_free] =>
-      debug "simplify_bound_or_free";
-      simplify_is_bound_or_free
-  | |- context[subst] =>
-      unfold subst
-  | |- context[open] =>
-      unfold open
-  end.
-
-Ltac simplify_locally_nameless_leaves :=
-  match goal with
-  | |- context[free_loc (Fr ?x)] =>
-      rewrite free_loc_Fr
-  | |- context[free_loc (Bd ?b)] =>
-      rewrite free_loc_Bd
-  | |- context[?x ∈ [?y]] =>
-      rewrite in_list_one
-  | |- context[Forall_ctx ?P] =>
-      unfold Forall_ctx
-  | |- context[is_bound_or_free] =>
-      simplify_is_bound_or_free
-  end.
-
-Ltac simplify_misc :=
-  match goal with
-  | |- context[(?a, ?b) = (?c, ?d)] =>
-      (* This form occurs when reasoning about ∈d at <<ret>> *)
-      rewrite pair_equal_spec
-  | |- context[eq (S ?n, ?a) ⦿ 1] =>
-      rewrite eq_pair_preincr
-  end.
-
+(*
 (* I don't entirely know why this is required. *)
 #[export] Typeclasses Transparent Monoid_op.
-#[export] Typeclasses Transparent Monoid_unit.
+(* #[export] Typeclasses Transparent Monoid_unit. *)
+About Pure_const.
+#[export] Typeclasses Transparent Pure_const.
 
 Lemma test_transparency:
   @Applicative (@const Type Type Prop)
@@ -269,8 +185,13 @@ Lemma test_transparency:
     (@Pure_const Prop False)
     (@Mult_const Prop or).
 Proof.
-  typeclasses eauto.
+  Set Typeclasses Debug Verbosity 2.
+  idtac.
+  typeclasses
+  Set Typeclasses Debug Verbosity 2.
+  Timeout 1 typeclasses eauto.
 Qed.
+*)
 
 
 (*|
@@ -341,6 +262,28 @@ Fixpoint binddt_term (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
 
 (*|
 ========================================
+Instantiation of derived functions
+========================================
+|*)
+#[export] Instance Map_STLC: Map term
+  := Map_Binddt nat term term.
+#[export] Instance Mapd_STLC: Mapd nat term
+  := Mapd_Binddt nat term term.
+#[export] Instance Traverse_STLC: Traverse term
+  := Traverse_Binddt nat term term.
+#[export] Instance Mapdt_STLC: Mapdt nat term
+  := Mapdt_Binddt nat term term.
+#[export] Instance Bind_STLC: Bind term term
+  := Bind_Binddt nat term term.
+#[export] Instance Bindd_STLC: Bindd nat term term
+  := Bindd_Binddt nat term term.
+#[export] Instance Bindt_STLC: Bindt term term
+  := Bindt_Binddt nat term term.
+#[export] Instance Elements_STLC: Elements term
+  := Elements_Traverse.
+
+(*|
+========================================
 Simplification automation
 ========================================
 |*)
@@ -366,6 +309,76 @@ Ltac binddt_term_3 :=
   change ((BD ?f) (app ?t1 ?t2)) with
     (P (@app _) <⋆> BD f t1 <⋆> BD f t2).
  *)
+
+Lemma free_to_foldMap: forall (t: term LN),
+    free t = foldMap free_loc t.
+Proof.
+  reflexivity.
+Qed.
+
+Ltac simplify_locally_nameless_top_level :=
+  match goal with
+  | |- context[free ?t] =>
+      debug "free_to_foldMap";
+      rewrite free_to_foldMap
+  | |- context[freeset ?t] =>
+      debug "unfold_freeset";
+      unfold freeset;
+      rewrite free_to_foldMap
+  | |- context[locally_closed] =>
+      idtac "locally_closed_spec";
+      rewrite locally_closed_spec
+  | |- context[locally_closed_gap] =>
+      idtac "locally_closed_gap_spec";
+      rewrite locally_closed_gap_spec
+  | |- context[is_bound_or_free] =>
+      debug "simplify_bound_or_free";
+      simplify_is_bound_or_free
+  | |- context[subst] =>
+      unfold subst
+  | |- context[open] =>
+      unfold open
+  end.
+
+Ltac rewrite_derived_ops_to_binddt :=
+  match goal with
+  | |- context[tolist (F := term) ?t] =>
+      debug "tolist_to_binddt";
+      rewrite (tolist_to_binddt (T := term))
+  | |- context[element_of (F := term) ?t ?x] =>
+      debug "in_to_binddt";
+      rewrite (in_to_binddt (T := term))
+  | |- context[element_ctx_of (F := term) ?t (?n, ?l)] =>
+      debug "ind_to_binddt";
+      rewrite (ind_to_binddt (T := term))
+  | |- context[element_of (F := term) ?t] =>
+      debug "element_of_to_binddt";
+      rewrite (element_of_to_binddt (T := term))
+  | |- context[foldMap (T := term) ?t] =>
+      debug "foldMap_to_binddt";
+      rewrite foldMap_to_traverse1, traverse_to_binddt
+  | |- context[foldMapd (T := term) ?t] =>
+      debug "foldMap_to_binddt";
+      rewrite (foldMapd_to_mapdt1 (T := term)),
+        (mapdt_to_binddt (T := term))
+  | |- context[Forall_ctx (T := term)  ?P] =>
+      debug "Forall_to_foldMapd";
+      unfold Forall_ctx
+  end.
+
+Ltac simplify_locally_nameless_leaves :=
+  match goal with
+  | |- context[free_loc (Fr ?x)] =>
+      rewrite free_loc_Fr
+  | |- context[free_loc (Bd ?b)] =>
+      rewrite free_loc_Bd
+  | |- context[?x ∈ [?y]] =>
+      rewrite in_list_one
+  | |- context[Forall_ctx ?P] =>
+      unfold Forall_ctx
+  | |- context[is_bound_or_free] =>
+      simplify_is_bound_or_free
+  end.
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -426,7 +439,7 @@ Ltac simpl_binddt_term :=
 Ltac simplify_pass1 :=
   first [ simplify_locally_nameless_top_level
         | rewrite_core_ops_to_binddt
-        | rewrite_ops_to_binddt
+        | rewrite_derived_ops_to_binddt
         | simpl_binddt_term
     ].
 
@@ -440,7 +453,6 @@ Ltac simplify_pass2 :=
         | simplify_fn_composition
         | simplify_extract
         | simplify_distribute_list_ops
-        | simplify_misc
     ].
 
 Ltac dtm_law_pass :=
@@ -709,23 +721,6 @@ a restriction on implementations of `binddt` (cite Gibbons).
     DecoratedTraversableMonad nat term :=
     {| kdtm_binddt0 := @dtm1_stlc;
     |}.
-
-  #[export] Instance Map_STLC: Map term
-    := Map_Binddt nat term term.
-  #[export] Instance Mapd_STLC: Mapd nat term
-    := Mapd_Binddt nat term term.
-  #[export] Instance Traverse_STLC: Traverse term
-    := Traverse_Binddt nat term term.
-  #[export] Instance Mapdt_STLC: Mapdt nat term
-    := Mapdt_Binddt nat term term.
-  #[export] Instance Bind_STLC: Bind term term
-    := Bind_Binddt nat term term.
-  #[export] Instance Bindd_STLC: Bindd nat term term
-    := Bindd_Binddt nat term term.
-  #[export] Instance Bindt_STLC: Bindt term term
-    := Bindt_Binddt nat term term.
-  #[export] Instance Elements_STLC: Elements term
-    := Elements_Traverse.
 
   #[export] Instance DTMFull_STLC:
     DecoratedTraversableMonadFull nat term

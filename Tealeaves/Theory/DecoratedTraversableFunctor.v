@@ -379,7 +379,8 @@ Section decorated_traversable_functor_theory.
     Qed.
 
     Lemma ind_to_foldMapd : forall (A : Type) (e : E) (a : A) (t : T A),
-        element_ctx_of t (e, a) = foldMapd (op := or) (unit := False) (eq (e, a)) t.
+        element_ctx_of t (e, a) =
+          foldMapd (op := Monoid_op_or) (unit := Monoid_unit_false) (eq (e, a)) t.
     Proof.
       intros.
       rewrite ctx_elements_to_foldMapd.

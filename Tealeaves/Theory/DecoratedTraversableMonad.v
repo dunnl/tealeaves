@@ -357,21 +357,30 @@ Section lemmas.
     reflexivity.
   Qed.
 
+  (* TODO give names to binddt instance arguments *)
   Corollary in_to_binddt: forall (A: Type) (t: U A) (a: A),
-      a ∈ t = binddt (G := const (subset A))
-                (B := False) (ret (T := subset) ∘ extract) t a.
+      a ∈ t = binddt (G := const Prop)
+                (H0 := @Pure_const Prop Monoid_unit_false)
+                (H1 := @Mult_const Prop Monoid_op_or)
+                (B := False) (eq a ∘ extract) t.
   Proof.
     intros.
-    rewrite element_of_to_binddt.
+    rewrite in_to_foldMap.
+    rewrite foldMap_to_traverse1.
+    rewrite traverse_to_binddt.
     reflexivity.
   Qed.
 
   Corollary ind_to_binddt: forall (A: Type) (t: U A) (w: W) (a: A),
-      (w, a) ∈d t = binddt (G := const (subset (W * A)))
-                (B := False) (ret (T := subset)) t (w, a).
+      (w, a) ∈d t = binddt (G := const Prop)
+                (H0 := @Pure_const Prop Monoid_unit_false)
+                (H1 := @Mult_const Prop Monoid_op_or)
+                (B := False) (eq (w, a)) t.
   Proof.
     intros.
-    rewrite element_ctx_of_to_binddt.
+    rewrite ind_to_foldMapd.
+    rewrite foldMapd_to_mapdt1.
+    rewrite mapdt_to_binddt.
     reflexivity.
   Qed.
 
