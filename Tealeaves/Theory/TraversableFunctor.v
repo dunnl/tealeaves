@@ -131,8 +131,6 @@ Section traversable_functor_theory.
       foldMap (T := T) f =
         traverse (G := const M) (B := False) f.
   Proof.
-    About traverse.
-    Set Printing All.
     reflexivity.
   Qed.
 
