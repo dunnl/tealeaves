@@ -128,8 +128,11 @@ Section traversable_functor_theory.
   (** *** As a special case of <<traverse>> *)
   (******************************************************************************)
   Lemma foldMap_to_traverse1 `{Monoid M} : forall `(f : A -> M),
-      foldMap (T := T) f = traverse (G := const M) (B := False) f.
+      foldMap (T := T) f =
+        traverse (G := const M) (B := False) f.
   Proof.
+    About traverse.
+    Set Printing All.
     reflexivity.
   Qed.
 
@@ -385,7 +388,8 @@ Section traversable_functor_theory.
       `{Elements T}
       `{! Compat_Elements_Traverse T}:
       forall (A : Type) (t : T A),
-        forall (a : A), a ∈ t = foldMap (op := or) (unit := False) (eq a) t.
+      forall (a : A), a ∈ t = foldMap (op := Monoid_op_or)
+                           (unit := Monoid_unit_false) (eq a) t.
     Proof.
       intros.
       rewrite element_of_to_foldMap.
