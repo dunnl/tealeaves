@@ -157,9 +157,7 @@ Proof.
     + assumption.
     + introv Hin.
       enough (lemma : ~ e ∈ (bind (T := list) (fun '(x, t) => free typ KType t) Γ)).
-      { Search "in_bind".
-        Print Instances ContainerMonad.
-        Print Instances TraversableMonad.
+      {
         assert (ContainerMonad list).
         eapply @ContainerMonad_Traversable.
         all: try typeclasses eauto.

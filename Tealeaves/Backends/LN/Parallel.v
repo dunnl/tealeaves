@@ -122,7 +122,6 @@ End local_operations.
 (******************************************************************************)
 Section LocallyNamelessOperations.
 
-  Search option.
   Context
     (T : Type -> Type)
     `{DecoratedTraversableMonadFull (list nat)

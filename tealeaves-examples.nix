@@ -1,4 +1,4 @@
-{ stdenv, nix-gitignore, coq, serapi, ocamlPackages, python310Packages, tealeaves }:
+{ stdenv, nix-gitignore, coq, serapi, ocamlPackages, python310Packages, tealeaves ? null }:
 
 stdenv.mkDerivation {
   name = "tealeaves-examples";
@@ -10,14 +10,11 @@ stdenv.mkDerivation {
       "*.lock"
       "*.nix"
       "*.md"
-      "Makefile"
     ] ./.;
-  makefile = ./Makefile.examples;
   nativeBuildInputs = [
     coq
     ocamlPackages.findlib
     python310Packages.alectryon
     serapi
-    tealeaves
   ];
 }

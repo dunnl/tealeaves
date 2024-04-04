@@ -29,15 +29,7 @@ Inductive term :=
 | lam : typ -> term -> term
 | app : term -> term -> term.
 
-(** ** Notations and automation *)
-(******************************************************************************)
-Module Notations.
-  Notation "'fun'" := (lam) (at level 45).
-  Notation "[ t1 ]@[ t2 ]" := (app t1 t2) (at level 80).
-  Notation "A ⟹ B" := (arr A B) (at level 40).
-End Notations.
-
-Import Notations.
+Import STLC.Syntax.Notations.
 
 (** ** Instantiate Tealeaves *)
 (******************************************************************************)
@@ -104,28 +96,6 @@ End STLC_SIG.
 Module Theory <: TheorySIG
   := MakeTheory STLC_SIG.
 Import Theory.
+(*
 Import Theory.Notations.
-
-(** ** Deeper Instantiate Tealeaves *)
-(******************************************************************************)
-
-(** ** Use Tealeaves *)
-(******************************************************************************)
-Reserved Notation "Γ ⊢ t : S" (at level 90, t at level 99).
-
-Inductive Judgment : ctx -> term -> typ -> Prop :=
-| j_var :
-    forall (Γ : ctx) (x : atom) (A : typ),
-      uniq Γ ->
-      (x, A) ∈ Γ ->
-      Γ ⊢ (atm x) : A
-| j_abs :
-    forall (L : AtomSet.t) Γ (τ1 τ2: typ) (t: term),
-      (forall x : atom, ~ AtomSet.In x L -> Γ ++ x ~ τ1 ⊢ t '(atm x) : τ2) ->
-      Γ ⊢ fun τ1 t : τ1 ⟹ τ2
-| j_app :
-    forall Γ (t1 t2 : term) (A B : typ),
-      Γ ⊢ t1 : A ⟹ B ->
-      Γ ⊢ t2 : A ->
-      Γ ⊢ [t1]@[t2] : B
-where "Γ ⊢ t : A" := (Judgment Γ t A).
+*)

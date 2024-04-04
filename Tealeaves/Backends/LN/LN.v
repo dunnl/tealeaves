@@ -24,7 +24,7 @@ Import
 
 #[local] Generalizable Variables T U.
 
-Instance todo `{Elements U} `{Elements T} `{Bind T T} `{Bind T U} `{DecoratedTraversableRightPreModule nat T U}:
+#[local] Instance todo `{Elements U} `{Elements T} `{Bind T T} `{Bind T U} `{DecoratedTraversableRightPreModule nat T U}:
   ContainerRightModule T U.
 Admitted.
 

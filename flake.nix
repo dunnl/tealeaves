@@ -14,13 +14,13 @@
         };
         tealeaves-examples = pkgs.callPackage ./tealeaves-examples.nix {
           inherit (pkgs.coqPackages) serapi;
-          inherit tealeaves;
+          # inherit tealeaves;
         };
     in { packages.x86_64-linux.default = tealeaves;
          packages.x86_64-linux.tealeaves = tealeaves;
          packages.x86_64-linux.tealeaves-examples = tealeaves-examples;
          devShells.x86_64-linux.default = tealeaves;
          devShells.x86_64-linux.tealeaves = tealeaves;
-         devShells.x86_64-linux.examples = tealeaves-examples;
+         devShells.x86_64-linux.tealeaves-examples = tealeaves-examples;
        };
 }

@@ -6,6 +6,7 @@ Tealeaves_old/
 *.vo*
 *.aux
 *.lia.cache
+Makefile.coq.local
 Makefile.coq
 Makefile.coq.conf
 .Makefile.coq.d
