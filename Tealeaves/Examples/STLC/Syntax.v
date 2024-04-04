@@ -23,7 +23,8 @@ From Tealeaves Require Export
   Backends.LN
   Misc.NaturalNumbers
   Functors.List
-  Theory.DecoratedTraversableMonad.
+  Theory.DecoratedTraversableMonad
+  Tactics.Debug.
 
 Export Monoid.Notations. (* Ƶ and ● *)
 Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
