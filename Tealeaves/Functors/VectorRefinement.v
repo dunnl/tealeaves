@@ -53,6 +53,20 @@ Qed.
 Definition Vector (n: nat) (A: Type) : Type :=
   {l : list A | length l = n}.
 
+Definition coerce_Vector_length: forall {A: Type} (n m: nat) (Heq: n = m),
+    Vector n A -> Vector m A.
+Proof.
+  introv heq [v pf].
+  exists v. now subst.
+Defined.
+
+Lemma coerce_Vector_contents: forall {A: Type} (n m: nat) (Heq: n = m) (v: Vector n A),
+    proj1_sig v = proj1_sig (coerce_Vector_length n m Heq v).
+Proof.
+  intros ? n m Heq [v pf].
+  reflexivity.
+Qed.
+
 (** ** Basic properties vectors *)
 (******************************************************************************)
 Lemma Vector_eq_iff:
@@ -195,13 +209,13 @@ Proof.
 Qed.
 
 Lemma Vector_induction2:
-  forall (A: Type) (P: forall m, Vector m A -> Vector m A -> Prop)
+  forall (A: Type) (m : nat) (P: forall m, Vector m A -> Vector m A -> Prop)
     (IHnil: P 0 vnil vnil)
     (IHcons:
       forall m (a1 a2: A) (v1 v2: Vector m A),
         P m v1 v2 ->
         P (S m) (vcons m a1 v1) (vcons m a2 v2)),
-  forall m (v1 v2: Vector m A), P m v1 v2.
+  forall (v1 v2: Vector m A), P m v1 v2.
 Proof.
   intros.
   induction m.
@@ -405,6 +419,67 @@ Section sec.
     - reflexivity.
     - rewrite to_list_length.
       reflexivity.
+  Qed.
+
+  Lemma functors_preserve_inj `{Functor F}:
+    forall {A B: Type} (f: A -> B) (g: B -> A)
+      (Hinv: g ∘ f = id) (a1 a2: F A),
+      map f a1 = map f a2 -> a1 = a2.
+  Proof.
+    introv Hinv Heq.
+    change (id a1 = id a2).
+    rewrite <- (fun_map_id (F := F)).
+    rewrite <- Hinv.
+    rewrite <- (fun_map_map (F := F)).
+    unfold compose.
+    rewrite Heq.
+    reflexivity.
+  Qed.
+
+  Lemma functors_preserve_inj2 `{Functor F}:
+    forall {A B: Type} (f: A -> B) (a1 a2: F A),
+    (exists g: B -> A, g ∘ f = id) ->
+      map f a1 = map f a2 -> a1 = a2.
+  Proof.
+    introv Hinv. destruct Hinv.
+    eapply functors_preserve_inj.
+    eassumption.
+  Qed.
+
+  Lemma functors_preserve_inj4 `{Applicative F}:
+    forall {A1 A2 B: Type} (f: A1 -> A2 -> B) (a1 a2: F A1) (a1' a2': F A2),
+    (exists g: B -> A1 * A2, (forall x y, (compose g ∘ f) x y = (x, y))) ->
+    pure f <⋆> a1 <⋆> a1'
+    = pure f <⋆> a2 <⋆> a2'
+    -> a1 = a2 /\ a1' = a2'.
+  Proof.
+    introv Hinv Heq.
+    enough (cut: (a1, a1') = (a2, a2')).
+    { inversion cut. now subst. }
+    change (id (a1, a1') = (a2, a2')).
+    assert (a1 ⊗ a1' = a2 ⊗ a2' -> (a1, a1') = (a2, a2')).
+    { intro eq_mult.
+      assert (map fst (a1 ⊗ a1') =
+                map fst (a2 ⊗ a2'))
+               by now rewrite eq_mult.
+      assert (map snd (a1 ⊗ a1') =
+                map snd (a2 ⊗ a2'))
+        by now rewrite eq_mult.
+      assert (map (F := F) (fun x => (fst x, snd x)) (a1 ⊗ a1') =
+                map (fun x => (fst x, snd x)) (a2 ⊗ a2')).
+      { rewrite eq_mult. reflexivity. }
+  Abort.
+
+  Lemma functors_preserve_inj3 `{Applicative F}:
+    forall {A B: Type} (f: A -> B) (a1 a2: F A),
+    (exists g: B -> A, g ∘ f = id) ->
+    pure f <⋆> a1 = pure f <⋆> a2 -> a1 = a2.
+  Proof.
+    introv Hinv.
+    rewrite <- map_to_ap.
+    rewrite <- map_to_ap.
+    apply functors_preserve_inj2.
+    assumption.
   Qed.
 
   Lemma Vector_pres_inj {n:nat} (v: Vector n A) `{Functor F}:

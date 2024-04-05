@@ -146,12 +146,29 @@ Section constant_functor.
   End with_monoid.
 
   #[global] Instance ApplicativeMorphism_monoid_morphism
-    `{Monoid M} `{Monoid N}
+   `{Monoid M} `{Monoid N}
     `{hom: ! Monoid_Morphism M N ϕ } :
     ApplicativeMorphism (const M) (const N) (const ϕ).
   Proof.
     inversion hom.
     constructor; now try typeclasses eauto.
+  Qed.
+
+
+  Lemma map_compose_const {F} `{Functor F} `{M : Type} :
+    @Map_compose F (const M) _ _ = @Map_const (F M).
+  Proof.
+    ext A' B' f' t.
+    unfold_ops @Map_compose @Map_const.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+  Lemma mult_compose_const {G} `{Applicative G} `{Monoid M} :
+    @Mult_compose G (const M) _ _ _ = @Mult_const (G M) (Monoid_op_applicative G M).
+  Proof.
+    ext A' B' [m1 m2].
+    reflexivity.
   Qed.
 
 End constant_functor.

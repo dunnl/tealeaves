@@ -5,7 +5,6 @@ From Tealeaves Require Export
 Import Batch.Notations.
 Import Applicative.Notations.
 
-About length_Batch.
 #[local] Arguments length_Batch {A B C}%type_scope b.
 
 (** * Batch to KStore *)
@@ -26,7 +25,7 @@ Section batch_to.
 
   Generalizable All Variables.
 
-  Lemma yo : forall `(b : Batch A B C),
+  Lemma length_Batch_KStore : forall `(b : Batch A B C),
       length_Batch b = KStore.length A B C (Batch_to_KStore b).
     intros.
     induction b.
@@ -153,13 +152,14 @@ Section isos.
     unfold KStore_to_Batch.
     unfold Batch_to_KStore.
     compose near k.
-    rewrite (cata_appmor _ _ (G1 := Batch A B) (G2 := KStore A B)).
+    (*
+    Fail rewrite (cata_appmor _ _ (G1 := Batch A B) (G2 := KStore A B)).
     rewrite runBatch_batch.
     rewrite cata_kstore.
     reflexivity.
     typeclasses eauto.
-  Qed.
-
+    *)
+  Abort.
 
   Lemma KStore_Batch_iso2: forall (b : Batch A B C),
       b = KStore_to_Batch (Batch_to_KStore b).
@@ -171,7 +171,6 @@ Section isos.
     enough (ApplicativeMorphism (KStore A B) (Batch A B)
                    (cata A B (batch A B))).
     rewrite (runBatch_morphism'(G := Batch A B) (F := KStore A B)).
-    Search cata kstore.
   Abort.
 
 End isos.

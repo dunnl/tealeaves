@@ -87,7 +87,26 @@ Defined.
 
 #[export] Instance Applicative_KStore:
   forall (A B : Type), Applicative (KStore A B).
-Admitted.
+Proof.
+  intros. constructor.
+  - typeclasses eauto.
+  - intros.
+    reflexivity.
+  - intros.
+    destruct x.
+    destruct y.
+    cbn.
+    fequal.
+    ext t.
+    destruct (VectorDef.splitat length0 t).
+    reflexivity.
+  - intros.
+    destruct x, y, z.
+    cbn.
+    assert (length0 + length1 + length2 =
+              length0 + (length1 + length2))%nat.
+    lia.
+Abort.
 
 (** * Cata for <<KStore>> *)
 (******************************************************************************)
@@ -116,35 +135,34 @@ Section cata.
     reflexivity.
   Qed.
 
+  Lemma traverse_Vector_KStore: forall len kstore contents,
+      traverse (T := VEC len)
+               (G := KStore A B) kstore contents =
+        {| length := len; contents := contents; build := (@id _) |}.
+  Proof.
+    intros len kstore contents.
+    induction contents.
+    - cbn.
+      unfold_ops @Pure_KStore.
+      unfold pure_KStore.
+      fequal.
+      ext b. rewrite toNil. reflexivity.
+    - cbn.
+      change_left (pure (F := KStore A B)
+                        (Basics.flip (fun a : B => Vector.cons B a n))
+                   <⋆> traverse (T := VEC n) (G := KStore A B) kstore contents0
+                   <⋆> kstore h).
+      rename h into a.
+      rewrite IHcontents.
+  Abort.
+
   Lemma cata_kstore : forall C, cata kstore C = @id (KStore A B C).
   Proof.
     intros C. ext k. destruct k as [len contents make].
     unfold id.
-    assert (lemma : traverse (T := VEC len)
-                             (G := KStore A B) kstore contents =
-              {| length := len; contents := contents; build := (@id _) |}).
-    { clear. induction contents.
-      - cbn. unfold_ops @Pure_KStore.
-        unfold pure_KStore. fequal.
-        ext b. rewrite toNil. reflexivity.
-      - cbn.
-        change_left (pure (F := KStore A B)
-                          (Basics.flip (fun a : B => Vector.cons B a n))
-                     <⋆> traverse (T := VEC n) (G := KStore A B) kstore contents0
-                      <⋆> kstore h).
-        rename h into a.
-        rewrite IHcontents.
-        unfold kstore.
-        unfold ap.
-        unfold_ops @Mult_KStore @Pure_KStore.
-        unfold mult_KStore, pure_KStore.
-        cbn.
-        admit.
-    }
-    cbn.
-    rewrite lemma.
-    reflexivity.
-  Admitted.
+    unfold cata.
+    Fail (now rewrite traverse_Vector_KStore).
+  Abort.
 
   Lemma cata_appmor
   `{ApplicativeMorphism G1 G2 ϕ}:

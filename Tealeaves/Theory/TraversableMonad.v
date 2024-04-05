@@ -45,7 +45,7 @@ Section traversable_monad_theory.
   (******************************************************************************)
   Lemma foldMap_bindt `{Applicative G} `{Monoid M} :
     forall `(g : B -> M) `(f : A -> G (T B)),
-      map (foldMap g) ∘ bindt f =
+      map (foldMap g) ∘ bindt (U := U) f =
         foldMap (T := U) (map (foldMap g) ∘ f).
   Proof.
     intros. unfold foldMap.
@@ -66,7 +66,7 @@ Section traversable_monad_theory.
   Qed.
 
   Lemma foldMap_bind `{Monoid M} : forall `(g : B -> M) `(f : A -> T B),
-      foldMap g ∘ bind f = foldMap (foldMap g ∘ f).
+      foldMap g ∘ bind (U := U) f = foldMap (foldMap g ∘ f).
   Proof.
     intros. unfold foldMap.
     rewrite (traverse_bind (G2 := const M) A B False).
@@ -132,7 +132,8 @@ Section traversable_monad_theory.
   Lemma bindt_respectful :
     forall (G : Type -> Type)
       `{Applicative G} `(f1 : A -> G (T B)) `(f2 : A -> G (T B)) (t : U A),
-      (forall (a : A), a ∈ t -> f1 a = f2 a) -> bindt f1 t = bindt f2 t.
+      (forall (a : A), a ∈ t -> f1 a = f2 a) ->
+      bindt (U := U) f1 t = bindt f2 t.
   Proof.
     introv ? hyp.
     rewrite bindt_through_runBatch.
@@ -164,12 +165,30 @@ Section traversable_monad_theory.
 
   Corollary bind_respectful :
     forall (A B : Type) (t : U A) (f1 : A -> T B) `(f2 : A -> T B),
-      (forall (a : A), a ∈ t -> f1 a = f2 a) -> bind f1 t = bind (U := U) f2 t.
+      (forall (a : A), a ∈ t -> f1 a = f2 a) ->
+      bind (U := U) f1 t = bind (U := U) f2 t.
   Proof.
     introv hyp.
     rewrite bind_to_bindt.
     rewrite bind_to_bindt.
     now apply (bindt_respectful (fun A => A) f1 f2).
+  Qed.
+
+  #[local] Instance element_of_hom2_Module:
+    ParallelRightModuleHom T subset U subset
+      (@element_of T _)
+      (@element_of U _).
+  Proof.
+    constructor.
+    intros.
+    rewrite element_of_to_foldMap.
+    rewrite element_of_to_foldMap.
+    rewrite element_of_to_foldMap.
+    rewrite foldMap_bind.
+    rewrite (foldMap_morphism (subset A) (subset B)
+                              (ϕ := bind (foldMap (ret subset) ∘ f))).
+    rewrite set_bind0.
+    reflexivity.
   Qed.
 
 End traversable_monad_theory.
@@ -187,7 +206,17 @@ Section instances.
     `{! Compat_Traverse_Bindt T T}
     `{! Compat_Bind_Bindt T T}
     `{! Compat_Elements_Traverse T}
-    `{! TraversableMonad T}.
+    `{! TraversableMonad T}
+    `{Map_U_inst : Map U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{! Compat_Map_Bindt T U}
+    `{! Compat_Traverse_Bindt T U}
+    `{! Compat_Bind_Bindt T U}
+    `{Elements_U_inst: Elements U}
+    `{! Compat_Elements_Traverse U}
+    `{Module_inst : ! TraversableRightModule T U}.
 
     #[export] Instance Monad_Hom_Tolist
       : MonadHom T list (@tolist T _) :=
@@ -204,6 +233,12 @@ Section instances.
     #[export] Instance ContainerMonad_Traversable:
       ContainerMonad T :=
       {| contm_pointwise := bind_respectful;
+      |}.
+
+    #[export] Instance ContainerModule_Traversable:
+      ContainerRightModule T U :=
+      {| contmod_pointwise := bind_respectful;
+        contmod_hom := element_of_hom2_Module;
       |}.
 
 End instances.
