@@ -60,10 +60,14 @@ Section ops.
     `{ret_inst : Return T}
       `{Mapd_T_inst : Mapd nat T}
       `{Mapd_U_inst : Mapd nat U}
-      `{Bindd_U_inst : Bindd nat T U}.
+      `{Bindd_U_inst : Bindd nat T U}
+      `{Elements_Ctx_U_inst : ElementsCtx nat U}.
+
+  Definition bound_in_gap (gap: nat) : nat -> nat -> bool :=
+    fun ix depth => ix <? depth + gap.
 
   Definition bound_in: nat -> nat -> bool :=
-    fun ix depth => ix <? depth.
+    bound_in_gap 0.
 
   (* Local function for incrementing free variables
      by <<n>> *)
@@ -80,7 +84,7 @@ Section ops.
        adjust σ to account for the depth
        - σ should be a top-level map, e.g.
          σ 0 is the first element being substituted
-         For open_by, σ 0 = u and σ (S n) = (S n)
+         For subst_by, σ 0 = u and σ (S n) = (S n)
        (<<ix - depth>> is the index into σ,
        adjusted to account for bound variables in scope
    *)
@@ -104,7 +108,7 @@ Section ops.
     | (depth, ix) => scoot_ren depth ρ ix
     end.
 
-  Definition open_loc (σ : nat -> T nat) (p: nat * nat): T nat :=
+  Definition subst_loc (σ : nat -> T nat) (p: nat * nat): T nat :=
     match p with
     | (depth, ix) => scoot depth σ ix
     end.
@@ -112,14 +116,30 @@ Section ops.
   Definition rename (ρ : nat -> nat) : U nat -> U nat :=
     mapd (T := U) (rename_loc ρ).
 
-  Definition open (σ : nat -> T nat) : U nat -> U nat :=
-    bindd (open_loc σ).
+  Definition subst (σ : nat -> T nat) : U nat -> U nat :=
+    bindd (subst_loc σ).
 
   Definition one (u: T nat): nat -> T nat :=
     fun n => if n =? 0 then u else ret n.
 
-  Definition open_by (u : T nat) : U nat -> U nat :=
-    open (one u).
+  Definition subst_by (u : T nat) : U nat -> U nat :=
+    subst (one u).
+
+  Definition closed_gap_loc (gap: nat) (p: nat * nat): bool :=
+    match p with
+    | (depth, ix) => bound_in_gap gap depth ix
+    end.
+
+  Definition closed_loc (p: nat * nat): bool :=
+    closed_gap_loc 0 p.
+
+  Definition closed_gap (gap: nat) (t: U nat): Prop :=
+    forall (depth ix: nat),
+      (depth, ix) ∈d t ->
+      closed_gap_loc gap (depth, ix) = true.
+
+  Definition closed (t: U nat): Prop :=
+    closed_gap 0 t.
 
 End ops.
 
@@ -139,7 +159,9 @@ Section theory.
   Proof.
     introv Hlt.
     rewrite <- ltb_lt in Hlt.
-    destruct n; cbn in *; auto.
+    unfold bound_in, bound_in_gap.
+    replace (n + 0) with n by lia.
+    destruct n; auto.
   Qed.
 
   Lemma bound_in_lt_iff: forall ix n,
@@ -160,6 +182,8 @@ Section theory.
       bound_in ix n = false.
   Proof.
     introv Hlt.
+    unfold bound_in, bound_in_gap.
+    replace (n + 0) with n by lia.
     destruct n; cbn; auto.
     now rewrite leb_gt.
   Qed.
@@ -170,7 +194,8 @@ Section theory.
   Proof.
     intros. split.
     - apply bound_in_ge.
-    - cbn. destruct n.
+    - cbn. replace (n + 0) with n by lia.
+      destruct n.
       + lia.
       + intros.
         rewrite leb_gt in H.
@@ -234,7 +259,7 @@ Section theory.
     lift 0 = extract.
   Proof.
     ext [depth ix].
-    cbn.
+    cbn. replace (depth + 0) with depth by lia.
     destruct depth.
     - lia.
     - destruct (ix <=? depth); lia.
@@ -440,11 +465,11 @@ Section theory.
     fequal. lia.
   Qed.
 
-  Lemma open_loc_preincr (σ : nat -> T nat) (n: nat):
-      open_loc σ ⦿ n =
-        open_loc (scoot n σ).
+  Lemma subst_loc_preincr (σ : nat -> T nat) (n: nat):
+      subst_loc σ ⦿ n =
+        subst_loc (scoot n σ).
   Proof.
-    unfold open_loc.
+    unfold subst_loc.
     ext (depth, ix); cbn.
     compose near σ on right.
     rewrite (scoot_scoot).

@@ -141,5 +141,5 @@ Tealeaves/Examples/SystemF/TypeSoundness.v
 Tealeaves/Backends/LN/Parallel.v
 
 Tealeaves/Backends/DB/DB.v
-Tealeaves/Backends/DB/Key.v
+Tealeaves/Backends/Adapters/Key.v
 Tealeaves/Backends/Adapters/LNtoDB.v
