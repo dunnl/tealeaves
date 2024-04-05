@@ -340,44 +340,63 @@ Module toDB.
       now rewrite (LN_DB_roundtrip_loc t).
     Qed.
 
+    Lemma DB_LN_roundtrip_loc1:
+      forall (t:U nat) k gap depth (n:nat),
+        unique k ->
+        closed_gap gap t ->
+        contains_ix_upto gap k ->
+        bound_in n depth = false ->
+        (depth, n) ∈d t ->
+        map (toDB_loc k ∘ pair depth) (map Fr (key_lookup_index k (n - depth))) = Some (Some n).
+    Proof.
+      introv Huniq Hclosed Hcont Hbound Helt.
+      unfold toLN_loc.
+      assert (Hcont_minus: contains_ix_upto (n - depth) k).
+      { clear Hbound.
+        unfold contains_ix_upto in *.
+        (* assert (n - depth <= gap).*)
+        unfold closed_gap in Hclosed;
+          specialize (Hclosed depth n Helt);
+          clear Helt;
+          unfold closed_gap_loc in Hclosed;
+          unfold bound_in_gap in Hclosed;
+          rewrite PeanoNat.Nat.ltb_lt in Hclosed.
+        lia.
+      }
+      {
+        unfold bound_in, bound_in_gap in Hbound;
+          rewrite PeanoNat.Nat.ltb_ge in Hbound;
+          replace (depth + 0) with depth in Hbound by lia.
+        destruct (key_lookup_ix_Some2 k (n-depth) Hcont_minus) as [a Halookup].
+        rewrite Halookup.
+        change (map ?f (Some ?n)) with (Some (f n)).
+        change (map ?f (Some ?n)) with (Some (f n)).
+        cbn.
+        apply (key_bijection2) in Halookup; auto.
+        rewrite Halookup; clear Halookup.
+        change (map ?f (Some ?n)) with (Some (f n)).
+        cbn.
+        replace (n - depth + depth) with n by lia.
+        reflexivity.
+      }
+    Qed.
+
     Lemma DB_LN_roundtrip_loc: forall (t:U nat) k gap depth (n:nat),
         unique k ->
         closed_gap gap t ->
         contains_ix_upto gap k ->
+        (depth, n) ∈d t ->
         (toDB_loc k ⋆6 toLN_loc k) (depth, n) =
           pure (F := option ∘ option) n.
     Proof.
-      introv Huniq Hclosed Hcont.
+      introv Huniq Hclosed Hcont Helt.
+      unfold_ops @Pure_compose @Pure_option.
       rewrite kc6_spec.
       unfold toLN_loc.
-      lookup index (n - depth) in key k.
-      - rewrite H_key_lookup.
-        remember (bound_in n depth) as Hrem.
-        unfold bound_in, bound_in_gap in HeqHrem.
-        symmetry in HeqHrem.
-        destruct Hrem.
-        + reflexivity.
-        + cbn.
-          rewrite PeanoNat.Nat.ltb_nlt in HeqHrem.
-          rewrite key_bijection in H_key_lookup; auto.
-          rewrite H_key_lookup.
-          cbn. replace (n - depth + depth) with n.
-          reflexivity.
-          unfold contains_ix_upto in *.
-          lia.
-      - rewrite H_key_lookup.
-        remember (bound_in n depth) as Hrem.
-        unfold bound_in, bound_in_gap in HeqHrem.
-        symmetry in HeqHrem.
-        destruct Hrem.
-        + unfold contains_ix_upto in *.
-          cbn. reflexivity.
-        + apply key_lookup_ix_None1 in H_key_lookup.
-          unfold contains_ix_upto in *.
-          cbn. false.
-          unfold closed_gap in *.
-          admit.
-    Admitted.
+      bound_induction.
+      apply (DB_LN_roundtrip_loc1 t k gap depth n
+               Huniq Hclosed Hcont Hbound Helt).
+    Qed.
 
     Theorem DB_LN_roundtrip: forall k gap (t: U nat),
         unique k ->
@@ -395,8 +414,7 @@ Module toDB.
       change (Some (Some t)) with (pure (F := option ∘ option) t).
       apply (mapdt_respectful_pure (G := option ∘ option)).
       intros.
-      rewrite (DB_LN_roundtrip_loc t k gap).
-      reflexivity. auto. auto. auto.
+      now rewrite (DB_LN_roundtrip_loc t k gap).
     Qed.
 
   End translate.
