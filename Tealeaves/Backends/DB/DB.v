@@ -127,7 +127,7 @@ Section ops.
 
   Definition closed_gap_loc (gap: nat) (p: nat * nat): bool :=
     match p with
-    | (depth, ix) => bound_in_gap gap depth ix
+    | (depth, ix) => bound_in_gap gap ix depth
     end.
 
   Definition closed_loc (p: nat * nat): bool :=
