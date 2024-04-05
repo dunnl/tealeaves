@@ -231,6 +231,86 @@ End bindt_rewriting_lemmas.
 #[export] Hint Rewrite bindt_list_nil bindt_list_cons bindt_list_one bindt_list_app :
   tea_list.
 
+(** ** Rewriting lemmas for <<traverse>> *)
+(******************************************************************************)
+Section traverse_rewriting_lemmas.
+
+  Context
+    (G : Type -> Type)
+    `{Applicative G}
+    (A B : Type).
+
+  Lemma traverse_list_nil : forall (f : A -> G B),
+      traverse f (@nil A) = pure (@nil B).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_list_one : forall (f : A -> G B) (a : A),
+      traverse f (ret (T := list) a) = map ret (f a).
+  Proof.
+    intros.
+    cbn.
+    rewrite ap3.
+    rewrite <- ap4;
+      rewrite ap2;
+      rewrite ap2.
+    rewrite <- map_to_ap.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_list_cons : forall (f : A -> G B) (a : A) (l : list A),
+      traverse f (a :: l) = pure (@cons B) <⋆> f a <⋆> traverse f l.
+  Proof.
+    intros.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_list_app : forall (f : A -> G B) (l1 l2 : list A),
+      traverse f (l1 ++ l2) = pure (@app B) <⋆> traverse f l1 <⋆> traverse f l2.
+  Proof.
+    intros.
+    induction l1.
+    - cbn. rewrite ap2.
+      rewrite ap1.
+      reflexivity.
+    - cbn.
+      rewrite IHl1.
+      repeat rewrite <- ap4.
+      repeat rewrite ap2.
+      rewrite ap3.
+      repeat rewrite <- ap4.
+      repeat rewrite ap2.
+      reflexivity.
+  Qed.
+
+  Definition snoc {A: Type} (l: list A) (a: A) := l ++ [a].
+
+  Lemma traverse_list_snoc : forall (f : A -> G B) (l : list A) (a: A),
+      traverse f (l ++ a::nil) =
+        pure (@snoc B) <⋆> traverse f l <⋆> f a.
+  Proof.
+    intros.
+    rewrite traverse_list_app.
+    cbn.
+    repeat rewrite <- ap4.
+    repeat rewrite ap2.
+    rewrite ap3.
+    repeat rewrite <- ap4.
+    repeat rewrite ap2.
+    rewrite ap3.
+    repeat rewrite <- ap4.
+    repeat rewrite ap2.
+    unfold compose.
+    reflexivity.
+  Qed.
+
+End traverse_rewriting_lemmas.
+
+#[export] Hint Rewrite traverse_list_nil traverse_list_cons traverse_list_one
+  traverse_list_snoc traverse_list_app :
+  tea_list.
+
 (** ** Rewriting lemmas for <<bind>> *)
 (******************************************************************************)
 Section bind_rewriting_lemmas.
