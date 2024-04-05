@@ -129,16 +129,20 @@ Tealeaves/Examples/STLC/SyntaxCategorical.v
 Tealeaves/Examples/STLC/TypeSoundness.v
 
 # MULTISORTED
-Tealeaves/Classes/Multisorted/Multifunctor.v
-Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
-Tealeaves/Backends/LN/Multisorted/LN.v
+#Tealeaves/Classes/Multisorted/Multifunctor.v
+#Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
+#Tealeaves/Backends/LN/Multisorted/LN.v
 
 # EXAMPLES
-Tealeaves/Examples/SystemF/Syntax.v
-Tealeaves/Examples/SystemF/Rewriting.v
-Tealeaves/Examples/SystemF/Contexts.v
-Tealeaves/Examples/SystemF/TypeSoundness.v
-
+#Tealeaves/Examples/SystemF/Syntax.v
+#Tealeaves/Examples/SystemF/Rewriting.v
+#Tealeaves/Examples/SystemF/Contexts.v
+#Tealeaves/Examples/SystemF/TypeSoundness.v
 
 # EXPERIMENTAL BACKENDS
-Tealeaves/Backends/LN/Parallel.v
+#Tealeaves/Backends/LN/Parallel.v
+
+# VARIADIC BINDERS
+Tealeaves/Examples/VariadicLet/Terms.v
+Tealeaves/Examples/VariadicLet/Syntax.v
+Tealeaves/Examples/VariadicLet/Syntax_Telescope.v

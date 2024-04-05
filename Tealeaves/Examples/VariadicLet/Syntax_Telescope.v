@@ -1,148 +1,8 @@
 From Tealeaves Require Export
-  Misc.NaturalNumbers
-  Functors.List
-  Adapters.Isomorphisms.BatchtoKStore
-  Theory.DecoratedTraversableMonad.
-
-Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
-Import Monoid.Notations. (* Ƶ and ● *)
-Import Misc.Subset.Notations. (* ∪ *)
-Export Applicative.Notations. (* <⋆> *)
-Export List.ListNotations. (* [] :: *)
-Export Product.Notations. (* × *)
-Export ContainerFunctor.Notations. (* ∈ *)
-Export DecoratedContainerFunctor.Notations. (* ∈d *)
+  Examples.VariadicLet.Terms.
 
 #[local] Generalizable Variables G A B C.
-
 #[local] Set Implicit Arguments.
-
-(** * Language definition *)
-(******************************************************************************)
-Inductive term (v : Type) :=
-| tvar : v -> term v
-| letin : list (term v) -> term v -> term v
-| app : term v -> term v -> term v.
-
-#[export] Instance Return_Lam: Return term := tvar.
-
-Print term_rect.
-
-Section term_induction.
-
-  Section term_mut_ind.
-
-  Variables
-    (v : Type)
-    (P : term v -> Prop).
-
-  Hypotheses
-    (tvar_case : forall v, P (tvar v))
-    (letin_nil_case :  forall t, P t -> P (letin nil t))
-    (letin_cons_case : forall (u: term v) (l : list (term v)) (t: term v)
-                         (IHu: P u) (IHl: List.Forall P l)
-                         (IHt: P t), P (letin (u :: l) t))
-    (app_case : forall t: term v, P t -> forall u: term v, P u -> P (app t u)).
-
-
-  #[program] Definition term_mut_ind_program: forall t, P t.
-  refine (fix F t := match t with
-          | tvar v => tvar_case v
-          | letin defs body =>
-              match defs with
-              | nil => @letin_nil_case body (F body)
-              | cons u rest =>
-                  @letin_cons_case u rest body
-                                   (F u)
-                                   _
-                                   (F body)
-              end
-          | app t1 t2 =>
-              @app_case t1 (F t1) t2 (F t2)
-                     end).
-  induction rest.
-  - apply List.Forall_nil.
-  - apply List.Forall_cons; auto.
-  Defined.
-
-  Definition term_mut_ind: forall t, P t :=
-    fix F t :=
-      match t with
-      | tvar v => tvar_case v
-      | letin defs body =>
-          match defs with
-          | nil => @letin_nil_case body (F body)
-          | cons u rest =>
-              @letin_cons_case u rest body
-                               (F u)
-                               ((fix G l : List.Forall P l
-                                 := match l with
-                                    | nil =>
-                                        List.Forall_nil P
-                                    | cons x xs =>
-                                        List.Forall_cons x (l := xs) (F x) (G xs)
-                                    end) rest)
-                               (F body)
-          end
-      | app t1 t2 =>
-          @app_case t1 (F t1) t2 (F t2)
-      end.
-
-  End term_mut_ind.
-
-  Section term_mut_ind.
-
-    Lemma Forall_compat_list: forall (A: Type) (l : list A) (P: A -> Prop),
-        List.Forall P l <-> Forall_List P l.
-    Proof.
-      intros.
-      induction l.
-      - split.
-        + intros _. exact I.
-        + intros. apply List.Forall_nil.
-      - split.
-        + intro H.
-          inversion H; subst.
-          cbn. split. assumption. now apply IHl.
-        + intro H.
-          inversion H.
-          apply List.Forall_cons. assumption. now apply IHl.
-    Qed.
-
-  Variables
-    (v : Type)
-      (P : term v -> Prop).
-
-  Hypotheses
-    (tvar_case : forall v, P (tvar v))
-      (letin_case : forall (defs: list (term v))
-                      (body: term v)
-                      (IHdefs: forall (t : term v), t ∈ defs -> P t)
-                      (IHbody: P body),
-          P (letin defs body))
-      (app_case : forall t: term v, P t -> forall u: term v, P u -> P (app t u)).
-
-  Definition term_mut_ind2: forall t, P t.
-  Proof.
-    intros.
-    induction t using term_mut_ind.
-    - auto.
-    - apply letin_case.
-      + inversion 1.
-      + assumption.
-    - apply letin_case.
-      + introv Hin.
-        autorewrite with tea_list in Hin.
-        inversion Hin.
-        * now subst.
-        * rewrite Forall_compat_list in IHl.
-          rewrite List.forall_iff in IHl.
-          now apply IHl.
-      + assumption.
-    - auto.
-  Qed.
-
-End term_mut_ind.
 
 Fixpoint binddt_term
            (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
@@ -153,23 +13,98 @@ Fixpoint binddt_term
   | tvar v => f (0, v)
   | letin defs body =>
       pure (@letin v2) <⋆>
-      ((fix F ls :=
+      ((fix F acc ls :=
       match ls with
       | nil => pure nil
       | cons d0 drest =>
-          pure cons <⋆> binddt_term f d0 <⋆> F drest
-      end) defs) <⋆> binddt_term (f ⦿ List.length defs) body
+          pure cons <⋆> binddt_term (f ⦿ acc) d0 <⋆> F (S acc) drest
+      end) 0 defs) <⋆> binddt_term (f ⦿ List.length defs) body
   | app t1 t2 =>
       pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
   end.
 
 #[export] Instance Binddt_Lam: Binddt nat term term := @binddt_term.
 
-Lemma binddt_rw_letin: forall `{Applicative G} (v1 v2 : Type)
-                         (l : list (term v1)) (body: term v1),
+Module TelescopingList.
+
+  Fixpoint mapdt_list_rec (acc: nat)
+             (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+             (A B : Type) (f : nat * A -> G B) (l : list A)
+    : G (list B) :=
+    match l with
+    | nil => pure (@nil B)
+    | x :: xs =>
+        pure (@List.cons B) <⋆> f (acc, x) <⋆>
+          mapdt_list_rec (S acc) _ f xs
+    end.
+
+  Definition mapdt_list
+             (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+             (A B : Type) (f : nat * A -> G B) (l : list A)
+    : G (list B) := mapdt_list_rec 0 B f l.
+
+  #[export] Instance Mapdt_List_Telescope: Mapdt nat list := @mapdt_list.
+  #[export] Instance Mapd_List_Telescope: Mapd nat list := Mapd_Mapdt.
+  #[export] Instance: Compat_Mapd_Mapdt.
+  typeclasses eauto.
+  Qed.
+  #[export] Instance: @Compat_Map_Mapdt nat list _ _.
+  Admitted.
+
+  #[export] Instance:
+    @Compat_Elements_ElementsCtx nat list
+                                 (@ElementsCtx_CtxTolist nat list
+                                                         (@CtxTolist_Mapdt nat list Mapdt_List_Telescope)) _.
+  Admitted.
+
+  #[export] Instance: @DecoratedTraversableFunctor
+                        nat list Mapdt_List_Telescope.
+  Proof.
+    constructor;
+      unfold_ops Mapdt_List_Telescope;
+      unfold mapdt_list;
+      intros; ext l; generalize 0.
+    - induction l; intros.
+      + reflexivity.
+      + cbn. rewrite IHl.
+        reflexivity.
+    - unfold compose; induction l;
+        intros.
+      + cbn.
+        rewrite app_pure_natural.
+        reflexivity.
+      + cbn.
+        rewrite map_ap.
+        rewrite map_ap.
+        rewrite app_pure_natural.
+        change (fun a => G1 (G2 a)) with (G1 ∘ G2).
+        rewrite_strat innermost (terms (ap_compose2 G2 G1)).
+        unfold_ops @Pure_compose.
+        rewrite app_pure_natural.
+        unfold kc6.
+        rewrite_strat innermost (terms (ap_compose2 G2 G1)).
+        rewrite <- IHl.
+        rewrite <- ap_map.
+        rewrite map_ap.
+        rewrite map_ap.
+        rewrite app_pure_natural.
+        rewrite app_pure_natural.
+        admit.
+    - admit.
+  Admitted.
+
+End TelescopingList.
+
+Import TelescopingList.
+
+Lemma binddt_rw_letin:
+  forall `{Applicative G} (v1 v2 : Type)
+    (l : list (term v1)) (body: term v1),
   forall f : nat * v1 -> G (term v2),
     binddt f (letin l body) =
-      pure (@letin v2) <⋆> traverse (binddt f) l <⋆>
+      pure (@letin v2) <⋆>
+          mapdt (E := nat) (T := list)
+                (fun '(n, t) => (binddt (T := term) (f ⦿ n)) t) l <⋆>
         binddt (f ⦿ List.length l) body.
 Proof.
   intros.
@@ -179,10 +114,15 @@ Proof.
     rewrite preincr_zero.
     reflexivity.
   - cbn.
+    change 0 with (Ƶ:nat).
+    rewrite preincr_zero.
     repeat fequal.
-    induction l.
-    + reflexivity.
-    + cbn. rewrite IHl.
+    generalize (S Ƶ).
+    induction l; intros.
+    + cbn.
+      reflexivity.
+    + cbn.
+      rewrite IHl.
       reflexivity.
 Qed.
 
@@ -192,7 +132,8 @@ Lemma binddt_helper_letin
         (g : nat * B -> G2 (term C)):
   binddt g ∘ letin (v:=B) l =
     (precompose (binddt (g ⦿ List.length l)) ∘ ap G2)
-      (pure (letin (v:=C)) <⋆> (traverse (binddt g) l)).
+      (pure (letin (v:=C)) <⋆> mapdt (E := nat) (T := list)
+                                     (fun '(n, t) => (binddt (T := term) (g ⦿ n)) t) l).
 Proof.
   unfold precompose, compose.
   ext body.
@@ -206,7 +147,7 @@ Lemma binddt_helper_letin2
     (g : nat * B -> G2 (term C)):
   compose (binddt_term g) ∘ letin (v:=B) ∘ toMake_mono list l (term B) =
     ((compose (precompose (binddt_term (g ⦿ List.length l)) ∘ ap G2) ∘
-             precompose (traverse (T := list) (binddt_term g)) ∘
+             precompose (mapdt (fun '(n, t) => binddt (g ⦿ n) t)) ∘
              ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ toMake_mono list l (term B).
 Proof.
   intros.
@@ -224,7 +165,6 @@ Proof.
   ext l'.
   change_left (binddt_term g ∘ letin (toMake_mono list l (term B) l')).
   ext body.
-
   rewrite binddt_helper_letin.
   rewrite length_helper_mono.
   reflexivity.
@@ -250,8 +190,11 @@ Proof.
     rewrite IHt.
     unfold_ops @Pure_I; unfold id.
     fequal.
-    apply (traverse_respectful_id (T := list)).
-    assumption.
+    apply (mapdt_respectful_id _).
+    introv Hin.
+    apply ind_implies_in in Hin.
+    rewrite extract_preincr2.
+    now apply IHdefs.
   - cbn.
     rewrite IHt1, IHt2.
     reflexivity.

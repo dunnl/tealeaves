@@ -625,6 +625,59 @@ Section decorated_traversable_functor_theory.
     Qed.
     *)
 
+    Lemma mapdt_respectful:
+      forall A B `{Applicative G} (t : T A) (f g : E * A -> G B),
+        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))
+        -> mapdt f t = mapdt g t.
+    Proof.
+      introv Happl hyp.
+      do 2 rewrite mapdt_through_runBatch.
+      rewrite (ctx_elements_through_runBatch2 (tag := B)) in hyp.
+      unfold compose in *.
+      induction (toBatch6 (B := B) t).
+      - reflexivity.
+      - destruct a as [e a]. cbn.
+        rewrite IHb.
+        rewrite hyp.
+        reflexivity.
+        + cbn. now right.
+        + introv hyp2.
+          apply hyp.
+          now left.
+    Qed.
+
+    Theorem mapdt_purity1 :
+      forall `{Applicative G},
+        `(mapdt (G := G) (pure ∘ extract) = @pure G _ (T A)).
+    Proof.
+      intros.
+      rewrite (kdtfun_morph (G1 := fun A => A) (G2 := G)).
+      rewrite kdtfun_mapdt1.
+      reflexivity.
+    Qed.
+
+    Corollary mapdt_respectful_pure:
+      forall A `{Applicative G} (t : T A) (f : E * A -> G A),
+        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = pure (F := G) a)
+        -> mapdt f t = pure t.
+    Proof.
+      intros.
+      rewrite <- mapdt_purity1.
+      now apply mapdt_respectful.
+    Qed.
+
+    Corollary mapdt_respectful_id:
+      forall A (t : T A) (f : E * A -> A),
+        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = a)
+        -> mapdt (G := fun A => A) f t = t.
+    Proof.
+      intros.
+      change t with (id t) at 2.
+      rewrite <- kdtfun_mapdt1.
+      apply (mapdt_respectful A A (G := fun A => A)).
+      assumption.
+    Qed.
+
     Lemma mapd_respectful :
       forall A B (t : T A) (f g : E * A -> B),
         (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))

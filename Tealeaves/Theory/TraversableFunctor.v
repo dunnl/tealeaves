@@ -647,31 +647,6 @@ Section polymorphic.
       `{! Compat_Map_Traverse T}
       `{! Compat_ToBatch_Traverse}.
 
-  Lemma toBatch_mapsnd : forall (A B B' : Type) (f : B -> B'),
-      mapsnd_Batch B B' f ∘ toBatch (A := A) (A' := B') =
-        map (F := Batch A B) (map f) ∘ toBatch (A := A) (A' := B).
-  Proof.
-    intros.
-    rewrite toBatch_to_traverse.
-    rewrite toBatch_to_traverse.
-    rewrite (trf_traverse_morphism
-               (G1 := Batch A B')
-               (ϕ := fun A => mapsnd_Batch B B' f)).
-    rewrite (map_traverse).
-    rewrite ret_dinatural.
-    reflexivity.
-  Qed.
-
-  Definition toLen_poly {A} (B: Type): forall (t : T A), nat.
-    intro t.
-    exact (length_Batch (B := B) (toBatch t)).
-  Defined.
-
-  Definition toLen {A}: forall (t : T A), nat.
-    intro t.
-    exact (length_Batch (B := False) (toBatch t)).
-  Defined.
-
   Lemma length_Batch1: forall (A B: Type) (t : T A),
       length_Batch (B := B) (toBatch t) =
         length_Batch (B := B) (toBatch (map (fun _ => tt) t)).
@@ -718,6 +693,58 @@ Section polymorphic.
   Proof.
   Abort.
 
+  Lemma toBatch_mapsnd : forall (A B B' : Type) (f : B -> B'),
+      mapsnd_Batch B B' f ∘ toBatch (A := A) (A' := B') =
+        map (F := Batch A B) (map f) ∘ toBatch (A := A) (A' := B).
+  Proof.
+    intros.
+    rewrite toBatch_to_traverse.
+    rewrite toBatch_to_traverse.
+    rewrite (trf_traverse_morphism
+               (G1 := Batch A B')
+               (ϕ := fun A => mapsnd_Batch B B' f)).
+    rewrite (map_traverse).
+    rewrite ret_dinatural.
+    reflexivity.
+  Qed.
+
+  (** ** Vector coercions *)
+  (******************************************************************************)
+  Definition coerce_Vector_length: forall (A: Type) (n: nat),
+      Vector.t A n ->
+      forall (m: nat), m = n ->
+                Vector.t A m :=
+    fun A n => @eq_rect_r _ n (Vector.t A).
+
+
+  Lemma coerce_Vector_length_eq_refl: forall (A: Type) (n: nat)
+      (v: Vector.t A n),
+      coerce_Vector_length A n v n eq_refl = v.
+  Proof.
+    intros.
+    cbn.
+    reflexivity.
+  Qed.
+
+  Lemma coerce_Vector_contents {A}:
+    forall (n m: nat) (Heq: m = n)
+      (v: Vector.t A n),
+      Vector.to_list v =
+        Vector.to_list (coerce_Vector_length A n v m Heq).
+  Proof.
+    intros.
+    destruct Heq.
+    rewrite coerce_Vector_length_eq_refl.
+    reflexivity.
+  Qed.
+
+  (** ** Length *)
+  (******************************************************************************)
+  Definition toLen_poly {A} (B: Type): forall (t : T A), nat.
+    intro t.
+    exact (length_Batch (B := B) (toBatch t)).
+  Defined.
+
   Lemma toLen_poly1: forall A B,
       toLen_poly (A := A) B =
         toLen_poly (A := unit) B ∘ map (fun _ => tt).
@@ -738,13 +765,65 @@ Section polymorphic.
     reflexivity.
   Qed.
 
-  Corollary toLen_poly_canonical: forall (A B: Type) (t: T A),
+  Definition toLen {A}: forall (t : T A), nat.
+    intro t.
+    exact (length_Batch (B := False) (toBatch t)).
+  Defined.
+
+  Corollary toLen_toLen_poly: forall (A B: Type) (t: T A),
       toLen t = toLen_poly B t.
   Proof.
     intros. rewrite (toLen_poly2 A B False).
     reflexivity.
   Qed.
 
+  Lemma toLen_foldMap: forall (A: Type) (t: T A),
+      toLen t = foldMap (fun _ => 1) t.
+  Proof.
+    intros.
+    unfold toLen.
+    rewrite length_Batch_spec.
+    rewrite foldMap_through_runBatch1.
+    reflexivity.
+  Qed.
+
+  (** ** Contents *)
+  (******************************************************************************)
+  Definition toContents_poly {A}: forall (B: Type) (t : T A),
+      Vector.t A (toLen_poly B t).
+  Proof.
+    intros B t.
+    apply (Batch_to_contents (toBatch t)).
+  Defined.
+
+  Definition toContents {A}: forall (t : T A),
+      Vector.t A (toLen t).
+  Proof.
+    intro t.
+    apply (Batch_to_contents (toBatch t)).
+  Defined.
+
+  Definition toContents_generic {A}:
+    forall (t : T A) (n : nat) (Heq: n = toLen t),
+      Vector.t A n.
+  Proof.
+    intros.
+    rewrite Heq.
+    apply (Batch_to_contents (toBatch t)).
+  Defined.
+
+  Definition toContents_generic2 {A}:
+    forall (t : T A) (n : nat) (Heq: n = toLen t),
+      Vector.t A n.
+  Proof.
+    intros.
+    eapply coerce_Vector_length.
+    eapply (Batch_to_contents (toBatch t)).
+    apply Heq.
+  Defined.
+
+  (** ** Make *)
+  (******************************************************************************)
   Definition toMake_poly {A}: forall (t : T A) (B C: Type),
       Vector.t B (toLen_poly C t) -> (T B).
   Proof.
@@ -770,38 +849,6 @@ Section polymorphic.
     assumption.
   Defined.
 
-  (*
-  Lemma toMake_poly1: forall (A: Type) (t : T A) (B C C': Type),
-      toMake_poly t B C =
-        toMake_poly t B C'.
-    Restart.
-    intros t B.
-    apply (toMake_poly t B False).
-   *)
-
-  Definition toContents_poly {A}: forall (B: Type) (t : T A),
-      Vector.t A (toLen_poly B t).
-  Proof.
-    intros B t.
-    apply (Batch_to_contents (toBatch t)).
-  Defined.
-
-  Definition toContents {A}: forall (t : T A),
-      Vector.t A (toLen t).
-  Proof.
-    intro t.
-    apply (Batch_to_contents (toBatch t)).
-  Defined.
-
-  Definition toContents_generic {A}:
-    forall (t : T A) (n : nat) (Heq: n = toLen t),
-      Vector.t A n.
-  Proof.
-    intros.
-    rewrite Heq.
-    apply (Batch_to_contents (toBatch t)).
-  Defined.
-
   Definition toMake_generic {A}:
     forall (t : T A) (B: Type) (n : nat) (Heq: n = toLen t),
       Vector.t B n -> (T B).
@@ -814,6 +861,58 @@ Section polymorphic.
     unfold toLen_poly in lemma.
     assumption.
   Defined.
+
+  Definition toMake_generic2 {A}:
+    forall (t : T A) (B: Type) (n : nat) (Heq: toLen t = n),
+      Vector.t B n -> (T B).
+  Proof.
+    intros t B n Heq v.
+    apply (Batch_to_makeFn (toBatch t)).
+    assert (Heq': length_Batch (toBatch (A' := B) t) = n).
+    rewrite <- Heq.
+    unfold toLen.
+    erewrite length_Batch2.
+    reflexivity.
+    apply (coerce_Vector_length B n v _ Heq').
+  Defined.
+
+  Definition toMake_generic3 {A}: forall (t : T A) (B: Type),
+      Vector.t B (toLen t) -> (T B).
+  Proof.
+    intros t B v.
+    apply (Batch_to_makeFn (toBatch t)).
+    eapply coerce_Vector_length.
+    eassumption.
+    unfold toLen.
+    erewrite length_Batch2.
+    reflexivity.
+  Defined.
+
+  Lemma toLen_map {A A'} (f: A -> A'):
+    forall (t : T A),
+      toLen (map f t) = toLen t.
+  Proof.
+    intros.
+    unfold toLen.
+    rewrite length_Batch1.
+    compose near t on left.
+    rewrite (fun_map_map (F := T)).
+    change ((fun _ : A' => tt) ∘ f) with (fun _:A => tt).
+    rewrite (length_Batch1 _ _ t).
+    reflexivity.
+  Qed.
+
+  Lemma toMake_make_toMake {A A'} (f: A -> A'):
+    forall (t : T A) (B: Type),
+      toMake_generic3 t B =
+        toMake_generic2 (map (F := T) f t) B (toLen t) (toLen_map f t).
+  Proof.
+    intros.
+    ext v.
+    unfold toMake_generic3.
+    unfold toMake_generic2.
+    unfold eq_ind_r, eq_ind.
+  Abort.
 
   Lemma toLen_toMake_poly {A B C D E}:
     forall (t : T A) (v: Vector.t B (toLen_poly C t)),
@@ -836,7 +935,7 @@ Section polymorphic.
     reflexivity.
   Qed.
 
-  Lemma repr {A}: forall `(t : T A),
+  Lemma repr1 {A}: forall `(t : T A),
       t = toMake_mono t A (toContents_poly A t).
   Proof.
     intros.
@@ -859,6 +958,18 @@ Section polymorphic.
       reflexivity.
   Qed.
 
+  Lemma repr2 {A}: forall `(t : T A),
+      t = toMake_generic3 t A (toContents t).
+  Proof.
+    intros.
+    change t with (id t) at 1.
+    rewrite <- trf_extract.
+    unfold compose at 1.
+    unfold toMake_generic3.
+    unfold toContents.
+    unfold toLen.
+    unfold length_Batch2 at 1.
+  Abort.
   (*
   Lemma toLen_toMake_generic {A B}:
     forall (t : T A)
@@ -886,6 +997,30 @@ Section polymorphic.
       toLen (toMake_mono t B v) = toLen t.
   Proof.
     intros.
+    Search toLen.
+    unfold toLen.
+    rewrite batch_length1.
+    rewrite batch_length1.
+    compose near t.
+    rewrite <- (foldMap_through_runBatch2
+                 A False (M := list A)
+                 (ret (T := list))
+              ).
+    compose near (toMake_mono t B v).
+    rewrite <- (foldMap_through_runBatch2
+                 B False (M := list B)
+                 (ret (T := list))
+              ).
+  Admitted.
+
+  Lemma toLen_toMake2 {A B}:
+    forall (t : T A) (v: Vector.t B (toLen t)),
+      toLen (toMake_generic2 t _ (toLen t) eq_refl v) = toLen t.
+  Proof.
+    intros.
+    unfold toMake_generic2.
+
+    unfold toMake_poly.
     Search toLen.
     unfold toLen.
     rewrite batch_length1.
