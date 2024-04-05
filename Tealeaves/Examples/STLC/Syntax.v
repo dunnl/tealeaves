@@ -149,86 +149,6 @@ Simplification support
 |*)
 
 
-(*
-(*
-change does not work as well as rewrite because it the right-hand side
-seems to do its own typeclass resolution rather than taking the information from the match (which seems not completely unreasonable in general *)
-Ltac binddt_term_1 :=
-  change ((BD ?f) (tvar ?x)) with (f (0, x)).
-
-Ltac binddt_term_2 :=
-  change ((BD ?f) ((λ) ?τ ?body)) with
-    (P ((λ) τ) <⋆> BD (f ⦿ 1) body).
-
-Ltac binddt_term_3 :=
-  change ((BD ?f) (app ?t1 ?t2)) with
-    (P (@app _) <⋆> BD f t1 <⋆> BD f t2).
-
-Ltac simplify_locally_nameless_top_level :=
-  match goal with
-  | |- context[free ?t] =>
-      debug "free_to_foldMap";
-      rewrite free_to_foldMap
-  | |- context[freeset ?t] =>
-      debug "unfold_freeset";
-      unfold freeset;
-      rewrite free_to_foldMap
-  | |- context[locally_closed] =>
-      idtac "locally_closed_spec";
-      rewrite locally_closed_spec
-  | |- context[locally_closed_gap] =>
-      idtac "locally_closed_gap_spec";
-      rewrite locally_closed_gap_spec
-  | |- context[is_bound_or_free] =>
-      debug "simplify_bound_or_free";
-      simplify_is_bound_or_free
-  | |- context[subst] =>
-      unfold subst
-  | |- context[open] =>
-      unfold open
-  end.
-
-Ltac rewrite_derived_ops_to_binddt :=
-  match goal with
-  | |- context[tolist (F := term) ?t] =>
-      debug "tolist_to_binddt";
-      rewrite (tolist_to_binddt (T := term))
-  | |- context[element_of (F := term) ?t ?x] =>
-      debug "in_to_binddt";
-      rewrite (in_to_binddt (T := term))
-  | |- context[element_ctx_of (F := term) ?t (?n, ?l)] =>
-      debug "ind_to_binddt";
-      rewrite (ind_to_binddt (T := term))
-  | |- context[element_of (F := term) ?t] =>
-      debug "element_of_to_binddt";
-      rewrite (element_of_to_binddt (T := term))
-  | |- context[foldMap (T := term) ?t] =>
-      debug "foldMap_to_binddt";
-      rewrite foldMap_to_traverse1, traverse_to_binddt
-  | |- context[foldMapd (T := term) ?t] =>
-      debug "foldMap_to_binddt";
-      rewrite (foldMapd_to_mapdt1 (T := term)),
-        (mapdt_to_binddt (T := term))
-  | |- context[Forall_ctx (T := term)  ?P] =>
-      debug "Forall_to_foldMapd";
-      unfold Forall_ctx
-  end.
-
-Ltac simplify_locally_nameless_leaves :=
-  match goal with
-  | |- context[free_loc (Fr ?x)] =>
-      rewrite free_loc_Fr
-  | |- context[free_loc (Bd ?b)] =>
-      rewrite free_loc_Bd
-  | |- context[?x ∈ [?y]] =>
-      rewrite in_list_one
-  | |- context[Forall_ctx ?P] =>
-      unfold Forall_ctx
-  | |- context[is_bound_or_free] =>
-      simplify_is_bound_or_free
-  end.
- *)
-
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Helper lemmas for proving the DTM laws
@@ -256,14 +176,14 @@ Section rw.
         (P (@app v2) <⋆> BD f t1 <⋆> BD f t2)
     := ltac:(reflexivity).
 
-  Lemma binddt_lam: forall τ,
+  Lemma binddt_pointfree_lam: forall τ,
     BD f ∘ (@lam v1 τ) =
       (precompose (BD (f ⦿ 1)) ∘ ap G ∘ P) (@lam v2 τ).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma binddt_app :
+  Lemma binddt_pointfree_app :
     compose (BD f) ∘ @app v1 =
       (compose (precompose (BD f) ∘ ap G) ∘ precompose (BD f) ∘ ap G ∘ P) (@app v2).
   Proof.
@@ -271,6 +191,22 @@ Section rw.
   Qed.
 
 End rw.
+
+(*
+change does not work as well as rewrite because it the right-hand side
+seems to do its own typeclass resolution rather than taking the information from the match (which seems not completely unreasonable in general *)
+(*
+Ltac binddt_term_1 :=
+  change ((BD ?f) (tvar ?x)) with (f (0, x)).
+
+Ltac binddt_term_2 :=
+  change ((BD ?f) ((λ) ?τ ?body)) with
+    (P ((λ) τ) <⋆> BD (f ⦿ 1) body).
+
+Ltac binddt_term_3 :=
+  change ((BD ?f) (app ?t1 ?t2)) with
+    (P (@app _) <⋆> BD f t1 <⋆> BD f t2).
+ *)
 
 Ltac simplify_binddt_term :=
   match goal with
@@ -291,53 +227,6 @@ Ltac simplify_binddt_term_lazy unit :=
 Ltac derive_dtm_law :=
   derive_dtm_law_with_simplify_binddt simplify_binddt_term_lazy.
 
-(*
-Ltac simplify_pass1 :=
-  first [ simplify_locally_nameless_top_level
-        | rewrite_core_ops_to_binddt
-        | rewrite_derived_ops_to_binddt
-        | simpl_binddt_term
-    ].
-
-Ltac simplify_pass2 :=
-  first [ simplify_locally_nameless_leaves
-        | simplify_const_functor
-        | simplify_monoid_units
-        (* ^ monoid_units should be after const_functor,
-           before distribute_list_ops *)
-        | simplify_I_functor
-        | simplify_fn_composition
-        | simplify_extract
-        | simplify_distribute_list_ops
-    ].
-
-Ltac dtm_law_pass :=
-  match goal with
-  | |- context[kc7 ?g ?f] =>
-      unfold kc7
-  end.
-
-Ltac handle_atoms :=
-  match goal with
-  | |- context[atoms] =>
-      progress (autorewrite with tea_rw_atoms)
-  | |- context[atoms (?l1 ● ?l2)] =>
-      unfold_ops @Monoid_op_list;
-      progress (autorewrite with tea_rw_atoms)
-  end.
-
-Ltac introduce_induction :=
-  let t := fresh "t" in
-  ext t; induction t.
-
-Ltac derive_dtm_law :=
-  intros;
-  try introduce_induction;
-  repeat simpl_binddt_term;
-  repeat simplify_pass2;
-  fequal; (trivial || reflexivity).
- *)
-
 (*|
 ========================================
 An overview of the DTM axioms
@@ -345,25 +234,6 @@ An overview of the DTM axioms
 |*)
 
 Section laws.
-
-  (* Generalize over (Coq) variables used for object-level variables
-   and symbols for applicative homomorphisms. *)
-  Generalizable Variables v ϕ.
-
-  (*
-  Ltac rewrite_with_bind_hyp :=
-    match goal with
-    | H : context[binddt] |- _ => rewrite H
-    end.
-
-  Ltac induction_on_term :=
-    match goal with
-    | t : term ?v |- _ => induction t
-    end.
-
-  Ltac dtm_setup :=
-    intros; ext t; unfold id; induction_on_term; cbn.
-  *)
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
