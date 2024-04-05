@@ -1,23 +1,40 @@
-From Tealeaves.Misc Require Import
-  NaturalNumbers.
-From Tealeaves.Theory Require Import
-  TraversableFunctor
-  DecoratedTraversableFunctor
-  DecoratedTraversableMonad.
+(*|
+############################################################
+Translating between locally nameless and de Bruijn indices
+############################################################
 
+We reason about a translation between syntax with de Bruijn indices
+and locally nameless variables. This consists of a function which,
+given a locally closed term t, outputs a term of the same shape whose
+leaves are de Bruijn indices and a "key": some arbitrary permutation
+of the names of free variables in t. Another function accepts a key
+and a de Bruijn term and computes a locally nameless term of the same
+shape. The two functions are shown to be inverses.
+
+.. contents:: Table of Contents :depth: 2
+
+============================
+Imports and setup
+============================
+
+Since we are using the Kleisli typeclass hierarchy, we import modules
+under the namespaces ``Classes.Kleisli`` and ``Theory.Kleisli.``
+|*)
 
 From Tealeaves Require Import
+  Misc.NaturalNumbers
+  Theory.TraversableFunctor
+  Theory.DecoratedTraversableFunctor
   Backends.LN
   Backends.DB.DB
-  Backends.DB.Key
-  Functors.Option.
-From Tealeaves.Adapters Require Import
-  MonadToApplicative
-  KleisliToCategorical.Monad.
+  Backends.Adapters.Key
+  Functors.Option
+  Adapters.MonadToApplicative
+  Adapters.KleisliToCategorical.Monad.
 
-Open Scope nat_scope.
-
-Import PeanoNat.Nat.
+(*
+Import Coq.Arith.PeanoNat.Nat.
+*)
 
 Import
   Product.Notations
@@ -33,9 +50,100 @@ Import
   DecoratedTraversableFunctor.Notations
   DecoratedTraversableMonad.Notations.
 
+(*
 Import Coq.Init.Nat. (* Nat notations *)
+ *)
 
 #[local] Generalizable Variables W T U.
+#[local] Open Scope nat_scope.
+
+(*|
+============================
+Translation operations
+============================
+|*)
+Definition toDB_loc (k: key) '(depth, l) : option nat :=
+  match l with
+  | Bd n => Some n
+  | Fr x => map (fun ix => ix + depth) (key_lookup_atom k x)
+  end.
+
+Definition toLN_loc (k: key) '(depth, ix) : option LN :=
+  if bound_in ix depth
+  then
+    Some (Bd ix)
+  else
+    map (F := option) Fr (key_lookup_index k (ix - depth)).
+
+Fixpoint toLNkey_list (l: list LN): key :=
+  match l with
+  | [] => nil
+  | (Bd n :: rest) => toLNkey_list rest
+  | (Fr x :: rest) => key_insert_atom (toLNkey_list rest) x
+  end.
+
+(*|
+============================
+Simplification support
+============================
+|*)
+Lemma toDB_loc_rw1 (k: key) (depth: nat) (n: nat):
+  toDB_loc k (depth, Bd n) = Some n.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma toDB_loc_rw2 (k: key) (depth: nat) (x: atom):
+  toDB_loc k (depth, Fr x) =
+    map (fun ix => ix + depth) (key_lookup_atom k x).
+Proof.
+  reflexivity.
+Qed.
+
+(*|
+============================
+Properties of toLNkey
+============================
+|*)
+Lemma toLNkey_unique: forall l,
+    unique (toLNkey_list l).
+Proof.
+  intros l. induction l as [|[x|n] rest].
+  - exact I.
+  - now apply key_insert_unique.
+  - cbn. assumption.
+Qed.
+Search key_lookup_index "bij".
+
+Lemma toLNkey_bijection: forall l ix a,
+    key_lookup_index (toLNkey_list l) ix = Some a <->
+      key_lookup_atom (toLNkey_list l) a = Some ix.
+Proof.
+  intros.
+  apply key_bijection.
+  apply toLNkey_unique.
+Qed.
+(*|
+============================
+Global operations
+============================
+|*)
+Definition toDB_from_key
+  `{Mapdt_inst: Mapdt nat T} (k: key): T LN -> option (T nat) :=
+  mapdt (G := option) (toDB_loc k).
+
+Definition toLN_from_key
+  `{Mapdt_inst: Mapdt nat T} (k: key): T nat -> option (T LN) :=
+  mapdt (G := option) (toLN_loc k).
+
+Definition toLNkey
+  `{Traverse_inst: Traverse T} (t: T LN): key :=
+  toLNkey_list (tolist t).
+
+Definition toDB
+  `{Traverse_inst: Traverse T}
+  `{Mapdt_inst: Mapdt nat T} (t: T LN): option (T nat) :=
+  toDB_from_key (toLNkey t) t.
 
 Module toDB.
 
@@ -76,8 +184,11 @@ Module toDB.
         `{! Compat_Bindt_Binddt nat T U}
         `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
                           (unit := Monoid_unit_zero)
-                          (op := Monoid_op_plus)}.
-
+                          (op := Monoid_op_plus)}
+        `{Elements_T: Elements T}
+        `{Elements_U: Elements U}
+        `{! Compat_Elements_Traverse T}
+        `{! Compat_Elements_Traverse U}.
 
     (** ** Boring admitted lemmas *)
     (******************************************************************************)
@@ -88,6 +199,16 @@ Module toDB.
     Proof.
     Admitted.
 
+    Lemma bound_in_plus: forall n depth,
+        bound_in (n + depth) depth = false.
+    Proof.
+      intros. destruct depth.
+      - reflexivity.
+      - cbn.
+        rewrite Compare_dec.leb_iff_conv.
+        lia.
+    Qed.
+
     Lemma mapdt_respectful_pure {G} `{Applicative G} :
       forall A (t : U A) (f : nat * A -> G A),
         (forall (e : nat) (a : A), (e, a) ∈d t -> f (e, a) = pure a)
@@ -96,119 +217,18 @@ Module toDB.
       introv hyp.
     Admitted.
 
-    (** ** Translation *)
-    (******************************************************************************)
-    Definition toDB_loc (k: key) '(depth, l) : option nat :=
-      match l with
-      | Bd n => Some n
-      | Fr x =>
-          match key_lookup_atom k x with
-          | None => None
-          | Some ix => Some (ix + depth)%nat
-          end
-      end.
-
-    Lemma toDB_loc_insert_Bd (k: key) (a: atom) depth (n: nat):
-      toDB_loc (key_insert_atom k a) (depth, Bd n) = Some n.
-    Proof.
-      reflexivity.
-    Qed.
-
-    Lemma toDB_loc_insert_Fr (k: key) (a: atom) depth (x: atom):
-      toDB_loc (key_insert_atom k a) (depth, Fr x) =
-        toDB_loc (key_insert_atom k a) (depth, Fr x).
-    Proof.
-    Abort.
-
-    (* Give a list of LN variables,
-       build a key containing every atom *)
-    Fixpoint LN_to_key_loc (l: list LN): key :=
-      match l with
-      | nil => nil
-      | cons ln rest =>
-          match ln with
-          | Bd n =>
-              LN_to_key_loc rest
-          | Fr x =>
-              key_insert_atom (LN_to_key_loc rest) x
-          end
-      end.
-
-    Lemma LN_to_key_unique: forall l,
-        unique (LN_to_key_loc l).
-    Proof.
-      intros l. induction l.
-      - exact I.
-      - cbn. destruct a.
-        + now apply key_insert_unique.
-        + assumption.
-    Qed.
-
-    Lemma LN_key_bijection: forall l ix a,
-        key_lookup_index (LN_to_key_loc l) ix = Some a <->
-          key_lookup_atom (LN_to_key_loc l) a = Some ix.
-    Proof.
-      intros.
-      apply key_bijection.
-      apply LN_to_key_unique.
-    Qed.
-
-    (*
-    Lemma tokey_loc_rw_app1 (k: key) (l1: list LN) (n: nat):
-      tokey_loc k (l1 ++ ret (T := list) (Bd n)) = tokey_loc k l1.
-    Proof.
-    Admitted.
-
-    Lemma tokey_loc_rw_app2 (k: key) (l1: list LN) (a: atom):
-      tokey_loc k (l1 ++ ret (T := list) (Fr a)) =
-        insert (tokey_loc k l1) a.
-    Proof.
-    Admitted.
-      *)
-
-    Definition LN_to_key (t: U LN): key :=
-      LN_to_key_loc (tolist t).
-
-    Definition toLN_loc (k: key) '(depth, ix) : option LN :=
-      if bound_in ix depth then
-        Some (Bd ix)
-      else
-        map (F := option) Fr (key_lookup_index k (ix - depth)).
-
-    Definition toDB_from_key (k: key): U LN -> option (U nat) :=
-      @mapdt nat U Mapdt_U_inst
-        option Map_option Pure_option Mult_option
-        LN nat (toDB_loc k).
-
-    Definition toDB: U LN -> option (U nat) :=
-      fun t => toDB_from_key (LN_to_key t) t.
-
-    Definition toLN_from_key (k: key): U nat -> option (U LN) :=
-      @mapdt nat U Mapdt_U_inst
-        option Map_option Pure_option Mult_option
-        nat LN (toLN_loc k).
-
-    Import Applicative.Notations.
-
-    Lemma toDB_Fr: forall n (a: atom) k,
-      a ∈ (k : list atom) ->
+    Lemma toDB_Fr: forall (n: nat) (a: atom) (k: key),
+      a ∈ k ->
       exists ix, toDB_loc k (n, Fr a) = Some ix.
     Proof.
       intros.
       unfold toDB_loc.
-      destruct (key_lookup_in1 _ _ H) as [m Hin].
-      exists (m + n). now rewrite Hin.
+      lookup atom a in key k.
+      rewrite H_key_lookup.
+      eexists. reflexivity.
     Qed.
 
-    Lemma toDB_Bd: forall n (m: nat) k,
-      exists ix, toDB_loc k (n, Bd m) = Some ix.
-    Proof.
-      intros.
-      unfold toDB_loc.
-      eauto.
-    Qed.
-
-    Definition whole_key (t: U LN) k :=
+    Definition whole_key (t: U LN) (k: key) :=
       forall x : atom, Fr x ∈ t -> x ∈ k.
 
     Lemma to_DB_from_key_total:
@@ -258,61 +278,50 @@ Module toDB.
           apply Hin.
           cbn. right.
           reflexivity.
-        + pose toDB_Bd.
-          specialize (toDB_Bd depth n k).
-          intros hyp.
-          destruct hyp as [ix Hixeq].
-          rewrite Hixeq.
-          cbn; eauto.
+        + cbn. eauto.
     Qed.
 
-    Lemma main: forall t k e a,
-        (forall x : atom, Fr x ∈ t -> x ∈ k) ->
-        locally_closed t ->
-        (e, a) ∈d t ->
-        kc6 (toLN_loc k) (toDB_loc k) (e, a) = pure (F := option ∘ option) a.
+    Lemma LN_DB_roundtrip_loc1: forall k depth x,
+        x ∈ k ->
+        map (F := option)
+          (toLN_loc k ∘ pair depth ∘ (fun ix : nat => ix + depth))
+          (key_lookup_atom k x) = Some (Some (Fr x)).
     Proof.
-      introv Hcont Hlc Hin.
-      cbn.
-      unfold kc6.
-      rewrite map_strength_cobind_spec.
-      destruct a.
-      - cbn.
-        assert (Hin': Fr a ∈ t).
-        rewrite ind_iff_in.
-        eexists. eassumption.
-        specialize (Hcont a Hin').
-        specialize (key_lookup_in1 k a Hcont).
-        intros [m Hlookup].
-        rewrite Hlookup.
-        change (map ?f (Some ?x)) with (Some (f x)).
-        unfold_ops @Pure_compose @Pure_option.
-        fequal. unfold compose.
-        { unfold toLN_loc.
-          unfold bound_in.
-          assert (Hlt: m + e <? e = false).
-          { rewrite ltb_ge.
-            lia. }
-          rewrite Hlt.
-          replace (m + e - e) with m by lia.
-          apply key_bijection1 in Hlookup.
-          rewrite Hlookup.
-          reflexivity.
-        }
-      - compose near (e, Bd n).
-        unfold compose at 1.
-        change (toDB_loc k (e, Bd n))
-          with (Some n).
-        change (map ?f (Some ?x)) with (Some (f x)).
-        unfold_ops @Pure_compose @Pure_option.
-        fequal.
+      intros.
+      lookup atom x in key k.
+      rewrite H_key_lookup.
+      change (map ?f (Some ?n)) with (Some (f n)).
+      unfold compose, toLN_loc.
+      rewrite bound_in_plus.
+      replace (n + depth - depth) with n by lia.
+      rewrite (key_bijection1 x k n H_key_lookup).
+      reflexivity.
+    Qed.
+
+    Lemma LN_DB_roundtrip_loc: forall t k depth l,
+        locally_closed t ->
+        whole_key t k ->
+        (depth, l) ∈d t ->
+        (toLN_loc k ⋆6 toDB_loc k) (depth, l) = pure (F := option ∘ option) l.
+    Proof.
+      introv Hlc Hwhole Hin.
+      rewrite kc6_spec.
+      unfold whole_key in Hwhole.
+      destruct l as [x|n].
+      - rewrite toDB_loc_rw2.
+        compose near (key_lookup_atom k x).
+        rewrite (fun_map_map (F := option)).
+        apply ind_implies_in in Hin.
+        specialize (Hwhole x Hin); clear Hin.
+        now apply LN_DB_roundtrip_loc1.
+      - rewrite toDB_loc_rw1.
+        change (map ?f (Some ?n)) with (Some (f n)).
         unfold compose.
         unfold toLN_loc.
-        rewrite (lc_bound t e n Hlc Hin).
-        reflexivity.
+        now rewrite (lc_bound t depth n Hlc Hin).
     Qed.
 
-    Theorem translation_inv1:
+    Theorem LN_DB_roundtrip:
       forall (t : U LN) (k: key),
         (forall x : atom, Fr x ∈ t -> x ∈ k) ->
         locally_closed t ->
@@ -328,127 +337,67 @@ Module toDB.
       change (Some (Some t)) with (pure (F := option ∘ option) t).
       apply (mapdt_respectful_pure (G := option ∘ option)).
       intros.
-      now rewrite (main t).
+      now rewrite (LN_DB_roundtrip_loc t).
     Qed.
 
-    (*
-    Goal forall (u : T nat) (t: U LN) (k : key),
-        (forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom)) ->
-        exists (t': U nat), map (F := option) (open_by u) (toDB_from_key k t) = Some t'.
+    Lemma DB_LN_roundtrip_loc: forall (t:U nat) k gap depth (n:nat),
+        unique k ->
+        closed_gap gap t ->
+        contains_ix_upto gap k ->
+        (toDB_loc k ⋆6 toLN_loc k) (depth, n) =
+          pure (F := option ∘ option) n.
     Proof.
-      intros.
-      unfold open_by.
-      unfold open_by, open, toDB_from_key.
-      compose near t.
-      rewrite bindd_mapdt.
-      change (Some ?t') with (pure t').
-      rewrite binddt_through_runBatch.
-      rewrite (element_through_runBatch2 _ nat) in H.
-      Search toBatch7.
-    Abort.
+      introv Huniq Hclosed Hcont.
+      rewrite kc6_spec.
+      unfold toLN_loc.
+      lookup index (n - depth) in key k.
+      - rewrite H_key_lookup.
+        remember (bound_in n depth) as Hrem.
+        unfold bound_in, bound_in_gap in HeqHrem.
+        symmetry in HeqHrem.
+        destruct Hrem.
+        + reflexivity.
+        + cbn.
+          rewrite PeanoNat.Nat.ltb_nlt in HeqHrem.
+          rewrite key_bijection in H_key_lookup; auto.
+          rewrite H_key_lookup.
+          cbn. replace (n - depth + depth) with n.
+          reflexivity.
+          unfold contains_ix_upto in *.
+          lia.
+      - rewrite H_key_lookup.
+        remember (bound_in n depth) as Hrem.
+        unfold bound_in, bound_in_gap in HeqHrem.
+        symmetry in HeqHrem.
+        destruct Hrem.
+        + unfold contains_ix_upto in *.
+          cbn. reflexivity.
+        + apply key_lookup_ix_None1 in H_key_lookup.
+          unfold contains_ix_upto in *.
+          cbn. false.
+          unfold closed_gap in *.
+          admit.
+    Admitted.
 
-    Goal forall (u : T nat) (u_pre : T LN) (t: U LN) (k : key),
-        (forall (x : atom), Fr x ∈ t -> x ∈ (k : list atom)) ->
-        map (F := option) (open_by u) (toDB_from_key k t) =
-          toDB_from_key k (LN.open (U := U) u_pre t).
-    Proof.
-      intros.
-      unfold open_by, open.
-      unfold toDB_from_key.
-      unfold LN.open.
-      compose near t.
-      rewrite bindd_mapdt.
-      rewrite mapdt_bindd.
-      apply binddt_respectful.
-      - typeclasses eauto.
-      - introv Hin.
-    Abort.
-
-    Goal forall (t: U LN),
-      exists (t': U nat), toDB t = Some t'.
-    Proof.
-      intros t.
-      unfold toDB.
-      unfold toDB_from_key.
-      unfold tokey.
-      rewrite (tolist_through_runBatch nat).
-      rewrite mapdt_through_runBatch.
-      unfold compose at 1.
-      rewrite toBatch6_toBatch.
-      unfold compose at 1.
-      induction (toBatch6 t).
-      - cbv. eauto.
-      - rewrite runBatch_rw2.
-        rewrite mapfst_Batch_rw2.
-        rewrite runBatch_rw2.
-        destruct a as [depth l].
-        change (extract (depth, l)) with l.
-        destruct IHb as [t' rest].
-        cbn.
-        unfold_ops @Monoid_op_list.
-        destruct l.
-        + rewrite tokey_loc_rw_app2.
-          unfold get_index.
-          unfold get_index_rec.
-    Abort.
-
-    Goal forall (t: U nat) (k : key),
-      exists (t': U LN), toLN_from_key k t = Some t'.
+    Theorem DB_LN_roundtrip: forall k gap (t: U nat),
+        unique k ->
+        closed_gap gap t ->
+        contains_ix_upto gap k ->
+        map (F := option) (toDB_from_key k) (toLN_from_key k t) =
+          Some (Some t).
     Proof.
       intros.
       unfold toLN_from_key.
-      rewrite mapdt_through_runBatch.
-      unfold compose at 1.
-      (*
-      rewrite (element_through_runBatch2 _ nat) in H.
-      rewrite toBatch6_toBatch in H.
-      unfold compose in H.
-       *)
-      induction (toBatch6 t).
-      - cbv. eauto.
-      - rewrite runBatch_rw2.
-        (*
-        assert ( (forall x : atom,
-         @runBatch LN nat (@const Type Type (LN -> Prop))
-           (@Map_const (LN -> Prop))
-           (@Mult_const (LN -> Prop) (@Monoid_op_subset LN))
-           (@Pure_const (LN -> Prop) (@Monoid_unit_subset LN))
-           (@ret subset Return_subset LN) (nat -> C)
-           (@mapfst_Batch nat (nat -> C) (nat * LN) LN
-              (@extract (prod nat) (Extract_reader nat) LN) b)
-           (Fr x) -> x ∈ k)).
-        { intros x.
-          specialize (H x).
-          intros hyp.
-          apply H.
-          left.
-          assumption. }
-         *)
-        destruct IHb as [f Hfeq].
-        rewrite Hfeq.
-        (*
-        destruct a as [depth l].
-        destruct l.
-        + pose toDB_Fr.
-          specialize (e depth a k).
-          enough (a ∈ k).
-          { specialize (e H1).
-            destruct e as [ix Hixeq].
-            rewrite Hixeq.
-            cbn.
-            eauto. }
-          apply H.
-          cbn. right.
-          reflexivity.
-        + pose toDB_Bd.
-          specialize (toDB_Bd depth n k).
-          intros hyp.
-          destruct hyp as [ix Hixeq].
-          rewrite Hixeq.
-          cbn; eauto.
-         *)
-    Abort.
-    *)
+      unfold toDB_from_key.
+      compose near t on left.
+      rewrite mapdt_mapdt.
+      all: try typeclasses eauto.
+      change (Some (Some t)) with (pure (F := option ∘ option) t).
+      apply (mapdt_respectful_pure (G := option ∘ option)).
+      intros.
+      rewrite (DB_LN_roundtrip_loc t k gap).
+      reflexivity. auto. auto. auto.
+    Qed.
 
   End translate.
 End toDB.
