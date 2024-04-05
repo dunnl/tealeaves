@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Classes.Categorical.Applicative
-  Classes.Kleisli.TraversableFunctor.
+  Classes.Kleisli.TraversableFunctor
+  Functors.List.
 
 Import Applicative.Notations.
 
@@ -198,8 +199,7 @@ Section Backwards.
   Lemma forwards_ap {G} `{Applicative G}:
     forall {A B: Type} (f: (Backwards G) (A -> B)) (a : (Backwards G) A),
       forwards (f <⋆> a) =
-        ap G (map (F := G) (fun a => evalAt (A := A) a (B := B))
-                  (forwards a)) (forwards f).
+        map evalAt (forwards a) <⋆> forwards f.
   Proof.
     intros.
     cbn.
@@ -211,4 +211,75 @@ Section Backwards.
     now ext [p q].
   Qed.
 
+   Lemma traverse_backwards_list1 {G} `{Applicative G}:
+     forall {A B: Type} (f: A -> G B) (l: list A),
+       traverse f l =
+         map (@List.rev B)
+           (forwards
+              (traverse (G := Backwards G)
+                 (mkBackwards ∘ f)
+                 (List.rev l))).
+   Proof.
+     intros.
+     induction l.
+     - cbn.
+       rewrite app_pure_natural.
+       reflexivity.
+     - cbn.
+       (* left *)
+       rewrite IHl.
+       rewrite map_to_ap.
+       repeat rewrite <- ap4;
+         repeat rewrite ap2.
+       rewrite ap3;
+         repeat rewrite <- ap4;
+         repeat rewrite ap2.
+       unfold compose.
+       assert (cut: (fun (b:B) => cons b ○ List.rev (A := B)) =
+                 (compose (List.rev (A := B)) ∘ Basics.flip (@snoc B))).
+       { ext x y. unfold compose, Basics.flip, snoc.
+         rewrite List.rev_unit.
+         reflexivity. }
+       rewrite cut.
+       (* right *)
+       rewrite traverse_list_snoc; [|typeclasses eauto].
+       change (map ?f (forwards ?x)) with
+         (forwards (map f x)).
+       rewrite map_to_ap.
+       repeat rewrite <- ap4;
+         repeat rewrite ap2.
+       rewrite forwards_ap.
+       rewrite forwards_ap.
+       rewrite map_to_ap;
+       repeat rewrite <- ap4;
+         repeat rewrite ap2.
+       cbn.
+       rewrite map_to_ap;
+       repeat rewrite <- ap4;
+         repeat rewrite ap2.
+       rewrite ap3;
+       repeat rewrite <- ap4;
+         repeat rewrite ap2.
+       rewrite ap3;
+       repeat rewrite <- ap4;
+         repeat rewrite ap2.
+       reflexivity.
+   Qed.
+
+   Lemma traverse_backwards_list2 {G} `{Applicative G}:
+     forall {A B: Type} (f: A -> G B) (l: list A),
+       traverse f (List.rev l) =
+           forwards (map (List.rev (A:=B))
+                       (traverse (G := Backwards G)
+                          (mkBackwards ∘ f) l)).
+   Proof.
+     intros.
+     rewrite traverse_backwards_list1.
+     change (map ?f (forwards ?x)) with
+       (forwards (map f x)).
+     rewrite List.rev_involutive.
+     reflexivity.
+   Qed.
+
 End Backwards.
+
