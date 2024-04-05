@@ -131,6 +131,7 @@ Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN.v
 
 # EXAMPLES
+Tealeaves/Examples/Simplification_Support.v
 Tealeaves/Examples/STLC/Syntax.v
 Tealeaves/Examples/STLC/Simplification.v
 Tealeaves/Examples/STLC/CompatTest.v

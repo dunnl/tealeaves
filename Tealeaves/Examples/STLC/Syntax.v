@@ -3,6 +3,7 @@
 Formalizing STLC with Tealeaves
 ############################################################
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Kleisli presentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -24,7 +25,8 @@ From Tealeaves Require Export
   Misc.NaturalNumbers
   Functors.List
   Theory.DecoratedTraversableMonad
-  Tactics.Debug.
+  Tactics.Debug
+  Examples.Simplification_Support.
 
 Export Monoid.Notations. (* Ƶ and ● *)
 Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
@@ -42,158 +44,6 @@ Export DecoratedContainerFunctor.Notations. (* ∈d *)
 #[local] Set Implicit Arguments.
 
 Open Scope set_scope.
-
-(*|
-========================================
-Simplification support
-========================================
-|*)
-Lemma pure_const_rw: forall {A} {a:A} {M} {unit:Monoid_unit M},
-    pure (F := const M) (Pure := @Pure_const _ unit) a = Ƶ.
-  reflexivity.
-Qed.
-
-Lemma ap_const_rw: forall {M} `{Monoid_op M} {A B} (x: const M (A -> B)) (y: const M A),
-    ap (const M) x y = (x ● y).
-  reflexivity.
-Qed.
-
-Lemma map_const_rw: forall A B (f: A -> B) X,
-    map (F := const X) f = @id X.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma free_loc_Bd: forall b,
-    free_loc (Bd b) = [].
-Proof.
-  reflexivity.
-Qed.
-
-Lemma free_loc_Fr: forall x,
-    free_loc (Fr x) = [x].
-Proof.
-  reflexivity.
-Qed.
-
-Lemma eq_pair_preincr: forall (n: nat) {A} (a: A),
-    eq (S n, a) ⦿ 1 = eq (n, a).
-Proof.
-  intros.
-  ext [n' a'].
-  unfold preincr, compose, incr.
-  apply propositional_extensionality.
-  rewrite pair_equal_spec.
-  rewrite pair_equal_spec.
-  intuition.
-Qed.
-
-Ltac rewrite_core_ops_to_binddt :=
-  match goal with
-  | |- context[bind ?f ?t] =>
-      debug "bind_to_binddt";
-      progress (rewrite bind_to_binddt)
-  | |- context[bindd ?f ?t] =>
-      debug "bindd_to_binddt";
-      progress (rewrite bindd_to_binddt)
-  end.
-
-Ltac simplify_monoid_units :=
-  match goal with
-  | |- context[Ƶ ● ?m] =>
-      debug "monoid_id_r";
-      rewrite (monoid_id_r m)
-  | |- context[?m ● Ƶ] =>
-      debug "monoid_id_l";
-      rewrite (monoid_id_l m)
-  end.
-
-Ltac simplify_const_functor :=
-  match goal with
-  | |- context [pure (F := const ?W) ?x] =>
-      debug "pure_const";
-      rewrite pure_const_rw
-  | |- context[(ap (const ?W) ?x ?y)] =>
-      debug "ap_const";
-      rewrite ap_const_rw
-  | |- context[map (F := const ?X) ?f] =>
-      debug "map_const";
-      rewrite map_const_rw
-
-  end.
-
-Ltac simplify_I_functor :=
-  match goal with
-  | |- context[pure (F := fun A => A) ?x] =>
-      debug "pure_I";
-      change (pure (F := fun A => A) x) with x
-  | |- context[ap (fun A => A) ?x ?y] =>
-      debug "ap_I";
-      change (ap (fun A => A) x y) with (x y)
-  end.
-
-Ltac simplify_extract :=
-  match goal with
-  | |- context[(?f ∘ extract) ⦿ ?w] =>
-      debug "extract_preincr2";
-      rewrite extract_preincr2
-  | |- context[(?f ∘ extract) (?w, ?a)] =>
-      debug "extract_pair";
-      change ((f ∘ extract) (w, a)) with
-      ((f ∘ (extract ∘ pair w)) a);
-      rewrite extract_pair
-  | |- context[(?f ⦿ Ƶ)] =>
-      rewrite (preincr_zero f)
-  | |- context[(?f ⦿ ?x)] =>
-      let T := type of x in
-      change x with (Ƶ:T);
-      rewrite preincr_zero
-  end.
-
-Ltac simplify_fn_composition :=
-  match goal with
-  | |- context [id ∘ ?f] =>
-      debug "id ∘ f";
-      change (id ∘ f) with f
-  | |- context [?f ∘ id] =>
-      debug "f ∘ id";
-      change (f ∘ id) with f
-  | |- context [id ?x] =>
-      debug "unfold_id";
-      change (id x) with x
-  end.
-
-Ltac simplify_distribute_list_ops :=
-  match goal with
-  | |- context[?f (monoid_op (Monoid_op := Monoid_op_list) ?l1 ?l2)] =>
-      unfold_ops @Monoid_op_list;
-      progress (autorewrite with tea_list)
-  | |- context[?f (monoid_op (Monoid_op := Monoid_op_subset) ?l1 ?l2)] =>
-      unfold_ops @Monoid_op_subset;
-      progress (autorewrite with tea_set)
-  end.
-
-(*
-(* I don't entirely know why this is required. *)
-#[export] Typeclasses Transparent Monoid_op.
-(* #[export] Typeclasses Transparent Monoid_unit. *)
-About Pure_const.
-#[export] Typeclasses Transparent Pure_const.
-
-Lemma test_transparency:
-  @Applicative (@const Type Type Prop)
-    (@Map_const Prop)
-    (@Pure_const Prop False)
-    (@Mult_const Prop or).
-Proof.
-  Set Typeclasses Debug Verbosity 2.
-  idtac.
-  typeclasses
-  Set Typeclasses Debug Verbosity 2.
-  Timeout 1 typeclasses eauto.
-Qed.
-*)
-
 
 (*|
 ========================================
@@ -298,7 +148,11 @@ Simplification support
 ========================================
 |*)
 
+
 (*
+(*
+change does not work as well as rewrite because it the right-hand side
+seems to do its own typeclass resolution rather than taking the information from the match (which seems not completely unreasonable in general *)
 Ltac binddt_term_1 :=
   change ((BD ?f) (tvar ?x)) with (f (0, x)).
 
@@ -309,13 +163,6 @@ Ltac binddt_term_2 :=
 Ltac binddt_term_3 :=
   change ((BD ?f) (app ?t1 ?t2)) with
     (P (@app _) <⋆> BD f t1 <⋆> BD f t2).
- *)
-
-Lemma free_to_foldMap: forall (t: term LN),
-    free t = foldMap free_loc t.
-Proof.
-  reflexivity.
-Qed.
 
 Ltac simplify_locally_nameless_top_level :=
   match goal with
@@ -380,6 +227,7 @@ Ltac simplify_locally_nameless_leaves :=
   | |- context[is_bound_or_free] =>
       simplify_is_bound_or_free
   end.
+ *)
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -424,7 +272,7 @@ Section rw.
 
 End rw.
 
-Ltac simpl_binddt_term :=
+Ltac simplify_binddt_term :=
   match goal with
   | |- context[BD ?f (tvar ?y)] =>
       debug "step_BD_tvar";
@@ -437,6 +285,13 @@ Ltac simpl_binddt_term :=
       rewrite binddt_term_rw3
   end.
 
+Ltac simplify_binddt_term_lazy unit :=
+  simplify_binddt_term.
+
+Ltac derive_dtm_law :=
+  derive_dtm_law_with_simplify_binddt simplify_binddt_term_lazy.
+
+(*
 Ltac simplify_pass1 :=
   first [ simplify_locally_nameless_top_level
         | rewrite_core_ops_to_binddt
@@ -481,6 +336,7 @@ Ltac derive_dtm_law :=
   repeat simpl_binddt_term;
   repeat simplify_pass2;
   fequal; (trivial || reflexivity).
+ *)
 
 (*|
 ========================================
@@ -494,6 +350,7 @@ Section laws.
    and symbols for applicative homomorphisms. *)
   Generalizable Variables v ϕ.
 
+  (*
   Ltac rewrite_with_bind_hyp :=
     match goal with
     | H : context[binddt] |- _ => rewrite H
@@ -506,6 +363,7 @@ Section laws.
 
   Ltac dtm_setup :=
     intros; ext t; unfold id; induction_on_term; cbn.
+  *)
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -657,15 +515,15 @@ A close comparison shows the rules differ in two respects:
     generalize dependent g.
     generalize dependent f.
     induction t; intros f g.
-    - repeat simpl_binddt_term.
+    - repeat simplify_binddt_term.
       dtm_law_pass.
       simplify_pass2.
       reflexivity.
-    - repeat simpl_binddt_term.
+    - repeat simplify_binddt_term.
       dtm3_lhs_step.
       dtm3_rhs_step.
       reflexivity.
-    - repeat simpl_binddt_term.
+    - repeat simplify_binddt_term.
       dtm3_lhs_step.
       dtm3_rhs_step.
       reflexivity.
