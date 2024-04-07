@@ -929,45 +929,45 @@ End listable_shape_lemmas.
 
 (** ** <<tosubset>> and rewriting principles *)
 (******************************************************************************)
-Lemma elements_list_nil : forall (A : Type),
+Lemma tosubset_list_nil : forall (A : Type),
     tosubset (@nil A) = ∅.
 Proof.
   intros. extensionality a. reflexivity.
 Qed.
 
-Lemma elements_list_one : forall (A : Type) (a : A),
+Lemma tosubset_list_one : forall (A : Type) (a : A),
     tosubset [a] = {{ a }}.
 Proof.
   intros. solve_basic_subset.
 Qed.
 
-Lemma elements_list_ret : forall (A : Type) (a : A),
+Lemma tosubset_list_ret : forall (A : Type) (a : A),
     tosubset (ret a) = {{ a }}.
 Proof.
   intros. solve_basic_subset.
 Qed.
 
-Lemma elements_list_cons :
+Lemma tosubset_list_cons :
   forall (A : Type) (a : A) (l : list A),
     tosubset (a :: l) = {{ a }} ∪ tosubset l.
 Proof.
   intros. extensionality a'. reflexivity.
 Qed.
 
-Lemma elements_list_app : forall (A : Type) (l1 l2 : list A),
+Lemma tosubset_list_app : forall (A : Type) (l1 l2 : list A),
     tosubset (l1 ++ l2) = tosubset l1 ∪ tosubset l2.
 Proof.
   intros. induction l1.
-  - cbn. rewrite elements_list_nil.
+  - cbn. rewrite tosubset_list_nil.
     solve_basic_subset.
   - cbn.
-    do 2 rewrite elements_list_cons.
+    do 2 rewrite tosubset_list_cons.
     rewrite IHl1. solve_basic_subset.
 Qed.
 
 #[export] Hint Rewrite
-  elements_list_nil elements_list_one elements_list_ret
-  elements_list_cons elements_list_app : tea_list.
+  tosubset_list_nil tosubset_list_one tosubset_list_ret
+  tosubset_list_cons tosubset_list_app : tea_list.
 
 (** ** Naturality of <<tosubset>> *)
 (******************************************************************************)
@@ -978,7 +978,7 @@ Proof.
   unfold compose at 1 2.
   induction l.
   - solve_basic_subset.
-  - rewrite elements_list_cons.
+  - rewrite tosubset_list_cons.
     autorewrite with tea_set tea_list.
     rewrite IHl.
     solve_basic_subset.
@@ -986,20 +986,20 @@ Qed.
 
 (** ** [tosubset] is a monoid homomorphism *)
 (******************************************************************************)
-#[export] Instance Monoid_Morphism_elements_list (A : Type) :
+#[export] Instance Monoid_Morphism_tosubset_list (A : Type) :
   Monoid_Morphism (list A) (subset A) (tosubset (A := A)) :=
-  {| monmor_unit := @elements_list_nil A;
-    monmor_op := @elements_list_app A;
+  {| monmor_unit := @tosubset_list_nil A;
+    monmor_op := @tosubset_list_app A;
   |}.
 
 (** ** <<∈>> for lists *)
 (******************************************************************************)
-Lemma in_list_nil {A} : forall (p : A), p ∈ @nil A <-> False.
+Lemma element_of_list_nil {A} : forall (p : A), p ∈ @nil A <-> False.
 Proof.
   reflexivity.
 Qed.
 
-Lemma in_list_cons {A} : forall (a1 a2 : A) (xs : list A),
+Lemma element_of_list_cons {A} : forall (a1 a2 : A) (xs : list A),
     a1 ∈ (a2 :: xs) <-> a1 = a2 \/ a1 ∈ xs.
 Proof.
   intros; unfold element_of.
@@ -1007,21 +1007,21 @@ Proof.
   intuition congruence.
 Qed.
 
-Lemma in_list_one {A} (a1 a2 : A) : a1 ∈ [ a2 ] <-> a1 = a2.
+Lemma element_of_list_one {A} (a1 a2 : A) : a1 ∈ [ a2 ] <-> a1 = a2.
 Proof.
   intros. unfold element_of.
   simpl_list; simpl_subset.
   intuition congruence.
 Qed.
 
-Lemma in_list_ret {A} (a1 a2 : A) : a1 ∈ ret a2 <-> a1 = a2.
+Lemma element_of_list_ret {A} (a1 a2 : A) : a1 ∈ ret a2 <-> a1 = a2.
 Proof.
   intros. unfold element_of.
   simpl_list; simpl_subset.
   easy.
 Qed.
 
-Lemma in_list_app {A} : forall (a : A) (xs ys : list A),
+Lemma element_of_list_app {A} : forall (a : A) (xs ys : list A),
     a ∈ (xs ++ ys) <-> a ∈ xs \/ a ∈ ys.
 Proof.
   intros. unfold element_of.
@@ -1029,17 +1029,18 @@ Proof.
   easy.
 Qed.
 
-#[export] Hint Rewrite @in_list_nil @in_list_cons
-  @in_list_one @in_list_ret @in_list_app : tea_list.
+#[export] Hint Rewrite @element_of_list_nil @element_of_list_cons
+  @element_of_list_one @element_of_list_ret @element_of_list_app : tea_list.
 
 (** *** [x ∈] is a monoid homomorphism *)
 (******************************************************************************)
 #[export] Instance Monoid_Morphism_element_list (A : Type) (a : A) :
-  Monoid_Morphism (list A) Prop (tgt_op := or) (tgt_unit := False)
-    (fun l => tosubset l a).
+  Monoid_Morphism (list A) Prop
+    (tgt_op := Monoid_op_or)
+    (tgt_unit := Monoid_unit_false)
+    (element_of a).
 Proof.
-  change (fun l => tosubset l a) with
-    (evalAt a ∘ tosubset).
+  rewrite element_of_tosubset.
   eapply Monoid_Morphism_compose;
     typeclasses eauto.
 Qed.
@@ -1051,10 +1052,10 @@ Theorem map_rigidly_respectful_list : forall A B (f g : A -> B) (l : list A),
 Proof.
   intros. induction l.
   - simpl_list.
-    setoid_rewrite in_list_nil.
+    setoid_rewrite element_of_list_nil.
     tauto.
   - simpl_list.
-    setoid_rewrite in_list_cons.
+    setoid_rewrite element_of_list_cons.
     destruct IHl. split.
     + intro; fequal; auto.
     + injection 1; intuition (subst; auto).
@@ -1100,7 +1101,7 @@ Proof.
   now rewrite <- (natural (ϕ := @tosubset list _)).
 Qed.
 
-#[export] Instance Monad_Hom_list_elements :
+#[export] Instance Monad_Hom_list_tosubset :
   MonadHom list subset (@tosubset list _) :=
   {| kmon_hom_ret := tosubset_list_hom1;
     kmon_hom_bind := tosubset_list_hom2;
@@ -1125,7 +1126,7 @@ Section quantification.
     - split.
       + intros tt a contra. inversion contra.
       + intros. exact I.
-    - setoid_rewrite in_list_cons.
+    - setoid_rewrite element_of_list_cons.
       rewrite IHl. split.
       + intros [Hpa Hrest].
         intros x [Heq | Hin].
@@ -1142,7 +1143,7 @@ Section quantification.
       + intros [].
       + intros [x [contra Hrest]]. inversion contra.
     - autorewrite with tea_list tea_set.
-      setoid_rewrite in_list_cons.
+      setoid_rewrite element_of_list_cons.
       unfold subset_one.
       rewrite IHl. split.
       + intros [Hpa | Hrest].

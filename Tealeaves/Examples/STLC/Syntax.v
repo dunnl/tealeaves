@@ -132,6 +132,8 @@ Instantiation of derived functions
   := Bindt_Binddt nat term term.
 #[export] Instance ToSubset_STLC: ToSubset term
   := ToSubset_Traverse.
+#[export] Instance ToBatch_STLC: ToBatch term
+  := ToBatch_Traverse.
 
 (*|
 ========================================

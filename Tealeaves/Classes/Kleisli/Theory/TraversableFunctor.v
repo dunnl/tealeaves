@@ -347,7 +347,7 @@ Proof.
   - reflexivity.
   - rewrite foldMap_list_eq.
     rewrite foldMap_list_cons.
-    rewrite elements_list_cons.
+    rewrite tosubset_list_cons.
     rewrite <- foldMap_list_eq.
     rewrite IHl.
     reflexivity.
@@ -376,16 +376,18 @@ Section elements.
     reflexivity.
   Qed.
 
-  (** ** Rewriting to <<foldMap>> and <<traverse> *)
+  (** ** Rewriting <<a ∈ t>> to <<foldMap>> *)
   (******************************************************************************)
-  Lemma in_to_foldMap:
-    forall (A : Type) (t : T A),
-    forall (a : A), a ∈ t = foldMap (op := Monoid_op_or)
-                         (unit := Monoid_unit_false) {{a}} t.
+  Lemma element_of_to_foldMap:
+    forall (A : Type) (a : A),
+      element_of a =
+        foldMap (op := Monoid_op_or)
+          (unit := Monoid_unit_false) {{a}}.
   Proof.
     intros.
     unfold element_of.
     rewrite tosubset_to_foldMap.
+    ext t.
     change_left (evalAt a (foldMap (ret (T := subset)) t)).
     compose near t on left.
     rewrite (foldMap_morphism

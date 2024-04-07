@@ -18,6 +18,7 @@ Tealeaves/Misc/Prop.v
 Tealeaves/Misc/Subset.v
 Tealeaves/Misc/List.v
 Tealeaves/Classes/Categorical/Applicative.v
+Tealeaves/Classes/Kleisli/KApplicative.v
 Tealeaves/Classes/Kleisli/Monad.v
 Tealeaves/Classes/Kleisli/Comonad.v
 Tealeaves/Functors/Reader.v
@@ -70,14 +71,14 @@ Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
 Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
+Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
+Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
 # CONTAINER/COALGEBRAIC STUFF
 Tealeaves/Functors/Vector.v
 Tealeaves/Functors/VectorRefinement.v
 Tealeaves/Functors/Batch.v
 Tealeaves/Functors/KStore.v
-Tealeaves/Functors/ListHistory.v
-Tealeaves/Functors/List_Telescoping.v
 Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
 # END CONTAINER STUFF
 Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
@@ -116,9 +117,6 @@ Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
 Tealeaves/Adapters/MonadToApplicative.v
 Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
 
-# EXPERIMENTAL VECTORS
-Tealeaves/Classes/Kleisli/KApplicative.v
-
 # HIGH-LEVEL THEORY
 Tealeaves/Theory/Batch.v
 Tealeaves/Theory/TraversableFunctor.v
@@ -126,9 +124,9 @@ Tealeaves/Theory/TraversableMonad.v
 Tealeaves/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Theory/DecoratedTraversableMonad.v
 
-# FULLY NOMINAL DTMS
-#Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
-#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
+# LIST TYPES WITH DECORATIONS
+Tealeaves/Functors/ListHistory.v
+Tealeaves/Functors/List_Telescoping.v
 
 # BACKENDS
 Tealeaves/Backends/LN/Atom.v
@@ -156,10 +154,14 @@ Tealeaves/Examples/STLC/TypeSoundness.v
 #Tealeaves/Examples/SystemF/Contexts.v
 #Tealeaves/Examples/SystemF/TypeSoundness.v
 
-# EXPERIMENTAL BACKENDS
-#Tealeaves/Backends/LN/Parallel.v
-
 # VARIADIC BINDERS
 Tealeaves/Examples/VariadicLet/Terms.v
 Tealeaves/Examples/VariadicLet/Syntax.v
 #Tealeaves/Examples/VariadicLet/Syntax_Telescope.v
+
+# EXPERIMENTAL BACKENDS
+#Tealeaves/Backends/LN/Parallel.v
+
+# FULLY NOMINAL DTMS
+#Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
+#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v

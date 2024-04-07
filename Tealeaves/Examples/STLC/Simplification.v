@@ -28,15 +28,15 @@ Section term_container_rewrite.
     ltac:(simplify).
 
   Definition toset_tvar_rw1: forall (x: A),
-      element_of (tvar x) = {{x}}
+      tosubset (tvar x) = {{x}}
     := ltac:(simplify).
 
   Definition toset_term_rw2: forall (X: typ) (t: term A),
-      element_of (lam X t) = element_of t
+      tosubset (lam X t) = tosubset t
     := ltac:(simplify).
 
   Definition toset_term_rw3: forall (t1 t2: term A),
-      element_of (app t1 t2) = element_of t1 ∪ element_of t2
+      tosubset (app t1 t2) = tosubset t1 ∪ tosubset t2
     := ltac:(simplify).
 
   Lemma in_term_rw1: forall (x y: A),

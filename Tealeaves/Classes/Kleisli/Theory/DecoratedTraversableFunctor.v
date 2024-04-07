@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableFunctor
-  Classes.Kleisli.DecoratedContainerFunctor
   Classes.Kleisli.Theory.TraversableFunctor
+  Classes.Kleisli.DecoratedContainerFunctor
   Classes.Kleisli.DecoratedShapelyFunctor.
 
 #[local] Generalizable Variable E T M ϕ A B C G.
@@ -11,7 +11,6 @@ Import ContainerFunctor.Notations.
 Import Monoid.Notations.
 Import Subset.Notations.
 Import Product.Notations.
-
 
 (** * <<mapdt>> with constant applicative functors *)
 (******************************************************************************)
@@ -524,7 +523,7 @@ Section quantification.
       unfold element_ctx_of.
       unfold_ops @ToCtxset_env.
       change (tosubset ?t ?p) with (p ∈ t).
-      setoid_rewrite in_list_cons.
+      setoid_rewrite element_of_list_cons.
       setoid_rewrite pair_equal_spec.
       unfold_all_transparent_tcs.
       intuition (subst; auto).

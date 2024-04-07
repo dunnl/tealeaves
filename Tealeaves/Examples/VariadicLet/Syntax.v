@@ -15,6 +15,12 @@ From Tealeaves Require Export
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
 
+#[local] Notation "'P'" := pure.
+#[local] Notation "'BD'" := binddt.
+
+(* TODO: this is needed because <<list>> has no other instance *)
+#[local] Existing Instance ToBatch_Traverse.
+
 Import Classes.Kleisli.TraversableFunctor.Notations.
 
   (* left *)
@@ -71,7 +77,28 @@ Fixpoint binddt_term
       pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
   end.
 
-#[export] Instance Binddt_Lam: Binddt nat term term := @binddt_term.
+#[export] Instance Binddt_Lam: Binddt nat term term
+  := @binddt_term.
+
+#[export] Instance Map_term: Map term
+  := Map_Binddt nat term term.
+#[export] Instance Mapd_term: Mapd nat term
+  := Mapd_Binddt nat term term.
+#[export] Instance Traverse_term: Traverse term
+  := Traverse_Binddt nat term term.
+#[export] Instance Mapdt_term: Mapdt nat term
+  := Mapdt_Binddt nat term term.
+#[export] Instance Bind_term: Bind term term
+  := Bind_Binddt nat term term.
+#[export] Instance Bindd_term: Bindd nat term term
+  := Bindd_Binddt nat term term.
+#[export] Instance Bindt_term: Bindt term term
+  := Bindt_Binddt nat term term.
+
+#[export] Instance ToSubset_term: ToSubset term
+  := ToSubset_Traverse.
+#[export] Instance ToBatch_Lam: ToBatch term
+  := ToBatch_Traverse.
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,9 +182,6 @@ Section rewriting.
 
 End rewriting.
 
-#[local] Notation "'P'" := pure.
-#[local] Notation "'BD'" := binddt.
-
 Ltac simplify_binddt_term :=
   match goal with
   | |- context[BD ?f (tvar ?y)] =>
@@ -210,7 +234,7 @@ Theorem dtm2_term : forall A : Type,
   Proof.
     derive_dtm_law.
     derive_dtm_law_case.
-    auto using traverse_respectful_id.
+    apply traverse_respectful_id; auto.
   Qed.
 
   Theorem dtm3_term:
@@ -506,7 +530,6 @@ Instantiate simplification infrastructure
     - do 2 simplify_binddt_term.
       (* left *)
       repeat dtm3_lhs_step.
-
 
       Check subst_in_defs (G := G1 ∘ G2) (map (BD g) ∘ f) defs.
       Check subst_in_defs (G := G1 ∘ G2) (g ⋆7 f) defs.

@@ -10,8 +10,6 @@ From Tealeaves Require Export
   Theory.Batch
   Functors.List.
 
-About foldMap.
-
 Import Subset.Notations.
 Import Applicative.Notations.
 Import ContainerFunctor.Notations.
@@ -195,7 +193,7 @@ Section pointwise.
     introv ? hyp.
     do 2 rewrite traverse_through_runBatch.
     unfold element_of in hyp.
-    rewrite (element_through_runBatch2 A B) in hyp.
+    rewrite (tosubset_through_runBatch2 A B) in hyp.
     unfold compose in *.
     unfold ret in *.
     induction (toBatch t).
@@ -266,14 +264,16 @@ End pointwise.
 Section length.
 
   Context
-    `{TraversableFunctor T} `{Map T}
-     `{! Compat_Map_Traverse T}
-    `{ToBatch T}
-    `{! Compat_ToBatch_Traverse}.
+    `{Map T}
+      `{ToBatch T}
+      `{Traverse T}
+      `{! TraversableFunctor T}
+      `{! Compat_Map_Traverse T}
+      `{! Compat_ToBatch_Traverse (T := T)}.
 
   Lemma plength_eq_length :
     forall {A} {B} (t: T A),
-     length_Batch (toBatch (A' := B) t) = plength t.
+      length_Batch (toBatch (A' := B) t) = plength t.
   Proof.
     intros.
     unfold plength.
@@ -318,17 +318,20 @@ Section deconstruction.
 
   Context
     `{Traverse T}
-    `{! Kleisli.TraversableFunctor.TraversableFunctor T}
-    `{Map T}
-    `{! Compat_Map_Traverse T}
-    `{ToBatch T}
-    `{! Compat_ToBatch_Traverse}
-    `{! ToSubset T}
-     `{! Compat_ToSubset_Traverse T}.
+      `{Map T}
+      `{toBatch_inst: ToBatch T}
+      `{ToSubset T}
+      `{! TraversableFunctor T}
+      `{! Compat_Map_Traverse T}
+      `{! Compat_ToBatch_Traverse}
+      `{! Compat_ToSubset_Traverse T}.
+
+  #[local] Generalizable Variables v.
 
   Definition trav_contents {A} (t: T A):
     Vector (plength t) A :=
-    let v : Vector (length_Batch (toBatch (A' := False) t)) A
+    let v : Vector (length_Batch
+                      (toBatch (ToBatch := toBatch_inst) (A' := False) t)) A
       := Batch_contents (toBatch t)
     in coerce_Vector_length (plength_eq_length t) v.
 
@@ -343,8 +346,6 @@ Section deconstruction.
     (fun v =>
        let v' := coerce_Vector_length (eq_sym (plength_eq_length t)) v
        in Batch_make (toBatch t) v').
-
-  Generalizable Variable v.
 
   (** ** Lemmas regarding <<trav_make>> *)
   (******************************************************************************)
@@ -636,8 +637,8 @@ Section pw_Batch.
       a' ∈ (b ⧆ a) = (a' ∈ b \/ a' = a).
   Proof.
     intros.
-    rewrite in_to_foldMap.
-    rewrite in_to_foldMap.
+    rewrite element_of_to_foldMap.
+    rewrite element_of_to_foldMap.
     rewrite foldMap_Batch_rw2.
     reflexivity.
   Qed.

@@ -53,15 +53,17 @@ Qed.
 Section laws.
 
   Context
-    `{Kleisli.TraversableFunctor.TraversableFunctor T}
     `{Map T}
-    `{! Compat_Map_Traverse T}
-    `{ToBatch T}
-    `{! Compat_ToBatch_Traverse}.
+      `{ToBatch T}
+      `{Traverse T}
+      `{! Kleisli.TraversableFunctor.TraversableFunctor T}
+      `{! Compat_Map_Traverse T}
+      `{! Compat_ToBatch_Traverse}.
 
   (** *** Factoring operations through <<toBatch>> *)
   (******************************************************************************)
-  Lemma traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
+  Lemma traverse_through_runBatch
+    `{Applicative G} `(f : A -> G B) :
     traverse f = runBatch f ∘ toBatch.
   Proof.
     rewrite toBatch_to_traverse.
@@ -127,7 +129,7 @@ Section laws.
     `{ToSubset T}
       `{! Compat_ToSubset_Traverse T}.
 
-  Lemma element_through_runBatch1 : forall (A : Type),
+  Lemma tosubset_through_runBatch1 : forall (A : Type),
       tosubset =
         runBatch (F := const (A -> Prop))
           (ret (T := subset) (A := A)) (B := False) ∘
@@ -139,7 +141,7 @@ Section laws.
     reflexivity.
   Qed.
 
-  Lemma element_through_runBatch2 : forall (A tag : Type),
+  Lemma tosubset_through_runBatch2 : forall (A tag : Type),
       tosubset =
         runBatch (F := const (A -> Prop))
           (ret (T := subset)) (B := tag) ∘

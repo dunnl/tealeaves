@@ -186,18 +186,25 @@ Ltac simplify_distribute_list_ops :=
 
 Ltac rewrite_derived_ops_to_binddt T :=
   match goal with
+  (* tolist *)
   | |- context[tolist (F := T) ?t] =>
       debug "tolist_to_binddt";
       rewrite (tolist_to_binddt (T := T))
-  | |- context[element_of (F := T) ?t ?x] =>
-      debug "in_to_binddt";
-      rewrite (in_to_binddt (T := T))
-  | |- context[element_ctx_of (F := T) ?t (?n, ?l)] =>
-      debug "ind_to_binddt";
-      rewrite (ind_to_binddt (T := T))
-  | |- context[element_of (F := T) ?t] =>
+  (* elements *)
+  | |- context[element_of (F := T) ?x ?t] =>
       debug "element_of_to_binddt";
       rewrite (element_of_to_binddt (T := T))
+  | |- context[element_ctx_of (T := T) (?n, ?l) ?t] =>
+      debug "element_ctx_of_to_binddt";
+      rewrite (element_ctx_of_to_binddt (T := T))
+  (* tosubset *)
+  | |- context[tosubset (F := T) ?t] =>
+      debug "tosubset_to_binddt";
+      rewrite (tosubset_to_binddt (T := T))
+  | |- context[toctxset (F := T) ?t] =>
+      debug "toctxset_to_binddt";
+      rewrite (toctxset_to_binddt (T := T))
+  (* foldMap *)
   | |- context[foldMap (T := T) ?t] =>
       debug "foldMap_to_binddt";
       rewrite foldMap_to_traverse1, traverse_to_binddt
@@ -205,6 +212,7 @@ Ltac rewrite_derived_ops_to_binddt T :=
       debug "foldMap_to_binddt";
       rewrite (foldMapd_to_mapdt1 (T := T)),
         (mapdt_to_binddt (T := T))
+  (* quantifiers *)
   | |- context[Forall_ctx (T := T)  ?P] =>
       debug "Forall_to_foldMapd";
       unfold Forall_ctx
@@ -217,7 +225,7 @@ Ltac simplify_locally_nameless_leaves :=
   | |- context[free_loc (Bd ?b)] =>
       rewrite free_loc_Bd
   | |- context[?x ∈ [?y]] =>
-      rewrite in_list_one
+      rewrite element_of_list_one
   | |- context[Forall_ctx ?P] =>
       unfold Forall_ctx
   | |- context[is_bound_or_free] =>
@@ -234,10 +242,10 @@ Ltac simplify_locally_nameless_top_level :=
       unfold freeset;
       rewrite free_to_foldMap
   | |- context[locally_closed] =>
-      idtac "locally_closed_spec";
+      debug "locally_closed_spec";
       rewrite locally_closed_spec
   | |- context[locally_closed_gap] =>
-      idtac "locally_closed_gap_spec";
+      debug "locally_closed_gap_spec";
       rewrite locally_closed_gap_spec
   | |- context[is_bound_or_free] =>
       debug "simplify_bound_or_free";

@@ -258,7 +258,7 @@ Proof.
   - rename a0 into a'.
     autorewrite with tea_list tea_set.
     cbn.
-    rewrite elements_list_cons.
+    rewrite tosubset_list_cons.
     rewrite map_set_add, map_set_one.
     cbn.
     rewrite subset_in_add.

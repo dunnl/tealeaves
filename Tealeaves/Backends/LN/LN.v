@@ -235,6 +235,8 @@ Section locally_nameless_basic_principles.
     `{Bindd_T_inst : Bindd nat T T}
     `{Bindt_T_inst : Bindt T T}
     `{Binddt_T_inst : Binddt nat T T}
+    `{ToSubset_T_inst : ToSubset T}
+    `{ToBatch_T_inst : ToBatch T}
     `{! Compat_Map_Binddt nat T T}
     `{! Compat_Mapd_Binddt nat T T}
     `{! Compat_Traverse_Binddt nat T T}
@@ -242,7 +244,10 @@ Section locally_nameless_basic_principles.
     `{! Compat_Mapdt_Binddt nat T T}
     `{! Compat_Bindd_Binddt nat T T}
     `{! Compat_Bindt_Binddt nat T T}
-    `{Monad_inst : ! DecoratedTraversableMonad nat T}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToBatch_Traverse}.
+
+  Context
     `{Map_U_inst : Map U}
     `{Mapd_U_inst : Mapd nat U}
     `{Traverse_U_inst : Traverse U}
@@ -251,6 +256,8 @@ Section locally_nameless_basic_principles.
     `{Bindd_U_inst : Bindd nat T U}
     `{Bindt_U_inst : Bindt T U}
     `{Binddt_U_inst : Binddt nat T U}
+    `{ToSubset_U_inst : ToSubset U}
+    `{ToBatch_U_inst : ToBatch U}
     `{! Compat_Map_Binddt nat T U}
     `{! Compat_Mapd_Binddt nat T U}
     `{! Compat_Traverse_Binddt nat T U}
@@ -258,13 +265,14 @@ Section locally_nameless_basic_principles.
     `{! Compat_Mapdt_Binddt nat T U}
     `{! Compat_Bindd_Binddt nat T U}
     `{! Compat_Bindt_Binddt nat T U}
-    `{ToSubset_T_inst : ToSubset T}
-    `{ToSubset_U_inst : ToSubset U}
-    `{! Compat_ToSubset_Traverse T}
     `{! Compat_ToSubset_Traverse U}
-    `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
-     (unit := Monoid_unit_zero)
-     (op := Monoid_op_plus)}.
+    `{! Compat_ToBatch_Traverse}.
+
+  Context
+    `{Monad_inst : ! DecoratedTraversableMonad nat T}
+      `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
+                        (unit := Monoid_unit_zero)
+                        (op := Monoid_op_plus)}.
 
   Implicit Types (l : LN) (n : nat) (t : U LN) (x : atom).
 
@@ -477,28 +485,26 @@ Section locally_nameless_basic_principles.
       x ∈ free t = Fr x ∈ t.
   Proof.
     intros. unfold free.
-    change_left ((evalAt x ∘ tosubset ∘ foldMap free_loc) t).
-    reassociate -> on left.
-    rewrite (foldMap_morphism (list atom) (subset atom)).
-    rewrite (foldMap_morphism (subset atom) Prop).
-    rewrite in_to_foldMap.
+    change_left ((element_of x ∘ foldMap free_loc) t).
+    rewrite (foldMap_morphism
+               (morphism := Monoid_Morphism_element_list atom x)
+               (list atom) Prop (ϕ := element_of x)).
+    rewrite (element_of_to_foldMap LN (Fr x)).
     fequal.
-    ext y.
-    apply in_free_iff_local.
+    ext l. apply in_free_iff_local.
   Qed.
 
   Theorem in_free_iff_T : forall (t : T LN) x,
       x ∈ free t = Fr x ∈ t.
   Proof.
     intros. unfold free.
-    change_left ((evalAt x ∘ tosubset ∘ foldMap free_loc) t).
-    reassociate -> on left.
-    rewrite (foldMap_morphism (list atom) (subset atom)).
-    rewrite (foldMap_morphism (subset atom) Prop).
-    rewrite in_to_foldMap.
+    change_left ((element_of x ∘ foldMap free_loc) t).
+    rewrite (foldMap_morphism
+               (morphism := Monoid_Morphism_element_list atom x)
+               (list atom) Prop (ϕ := element_of x)).
+    rewrite (element_of_to_foldMap LN (Fr x)).
     fequal.
-    ext y.
-    apply in_free_iff_local.
+    ext l. apply in_free_iff_local.
   Qed.
 
   Theorem free_iff_freeset : forall t x,
@@ -732,6 +738,7 @@ Ltac simplify_is_bound_or_free :=
 (******************************************************************************)
 Section locally_nameless_metatheory.
 
+
   Context
     `{ret_inst : Return T}
     `{Map_T_inst : Map T}
@@ -742,6 +749,8 @@ Section locally_nameless_metatheory.
     `{Bindd_T_inst : Bindd nat T T}
     `{Bindt_T_inst : Bindt T T}
     `{Binddt_T_inst : Binddt nat T T}
+    `{ToSubset_T_inst : ToSubset T}
+    `{ToBatch_T_inst : ToBatch T}
     `{! Compat_Map_Binddt nat T T}
     `{! Compat_Mapd_Binddt nat T T}
     `{! Compat_Traverse_Binddt nat T T}
@@ -749,7 +758,10 @@ Section locally_nameless_metatheory.
     `{! Compat_Mapdt_Binddt nat T T}
     `{! Compat_Bindd_Binddt nat T T}
     `{! Compat_Bindt_Binddt nat T T}
-    `{Monad_inst : ! DecoratedTraversableMonad nat T}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToBatch_Traverse}.
+
+  Context
     `{Map_U_inst : Map U}
     `{Mapd_U_inst : Mapd nat U}
     `{Traverse_U_inst : Traverse U}
@@ -758,6 +770,8 @@ Section locally_nameless_metatheory.
     `{Bindd_U_inst : Bindd nat T U}
     `{Bindt_U_inst : Bindt T U}
     `{Binddt_U_inst : Binddt nat T U}
+    `{ToSubset_U_inst : ToSubset U}
+    `{ToBatch_U_inst : ToBatch U}
     `{! Compat_Map_Binddt nat T U}
     `{! Compat_Mapd_Binddt nat T U}
     `{! Compat_Traverse_Binddt nat T U}
@@ -765,13 +779,14 @@ Section locally_nameless_metatheory.
     `{! Compat_Mapdt_Binddt nat T U}
     `{! Compat_Bindd_Binddt nat T U}
     `{! Compat_Bindt_Binddt nat T U}
-    `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
-     (unit := Monoid_unit_zero)
-     (op := Monoid_op_plus)}
-    `{ToSubset_T_inst : ToSubset T}
-    `{ToSubset_U_inst : ToSubset U}
-    `{! Compat_ToSubset_Traverse T}
-    `{! Compat_ToSubset_Traverse U}.
+    `{! Compat_ToSubset_Traverse U}
+    `{! Compat_ToBatch_Traverse}.
+
+  Context
+    `{Monad_inst : ! DecoratedTraversableMonad nat T}
+      `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
+                        (unit := Monoid_unit_zero)
+                        (op := Monoid_op_plus)}.
 
   Open Scope set_scope.
 
