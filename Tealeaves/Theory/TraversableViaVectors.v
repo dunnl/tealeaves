@@ -567,7 +567,7 @@ Section pw.
     `{Map T}
     `{! Compat_Map_Traverse T}.
 
-  Existing Instance Elements_Traverse.
+  Existing Instance ToSubset_Traverse.
 
   Definition traverse_pw
                {A B} (G : Type -> Type)

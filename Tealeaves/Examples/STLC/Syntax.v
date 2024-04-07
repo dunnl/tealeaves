@@ -130,8 +130,8 @@ Instantiation of derived functions
   := Bindd_Binddt nat term term.
 #[export] Instance Bindt_STLC: Bindt term term
   := Bindt_Binddt nat term term.
-#[export] Instance Elements_STLC: Elements term
-  := Elements_Traverse.
+#[export] Instance ToSubset_STLC: ToSubset term
+  := ToSubset_Traverse.
 
 (*|
 ========================================

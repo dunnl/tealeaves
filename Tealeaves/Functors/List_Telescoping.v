@@ -1,5 +1,6 @@
 From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableFunctor
+  Classes.Kleisli.Theory.DecoratedTraversableFunctor
   Functors.List
   Misc.NaturalNumbers
   Theory.DecoratedTraversableFunctor.
@@ -8,16 +9,16 @@ Import Applicative.Notations.
 Import Monoid.Notations.
 Import DecoratedTraversableFunctor.Notations.
 
-Lemma element_ctx_of_nil: forall (E A: Type),
-    element_ctx_of (F := env E) (@nil (E * A)) = subset_empty.
+Lemma toctxset_nil: forall (E A: Type),
+    toctxset (F := env E) (@nil (E * A)) = subset_empty.
 Proof.
   reflexivity.
 Qed.
 
 Import Subset.Notations.
-Lemma element_ctx_of_cons: forall (E A: Type) (e: E) (a: A) (l: env E A),
-    element_ctx_of (F := env E) ((e, a) :: l) =
-      {{(e, a)}} ∪ (element_ctx_of l).
+Lemma toctxset_cons: forall (E A: Type) (e: E) (a: A) (l: env E A),
+    toctxset (F := env E) ((e, a) :: l) =
+      {{(e, a)}} ∪ (toctxset l).
 Proof.
   reflexivity.
 Qed.
@@ -109,22 +110,22 @@ Proof.
 Qed.
 
 #[export] Instance CtxToList_List_Telescoping:
-  CtxTolist nat list := CtxTolist_Mapdt.
+  ToCtxlist nat list := ToCtxlist_Mapdt.
 
-#[export] Instance ElementsCtx_List_Telescoping:
-  ElementsCtx nat list := ElementsCtx_CtxTolist.
+#[export] Instance ToCtxset_List_Telescoping:
+  ToCtxset nat list := ToCtxset_ToCtxlist.
 
-#[export] Instance Compat_Elements_ElementsCtx_List_Telescoping:
-  @Compat_Elements_ElementsCtx
-    nat list ElementsCtx_List_Telescoping Elements_list.
+#[export] Instance Compat_ToSubset_ToCtxset_List_Telescoping:
+  @Compat_ToSubset_ToCtxset
+    nat list ToCtxset_List_Telescoping ToSubset_list.
 Proof.
-  unfold Compat_Elements_ElementsCtx.
+  unfold Compat_ToSubset_ToCtxset.
   ext A l a.
-  unfold_ops @Elements_ElementsCtx
-               @ElementsCtx_List_Telescoping
-               @ElementsCtx_CtxTolist.
+  unfold_ops @ToSubset_ToCtxset
+               @ToCtxset_List_Telescoping
+               @ToCtxset_ToCtxlist.
   unfold_ops @CtxToList_List_Telescoping
-               @CtxTolist_Mapdt.
+               @ToCtxlist_Mapdt.
   rewrite foldMapd_to_mapdt1.
   rewrite <- (preincr_zero ret).
   generalize (Ƶ: nat).
@@ -134,7 +135,7 @@ Proof.
     + intros [[n' a'] [contra rest]]. easy.
   - rename a0 into a'.
     unfold compose in *; cbn.
-    rewrite element_ctx_of_cons.
+    rewrite toctxset_cons.
     autorewrite with tea_set.
     rewrite preincr_preincr.
     rewrite <- (IHl (n ● 1)).
@@ -226,27 +227,27 @@ Proof.
 Qed.
 
 #[export] Instance CtxToList_List_Full:
-  CtxTolist nat list := CtxTolist_Mapdt.
+  ToCtxlist nat list := ToCtxlist_Mapdt.
 
-#[export] Instance ElementsCtx_List_Full:
-  ElementsCtx nat list := ElementsCtx_CtxTolist.
+#[export] Instance ToCtxset_List_Full:
+  ToCtxset nat list := ToCtxset_ToCtxlist.
 
-#[export] Instance Compat_Elements_ElementsCtx_List_Full:
-  @Compat_Elements_ElementsCtx
-    nat list ElementsCtx_List_Full Elements_list.
+#[export] Instance Compat_ToSubset_ToCtxset_List_Full:
+  @Compat_ToSubset_ToCtxset
+    nat list ToCtxset_List_Full ToSubset_list.
 Proof.
-  unfold Compat_Elements_ElementsCtx.
+  unfold Compat_ToSubset_ToCtxset.
   ext A l a.
-  unfold_ops @Elements_ElementsCtx
-               @ElementsCtx_List_Full
-               @ElementsCtx_CtxTolist.
+  unfold_ops @ToSubset_ToCtxset
+               @ToCtxset_List_Full
+               @ToCtxset_ToCtxlist.
   unfold_ops @CtxToList_List_Full
-               @CtxTolist_Mapdt.
+               @ToCtxlist_Mapdt.
   rewrite foldMapd_to_mapdt1.
-  unfold_ops @ElementsCtx_env.
+  unfold_ops @ToCtxset_env.
   reassociate <-.
-  change (fun s : env nat A => @element_of list Elements_list (nat * A) s)
-    with (@element_of list Elements_list (nat * A)).
+  change (fun s : env nat A => @tosubset list ToSubset_list (nat * A) s)
+    with (@tosubset list ToSubset_list (nat * A)).
   unfold compose. unfold_ops @Mapdt_List_Full.
   unfold mapdt_list_full.
   generalize (length l).

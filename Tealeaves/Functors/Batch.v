@@ -3,7 +3,8 @@ From Tealeaves.Classes Require Export
   Categorical.Applicative
   Categorical.Monad
   Categorical.ShapelyFunctor
-  Kleisli.TraversableFunctor.
+  Kleisli.TraversableFunctor
+  Kleisli.Theory.TraversableFunctor.
 
 From Tealeaves.Functors Require Import
   Constant
@@ -12,7 +13,8 @@ From Tealeaves.Functors Require Import
 
 Import Monoid.Notations.
 Import Applicative.Notations.
-Import TraversableFunctor.Notations.
+Import Kleisli.TraversableFunctor.Notations.
+Import Theory.TraversableFunctor.Notations.
 
 #[local] Generalizable Variables ψ ϕ W F G M A B C D X Y O.
 
@@ -1424,6 +1426,8 @@ Arguments traverse T%function_scope {Traverse} (G)%function_scope
   {H H0 H1} (A B)%type_scope _%function_scope _.
 *)
 
+(** ** Specification for <<traverse>> *)
+(******************************************************************************)
 Lemma traverse_spec
   (F : Type -> Type) `{Map F} `{Mult F} `{Pure F} `{! Applicative F}
   `(ϕ : A -> F A') (B C : Type) :

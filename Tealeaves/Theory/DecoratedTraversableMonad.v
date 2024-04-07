@@ -60,10 +60,10 @@ Section lemmas.
     `{! Compat_Bindd_Binddt W T U}
     `{! Compat_Bindt_Binddt W T U}
     `{Module_inst: ! DecoratedTraversableRightPreModule W T U}
-    `{Elements_T_inst: Elements T}
-    `{! Compat_Elements_Traverse T}
-    `{Elements_U_inst: Elements U}
-    `{! Compat_Elements_Traverse U}.
+    `{ToSubset_T_inst: ToSubset T}
+    `{! Compat_ToSubset_Traverse T}
+    `{ToSubset_U_inst: ToSubset U}
+    `{! Compat_ToSubset_Traverse U}.
 
   Lemma toBatch6_to_toBatch7 : forall A A' t,
       toBatch6 (A := A) (B := A') t =
@@ -247,35 +247,35 @@ Section lemmas.
 
   (** *** Relating <<tolistd>> and <<binddt>> / <<ret>> *)
   (******************************************************************************)
-  Lemma ctx_tolist_ret : forall (A : Type) (a : A),
-      ctx_tolist (ret (T := T) a) = [ (Ƶ, a) ].
+  Lemma toctxlist_ret : forall (A : Type) (a : A),
+      toctxlist (ret (T := T) a) = [ (Ƶ, a) ].
   Proof.
     intros.
-    rewrite ctx_tolist_to_foldMapd.
+    rewrite toctxlist_to_foldMapd.
     compose near a on left.
     rewrite foldMapd_ret.
     reflexivity.
   Qed.
 
-  Lemma ctx_tolist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
-      map (F := G) ctx_tolist ∘ binddt (G := G) f =
+  Lemma toctxlist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
+      map (F := G) toctxlist ∘ binddt (G := G) f =
         foldMapd (T := U)
           (fun '(w, a) => map (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
   Proof.
     intros.
-    rewrite ctx_tolist_to_foldMapd.
+    rewrite toctxlist_to_foldMapd.
     rewrite foldMapd_binddt.
     reflexivity.
   Qed.
 
-  (** *** Relating <<ctx_tolist>> and lesser operations *)
+  (** *** Relating <<toctxlist>> and lesser operations *)
   (******************************************************************************)
-  Lemma ctx_tolist_bindd : forall `(f : W * A -> T B),
-      ctx_tolist ∘ bindd f =
+  Lemma toctxlist_bindd : forall `(f : W * A -> T B),
+      toctxlist ∘ bindd f =
         foldMapd (T := U) (fun '(w, a) => (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
   Proof.
     intros.
-    rewrite ctx_tolist_to_foldMapd.
+    rewrite toctxlist_to_foldMapd.
     rewrite foldMapd_bindd.
     reflexivity.
   Qed.
@@ -325,7 +325,7 @@ Section lemmas.
     reflexivity.
   Qed.
 
-  Corollary tolist_to_binddt : forall (A : Type),
+  Corollary ctxtolist_to_binddt : forall (A : Type),
       tolist = binddt (G := const (list A))
                  (B := False) (ret (T := list) ∘ extract).
   Proof.

@@ -23,7 +23,7 @@ Import Kleisli.TraversableFunctor.Notations.
 
 (** ** <<ToBatch>> instance *)
 (******************************************************************************)
-#[export] Instance ToBatch_Traverse `{Traverse T}
+#[local] Instance ToBatch_Traverse `{Traverse T}
   : Coalgebraic.TraversableFunctor.ToBatch T :=
   (fun A B => traverse (G := Batch A B) (batch B) :
      T A -> Batch A B (T B)).
@@ -124,29 +124,29 @@ Section laws.
   Qed.
 
   Context
-    `{Elements T}
-      `{! Compat_Elements_Traverse T}.
+    `{ToSubset T}
+      `{! Compat_ToSubset_Traverse T}.
 
   Lemma element_through_runBatch1 : forall (A : Type),
-      element_of =
+      tosubset =
         runBatch (F := const (A -> Prop))
           (ret (T := subset) (A := A)) (B := False) ∘
           toBatch (A' := False).
   Proof.
     intros.
-    rewrite element_of_to_foldMap.
+    rewrite tosubset_to_foldMap.
     rewrite foldMap_through_runBatch1.
     reflexivity.
   Qed.
 
   Lemma element_through_runBatch2 : forall (A tag : Type),
-      element_of =
+      tosubset =
         runBatch (F := const (A -> Prop))
           (ret (T := subset)) (B := tag) ∘
           toBatch (A' := tag).
   Proof.
     intros.
-    rewrite element_of_to_foldMap.
+    rewrite tosubset_to_foldMap.
     rewrite (foldMap_through_runBatch2 A tag).
     reflexivity.
   Qed.

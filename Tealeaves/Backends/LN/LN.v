@@ -258,10 +258,10 @@ Section locally_nameless_basic_principles.
     `{! Compat_Mapdt_Binddt nat T U}
     `{! Compat_Bindd_Binddt nat T U}
     `{! Compat_Bindt_Binddt nat T U}
-    `{Elements_T_inst : Elements T}
-    `{Elements_U_inst : Elements U}
-    `{! Compat_Elements_Traverse T}
-    `{! Compat_Elements_Traverse U}
+    `{ToSubset_T_inst : ToSubset T}
+    `{ToSubset_U_inst : ToSubset U}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToSubset_Traverse U}
     `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
@@ -477,7 +477,7 @@ Section locally_nameless_basic_principles.
       x ∈ free t = Fr x ∈ t.
   Proof.
     intros. unfold free.
-    change_left ((evalAt x ∘ element_of ∘ foldMap free_loc) t).
+    change_left ((evalAt x ∘ tosubset ∘ foldMap free_loc) t).
     reassociate -> on left.
     rewrite (foldMap_morphism (list atom) (subset atom)).
     rewrite (foldMap_morphism (subset atom) Prop).
@@ -491,7 +491,7 @@ Section locally_nameless_basic_principles.
       x ∈ free t = Fr x ∈ t.
   Proof.
     intros. unfold free.
-    change_left ((evalAt x ∘ element_of ∘ foldMap free_loc) t).
+    change_left ((evalAt x ∘ tosubset ∘ foldMap free_loc) t).
     reassociate -> on left.
     rewrite (foldMap_morphism (list atom) (subset atom)).
     rewrite (foldMap_morphism (subset atom) Prop).
@@ -587,10 +587,10 @@ Section locally_nameless_utilities.
     `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}
-    `{Elements_T_inst : Elements T}
-    `{Elements_U_inst : Elements U}
-    `{! Compat_Elements_Traverse T}
-    `{! Compat_Elements_Traverse U}.
+    `{ToSubset_T_inst : ToSubset T}
+    `{ToSubset_U_inst : ToSubset U}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToSubset_Traverse U}.
 
   Import Notations.
 
@@ -768,10 +768,10 @@ Section locally_nameless_metatheory.
     `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}
-    `{Elements_T_inst : Elements T}
-    `{Elements_U_inst : Elements U}
-    `{! Compat_Elements_Traverse T}
-    `{! Compat_Elements_Traverse U}.
+    `{ToSubset_T_inst : ToSubset T}
+    `{ToSubset_U_inst : ToSubset U}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToSubset_Traverse U}.
 
   Open Scope set_scope.
 

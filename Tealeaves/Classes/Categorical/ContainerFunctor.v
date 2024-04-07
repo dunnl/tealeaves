@@ -12,52 +12,60 @@ Import Functor.Notations.
 Import Subset.Notations.
 Import List.ListNotations.
 
-#[local] Generalizable Variables T A.
+#[local] Generalizable Variables F T A.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 
 (** * Container-like functors *)
 (******************************************************************************)
 
-(** ** <<element_of>> operation *)
+(** ** <<tosubset>> operation *)
 (******************************************************************************)
-Class Elements (F : Type -> Type) :=
-  element_of : F ⇒ subset.
+Class ToSubset (F : Type -> Type) :=
+  tosubset : F ⇒ subset.
 
-#[global] Arguments element_of {F}%function_scope {Elements} {A}%type_scope.
+#[global] Arguments tosubset {F}%function_scope {ToSubset} {A}%type_scope.
 
+Definition element_of `{ToSubset F} {A: Type}:
+  A -> F A -> Prop := fun a t => tosubset t a.
+
+Lemma element_of_tosubset `{ToSubset F} {A: Type}:
+  forall (a:A), element_of a = evalAt a ∘ tosubset.
+Proof.
+  reflexivity.
+Qed.
 #[local] Notation "x ∈ t" :=
-  (element_of t x) (at level 50) : tealeaves_scope.
+  (element_of x t) (at level 50) : tealeaves_scope.
 
 (** ** Functor typeclass *)
 (******************************************************************************)
 Class ContainerFunctor
   (F : Type -> Type)
-  `{Map F} `{Elements F} :=
-  { cont_natural :> Natural (@element_of F _);
+  `{Map F} `{ToSubset F} :=
+  { cont_natural :> Natural (@tosubset F _);
     cont_functor :> Functor F;
     cont_pointwise : forall (A B : Type) (t : F A) (f g : A -> B),
       (forall a, a ∈ t -> f a = g a) -> map F f t = map F g t;
   }.
 
-(** ** [Elements]-preserving natural transformations *)
+(** ** [ToSubset]-preserving natural transformations *)
 (******************************************************************************)
 Class ContainerTransformation
   {F G : Type -> Type}
-  `{Map F} `{Elements F}
-  `{Map G} `{Elements G}
+  `{Map F} `{ToSubset F}
+  `{Map G} `{ToSubset G}
   (η : F ⇒ G) :=
   { cont_trans_natural : Natural η;
-    cont_trans_commute : forall A, element_of (F := F) = element_of (F := G) ∘ η A;
+    cont_trans_commute : forall A, tosubset (F := F) = tosubset (F := G) ∘ η A;
   }.
 
 (** * Container instance for <<subset>> *)
 (******************************************************************************)
 Section Container_subset.
 
-  Instance Elements_set : Elements subset :=
+  Instance ToSubset_set : ToSubset subset :=
     fun (A : Type) (s : subset A) => s.
 
-  Instance Natural_elements_set : Natural (@element_of subset _).
+  Instance Natural_elements_set : Natural (@tosubset subset _).
   Proof.
     constructor; try typeclasses eauto.
     intros. ext S b. reflexivity.
@@ -95,7 +103,11 @@ Section setlike_functor_theory.
       b ∈ map F f t <-> exists a : A, a ∈ t /\ f a = b.
   Proof.
     introv. compose near t on left.
-    now rewrite <- (natural (G:=(-> Prop))).
+    rewrite element_of_tosubset.
+    reassociate -> on left.
+    unfold element_of.
+    rewrite <- (natural (G:=(-> Prop))).
+    reflexivity.
   Qed.
 
   (** This next property says that applying <<f>> (or on the
@@ -129,7 +141,7 @@ End setlike_functor_theory.
 (** * Properness conditions *)
 (******************************************************************************)
 Definition pointwise_equal_on
-  (F : Type -> Type) {A B} `{Elements F} :
+  (F : Type -> Type) {A B} `{ToSubset F} :
   F A -> relation (A -> B) :=
   fun t f g => (forall a : A, a ∈ t -> f a = g a).
 
@@ -179,5 +191,5 @@ End quantification.
 (******************************************************************************)
 Module Notations.
   Notation "x ∈ t" :=
-    (element_of t x) (at level 50) : tealeaves_scope.
+    (element_of x t) (at level 50) : tealeaves_scope.
 End Notations.

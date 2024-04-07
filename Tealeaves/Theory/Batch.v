@@ -6,7 +6,7 @@ From Tealeaves Require Export
 Import Batch.Notations.
 Import Applicative.Notations.
 
-#[local] Generalizable Variables G.
+#[local] Generalizable Variables G T.
 
 (** * Deconstructing <<Batch A B C>> via <<Vector>> *)
 (******************************************************************************)

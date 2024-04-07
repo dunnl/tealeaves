@@ -22,6 +22,109 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables T G A B C M ϕ.
 
+(** * Misc *)
+(******************************************************************************)
+Section stuff.
+
+  Context
+    `{TraversableFunctor T}
+      `{Map T}
+      `{ToBatch T}
+      `{! Compat_Map_Traverse T}
+      `{! Compat_ToBatch_Traverse}.
+
+  Lemma Batch_contents_tolist:
+    forall {A B} (t: T A),
+      Vector_to_list A (Batch_contents (toBatch (A' := B) t)) =
+        List.rev (tolist t).
+  Proof.
+    intros.
+    rewrite tolist_to_foldMap.
+    rewrite (foldMap_through_runBatch2 A B).
+    unfold compose.
+    induction (toBatch t).
+    - reflexivity.
+    - cbn.
+      rewrite Vector_to_list_vcons.
+      rewrite IHb.
+      unfold_ops @Monoid_op_list @Return_list.
+      rewrite List.rev_unit.
+      reflexivity.
+  Qed.
+
+  Lemma Batch_contents_toBatch_sim:
+    forall {A B B'} (t: T A),
+      Batch_contents
+        (toBatch (A' := B) t) ~~
+        Batch_contents (toBatch (A' := B') t).
+  Proof.
+    intros.
+    unfold Vector_sim.
+    change (proj1_sig ?v) with (Vector_to_list _ v).
+    rewrite Batch_contents_tolist.
+    rewrite Batch_contents_tolist.
+    reflexivity.
+  Qed.
+
+  Lemma shape_toBatch_spec: forall (A B: Type) (t: T A),
+      shape (toBatch (A' := B) t) =
+        toBatch (A' := B) (shape t).
+  Proof.
+    intros.
+    compose near t on right.
+    unfold shape at 2.
+    rewrite toBatch_mapfst.
+    reflexivity.
+  Qed.
+
+  Lemma toBatch_shape:
+    forall {A' B} `(t1: T A) (t2: T A'),
+      shape t1 = shape t2 ->
+      shape (F := BATCH1 B (T B))
+        (toBatch (A' := B) t1) =
+        shape (F := BATCH1 B (T B))
+          (toBatch (A' := B) t2).
+  Proof.
+    introv Hshape.
+    do 2 rewrite shape_toBatch_spec.
+    rewrite Hshape.
+    reflexivity.
+  Qed.
+
+End stuff.
+
+(** ** Batch_to_list *)
+(******************************************************************************)
+Section Batch.
+
+  Definition Batch_to_list: forall `(b: Batch A B C), list A.
+  Proof.
+    intros. apply (tolist (F := BATCH1 B C) b).
+  Defined.
+
+  Lemma Batch_contents_list: forall `(b: Batch A B C),
+      proj1_sig (Batch_contents b) = List.rev (Batch_to_list b).
+  Proof.
+    intros.
+    induction b.
+    - reflexivity.
+    - cbn.
+      rewrite proj_vcons.
+      rewrite IHb.
+      rewrite <- List.rev_unit.
+      reflexivity.
+  Qed.
+
+  Lemma Batch_to_list_rw2 {A B C}: forall (b: Batch A B (B -> C)) (a: A),
+      Batch_to_list (b ⧆ a) = Batch_to_list b ++ (a::nil).
+  Proof.
+    intros.
+    cbn.
+    reflexivity.
+  Qed.
+
+End Batch.
+
 (** * Proof that traversable functors are shapely over lists *)
 (******************************************************************************)
 Section shapeliness.
@@ -78,10 +181,12 @@ Section pointwise.
 
   Context
     `{Classes.Kleisli.TraversableFunctor.TraversableFunctor T}
-    `{Map T}
-    `{Elements T}
+    `{ToMap_inst: Map T}
+    `{ToSubset_inst: ToSubset T}
+    `{ToBatch_inst: ToBatch T}
     `{! Compat_Map_Traverse T}
-    `{! Compat_Elements_Traverse T}.
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToBatch_Traverse}.
 
   Lemma traverse_respectful :
     forall `{Applicative G} `(f1 : A -> G B) `(f2 : A -> G B) (t : T A),
@@ -89,6 +194,7 @@ Section pointwise.
   Proof.
     introv ? hyp.
     do 2 rewrite traverse_through_runBatch.
+    unfold element_of in hyp.
     rewrite (element_through_runBatch2 A B) in hyp.
     unfold compose in *.
     unfold ret in *.
@@ -146,7 +252,7 @@ Section pointwise.
     ContainerFunctor T.
   Proof.
     constructor.
-    - rewrite compat_element_traverse.
+    - rewrite compat_tosubset_traverse.
       typeclasses eauto.
     - typeclasses eauto.
     - intros. now apply map_respectful.
@@ -217,8 +323,8 @@ Section deconstruction.
     `{! Compat_Map_Traverse T}
     `{ToBatch T}
     `{! Compat_ToBatch_Traverse}
-    `{! Elements T}
-     `{! Compat_Elements_Traverse T}.
+    `{! ToSubset T}
+     `{! Compat_ToSubset_Traverse T}.
 
   Definition trav_contents {A} (t: T A):
     Vector (plength t) A :=
@@ -309,96 +415,6 @@ Section deconstruction.
         rewrite <- coerce_Vector_contents.
         reflexivity.
     Qed.
-
-    Lemma Batch_contents_tolist:
-      forall {A B} (t: T A),
-        Vector_to_list A (Batch_contents (toBatch (A' := B) t)) =
-          List.rev (tolist t).
-    Proof.
-      intros.
-      rewrite tolist_to_foldMap.
-      rewrite (foldMap_through_runBatch2 A B).
-      unfold compose.
-      induction (toBatch t).
-      - reflexivity.
-      - cbn.
-        rewrite Vector_to_list_vcons.
-        rewrite IHb.
-        unfold_ops @Monoid_op_list @Return_list.
-        rewrite List.rev_unit.
-        reflexivity.
-    Qed.
-
-    Lemma Batch_contents_toBatch_sim:
-      forall {A B B'} (t: T A),
-        Batch_contents
-          (toBatch (A' := B) t) ~~
-          Batch_contents (toBatch (A' := B') t).
-    Proof.
-      intros.
-      unfold Vector_sim.
-      change (proj1_sig ?v) with (Vector_to_list _ v).
-      rewrite Batch_contents_tolist.
-      rewrite Batch_contents_tolist.
-      reflexivity.
-    Qed.
-
-    Lemma shape_toBatch_spec: forall (A B: Type) (t: T A),
-        shape (toBatch (A' := B) t) =
-          toBatch (A' := B) (shape t).
-    Proof.
-      intros.
-      compose near t on right.
-      unfold shape at 2.
-      rewrite toBatch_mapfst.
-      reflexivity.
-    Qed.
-
-    Lemma toBatch_shape:
-      forall {A' B} `(t1: T A) (t2: T A'),
-        shape t1 = shape t2 ->
-        shape (F := BATCH1 B (T B))
-              (toBatch (A' := B) t1) =
-          shape (F := BATCH1 B (T B))
-                (toBatch (A' := B) t2).
-    Proof.
-      introv Hshape.
-      do 2 rewrite shape_toBatch_spec.
-      rewrite Hshape.
-      reflexivity.
-    Qed.
-
-    (** ** Batch_to_list *)
-    (******************************************************************************)
-    Section Batch.
-
-      Definition Batch_to_list: forall `(b: Batch A B C), list A.
-      Proof.
-        intros. apply (tolist (F := BATCH1 B C) b).
-      Defined.
-
-      Lemma Batch_contents_list: forall `(b: Batch A B C),
-          proj1_sig (Batch_contents b) = List.rev (Batch_to_list b).
-      Proof.
-        intros.
-        induction b.
-        - reflexivity.
-        - cbn.
-          rewrite proj_vcons.
-          rewrite IHb.
-          rewrite <- List.rev_unit.
-          reflexivity.
-      Qed.
-
-      Lemma Batch_to_list_rw2 {A B C}: forall (b: Batch A B (B -> C)) (a: A),
-          Batch_to_list (b ⧆ a) = Batch_to_list b ++ (a::nil).
-      Proof.
-        intros.
-        cbn.
-        reflexivity.
-      Qed.
-
-    End Batch.
 
   End list.
 
@@ -546,23 +562,24 @@ Section deconstruction.
 
 End deconstruction.
 
-#[export] Instance Elements_Vector {n}: Elements (Vector n).
-unfold Vector.
-intro X.
-intros [l pf].
-intro x.
-exact (x ∈ l).
+#[export] Instance ToSubset_Vector {n}: ToSubset (Vector n).
+Proof.
+  unfold Vector.
+  intro X.
+  intros [l pf].
+  intro x.
+  exact (x ∈ l).
 Defined.
 
-(** * Elements of <<Batch>> *)
+(** * Auto-refining <<Batch>> *)
 (******************************************************************************)
 Require Import ContainerFunctor.
 
 Import ContainerFunctor.Notations.
 Import Applicative.Notations.
 
-#[export] Instance Elements_Batch1 {B C}: Elements (BATCH1 B C) :=
-  Elements_Traverse.
+#[export] Instance ToSubset_Batch1 {B C}: ToSubset (BATCH1 B C) :=
+  ToSubset_Traverse.
 
 Section pw_Batch.
 
@@ -577,14 +594,14 @@ Section pw_Batch.
     reflexivity.
   Qed.
 
-  Definition element_of_Step1 {A B C:Type}:
+  Definition tosubset_Step1 {A B C:Type}:
     forall (a' : A) (rest: Batch A B (B -> C)),
       forall (a : A),
-      element_of (F := BATCH1 B (B -> C)) rest a ->
-      element_of (F := BATCH1 B C) (Step rest a') a.
+        tosubset (F := BATCH1 B (B -> C)) rest a ->
+        tosubset (F := BATCH1 B C) (Step rest a') a.
   Proof.
     introv.
-    unfold_ops @Elements_Batch1 @Elements_Traverse.
+    unfold_ops @ToSubset_Batch1 @ToSubset_Traverse.
     introv Hin.
     change ((evalAt a ∘ foldMap (T := BATCH1 B (B -> C))
                     (ret (T := subset))) rest) in Hin.
@@ -600,12 +617,12 @@ Section pw_Batch.
     now left.
   Defined.
 
-  Definition element_of_Step2 {A B C:Type}:
+  Definition tosubset_Step2 {A B C:Type}:
     forall (rest: Batch A B (B -> C)) (a: A),
-      element_of (F := BATCH1 B C) (Step rest a) a.
+      tosubset (F := BATCH1 B C) (Step rest a) a.
   Proof.
     intros.
-    unfold_ops @Elements_Batch1 @Elements_Traverse.
+    unfold_ops @ToSubset_Batch1 @ToSubset_Traverse.
     change ((evalAt a ∘ foldMap (T := BATCH1 B C)
                     (ret (T := subset))) (rest ⧆ a)).
     rewrite (foldMap_morphism
@@ -634,25 +651,25 @@ Section pw_Batch.
   Fixpoint elt_decorate
    {A B C: Type}
    (b : Batch A B C):
-    Batch {a|element_of (F := BATCH1 B C) b a} B C :=
+    Batch {a| tosubset (F := BATCH1 B C) b a} B C :=
     match b with
     | Done c => Done c
     | Step rest a =>
         Step (map (F := BATCH1 B (B -> C))
                   (sigMapP A
-                           (element_of (F := BATCH1 B (B -> C)) rest)
-                           (element_of (F := BATCH1 B C) (Step rest a))
-                           (element_of_Step1 a rest)
+                           (tosubset (F := BATCH1 B (B -> C)) rest)
+                           (tosubset (F := BATCH1 B C) (Step rest a))
+                           (tosubset_Step1 a rest)
                   )
                   (elt_decorate rest))
-             (exist _ a (element_of_Step2 rest a))
+             (exist _ a (tosubset_Step2 rest a))
     end.
 
 
   Definition runBatch_pw
                {A B C} (G : Type -> Type)
                `{Applicative G}:
-    forall (b: Batch A B C) `(f1 : {a | element_of (F := BATCH1 B C) b a} -> G B), G C.
+    forall (b: Batch A B C) `(f1 : {a | tosubset (F := BATCH1 B C) b a} -> G B), G C.
   Proof.
     intros.
     induction b.
@@ -662,10 +679,12 @@ Section pw_Batch.
       + intros [a' a'in].
         apply f1.
         exists a'.
+        change (a' ∈ (b ⧆ a)).
         rewrite element_of_Step_spec.
         now left.
       + apply f1.
         exists a.
+        change (a ∈ (b ⧆ a)).
         rewrite element_of_Step_spec.
         now right.
   Defined.

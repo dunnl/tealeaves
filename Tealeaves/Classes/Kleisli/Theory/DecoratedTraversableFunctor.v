@@ -12,7 +12,6 @@ Import Monoid.Notations.
 Import Subset.Notations.
 Import Product.Notations.
 
-About element_of.
 
 (** * <<mapdt>> with constant applicative functors *)
 (******************************************************************************)
@@ -141,14 +140,14 @@ Section mapdt_foldMapd.
 
 End mapdt_foldMapd.
 
-(** * The <<ctx_tolist>> operation *)
+(** * The <<toctxlist>> operation *)
 (******************************************************************************)
 
-#[export] Instance CtxTolist_Mapdt
-  `{Mapdt E T}: CtxTolist E T :=
+#[export] Instance ToCtxlist_Mapdt
+  `{Mapdt E T}: ToCtxlist E T :=
   fun A => foldMapd (ret (T := list)).
 
-Section mapdt_ctx_tolist.
+Section mapdt_toctxlist.
 
   Context
     {E: Type} {T: Type -> Type}
@@ -161,32 +160,32 @@ Section mapdt_ctx_tolist.
       `{! Compat_Traverse_Mapdt}
       `{! DecoratedTraversableFunctor E T}.
 
-  (** ** <<ctx_tolist>> as a special case of <<foldMapd>>/<<mapdt>>*)
+  (** ** <<toctxlist>> as a special case of <<foldMapd>>/<<mapdt>>*)
   (******************************************************************************)
-  Lemma ctx_tolist_to_foldMapd : forall (A : Type),
-      ctx_tolist (F := T) = foldMapd (ret (T := list) (A := E * A)).
+  Lemma toctxlist_to_foldMapd : forall (A : Type),
+      toctxlist (F := T) = foldMapd (ret (T := list) (A := E * A)).
   Proof.
     reflexivity.
   Qed.
 
-  Corollary ctx_tolist_to_mapdt1 : forall (A : Type),
-      ctx_tolist = mapdt (G := const (list (E * A))) (B := False) (ret (T := list)).
+  Corollary toctxlist_to_mapdt1 : forall (A : Type),
+      toctxlist = mapdt (G := const (list (E * A))) (B := False) (ret (T := list)).
   Proof.
     reflexivity.
   Qed.
 
-  Corollary ctx_tolist_to_mapdt2 : forall (A fake : Type),
-      ctx_tolist = mapdt (G := const (list (E * A))) (B := fake) (ret (T := list)).
+  Corollary toctxlist_to_mapdt2 : forall (A fake : Type),
+      toctxlist = mapdt (G := const (list (E * A))) (B := fake) (ret (T := list)).
   Proof.
     intros.
-    rewrite ctx_tolist_to_mapdt1.
+    rewrite toctxlist_to_mapdt1.
     rewrite (mapdt_constant_applicative1 (B := fake)).
     reflexivity.
   Qed.
 
-  (** ** <<ctx_tolist>> is a natural transformation *)
+  (** ** <<toctxlist>> is a natural transformation *)
   (******************************************************************************)
-  #[export] Instance Natural_CtxTolist_Mapdt : Natural (@ctx_tolist E T _).
+  #[export] Instance Natural_ToCtxlist_Mapdt : Natural (@toctxlist E T _).
   Proof.
     constructor.
     - typeclasses eauto.
@@ -194,7 +193,7 @@ Section mapdt_ctx_tolist.
     - intros.
       (* LHS *)
       change (list ○ prod E) with (env E). (* hidden *)
-      rewrite ctx_tolist_to_foldMapd.
+      rewrite toctxlist_to_foldMapd.
       assert (Monoid_Morphism (list (E * A)) (list (E * B)) (map f)).
       { rewrite env_map_spec.
         apply Monmor_list_map. }
@@ -202,28 +201,28 @@ Section mapdt_ctx_tolist.
       rewrite env_map_spec.
       rewrite (natural (ϕ := @ret list _)); unfold_ops @Map_I.
       (* RHS *)
-      rewrite ctx_tolist_to_foldMapd.
+      rewrite toctxlist_to_foldMapd.
       rewrite foldMapd_map.
       reflexivity.
   Qed.
 
-    (** ** Composing <<ctx_tolist>> with <<mapd>> *)
+    (** ** Composing <<toctxlist>> with <<mapd>> *)
     (******************************************************************************)
-    Lemma ctx_tolist_mapd : forall `(f : E * A -> B),
-        ctx_tolist (F := T) ∘ mapd f = foldMapd (ret (T := list) ∘ cobind f).
+    Lemma toctxlist_mapd : forall `(f : E * A -> B),
+        toctxlist (F := T) ∘ mapd f = foldMapd (ret (T := list) ∘ cobind f).
     Proof.
       intros.
-      rewrite ctx_tolist_to_foldMapd.
+      rewrite toctxlist_to_foldMapd.
       rewrite foldMapd_mapd.
       reflexivity.
     Qed.
 
-    Lemma ctx_tolist_map : forall `(f : A -> B),
-        ctx_tolist (F := T) ∘ map f =
+    Lemma toctxlist_map : forall `(f : A -> B),
+        toctxlist (F := T) ∘ map f =
           foldMapd (ret (T := list) ∘ map (F := (E ×)) f).
     Proof.
       intros.
-      rewrite ctx_tolist_to_foldMapd.
+      rewrite toctxlist_to_foldMapd.
       rewrite foldMapd_map.
       reflexivity.
     Qed.
@@ -240,14 +239,14 @@ Section mapdt_ctx_tolist.
       reflexivity.
     Qed.
 
-    (** ** Naturality for <<ctx_tolist>> *)
+    (** ** Naturality for <<toctxlist>> *)
     (******************************************************************************)
-    Lemma mapd_ctx_tolist : forall `(f : E * A -> B),
-        mapd f ∘ ctx_tolist (F := T) = ctx_tolist ∘ mapd f.
+    Lemma mapd_toctxlist : forall `(f : E * A -> B),
+        mapd f ∘ toctxlist (F := T) = toctxlist ∘ mapd f.
     Proof.
       intros.
-      rewrite ctx_tolist_mapd.
-      rewrite ctx_tolist_to_foldMapd.
+      rewrite toctxlist_mapd.
+      rewrite toctxlist_to_foldMapd.
       assert (Monoid_Morphism (env E A) (env E B) (mapd f)).
       { unfold env. rewrite env_mapd_spec.
         typeclasses eauto. }
@@ -256,13 +255,13 @@ Section mapdt_ctx_tolist.
       (* TODO ^ generalize this part *)
     Qed.
 
-    Lemma map_ctx_tolist : forall `(f : A -> B),
-        map f ∘ ctx_tolist (F := T) =
-          ctx_tolist (F := T) ∘ map f.
+    Lemma map_toctxlist : forall `(f : A -> B),
+        map f ∘ toctxlist (F := T) =
+          toctxlist (F := T) ∘ map f.
     Proof.
       intros.
-      rewrite ctx_tolist_to_foldMapd.
-      rewrite ctx_tolist_to_foldMapd.
+      rewrite toctxlist_to_foldMapd.
+      rewrite toctxlist_to_foldMapd.
       rewrite foldMapd_map.
       assert (Monoid_Morphism (env E A) (env E B) (map f)).
       { unfold env at 1 2. rewrite env_map_spec.
@@ -273,14 +272,14 @@ Section mapdt_ctx_tolist.
       now rewrite (natural (ϕ := @ret list _) (A := E * A) (B := E * B)).
     Qed.
 
-    (** *** Factoring <<foldMapd>> through <<ctx_tolist>> *)
+    (** *** Factoring <<foldMapd>> through <<toctxlist>> *)
     (******************************************************************************)
-    Corollary foldMapd_through_ctx_tolist `{Monoid M}:
+    Corollary foldMapd_through_toctxlist `{Monoid M}:
       forall (A : Type) (f : E * A -> M),
-        foldMapd f = foldMap (T := list) f ∘ ctx_tolist.
+        foldMapd f = foldMap (T := list) f ∘ toctxlist.
     Proof.
       intros.
-      unfold_ops @CtxTolist_Mapdt.
+      unfold_ops @ToCtxlist_Mapdt.
       rewrite foldMap_list_eq.
       rewrite (foldMapd_morphism (M1 := list (E * A)) (M2 := M)).
       fequal. ext a. cbn. rewrite monoid_id_l.
@@ -289,38 +288,38 @@ Section mapdt_ctx_tolist.
 
     Lemma foldMapd_through_List_foldMap `{Monoid M}:
       forall (A : Type) (f : E * A -> M),
-        foldMapd f = foldMap_list f ∘ ctx_tolist.
+        foldMapd f = foldMap_list f ∘ toctxlist.
     Proof.
       intros.
-      rewrite foldMapd_through_ctx_tolist.
+      rewrite foldMapd_through_toctxlist.
       rewrite foldMap_list_eq.
       reflexivity.
     Qed.
 
-    (** *** Relating <<tolist>> and <<ctx_tolist>> *)
+    (** *** Relating <<tolist>> and <<toctxlist>> *)
     (******************************************************************************)
-    Lemma tolist_to_ctx_tolist : forall (A : Type),
-        tolist (F := T) (A := A) = map (F := list) extract ∘ ctx_tolist.
+    Lemma tolist_to_toctxlist : forall (A : Type),
+        tolist (F := T) (A := A) = map (F := list) extract ∘ toctxlist.
     Proof.
       intros.
       rewrite tolist_to_foldMap.
       rewrite foldMap_to_foldMapd.
-      rewrite ctx_tolist_to_foldMapd.
+      rewrite toctxlist_to_foldMapd.
       rewrite (foldMapd_morphism).
       rewrite (natural (ϕ := @ret list _)).
       reflexivity.
     Qed.
 
-End mapdt_ctx_tolist.
+End mapdt_toctxlist.
 
 (** * Elements and <<∈d>> *)
 (******************************************************************************)
 
 (* TODO generalize this with a Compat class or something *)
-#[export] Instance ElementsCtx_CtxTolist `{CtxTolist E T} : ElementsCtx E T :=
-  fun A => element_ctx_of ∘ ctx_tolist.
+#[export] Instance ToCtxset_ToCtxlist `{ToCtxlist E T} : ToCtxset E T :=
+  fun A => toctxset ∘ toctxlist.
 
-Section mapdt_element_ctx_of.
+Section mapdt_toctxset.
 
   Context
     {E: Type} {T: Type -> Type}
@@ -333,97 +332,111 @@ Section mapdt_element_ctx_of.
       `{! Compat_Traverse_Mapdt}
       `{! DecoratedTraversableFunctor E T}.
 
-  (** ** Factoring <<ctx_elements_of>> through <<ctx_tolist>>/<<foldMapd>> *)
+  (** ** Factoring <<toctxset_of>> through <<toctxlist>>/<<foldMapd>> *)
   (******************************************************************************)
-  Lemma ctx_elements_through_ctx_tolist : forall (A : Type),
-      element_ctx_of (F := T) (A := A) =
-        element_of (F := list) ∘ ctx_tolist (F := T).
+  Lemma toctxset_through_toctxlist : forall (A : Type),
+      toctxset (F := T) (A := A) =
+        tosubset (F := list) ∘ toctxlist (F := T).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma ctx_elements_through_ctx_tolist2 : forall (A : Type),
-      element_ctx_of (F := T) (A := A) =
-        element_ctx_of (F := env E) ∘ ctx_tolist (F := T).
+  Lemma toctxset_through_toctxlist2 : forall (A : Type),
+      toctxset (F := T) (A := A) =
+        toctxset (F := env E) ∘ toctxlist (F := T).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma ctx_elements_through_foldMapd : forall (A : Type),
-      element_ctx_of (F := T) (A := A) =
-        element_of ∘ foldMapd (ret (T := list)).
+  Lemma toctxset_through_foldMapd : forall (A : Type),
+      toctxset (F := T) (A := A) =
+        tosubset ∘ foldMapd (ret (T := list)).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma ctx_elements_to_foldMapd : forall (A : Type),
-      element_ctx_of (F := T) (A := A) = foldMapd (ret (T := subset)).
-  Proof.
-    intros.
-    rewrite ctx_elements_through_foldMapd.
-    rewrite (foldMapd_morphism (ϕ := element_of)).
-    rewrite element_of_list_hom1.
-    reflexivity.
-  Qed.
-
-  (** ** Rewriting <<ctx_elements_of>> and <<∈d>> to <<foldMapd>> *)
+  (** ** Rewriting <<toctxset_of>> and <<∈d>> to <<foldMapd>> *)
   (******************************************************************************)
-  Lemma ind_to_foldMapd : forall (A : Type) (e : E) (a : A) (t : T A),
-      element_ctx_of t (e, a) =
-        foldMapd (op := Monoid_op_or)
-          (unit := Monoid_unit_false) (eq (e, a)) t.
+  Lemma toctxset_to_foldMapd : forall (A : Type),
+      toctxset (F := T) (A := A) = foldMapd (ret (T := subset)).
   Proof.
     intros.
-    rewrite ctx_elements_to_foldMapd.
-    change_left ((evalAt (e, a) ∘ foldMapd (ret (T := subset))) t).
-    rewrite foldMapd_morphism.
-    now (fequal; ext [e' a']; propext; intuition).
-  Qed.
-
-  Corollary ctx_elements_to_mapdt1 : forall (A : Type),
-      element_ctx_of (F := T) = mapdt (G := const (subset (E * A))) (B := False) (ret (T := subset)).
-  Proof.
-    intros.
-    rewrite ctx_elements_to_foldMapd.
+    rewrite toctxset_through_foldMapd.
+    rewrite (foldMapd_morphism (ϕ := tosubset)).
+    rewrite tosubset_list_hom1.
     reflexivity.
   Qed.
 
-  Corollary ctx_elements_to_mapdt2 : forall (A fake : Type),
-      element_ctx_of (F := T) =
+  Corollary toctxset_to_mapdt1 : forall (A : Type),
+      toctxset (F := T) =
+        mapdt (G := const (subset (E * A))) (B := False) (ret (T := subset)).
+  Proof.
+    intros.
+    rewrite toctxset_to_foldMapd.
+    reflexivity.
+  Qed.
+
+  Corollary toctxset_to_mapdt2 : forall (A fake : Type),
+      toctxset (F := T) =
         mapdt (G := const (subset (E * A))) (B := fake) (ret (T := subset)).
   Proof.
     intros.
-    rewrite ctx_elements_to_mapdt1.
+    rewrite toctxset_to_mapdt1.
     rewrite (mapdt_constant_applicative1 (B := fake)).
     reflexivity.
   Qed.
 
-  (** ** Naturality for <<element_ctx_of>> *)
-  (******************************************************************************)
-  Lemma ctx_elements_mapd : forall `(f : E * A -> B),
-      element_ctx_of (F := T) ∘ mapd f = foldMapd (ret (T := subset) ∘ cobind f).
+  Lemma element_ctx_of_to_foldMapd
+    `{ToSubset T} `{! Compat_ToSubset_Traverse T}
+    : forall (A : Type) (p: E * A),
+      element_ctx_of (T := T) (A := A) p =
+        foldMapd (op := Monoid_op_or)
+          (unit := Monoid_unit_false) {{p}}.
   Proof.
     intros.
-    rewrite ctx_elements_to_foldMapd.
+    rewrite element_ctx_of_toctxset.
+    rewrite toctxset_to_foldMapd.
+    rewrite foldMapd_morphism.
+    now (fequal; ext [e' a']; propext; intuition).
+  Qed.
+
+  Lemma element_ctx_of_to_foldMapd2
+    `{ToSubset T} `{! Compat_ToSubset_Traverse T}
+    : forall (A : Type),
+      element_ctx_of (T := T) (A := A) =
+        foldMapd (op := Monoid_op_or)
+          (unit := Monoid_unit_false) ∘ ret (T := subset).
+  Proof.
+    intros. ext p.
+    apply element_ctx_of_to_foldMapd.
+  Qed.
+
+  (** ** Naturality for <<toctxset>> *)
+  (******************************************************************************)
+  Lemma toctxset_mapd : forall `(f : E * A -> B),
+      toctxset (F := T) ∘ mapd f = foldMapd (ret (T := subset) ∘ cobind f).
+  Proof.
+    intros.
+    rewrite toctxset_to_foldMapd.
     rewrite foldMapd_mapd.
     reflexivity.
   Qed.
 
-  Lemma ctx_elements_map : forall `(f : A -> B),
-      element_ctx_of (F := T) ∘ map f = foldMapd (ret (T := subset) ∘ map (F := (E ×)) f).
+  Lemma toctxset_map : forall `(f : A -> B),
+      toctxset (F := T) ∘ map f = foldMapd (ret (T := subset) ∘ map (F := (E ×)) f).
   Proof.
     intros.
-    rewrite ctx_elements_to_foldMapd.
+    rewrite toctxset_to_foldMapd.
     rewrite foldMapd_map.
     reflexivity.
   Qed.
 
-  Lemma elements_mapd
-    `{Elements T} `{! Compat_Elements_Traverse T} : forall `(f : E * A -> B),
-      element_of ∘ mapd f = foldMapd (ret (T := subset) ∘ f).
+  Lemma tosubset_mapd
+    `{ToSubset T} `{! Compat_ToSubset_Traverse T} : forall `(f : E * A -> B),
+      tosubset ∘ mapd f = foldMapd (ret (T := subset) ∘ f).
   Proof.
     intros.
-    rewrite element_of_to_foldMap.
+    rewrite tosubset_to_foldMap.
     rewrite foldMap_to_foldMapd.
     rewrite foldMapd_mapd.
     reassociate -> on left.
@@ -431,60 +444,63 @@ Section mapdt_element_ctx_of.
     reflexivity.
   Qed.
 
-  #[export] Instance Natural_Elementd_Mapdt : Natural (@element_ctx_of E T _).
+  #[export] Instance Natural_Elementd_Mapdt : Natural (@toctxset E T _).
   Proof.
     apply Natural_compose_Natural.
     typeclasses eauto.
     typeclasses eauto.
   Qed.
 
-  (** *** Relating <<element_of>> and <<elementsd>> *)
+  (** *** Relating <<tosubset>> and <<elementsd>> *)
   (******************************************************************************)
-  Lemma element_to_element_ctx_of
-    `{Elements T} `{! Compat_Elements_Traverse T}: forall (A : Type),
-      element_of (F := T) (A := A) = map (F := subset) extract ∘ element_ctx_of.
+  Lemma tosubset_to_toctxset
+    `{ToSubset T} `{! Compat_ToSubset_Traverse T}: forall (A : Type),
+      tosubset (F := T) (A := A) = map (F := subset) extract ∘ toctxset.
   Proof.
     intros.
-    rewrite element_of_to_foldMap.
+    rewrite tosubset_to_foldMap.
     rewrite foldMap_to_foldMapd.
-    rewrite ctx_elements_to_foldMapd.
+    rewrite toctxset_to_foldMapd.
     rewrite foldMapd_morphism.
     rewrite (natural (ϕ := @ret subset _)).
     reflexivity.
   Qed.
 
-  #[export] Instance Compat_Elements_ElementsCtx_Mapdt
-    `{Elements T} `{! Compat_Elements_Traverse T}:
-    `{Compat_Elements_ElementsCtx (E := E) (T := T)}.
+  #[export] Instance Compat_ToSubset_ToCtxset_Mapdt
+    `{ToSubset T} `{! Compat_ToSubset_Traverse T}:
+    `{Compat_ToSubset_ToCtxset (E := E) (T := T)}.
   Proof.
     hnf.
     ext A B.
-    rewrite element_to_element_ctx_of.
+    rewrite tosubset_to_toctxset.
     reflexivity.
   Qed.
 
   (** ** Characterizing <<∈d>> *)
   (******************************************************************************)
-  Lemma ind_iff_in_ctx_tolist1 : forall (A : Type) (e : E) (a : A) (t : T A),
-      (e, a) ∈d t <-> (e, a) ∈ (ctx_tolist t : list (E * A)).
+  Lemma ind_iff_in_toctxlist1 : forall (A : Type) (e : E) (a : A) (t : T A),
+      (e, a) ∈d t <-> (e, a) ∈ (toctxlist t : list (E * A)).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma ind_iff_in_ctx_tolist2 : forall (A : Type) (e : E) (a : A) (t : T A),
-      (e, a) ∈d t <-> (e, a) ∈d ctx_tolist t.
+  Lemma ind_iff_in_toctxlist2 : forall (A : Type) (e : E) (a : A) (t : T A),
+      (e, a) ∈d t <-> (e, a) ∈d toctxlist t.
   Proof.
     reflexivity.
   Qed.
 
-End mapdt_element_ctx_of.
+End mapdt_toctxset.
 
 (** * Quantification over elements *)
 (******************************************************************************)
 Section quantification.
 
   Context
-    `{DecoratedTraversableFunctor E T}.
+    `{DecoratedTraversableFunctor E T}
+      `{Traverse T}
+      `{ToSubset T}
+      `{! Compat_ToSubset_Traverse T}.
 
   Definition Forall_ctx `(P : E * A -> Prop) : T A -> Prop :=
     @foldMapd T E _ Prop Monoid_op_and Monoid_unit_true A P.
@@ -496,19 +512,19 @@ Section quantification.
     Forall_ctx P t <-> forall (e : E) (a : A), (e, a) ∈d t -> P (e, a).
   Proof.
     unfold Forall_ctx.
-    rewrite foldMapd_through_ctx_tolist.
-    unfold_ops @ElementsCtx_CtxTolist.
-    unfold compose at 1 2.
-    induction (ctx_tolist t) as [|[e a] rest IHrest].
+    rewrite foldMapd_through_toctxlist.
+    setoid_rewrite ind_iff_in_toctxlist2.
+    unfold compose at 1.
+    induction (toctxlist t) as [|[e a] rest IHrest].
     - cbv. intuition.
     - rewrite foldMap_list_eq;
         simpl_list;
         rewrite <- foldMap_list_eq.
       rewrite IHrest; clear IHrest.
-      unfold_ops @ElementsCtx_env.
-      simpl_list.
-      setoid_rewrite subset_in_add.
-      change ({{(e, a)}} (?e0, ?a0)) with ((e, a) = (e0, a0)).
+      unfold element_ctx_of.
+      unfold_ops @ToCtxset_env.
+      change (tosubset ?t ?p) with (p ∈ t).
+      setoid_rewrite in_list_cons.
       setoid_rewrite pair_equal_spec.
       unfold_all_transparent_tcs.
       intuition (subst; auto).

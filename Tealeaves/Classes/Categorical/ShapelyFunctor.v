@@ -1,13 +1,8 @@
 From Tealeaves Require Export
-  Classes.Monoid
   Classes.Categorical.ContainerFunctor
-  Misc.List
-  Misc.Subset.
+  Misc.List.
 
-Import ContainerFunctor.Notations.
-Import Subset.Notations.
 Import Classes.Functor.Notations.
-Import List.ListNotations.
 
 #[local] Generalizable Variables G F A B.
 

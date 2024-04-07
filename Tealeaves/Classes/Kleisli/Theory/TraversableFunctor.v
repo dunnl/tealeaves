@@ -274,51 +274,52 @@ End tolist.
 
 (** * Elements of traversable functors *)
 (******************************************************************************)
-#[local] Instance Elements_Traverse `{Traverse T}:
-  Elements T :=
+#[local] Instance ToSubset_Traverse `{Traverse T}:
+  ToSubset T :=
   fun A => foldMap (ret (T := subset)).
 
-Class Compat_Elements_Traverse
+Class Compat_ToSubset_Traverse
   (T : Type -> Type)
-  `{Elements_inst : Elements T}
+  `{ToSubset_inst : ToSubset T}
   `{Traverse_inst : Traverse T} : Prop :=
-  compat_element_traverse :
-    @element_of T Elements_inst =
-      @element_of T (@Elements_Traverse T Traverse_inst).
+  compat_tosubset_traverse :
+    @tosubset T ToSubset_inst =
+      @tosubset T (@ToSubset_Traverse T Traverse_inst).
 
-#[export] Instance Compat_Elements_Traverse_Self
+#[export] Instance Compat_ToSubset_Traverse_Self
   `{Traverse_T: Traverse T}:
-  @Compat_Elements_Traverse T Elements_Traverse Traverse_T := ltac:(reflexivity).
+  @Compat_ToSubset_Traverse T ToSubset_Traverse Traverse_T := ltac:(reflexivity).
 
-Lemma element_of_to_foldMap `{Compat_Elements_Traverse T}:
+Lemma tosubset_to_foldMap `{Compat_ToSubset_Traverse T}:
   forall (A : Type),
-    @element_of T _ A = foldMap (ret (T := subset)) (A := A).
+    @tosubset T _ A =
+      foldMap (ret (T := subset)) (A := A).
 Proof.
-  rewrite compat_element_traverse.
+  rewrite compat_tosubset_traverse.
   reflexivity.
 Qed.
 
-#[export] Instance Compat_Elements_Traverse_Tolist
+#[export] Instance Compat_ToSubset_Traverse_Tolist
   `{TraversableFunctor T} :
-  @Compat_Elements_Tolist T
-    (@Elements_Traverse T _)
+  @Compat_ToSubset_Tolist T
+    (@ToSubset_Traverse T _)
     (@Tolist_Traverse T _).
 Proof.
   hnf.
-  unfold_ops @Elements_Traverse.
-  unfold_ops @Elements_Tolist.
+  unfold_ops @ToSubset_Traverse.
+  unfold_ops @ToSubset_Tolist.
   unfold_ops @Tolist_Traverse.
   ext A.
   rewrite (foldMap_morphism (list A) (subset A)
-             (ϕ := @element_of list Elements_list A)).
-  rewrite element_of_list_hom1.
+             (ϕ := @tosubset list ToSubset_list A)).
+  rewrite tosubset_list_hom1.
   reflexivity.
 Qed.
 
-#[export] Instance Compat_Elements_Traverse_List :
-  @Compat_Elements_Traverse list Elements_list Traverse_list.
+#[export] Instance Compat_ToSubset_Traverse_List :
+  @Compat_ToSubset_Traverse list ToSubset_list Traverse_list.
 Proof.
-  unfold Compat_Elements_Traverse.
+  unfold Compat_ToSubset_Traverse.
   ext A l a.
   induction l.
   - cbn. reflexivity.
@@ -332,13 +333,13 @@ Proof.
     firstorder.
 Qed.
 
-Lemma element_through_tolist
+Lemma tosubset_through_tolist
   `{TraversableFunctor T}: forall A:Type,
-  element_of (F := T) (A := A) =
-    element_of (F := list) ∘ tolist (A := A).
+    tosubset (F := T) (A := A) =
+      tosubset (F := list) ∘ tolist (A := A).
 Proof.
   intros.
-  rewrite element_of_to_foldMap.
+  rewrite tosubset_to_foldMap.
   rewrite foldMap_through_tolist.
   ext t.
   unfold compose.
@@ -357,18 +358,18 @@ Section elements.
   Context
     `{TraversableFunctor T}
       `{Map T}
-      `{Elements T}
+      `{ToSubset T}
       `{! Compat_Map_Traverse T}
-      `{! Compat_Elements_Traverse T}.
+      `{! Compat_ToSubset_Traverse T}.
 
   (** ** Naturality *)
   (******************************************************************************)
   #[export] Instance Natural_Element_Traverse :
-    Natural (@element_of T Elements_Traverse).
+    Natural (@tosubset T ToSubset_Traverse).
   Proof.
     constructor; try typeclasses eauto.
     intros A B f.
-    unfold element_of, Elements_Traverse.
+    unfold tosubset, ToSubset_Traverse.
     rewrite (foldMap_morphism (subset A) (subset B)).
     rewrite foldMap_map.
     rewrite (natural (ϕ := @ret subset _)).
@@ -380,10 +381,11 @@ Section elements.
   Lemma in_to_foldMap:
     forall (A : Type) (t : T A),
     forall (a : A), a ∈ t = foldMap (op := Monoid_op_or)
-                         (unit := Monoid_unit_false) (eq a) t.
+                         (unit := Monoid_unit_false) {{a}} t.
   Proof.
     intros.
-    rewrite element_of_to_foldMap.
+    unfold element_of.
+    rewrite tosubset_to_foldMap.
     change_left (evalAt a (foldMap (ret (T := subset)) t)).
     compose near t on left.
     rewrite (foldMap_morphism
@@ -400,8 +402,8 @@ Section quantification.
 
   Context
     `{TraversableFunctor T}
-    `{! Elements T}
-     `{! Compat_Elements_Traverse T}.
+    `{! ToSubset T}
+     `{! Compat_ToSubset_Traverse T}.
 
   Definition Forall `(P : A -> Prop) : T A -> Prop :=
     @foldMap T _ Prop Monoid_op_and Monoid_unit_true A P.
@@ -414,8 +416,9 @@ Section quantification.
   Proof.
     unfold Forall.
     rewrite foldMap_through_tolist.
-    rewrite compat_element_traverse.
-    rewrite element_through_tolist.
+    unfold element_of.
+    rewrite compat_tosubset_traverse.
+    rewrite tosubset_through_tolist.
     unfold compose at 1 2.
     induction (tolist t) as [|a rest IHrest].
     - split.
@@ -436,8 +439,9 @@ Section quantification.
   Proof.
     unfold Forany.
     rewrite foldMap_through_tolist.
-    rewrite compat_element_traverse.
-    rewrite element_through_tolist.
+    unfold element_of.
+    rewrite compat_tosubset_traverse.
+    rewrite tosubset_through_tolist.
     unfold compose at 1 2.
     induction (tolist t) as [|a rest IHrest].
     - split.

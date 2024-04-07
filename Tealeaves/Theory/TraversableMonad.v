@@ -36,10 +36,10 @@ Section traversable_monad_theory.
       `{! Compat_Bind_Bindt T U}
       `{Monad_inst : ! TraversableMonad T}
       `{Module_inst : ! TraversableRightPreModule T U}
-      `{Elements_T_inst: Elements T}
-      `{Elements_U_inst: Elements U}
-      `{! Compat_Elements_Traverse T}
-      `{! Compat_Elements_Traverse U}.
+      `{ToSubset_T_inst: ToSubset T}
+      `{ToSubset_U_inst: ToSubset U}
+      `{! Compat_ToSubset_Traverse T}
+      `{! Compat_ToSubset_Traverse U}.
 
   (** * <<foldMap>> on monads *)
   (******************************************************************************)
@@ -201,11 +201,11 @@ Section instances.
     `{Traverse_T_inst : Traverse T}
     `{Bind_T_inst : Bind T T}
     `{Bindt_T_inst : Bindt T T}
-    `{Elements_T_inst: Elements T}
+    `{ToSubset_T_inst: ToSubset T}
     `{! Compat_Map_Bindt T T}
     `{! Compat_Traverse_Bindt T T}
     `{! Compat_Bind_Bindt T T}
-    `{! Compat_Elements_Traverse T}
+    `{! Compat_ToSubset_Traverse T}
     `{! TraversableMonad T}
     `{Map_U_inst : Map U}
     `{Traverse_U_inst : Traverse U}
@@ -214,8 +214,8 @@ Section instances.
     `{! Compat_Map_Bindt T U}
     `{! Compat_Traverse_Bindt T U}
     `{! Compat_Bind_Bindt T U}
-    `{Elements_U_inst: Elements U}
-    `{! Compat_Elements_Traverse U}
+    `{ToSubset_U_inst: ToSubset U}
+    `{! Compat_ToSubset_Traverse U}
     `{Module_inst : ! TraversableRightModule T U}.
 
     #[export] Instance Monad_Hom_Tolist

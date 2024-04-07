@@ -1,4 +1,4 @@
-From Tealeaves Require Import
+From Tealeaves Require Export
   Classes.Kleisli.Monad (Return, ret)
   Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Categorical.Applicative

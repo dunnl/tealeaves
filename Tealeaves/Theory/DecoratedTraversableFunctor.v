@@ -21,106 +21,89 @@ Import DecoratedContainerFunctor.Notations.
   {H H0 H1} ϕ%function_scope {C}%type_scope b.
 
 
+Section decorated_traversable_functor_theory.
 
-    (** ** Characterizing <<∈d>> and <<mapd>> *)
-    (******************************************************************************)
-    Theorem ind_mapd_iff_core:
-      forall `(f : E * A -> B),
-        mapd f ∘ element_ctx_of = element_ctx_of ∘ mapd (T := T) f.
-    Proof.
-      intros.
-      rewrite ctx_elements_through_ctx_tolist.
-      rewrite ctx_elements_through_ctx_tolist.
-      reassociate -> on right.
-      change (list (prod ?E ?X)) with (env E X). (* hidden *)
-      rewrite <- (mapd_ctx_tolist f).
-      rewrite env_mapd_spec.
-      reassociate <- on right.
-      rewrite ctxset_mapd_spec.
-      change (env ?E ?X) with (list (prod E X)). (* hidden *)
-      unfold ctxset.
-      rewrite <- (natural (ϕ := @element_of list _)).
+  Context
+    `{DecoratedTraversableFunctor E T}
+      `{Map T}
+      `{Mapd E T}
+      `{! Compat_Map_Mapdt}
+      `{! Compat_Mapd_Mapdt}.
+
+  (** ** Characterizing <<∈d>> and <<mapd>> *)
+  (******************************************************************************)
+  Theorem ind_mapd_iff_core:
+    forall `(f : E * A -> B),
+      mapd f ∘ toctxset = toctxset ∘ mapd (T := T) f.
+  Proof.
+    intros.
+    rewrite toctxset_through_toctxlist.
+    rewrite toctxset_through_toctxlist.
+    reassociate -> on right.
+    change (list (prod ?E ?X)) with (env E X). (* hidden *)
+    rewrite <- (mapd_toctxlist f).
+    rewrite env_mapd_spec.
+    reassociate <- on right.
+    rewrite ctxset_mapd_spec.
+    change (env ?E ?X) with (list (prod E X)). (* hidden *)
+    unfold ctxset.
+    rewrite <- (natural (ϕ := @tosubset list _)).
+    reflexivity.
+  Qed.
+
+  Lemma mapdt_respectful:
+    forall A B `{Applicative G} (t : T A) (f g : E * A -> G B),
+      (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))
+      -> mapdt f t = mapdt g t.
+  Proof.
+    introv Happl hyp.
+    do 2 rewrite mapdt_through_runBatch.
+    unfold element_ctx_of in hyp.
+    rewrite (toctxset_through_runBatch2 (tag := B)) in hyp.
+    unfold compose in *.
+    induction (toBatch6 (B := B) t).
+    - reflexivity.
+    - destruct a as [e a]. cbn.
+      rewrite IHb.
+      rewrite hyp.
       reflexivity.
-    Qed.
+      + cbn. now right.
+      + introv hyp2.
+        apply hyp.
+        now left.
+  Qed.
 
-    (*
-    Theorem ind_mapd_iff:
-      forall `(f : E * A -> B) (t : T A) (e : E) (b : B),
-        (e, b) ∈d mapd f t <-> exists (a : A), (e, a) ∈d t /\ f (e, a) = b.
-    Proof.
-      intros.
-      unfold_ops @ElementsCtx_CtxTolist.
-      change_left ((evalAt (e, b) ∘ element_of (F := list) ∘ ctx_tolist ∘ mapd (T := T) f) t).
-      change_right ((evalAt (e, b) ∘ mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist) t).
-      enough (lemma : element_of (F := list) ∘ ctx_tolist ∘ mapd f =
-                        mapd (T := ctxset E) f ∘ element_of (F := list) ∘ ctx_tolist).
-      change_left ((evalAt (e, b) ∘ (element_of (F := list) ∘ ctx_tolist ∘ mapd f)) t).
-      rewrite lemma. reflexivity.
-      { reassociate -> on left.
-        change (list (prod ?E ?X)) with (env E X). (* hidden *)
-        rewrite <- (mapd_ctx_tolist f).
-        reassociate <- on left.
-        rewrite (env_mapd_spec).
-        rewrite (ctxset_mapd_spec).
-        change (env ?E ?X) with (list (prod E X)). (* hidden *)
-        rewrite <- (natural (ϕ := @element_of list _)).
-        reflexivity.
-      }
-    Qed.
-    *)
+  Theorem mapdt_purity1 :
+    forall `{Applicative G},
+      `(mapdt (G := G) (pure ∘ extract) = @pure G _ (T A)).
+  Proof.
+    intros.
+    rewrite (kdtfun_morph (G1 := fun A => A) (G2 := G)).
+    rewrite kdtfun_mapdt1.
+    reflexivity.
+  Qed.
 
-    Lemma mapdt_respectful:
-      forall A B `{Applicative G} (t : T A) (f g : E * A -> G B),
-        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))
-        -> mapdt f t = mapdt g t.
-    Proof.
-      introv Happl hyp.
-      do 2 rewrite mapdt_through_runBatch.
-      rewrite (ctx_elements_through_runBatch2 (tag := B)) in hyp.
-      unfold compose in *.
-      induction (toBatch6 (B := B) t).
-      - reflexivity.
-      - destruct a as [e a]. cbn.
-        rewrite IHb.
-        rewrite hyp.
-        reflexivity.
-        + cbn. now right.
-        + introv hyp2.
-          apply hyp.
-          now left.
-    Qed.
+  Corollary mapdt_respectful_pure:
+    forall A `{Applicative G} (t : T A) (f : E * A -> G A),
+      (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = pure (F := G) a)
+      -> mapdt f t = pure t.
+  Proof.
+    intros.
+    rewrite <- mapdt_purity1.
+    now apply mapdt_respectful.
+  Qed.
 
-    Theorem mapdt_purity1 :
-      forall `{Applicative G},
-        `(mapdt (G := G) (pure ∘ extract) = @pure G _ (T A)).
-    Proof.
-      intros.
-      rewrite (kdtfun_morph (G1 := fun A => A) (G2 := G)).
-      rewrite kdtfun_mapdt1.
-      reflexivity.
-    Qed.
-
-    Corollary mapdt_respectful_pure:
-      forall A `{Applicative G} (t : T A) (f : E * A -> G A),
-        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = pure (F := G) a)
-        -> mapdt f t = pure t.
-    Proof.
-      intros.
-      rewrite <- mapdt_purity1.
-      now apply mapdt_respectful.
-    Qed.
-
-    Corollary mapdt_respectful_id:
-      forall A (t : T A) (f : E * A -> A),
-        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = a)
-        -> mapdt (G := fun A => A) f t = t.
-    Proof.
-      intros.
-      change t with (id t) at 2.
-      rewrite <- kdtfun_mapdt1.
-      apply (mapdt_respectful A A (G := fun A => A)).
-      assumption.
-    Qed.
+  Corollary mapdt_respectful_id:
+    forall A (t : T A) (f : E * A -> A),
+      (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = a)
+      -> mapdt (G := fun A => A) f t = t.
+  Proof.
+    intros.
+    change t with (id t) at 2.
+    rewrite <- kdtfun_mapdt1.
+    apply (mapdt_respectful A A (G := fun A => A)).
+    assumption.
+  Qed.
 
     Lemma mapd_respectful :
       forall A B (t : T A) (f g : E * A -> B),
@@ -129,7 +112,8 @@ Import DecoratedContainerFunctor.Notations.
     Proof.
       introv hyp.
       do 2 rewrite mapd_through_runBatch.
-      rewrite (ctx_elements_through_runBatch2 (tag := B)) in hyp.
+      unfold element_ctx_of in hyp.
+      rewrite (toctxset_through_runBatch2 (tag := B)) in hyp.
       unfold compose in *.
       induction (toBatch6 (B := B) t).
       - reflexivity.
@@ -143,7 +127,6 @@ Import DecoratedContainerFunctor.Notations.
           now left.
     Qed.
 
-  End tosetd.
 
   #[export] Instance: DecoratedContainerFunctor E T.
   Proof.

@@ -20,9 +20,9 @@ Class DecoratedContainerMonad
   (W : Type) (T : Type -> Type)
   `{Monoid_op W} `{Monoid_unit W}
   `{Bindd W T T} `{Return T}
-  `{ElementsCtx W T} :=
+  `{ToCtxset W T} :=
   { dconm_functor :> DecoratedMonad W T;
-    decom_hom :> DecoratedMonadHom W T (ctxset W) (@element_ctx_of W T _);
+    decom_hom :> DecoratedMonadHom W T (ctxset W) (@toctxset W T _);
     dconm_pointwise : forall (A B : Type) (t : T A) (f g : W * A -> T B),
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> bindd f t = bindd g t;
   }.
@@ -32,12 +32,12 @@ Class DecoratedContainerRightModule
   `{Monoid_op W} `{Monoid_unit W}
   `{Bindd W T T} `{Return T}
   `{Bindd W T U}
-  `{ElementsCtx W T}
-  `{ElementsCtx W U} :=
+  `{ToCtxset W T}
+  `{ToCtxset W U} :=
   { dconmod_module :> DecoratedRightModule W T U;
     dconmod_hom :> ParallelDecoratedRightModuleHom T (ctxset W) U (ctxset W)
-      (@element_ctx_of W T _)
-      (@element_ctx_of W U _);
+      (@toctxset W T _)
+      (@toctxset W U _);
     dconmod_pointwise : forall (A B : Type) (t : U A) (f g : W * A -> T B),
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> bindd f t = bindd (U := U) g t;
   }.
@@ -52,10 +52,10 @@ Class DecoratedContainerMonadFull
   `{Monoid_op W}
   `{Monoid_unit W}
   `{Monoid W}
-  `{ElementsCtx W T} `{Elements T} :=
+  `{ToCtxset W T} `{ToSubset T} :=
   { dconmf_dconm :> DecoratedContainerMonad W T;
     dconmf_functor :> DecoratedMonadFull W T;
-    dconmf_element_compat :> Compat_Elements_ElementsCtx;
+    dconmf_element_compat :> Compat_ToSubset_ToCtxset;
   }.
 
 (** * Basic properties of containers *)
@@ -73,9 +73,9 @@ Section decorated_container_monad_theory.
       `{Map_Bindd_T_inst : ! Compat_Map_Bindd W T T}
       `{Bind_Bindd_T_inst : ! Compat_Bind_Bindd W T T}
       `{Mapd_Bindd_T_inst : ! Compat_Mapd_Bindd W T T}
-      `{ElementsCtx_T_inst : ElementsCtx W T}
-      `{Elements_T_inst : Elements T}
-      `{! Compat_Elements_ElementsCtx (E := W) (T := T)}
+      `{ToCtxset_T_inst : ToCtxset W T}
+      `{ToSubset_T_inst : ToSubset T}
+      `{! Compat_ToSubset_ToCtxset (E := W) (T := T)}
       `{! DecoratedContainerMonad W T}
       `{Mapd_U_inst : Mapd W U}
       `{Bind_U_inst : Bind T U}
@@ -84,9 +84,9 @@ Section decorated_container_monad_theory.
       `{Map_Bindd_inst : ! Compat_Map_Bindd W T U}
       `{Bind_Bindd_inst : ! Compat_Bind_Bindd W T U}
       `{Mapd_Bindd_inst : ! Compat_Mapd_Bindd W T U}
-      `{ElementsCtx_U_inst : ElementsCtx W U}
-      `{Elements_U_inst : Elements U}
-      `{! Compat_Elements_ElementsCtx (E := W) (T := U)}
+      `{ToCtxset_U_inst : ToCtxset W U}
+      `{ToSubset_U_inst : ToSubset U}
+      `{! Compat_ToSubset_ToCtxset (E := W) (T := U)}
       `{Module_inst : ! DecoratedContainerRightModule W T U}.
 
   Variables (A B : Type).
@@ -94,7 +94,7 @@ Section decorated_container_monad_theory.
   Implicit Types (t : U A) (b : B) (w : W) (a : A).
 
   Lemma dconm_morphism_ret : forall (A : Type),
-      element_ctx_of ∘ ret (T := T) (A := A) =
+      toctxset ∘ ret (T := T) (A := A) =
         ret (T := ctxset W).
   Proof.
     apply kmond_hom_ret.
@@ -105,14 +105,17 @@ Section decorated_container_monad_theory.
   Proof.
     intros.
     compose near a2 on left.
-    rewrite kmond_hom_ret.
+    rewrite element_ctx_of_toctxset.
+    reassociate -> on left.
+    rewrite (kmond_hom_ret (ϕ := @toctxset W T _)).
+    unfold evalAt, compose;
     unfold_ops @Return_ctxset.
     intuition.
   Qed.
 
   Lemma dconm_morphism_bind : forall (A B : Type) (f : W * A -> T B),
-      element_ctx_of ∘ bindd (U := U) f =
-        bindd (U := ctxset W) (element_ctx_of ∘ f) ∘ element_ctx_of (F := U).
+      toctxset ∘ bindd (U := U) f =
+        bindd (U := ctxset W) (toctxset ∘ f) ∘ toctxset (F := U).
   Proof.
     apply kmoddpar_hom_bind.
   Qed.
@@ -125,7 +128,9 @@ Section decorated_container_monad_theory.
   Proof.
     introv.
     compose near t on left.
-    rewrite kmoddpar_hom_bind.
+    rewrite element_ctx_of_toctxset.
+    reassociate -> on left.
+    rewrite (kmoddpar_hom_bind (ϕ := @toctxset W U _)).
     reflexivity.
   Qed.
 
@@ -252,17 +257,17 @@ Proof.
   - admit.
   - intros. ext l. unfold compose.
     induction l as [| [w a] rest IHrest].
-    + cbn. unfold_ops @ElementsCtx_env.
+    + cbn. unfold_ops @ToCtxset_env.
       autorewrite with tea_list.
       rewrite bindd_ctxset_nil.
       reflexivity.
     + change (bindd f ((w, a) :: rest)) with
         (shift list (w, f (w, a)) ++ bindd f rest).
       cbn.
-      unfold_ops @ElementsCtx_env.
+      unfold_ops @ToCtxset_env.
       autorewrite with tea_list.
-      change (element_of (A := W * ?A)) with
-        (element_ctx_of (F := env W) (A := A)).
+      change (tosubset (A := W * ?A)) with
+        (toctxset (F := env W) (A := A)).
       rewrite bindd_ctxset_add.
       rewrite bindd_ctxset_one.
       rewrite <- IHrest.

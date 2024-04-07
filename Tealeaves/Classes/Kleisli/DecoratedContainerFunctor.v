@@ -16,40 +16,49 @@ Import List.ListNotations.
 (** * Container-like functors with context *)
 (******************************************************************************)
 
-(** ** <<element_ctx_of>> operation *)
+(** ** <<toctxset>> operation *)
 (******************************************************************************)
-Class ElementsCtx (E : Type) (F : Type -> Type) :=
-  element_ctx_of : forall A : Type, F A -> ctxset E A.
+Class ToCtxset (E : Type) (F : Type -> Type) :=
+  toctxset : forall A : Type, F A -> ctxset E A.
 
-#[global] Arguments element_ctx_of {E}%type_scope {F}%function_scope
-  {ElementsCtx} {A}%type_scope _.
+#[global] Arguments toctxset {E}%type_scope {F}%function_scope
+  {ToCtxset} {A}%type_scope _.
+
+Definition element_ctx_of `{ToCtxset E T} {A: Type}:
+  E * A -> T A -> Prop := fun p t => toctxset t p.
+
+Lemma element_ctx_of_toctxset `{ToCtxset E T} {A: Type}:
+  forall (p:E*A), element_ctx_of p = evalAt p ∘ toctxset.
+Proof.
+  reflexivity.
+Qed.
 
 #[local] Notation "x ∈d t" :=
-  (element_ctx_of t x) (at level 50) : tealeaves_scope.
+  (element_ctx_of x t) (at level 50) : tealeaves_scope.
 
 Section compat.
 
   Context
-    `{ElementsCtx_inst : ElementsCtx E T}.
+    `{ToCtxset_inst : ToCtxset E T}.
 
-  Definition Elements_ElementsCtx : Elements T :=
-    fun A => map (F := subset) extract ∘ element_ctx_of.
+  Definition ToSubset_ToCtxset : ToSubset T :=
+    fun A => map (F := subset) extract ∘ toctxset.
 
-  Class Compat_Elements_ElementsCtx
-    `{Elements_inst : Elements T} : Prop :=
+  Class Compat_ToSubset_ToCtxset
+    `{ToSubset_inst : ToSubset T} : Prop :=
     compat_elements_elements_ctx :
-      @element_of T Elements_inst =
-        @element_of T Elements_ElementsCtx.
+      @tosubset T ToSubset_inst =
+        @tosubset T ToSubset_ToCtxset.
 
   Lemma ind_iff_in
-    `{Compat_Elements_ElementsCtx}:
+    `{Compat_ToSubset_ToCtxset}:
     forall (A : Type) (t : T A) (a : A),
       a ∈ t <-> exists (e: E), (e, a) ∈d t.
   Proof.
     intros.
-    change_left ((evalAt a ∘ element_of) t).
+    change_left ((evalAt a ∘ tosubset) t).
     rewrite compat_elements_elements_ctx.
-    unfold_ops @Elements_ElementsCtx.
+    unfold_ops @ToSubset_ToCtxset.
     unfold_ops @Map_subset.
     unfold evalAt, compose.
     split.
@@ -60,7 +69,7 @@ Section compat.
   Qed.
 
   Lemma ind_implies_in
-    `{Compat_Elements_ElementsCtx}:
+    `{Compat_ToSubset_ToCtxset}:
     forall (A : Type) (e : E) (a : A) (t : T A),
       (e, a) ∈d t -> a ∈ t.
   Proof.
@@ -75,9 +84,9 @@ End compat.
 (******************************************************************************)
 Class DecoratedContainerFunctor
   (E : Type) (F : Type -> Type)
-  `{Mapd E F} `{ElementsCtx E F} :=
+  `{Mapd E F} `{ToCtxset E F} :=
   { dcont_functor :> DecoratedFunctor E F;
-    dcont_natural :> DecoratedNatural E F (ctxset E) (@element_ctx_of E _ _);
+    dcont_natural :> DecoratedNatural E F (ctxset E) (@toctxset E _ _);
     dcont_pointwise : forall (A B : Type) (t : F A) (f g : E * A -> B),
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> mapd f t = mapd g t;
   }.
@@ -85,23 +94,23 @@ Class DecoratedContainerFunctor
 Class DecoratedContainerFunctorFull
   (E : Type) (F : Type -> Type)
   `{Map F} `{Mapd E F}
-  `{Elements F}
-  `{ElementsCtx E F} :=
+  `{ToSubset F}
+  `{ToCtxset E F} :=
   { dcontf_functor :> DecoratedFunctorFull E F;
     dcontf_dcont :> DecoratedContainerFunctor E F;
-    dcontf_compat :> Compat_Elements_ElementsCtx;
+    dcontf_compat :> Compat_ToSubset_ToCtxset;
   }.
 
-(** ** [ElementsCtx]-preserving Natural transformations *)
+(** ** [ToCtxset]-preserving Natural transformations *)
 (******************************************************************************)
 Class DecoratedContainerTransformation
   {E : Type} {F G : Type -> Type}
-  `{Map F} `{Mapd E F} `{ElementsCtx E F}
-  `{Map G} `{Mapd E G} `{ElementsCtx E G}
+  `{Map F} `{Mapd E F} `{ToCtxset E F}
+  `{Map G} `{Mapd E G} `{ToCtxset E G}
   (η : F ⇒ G) :=
   { dcont_trans_natural : Natural η;
     dcont_trans_commute :
-    forall A, element_ctx_of (F := F) = element_ctx_of (F := G) ∘ η A;
+    forall A, toctxset (F := F) = toctxset (F := G) ∘ η A;
   }.
 
 (** * Container instance for <<ctxset>> *)
@@ -110,12 +119,12 @@ Section Container_ctxset.
 
   Context {E: Type}.
 
-  Instance ElementsCtx_ctxset : ElementsCtx E (ctxset E) :=
+  Instance ToCtxset_ctxset : ToCtxset E (ctxset E) :=
     fun (A : Type) (s : ctxset E A) => s.
 
   Instance Natural_elements_ctx_ctxset :
     DecoratedNatural E (ctxset E) (ctxset E)
-      (@element_ctx_of E (ctxset E) _).
+      (@toctxset E (ctxset E) _).
   Proof.
     constructor. reflexivity.
   Qed.
@@ -147,9 +156,9 @@ Section setlike_functor_theory.
     `{DecoratedFunctor E T}
     `{Map_inst : Map T}
     `{! Compat_Map_Mapd}
-    `{ElementsCtx E T}
-    `{Elements_inst : Elements T}
-    `{! Compat_Elements_ElementsCtx}
+    `{ToCtxset E T}
+    `{ToSubset_inst : ToSubset T}
+    `{! Compat_ToSubset_ToCtxset}
     `{! DecoratedContainerFunctor E T}
     {A B : Type}.
 
@@ -162,7 +171,9 @@ Section setlike_functor_theory.
   Proof.
     introv.
     compose near t on left.
-    rewrite <- dec_natural.
+    rewrite element_ctx_of_toctxset.
+    reassociate -> on left.
+    rewrite <- (dec_natural (ϕ := @toctxset E T _)).
     reflexivity.
   Qed.
 
@@ -220,7 +231,7 @@ End setlike_functor_theory.
 Module Notations.
 
   Notation "x ∈d t" :=
-    (element_ctx_of t x) (at level 50) : tealeaves_scope.
+  (element_ctx_of x t) (at level 50) : tealeaves_scope.
 
 End Notations.
 
@@ -230,16 +241,16 @@ Section env_instance.
 
   Context {E : Type}.
 
-#[export] Instance ElementsCtx_env : ElementsCtx E (env E) :=
+#[export] Instance ToCtxset_env : ToCtxset E (env E) :=
   fun (A : Type) (s : env E A) =>
-    element_of (F := list) s.
+    tosubset (F := list) s.
 
-#[export] Instance DecoratedNatural_elements_ctx_env :
-  DecoratedNatural E (env E) (ctxset E) (@element_ctx_of E (env E) _).
+#[export] Instance DecoratedNatural_toctxset_env :
+  DecoratedNatural E (env E) (ctxset E) (@toctxset E (env E) _).
 Proof.
   constructor. intros.
   ext Γ [e b].
-  unfold_ops @ElementsCtx_env @Mapd_ctxset.
+  unfold_ops @ToCtxset_env @Mapd_ctxset.
   unfold compose.
   induction Γ.
   - cbn. propext.
@@ -264,18 +275,18 @@ Proof.
         intuition.
 Qed.
 
-#[export] Instance Natural_Elementd_env :
-  Natural (@element_ctx_of E (env E) _).
+#[export] Instance Natural_ToCtxset_env :
+  Natural (@toctxset E (env E) _).
 Proof.
   constructor.
   - typeclasses eauto.
   - typeclasses eauto.
-  - unfold_ops @ElementsCtx_env.
+  - unfold_ops @ToCtxset_env.
     intros.
     rewrite ctxset_map_spec.
     rewrite (natural (A := E * A)
                      (B := E * B)
-                     (ϕ := @element_of list _)).
+                     (ϕ := @tosubset list _)).
     rewrite env_map_spec.
     reflexivity.
 Qed.
