@@ -5,7 +5,7 @@ From Tealeaves.Classes Require Export
   Categorical.ShapelyFunctor
   Kleisli.TraversableFunctor.
 
-From Tealeaves.Functors Require Export
+From Tealeaves.Functors Require Import
   Constant
   List
   VectorRefinement.

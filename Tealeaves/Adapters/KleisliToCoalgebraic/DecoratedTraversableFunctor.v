@@ -223,3 +223,55 @@ Section to_coalgebraic.
     |}.
 
 End to_coalgebraic.
+
+
+  (** *** <<foldMapd>> a special case of <<runBatch>> *)
+  (******************************************************************************)
+  Lemma foldMapd_through_runBatch1 {A} `{Monoid M} : forall `(f : E * A -> M),
+      foldMapd f = runBatch (F := const M) f (C := T False) ∘ toBatch6 (B := False).
+  Proof.
+    intros.
+    rewrite foldMapd_to_mapdt1.
+    rewrite (mapdt_through_runBatch (G := const M)).
+    reflexivity.
+  Qed.
+
+  Lemma foldMapd_through_runBatch2 `{Monoid M} : forall (A fake : Type) `(f : E * A -> M),
+      foldMapd f = runBatch (F := const M) f (C := T fake) ∘ toBatch6 (B := fake).
+  Proof.
+    intros.
+    rewrite foldMapd_to_mapdt1.
+    rewrite (mapdt_constant_applicative2 False False fake).
+    rewrite mapdt_through_runBatch.
+    reflexivity.
+  Qed.
+
+
+    (** *** Factoring through <<runBatch>> *)
+    (******************************************************************************)
+    Corollary ctx_tolist_through_runBatch6 {A : Type} (tag : Type) :
+      ctx_tolist = runBatch (B := tag) (F := const (list (E * A))) (ret (T := list))
+                  ∘ toBatch6.
+    Proof.
+      rewrite (ctx_tolist_to_mapdt2 A tag).
+      now rewrite mapdt_through_runBatch.
+    Qed.
+
+
+    (** *** Factoring through <<runBatch>> *)
+    (******************************************************************************)
+    Corollary ctx_elements_through_runBatch1 {A : Type} :
+      element_ctx_of (F := T) = runBatch (B := False) (F := const (subset (E * A)))
+                  (ret (T := subset)) ∘ toBatch6.
+    Proof.
+      rewrite (ctx_elements_to_mapdt1 A).
+      now rewrite (mapdt_through_runBatch).
+    Qed.
+
+    Corollary ctx_elements_through_runBatch2 {A tag : Type} :
+      element_ctx_of (F := T) = runBatch (B := tag) (F := const (subset (E * A)))
+                  (ret (T := subset)) ∘ toBatch6.
+    Proof.
+      rewrite (ctx_elements_to_mapdt2 A tag).
+      now rewrite (mapdt_through_runBatch).
+    Qed.

@@ -1,9 +1,12 @@
 From Tealeaves Require Import
   Functors.Batch
+  Functors.Subset
   Classes.Kleisli.TraversableFunctor
+  Classes.Kleisli.Theory.TraversableFunctor
   Classes.Coalgebraic.TraversableFunctor.
 
 Import Batch.Notations.
+Import Subset.Notations.
 Import Kleisli.TraversableFunctor.Notations.
 
 #[local] Generalizable Variables G T M A B.
@@ -84,6 +87,70 @@ Section laws.
     reflexivity.
   Qed.
 
+  (** *** Factoring derived operations through <<runBatch>> *)
+  (******************************************************************************)
+  Lemma foldMap_through_runBatch1 {A : Type} `{Monoid M} : forall `(f : A -> M),
+      foldMap f = runBatch (F:= const M) f (B := False) ∘
+                    toBatch (A := A) (A' := False).
+  Proof.
+    intros.
+    rewrite foldMap_to_traverse1.
+    rewrite traverse_through_runBatch.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_through_runBatch2 `{Monoid M} : forall (A fake : Type) `(f : A -> M),
+      foldMap f = runBatch (F := const M) f (B := fake) ∘
+                    toBatch (A' := fake).
+  Proof.
+    intros.
+    rewrite foldMap_to_traverse1.
+    change (fun _ : Type => M) with (const (A := Type) M).
+    rewrite (traverse_const1 fake).
+    rewrite (traverse_through_runBatch (G := const M)).
+    reflexivity.
+  Qed.
+
+
+  Corollary tolist_through_runBatch {A : Type} (tag : Type) `(t : T A) :
+    tolist t =
+      runBatch (F := const (list A))
+        (ret (T := list) : A -> const (list A) tag)
+        (B := tag) (toBatch (A' := tag) t).
+  Proof.
+    rewrite (tolist_to_traverse2 A tag).
+    rewrite (traverse_through_runBatch (G := const (list A))).
+    reflexivity.
+  Qed.
+
+  Context
+    `{Elements T}
+      `{! Compat_Elements_Traverse T}.
+
+  Lemma element_through_runBatch1 : forall (A : Type),
+      element_of =
+        runBatch (F := const (A -> Prop))
+          (ret (T := subset) (A := A)) (B := False) ∘
+          toBatch (A' := False).
+  Proof.
+    intros.
+    rewrite element_of_to_foldMap.
+    rewrite foldMap_through_runBatch1.
+    reflexivity.
+  Qed.
+
+  Lemma element_through_runBatch2 : forall (A tag : Type),
+      element_of =
+        runBatch (F := const (A -> Prop))
+          (ret (T := subset)) (B := tag) ∘
+          toBatch (A' := tag).
+  Proof.
+    intros.
+    rewrite element_of_to_foldMap.
+    rewrite (foldMap_through_runBatch2 A tag).
+    reflexivity.
+  Qed.
+
   (** *** Naturality of <<toBatch>> *)
   (******************************************************************************)
   Lemma toBatch_mapfst : forall (A B : Type) (f : A -> B) (C : Type),
@@ -130,46 +197,5 @@ Section laws.
     {| trf_extract := toBatch_extract_Kleisli;
        trf_duplicate := toBatch_duplicate_Kleisli;
     |}.
-
-  (** *** Representation theorem *)
-  (******************************************************************************)
-
-  (*
-  Definition length_gen {A B}: T A -> nat :=
-    length_Batch ∘ toBatch (A' := B).
-
-  Lemma length_gen1: forall {A B B'} (t: T A),
-      length_gen (B := B) t = length_gen (B := B') t.
-  Proof.
-    intros.
-    unfold length_gen.
-    unfold compose.
-  Abort.
-
-  Definition to_contents_gen {A B}:
-    forall (t: T A), Vector.t A (length_gen (B := B) t) :=
-    fun t => Batch_to_contents (toBatch (A' := B) t).
-
-  Definition to_makeFn_gen {A B}:
-    forall (t: T A), Vector.t B (length_gen (B := B) t) -> T B :=
-    fun t => Batch_to_makeFn (toBatch (A' := B) t).
-
-  Import Applicative.Notations.
-  Import Functors.Vector.
-
-  Theorem traverse_repr `{Applicative G} {A B : Type}:
-    forall (f: A -> G B) (t: T A),
-      traverse f t =
-        pure (to_makeFn_gen t) <⋆>
-            traverse (T := VEC (length_gen (B := B) t)) f
-                     (to_contents_gen t).
-  Proof.
-    intros.
-    rewrite traverse_through_runBatch.
-    unfold compose at 1.
-    rewrite runBatch_repr.
-    reflexivity.
-  Qed.
-  *)
 
 End laws.

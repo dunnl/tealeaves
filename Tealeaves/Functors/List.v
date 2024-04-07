@@ -518,28 +518,28 @@ Proof.
   - cbn. now rewrite IHl.
 Qed.
 
-(** ** <<foldMap>> *)
+(** ** <<foldMap_list>> *)
 (******************************************************************************)
-Definition foldMap {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
+Definition foldMap_list {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
   {A : Type} (f : A -> M) : list A -> M :=
   fold M ∘ map f.
 
-(** <<foldMap>> is a monoid homomorphism *)
-#[export] Instance Monoid_Morphism_foldMap
+(** <<foldMap_list>> is a monoid homomorphism *)
+#[export] Instance Monoid_Morphism_foldMap_list
   `{Monoid M} {A : Type}
-  `(f : A -> M) : Monoid_Morphism (list A) M (foldMap f).
+  `(f : A -> M) : Monoid_Morphism (list A) M (foldMap_list f).
 Proof.
-  unfold foldMap.
+  unfold foldMap_list.
   eapply Monoid_Morphism_compose;
     typeclasses eauto.
 Qed.
 
-(** <<foldMap>> commutes with monoid homomorphisms *)
-Lemma foldMap_morphism `{Monoid_Morphism M1 M2 ϕ}
+(** <<foldMap_list>> commutes with monoid homomorphisms *)
+Lemma foldMap_list_morphism `{Monoid_Morphism M1 M2 ϕ}
   : forall `(f : A -> M1),
-    ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
+    ϕ ∘ foldMap_list f = foldMap_list (ϕ ∘ f).
 Proof.
-  intros. unfold foldMap.
+  intros. unfold foldMap_list.
   reassociate <- on left.
   rewrite (fold_mon_hom ϕ).
   reassociate -> on left.
@@ -547,7 +547,7 @@ Proof.
   reflexivity.
 Qed.
 
-(** *** Rewriting with <<foldMap>> *)
+(** *** Rewriting with <<foldMap_list>> *)
 (******************************************************************************)
 Section foldMap_list_rw.
 
@@ -556,32 +556,32 @@ Section foldMap_list_rw.
     `{Monoid M}
     (f : A -> M).
 
-  Lemma foldMap_list_nil : foldMap f (@nil A) = Ƶ.
+  Lemma foldMap_list_nil : foldMap_list f (@nil A) = Ƶ.
   Proof.
     reflexivity.
   Qed.
 
   Lemma foldMap_list_cons : forall (x : A) (xs : list A),
-      foldMap f (x :: xs) = f x ● foldMap f xs.
+      foldMap_list f (x :: xs) = f x ● foldMap_list f xs.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMap_list_one (a : A) : foldMap f [ a ] = f a.
+  Lemma foldMap_list_one (a : A) : foldMap_list f [ a ] = f a.
   Proof.
     cbv. apply monoid_id_l.
   Qed.
 
-  Lemma foldMap_list_ret : foldMap f ∘ ret = f.
+  Lemma foldMap_list_ret : foldMap_list f ∘ ret = f.
   Proof.
     ext a; cbn. apply monoid_id_l.
   Qed.
 
   Lemma foldMap_list_app : forall (l1 l2 : list A),
-      foldMap f (l1 ++ l2) = foldMap f l1 ● foldMap f l2.
+      foldMap_list f (l1 ++ l2) = foldMap_list f l1 ● foldMap_list f l2.
   Proof.
     intros.
-    unfold foldMap.
+    unfold foldMap_list.
     unfold compose. autorewrite with tea_list.
     rewrite (fold_app M).
     reflexivity.
@@ -592,7 +592,7 @@ End foldMap_list_rw.
 #[export] Hint Rewrite @foldMap_list_nil @foldMap_list_cons
   @foldMap_list_one @foldMap_list_app : tea_list.
 
-Lemma foldMap_list_ret_id : forall A, foldMap (@ret list _ A) = id.
+Lemma foldMap_list_ret_id : forall A, foldMap_list (@ret list _ A) = id.
 Proof.
   intros.
   ext l.
@@ -1103,10 +1103,10 @@ Qed.
 Section quantification.
 
   Definition Forall_List `(P : A -> Prop) : list A -> Prop :=
-    foldMap (op := Monoid_op_and) (unit := Monoid_unit_true) P.
+    foldMap_list (op := Monoid_op_and) (unit := Monoid_unit_true) P.
 
   Definition Forany_List `(P : A -> Prop) : list A -> Prop :=
-    foldMap (op := Monoid_op_or) (unit := Monoid_unit_false) P.
+    foldMap_list (op := Monoid_op_or) (unit := Monoid_unit_false) P.
 
   Lemma forall_iff `(P : A -> Prop) (l : list A) :
     Forall_List P l <-> forall (a : A), a ∈ l -> P a.
@@ -1148,10 +1148,10 @@ Section quantification.
 
 End quantification.
 
-(** ** <<Element>> in terms of <<foldMap>> *)
+(** ** <<Element>> in terms of <<foldMap_list>> *)
 (******************************************************************************)
-Lemma element_to_foldMap1 : forall (A : Type),
-    element_of = foldMap (ret (T := subset) (A := A)).
+Lemma element_to_foldMap_list1 : forall (A : Type),
+    element_of = foldMap_list (ret (T := subset) (A := A)).
 Proof.
   intros. ext l. induction l.
   - reflexivity.
@@ -1160,12 +1160,12 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma element_to_foldMap2 : forall (A : Type) (l : list A) (a : A),
-    element_of l a = foldMap (op := or) (unit := False) (eq a) l.
+Lemma element_to_foldMap_list2 : forall (A : Type) (l : list A) (a : A),
+    element_of l a = foldMap_list (op := or) (unit := False) (eq a) l.
 Proof.
-  intros. rewrite element_to_foldMap1.
+  intros. rewrite element_to_foldMap_list1.
   (*
-    change_left ((evalAt a ∘ foldMap (ret (T := subset))) l).
+    change_left ((evalAt a ∘ foldMap_list (ret (T := subset))) l).
    *)
   induction l.
   - reflexivity.

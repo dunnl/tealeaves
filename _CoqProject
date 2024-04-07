@@ -28,7 +28,6 @@ Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableMonad.v
-Tealeaves/Functors/Constant.v
 Tealeaves/Classes/Categorical/Monad.v
 Tealeaves/Classes/Categorical/Comonad.v
 Tealeaves/Classes/Categorical/BeckDistributiveLaw.v
@@ -46,6 +45,12 @@ Tealeaves/Classes/Categorical/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Categorical/DecoratedTraversableMonad.v
 Tealeaves/Classes/Categorical/ContainerFunctor.v
 Tealeaves/Classes/Categorical/ShapelyFunctor.v
+Tealeaves/Categories/Type.v
+Tealeaves/Categories/TypeFamily.v
+Tealeaves/Categories/DecoratedFunctor.v
+Tealeaves/Categories/TraversableFunctor.v
+Tealeaves/Categories/DecoratedTraversableFunctor.v
+Tealeaves/Functors/Constant.v
 Tealeaves/Functors/Subset.v
 Tealeaves/Functors/List.v
 Tealeaves/Functors/Ctxset.v
@@ -63,18 +68,18 @@ Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
-Tealeaves/Functors/ListHistory.v
-Tealeaves/Functors/List_Telescoping.v
+Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
+Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
+Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
+# CONTAINER/COALGEBRAIC STUFF
 Tealeaves/Functors/Vector.v
 Tealeaves/Functors/VectorRefinement.v
 Tealeaves/Functors/Batch.v
 Tealeaves/Functors/KStore.v
+Tealeaves/Functors/ListHistory.v
+Tealeaves/Functors/List_Telescoping.v
 Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
-Tealeaves/Categories/Type.v
-Tealeaves/Categories/TypeFamily.v
-Tealeaves/Categories/DecoratedFunctor.v
-Tealeaves/Categories/TraversableFunctor.v
-Tealeaves/Categories/DecoratedTraversableFunctor.v
+# END CONTAINER STUFF
 Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
 Tealeaves/Classes/Coalgebraic/TraversableMonad.v
 Tealeaves/Classes/Coalgebraic/DecoratedTraversableFunctor.v
@@ -114,15 +119,16 @@ Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
 # EXPERIMENTAL VECTORS
 Tealeaves/Classes/Kleisli/KApplicative.v
 
-#
+# HIGH-LEVEL THEORY
 Tealeaves/Theory/Batch.v
 Tealeaves/Theory/TraversableFunctor.v
 Tealeaves/Theory/TraversableMonad.v
 Tealeaves/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Theory/DecoratedTraversableMonad.v
+
+# FULLY NOMINAL DTMS
 #Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
-
 
 # BACKENDS
 Tealeaves/Backends/LN/Atom.v
