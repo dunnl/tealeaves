@@ -109,6 +109,7 @@ Tealeaves/Adapters/Roundtrips/TraversableMonad.v
 Tealeaves/Adapters/Roundtrips/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
 Tealeaves/Adapters/MonadToApplicative.v
+Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
 
 # EXPERIMENTAL VECTORS
 Tealeaves/Classes/Kleisli/KApplicative.v
@@ -155,4 +156,4 @@ Tealeaves/Examples/STLC/TypeSoundness.v
 # VARIADIC BINDERS
 Tealeaves/Examples/VariadicLet/Terms.v
 Tealeaves/Examples/VariadicLet/Syntax.v
-Tealeaves/Examples/VariadicLet/Syntax_Telescope.v
+#Tealeaves/Examples/VariadicLet/Syntax_Telescope.v

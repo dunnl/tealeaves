@@ -475,8 +475,7 @@ Section elements.
   (** ** Pointwise reasoning for operations *)
   (******************************************************************************)
   Lemma traverse_respectful :
-    forall (G : Type -> Type)
-      `{Applicative G} `(f1 : A -> G B) `(f2 : A -> G B) (t : T A),
+    forall `{Applicative G} `(f1 : A -> G B) `(f2 : A -> G B) (t : T A),
       (forall (a : A), a ∈ t -> f1 a = f2 a) -> traverse f1 t = traverse f2 t.
   Proof.
     introv ? hyp.
@@ -495,8 +494,7 @@ Section elements.
   (** *** Corollaries *)
   (******************************************************************************)
   Corollary traverse_respectful_pure :
-    forall (G : Type -> Type)
-      `{Applicative G} `(f1 : A -> G A) (t : T A),
+    forall `{Applicative G} `(f1 : A -> G A) (t : T A),
       (forall (a : A), a ∈ t -> f1 a = pure a) -> traverse f1 t = pure t.
   Proof.
     intros.
@@ -505,14 +503,13 @@ Section elements.
   Qed.
 
   Corollary traverse_respectful_map {A B} :
-    forall (G : Type -> Type)
-      `{Applicative G} (t : T A) (f : A -> G B) (g : A -> B),
+    forall `{Applicative G} (t : T A) (f : A -> G B) (g : A -> B),
       (forall a, a ∈ t -> f a = pure (g a)) -> traverse f t = pure (map g t).
   Proof.
     intros. rewrite <- (traverse_purity1 (G := G)).
     compose near t on right.
     rewrite traverse_map.
-    apply (traverse_respectful G).
+    apply traverse_respectful.
     assumption.
   Qed.
 
@@ -522,7 +519,7 @@ Section elements.
   Proof.
     intros.
     change t with (pure (F := fun A => A) t) at 2.
-    apply (traverse_respectful_pure (fun A => A)).
+    apply (traverse_respectful_pure (G := fun A => A)).
     assumption.
   Qed.
 
@@ -532,7 +529,7 @@ Section elements.
     introv hyp.
     rewrite map_to_traverse.
     rewrite map_to_traverse.
-    apply (traverse_respectful (fun A => A)).
+    apply (traverse_respectful (G := fun A => A)).
     assumption.
   Qed.
 
@@ -978,8 +975,14 @@ Section deconstruction.
                                (coerce (plength_eq_length (B := B) t)
                                  in Batch_contents (toBatch t))))).
     rewrite (fun_map_map).
-    repeat fequal.
-  Abort.
+    fequal.
+    fequal.
+    fequal.
+    apply Vector_eq.
+    apply Vector_coerce_sim_l'.
+    apply Vector_coerce_sim_r'.
+    eapply Batch_contents_toBatch_sim.
+  Qed.
 
   (** ** Lemmas regarding <<plength>> *)
   (******************************************************************************)
@@ -1188,3 +1191,29 @@ End pw_Batch.
 Module Notations.
   Notation "f <◻> g" := (applicative_arrow_combine f g) (at level 60) : tealeaves_scope.
 End Notations.
+
+Lemma list_plength_length: forall (A: Type) (l: list A),
+    plength l = length l.
+Proof.
+  intros.
+  induction l.
+  - reflexivity.
+  - cbn. now rewrite IHl.
+Qed.
+
+#[export] Instance Compat_Elements_Traverse_List :
+  @Compat_Elements_Traverse list Elements_list Traverse_list.
+Proof.
+  unfold Compat_Elements_Traverse.
+  ext A l a.
+  induction l.
+  - cbn. reflexivity.
+  - apply propositional_extensionality.
+    autorewrite with tea_list tea_set.
+    cbn.
+    unfold_ops @Pure_const.
+    unfold_ops @Monoid_op_subset.
+    autorewrite with tea_set.
+    rewrite IHl.
+    firstorder.
+Qed.

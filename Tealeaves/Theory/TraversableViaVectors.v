@@ -616,21 +616,4 @@ Section pw.
           exists a. apply Hp.
   Defined.
 
-#[export] Instance Compat_Elements_Traverse_List :
-  @Compat_Elements_Traverse list Elements_list Traverse_list.
-Proof.
-  unfold Compat_Elements_Traverse.
-  ext A l a.
-  induction l.
-  - cbn. reflexivity.
-  - apply propositional_extensionality.
-    autorewrite with tea_list tea_set.
-    cbn.
-    unfold_ops @Pure_const.
-    unfold_ops @Monoid_op_subset.
-    autorewrite with tea_set.
-    rewrite IHl.
-    firstorder.
-Qed.
-
 End pw.

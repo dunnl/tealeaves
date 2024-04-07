@@ -5,62 +5,41 @@ From Tealeaves Require Export
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
 
-Fixpoint binddt_term
-           (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-           {v1 v2 : Type}
-           (f : nat * v1 -> G (term v2))
-           (t : term v1) : G (term v2) :=
-  match t with
-  | tvar v => f (0, v)
-  | letin defs body =>
-      pure (@letin v2) <⋆>
-      ((fix F acc ls :=
-      match ls with
-      | nil => pure nil
-      | cons d0 drest =>
-          pure cons <⋆> binddt_term (f ⦿ acc) d0 <⋆> F (S acc) drest
-      end) 0 defs) <⋆> binddt_term (f ⦿ List.length defs) body
-  | app t1 t2 =>
-      pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
-  end.
 
-#[export] Instance Binddt_Lam: Binddt nat term term := @binddt_term.
-
-About mapdt.
-Lemma binddt_rw_letin:
-  forall `{Applicative G} (v1 v2 : Type)
-    (l : list (term v1)) (body: term v1),
-  forall f : nat * v1 -> G (term v2),
-    binddt f (letin l body) =
-      pure (@letin v2) <⋆>
+  (*
+  Lemma binddt_rw_letin:
+    forall `{Applicative G} (v1 v2 : Type)
+      (l : list (term v1)) (body: term v1),
+    forall f : nat * v1 -> G (term v2),
+      binddt f (letin l body) =
+        pure (@letin v2) <⋆>
           mapdt (E := nat) (T := list) (Mapdt := Mapdt_List_Telescope)
-                (fun '(n, t) => (binddt (T := term) (f ⦿ n)) t) l <⋆>
-        binddt (f ⦿ List.length l) body.
-Proof.
-  intros.
-  destruct l.
-  - cbn.
-    change 0 with (Ƶ:nat).
-    rewrite preincr_zero.
-    reflexivity.
-  - cbn.
-    change 0 with (Ƶ:nat).
-    rewrite preincr_zero.
-    repeat fequal.
-    generalize (S Ƶ).
-    induction l; intros.
-    + cbn.
+            (fun '(n, t) => (binddt (T := term) (f ⦿ n)) t) l <⋆>
+          binddt (f ⦿ List.length l) body.
+  Proof.
+    intros.
+    destruct l.
+    - cbn.
+      change 0 with (Ƶ:nat).
+      rewrite preincr_zero.
       reflexivity.
-    + cbn.
-      rewrite IHl.
-      change 0 with (Ƶ : nat) at 1.
-      rewrite monoid_id_l.
-      rewrite preincr_preincr.
-      replace (n ● 1) with (S n).
-      reflexivity.
-      unfold_ops @Monoid_op_plus.
-      lia.
-Qed.
+    - cbn.
+      change 0 with (Ƶ:nat).
+      rewrite preincr_zero.
+      repeat fequal.
+      generalize (S Ƶ).
+      induction l; intros.
+      + cbn.
+        reflexivity.
+      + cbn.
+        rewrite IHl.
+        change 0 with (Ƶ : nat) at 1.
+        rewrite monoid_id_l.
+        rewrite preincr_preincr.
+        replace (n ● 1) with (S n).
+        reflexivity.
+        unfold_ops @Monoid_op_plus.
+       Qed.
 
 Lemma binddt_helper_letin
         `{Applicative G2}
@@ -76,15 +55,6 @@ Proof.
   ext body.
   rewrite binddt_rw_letin.
   reflexivity.
-Qed.
-
-Lemma list_plength_length: forall (A: Type) (l: list A),
-    plength l = length l.
-Proof.
-  intros.
-  induction l.
-  - reflexivity.
-  - cbn. now rewrite IHl.
 Qed.
 
 Lemma binddt_helper_letin2
@@ -121,6 +91,8 @@ Proof.
   rewrite <- plength_trav_make.
   reflexivity.
 Qed.
+   *)
+
 
 Theorem dtm1_lam:
   forall `{Applicative G} (A B : Type),

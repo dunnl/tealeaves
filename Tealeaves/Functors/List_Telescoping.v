@@ -68,7 +68,7 @@ Proof.
   now rewrite incr_zero.
 Qed.
 
-Fixpoint mapdt_list
+Fixpoint mapdt_list_telescope
            {G : Type -> Type} `{Map G} `{Pure G} `{Mult G}
            {A B : Type} (f : nat * A -> G B) (l : list A)
   : G (list B) :=
@@ -76,10 +76,10 @@ Fixpoint mapdt_list
   | nil => pure (@nil B)
   | x :: xs =>
       pure (@List.cons B) <⋆> f (0, x) <⋆>
-        mapdt_list (f ⦿ 1) xs
+        mapdt_list_telescope (f ⦿ 1) xs
   end.
 
-#[export] Instance Mapdt_List_Telescope: Mapdt nat list := @mapdt_list.
+#[export] Instance Mapdt_List_Telescope: Mapdt nat list := @mapdt_list_telescope.
 #[export] Instance Mapd_List_Telescope: Mapd nat list := Mapd_Mapdt.
 #[export] Instance: Compat_Mapd_Mapdt := ltac:(typeclasses eauto).
 #[export] Instance: @Compat_Map_Mapdt nat list Map_list Mapdt_List_Telescope.

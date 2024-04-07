@@ -32,7 +32,9 @@ Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
 Export Misc.Subset.Notations. (* ∪ *)
 Export Applicative.Notations. (* <⋆> *)
 Export List.ListNotations. (* [] :: *)
+(*
 Export LN.Notations. (* operations *)
+*)
 Export LN.AtomSet.Notations.
 Export LN.AssocList.Notations. (* one, ~ *)
 Export Product.Notations. (* × *)
@@ -290,13 +292,31 @@ Ltac introduce_induction :=
   let t := fresh "t" in
   ext t; induction t.
 
+Ltac introduce_induction_with IH :=
+  let t := fresh "t" in
+  ext t; induction t using IH.
+
+Ltac derive_dtm4_law_case :=
+  repeat rewrite ap_morphism_1;
+  rewrite appmor_pure.
+
+Ltac derive_dtm_law_case_with_simplify_binddt simplify_binddt :=
+  repeat (simplify_binddt ());
+  repeat (simplify_pass2);
+  repeat derive_dtm4_law_case;
+  (fequal; try (trivial || reflexivity || auto)).
+
 Ltac derive_dtm_law_with_simplify_binddt simplify_binddt :=
   intros;
   try introduce_induction;
-  repeat (simplify_binddt ());
-  repeat simplify_pass2;
-  fequal; (trivial || reflexivity).
+  try solve [ derive_dtm_law_case_with_simplify_binddt
+                simplify_binddt ].
 
+Ltac derive_dtm_law_with_simplify_binddt_IH IH simplify_binddt :=
+  intros;
+  try introduce_induction_with IH;
+  try solve [ derive_dtm_law_case_with_simplify_binddt
+                simplify_binddt ].
 
 Ltac simplify_subset_reasoning_leaves :=
   debug "handle_subset_reasoning_leaves";
