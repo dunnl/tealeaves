@@ -8,6 +8,7 @@ From Tealeaves Require Import
 Import Applicative.Notations.
 Import Monoid.Notations.
 Import DecoratedTraversableFunctor.Notations.
+Import Kleisli.TraversableFunctor.Notations.
 
 Lemma toctxset_nil: forall (E A: Type),
     toctxset (F := env E) (@nil (E * A)) = subset_empty.
@@ -83,10 +84,22 @@ Fixpoint mapdt_list_telescope
 #[export] Instance Mapdt_List_Telescope: Mapdt nat list := @mapdt_list_telescope.
 #[export] Instance Mapd_List_Telescope: Mapd nat list := Mapd_Mapdt.
 #[export] Instance: Compat_Mapd_Mapdt := ltac:(typeclasses eauto).
+#[export] Instance: @Compat_Traverse_Mapdt nat list Traverse_list Mapdt_List_Telescope.
+Proof.
+  unfold Compat_Traverse_Mapdt.
+  intros. ext A B f l.
+  induction l as [|a rest IHrest].
+  - reflexivity.
+  - cbn. fequal.
+    rewrite IHrest.
+    rewrite extract_preincr2.
+    reflexivity.
+Qed.
 #[export] Instance: @Compat_Map_Mapdt nat list Map_list Mapdt_List_Telescope.
 Proof.
   unfold Compat_Map_Mapdt.
-  ext A B f l. induction l as [|a rest IHrest].
+  ext A B f l.
+  induction l as [|a rest IHrest].
   - reflexivity.
   - cbn. fequal.
     rewrite IHrest.
@@ -271,20 +284,46 @@ Qed.
     nat list Mapdt_List_Full.
 Proof.
   constructor; intros; ext l;
-  unfold_ops @Mapdt_List_Full;
-  unfold mapdt_list_full.
+    unfold_ops @Mapdt_List_Full;
+    unfold mapdt_list_full.
   - rewrite extract_pair.
     now rewrite trf_traverse_id.
   - unfold compose at 1.
+    assert (Functor G1) by now inversion H3.
+    assert (Functor G2) by now inversion H7.
     assert (kc_spec: kc6 (G1 := G1)(G2 := G2) g f ∘ pair (length l) =
-              kc2 (g ∘ pair (length l)) (f ∘ pair (length l))).
-      { ext a. unfold kc6, kc2, compose; cbn.
-        compose near (f (length l, a)) on left.
-        inversion H3.
-        now rewrite (fun_map_map (F := G1)). }
-      admit.
+                       kc2 (g ∘ pair (length l)) (f ∘ pair (length l))).
+    { ext a. unfold kc6, kc2, compose; cbn.
+      compose near (f (length l, a)) on left.
+      now rewrite (fun_map_map (F := G1)). }
+    Set Keyed Unification.
+    rewrite kc_spec.
+    Unset Keyed Unification.
+    rewrite <- trf_traverse_traverse.
+    #[local] Existing Instance ToBatch_Traverse.
+    rewrite traverse_repr.
+    change (map ?g (map ?f ?x)) with ((map g ∘ map f) x).
+    rewrite (fun_map_map).
+    cbn beta.
+    unfold compose at 1.
+    assert (cut: (fun (a: Vector (plength l) B) =>
+                traverse (g ∘ pair (length (trav_make l a))) (trav_make l a))
+             =
+               (fun (a: Vector (plength l) B) =>
+                  traverse (g ∘ pair (length l)) (trav_make l a))).
+    { ext a.
+      rewrite <- list_plength_length.
+      rewrite <- list_plength_length.
+      rewrite <- TraversableFunctor.plength_trav_make.
+      reflexivity. }
+    rewrite cut.
+    change (?g ○ trav_make l) with (g ∘ trav_make l).
+    rewrite <- (fun_map_map).
+    unfold compose at 1.
+    rewrite <- traverse_repr.
+    reflexivity.
   - unfold compose.
     compose near l on right.
     rewrite (trf_traverse_morphism).
     reflexivity.
-Admitted.
+Qed.
