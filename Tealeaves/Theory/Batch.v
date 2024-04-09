@@ -446,6 +446,20 @@ Section deconstruction.
 
   End Batch_make.
 
+  (** ** Lemmas regarding <<Batch_contents>> *)
+  (******************************************************************************)
+  Lemma Batch_contents_natural: forall `(b: Batch A B C) `(f: A -> A'),
+      map f (Batch_contents b) ~~ Batch_contents (mapfst_Batch _ _ f b).
+  Proof.
+    intros.
+    induction b.
+    - reflexivity.
+    - cbn.
+      rewrite map_Vector_vcons.
+      apply vcons_sim.
+      assumption.
+  Qed.
+
   (** ** Lemmas regarding <<Batch_make>> *)
   (******************************************************************************)
   Section Batch_replace.

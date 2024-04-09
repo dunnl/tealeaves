@@ -258,9 +258,8 @@ Section pointwise.
 
 End pointwise.
 
-(** * New length *)
+(** * <<plength>> *)
 (******************************************************************************)
-
 Section length.
 
   Context
@@ -335,11 +334,13 @@ Section deconstruction.
       := Batch_contents (toBatch t)
     in coerce_Vector_length (plength_eq_length t) v.
 
+  (*
   Definition trav_contents_list {A} (t: T A):
     Vector (plength t) A :=
     let v : Vector (length_Batch (toBatch (A' := False) t)) A
       := Batch_contents (toBatch t)
     in coerce_Vector_length (plength_eq_length t) v.
+   *)
 
   Definition trav_make {A B} (t: T A):
     Vector (plength t) B -> T B :=

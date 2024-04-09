@@ -968,6 +968,53 @@ Qed.
     fun_map_map := fun_map_map_Vector n;
   |}.
 
+Lemma map_coerce_Vector:
+  forall (A B: Type) (f: A -> B) (n m: nat) (Heq: n = m) (v: Vector n A),
+    map f v ~~ map f (coerce Heq in v).
+Proof.
+  intros. unfold Vector_sim.
+  destruct v as [l Hlen].
+  reflexivity.
+Qed.
+
+(** ** Rewriting rules *)
+(******************************************************************************)
+Lemma map_Vector_rw1:
+  forall {A B : Type} (f : A -> B),
+    map f vnil = vnil.
+Proof.
+  intros.
+  apply Vector_eq.
+  reflexivity.
+Qed.
+
+Lemma map_Vector_rw2:
+  forall {A B : Type} (f : A -> B)
+    (a : A) (l: list A)
+    (n : nat)
+    (p : length (a :: l) = S n),
+    map f (exist _ (a :: l) p) =
+      vcons n (f a) (map f (exist (fun l => length l = n) l (S_uncons p))).
+Proof.
+  intros.
+  apply Vector_eq.
+  reflexivity.
+Qed.
+
+Lemma map_Vector_vcons:
+  forall  {A B : Type} (f : A -> B)
+     (n : nat) (v : Vector n A) (a : A),
+    map f (vcons n a v) =
+      vcons n (f a) (map f v).
+Proof.
+  intros.
+  destruct v.
+  unfold vcons.
+  rewrite map_Vector_rw2.
+  cbn. fequal.
+  apply proof_irrelevance.
+Qed.
+
 (** * Traversable instance *)
 (******************************************************************************)
 Definition traverse_Vector_core
@@ -1105,6 +1152,30 @@ Proof.
   intros.
   subst.
   replace (fun v0 : Vector m B => coerce eq_sym eq_refl in v0)
+    with (@id (Vector m B)).
+  rewrite (fun_map_id).
+  replace (coerce eq_refl in v) with v.
+  reflexivity.
+  - destruct v.
+    destruct e.
+    reflexivity.
+  - ext w.
+    destruct w.
+    destruct e.
+    reflexivity.
+Qed.
+
+Lemma traverse_Vector_coerce_natural:
+  forall (n m : nat) `{Applicative G}
+    {A B : Type} (f : A -> G B)
+    (Heq: n = m) (v : Vector n A),
+    map (F := G) (fun v => coerce Heq in v)
+      (traverse f v) =
+      (traverse f (coerce Heq in v) : G (Vector m B)).
+Proof.
+  intros.
+  subst.
+  replace (fun v0 : Vector m B => coerce eq_refl in v0)
     with (@id (Vector m B)).
   rewrite (fun_map_id).
   replace (coerce eq_refl in v) with v.

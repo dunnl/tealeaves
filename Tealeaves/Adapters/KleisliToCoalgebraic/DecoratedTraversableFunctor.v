@@ -2,6 +2,9 @@ From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Kleisli.Theory.DecoratedTraversableFunctor
   Classes.Coalgebraic.DecoratedTraversableFunctor.
+From Tealeaves Require Export
+  Classes.Coalgebraic.TraversableFunctor
+  Adapters.KleisliToCoalgebraic.TraversableFunctor.
 
 Import Product.Notations.
 Import Kleisli.DecoratedTraversableFunctor.Notations.
@@ -37,6 +40,23 @@ Section runBatch.
      `{! Compat_Traverse_Mapdt}
      `{! Compat_ToSubset_Traverse T}
      `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
+
+  Theorem toBatch6_toBatch
+    {A B} `{ToBatch T} `{! Compat_ToBatch_Traverse}:
+    toBatch (T := T) (A := A) (A' := B) =
+      mapfst_Batch extract ∘ toBatch6 (T := T) (A := A).
+  Proof.
+    rewrite toBatch_to_traverse.
+    rewrite traverse_to_mapdt.
+    unfold toBatch6, ToBatch6_Mapdt.
+    rewrite <- (kdtfun_morph (T := T)
+                 (ϕ := fun X =>
+                         mapfst_Batch (B := B) (C := X)
+                           (A1 := E * A) (A2 := A)
+                           (extract (W := prod E) (A := A)))
+                 (batch B)).
+    reflexivity.
+  Qed.
 
   Theorem mapdt_through_runBatch `{Applicative G} `(f : E * A -> G B) :
     mapdt f = runBatch f ∘ toBatch6.
@@ -141,6 +161,7 @@ From Tealeaves Require Import
 
 (** ** Relating <<toBatch6>> with <<toBatch>> *)
 (******************************************************************************)
+(*
 Lemma toBatch6_toBatch
   `{Traverse_inst: Traverse T}
   `{Mapdt_inst: Mapdt E T}
@@ -162,6 +183,7 @@ Proof.
   rewrite ret_natural.
   reflexivity.
 Qed.
+*)
 
 Lemma runBatch_toBatch6
   `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}

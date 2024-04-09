@@ -141,3 +141,310 @@ Section decorated_traversable_functor_theory.
   Qed.
 
 End decorated_traversable_functor_theory.
+
+
+(** * Deconstructing with refinement-type vectors *)
+(******************************************************************************)
+Section deconstruction.
+
+  Context
+    `{DecoratedTraversableFunctor E T}
+    `{Traverse T}
+    `{Map T}
+    `{toBatch_inst: ToBatch T}
+    `{ToSubset T}
+    `{! TraversableFunctor T}
+    `{! Compat_Map_Mapdt}
+    `{! Compat_ToBatch_Traverse}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_Traverse_Mapdt}.
+
+  #[local] Generalizable Variables v.
+
+  Lemma plength_toBatch6:
+    forall {A} {B} (t: T A),
+      plength t = length_Batch (toBatch6 (A := A) (B := B) t).
+  Proof.
+    intros.
+    unfold plength.
+    rewrite (foldMap_through_runBatch2 A B).
+    rewrite toBatch6_toBatch.
+    unfold compose.
+    induction (toBatch6 t).
+    - reflexivity.
+    - cbn.
+      rewrite IHb.
+      unfold_ops @NaturalNumbers.Monoid_op_plus.
+      lia.
+  Qed.
+
+  Lemma plength_toBatch6':
+    forall {A B} (t: T A),
+      length_Batch (toBatch6 (A := A) (B := B) t) = plength t.
+  Proof.
+    symmetry.
+    apply plength_toBatch6.
+  Qed.
+
+  Lemma length_toBatch6_toBatch:
+    forall {A B} (t: T A),
+      length_Batch (toBatch6 (A := A) (B := B) t) =
+        length_Batch (toBatch (A := A) (A' := B) t).
+  Proof.
+    intros.
+    rewrite toBatch6_toBatch.
+    unfold compose. induction (toBatch6 t).
+    - reflexivity.
+    - cbn. now rewrite IHb.
+  Qed.
+
+  Definition mapdt_contents {A} (t: T A):
+    Vector (plength t) (E * A) :=
+    let v : Vector
+              (length_Batch (toBatch6 (B := False) (A := A) t))
+              (E * A)
+      := Batch_contents (toBatch6 t)
+    in coerce_Vector_length (plength_toBatch6' t) v.
+
+  Definition mapdt_make {A B} (t: T A):
+    Vector (plength t) B -> T B := trav_make t.
+  (*
+    (fun v =>
+       let v' := coerce_Vector_length (eq_sym (plength_eq_length t)) v
+       in Batch_make (toBatch t) v').
+   *)
+
+
+  Lemma Batch_contents_toctxlist:
+    forall {A B} (t: T A),
+      Vector_to_list (E*A) (Batch_contents (toBatch6 (B := B) t)) =
+        List.rev (toctxlist t).
+  Proof.
+    intros.
+    unfold toctxlist.
+    unfold ToCtxlist_Mapdt.
+    rewrite (foldMapd_through_runBatch2 A B).
+    unfold compose.
+    induction (toBatch6 t).
+    - cbn. reflexivity.
+    - cbn.
+      rewrite Vector_to_list_vcons.
+      rewrite IHb.
+      unfold_ops @Monoid_op_list @Return_list.
+      rewrite List.rev_unit.
+      reflexivity.
+  Qed.
+
+  Lemma Batch_contents_toBatch6_sim:
+    forall {A B B'} (t: T A),
+      Batch_contents
+        (toBatch6 (B := B) t) ~~
+        Batch_contents (toBatch6 (B := B') t).
+  Proof.
+    intros.
+    unfold Vector_sim.
+    change (proj1_sig ?v) with (Vector_to_list _ v).
+    rewrite Batch_contents_toctxlist.
+    rewrite Batch_contents_toctxlist.
+    reflexivity.
+  Qed.
+
+  Lemma Batch_make6 {A B} (t: T A):
+    Batch_make (toBatch6 t) =
+      (fun v => Batch_make (B := B)
+               (toBatch t) (coerce (length_toBatch6_toBatch t) in v)).
+  Proof.
+    ext v.
+    generalize dependent (length_toBatch6_toBatch (B:=B) t).
+    intro e.
+    apply Batch_make_sim3.
+    2: { vector_sim. }
+    { rewrite toBatch6_toBatch.
+      unfold compose.
+      clear e v.
+      induction (toBatch6 t).
+      + reflexivity.
+      + unfold shape in *. cbn.
+        fequal. apply IHb.
+    }
+  Qed.
+
+  (** ** Lemmas regarding <<trav_make>> *)
+  (******************************************************************************)
+  (*
+  Section trav_make_lemmas.
+
+    Context
+      {A B : Type}.
+
+    Lemma trav_make_sim1:
+      forall (t : T A) `{v1 ~~ v2},
+        trav_make (B := B) t v1 = trav_make t v2.
+    Proof.
+      intros.
+      unfold trav_make.
+      apply Batch_make_sim1.
+      vector_sim.
+    Qed.
+
+    Lemma trav_make_sim2:
+      forall `(t1 : T A) (t2: T A)
+        `(v1: Vector (plength t1) B)
+        `(v2: Vector (plength t2) B),
+        t1 = t2 ->
+        Vector_sim v1 v2 ->
+        trav_make t1 v1 = trav_make t2 v2.
+    Proof.
+      intros.
+      subst.
+      now apply trav_make_sim1.
+    Qed.
+
+  End trav_make_lemmas.
+  *)
+
+  (** ** Miscellaneous *)
+  (******************************************************************************)
+  Section ctxlist.
+
+    Lemma tolist_trav_contents `{t: T A}:
+      Vector_to_list (E * A) (mapdt_contents t) =
+        List.rev (toctxlist t).
+    Proof.
+      intros.
+      unfold mapdt_contents.
+    Abort.
+
+  End ctxlist.
+
+  (** ** Lens-like laws *)
+  (******************************************************************************)
+  Section lens_laws.
+
+    (** *** get-put *)
+    (******************************************************************************)
+    Lemma mapdt_get_put `{t: T A}:
+      mapdt_make t (map extract (mapdt_contents t)) = t.
+    Proof.
+      unfold mapdt_make, trav_make, mapdt_contents.
+      change t with (id t) at 13.
+      rewrite <- trf_extract.
+      unfold compose.
+      rewrite <- Batch_make_contents.
+      apply Batch_make_sim1.
+      apply Vector_coerce_sim_l'.
+      rewrite toBatch6_toBatch.
+      unfold compose.
+      apply (transitive_Vector_sim
+               (v2 := map extract (Batch_contents (B := False) (toBatch6 t)))).
+      vec_symmetry.
+      apply map_coerce_Vector.
+      unfold Vector_sim.
+      rewrite Batch_contents_natural.
+      compose near t.
+      do 2 rewrite <- toBatch6_toBatch.
+      apply Batch_contents_toBatch_sim.
+    Qed.
+
+    Lemma toBatch_mapdt_make {A A' B} {t: T A} {v: Vector (plength t) B}:
+      toBatch (A' := A') (mapdt_make t v) =
+        Batch_replace_contents
+          (toBatch (A' := A') t)
+          (coerce eq_sym (plength_eq_length t) in v).
+    Proof.
+      apply toBatch_trav_make.
+    Qed.
+
+    (** *** put-get *)
+    (******************************************************************************)
+    (*
+    Lemma mapdt_contents_make {A} {t: T A} {v: Vector (plength t) A}:
+      mapdt_contents (trav_make t v) ~~ v.
+    Proof.
+      unfold trav_contents.
+      vector_sim.
+      rewrite toBatch_trav_make.
+      rewrite Batch_put_get.
+      vector_sim.
+    Qed.
+    *)
+
+    (** *** put-put *)
+    (******************************************************************************)
+    Lemma mapdt_make_make
+            `(t: T A) `(v: Vector (plength t) B)
+            `(v1: Vector _ B')
+            (v2: Vector _ B')
+            (pf: v1 ~~ v2):
+      mapdt_make (mapdt_make t v) v1 =
+        mapdt_make t v2.
+    Proof.
+      unfold mapdt_make at 1 2 3.
+      apply trav_make_make.
+      assumption.
+    Qed.
+
+    Notation "'precoerce' Hlen 'in' F" :=
+      (F ○ coerce_Vector_length Hlen)
+        (at level 10, F at level 20).
+
+    Lemma mapdt_same_shape
+            `(t1: T A) `(t2: T A'):
+      shape t1 = shape t2 ->
+      forall B, mapdt_make (B := B) t1 ~!~ mapdt_make t2.
+    Proof.
+      intros.
+      now apply trav_same_shape.
+    Qed.
+
+  End lens_laws.
+
+  (** ** Representation theorems *)
+  (******************************************************************************)
+  Lemma mapdt_repr:
+    forall `{Applicative G} (A B: Type) (t: T A) (f: E * A -> G B),
+      mapdt f t =
+        map (mapdt_make t)
+          (forwards (traverse (mkBackwards ∘ f) (mapdt_contents t))).
+  Proof.
+    intros.
+    unfold mapdt_make.
+    unfold mapdt_contents.
+    unfold trav_make.
+    change  (map (?f ○ ?g)) with (map (f ∘ g)).
+    assert (Functor G) by now inversion H10.
+    rewrite <- (fun_map_map (F := G)).
+    unfold compose at 1.
+    do 2 change (map ?f (forwards ?x)) with (forwards (map f x)).
+    rewrite traverse_Vector_coerce_natural;[|typeclasses eauto].
+
+    rewrite mapdt_through_runBatch.
+    unfold compose at 1.
+    rewrite runBatch_repr2.
+    change (map ?f (forwards ?x)) with (forwards (map f x)).
+    fequal.
+    rewrite Batch_make6.
+    change  (map (?f ○ ?g) ?t) with (map (f ∘ g) t).
+    rewrite <- (fun_map_map (F := Backwards G)).
+    unfold compose at 1.
+    rewrite traverse_Vector_coerce_natural;[|typeclasses eauto].
+    fequal.
+    fequal.
+    apply Vector_eq.
+    apply Vector_coerce_sim_l'.
+    apply Vector_coerce_sim_r'.
+    apply Vector_coerce_sim_r'.
+    eapply Batch_contents_toBatch6_sim.
+  Qed.
+
+  (** ** Lemmas regarding <<plength>> *)
+  (******************************************************************************)
+  Lemma plength_trav_make: forall `(t: T A) `(v: Vector _ B),
+      plength t = plength (mapdt_make t v).
+  Proof.
+    intros.
+    unfold mapdt_make.
+    apply plength_trav_make.
+  Qed.
+
+End deconstruction.
