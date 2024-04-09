@@ -224,6 +224,11 @@ Definition mapdt_list_full
 #[export] Instance Mapdt_List_Full: Mapdt nat list := @mapdt_list_full.
 #[export] Instance Mapd_List_Full: Mapd nat list :=
   @Mapd_Mapdt nat list Mapdt_List_Full.
+#[export] Instance: @Compat_Traverse_Mapdt nat list Traverse_list Mapdt_List_Full.
+Proof.
+  unfold Compat_Traverse_Mapdt.
+  reflexivity.
+Qed.
 #[export] Instance: Compat_Mapd_Mapdt := ltac:(typeclasses eauto).
 #[export] Instance: @Compat_Map_Mapdt nat list Map_list Mapdt_List_Full.
 Proof.
