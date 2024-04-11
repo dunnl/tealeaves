@@ -11,6 +11,7 @@
           version = "dunnl:master";
           coq = pkgs.coq;
           mkCoqDerivation = pkgs.coqPackages.mkCoqDerivation;
+          coq-autosubst = pkgs.coqPackages.autosubst;
         };
         tealeaves-examples = pkgs.callPackage ./tealeaves-examples.nix {
           inherit (pkgs.coqPackages) serapi;

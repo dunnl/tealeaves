@@ -157,11 +157,14 @@ Tealeaves/Examples/STLC/TypeSoundness.v
 # VARIADIC BINDERS
 Tealeaves/Examples/VariadicLet/Terms.v
 Tealeaves/Examples/VariadicLet/Syntax.v
-#Tealeaves/Examples/VariadicLet/Syntax_Telescope.v
 
 # EXPERIMENTAL BACKENDS
-#Tealeaves/Backends/LN/Parallel.v
+Tealeaves/Backends/LN/Parallel.v
 
 # FULLY NOMINAL DTMS
 #Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
+
+Tealeaves/Backends/DB/DB.v
+Tealeaves/Backends/Adapters/Key.v
+Tealeaves/Backends/Adapters/LNtoDB.v

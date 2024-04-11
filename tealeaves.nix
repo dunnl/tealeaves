@@ -1,4 +1,4 @@
-{ lib, nix-gitignore, mkCoqDerivation, coq, ocaml, version ? null }:
+{ lib, nix-gitignore, mkCoqDerivation, coq, coq-autosubst, ocaml, version ? null }:
 
 mkCoqDerivation {
   pname = "tealeaves";
@@ -16,6 +16,7 @@ mkCoqDerivation {
     ] ./.;
   nativeBuildInputs = [
     ocaml # `ocaml` is needed for `ocamldoc`, which is needed to make Makefile.coq happy
+    coq-autosubst
   ];
   installTargets = "install install-doc";
   buildFlags = [ "-j1" ];
