@@ -92,7 +92,9 @@ Lemma toBatch3_toBatch
   `{Kleisli.TraversableMonad.TraversableMonad T}
   `{Traverse_inst : Traverse U}
   `{Bindt_U_inst : Bindt T U}
+  `{ToBatch_U_inst : ToBatch U}
   `{! Compat_Traverse_Bindt T U}
+  `{! Compat_ToBatch_Traverse}
   `{! Kleisli.TraversableMonad.TraversableRightPreModule T U}
   {A B: Type} (t: U A) :
   toBatch B t = mapsnd_Batch (ret (T := T)) (toBatch3 B t).

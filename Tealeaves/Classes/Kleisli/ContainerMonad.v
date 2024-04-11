@@ -10,9 +10,9 @@ Import ContainerFunctor.Notations.
 
 Class ContainerMonad
   (T : Type -> Type)
-  `{Bind T T} `{Return T} `{Elements T} :=
+  `{Bind T T} `{Return T} `{ToSubset T} :=
   { contm_monad :> Monad T;
-    contm_hom :> MonadHom T subset (@element_of T _);
+    contm_hom :> MonadHom T subset (@tosubset T _);
     contm_pointwise : forall (A B : Type) (t : T A) (f g : A -> T B),
       (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t;
   }.
@@ -22,12 +22,12 @@ Class ContainerRightModule
   `{Bind T T}
   `{Bind T U}
   `{Return T}
-  `{Elements T}
-  `{Elements U} :=
+  `{ToSubset T}
+  `{ToSubset U} :=
   { contmod_module :> RightModule T U;
     contmod_hom :> ParallelRightModuleHom T subset U subset
-      (@element_of T _)
-      (@element_of U _);
+      (@tosubset T _)
+      (@tosubset U _);
     contmod_pointwise : forall (A B : Type) (t : U A) (f g : A -> T B),
       (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t;
   }.
@@ -43,10 +43,10 @@ Section corollaries.
       ret a = ret a' -> a = a'.
   Proof.
     introv hyp.
-    cut (element_of (ret a) = element_of (ret a')).
+    cut (tosubset (ret a) = tosubset (ret a')).
     compose near a.
     compose near a'.
-    rewrite (kmon_hom_ret (ϕ := @element_of T _)).
+    rewrite (kmon_hom_ret (ϕ := @tosubset T _)).
     now apply set_ret_injective.
     now rewrite hyp.
   Qed.
@@ -56,7 +56,9 @@ Section corollaries.
   Proof.
     intros.
     compose near a2 on left.
-    rewrite (kmon_hom_ret (ϕ := @element_of T _)).
+    rewrite element_of_tosubset.
+    reassociate -> on left.
+    rewrite (kmon_hom_ret (ϕ := @tosubset T _)).
     easy.
   Qed.
 
@@ -65,7 +67,9 @@ Section corollaries.
       b ∈ bind f t <-> exists a, a ∈ t /\ b ∈ f a.
   Proof.
     intros. compose near t on left.
-    rewrite (kmon_hom_bind (ϕ := @element_of T _)).
+    rewrite element_of_tosubset.
+    reassociate -> on left.
+    rewrite (kmon_hom_bind (ϕ := @tosubset T _)).
     reflexivity.
   Qed.
 
@@ -109,7 +113,9 @@ Section corollaries.
   Proof.
     intros.
     compose near t on left.
-    rewrite (kmodpar_hom_bind (ϕ := @element_of U _)).
+    rewrite element_of_tosubset.
+    reassociate -> on left.
+    rewrite (kmodpar_hom_bind (ϕ := @tosubset U _)).
     reflexivity.
   Qed.
 

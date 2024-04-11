@@ -14,6 +14,7 @@ Import List.ListNotations.
 Import Monoid.Notations.
 Import Subset.Notations.
 Import Applicative.Notations.
+Export EqNotations.
 
 #[local] Generalizable Variables M A B G ϕ.
 
@@ -230,6 +231,86 @@ End bindt_rewriting_lemmas.
 #[export] Hint Rewrite bindt_list_nil bindt_list_cons bindt_list_one bindt_list_app :
   tea_list.
 
+(** ** Rewriting lemmas for <<traverse>> *)
+(******************************************************************************)
+Section traverse_rewriting_lemmas.
+
+  Context
+    (G : Type -> Type)
+    `{Applicative G}
+    (A B : Type).
+
+  Lemma traverse_list_nil : forall (f : A -> G B),
+      traverse f (@nil A) = pure (@nil B).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_list_one : forall (f : A -> G B) (a : A),
+      traverse f (ret (T := list) a) = map ret (f a).
+  Proof.
+    intros.
+    cbn.
+    rewrite ap3.
+    rewrite <- ap4;
+      rewrite ap2;
+      rewrite ap2.
+    rewrite <- map_to_ap.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_list_cons : forall (f : A -> G B) (a : A) (l : list A),
+      traverse f (a :: l) = pure (@cons B) <⋆> f a <⋆> traverse f l.
+  Proof.
+    intros.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_list_app : forall (f : A -> G B) (l1 l2 : list A),
+      traverse f (l1 ++ l2) = pure (@app B) <⋆> traverse f l1 <⋆> traverse f l2.
+  Proof.
+    intros.
+    induction l1.
+    - cbn. rewrite ap2.
+      rewrite ap1.
+      reflexivity.
+    - cbn.
+      rewrite IHl1.
+      repeat rewrite <- ap4.
+      repeat rewrite ap2.
+      rewrite ap3.
+      repeat rewrite <- ap4.
+      repeat rewrite ap2.
+      reflexivity.
+  Qed.
+
+  Definition snoc {A: Type} (l: list A) (a: A) := l ++ [a].
+
+  Lemma traverse_list_snoc : forall (f : A -> G B) (l : list A) (a: A),
+      traverse f (l ++ a::nil) =
+        pure (@snoc B) <⋆> traverse f l <⋆> f a.
+  Proof.
+    intros.
+    rewrite traverse_list_app.
+    cbn.
+    repeat rewrite <- ap4.
+    repeat rewrite ap2.
+    rewrite ap3.
+    repeat rewrite <- ap4.
+    repeat rewrite ap2.
+    rewrite ap3.
+    repeat rewrite <- ap4.
+    repeat rewrite ap2.
+    unfold compose.
+    reflexivity.
+  Qed.
+
+End traverse_rewriting_lemmas.
+
+#[export] Hint Rewrite traverse_list_nil traverse_list_cons traverse_list_one
+  traverse_list_snoc traverse_list_app :
+  tea_list.
+
 (** ** Rewriting lemmas for <<bind>> *)
 (******************************************************************************)
 Section bind_rewriting_lemmas.
@@ -437,28 +518,28 @@ Proof.
   - cbn. now rewrite IHl.
 Qed.
 
-(** ** <<foldMap>> *)
+(** ** <<foldMap_list>> *)
 (******************************************************************************)
-Definition foldMap {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
+Definition foldMap_list {M : Type} `{op : Monoid_op M} `{unit : Monoid_unit M}
   {A : Type} (f : A -> M) : list A -> M :=
   fold M ∘ map f.
 
-(** <<foldMap>> is a monoid homomorphism *)
-#[export] Instance Monoid_Morphism_foldMap
+(** <<foldMap_list>> is a monoid homomorphism *)
+#[export] Instance Monoid_Morphism_foldMap_list
   `{Monoid M} {A : Type}
-  `(f : A -> M) : Monoid_Morphism (list A) M (foldMap f).
+  `(f : A -> M) : Monoid_Morphism (list A) M (foldMap_list f).
 Proof.
-  unfold foldMap.
+  unfold foldMap_list.
   eapply Monoid_Morphism_compose;
     typeclasses eauto.
 Qed.
 
-(** <<foldMap>> commutes with monoid homomorphisms *)
-Lemma foldMap_morphism `{Monoid_Morphism M1 M2 ϕ}
+(** <<foldMap_list>> commutes with monoid homomorphisms *)
+Lemma foldMap_list_morphism `{Monoid_Morphism M1 M2 ϕ}
   : forall `(f : A -> M1),
-    ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
+    ϕ ∘ foldMap_list f = foldMap_list (ϕ ∘ f).
 Proof.
-  intros. unfold foldMap.
+  intros. unfold foldMap_list.
   reassociate <- on left.
   rewrite (fold_mon_hom ϕ).
   reassociate -> on left.
@@ -466,7 +547,7 @@ Proof.
   reflexivity.
 Qed.
 
-(** *** Rewriting with <<foldMap>> *)
+(** *** Rewriting with <<foldMap_list>> *)
 (******************************************************************************)
 Section foldMap_list_rw.
 
@@ -475,32 +556,32 @@ Section foldMap_list_rw.
     `{Monoid M}
     (f : A -> M).
 
-  Lemma foldMap_list_nil : foldMap f (@nil A) = Ƶ.
+  Lemma foldMap_list_nil : foldMap_list f (@nil A) = Ƶ.
   Proof.
     reflexivity.
   Qed.
 
   Lemma foldMap_list_cons : forall (x : A) (xs : list A),
-      foldMap f (x :: xs) = f x ● foldMap f xs.
+      foldMap_list f (x :: xs) = f x ● foldMap_list f xs.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMap_list_one (a : A) : foldMap f [ a ] = f a.
+  Lemma foldMap_list_one (a : A) : foldMap_list f [ a ] = f a.
   Proof.
     cbv. apply monoid_id_l.
   Qed.
 
-  Lemma foldMap_list_ret : foldMap f ∘ ret = f.
+  Lemma foldMap_list_ret : foldMap_list f ∘ ret = f.
   Proof.
     ext a; cbn. apply monoid_id_l.
   Qed.
 
   Lemma foldMap_list_app : forall (l1 l2 : list A),
-      foldMap f (l1 ++ l2) = foldMap f l1 ● foldMap f l2.
+      foldMap_list f (l1 ++ l2) = foldMap_list f l1 ● foldMap_list f l2.
   Proof.
     intros.
-    unfold foldMap.
+    unfold foldMap_list.
     unfold compose. autorewrite with tea_list.
     rewrite (fold_app M).
     reflexivity.
@@ -511,7 +592,7 @@ End foldMap_list_rw.
 #[export] Hint Rewrite @foldMap_list_nil @foldMap_list_cons
   @foldMap_list_one @foldMap_list_app : tea_list.
 
-Lemma foldMap_list_ret_id : forall A, foldMap (@ret list _ A) = id.
+Lemma foldMap_list_ret_id : forall A, foldMap_list (@ret list _ A) = id.
 Proof.
   intros.
   ext l.
@@ -843,115 +924,123 @@ End listable_shape_lemmas.
 
 (** * Container-like functor instance *)
 (******************************************************************************)
-#[export] Instance Elements_list : Elements list :=
+#[export] Instance ToSubset_list : ToSubset list :=
   fun (A : Type) (l : list A) => (fun a : A => @List.In A a l).
 
-(** ** <<element_of>> and rewriting principles *)
+(** ** <<tosubset>> and rewriting principles *)
 (******************************************************************************)
-Lemma elements_list_nil : forall (A : Type),
-    element_of (@nil A) = ∅.
+Lemma tosubset_list_nil : forall (A : Type),
+    tosubset (@nil A) = ∅.
 Proof.
   intros. extensionality a. reflexivity.
 Qed.
 
-Lemma elements_list_one : forall (A : Type) (a : A),
-    element_of [a] = {{ a }}.
+Lemma tosubset_list_one : forall (A : Type) (a : A),
+    tosubset [a] = {{ a }}.
 Proof.
   intros. solve_basic_subset.
 Qed.
 
-Lemma elements_list_ret : forall (A : Type) (a : A),
-    element_of (ret a) = {{ a }}.
+Lemma tosubset_list_ret : forall (A : Type) (a : A),
+    tosubset (ret a) = {{ a }}.
 Proof.
   intros. solve_basic_subset.
 Qed.
 
-Lemma elements_list_cons :
+Lemma tosubset_list_cons :
   forall (A : Type) (a : A) (l : list A),
-    element_of (a :: l) = {{ a }} ∪ element_of l.
+    tosubset (a :: l) = {{ a }} ∪ tosubset l.
 Proof.
   intros. extensionality a'. reflexivity.
 Qed.
 
-Lemma elements_list_app : forall (A : Type) (l1 l2 : list A),
-    element_of (l1 ++ l2) = element_of l1 ∪ element_of l2.
+Lemma tosubset_list_app : forall (A : Type) (l1 l2 : list A),
+    tosubset (l1 ++ l2) = tosubset l1 ∪ tosubset l2.
 Proof.
   intros. induction l1.
-  - cbn. rewrite elements_list_nil.
+  - cbn. rewrite tosubset_list_nil.
     solve_basic_subset.
   - cbn.
-    do 2 rewrite elements_list_cons.
+    do 2 rewrite tosubset_list_cons.
     rewrite IHl1. solve_basic_subset.
 Qed.
 
 #[export] Hint Rewrite
-  elements_list_nil elements_list_one elements_list_ret
-  elements_list_cons elements_list_app : tea_list.
+  tosubset_list_nil tosubset_list_one tosubset_list_ret
+  tosubset_list_cons tosubset_list_app : tea_list.
 
-(** ** Naturality of <<element_of>> *)
+(** ** Naturality of <<tosubset>> *)
 (******************************************************************************)
-#[export] Instance Natural_Elements_list : Natural (@element_of list _).
+#[export] Instance Natural_ToSubset_list : Natural (@tosubset list _).
 Proof.
   constructor; try typeclasses eauto.
   intros A B f. ext l.
   unfold compose at 1 2.
   induction l.
   - solve_basic_subset.
-  - rewrite elements_list_cons.
+  - rewrite tosubset_list_cons.
     autorewrite with tea_set tea_list.
     rewrite IHl.
     solve_basic_subset.
 Qed.
 
-(** ** [element_of] is a monoid homomorphism *)
+(** ** [tosubset] is a monoid homomorphism *)
 (******************************************************************************)
-#[export] Instance Monoid_Morphism_elements_list (A : Type) :
-  Monoid_Morphism (list A) (subset A) (element_of (A := A)) :=
-  {| monmor_unit := @elements_list_nil A;
-    monmor_op := @elements_list_app A;
+#[export] Instance Monoid_Morphism_tosubset_list (A : Type) :
+  Monoid_Morphism (list A) (subset A) (tosubset (A := A)) :=
+  {| monmor_unit := @tosubset_list_nil A;
+    monmor_op := @tosubset_list_app A;
   |}.
 
 (** ** <<∈>> for lists *)
 (******************************************************************************)
-Lemma in_list_nil {A} : forall (p : A), p ∈ @nil A <-> False.
+Lemma element_of_list_nil {A} : forall (p : A), p ∈ @nil A <-> False.
 Proof.
   reflexivity.
 Qed.
 
-Lemma in_list_cons {A} : forall (a1 a2 : A) (xs : list A),
+Lemma element_of_list_cons {A} : forall (a1 a2 : A) (xs : list A),
     a1 ∈ (a2 :: xs) <-> a1 = a2 \/ a1 ∈ xs.
 Proof.
-  intros; simpl_list; simpl_subset.
+  intros; unfold element_of.
+  simpl_list; simpl_subset.
   intuition congruence.
 Qed.
 
-Lemma in_list_one {A} (a1 a2 : A) : a1 ∈ [ a2 ] <-> a1 = a2.
+Lemma element_of_list_one {A} (a1 a2 : A) : a1 ∈ [ a2 ] <-> a1 = a2.
 Proof.
-  intros. simpl_list. simpl_subset. intuition congruence.
+  intros. unfold element_of.
+  simpl_list; simpl_subset.
+  intuition congruence.
 Qed.
 
-Lemma in_list_ret {A} (a1 a2 : A) : a1 ∈ ret a2 <-> a1 = a2.
+Lemma element_of_list_ret {A} (a1 a2 : A) : a1 ∈ ret a2 <-> a1 = a2.
 Proof.
-  intros. simpl_list; simpl_subset. intuition.
+  intros. unfold element_of.
+  simpl_list; simpl_subset.
+  easy.
 Qed.
 
-Lemma in_list_app {A} : forall (a : A) (xs ys : list A),
+Lemma element_of_list_app {A} : forall (a : A) (xs ys : list A),
     a ∈ (xs ++ ys) <-> a ∈ xs \/ a ∈ ys.
 Proof.
-  intros. simpl_list. simpl_subset. reflexivity.
+  intros. unfold element_of.
+  simpl_list; simpl_subset.
+  easy.
 Qed.
 
-#[export] Hint Rewrite @in_list_nil @in_list_cons
-  @in_list_one @in_list_ret @in_list_app : tea_list.
+#[export] Hint Rewrite @element_of_list_nil @element_of_list_cons
+  @element_of_list_one @element_of_list_ret @element_of_list_app : tea_list.
 
 (** *** [x ∈] is a monoid homomorphism *)
 (******************************************************************************)
 #[export] Instance Monoid_Morphism_element_list (A : Type) (a : A) :
-  Monoid_Morphism (list A) Prop (tgt_op := or) (tgt_unit := False)
-    (fun l => element_of l a).
+  Monoid_Morphism (list A) Prop
+    (tgt_op := Monoid_op_or)
+    (tgt_unit := Monoid_unit_false)
+    (element_of a).
 Proof.
-  change (fun l => element_of l a) with
-    (evalAt a ∘ element_of).
+  rewrite element_of_tosubset.
   eapply Monoid_Morphism_compose;
     typeclasses eauto.
 Qed.
@@ -962,9 +1051,11 @@ Theorem map_rigidly_respectful_list : forall A B (f g : A -> B) (l : list A),
     (forall (a : A), a ∈ l -> f a = g a) <-> map f l = map g l.
 Proof.
   intros. induction l.
-  - simpl_list. setoid_rewrite subset_in_empty. tauto.
-  - simpl_list. setoid_rewrite subset_in_add.
-    setoid_rewrite set_in_ret.
+  - simpl_list.
+    setoid_rewrite element_of_list_nil.
+    tauto.
+  - simpl_list.
+    setoid_rewrite element_of_list_cons.
     destruct IHl. split.
     + intro; fequal; auto.
     + injection 1; intuition (subst; auto).
@@ -980,18 +1071,18 @@ Qed.
   {| cont_pointwise := map_respectful_list;
   |}.
 
-(** ** <<element_of>> as a monad homomorphism *)
+(** ** <<tosubset>> as a monad homomorphism *)
 (******************************************************************************)
-Lemma element_of_list_hom1 : forall (A : Type),
-    element_of ∘ ret (A := A) = ret (T := subset).
+Lemma tosubset_list_hom1 : forall (A : Type),
+    tosubset ∘ ret (A := A) = ret (T := subset).
 Proof.
   intros.
   ext a b. propext;
   cbv; intuition.
 Qed.
 
-Lemma element_of_list_hom2 : forall (A B : Type) (f : A -> list B),
-    element_of ∘ bind f = bind (T := subset) (element_of ∘ f) ∘ element_of.
+Lemma tosubset_list_hom2 : forall (A B : Type) (f : A -> list B),
+    tosubset ∘ bind f = bind (T := subset) (tosubset ∘ f) ∘ tosubset.
 Proof.
   intros. unfold compose. ext l b.
   induction l.
@@ -1003,17 +1094,17 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma element_of_list_map : forall (A B : Type) (f : A -> B),
-    element_of ∘ map f = map f ∘ element_of.
+Lemma tosubset_list_map : forall (A B : Type) (f : A -> B),
+    tosubset ∘ map f = map f ∘ tosubset.
 Proof.
   intros.
-  now rewrite <- (natural (ϕ := @element_of list _)).
+  now rewrite <- (natural (ϕ := @tosubset list _)).
 Qed.
 
-#[export] Instance Monad_Hom_list_elements :
-  MonadHom list subset (@element_of list _) :=
-  {| kmon_hom_ret := element_of_list_hom1;
-    kmon_hom_bind := element_of_list_hom2;
+#[export] Instance Monad_Hom_list_tosubset :
+  MonadHom list subset (@tosubset list _) :=
+  {| kmon_hom_ret := tosubset_list_hom1;
+    kmon_hom_bind := tosubset_list_hom2;
   |}.
 
 (** * Quantification over elements *)
@@ -1022,10 +1113,10 @@ Qed.
 Section quantification.
 
   Definition Forall_List `(P : A -> Prop) : list A -> Prop :=
-    foldMap (op := Monoid_op_and) (unit := Monoid_unit_true) P.
+    foldMap_list (op := Monoid_op_and) (unit := Monoid_unit_true) P.
 
   Definition Forany_List `(P : A -> Prop) : list A -> Prop :=
-    foldMap (op := Monoid_op_or) (unit := Monoid_unit_false) P.
+    foldMap_list (op := Monoid_op_or) (unit := Monoid_unit_false) P.
 
   Lemma forall_iff `(P : A -> Prop) (l : list A) :
     Forall_List P l <-> forall (a : A), a ∈ l -> P a.
@@ -1035,8 +1126,7 @@ Section quantification.
     - split.
       + intros tt a contra. inversion contra.
       + intros. exact I.
-    - setoid_rewrite subset_in_add.
-      unfold subset_one.
+    - setoid_rewrite element_of_list_cons.
       rewrite IHl. split.
       + intros [Hpa Hrest].
         intros x [Heq | Hin].
@@ -1053,7 +1143,7 @@ Section quantification.
       + intros [].
       + intros [x [contra Hrest]]. inversion contra.
     - autorewrite with tea_list tea_set.
-      setoid_rewrite subset_in_add.
+      setoid_rewrite element_of_list_cons.
       unfold subset_one.
       rewrite IHl. split.
       + intros [Hpa | Hrest].
@@ -1067,10 +1157,10 @@ Section quantification.
 
 End quantification.
 
-(** ** <<Element>> in terms of <<foldMap>> *)
+(** ** <<Element>> in terms of <<foldMap_list>> *)
 (******************************************************************************)
-Lemma element_to_foldMap1 : forall (A : Type),
-    element_of = foldMap (ret (T := subset) (A := A)).
+Lemma element_to_foldMap_list1 : forall (A : Type),
+    tosubset = foldMap_list (ret (T := subset) (A := A)).
 Proof.
   intros. ext l. induction l.
   - reflexivity.
@@ -1079,12 +1169,12 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma element_to_foldMap2 : forall (A : Type) (l : list A) (a : A),
-    element_of l a = foldMap (op := or) (unit := False) (eq a) l.
+Lemma element_to_foldMap_list2 : forall (A : Type) (l : list A) (a : A),
+    tosubset l a = foldMap_list (op := or) (unit := False) (eq a) l.
 Proof.
-  intros. rewrite element_to_foldMap1.
+  intros. rewrite element_to_foldMap_list1.
   (*
-    change_left ((evalAt a ∘ foldMap (ret (T := subset))) l).
+    change_left ((evalAt a ∘ foldMap_list (ret (T := subset))) l).
    *)
   induction l.
   - reflexivity.
@@ -1097,38 +1187,39 @@ Qed.
 
 (** * Enumerating elements of listable functors *)
 (******************************************************************************)
-Section Elements_Tolist.
-  #[local] Instance Elements_Tolist `{Tolist F} : Elements F :=
-  fun A => element_of ∘ tolist.
-End Elements_Tolist.
+Section ToSubset_Tolist.
+  #[local] Instance ToSubset_Tolist `{Tolist F} : ToSubset F :=
+  fun A => tosubset ∘ tolist.
+End ToSubset_Tolist.
 
-Class Compat_Elements_Tolist
+Class Compat_ToSubset_Tolist
   (F : Type -> Type)
-  `{H_element_of : Elements F}
+  `{H_tosubset : ToSubset F}
   `{H_tolist : Tolist F} : Prop :=
   compat_element_tolist :
-    @element_of F H_element_of =
-      @element_of F (@Elements_Tolist F H_tolist).
+    @tosubset F H_tosubset =
+      @tosubset F (@ToSubset_Tolist F H_tolist).
 
-Lemma element_of_to_tolist `{Compat_Elements_Tolist F} :
+Lemma tosubset_to_tolist `{Compat_ToSubset_Tolist F} :
   forall (A : Type),
-    element_of (F := F) (A := A) = element_of (F := list) ∘ tolist.
+    tosubset (F := F) (A := A) = tosubset (F := list) ∘ tolist.
 Proof.
   now rewrite compat_element_tolist.
 Qed.
 
-Theorem in_iff_in_tolist `{Compat_Elements_Tolist F} :
+Theorem in_iff_in_tolist `{Compat_ToSubset_Tolist F} :
   forall (A : Type) (t : F A) (a : A),
     a ∈ t <-> a ∈ tolist t.
 Proof.
+  intros. unfold element_of.
   now rewrite compat_element_tolist.
 Qed.
 
 #[export] Instance Natural_Element_Tolist :
-  forall `{ShapelyFunctor F}, Natural (@element_of F Elements_Tolist).
+  forall `{ShapelyFunctor F}, Natural (@tosubset F ToSubset_Tolist).
 Proof.
   constructor; try typeclasses eauto.
-  intros A B f. unfold element_of, Elements_Tolist. ext t.
+  intros A B f. unfold tosubset, ToSubset_Tolist. ext t.
   reassociate <- on left. rewrite (natural (G := subset)).
   reassociate -> on left. now rewrite natural.
 Qed.
@@ -1163,11 +1254,11 @@ Section ShapelyFunctor_setlike.
   Qed.
 
   Context
-    `{Elements F}
-      `{! Compat_Elements_Tolist F}.
+    `{ToSubset F}
+      `{! Compat_ToSubset_Tolist F}.
 
   Lemma compat_element_tolist_natural :
-    `{Natural (@element_of F _)}.
+    `{Natural (@tosubset F _)}.
   Proof.
     constructor; try typeclasses eauto.
     intros.
@@ -1209,4 +1300,173 @@ Theorem permutation_spec : forall {A} {l1 l2 : list A},
     Permutation l1 l2 -> (forall a, a ∈ l1 <-> a ∈ l2).
 Proof.
   introv perm. induction perm; firstorder.
+Qed.
+
+(** * Misc *)
+(******************************************************************************)
+Lemma map_preserve_length:
+  forall (A B: Type) (f: A -> B) (l: list A),
+    length (map f l) = length l.
+Proof.
+  intros.
+  induction l.
+  - reflexivity.
+  - cbn.
+    rewrite <- IHl.
+    reflexivity.
+Qed.
+
+Definition decide_length {A}: forall (n: nat) (l: list A),
+    {length l = n} + { length l = n -> False}.
+Proof.
+  intros.
+  remember (Nat.eqb (length l) n) as b.
+  symmetry in Heqb.
+  destruct b.
+  - left.
+    apply (PeanoNat.Nat.eqb_eq (length l) n).
+    assumption.
+  - right.
+    apply (PeanoNat.Nat.eqb_neq (length l) n).
+    assumption.
+Defined.
+
+(** * Un-con-sing non-empty lists *)
+(******************************************************************************)
+Lemma S_uncons {n m}: S n = S m -> n = m.
+Proof.
+  now inversion 1.
+Defined.
+
+Definition zero_not_S {n} {anything}:
+  0 = S n -> anything :=
+  fun pf => match pf with
+         | eq_refl =>
+             let false : False :=
+               eq_ind 0 (fun e : nat => match e with
+                           | 0 => True
+                           | S _ => False
+                           end) I (S n) pf
+             in (False_rect anything false)
+         end.
+
+Lemma list_uncons_exists:
+  forall (A: Type) (n: nat)
+    (v: list A) (vlen: length v = S n),
+    exists (a: A) (v': list A),
+    v = cons a v'.
+Proof.
+  intros.
+  destruct v.
+  - inversion vlen.
+  - exists a v. reflexivity.
+Qed.
+
+Definition list_uncons {n A} (l: list A) (vlen: length l = S n):
+  A * list A :=
+  match l return (length l = S n -> A * list A) with
+  | nil => zero_not_S
+  | cons a rest => fun vlen => (a, rest)
+  end vlen.
+
+Definition list_uncons_sigma {n A} (l: list A) (vlen: length l = S n):
+  A * {l : list A | length l = n} :=
+  match l return (length l = S n -> A * {l: list A | length l = n}) with
+  | nil => zero_not_S
+  | cons hd tl => fun vlen => (hd, exist _ tl (S_uncons vlen))
+  end vlen.
+
+Definition list_uncons_sigma2 {n A} (l: list A) (vlen: length l = S n):
+  {p: A * list A | l = uncurry cons p} :=
+  match l return (length l = S n -> {p: A * list A | l = uncurry cons p}) with
+  | nil => zero_not_S
+  | cons hd tl => fun vlen => exist _ (hd, tl) eq_refl
+  end vlen.
+
+(** ** Total list head and tail functions for non-empty lists *)
+(******************************************************************************)
+Definition list_hd {n A} :=
+  fun (l: list A) (vlen: length l = S n) =>
+  fst (list_uncons l vlen).
+
+Definition list_tl {n A} :=
+  fun (l: list A) (vlen: length l = S n) =>
+    snd (list_uncons l vlen).
+
+(** *** Proof independence and rewriting laws *)
+(******************************************************************************)
+Lemma list_hd_proof_irrelevance
+        {n m A}
+        (l: list A)
+        (vlen1: length l = S n)
+        (vlen2: length l = S m):
+  list_hd l vlen1 = list_hd l vlen2.
+Proof.
+  induction l.
+  - inversion vlen1.
+  - reflexivity.
+Qed.
+
+Lemma list_tl_proof_irrelevance
+        {n m A}
+        (l: list A)
+        (vlen1: length l = S n)
+        (vlen2: length l = S m):
+  list_tl l vlen1 = list_tl l vlen2.
+Proof.
+  induction l.
+  - inversion vlen1.
+  - reflexivity.
+Qed.
+
+(** Rewrite a [list_hd] subterm by pushing a type coercion into the
+    length proof *)
+Lemma list_hd_rw
+        {n A}
+        {l1 l2: list A}
+        (Heq: l1 = l2)
+        {vlen: length l1 = S n}:
+  list_hd l1 vlen = list_hd l2 (rew [fun l1 => length l1 = S n] Heq in vlen).
+Proof.
+  subst.
+  apply list_hd_proof_irrelevance.
+Qed.
+
+(** Rewrite a [list_tl] subterm by pushing a type coercion into the
+    length proof *)
+Lemma list_tl_rw
+        {n A}
+        {l1 l2: list A}
+        (Heq: l1 = l2)
+        {vlen: length l1 = S n}:
+  list_tl l1 vlen = list_tl l2 (rew [fun l1 => length l1 = S n] Heq in vlen).
+Proof.
+  subst.
+  apply list_tl_proof_irrelevance.
+Qed.
+
+Lemma list_tl_length {n} `(l: list A) (vlen: length l = S n):
+  length (list_tl l vlen) = n.
+Proof.
+  destruct l.
+  - inversion vlen.
+  - cbn. now inversion vlen.
+Qed.
+
+(** *** Surjective pairing properties *)
+(******************************************************************************)
+Lemma list_surjective_pairing {n} `(l: list A) `(vlen: length l = S n):
+  list_uncons l vlen = (list_hd l vlen, list_tl l vlen).
+Proof.
+  destruct l.
+  - inversion vlen.
+  - reflexivity.
+Qed.
+
+Lemma list_surjective_pairing2 {n} `(l: list A) `(vlen: length l = S n):
+  l = cons (list_hd l vlen) (list_tl l vlen).
+Proof.
+  destruct l.
+  - inversion vlen.
+  - reflexivity.
 Qed.

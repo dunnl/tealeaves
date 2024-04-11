@@ -43,7 +43,7 @@ Qed.
 
 Definition const {A B : Type} (b : B) : A -> B := fun _ => b.
 
-Definition evalAt `(a : A) `(f : A -> B) := f a.
+Definition evalAt {A B} (a : A) (f : A -> B) := f a.
 
 Definition strength_arrow `(p : A * (B -> C)) : B -> A * C := fun b => (fst p, snd p b).
 

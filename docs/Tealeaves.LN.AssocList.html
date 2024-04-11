@@ -58,7 +58,7 @@
 
 <div class="doc">
 <a id="lab397"></a><h1 class="section">Miscellaneous</h1>
- TODO : Put this somewhere useful 
+ TODO : Put this somewhere useful
 </div>
 <div class="code">
 <span class="id" title="keyword">Lemma</span> <a id="nin_app_iff" class="idref" href="#nin_app_iff"><span class="id" title="lemma">nin_app_iff</span></a> : <span class="id" title="keyword">forall</span> <a id="X:1" class="idref" href="#X:1"><span class="id" title="binder">X</span></a> (<a id="x:2" class="idref" href="#x:2"><span class="id" title="binder">x</span></a> : <a class="idref" href="Tealeaves.LN.AssocList.html#X:1"><span class="id" title="variable">X</span></a>) (<a id="l1:3" class="idref" href="#l1:3"><span class="id" title="binder">l1</span></a> <a id="l2:4" class="idref" href="#l2:4"><span class="id" title="binder">l2</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#X:1"><span class="id" title="variable">X</span></a>),<br/>
@@ -86,7 +86,7 @@
  An association list is a list of pairs of type <code>atom * A</code>.  A
 functor instance is provided by mapping over <code>A</code>, leaving atoms
 alone.  Technically the functor is the composition of <span class="inlinecode"><a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Lists.List.html#list"><span class="id" title="abbreviation">list</span></a></span> and
-<code>prod atom</code>. 
+<code>prod atom</code>.
 </div>
 <div class="code">
 <span class="id" title="keyword">Module</span> <a id="Notations" class="idref" href="#Notations"><span class="id" title="module">Notations</span></a>.<br/>
@@ -119,7 +119,7 @@ alone.  Technically the functor is the composition of <span class="inlinecode"><
 <div class="doc">
 Envmap is just <span class="inlinecode"><a class="idref" href="Tealeaves.Classes.Functor.html#fmap"><span class="id" title="projection">fmap</span></a></span> specialized to <code>alist</code>. It is given a
 slightly more friendly name, primarily to avoid
-writing <code>fun A =&gt; alist A</code> all the time. 
+writing <code>fun A =&gt; alist A</code> all the time.
 </div>
 <div class="code">
 <span class="id" title="keyword">Definition</span> <a id="envmap" class="idref" href="#envmap"><span class="id" title="definition">envmap</span></a> {<a id="A:7" class="idref" href="#A:7"><span class="id" title="binder">A</span></a> <a id="B:8" class="idref" href="#B:8"><span class="id" title="binder">B</span></a>} (<a id="f:9" class="idref" href="#f:9"><span class="id" title="binder">f</span></a> : <a class="idref" href="Tealeaves.LN.AssocList.html#A:7"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#B:8"><span class="id" title="variable">B</span></a>) : <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">alist</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">alist</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">B</span></a> :=<br/>
@@ -133,7 +133,7 @@ writing <code>fun A =&gt; alist A</code> all the time.
 
 <div class="paragraph"> </div>
 
- <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span> computes the list of keys of an association list. 
+ <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span> computes the list of keys of an association list.
 </div>
 <div class="code">
 <span class="id" title="keyword">Definition</span> <a id="dom" class="idref" href="#dom"><span class="id" title="definition">dom</span></a> {<a id="A:10" class="idref" href="#A:10"><span class="id" title="binder">A</span></a>} (<a id="8a5fb5e1be55058be9aa6b31d1a8bfab" class="idref" href="#8a5fb5e1be55058be9aa6b31d1a8bfab"><span class="id" title="binder">Γ</span></a> : <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">alist</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">A</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#atom"><span class="id" title="abbreviation">atom</span></a> :=<br/>
@@ -143,7 +143,7 @@ writing <code>fun A =&gt; alist A</code> all the time.
 </div>
 
 <div class="doc">
-<span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#domset"><span class="id" title="definition">domset</span></a></span> computes the keys as an <span class="inlinecode"><span class="id" title="var">AtomSet.t</span></span> for use with <code>fsetdec</code>. 
+<span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#domset"><span class="id" title="definition">domset</span></a></span> computes the keys as an <span class="inlinecode"><span class="id" title="var">AtomSet.t</span></span> for use with <code>fsetdec</code>.
 </div>
 <div class="code">
 <span class="id" title="keyword">Definition</span> <a id="domset" class="idref" href="#domset"><span class="id" title="definition">domset</span></a> {<a id="A:12" class="idref" href="#A:12"><span class="id" title="binder">A</span></a>} (<a id="a57704a48aaf9a67d8a3df75d6eea365" class="idref" href="#a57704a48aaf9a67d8a3df75d6eea365"><span class="id" title="binder">Γ</span></a> : <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">alist</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">A</span></a>) : <a class="idref" href="Tealeaves.LN.AtomSet.html#AtomSet.t"><span class="id" title="definition">AtomSet.t</span></a> :=<br/>
@@ -153,7 +153,7 @@ writing <code>fun A =&gt; alist A</code> all the time.
 </div>
 
 <div class="doc">
-<span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span> computes the list of values of an association list. 
+<span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span> computes the list of values of an association list.
 </div>
 <div class="code">
 <span class="id" title="keyword">Definition</span> <a id="range" class="idref" href="#range"><span class="id" title="definition">range</span></a> {<a id="A:14" class="idref" href="#A:14"><span class="id" title="binder">A</span></a>} ( <a id="918d7ebace48bcbe2bb5610a4828654d" class="idref" href="#918d7ebace48bcbe2bb5610a4828654d"><span class="id" title="binder">Γ</span></a> : <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">alist</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">A</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#A:14"><span class="id" title="variable">A</span></a> :=<br/>
@@ -163,7 +163,7 @@ writing <code>fun A =&gt; alist A</code> all the time.
 </div>
 
 <div class="doc">
-<code>uniq l</code> whenever the keys of <code>l</code> contain no duplicates. 
+<code>uniq l</code> whenever the keys of <code>l</code> contain no duplicates.
 </div>
 <div class="code">
 <span class="id" title="keyword">Inductive</span> <a id="uniq" class="idref" href="#uniq"><span class="id" title="inductive">uniq</span></a> {<a id="A:16" class="idref" href="#A:16"><span class="id" title="binder">A</span></a>} : <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">alist</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
@@ -176,7 +176,7 @@ writing <code>fun A =&gt; alist A</code> all the time.
 
 <div class="doc">
 <code>disjoint E F</code> whenever the keys of <code>E</code> and <code>F</code> contain no
-common elements. 
+common elements.
 </div>
 <div class="code">
 <span class="id" title="keyword">Definition</span> <a id="disjoint" class="idref" href="#disjoint"><span class="id" title="definition">disjoint</span></a> {<a id="A:22" class="idref" href="#A:22"><span class="id" title="binder">A</span></a> <a id="B:23" class="idref" href="#B:23"><span class="id" title="binder">B</span></a>} (<a id="46e4e436d870f59baa3a80c19933703b" class="idref" href="#46e4e436d870f59baa3a80c19933703b"><span class="id" title="binder">Γ1</span></a> : <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">alist</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">A</span></a>) (<a id="f7990cadbd09bccf73777b54c27592aa" class="idref" href="#f7990cadbd09bccf73777b54c27592aa"><span class="id" title="binder">Γ2</span></a> : <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">alist</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#Notations.:::'alist'"><span class="id" title="notation">B</span></a>) :=<br/>
@@ -190,7 +190,7 @@ common elements.
  The following rewrite rules can be used for normalizing
     alists. Note that we prefer <code>one x ++ l</code> to <code>cons x l</code>.  These
     rules are put into a rewrite hint database that can be invoked as
-    <code>simpl_alist</code>. 
+    <code>simpl_alist</code>.
 </div>
 <div class="code">
 <span class="id" title="keyword">Section</span> <a id="alist_simpl_lemmas" class="idref" href="#alist_simpl_lemmas"><span class="id" title="section">alist_simpl_lemmas</span></a>.<br/>
@@ -248,7 +248,7 @@ common elements.
 <a id="lab402"></a><h3 class="section">Rewriting alists</h3>
  The tactic <code>change_alist</code> can be used to replace an alist with
     an equivalent form, as long as the two forms are equal after
-    normalizing with <code>simpl_alist</code>. 
+    normalizing with <code>simpl_alist</code>.
 </div>
 <div class="code">
 <span class="id" title="keyword">Tactic Notation</span> "change_alist" <span class="id" title="keyword">constr</span>(<span class="id" title="var">E</span>) :=<br/>
@@ -530,7 +530,7 @@ rather than <code>cons</code>.
 </div>
 
 <div class="doc">
-<a id="lab409"></a><h3 class="section">Elements of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span></h3>
+<a id="lab409"></a><h3 class="section">ToSubset of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#dom"><span class="id" title="definition">dom</span></a></span></h3>
 
 </div>
 <div class="code">
@@ -764,7 +764,7 @@ rather than <code>cons</code>.
 </div>
 
 <div class="doc">
-Elements of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span> 
+ToSubset of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#range"><span class="id" title="definition">range</span></a></span>
 </div>
 <div class="code">
 <span class="id" title="keyword">Section</span> <a id="in_range_lemmas" class="idref" href="#in_range_lemmas"><span class="id" title="section">in_range_lemmas</span></a>.<br/>
@@ -1255,7 +1255,7 @@ Elements of <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocLi
 
 <div class="doc">
 These introduce existential variables, so only
-apply them if they immediately solve the goal. 
+apply them if they immediately solve the goal.
 </div>
 <div class="code">
 #[<span class="id" title="var">export</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Immediate</span> <span class="id" title="var">disjoint_app1</span> <span class="id" title="var">disjoint_app2</span><br/>
@@ -1270,7 +1270,7 @@ apply them if they immediately solve the goal.
 <a id="lab416"></a><h2 class="section">Tactical lemmas for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#uniq"><span class="id" title="inductive">uniq</span></a></span></h2>
  For automating proofs about uniqueness, it is typically easier to
 work with (one-way) lemmas rather than rewriting principles, in
-contrast to most of the other parts of Tealeaves internals. 
+contrast to most of the other parts of Tealeaves internals.
 </div>
 <div class="code">
 <span class="id" title="keyword">Section</span> <a id="uniq_auto_lemmas" class="idref" href="#uniq_auto_lemmas"><span class="id" title="section">uniq_auto_lemmas</span></a>.<br/>
@@ -1439,7 +1439,7 @@ contrast to most of the other parts of Tealeaves internals.
 </div>
 
 <div class="doc">
-These introduce existential variables 
+These introduce existential variables
 </div>
 <div class="code">
 #[<span class="id" title="var">export</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Immediate</span> <span class="id" title="var">uniq_cons1</span><br/>
@@ -1905,7 +1905,7 @@ These introduce existential variables
 
 <div class="doc">
 For any given finite set of atoms, we can generate an atom fresh
-    for it. 
+    for it.
 </div>
 <div class="code">
 <span class="id" title="keyword">Lemma</span> <a id="atom_fresh" class="idref" href="#atom_fresh"><span class="id" title="lemma">atom_fresh</span></a> : <span class="id" title="keyword">forall</span> <a id="L:435" class="idref" href="#L:435"><span class="id" title="binder">L</span></a> : <a class="idref" href="Tealeaves.LN.AtomSet.html#AtomSet.t"><span class="id" title="definition">AtomSet.t</span></a>, <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#6556914db359db999889decec6a4a562"><span class="id" title="notation">{</span></a> <a id="x:436" class="idref" href="#x:436"><span class="id" title="binder">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#6556914db359db999889decec6a4a562"><span class="id" title="notation">:</span></a> <a class="idref" href="Tealeaves.LN.Atom.html#atom"><span class="id" title="abbreviation">atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#6556914db359db999889decec6a4a562"><span class="id" title="notation">|</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#x:436"><span class="id" title="variable">x</span></a> <a class="idref" href="Tealeaves.LN.AtomSet.html#9cf70f4f46b2021514e42e92c6e5021e"><span class="id" title="notation">∈@</span></a> <a class="idref" href="Tealeaves.LN.AssocList.html#L:435"><span class="id" title="variable">L</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.1/stdlib//Coq.Init.Specif.html#6556914db359db999889decec6a4a562"><span class="id" title="notation">}</span></a>.<br/>
@@ -1933,7 +1933,7 @@ For any given finite set of atoms, we can generate an atom fresh
 <div class="doc">
 <span class="inlinecode"><span class="id" title="var">gather_atoms_with</span></span> <span class="inlinecode"><span class="id" title="var">F</span></span> returns the union of all the finite sets
     <span class="inlinecode"><span class="id" title="var">F</span></span> <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#alist_simpl_lemmas.x"><span class="id" title="variable">x</span></a></span> where <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#alist_simpl_lemmas.x"><span class="id" title="variable">x</span></a></span> is a variable from the context such that <span class="inlinecode"><span class="id" title="var">F</span></span> <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#alist_simpl_lemmas.x"><span class="id" title="variable">x</span></a></span>
-    type checks. 
+    type checks.
 </div>
 <div class="code">
 
@@ -1963,7 +1963,7 @@ For any given finite set of atoms, we can generate an atom fresh
 <div class="doc">
 <span class="inlinecode"><span class="id" title="var">beautify_fset</span></span> <span class="inlinecode"><span class="id" title="var">V</span></span> assumes that <span class="inlinecode"><span class="id" title="var">V</span></span> is built as a union of finite
     sets and returns the same set cleaned up: empty sets are removed
-    and items are laid out in a nicely parenthesized way. 
+    and items are laid out in a nicely parenthesized way.
 </div>
 <div class="code">
 
@@ -1992,7 +1992,7 @@ The tactic <span class="inlinecode"><span class="id" title="var">pick</span></sp
     for "all atoms in the context."  This version depends on the
     tactic <span class="inlinecode"><span class="id" title="var">gather_atoms</span></span>, which is responsible for returning the set
     of "all atoms in the context."  By default, it returns the empty
-    set, but users are free (and expected) to redefine it. 
+    set, but users are free (and expected) to redefine it.
 </div>
 <div class="code">
 
@@ -2021,7 +2021,7 @@ The tactic <span class="inlinecode"><span class="id" title="var">pick</span></sp
 <div class="doc">
 Example: We can redefine <span class="inlinecode"><span class="id" title="var">gather_atoms</span></span> to return all the
     "obvious" atoms in the context using the <span class="inlinecode"><span class="id" title="var">gather_atoms_with</span></span> thus
-    giving us a "useful" version of the "<span class="inlinecode"><span class="id" title="var">pick</span></span> <span class="inlinecode"><span class="id" title="tactic">fresh</span></span>" tactic. 
+    giving us a "useful" version of the "<span class="inlinecode"><span class="id" title="var">pick</span></span> <span class="inlinecode"><span class="id" title="tactic">fresh</span></span>" tactic.
 </div>
 <div class="code">
 
@@ -2043,7 +2043,7 @@ Example: We can redefine <span class="inlinecode"><span class="id" title="var">g
 <div class="doc">
 At this point in the proof, we have a new atom <span class="inlinecode"><span class="id" title="var">k</span></span> and a
       hypothesis <span class="inlinecode"><a class="idref" href="Tealeaves.LN.Leaf.html#Fr"><span class="id" title="constructor">Fr</span></a></span> that <span class="inlinecode"><span class="id" title="var">k</span></span> is fresh for <span class="inlinecode"><a class="idref" href="Tealeaves.LN.AssocList.html#alist_simpl_lemmas.x"><span class="id" title="variable">x</span></a></span>, <span class="inlinecode"><span class="id" title="var">y</span></span>, <span class="inlinecode"><span class="id" title="var">z</span></span>, <span class="inlinecode"><span class="id" title="var">L1</span></span>, <span class="inlinecode"><span class="id" title="var">L2</span></span>,
-      and <span class="inlinecode"><span class="id" title="var">L3</span></span>. 
+      and <span class="inlinecode"><span class="id" title="var">L3</span></span>.
 </div>
 <div class="code">
 
@@ -2091,7 +2091,7 @@ At this point in the proof, we have a new atom <span class="inlinecode"><span cl
 
 <div class="doc">
 When the goal is a cofinite quantification, introduce a new atom
-      and specialize assumption H to this variable. 
+      and specialize assumption H to this variable.
 </div>
 <div class="code">
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">intros_cof</span> <span class="id" title="var">H</span> :=<br/>

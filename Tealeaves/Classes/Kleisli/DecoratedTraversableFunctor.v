@@ -5,6 +5,7 @@ From Tealeaves Require Export
   Classes.Kleisli.TraversableFunctor
   Functors.Reader.
 
+Import Monoid.Notations.
 Import Strength.Notations.
 Import TraversableFunctor.Notations.
 Import Comonad.Notations.
@@ -229,6 +230,18 @@ Section theory.
         (fun '(w, a) => map (g ∘ pair w) (f (w, a))).
   Proof.
     intros. unfold kc6. apply map_strength_cobind_spec.
+  Qed.
+
+  Lemma kc6_preincr `{Monoid_op E} `{Applicative G2} `{Applicative G1} :
+    forall (A B C : Type) (f : E * A -> G1 B) (g : E * B -> G2 C) (e: E),
+      (g ⋆6 f) ⦿ e =
+        (g  ⦿ e ⋆6 f ⦿ e).
+  Proof.
+    intros.
+    do 2 rewrite kc6_spec.
+    ext [e' a].
+    unfold compose; cbn.
+    reflexivity.
   Qed.
 
   (** *** Functor composition in the applicative functor *)

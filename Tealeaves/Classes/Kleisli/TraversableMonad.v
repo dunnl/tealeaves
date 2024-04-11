@@ -685,7 +685,7 @@ Section DerivedInstances.
     Qed.
 
     Lemma bind_id : forall (A : Type),
-        bind ret = @id (T A).
+        bind ret = @id (U A).
     Proof.
       intros.
       rewrite bind_to_bindt.
@@ -694,7 +694,7 @@ Section DerivedInstances.
     Qed.
 
     Lemma bind_bind : forall (A B C : Type) (g : B -> T C) (f : A -> T B),
-        bind g ∘ bind f = bind (g ⋆1 f).
+        bind g ∘ bind f = bind (U := U) (g ⋆1 f).
     Proof.
       intros.
       do 2 rewrite bind_to_bindt.
@@ -781,10 +781,6 @@ Section instances.
     {| kmon_bind0 := bind_ret;
     |}.
 
-  #[export] Instance RightModule_TraversableRightModule : RightModule T T :=
-    {| kmod_monad := _
-    |}.
-
   #[export] Instance Functor_TraversableMonad : Functor T.
   Proof.
     typeclasses eauto.
@@ -810,6 +806,15 @@ Section instances.
   #[export] Instance Functor_TraversableRightModule: Functor U :=
     {| fun_map_id := map_id;
        fun_map_map := map_map;
+    |}.
+
+  #[export] Instance RightPreModule_TraversableModule: RightPreModule T U :=
+    {| kmod_bind1 := bind_id;
+       kmod_bind2 := bind_bind;
+    |}.
+
+  #[export] Instance RightModule_TraversableRightModule : RightModule T U :=
+    {| kmod_premod := _
     |}.
 
 End instances.

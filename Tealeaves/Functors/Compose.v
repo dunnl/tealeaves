@@ -74,3 +74,25 @@ Section lemmas.
   Qed.
 
 End lemmas.
+
+Import Functor.Notations.
+
+(* Do not export this instance or typeclass resolution goes hog wild *)
+#[local] Instance Natural_compose_Natural
+  `{Map F1} `{Map F2} `{Map F3}
+  (ϕ1: F1 ⇒ F2)
+  (ϕ2: F2 ⇒ F3)
+  `{! Natural ϕ1}
+  `{! Natural ϕ2}:
+  Natural (F := F1) (G := F3) (fun A => ϕ2 A ∘ ϕ1 A).
+Proof.
+  assert (Functor F1) by now inversion Natural0.
+  assert (Functor F3) by now inversion Natural1.
+  constructor; try typeclasses eauto.
+  intros.
+  reassociate <- on left.
+  rewrite (natural (ϕ := ϕ2)).
+  reassociate -> on left.
+  rewrite (natural (ϕ := ϕ1)).
+  reflexivity.
+Qed.

@@ -1,9 +1,12 @@
 From Tealeaves Require Import
   Functors.Batch
+  Functors.Subset
   Classes.Kleisli.TraversableFunctor
+  Classes.Kleisli.Theory.TraversableFunctor
   Classes.Coalgebraic.TraversableFunctor.
 
 Import Batch.Notations.
+Import Subset.Notations.
 Import Kleisli.TraversableFunctor.Notations.
 
 #[local] Generalizable Variables G T M A B.
@@ -20,7 +23,7 @@ Import Kleisli.TraversableFunctor.Notations.
 
 (** ** <<ToBatch>> instance *)
 (******************************************************************************)
-#[export] Instance ToBatch_Traverse `{Traverse T}
+#[local] Instance ToBatch_Traverse `{Traverse T}
   : Coalgebraic.TraversableFunctor.ToBatch T :=
   (fun A B => traverse (G := Batch A B) (batch B) :
      T A -> Batch A B (T B)).
@@ -50,15 +53,17 @@ Qed.
 Section laws.
 
   Context
-    `{Kleisli.TraversableFunctor.TraversableFunctor T}
     `{Map T}
-    `{! Compat_Map_Traverse T}
-    `{ToBatch T}
-    `{! Compat_ToBatch_Traverse}.
+      `{ToBatch T}
+      `{Traverse T}
+      `{! Kleisli.TraversableFunctor.TraversableFunctor T}
+      `{! Compat_Map_Traverse T}
+      `{! Compat_ToBatch_Traverse}.
 
   (** *** Factoring operations through <<toBatch>> *)
   (******************************************************************************)
-  Lemma traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
+  Lemma traverse_through_runBatch
+    `{Applicative G} `(f : A -> G B) :
     traverse f = runBatch f ∘ toBatch.
   Proof.
     rewrite toBatch_to_traverse.
@@ -81,6 +86,70 @@ Section laws.
     intros.
     rewrite <- trf_traverse_id.
     rewrite (traverse_through_runBatch (G := fun A => A)).
+    reflexivity.
+  Qed.
+
+  (** *** Factoring derived operations through <<runBatch>> *)
+  (******************************************************************************)
+  Lemma foldMap_through_runBatch1 {A : Type} `{Monoid M} : forall `(f : A -> M),
+      foldMap f = runBatch (F:= const M) f (B := False) ∘
+                    toBatch (A := A) (A' := False).
+  Proof.
+    intros.
+    rewrite foldMap_to_traverse1.
+    rewrite traverse_through_runBatch.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_through_runBatch2 `{Monoid M} : forall (A fake : Type) `(f : A -> M),
+      foldMap f = runBatch (F := const M) f (B := fake) ∘
+                    toBatch (A' := fake).
+  Proof.
+    intros.
+    rewrite foldMap_to_traverse1.
+    change (fun _ : Type => M) with (const (A := Type) M).
+    rewrite (traverse_const1 fake).
+    rewrite (traverse_through_runBatch (G := const M)).
+    reflexivity.
+  Qed.
+
+
+  Corollary tolist_through_runBatch {A : Type} (tag : Type) `(t : T A) :
+    tolist t =
+      runBatch (F := const (list A))
+        (ret (T := list) : A -> const (list A) tag)
+        (B := tag) (toBatch (A' := tag) t).
+  Proof.
+    rewrite (tolist_to_traverse2 A tag).
+    rewrite (traverse_through_runBatch (G := const (list A))).
+    reflexivity.
+  Qed.
+
+  Context
+    `{ToSubset T}
+      `{! Compat_ToSubset_Traverse T}.
+
+  Lemma tosubset_through_runBatch1 : forall (A : Type),
+      tosubset =
+        runBatch (F := const (A -> Prop))
+          (ret (T := subset) (A := A)) (B := False) ∘
+          toBatch (A' := False).
+  Proof.
+    intros.
+    rewrite tosubset_to_foldMap.
+    rewrite foldMap_through_runBatch1.
+    reflexivity.
+  Qed.
+
+  Lemma tosubset_through_runBatch2 : forall (A tag : Type),
+      tosubset =
+        runBatch (F := const (A -> Prop))
+          (ret (T := subset)) (B := tag) ∘
+          toBatch (A' := tag).
+  Proof.
+    intros.
+    rewrite tosubset_to_foldMap.
+    rewrite (foldMap_through_runBatch2 A tag).
     reflexivity.
   Qed.
 

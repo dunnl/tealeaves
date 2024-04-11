@@ -1,12 +1,16 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableFunctor
-  Classes.Coalgebraic.DecoratedTraversableFunctor
-  Functors.Batch.
+  Classes.Kleisli.Theory.DecoratedTraversableFunctor
+  Classes.Coalgebraic.DecoratedTraversableFunctor.
+From Tealeaves Require Export
+  Classes.Coalgebraic.TraversableFunctor
+  Adapters.KleisliToCoalgebraic.TraversableFunctor.
 
 Import Product.Notations.
 Import Kleisli.DecoratedTraversableFunctor.Notations.
 Import Batch.Notations.
 Import Monoid.Notations.
+Import Subset.Notations.
 
 #[local] Generalizable Variables E G T M A B.
 
@@ -30,10 +34,29 @@ Section runBatch.
      `{Mapd_inst: Mapd E T}
      `{Traverse_inst: Traverse T}
      `{Mapdt_inst: Mapdt E T}
+     `{Subset_inst: ToSubset T}
      `{! Compat_Map_Mapdt}
      `{! Compat_Mapd_Mapdt}
      `{! Compat_Traverse_Mapdt}
+     `{! Compat_ToSubset_Traverse T}
      `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
+
+  Theorem toBatch6_toBatch
+    {A B} `{ToBatch T} `{! Compat_ToBatch_Traverse}:
+    toBatch (T := T) (A := A) (A' := B) =
+      mapfst_Batch extract ∘ toBatch6 (T := T) (A := A).
+  Proof.
+    rewrite toBatch_to_traverse.
+    rewrite traverse_to_mapdt.
+    unfold toBatch6, ToBatch6_Mapdt.
+    rewrite <- (kdtfun_morph (T := T)
+                 (ϕ := fun X =>
+                         mapfst_Batch (B := B) (C := X)
+                           (A1 := E * A) (A2 := A)
+                           (extract (W := prod E) (A := A)))
+                 (batch B)).
+    reflexivity.
+  Qed.
 
   Theorem mapdt_through_runBatch `{Applicative G} `(f : E * A -> G B) :
     mapdt f = runBatch f ∘ toBatch6.
@@ -70,6 +93,66 @@ Section runBatch.
     reflexivity.
   Qed.
 
+  (** *** <<foldMapd>> a special case of <<runBatch>> *)
+  (******************************************************************************)
+  Lemma foldMapd_through_runBatch1 {A} `{Monoid M} : forall `(f : E * A -> M),
+      foldMapd f = runBatch (F := const M) f (C := T False) ∘ toBatch6 (B := False).
+  Proof.
+    intros.
+    rewrite foldMapd_to_mapdt1.
+    rewrite (mapdt_through_runBatch (G := const M)).
+    reflexivity.
+  Qed.
+
+  Lemma foldMapd_through_runBatch2 `{Monoid M} : forall (A fake : Type) `(f : E * A -> M),
+      foldMapd f = runBatch (F := const M) f (C := T fake) ∘ toBatch6 (B := fake).
+  Proof.
+    intros.
+    rewrite foldMapd_to_mapdt1.
+    rewrite (mapdt_constant_applicative2 False False fake).
+    rewrite mapdt_through_runBatch.
+    reflexivity.
+  Qed.
+
+  (** *** Factoring through <<runBatch>> *)
+  (******************************************************************************)
+  Corollary toctxlist_through_runBatch6 {A : Type} (tag : Type) :
+    toctxlist = runBatch (B := tag) (F := const (list (E * A))) (ret (T := list))
+                  ∘ toBatch6.
+  Proof.
+    rewrite (toctxlist_to_mapdt2 A tag).
+    now rewrite mapdt_through_runBatch.
+  Qed.
+
+
+  Corollary toctxset_through_runBatch1 {A : Type} :
+    toctxset (F := T) = runBatch (B := False) (F := const (subset (E * A)))
+                                (ret (T := subset)) ∘ toBatch6.
+  Proof.
+    rewrite (toctxset_to_mapdt1 A).
+    now rewrite (mapdt_through_runBatch).
+  Qed.
+
+  Corollary toctxset_through_runBatch2 {A tag : Type} :
+    toctxset (F := T) = runBatch (B := tag) (F := const (subset (E * A)))
+                                (ret (T := subset)) ∘ toBatch6.
+  Proof.
+    rewrite (toctxset_to_mapdt2 A tag).
+    now rewrite (mapdt_through_runBatch).
+  Qed.
+
+  Corollary ctx_elements_through_runBatch1 {A : Type} {p:E * A}:
+    element_ctx_of (T := T) p =
+      runBatch (B := False) (F := const Prop)
+        (H0 := @Mult_const _ Monoid_op_or)
+        (H1 := @Pure_const _ Monoid_unit_false)
+        {{p}} ∘ toBatch6.
+  Proof.
+    rewrite element_ctx_of_to_foldMapd.
+    rewrite foldMapd_through_runBatch1.
+    reflexivity.
+  Qed.
+
 End runBatch.
 
 From Tealeaves Require Import
@@ -78,17 +161,20 @@ From Tealeaves Require Import
 
 (** ** Relating <<toBatch6>> with <<toBatch>> *)
 (******************************************************************************)
+(*
 Lemma toBatch6_toBatch
   `{Traverse_inst: Traverse T}
   `{Mapdt_inst: Mapdt E T}
+  `{ToBatch_inst: ToBatch T}
   `{! Compat_Traverse_Mapdt}
+  `{! Compat_ToBatch_Traverse}
   `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}
   {A B : Type} :
   toBatch (A := A) (A' := B) = mapfst_Batch extract ∘ toBatch6.
 Proof.
   intros.
   unfold_ops @ToBatch6_Mapdt.
-  unfold_ops @ToBatch_Traverse.
+  rewrite toBatch_to_traverse.
   rewrite traverse_to_mapdt.
   rewrite <- (kdtfun_morph
                (G1 := Batch (E * A) B)
@@ -97,6 +183,7 @@ Proof.
   rewrite ret_natural.
   reflexivity.
 Qed.
+*)
 
 Lemma runBatch_toBatch6
   `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}
@@ -164,8 +251,11 @@ Qed.
 
 Lemma toBatch6_mapfst3
   `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
+  `{ToBatch_inst: ToBatch T}
+  `{! Compat_ToBatch_Traverse}
   {A A' B : Type} (f : E * A -> A') :
-  toBatch (A := A') (A' := B) ∘ mapd (T := T) f = mapfst_Batch f ∘ toBatch6 (T := T) (A := A) (B := B).
+  toBatch (A := A') (A' := B) ∘ mapd (T := T) f =
+    mapfst_Batch f ∘ toBatch6 (T := T) (A := A) (B := B).
 Proof.
   rewrite toBatch6_toBatch.
   reassociate -> on left.
@@ -181,7 +271,9 @@ Qed.
 Section to_coalgebraic.
 
   Context
-    `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}.
+    `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
+      `{ToBatch_inst: ToBatch T}
+      `{! Compat_ToBatch_Traverse}.
 
   Lemma double_Batch6_spec : forall A B C,
       double_batch6 (E := E) (A := A) (B := B) C = batch C ⋆6 batch B.

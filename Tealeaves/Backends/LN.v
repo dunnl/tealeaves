@@ -62,7 +62,8 @@ Module MakeTheory_Hetero
   #[local] Existing Instance Bind_Binddt.
   #[local] Existing Instance Bindt_Binddt.
   #[local] Existing Instance Bindd_Binddt.
-  #[local] Existing Instance Elements_Traverse.
+  #[local] Existing Instance ToBatch_Traverse.
+  #[local] Existing Instance ToSubset_Traverse.
 
   Import AtomSet.Notations.
 

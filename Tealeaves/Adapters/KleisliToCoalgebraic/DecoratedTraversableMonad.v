@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableMonad
   Classes.Coalgebraic.DecoratedTraversableMonad
+  Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
   Functors.Batch.
 
 Import Product.Notations.
@@ -17,36 +18,94 @@ Import Monoid.Notations.
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
-(** * DecoratedTraversableMonads as <<Batch3>> coalgebras *)
+(** * DecoratedTraversableMonads as <<Batch7>> coalgebras *)
 (******************************************************************************)
 #[export] Instance ToBatch7_Binddt `{Binddt W T U}
-    : Coalgebraic.DecoratedTraversableMonad.ToBatch7 W T U :=
+  : Coalgebraic.DecoratedTraversableMonad.ToBatch7 W T U :=
   (fun A B => binddt (G := Batch (W * A) (T B)) (batch (T B)) : U A -> Batch (W * A) (T B) (U B)).
+
+Lemma toBatch6_to_toBatch7
+  `{Monoid_op W}
+  `{Monoid_unit W}
+  `{Return T}
+  `{Mapdt W U}
+  `{Binddt W T U}
+  `{Binddt W T T}
+  `{! Compat_Mapdt_Binddt W T U}
+  `{! DecoratedTraversableRightPreModule W T U}:
+  forall A A' t,
+    toBatch6 (A := A) (B := A') t =
+      mapsnd_Batch (B1 := A') (B2 := T A')
+        (ret (T := T) (A := A')) (toBatch7 (A := A) (B := A') t).
+Proof.
+  intros.
+  unfold_ops @ToBatch6_Mapdt.
+  unfold_ops @ToBatch7_Binddt.
+  rewrite mapdt_to_binddt.
+  compose near t on right.
+  rewrite (kdtm_morph (A := A) (T := T)
+             (Batch _ (T A'))
+             (Batch _ A')
+             (ϕ := fun C => mapsnd_Batch (B1 := A') (B2 := T A') ret)
+             (batch (A := W * A) (T A'))).
+  reflexivity.
+Qed.
 
 (** ** Factoring operations through <<toBatch>> *)
 (******************************************************************************)
 Section runBatch.
 
+
   Context
-    `{Return_inst: Return T}
-     `{Map_inst: Map T}
-     `{Mapd_inst: Mapd W T}
-     `{Traverse_inst: Traverse T}
-     `{Mapdt_inst: Mapdt W T}
-     `{Bindd_inst: Bindd W T T}
-     `{Bindt_inst: Bindt T T}
-     `{Binddt_inst: Binddt W T T}
-     `{! Compat_Map_Binddt W T T}
-     `{! Compat_Mapd_Binddt W T T}
-     `{! Compat_Traverse_Binddt W T T}
-     `{! Compat_Mapdt_Binddt W T T}
-     `{! Compat_Bindd_Binddt W T T}
-     `{! Compat_Bindt_Binddt W T T}
-     `{Monoid W}
-     `{! Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
+    `{op : Monoid_op W}
+      `{unit : Monoid_unit W}
+      `{Monoid_inst: Monoid W}.
+
+  Context
+    `{ret_inst : Return T}
+      `{Map_T_inst : Map T}
+      `{Mapd_T_inst : Mapd W T}
+      `{Traverse_T_inst : Traverse T}
+      `{Bind_T_inst : Bind T T}
+      `{Mapdt_T_inst : Mapdt W T}
+      `{Bindd_T_inst : Bindd W T T}
+      `{Bindt_T_inst : Bindt T T}
+      `{Binddt_T_inst : Binddt W T T}
+      `{ToSubset_T_inst: ToSubset T}
+      `{! Compat_Map_Binddt W T T}
+      `{! Compat_Mapd_Binddt W T T}
+      `{! Compat_Traverse_Binddt W T T}
+      `{! Compat_Bind_Binddt W T T}
+      `{! Compat_Mapdt_Binddt W T T}
+      `{! Compat_Bindd_Binddt W T T}
+      `{! Compat_Bindt_Binddt W T T}.
+
+  Context
+    `{Map_U_inst : Map U}
+      `{Mapd_U_inst : Mapd W U}
+      `{Traverse_U_inst : Traverse U}
+      `{Bind_U_inst : Bind T U}
+      `{Mapdt_U_inst : Mapdt W U}
+      `{Bindd_U_inst : Bindd W T U}
+      `{Bindt_U_inst : Bindt T U}
+      `{Binddt_U_inst : Binddt W T U}
+      `{ToSubset_U_inst: ToSubset U}
+      `{! Compat_Map_Binddt W T U}
+      `{! Compat_Mapd_Binddt W T U}
+      `{! Compat_Traverse_Binddt W T U}
+      `{! Compat_Bind_Binddt W T U}
+      `{! Compat_Mapdt_Binddt W T U}
+      `{! Compat_Bindd_Binddt W T U}
+      `{! Compat_Bindt_Binddt W T U}
+      `{! Compat_ToSubset_Traverse T}
+      `{! Compat_ToSubset_Traverse U}.
+
+  Context
+    `{Monad_inst : ! DecoratedTraversableMonad W T}
+      `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
 
   Lemma binddt_through_runBatch `{Applicative G} `(f : W * A -> G (T B)) :
-    binddt f = runBatch f ∘ toBatch7.
+    binddt (U := U) f = runBatch f ∘ toBatch7.
   Proof.
     unfold_ops @ToBatch7_Binddt.
     rewrite (kdtm_morph _ _ (ϕ := @runBatch _ _ G _ _ _ f)).
@@ -55,7 +114,7 @@ Section runBatch.
   Qed.
 
   Lemma bindt_through_runBatch `{Applicative G} `(f : A -> G (T B)) :
-    bindt (T := T) f = runBatch (f ∘ extract) ∘ toBatch7.
+    bindt (U := U) f = runBatch (f ∘ extract) ∘ toBatch7.
   Proof.
     rewrite bindt_to_binddt.
     rewrite binddt_through_runBatch.
@@ -63,7 +122,7 @@ Section runBatch.
   Qed.
 
   Lemma bindd_through_runBatch `(f : W * A -> T B) :
-    bindd (T := T) f = runBatch (F := fun A => A) f ∘ toBatch7.
+    bindd (U := U) f = runBatch (F := fun A => A) f ∘ toBatch7.
   Proof.
     rewrite bindd_to_binddt.
     rewrite binddt_through_runBatch.
@@ -71,7 +130,7 @@ Section runBatch.
   Qed.
 
   Lemma traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
-    traverse (T := T) f = runBatch (map ret ∘ f ∘ extract) ∘ toBatch7.
+    traverse (T := U) f = runBatch (map ret ∘ f ∘ extract) ∘ toBatch7.
   Proof.
     rewrite traverse_to_binddt.
     rewrite binddt_through_runBatch.
@@ -79,7 +138,7 @@ Section runBatch.
   Qed.
 
   Corollary mapdt_through_runBatch `{Applicative G} `(f : W * A -> G B) :
-    mapdt (T := T) f = runBatch (F := G) (map ret ∘ f) ∘ toBatch7.
+    mapdt (T := U) f = runBatch (F := G) (map ret ∘ f) ∘ toBatch7.
   Proof.
     rewrite mapdt_to_binddt.
     rewrite binddt_through_runBatch.
@@ -87,7 +146,7 @@ Section runBatch.
   Qed.
 
   Corollary mapd_through_runBatch `(f : W * A -> B) :
-    mapd (T := T) f = runBatch (F := fun A => A) (ret (T := T) ∘ f) ∘ toBatch7.
+    mapd (T := U) f = runBatch (F := fun A => A) (ret (T := T) ∘ f) ∘ toBatch7.
   Proof.
     rewrite mapd_to_binddt.
     rewrite binddt_through_runBatch.
@@ -95,7 +154,7 @@ Section runBatch.
   Qed.
 
   Corollary map_through_runBatch `(f : A -> B) :
-    map (F := T) f = runBatch (F := fun A => A) (ret (T := T) ∘ f ∘ extract) ∘ toBatch7.
+    map (F := U) f = runBatch (F := fun A => A) (ret (T := T) ∘ f ∘ extract) ∘ toBatch7.
   Proof.
     rewrite map_to_traverse.
     rewrite traverse_through_runBatch.
@@ -103,10 +162,10 @@ Section runBatch.
   Qed.
 
   Corollary id_through_runBatch : forall (A : Type),
-      id (A := T A) = runBatch (F := fun A => A) (ret (T := T) ∘ extract) ∘ toBatch7.
+      id (A := U A) = runBatch (F := fun A => A) (ret (T := T) ∘ extract) ∘ toBatch7.
   Proof.
     intros.
-    rewrite <- (fun_map_id (F := T)).
+    rewrite <- (fun_map_id (F := U)).
     rewrite map_through_runBatch.
     reflexivity.
   Qed.
