@@ -210,6 +210,18 @@ Section theory.
     reflexivity.
   Qed.
 
+  Lemma cons_sub_id {X}: forall (σ: nat -> X),
+      (σ 0) ⋅ (σ ∘ S) = σ.
+  Proof.
+    intros.
+    ext ix.
+    destruct ix.
+    - rewrite cons_rw0.
+      reflexivity.
+    - rewrite cons_rw1.
+      reflexivity.
+  Qed.
+
   Lemma bound_in_zero: forall ix,
       bound_in ix 0 = false.
   Proof.
