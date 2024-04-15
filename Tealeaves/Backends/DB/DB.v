@@ -52,6 +52,36 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma iterate_rw0' : forall {A : Type} (f : A -> A) a,
+    iterate 0 f a = a.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma iterate_rw1' : forall (n : nat) {A : Type} (f : A -> A) a,
+    iterate (S n) f a = (iterate n f) (f a).
+Proof.
+  reflexivity.
+Qed.
+
+(** ** Operations with policy *)
+(******************************************************************************)
+Definition map_with_policy `{Mapd nat T}
+  (policy : (nat -> nat) -> (nat -> nat)) (ρ : nat -> nat): T nat -> T nat :=
+  mapd (fun '(depth, ix) => iterate depth policy ρ ix).
+
+Definition bind_with_policy `{Bindd nat T T}
+  (policy : (nat -> T nat) -> (nat -> T nat)) (σ : nat -> T nat): T nat -> T nat :=
+  bindd (fun '(depth, ix) => iterate depth policy σ ix).
+
+  (* Given a depth and local substitution σ,
+       adjust σ to account for the depth
+       - σ should be a top-level map, e.g.
+         σ 0 is the replacement for the first free variable
+         σ 1 is the replacement for the second free variable
+         ...
+   *)
+
 (** ** De Bruijn operations as defined by Tealeaves *)
 (******************************************************************************)
 Section ops.
@@ -69,62 +99,6 @@ Section ops.
   Definition bound_in: nat -> nat -> bool :=
     bound_in_gap 0.
 
-  (* Local function for incrementing free variables
-     by <<n>> *)
-  (* n: A value by which to increment free indices *)
-  Definition lift (n : nat) (p : nat * nat) : nat :=
-    match p with
-    | (depth, ix) =>
-        if bound_in ix depth
-        then ix
-        else ix + n
-    end.
-
-  (* Given a depth and local substitution σ,
-       adjust σ to account for the depth
-       - σ should be a top-level map, e.g.
-         σ 0 is the first element being substituted
-         For subst_by, σ 0 = u and σ (S n) = (S n)
-       (<<ix - depth>> is the index into σ,
-       adjusted to account for bound variables in scope
-   *)
-  (* TODO: Decrement free variables if necessary *)
-  Definition scoot : nat -> (nat -> T nat) -> (nat -> T nat) :=
-    fun depth σ ix =>
-      if bound_in ix depth
-      then ret ix
-      else mapd (lift depth) (σ (ix - depth)).
-
-  Definition scoot_ren : nat -> (nat -> nat) -> (nat -> nat) :=
-    fun depth ρ ix =>
-      if bound_in ix depth
-      then ix
-      else
-        lift depth (0, ρ (ix - depth))
-             (* = ρ (ix - depth) + depth *).
-
-  Definition rename_loc (ρ : nat -> nat) (p: nat * nat): nat :=
-    match p with
-    | (depth, ix) => scoot_ren depth ρ ix
-    end.
-
-  Definition subst_loc (σ : nat -> T nat) (p: nat * nat): T nat :=
-    match p with
-    | (depth, ix) => scoot depth σ ix
-    end.
-
-  Definition rename (ρ : nat -> nat) : U nat -> U nat :=
-    mapd (T := U) (rename_loc ρ).
-
-  Definition subst (σ : nat -> T nat) : U nat -> U nat :=
-    bindd (subst_loc σ).
-
-  Definition one (u: T nat): nat -> T nat :=
-    fun n => if n =? 0 then u else ret n.
-
-  Definition subst_by (u : T nat) : U nat -> U nat :=
-    subst (one u).
-
   Definition closed_gap_loc (gap: nat) (p: nat * nat): bool :=
     match p with
     | (depth, ix) => bound_in_gap gap ix depth
@@ -141,11 +115,100 @@ Section ops.
   Definition closed (t: U nat): Prop :=
     closed_gap 0 t.
 
+  (* Local function for incrementing free variables
+     by <<n>> *)
+  (* n: A value by which to increment free indices *)
+  Definition raiseFreeBy_loc (n : nat) (p : nat * nat) : nat :=
+    match p with
+    | (depth, ix) =>
+        if bound_in ix depth
+        then ix
+        else ix + n
+    end.
+
+  (* Increment all free indices by <<n>> *)
+  Definition raiseFreeBy (n: nat): T nat -> T nat :=
+    mapd (raiseFreeBy_loc n).
+
+  Definition liftRenamingBy : nat -> (nat -> nat) -> (nat -> nat) :=
+    fun depth ρ ix =>
+      if bound_in ix depth
+      then ix
+      else let normalized_ix := ix - depth
+           in ρ normalized_ix + depth.
+
+  (* Given a depth and local substitution σ,
+       adjust σ to account for the depth *)
+  Definition liftSubstitutionBy: nat -> (nat -> T nat) -> (nat -> T nat) :=
+    fun depth σ ix =>
+      if bound_in ix depth
+      then ret ix
+      else let normalized_ix := ix - depth
+           in raiseFreeBy depth (σ normalized_ix).
+
+  Definition applyRenaming_loc (ρ : nat -> nat) (p: nat * nat): nat :=
+    match p with
+    | (depth, ix) => liftRenamingBy depth ρ ix
+    end.
+
+  Definition applySubstitution_loc (σ : nat -> T nat) (p: nat * nat): T nat :=
+    match p with
+    | (depth, ix) => liftSubstitutionBy depth σ ix
+    end.
+
+  Definition rename (ρ : nat -> nat) : U nat -> U nat :=
+    mapd (T := U) (applyRenaming_loc ρ).
+
+  Definition subst (σ : nat -> T nat) : U nat -> U nat :=
+    bindd (applySubstitution_loc σ).
+
+  (*
+  Definition one (u: T nat): nat -> T nat :=
+    fun n => if n =? 0 then u else ret n.
+
+  Definition subst_one (u : T nat) : U nat -> U nat :=
+    subst (one u).
+  *)
+
+  Definition cons {X : Type} : X -> (nat -> X) -> (nat -> X)  :=
+    fun new sub n => match n with
+                  | O => new
+                  | S n' => sub n'
+                  end.
+
+  Definition uparrow: nat -> nat := S.
+
+  (* adjust a renaming to go under one binder *)
+  Definition goUnderBinder_renaming (ρ: nat -> nat): nat -> nat :=
+    cons 0 (S ∘ ρ).
+
+  Definition incrementFree: T nat -> T nat :=
+    map_with_policy goUnderBinder_renaming uparrow.
+
+  (* adjust a substitution to go under one binder *)
+  Definition goUnderBinder_substitution (σ: nat -> T nat): nat -> T nat :=
+    cons (ret 0) (incrementFree ∘ σ).
+
 End ops.
+
+#[local] Notation "↑" := uparrow.
+(* Notation "f '✪' g" := (kc1 g f) (at level 30). *)
+#[local] Infix "⋅" := (cons) (at level 10).
+
 
 Implicit Types (ρ: nat -> nat).
 
 Section theory.
+
+  Lemma cons_rw0 {A}: forall `(x: A) σ, (x ⋅ σ) 0 = x.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma cons_rw1 {A}: forall `(x: A) (n: nat) σ, (x ⋅ σ) (S n) = σ n.
+  Proof.
+    reflexivity.
+  Qed.
 
   Lemma bound_in_zero: forall ix,
       bound_in ix 0 = false.
@@ -237,26 +300,32 @@ Section theory.
     lia.
   Qed.
 
-  Lemma lift_lt: forall n depth ix,
-      ix < depth ->
-      lift n (depth, ix) = ix.
+  Lemma bound_in_1: forall ix,
+      bound_in ix 1 = true <-> ix = 0.
   Proof.
-    intros. unfold lift.
+    destruct ix; intuition.
+  Qed.
+
+  Lemma raiseFreeBy_loc_lt: forall n depth ix,
+      ix < depth ->
+      raiseFreeBy_loc n (depth, ix) = ix.
+  Proof.
+    intros. unfold raiseFreeBy_loc.
     rewrite bound_in_lt_iff in H.
     now rewrite H.
   Qed.
 
-  Lemma lift_ge: forall n depth ix,
+  Lemma raiseFreeBy_loc_ge: forall n depth ix,
       ix >= depth ->
-      lift n (depth, ix) = ix + n.
+      raiseFreeBy_loc n (depth, ix) = ix + n.
   Proof.
-    intros. unfold lift.
+    intros. unfold raiseFreeBy_loc.
     rewrite bound_in_ge_iff in H.
     now rewrite H.
   Qed.
 
-  Lemma lift_zero:
-    lift 0 = extract.
+  Lemma raiseFreeBy_loc_zero:
+    raiseFreeBy_loc 0 = extract.
   Proof.
     ext [depth ix].
     cbn. replace (depth + 0) with depth by lia.
@@ -265,8 +334,8 @@ Section theory.
     - destruct (ix <=? depth); lia.
   Qed.
 
-  Lemma lift_depth_zero: forall n ix,
-      lift n (0, ix) = ix + n.
+  Lemma raiseFreeBy_loc_depth_zero: forall n ix,
+      raiseFreeBy_loc n (0, ix) = ix + n.
   Proof.
     reflexivity.
   Qed.
@@ -323,158 +392,329 @@ Section theory.
                         (unit := Monoid_unit_zero)
                         (op := Monoid_op_plus)}.
 
-  Lemma lift_lift1: forall n m depth ix,
-      lift m (depth, lift n (depth, ix)) = lift (m + n) (depth, ix).
+  Lemma raiseFreeBy_loc_raiseFreeBy_loc1: forall n m depth ix,
+      raiseFreeBy_loc m (depth, raiseFreeBy_loc n (depth, ix)) =
+        raiseFreeBy_loc (m + n) (depth, ix).
   Proof.
-    intros. unfold lift.
+    intros. unfold raiseFreeBy_loc.
     - bound_induction.
       + bound_induction.
       + bound_induction.
   Qed.
 
-  Lemma lift_lift2: forall (n m: nat),
-      lift m ⋆4 lift n = lift (m + n).
+  Lemma raiseFreeBy_loc_raiseFreeBy_loc2: forall (n m: nat),
+      raiseFreeBy_loc m ⋆4 raiseFreeBy_loc n = raiseFreeBy_loc (m + n).
   Proof.
     intros. ext [depth ix].
     unfold kc4, compose.
     unfold_ops @Cobind_reader.
-    rewrite lift_lift1.
+    rewrite raiseFreeBy_loc_raiseFreeBy_loc1.
     reflexivity.
   Qed.
 
-  Lemma scoot_zero:
-    scoot 0 = id.
+  Lemma liftRenamingBy_zero:
+    liftRenamingBy 0 = id.
   Proof.
-    unfold scoot. ext σ ix. cbn.
-    rewrite lift_zero.
-    rewrite mapd_id.
-    replace (ix - 0) with ix by lia.
-    reflexivity.
-  Qed.
-
-  Lemma scoot_ren_zero:
-    scoot_ren 0 = id.
-  Proof.
-    unfold scoot. ext σ ix. cbn.
+    unfold liftSubstitutionBy. ext σ ix. cbn.
     replace (ix - 0) with ix by lia.
     replace (σ ix + 0) with (σ ix) by lia.
     reflexivity.
   Qed.
 
-  Lemma scoot_scoot : forall (n m: nat),
-      scoot m ∘ scoot n = scoot (m + n).
+  Lemma liftSubstitutionBy_zero:
+    liftSubstitutionBy 0 = id.
+  Proof.
+    unfold liftSubstitutionBy. ext σ ix. cbn.
+    unfold raiseFreeBy.
+    rewrite raiseFreeBy_loc_zero.
+    rewrite mapd_id.
+    replace (ix - 0) with ix by lia.
+    reflexivity.
+  Qed.
+
+  Lemma liftRenamingBy_liftRenamingBy : forall (n m: nat),
+      liftRenamingBy m ∘ liftRenamingBy n = liftRenamingBy (m + n).
   Proof.
     intros. ext σ ix.
-    unfold compose, scoot.
+    unfold compose, liftRenamingBy.
+    bound_induction.
+    - bound_induction.
+      + bound_induction.
+        rewrite (add_comm m n).
+        rewrite add_assoc.
+        fequal. fequal. fequal. lia.
+      + bound_induction.
+    - bound_induction.
+  Qed.
+
+  Lemma liftSubstitutionBy_liftSubstitutionBy : forall (n m: nat),
+      liftSubstitutionBy m ∘ liftSubstitutionBy n = liftSubstitutionBy (m + n).
+  Proof.
+    intros. ext σ ix.
+    unfold compose, liftSubstitutionBy.
     bound_induction.
     - bound_induction.
       + bound_induction.
         { compose near (σ (ix - m - n)) on left.
+          unfold raiseFreeBy.
           rewrite mapd_mapd.
-          rewrite lift_lift2.
+          rewrite raiseFreeBy_loc_raiseFreeBy_loc2.
           do 2 fequal. lia. }
       + bound_induction.
         { compose near (ix - m).
+          unfold raiseFreeBy.
           rewrite mapd_ret.
           unfold compose; cbn.
           fequal. lia. }
     - bound_induction.
   Qed.
 
-  Lemma scoot_ren_scoot_ren : forall (n m: nat),
-      scoot_ren m ∘ scoot_ren n = scoot_ren (m + n).
-  Proof.
-    intros. ext σ ix.
-    unfold compose, scoot_ren.
-    bound_induction.
-    - bound_induction.
-      + bound_induction.
-        rewrite lift_lift1.
-        do 2 rewrite lift_depth_zero.
-        do 2 fequal.
-        lia.
-      + bound_induction.
-        rewrite lift_depth_zero.
-        lia.
-    - bound_induction.
-  Qed.
-
-  Corollary scoot_S: forall (n: nat),
-      scoot (S n) = scoot n ∘ scoot 1.
+  Corollary liftRenamingBy_S: forall (n: nat) ρ,
+      liftRenamingBy (S n) ρ = liftRenamingBy n (liftRenamingBy 1 ρ).
   Proof.
     intros.
     replace (S n) with (n + 1) by lia.
-    now rewrite scoot_scoot.
+    compose near ρ on right.
+    now rewrite liftRenamingBy_liftRenamingBy.
   Qed.
 
-  Corollary scoot_ren_S: forall (n: nat),
-      scoot_ren (S n) = scoot_ren n ∘ scoot_ren 1.
+  Corollary liftSubstitutionBy_S: forall (n: nat) σ,
+      liftSubstitutionBy (S n) σ = liftSubstitutionBy n (liftSubstitutionBy 1 σ).
   Proof.
     intros.
     replace (S n) with (n + 1) by lia.
-    now rewrite scoot_ren_scoot_ren.
+    compose near σ on right.
+    now rewrite liftSubstitutionBy_liftSubstitutionBy.
   Qed.
 
-  Lemma iterate_scoot: forall n,
-      scoot n = iterate n (scoot 1).
+  Lemma iterate_liftRenamingBy: forall n,
+      liftRenamingBy n = iterate n (liftRenamingBy 1).
   Proof.
-    intros. induction n.
-    - rewrite scoot_zero. reflexivity.
-    - rewrite scoot_S.
+    intros.
+    induction n.
+    - rewrite liftRenamingBy_zero.
+      reflexivity.
+    - ext ρ.
+      rewrite liftRenamingBy_S.
       rewrite IHn.
       rewrite iterate_rw1.
       reflexivity.
   Qed.
 
-  Lemma scoot_ren_spec: forall ρ n,
-      ret ∘ (scoot_ren n ρ) = scoot n (ret ∘ ρ).
+  Lemma iterate_liftSubstitutionBy: forall n,
+      liftSubstitutionBy n = iterate n (liftSubstitutionBy 1).
+  Proof.
+    intros. induction n.
+    - rewrite liftSubstitutionBy_zero.
+      reflexivity.
+    - ext σ.
+      rewrite liftSubstitutionBy_S.
+      rewrite iterate_rw1'.
+      rewrite IHn.
+      reflexivity.
+  Qed.
+
+  Lemma liftRenamingBy_spec: forall ρ n,
+      ret ∘ (liftRenamingBy n ρ) = liftSubstitutionBy n (ret ∘ ρ).
   Proof.
     intros.
     ext m.
     unfold compose; cbn.
-    unfold scoot, scoot_ren.
+    unfold liftSubstitutionBy, liftRenamingBy.
     bound_induction.
     compose near (ρ (m - n)).
+    unfold raiseFreeBy.
     rewrite (mapd_ret).
     unfold compose.
     reflexivity.
   Qed.
 
-  Lemma iterate_scoot_ren: forall n,
-      scoot_ren n = iterate n (scoot_ren 1).
+  Lemma applyRenaming_loc_preincr (ρ : nat -> nat) (n: nat):
+    applyRenaming_loc ρ ⦿ n =
+      applyRenaming_loc (liftRenamingBy n ρ).
   Proof.
-    intros.
-    induction n.
-    - rewrite scoot_ren_zero.
-      reflexivity.
-    - rewrite scoot_ren_S.
-      rewrite IHn.
-      rewrite iterate_rw1.
-      reflexivity.
-  Qed.
-
-  Lemma rename_loc_preincr (ρ : nat -> nat) (n: nat):
-    rename_loc ρ ⦿ n =
-      rename_loc (scoot_ren n ρ).
-  Proof.
-    unfold rename_loc.
     ext (depth, ix); cbn.
-    compose near ρ on right.
-    rewrite (scoot_ren_scoot_ren).
     change (?n ● ?m) with (n + m).
-    fequal. lia.
+    compose near ρ.
+    rewrite (liftRenamingBy_liftRenamingBy).
+    fequal; lia.
   Qed.
 
-  Lemma subst_loc_preincr (σ : nat -> T nat) (n: nat):
-      subst_loc σ ⦿ n =
-        subst_loc (scoot n σ).
+  Lemma applySubstitution_loc_preincr (σ : nat -> T nat) (n: nat):
+    applySubstitution_loc σ ⦿ n =
+      applySubstitution_loc (liftSubstitutionBy n σ).
   Proof.
-    unfold subst_loc.
+    unfold applySubstitution_loc.
     ext (depth, ix); cbn.
     compose near σ on right.
-    rewrite (scoot_scoot).
+    rewrite (liftSubstitutionBy_liftSubstitutionBy).
     change (?n ● ?m) with (n + m).
     fequal. lia.
+  Qed.
+
+  Lemma liftRenamingBy_1:
+      liftRenamingBy 1 = goUnderBinder_renaming.
+  Proof.
+    intros. ext ρ ix.
+    unfold liftRenamingBy.
+    unfold goUnderBinder_renaming.
+    bound_induction.
+    - cbn. destruct ix.
+      + false.
+      + cbn. unfold compose.
+        rewrite add_1_r.
+        do 2 fequal. lia.
+    - apply bound_in_1 in Hbound.
+      subst. reflexivity.
+  Qed.
+
+  Lemma liftRenaming_policy_repr: forall depth,
+    liftRenamingBy depth = iterate depth goUnderBinder_renaming.
+  Proof.
+    intros. induction depth.
+    - ext ρ ix. cbn.
+      rewrite add_0_r.
+      fequal; lia.
+    - ext ρ ix.
+      rewrite iterate_rw1'.
+      rewrite liftRenamingBy_S.
+      rewrite IHdepth.
+      rewrite liftRenamingBy_1.
+      reflexivity.
+  Qed.
+
+  Lemma liftRenaming_S: forall depth ix,
+      liftRenamingBy depth S ix = raiseFreeBy_loc 1 (depth, ix).
+  Proof.
+    intros.
+    induction depth.
+    - cbn. rewrite add_0_r. lia.
+    - cbn. unfold liftRenamingBy.
+      rewrite add_0_r.
+      bound_induction.
+      + cbn.
+        assert (ix <=? depth = false).
+        rewrite leb_gt. lia.
+        rewrite H.
+        rewrite add_1_r. lia.
+      + assert (ix <=? depth = true).
+        rewrite leb_le. lia. rewrite H. reflexivity.
+  Qed.
+
+  Corollary applyRenaming_loc_S:
+    applyRenaming_loc S = raiseFreeBy_loc 1.
+  Proof.
+    ext [depth ix]. cbn.
+    apply liftRenaming_S.
+  Qed.
+
+  Corollary applyRenaming_policy_repr: forall ρ depth ix,
+      applyRenaming_loc ρ (depth, ix) = iterate depth goUnderBinder_renaming ρ ix.
+  Proof.
+    intros. cbn.
+    rewrite liftRenaming_policy_repr.
+    reflexivity.
+  Qed.
+
+  Lemma rename_policy_repr (ρ : nat -> nat):
+    rename ρ = map_with_policy goUnderBinder_renaming ρ.
+  Proof.
+    unfold rename.
+    unfold map_with_policy.
+    fequal. ext [depth ix].
+    apply applyRenaming_policy_repr.
+  Qed.
+
+  Lemma rename_policy_repr_T (ρ : nat -> nat):
+    rename (U := T) ρ = map_with_policy goUnderBinder_renaming ρ.
+  Proof.
+    unfold rename.
+    unfold map_with_policy.
+    fequal. ext [depth ix].
+    apply applyRenaming_policy_repr.
+  Qed.
+
+
+  Lemma incrementFree_spec:
+    rename (U := U) S = incrementFree.
+  Proof.
+    unfold incrementFree.
+    rewrite rename_policy_repr.
+    reflexivity.
+  Qed.
+
+  Lemma raiseFreeBy_spec: forall depth,
+    rename (U := U) (fun n => n + depth) = raiseFreeBy depth.
+  Proof.
+    intros.
+    unfold raiseFreeBy.
+    unfold rename.
+    fequal.
+    unfold applyRenaming_loc.
+    unfold raiseFreeBy_loc.
+    unfold liftRenamingBy.
+    ext [depth' ix].
+    bound_induction.
+  Qed.
+
+  Lemma goUnderBinder_substitution_spec:
+    liftSubstitutionBy (T := T) 1 = goUnderBinder_substitution.
+  Proof.
+    ext σ ix.
+    unfold goUnderBinder_substitution.
+    unfold liftSubstitutionBy.
+    bound_induction.
+    - apply bound_in_ge_iff in Hbound.
+      assert (Hgt1: exists ix', ix = S ix').
+      { destruct ix. false; lia. eauto. }
+      destruct Hgt1 as [ix' Heq]; subst.
+      rewrite cons_rw1; unfold compose at 1.
+      replace (S ix' - 1) with ix' by lia.
+      unfold raiseFreeBy.
+      unfold incrementFree.
+      rewrite <- rename_policy_repr_T.
+      unfold rename.
+      fequal.
+      rewrite <- applyRenaming_loc_S.
+      reflexivity.
+    - apply bound_in_1 in Hbound.
+      now subst.
+  Qed.
+
+  Goal forall (n: nat) σ,
+      (0 ⋅ (1 ⋅ σ)) n =
+        if bound_in n 2 then n else σ (n - 2).
+  Proof.
+    intros. bound_induction.
+    - unfold cons.
+      destruct n. lia.
+      destruct n. lia. cbn.
+      fequal. lia.
+    - unfold cons.
+      destruct n. lia.
+      destruct n. lia.
+      lia.
+  Qed.
+
+  Lemma applySubstitution_loc_spec: forall σ,
+      applySubstitution_loc σ =
+        (fun '(depth, ix) => iterate depth goUnderBinder_substitution σ ix).
+  Proof.
+    intros.
+    ext [depth ix].
+    unfold applySubstitution_loc.
+    rewrite iterate_liftSubstitutionBy.
+    fequal.
+    apply goUnderBinder_substitution_spec.
+  Qed.
+
+  Lemma subst_via_policy (σ : nat -> T nat):
+    subst σ = bind_with_policy goUnderBinder_substitution σ.
+  Proof.
+    unfold subst.
+    unfold bind_with_policy.
+    fequal.
+    apply applySubstitution_loc_spec.
   Qed.
 
 End theory.

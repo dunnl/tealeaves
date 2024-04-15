@@ -41,19 +41,13 @@ Module DB1.
      (unit := Monoid_unit_zero)
      (op := Monoid_op_plus)}.
 
-    Definition cons {X : Type} : X -> (nat -> X) -> (nat -> X)  :=
-      fun new sub n => match n with
-                    | O => new
-                    | S n' => sub n'
-                    end.
 
     (* or uparrow *)
-    Definition shift: nat -> nat := S.
     (*
       fun n => ret (n + 1).
       *)
 
-    Notation "↑" := shift.
+    Notation "↑" := uparrow.
     Notation "f '✪' g" := (kc1 g f) (at level 30).
     Infix "⋅" := (cons) (at level 10).
 
@@ -66,7 +60,7 @@ Module DB1.
     Proof.
       intros.
       unfold kc1.
-      unfold shift.
+      unfold uparrow.
       ext n.
       unfold compose.
       compose near (n + 1) on left.
@@ -93,17 +87,10 @@ Module DB1.
     *)
 
 
-    Definition map_with_policy
-      (policy : (nat -> nat) -> (nat -> nat)) (ρ : nat -> nat): T nat -> T nat :=
-      mapd (fun '(depth, ix) => iterate depth policy ρ ix).
-
-    Definition bind_with_policy
-      (policy : (nat -> T nat) -> (nat -> T nat)) (σ : nat -> T nat): T nat -> T nat :=
-      bindd (fun '(depth, ix) => iterate depth policy σ ix).
 
     (* raise all free variables by 1 *)
     Definition lift: T nat -> T nat :=
-      map_with_policy (cons 0) shift.
+      map_with_policy (cons 0) uparrow.
 
     (* adjust a substitution to go under one binder *)
     Definition go_under_one_binder (σ: nat -> T nat): nat -> T nat :=
@@ -173,14 +160,14 @@ Section equivalence.
 
   (*
   Lemma tmp:
-    bind DB1.shift = mapd (DB2.lift 1).
+    bind DB1.uparrow = mapd (DB2.lift 1).
   Proof.
     rewrite bind_to_bindd.
     rewrite mapd_to_bindd.
     fequal.
     ext [depth ix].
     unfold compose; cbn.
-    unfold DB1.shift.
+    unfold DB1.uparrow.
     destruct depth.
       + reflexivity.
       + destruct (ix <=? depth).
@@ -216,7 +203,7 @@ Section equivalence.
   Lemma lift_to_lift:
     DB1.lift = mapd (DB2.lift 1).
   Proof.
-    unfold DB1.lift, DB1.map_with_policy, DB1.shift.
+    unfold DB1.lift, DB1.map_with_policy, DB1.uparrow.
     fequal; ext [depth ix].
     generalize dependent ix.
     induction depth; intro ix.
@@ -232,7 +219,7 @@ Section equivalence.
     cbn.
 
   Lemma tmp:
-    DB1.bind_with_policy (DB1.cons (ret 0)) DB1.shift =
+    DB1.bind_with_policy (DB1.cons (ret 0)) DB1.uparrow =
       mapd (DB2.lift 1).
   Proof.
     intros.
@@ -241,7 +228,7 @@ Section equivalence.
     fequal.
     ext [depth ix].
     unfold compose.
-    unfold DB1.shift.
+    unfold DB1.uparrow.
     induction depth.
     - cbn. reflexivity.
     - cbn.
@@ -318,7 +305,7 @@ Proof.
     symmetry in Heqb.
     destruct b.
     + exfalso. rewrite PeanoNat.Nat.ltb_lt in Heqb. lia.
-    + cbn. rewrite DB2.shift_zero.
+    + cbn. rewrite DB2.uparrow_zero.
       rewrite (dfun_fmapd1 nat term).
       unfold id. fequal. lia.
   - unfold iterate. unfold compose.
