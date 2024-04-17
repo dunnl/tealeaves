@@ -185,7 +185,7 @@ Section alt_presentation.
       `{Bindd_U_inst : Bindd nat T U}
       `{ToCtxset_U_inst : ToCtxset nat U}.
 
-  Definition cons {X : Type} : X -> (nat -> X) -> (nat -> X)  :=
+  Definition scons {X : Type} : X -> (nat -> X) -> (nat -> X)  :=
     fun new sub n => match n with
                   | O => new
                   | S n' => sub n'
@@ -195,14 +195,14 @@ Section alt_presentation.
 
   (* adjust a renaming to go under one binder *)
   Definition up__ren (ρ: nat -> nat): nat -> nat :=
-    cons 0 (S ∘ ρ).
+    scons 0 (S ∘ ρ).
 
   Definition rename_alt: forall (ρ : nat -> nat), T nat -> T nat :=
     map_with_policy up__ren.
 
   (* adjust a substitution to go under one binder *)
   Definition up (σ: nat -> T nat): nat -> T nat :=
-    cons (ret 0) (rename_alt S ∘ σ).
+    scons (ret 0) (rename_alt S ∘ σ).
 
   Definition subst_alt (σ : nat -> T nat): U nat -> U nat :=
     bind_with_policy (T := T) (U := U) up σ.
@@ -222,40 +222,40 @@ End alt_presentation.
 #[local] Notation "'⇑'" := up.
 #[local] Notation "'⇑__ren'" := up.
 #[local] Notation "f '✪' g" := (kc1 g f) (at level 30).
-#[local] Infix "⋅" := (cons) (at level 10).
+#[local] Infix "⋅" := (scons) (at level 10).
 
-Lemma cons_rw0 {A}: forall `(x: A) σ, (x ⋅ σ) 0 = x.
+Lemma scons_rw0 {A}: forall `(x: A) σ, (x ⋅ σ) 0 = x.
 Proof.
   reflexivity.
 Qed.
 
-Lemma cons_rw1 {A}: forall `(x: A) (n: nat) σ, (x ⋅ σ) (S n) = σ n.
+Lemma scons_rw1 {A}: forall `(x: A) (n: nat) σ, (x ⋅ σ) (S n) = σ n.
 Proof.
   reflexivity.
 Qed.
 
-Lemma cons_sub_id {X}: forall (σ: nat -> X),
+Lemma scons_sub_id {X}: forall (σ: nat -> X),
     (σ 0) ⋅ (σ ∘ S) = σ.
 Proof.
   intros.
   ext ix.
   destruct ix.
-  - rewrite cons_rw0.
+  - rewrite scons_rw0.
     reflexivity.
-  - rewrite cons_rw1.
+  - rewrite scons_rw1.
     reflexivity.
 Qed.
 
 (*
-Lemma cons_sub_id {X}: forall (σ: nat -> T nat),
+Lemma scons_sub_id {X}: forall (σ: nat -> T nat),
     (x ⋅ σ) ∘ rename S = σ.
 Proof.
   intros.
   ext ix.
   destruct ix.
-  - rewrite cons_rw0.
+  - rewrite scons_rw0.
     reflexivity.
-  - rewrite cons_rw1.
+  - rewrite scons_rw1.
     reflexivity.
 Qed.
 *)
@@ -787,7 +787,7 @@ Section theory.
       assert (Hgt1: exists ix', ix = S ix').
       { destruct ix. false; lia. eauto. }
       destruct Hgt1 as [ix' Heq]; subst.
-      rewrite cons_rw1; unfold compose at 1.
+      rewrite scons_rw1; unfold compose at 1.
       replace (S ix' - 1) with ix' by lia.
       rewrite <- rename_policy_repr.
       fequal. ext n. lia.
@@ -801,11 +801,11 @@ Section theory.
         if bound_in n 2 then n else σ (n - 2).
   Proof.
     intros. bound_induction.
-    - unfold cons.
+    - unfold scons.
       destruct n. lia.
       destruct n. lia. cbn.
       fequal. lia.
-    - unfold cons.
+    - unfold scons.
       destruct n. lia.
       destruct n. lia.
       lia.
