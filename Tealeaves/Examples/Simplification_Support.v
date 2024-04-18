@@ -47,7 +47,6 @@ Export DecoratedContainerFunctor.Notations. (* ∈d *)
 Open Scope set_scope.
 
 
-
 (*|
 ========================================
 Simplification support
@@ -99,90 +98,64 @@ Proof.
   intuition.
 Qed.
 
+(** ** Rewriting with binddt *)
+(******************************************************************************)
 Ltac rewrite_core_ops_to_binddt :=
   match goal with
+  | |- context[map ?f ?t] =>
+      debug "map_to_binddt";
+      progress (rewrite bind_to_binddt)
+  (* mapd/bind/traverse *)
   | |- context[bind ?f ?t] =>
       debug "bind_to_binddt";
       progress (rewrite bind_to_binddt)
+  | |- context[mapd ?f ?t] =>
+      debug "mapd_to_binddt";
+      progress (rewrite mapd_to_binddt)
+  | |- context[traverse ?f ?t] =>
+      debug "traverse_to_binddt";
+      progress (rewrite traverse_to_binddt)
+  (* mapdt/bindd/bindt *)
+  | |- context[mapdt ?f ?t] =>
+      debug "mapdt_to_binddt";
+      progress (rewrite mapdt_to_binddt)
   | |- context[bindd ?f ?t] =>
       debug "bindd_to_binddt";
       progress (rewrite bindd_to_binddt)
+  | |- context[bindt ?f ?t] =>
+      debug "bindt_to_binddt";
+      progress (rewrite bindt_to_binddt)
   end.
 
-Ltac simplify_monoid_units :=
+Ltac rewrite_binddt_to_core_ops :=
   match goal with
-  | |- context[Ƶ ● ?m] =>
-      debug "monoid_id_r";
-      rewrite (monoid_id_r m)
-  | |- context[?m ● Ƶ] =>
-      debug "monoid_id_l";
-      rewrite (monoid_id_l m)
+  | |- context[binddt (G := fun A => A) (ret ∘ ?f ∘ extract)] =>
+      debug "binddt_to_map";
+      progress (rewrite <- map_to_binddt)
+  | |- context[binddt (G := fun A => A) (ret (T := ?T) (A := ?A) ∘ extract)] =>
+      change (ret (T := T) (A := A)) with (ret (T := T) (A := A) ∘ id);
+      debug "binddt_to_map";
+      progress (rewrite <- map_to_binddt)
+  | |- context[binddt (G := fun A => A) (?f ∘ extract)] =>
+      debug "binddt_to_bind";
+      progress (rewrite <- bind_to_binddt)
+  | |- context[binddt (G := fun A => A) (ret ∘ ?f)] =>
+      debug "binddt_to_mapd";
+      progress (rewrite <- mapd_to_binddt)
+  | |- context[binddt (G := fun A => A)] =>
+      debug "binddt_to_bindd";
+      progress (rewrite <- bindd_to_binddt)
+  | |- context[binddt (G := ?G) (map (F := ?G) ret ∘ ?f ∘ extract)] =>
+      debug "binddt_to_traverse";
+      progress (rewrite <- traverse_to_binddt)
+  | |- context[binddt (G := ?G) (map (F := ?G) ret ∘ ?f)] =>
+      debug "binddt_to_mapdt";
+      progress (rewrite <- mapdt_to_binddt)
+  | |- context[binddt (G := ?G) (?f ∘ extract)] =>
+      debug "binddt_to_bindt";
+      progress (rewrite <- bindt_to_binddt)
   end.
 
-Ltac simplify_const_functor :=
-  match goal with
-  | |- context [pure (F := const ?W) ?x] =>
-      debug "pure_const";
-      rewrite pure_const_rw
-  | |- context[(ap (const ?W) ?x ?y)] =>
-      debug "ap_const";
-      rewrite ap_const_rw
-  | |- context[map (F := const ?X) ?f] =>
-      debug "map_const";
-      rewrite map_const_rw
-
-  end.
-
-Ltac simplify_I_functor :=
-  match goal with
-  | |- context[pure (F := fun A => A) ?x] =>
-      debug "pure_I";
-      change (pure (F := fun A => A) x) with x
-  | |- context[ap (fun A => A) ?x ?y] =>
-      debug "ap_I";
-      change (ap (fun A => A) x y) with (x y)
-  end.
-
-Ltac simplify_extract :=
-  match goal with
-  | |- context[(?f ∘ extract) ⦿ ?w] =>
-      debug "extract_preincr2";
-      rewrite extract_preincr2
-  | |- context[(?f ∘ extract) (?w, ?a)] =>
-      debug "extract_pair";
-      change ((f ∘ extract) (w, a)) with
-      ((f ∘ (extract ∘ pair w)) a);
-      rewrite extract_pair
-  | |- context[(?f ⦿ Ƶ)] =>
-      rewrite (preincr_zero f)
-  | |- context[(?f ⦿ ?x)] =>
-      let T := type of x in
-      change x with (Ƶ:T);
-      rewrite preincr_zero
-  end.
-
-Ltac simplify_fn_composition :=
-  match goal with
-  | |- context [id ∘ ?f] =>
-      debug "id ∘ f";
-      change (id ∘ f) with f
-  | |- context [?f ∘ id] =>
-      debug "f ∘ id";
-      change (f ∘ id) with f
-  | |- context [id ?x] =>
-      debug "unfold_id";
-      change (id x) with x
-  end.
-
-Ltac simplify_distribute_list_ops :=
-  match goal with
-  | |- context[?f (monoid_op (Monoid_op := Monoid_op_list) ?l1 ?l2)] =>
-      unfold_ops @Monoid_op_list;
-      progress (autorewrite with tea_list)
-  | |- context[?f (monoid_op (Monoid_op := Monoid_op_subset) ?l1 ?l2)] =>
-      unfold_ops @Monoid_op_subset;
-      progress (autorewrite with tea_set)
-  end.
 
 Ltac rewrite_derived_ops_to_binddt T :=
   match goal with
@@ -218,6 +191,102 @@ Ltac rewrite_derived_ops_to_binddt T :=
       unfold Forall_ctx
   end.
 
+(** ** Simplifying monoid ops *)
+(******************************************************************************)
+Ltac simplify_monoid_units :=
+  match goal with
+  | |- context[Ƶ ● ?m] =>
+      debug "monoid_id_r";
+      rewrite (monoid_id_r m)
+  | |- context[?m ● Ƶ] =>
+      debug "monoid_id_l";
+      rewrite (monoid_id_l m)
+  end.
+
+Ltac simplify_extract :=
+  match goal with
+  | |- context[(?f ∘ extract) ⦿ ?w] =>
+      debug "simpl_extract_preincr2";
+      rewrite (extract_preincr2 f w)
+  | |- context[(?f ∘ extract) (?w, ?a)] =>
+      debug "simpl_extract_pair";
+      change ((f ∘ extract) (w, a)) with (f a)
+      (*
+      change ((f ∘ extract) (w, a)) with
+        ((f ∘ (extract ∘ pair w)) a);
+      rewrite extract_pair
+       *)
+  | |- context[(?f ⦿ Ƶ)] =>
+      debug "simpl_preincr_zero";
+      rewrite (preincr_zero f)
+  | |- context[(?f ⦿ ?x)] =>
+      (* test whether x can be resolved as some Ƶ *)
+      let T := type of x in
+      change x with (Ƶ:T);
+      debug "simpl_preincr_zero";
+      rewrite preincr_zero
+  end.
+
+(** ** Simplifying applicative functors *)
+(******************************************************************************)
+
+(** *** Constant functors *)
+(******************************************************************************)
+Ltac simplify_applicative_const :=
+  match goal with
+  | |- context [pure (F := const ?W) ?x] =>
+      debug "pure_const";
+      rewrite pure_const_rw
+  | |- context[(ap (const ?W) ?x ?y)] =>
+      debug "ap_const";
+      rewrite ap_const_rw
+  | |- context[map (F := const ?X) ?f] =>
+      debug "map_const";
+      rewrite map_const_rw
+
+  end.
+
+(** *** Identity functor *)
+(******************************************************************************)
+Ltac simplify_applicative_I :=
+  match goal with
+  | |- context[pure (F := fun A => A) ?x] =>
+      debug "pure_I";
+      change (pure (F := fun A => A) x) with x
+  | |- context[ap (fun A => A) ?x ?y] =>
+      debug "ap_I";
+      change (ap (fun A => A) x y) with (x y)
+  end.
+
+(** ** Basic simplifications *)
+(******************************************************************************)
+Ltac simplify_fn_composition :=
+  match goal with
+  | |- context [id ∘ ?f] =>
+      debug "id ∘ f";
+      change (id ∘ f) with f
+  | |- context [?f ∘ id] =>
+      debug "f ∘ id";
+      change (f ∘ id) with f
+  | |- context [id ?x] =>
+      debug "unfold_id";
+      change (id x) with x
+  end.
+
+(** ** Misc *)
+(******************************************************************************)
+Ltac simplify_distribute_list_ops :=
+  match goal with
+  | |- context[?f (monoid_op (Monoid_op := Monoid_op_list) ?l1 ?l2)] =>
+      unfold_ops @Monoid_op_list;
+      progress (autorewrite with tea_list)
+  | |- context[?f (monoid_op (Monoid_op := Monoid_op_subset) ?l1 ?l2)] =>
+      unfold_ops @Monoid_op_subset;
+      progress (autorewrite with tea_set)
+  end.
+
+(** ** Locally nameless *)
+(******************************************************************************)
 Ltac simplify_locally_nameless_leaves :=
   match goal with
   | |- context[free_loc (Fr ?x)] =>
@@ -256,6 +325,19 @@ Ltac simplify_locally_nameless_top_level :=
       unfold open
   end.
 
+(** * Autosimplifying expressions *)
+(******************************************************************************)
+(* Attempt to simplify an expression involving binddt, or core operations derived from binddt, by rewriting operations to binddt, calling the provided "simplify_binddt" tactic, then attempting to refold any definitions we started with *)
+Ltac simplify_core_binddt_expression_with simplify_binddt :=
+  first [ rewrite_core_ops_to_binddt
+        | simplify_binddt ()
+        | rewrite_binddt_to_core_ops
+    ].
+Ltac simplify_core_binddt_expression :=
+  first [ rewrite_core_ops_to_binddt
+        | cbn
+        | rewrite_binddt_to_core_ops
+    ].
 
 Ltac simplify_pass1_with_simplify_binddt T simplify_binddt :=
   first [ simplify_locally_nameless_top_level
@@ -264,14 +346,13 @@ Ltac simplify_pass1_with_simplify_binddt T simplify_binddt :=
         | simplify_binddt ()
     ].
 
-
 Ltac simplify_pass2 :=
   first [ simplify_locally_nameless_leaves
-        | simplify_const_functor
+        | simplify_applicative_const
         | simplify_monoid_units
         (* ^ monoid_units should be after const_functor,
            before distribute_list_ops *)
-        | simplify_I_functor
+        | simplify_applicative_I
         | simplify_fn_composition
         | simplify_extract
         | simplify_distribute_list_ops
@@ -296,36 +377,6 @@ Ltac handle_atoms :=
       progress (autorewrite with tea_rw_atoms)
   end.
 
-Ltac introduce_induction :=
-  let t := fresh "t" in
-  ext t; induction t.
-
-Ltac introduce_induction_with IH :=
-  let t := fresh "t" in
-  ext t; induction t using IH.
-
-Ltac derive_dtm4_law_case :=
-  repeat rewrite ap_morphism_1;
-  rewrite appmor_pure.
-
-Ltac derive_dtm_law_case_with_simplify_binddt simplify_binddt :=
-  repeat (simplify_binddt ());
-  repeat (simplify_pass2);
-  repeat derive_dtm4_law_case;
-  (fequal; try (trivial || reflexivity || auto)).
-
-Ltac derive_dtm_law_with_simplify_binddt simplify_binddt :=
-  intros;
-  try introduce_induction;
-  try solve [ derive_dtm_law_case_with_simplify_binddt
-                simplify_binddt ].
-
-Ltac derive_dtm_law_with_simplify_binddt_IH IH simplify_binddt :=
-  intros;
-  try introduce_induction_with IH;
-  try solve [ derive_dtm_law_case_with_simplify_binddt
-                simplify_binddt ].
-
 Ltac simplify_subset_reasoning_leaves :=
   debug "handle_subset_reasoning_leaves";
   match goal with
@@ -335,7 +386,6 @@ Ltac simplify_subset_reasoning_leaves :=
   | |- context[eq (S ?n, ?a) ⦿ 1] =>
       rewrite eq_pair_preincr
   end.
-
 
 Ltac autosimplify_final_pass :=
   first [ simpl_subset
@@ -358,3 +408,154 @@ Ltac simplify_with_simplify_binddt T simplify_binddt :=
   repeat simplify_pass2;
   repeat autosimplify_final_pass;
   autosimplify_final_cleanup.
+
+(** * Deriving DTM laws expressions *)
+(******************************************************************************)
+Ltac rewrite_with_any :=
+  match goal with
+  | [H : _ = _ |- _] => rewrite H
+  | [H : forall _, _ |- _] => progress rewrite H by now trivial
+  end.
+
+Ltac derive_dtm1 :=
+  first [ reflexivity |
+          let v := fresh "var" in
+          now ext v].
+
+Ltac derive_dtm2_with simplify_binddt :=
+  repeat simplify_applicative_I; (* get rid of pure/ap *)
+  try simplify_extract; (* account for any binders gone under *)
+  try reflexivity; (* should solve <<ret>> case *)
+  repeat rewrite_with_any; (* try to use IH wherever possible *)
+  try easy. (* hopefully this solves it, otherwise let the user take over *)
+
+Ltac derive_dtm2 := derive_dtm2_with ltac:(fun unit => cbn).
+
+(* map f (pure x) ~~~> pure (f x)
+   map f (x <⋆> y) ~~~> ((map f ∘ x) <⋆> y)
+   map f ((x <⋆> y) <⋆> z) ~~~> ((map f ∘) ∘ x <⋆> y) <⋆> z
+ *)
+Ltac push_outer_map_into_pure :=
+  repeat rewrite map_ap;
+  (* Distribute outer <<map>> into the constructor *)
+  rewrite app_pure_natural.
+(* Fuse <<map f>> and the <<pure C>> into <<pure (f ∘ C)>> *)
+
+Ltac dtm3_lhs :=
+  push_outer_map_into_pure.
+
+(* First pass on the RHS where we invoke the IH as much as possible *)
+Ltac dtm3_rhs_kc7_preincr :=
+  try match goal with
+    | |- context[@preincr _ _ _ ((?G1 ∘ ?G2) ?x)] =>
+        change ((G1 ∘ G2) x) with (G1 (G2 x))
+    (* this step deals with composition blocking
+           rewrite kc7_preincr *) end;
+  repeat rewrite <- kc7_preincr.
+
+Ltac dtm3_rhs_invoke_IH :=
+  repeat match goal with
+    | IH: context[binddt (_ ⋆7 _) ?t] |- _ =>
+        rewrite <- IH
+    end.
+
+Ltac dtm3_rhs_step1 :=
+  dtm3_rhs_kc7_preincr;
+  dtm3_rhs_invoke_IH.
+
+(* Second pass on the RHS where we invoke applicative laws *)
+Ltac dtm3_rhs_unfold_ap_compose :=
+  match goal with
+  | |- context[ap (?G1 ∘ ?G2)] =>
+      (rewrite_strat innermost
+         (terms (ap_compose2 G2 G1)))
+  end.
+
+Ltac dtm3_rhs_one_constructor :=
+  dtm3_rhs_unfold_ap_compose;
+  push_outer_map_into_pure;
+  rewrite <- ap_map;
+  push_outer_map_into_pure.
+
+Ltac dtm3_rhs_step2 :=
+  unfold_ops @Pure_compose;
+  repeat dtm3_rhs_one_constructor.
+
+Ltac dtm3_rhs :=
+  dtm3_rhs_step1;
+  dtm3_rhs_step2.
+
+Ltac dtm3_ret_case :=
+  simplify_extract; (* deal with (g ⦿ Ƶ) *)
+  reflexivity.
+
+Ltac derive_dtm3 :=
+  try solve [dtm3_ret_case];
+  dtm3_lhs;
+  dtm3_rhs;
+  try easy.
+
+Ltac derive_dtm4_simplify_hom :=
+  repeat rewrite ap_morphism_1;
+  rewrite appmor_pure.
+
+Ltac derive_dtm4 :=
+  try reflexivity; (* should solve <<ret>> case *)
+  (* if not the <<ret>> case, push the homomorphism and use the IH *)
+  derive_dtm4_simplify_hom;
+  repeat rewrite_with_any; (* try to use IH wherever possible *)
+  try easy. (* hopefully this solves it, otherwise let the user take over *)
+
+Ltac setup_dtm_proof :=
+  match goal with
+  | |- context[(binddt (T := ?T) (U := ?U) ?f ∘ ret)] =>
+      debug "setup_dtm_proof_guess_law1";
+      derive_dtm1
+  | |- context[binddt (T := ?T) (U := ?U) (ret ∘ extract) = id] =>
+      debug "setup_dtm_proof_guess_law2";
+      let t := fresh "t" in
+      ext t;
+      change (id ?t) with t;
+      induction t;
+      cbn;
+      derive_dtm2
+  | |- context[map (binddt (T := ?T) (U := ?U) ?g) ∘
+                binddt (T := ?T) (U := ?U) ?f] =>
+      debug "setup_dtm_proof_guess_law3";
+      let t := fresh "t" in
+      ext t;
+      generalize dependent f;
+      generalize dependent g;
+      change ((?g ∘ ?f) t) with (g (f t));
+      induction t; intros g f;
+      cbn;
+      derive_dtm3
+  | H: ApplicativeMorphism ?G1 ?G2 ?ϕ
+    |- context[(?ϕ ?B ∘ binddt ?f) = binddt (?ϕ ?B ∘ ?f)] =>
+      debug "setup_dtm_proof_guess_law4";
+      (assert (Applicative G1) by now inversion H);
+      (assert (Applicative G2) by now inversion H);
+      let t := fresh "t" in
+      ext t;
+      generalize dependent f;
+      change ((?g ∘ ?f) t) with (g (f t));
+      induction t; intro f;
+      cbn;
+      derive_dtm4
+  end.
+
+Ltac derive_dtm_law :=
+  intros;
+  setup_dtm_proof.
+
+Ltac derive_dtm :=
+  match goal with
+  | |- DecoratedTraversableMonad ?W ?T =>
+      constructor;
+      try (timeout 1 typeclasses eauto);
+      try (match goal with
+           | |- DecoratedTraversableRightPreModule ?W ?T ?U =>
+               constructor
+           end);
+      derive_dtm_law
+  end.

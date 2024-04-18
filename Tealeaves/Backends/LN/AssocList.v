@@ -503,32 +503,32 @@ Section in_domset_lemmas.
     (A : Type).
 
   Lemma in_domset_nil : forall x,
-      x ∈@ domset (@nil (atom * A)) <-> False.
+      x `in` domset (@nil (atom * A)) <-> False.
   Proof.
     intros. autorewrite with tea_rw_dom. fsetdec.
   Qed.
 
   Lemma in_domset_one : forall (x y : atom) (a : A),
-      y ∈@ domset (x ~ a) <-> y = x.
+      y `in` domset (x ~ a) <-> y = x.
   Proof.
     intros. autorewrite with tea_rw_dom.
     fsetdec.
   Qed.
 
   Lemma in_domset_cons : forall (x y : atom) (a : A) (Γ : alist A),
-      y ∈@ domset ((x, a) :: Γ) <-> y = x \/ y ∈@ domset Γ.
+      y `in` domset ((x, a) :: Γ) <-> y = x \/ y `in` domset Γ.
   Proof.
     intros. autorewrite with tea_rw_dom. fsetdec.
   Qed.
 
   Lemma in_domset_app : forall x (Γ1 Γ2 : alist A),
-    x ∈@ domset (Γ1 ++ Γ2) <-> x ∈@ domset Γ1 \/ x ∈@ domset Γ2.
+    x `in` domset (Γ1 ++ Γ2) <-> x `in` domset Γ1 \/ x `in` domset Γ2.
   Proof.
     intros. autorewrite with tea_rw_dom. fsetdec.
   Qed.
 
   Lemma in_domset_map : forall {B} {f : A -> B} (l : alist A) x,
-      x ∈@ domset (envmap f l) <-> x ∈@ domset l.
+      x `in` domset (envmap f l) <-> x `in` domset l.
   Proof.
     intros. autorewrite with tea_rw_dom. fsetdec.
   Qed.
@@ -608,14 +608,14 @@ Section in_operations_lemmas.
   Qed.
 
   Lemma in_domset_iff : forall x,
-      x ∈@ domset Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
+      x `in` domset Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
   Proof.
     unfold domset. intro x. rewrite <- in_atoms_iff.
     setoid_rewrite in_dom_iff. easy.
   Qed.
 
   Lemma in_domset_iff_dom : forall x,
-      x ∈@ domset Γ <-> x ∈ dom Γ.
+      x `in` domset Γ <-> x ∈ dom Γ.
   Proof.
     intros. setoid_rewrite in_domset_iff.
     setoid_rewrite in_dom_iff. easy.
@@ -663,7 +663,7 @@ Section in_in.
 
   Lemma in_in_domset : forall x a Γ,
       (x, a) ∈ Γ ->
-      x ∈@ domset (A := A) Γ.
+      x `in` domset (A := A) Γ.
   Proof.
     setoid_rewrite in_domset_iff. eauto.
   Qed.
@@ -783,7 +783,7 @@ Tactic Notation "alist" "induction" ident(E) "as" simple_intropattern(P) :=
 Inductive uniq {A} : alist A -> Prop :=
 | uniq_nil : uniq nil
 | uniq_push : forall (x : atom) (v : A) ( Γ : alist A),
-    uniq  Γ -> ~ x ∈@ domset  Γ -> uniq (x ~ v ++  Γ).
+    uniq  Γ -> ~ x `in` domset  Γ -> uniq (x ~ v ++  Γ).
 
 (** <<disjoint E F>> whenever the keys of <<E>> and <<F>> contain no
 common elements. *)
@@ -816,28 +816,28 @@ Section disjoint_rewriting_lemmas.
   Qed.
 
   Lemma disjoint_cons_l : forall (x : atom) (a : A) (Γ1 : alist A) (Γ2 : alist B),
-      disjoint ((x, a) :: Γ1) Γ2 <-> ~ x ∈@ domset Γ2 /\ disjoint Γ1 Γ2.
+      disjoint ((x, a) :: Γ1) Γ2 <-> ~ x `in` domset Γ2 /\ disjoint Γ1 Γ2.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     intuition fsetdec.
   Qed.
 
   Lemma disjoint_cons_r : forall (x : atom) (b : B) (Γ1 : alist A) (Γ2 : alist B),
-      disjoint Γ1 ((x, b) :: Γ2) <-> ~ x ∈@ domset Γ1 /\ disjoint Γ1 Γ2.
+      disjoint Γ1 ((x, b) :: Γ2) <-> ~ x `in` domset Γ1 /\ disjoint Γ1 Γ2.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     intuition fsetdec.
   Qed.
 
   Lemma disjoint_one_l : forall (x : atom) (a : A) (Γ2 : alist B),
-      disjoint (x ~ a) Γ2 <-> ~ x ∈@ domset Γ2.
+      disjoint (x ~ a) Γ2 <-> ~ x `in` domset Γ2.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     intuition fsetdec.
   Qed.
 
   Lemma disjoint_one_r : forall (x : atom) (b : B) (Γ1 : alist A),
-      disjoint Γ1 (x ~ b) <-> ~ x ∈@ domset Γ1.
+      disjoint Γ1 (x ~ b) <-> ~ x `in` domset Γ1.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     intuition fsetdec.
@@ -933,25 +933,25 @@ Section disjoint_auto_lemmas.
   Qed.
 
   Lemma disjoint_one_l1 : forall x a (Γ : alist B),
-      disjoint (x ~ a) Γ -> ~ x ∈@ domset Γ.
+      disjoint (x ~ a) Γ -> ~ x `in` domset Γ.
   Proof.
     introv. now autorewrite with tea_rw_disj.
   Qed.
 
   Lemma disjoint_one_l2 : forall x a (Γ : alist B),
-      ~ x ∈@ domset Γ -> disjoint (x ~ a) Γ.
+      ~ x `in` domset Γ -> disjoint (x ~ a) Γ.
   Proof.
     introv. now autorewrite with tea_rw_disj.
   Qed.
 
   Lemma disjoint_cons_hd : forall x a (Γ1 : alist A) (Γ2 : alist B),
-      disjoint ((x, a) :: Γ1) Γ2 -> ~ x ∈@ domset Γ2.
+      disjoint ((x, a) :: Γ1) Γ2 -> ~ x `in` domset Γ2.
   Proof.
     introv. now autorewrite with tea_rw_disj.
   Qed.
 
   Lemma disjoint_cons_hd_one : forall x a (Γ1 : alist A) (Γ2 : alist B),
-      disjoint (x ~ a ++ Γ1) Γ2 -> ~ x ∈@ domset Γ2.
+      disjoint (x ~ a ++ Γ1) Γ2 -> ~ x `in` domset Γ2.
   Proof.
     introv. now autorewrite with tea_rw_disj.
   Qed.
@@ -964,16 +964,16 @@ Section disjoint_auto_lemmas.
 
   Lemma disjoint_dom1 : forall x (Γ1 : alist A) (Γ2 : alist B),
       disjoint Γ1 Γ2 ->
-      x ∈@ domset Γ1 ->
-      ~ x ∈@ domset Γ2.
+      x `in` domset Γ1 ->
+      ~ x `in` domset Γ2.
   Proof.
     unfold disjoint in *. fsetdec.
   Qed.
 
   Lemma disjoint_dom2 : forall x (Γ1 : alist A) (Γ2 : alist B),
       disjoint Γ1 Γ2 ->
-      x ∈@ domset Γ2 ->
-      ~ x ∈@ domset Γ1.
+      x `in` domset Γ2 ->
+      ~ x `in` domset Γ1.
   Proof.
     unfold disjoint in *. fsetdec.
   Qed.
@@ -1040,13 +1040,13 @@ Section uniq_auto_lemmas.
 
   Lemma uniq_cons2 : forall x a,
       uniq ((x, a) :: Γ1) ->
-      ~ x ∈@ domset Γ1.
+      ~ x `in` domset Γ1.
   Proof.
     now inversion 1.
   Qed.
 
   Lemma uniq_cons_3 : forall x a,
-      ~ x ∈@ domset Γ1 ->
+      ~ x `in` domset Γ1 ->
       uniq Γ1 ->
       uniq ((x, a) :: Γ1).
   Proof.
@@ -1101,7 +1101,7 @@ Section uniq_auto_lemmas.
 
   Lemma uniq_app_5 : forall x a Γ,
       uniq (x ~ a ++ Γ) ->
-      ~ x ∈@ domset Γ.
+      ~ x `in` domset Γ.
   Proof.
     now inversion 1.
   Qed.
@@ -1181,7 +1181,7 @@ Section uniq_rewriting_lemmas.
   Qed.
 
   Lemma uniq_cons_iff : forall x a Γ,
-      uniq ((x, a) :: Γ) <->  ~ x ∈@ domset Γ /\ uniq Γ.
+      uniq ((x, a) :: Γ) <->  ~ x `in` domset Γ /\ uniq Γ.
   Proof.
     split.
     - eauto with tea_alist.
@@ -1229,8 +1229,8 @@ Section uniq_theorems.
 
   Lemma uniq_insert_mid : forall x a Γ1 Γ2,
     uniq (Γ1 ++ Γ2) ->
-    ~ x ∈@ domset Γ1 ->
-    ~ x ∈@ domset Γ2 ->
+    ~ x `in` domset Γ1 ->
+    ~ x `in` domset Γ2 ->
     uniq (Γ1 ++ x ~ a ++ Γ2).
   Proof.
     intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
@@ -1273,7 +1273,7 @@ Section uniq_theorems.
 
   Lemma fresh_mid_tail : forall x a Γ1 Γ2,
     uniq (Γ1 ++ x ~ a ++ Γ2) ->
-    ~ x ∈@ domset Γ2.
+    ~ x `in` domset Γ2.
   Proof.
     intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
     tauto.
@@ -1281,7 +1281,7 @@ Section uniq_theorems.
 
   Lemma fresh_mid_head : forall x a Γ1 Γ2,
     uniq (Γ1 ++ x ~ a ++ Γ2) ->
-    ~ x ∈@ domset Γ1.
+    ~ x `in` domset Γ1.
   Proof.
     intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
     tauto.
@@ -1301,8 +1301,8 @@ Section in_theorems_uniq.
   Lemma in_app_uniq_iff : forall x a Γ1 Γ2,
       uniq (Γ1 ++ Γ2) ->
       (x, a) ∈ (Γ1 ++ Γ2) <->
-      ((x, a) ∈ Γ1 /\ ~ x ∈@ domset Γ2) \/
-      ((x, a) ∈ Γ2 /\ ~ x ∈@ domset Γ1).
+      ((x, a) ∈ Γ1 /\ ~ x `in` domset Γ2) \/
+      ((x, a) ∈ Γ2 /\ ~ x `in` domset Γ1).
   Proof.
     introv H. autorewrite with tea_rw_uniq tea_rw_in in *.
     destructs H. split.
@@ -1319,7 +1319,7 @@ Section in_theorems_uniq.
   Lemma in_cons_uniq_iff : forall x y (a b : A) Γ,
     uniq ((y, b) :: Γ) ->
     (x, a) ∈ ((y, b) :: Γ) <->
-     (x = y /\ a = b /\ ~ x ∈@ domset Γ) \/
+     (x = y /\ a = b /\ ~ x `in` domset Γ) \/
      ((x, a) ∈ Γ /\ x <> y).
   Proof.
     introv. change_alist (y ~ b ++ Γ).
@@ -1434,7 +1434,7 @@ Section binds_theorems.
   Lemma fresh_app_l : forall x a Γ1 Γ2,
     uniq (Γ1 ++ Γ2) ->
     (x, a) ∈ Γ1 ->
-    ~ x ∈@ (domset Γ2).
+    ~ x `in` (domset Γ2).
   Proof.
     intros. autorewrite with tea_rw_uniq in *.
     preprocess. apply in_in_domset in H0.
@@ -1444,7 +1444,7 @@ Section binds_theorems.
   Lemma fresh_app_r : forall x a Γ1 Γ2,
     uniq (Γ1 ++ Γ2) ->
     (x, a) ∈ Γ2 ->
-    ~ x ∈@ domset Γ1.
+    ~ x `in` domset Γ1.
   Proof.
     intros. autorewrite with tea_rw_uniq in *.
     preprocess. apply in_in_domset in H0.
@@ -1540,7 +1540,7 @@ Create HintDb tea_rw_perm.
 
 (** For any given finite set of atoms, we can generate an atom fresh
     for it. *)
-Lemma atom_fresh : forall L : AtomSet.t, { x : atom | ~ x ∈@ L }.
+Lemma atom_fresh : forall L : AtomSet.t, { x : atom | ~ x `in` L }.
 Proof.
   intros L. destruct (atom_fresh_for_list (AtomSet.elements L)) as [a H].
   rewrite <- in_elements_iff in H.

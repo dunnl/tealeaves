@@ -143,9 +143,119 @@ Section decorated_traversable_functor_theory.
 End decorated_traversable_functor_theory.
 
 
+(** * Shapeliness *)
+(******************************************************************************)
+Section shapeliness.
+
+  Context
+    `{DecoratedTraversableFunctor E T}
+      `{Map T}
+      `{Mapd E T}
+      `{Traverse T}
+      `{ToBatch T}
+      `{! Compat_Map_Mapd}
+      `{! Compat_Map_Traverse T}
+      `{! Compat_Mapd_Mapdt}
+      `{! Compat_ToBatch_Traverse}
+      `{! Compat_Traverse_Mapdt}.
+
+  Lemma mapd_shape {A B}: forall (f: E * A -> B) t,
+      shape (mapd f t) = shape t.
+  Proof.
+    intros.
+    unfold shape.
+    compose near t on left.
+    rewrite map_mapd.
+    rewrite DecoratedFunctor.map_to_mapd.
+    fequal.
+  Qed.
+
+  Theorem mapd_injective1 {A B}: forall (f: E * A -> B) (t1 t2 : T A),
+      (forall p q, f p = f q -> p = q) ->
+      mapd f t1 = mapd f t2 ->
+      t1 = t2.
+  Proof.
+    introv Hinj Heq.
+    assert (cut: (toctxlist ∘ mapd f) t1 = (toctxlist ∘ mapd f) t2).
+    { unfold compose. fequal. auto. }
+    rewrite <- mapd_toctxlist in cut.
+    unfold compose in cut.
+    apply shapeliness.
+    split.
+    - enough (cut2: shape (mapd f t1) = shape (mapd f t2)).
+      do 2 rewrite mapd_shape in cut2; auto.
+      now rewrite Heq.
+    - rewrite tolist_to_toctxlist.
+      unfold compose.
+      generalize dependent (toctxlist t2).
+      induction (toctxlist t1); intros otherlist premise.
+      + induction (otherlist).
+        * reflexivity.
+        * destruct a as [e' a].
+          inversion premise.
+      + destruct a as [e' a].
+        destruct otherlist.
+        * inversion premise.
+        * destruct p as [e'' a'].
+          cbn in *.
+          inversion premise.
+          fequal.
+          { specialize (Hinj (e'', a) (e'', a') H11).
+            now inversion Hinj. }
+          { apply IHe. auto. }
+  Qed.
+
+  Theorem mapd_injective2 {A B}: forall (f: E * A -> B) (t1 t2 : T A),
+      (forall e a1 a2,
+          (e, a1) ∈d t1 ->
+          (e, a2) ∈d t2 ->
+          f (e, a1) = f (e, a2) -> a1 = a2) ->
+      mapd f t1 = mapd f t2 ->
+      t1 = t2.
+  Proof.
+    introv Hinj Heq.
+    setoid_rewrite ind_iff_in_toctxlist1 in Hinj.
+    assert (Heq2: (toctxlist ∘ mapd f) t1 = (toctxlist ∘ mapd f) t2).
+    { unfold compose. fequal. auto. }
+    rewrite <- mapd_toctxlist in Heq2.
+    unfold compose in Heq2.
+    apply shapeliness.
+    split.
+    - enough (cut2: shape (mapd f t1) = shape (mapd f t2)).
+      do 2 rewrite mapd_shape in cut2; auto.
+      now rewrite Heq.
+    - rewrite tolist_to_toctxlist.
+      unfold compose.
+      generalize dependent (toctxlist t2).
+      induction (toctxlist t1);
+        intros otherlist Hinj Heq_list.
+      + induction (otherlist).
+        * reflexivity.
+        * destruct a as [e' a].
+          inversion Heq_list.
+      + destruct a as [e' a].
+        destruct otherlist.
+        * inversion Heq_list.
+        * destruct p as [e'' a'].
+          inversion Heq_list; subst.
+          cbn. fequal.
+          { eapply Hinj.
+            now left. now left. auto. }
+          { apply IHe; auto.
+            intros. eapply Hinj.
+            rewrite element_of_list_cons.
+            right. eassumption.
+            rewrite element_of_list_cons.
+            right. assumption.
+            auto.
+          }
+  Qed.
+
+End shapeliness.
+
 (** * Deconstructing with refinement-type vectors *)
 (******************************************************************************)
-Section deconstruction.
+  Section deconstruction.
 
   Context
     `{DecoratedTraversableFunctor E T}

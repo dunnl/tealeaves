@@ -24,7 +24,8 @@ Open Scope set_scope.
 
 Module Notations.
 
-  Notation "x ∈@ S" := (AtomSet.In x S) (at level 40) : set_scope.
+  Notation "x `∈@` S" := (AtomSet.In x S) (at level 40) : set_scope.
+  Notation "x `in` S" := (AtomSet.In x S) (at level 40) : set_scope.
   Notation "s [=] t" := (AtomSet.Equal s t) (at level 70, no associativity) : set_scope.
   Notation "s ⊆ t" := (AtomSet.Subset s t) (at level 70, no associativity) : set_scope.
   Notation "s ∩ t" := (AtomSet.inter s t) (at level 60, no associativity) : set_scope.
@@ -82,25 +83,25 @@ Qed.
 
 #[export] Hint Rewrite atoms_nil atoms_cons atoms_one atoms_app : tea_rw_atoms.
 
-Lemma in_atoms_nil : forall x, x ∈@ atoms nil <-> False.
+Lemma in_atoms_nil : forall x, x `in` atoms nil <-> False.
 Proof.
   cbn. fsetdec.
 Qed.
 
 Lemma in_atoms_cons : forall (y : atom) (x : atom) (xs : list atom),
-    y ∈@ atoms (x :: xs) <-> y = x \/ y ∈@ atoms xs.
+    y `in` atoms (x :: xs) <-> y = x \/ y `in` atoms xs.
 Proof.
    intros. autorewrite with tea_rw_atoms. fsetdec.
 Qed.
 
 Lemma in_atoms_one : forall (y x : atom),
-    y ∈@ atoms [x] <-> y = x.
+    y `in` atoms [x] <-> y = x.
 Proof.
   intros. autorewrite with tea_rw_atoms. fsetdec.
 Qed.
 
 Lemma in_atoms_app : forall (x : atom) (l1 l2 : list atom),
-    x ∈@ atoms (l1 ++ l2) <-> x ∈@ atoms l1 \/ x ∈@ atoms l2.
+    x `in` atoms (l1 ++ l2) <-> x `in` atoms l1 \/ x `in` atoms l2.
 Proof.
    intros. autorewrite with tea_rw_atoms. fsetdec.
 Qed.
@@ -108,13 +109,13 @@ Qed.
 #[export] Hint Rewrite in_atoms_nil in_atoms_cons in_atoms_one in_atoms_app : tea_rw_atoms.
 
 Lemma in_singleton_iff : forall (x : atom) (y : atom),
-    y ∈@ {{ x }} <-> y = x.
+    y `in` {{ x }} <-> y = x.
 Proof.
   intros. fsetdec.
 Qed.
 
 Lemma in_union_iff : forall (x : atom) (s1 s2 : AtomSet.t),
-    x ∈@ (s1 ∪ s2) <-> x ∈@ s1 \/ x ∈@ s2.
+    x `in` (s1 ∪ s2) <-> x `in` s1 \/ x `in` s2.
 Proof.
   intros. fsetdec.
 Qed.
@@ -122,7 +123,7 @@ Qed.
 (** ** Relating <<AtomSet.t>> and <<list atom>> *)
 (******************************************************************************)
 Lemma in_elements_iff : forall (s : AtomSet.t) (x : atom),
-    x ∈@ s <-> x ∈ elements s.
+    x `in` s <-> x ∈ elements s.
 Proof.
   intros. rewrite <- AtomSet.elements_spec1. induction (elements s).
   - cbv. split; intro H; inversion H.
@@ -135,7 +136,7 @@ Proof.
     + right. now rewrite IHl.
 Qed.
 
-Lemma in_atoms_iff : forall (l : list atom) (x : atom), x ∈ l <-> x ∈@ atoms l.
+Lemma in_atoms_iff : forall (l : list atom) (x : atom), x ∈ l <-> x `in` atoms l.
 Proof.
   intros. induction l.
   - easy.

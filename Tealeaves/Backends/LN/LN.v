@@ -1,18 +1,19 @@
 (** This files contains metatheorems for the locally nameless variables
  that closely parallel those of LNgen. *)
-From Tealeaves.Backends.LN Require Import
+From Tealeaves.Backends.LN Require Export
   Atom AtomSet.
-From Tealeaves.Misc Require Import
+From Tealeaves.Misc Require Export
   NaturalNumbers.
 From Tealeaves.Theory Require Import
-  TraversableFunctor
   DecoratedTraversableMonad.
 
+Import Coq.Init.Nat. (* Notation <? *)
+
 Import
+  List.ListNotations
   Product.Notations
   Monoid.Notations
   Batch.Notations
-  List.ListNotations
   Subset.Notations
   Kleisli.Monad.Notations
   Kleisli.Comonad.Notations
@@ -83,61 +84,61 @@ Section locally_nameless_local_operations.
   Definition open_loc (u : T LN) : nat * LN -> T LN :=
     fun p => match p with
           | (w, l) =>
-            match l with
-            | Fr x => ret T (Fr x)
-            | Bd n =>
-              match Nat.compare n w with
-              | Gt => ret T (Bd (n - 1))
-              | Eq => u
-              | Lt => ret T (Bd n)
+              match l with
+              | Fr x => ret T (Fr x)
+              | Bd n =>
+                  match Nat.compare n w with
+                  | Gt => ret T (Bd (n - 1))
+                  | Eq => u
+                  | Lt => ret T (Bd n)
+                  end
               end
-            end
           end.
 
   Definition is_opened : nat * LN -> Prop :=
     fun p =>
       match p with
       | (ctx, l) =>
-        match l with
-        | Fr y => False
-        | Bd n => n = ctx
-        end
+          match l with
+          | Fr y => False
+          | Bd n => n = ctx
+          end
       end.
 
   Definition close_loc (x : atom ) : nat * LN -> LN :=
     fun p => match p with
           | (w, l) =>
-            match l with
-            | Fr y => if x == y then Bd w else Fr y
-            | Bd n =>
-              match Nat.compare n w with
-              | Gt => Bd (S n)
-              | Eq => Bd (S n)
-              | Lt => Bd n
+              match l with
+              | Fr y => if x == y then Bd w else Fr y
+              | Bd n =>
+                  match n ?= w with
+                  | Gt => Bd (S n)
+                  | Eq => Bd (S n)
+                  | Lt => Bd n
+                  end
               end
-            end
           end.
 
   (** The argument <<n>> is appended the context---to define local
       closure we will take <<n = 0>>, but we can also consider more
       notions like ``local closure within a gap of 1 binder,'' which
       is useful for backend reasoning. **)
-  Definition is_bound_or_free (gap : nat) : nat * LN -> Prop :=
+  Definition lc_loc (gap : nat) : nat * LN -> Prop :=
     fun p => match p with
           | (w, l) =>
-            match l with
-            | Fr x => True
-            | Bd n => n < w ● gap
-            end
+              match l with
+              | Fr x => True
+              | Bd n => n < w + gap
+              end
           end.
 
-  Definition is_bound_or_free_bool (gap : nat) : nat * LN -> bool :=
+  Definition lcb_loc (gap : nat) : nat * LN -> bool :=
     fun p => match p with
           | (w, l) =>
-            match l with
-            | Fr x => true
-            | Bd n => Nat.ltb n (w + gap)
-            end
+              match l with
+              | Fr x => true
+              | Bd n => n <? w + gap
+              end
           end.
 
 End locally_nameless_local_operations.
@@ -161,23 +162,23 @@ Section locally_nameless_operations.
   Definition free : T LN -> list atom :=
     foldMap free_loc.
 
-  Definition freeset : T LN -> AtomSet.t :=
+  Definition FV : T LN -> AtomSet.t :=
     LN.AtomSet.atoms ○ free.
 
-  Definition locally_closed_gap_bool (gap : nat) : U LN -> bool :=
-    foldMapd (is_bound_or_free_bool gap).
+  Definition LCnb (gap : nat) : U LN -> bool :=
+    foldMapd (lcb_loc gap).
 
-  Definition locally_closed_bool : U LN -> bool :=
-    locally_closed_gap_bool 0.
+  Definition LCb : U LN -> bool :=
+    LCnb 0.
 
-  Definition locally_closed_gap (gap : nat) : U LN -> Prop :=
-    fun t => forall w l, (w, l) ∈d t -> is_bound_or_free gap (w, l).
+  Definition LCn (gap : nat) : U LN -> Prop :=
+    fun t => forall w l, (w, l) ∈d t -> lc_loc gap (w, l).
 
-  Definition locally_closed : U LN -> Prop :=
-    locally_closed_gap 0.
+  Definition LC : U LN -> Prop :=
+    LCn 0.
 
   Definition scoped : T LN -> AtomSet.t -> Prop :=
-    fun t γ => freeset t ⊆ γ.
+    fun t γ => FV t ⊆ γ.
 
 End locally_nameless_operations.
 
@@ -278,8 +279,8 @@ Section locally_nameless_basic_principles.
 
   (** ** Local closure spec *)
   (******************************************************************************)
-  Lemma locally_closed_gap_spec: forall gap,
-      locally_closed_gap gap = Forall_ctx (is_bound_or_free gap).
+  Lemma LCn_spec: forall gap,
+      LCn gap = Forall_ctx (lc_loc gap).
   Proof.
     intro. ext t.
     apply propositional_extensionality.
@@ -288,61 +289,11 @@ Section locally_nameless_basic_principles.
   Qed.
 
   Definition locally_closed_spec:
-    locally_closed = Forall_ctx (is_bound_or_free 0).
+    LC = Forall_ctx (lc_loc 0).
   Proof.
     ext t.
     apply propositional_extensionality.
     rewrite forall_ctx_iff.
-    reflexivity.
-  Qed.
-
-  Lemma is_bound_or_free_preincr: forall n m,
-      is_bound_or_free n ⦿ m =
-        is_bound_or_free (n + m).
-  Proof.
-    intros.
-    ext [w l].
-    destruct l.
-    - reflexivity.
-    - cbn. unfold_monoid. propext; lia.
-  Qed.
-
-  Lemma is_bound_or_free_S: forall n,
-      is_bound_or_free n ⦿ 1 =
-        is_bound_or_free (S n).
-  Proof.
-    intros.
-    rewrite is_bound_or_free_preincr.
-    fequal. lia.
-  Qed.
-
-  Lemma is_bound_or_free_nBd: forall n w b,
-      is_bound_or_free n (w, Bd b) = (b < w + n).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma is_bound_or_free_0Bd: forall w b,
-      is_bound_or_free 0 (w, Bd b) = (b < w).
-  Proof.
-    intros.
-    cbn.
-    unfold_monoid.
-    propext; lia.
-  Qed.
-
-  Lemma is_bound_or_free_00Bd: forall b,
-      is_bound_or_free 0 (0, Bd b) = False.
-  Proof.
-    intros.
-    rewrite is_bound_or_free_0Bd.
-    propext; lia.
-  Qed.
-
-  Lemma is_bound_or_free_Fr: forall n w x,
-      is_bound_or_free n (w, Fr x) = True.
-  Proof.
-    intros.
     reflexivity.
   Qed.
 
@@ -367,6 +318,15 @@ Section locally_nameless_basic_principles.
     now apply bindd_respectful_id.
   Qed.
 
+  Lemma open_ret : forall l (u : T LN),
+      (ret l) '(u) = open_loc u (0, l).
+  Proof.
+    intros. unfold open.
+    compose near l on left.
+    rewrite kmond_bindd0.
+    reflexivity.
+  Qed.
+
   (** *** <<close>> *)
   (******************************************************************************)
   Lemma close_eq : forall t x y,
@@ -385,6 +345,15 @@ Section locally_nameless_basic_principles.
     now apply mapd_respectful_id.
   Qed.
 
+  Lemma close_ret : forall l x,
+      '[x] (ret l) = ret (close_loc x (0, l)).
+  Proof.
+    intros. unfold close.
+    compose near l on left.
+    rewrite mapd_ret.
+    reflexivity.
+  Qed.
+
   (** *** <<subst>> *)
   (******************************************************************************)
   Lemma subst_eq : forall t x y (u1 u2 : T LN),
@@ -401,6 +370,15 @@ Section locally_nameless_basic_principles.
   Proof.
     intros. unfold subst.
     now apply mod_bind_respectful_id.
+  Qed.
+
+  Lemma subst_ret : forall x l (u : T LN),
+      (ret l) '{x ~> u} = subst_loc x u l.
+  Proof.
+    intros. unfold subst.
+    compose near l on left.
+    rewrite kmon_bind0.
+    reflexivity.
   Qed.
 
   (** ** Occurrence analysis lemmas *)
@@ -459,96 +437,6 @@ Section locally_nameless_basic_principles.
   Proof.
     intros. unfold subst.
     now rewrite mod_in_bind_iff.
-  Qed.
-
-  (** ** Free variables *)
-  (******************************************************************************)
-
-  (** *** Specifications for [free] and [freeset] *)
-  (******************************************************************************)
-  Lemma in_free_iff_local : forall x l,
-      x ∈ free_loc l = (Fr x = l).
-  Proof.
-    intros.
-    destruct l.
-    - cbv. propext.
-      + intros [hyp|hyp].
-        * now subst.
-        * contradiction.
-      + inversion 1. now left.
-    - cbv. propext.
-      + inversion 1.
-      + inversion 1.
-  Qed.
-
-  Theorem in_free_iff : forall t x,
-      x ∈ free t = Fr x ∈ t.
-  Proof.
-    intros. unfold free.
-    change_left ((element_of x ∘ foldMap free_loc) t).
-    rewrite (foldMap_morphism
-               (morphism := Monoid_Morphism_element_list atom x)
-               (list atom) Prop (ϕ := element_of x)).
-    rewrite (element_of_to_foldMap LN (Fr x)).
-    fequal.
-    ext l. apply in_free_iff_local.
-  Qed.
-
-  Theorem in_free_iff_T : forall (t : T LN) x,
-      x ∈ free t = Fr x ∈ t.
-  Proof.
-    intros. unfold free.
-    change_left ((element_of x ∘ foldMap free_loc) t).
-    rewrite (foldMap_morphism
-               (morphism := Monoid_Morphism_element_list atom x)
-               (list atom) Prop (ϕ := element_of x)).
-    rewrite (element_of_to_foldMap LN (Fr x)).
-    fequal.
-    ext l. apply in_free_iff_local.
-  Qed.
-
-  Theorem free_iff_freeset : forall t x,
-      x ∈ free t <-> x ∈@ freeset t.
-  Proof.
-    intros.
-    unfold freeset.
-    rewrite <- in_atoms_iff.
-    reflexivity.
-  Qed.
-
-  (** *** Opening *)
-  (******************************************************************************)
-  Lemma free_open_iff : forall u t x,
-      x ∈ free (t '(u)) <-> exists w l1,
-        (w, l1) ∈d t /\ x ∈ free (open_loc u (w, l1)).
-  Proof.
-    intros.
-    rewrite in_free_iff.
-    setoid_rewrite (in_free_iff_T).
-    now rewrite in_open_iff.
-  Qed.
-
-  (** *** Closing *)
-  (******************************************************************************)
-  Lemma free_close_iff : forall t x y,
-      y ∈ free ('[x] t) <-> exists w l1,
-        (w, l1) ∈d t /\ close_loc x (w, l1) = Fr y.
-  Proof.
-    intros.
-    rewrite in_free_iff.
-    now rewrite in_close_iff.
-  Qed.
-
-  (** *** Substitution *)
-  (******************************************************************************)
-  Lemma free_subst_iff : forall u t x y,
-      y ∈ free (t '{x ~> u}) <-> exists l1,
-        l1 ∈ t /\ y ∈ free (subst_loc x u l1).
-  Proof.
-    intros.
-    rewrite in_free_iff.
-    setoid_rewrite in_free_iff_T.
-    now rewrite in_subst_iff.
   Qed.
 
 End locally_nameless_basic_principles.
@@ -675,18 +563,84 @@ Section locally_nameless_utilities.
     reflexivity.
   Qed.
 
-  (** ** [Miscellaneous utilities] *)
+  (** ** [close_loc] *)
   (******************************************************************************)
-  Lemma ninf_in_neq : forall x l (t : U LN),
-      ~ x ∈ free t ->
-      l ∈ t ->
-      Fr x <> l.
+  Lemma close_loc_neq : forall w x y,
+      x <> y -> close_loc x (w, Fr y) = Fr y.
   Proof.
-    introv hyp1 hyp2.
-    rewrite in_free_iff in hyp1. destruct l.
-    - injection. intros; subst.
-      contradiction.
-    - discriminate.
+    intros. cbn. compare values x and y.
+  Qed.
+
+  Lemma close_loc_eq : forall w x,
+      close_loc x (w, Fr x) = Bd w.
+  Proof.
+    intros. cbn. compare values x and x.
+  Qed.
+
+  Lemma close_loc_lt : forall x w n,
+      n < w ->
+      close_loc x (w, Bd n) = Bd n.
+  Proof.
+    intros. cbn. compare naturals n and w.
+  Qed.
+
+  Lemma close_loc_ge : forall x w n,
+      n >= w ->
+      close_loc x (w, Bd n) = Bd (S n).
+  Proof.
+    intros. cbn. compare naturals n and w.
+  Qed.
+
+  (** ** Local reasoning principles for LC *)
+  (******************************************************************************)
+  Lemma is_bound_or_free_preincr: forall n m,
+      lc_loc n ⦿ m =
+        lc_loc (n + m).
+  Proof.
+    intros.
+    ext [w l].
+    destruct l.
+    - reflexivity.
+    - cbn. unfold_monoid. propext; lia.
+  Qed.
+
+  Lemma is_bound_or_free_S: forall n,
+      lc_loc n ⦿ 1 =
+        lc_loc (S n).
+  Proof.
+    intros.
+    rewrite is_bound_or_free_preincr.
+    fequal. lia.
+  Qed.
+
+  Lemma is_bound_or_free_nBd: forall n w b,
+      lc_loc n (w, Bd b) = (b < w + n).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma is_bound_or_free_0Bd: forall w b,
+      lc_loc 0 (w, Bd b) = (b < w).
+  Proof.
+    intros.
+    cbn.
+    unfold_monoid.
+    propext; lia.
+  Qed.
+
+  Lemma is_bound_or_free_00Bd: forall b,
+      lc_loc 0 (0, Bd b) = False.
+  Proof.
+    intros.
+    rewrite is_bound_or_free_0Bd.
+    propext; lia.
+  Qed.
+
+  Lemma is_bound_or_free_Fr: forall n w x,
+      lc_loc n (w, Fr x) = True.
+  Proof.
+    intros.
+    reflexivity.
   Qed.
 
   Lemma neq_symmetry : forall X (x y : X),
@@ -718,21 +672,181 @@ End locally_nameless_utilities.
 
 Tactic Notation "simpl_local" := (autorewrite* with tea_local).
 
-Ltac simplify_is_bound_or_free :=
+Ltac simplify_lc_loc :=
   match goal with
-  | |- context[is_bound_or_free ?n ⦿ 1] =>
+  | |- context[lc_loc ?n ⦿ 1] =>
       rewrite is_bound_or_free_S
-  | |- context[is_bound_or_free ?n ⦿ ?m] =>
+  | |- context[lc_loc ?n ⦿ ?m] =>
       rewrite is_bound_or_free_preincr
-  | |- context[is_bound_or_free ?n (?w, Fr ?x)] =>
+  | |- context[lc_loc ?n (?w, Fr ?x)] =>
       rewrite is_bound_or_free_Fr
-  | |- context[is_bound_or_free 0 (0, Bd ?b)] =>
+  | |- context[lc_loc 0 (0, Bd ?b)] =>
       rewrite is_bound_or_free_00Bd
-  | |- context[is_bound_or_free 0 (?w, Bd ?b)] =>
+  | |- context[lc_loc 0 (?w, Bd ?b)] =>
       rewrite is_bound_or_free_0Bd
-  | |- context[is_bound_or_free ?n (?w, Bd ?b)] =>
+  | |- context[lc_loc ?n (?w, Bd ?b)] =>
       rewrite is_bound_or_free_nBd
   end.
+
+(** * Free variables *)
+(******************************************************************************)
+Section locally_nameless_free_variables.
+
+  Import Notations.
+
+  Context
+    `{ret_inst : Return T}
+    `{Map_T_inst : Map T}
+    `{Mapd_T_inst : Mapd nat T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Mapdt_T_inst : Mapdt nat T}
+    `{Bindd_T_inst : Bindd nat T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{Binddt_T_inst : Binddt nat T T}
+    `{ToSubset_T_inst : ToSubset T}
+    `{ToBatch_T_inst : ToBatch T}
+    `{! Compat_Map_Binddt nat T T}
+    `{! Compat_Mapd_Binddt nat T T}
+    `{! Compat_Traverse_Binddt nat T T}
+    `{! Compat_Bind_Binddt nat T T}
+    `{! Compat_Mapdt_Binddt nat T T}
+    `{! Compat_Bindd_Binddt nat T T}
+    `{! Compat_Bindt_Binddt nat T T}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToBatch_Traverse}.
+
+  Context
+    `{Map_U_inst : Map U}
+    `{Mapd_U_inst : Mapd nat U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Mapdt_U_inst : Mapdt nat U}
+    `{Bindd_U_inst : Bindd nat T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{Binddt_U_inst : Binddt nat T U}
+    `{ToSubset_U_inst : ToSubset U}
+    `{ToBatch_U_inst : ToBatch U}
+    `{! Compat_Map_Binddt nat T U}
+    `{! Compat_Mapd_Binddt nat T U}
+    `{! Compat_Traverse_Binddt nat T U}
+    `{! Compat_Bind_Binddt nat T U}
+    `{! Compat_Mapdt_Binddt nat T U}
+    `{! Compat_Bindd_Binddt nat T U}
+    `{! Compat_Bindt_Binddt nat T U}
+    `{! Compat_ToSubset_Traverse U}
+    `{! Compat_ToBatch_Traverse}.
+
+  Context
+    `{Monad_inst : ! DecoratedTraversableMonad nat T}
+      `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
+                        (unit := Monoid_unit_zero)
+                        (op := Monoid_op_plus)}.
+  (** ** Free variables *)
+  (******************************************************************************)
+
+  (** *** Specifications for [free] and [FV] *)
+  (******************************************************************************)
+  Lemma in_free_iff_local : forall x l,
+      x ∈ free_loc l = (Fr x = l).
+  Proof.
+    intros.
+    destruct l.
+    - cbv. propext.
+      + intros [hyp|hyp].
+        * now subst.
+        * contradiction.
+      + inversion 1. now left.
+    - cbv. propext.
+      + inversion 1.
+      + inversion 1.
+  Qed.
+
+  Theorem in_free_iff : forall t x,
+      x ∈ free (T := U) t = Fr x ∈ t.
+  Proof.
+    intros. unfold free.
+    change_left ((element_of x ∘ foldMap free_loc) t).
+    rewrite (foldMap_morphism
+               (morphism := Monoid_Morphism_element_list atom x)
+               (list atom) Prop (ϕ := element_of x)).
+    rewrite (element_of_to_foldMap LN (Fr x)).
+    fequal. ext l.
+    apply in_free_iff_local.
+  Qed.
+
+  Theorem free_iff_FV : forall t x,
+      x ∈ free t <-> x `in` FV t.
+  Proof.
+    intros.
+    unfold FV.
+    rewrite <- in_atoms_iff.
+    reflexivity.
+  Qed.
+
+  Theorem in_free_iff_T_internal : forall t x,
+      x ∈ free (T := T) t = Fr x ∈ t.
+  Proof.
+    intros. unfold free.
+    change_left ((element_of x ∘ foldMap free_loc) t).
+    rewrite (foldMap_morphism
+               (morphism := Monoid_Morphism_element_list atom x)
+               (list atom) Prop (ϕ := element_of x)).
+    rewrite (element_of_to_foldMap LN (Fr x)).
+    fequal. ext l.
+    apply in_free_iff_local.
+  Qed.
+
+  (** *** Opening *)
+  (******************************************************************************)
+  Lemma free_open_iff : forall u t x,
+      x ∈ free (t '(u)) <-> exists w l1,
+        (w, l1) ∈d t /\ x ∈ free (open_loc u (w, l1)).
+  Proof.
+    intros.
+    rewrite in_free_iff.
+    setoid_rewrite (in_free_iff_T_internal).
+    now rewrite in_open_iff.
+  Qed.
+
+  (** *** Closing *)
+  (******************************************************************************)
+  Lemma free_close_iff : forall t x y,
+      y ∈ free ('[x] t) <-> exists w l1,
+        (w, l1) ∈d t /\ close_loc x (w, l1) = Fr y.
+  Proof.
+    intros.
+    rewrite in_free_iff.
+    now rewrite in_close_iff.
+  Qed.
+
+  (** *** Substitution *)
+  (******************************************************************************)
+  Lemma free_subst_iff : forall u t x y,
+      y ∈ free (t '{x ~> u}) <-> exists l1,
+        l1 ∈ t /\ y ∈ free (subst_loc x u l1).
+  Proof.
+    intros.
+    rewrite in_free_iff.
+    setoid_rewrite in_free_iff_T_internal.
+    now rewrite in_subst_iff.
+  Qed.
+
+  (** ** [Miscellaneous utilities] *)
+  (******************************************************************************)
+  Lemma ninf_in_neq : forall x l (t : U LN),
+      ~ x ∈ free t ->
+      l ∈ t ->
+      Fr x <> l.
+  Proof.
+    introv hyp1 hyp2.
+    rewrite in_free_iff in hyp1. destruct l.
+    - injection. intros; subst.
+      contradiction.
+    - discriminate.
+  Qed.
+
+End locally_nameless_free_variables.
 
 (** * Locally nameless metatheory *)
 (******************************************************************************)
@@ -790,14 +904,6 @@ Section locally_nameless_metatheory.
 
   Open Scope set_scope.
 
-  Lemma subst_in_ret : forall x l (u : T LN),
-      (ret l) '{x ~> u} = subst_loc x u l.
-  Proof.
-    intros. unfold subst. compose near l on left.
-    change_left ((bind (subst_loc x u) ∘ ret) l).
-    now rewrite kmon_bind0.
-  Qed.
-
   Implicit Types
            (l : LN) (p : LN)
            (x : atom) (t : U LN)
@@ -813,7 +919,7 @@ Section locally_nameless_metatheory.
     introv. compare l to atom x; simpl_local; intuition.
   Qed.
 
-  Theorem ind_subst_iff' : forall w t u l x,
+  Theorem ind_subst_iff2 : forall w t u l x,
       (w, l) ∈d t '{x ~> u} <->
       (w, l) ∈d t /\ l <> Fr x \/
       exists w1 w2 : nat, (w1, Fr x) ∈d t /\ (w2, l) ∈d u /\ w = w1 ● w2.
@@ -863,13 +969,13 @@ Section locally_nameless_metatheory.
     now simpl_local.
   Qed.
 
-  Corollary in_freeset_subst_iff : forall t u x y,
-      y ∈@ freeset (t '{x ~> u}) <->
-      y ∈@ freeset t /\ y <> x \/
-      x ∈@ freeset t /\ y ∈@ freeset u.
+  Corollary in_FV_subst_iff : forall t u x y,
+      y `in` FV (t '{x ~> u}) <->
+      y `in` FV t /\ y <> x \/
+      x `in` FV t /\ y `in` FV u.
   Proof.
     intros.
-    do 4 rewrite <- free_iff_freeset.
+    do 4 rewrite <- free_iff_FV.
     rewrite in_free_subst_iff.
     reflexivity.
   Qed.
@@ -895,14 +1001,15 @@ Section locally_nameless_metatheory.
     tauto.
   Qed.
 
-  Corollary freeset_subst_upper : forall t u x,
-      freeset (t '{x ~> u}) ⊆
-              (freeset t \\ {{x}} ∪ freeset u)%set.
+  (* LNgen 4: fv-subst-upper *)
+  Corollary FV_subst_upper : forall t u x,
+      FV (t '{x ~> u}) ⊆
+              (FV t \\ {{x}} ∪ FV u)%set.
   Proof.
     intros t y x a.
     rewrite AtomSet.union_spec, AtomSet.diff_spec,
     AtomSet.singleton_spec.
-    rewrite <- ?(free_iff_freeset).
+    rewrite <- ?(free_iff_FV).
     apply in_free_subst_upper.
   Qed.
 
@@ -921,12 +1028,13 @@ Section locally_nameless_metatheory.
     apply in_subst_lower; now simpl_local.
   Qed.
 
-  Corollary freeset_subst_lower : forall (t : T LN) u x,
-      freeset u \\ {{ x }} ⊆ freeset (u '{x ~> t}).
+  (* LNgen 5: fv-subst-lower *)
+  Corollary FV_subst_lower : forall (t : T LN) u x,
+      FV u \\ {{ x }} ⊆ FV (u '{x ~> t}).
   Proof.
     introv. intro a.
     rewrite AtomSet.diff_spec, AtomSet.singleton_spec.
-    do 2 rewrite <- free_iff_freeset.
+    do 2 rewrite <- free_iff_FV.
     intros [? ?]. now apply in_free_subst_lower.
   Qed.
 
@@ -936,7 +1044,7 @@ Section locally_nameless_metatheory.
       scoped (t '{x ~> u}) (γ1 \\ {{x}} ∪ γ2).
   Proof.
     introv St Su. unfold scoped in *.
-    etransitivity. apply freeset_subst_upper. fsetdec.
+    etransitivity. apply FV_subst_upper. fsetdec.
   Qed.
 
   (** ** Substitution of fresh variables *)
@@ -960,11 +1068,20 @@ Section locally_nameless_metatheory.
     now simpl_local.
   Qed.
 
+  (* LNgen 7: subst-fresh-eq *)
   Corollary subst_fresh_set : forall t x u,
-      ~ x ∈@ freeset t ->
+      ~ x `in` FV t ->
       t '{x ~> u} = t.
   Proof.
-    setoid_rewrite <- free_iff_freeset. apply subst_fresh.
+    setoid_rewrite <- free_iff_FV. apply subst_fresh.
+  Qed.
+
+  (* LNgen 6: fv-subst-fresh *)
+  Corollary FV_subst_fresh : forall t x u,
+      ~ x `in` FV t ->
+             FV (t '{x ~> u}) = FV t.
+  Proof.
+    intros. rewrite subst_fresh_set; auto.
   Qed.
 
   (** ** Composing substitutions *)
@@ -981,28 +1098,29 @@ Section locally_nameless_metatheory.
     compare l to atom x1.
     - rewrite subst_loc_eq.
       rewrite subst_loc_neq...
-      rewrite subst_in_ret.
+      rewrite subst_ret.
       rewrite subst_loc_eq.
       reflexivity.
     - rewrite subst_loc_neq...
       compare values x2 and a.
-      + rewrite subst_in_ret.
+      + rewrite subst_ret.
         rewrite subst_loc_eq.
         rewrite subst_fresh_T...
         reflexivity.
-      + rewrite subst_in_ret.
+      + rewrite subst_ret.
         rewrite subst_loc_neq...
-        rewrite subst_in_ret.
+        rewrite subst_ret.
         rewrite subst_loc_neq...
         reflexivity.
     - rewrite subst_loc_b.
-      rewrite subst_in_ret.
+      rewrite subst_ret.
       rewrite subst_loc_b.
-      rewrite subst_in_ret.
+      rewrite subst_ret.
       rewrite subst_loc_b.
       reflexivity.
   Qed.
 
+  (* LNgen 8: subst-subst *)
   Theorem subst_subst : forall u1 u2 t (x1 x2 : atom),
       ~ x1 ∈ free u2 ->
       x1 <> x2 ->
@@ -1036,16 +1154,16 @@ Section locally_nameless_metatheory.
   (** ** Local closure is preserved by substitution *)
   (******************************************************************************)
   Theorem subst_lc : forall u t x,
-      locally_closed t ->
-      locally_closed u ->
-      locally_closed (subst x u t).
+      LC t ->
+      LC u ->
+      LC (subst x u t).
   Proof.
-    unfold locally_closed. introv lct lcu hin.
-    rewrite ind_subst_iff' in hin.
+    unfold LC. introv lct lcu hin.
+    rewrite ind_subst_iff2 in hin.
     destruct hin as [[? ?] | [n1 [n2 [h1 [h2 h3]]]]].
     - auto.
     - subst. specialize (lcu n2 l h2).
-      unfold is_bound_or_free in *.
+      unfold lc_loc in *.
       destruct l; auto. unfold_monoid. lia.
   Qed.
 
@@ -1064,6 +1182,7 @@ Section locally_nameless_metatheory.
       now compare naturals (S n) and w.
   Qed.
 
+  (* LNgen 9: subst-spec *)
   Theorem subst_spec : forall x u t,
       t '{x ~> u} = ('[x] t) '(u).
   Proof.
@@ -1144,11 +1263,12 @@ Section locally_nameless_metatheory.
     intros. rewrite in_free_close_iff. intuition.
   Qed.
 
-  Corollary freeset_close : forall t x,
-      freeset ('[x] t) [=] freeset t \\ {{ x }}.
+  (* LNgen 3: fv-close *)
+  Corollary FV_close : forall t x,
+      FV ('[x] t) [=] FV t \\ {{ x }}.
   Proof.
     introv. intro a. rewrite AtomSet.diff_spec.
-    rewrite <- 2(free_iff_freeset). rewrite in_free_close_iff.
+    rewrite <- 2(free_iff_FV). rewrite in_free_close_iff.
     rewrite AtomSet.singleton_spec. intuition.
   Qed.
 
@@ -1158,30 +1278,29 @@ Section locally_nameless_metatheory.
     introv. rewrite in_free_close_iff. intuition.
   Qed.
 
-  Corollary nin_freeset_close : forall t x,
-      ~ (x ∈@ freeset ('[x] t)).
+  Corollary nin_FV_close : forall t x,
+      ~ (x `in` FV ('[x] t)).
   Proof.
-    introv. rewrite <- free_iff_freeset. apply nin_free_close.
+    introv. rewrite <- free_iff_FV. apply nin_free_close.
   Qed.
 
   (** ** Variable closing and local closure *)
   (******************************************************************************)
   Theorem close_lc_eq : forall t x,
-      locally_closed t ->
-      locally_closed_gap 1 (close x t).
+      LC t ->
+      LCn 1 (close x t).
   Proof.
-    unfold locally_closed. introv lct hin.
+    unfold LC. introv lct hin.
     rewrite ind_close_iff in hin.
     destruct hin as [l1 [? ?]]. compare l1 to atom x; subst.
     - cbn. compare values x and x. unfold_lia.
     - cbn. compare values x and a.
     - cbn. compare naturals n and w.
-      + unfold_lia.
-      + (* contradiction *)
+      + false.
         specialize (lct w (Bd w) ltac:(assumption)).
-        cbn in lct. now unfold_lia.
+        cbn in lct. lia.
       + specialize (lct w (Bd n) ltac:(assumption)).
-        cbn in lct. now unfold_lia.
+        cbn in lct. lia.
   Qed.
 
   (** ** Upper and lower bounds on free variables after opening *)
@@ -1213,11 +1332,12 @@ Section locally_nameless_metatheory.
     eauto using free_open_upper_local.
   Qed.
 
-  Corollary freeset_open_upper : forall t (u : T LN),
-      freeset (t '(u)) ⊆ freeset t ∪ freeset u.
+  (* LNgen 1: fv-open-upper *)
+  Corollary FV_open_upper : forall t (u : T LN),
+      FV (t '(u)) ⊆ FV t ∪ FV u.
   Proof.
     intros. intro a. rewrite AtomSet.union_spec.
-    repeat rewrite <- (free_iff_freeset).
+    repeat rewrite <- (free_iff_FV).
     auto using free_open_upper.
   Qed.
 
@@ -1234,17 +1354,18 @@ Section locally_nameless_metatheory.
     exists w (Fr x). now autorewrite with tea_local.
   Qed.
 
-  Corollary freeset_open_lower : forall t u,
-      freeset t ⊆ freeset (t '(u)).
+  (* LNgen 2: fv-open-lower *)
+  Corollary FV_open_lower : forall t u,
+      FV t ⊆ FV (t '(u)).
   Proof.
-    intros. intro a. rewrite <- 2(free_iff_freeset).
+    intros. intro a. rewrite <- 2(free_iff_FV).
     apply free_open_lower.
   Qed.
 
   (** ** Opening a locally closed term is the identity *)
   (**************************************************************************)
   Lemma open_lc_local : forall (u : T LN) w l,
-      is_bound_or_free 0 (w, l) ->
+      lc_loc 0 (w, l) ->
       open_loc u (w, l) = ret l.
   Proof.
     introv hyp. destruct l as [a | n].
@@ -1253,7 +1374,7 @@ Section locally_nameless_metatheory.
   Qed.
 
   Theorem open_lc : forall t u,
-      locally_closed t ->
+      LC t ->
       t '(u) = t.
   Proof.
     introv lc. apply open_id. introv lin.
@@ -1264,39 +1385,41 @@ Section locally_nameless_metatheory.
   (** ** Opening followed by substitution *)
   (**************************************************************************)
   Lemma subst_open_local : forall u1 u2 x,
-      locally_closed u2 ->
+      LC u2 ->
       subst x u2 ∘ open_loc u1 =
       open_loc (u1 '{x ~> u2}) ⋆5 (subst_loc x u2 ∘ extract).
   Proof.
     introv lcu2. ext [w l]. unfold kc5.
     unfold preincr, compose; cbn. compare l to atom x.
-    - rewrite subst_in_ret. cbn.
+    - rewrite subst_ret. cbn.
       compare values x and x. symmetry.
       apply (bindd_respectful_id).
       intros. destruct a.
       + reflexivity.
-      + unfold locally_closed, locally_closed_gap, is_bound_or_free in lcu2. cbn.
+      + unfold LC, LCn, lc_loc in lcu2. cbn.
         compare naturals n and (w ● w0).
         { specialize (lcu2 _ _ ltac:(eauto)). cbn in lcu2. unfold_lia. }
         { specialize (lcu2 _ _ ltac:(eauto)). cbn in lcu2. unfold_lia. }
-    - rewrite subst_in_ret. cbn. compare values x and a.
+    - rewrite subst_ret. cbn. compare values x and a.
       compose near (Fr a).
       now rewrite (kmond_bindd0).
     - compare naturals n and w; cbn.
-      + rewrite subst_in_ret. compose near (Bd n) on right.
+      + rewrite subst_ret. compose near (Bd n) on right.
         rewrite (kmond_bindd0); unfold compose. cbn.
         rewrite monoid_id_l. compare naturals n and w.
       + compose near (Bd w) on right.
         rewrite (kmond_bindd0). unfold compose. cbn.
         rewrite monoid_id_l. compare naturals w and w.
-      + rewrite subst_in_ret.
+      + rewrite subst_ret.
         compose near (Bd n) on right.
         rewrite (kmond_bindd0). unfold compose. cbn.
         rewrite monoid_id_l. compare naturals n and w.
   Qed.
 
+
+  (* LNgen 10: subst-open *)
   Theorem subst_open :  forall u1 u2 t x,
-      locally_closed u2 ->
+      LC u2 ->
       t '(u1) '{x ~> u2} =
       t '{x ~> u2} '(u1 '{x ~> u2}).
   Proof.
@@ -1313,6 +1436,92 @@ Section locally_nameless_metatheory.
     now ext [w t'].
   Qed.
 
+  (** ** Closing followed by substitution *)
+  (**************************************************************************)
+  Lemma close_notin_FV: forall y (u: T LN) depth,
+      LC u ->
+      ~ (y `in` FV u) ->
+      mapd (close_loc y ⦿ depth) u = u.
+  Proof.
+    introv HLC Hnin.
+    change u with (id u) at 2.
+    rewrite <- dfun_mapd1.
+    apply mapd_respectful.
+    introv Hin.
+    compare a to atom y.
+    - false.
+      apply ind_implies_in in Hin.
+      rewrite <- free_iff_FV in Hnin.
+      rewrite in_free_iff in Hnin.
+      easy.
+    - cbn. compare values a and a.
+      destruct (@eq_dec Atom.atom _ y a). false.
+      easy.
+    - cbn. unfold transparent tcs.
+      unfold LC in HLC.
+      unfold LCn in HLC.
+      specialize (HLC _ _ Hin).
+      cbn in HLC.
+      compare naturals n and (depth + e)%nat.
+  Qed.
+
+  Lemma subst_close_local : forall x y u depth l,
+      x <> y ->
+      ~ y `in` FV u ->
+      LC u ->
+      subst_loc x u (close_loc y (depth, l)) =
+        mapd (close_loc y ⦿ depth) (subst_loc x u l).
+  Proof.
+    introv Hneq lc Hnotin.
+    compare l to atom y.
+    - rewrite close_loc_eq.
+      compare values x and y.
+      rewrite subst_loc_neq; auto.
+      rewrite subst_loc_b.
+      compose near (Fr y) on right.
+      rewrite mapd_ret.
+      reassociate -> on right.
+      rewrite preincr_ret.
+      unfold compose. cbn.
+      now compare values y and y.
+    - rewrite close_loc_neq; auto.
+      compare values x and a.
+      + rewrite subst_loc_eq.
+        rewrite close_notin_FV; auto.
+      + rewrite subst_loc_neq; auto.
+        compose near (Fr a) on right.
+        rewrite mapd_ret.
+        reassociate -> on right.
+        rewrite preincr_ret.
+        unfold compose; cbn.
+        destruct_eq_args y a.
+    - cbn.
+      compose near (Bd n) on right.
+      rewrite mapd_ret.
+      reassociate -> on right.
+      rewrite preincr_ret.
+      unfold compose; cbn.
+      compare naturals n and depth.
+  Qed.
+
+  (* LNgen 13: subst-close *)
+  Theorem subst_close :  forall (u: T LN) (t: U LN) x y,
+      x <> y ->
+      ~ y `in` FV u ->
+      LC u ->
+      ('[y] t) '{x ~> u} =
+        '[y] (t '{x ~> u}).
+  Proof.
+    introv Hneq lc Hnotin.
+    compose near t.
+    unfold close, subst.
+    rewrite (bind_mapd).
+    rewrite (mapd_bind).
+    fequal. unfold compose.
+    ext [depth l].
+    apply subst_close_local; auto.
+  Qed.
+
   (** ** Decompose opening into variable opening followed by substitution *)
   (**************************************************************************)
   Lemma open_spec_local : forall u x w l,
@@ -1322,19 +1531,20 @@ Section locally_nameless_metatheory.
   Proof.
     introv neq. unfold compose. compare l to atom x.
     - contradiction.
-    - autorewrite with tea_local. rewrite subst_in_ret.
+    - autorewrite with tea_local. rewrite subst_ret.
       now rewrite subst_loc_neq.
     - cbn. compare naturals n and w.
-      now rewrite subst_in_ret.
-      now rewrite subst_in_ret, subst_loc_eq.
-      now rewrite subst_in_ret, subst_loc_b.
+      now rewrite subst_ret.
+      now rewrite subst_ret, subst_loc_eq.
+      now rewrite subst_ret, subst_loc_b.
   Qed.
 
   (* This theorem would be easy to prove with [subst_open_eq], but
    applying that theorem would introduce a local closure hypothesis
    for <<u>> that is not actually required for our purposes. *)
+  (* LNgen 14: subst-intro *)
   Theorem open_spec_eq : forall u t x,
-      ~ x ∈@ freeset t ->
+      ~ x `in` FV t ->
       t '(u) = t '(ret (Fr x)) '{x ~> u}.
   Proof.
     introv fresh. compose near t on right.
@@ -1343,7 +1553,7 @@ Section locally_nameless_metatheory.
     apply (bindd_respectful). introv hin.
     assert (a <> Fr x).
     { apply (ind_implies_in) in hin.
-      rewrite <- free_iff_freeset in fresh.
+      rewrite <- free_iff_FV in fresh.
       eapply ninf_in_neq in fresh; eauto. }
     now rewrite <- (open_spec_local u x).
   Qed.
@@ -1352,17 +1562,18 @@ Section locally_nameless_metatheory.
   (**************************************************************************)
   Lemma subst_open_var_loc : forall u x y,
       x <> y ->
-      locally_closed u ->
+      LC u ->
       subst x u ∘ open_loc (ret (Fr y)) =
       open_loc (ret (Fr y)) ⋆5 (subst_loc x u ∘ extract).
   Proof with auto.
     introv neq lc. rewrite subst_open_local...
-    rewrite subst_in_ret. cbn. compare values x and y.
+    rewrite subst_ret. cbn. compare values x and y.
   Qed.
 
+  (* LNgen 11: subst-open-var *)
   Theorem subst_open_var : forall u t x y,
       x <> y ->
-      locally_closed u ->
+      LC u ->
       t '(ret (Fr y)) '{x ~> u} =
       t '{x ~> u} '(ret (Fr y)).
   Proof.
@@ -1376,6 +1587,8 @@ Section locally_nameless_metatheory.
     #[local] Unset Keyed Unification.
     now ext [w t'].
   Qed.
+
+  (* LNgen 12: doesn't make sense here because it mentions concrete syntax *)
 
   (** ** Closing, followed by opening *)
   (**************************************************************************)
@@ -1391,6 +1604,7 @@ Section locally_nameless_metatheory.
       compare naturals (S n) and w.
   Qed.
 
+  (* LNgen 15: open_close *)
   Theorem open_close : forall x t,
       ('[x] t) '(ret (Fr x)) = t.
   Proof.
@@ -1416,6 +1630,15 @@ Section locally_nameless_metatheory.
              end
            end.
 
+  Lemma open_LN_loc_spec: forall (x: LN),
+      open_loc (ret x) = ret (T := T) ∘ open_LN_loc x.
+  Proof.
+    intros. ext [depth l]. unfold compose.
+    destruct l.
+    - cbn. reflexivity.
+    - cbn. compare naturals n and depth.
+  Qed.
+
   Lemma open_by_LN_spec : forall l,
       open (ret l) = mapd (open_LN_loc l).
   Proof.
@@ -1440,6 +1663,7 @@ Section locally_nameless_metatheory.
       compare naturals (n - 1) and w.
   Qed.
 
+  (* LNgen 16: close_open *)
   Theorem close_open : forall x t,
       ~ x ∈ free t ->
       '[x] (t '(ret (Fr x))) = t.
@@ -1458,11 +1682,11 @@ Section locally_nameless_metatheory.
   (** ** Opening and local closure *)
   (**************************************************************************)
   Lemma open_lc_gap_eq_1 : forall n t u,
-      locally_closed u ->
-      locally_closed_gap n t ->
-      locally_closed_gap (n - 1) (t '(u)).
+      LC u ->
+      LCn n t ->
+      LCn (n - 1) (t '(u)).
   Proof.
-    unfold locally_closed_gap.
+    unfold LCn.
     introv lcu lct Hin. rewrite ind_open_iff in Hin.
     destruct Hin as [n1 [n2 [l1 [h1 [h2 h3]]]]].
     destruct l1.
@@ -1471,19 +1695,19 @@ Section locally_nameless_metatheory.
     - specialize (lct _ _ h1). cbn in h2. compare naturals n0 and n1.
       + rewrite (ind_ret_iff) in h2; destruct h2; subst.
         cbn. unfold_monoid. lia.
-      + specialize (lcu n2 l h2). unfold is_bound_or_free in *.
+      + specialize (lcu n2 l h2). unfold lc_loc in *.
         destruct l; [trivial|]. unfold_monoid. lia.
       + rewrite (ind_ret_iff) in h2. destruct h2; subst.
-        unfold is_bound_or_free in *. unfold_lia.
+        unfold lc_loc in *. unfold_lia.
   Qed.
 
   Lemma open_lc_gap_eq_2 : forall n t u,
       n > 0 ->
-      locally_closed u ->
-      locally_closed_gap (n - 1) (t '(u)) ->
-      locally_closed_gap n t.
+      LC u ->
+      LCn (n - 1) (t '(u)) ->
+      LCn n t.
   Proof.
-    unfold locally_closed_gap.
+    unfold LCn.
     introv ngt lcu lct Hin. setoid_rewrite (ind_open_iff) in lct.
     destruct l.
     - cbv. trivial.
@@ -1505,17 +1729,17 @@ Section locally_nameless_metatheory.
 
   Theorem open_lc_gap_eq_iff : forall n t u,
       n > 0 ->
-      locally_closed u ->
-      locally_closed_gap n t <->
-      locally_closed_gap (n - 1) (t '(u)).
+      LC u ->
+      LCn n t <->
+      LCn (n - 1) (t '(u)).
   Proof.
     intros; intuition (eauto using open_lc_gap_eq_1, open_lc_gap_eq_2).
   Qed.
 
   Corollary open_lc_gap_eq_var : forall n t x,
       n > 0 ->
-      locally_closed_gap n t <->
-      locally_closed_gap (n - 1) (t '(ret (Fr x))).
+      LCn n t <->
+      LCn (n - 1) (t '(ret (Fr x))).
   Proof.
     intros. apply open_lc_gap_eq_iff. auto.
     intros w l hin. rewrite (ind_ret_iff) in hin.
@@ -1523,24 +1747,130 @@ Section locally_nameless_metatheory.
   Qed.
 
   Corollary open_lc_gap_eq_iff_1 : forall t u,
-      locally_closed u ->
-      locally_closed_gap 1 t <->
-      locally_closed (t '(u)).
+      LC u ->
+      LCn 1 t <->
+      LC (t '(u)).
   Proof.
-    intros. unfold locally_closed.
+    intros. unfold LC.
     change 0 with (1 - 1).
     rewrite <- open_lc_gap_eq_iff; auto.
     reflexivity.
   Qed.
 
   Corollary open_lc_gap_eq_var_1 : forall t x,
-      locally_closed_gap 1 t <->
-      locally_closed (t '(ret (Fr x))).
+      LCn 1 t <->
+      LC (t '(ret (Fr x))).
   Proof.
-    intros. unfold locally_closed.
+    intros. unfold LC.
     change 0 with (1 - 1).
     rewrite <- open_lc_gap_eq_var; auto.
     reflexivity.
+  Qed.
+
+  (** ** Injectivity of opening *)
+  (******************************************************************************)
+
+  (* LNgen 17: open-inj *)
+  Lemma open_inj: forall (x: atom) (t u: U LN),
+      ~ x `in` (FV t ∪ FV u) ->
+      t '(ret (Fr x)) = u '(ret (Fr x)) ->
+      t = u.
+  Proof.
+    introv Hnin Heq.
+    rewrite open_by_LN_spec in Heq.
+    apply (mapd_injective2 (open_LN_loc (Fr x))); auto.
+    intros e a1 a2 Hint1 Hint2 Heq_loc.
+    assert (Heq_loc2:
+             open_loc (ret (T := T) (Fr x)) (e, a1) =
+               open_loc (ret (Fr x)) (e, a2)).
+    { rewrite open_LN_loc_spec.
+      unfold compose. fequal. rewrite Heq_loc. reflexivity. }
+    enough (Hneq: a1 <> Fr x /\ a2 <> Fr x).
+    { destruct Hneq.
+      cbn in Heq_loc.
+      destruct a1.
+      { destruct a2.
+        { now inversion Heq_loc. }
+        { compare naturals n and e; false. }
+      }
+      { destruct a2.
+        { compare naturals n and e; false. }
+        { compare naturals n and e.
+          { compare naturals n0 and e.
+            - now inversion Heq_loc.
+            - false.
+            - inversion Heq_loc. lia.
+          }
+          { compare naturals n0 and e.
+            - now inversion Heq_loc.
+            - false.
+          }
+          { compare naturals n0 and e.
+            - inversion Heq_loc. lia.
+            - false.
+            - inversion Heq_loc. lia. }
+        }
+      }
+    }
+    split.
+    - assert (cut: ~ (x `in` FV t)) by fsetdec.
+      rewrite <- free_iff_FV in cut.
+      apply ind_implies_in in Hint1.
+      eapply ninf_in_neq in Hint1; eauto.
+    - assert (cut: ~ (x `in` FV u)) by fsetdec.
+      rewrite <- free_iff_FV in cut.
+      apply ind_implies_in in Hint2.
+      eapply ninf_in_neq in Hint2; eauto.
+  Qed.
+
+  (* LNgen 17: close-inj *)
+  Lemma close_inj: forall (x: atom) (t u: U LN),
+      '[x] t = '[x]  u ->
+      t = u.
+  Proof.
+    introv premise.
+    apply (mapd_injective2 (close_loc x)); auto.
+    intros e a1 a2 Hint1 Hint2 Heq_loc.
+    cbn in Heq_loc.
+    compare a1 to atom x.
+    - compare values x and x.
+      compare a2 to atom x.
+      + reflexivity.
+      + compare values x and a.
+      + compare naturals n and e.
+        { inversion Heq_loc. lia. }
+        { inversion Heq_loc. lia. }
+        { inversion Heq_loc. lia. }
+    - compare values x and a.
+      compare a2 to atom x.
+      compare values x and x.
+      compare values x and a0.
+      compare naturals n and e.
+      { false. }
+      { false. }
+      { false. }
+    - compare a2 to atom x.
+      { compare naturals n and e.
+        compare values x and x.
+        { inversion Heq_loc. lia. }
+        { compare values x and x.
+          inversion Heq_loc. lia. }
+        { compare values x and x.
+          inversion Heq_loc. lia. }
+      }
+      { compare naturals n and e.
+        destruct (@eq_dec Atom.atom _ x a).
+        { inversion Heq_loc. lia. }
+        { inversion Heq_loc. }
+        { compare values x and a. }
+        destruct (@eq_dec Atom.atom _ x a).
+        { inversion Heq_loc. lia. }
+        { inversion Heq_loc. }
+      }
+      { compare naturals n and e;
+          compare naturals n0 and e;
+          inversion Heq_loc; try lia; easy.
+      }
   Qed.
 
 End locally_nameless_metatheory.

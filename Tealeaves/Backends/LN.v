@@ -1,10 +1,34 @@
 From Tealeaves.Backends.LN Require Export
   Atom AtomSet AssocList LN.
 
-From Tealeaves.Misc Require Import
+From Tealeaves.Misc Require Export
   NaturalNumbers.
-From Tealeaves.Theory Require Import
+From Tealeaves.Theory Require Export
   DecoratedTraversableMonad.
+
+Module Notations.
+  Export Categorical.Applicative.Notations. (* <⋆> *)
+  Export Kleisli.Comonad.Notations.
+  (* Export Kleisli.DecoratedFunctor.Notations. *)
+  Export Kleisli.DecoratedMonad.Notations.
+  Export Kleisli.TraversableFunctor.Notations.
+  Export Kleisli.TraversableMonad.Notations.
+  Export Kleisli.DecoratedTraversableFunctor.Notations.
+  Export Kleisli.DecoratedTraversableMonad.Notations.
+  Export Kleisli.DecoratedContainerFunctor.Notations. (* ∈d *)
+  (* Export Kleisli.DecoratedContainerMonad.Notations. *)
+  Export Categorical.ContainerFunctor.Notations. (* ∈ *)
+
+  Export Misc.Product.Notations. (* × *)
+  Export Monoid.Notations. (* Ƶ and ● *)
+  Export Misc.Subset.Notations. (* ∪ *)
+  Export List.ListNotations. (* [] :: *)
+
+  Export LN.Notations. (* operations *)
+  Export LN.AtomSet.Notations.
+  Export LN.AssocList.Notations. (* one, ~ *)
+End Notations.
+
 
 Module Type SyntaxSIGHetero.
   Parameter (iterm oterm : Type).
