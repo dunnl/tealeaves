@@ -288,7 +288,7 @@ Section locally_nameless_basic_principles.
     reflexivity.
   Qed.
 
-  Definition locally_closed_spec:
+  Definition LC_spec:
     LC = Forall_ctx (lc_loc 0).
   Proof.
     ext t.
@@ -593,7 +593,7 @@ Section locally_nameless_utilities.
 
   (** ** Local reasoning principles for LC *)
   (******************************************************************************)
-  Lemma is_bound_or_free_preincr: forall n m,
+  Lemma lc_loc_preincr: forall n m,
       lc_loc n ⦿ m =
         lc_loc (n + m).
   Proof.
@@ -604,22 +604,22 @@ Section locally_nameless_utilities.
     - cbn. unfold_monoid. propext; lia.
   Qed.
 
-  Lemma is_bound_or_free_S: forall n,
+  Lemma lc_loc_S: forall n,
       lc_loc n ⦿ 1 =
         lc_loc (S n).
   Proof.
     intros.
-    rewrite is_bound_or_free_preincr.
+    rewrite lc_loc_preincr.
     fequal. lia.
   Qed.
 
-  Lemma is_bound_or_free_nBd: forall n w b,
+  Lemma lc_loc_nBd: forall n w b,
       lc_loc n (w, Bd b) = (b < w + n).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma is_bound_or_free_0Bd: forall w b,
+  Lemma lc_loc_0Bd: forall w b,
       lc_loc 0 (w, Bd b) = (b < w).
   Proof.
     intros.
@@ -628,15 +628,15 @@ Section locally_nameless_utilities.
     propext; lia.
   Qed.
 
-  Lemma is_bound_or_free_00Bd: forall b,
+  Lemma lc_loc_00Bd: forall b,
       lc_loc 0 (0, Bd b) = False.
   Proof.
     intros.
-    rewrite is_bound_or_free_0Bd.
+    rewrite lc_loc_0Bd.
     propext; lia.
   Qed.
 
-  Lemma is_bound_or_free_Fr: forall n w x,
+  Lemma lc_loc_Fr: forall n w x,
       lc_loc n (w, Fr x) = True.
   Proof.
     intros.
@@ -675,17 +675,17 @@ Tactic Notation "simpl_local" := (autorewrite* with tea_local).
 Ltac simplify_lc_loc :=
   match goal with
   | |- context[lc_loc ?n ⦿ 1] =>
-      rewrite is_bound_or_free_S
+      rewrite lc_loc_S
   | |- context[lc_loc ?n ⦿ ?m] =>
-      rewrite is_bound_or_free_preincr
+      rewrite lc_loc_preincr
   | |- context[lc_loc ?n (?w, Fr ?x)] =>
-      rewrite is_bound_or_free_Fr
+      rewrite lc_loc_Fr
   | |- context[lc_loc 0 (0, Bd ?b)] =>
-      rewrite is_bound_or_free_00Bd
+      rewrite lc_loc_00Bd
   | |- context[lc_loc 0 (?w, Bd ?b)] =>
-      rewrite is_bound_or_free_0Bd
+      rewrite lc_loc_0Bd
   | |- context[lc_loc ?n (?w, Bd ?b)] =>
-      rewrite is_bound_or_free_nBd
+      rewrite lc_loc_nBd
   end.
 
 (** * Free variables *)

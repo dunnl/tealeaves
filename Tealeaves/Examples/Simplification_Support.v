@@ -1,55 +1,18 @@
-(*|
-############################################################
-Formalizing STLC with Tealeaves
-############################################################
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Kleisli presentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This file gives a tutorial on proving the decorated traversable monad
-laws the for the syntax of the simply-typed lambda calculus (STLC).
-
-.. contents:: Table of Contents
-   :depth: 2
-
-============================
-Imports and setup
-============================
-
-Since we are using the Kleisli typeclass hierarchy, we import modules under
-the namespaces ``Classes.Kleisli`` and ``Theory.Kleisli.``
-|*)
 From Tealeaves Require Export
   Backends.LN
-  Misc.NaturalNumbers
-  Functors.List
   Theory.DecoratedTraversableMonad
   Tactics.Debug.
 
-Export Monoid.Notations. (* Ƶ and ● *)
-Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
-Export Misc.Subset.Notations. (* ∪ *)
-Export Applicative.Notations. (* <⋆> *)
-Export List.ListNotations. (* [] :: *)
-(*
-Export LN.Notations. (* operations *)
-*)
-Export LN.AtomSet.Notations.
-Export LN.AssocList.Notations. (* one, ~ *)
-Export Product.Notations. (* × *)
-Export ContainerFunctor.Notations. (* ∈ *)
-Export DecoratedContainerFunctor.Notations. (* ∈d *)
+Import LN.Notations.
 
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
 
-Open Scope set_scope.
-
+(* Open Scope set_scope. *)
 
 (*|
 ========================================
-Simplification support
+Extra lemmas for simplification support
 ========================================
 |*)
 Lemma pure_const_rw: forall {A} {a:A} {M} {unit:Monoid_unit M},
@@ -156,6 +119,31 @@ Ltac rewrite_binddt_to_core_ops :=
       progress (rewrite <- bindt_to_binddt)
   end.
 
+About tolist_to_binddt.
+About tolist_to_foldMap.
+
+Ltac simplify_binddt := cbn.
+
+Ltac simplify_mapdt T :=
+  rewrite (mapdt_to_binddt (T := T));
+  simplify_binddt;
+  rewrite <- (mapdt_to_binddt (T := T)).
+
+Ltac simplify_foldMapd T :=
+  match goal with
+  | |- context[foldMapd (T := T) (M := ?M) (op := ?op) (unit := ?unit)] =>
+      rewrite foldMapd_to_mapdt1;
+      simplify_mapdt;
+      rewrite <- foldMapd_to_mapdt1
+  end.
+
+Ltac simplify_LC T :=
+  rewrite LCn_spec;
+  unfold Forall_ctx;
+  simplify_foldMapd T;
+  fold Forall_ctx.
+
+
 
 Ltac rewrite_derived_ops_to_binddt T :=
   match goal with
@@ -240,10 +228,13 @@ Ltac simplify_applicative_const :=
   | |- context[(ap (const ?W) ?x ?y)] =>
       debug "ap_const";
       rewrite ap_const_rw
+  end.
+
+Ltac simplify_map_const :=
+  match goal with
   | |- context[map (F := const ?X) ?f] =>
       debug "map_const";
       rewrite map_const_rw
-
   end.
 
 (** *** Identity functor *)
@@ -297,8 +288,8 @@ Ltac simplify_locally_nameless_leaves :=
       rewrite element_of_list_one
   | |- context[Forall_ctx ?P] =>
       unfold Forall_ctx
-  | |- context[is_bound_or_free] =>
-      simplify_is_bound_or_free
+  | |- context[lc_loc] =>
+      simplify_lc_loc
   end.
 
 Ltac simplify_locally_nameless_top_level :=
@@ -306,19 +297,19 @@ Ltac simplify_locally_nameless_top_level :=
   | |- context[free ?t] =>
       debug "free_to_foldMap";
       rewrite free_to_foldMap
-  | |- context[freeset ?t] =>
-      debug "unfold_freeset";
-      unfold freeset;
+  | |- context[FV ?t] =>
+      debug "unfold_FV";
+      unfold FV;
       rewrite free_to_foldMap
-  | |- context[locally_closed] =>
-      debug "locally_closed_spec";
-      rewrite locally_closed_spec
-  | |- context[locally_closed_gap] =>
-      debug "locally_closed_gap_spec";
-      rewrite locally_closed_gap_spec
-  | |- context[is_bound_or_free] =>
+  | |- context[LC] =>
+      debug "LC_spec";
+      rewrite LC_spec
+  | |- context[LCn] =>
+      debug "LC_gap_spec";
+      rewrite LCn_spec
+  | |- context[lc_loc] =>
       debug "simplify_bound_or_free";
-      simplify_is_bound_or_free
+      simplify_lc_loc
   | |- context[subst] =>
       unfold subst
   | |- context[open] =>

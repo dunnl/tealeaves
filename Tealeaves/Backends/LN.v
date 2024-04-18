@@ -65,7 +65,7 @@ Module Type TheorySIG.
     (open : iterm -> oterm -> oterm)
     (close : atom -> oterm -> oterm)
     (subst : atom -> iterm -> oterm -> oterm)
-    (locally_closed_bool : oterm -> bool).
+    (LCb : oterm -> bool).
 End TheorySIG.
 
 Module MakeTheory_Hetero
@@ -106,26 +106,26 @@ Module MakeTheory_Hetero
   Definition free : oterm -> list atom :=
     fun u => free (T := U) u.
 
-  Definition freeset : oterm -> AtomSet.t :=
-    fun u => freeset (T := U) u.
+  Definition FV : oterm -> AtomSet.t :=
+    fun u => FV (T := U) u.
 
-  Definition locally_closed : oterm -> Prop :=
-    fun u => locally_closed (U := U) u.
+  Definition LC : oterm -> Prop :=
+    fun u => LC (U := U) u.
 
-  Definition locally_closed_bool : oterm -> bool :=
-    fun u => locally_closed_bool (U := U) u.
+  Definition LCb : oterm -> bool :=
+    fun u => LCb (U := U) u.
 
   Definition scoped : oterm -> AtomSet.t -> Prop :=
-    fun t γ => freeset t ⊆ γ.
+    fun t γ => FV t ⊆ γ.
 
   Definition subst_i : atom -> iterm -> iterm -> iterm :=
     fun x t u => to_T_inv (LN.subst (T := T) (U := T) x t u).
 
-  Definition freeset_i : iterm -> AtomSet.t :=
-    fun t => LN.freeset (T := T) t.
+  Definition FV_i : iterm -> AtomSet.t :=
+    fun t => LN.FV (T := T) t.
 
-  Definition locally_closed_i : iterm -> Prop :=
-    fun u => LN.locally_closed (U := T) u.
+  Definition LC_i : iterm -> Prop :=
+    fun u => LN.LC (U := T) u.
 
   Module Notations.
     Notation "t '{ x ~> u }" := (subst x u t) (at level 35).
@@ -141,37 +141,37 @@ Module MakeTheory_Hetero
   Implicit Types (x y: atom) (t: iterm) (u: oterm).
 
   Theorem open_lc: forall t u,
-      locally_closed u -> u '(t) = u.
+    LC u -> u '(t) = u.
   Proof.
     intros.
-    unfold locally_closed.
+    unfold LC.
     unfold open.
     rewrite open_lc.
     - apply to_U_iso.
     - assumption.
   Qed.
 
-  Theorem freeset_subst_upper: forall x t u,
-      freeset (u '{x ~> t}) ⊆ freeset u \\ {{x}} ∪ freeset_i t.
+  Theorem FV_subst_upper: forall x t u,
+      FV (u '{x ~> t}) ⊆ FV u \\ {{x}} ∪ FV_i t.
   Proof.
     intros.
-    unfold freeset, freeset_i, subst.
+    unfold FV, FV_i, subst.
     rewrite to_U_iso_inv.
-    rewrite freeset_subst_upper.
+    rewrite FV_subst_upper.
     reflexivity.
   Qed.
 
-  Theorem freeset_subst_lower: forall t u x,
-      freeset u \\ {{ x }} ⊆ freeset (u '{x ~> t}).
+  Theorem FV_subst_lower: forall t u x,
+      FV u \\ {{ x }} ⊆ FV (u '{x ~> t}).
   Proof.
     intros.
-    unfold freeset, freeset_i, subst.
+    unfold FV, FV_i, subst.
     rewrite to_U_iso_inv.
-    apply freeset_subst_lower.
+    apply FV_subst_lower.
   Qed.
 
   Theorem close_open : forall x u,
-      ~ x ∈@ freeset u ->
+      ~ x `in` FV u ->
       '[x] (u '(from_atom x)) = u.
   Proof.
     intros.
@@ -182,7 +182,7 @@ Module MakeTheory_Hetero
     rewrite close_open.
     - rewrite to_U_iso.
       reflexivity.
-    - rewrite free_iff_freeset.
+    - rewrite free_iff_FV.
       assumption.
   Qed.
 
@@ -201,7 +201,7 @@ Module MakeTheory_Hetero
 
   Theorem subst_open_var : forall u t x y,
       x <> y ->
-      locally_closed_i t ->
+      LC_i t ->
       u '(from_atom y) '{x ~> t} =
         u '{x ~> t} '(from_atom y).
   Proof.
@@ -218,7 +218,7 @@ Module MakeTheory_Hetero
   Qed.
 
   Theorem open_spec_eq : forall u t x,
-      ~ x ∈@ freeset u ->
+      ~ x `in` FV u ->
       u '(t) = u '(from_atom x) '{x ~> t}.
   Proof.
     intros.
@@ -232,7 +232,7 @@ Module MakeTheory_Hetero
   Qed.
 
   Theorem subst_open :  forall t1 t2 u x,
-      locally_closed_i t2 ->
+      LC_i t2 ->
       u '(t1) '{x ~> t2} =
         open (subst_i x t2 t1) (u '{x ~> t2}).
   Proof.
@@ -246,55 +246,55 @@ Module MakeTheory_Hetero
     - assumption.
   Qed.
 
-  Theorem freeset_open_upper : forall u t,
-      freeset (u '(t)) ⊆ freeset u ∪ freeset_i t.
+  Theorem FV_open_upper : forall u t,
+      FV (u '(t)) ⊆ FV u ∪ FV_i t.
   Proof.
     intros.
-    unfold freeset, open.
+    unfold FV, open.
     rewrite to_U_iso_inv.
-    rewrite freeset_open_upper.
+    rewrite FV_open_upper.
     reflexivity.
   Qed.
 
-  Theorem freeset_open_lower : forall t u,
-      freeset u ⊆ freeset (u '(t)).
+  Theorem FV_open_lower : forall t u,
+      FV u ⊆ FV (u '(t)).
   Proof.
     intros.
-    unfold freeset, open.
+    unfold FV, open.
     rewrite to_U_iso_inv.
-    rewrite freeset_open_lower.
+    rewrite FV_open_lower.
     reflexivity.
   Qed.
 
-  Theorem freeset_close : forall u x,
-      freeset ('[x] u) [=] freeset u \\ {{ x }}.
+  Theorem FV_close : forall u x,
+      FV ('[x] u) [=] FV u \\ {{ x }}.
   Proof.
     intros.
-    unfold freeset, close.
+    unfold FV, close.
     rewrite to_U_iso_inv.
-    rewrite freeset_close.
+    rewrite FV_close.
     reflexivity.
   Qed.
 
-  Theorem nin_freeset_close : forall u x,
-      ~ x ∈@ freeset ('[x] u).
+  Theorem nin_FV_close : forall u x,
+      ~ x `in` FV ('[x] u).
   Proof.
     intros.
-    unfold freeset, close.
+    unfold FV, close.
     rewrite to_U_iso_inv.
-    apply nin_freeset_close.
+    apply nin_FV_close.
   Qed.
 
-  Theorem freeset_close1 : forall u x y,
+  Theorem FV_close1 : forall u x y,
       y <> x ->
-      y ∈@ freeset ('[x] u) <-> y ∈@ freeset u.
+      y `in` FV ('[x] u) <-> y `in` FV u.
   Proof.
     intros.
-    unfold close, freeset.
+    unfold close, FV.
     rewrite to_U_iso_inv.
-    rewrite <- free_iff_freeset.
+    rewrite <- free_iff_FV.
     rewrite in_free_close_iff.
-    rewrite <- free_iff_freeset.
+    rewrite <- free_iff_FV.
     intuition.
   Qed.
 

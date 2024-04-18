@@ -469,7 +469,10 @@ Section in_dom_lemmas.
   Lemma in_dom_cons : forall (x y : atom) (a : A) (Γ : alist A),
       y ∈ dom ((x, a) :: Γ) <-> y = x \/ y ∈ dom Γ.
   Proof.
-    intros; now autorewrite with tea_rw_dom tea_list.
+    intros; autorewrite with tea_rw_dom.
+    rewrite @element_of_list_app.
+    rewrite @element_of_list_one.
+    reflexivity.
   Qed.
 
   Lemma in_dom_one : forall (x y : atom) (a : A),

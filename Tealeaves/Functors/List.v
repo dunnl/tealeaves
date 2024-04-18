@@ -999,17 +999,17 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma element_of_list_cons {A} : forall (a1 a2 : A) (xs : list A),
-    a1 ∈ (a2 :: xs) <-> a1 = a2 \/ a1 ∈ xs.
+Lemma element_of_list_one {A} (a1 a2 : A) : a1 ∈ [ a2 ] <-> a1 = a2.
 Proof.
-  intros; unfold element_of.
+  intros. unfold element_of.
   simpl_list; simpl_subset.
   intuition congruence.
 Qed.
 
-Lemma element_of_list_one {A} (a1 a2 : A) : a1 ∈ [ a2 ] <-> a1 = a2.
+Lemma element_of_list_cons {A} : forall (a1 a2 : A) (xs : list A),
+    a1 ∈ (a2 :: xs) <-> a1 = a2 \/ a1 ∈ xs.
 Proof.
-  intros. unfold element_of.
+  intros; unfold element_of.
   simpl_list; simpl_subset.
   intuition congruence.
 Qed.
@@ -1029,8 +1029,9 @@ Proof.
   easy.
 Qed.
 
-#[export] Hint Rewrite @element_of_list_nil @element_of_list_cons
-  @element_of_list_one @element_of_list_ret @element_of_list_app : tea_list.
+#[export] Hint Rewrite @element_of_list_nil
+  @element_of_list_cons @element_of_list_one
+  @element_of_list_ret @element_of_list_app : tea_list.
 
 (** *** [x ∈] is a monoid homomorphism *)
 (******************************************************************************)
