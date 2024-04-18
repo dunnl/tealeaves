@@ -64,10 +64,24 @@ Ltac normalize_fns :=
       change (id ∘ f) with f
   end.
 
+Ltac normalize_fns_in H :=
+  match goal with
+  | H: context[?f ∘ id] |- _ =>
+      change (f ∘ id) with f in H
+  | H: context[(id ∘ ?f)] |- _ =>
+      change (id ∘ f) with f in H
+  end.
+
 Ltac normalize_id :=
   match goal with
   | |- context[id ?t] =>
       change (id t) with t
+  end.
+
+Ltac normalize_id_in :=
+  match goal with
+  | H: context[id ?t] |- _ =>
+      change (id t) with t in H
   end.
 
 Ltac push_preincr_into_fn :=
@@ -76,6 +90,14 @@ Ltac push_preincr_into_fn :=
       rewrite (preincr_assoc g f w)
   | |- context[extract ⦿ ?w] =>
       rewrite (extract_preincr w)
+  end.
+
+Ltac push_preincr_into_fn_in :=
+  match goal with
+  | H: context[(?g ∘ ?f) ⦿ ?w] |- _ =>
+      rewrite (preincr_assoc g f w) in H
+  | H: context[extract ⦿ ?w] |- _ =>
+      rewrite (extract_preincr w) in H
   end.
 
 Ltac simplify_post_binddt_ret :=
@@ -93,12 +115,35 @@ Ltac simplify_post_binddt_ret :=
       change (f ∘ ret (T := T) a) with (f (ret a))
   end.
 
+Ltac simplify_post_binddt_ret_in :=
+  match goal with
+  | H: context[map (F := const ?X) ?f ∘ ?g] |- _ =>
+      change (map (F := const ?X) ?f ∘ ?g) with g in H
+  | H: context[map (F := const ?X) ?f] |- _ =>
+      rewrite map_const_rw in H;
+      try normalize_id_in H
+  | H: context[(?f ∘ extract) (?w, ?a)] |- _ =>
+      change ((f ∘ extract) (w, a)) with (f a) in H
+  | H: context[extract (?w, ?a)] |- _ =>
+      change (extract (w, a)) with a in H
+  | H: context[(?f ∘ ret (T := ?T) ?a)] |- _ =>
+      change (f ∘ ret (T := T) a) with (f (ret a)) in H
+  end.
+
 Ltac simplify_binddt_ret :=
   match goal with
   | |- context[binddt (T := ?T) ?f (?rtn ?t)] =>
       change (rtn t) with (ret (T := T) t);
       rewrite binddt_ret;
       repeat simplify_post_binddt_ret
+  end.
+
+Ltac simplify_binddt_ret_in H :=
+  match goal with
+  | H: context[binddt (T := ?T) ?f (?rtn ?t)] |- _ =>
+      change (rtn t) with (ret (T := T) t) in H;
+      rewrite binddt_ret in H;
+      repeat simplify_post_binddt_ret_in H
   end.
 
 Ltac simplify_binddt_core :=
@@ -111,13 +156,32 @@ Ltac simplify_binddt_core :=
                          f t) in
       let e' := eval cbn in e in
         debug "simplify_binddt_core|change";
-        progress (change e with e' in *)
+        progress (change e with e')
+  end.
+
+Ltac simplify_binddt_core_in :=
+  match goal with
+  | H: context[binddt (W := ?W) (T := ?T)
+                (H := ?H) (H0 := ?H0) (H1 := ?H1)
+                (U := ?U) (G := ?G) ?f ?t] |- _ =>
+      let e := constr:(binddt (W := W) (T := T) (U := U) (G := G)
+                         (H := H) (H0 := H0) (H1 := H1)
+                         f t) in
+      let e' := eval cbn in e in
+        debug "simplify_binddt_core|change";
+        progress (change e with e' in H)
   end.
 
 Ltac simplify_binddt :=
    (simplify_binddt_ret
     (* || cbn; repeat push_preincr_into_fn *)
-    || simplify_binddt_core; repeat push_preincr_into_fn).
+    || simplify_binddt_core;
+    repeat push_preincr_into_fn).
+
+Ltac simplify_binddt_in H :=
+  (simplify_binddt_ret_in H
+    || simplify_binddt_core_in H;
+    repeat push_preincr_into_fn_in H).
 
 Ltac simplify_mapdt :=
   match goal with
@@ -127,6 +191,16 @@ Ltac simplify_mapdt :=
       rewrite (mapdt_to_binddt (T := T));
       simplify_binddt;
       repeat rewrite <- (mapdt_to_binddt (T := T))
+  end.
+
+Ltac simplify_mapdt_in :=
+  match goal with
+  | H: context[mapdt (T := ?T) ?f (ret ?t)] |- _ =>
+      idtac "mapdt_ret should be called here"
+  | H: context[mapdt (T := ?T)] |- _ =>
+      rewrite (mapdt_to_binddt (T := T)) in H;
+      simplify_binddt_in H;
+      repeat rewrite <- (mapdt_to_binddt (T := T)) in H
   end.
 
 Ltac simplify_bindt :=
@@ -166,17 +240,24 @@ Ltac simplify_traverse :=
       idtac "traverse_ret should be called here"
   | |- context[traverse (T := ?T) (G := ?G) ?f ?t] =>
       rewrite (traverse_to_bindt (T := T) (G := G) f);
-      (* Don't simplify this yet, we need it for: rewrite <-
-      (* in case applicative is constant *)
-      repeat change (map (F := const ?M) ?f ∘ ?g) with g;
-      *)
       repeat simplify_bindt;
       repeat rewrite <- (traverse_to_bindt (T := T))
-             (*
-      (* in case applicative is constant *)
-      repeat change (map (F := const ?M) ?f ∘ ?g) with g;
-      *)
-end.
+  end.
+
+Ltac simplify_monoid_units_in H :=
+  match goal with
+  | H: context[Ƶ ● ?m] |- _ =>
+      debug "monoid_id_r";
+      rewrite (monoid_id_r m) in H
+  | H: context[?m ● Ƶ] |- _ =>
+      debug "monoid_id_l";
+      rewrite (monoid_id_l m) in H
+  end.
+
+Ltac simplify_foldMapd_post :=
+      repeat simplify_applicative_const;
+      (* ^ above step creates some ((Ƶ ● m) ● n) *)
+      repeat simplify_monoid_units.
 
 Ltac simplify_foldMapd :=
   match goal with
@@ -184,14 +265,24 @@ Ltac simplify_foldMapd :=
       rewrite foldMapd_to_mapdt1;
       simplify_mapdt;
       repeat rewrite <- foldMapd_to_mapdt1;
-      repeat simplify_applicative_const;
-      (* ^ above step creates some ((Ƶ ● m) ● n) *)
-      repeat simplify_monoid_units
+      simplify_foldMapd_post
+  end.
+
+Ltac simplify_foldMapd_post_in H :=
+      repeat simplify_applicative_const_in H;
+      repeat simplify_monoid_units_in H.
+
+Ltac simplify_foldMapd_in :=
+  match goal with
+  | H: context[foldMapd (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] |- _ =>
+      rewrite foldMapd_to_mapdt1 in H;
+      simplify_mapdt_in H;
+      repeat rewrite <- foldMapd_to_mapdt1 in H;
+      simplify_foldMapd_post_in H
   end.
 
 Ltac simplify_foldMap_post :=
   repeat simplify_applicative_const;
-      (* ^ above step creates some ((Ƶ ● m) ● n) *)
   repeat simplify_monoid_units;
   repeat change (const ?x ?y) with x.
 
@@ -216,6 +307,9 @@ Ltac simplify_monoid_conjunction :=
   | |- context[monoid_op (Monoid_op := Monoid_op_and) ?P1 ?P2] =>
       rewrite monoid_conjunction_rw
   end.
+
+Ltac simplify_monoid_conjunction_in H :=
+  rewrite monoid_conjunction_rw in H.
 
 Lemma monoid_append_rw:
   forall {A} (l1 l2: list A),
@@ -349,6 +443,12 @@ Ltac simplify_Forall_ctx :=
   repeat rewrite <- Forall_ctx_to_foldMapd;
   repeat simplify_monoid_conjunction.
 
+Ltac simplify_Forall_ctx_in H :=
+  rewrite Forall_ctx_to_foldMapd in H;
+  simplify_foldMapd_in H;
+  repeat rewrite <- Forall_ctx_to_foldMapd in H;
+  repeat simplify_monoid_conjunction_in H.
+
 Ltac simplify_lc_loc_under_binder :=
   match goal with
   | |- context[lc_loc ?n ⦿ 1] =>
@@ -390,6 +490,14 @@ Ltac simplify_LC :=
   repeat change (LCn 0 ?t) with (LC t).
 
 
+Ltac simplify_LC_in H :=
+  repeat change (LC ?t) with (LCn 0 t) in H;
+  rewrite LCn_spec in H;
+  simplify_Forall_ctx_in H;
+  repeat rewrite <- LCn_spec in H;
+  repeat change (LCn 0 ?t) with (LC t) in H.
+
+
 Ltac simplify_free_loc :=
   match goal with
   | |- context[free_loc ?v] =>
@@ -409,7 +517,15 @@ Ltac simplify_free :=
 Ltac simplify_FV :=
   unfold FV;
   simplify_free;
-  autorewrite with tea_rw_atoms.
+  autorewrite with tea_rw_atoms;
+  repeat match goal with
+    | |- context[atoms ○ free (T := ?T)] =>
+        change (atoms ○ free (T := T))
+        with (FV (T := T))
+    | |- context[atoms (free (T := ?T) ?t)] =>
+        change (atoms (free (T := T) t))
+        with (FV (T := T) t)
+    end.
 
 Ltac simplify_open :=
   unfold open;
@@ -457,9 +573,15 @@ Ltac simplify_LN :=
   | |- context[free ?t] =>
       debug "";
       simplify_free
+  | |- context[FV ?t] =>
+      debug "";
+      simplify_FV
   | |- context[open ?t] =>
       debug "";
       simplify_open
+  | |- context[subst ?x ?u ?t] =>
+      debug "";
+      simplify_subst
   end.
 
 Ltac simplify :=
@@ -488,7 +610,7 @@ Proof.
 Qed.
 
 Theorem term_lcn3 : forall (t1 t2 : term LN) (m : nat),
-    LCn m ([t1]@[t2]) <->
+    LCn m (⟨t1⟩(t2)) <->
       LCn m t1 /\ LCn m t2.
 Proof.
   intros. simplify_LN. reflexivity.
@@ -513,7 +635,7 @@ Proof.
 Qed.
 
 Theorem term_lc3 : forall (t1 t2 : term LN),
-    LC ([t1]@[t2]) <-> LC t1 /\ LC t2.
+    LC (⟨t1⟩ (t2)) <-> LC t1 /\ LC t2.
 Proof.
   intros. simplify_LN. reflexivity.
 Qed.
@@ -706,7 +828,7 @@ Section term_foldMapd_rewrite.
   Qed.
 
   Lemma term_foldMapd3 : forall (t1 t2 : term A),
-      foldMapd f ([t1]@[t2]) = foldMapd f t1 ● foldMapd f t2.
+      foldMapd f (⟨t1⟩ (t2)) = foldMapd f t1 ● foldMapd f t2.
   Proof.
     intros. simplify_foldMapd. reflexivity.
   Qed.
@@ -747,7 +869,7 @@ Section term_ind_rewrite.
   Qed.
 
   Lemma term_ind3 : forall (t1 t2 : term LN) (n : nat) (l : LN),
-      (n, l) ∈d ([t1]@[t2]) <-> (n, l) ∈d t1 \/ (n, l) ∈d t2.
+      (n, l) ∈d (⟨t1⟩ (t2)) <-> (n, l) ∈d t1 \/ (n, l) ∈d t2.
   Proof.
     intros. simplify. reflexivity.
   Qed.

@@ -217,14 +217,14 @@ Module MakeTheory_Hetero
     - assumption.
   Qed.
 
-  Theorem open_spec_eq : forall u t x,
+  Theorem open_spec : forall u t x,
       ~ x `in` FV u ->
       u '(t) = u '(from_atom x) '{x ~> t}.
   Proof.
     intros.
     unfold close, open, subst.
     rewrite to_U_iso_inv.
-    erewrite open_spec_eq.
+    erewrite open_spec.
     - rewrite from_atom_Ret.
       rewrite to_T_iso_inv.
       reflexivity.

@@ -26,6 +26,7 @@ Module Notations.
 
   Notation "x `∈@` S" := (AtomSet.In x S) (at level 40) : set_scope.
   Notation "x `in` S" := (AtomSet.In x S) (at level 40) : set_scope.
+  Notation "x `notin` S" := (~ AtomSet.In x S) (at level 40) : set_scope.
   Notation "s [=] t" := (AtomSet.Equal s t) (at level 70, no associativity) : set_scope.
   Notation "s ⊆ t" := (AtomSet.Subset s t) (at level 70, no associativity) : set_scope.
   Notation "s ∩ t" := (AtomSet.inter s t) (at level 60, no associativity) : set_scope.

@@ -33,7 +33,6 @@ Import LN.Notations.
 Using Tealeaves with STLC
 ========================================
 |*)
-
 Parameter base_typ : Type.
 
 Inductive typ :=
@@ -55,11 +54,20 @@ Notations
 
 Module Notations.
   Notation "'λ'" := (lam) (at level 45).
-  Notation "[ t1 ]@[ t2 ]" := (app t1 t2) (at level 80).
+  Notation "⟨ t ⟩ ( u )" := (app t u) (at level 80, t at level 40, u at level 40).
   Notation "A ⟹ B" := (arr A B) (at level 40).
 End Notations.
 
 Import Notations.
+
+Definition lnvar := @tvar LN.
+Definition bvar := @tvar LN ○ Bd.
+Definition fvar := @tvar LN ○ Fr.
+Coercion lnvar: LN >-> term.
+Coercion bvar: nat >-> term.
+Coercion fvar: atom >-> term.
+Coercion Bd: nat >-> LN.
+Coercion Fr: atom >-> LN.
 
 Section test_notations.
 
@@ -69,12 +77,20 @@ Section test_notations.
     (b : β) (τ : typ).
 
   Check 1.
-  Check (λ τ (tvar (Bd 1))).
-  Check (λ τ (tvar (Fr x))).
-  Check [λ τ (tvar (Bd 1))]@[tvar (Fr x)].
-  Check [λ τ (tvar (Fr x))]@[tvar (Bd 0)].
-  Check λ τ ([(tvar (Bd 1))]@[tvar (Fr x)]).
-  Check λ τ ([(tvar (Fr x))]@[tvar (Bd 0)]).
+  Check (1: LN).
+  Check (1: term LN).
+  Check λ τ (tvar (Bd 1)).
+  Check λ τ (Bd 1).
+  Check λ τ 1.
+  Check λ τ (tvar (Fr x)).
+  Check λ τ (Fr x).
+  Check λ τ x.
+  Check ⟨λ τ (tvar (Bd 1))⟩ (tvar (Fr x)).
+  Check ⟨λ τ (Bd 1)⟩ (Fr x).
+  Check ⟨λ τ (Bd 1)⟩ (x).
+  Check ⟨λ τ (tvar (Fr x))⟩ (tvar (Bd 0)).
+  Check ⟨λ τ (Fr x)⟩ (Bd 0).
+  Check ⟨λ τ x⟩ (0).
 
 End test_notations.
 
@@ -123,23 +139,66 @@ Instantiation of derived functions
   DecoratedTraversableMonadFull nat term
   := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat term.
 
+Section test_operations.
+
+  Context
+    (β : Type)
+    (x y z : atom)
+    (b : β) (τ : typ).
+
+  Check 1.
+  Check (1: LN).
+  Check (1: term LN).
+  Compute (λ τ (tvar (Bd 0))) '(x: term LN).
+  Compute (λ τ (tvar (Bd 1))) '(tvar (Fr x)).
+  Compute (λ τ (tvar (Bd 0))) '(Bd 0: term LN).
+  Compute (λ τ (tvar (Bd 0))) '(Bd 1: term LN).
+  Compute (λ τ (tvar (Bd 1))) '(Bd 0: term LN).
+  Compute (λ τ (tvar (Bd 1))) '(Bd 1: term LN).
+  Compute (λ τ x) '{x ~> (y: term LN)}.
+  Compute (λ τ y) '{x ~> (y: term LN)}.
+
+End test_operations.
+
 Definition ctx := list (atom * typ).
 
-Reserved Notation "Γ ⊢ t : S" (at level 90, t at level 99).
+Reserved Notation "Γ ⊢ t : τ" (at level 90, t at level 99).
 
-Inductive Judgment : ctx -> term LN -> typ -> Prop :=
-| j_var :
-    forall (Γ : ctx) (x : atom) (A : typ),
-      uniq Γ ->
-      (x, A) ∈ Γ ->
-      Γ ⊢ tvar (Fr x) : A
-| j_abs :
-    forall (L : AtomSet.t) Γ (τ1 τ2 : typ) (t : term LN),
-      (forall x : atom, ~ AtomSet.In x L -> Γ ++ x ~ τ1 ⊢ t '(tvar (Fr x)) : τ2) ->
-      Γ ⊢ λ τ1 t : τ1 ⟹ τ2
-| j_app :
-    forall Γ (t1 t2 : term LN) (A B : typ),
-      Γ ⊢ t1 : A ⟹ B ->
-      Γ ⊢ t2 : A ->
-      Γ ⊢ [t1]@[t2] : B
-where "Γ ⊢ t : A" := (Judgment Γ t A).
+Implicit Types (t: term LN) (Γ: ctx) (x: atom) (τ: typ)
+  (L: AtomSet.t).
+
+Inductive Judgment: ctx -> term LN -> typ -> Prop :=
+| j_var:
+    forall Γ x τ
+      (Huniq: uniq Γ)
+      (Hin: (x, τ) ∈ Γ),
+      Γ ⊢ tvar (Fr x): τ
+| j_abs:
+    forall L Γ τ1 τ2 t,
+      (forall x,
+          x `notin` L ->
+          Γ ++ x ~ τ1 ⊢ t '(x: term LN): τ2) ->
+      Γ ⊢ λ τ1 t: τ1 ⟹ τ2
+| j_app:
+    forall Γ (t1 t2: term LN) (τ1 τ2: typ),
+      Γ ⊢ t1: τ1 ⟹ τ2 ->
+      Γ ⊢ t2: τ1 ->
+      Γ ⊢ ⟨t1⟩ (t2): τ2
+where "Γ ⊢ t : τ" := (Judgment Γ t τ).
+
+Ltac typing_induction_on J :=
+  let  x := fresh "x" in
+  let τ := fresh "τ" in
+  let τ1 := fresh "τ1" in
+  let τ2 := fresh "τ2" in
+  let body := fresh "body" in
+  induction J as
+    [ Γ x τ Huniq Hin
+    | L Γ τ1 τ2 body Jbody IHbody
+    | Γ t1 t2 τ1 τ2 J1 IHJ1 J2 IHJ2 ].
+
+Ltac typing_induction :=
+  match goal with
+  | J: context[Judgment ?Γ ?t ?τ] |- _ =>
+      typing_induction_on J
+  end.

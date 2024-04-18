@@ -69,8 +69,8 @@ Qed.
 Theorem j_kind_ctx_weak : forall Δ1 Δ2 Γ t τ,
     ok_kind_ctx Δ2 ->
     disjoint Δ1 Δ2 ->
-    (Δ1 ; Γ ⊢ t : τ) ->
-    (Δ1 ++ Δ2 ; Γ ⊢ t : τ).
+    Δ1 ; Γ ⊢ t : τ ->
+    Δ1 ++ Δ2 ; Γ ⊢ t : τ.
 Proof.
   introv ok disj j. induction j.
   - apply j_var; auto with sysf_ctx.

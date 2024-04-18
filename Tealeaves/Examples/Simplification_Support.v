@@ -119,9 +119,6 @@ Ltac rewrite_binddt_to_core_ops :=
       progress (rewrite <- bindt_to_binddt)
   end.
 
-About tolist_to_binddt.
-About tolist_to_foldMap.
-
 Ltac simplify_binddt := cbn.
 
 Ltac simplify_mapdt T :=
@@ -229,12 +226,28 @@ Ltac simplify_applicative_const :=
       debug "ap_const";
       rewrite ap_const_rw
   end.
+Ltac simplify_applicative_const_in :=
+  match goal with
+  | H: context [pure (F := const ?W) ?x] |- _ =>
+      debug "pure_const";
+      rewrite pure_const_rw in H
+  | H: context[(ap (const ?W) ?x ?y)] |- _ =>
+      debug "ap_const";
+      rewrite ap_const_rw in H
+  end.
 
 Ltac simplify_map_const :=
   match goal with
   | |- context[map (F := const ?X) ?f] =>
       debug "map_const";
       rewrite map_const_rw
+  end.
+
+Ltac simplify_map_const_in :=
+  match goal with
+  | H: context[map (F := const ?X) ?f] |- _ =>
+      debug "map_const";
+      rewrite map_const_rw in H
   end.
 
 (** *** Identity functor *)

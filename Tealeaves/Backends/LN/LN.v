@@ -186,8 +186,8 @@ End locally_nameless_operations.
 (******************************************************************************)
 Module Notations.
   Notation "t '{ x ~> u }" := (subst x u t) (at level 35).
-  Notation "t '( u )" := (open u t) (at level 35).
-  Notation "'[ x ] t" := (close x t) (at level 35).
+  Notation "t ' ( u )" := (open u t) (at level 35, format "t  ' ( u )" ).
+  Notation "' [ x ] t" := (close x t) (at level 35, format "' [ x ]  t" ).
 End Notations.
 
 Import Notations.
@@ -205,7 +205,7 @@ Section test_notations.
 
   Check u '{x ~> t}.
   Check u '(t).
-  Check '[ x ] u.
+  Check '[x] u.
 
 End test_notations.
 
@@ -1038,7 +1038,7 @@ Section locally_nameless_metatheory.
     intros [? ?]. now apply in_free_subst_lower.
   Qed.
 
-  Corollary scoped_subst_eq : forall t (u : T LN) x γ1 γ2,
+  Corollary scoped_subst : forall t (u : T LN) x γ1 γ2,
       scoped t γ1 ->
       scoped u γ2 ->
       scoped (t '{x ~> u}) (γ1 \\ {{x}} ∪ γ2).
@@ -1286,7 +1286,7 @@ Section locally_nameless_metatheory.
 
   (** ** Variable closing and local closure *)
   (******************************************************************************)
-  Theorem close_lc_eq : forall t x,
+  Theorem close_lc : forall t x,
       LC t ->
       LCn 1 (close x t).
   Proof.
@@ -1543,7 +1543,7 @@ Section locally_nameless_metatheory.
    applying that theorem would introduce a local closure hypothesis
    for <<u>> that is not actually required for our purposes. *)
   (* LNgen 14: subst-intro *)
-  Theorem open_spec_eq : forall u t x,
+  Theorem open_spec : forall u t x,
       ~ x `in` FV t ->
       t '(u) = t '(ret (Fr x)) '{x ~> u}.
   Proof.
@@ -1681,7 +1681,7 @@ Section locally_nameless_metatheory.
 
   (** ** Opening and local closure *)
   (**************************************************************************)
-  Lemma open_lc_gap_eq_1 : forall n t u,
+  Lemma open_lcn_1 : forall n t u,
       LC u ->
       LCn n t ->
       LCn (n - 1) (t '(u)).
@@ -1701,7 +1701,7 @@ Section locally_nameless_metatheory.
         unfold lc_loc in *. unfold_lia.
   Qed.
 
-  Lemma open_lc_gap_eq_2 : forall n t u,
+  Lemma open_lcn_2 : forall n t u,
       n > 0 ->
       LC u ->
       LCn (n - 1) (t '(u)) ->
@@ -1727,43 +1727,43 @@ Section locally_nameless_metatheory.
           rewrite (ind_ret_iff). now simpl_monoid. }
   Qed.
 
-  Theorem open_lc_gap_eq_iff : forall n t u,
+  Theorem open_lcn_iff : forall n t u,
       n > 0 ->
       LC u ->
       LCn n t <->
       LCn (n - 1) (t '(u)).
   Proof.
-    intros; intuition (eauto using open_lc_gap_eq_1, open_lc_gap_eq_2).
+    intros; intuition (eauto using open_lcn_1, open_lcn_2).
   Qed.
 
-  Corollary open_lc_gap_eq_var : forall n t x,
+  Corollary open_var_lcn : forall n t x,
       n > 0 ->
       LCn n t <->
       LCn (n - 1) (t '(ret (Fr x))).
   Proof.
-    intros. apply open_lc_gap_eq_iff. auto.
+    intros. apply open_lcn_iff. auto.
     intros w l hin. rewrite (ind_ret_iff) in hin.
     destruct hin; subst. cbv. trivial.
   Qed.
 
-  Corollary open_lc_gap_eq_iff_1 : forall t u,
+  Corollary open_lcn_iff_1 : forall t u,
       LC u ->
       LCn 1 t <->
       LC (t '(u)).
   Proof.
     intros. unfold LC.
     change 0 with (1 - 1).
-    rewrite <- open_lc_gap_eq_iff; auto.
+    rewrite <- open_lcn_iff; auto.
     reflexivity.
   Qed.
 
-  Corollary open_lc_gap_eq_var_1 : forall t x,
+  Corollary open_var_lcn_1 : forall t x,
       LCn 1 t <->
       LC (t '(ret (Fr x))).
   Proof.
     intros. unfold LC.
     change 0 with (1 - 1).
-    rewrite <- open_lc_gap_eq_var; auto.
+    rewrite <- open_var_lcn; auto.
     reflexivity.
   Qed.
 
