@@ -22,7 +22,7 @@ the namespaces ``Classes.Kleisli`` and ``Theory.Kleisli.``
 |*)
 From Tealeaves Require Export
   Backends.LN
-  Examples.Simplification_Support.
+  Examples.Simplification.
 
 Import LN.Notations.
 
