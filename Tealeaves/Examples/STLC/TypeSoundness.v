@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Examples.STLC.Syntax
-  Examples.STLC.Simplification.
+  Examples.Simplification.
 
 Export LN.Notations.
 Export STLC.Syntax.Notations.
@@ -34,7 +34,7 @@ Qed.
 Lemma inversion21 : forall (τ B : typ) (e : term LN) (Γ : ctx),
     (Γ ⊢ λ τ e : B) ->
     exists C, B = τ ⟹ C /\ exists L, forall (x : atom),
-        x `notin` L -> Γ ++ x ~ τ ⊢ e '(tvar (Fr x)) : C.
+        x `notin` L -> Γ ++ x ~ τ ⊢ e '(x) : C.
 Proof.
   introv J.
   inversion J; subst.
@@ -175,7 +175,7 @@ Proof.
       simpl_local.
       assert (τ = τ1) by eauto using binds_mid_eq; subst.
       apply weakening_r.
-      { assumption. }
+      { compare values x0 and x0. }
       { autorewrite with tea_rw_uniq tea_rw_disj in *.
         intuition. }
       { autorewrite with tea_rw_uniq tea_rw_disj in *.

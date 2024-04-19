@@ -7,6 +7,27 @@ Import DecoratedTraversableMonad.Notations.
 
 (** * Deriving DTM laws expressions *)
 (******************************************************************************)
+Ltac derive_dtm_custom_IH := constr:(tt).
+(*
+Goal False.
+  let T := derive in
+  let x := eval compute in T in
+    let y := type of x in
+    idtac y.
+ *)
+
+Ltac induction_term t :=
+  let custIH := derive_dtm_custom_IH in
+  let T := type of custIH in
+  match T with
+  | unit =>
+      debug "Using standard induction";
+      induction t
+  | _ =>
+      debug "Trying custom induction principle";
+      induction t using custIH
+  end.
+
 Ltac derive_dtm1 :=
   first [ reflexivity |
           let v := fresh "var" in
@@ -19,7 +40,8 @@ Ltac derive_dtm2_IH_step :=
   simplify_binddt_raw;
   repeat simplify_applicative_I;
   repeat rewrite_with_any; (* try to use IH wherever possible *)
-  try easy. (* hopefully this solves it, otherwise let the user take over *)
+  try easy; (* hopefully this solves it, otherwise let the user take over *)
+  repeat fequal.
 
 Ltac derive_dtm2_ret_case :=
   derive_dtm_solve_ret_case.
@@ -27,11 +49,13 @@ Ltac derive_dtm2_ret_case :=
 Ltac derive_dtm2_setup :=
   match goal with
   | |- context[binddt (T := ?T) (U := ?U) (ret ∘ extract) = id] =>
+      intros;
       debug "setup_dtm_proof_guess_law2";
       let t := fresh "t" in
       ext t;
       change (id ?t) with t;
-      induction t
+  (* induction t *)
+      induction_term t
   | |- _ => fail "derive_dtm2_setup: no match"
   end.
 
@@ -89,11 +113,14 @@ Ltac dtm3_rhs_unfold_ap_compose :=
          (terms (ap_compose2 G2 G1)))
   end.
 
+Ltac dtm3_push_map_right_to_left :=
+  rewrite <- ap_map;
+  push_outer_map_into_pure.
+
 Ltac dtm3_rhs_one_constructor :=
   dtm3_rhs_unfold_ap_compose;
   push_outer_map_into_pure;
-  rewrite <- ap_map;
-  push_outer_map_into_pure.
+  dtm3_push_map_right_to_left.
 
 Ltac dtm3_rhs_step2 :=
   unfold_ops @Pure_compose;
@@ -104,6 +131,7 @@ Ltac dtm3_rhs :=
   dtm3_rhs_step2.
 
 Ltac derive_dtm3_ret_case :=
+  unfold kc7;
   do 2 simplify_binddt_raw;
   try simplify_preincr_zero;
   reflexivity.
@@ -119,12 +147,14 @@ Ltac derive_dtm3_setup :=
   | |- context[map (binddt (T := ?T) (U := ?U) ?g) ∘
                 binddt (T := ?T) (U := ?U) ?f] =>
       debug "setup_dtm_proof_guess_law3";
+      infer_applicative_functors;
       let t := fresh "t" in
       ext t;
       generalize dependent f;
       generalize dependent g;
       change ((?g ∘ ?f) t) with (g (f t));
-      induction t; intros g f
+      induction_term t; intros g f
+  | |- _ => fail "derive_dtm3_setup: no match"
   end.
 
 Ltac derive_dtm3 :=
@@ -142,7 +172,8 @@ Ltac derive_dtm4_ret_case :=
 Ltac derive_dtm4_IH_step :=
   derive_dtm4_simplify_hom;
   repeat rewrite_with_any; (* try to use IH wherever possible *)
-  try easy. (* hopefully this solves it, otherwise let the user take over *)
+  try easy; (* hopefully this solves it, otherwise let the user take over *)
+  repeat fequal.
 
 Ltac derive_dtm4_setup :=
   match goal with
@@ -155,8 +186,9 @@ Ltac derive_dtm4_setup :=
       ext t;
       generalize dependent f;
       change ((?g ∘ ?f) t) with (g (f t));
-      induction t; intro f;
-      simplify_binddt_raw
+      induction_term t; intro f;
+      repeat simplify_binddt_raw
+  | |- _ => fail "derive_dtm4_setup: no match"
   end.
 
 Ltac derive_dtm4 :=

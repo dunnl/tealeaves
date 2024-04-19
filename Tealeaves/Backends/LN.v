@@ -24,7 +24,7 @@ Module Notations.
   Export Misc.Subset.Notations. (* ∪ *)
   Export List.ListNotations. (* [] :: *)
 
-  Export LN.Notations. (* operations *)
+  (* Export LN.OpNotations. (* operations *) *)
   Export LN.AtomSet.Notations.
   Export LN.AssocList.Notations. (* one, ~ *)
 End Notations.

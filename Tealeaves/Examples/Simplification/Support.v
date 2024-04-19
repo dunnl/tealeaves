@@ -182,6 +182,20 @@ End Basics.
 (******************************************************************************)
 Module SimplApplicative.
 
+  Ltac find_functor_instance G :=
+    match goal with
+    | H: Functor G |- _ => idtac
+    | |- _ => fail
+    end.
+
+  Ltac infer_applicative_functors :=
+    repeat match goal with
+    | H: Applicative ?G |- _ =>
+        (* See coq refman 8.20 Note about assert_fails *)
+        assert_fails (idtac; find_functor_instance G);
+        assert (Functor G) by (now inversion H)
+    end.
+
   (** ** Constant applicatives *)
   (******************************************************************************)
   Ltac simplify_applicative_const :=

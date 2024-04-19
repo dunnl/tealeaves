@@ -24,7 +24,7 @@ From Tealeaves Require Export
   Backends.LN
   Examples.Simplification.
 
-Import LN.Notations.
+Export LN.Notations.
 
 #[local] Set Implicit Arguments.
 
@@ -58,7 +58,7 @@ Module Notations.
   Notation "A ⟹ B" := (arr A B) (at level 40).
 End Notations.
 
-Import Notations.
+Export Notations.
 
 Definition lnvar := @tvar LN.
 Definition bvar := @tvar LN ○ Bd.
@@ -139,6 +139,15 @@ Instantiation of derived functions
   DecoratedTraversableMonadFull nat term
   := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat term.
 
+
+Module NotationsLN.
+  Notation "t '{ x ~> u }" := (subst x (u: term LN) (t: term LN)) (at level 35).
+  Notation "t ' ( u )" := (open (u: term LN) (t : term LN)) (at level 35, format "t  ' ( u )" ).
+  Notation "' [ x ] t" := (close x (t: term LN)) (at level 35, format "' [ x ]  t" ).
+End NotationsLN.
+
+Export NotationsLN.
+
 Section test_operations.
 
   Context
@@ -146,10 +155,26 @@ Section test_operations.
     (x y z : atom)
     (b : β) (τ : typ).
 
+
+  Compute (λ τ (tvar (Bd 0))) '(Bd 0: term LN).
+  Compute (λ τ (tvar (Bd 0))) '(Bd 1).
+  Compute (λ τ (tvar (Bd 1))) '(0).
+  Compute (λ τ (Bd 1)) '(0).
+  Compute (λ τ 1) '(0).
+  Compute (λ τ 1) '(0).
+  Compute (λ τ x) '{x ~> y}.
+  Compute (λ τ y) '{x ~> y}.
+  Compute (λ τ x) '{x ~> 0}.
+  Compute (λ τ 0) '{x ~> y}.
+
   Check 1.
   Check (1: LN).
   Check (1: term LN).
   Compute (λ τ (tvar (Bd 0))) '(x: term LN).
+  (*
+  Set Typeclasses Debug.
+  Fail Timeout 1 Compute (λ τ (tvar (Bd 0))) '(x: LN).
+  *)
   Compute (λ τ (tvar (Bd 1))) '(tvar (Fr x)).
   Compute (λ τ (tvar (Bd 0))) '(Bd 0: term LN).
   Compute (λ τ (tvar (Bd 0))) '(Bd 1: term LN).
@@ -172,12 +197,12 @@ Inductive Judgment: ctx -> term LN -> typ -> Prop :=
     forall Γ x τ
       (Huniq: uniq Γ)
       (Hin: (x, τ) ∈ Γ),
-      Γ ⊢ tvar (Fr x): τ
+      Γ ⊢ x: τ
 | j_abs:
     forall L Γ τ1 τ2 t,
       (forall x,
           x `notin` L ->
-          Γ ++ x ~ τ1 ⊢ t '(x: term LN): τ2) ->
+          Γ ++ x ~ τ1 ⊢ t '(x): τ2) ->
       Γ ⊢ λ τ1 t: τ1 ⟹ τ2
 | j_app:
     forall Γ (t1 t2: term LN) (τ1 τ2: typ),

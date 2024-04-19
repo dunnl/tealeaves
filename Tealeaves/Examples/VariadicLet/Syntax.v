@@ -6,52 +6,27 @@ Formalizing variadic syntax with Tealeaves
 |*)
 From Tealeaves Require Export
   Examples.VariadicLet.Terms
-  Examples.Simplification_Support
+  Examples.Simplification
   Functors.List_Telescoping
-  Tactics.Debug
-  Theory.TraversableFunctor
   Adapters.Compositions.DecoratedTraversableModule.
 
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
-
-Open Scope nat_scope.
+#[local] Open Scope nat_scope.
 
 #[local] Notation "'P'" := pure.
 #[local] Notation "'BD'" := binddt.
 
-(* TODO: this is needed because <<list>> has no other instance *)
-#[local] Existing Instance ToBatch_Traverse.
-
 Import Classes.Kleisli.TraversableFunctor.Notations.
 Import Classes.Kleisli.DecoratedTraversableFunctor.Notations.
 
-  (* left *)
-  Ltac dtm3_lhs_step :=
-    repeat rewrite map_ap;
-    rewrite app_pure_natural.
+(* TODO: this is needed because <<list>> has no other instance *)
+#[local] Existing Instance ToBatch_Traverse.
 
-  (* right *)
-  Ltac dtm3_rhs_applicative_compose :=
-    match goal with
-    | |- context[ap (?G1 ∘ ?G2)] =>
-        (rewrite_strat innermost
-           (terms (ap_compose2 G2 G1)));
-        (repeat rewrite map_ap);
-        (repeat rewrite app_pure_natural)
-    end.
-  Ltac dtm3_rhs_applicative_map :=
-    rewrite <- ap_map;
-    repeat rewrite map_ap;
-    repeat rewrite app_pure_natural.
-  Ltac dtm3_rhs_step :=
-    unfold_ops @Pure_compose;
-    repeat (dtm3_rhs_applicative_compose;
-            dtm3_rhs_applicative_map).
-
+Ltac derive_dtm_custom_IH ::=
+  constr:(term_mut_ind2).
 
 Module ex_binding_type1.
-
 (*|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 let with no pairwise binding
@@ -108,7 +83,6 @@ Fixpoint binddt_term
 Rewriting principles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |*)
-
 Section rewriting.
 
   Section pointful.
@@ -118,7 +92,7 @@ Section rewriting.
         (f : nat * v1 -> G (term v2)).
 
     Lemma binddt_term_rw1: forall (v: v1),
-        binddt f (tvar v) = f (Ƶ, v).
+        binddt f (tvar v) = f (0, v).
     Proof.
       reflexivity.
     Qed.
@@ -198,8 +172,8 @@ Ltac simplify_binddt_term :=
       rewrite binddt_term_rw3
   end.
 
-Ltac simplify_binddt_term_lazy unit :=
-    simplify_binddt_term.
+Ltac simplify_binddt_core ::=
+  simplify_binddt_term.
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -207,6 +181,7 @@ Instantiate simplification infrastructure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |*)
 
+(*
 Ltac derive_dtm_law :=
   derive_dtm_law_with_simplify_binddt_IH
     term_mut_ind2 simplify_binddt_term_lazy.
@@ -216,6 +191,7 @@ Ltac simplify_pass1 :=
 
 Ltac derive_dtm_law_case :=
   derive_dtm_law_case_with_simplify_binddt simplify_binddt_term_lazy.
+*)
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -234,67 +210,67 @@ Qed.
 Theorem dtm2_term : forall A : Type,
     binddt (T := term) (U := term)
       (G := fun A => A) (ret (T := term) ∘ extract (W := (nat ×))) = @id (term A).
-  Proof.
-    derive_dtm_law.
-    derive_dtm_law_case.
-    apply traverse_respectful_id; auto.
-  Qed.
+Proof.
+  intros.
+  derive_dtm2.
+  apply traverse_respectful_id; auto.
+Qed.
 
-  Theorem dtm3_term:
-    forall `{Applicative G1} `{Applicative G2},
-    forall `(g : nat * B -> G2 (term C)) `(f : nat * A -> G1 (term B)),
-      map (binddt g) ∘ binddt f = binddt (G := G1 ∘ G2) (g ⋆7 f).
-  Proof.
-    intros. ext t.
-    generalize dependent g.
-    generalize dependent f.
-    assert (Functor G1) by (now inversion H2).
-    assert (Functor G2) by (now inversion H6).
-    unfold compose at 1.
-    induction t using term_mut_ind2; intros f g.
-    - derive_dtm_law_case.
-      dtm_law_pass.
-      derive_dtm_law_case.
-    - derive_dtm_law_case.
-      (* left *)
-      repeat dtm3_lhs_step.
-      (* right *)
-      assert (IHdefs':
-               traverse (G := G1 ∘ G2) (map (BD g) ∘ BD f) defs =
-                 traverse (G := G1 ∘ G2)
-                   (binddt (G := G1 ∘ G2) (g ⋆7 f)) defs).
-      { apply traverse_respectful; try typeclasses eauto.
-        intros t' t'_in.
-        apply (IHdefs t' t'_in f g).
-      }
-      (* defs *)
-      rewrite <- IHdefs'.
-      change (map ?g ∘ ?f) with (g ⋆2 f).
-      rewrite <- trf_traverse_traverse.
-      change ((?g ∘ ?f) defs) with (g (f defs)).
-      dtm3_rhs_step.
-      (* rhs body *)
-      rewrite <- (kc7_preincr g f (G1 := G1) (G2 := G2) (length defs)).
-      rewrite <- (IHt (f ⦿ length defs) (g ⦿ length defs)).
-      dtm3_rhs_step.
-      (* rhs pure *)
-      fequal.
-      { rewrite traverse_repr.
-        rewrite map_to_ap.
-        repeat rewrite <- ap4;
-          repeat rewrite ap2.
-        rewrite binddt_pointfree_letin.
-        reflexivity.
-      }
-    - derive_dtm_law_case.
-      repeat dtm3_lhs_step.
-      dtm3_rhs_step.
-      rewrite <- IHt1.
-      dtm3_rhs_step.
-      rewrite <- IHt2.
-      dtm3_rhs_step.
-      reflexivity.
-  Qed.
+Ltac binddt_typeclass_normalize :=
+  repeat match goal with
+    | [|- context[binddt ?f ?t]] =>
+        let s := constr:(binddt f t) in progress change (binddt f t) with s
+    | |- context[binddt (G := ?G) (A := ?A) (B := ?B) (T := ?T) ?f] =>
+        let s := constr:(binddt (G := G) (A := A) (B := B) f)
+        in progress change (binddt f) with s
+    | [|- context[bindd ?f ?t]] =>
+        let s := constr:(bindd f t) in progress change (bindd f t) with s
+    | [|- context[bindt ?f ?t]] =>
+        let s := constr:(bindt f t) in progress change (bindt f t) with s
+    | [|- context[mapdt ?f ?t]] =>
+        let s := constr:(mapdt f t) in progress change (mapdt f t) with s
+    | [|- context[traverse ?f ?t]] =>
+        let s := constr:(traverse f t) in progress change (traverse f t) with s
+    | [|- context[map ?f ?t]] =>
+        let s := constr:(map f t) in progress change (map f t) with s
+    end.
+
+Theorem dtm3_term:
+  forall `{Applicative G1} `{Applicative G2},
+  forall `(g : nat * B -> G2 (term C)) `(f : nat * A -> G1 (term B)),
+    map (binddt g) ∘ binddt f = binddt (G := G1 ∘ G2) (g ⋆7 f).
+Proof.
+  intros.
+  derive_dtm3.
+  (* TODO investigate how to stop ^^^ from unfold Pure_compose in traverse *)
+  binddt_typeclass_normalize.
+  (* ^ Hence necessity to repair the damage so rewrite <- IHdefs' works below *)
+  (* lhs *)
+  rewrite traverse_repr at 1.
+  dtm3_push_map_right_to_left.
+  repeat change (precompose ?f ?g) with (g ∘ f).
+  rewrite binddt_pointfree_letin.
+  change (?g ∘ ?trav_make defs) with (precompose (trav_make defs) g).
+  rewrite <- app_pure_natural.
+  rewrite ap_map.
+  rewrite <- traverse_repr.
+  (* rhs *)
+  assert (IHdefs':
+           traverse (G := G1 ∘ G2) (map (BD g) ∘ BD f) defs =
+             traverse (G := G1 ∘ G2)
+               (binddt (G := G1 ∘ G2) (g ⋆7 f)) defs). {
+    apply traverse_respectful; try typeclasses eauto.
+    intros t' t'_in.
+    unfold compose at 2.
+    apply (IHdefs t' t'_in g f). }
+  rewrite <- IHdefs'.
+  change (map ?g ∘ ?f) with (g ⋆2 f).
+  rewrite <- trf_traverse_traverse.
+  change ((?g ∘ ?f) defs) with (g (f defs)).
+  dtm3_rhs_one_constructor.
+  dtm3_rhs_one_constructor.
+  reflexivity.
+Qed.
 
   Theorem dtm4_stlc :
     forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Mult G1) (H3 : Pure G1) (H4 : Map G2) (H5 : Mult G2) (H6 : Pure G2)
@@ -303,23 +279,14 @@ Theorem dtm2_term : forall A : Type,
       forall (A B : Type) (f : nat * A -> G1 (term B)),
         ϕ (term B) ∘ binddt f = binddt (ϕ (term B) ∘ f).
   Proof.
-    intros. ext t.
-    unfold compose at 1.
-    assert (Applicative G1) by (now inversion H).
-    assert (Applicative G2) by (now inversion H).
-    generalize dependent f.
-    induction t using term_mut_ind2; intro f.
-    - derive_dtm_law_case.
-    - derive_dtm_law_case.
-      fequal.
-      + compose near defs on left.
-        rewrite (trf_traverse_morphism).
-        apply traverse_respectful.
-        unfold compose.
-        intros t' t'_in.
-        apply (IHdefs t' t'_in f).
-      + apply IHt.
-    - do 2 derive_dtm_law_case.
+    intros.
+    derive_dtm4.
+    compose near defs on left.
+    rewrite (trf_traverse_morphism).
+    apply traverse_respectful.
+    unfold compose.
+    intros t' t'_in.
+    apply (IHdefs t' t'_in f).
   Qed.
 
 End ex_binding_type1.

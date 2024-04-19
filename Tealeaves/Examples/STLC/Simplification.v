@@ -1,7 +1,6 @@
 From Tealeaves Require Export
   Examples.STLC.Syntax.
 
-Import LN.Notations.
 Import STLC.Syntax.Notations.
 
 #[local] Open Scope tealeaves_scope.

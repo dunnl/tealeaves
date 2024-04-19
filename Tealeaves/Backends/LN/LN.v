@@ -184,13 +184,13 @@ End locally_nameless_operations.
 
 (** ** Notations *)
 (******************************************************************************)
-Module Notations.
+Module OpNotations.
   Notation "t '{ x ~> u }" := (subst x u t) (at level 35).
   Notation "t ' ( u )" := (open u t) (at level 35, format "t  ' ( u )" ).
   Notation "' [ x ] t" := (close x t) (at level 35, format "' [ x ]  t" ).
-End Notations.
+End OpNotations.
 
-Import Notations.
+Import OpNotations.
 
 Section test_notations.
 
