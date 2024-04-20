@@ -160,7 +160,10 @@ Tealeaves/Examples/STLC/TypeSoundness.v
 
 # VARIADIC BINDERS
 Tealeaves/Examples/VariadicLet/Terms.v
-Tealeaves/Examples/VariadicLet/Syntax.v
+Tealeaves/Examples/VariadicLet/Instances/Simple.v
+#Tealeaves/Examples/VariadicLet/Instances/LetIn.v
+#Tealeaves/Examples/VariadicLet/Instances/LetRec.v
+#Tealeaves/Examples/VariadicLet/Demo.v
 
 # EXPERIMENTAL BACKENDS
 Tealeaves/Backends/LN/Parallel.v

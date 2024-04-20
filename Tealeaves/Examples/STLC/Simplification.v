@@ -10,7 +10,7 @@ Import STLC.Syntax.Notations.
 Theorem term_lcn11 : forall (n : nat) (m : nat),
     LCn m (tvar (Bd n)) <-> n < m.
 Proof.
-  intros. simplify_LC. reflexivity.
+  intros. simplify_LN. reflexivity.
 Qed.
 
 Theorem term_lcn12 : forall (x : atom) (m : nat),
@@ -260,10 +260,6 @@ Section term_ind_rewrite.
   Proof.
     intros. simplify. reflexivity.
   Qed.
-
-  Ltac print_goal := match goal with
-  | |- ?g => idtac g (* prints goal *)
-  end.
 
   Lemma term_ind2 : forall (t : term LN) (l : LN) (n : nat) (X : typ),
       (n, l) ∈d t = (S n, l) ∈d (λ X t).

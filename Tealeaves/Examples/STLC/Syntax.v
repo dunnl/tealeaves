@@ -69,6 +69,11 @@ Coercion fvar: atom >-> term.
 Coercion Bd: nat >-> LN.
 Coercion Fr: atom >-> LN.
 
+(* Help the simplification tactics unfold coercions to expose a
+   <<tvar>> constructor, which is needed to find a match for
+   <<bindd f (ret x)>> *)
+#[global] Hint Unfold fvar bvar: tea_ret_coercions.
+
 Section test_notations.
 
   Context
@@ -109,7 +114,19 @@ Fixpoint binddt_term (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
 
 #[export] Instance Return_STLC: Return term := tvar.
 #[export] Instance Binddt_STLC: Binddt nat term term := @binddt_term.
-#[export] Instance DTM_STLC: DecoratedTraversableMonad nat term := ltac:(derive_dtm).
+#[export] Instance DTM_STLC: DecoratedTraversableMonad nat term.
+Proof.
+  (* We duplicate the goal just for the purpose of debugging the tactics *)
+  dup. {
+    constructor.
+    typeclasses eauto.
+    - derive_dtm1.
+    - constructor.
+      + derive_dtm2.
+      + derive_dtm3.
+      + derive_dtm4. }
+  derive_dtm.
+Qed.
 
 (*|
 ========================================
@@ -141,9 +158,12 @@ Instantiation of derived functions
 
 
 Module NotationsLN.
-  Notation "t '{ x ~> u }" := (subst x (u: term LN) (t: term LN)) (at level 35).
-  Notation "t ' ( u )" := (open (u: term LN) (t : term LN)) (at level 35, format "t  ' ( u )" ).
-  Notation "' [ x ] t" := (close x (t: term LN)) (at level 35, format "' [ x ]  t" ).
+  Notation "t '{ x ~> u }" :=
+    (subst x (u: term LN) (t: term LN)) (at level 35).
+  Notation "t ' ( u )" :=
+    (open (u: term LN) (t : term LN)) (at level 35, format "t  ' ( u )" ).
+  Notation "' [ x ] t" :=
+    (close x (t: term LN)) (at level 35, format "' [ x ]  t" ).
 End NotationsLN.
 
 Export NotationsLN.
@@ -154,7 +174,6 @@ Section test_operations.
     (β : Type)
     (x y z : atom)
     (b : β) (τ : typ).
-
 
   Compute (λ τ (tvar (Bd 0))) '(Bd 0: term LN).
   Compute (λ τ (tvar (Bd 0))) '(Bd 1).
@@ -167,11 +186,30 @@ Section test_operations.
   Compute (λ τ x) '{x ~> 0}.
   Compute (λ τ 0) '{x ~> y}.
 
-  Check 1.
+  (* test something *)
+  Eval cbn in LC (λ τ 0).
+  Context (body: term LN).
+  Eval cbn in FV (λ τ body).
+  Eval cbn in LCn 3 (λ τ body).
+  Goal LC (λ τ body).
+    simplify.
+  Abort.
+  Goal FV (λ τ body) = FV (λ τ body).
+    simplify.
+  Abort.
+  Goal  (λ τ body) '{x ~> y} = (λ τ body).
+    cbn.
+  Abort.
+  Goal (λ τ (body '{x ~> y}) = λ τ body).
+    simplify.
+  Abort.
+
   Check (1: LN).
   Check (1: term LN).
   Compute (λ τ (tvar (Bd 0))) '(x: term LN).
   (*
+    This will fail if LN.v's polymorphic notations are used
+    due to typeclass resolution
   Set Typeclasses Debug.
   Fail Timeout 1 Compute (λ τ (tvar (Bd 0))) '(x: LN).
   *)

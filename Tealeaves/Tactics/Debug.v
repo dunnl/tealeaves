@@ -1,10 +1,15 @@
-Definition DEBUG : bool := false.
+Definition DEBUG : bool := true.
 
 Tactic Notation "debug" string(x) :=
   let debug := eval compute in DEBUG in
-  (match debug with
-  | true => idtac x
-  | false => idtac
-   | _ => idtac "debug pattern match failed with ";
-         idtac x
-   end).
+    (match debug with
+     | true => idtac x
+     | false => idtac
+     | _ => idtac "debug pattern match failed with ";
+           idtac x
+     end).
+
+Ltac print_goal :=
+  match goal with
+  | |- ?g => idtac g (* prints goal *)
+  end.

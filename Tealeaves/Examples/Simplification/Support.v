@@ -118,6 +118,7 @@ Module Basics.
     end.
 
   Ltac normalize_fns :=
+    debug "normalize_fns";
     match goal with
     | |- context[?f ∘ id] =>
         change (f ∘ id) with f
@@ -134,6 +135,7 @@ Module Basics.
     end.
 
   Ltac normalize_id :=
+    debug "normalize_id";
     match goal with
     | |- context[id ?t] =>
         change (id t) with t
@@ -146,26 +148,24 @@ Module Basics.
     end.
 
   Ltac simplify_monoid_units :=
+    debug "simplify_monoid_units";
     match goal with
     | |- context[Ƶ ● ?m] =>
-        debug "monoid_id_r";
         rewrite (monoid_id_r m)
     | |- context[?m ● Ƶ] =>
-        debug "monoid_id_l";
         rewrite (monoid_id_l m)
     end.
 
   Ltac simplify_monoid_units_in H :=
     match goal with
     | H: context[Ƶ ● ?m] |- _ =>
-        debug "monoid_id_r";
         rewrite (monoid_id_r m) in H
     | H: context[?m ● Ƶ] |- _ =>
-        debug "monoid_id_l";
         rewrite (monoid_id_l m) in H
     end.
 
   Ltac simplify_preincr_zero :=
+    debug "simplify_preincr_zero";
     match goal with
     | |- context[(?f ⦿ Ƶ)] =>
         rewrite (preincr_zero f)
@@ -188,77 +188,82 @@ Module SimplApplicative.
     | |- _ => fail
     end.
 
+  Ltac find_applicative_instance G :=
+    match goal with
+    | H: Applicative G |- _ => idtac
+    | |- _ => fail
+    end.
+
   Ltac infer_applicative_functors :=
     repeat match goal with
-    | H: Applicative ?G |- _ =>
-        (* See coq refman 8.20 Note about assert_fails *)
-        assert_fails (idtac; find_functor_instance G);
-        assert (Functor G) by (now inversion H)
-    end.
+      | H: Applicative ?G |- _ =>
+          (* See coq refman 8.20 Note about assert_fails *)
+          assert_fails (idtac; find_functor_instance G);
+          assert (Functor G) by (now inversion H)
+      | H: ApplicativeMorphism ?G1 ?G2 ?ϕ |- _ =>
+          (assert_fails (idtac; find_applicative_instance G1);
+           assert (Applicative G1) by now inversion H)
+          || (assert_fails (idtac; find_applicative_instance G2);
+             assert (Applicative G2) by now inversion H)
+      end.
 
   (** ** Constant applicatives *)
   (******************************************************************************)
   Ltac simplify_applicative_const :=
+    debug "simplify_applicative_const";
     match goal with
     | |- context [pure (F := const ?W) ?x] =>
-        debug "pure_const";
         rewrite pure_const_rw
     | |- context[(ap (const ?W) ?x ?y)] =>
-        debug "ap_const";
         rewrite ap_const_rw
     end.
 
   Ltac simplify_applicative_const_in :=
     match goal with
     | H: context [pure (F := const ?W) ?x] |- _ =>
-        debug "pure_const";
         rewrite pure_const_rw in H
     | H: context[(ap (const ?W) ?x ?y)] |- _ =>
-        debug "ap_const";
         rewrite ap_const_rw in H
     end.
 
   (** ** Constant maps *)
   (******************************************************************************)
   Ltac simplify_map_const :=
+    debug "simplify_map_const";
     match goal with
     | |- context[map (F := const ?X) ?f] =>
-        debug "map_const";
         rewrite map_const_rw
     end.
 
   Ltac simplify_map_const_in :=
     match goal with
     | H: context[map (F := const ?X) ?f] |- _ =>
-        debug "map_const";
         rewrite map_const_rw in H
     end.
 
   (** ** Identity applicative *)
   (******************************************************************************)
   Ltac simplify_applicative_I :=
+    debug "simplify_applicative_I";
     match goal with
     | |- context[pure (F := fun A => A) ?x] =>
-        debug "pure_I";
         change (pure (F := fun A => A) x) with x
     | |- context[ap (fun A => A) ?x ?y] =>
-        debug "ap_I";
         change (ap (fun A => A) x y) with (x y)
     end.
 
   Ltac simplify_applicative_I_in :=
     match goal with
     | H: context[pure (F := fun A => A) ?x] |- _ =>
-        debug "pure_I";
         change (pure (F := fun A => A) x) with x
     | H: context[ap (fun A => A) ?x ?y] |- _ =>
-        debug "ap_I";
         change (ap (fun A => A) x y) with (x y)
     end.
 
   (** ** Identity maps *)
   (******************************************************************************)
   Ltac simplify_map_I :=
+    debug "simplify_map_I";
     match goal with
     | |- context[map (F := fun A => A) ?f] =>
         unfold_ops @Map_I

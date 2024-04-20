@@ -181,7 +181,6 @@ Proof.
       { autorewrite with tea_rw_uniq tea_rw_disj in *.
         intuition. }
     + simplify_subst.
-      simpl_local.
       apply j_var.
       { autorewrite with tea_rw_uniq tea_rw_disj in *.
         intuition. }
