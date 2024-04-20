@@ -7,12 +7,12 @@ Export STLC.Syntax.Notations.
 #[local] Open Scope set_scope.
 
 Implicit Types (x: atom) (τ: typ)
-  (t u: term LN) (n: nat) (v: LN) (Γ : ctx).
+  (t u: term) (n: nat) (v: LN) (Γ : ctx).
 
 Ltac gather_atoms ::=
   let A := gather_atoms_with (fun s : AtomSet.t => s) in
   let B := gather_atoms_with (fun x : atom => {{ x }}) in
-  let C := gather_atoms_with (fun t : term LN => FV t) in
+  let C := gather_atoms_with (fun t : term => FV t) in
   let D := gather_atoms_with (fun Γ : alist typ => domset Γ) in
   constr:(A ∪ B ∪ C ∪ D).
 
@@ -31,7 +31,7 @@ Proof.
 Qed.
 
 (* This is somewhat weak because L should really be (dom Γ) *)
-Lemma inversion21 : forall (τ B : typ) (e : term LN) (Γ : ctx),
+Lemma inversion21 : forall (τ B : typ) (e : term) (Γ : ctx),
     (Γ ⊢ λ τ e : B) ->
     exists C, B = τ ⟹ C /\ exists L, forall (x : atom),
         x `notin` L -> Γ ++ x ~ τ ⊢ e '(x) : C.
@@ -42,11 +42,11 @@ Proof.
 Qed.
 
 (** Inversion principle for [abs] where we may assume the abstraction has arrow type *)
-Lemma inversion22 : forall (τ τ' : typ) (e : term LN) (Γ : ctx),
+Lemma inversion22 : forall (τ τ' : typ) (e : term) (Γ : ctx),
     Γ ⊢ λ τ e : τ ⟹ τ' ->
     exists L, forall (x : atom),
       x `notin` L ->
-      Γ ++ x ~ τ ⊢ e '(x: term LN) : τ'.
+      Γ ++ x ~ τ ⊢ e '(x: term) : τ'.
 Proof.
   introv J. apply inversion21 in J.
   destruct J as [C [H1 H2]].
@@ -54,7 +54,7 @@ Proof.
   assumption.
 Qed.
 
-Lemma inversion3 : forall (τ: typ) (Γ : ctx) (t1 t2 : term LN),
+Lemma inversion3 : forall (τ: typ) (Γ : ctx) (t1 t2 : term),
     (Γ ⊢ ⟨t1⟩ (t2) : τ) ->
     exists τ', (Γ ⊢ t1 : τ' ⟹ τ)
           /\ (Γ ⊢ t2 : τ').
@@ -64,7 +64,7 @@ Qed.
 
 (** * Misc lemmas *)
 (******************************************************************************)
-Theorem j_ctx_wf : forall Γ (t : term LN) (τ: typ),
+Theorem j_ctx_wf : forall Γ (t : term) (τ: typ),
     Γ ⊢ t : τ -> uniq Γ.
 Proof.
   introv J; typing_induction.
@@ -74,7 +74,7 @@ Proof.
   - assumption.
 Qed.
 
-Theorem j_wf : forall Γ (t : term LN) (τ: typ),
+Theorem j_wf : forall Γ (t : term) (τ: typ),
     Γ ⊢ t : τ -> FV t ⊆ domset Γ.
 Proof.
   introv J. typing_induction.
@@ -83,7 +83,7 @@ Proof.
     fsetdec.
   - specialize_freshly IHbody.
     simplify.
-    assert (step1 : FV body ⊆ FV (body '(e: term LN)))
+    assert (step1 : FV body ⊆ FV (body '(e: term)))
       by apply FV_open_lower.
     assert (step2 : forall x, x `in` FV body -> x `in` (domset (Γ ++ e ~ τ1)))
       by fsetdec.
@@ -97,8 +97,8 @@ Proof.
     fsetdec.
 Qed.
 
-Theorem lc_lam : forall (L : AtomSet.t) (t : term LN) (X : typ),
-    (forall x : atom, ~ x `in` L -> LC (t '(x: term LN))) ->
+Theorem lc_lam : forall (L : AtomSet.t) (t : term) (X : typ),
+    (forall x : atom, ~ x `in` L -> LC (t '(x: term))) ->
     LC (λ X t).
 Proof.
   introv HLC.
@@ -119,7 +119,7 @@ Proof.
   - simplify_LN. split; assumption.
 Qed.
 
-Theorem weakening : forall Γ1 Γ2 Γ' (t : term LN) (τ: typ),
+Theorem weakening : forall Γ1 Γ2 Γ' (t : term) (τ: typ),
     uniq Γ' ->
     disjoint Γ' (Γ1 ++ Γ2) ->
     (Γ1 ++ Γ2 ⊢ t : τ) ->
@@ -146,7 +146,7 @@ Proof.
   - eauto using j_app.
 Qed.
 
-Corollary weakening_r : forall Γ1 (t : term LN) (τ: typ),
+Corollary weakening_r : forall Γ1 (t : term) (τ: typ),
     (Γ1 ⊢ t : τ) ->
     forall Γ2, uniq Γ2 -> disjoint Γ1 Γ2 -> Γ1 ++ Γ2 ⊢ t : τ.
 Proof.
@@ -199,7 +199,7 @@ Proof.
   - simplify. eauto using j_app.
 Qed.
 
-Corollary substitution_r : forall Γ (x : atom) (t u : term LN) (A B : typ),
+Corollary substitution_r : forall Γ (x : atom) (t u : term) (A B : typ),
     (Γ ++ x ~ A ⊢ t : B) ->
     (Γ ⊢ u : A) ->
     (Γ ⊢ t '{x ~> u} : B).
@@ -210,20 +210,20 @@ Proof.
   eapply substitution; eauto.
 Qed.
 
-Inductive value : term LN -> Prop :=
+Inductive value : term -> Prop :=
   | value_abs : forall X t, value (λ X t).
 
-Inductive beta_step : term LN -> term LN -> Prop :=
-| beta_app_l : forall (t1 t2 t1' : term LN),
+Inductive beta_step : term -> term -> Prop :=
+| beta_app_l : forall (t1 t2 t1' : term),
     beta_step t1 t1' ->
     beta_step (⟨t1⟩ (t2)) (⟨t1'⟩(t2))
-| beta_app_r : forall (t1 t2 t2' : term LN),
+| beta_app_r : forall (t1 t2 t2' : term),
     beta_step t2 t2' ->
     beta_step (⟨t1⟩(t2)) (⟨t1⟩(t2'))
 | beta_beta : forall τ t u,
     beta_step (⟨λ τ t⟩(u)) (t '(u)).
 
-Theorem subject_reduction_step : forall (t t' : term LN) Γ A,
+Theorem subject_reduction_step : forall (t t' : term) Γ A,
     Γ ⊢ t : A -> beta_step t t' -> Γ ⊢ t' : A.
 Proof.
   introv J Hstep.
@@ -244,7 +244,7 @@ Proof.
       { fsetdec. }
 Qed.
 
-Theorem progress : forall (t : term LN) τ1,
+Theorem progress : forall (t : term) τ1,
     nil ⊢ t : τ1 -> value t \/ (exists t', beta_step t t').
 Proof.
   introv J. remember [] as ctx.

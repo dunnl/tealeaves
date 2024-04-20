@@ -41,10 +41,10 @@ Inductive typ :=
 
 Coercion base : base_typ >-> typ.
 
-Inductive term (v : Type) :=
-| tvar : v -> term v
-| lam : typ -> term v -> term v
-| app : term v -> term v -> term v.
+Inductive Lam (V : Type) :=
+| tvar : V -> Lam V
+| lam  : typ -> Lam V -> Lam V
+| app  : Lam V -> Lam V -> Lam V.
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,19 +53,20 @@ Notations
 |*)
 
 Module Notations.
+  Notation "'term'" := (Lam LN).
   Notation "'λ'" := (lam) (at level 45).
   Notation "⟨ t ⟩ ( u )" := (app t u) (at level 80, t at level 40, u at level 40).
   Notation "A ⟹ B" := (arr A B) (at level 40).
 End Notations.
 
-Export Notations.
+Import Notations.
 
 Definition lnvar := @tvar LN.
 Definition bvar := @tvar LN ○ Bd.
 Definition fvar := @tvar LN ○ Fr.
-Coercion lnvar: LN >-> term.
-Coercion bvar: nat >-> term.
-Coercion fvar: atom >-> term.
+Coercion lnvar: LN >-> Lam.
+Coercion bvar: nat >-> Lam.
+Coercion fvar: atom >-> Lam.
 Coercion Bd: nat >-> LN.
 Coercion Fr: atom >-> LN.
 
@@ -83,7 +84,7 @@ Section test_notations.
 
   Check 1.
   Check (1: LN).
-  Check (1: term LN).
+  Check (1: Lam LN).
   Check λ τ (tvar (Bd 1)).
   Check λ τ (Bd 1).
   Check λ τ 1.
@@ -104,17 +105,17 @@ End test_notations.
 Definition of binddt
 ========================================
 |*)
-Fixpoint binddt_term (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    {v1 v2 : Type} (f : nat * v1 -> G (term v2)) (t : term v1) : G (term v2) :=
+Fixpoint binddt_Lam (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    {v1 v2 : Type} (f : nat * v1 -> G (Lam v2)) (t : Lam v1) : G (Lam v2) :=
   match t with
   | tvar v => f (0, v)
-  | lam τ body => pure (lam τ) <⋆> binddt_term (f ⦿ 1) body
-  | app t1 t2 => pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
+  | lam τ body => pure (lam τ) <⋆> binddt_Lam (f ⦿ 1) body
+  | app t1 t2 => pure (@app v2) <⋆> binddt_Lam f t1 <⋆> binddt_Lam f t2
   end.
 
-#[export] Instance Return_STLC: Return term := tvar.
-#[export] Instance Binddt_STLC: Binddt nat term term := @binddt_term.
-#[export] Instance DTM_STLC: DecoratedTraversableMonad nat term.
+#[export] Instance Return_STLC: Return Lam := tvar.
+#[export] Instance Binddt_STLC: Binddt nat Lam Lam := @binddt_Lam.
+#[export] Instance DTM_STLC: DecoratedTraversableMonad nat Lam.
 Proof.
   (* We duplicate the goal just for the purpose of debugging the tactics *)
   dup. {
@@ -133,37 +134,37 @@ Qed.
 Instantiation of derived functions
 ========================================
 |*)
-#[export] Instance Map_STLC: Map term
-  := Map_Binddt nat term term.
-#[export] Instance Mapd_STLC: Mapd nat term
-  := Mapd_Binddt nat term term.
-#[export] Instance Traverse_STLC: Traverse term
-  := Traverse_Binddt nat term term.
-#[export] Instance Mapdt_STLC: Mapdt nat term
-  := Mapdt_Binddt nat term term.
-#[export] Instance Bind_STLC: Bind term term
-  := Bind_Binddt nat term term.
-#[export] Instance Bindd_STLC: Bindd nat term term
-  := Bindd_Binddt nat term term.
-#[export] Instance Bindt_STLC: Bindt term term
-  := Bindt_Binddt nat term term.
-#[export] Instance ToSubset_STLC: ToSubset term
+#[export] Instance Map_STLC: Map Lam
+  := Map_Binddt nat Lam Lam.
+#[export] Instance Mapd_STLC: Mapd nat Lam
+  := Mapd_Binddt nat Lam Lam.
+#[export] Instance Traverse_STLC: Traverse Lam
+  := Traverse_Binddt nat Lam Lam.
+#[export] Instance Mapdt_STLC: Mapdt nat Lam
+  := Mapdt_Binddt nat Lam Lam.
+#[export] Instance Bind_STLC: Bind Lam Lam
+  := Bind_Binddt nat Lam Lam.
+#[export] Instance Bindd_STLC: Bindd nat Lam Lam
+  := Bindd_Binddt nat Lam Lam.
+#[export] Instance Bindt_STLC: Bindt Lam Lam
+  := Bindt_Binddt nat Lam Lam.
+#[export] Instance ToSubset_STLC: ToSubset Lam
   := ToSubset_Traverse.
-#[export] Instance ToBatch_STLC: ToBatch term
+#[export] Instance ToBatch_STLC: ToBatch Lam
   := ToBatch_Traverse.
 
 #[export] Instance DTMFull_STLC:
-  DecoratedTraversableMonadFull nat term
-  := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat term.
+  DecoratedTraversableMonadFull nat Lam
+  := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat Lam.
 
 
 Module NotationsLN.
   Notation "t '{ x ~> u }" :=
-    (subst x (u: term LN) (t: term LN)) (at level 35).
+    (subst x (u: Lam LN) (t: Lam LN)) (at level 35).
   Notation "t ' ( u )" :=
-    (open (u: term LN) (t : term LN)) (at level 35, format "t  ' ( u )" ).
+    (open (u: Lam LN) (t : Lam LN)) (at level 35, format "t  ' ( u )" ).
   Notation "' [ x ] t" :=
-    (close x (t: term LN)) (at level 35, format "' [ x ]  t" ).
+    (close x (t: Lam LN)) (at level 35, format "' [ x ]  t" ).
 End NotationsLN.
 
 Export NotationsLN.
@@ -175,7 +176,7 @@ Section test_operations.
     (x y z : atom)
     (b : β) (τ : typ).
 
-  Compute (λ τ (tvar (Bd 0))) '(Bd 0: term LN).
+  Compute (λ τ (tvar (Bd 0))) '(Bd 0: Lam LN).
   Compute (λ τ (tvar (Bd 0))) '(Bd 1).
   Compute (λ τ (tvar (Bd 1))) '(0).
   Compute (λ τ (Bd 1)) '(0).
@@ -188,7 +189,7 @@ Section test_operations.
 
   (* test something *)
   Eval cbn in LC (λ τ 0).
-  Context (body: term LN).
+  Context (body: Lam LN).
   Eval cbn in FV (λ τ body).
   Eval cbn in LCn 3 (λ τ body).
   Goal LC (λ τ body).
@@ -205,8 +206,8 @@ Section test_operations.
   Abort.
 
   Check (1: LN).
-  Check (1: term LN).
-  Compute (λ τ (tvar (Bd 0))) '(x: term LN).
+  Check (1: Lam LN).
+  Compute (λ τ (tvar (Bd 0))) '(x: Lam LN).
   (*
     This will fail if LN.v's polymorphic notations are used
     due to typeclass resolution
@@ -214,12 +215,12 @@ Section test_operations.
   Fail Timeout 1 Compute (λ τ (tvar (Bd 0))) '(x: LN).
   *)
   Compute (λ τ (tvar (Bd 1))) '(tvar (Fr x)).
-  Compute (λ τ (tvar (Bd 0))) '(Bd 0: term LN).
-  Compute (λ τ (tvar (Bd 0))) '(Bd 1: term LN).
-  Compute (λ τ (tvar (Bd 1))) '(Bd 0: term LN).
-  Compute (λ τ (tvar (Bd 1))) '(Bd 1: term LN).
-  Compute (λ τ x) '{x ~> (y: term LN)}.
-  Compute (λ τ y) '{x ~> (y: term LN)}.
+  Compute (λ τ (tvar (Bd 0))) '(Bd 0: Lam LN).
+  Compute (λ τ (tvar (Bd 0))) '(Bd 1: Lam LN).
+  Compute (λ τ (tvar (Bd 1))) '(Bd 0: Lam LN).
+  Compute (λ τ (tvar (Bd 1))) '(Bd 1: Lam LN).
+  Compute (λ τ x) '{x ~> (y: Lam LN)}.
+  Compute (λ τ y) '{x ~> (y: Lam LN)}.
 
 End test_operations.
 
@@ -227,10 +228,10 @@ Definition ctx := list (atom * typ).
 
 Reserved Notation "Γ ⊢ t : τ" (at level 90, t at level 99).
 
-Implicit Types (t: term LN) (Γ: ctx) (x: atom) (τ: typ)
+Implicit Types (t: term) (Γ: ctx) (x: atom) (τ: typ)
   (L: AtomSet.t).
 
-Inductive Judgment: ctx -> term LN -> typ -> Prop :=
+Inductive Judgment: ctx -> term -> typ -> Prop :=
 | j_var:
     forall Γ x τ
       (Huniq: uniq Γ)
@@ -243,7 +244,7 @@ Inductive Judgment: ctx -> term LN -> typ -> Prop :=
           Γ ++ x ~ τ1 ⊢ t '(x): τ2) ->
       Γ ⊢ λ τ1 t: τ1 ⟹ τ2
 | j_app:
-    forall Γ (t1 t2: term LN) (τ1 τ2: typ),
+    forall Γ (t1 t2: Lam LN) (τ1 τ2: typ),
       Γ ⊢ t1: τ1 ⟹ τ2 ->
       Γ ⊢ t2: τ1 ->
       Γ ⊢ ⟨t1⟩ (t2): τ2

@@ -1,22 +1,8 @@
 From Tealeaves Require Export
   Backends.LN
-  Misc.NaturalNumbers
-  Functors.List
-  Theory.DecoratedTraversableMonad
   Examples.STLC.Syntax.
 
-Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
-Import Monoid.Notations. (* Ƶ and ● *)
-Import Misc.Subset.Notations. (* ∪ *)
-Export Applicative.Notations. (* <⋆> *)
-Export List.ListNotations. (* [] :: *)
-Export LN.Notations. (* operations *)
-Export LN.AtomSet.Notations.
-Export LN.AssocList.Notations. (* one, ~ *)
-Export Product.Notations. (* × *)
-Export ContainerFunctor.Notations. (* ∈ *)
-Export DecoratedContainerFunctor.Notations. (* ∈d *)
-
+Export LN.Notations.
 #[local] Generalizable Variables G.
 
 #[local] Set Implicit Arguments.
@@ -29,11 +15,9 @@ Inductive term :=
 | lam : typ -> term -> term
 | app : term -> term -> term.
 
-Import STLC.Syntax.Notations.
-
 (** ** Instantiate Tealeaves *)
 (******************************************************************************)
-Fixpoint to_T (t: term) : Syntax.term LN :=
+Fixpoint to_T (t: term) : Syntax.Lam LN :=
   match t with
   | atm a => Syntax.tvar (Fr a)
   | ix n => Syntax.tvar (Bd n)
@@ -41,7 +25,7 @@ Fixpoint to_T (t: term) : Syntax.term LN :=
   | app t1 t2 => Syntax.app (to_T t1) (to_T t2)
   end.
 
-Fixpoint to_T_inv (t: Syntax.term LN) : term :=
+Fixpoint to_T_inv (t: Syntax.Lam LN) : term :=
   match t with
   | tvar (Fr a) => atm a
   | tvar (Bd n) => ix n
@@ -59,7 +43,7 @@ Proof.
   - cbn. now rewrite IHt1, IHt2.
 Qed.
 
-Lemma to_T_iso_inv: forall (t : Syntax.term LN), to_T (to_T_inv t) = t.
+Lemma to_T_iso_inv: forall (t : Syntax.Lam LN), to_T (to_T_inv t) = t.
 Proof.
   intros.
   induction t.
@@ -71,7 +55,7 @@ Qed.
 Module STLC_SIG <: SyntaxSIG with Definition term := term.
 
   Definition term : Type := term.
-  Definition T := Syntax.term.
+  Definition T := Syntax.Lam.
   Definition ret_inst := Syntax.Return_STLC.
   Definition binddt_inst := Syntax.Binddt_STLC.
   Definition monad_inst := Syntax.DTM_STLC.

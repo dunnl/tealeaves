@@ -42,6 +42,15 @@ End Notations.
 
 Import Notations.
 
+#[global] Instance Monoid_op_atoms: @Monoid_op AtomSet.t := AtomSet.union.
+#[global] Instance Monoid_unit_atoms: @Monoid_unit AtomSet.t := AtomSet.empty.
+#[global] Instance Monoid_atoms: Monoid AtomSet.t.
+Proof.
+  constructor; unfold transparent tcs; intros.
+  (* TODO: Can't use existing monoid typeclass because
+     the laws only hold up to AtomSet.Equal, not propositional equality. *)
+Abort.
+
 (** ** The [atoms] operation *)
 (** <<atoms>> collects a list of atoms into an <<AtomSet>>. It is
     conceptually inverse to [AtomSet.elements], but there's no
