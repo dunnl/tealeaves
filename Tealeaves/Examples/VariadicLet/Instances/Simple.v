@@ -38,7 +38,7 @@ Fixpoint binddt_term
       pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
   end.
 
-#[export] Instance Binddt_Lam: Binddt nat term term
+#[export] Instance Binddt_term: Binddt nat term term
   := @binddt_term.
 
 #[export] Instance Map_term: Map term
@@ -57,7 +57,7 @@ Fixpoint binddt_term
   := Bindt_Binddt nat term term.
 #[export] Instance ToSubset_term: ToSubset term
   := ToSubset_Traverse.
-#[export] Instance ToBatch_Lam: ToBatch term
+#[export] Instance ToBatch_term: ToBatch term
   := ToBatch_Traverse.
 
 Section rewriting.
@@ -140,7 +140,7 @@ Section rewriting.
 End rewriting.
 
 Ltac simplify_binddt_letin :=
-  debug "simplify_binddt_letin";
+  ltac_trace "simplify_binddt_letin";
   match goal with
   | |- context[binddt ?f (tvar ?y)] =>
       rewrite binddt_term_rw1
@@ -158,7 +158,7 @@ Ltac cbn_binddt ::=
 DTM laws
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |*)
-Theorem dtm1_lam:
+Theorem dtm1_term:
   forall `{Applicative G} (A B : Type),
   forall f : nat * A -> G (term B),
     binddt f ∘ ret  = f ∘ ret (T := (nat ×)).
@@ -213,7 +213,7 @@ Proof.
   }
 Qed.
 
-Theorem dtm4_stlc :
+Theorem dtm4_term :
   forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Mult G1) (H3 : Pure G1) (H4 : Map G2) (H5 : Mult G2) (H6 : Pure G2)
     (ϕ : forall A : Type, G1 A -> G2 A),
     ApplicativeMorphism G1 G2 ϕ ->
@@ -228,4 +228,15 @@ Proof.
   unfold compose.
   intros t' t'_in.
   apply (IHdefs t' t'_in f).
+Qed.
+
+#[export] Instance DTM_LetIn: DecoratedTraversableMonad nat term.
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - intros. apply dtm1_term.
+  - constructor.
+    + apply dtm2_term.
+    + intros. apply dtm3_term.
+    + apply dtm4_term.
 Qed.

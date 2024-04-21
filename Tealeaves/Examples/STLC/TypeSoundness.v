@@ -1,9 +1,8 @@
 From Tealeaves Require Export
-  Examples.STLC.Syntax
-  Examples.Simplification.
+  Examples.STLC.Syntax.
 
-Export LN.Notations.
-Export STLC.Syntax.Notations.
+Import Syntax.TermNotations.
+
 #[local] Open Scope set_scope.
 
 Implicit Types (x: atom) (τ: typ)

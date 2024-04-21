@@ -1,24 +1,25 @@
 From Tealeaves Require Export
   Examples.STLC.Syntax.
 
-Import STLC.Syntax.Notations.
+Import STLC.Syntax.TermNotations.
 
 #[local] Open Scope tealeaves_scope.
 
 Ltac assert_identical :=
     match goal with
     | |- ?x = ?x =>
-        debug "Both sides identical:";
+        ltac_trace "Both sides identical:";
         print_goal
     | |- _ =>
-        debug "LHS and RHS not syntactically identical:";
+        ltac_trace "LHS and RHS not syntactically identical:";
         print_goal;
         fail
     end.
 
 Ltac assert_different :=
   assert_fails (idtac; assert_identical).
-(* idtac prevents Ltac from evaluating assert_identical right here *)
+(* idtac
+ prevents Ltac from evaluating assert_identical right here *)
 
 Ltac conclude := now assert_identical.
 Ltac reject := now assert_different.
@@ -195,7 +196,6 @@ Section term_container_rewrite.
     unfold tolist.
     unfold Tolist_Traverse.
     simplify.
-    Print tolist.
     reflexivity.
   Qed.
 

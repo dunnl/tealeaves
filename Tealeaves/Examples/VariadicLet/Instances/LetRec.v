@@ -1,102 +1,111 @@
-
-
-Module ex_binding_type3.
 (*|
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-fully mutually recursive
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+############################################################
+Formalizing variadic syntax with Tealeaves
+############################################################
 
-To illustrate the use of the traversal representation theorem, we
-consider an example where the syntax has no mutual binding structure.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+let with letrec semantics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 |*)
+From Tealeaves Require Export
+  Examples.VariadicLet.Terms
+  Functors.List_Telescoping
+  Adapters.Compositions.DecoratedTraversableModule.
 
-  Fixpoint binddt_term
-    (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    {v1 v2 : Type}
-    (f : nat * v1 -> G (term v2))
-    (t : term v1) : G (term v2) :=
-    match t with
-    | tvar v => f (0, v)
-    | letin defs body =>
-        pure (@letin v2) <⋆>
+#[local] Generalizable Variables G A B C.
+#[local] Set Implicit Arguments.
+#[local] Open Scope nat_scope.
+
+#[local] Notation "'P'" := pure.
+#[local]  Notation "'BD'" := binddt.
+
+Fixpoint binddt_term
+  (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+  {v1 v2 : Type}
+  (f : nat * v1 -> G (term v2))
+  (t : term v1) : G (term v2) :=
+  match t with
+  | tvar v => f (0, v)
+  | letin defs body =>
+      pure (@letin v2) <⋆>
         ((fix F ls :=
             match ls with
             | nil => pure nil
             | cons d drest =>
                 pure cons <⋆> binddt_term (f ⦿ length defs) d <⋆> F drest
             end) defs) <⋆> binddt_term (f ⦿ length defs) body
-    | app t1 t2 =>
-        pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
-    end.
+  | app t1 t2 =>
+      pure (@app v2) <⋆> binddt_term f t1 <⋆> binddt_term f t2
+  end.
 
-  #[export] Instance Binddt_Lam: Binddt nat term term := @binddt_term.
+#[export] Instance Binddt_term: Binddt nat term term := @binddt_term.
 
-  Definition subst_in_defs
-    `{Applicative G} {v1 v2 : Type}
-    (f : nat * v1 -> G (term v2)):
-    list (term v1) -> G (list (term v2)) :=
-    binddt (Binddt := Mapdt_Binddt_compose (Mapdt_F := Mapdt_List_Full))
-      (U := list ∘ term) f.
+Definition subst_in_defs
+  `{Applicative G} {v1 v2 : Type}
+  (f : nat * v1 -> G (term v2)):
+  list (term v1) -> G (list (term v2)) :=
+  binddt (Binddt := Mapdt_Binddt_compose (Mapdt_F := Mapdt_List_Full))
+    (U := list ∘ term) f.
 
-  Section rewriting.
+Section rewriting.
 
-    Section pointful.
+  Section pointful.
 
-      Context
-        `{Applicative G} (v1 v2 : Type)
-          (f : nat * v1 -> G (term v2)).
+    Context
+      `{Applicative G} (v1 v2 : Type)
+        (f : nat * v1 -> G (term v2)).
 
-      Lemma binddt_term_rw1: forall (v: v1),
-          binddt f (tvar v) = f (Ƶ, v).
-      Proof.
-        reflexivity.
-      Qed.
+    Lemma binddt_term_rw1: forall (v: v1),
+        binddt f (tvar v) = f (Ƶ, v).
+    Proof.
+      reflexivity.
+    Qed.
 
-      Lemma binddt_term_rw2: forall (l : list (term v1)) (body: term v1),
-          binddt f (letin l body) =
-            pure (@letin v2) <⋆> subst_in_defs f l <⋆>
-              binddt (f ⦿ length l) body.
-      Proof.
-        intros. cbn.
-        do 2 fequal.
-        unfold subst_in_defs.
-        unfold_ops @Mapdt_Binddt_compose.
-        unfold_ops @Mapdt_List_Full;
-          unfold mapdt_list_full.
-        match goal with
-        | |- context[(fun '(w1, t) => ?binddt (f ⦿ w1) t)] =>
-            replace (fun '(w1, t) => binddt (f ⦿ w1) t) with
-            ((fun '(w1, t) => binddt (f ⦿ w1) t) ⦿ 0)
-            by now ext [w t]
-        end.
-        match goal with
-        | |- context[BD (f ⦿ length l)] =>
-            replace (BD (f ⦿ length l)) with
-            (BD (f ⦿ (length l + 0)%nat))
-        end.
-        2: { fequal. fequal. lia. }
-        generalize dependent f; clear f.
-        generalize 0.
-        induction l; intros n f.
-        - reflexivity.
-        - cbn.
+    Lemma binddt_term_rw2: forall (l : list (term v1)) (body: term v1),
+        binddt f (letin l body) =
+          pure (@letin v2) <⋆> subst_in_defs f l <⋆>
+            binddt (f ⦿ length l) body.
+    Proof.
+      intros. cbn.
+      do 2 fequal.
+      unfold subst_in_defs.
+      unfold_ops @Mapdt_Binddt_compose.
+      unfold_ops @Mapdt_List_Full;
+        unfold mapdt_list_full.
+      match goal with
+      | |- context[(fun '(w1, t) => ?binddt (f ⦿ w1) t)] =>
+          replace (fun '(w1, t) => binddt (f ⦿ w1) t) with
+          ((fun '(w1, t) => binddt (f ⦿ w1) t) ⦿ 0)
+          by now ext [w t]
+      end.
+      match goal with
+      | |- context[BD (f ⦿ length l)] =>
+          replace (BD (f ⦿ length l)) with
+          (BD (f ⦿ (length l + 0)%nat))
+      end.
+      2: { fequal. fequal. lia. }
+      generalize dependent f; clear f.
+      generalize 0.
+      induction l; intros n f.
+      - reflexivity.
+      - cbn.
+        fequal.
+        + repeat fequal.
+          unfold_all_transparent_tcs.
+          lia.
+        + specialize (IHl (S n) f).
+          replace (length l + S n)
+            with (S (length l + n)) in IHl by lia.
+          rewrite IHl.
           fequal.
-          + repeat fequal.
-            unfold_all_transparent_tcs.
-            lia.
-          + specialize (IHl (S n) f).
-            replace (length l + S n)
-              with (S (length l + n)) in IHl by lia.
-            rewrite IHl.
-            fequal.
-            ext t.
-            cbn. fequal. fequal.
-            unfold_all_transparent_tcs.
-            lia.
-      Qed.
+          ext t.
+          cbn. fequal. fequal.
+          unfold_all_transparent_tcs.
+          lia.
+    Qed.
 
-      Lemma binddt_term_rw3: forall (t1 t2: term v1),
+    Lemma binddt_term_rw3: forall (t1 t2: term v1),
           binddt f (app t1 t2) =
             pure (@app v2) <⋆> binddt f t1 <⋆> binddt f t2.
       Proof.
@@ -144,179 +153,119 @@ consider an example where the syntax has no mutual binding structure.
 
   End rewriting.
 
-  #[local] Notation "'P'" := pure.
-  #[local] Notation "'BD'" := binddt.
+Ltac simplify_binddt_term :=
+  match goal with
+  | |- context[BD ?f (tvar ?y)] =>
+      ltac_trace "step_BD_tvar";
+      rewrite binddt_term_rw1
+  | |- context[((BD ?f) (letin ?l ?body))] =>
+      ltac_trace "step_BD_letin";
+      rewrite binddt_term_rw2
+  | |- context[((BD ?f) (app ?t1 ?t2))] =>
+      ltac_trace "step_BD_app";
+      rewrite binddt_term_rw3
+  end.
 
-  Ltac simplify_binddt_term :=
-    match goal with
-    | |- context[BD ?f (tvar ?y)] =>
-        debug "step_BD_tvar";
-        rewrite binddt_term_rw1
-    | |- context[((BD ?f) (letin ?l ?body))] =>
-        debug "step_BD_letin";
-        rewrite binddt_term_rw2
-    | |- context[((BD ?f) (app ?t1 ?t2))] =>
-        debug "step_BD_app";
-        rewrite binddt_term_rw3
-    end.
+Ltac cbn_binddt ::=
+  simplify_binddt_term.
 
-  Ltac simplify_binddt_term_lazy unit :=
-    simplify_binddt_term.
+Theorem dtm1_term:
+  forall `{Applicative G} (A B : Type),
+  forall f : nat * A -> G (term B),
+    binddt f ∘ ret  = f ∘ ret (T := (nat ×)).
+Proof.
+  derive_dtm1.
+Qed.
 
-(*|
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Instantiate simplification infrastructure
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-|*)
+Theorem dtm2_term : forall A : Type,
+    binddt (T := term) (U := term)
+      (G := fun A => A) (ret (T := term) ∘ extract (W := (nat ×))) = @id (term A).
+Proof.
+  intros.
+  derive_dtm2.
+  unfold subst_in_defs.
+  unfold_ops @Mapdt_Binddt_compose.
+  apply mapdt_respectful_id; intros.
+  do 2 push_preincr_into_fn.
+  apply ind_implies_in in H.
+  auto.
+Qed.
 
-  Ltac derive_dtm_law :=
-    derive_dtm_law_with_simplify_binddt_IH
-      term_mut_ind2 simplify_binddt_term_lazy.
+Set Keyed Unification.
 
-  Ltac simplify_pass1 :=
-    simplify_pass1_with_simplify_binddt term simplify_binddt_term_lazy.
-
-  Ltac derive_dtm_law_case :=
-    derive_dtm_law_case_with_simplify_binddt simplify_binddt_term_lazy.
-
-  Theorem dtm1_lam:
-    forall `{Applicative G} (A B : Type),
-    forall f : nat * A -> G (term B),
-      binddt f ∘ ret  = f ∘ ret (T := (nat ×)).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Theorem dtm2_term : forall A : Type,
-      binddt (T := term) (U := term)
-        (G := fun A => A) (ret (T := term) ∘ extract (W := (nat ×))) = @id (term A).
-  Proof.
-    intros.
-    derive_dtm_law.
-    derive_dtm_law_case.
-    unfold subst_in_defs.
-    unfold_ops @Mapdt_Binddt_compose.
-    apply mapdt_respectful_id.
-    intros.
-    apply ind_implies_in in H.
-    simplify_pass2.
-    eauto.
-  Qed.
-
-  Theorem dtm3_term:
-    forall `{Applicative G1} `{Applicative G2},
+Theorem dtm3_term:
+  forall `{Applicative G1} `{Applicative G2},
     forall `(g : nat * B -> G2 (term C)) `(f : nat * A -> G1 (term B)),
       map (binddt g) ∘ binddt f = binddt (G := G1 ∘ G2) (g ⋆7 f).
-  Proof.
-    intros. ext t.
-    generalize dependent g.
-    generalize dependent f.
-    assert (Functor G1) by (now inversion H2).
-    assert (Functor G2) by (now inversion H6).
-    unfold compose at 1.
-    induction t using term_mut_ind2; intros f g.
-    - cbn.
-      change (g ⦿ 0) with (g ⦿ Ƶ).
-      now rewrite preincr_zero.
-    - do 2 simplify_binddt_term.
-      (* left *)
-      repeat dtm3_lhs_step.
-      unfold subst_in_defs at 1;
-        unfold binddt at 2, Mapdt_Binddt_compose at 1.
-      { assert (ToBatch list).
-        typeclasses eauto.
-        rewrite mapdt_repr.
-        rewrite map_to_ap.
-        repeat rewrite <- ap4;
-          repeat rewrite ap2.
-        rewrite binddt_pointfree_letin.
-        rewrite <- map_to_ap.
-        rewrite <- (fun_map_map).
-        unfold compose at 1.
-        rewrite map_to_ap.
-        rewrite <- mapdt_repr.
-        change (mapdt (A := term A) (B := term B)
-                  _ defs) with (subst_in_defs f defs).
-        (* rhs *)
-        unfold_ops @Pure_compose.
-        (* rhs defs *)
-        assert (lemma_for_defs:
-                 subst_in_defs (G := G1 ∘ G2) (g ⋆7 f) defs =
-                   map (F := G1) (subst_in_defs (G := G2) g)
-                     (subst_in_defs (G := G1) f defs)).
-        { unfold subst_in_defs.
-          unfold_ops @Mapdt_Binddt_compose.
-          compose near defs on right.
-          rewrite kdtfun_mapdt2.
-          apply mapdt_respectful.
-          - typeclasses eauto.
-          - intros w u Hin.
-            rewrite <- (kc7_preincr (G1 := G1) g f w).
-            apply ind_implies_in in Hin.
-            rewrite <- IHdefs; auto.
-            rewrite kc6_spec.
-            reflexivity.
-        }
-        Set Keyed Unification.
-        rewrite lemma_for_defs.
-        Unset Keyed Unification.
-        dtm3_rhs_applicative_compose.
-        dtm3_rhs_applicative_map.
-        (* last part *)
-        rewrite <- (kc7_preincr (G1 := G1) g f (length defs)).
-        rewrite <- IHt.
-        dtm3_rhs_applicative_compose.
-        dtm3_rhs_applicative_map.
-        reflexivity.
-      }
-    - do 2 simplify_binddt_term.
-      repeat dtm3_rhs_step.
-      dtm3_rhs_step.
-      rewrite <- IHt1.
-      dtm3_rhs_step.
-      rewrite <- IHt2.
-      dtm3_rhs_step.
-      reflexivity.
-  Qed.
+Proof.
+  intros.
+  derive_dtm3.
 
-  Theorem dtm4_stlc :
-    forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Mult G1)
-      (H3 : Pure G1) (H4 : Map G2) (H5 : Mult G2) (H6 : Pure G2)
-      (ϕ : forall A : Type, G1 A -> G2 A),
-      ApplicativeMorphism G1 G2 ϕ ->
-      forall (A B : Type) (f : nat * A -> G1 (term B)),
-        ϕ (term B) ∘ binddt f = binddt (ϕ (term B) ∘ f).
-  Proof.
-    introv Happl. intros. ext t.
-    assert (Applicative G1) by (now inversion Happl).
-    assert (Applicative G2) by (now inversion Happl).
-    generalize dependent f.
-    unfold compose at 1.
-    induction t using term_mut_ind2; intro f. (* .unfold *)
-    - reflexivity.
-    - do 2 simplify_binddt_term.
-      repeat rewrite ap_morphism_1.
-      rewrite appmor_pure.
-      rewrite IHt.
-      change (ϕ (list (term B)) (subst_in_defs f defs))
-        with ((ϕ (list (term B)) ∘ subst_in_defs f) defs).
-      unfold subst_in_defs.
-      unfold_ops @Mapdt_Binddt_compose.
-      change ((?g ∘ ?f) ⦿ ?w) with (g ∘ (f ⦿ w)).
-      rewrite <- kdtfun_morph.
-      do 2 fequal.
-      apply mapdt_respectful;[typeclasses eauto|].
-      intros. cbn.
-      unfold compose.
-      apply ind_implies_in in H7.
-      apply IHdefs.
-      assumption.
-    - cbn.
-      repeat rewrite ap_morphism_1.
-      rewrite appmor_pure.
-      rewrite IHt1.
-      rewrite IHt2.
-      reflexivity.
-  Qed.
+  assert (IHdefs':
+           map (F := G1) (subst_in_defs g) (subst_in_defs f defs) =
+             subst_in_defs (G := G1 ∘ G2) (g ⋆7 f) defs).
+  {
+    unfold subst_in_defs.
+    unfold_ops @Mapdt_Binddt_compose.
+    compose near defs on left.
+    rewrite kdtfun_mapdt2.
+    apply (mapdt_respectful (G := G1 ∘ G2) (T := list) _ _ defs).
+    intros e t' Hin.
+    rewrite kc6_spec.
+    setoid_rewrite <- (kc7_preincr g f e).
+    apply ind_implies_in in Hin.
+    rewrite <- (IHdefs t' Hin (g ⦿ e) (f ⦿ e)).
+    reflexivity.
+  }
 
-End ex_binding_type3.
+  unfold subst_in_defs at 1.
+  unfold_ops @Mapdt_Binddt_compose.
+  rewrite mapdt_repr at 1.
+  dtm3_push_map_right_to_left.
+  repeat change (precompose ?f ?g) with (g ∘ f).
+  rewrite binddt_pointfree_letin.
+  change (?g ∘ ?trav_make defs) with (precompose (trav_make defs) g).
+  rewrite <- app_pure_natural.
+  rewrite ap_map.
+  rewrite <- mapdt_repr.
+  change (mapdt (A := term A) (B := term B)
+            _ defs) with (subst_in_defs f defs).
+  rewrite <- IHdefs'.
+  dtm3_rhs_one_constructor.
+  dtm3_rhs_one_constructor.
+  reflexivity.
+Qed.
+
+
+Theorem dtm4_term :
+  forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Mult G1)
+    (H3 : Pure G1) (H4 : Map G2) (H5 : Mult G2) (H6 : Pure G2)
+    (ϕ : forall A : Type, G1 A -> G2 A),
+    ApplicativeMorphism G1 G2 ϕ ->
+    forall (A B : Type) (f : nat * A -> G1 (term B)),
+      ϕ (term B) ∘ binddt f = binddt (ϕ (term B) ∘ f).
+Proof.
+  derive_dtm4.
+  compose near defs on left.
+  unfold subst_in_defs.
+  unfold_ops @Mapdt_Binddt_compose.
+  change ((?g ∘ ?f) ⦿ ?w) with (g ∘ (f ⦿ w)).
+  rewrite <- kdtfun_morph.
+  apply mapdt_respectful;[typeclasses eauto|].
+  introv Hin.
+  unfold compose.
+  apply ind_implies_in in Hin.
+  apply IHdefs.
+  assumption.
+Qed.
+
+#[export] Instance DTM_LetIn: DecoratedTraversableMonad nat term.
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - intros. apply dtm1_term.
+  - constructor.
+    + apply dtm2_term.
+    + intros. apply dtm3_term.
+    + apply dtm4_term.
+Qed.

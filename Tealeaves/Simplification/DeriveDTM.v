@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Theory.DecoratedTraversableMonad
-  Examples.Simplification.Support
-  Examples.Simplification.Binddt.
+  Simplification.Support
+  Simplification.Binddt.
 
 Import DecoratedTraversableMonad.Notations.
 
@@ -14,10 +14,10 @@ Ltac induction_term t :=
   let T := type of custIH in
   match T with
   | unit =>
-      debug "derive_dtm|Using standard induction";
+      ltac_trace "derive_dtm|Using standard induction";
       induction t
   | _ =>
-      debug "derive_dtm|Using custom induction principle";
+      ltac_trace "derive_dtm|Using custom induction principle";
       induction t using custIH
   end.
 
@@ -34,24 +34,24 @@ Ltac derive_dtm1 :=
 (** ** Proving the second law *)
 (******************************************************************************)
 Ltac derive_dtm2_ret_case :=
-  debug "derive_dtm2_ret_case";
+  ltac_trace "derive_dtm2_ret_case";
   cbn_binddt;
   derive_dtm_solve_ret_case;
-  debug "derive_dtm2_ret_case_finished".
+  ltac_trace "derive_dtm2_ret_case_finished".
 
 Ltac derive_dtm2_IH_step :=
-  debug "derive_dtm2_IH_step";
+  ltac_trace "derive_dtm2_IH_step";
   simplify_binddt_core;
   repeat simplify_applicative_I;
   repeat rewrite_with_any; (* try to use IH wherever possible *)
   try easy; (* hopefully this solves it, otherwise let the user take over *)
   repeat fequal;
-  debug "derive_dtm2_IH_step_finished".
+  ltac_trace "derive_dtm2_IH_step_finished".
 
 Ltac assert_match_dtm2 :=
   match goal with
   | |- context[binddt (T := ?T) (U := ?U) (ret ∘ extract) = id] =>
-      debug "assert_match_dtm2|match"
+      ltac_trace "assert_match_dtm2|match"
   | |- _ => fail "assert_match_setup|no match"
   end.
 
@@ -130,32 +130,32 @@ Ltac dtm3_rhs :=
   dtm3_rhs_step2.
 
 Ltac derive_dtm3_ret_case :=
-  debug "derive_dtm3|ret case setup";
+  ltac_trace "derive_dtm3|ret case setup";
   unfold kc7;
   do 2 simplify_binddt_core;
   try simplify_preincr_zero;
   reflexivity;
-  debug "derive_dtm3|ret case end".
+  ltac_trace "derive_dtm3|ret case end".
 
 Ltac derive_dtm3_IH_step :=
-  debug "derive_dtm3|IH step start";
+  ltac_trace "derive_dtm3|IH step start";
   do 2 simplify_binddt_core;
   dtm3_lhs;
   dtm3_rhs;
   try easy;
-  debug "derive_dtm3|IH step finished".
+  ltac_trace "derive_dtm3|IH step finished".
 
 Ltac assert_match_dtm3 :=
   match goal with
   | |- context[map (binddt (T := ?T) (U := ?U) ?g) ∘
                 binddt (T := ?T) (U := ?U) ?f] =>
-      debug "setup_dtm_proof_guess_law3";
+      ltac_trace "setup_dtm_proof_guess_law3";
       infer_applicative_functors
   | |- _ => fail "derive_dtm3_setup: no match"
   end.
 
 Ltac derive_dtm3_setup :=
-  debug "derive_dtm3|setup";
+  ltac_trace "derive_dtm3|setup";
   assert_match_dtm3;
   let t := fresh "t" in
   ext t;
@@ -178,27 +178,27 @@ Ltac derive_dtm3 :=
 (** ** Proving the fourt law *)
 (******************************************************************************)
 Ltac derive_dtm4_ret_case :=
-  debug "derive_dtm4|ret case start";
+  ltac_trace "derive_dtm4|ret case start";
   reflexivity; (* should solve <<ret>> case *)
-  debug "derive_dtm4|ret case end".
+  ltac_trace "derive_dtm4|ret case end".
 
 Ltac derive_dtm4_simplify_hom :=
   repeat rewrite ap_morphism_1;
   rewrite appmor_pure.
 
 Ltac derive_dtm4_IH_step :=
-  debug "derive_dtm4|IH step start";
+  ltac_trace "derive_dtm4|IH step start";
   repeat simplify_binddt_core;
   derive_dtm4_simplify_hom;
   repeat rewrite_with_any; (* try to use IH wherever possible *)
   try easy; (* hopefully this solves it, otherwise let the user take over *)
   repeat fequal;
-  debug "derive_dtm4|IH step end".
+  ltac_trace "derive_dtm4|IH step end".
 
 Ltac derive_dtm4_setup :=
   match goal with
-    |- context[(?ϕ ?B ∘ binddt ?f) = binddt (?ϕ ?B ∘ ?f)] =>
-      debug "setup_dtm_proof_guess_law4";
+    |- context[(?ϕ (_ ?B) ∘ binddt ?f) = binddt (?ϕ (_ ?B) ∘ ?f)] =>
+      ltac_trace "setup_dtm_proof_guess_law4";
       infer_applicative_functors;
       let t := fresh "t" in
       ext t;

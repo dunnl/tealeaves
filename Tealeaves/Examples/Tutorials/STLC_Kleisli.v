@@ -49,13 +49,13 @@ End rw.
 Ltac simplify_binddt_term :=
   match goal with
   | |- context[BD ?f (tvar ?y)] =>
-      debug "simplify_binddt_term_tvar";
+      ltac_trace "simplify_binddt_term_tvar";
       rewrite binddt_term_rw1
   | |- context[((BD ?f) ((λ) ?τ ?body))] =>
-      debug "simplify_binddt_term_abs";
+      ltac_trace "simplify_binddt_term_abs";
       rewrite binddt_term_rw2
   | |- context[((BD ?f) (app ?t1 ?t2))] =>
-      debug "simplify_binddt_term_app";
+      ltac_trace "simplify_binddt_term_app";
       rewrite binddt_term_rw3
   end.
 

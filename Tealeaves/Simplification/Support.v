@@ -1,20 +1,17 @@
 From Tealeaves Require Export
-  Backends.LN
   Theory.DecoratedTraversableMonad
   Tactics.Debug.
 
-Import LN.Notations.
-
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
-
-(* Open Scope set_scope. *)
 
 (*|
 ========================================
 Extra lemmas for simplification support
 ========================================
 |*)
+Import Monoid.Notations.
+
 Lemma pure_const_rw: forall {A} {a:A} {M} {unit:Monoid_unit M},
     pure (F := const M) (Pure := @Pure_const _ unit) a = Ƶ.
   reflexivity.
@@ -27,24 +24,6 @@ Qed.
 
 Lemma map_const_rw: forall A B (f: A -> B) X,
     map (F := const X) f = @id X.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma free_loc_Bd: forall b,
-    free_loc (Bd b) = [].
-Proof.
-  reflexivity.
-Qed.
-
-Lemma free_loc_Fr: forall x,
-    free_loc (Fr x) = [x].
-Proof.
-  reflexivity.
-Qed.
-
-Lemma free_to_foldMap {T} `{Traverse T}: forall (t: T LN),
-    free t = foldMap free_loc t.
 Proof.
   reflexivity.
 Qed.
@@ -118,7 +97,7 @@ Module Basics.
     end.
 
   Ltac normalize_fns :=
-    debug "normalize_fns";
+    ltac_trace "normalize_fns";
     match goal with
     | |- context[?f ∘ id] =>
         change (f ∘ id) with f
@@ -135,7 +114,7 @@ Module Basics.
     end.
 
   Ltac normalize_id :=
-    debug "normalize_id";
+    ltac_trace "normalize_id";
     match goal with
     | |- context[id ?t] =>
         change (id t) with t
@@ -148,7 +127,7 @@ Module Basics.
     end.
 
   Ltac simplify_monoid_units :=
-    debug "simplify_monoid_units";
+    ltac_trace "simplify_monoid_units";
     match goal with
     | |- context[Ƶ ● ?m] =>
         rewrite (monoid_id_r m)
@@ -165,7 +144,7 @@ Module Basics.
     end.
 
   Ltac simplify_preincr_zero :=
-    debug "simplify_preincr_zero";
+    ltac_trace "simplify_preincr_zero";
     match goal with
     | |- context[(?f ⦿ Ƶ)] =>
         rewrite (preincr_zero f)
@@ -210,7 +189,7 @@ Module SimplApplicative.
   (** ** Constant applicatives *)
   (******************************************************************************)
   Ltac simplify_applicative_const :=
-    debug "simplify_applicative_const";
+    ltac_trace "simplify_applicative_const";
     match goal with
     | |- context [pure (F := const ?W) ?x] =>
         rewrite pure_const_rw
@@ -229,7 +208,7 @@ Module SimplApplicative.
   (** ** Constant maps *)
   (******************************************************************************)
   Ltac simplify_map_const :=
-    debug "simplify_map_const";
+    ltac_trace "simplify_map_const";
     match goal with
     | |- context[map (F := const ?X) ?f] =>
         rewrite map_const_rw
@@ -244,7 +223,7 @@ Module SimplApplicative.
   (** ** Identity applicative *)
   (******************************************************************************)
   Ltac simplify_applicative_I :=
-    debug "simplify_applicative_I";
+    ltac_trace "simplify_applicative_I";
     match goal with
     | |- context[pure (F := fun A => A) ?x] =>
         change (pure (F := fun A => A) x) with x
@@ -263,7 +242,7 @@ Module SimplApplicative.
   (** ** Identity maps *)
   (******************************************************************************)
   Ltac simplify_map_I :=
-    debug "simplify_map_I";
+    ltac_trace "simplify_map_I";
     match goal with
     | |- context[map (F := fun A => A) ?f] =>
         unfold_ops @Map_I

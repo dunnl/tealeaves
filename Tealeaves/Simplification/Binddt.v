@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Examples.Simplification.Support
+  Simplification.Support
   Theory.DecoratedTraversableMonad.
 
 Import
@@ -46,56 +46,56 @@ Module ToBinddt.
   Ltac rewrite_core_ops_to_binddt :=
     match goal with
     | |- context[map ?f ?t] =>
-        debug "map_to_binddt";
+        ltac_trace "map_to_binddt";
         progress (rewrite bind_to_binddt)
     (* mapd/bind/traverse *)
     | |- context[bind ?f ?t] =>
-        debug "bind_to_binddt";
+        ltac_trace "bind_to_binddt";
         progress (rewrite bind_to_binddt)
     | |- context[mapd ?f ?t] =>
-        debug "mapd_to_binddt";
+        ltac_trace "mapd_to_binddt";
         progress (rewrite mapd_to_binddt)
     | |- context[traverse ?f ?t] =>
-        debug "traverse_to_binddt";
+        ltac_trace "traverse_to_binddt";
         progress (rewrite traverse_to_binddt)
     (* mapdt/bindd/bindt *)
     | |- context[mapdt ?f ?t] =>
-        debug "mapdt_to_binddt";
+        ltac_trace "mapdt_to_binddt";
         progress (rewrite mapdt_to_binddt)
     | |- context[bindd ?f ?t] =>
-        debug "bindd_to_binddt";
+        ltac_trace "bindd_to_binddt";
         progress (rewrite bindd_to_binddt)
     | |- context[bindt ?f ?t] =>
-        debug "bindt_to_binddt";
+        ltac_trace "bindt_to_binddt";
         progress (rewrite bindt_to_binddt)
     end.
 
   Ltac rewrite_binddt_to_core_ops :=
     match goal with
     | |- context[binddt (G := fun A => A) (ret ∘ ?f ∘ extract)] =>
-        debug "binddt_to_map";
+        ltac_trace "binddt_to_map";
         progress (rewrite <- map_to_binddt)
     | |- context[binddt (G := fun A => A) (ret (T := ?T) (A := ?A) ∘ extract)] =>
         change (ret (T := T) (A := A)) with (ret (T := T) (A := A) ∘ id);
-        debug "binddt_to_map";
+        ltac_trace "binddt_to_map";
         progress (rewrite <- map_to_binddt)
     | |- context[binddt (G := fun A => A) (?f ∘ extract)] =>
-        debug "binddt_to_bind";
+        ltac_trace "binddt_to_bind";
         progress (rewrite <- bind_to_binddt)
     | |- context[binddt (G := fun A => A) (ret ∘ ?f)] =>
-        debug "binddt_to_mapd";
+        ltac_trace "binddt_to_mapd";
         progress (rewrite <- mapd_to_binddt)
     | |- context[binddt (G := fun A => A)] =>
-        debug "binddt_to_bindd";
+        ltac_trace "binddt_to_bindd";
         progress (rewrite <- bindd_to_binddt)
     | |- context[binddt (G := ?G) (map (F := ?G) ret ∘ ?f ∘ extract)] =>
-        debug "binddt_to_traverse";
+        ltac_trace "binddt_to_traverse";
         progress (rewrite <- traverse_to_binddt)
     | |- context[binddt (G := ?G) (map (F := ?G) ret ∘ ?f)] =>
-        debug "binddt_to_mapdt";
+        ltac_trace "binddt_to_mapdt";
         progress (rewrite <- mapdt_to_binddt)
     | |- context[binddt (G := ?G) (?f ∘ extract)] =>
-        debug "binddt_to_bindt";
+        ltac_trace "binddt_to_bindt";
         progress (rewrite <- bindt_to_binddt)
     end.
 
@@ -103,33 +103,33 @@ Module ToBinddt.
     match goal with
     (* tolist *)
     | |- context[tolist (F := T) ?t] =>
-        debug "tolist_to_binddt";
+        ltac_trace "tolist_to_binddt";
         rewrite (tolist_to_binddt (T := T))
     (* elements *)
     | |- context[element_of (F := T) ?x ?t] =>
-        debug "element_of_to_binddt";
+        ltac_trace "element_of_to_binddt";
         rewrite (element_of_to_binddt (T := T))
     | |- context[element_ctx_of (T := T) (?n, ?l) ?t] =>
-        debug "element_ctx_of_to_binddt";
+        ltac_trace "element_ctx_of_to_binddt";
         rewrite (element_ctx_of_to_binddt (T := T))
     (* tosubset *)
     | |- context[tosubset (F := T) ?t] =>
-        debug "tosubset_to_binddt";
+        ltac_trace "tosubset_to_binddt";
         rewrite (tosubset_to_binddt (T := T))
     | |- context[toctxset (F := T) ?t] =>
-        debug "toctxset_to_binddt";
+        ltac_trace "toctxset_to_binddt";
         rewrite (toctxset_to_binddt (T := T))
     (* foldMap *)
     | |- context[foldMap (T := T) ?t] =>
-        debug "foldMap_to_binddt";
+        ltac_trace "foldMap_to_binddt";
         rewrite foldMap_to_traverse1, traverse_to_binddt
     | |- context[foldMapd (T := T) ?t] =>
-        debug "foldMap_to_binddt";
+        ltac_trace "foldMap_to_binddt";
         rewrite (foldMapd_to_mapdt1 (T := T)),
           (mapdt_to_binddt (T := T))
     (* quantifiers *)
     | |- context[Forall_ctx (T := T)  ?P] =>
-        debug "Forall_to_foldMapd";
+        ltac_trace "Forall_to_foldMapd";
         unfold Forall_ctx
     end.
 
@@ -183,7 +183,7 @@ How to step some <<binddt f (ret x)>>
 |*)
 (* Rewrite a <<binddt f (ret v)>> expression by using the <<binddt_ret>> axiom. *)
 Ltac simplify_binddt_ret_axiomatically :=
-  debug "simplify_binddt_ret";
+  ltac_trace "simplify_binddt_ret";
   rewrite binddt_ret;
   repeat simplify_post_binddt_ret.
 
@@ -192,20 +192,20 @@ Ltac simplify_binddt_ret_axiomatically_then taclocal :=
   taclocal.
 
 Ltac simplify_match_binddt_ret :=
-  debug "simplify_match_binddt_ret";
+  ltac_trace "simplify_match_binddt_ret";
   match goal with
   | |- context[binddt (T := ?T) ?f (?rtn ?t)] =>
       change (rtn t) with (ret (T := T) t);
-      debug "simplify_match_binddt_ret| match found";
+      ltac_trace "simplify_match_binddt_ret| match found";
       simplify_binddt_ret_axiomatically
-  | |- _ => debug "simplify_match_binddt_ret| no match"; fail
+  | |- _ => ltac_trace "simplify_match_binddt_ret| no match"; fail
   end.
 
 Ltac simplify_match_binddt_ret_then taclocal :=
-  debug "simplify_match_binddt_ret_then";
+  ltac_trace "simplify_match_binddt_ret_then";
   match goal with
   | |- context[binddt (T := ?T) ?f (?rtn ?t)] =>
-      debug "simplify_match_binddt_ret_then| match found";
+      ltac_trace "simplify_match_binddt_ret_then| match found";
       change (rtn t) with (ret (T := T) t);
       simplify_binddt_ret_axiomatically_then taclocal
   end.
@@ -251,7 +251,7 @@ Ltac does_match_binddt_ret t :=
   match t with
     context[binddt (T := ?T) ?f (?rtn ?x)] =>
       assert_succeeds (change (rtn x) with (ret (T := T) x));
-      debug "binddt(ret x) found"
+      ltac_trace "binddt(ret x) found"
   end.
 
 Ltac does_goal_match_binddt_ret :=
@@ -266,10 +266,10 @@ Ltac if_goal_match_binddt_ret tacthen tacelse :=
   else tacelse.
 
 Ltac assert_nomatch_binddt_ret t :=
-  debug "assert_nomatch_binddt_ret";
+  ltac_trace "assert_nomatch_binddt_ret";
   ( (assert_fails (does_match_binddt_ret t);
-     debug "assert_nomatch_binddt_ret|no match found")
-    || (debug "assert_nomatch_binddt_ret|unexpected match found!"; fail)).
+     ltac_trace "assert_nomatch_binddt_ret|no match found")
+    || (ltac_trace "assert_nomatch_binddt_ret|unexpected match found!"; fail)).
 
 (*|
 After simplifying an expression like <<bindd f (λ body)>>, we are dealing with subterms such as
@@ -280,10 +280,10 @@ After simplifying an expression like <<bindd f (λ body)>>, we are dealing with 
 Ltac push_preincr_into_fn :=
   match goal with
   | |- context[(?g ∘ ?f) ⦿ ?w] =>
-      debug "push_preincr_into_fn|assoc";
+      ltac_trace "push_preincr_into_fn|assoc";
       rewrite (preincr_assoc g f w)
   | |- context[extract ⦿ ?w] =>
-      debug "push_preincr_into_fn|extract";
+      ltac_trace "push_preincr_into_fn|extract";
       rewrite (extract_preincr w)
   end.
 
@@ -326,7 +326,7 @@ Ltac cbn_binddt_in :=
   end.
 
 Ltac simplify_binddt_core :=
-  debug "simplify_binddt_core";
+  ltac_trace "simplify_binddt_core";
   cbn_binddt;
   repeat push_preincr_into_fn.
 
@@ -336,7 +336,7 @@ Ltac simplify_binddt_core_in H :=
 
 (* simplify binddt but handle ret case with DTM law *)
 Ltac simplify_binddt :=
-  debug "simplify_binddt";
+  ltac_trace "simplify_binddt";
   first [ simplify_match_binddt_ret
         | simplify_binddt_core].
 
@@ -346,27 +346,44 @@ Ltac simplify_binddt_in H :=
 
 (* simplify binddt but handle ret case with local function *)
 Ltac simplify_binddt_to_leaves taclocal :=
-  debug "simplify_binddt_to_leaves";
+  ltac_trace "simplify_binddt_to_leaves";
   (repeat simplify_match_binddt_ret_then taclocal);
   simplify_binddt_core.
+
+Ltac cbn_mapdt :=
+  match goal with
+  | |- context[mapdt (E := ?W) (T := ?T)
+                (H := ?H) (H0 := ?H0) (H1 := ?H1)
+                (G := ?G) ?f ?t] =>
+      idtac f;
+      let e := constr:(mapdt (E := W) (T := T) (G := G)
+                         (H := H) (H0 := H0) (H1 := H1)
+                         f t) in
+      cbn_subterm e
+  end.
+
+Ltac simplify_mapdt_core :=
+  ltac_trace "simplify_mapdt_core";
+  cbn_mapdt;
+  repeat push_preincr_into_fn.
 
 Ltac simplify_mapdt :=
   match goal with
   | |- context[mapdt (T := ?T) ?f (ret ?t)] =>
-      idtac "mapdt_ret should be called here";
+      ltac_trace "mapdt_ret should be called here";
       fail 2
   | |- context[mapdt (T := ?T)] =>
-      debug "simplify_mapdt_start";
+      ltac_trace "simplify_mapdt_start";
       rewrite (mapdt_to_binddt (T := T));
       simplify_binddt;
       repeat rewrite <- (mapdt_to_binddt (T := T));
-      debug "simplify_mapdt_end"
+      ltac_trace "simplify_mapdt_end"
   end.
 
 Ltac simplify_mapdt_in :=
   match goal with
   | H: context[mapdt (T := ?T) ?f (ret ?t)] |- _ =>
-      idtac "mapdt_ret should be called here"
+      ltac_trace "mapdt_ret should be called here"
   | H: context[mapdt (T := ?T)] |- _ =>
       rewrite (mapdt_to_binddt (T := T)) in H;
       simplify_binddt_in H;
@@ -376,59 +393,59 @@ Ltac simplify_mapdt_in :=
 Ltac simplify_bindt :=
   match goal with
   | |- context[bindt (T := ?T) ?f (ret ?t)] =>
-      idtac "bindt_ret should be called here"
+      ltac_trace "bindt_ret should be called here"
   | |- context[bindt (T := ?T)] =>
-      debug "simplify_bindt_start";
+      ltac_trace "simplify_bindt_start";
       rewrite (bindt_to_binddt (T := T));
       simplify_binddt;
       repeat rewrite <- (bindt_to_binddt (T := T));
-      debug "simplify_bindt_end"
+      ltac_trace "simplify_bindt_end"
   end.
 
 Ltac simplify_bindd_post :=
-  debug "simplify_bindd_post";
+  ltac_trace "simplify_bindd_post";
   repeat simplify_applicative_I.
 
 Ltac simplify_bindd :=
   match goal with
   | |- context[bindd (T := ?T) ?f (ret ?t)] =>
-      idtac "bindd_ret could be called here, skipping";
+      ltac_trace "bindd_ret could be called here, skipping";
       fail
   | |- context[bindd (T := ?T)] =>
-      debug "simplify_bindd_start";
+      ltac_trace "simplify_bindd_start";
       rewrite (bindd_to_binddt (T := T));
       simplify_binddt;
       repeat rewrite <- (bindd_to_binddt (T := T));
       simplify_bindd_post;
-      debug "simplify_bindd_end"
+      ltac_trace "simplify_bindd_end"
   end.
 
 Ltac simplify_bind :=
   match goal with
   | |- context[bind (T := ?T) ?f (ret ?t)] =>
-      idtac "bind_ret should be called here"
+      ltac_trace "bind_ret should be called here"
   | |- context[bind (T := ?T)] =>
-      debug "simplify_bind_start";
+      ltac_trace "simplify_bind_start";
       rewrite (bind_to_bindd (T := T));
       simplify_bindd;
       repeat rewrite <- (bind_to_bindd (T := T));
-      debug "simplify_bind_end"
+      ltac_trace "simplify_bind_end"
   end.
 
 Ltac simplify_traverse :=
   match goal with
   | |- context[traverse (T := ?T) ?f (ret ?t)] =>
-      idtac "traverse_ret should be called here"
+      ltac_trace "traverse_ret should be called here"
   | |- context[traverse (T := ?T) (G := ?G) ?f ?t] =>
-      debug "simplify_traverse_start";
+      ltac_trace "simplify_traverse_start";
       rewrite (traverse_to_bindt (T := T) (G := G) f);
       repeat simplify_bindt;
       repeat rewrite <- (traverse_to_bindt (T := T));
-      debug "simplify_traverse_end"
+      ltac_trace "simplify_traverse_end"
   end.
 
 Ltac simplify_foldMapd_post :=
-  debug "simplify_foldMapd_post";
+  ltac_trace "simplify_foldMapd_post";
   repeat simplify_applicative_const;
   (* ^ above step creates some ((Ƶ ● m) ● n) *)
   repeat simplify_monoid_units.
@@ -456,7 +473,7 @@ Ltac simplify_foldMapd_in :=
   end.
 
 Ltac simplify_foldMap_post :=
-  debug "simplify_foldMap_post";
+  ltac_trace "simplify_foldMap_post";
   repeat simplify_applicative_const;
   repeat simplify_monoid_units;
   repeat change (const ?x ?y) with x.
@@ -464,12 +481,12 @@ Ltac simplify_foldMap_post :=
 Ltac simplify_foldMap :=
   match goal with
   | |- context[foldMap (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] =>
-      debug "simplify_foldMap_start";
+      ltac_trace "simplify_foldMap_start";
       rewrite foldMap_to_traverse1;
       simplify_traverse;
       repeat rewrite <- foldMap_to_traverse1;
       simplify_foldMap_post;
-      debug "simplify_foldMap_end"
+      ltac_trace "simplify_foldMap_end"
   end.
 
 Lemma monoid_conjunction_rw:
@@ -480,7 +497,7 @@ Proof.
 Qed.
 
 Ltac simplify_monoid_conjunction :=
-  debug "simplify_monoid_conjunction";
+  ltac_trace "simplify_monoid_conjunction";
   match goal with
   | |- context[monoid_op (Monoid_op := Monoid_op_and) ?P1 ?P2] =>
       rewrite monoid_conjunction_rw
@@ -504,7 +521,7 @@ Proof.
 Qed.
 
 Ltac simplify_monoid_disjunction :=
-  debug "simplify_monoid_disjunction";
+  ltac_trace "simplify_monoid_disjunction";
   match goal with
   | |- context[monoid_op (Monoid_op := Monoid_op_or) ?P1 ?P2] =>
       rewrite monoid_disjunction_rw
@@ -521,11 +538,11 @@ Proof.
 Qed.
 
 Ltac simplify_monoid_subset :=
-  debug "simplify_monoid_subset";
+  ltac_trace "simplify_monoid_subset";
   rewrite monoid_subset_rw.
 
 Ltac simplify_tolist :=
-  debug "simplify_tolist";
+  ltac_trace "simplify_tolist";
   match goal with
   | |- context[tolist (F := ?T) ?t] =>
       rewrite (tolist_to_foldMap (T := T));
@@ -535,7 +552,7 @@ Ltac simplify_tolist :=
   end.
 
 Ltac simplify_tosubset :=
-  debug "simplify_tosubset";
+  ltac_trace "simplify_tosubset";
   match goal with
   | |- context[tosubset (F := ?T) (A := ?A) ?t] =>
       rewrite (tosubset_to_foldMap (T := T) A);
@@ -550,7 +567,7 @@ Ltac simplify_tosubset :=
     end.
 
 Ltac simplify_toctxset :=
-  debug "simplify_toctxset";
+  ltac_trace "simplify_toctxset";
   match goal with
   | |- context[toctxset (F := ?T) ?t] =>
       rewrite (toctxset_to_foldMapd (T := T) t);
@@ -565,7 +582,7 @@ Ltac simplify_toctxset :=
     end.
 
 Ltac simplify_element_of :=
-  debug "simplify_element_of";
+  ltac_trace "simplify_element_of";
   match goal with
   | |- context[element_of (F := ?T) (A := ?A) ?t] =>
       rewrite (element_of_to_foldMap (T := T) A t);
@@ -588,6 +605,8 @@ Proof.
   propext; rewrite pair_equal_spec; intuition.
 Qed.
 
+Import Misc.NaturalNumbers.
+
 Lemma simplify_singleton_ctx_preincr: forall {A} (a: A) n,
     n > 1 ->
     {{(n, a)}} ⦿ 1 = {{(n - 1, a)}}.
@@ -601,7 +620,7 @@ Proof.
 Qed.
 
 Ltac simplify_singleton_ctx_under_binder :=
-  debug "simplify_{{x}}_preincr_S";
+  ltac_trace "simplify_{{x}}_preincr_S";
   match goal with
   | |- context[{{?p}} ⦿ 1] =>
       rewrite simplify_singleton_ctx_S_preincr
@@ -613,7 +632,7 @@ Ltac simplify_singleton_ctx_under_binder :=
   end.
 
 Ltac simplify_element_ctx_of :=
-  debug "simplify_element_ctx_of";
+  ltac_trace "simplify_element_ctx_of";
   match goal with
   | |- context[element_ctx_of (T := ?T) (A := ?A) ?p] =>
       rewrite (element_ctx_of_to_foldMapd (T := T) A p);
@@ -627,7 +646,7 @@ Ltac simplify_element_ctx_of :=
   try rewrite pair_equal_spec.
 
 Ltac simplify_Forall_ctx :=
-  debug "simplify_Forall_ctx";
+  ltac_trace "simplify_Forall_ctx";
   rewrite Forall_ctx_to_foldMapd;
   simplify_foldMapd;
   repeat rewrite <- Forall_ctx_to_foldMapd;
@@ -640,7 +659,7 @@ Ltac simplify_Forall_ctx_in H :=
   repeat simplify_monoid_conjunction_in H.
 
 Ltac simplify_derived_operations :=
-  debug "simplify_derived_operations";
+  ltac_trace "simplify_derived_operations";
   match goal with
   | |- context[tolist ?t] =>
       simplify_tolist

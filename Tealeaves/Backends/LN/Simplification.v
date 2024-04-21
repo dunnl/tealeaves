@@ -1,9 +1,9 @@
 From Tealeaves Require Export
-  Backends.LN
-  Examples.Simplification.Support
-  Examples.Simplification.Binddt.
+  Backends.LN.LN
+  Simplification.Support
+  Simplification.Binddt.
 
-Import LN.Notations.
+Import Monoid.Notations List.ListNotations.
 
 #[local] Notation "'P'" := pure.
 #[local]  Notation "'BD'" := binddt.
@@ -46,14 +46,14 @@ Ltac simplify_lc_loc_leaf :=
 (** ** Simplifying LCn *)
 (******************************************************************************)
 Ltac simplify_LC_local :=
-  debug "simplify_LC_local";
+  ltac_trace "simplify_LC_local";
   repeat simplify_lc_loc_under_binder;
   ( unfold_ops @Monoid_op_plus @Monoid_unit_zero;
     try simplify_lc_loc_leaf;
     repeat simplify_arithmetic).
 
 Ltac simplify_LC :=
-  debug "simplify_ln_LC_start";
+  ltac_trace "simplify_ln_LC_start";
   repeat change (LC ?t) with (LCn 0 t);
   rewrite LCn_spec;
   simplify_Forall_ctx;
@@ -62,7 +62,7 @@ Ltac simplify_LC :=
   (* ELSE IF refolding *)
   repeat rewrite <- LCn_spec;
   repeat change (LCn 0 ?t) with (LC t);
-  debug "simplify_ln_LC_end".
+  ltac_trace "simplify_ln_LC_end".
 
 Ltac simplify_LC_in H :=
   repeat change (LC ?t) with (LCn 0 t) in H;
@@ -73,6 +73,24 @@ Ltac simplify_LC_in H :=
 
 (** * Simplifying free and FV *)
 (******************************************************************************)
+Lemma free_loc_Bd: forall b,
+    free_loc (Bd b) = [].
+Proof.
+  reflexivity.
+Qed.
+
+Lemma free_loc_Fr: forall x,
+    free_loc (Fr x) = [x].
+Proof.
+  reflexivity.
+Qed.
+
+Lemma free_to_foldMap {T} `{Traverse T}: forall (t: T LN),
+    free t = foldMap free_loc t.
+Proof.
+  reflexivity.
+Qed.
+
 Ltac simplify_free_loc :=
   repeat match goal with
   | |- context[free_loc ?v] =>
@@ -86,15 +104,15 @@ Ltac simplify_free_post :=
   repeat simplify_monoid_append.
 
 Ltac simplify_free :=
-  debug "simplify_free";
+  ltac_trace "simplify_free";
   unfold free;
   simplify_foldMap;
   (* ^^ this exposes ● with lists *)
   repeat simplify_monoid_append;
   (* IF bottomed out *)
-  debug "simplify_free_loc";
+  ltac_trace "simplify_free_loc";
   simplify_free_loc;
-  debug "simplify_free";
+  ltac_trace "simplify_free";
   (* ELSE IF refolding *)
   repeat change (foldMap free_loc ?t) with (free t).
 
@@ -109,12 +127,12 @@ Ltac refold_FV :=
     end.
 
 Ltac simplify_FV :=
-  debug "simplify_ln_FV_start";
+  ltac_trace "simplify_ln_FV_start";
   unfold FV;
   simplify_free;
   autorewrite with tea_rw_atoms;
   refold_FV;
-  debug "simplify_ln_FV_end".
+  ltac_trace "simplify_ln_FV_end".
 
 (** * Simplifying open *)
 (******************************************************************************)
@@ -125,11 +143,11 @@ Ltac refold_open :=
     end.
 
 Ltac simplify_open :=
-  debug "simplify_ln_open_start";
+  ltac_trace "simplify_ln_open_start";
   unfold open;
   simplify_bindd;
   refold_open;
-  debug "simplify_ln_open_end".
+  ltac_trace "simplify_ln_open_end".
 
 
 (** * Simplifying subst *)
@@ -156,29 +174,29 @@ Ltac try_change_to_ret T exp :=
   end.
 
 Ltac simplify_subst :=
-  debug "simplify_ln_subst| start";
+  ltac_trace "simplify_ln_subst| start";
   match goal with
   | |- context[subst (T := ?T) ?x ?u ?t] =>
-      debug "simplify_ln_subst| test for ret";
+      ltac_trace "simplify_ln_subst| test for ret";
       try_change_to_ret T t;
       rewrite subst_ret;
-      debug "simplify_ln_subst| changed to ret";
+      ltac_trace "simplify_ln_subst| changed to ret";
       simplify_subst_local
   | |- context[subst (T := ?T) ?x ?u ?t] =>
-      debug "simplify_ln_subst| not ret";
+      ltac_trace "simplify_ln_subst| not ret";
       rewrite (subst_to_bind x u t);
       simplify_bind;
       refold_subst
   | |- _ => fail
   end;
-  debug "simplify_ln_subst_end".
+  ltac_trace "simplify_ln_subst_end".
 
 
 (** * Simplifying everything *)
 (******************************************************************************)
 Ltac simplify_LN :=
   autounfold with tea_ret_coercions;
-  debug "simplify_LN";
+  ltac_trace "simplify_LN";
   match goal with
   | |- context[LCn ?t] =>
       simplify_LC

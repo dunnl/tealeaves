@@ -1,20 +1,9 @@
 From Tealeaves Require Export
-  Examples.Simplification
-  Misc.NaturalNumbers
-  Functors.List
-  Theory.DecoratedTraversableMonad.
+  Backends.LN
+  Simplification.Simplification.
 
-Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
-Export Monoid.Notations. (* Ƶ and ● *)
-Export Misc.Subset.Notations. (* ∪ *)
-Export Applicative.Notations. (* <⋆> *)
-Export List.ListNotations. (* [] :: *)
-Export Product.Notations. (* × *)
-Export ContainerFunctor.Notations. (* ∈ *)
-Export DecoratedContainerFunctor.Notations. (* ∈d *)
-Export Classes.Kleisli.TraversableFunctor.Notations.
-Export Classes.Kleisli.DecoratedTraversableFunctor.Notations.
-
+Import LN.Simplification.
+Export LN.Notations.
 
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.

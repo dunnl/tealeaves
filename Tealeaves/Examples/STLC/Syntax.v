@@ -22,8 +22,9 @@ the namespaces ``Classes.Kleisli`` and ``Theory.Kleisli.``
 |*)
 From Tealeaves Require Export
   Backends.LN
-  Examples.Simplification.
+  Simplification.Simplification.
 
+Export LN.Simplification.
 Export LN.Notations.
 
 #[local] Set Implicit Arguments.
@@ -52,14 +53,14 @@ Notations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |*)
 
-Module Notations.
+Module TermNotations.
   Notation "'term'" := (Lam LN).
   Notation "'λ'" := (lam) (at level 45).
   Notation "⟨ t ⟩ ( u )" := (app t u) (at level 80, t at level 40, u at level 40).
   Notation "A ⟹ B" := (arr A B) (at level 40).
-End Notations.
+End TermNotations.
 
-Import Notations.
+Import TermNotations.
 
 Definition lnvar := @tvar LN.
 Definition bvar := @tvar LN ○ Bd.
@@ -158,16 +159,16 @@ Instantiation of derived functions
   := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat Lam.
 
 
-Module NotationsLN.
+Module LNNotations.
   Notation "t '{ x ~> u }" :=
     (subst x (u: Lam LN) (t: Lam LN)) (at level 35).
   Notation "t ' ( u )" :=
     (open (u: Lam LN) (t : Lam LN)) (at level 35, format "t  ' ( u )" ).
   Notation "' [ x ] t" :=
     (close x (t: Lam LN)) (at level 35, format "' [ x ]  t" ).
-End NotationsLN.
+End LNNotations.
 
-Export NotationsLN.
+Export LNNotations.
 
 Section test_operations.
 
