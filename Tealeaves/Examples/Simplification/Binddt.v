@@ -181,13 +181,14 @@ Ltac simplify_post_binddt_ret_in :=
 (*|
 How to step some <<binddt f (ret x)>>
 |*)
-Ltac simplify_binddt_ret :=
+(* Rewrite a <<binddt f (ret v)>> expression by using the <<binddt_ret>> axiom. *)
+Ltac simplify_binddt_ret_axiomatically :=
   debug "simplify_binddt_ret";
   rewrite binddt_ret;
   repeat simplify_post_binddt_ret.
 
-Ltac simplify_binddt_ret_then taclocal :=
-  rewrite binddt_ret;
+Ltac simplify_binddt_ret_axiomatically_then taclocal :=
+  simplify_binddt_ret_axiomatically;
   taclocal.
 
 Ltac simplify_match_binddt_ret :=
@@ -196,7 +197,7 @@ Ltac simplify_match_binddt_ret :=
   | |- context[binddt (T := ?T) ?f (?rtn ?t)] =>
       change (rtn t) with (ret (T := T) t);
       debug "simplify_match_binddt_ret| match found";
-      simplify_binddt_ret
+      simplify_binddt_ret_axiomatically
   | |- _ => debug "simplify_match_binddt_ret| no match"; fail
   end.
 
@@ -206,7 +207,7 @@ Ltac simplify_match_binddt_ret_then taclocal :=
   | |- context[binddt (T := ?T) ?f (?rtn ?t)] =>
       debug "simplify_match_binddt_ret_then| match found";
       change (rtn t) with (ret (T := T) t);
-      simplify_binddt_ret_then taclocal
+      simplify_binddt_ret_axiomatically_then taclocal
   end.
 
 Ltac simplify_match_binddt_ret_in H :=
@@ -220,11 +221,31 @@ Ltac simplify_match_binddt_ret_in H :=
 (*|
 Other functions for binddt ret
 |*)
-Ltac normalize_all_binddt_ret :=
-  match goal with
-  | |- context[binddt (T := ?T) ?f (?rtn ?t)] =>
-      change (rtn t) with (ret (T := T) t)
+Ltac assert_not_ret mret :=
+  match mret with
+  | ret (T := ?T) => fail
+  | _ => idtac
   end.
+
+Ltac assert_ret mret :=
+  match mret with
+  | ret (T := ?T) => idtac
+  | _ => fail
+  end.
+
+Ltac normalize_all_ret :=
+  repeat match goal with
+    | |- context[?rtn ?t] =>
+        assert_not_ret rtn;
+        progress (change (rtn t) with (ret (T := _) t))
+    end.
+
+Ltac normalize_all_binddt_ret :=
+  repeat match goal with
+    | |- context[binddt (T := ?T) ?f (?rtn ?t)] =>
+        assert_not_ret rtn;
+        progress (change (rtn t) with (ret (T := T) t))
+    end.
 
 Ltac does_match_binddt_ret t :=
   match t with
@@ -371,7 +392,8 @@ Ltac simplify_bindd_post :=
 Ltac simplify_bindd :=
   match goal with
   | |- context[bindd (T := ?T) ?f (ret ?t)] =>
-      idtac "bindt_ret should be called here"
+      idtac "bindd_ret could be called here, skipping";
+      fail
   | |- context[bindd (T := ?T)] =>
       debug "simplify_bindd_start";
       rewrite (bindd_to_binddt (T := T));

@@ -522,6 +522,14 @@ Section locally_nameless_utilities.
       subst_loc x u (Fr x) = u.
   Proof. intros. cbn. now compare values x and x. Qed.
 
+  Lemma subst_loc_eq_impl : forall (u : T LN) x y,
+      Fr x = y -> subst_loc x u y = u.
+  Proof. intros. subst. now rewrite subst_loc_eq. Qed.
+
+  Lemma subst_loc_fr_eq_impl : forall (u : T LN) x y,
+      x = y -> subst_loc x u (Fr y) = u.
+  Proof. intros. subst. now rewrite subst_loc_eq. Qed.
+
   Lemma subst_loc_neq : forall (u : T LN) x y,
       y <> x -> subst_loc x u (Fr y) = ret (Fr y).
   Proof. intros. cbn. now compare values x and y. Qed.
@@ -650,6 +658,24 @@ Section locally_nameless_utilities.
   Qed.
 
 End locally_nameless_utilities.
+
+
+Create HintDb subst_local.
+
+#[export] Hint Rewrite
+  @subst_loc_eq: subst_local.
+
+#[export] Hint Rewrite
+  @subst_loc_eq_impl
+  @subst_loc_fr_eq_impl
+  @subst_loc_b
+  @subst_loc_neq
+  @subst_loc_fr_neq
+  using solve [auto]: subst_local.
+
+Ltac simplify_subst_local :=
+  autorewrite with subst_local.
+
 
 #[export] Hint Rewrite @in_ret_iff @ind_ret_iff
      using typeclasses eauto : tea_local.

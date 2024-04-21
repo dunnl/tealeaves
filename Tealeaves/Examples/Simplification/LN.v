@@ -140,23 +140,44 @@ Ltac refold_subst :=
       try change (bind (subst_loc x u) t) with (subst x u t)
     end.
 
-Ltac simplify_subst_loc :=
-  rewrite ?subst_loc_neq, ?subst_loc_b,
-  ?subst_loc_fr_neq by auto.
+Lemma subst_to_bind {T U}
+  `{Return T} `{Bind T U}: forall x (u: T LN) (t: U LN),
+    subst x u t = bind (subst_loc x u) t.
+Proof.
+  reflexivity.
+Qed.
+
+(* mret is some expression being tested for matching
+   (ret x) for some x *)
+Ltac try_change_to_ret T exp :=
+  match exp with
+  | context[?mret ?t] =>
+      change (mret t) with (ret (T := T) t)
+  end.
 
 Ltac simplify_subst :=
-  debug "simplify_ln_subst_start";
-  unfold subst;
-  autounfold with tea_ret_coercions;
-  simplify_bind;
-  debug "simplify_subst_loc";
-  simplify_subst_loc;
-  refold_subst;
+  debug "simplify_ln_subst| start";
+  match goal with
+  | |- context[subst (T := ?T) ?x ?u ?t] =>
+      debug "simplify_ln_subst| test for ret";
+      try_change_to_ret T t;
+      rewrite subst_ret;
+      debug "simplify_ln_subst| changed to ret";
+      simplify_subst_local
+  | |- context[subst (T := ?T) ?x ?u ?t] =>
+      debug "simplify_ln_subst| not ret";
+      rewrite (subst_to_bind x u t);
+      simplify_bind;
+      refold_subst
+  | |- _ => fail
+  end;
   debug "simplify_ln_subst_end".
+
 
 (** * Simplifying everything *)
 (******************************************************************************)
 Ltac simplify_LN :=
+  autounfold with tea_ret_coercions;
   debug "simplify_LN";
   match goal with
   | |- context[LCn ?t] =>

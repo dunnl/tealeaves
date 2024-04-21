@@ -180,8 +180,7 @@ Proof.
         intuition. }
       { autorewrite with tea_rw_uniq tea_rw_disj in *.
         intuition. }
-    + simplify_subst.
-      apply j_var.
+    + simplify. apply j_var.
       { autorewrite with tea_rw_uniq tea_rw_disj in *.
         intuition. }
       { eauto using binds_remove_mid. }
