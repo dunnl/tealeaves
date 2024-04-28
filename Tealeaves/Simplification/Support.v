@@ -5,6 +5,8 @@ From Tealeaves Require Export
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
 
+Import Monoid.Notations.
+
 (*|
 ========================================
 Extra lemmas for simplification support

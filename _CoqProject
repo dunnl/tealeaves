@@ -130,18 +130,18 @@ Tealeaves/Simplification/Binddt.v
 Tealeaves/Simplification/DeriveDTM.v
 Tealeaves/Simplification/Simplification.v
 
-# LN BACKEND
+# BACKENDS
+## LN
 Tealeaves/Backends/LN/Atom.v
 Tealeaves/Backends/LN/AtomSet.v
 Tealeaves/Backends/LN/AssocList.v
 Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN/Simplification.v
 Tealeaves/Backends/LN.v
-
-# DB BACKEND
+## DB
 Tealeaves/Backends/DB/DB.v
-
-# LN <-> DB ADAPTER
+#Tealeaves/Backends/DB/DB2.v
+## Adapter
 Tealeaves/Backends/Adapters/Key.v
 Tealeaves/Backends/Adapters/LNtoDB.v
 

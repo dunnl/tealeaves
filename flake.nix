@@ -20,7 +20,7 @@
     in { packages.x86_64-linux.default = tealeaves;
          packages.x86_64-linux.tealeaves = tealeaves;
          packages.x86_64-linux.tealeaves-examples = tealeaves-examples;
-         devShells.x86_64-linux.default = tealeaves-examples;
+         devShells.x86_64-linux.default = tealeaves;
          devShells.x86_64-linux.tealeaves = tealeaves;
          devShells.x86_64-linux.tealeaves-examples = tealeaves-examples;
        };

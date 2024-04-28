@@ -1,35 +1,33 @@
-From Tealeaves.Misc Require Import
+From Tealeaves.Misc Require Export
   NaturalNumbers.
-From Tealeaves.Theory Require Import
-  TraversableFunctor
-  DecoratedTraversableFunctor
+From Tealeaves.Theory Require Export
   DecoratedTraversableMonad.
-
-From Tealeaves Require Import
-  Backends.LN.
-From Tealeaves.Adapters Require Import
-  MonadToApplicative
-  KleisliToCategorical.Monad.
 
 Import PeanoNat.Nat.
 Import Coq.Init.Nat. (* Nat notations *)
+Open Scope nat_scope.
 
-Import
-  Product.Notations
-  Monoid.Notations
-  Batch.Notations
-  List.ListNotations
-  Subset.Notations
-  Kleisli.Monad.Notations
-  Kleisli.Comonad.Notations
-  ContainerFunctor.Notations
-  DecoratedMonad.Notations
-  DecoratedContainerFunctor.Notations
-  DecoratedTraversableMonad.Notations.
+Implicit Types (ρ: nat -> nat).
+
+Module Notations.
+  Export Categorical.Applicative.Notations.
+  Export Kleisli.Comonad.Notations.
+  Export Kleisli.DecoratedMonad.Notations.
+  Export Kleisli.TraversableFunctor.Notations.
+  Export Kleisli.TraversableMonad.Notations.
+  Export Kleisli.DecoratedTraversableFunctor.Notations.
+  Export Kleisli.DecoratedTraversableMonad.Notations.
+  Export Kleisli.DecoratedContainerFunctor.Notations.
+  Export Categorical.ContainerFunctor.Notations.
+  Export Misc.Product.Notations.
+  Export Monoid.Notations.
+  Export Misc.Subset.Notations.
+  Export List.ListNotations.
+End Notations.
+
+Import Notations.
 
 #[local] Generalizable Variables W T U.
-
-Open Scope nat_scope.
 
 (* Iterate an endofunction <<n>> times *)
 Fixpoint iterate (n : nat) {A : Type} (f : A -> A) :=
@@ -64,27 +62,9 @@ Proof.
   reflexivity.
 Qed.
 
-(** ** Operations with policy *)
+(** * Closure *)
 (******************************************************************************)
-Definition map_with_policy `{Mapd nat T}
-  (policy : (nat -> nat) -> (nat -> nat)) (ρ : nat -> nat): T nat -> T nat :=
-  mapd (fun '(depth, ix) => iterate depth policy ρ ix).
-
-Definition bind_with_policy `{Bindd nat T U}
-  (policy : (nat -> T nat) -> (nat -> T nat)) (σ : nat -> T nat): U nat -> U nat :=
-  bindd (fun '(depth, ix) => iterate depth policy σ ix).
-
-  (* Given a depth and local substitution σ,
-       adjust σ to account for the depth
-       - σ should be a top-level map, e.g.
-         σ 0 is the replacement for the first free variable
-         σ 1 is the replacement for the second free variable
-         ...
-   *)
-
-(** ** De Bruijn operations as defined by Tealeaves *)
-(******************************************************************************)
-Section ops.
+Section section.
 
   Context
     `{ret_inst : Return T}
@@ -115,289 +95,103 @@ Section ops.
   Definition closed (t: U nat): Prop :=
     closed_gap 0 t.
 
-  (*
-  (* Local function for incrementing free variables
-     by <<n>> *)
-  (* n: A value by which to increment free indices *)
-  Definition raiseFreeBy_loc (n : nat) (p : nat * nat) : nat :=
-    match p with
-    | (depth, ix) =>
-        if bound_in ix depth
-        then ix
-        else ix + n
-    end.
+End section.
 
-  (* Increment all free indices by <<n>> *)
-  Definition raiseFreeBy (n: nat): T nat -> T nat :=
-    mapd (raiseFreeBy_loc n).
-  *)
-
-  (* Given a depth and renaming ρ, adjust ρ to account for the
-     depth *)
-  Definition liftRenamingBy: nat -> (nat -> nat) -> (nat -> nat) :=
-    fun depth ρ ix =>
-      if bound_in ix depth
-      then ix
-      else let normalized_ix := ix - depth
-           in ρ normalized_ix + depth.
-
-  Definition lift__ren (ρ : nat -> nat) (p: nat * nat): nat :=
-    match p with
-    | (depth, ix) => liftRenamingBy depth ρ ix
-    end.
-
-  Definition rename (ρ : nat -> nat): T nat -> T nat :=
-    mapd (T := T) (lift__ren ρ).
-
-  (* Given a depth and substitution σ, adjust σ to account for the
-       depth *)
-  Definition liftSubstitutionBy: nat -> (nat -> T nat) -> (nat -> T nat) :=
-    fun depth σ ix =>
-      if bound_in ix depth
-      then ret ix
-      else let normalized_ix := ix - depth
-           in rename (fun n => n + depth) (σ normalized_ix).
-
-  Definition lift__sub (σ : nat -> T nat) (p: nat * nat): T nat :=
-    match p with
-    | (depth, ix) => liftSubstitutionBy depth σ ix
-    end.
-
-  Definition subst (σ : nat -> T nat) : U nat -> U nat :=
-    bindd (lift__sub σ).
-
-  (*
-  Definition one (u: T nat): nat -> T nat :=
-    fun n => if n =? 0 then u else ret n.
-
-  Definition subst_one (u : T nat) : U nat -> U nat :=
-    subst (one u).
-  *)
-
-End ops.
-
-Section alt_presentation.
-
-  Context
-    `{ret_inst : Return T}
-      `{Mapd_T_inst : Mapd nat T}
-      `{Mapd_U_inst : Mapd nat U}
-      `{Bindd_U_inst : Bindd nat T U}
-      `{ToCtxset_U_inst : ToCtxset nat U}.
-
-  Definition scons {X : Type} : X -> (nat -> X) -> (nat -> X)  :=
-    fun new sub n => match n with
-                  | O => new
-                  | S n' => sub n'
-                  end.
-
-  Definition uparrow: nat -> nat := S.
-
-  (* adjust a renaming to go under one binder *)
-  Definition up__ren (ρ: nat -> nat): nat -> nat :=
-    scons 0 (S ∘ ρ).
-
-  Definition rename_alt: forall (ρ : nat -> nat), T nat -> T nat :=
-    map_with_policy up__ren.
-
-  (* adjust a substitution to go under one binder *)
-  Definition up (σ: nat -> T nat): nat -> T nat :=
-    scons (ret 0) (rename_alt S ∘ σ).
-
-  Definition subst_alt (σ : nat -> T nat): U nat -> U nat :=
-    bind_with_policy (T := T) (U := U) up σ.
-
-  (*
-  Definition incrementFree: T nat -> T nat :=
-    map_with_policy up__ren uparrow.
-
-  Goal incrementFree = rename_alt S.
-    reflexivity.
-  Qed.
-  *)
-
-End alt_presentation.
-
-#[local] Notation "↑" := uparrow.
-#[local] Notation "'⇑'" := up.
-#[local] Notation "'⇑__ren'" := up.
-#[local] Notation "f '✪' g" := (kc1 g f) (at level 30).
-#[local] Infix "⋅" := (scons) (at level 10).
-
-Lemma scons_rw0 {A}: forall `(x: A) σ, (x ⋅ σ) 0 = x.
+(** ** Boundedness and closure *)
+(******************************************************************************)
+Lemma bound_in_zero: forall ix,
+    bound_in ix 0 = false.
 Proof.
   reflexivity.
 Qed.
 
-Lemma scons_rw1 {A}: forall `(x: A) (n: nat) σ, (x ⋅ σ) (S n) = σ n.
+Lemma bound_in_lt: forall ix n,
+    ix < n ->
+    bound_in ix n = true.
 Proof.
-  reflexivity.
+  introv Hlt.
+  rewrite <- ltb_lt in Hlt.
+  unfold bound_in, bound_in_gap.
+  replace (n + 0) with n by lia.
+  destruct n; auto.
 Qed.
 
-Lemma scons_sub_id {X}: forall (σ: nat -> X),
-    (σ 0) ⋅ (σ ∘ S) = σ.
-Proof.
-  intros.
-  ext ix.
-  destruct ix.
-  - rewrite scons_rw0.
-    reflexivity.
-  - rewrite scons_rw1.
-    reflexivity.
-Qed.
-
-(*
-Lemma scons_sub_id {X}: forall (σ: nat -> T nat),
-    (x ⋅ σ) ∘ rename S = σ.
-Proof.
-  intros.
-  ext ix.
-  destruct ix.
-  - rewrite scons_rw0.
-    reflexivity.
-  - rewrite scons_rw1.
-    reflexivity.
-Qed.
-*)
-
-Implicit Types (ρ: nat -> nat).
-
-Section theory.
-
-
-  Lemma bound_in_zero: forall ix,
-      bound_in ix 0 = false.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma bound_in_lt: forall ix n,
-      ix < n ->
+Lemma bound_in_lt_iff: forall ix n,
+    ix < n <->
       bound_in ix n = true.
-  Proof.
-    introv Hlt.
-    rewrite <- ltb_lt in Hlt.
-    unfold bound_in, bound_in_gap.
-    replace (n + 0) with n by lia.
-    destruct n; auto.
-  Qed.
+Proof.
+  intros. split.
+  - apply bound_in_lt.
+  - cbn. destruct n.
+    + inversion 1.
+    + cbn. rewrite leb_le. lia.
+Qed.
 
-  Lemma bound_in_lt_iff: forall ix n,
-      ix < n <->
-      bound_in ix n = true.
-  Proof.
-    intros. split.
-    - apply bound_in_lt.
-    - cbn. destruct n.
-      + inversion 1.
-      + cbn.
-        rewrite OrdersEx.Nat_as_OT.leb_le.
-        lia.
-  Qed.
+Lemma bound_in_ge: forall ix n,
+    ix >= n ->
+    bound_in ix n = false.
+Proof.
+  introv Hlt.
+  unfold bound_in, bound_in_gap.
+  replace (n + 0) with n by lia.
+  destruct n; cbn; auto.
+  now rewrite leb_gt.
+Qed.
 
-  Lemma bound_in_ge: forall ix n,
-      ix >= n ->
+Lemma bound_in_ge_iff: forall ix n,
+    ix >= n <->
       bound_in ix n = false.
-  Proof.
-    introv Hlt.
-    unfold bound_in, bound_in_gap.
-    replace (n + 0) with n by lia.
-    destruct n; cbn; auto.
-    now rewrite leb_gt.
-  Qed.
+Proof.
+  intros. split.
+  - apply bound_in_ge.
+  - cbn. replace (n + 0) with n by lia.
+    destruct n.
+    + lia.
+    + intros.
+      rewrite leb_gt in H.
+      lia.
+Qed.
 
-  Lemma bound_in_ge_iff: forall ix n,
-      ix >= n <->
-      bound_in ix n = false.
-  Proof.
-    intros. split.
-    - apply bound_in_ge.
-    - cbn. replace (n + 0) with n by lia.
-      destruct n.
-      + lia.
-      + intros.
-        rewrite leb_gt in H.
-        lia.
-  Qed.
+Lemma bound_in_ind: forall ix n (P:Prop),
+    (ix >= n -> bound_in ix n = false -> P) ->
+    (ix < n -> bound_in ix n = true -> P) ->
+    P.
+Proof.
+  introv.
+  rewrite <- bound_in_ge_iff.
+  rewrite <- bound_in_lt_iff.
+  introv Hge Hlt.
+  compare naturals ix and n; auto.
+  apply Hge; lia.
+Qed.
 
-  Lemma bound_in_ind: forall ix n (P:Prop),
-      (ix >= n -> bound_in ix n = false -> P) ->
-      (ix < n -> bound_in ix n = true -> P) ->
-      P.
-  Proof.
-    introv.
-    rewrite <- bound_in_ge_iff.
-    rewrite <- bound_in_lt_iff.
-    introv Hge Hlt.
-    compare naturals ix and n; auto.
-    apply Hge; lia.
-  Qed.
+Lemma bound_in_mono: forall ix n m,
+    m > n ->
+    bound_in ix n = true ->
+    bound_in ix m = true.
+Proof.
+  introv Hlt Hbound.
+  rewrite <- bound_in_lt_iff in Hbound.
+  rewrite <- bound_in_lt_iff.
+  lia.
+Qed.
 
-  Lemma bound_in_mono: forall ix n m,
-      m > n ->
-      bound_in ix n = true ->
-      bound_in ix m = true.
-  Proof.
-    introv Hlt Hbound.
-    rewrite <- bound_in_lt_iff in Hbound.
-    rewrite <- bound_in_lt_iff.
-    lia.
-  Qed.
+Lemma bound_rev_mono: forall ix n m,
+    m < n ->
+    bound_in ix n = false ->
+    bound_in ix m = false.
+Proof.
+  introv Hlt Hbound.
+  rewrite <- bound_in_ge_iff in Hbound.
+  rewrite <- bound_in_ge_iff.
+  lia.
+Qed.
 
-  Lemma bound_rev_mono: forall ix n m,
-      m < n ->
-      bound_in ix n = false ->
-      bound_in ix m = false.
-  Proof.
-    introv Hlt Hbound.
-    rewrite <- bound_in_ge_iff in Hbound.
-    rewrite <- bound_in_ge_iff.
-    lia.
-  Qed.
-
-  Lemma bound_in_1: forall ix,
-      bound_in ix 1 = true <-> ix = 0.
-  Proof.
-    destruct ix; intuition.
-  Qed.
-
-  (*
-  Lemma raiseFreeBy_loc_lt: forall n depth ix,
-      ix < depth ->
-      raiseFreeBy_loc n (depth, ix) = ix.
-  Proof.
-    intros. unfold raiseFreeBy_loc.
-    rewrite bound_in_lt_iff in H.
-    now rewrite H.
-  Qed.
-
-  Lemma raiseFreeBy_loc_ge: forall n depth ix,
-      ix >= depth ->
-      raiseFreeBy_loc n (depth, ix) = ix + n.
-  Proof.
-    intros. unfold raiseFreeBy_loc.
-    rewrite bound_in_ge_iff in H.
-    now rewrite H.
-  Qed.
-
-  Lemma raiseFreeBy_loc_zero:
-    raiseFreeBy_loc 0 = extract.
-  Proof.
-    ext [depth ix].
-    cbn. replace (depth + 0) with depth by lia.
-    destruct depth.
-    - lia.
-    - destruct (ix <=? depth); lia.
-  Qed.
-
-  Lemma raiseFreeBy_loc_depth_zero: forall n ix,
-      raiseFreeBy_loc n (0, ix) = ix + n.
-  Proof.
-    reflexivity.
-  Qed.
-  *)
-
-End theory.
+Lemma bound_in_1: forall ix,
+    bound_in ix 1 = true <-> ix = 0.
+Proof.
+  destruct ix; intuition.
+Qed.
 
 Ltac bound_induction :=
   match goal with
@@ -410,6 +204,94 @@ Ltac bound_induction :=
       try solve [lia | easy]
   end.
 
+(* Autosubst lift *)
+(* plus with different simplification behaviour *)
+Definition lift (x y : nat) : nat := plus x y.
+Arguments lift x y/.
+Notation "( + x )" := (lift x) (format "( + x )").
+
+Lemma lift0 : (+0) = id. reflexivity. Qed.
+
+Lemma lift_comp :forall m n, (+m) ∘ (+n) = (+ (m + n)).
+Proof.
+  intros. unfold compose, lift. ext y.
+  lia.
+Qed.
+
+Ltac normalize_lift :=
+  rewrite ?lift_comp.
+
+(*
+Lemma lift_scons x f n : (+S n) >>> (x .: f) = (+n) >>> f.
+Proof. reflexivity. Qed.
+
+Lemma lift_comp n m : (+n) >>> (+m) = (+m+n).
+Proof. f_ext; intros x; simpl. now rewrite plusA. Qed.
+
+Lemma lift_compR n m f : (+n) >>> ((+m) >>> f) = (+m+n) >>> f.
+Proof. now rewrite <- lift_comp. Qed.
+
+End LemmasForFun.
+
+Lemma lift_eta n : n .: (+S n) = (+ n).
+Proof. apply (scons_eta id). Qed.
+*)
+
+(** * De Bruijn operations *)
+(******************************************************************************)
+Section ops.
+
+  Context
+    `{ret_inst : Return T}
+      `{Mapd_T_inst : Mapd nat T}
+      `{Mapd_U_inst : Mapd nat U}
+      `{Bindd_U_inst : Bindd nat T U}
+      `{ToCtxset_U_inst : ToCtxset nat U}.
+
+  (* Given a depth and renaming ρ, adjust ρ to account for the
+     depth *)
+  Definition lift__ren: nat -> (nat -> nat) -> (nat -> nat) :=
+    fun depth ρ ix =>
+      if bound_in ix depth
+      then ix
+      else let normalized_ix := ix - depth
+           in ρ normalized_ix + depth.
+
+  Definition local__ren (ρ : nat -> nat) (p: nat * nat): nat :=
+    match p with
+    | (depth, ix) => lift__ren depth ρ ix
+    end.
+
+  Definition rename (ρ : nat -> nat): T nat -> T nat :=
+    mapd (T := T) (local__ren ρ).
+
+  (* Given a depth and substitution σ, adjust σ to account for the
+       depth *)
+  Definition lift__sub: nat -> (nat -> T nat) -> (nat -> T nat) :=
+    fun depth σ ix =>
+      if bound_in ix depth
+      then ret ix
+      else let normalized_ix := ix - depth
+           in rename (+ depth) (σ normalized_ix).
+
+  Definition local__sub (σ : nat -> T nat) (p: nat * nat): T nat :=
+    match p with
+    | (depth, ix) => lift__sub depth σ ix
+    end.
+
+  Definition subst (σ : nat -> T nat) : U nat -> U nat :=
+    bindd (local__sub σ).
+
+  Definition one (u: T nat): nat -> T nat :=
+    fun n => if n =? 0 then u else ret n.
+
+  Definition subst_one (u : T nat) : U nat -> U nat :=
+    subst (one u).
+
+End ops.
+
+(** ** Properties of renaming *)
+(******************************************************************************)
 Section theory.
 
   Context
@@ -449,43 +331,25 @@ Section theory.
                         (unit := Monoid_unit_zero)
                         (op := Monoid_op_plus)}.
 
-  (*
-  Lemma raiseFreeBy_loc_raiseFreeBy_loc1: forall n m depth ix,
-      raiseFreeBy_loc m (depth, raiseFreeBy_loc n (depth, ix)) =
-        raiseFreeBy_loc (m + n) (depth, ix).
+  (** ** Renaming and <<ret>> *)
+  (******************************************************************************)
+  Lemma lift__ren_zero:
+    lift__ren 0 = id.
   Proof.
-    intros. unfold raiseFreeBy_loc.
-    - bound_induction.
-      + bound_induction.
-      + bound_induction.
-  Qed.
-
-  Lemma raiseFreeBy_loc_raiseFreeBy_loc2: forall (n m: nat),
-      raiseFreeBy_loc m ⋆4 raiseFreeBy_loc n = raiseFreeBy_loc (m + n).
-  Proof.
-    intros. ext [depth ix].
-    unfold kc4, compose.
-    unfold_ops @Cobind_reader.
-    rewrite raiseFreeBy_loc_raiseFreeBy_loc1.
+    unfold lift__sub.
+    ext ρ ix. cbn; unfold id.
+    replace (ix - 0) with ix by lia.
+    replace (ρ ix + 0) with (ρ ix) by lia.
     reflexivity.
   Qed.
-  *)
 
-  Lemma lift__ren_id:
-    lift__ren id = extract.
+  Corollary local__ren_zero: forall ρ ix,
+    local__ren ρ (0, ix) = ρ ix.
   Proof.
-    ext [depth ix].
-    cbn.
-    unfold liftRenamingBy, id.
-    bound_induction.
-  Qed.
-
-  Lemma lift__ren_zero: forall ρ ix,
-    lift__ren ρ (0, ix) = ρ ix.
-  Proof.
-    intros. cbn.
-    rewrite add_0_r.
-    fequal. lia.
+    intros.
+    unfold local__ren.
+    rewrite lift__ren_zero.
+    reflexivity.
   Qed.
 
   Corollary rename_ret: forall ρ ix,
@@ -495,72 +359,84 @@ Section theory.
     unfold rename.
     compose near ix.
     rewrite mapd_ret.
-    unfold transparent tcs.
-    unfold compose. cbn.
-    fequal. rewrite add_0_r.
-    fequal. lia.
-  Qed.
-
-  Lemma liftRenamingBy_zero:
-    liftRenamingBy 0 = id.
-  Proof.
-    unfold liftSubstitutionBy. ext σ ix. cbn.
-    replace (ix - 0) with ix by lia.
-    replace (σ ix + 0) with (σ ix) by lia.
+    unfold compose.
+    match goal with
+    | [|- context[@ret _ _ ?x]] =>
+        try let s := constr:(ret x) in progress change (ret x) with s
+    end.
+    unfold_ops @Return_Writer.
+    unfold_ops @Monoid_unit_zero.
+    rewrite local__ren_zero.
     reflexivity.
   Qed.
 
-  Lemma liftRenamingBy_compose : forall (n m: nat),
-      liftRenamingBy m ∘ liftRenamingBy n = liftRenamingBy (m + n).
+  (** ** Renaming identity *)
+  (******************************************************************************)
+  Lemma lift__ren_id: forall depth,
+      lift__ren depth id = id.
   Proof.
-    intros. ext σ ix.
-    unfold compose, liftRenamingBy.
+    unfold lift__ren.
+    intro depth. ext ix.
+    unfold id.
     bound_induction.
-    - bound_induction.
-      + bound_induction.
-        rewrite (add_comm m n).
-        rewrite add_assoc.
-        fequal. fequal. fequal. lia.
-      + bound_induction.
-    - bound_induction.
   Qed.
 
-  Corollary liftRenamingBy_S: forall (n: nat) ρ,
-      liftRenamingBy (S n) ρ = liftRenamingBy n (liftRenamingBy 1 ρ).
+  Corollary local__ren_id:
+    local__ren id = extract.
   Proof.
-    intros.
-    replace (S n) with (n + 1) by lia.
-    compose near ρ on right.
-    now rewrite liftRenamingBy_compose.
+    ext [depth ix].
+    unfold local__ren.
+    rewrite lift__ren_id.
+    reflexivity.
   Qed.
 
-  Lemma iterate_liftRenamingBy: forall n,
-      liftRenamingBy n = iterate n (liftRenamingBy 1).
+  Lemma remame_id:
+    rename id = (@id (T nat)).
   Proof.
-    intros.
-    induction n.
-    - rewrite liftRenamingBy_zero.
-      reflexivity.
-    - ext ρ.
-      rewrite liftRenamingBy_S.
-      rewrite IHn.
-      rewrite iterate_rw1.
-      reflexivity.
+    unfold rename.
+    rewrite local__ren_id.
+    apply mapd_id.
+  Qed.
+
+  (** ** Composition of renaming *)
+  (******************************************************************************)
+  Lemma lift__ren_loc_compose1: forall depth ix ρ1 ρ2,
+      ix >= depth ->
+      lift__ren depth ρ2 (ρ1 (ix - depth) + depth) =
+        ρ2 (ρ1 (ix - depth)) + depth.
+  Proof.
+    intros. unfold lift__ren.
+    bound_induction.
+    cbn. fequal. fequal. lia.
+  Qed.
+
+  Lemma lift__ren_loc_compose2: forall ρ depth ix,
+      ix < depth ->
+      lift__ren depth ρ ix = ix.
+  Proof.
+    intros. unfold lift__ren.
+    bound_induction.
+  Qed.
+
+  Lemma lift__ren_loc_compose: forall depth ρ1 ρ2,
+      lift__ren depth ρ2 ∘ lift__ren depth ρ1 =
+        lift__ren depth (ρ2 ∘ ρ1).
+  Proof.
+    intros. ext ix.
+    unfold compose.
+    unfold lift__ren at 2 3.
+    bound_induction;
+      auto using lift__ren_loc_compose1, lift__ren_loc_compose2.
   Qed.
 
   Lemma rename_rename_loc: forall ρ2 ρ1,
-      lift__ren ρ2 ⋆4 lift__ren ρ1 = lift__ren (ρ2 ∘ ρ1).
+      local__ren ρ2 ⋆4 local__ren ρ1 = local__ren (ρ2 ∘ ρ1).
   Proof.
     intros.
-    ext [depth ix].
-    cbn.
+    ext [depth ix]. cbn.
     compose near ix on left.
-    unfold liftRenamingBy.
-    unfold compose.
-    bound_induction.
-    bound_induction.
-    fequal. fequal. lia.
-    bound_induction.
+    rewrite lift__ren_loc_compose.
+    reflexivity.
   Qed.
 
   Lemma rename_rename : forall ρ2 ρ1,
@@ -573,36 +449,142 @@ Section theory.
     reflexivity.
   Qed.
 
-  Lemma liftSubstitutionBy_zero:
-    liftSubstitutionBy 0 = id.
+  (** ** Iterating lifting *)
+  (******************************************************************************)
+  Lemma lift__ren_compose: forall (n m: nat),
+      lift__ren m ∘ lift__ren n = lift__ren (m + n).
+  Proof.
+    intros. ext σ ix.
+    unfold compose, lift__ren.
+    bound_induction.
+    - bound_induction.
+      + bound_induction.
+        rewrite (add_comm m n).
+        rewrite add_assoc.
+        fequal. fequal. fequal. lia.
+      + bound_induction.
+    - bound_induction.
+  Qed.
+
+  Corollary lift__ren_S: forall (n: nat) ρ,
+      lift__ren (S n) ρ = lift__ren n (lift__ren 1 ρ).
+  Proof.
+    intros.
+    replace (S n) with (n + 1) by lia.
+    compose near ρ on right.
+    now rewrite lift__ren_compose.
+  Qed.
+
+  Lemma lift__ren_iter: forall n,
+      lift__ren n = iterate n (lift__ren 1).
+  Proof.
+    intros.
+    induction n.
+    - rewrite lift__ren_zero.
+      reflexivity.
+    - ext ρ.
+      rewrite lift__ren_S.
+      rewrite IHn.
+      rewrite iterate_rw1.
+      reflexivity.
+  Qed.
+
+  Lemma local__ren_preincr (ρ : nat -> nat) (n: nat):
+    (local__ren ρ) ⦿ n =
+      local__ren (lift__ren n ρ).
+  Proof.
+    ext (depth, ix); cbn.
+    change (?n ● ?m) with (n + m).
+    compose near ρ.
+    rewrite (lift__ren_compose).
+    fequal; lia.
+  Qed.
+
+  (** * Properties of substitution *)
+  (******************************************************************************)
+
+  (** ** Substitution and ret *)
+  (******************************************************************************)
+  Lemma lift__sub_zero:
+    lift__sub 0 = id.
   Proof.
     ext σ ix. unfold id.
-    unfold liftSubstitutionBy.
+    unfold lift__sub.
     cbn.
     replace (ix - 0) with ix by lia.
-    replace (fun n => n + 0) with (@id nat).
-    2:{ ext n. unfold id. lia. }
+    replace (+ 0) with (@id nat).
+    2:{ ext n. unfold lift, id. lia. }
     unfold rename.
-    rewrite lift__ren_id.
+    rewrite local__ren_id.
     rewrite mapd_id.
     reflexivity.
   Qed.
 
-  Lemma liftSubstitutionBy_compose : forall (n m: nat),
-      liftSubstitutionBy m ∘ liftSubstitutionBy n =
-        liftSubstitutionBy (m + n).
+  Lemma subst_compose_ret: forall σ x,
+      (local__sub σ ∘ ret) x = σ x.
+  Proof.
+    intros.
+    unfold_ops @Return_Writer @Monoid_unit_zero.
+    unfold compose.
+    unfold local__sub.
+    rewrite lift__sub_zero.
+    reflexivity.
+  Qed.
+
+  Lemma subst_ret: forall σ x,
+      subst σ (ret x) = σ x.
+  Proof.
+    intros.
+    unfold subst.
+    compose near x on left.
+    rewrite bindd_ret.
+    apply subst_compose_ret.
+  Qed.
+
+  (** ** Substitution and identity *)
+  (******************************************************************************)
+  Lemma lift__sub_id: forall depth ix,
+      lift__sub depth ret ix = (ret ∘ extract) (depth, ix).
+  Proof.
+    intros.
+    unfold lift__sub.
+    bound_induction.
+    rewrite rename_ret.
+    unfold compose. cbn.
+    fequal. lia.
+  Qed.
+
+  Corollary local__subst_id:
+    local__sub (T := T) (@ret T _ nat) = ret ∘ extract.
+  Proof.
+    unfold local__sub. ext [depth ix].
+    apply lift__sub_id.
+  Qed.
+
+  Lemma subst_id:
+      subst (@ret T _ nat) = id.
+  Proof.
+    unfold subst.
+    rewrite local__subst_id.
+    apply bindd_id.
+  Qed.
+
+  (** ** Iterated lifting *)
+  (******************************************************************************)
+  Lemma lift__sub_compose : forall (n m: nat),
+      lift__sub m ∘ lift__sub n =
+        lift__sub (m + n).
   Proof.
     intros. ext σ ix.
-    unfold compose, liftSubstitutionBy.
+    unfold compose, lift__sub.
     bound_induction.
     - bound_induction.
       + bound_induction.
         compose near (σ (ix - m - n)) on left.
         rewrite rename_rename.
-        unfold compose at 1.
-        fequal.
-        * ext x. lia.
-        * fequal. lia.
+        rewrite lift_comp.
+        fequal. fequal.
+        lia.
       + bound_induction.
         compose near (ix - m).
         unfold rename.
@@ -614,223 +596,156 @@ Section theory.
     - bound_induction.
   Qed.
 
-  Corollary liftSubstitutionBy_S: forall (n: nat) σ,
-      liftSubstitutionBy (S n) σ =
-        liftSubstitutionBy n (liftSubstitutionBy 1 σ).
+  Corollary lift__sub_S: forall (n: nat) σ,
+      lift__sub (S n) σ =
+        lift__sub n (lift__sub 1 σ).
   Proof.
     intros.
     replace (S n) with (n + 1) by lia.
     compose near σ on right.
-    now rewrite liftSubstitutionBy_compose.
+    now rewrite lift__sub_compose.
   Qed.
 
-  Lemma iterate_liftSubstitutionBy: forall n,
-      liftSubstitutionBy n = iterate n (liftSubstitutionBy 1).
+  Lemma lift__sub_iter: forall n,
+      lift__sub n = iterate n (lift__sub 1).
   Proof.
     intros. induction n.
-    - rewrite liftSubstitutionBy_zero.
+    - rewrite lift__sub_zero.
       reflexivity.
     - ext σ.
-      rewrite liftSubstitutionBy_S.
+      rewrite lift__sub_S.
       rewrite iterate_rw1'.
       rewrite IHn.
       reflexivity.
   Qed.
 
-  Lemma liftRenamingBy_spec: forall ρ n,
-      ret ∘ liftRenamingBy n ρ = liftSubstitutionBy n (ret ∘ ρ).
+  Lemma local__sub_preincr (σ : nat -> T nat) (n: nat):
+    (local__sub σ) ⦿ n =
+      local__sub (lift__sub n σ).
   Proof.
-    intros.
-    ext m.
-    unfold compose; cbn.
-    unfold liftSubstitutionBy, liftRenamingBy.
-    bound_induction.
-    rewrite rename_ret.
-    reflexivity.
-  Qed.
-
-  Lemma lift__ren_preincr (ρ : nat -> nat) (n: nat):
-    lift__ren ρ ⦿ n =
-      lift__ren (liftRenamingBy n ρ).
-  Proof.
-    ext (depth, ix); cbn.
-    change (?n ● ?m) with (n + m).
-    compose near ρ.
-    rewrite (liftRenamingBy_compose).
-    fequal; lia.
-  Qed.
-
-  Lemma lift__sub_preincr (σ : nat -> T nat) (n: nat):
-    lift__sub σ ⦿ n =
-      lift__sub (liftSubstitutionBy n σ).
-  Proof.
-    unfold lift__sub.
+    unfold local__sub.
     ext (depth, ix); cbn.
     compose near σ on right.
-    rewrite (liftSubstitutionBy_compose).
+    rewrite (lift__sub_compose).
     change (?n ● ?m) with (n + m).
     fequal. lia.
   Qed.
 
-  Lemma liftRenamingBy_1:
-      liftRenamingBy 1 = up__ren.
-  Proof.
-    intros. ext ρ ix.
-    unfold liftRenamingBy.
-    unfold up__ren.
-    bound_induction.
-    - cbn. destruct ix.
-      + false.
-      + cbn. unfold compose.
-        rewrite add_1_r.
-        do 2 fequal. lia.
-    - apply bound_in_1 in Hbound.
-      subst. reflexivity.
-  Qed.
-
-  Lemma liftRenaming_policy_repr: forall depth,
-    liftRenamingBy depth = iterate depth up__ren.
-  Proof.
-    intros. induction depth.
-    - ext ρ ix. cbn.
-      rewrite add_0_r.
-      fequal; lia.
-    - ext ρ ix.
-      rewrite iterate_rw1'.
-      rewrite liftRenamingBy_S.
-      rewrite IHdepth.
-      rewrite liftRenamingBy_1.
-      reflexivity.
-  Qed.
-
-  Corollary lift__ren_policy_repr: forall ρ depth ix,
-      lift__ren ρ (depth, ix) = iterate depth up__ren ρ ix.
-  Proof.
-    intros. cbn.
-    rewrite liftRenaming_policy_repr.
-    reflexivity.
-  Qed.
-
-  Lemma rename_policy_repr (ρ : nat -> nat):
-    rename (T := T) ρ = rename_alt ρ.
-  Proof.
-    unfold rename, rename_alt.
-    unfold map_with_policy.
-    fequal. ext [depth ix].
-    apply lift__ren_policy_repr.
-  Qed.
-
-  (*
-  Lemma liftRenaming_S: forall depth ix,
-      liftRenamingBy depth S ix = raiseFreeBy_loc 1 (depth, ix).
+  (** ** Substitution and composition *)
+  (******************************************************************************)
+  Lemma subst_subst_loc: forall (σ2 σ1: nat -> T nat),
+      local__sub (T := T) σ2 ⋆5 local__sub (T := T) σ1 =
+        local__sub (T := T) (subst σ2 ∘ σ1).
   Proof.
     intros.
-    induction depth.
-    - cbn. rewrite add_0_r. lia.
-    - cbn. unfold liftRenamingBy.
-      rewrite add_0_r.
-      bound_induction.
-      + cbn.
-        assert (ix <=? depth = false).
-        rewrite leb_gt. lia.
-        rewrite H.
-        rewrite add_1_r. lia.
-      + assert (ix <=? depth = true).
-        rewrite leb_le. lia. rewrite H. reflexivity.
-  Qed.
-   *)
-
-  (*
-  Corollary lift__ren_S:
-    lift__ren S = raiseFreeBy_loc 1.
-  Proof.
-    ext [depth ix]. cbn.
-    apply liftRenaming_S.
-  Qed.
-   *)
-
-
-  (*
-  Lemma incrementFree_spec:
-    rename (U := U) S = incrementFree.
-  Proof.
-    unfold incrementFree.
-    rewrite rename_policy_repr.
-    reflexivity.
-  Qed.
-  *)
-
-  (*
-  Lemma raiseFreeBy_spec: forall depth,
-    rename (T := T) (fun n => n + depth) = raiseFreeBy depth.
-  Proof.
-    intros.
-    unfold raiseFreeBy.
-    unfold rename.
-    fequal.
-    unfold lift__ren.
-    unfold raiseFreeBy_loc.
-    unfold liftRenamingBy.
-    ext [depth' ix].
-    bound_induction.
-  Qed.
-   *)
-
-  Lemma up_spec:
-    liftSubstitutionBy 1 = up.
-  Proof.
-    ext σ ix.
-    unfold up.
-    unfold liftSubstitutionBy.
-    bound_induction.
-    - apply bound_in_ge_iff in Hbound.
-      assert (Hgt1: exists ix', ix = S ix').
-      { destruct ix. false; lia. eauto. }
-      destruct Hgt1 as [ix' Heq]; subst.
-      rewrite scons_rw1; unfold compose at 1.
-      replace (S ix' - 1) with ix' by lia.
-      rewrite <- rename_policy_repr.
-      fequal. ext n. lia.
-    - apply bound_in_1 in Hbound.
-      now subst.
-  Qed.
-
-  (*
-  Goal forall (n: nat) σ,
-      (0 ⋅ (1 ⋅ σ)) n =
-        if bound_in n 2 then n else σ (n - 2).
-  Proof.
-    intros. bound_induction.
-    - unfold scons.
-      destruct n. lia.
-      destruct n. lia. cbn.
-      fequal. lia.
-    - unfold scons.
-      destruct n. lia.
-      destruct n. lia.
-      lia.
-  Qed.
-  *)
-
-  Lemma lift__sub_policy_repr: forall depth ix σ,
-      lift__sub σ (depth, ix) = iterate depth up σ ix.
-  Proof.
-    intros.
-    unfold lift__sub.
-    rewrite iterate_liftSubstitutionBy.
-    fequal.
-    apply up_spec.
-  Qed.
-
-  Lemma subst_policy_repr (σ : nat -> T nat):
-    subst σ = subst_alt σ.
-  Proof.
-    unfold subst, subst_alt.
-    unfold bind_with_policy.
-    fequal.
+    unfold kc5.
     ext [depth ix].
-    rewrite lift__sub_policy_repr.
+    unfold local__sub at 2 3.
+    unfold lift__sub.
+    bound_induction.
+    2:{ compose near ix on left.
+        rewrite bindd_ret.
+        unfold compose.
+        unfold_ops @Return_Writer.
+        unfold local__sub. cbn.
+        rewrite monoid_id_l.
+        unfold lift__sub.
+        rewrite Hbound. reflexivity. }
+    { unfold compose at 1.
+      unfold rename.
+      rewrite local__sub_preincr.
+      compose near (σ1 (ix - depth)) on left.
+      compose near (σ1 (ix - depth)) on right.
+      rewrite bindd_mapd.
+      unfold subst.
+      rewrite mapd_bindd.
+      fequal.
+      ext [depth' ix'].
+      { rewrite local__ren_preincr.
+        cbn. unfold lift__ren at 1.
+        unfold lift__sub at 3.
+        bound_induction.
+        -  unfold lift at 1.
+           replace (depth + (ix' - depth') + depth') with (ix' + depth) by lia.
+           unfold rename.
+           compose near (σ2 (ix' - depth')).
+           rewrite mapd_mapd.
+           rewrite rename_rename_loc.
+           unfold lift__sub.
+           bound_induction.
+           bound_induction.
+           replace (ix' + depth - depth' - depth) with (ix' - depth') by lia.
+           compose near (σ2 (ix' - depth')) on left.
+           rewrite rename_rename.
+           unfold rename. fequal.
+           unfold compose.
+           fequal.
+           ext m. unfold lift__ren.
+           unfold lift.
+           bound_induction.
+        - compose near ix' on right.
+          rewrite mapd_ret.
+          compose near σ2 on left.
+          rewrite lift__sub_compose.
+          unfold compose. unfold transparent tcs.
+          cbn.
+          unfold lift__sub.
+          bound_induction.
+          fequal.
+          unfold lift__ren.
+          replace (ix' - 0) with ix' by lia. bound_induction.
+      }
+    }
+  Qed.
+
+  Lemma subst_subst : forall (σ2 σ1: nat -> T nat),
+      subst σ2 ∘ subst σ1 = subst (T := T) (subst σ2 ∘ σ1).
+  Proof.
+    intros.
+    unfold subst.
+    rewrite bindd_bindd.
+    rewrite subst_subst_loc.
     reflexivity.
+  Qed.
+
+  Lemma lift__ren_to_sub: forall n ρ,
+      ret ∘ lift__ren n ρ = lift__sub n (ret ∘ ρ).
+  Proof.
+    intros. ext m.
+    unfold compose; cbn.
+    unfold lift__sub, lift__ren.
+    unfold lift.
+    bound_induction.
+    rewrite rename_ret.
+    fequal. lia.
+  Qed.
+
+  Lemma rename_to_subst_loc: forall ρ,
+      ret ∘ local__ren ρ = local__sub (T := T) (ret ∘ ρ).
+  Proof.
+    intros. ext [depth ix].
+    unfold compose. cbn.
+    compose near ix on left.
+    rewrite lift__ren_to_sub.
+    reflexivity.
+  Qed.
+
+  Lemma rename_to_subst : forall ρ,
+      rename ρ = subst (U := T) (ret ∘ ρ).
+  Proof.
+    intros.
+    unfold rename, subst.
+    rewrite mapd_to_bindd.
+    fequal.
+    (* Fails with a universe error for some reason
+    rewrite (rename_to_subst_loc ρ).
+     *)
+    intros. ext [depth ix]. unfold compose.
+    cbn. unfold lift__ren, lift__sub.
+    unfold lift.
+    bound_induction.
+    rewrite rename_ret.
+    fequal; lia.
   Qed.
 
 End theory.

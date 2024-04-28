@@ -325,7 +325,7 @@ Ltac lookup_atom_in_key k a :=
 Tactic Notation "lookup" "atom" constr(a) "in" "key" constr(k) :=
   lookup_atom_in_key k a.
 
-Goal forall k (a: atom), a ∈ k \/ ~ a ∈ k.
+Goal forall (k: key) (a: atom), a ∈ k \/ ~ a ∈ k.
 Proof.
   intros.
   lookup atom a in key k.
