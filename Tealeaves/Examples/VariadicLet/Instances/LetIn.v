@@ -38,6 +38,25 @@ Fixpoint binddt_term
 
 #[export] Instance Binddt_term: Binddt nat term term := @binddt_term.
 
+#[export] Instance Map_term: Map term
+  := Map_Binddt nat term term.
+#[export] Instance Mapd_term: Mapd nat term
+  := Mapd_Binddt nat term term.
+#[export] Instance Traverse_term: Traverse term
+  := Traverse_Binddt nat term term.
+#[export] Instance Mapdt_term: Mapdt nat term
+  := Mapdt_Binddt nat term term.
+#[export] Instance Bind_term: Bind term term
+  := Bind_Binddt nat term term.
+#[export] Instance Bindd_term: Bindd nat term term
+  := Bindd_Binddt nat term term.
+#[export] Instance Bindt_term: Bindt term term
+  := Bindt_Binddt nat term term.
+#[export] Instance ToSubset_term: ToSubset term
+  := ToSubset_Traverse.
+#[export] Instance ToBatch_term: ToBatch term
+  := ToBatch_Traverse.
+
 Definition subst_in_defs
   `{Applicative G} {v1 v2 : Type}
   (f : nat * v1 -> G (term v2)):

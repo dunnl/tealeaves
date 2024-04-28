@@ -141,6 +141,15 @@ Section locally_nameless_local_operations.
               end
           end.
 
+  Definition level_loc: nat * LN -> nat :=
+    fun p => match p with
+          | (w, l) =>
+            match l with
+            | Fr x => 0
+            | Bd n => n + 1 - w
+            end
+          end.
+
 End locally_nameless_local_operations.
 
 (** ** Extended operations *)
@@ -176,6 +185,10 @@ Section locally_nameless_operations.
 
   Definition LC : U LN -> Prop :=
     LCn 0.
+
+ Definition level : U LN -> nat :=
+    foldMapd (op := Monoid_op_max) (unit := Monoid_unit_max)
+      level_loc.
 
   Definition scoped : T LN -> AtomSet.t -> Prop :=
     fun t γ => FV t ⊆ γ.
@@ -295,6 +308,105 @@ Section locally_nameless_basic_principles.
     apply propositional_extensionality.
     rewrite forall_ctx_iff.
     reflexivity.
+  Qed.
+ Lemma lc_loc_mono: forall gap gap' w l,
+      gap <= gap' ->
+      lc_loc gap (w, l) ->
+      lc_loc gap' (w, l).
+  Proof.
+    unfold lc_loc.
+    unfold transparent tcs.
+    destruct l; lia.
+  Qed.
+
+  Theorem local_closure_mono: forall gap gap' t,
+      gap <= gap' ->
+      LCn gap t ->
+      LCn gap' t.
+  Proof.
+    unfold LCn. intros.
+    apply (lc_loc_mono gap); auto.
+  Qed.
+
+  Lemma level1: forall (t: U LN),
+    forall w n, (w, Bd n) ∈d t -> n < (w + level t)%nat.
+  Proof.
+    intros.
+    enough (n + 1 - w <= level t).
+    lia.
+    change (n + 1 - w) with
+      (level_loc (w, Bd n)).
+    unfold level.
+    apply (foldMapd_pompos (R := le)).
+    assumption.
+  Qed.
+
+  Lemma level2: forall (t: U LN),
+      LCn (level t) t.
+  Proof.
+    intros.
+    unfold LCn.
+    intros.
+    unfold lc_loc.
+    destruct l.
+    - trivial.
+    - unfold transparent tcs.
+      apply level1.
+      auto.
+  Qed.
+
+  Lemma level3: forall (gap: nat) (t: U LN),
+      level t <= gap ->
+      LCn gap t.
+  Proof.
+    intros. apply (local_closure_mono (level t)).
+    assumption.
+    apply level2.
+  Qed.
+
+  Lemma level4: forall (gap: nat) (t: U LN),
+      LCn gap t ->
+      level t <= gap.
+  Proof.
+    introv hyp.
+    rewrite LCn_spec in hyp.
+    unfold Forall_ctx in hyp.
+    rewrite foldMapd_through_toctxlist in hyp.
+    unfold level.
+    rewrite foldMapd_through_toctxlist.
+    unfold compose in *.
+    induction (toctxlist t).
+    - cbv. lia.
+    - cbn.
+      rewrite foldMap_list_eq in hyp.
+      rewrite foldMap_list_cons in hyp.
+      rewrite <- foldMap_list_eq in hyp.
+      destruct hyp.
+      apply PeanoNat.Nat.max_lub.
+      + destruct a as [n l].
+        unfold level_loc.
+        unfold lc_loc in H1.
+        destruct l.
+        * lia.
+        * unfold monoid_op, Monoid_op_plus in H1.
+          lia.
+      + auto.
+  Qed.
+
+  Lemma level_iff: forall (gap: nat) (t: U LN),
+      LCn gap t <-> level t <= gap.
+  Proof.
+    intros. split.
+    - apply level4.
+    - apply level3.
+  Qed.
+
+  Lemma local_closure_iff: forall (gap: nat) (t: U LN),
+      LC t <-> level t = 0.
+  Proof.
+    intros. unfold LC.
+    rewrite level_iff.
+    lia.
   Qed.
 
   (** ** Reasoning principles for proving equalities *)

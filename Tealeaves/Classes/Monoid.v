@@ -205,6 +205,74 @@ Section preincr.
 
 End preincr.
 
+From Coq Require Export
+  Relations
+  Classes.RelationClasses.
+
+(** * Preorder Monoids *)
+(******************************************************************************)
+Class PreOrderedMonoidLaws
+  (M : Type)
+  (R : relation M)
+  (op : Monoid_op M)
+  (unit : Monoid_unit M) :=
+  { pom_mono_l: `(R x y -> R (z ● x) (z ● y));
+    pom_mono_r: `(R x y -> R (x ● z) (y ● z));
+  }.
+
+Class PreOrderedMonoid (M : Type) (R : relation M)
+  {op : Monoid_op M} {unit : Monoid_unit M} :=
+  { pom_monoid :> Monoid M;
+    pom_order :> PreOrder R;
+    pom_laws :> PreOrderedMonoidLaws M R op unit;
+  }.
+
+Class PreOrderedMonoidPos (M : Type) (R : relation M)
+  {op : Monoid_op M} {unit : Monoid_unit M} :=
+  { pompos_pom :> PreOrderedMonoid M R;
+    pompos_pos : forall m, R Ƶ m;
+  }.
+
+Section lemmas.
+
+  Generalizable Variables M R.
+
+  Context
+    `{PreOrderedMonoid M R}.
+
+  Lemma pompos_both: forall m n m' n',
+      R m m' -> R n n' ->
+      R (m ● n) (m' ● n').
+  Proof.
+    intros.
+    transitivity (m ● n').
+    apply pom_mono_l; auto.
+    apply pom_mono_r; auto.
+  Qed.
+
+  Context
+    `{! PreOrderedMonoidPos M R}.
+
+  Lemma pompos_incr_r: forall m n,
+      R m (m ● n).
+  Proof.
+    intros.
+    rewrite <- (monoid_id_l m) at 1.
+    apply pom_mono_l.
+    apply pompos_pos.
+  Qed.
+
+  Lemma pompos_incr_l: forall m n,
+      R m (n ● m).
+  Proof.
+    intros.
+    rewrite <- (monoid_id_r m) at 1.
+    apply pom_mono_r.
+    apply pompos_pos.
+  Qed.
+
+End lemmas.
+
 (** * Notations *)
 (******************************************************************************)
 Module Notations.

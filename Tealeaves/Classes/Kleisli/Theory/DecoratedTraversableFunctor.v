@@ -489,6 +489,56 @@ Section mapdt_toctxset.
     reflexivity.
   Qed.
 
+  (** ** Preordered monoids *)
+  (******************************************************************************)
+  Lemma foldMapd_mono {M R op unit}
+    `{@PreOrderedMonoid M R op unit}:
+    forall `(f : E * A -> M) (g : E * A -> M)
+      (t: T A),
+    (forall e a, (e, a) ∈d t ->
+            R (f (e, a)) (g (e, a))) ->
+    R (foldMapd f t) (foldMapd g t).
+  Proof.
+    introv Hin.
+    setoid_rewrite ind_iff_in_toctxlist1 in Hin.
+    do 2 rewrite foldMapd_through_List_foldMap.
+    unfold compose.
+    induction (toctxlist t).
+    - cbv. reflexivity.
+    - rename a into hd.
+      rename e into tl.
+      destruct hd as [e a].
+      setoid_rewrite element_of_list_cons in Hin.
+      do 2 rewrite foldMap_list_cons.
+      apply pompos_both.
+      + auto.
+      + apply IHe. intuition.
+  Qed.
+
+  Lemma foldMapd_pompos {M R op unit}
+      `{@PreOrderedMonoidPos M R op unit}:
+    forall `(f : E * A -> M) (t: T A),
+    forall e a, (e, a) ∈d t -> R (f (e, a)) (foldMapd f t).
+  Proof.
+    introv Hin.
+    rewrite ind_iff_in_toctxlist1 in Hin.
+    rewrite foldMapd_through_List_foldMap.
+    unfold compose.
+    induction (toctxlist t).
+    - inversion Hin.
+    - rename a0 into hd.
+      rename e0 into tl.
+      destruct hd as [e' a'].
+      rewrite element_of_list_cons in Hin.
+      rewrite foldMap_list_cons.
+      destruct Hin as [Hin | Hin].
+      + inversion Hin.
+        apply pompos_incr_r.
+      + transitivity (foldMap_list f tl).
+        * auto.
+        * apply pompos_incr_l.
+  Qed.
+
 End mapdt_toctxset.
 
 (** * Quantification over elements *)
