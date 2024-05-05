@@ -25,7 +25,7 @@ Proof.
   intuition.
 Qed.
 
-Lemma map_some: forall `(f: A -> B) (x: option A)  y,
+Lemma map_Some_inv: forall `(f: A -> B) (x: option A)  y,
     (forall a a', f a = f a' -> a = a') ->
     map f x = Some (f y) ->
     x = Some y.
@@ -104,7 +104,7 @@ Definition contains_ix_upto (n: nat) (k: key): Prop :=
   n < length k.
 
 Definition wf_DB `{ToCtxset nat T} (t: T nat) (k: key): Prop :=
-  unique k /\ exists (gap: nat), closed_gap gap t /\ contains_ix_upto gap k.
+  unique k /\ exists (gap: nat), cl_at gap t /\ contains_ix_upto gap k.
 
 (** * Misc *)
 (******************************************************************************)
@@ -352,7 +352,7 @@ Proof.
   cbn in HH.
   destruct_eq_args a x.
   split. assumption.
-  eauto using (map_some S).
+  eauto using (map_Some_inv S).
 Qed.
 
 Theorem key_lookup_atom_cons: forall a k a' ix,
@@ -497,147 +497,6 @@ Proof.
   - now right.
 Qed.
 
-(** ** Properties of <<get_index>> *)
-(******************************************************************************)
-(*
-Lemma get_index_rec_S (acc: nat) (a: atom) (k: key):
-  get_index_rec (S acc) a k = map S (get_index_rec acc a k).
-Proof.
-  generalize dependent acc.
-  induction k; intro.
-  - cbn. reflexivity.
-  - cbn. destruct_eq_args a a0.
-Qed.
-
-Lemma get_index_rec_plus (acc acc': nat) (a: atom) (k: key):
-  get_index_rec (acc + acc') a k =
-    map (fun acc => acc + acc') (get_index_rec acc a k).
-Proof.
-  generalize dependent acc.
-  induction k; intro.
-  - cbn. reflexivity.
-  - cbn. destruct_eq_args a a0.
-    rewrite get_index_rec_S.
-    rewrite IHk.
-    rewrite get_index_rec_S.
-    compose near (get_index_rec acc a k).
-    rewrite (fun_map_map).
-    rewrite (fun_map_map).
-    reflexivity.
-Qed.
-
-Lemma get_index_rec_plus_Some1 (acc acc': nat) (a: atom) (k: key) (ix: nat):
-  get_index_rec acc a k = Some ix ->
-    get_index_rec (acc + acc') a k = Some (ix + acc').
-Proof.
-  introv hyp.
-  rewrite get_index_rec_plus.
-  rewrite hyp.
-  reflexivity.
-Qed.
-
-Lemma get_index_rec_plus_Some2 (acc acc': nat) (a: atom) (k: key) (ix: nat):
-  get_index_rec (acc + acc') a k = Some (ix + acc') ->
-  get_index_rec acc a k = Some ix.
-Proof.
-  rewrite get_index_rec_plus.
-  apply (map_some (fun x => x + acc')).
-  intros n m. lia.
-Qed.
- *)
-
-(** *** Keys known to contain a particular element *)
-(******************************************************************************)
-(*
-Lemma get_index_rec_in (acc: nat) (x: atom) (k: key):
-  x ∈ k -> exists ix, get_index_rec acc x k = Some ix.
-Proof.
-  intros.
-  induction k.
-  - false.
-  - cbn. destruct_eq_args x a.
-    + eauto.
-    + autorewrite with tea_list in H.
-      destruct H; [false|].
-      specialize (IHk H).
-      rewrite get_index_rec_S.
-      destruct IHk as [ix hyp].
-      exists (S ix).
-      rewrite hyp.
-      reflexivity.
-Qed.
-
-Corollary get_index_in (x: atom) (k: key):
-  x ∈ k -> exists ix, get_index x k = Some ix.
-Proof.
-  unfold get_index.
-  apply get_index_rec_in.
-Qed.
-
-Lemma get_index_rec_insert1 (acc: nat) (a: atom) (k: key) (x: atom):
-  a = x ->
-  exists (m: nat), get_index_rec acc a (key_insert_atom k x) = Some m.
-Proof.
-  intro Heq.
-  subst.
-  generalize dependent acc.
-  induction k; intro acc.
-  - cbn. destruct_eq_args x x. exists acc. reflexivity.
-  - destruct (x == a).
-    + subst. rewrite (insert_cons_eq a _ a Logic.eq_refl).
-      cbn. destruct_eq_args a a. eauto.
-    + rewrite insert_cons_neq. cbn.
-      destruct_eq_args x a. eauto.
-Qed.
-
-Corollary get_index_insert1 (a: atom) (k: key) (x: atom):
-  a = x ->
-  exists (m: nat), get_index a (insert k x) = Some m.
-Proof.
-  apply get_index_rec_insert1.
-Qed.
-
-
-Lemma get_atom_rw2: forall a k ix,
-    key_lookup_atom_rec (a :: k) (S ix) =
-      key_lookup_atom_rec k ix.
-Proof.
-  intros.
-  cbn.
-  reflexivity.
-Qed.
-
-Lemma get_index_rec_neqS: forall a k n,
-    n > 0 ->
-    get_index_rec n a k <> Some 0.
-Proof.
-  intros.
-  generalize dependent n.
-  induction k; introv hyp.
-  - cbn. easy.
-  - cbn.
-    specialize (IHk (S n) ltac:(lia)).
-    destruct (a == a0).
-    + inversion 1. lia.
-    + assumption.
-Qed.
-
-Lemma get_index_Some_0: forall a x k,
-    get_index a (x :: k) = Some 0 <->
-      a = x.
-Proof.
-  introv.
-  cbn.
-  destruct_eq_args a x.
-  split.
-  - intro contra.
-    apply get_index_rec_neqS in contra.
-    false. lia.
-  - inversion 1. false.
-Qed.
-
-*)
-
 (** ** Properties of <<key_lookup_index>> *)
 (******************************************************************************)
 Lemma key_lookup_zero: forall a k ix,
@@ -647,17 +506,6 @@ Proof.
   intros. subst.
   reflexivity.
 Qed.
-
-(*
-Lemma map_key_lookup_atom_Z: forall k a,
-    map S (key_lookup_atom_alt k a) = Some 0 -> False.
-Proof.
-  intros.
-  destruct (key_lookup_atom_alt k a).
-  - cbn in H. inversion H.
-  - inversion H.
-Qed.
- *)
 
 Lemma key_lookup_index_S: forall k ix a,
     key_lookup_index k ix = Some a ->
@@ -724,4 +572,60 @@ Lemma key_bijection: forall a k ix,
 Proof.
   intros.
   split; auto using key_bijection1, key_bijection2.
+Qed.
+
+Class PartialBijection {A B: Type}
+  (f: A -> option B)
+  (g: B -> option A) :=
+  { pb_fwd: forall (a: A) (b: B),
+      f a = Some b -> g b = Some a;
+    pb_bwd: forall (b: B) (a: A),
+      g b = Some a -> f a = Some b;
+
+  }.
+
+Lemma pb_iff `{PartialBijection A B f g}:
+  forall (a: A) (b: B),
+    f a = Some b <-> g b = Some a.
+Proof.
+  intros. split.
+  apply pb_fwd.
+  apply pb_bwd.
+Qed.
+
+Lemma pb_fwd_None `{PartialBijection A B f g}:
+  forall (a: A),
+    f a = None -> forall b, g b = Some a -> False.
+Proof.
+  introv H1 H2.
+  apply pb_bwd in H2.
+  congruence.
+Qed.
+
+
+Lemma pb_bwd_None `{PartialBijection A B f g}:
+  forall (b: B),
+    g b = None -> forall a, f a = Some b -> False.
+Proof.
+  introv H1 H2.
+  apply pb_fwd in H2.
+  congruence.
+Qed.
+
+
+Lemma pb_iff_None `{PartialBijection A B f g}:
+  forall (a: A),
+    f a = None <-> forall (b: B), ~ (g b = Some a).
+Proof.
+  intros. remember (f a) as fa.
+  symmetry in Heqfa.
+  destruct fa.
+  - apply pb_fwd in Heqfa.
+    split.
+    inversion 1.
+    intros contra.
+    specialize (contra b Heqfa).
+    contradiction.
+  - specialize (pb_fwd_None a Heqfa).
+    split; auto.
 Qed.

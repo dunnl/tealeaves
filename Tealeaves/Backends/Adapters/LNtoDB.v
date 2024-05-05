@@ -43,7 +43,7 @@ Definition toDB_loc (k: key) '(depth, l) : option nat :=
   end.
 
 Definition toLN_loc (k: key) '(depth, ix) : option LN :=
-  if bound_in ix depth
+  if bound ix depth == true
   then
     Some (Bd ix)
   else
@@ -170,12 +170,12 @@ Section translate.
   Lemma lc_bound: forall t e n,
       LC (U := U) t ->
       (e, Bd n) ∈d t ->
-      bound_in n e = true.
+      bound n e = true.
   Proof.
   Admitted.
 
   Lemma bound_in_plus: forall n depth,
-      bound_in (n + depth) depth = false.
+      bound (n + depth) depth = false.
   Proof.
     intros. destruct depth.
     - reflexivity.
@@ -325,9 +325,9 @@ Section translate.
   Lemma DB_LN_roundtrip_loc1:
     forall (t:U nat) k gap depth (n:nat),
       unique k ->
-      closed_gap gap t ->
+      cl_at gap t ->
       contains_ix_upto gap k ->
-      bound_in n depth = false ->
+      bound n depth = false ->
       (depth, n) ∈d t ->
       map (toDB_loc k ∘ pair depth) (map Fr (key_lookup_index k (n - depth))) = Some (Some n).
   Proof.
@@ -337,16 +337,16 @@ Section translate.
     { clear Hbound.
       unfold contains_ix_upto in *.
       (* assert (n - depth <= gap).*)
-      unfold closed_gap in Hclosed;
+      unfold cl_at in Hclosed;
         specialize (Hclosed depth n Helt);
         clear Helt;
-        unfold closed_gap_loc in Hclosed;
-        unfold bound_in_gap in Hclosed;
+        unfold cl_at_loc in Hclosed;
+        unfold bound_within in Hclosed;
         rewrite PeanoNat.Nat.ltb_lt in Hclosed.
       lia.
     }
     {
-      unfold bound_in, bound_in_gap in Hbound;
+      unfold bound, bound_within in Hbound;
         rewrite PeanoNat.Nat.ltb_ge in Hbound;
         replace (depth + 0) with depth in Hbound by lia.
       destruct (key_lookup_ix_Some2 k (n-depth) Hcont_minus) as [a Halookup].
@@ -365,7 +365,7 @@ Section translate.
 
   Lemma DB_LN_roundtrip_loc: forall (t:U nat) k gap depth (n:nat),
       unique k ->
-      closed_gap gap t ->
+      cl_at gap t ->
       contains_ix_upto gap k ->
       (depth, n) ∈d t ->
       (toDB_loc k ⋆6 toLN_loc k) (depth, n) =
@@ -382,7 +382,7 @@ Section translate.
 
   Theorem DB_LN_roundtrip: forall k gap (t: U nat),
       unique k ->
-      closed_gap gap t ->
+      cl_at gap t ->
       contains_ix_upto gap k ->
       map (F := option) (toDB_from_key k) (toLN_from_key k t) =
         Some (Some t).
