@@ -804,5 +804,21 @@ Section theory.
     cbn.
   Admitted.
 
+  Lemma subst_pw_example (k: nat) (σ1 σ2 : nat -> T nat) (t: T nat):
+    cl_at k t ->
+    (forall i, i < k -> σ1 i = σ2 i) ->
+    subst σ1 t = subst σ2 t.
+  Proof.
+    unfold subst, cl_at.
+    intros Hclosed Hpw.
+    apply bindd_respectful.
+    intros w a Hin.
+    specialize (Hclosed w a Hin).
+    unfold cl_at_loc, bound_within in Hclosed.
+    apply leb_le in Hclosed.
+    unfold local__sub, lift__sub.
+    bound_induction. fequal.
+    apply Hpw. lia.
+  Qed.
 
 End theory.
