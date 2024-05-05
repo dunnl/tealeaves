@@ -138,10 +138,14 @@ Tealeaves/Backends/LN/AssocList.v
 Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN/Simplification.v
 Tealeaves/Backends/LN.v
+
 ## DB
 Tealeaves/Backends/DB/DB.v
-#Tealeaves/Backends/DB/DB2.v
-## Adapter
+Tealeaves/Backends/DB/Simplification.v
+Tealeaves/Backends/DB/Autosubst.v
+Tealeaves/Backends/DB.v
+
+## LN TO DB
 Tealeaves/Backends/Adapters/Key.v
 Tealeaves/Backends/Adapters/LNtoDB.v
 
@@ -155,7 +159,11 @@ Tealeaves/Examples/STLC/SyntaxCategorical.v
 Tealeaves/Examples/STLC/TypeSoundness.v
 
 # TESTS
+Tealeaves/Simplification/Tests/Support.v
+Tealeaves/Simplification/Tests/STLC_Binddt.v
+Tealeaves/Simplification/Tests/STLC_Container.v
 Tealeaves/Simplification/Tests/STLC_LN.v
+Tealeaves/Simplification/Tests/STLC_DB.v
 
 # MULTISORTED
 #Tealeaves/Classes/Multisorted/Multifunctor.v

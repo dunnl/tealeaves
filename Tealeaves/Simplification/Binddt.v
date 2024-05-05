@@ -377,6 +377,8 @@ Ltac simplify_mapdt :=
       rewrite (mapdt_to_binddt (T := T));
       simplify_binddt;
       repeat rewrite <- (mapdt_to_binddt (T := T));
+      (* If G = A, above step doesn't match, so try being explicit *)
+      repeat rewrite <- (mapdt_to_binddt (G := fun A => A) (T := T));
       ltac_trace "simplify_mapdt_end"
   end.
 
@@ -430,6 +432,25 @@ Ltac simplify_bind :=
       simplify_bindd;
       repeat rewrite <- (bind_to_bindd (T := T));
       ltac_trace "simplify_bind_end"
+  end.
+
+
+(* If we hit a leaf, (map (F := I)) is exposed *)
+Ltac simplify_mapd_post :=
+  ltac_trace "simplify_mapd_post";
+  repeat (simplify_applicative_I || simplify_map_I).
+
+Ltac simplify_mapd :=
+  match goal with
+  | |- context[mapd (T := ?T) ?f (ret ?t)] =>
+      ltac_trace "mapd_ret should be called here"
+  | |- context[mapd (T := ?T)] =>
+      ltac_trace "simplify_mapd_start";
+      rewrite (mapd_to_mapdt (T := T));
+      simplify_mapdt;
+      repeat rewrite <- (mapd_to_mapdt (T := T));
+      simplify_mapd_post;
+      ltac_trace "simplify_mapd_end"
   end.
 
 Ltac simplify_traverse :=
@@ -661,14 +682,24 @@ Ltac simplify_Forall_ctx_in H :=
 Ltac simplify_derived_operations :=
   ltac_trace "simplify_derived_operations";
   match goal with
-  | |- context[tolist ?t] =>
-      simplify_tolist
-  | |- context[element_ctx_of ?x ?t] =>
-      simplify_element_ctx_of
+  | |- context[foldMapd ?f ?t] =>
+      simplify_foldMap
+  | |- context[Forall_ctx ?P ?t] =>
+      simplify_Forall_ctx
   | |- context[toctxset ?t] =>
       simplify_toctxset
-  | |- context[element_of ?x ?t] =>
-      simplify_element_of
+  | |- context[element_ctx_of ?x ?t] =>
+      simplify_element_ctx_of
+  | |- context[foldMap ?f ?t] =>
+      simplify_foldMap
+        (*
+  | |- context[Forall ?P ?t] =>
+      simplify_Forall
+        *)
+  | |- context[tolist ?t] =>
+      simplify_tolist
   | |- context[tosubset ?t] =>
       simplify_tosubset
+  | |- context[element_of ?x ?t] =>
+      simplify_element_of
   end.

@@ -50,6 +50,19 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma iterate_rw2 : forall (n : nat) {A : Type} (f : A -> A),
+    iterate (S n) f = f ∘ (iterate n f).
+Proof.
+  intros.
+  cbn.
+  induction n.
+  + reflexivity.
+  + rewrite iterate_rw1.
+    reassociate <- on right.
+    rewrite <- IHn.
+    reflexivity.
+Qed.
+
 Lemma iterate_rw0' : forall {A : Type} (f : A -> A) a,
     iterate 0 f a = a.
 Proof.
@@ -59,6 +72,16 @@ Qed.
 Lemma iterate_rw1' : forall (n : nat) {A : Type} (f : A -> A) a,
     iterate (S n) f a = (iterate n f) (f a).
 Proof.
+  reflexivity.
+Qed.
+
+
+Lemma iterate_rw2' : forall (n : nat) {A : Type} (f : A -> A) a,
+    iterate (S n) f a = f (iterate n f a).
+Proof.
+  intros.
+  compose near a on right.
+  rewrite iterate_rw2.
   reflexivity.
 Qed.
 
@@ -304,10 +327,10 @@ Section theory.
       `{Map_T_inst : Map T}
       `{Mapd_T_inst : Mapd nat T}
       `{Traverse_T_inst : Traverse T}
-      `{Bind_T_inst : Bind T T}
       `{Mapdt_T_inst : Mapdt nat T}
-      `{Bindd_T_inst : Bindd nat T T}
+      `{Bind_T_inst : Bind T T}
       `{Bindt_T_inst : Bindt T T}
+      `{Bindd_T_inst : Bindd nat T T}
       `{Binddt_T_inst : Binddt nat T T}
       `{! Compat_Map_Binddt nat T T}
       `{! Compat_Mapd_Binddt nat T T}
@@ -316,27 +339,9 @@ Section theory.
       `{! Compat_Mapdt_Binddt nat T T}
       `{! Compat_Bindd_Binddt nat T T}
       `{! Compat_Bindt_Binddt nat T T}
-      `{Monad_inst : ! DecoratedTraversableMonad nat T}.
-
-  Context
-    `{Map_U_inst : Map U}
-      `{Mapd_U_inst : Mapd nat U}
-      `{Traverse_U_inst : Traverse U}
-      `{Bind_U_inst : Bind T U}
-      `{Mapdt_U_inst : Mapdt nat U}
-      `{Bindd_U_inst : Bindd nat T U}
-      `{Bindt_U_inst : Bindt T U}
-      `{Binddt_U_inst : Binddt nat T U}
-      `{! Compat_Map_Binddt nat T U}
-      `{! Compat_Mapd_Binddt nat T U}
-      `{! Compat_Traverse_Binddt nat T U}
-      `{! Compat_Bind_Binddt nat T U}
-      `{! Compat_Mapdt_Binddt nat T U}
-      `{! Compat_Bindd_Binddt nat T U}
-      `{! Compat_Bindt_Binddt nat T U}
-      `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
-                        (unit := Monoid_unit_zero)
-                        (op := Monoid_op_plus)}.
+      `{Monad_inst : ! DecoratedTraversableMonad nat T
+                       (op := Monoid_op_plus)
+                       (unit := Monoid_unit_zero)}.
 
   (** ** Renaming and <<ret>> *)
   (******************************************************************************)
@@ -507,6 +512,49 @@ Section theory.
     fequal; lia.
   Qed.
 
+End theory.
+
+Section theory.
+
+  Context
+    `{ret_inst : Return T}
+      `{Map_T_inst : Map T}
+      `{Mapd_T_inst : Mapd nat T}
+      `{Traverse_T_inst : Traverse T}
+      `{Bind_T_inst : Bind T T}
+      `{Mapdt_T_inst : Mapdt nat T}
+      `{Bindd_T_inst : Bindd nat T T}
+      `{Bindt_T_inst : Bindt T T}
+      `{Binddt_T_inst : Binddt nat T T}
+      `{! Compat_Map_Binddt nat T T}
+      `{! Compat_Mapd_Binddt nat T T}
+      `{! Compat_Traverse_Binddt nat T T}
+      `{! Compat_Bind_Binddt nat T T}
+      `{! Compat_Mapdt_Binddt nat T T}
+      `{! Compat_Bindd_Binddt nat T T}
+      `{! Compat_Bindt_Binddt nat T T}
+      `{Monad_inst : ! DecoratedTraversableMonad nat T}.
+
+  Context
+    `{Map_U_inst : Map U}
+      `{Mapd_U_inst : Mapd nat U}
+      `{Traverse_U_inst : Traverse U}
+      `{Bind_U_inst : Bind T U}
+      `{Mapdt_U_inst : Mapdt nat U}
+      `{Bindd_U_inst : Bindd nat T U}
+      `{Bindt_U_inst : Bindt T U}
+      `{Binddt_U_inst : Binddt nat T U}
+      `{! Compat_Map_Binddt nat T U}
+      `{! Compat_Mapd_Binddt nat T U}
+      `{! Compat_Traverse_Binddt nat T U}
+      `{! Compat_Bind_Binddt nat T U}
+      `{! Compat_Mapdt_Binddt nat T U}
+      `{! Compat_Bindd_Binddt nat T U}
+      `{! Compat_Bindt_Binddt nat T U}
+      `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
+                        (unit := Monoid_unit_zero)
+                        (op := Monoid_op_plus)}.
+
   (** * Properties of substitution *)
   (******************************************************************************)
 
@@ -527,14 +575,21 @@ Section theory.
     reflexivity.
   Qed.
 
-  Lemma subst_compose_ret: forall σ x,
+  Lemma local__sub_zero: forall σ n,
+    local__sub σ (0, n) = σ n.
+  Proof.
+    intros. unfold local__sub.
+    rewrite lift__sub_zero.
+    reflexivity.
+  Qed.
+
+  Lemma local__sub_compose_ret: forall σ x,
       (local__sub σ ∘ ret) x = σ x.
   Proof.
     intros.
     unfold_ops @Return_Writer @Monoid_unit_zero.
     unfold compose.
-    unfold local__sub.
-    rewrite lift__sub_zero.
+    rewrite local__sub_zero.
     reflexivity.
   Qed.
 
@@ -545,7 +600,24 @@ Section theory.
     unfold subst.
     compose near x on left.
     rewrite bindd_ret.
-    apply subst_compose_ret.
+    apply local__sub_compose_ret.
+  Qed.
+
+  Lemma subst_compose_ret: forall σ,
+      subst σ ∘ ret = σ.
+  Proof.
+    intros. ext x.
+    unfold compose. apply subst_ret.
+  Qed.
+
+  (* used for simpl_db *)
+  Lemma subst_compose_ret_assoc {X: Type}: forall (f: T nat -> X) σ,
+    (f ∘ subst σ) ∘ ret = f ∘ σ.
+  Proof.
+    intros.
+    change_left (f ∘ (subst σ ∘ ret)).
+    rewrite subst_compose_ret.
+    reflexivity.
   Qed.
 
   (** ** Substitution and identity *)
@@ -766,9 +838,9 @@ Section theory.
   Qed.
 
   Lemma hm: forall (σ: nat -> T nat) (k d1 i1: nat),
-    (forall (n: nat), cl_at k (σ n)) ->
-    cl_at (k + d1) (lift__sub d1 σ i1).
-    Proof.
+      (forall (n: nat), cl_at k (σ n)) ->
+      cl_at (k + d1) (lift__sub d1 σ i1).
+  Proof.
     intros.
     unfold cl_at, cl_at_loc in *.
     unfold lift__sub.
@@ -780,7 +852,7 @@ Section theory.
     symmetry in Heqb.
     destruct b.
     - rewrite <- bound_lt_iff in Heqb.
-       rewrite ind_ret_iff in Hin.
+      rewrite ind_ret_iff in Hin.
       destruct Hin as [Hdepth Hix];
         subst; unfold_ops @Monoid_unit_zero.
       rewrite <- bound_lt_iff. lia.
@@ -788,7 +860,7 @@ Section theory.
       rewrite <- bound_ge_iff in Heqb.
       specialize (H (i1 - d1) depth ix).
       admit.
-    Admitted.
+  Admitted.
 
   Lemma hmm:
     forall (t: U nat) (σ: nat -> T nat) (k: nat),
@@ -819,6 +891,259 @@ Section theory.
     unfold local__sub, lift__sub.
     bound_induction. fequal.
     apply Hpw. lia.
+  Qed.
+
+End theory.
+
+
+(** * Alternative presentation *)
+(******************************************************************************)
+
+(** ** Operations with policy *)
+(******************************************************************************)
+Definition map_with_policy `{Mapd nat T}
+  (policy : (nat -> nat) -> (nat -> nat)) (ρ : nat -> nat): T nat -> T nat :=
+  mapd (fun '(depth, ix) => iterate depth policy ρ ix).
+
+Definition bind_with_policy `{Bindd nat T U}
+  (policy : (nat -> T nat) -> (nat -> T nat)) (σ : nat -> T nat): U nat -> U nat :=
+  bindd (fun '(depth, ix) => iterate depth policy σ ix).
+
+(* Given a depth and local substitution σ,
+       adjust σ to account for the depth
+       - σ should be a top-level map, e.g.
+         σ 0 is the replacement for the first free variable
+         σ 1 is the replacement for the second free variable
+         ...
+ *)
+
+Section alt_presentation.
+
+  Context
+    `{ret_inst : Return T}
+      `{Mapd_T_inst : Mapd nat T}
+      `{Bindd_U_inst : Bindd nat T U}.
+
+  Definition scons {X : Type} : X -> (nat -> X) -> (nat -> X)  :=
+    fun new sub n => match n with
+                  | O => new
+                  | S n' => sub n'
+                  end.
+
+  #[local] Infix "⋅" := (scons) (at level 10).
+
+  Definition uparrow: nat -> nat := S.
+
+  (* adjust a renaming to go under one binder *)
+  Definition up__ren (ρ: nat -> nat): nat -> nat :=
+    0 ⋅ (S ∘ ρ).
+
+  Definition rename_alt: forall (ρ : nat -> nat), T nat -> T nat :=
+    map_with_policy up__ren.
+
+  (* adjust a substitution to go under one binder *)
+  Definition up__sub (σ: nat -> T nat): nat -> T nat :=
+    (ret 0) ⋅ (rename_alt S ∘ σ).
+
+  Definition subst_alt (σ : nat -> T nat): U nat -> U nat :=
+    bind_with_policy (T := T) (U := U) up__sub σ.
+
+End alt_presentation.
+
+#[local] Notation "↑" := uparrow.
+#[local] Notation "'⇑'" := up__sub.
+#[local] Notation "'⇑__ren'" := up__ren.
+#[local] Notation "f ';' g" := (kc1 g f) (at level 30).
+#[local] Infix "⋅" := (scons) (at level 10).
+
+(** ** Properties of scons *)
+(******************************************************************************)
+Lemma scons_rw0 {A}: forall `(x: A) (σ: nat -> A),
+    (x ⋅ σ) 0 = x.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma scons_rw1 {A}: forall `(x: A) (n: nat) (σ: nat -> A),
+    (x ⋅ σ) (S n) = σ n.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma scons_sub_id {X}: forall (σ: nat -> X),
+    (σ 0) ⋅ (σ ∘ S) = σ.
+Proof.
+  intros.
+  ext ix.
+  destruct ix.
+  - rewrite scons_rw0.
+    reflexivity.
+  - rewrite scons_rw1.
+    reflexivity.
+Qed.
+
+(** ** Relating <<lift__ren>> to <<up__ren>> *)
+(******************************************************************************)
+Lemma lift__ren_1:
+  lift__ren 1 = up__ren.
+Proof.
+  ext ρ ix.
+  unfold lift__ren, up__ren.
+  bound_induction.
+  - cbn. destruct ix.
+    + false.
+    + cbn. unfold compose.
+      rewrite add_1_r.
+      do 2 fequal. lia.
+  - apply bound_1 in Hbound.
+    subst. reflexivity.
+Qed.
+
+Lemma lift__ren_repr: forall depth,
+    lift__ren depth = iterate depth up__ren.
+Proof.
+  intros. induction depth.
+  - ext ρ ix. cbn.
+    rewrite add_0_r.
+    fequal; lia.
+  - ext ρ ix.
+    rewrite iterate_rw1'.
+    rewrite lift__ren_S.
+    rewrite IHdepth.
+    rewrite lift__ren_1.
+    reflexivity.
+Qed.
+
+Corollary local__ren_repr: forall ρ depth ix,
+    local__ren ρ (depth, ix) = iterate depth up__ren ρ ix.
+Proof.
+  intros. cbn.
+  rewrite lift__ren_repr.
+  reflexivity.
+Qed.
+
+Lemma rename_policy_repr `{Mapd_T_inst : Mapd nat T} (ρ : nat -> nat):
+  rename (T := T) ρ = rename_alt ρ.
+Proof.
+  unfold rename, rename_alt.
+  unfold map_with_policy.
+  fequal. ext [depth ix].
+  apply local__ren_repr.
+Qed.
+
+Lemma local__ren_preincr_1 (ρ : nat -> nat):
+  (local__ren ρ) ⦿ 1 =
+    local__ren (up__ren ρ).
+Proof.
+  rewrite local__ren_preincr.
+  rewrite lift__ren_1.
+  reflexivity.
+Qed.
+
+Section theory.
+
+  Context
+    `{ret_inst : Return T}
+      `{Map_T_inst : Map T}
+      `{Mapd_T_inst : Mapd nat T}
+      `{Traverse_T_inst : Traverse T}
+      `{Bind_T_inst : Bind T T}
+      `{Mapdt_T_inst : Mapdt nat T}
+      `{Bindd_T_inst : Bindd nat T T}
+      `{Bindt_T_inst : Bindt T T}
+      `{Binddt_T_inst : Binddt nat T T}
+      `{! Compat_Map_Binddt nat T T}
+      `{! Compat_Mapd_Binddt nat T T}
+      `{! Compat_Traverse_Binddt nat T T}
+      `{! Compat_Bind_Binddt nat T T}
+      `{! Compat_Mapdt_Binddt nat T T}
+      `{! Compat_Bindd_Binddt nat T T}
+      `{! Compat_Bindt_Binddt nat T T}
+      `{Monad_inst : ! DecoratedTraversableMonad nat T}.
+  Context
+    `{Map_U_inst : Map U}
+      `{Mapd_U_inst : Mapd nat U}
+      `{Traverse_U_inst : Traverse U}
+      `{Bind_U_inst : Bind T U}
+      `{Mapdt_U_inst : Mapdt nat U}
+      `{Bindd_U_inst : Bindd nat T U}
+      `{Bindt_U_inst : Bindt T U}
+      `{Binddt_U_inst : Binddt nat T U}
+      `{! Compat_Map_Binddt nat T U}
+      `{! Compat_Mapd_Binddt nat T U}
+      `{! Compat_Traverse_Binddt nat T U}
+      `{! Compat_Bind_Binddt nat T U}
+      `{! Compat_Mapdt_Binddt nat T U}
+      `{! Compat_Bindd_Binddt nat T U}
+      `{! Compat_Bindt_Binddt nat T U}
+      `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
+                        (unit := Monoid_unit_zero)
+                        (op := Monoid_op_plus)}.
+
+  Lemma up_spec:
+    lift__sub 1 = up__sub.
+  Proof.
+    ext σ ix.
+    unfold up__sub.
+    unfold lift__sub.
+    bound_induction.
+    - apply bound_ge_iff in Hbound.
+      assert (Hgt1: exists ix', ix = S ix').
+      { destruct ix. false; lia. eauto. }
+      destruct Hgt1 as [ix' Heq]; subst.
+      rewrite scons_rw1; unfold compose at 1.
+      replace (S ix' - 1) with ix' by lia.
+      rewrite <- rename_policy_repr.
+      reflexivity.
+    - apply bound_1 in Hbound.
+      now subst.
+  Qed.
+
+  Lemma local__sub_policy_repr: forall depth ix σ,
+      local__sub σ (depth, ix) = iterate depth up__sub σ ix.
+  Proof.
+    intros.
+    unfold local__sub.
+    rewrite lift__sub_iter.
+    fequal.
+    apply up_spec.
+  Qed.
+
+  Lemma subst_policy_repr (σ : nat -> T nat):
+    subst σ = subst_alt σ.
+  Proof.
+    unfold subst, subst_alt.
+    unfold bind_with_policy.
+    fequal.
+    ext [depth ix].
+    rewrite local__sub_policy_repr.
+    reflexivity.
+  Qed.
+
+  Lemma local__sub_preincr_1 (σ : nat -> T nat):
+    (local__sub σ) ⦿ 1 =
+      local__sub (up__sub σ).
+  Proof.
+    rewrite local__sub_preincr.
+    rewrite up_spec.
+    reflexivity.
+  Qed.
+
+  Lemma up__sub_unfold (σ: nat -> T nat):
+    up__sub σ = ret 0 ⋅ (subst (ret ∘ (+1)) ∘ σ).
+  Proof.
+    unfold up__sub.
+    rewrite <- rename_policy_repr.
+    rewrite rename_to_subst.
+    reflexivity.
+  Qed.
+
+  Lemma iterate_up__sub_unfold (σ: nat -> T nat) (n: nat):
+    iterate (S n) up__sub σ = ret 0 ⋅ (subst (ret ∘ (+1)) ∘ iterate n up__sub σ).
+  Proof.
+    rewrite iterate_rw2'.
+    rewrite up__sub_unfold.
+    reflexivity.
   Qed.
 
 End theory.
