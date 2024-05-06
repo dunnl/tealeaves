@@ -25,30 +25,30 @@ Section toBatchM.
       `{MultiDecoratedTraversablePreModule W T U}
       `{! MultiDecoratedTraversableMonad W T}.
 
-  Lemma tomlistd_gen_to_runBatchM (fake : Type) `(t : U A) :
-    tomlistd_gen U fake t =
+  Lemma tolistmd_gen_to_runBatchM (fake : Type) `(t : U A) :
+    tolistmd_gen U fake t =
       runBatchM (F := const (list _))
         (fun k '(w, a) => [(w, (k, a))]) (toBatchM U fake t).
   Proof.
-    unfold tomlistd_gen.
+    unfold tolistmd_gen.
     rewrite mmapdt_to_runBatchM.
     reflexivity.
   Qed.
 
-  Lemma tomlistd_to_runBatchM  (fake : Type) `(t : U A) :
-    tomlistd U t = runBatchM (fun k '(w, a) => [(w, (k, a))]) (toBatchM U fake t).
+  Lemma tolistmd_to_runBatchM  (fake : Type) `(t : U A) :
+    tolistmd U t = runBatchM (fun k '(w, a) => [(w, (k, a))]) (toBatchM U fake t).
   Proof.
-    unfold tomlistd.
-    rewrite (tomlistd_equiv U False fake).
-    rewrite tomlistd_gen_to_runBatchM.
+    unfold tolistmd.
+    rewrite (tolistmd_equiv U False fake).
+    rewrite tolistmd_gen_to_runBatchM.
     reflexivity.
   Qed.
 
-  Lemma tomsetd_to_runBatchM  (fake : Type) `(t : U A) :
-    tomsetd U t = runBatchM (F := (@const Type Type (subset (W * (K * A)))))
+  Lemma tosetmd_to_runBatchM  (fake : Type) `(t : U A) :
+    tosetmd U t = runBatchM (F := (@const Type Type (subset (W * (K * A)))))
                     (fun k '(w, a) => {{(w, (k, a))}}) (toBatchM U fake t).
   Proof.
-    unfold tomsetd, compose. rewrite (tomlistd_to_runBatchM fake).
+    unfold tosetmd, compose. rewrite (tolistmd_to_runBatchM fake).
     change (tosubset (F := list)
               (A := W * (K * A))) with (const (tosubset (A := W * (K * A))) (U fake)).
     cbn. (* <- needed for implicit arguments. *)
@@ -59,10 +59,10 @@ Section toBatchM.
     apply tosubset_list_one.
   Qed.
 
-  Lemma tomlist_to_runBatchM (fake : Type) `(t : U A) :
-    tomlist U t = runBatchM (fun k '(w, a) => [(k, a)]) (toBatchM U fake t).
+  Lemma tolistm_to_runBatchM (fake : Type) `(t : U A) :
+    tolistm U t = runBatchM (fun k '(w, a) => [(k, a)]) (toBatchM U fake t).
   Proof.
-    unfold tomlist. unfold compose. rewrite (tomlistd_to_runBatchM fake).
+    unfold tolistm. unfold compose. rewrite (tolistmd_to_runBatchM fake).
     change (map (F := list) ?f) with (const (map (F := list) f) (U fake)).
     rewrite (runBatchM_morphism (G1 := const (list (W * (K * A))))
                (G2 := const (list (K * A)))
@@ -88,7 +88,7 @@ Section mbindd_respectful.
       -> mbindd U f t = mbindd U g t.
   Proof.
     introv hyp.
-    rewrite (tomsetd_to_runBatchM U B t) in hyp.
+    rewrite (tosetmd_to_runBatchM U B t) in hyp.
     rewrite mbindd_to_runBatchM.
     rewrite mbindd_to_runBatchM.
     induction (toBatchM U B t).
@@ -165,7 +165,9 @@ Section mbind_respectful.
       -> mbind U f t = mbind U g t.
   Proof.
     introv hyp. rewrite mbind_to_mbindd.
-    apply mbindd_respectful. introv premise. apply ind_implies_in in premise.
+    apply mbindd_respectful.
+    introv premise.
+    apply inmd_implies_in in premise.
     unfold vec_compose, compose; cbn. auto.
   Qed.
 

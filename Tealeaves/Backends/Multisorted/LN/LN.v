@@ -339,59 +339,59 @@ Section operations_specifications.
 
   (** *** For [open] *)
   (******************************************************************************)
-  Lemma ind_open_iff_eq : forall k l w u t,
+  Lemma inmd_open_iff_eq : forall k l w u t,
       (w, (k, l)) ∈md t '(k | u) <-> exists w1 w2 l1,
         (w1, (k, l1)) ∈md t /\ (w2, (k, l)) ∈md open_loc k u (w1, l1) /\ w = w1 ● w2.
   Proof.
     intros. unfold open.
-    now rewrite (ind_kbindd_eq_iff U).
+    now rewrite (inmd_kbindd_eq_iff U).
   Qed.
 
-  Lemma ind_open_neq_iff : forall k j l w u t,
+  Lemma inmd_open_neq_iff : forall k j l w u t,
       k <> j ->
       (w, (k, l)) ∈md t '(j | u) <-> (w, (k, l)) ∈md t \/ exists w1 w2 l1,
           (w1, (j, l1)) ∈md t /\ (w2, (k, l)) ∈md open_loc j u (w1, l1) /\ w = w1 ● w2.
   Proof.
     intros. unfold open.
-    now rewrite (ind_kbindd_neq_iff U); auto.
+    now rewrite (inmd_kbindd_neq_iff U); auto.
   Qed.
 
   (** *** For [close] *)
   (******************************************************************************)
-  Lemma ind_close_iff_eq : forall k l w x t,
+  Lemma inmd_close_iff_eq : forall k l w x t,
       (w, (k, l)) ∈md '[k | x] t <-> exists l1,
         (w, (k, l1)) ∈md t /\ l = close_loc k x (w, l1).
   Proof.
     intros. unfold close.
-    rewrite (ind_kmapd_eq_iff U).
+    rewrite (inmd_kmapd_eq_iff U).
     easy.
   Qed.
 
-  Lemma ind_close_neq_iff : forall k j l w x t,
+  Lemma inmd_close_neq_iff : forall k j l w x t,
       j <> k ->
       (w, (k, l)) ∈md '[j | x] t <-> (w, (k, l)) ∈md t.
   Proof.
     intros. unfold close.
-    now rewrite (ind_kmapd_neq_iff U).
+    now rewrite (inmd_kmapd_neq_iff U).
   Qed.
 
   (** *** For [subst] *)
   (******************************************************************************)
-  Lemma ind_subst_iff_eq : forall k w l u t x,
+  Lemma inmd_subst_iff_eq : forall k w l u t x,
       (w, (k, l)) ∈md t '{k | x ~> u} <-> exists w1 w2 l1,
         (w1, (k, l1)) ∈md t /\ (w2, (k, l)) ∈md subst_loc k x u l1 /\ w = w1 ● w2.
   Proof.
     intros. unfold subst.
-    now rewrite (ind_kbind_eq_iff U).
+    now rewrite (inmd_kbind_eq_iff U).
   Qed.
 
-  Lemma ind_subst_neq_iff : forall k j w l u t x,
+  Lemma inmd_subst_neq_iff : forall k j w l u t x,
       k <> j ->
       (w, (k, l)) ∈md t '{j | x ~> u} <-> (w, (k, l)) ∈md t \/ exists w1 w2 l1,
         (w1, (j, l1)) ∈md t /\ (w2, (k, l)) ∈md subst_loc j x u l1 /\ w = w1 ● w2.
   Proof.
     intros. unfold subst.
-    now rewrite (ind_kbind_neq_iff U); auto.
+    now rewrite (inmd_kbind_neq_iff U); auto.
   Qed.
 
   (** ** Context-agnostic LN analysis of operations *)
@@ -734,7 +734,7 @@ Tactic Notation "unfold_monoid" :=
 (** Rewrite rules for expressions of the form <<x ∈ mret T y>> *)
 #[export] Hint Rewrite
      @in_mret_iff @in_mret_eq_iff
-     @ind_mret_iff @ind_mret_eq_iff using typeclasses eauto : tea_local.
+     @inmd_mret_iff @inmd_mret_eq_iff using typeclasses eauto : tea_local.
 
 (** Rewrite rules for simplifying expressions involving equalities between leaves *)
 #[export] Hint Rewrite
@@ -778,7 +778,7 @@ Section subst_metatheory.
 
     (** ** LN analysis with contexts *)
     (******************************************************************************)
-    Lemma ind_subst_loc_iff : forall k l w j p u x,
+    Lemma inmd_subst_loc_iff : forall k l w j p u x,
         (w, (j, p)) ∈md subst_loc k x u l <->
         l <> Fr x /\ k = j /\ w = Ƶ /\ l = p \/ (* l is not replaced *)
         l = Fr x /\ (w, (j, p)) ∈md u. (* l is replaced *)
@@ -787,32 +787,32 @@ Section subst_metatheory.
       - rewrite subst_loc_eq.
         clear; firstorder.
       - rewrite subst_loc_neq; auto.
-        rewrite ind_mret_iff.
+        rewrite inmd_mret_iff.
         rewrite Fr_injective.
         firstorder.
       - rewrite subst_loc_b.
-        rewrite ind_mret_iff.
+        rewrite inmd_mret_iff.
         rewrite B_neq_Fr.
         firstorder.
     Qed.
 
-    Corollary ind_subst_loc_iff_eq : forall k l w p u x,
+    Corollary inmd_subst_loc_iff_eq : forall k l w p u x,
         (w, (k, p)) ∈md subst_loc k x u l <->
         l <> Fr x /\ w = Ƶ /\ l = p \/
         l = Fr x /\ (w, (k, p)) ∈md u.
     Proof.
-      introv. rewrite ind_subst_loc_iff. clear. firstorder.
+      introv. rewrite inmd_subst_loc_iff. clear. firstorder.
     Qed.
 
-    Corollary ind_subst_loc_iff_neq : forall k l w j p u x,
+    Corollary inmd_subst_loc_iff_neq : forall k l w j p u x,
         k <> j ->
         (w, (j, p)) ∈md subst_loc k x u l <->
         l = Fr x /\ (w, (j, p)) ∈md u.
     Proof.
-      introv neq. rewrite ind_subst_loc_iff. intuition.
+      introv neq. rewrite inmd_subst_loc_iff. intuition.
     Qed.
 
-    Theorem ind_subst_iff : forall k j w t u l x,
+    Theorem inmd_subst_iff : forall k j w t u l x,
         (* <<l>> occurs in the result of a <<subst>> IFF *)
         (w, j, l) ∈md t '{k | x ~> u} <->
         (* <<l>> is an occurrence in <<t>> not of the same sort as the <<subst>> OR *)
@@ -823,7 +823,7 @@ Section subst_metatheory.
         exists w1 w2 : list K, (w1, k, Fr x) ∈md t /\ (w2, j, l) ∈md u /\ w = w1 ● w2.
     Proof with auto.
       intros. compare values k and j.
-      - rewrite (ind_subst_iff_eq U). setoid_rewrite (ind_subst_loc_iff_eq j).
+      - rewrite (inmd_subst_iff_eq U). setoid_rewrite (inmd_subst_loc_iff_eq j).
         split.
         + intros [l' [n1 [n2 conditions]]].
           right. destruct conditions as [c1 [[c2|c2] c3]].
@@ -834,9 +834,9 @@ Section subst_metatheory.
           { contradiction. }
           { exists w (Ƶ : list K) l. rewrite monoid_id_l. split... }
           { destruct hyp as [w1 [w2 ?]]. exists w1 w2 (Fr x). intuition. }
-      - rewrite (ind_subst_neq_iff U)... split.
+      - rewrite (inmd_subst_neq_iff U)... split.
         + intros [? | [n1 [n2 [p [in_t in_local]]]]]...
-          rewrite (ind_subst_loc_iff_neq k) in in_local...
+          rewrite (inmd_subst_loc_iff_neq k) in in_local...
           right. right. exists n1 n2. destruct in_local as [[? ?] ?]; subst...
         + intros [[? ?] | [[? ?] | [w1 [w2 rest]]]].
           { auto. }
@@ -844,21 +844,21 @@ Section subst_metatheory.
           { right. exists w1 w2 (Fr x). simpl_local... }
     Qed.
 
-    Corollary ind_subst_iff_eq' : forall k w t u l x,
+    Corollary inmd_subst_iff_eq' : forall k w t u l x,
         (w, k, l) ∈md t '{k | x ~> u} <->
         (w, k, l) ∈md t /\ l <> Fr x \/
         exists w1 w2 : list K, (w1, k, Fr x) ∈md t /\ (w2, k, l) ∈md u /\ w = w1 ● w2.
     Proof.
-      intros. rewrite ind_subst_iff. intuition.
+      intros. rewrite inmd_subst_iff. intuition.
     Qed.
 
-    Corollary ind_subst_iff_neq' : forall k j w t u l x,
+    Corollary inmd_subst_iff_neq' : forall k j w t u l x,
         k <> j ->
         (w, j, l) ∈md t '{k | x ~> u} <->
         (w, j, l) ∈md t \/
         exists w1 w2 : list K, (w1, k, Fr x) ∈md t /\ (w2, j, l) ∈md u /\ w = w1 ● w2.
     Proof.
-      intros. rewrite ind_subst_iff. intuition.
+      intros. rewrite inmd_subst_iff. intuition.
     Qed.
 
     (** ** LN analysis without contexts *)
@@ -1313,7 +1313,7 @@ Section subst_metatheory.
         LC U k (subst U k x u t).
     Proof.
       unfold LC. introv lct lcu hin.
-      rewrite (ind_subst_iff_eq' U) in hin.
+      rewrite (inmd_subst_iff_eq' U) in hin.
       destruct hin as [[? ?] | [n1 [n2 [h1 [h2 h3]]]]].
       - auto.
       - subst. specialize (lcu n2 l h2).
@@ -1329,7 +1329,7 @@ Section subst_metatheory.
         LC U j (subst U k x u t).
     Proof.
       unfold LC. introv neq lct lcu hin.
-      rewrite (ind_subst_iff_neq' U) in hin; auto.
+      rewrite (inmd_subst_iff_neq' U) in hin; auto.
       destruct hin as [? | [n1 [n2 [h1 [h2 h3]]]]].
       - auto.
       - subst. specialize (lcu n2 l h2).
@@ -1418,7 +1418,7 @@ Section close_metatheory.
   Proof.
     introv lin heq. destruct l as [la | ln].
     - cbn in heq. destruct_eq_args x la.
-      inverts heq. now apply (ind_implies_in U) in lin.
+      inverts heq. now apply (inmd_implies_in U) in lin.
     - cbn in heq. compare_nats_args ln (countk k w); discriminate.
   Qed.
 
@@ -1427,7 +1427,7 @@ Section close_metatheory.
       (k, Fr y) ∈m t ->
       exists w l, (w, k, l) ∈md t /\ Fr y = close_loc k x (w, l).
   Proof.
-    introv neq yin. apply (ind_iff_in U) in yin. destruct yin as [w yin].
+    introv neq yin. apply (inmd_iff_in U) in yin. destruct yin as [w yin].
     exists w. exists (Fr y). cbn. compare values x and y.
   Qed.
 
@@ -1474,7 +1474,7 @@ Section close_metatheory.
       LCn U k 1 (close U k x t).
   Proof.
     unfold LC. introv lct hin.
-    rewrite (ind_close_iff_eq U) in hin.
+    rewrite (inmd_close_iff_eq U) in hin.
     destruct hin as [l1 [? ?]]. compare l1 to atom x; subst.
     - cbn. compare values x and x. unfold_monoid; lia.
     - cbn. compare values x and a.
@@ -1491,7 +1491,7 @@ Section close_metatheory.
       LC U j (close U k x t).
   Proof.
     unfold LC. introv neq lct hin.
-    rewrite (ind_close_neq_iff U) in hin; auto.
+    rewrite (inmd_close_neq_iff U) in hin; auto.
   Qed.
 
 End close_metatheory.
@@ -1558,11 +1558,11 @@ Section open_metatheory.
     introv xin. compare values j and k.
     - rewrite (free_open_eq_iff U) in xin.
       destruct xin as [w [l [hin ?]]].
-      eapply (ind_implies_in U) in hin.
+      eapply (inmd_implies_in U) in hin.
       eauto using free_open_upper_local_eq.
     - rewrite (free_open_neq_iff U) in xin; auto.
       destruct xin as  [? |  [w [l [hin ?]]]].
-      auto. apply (ind_implies_in U) in hin.
+      auto. apply (inmd_implies_in U) in hin.
       right. eauto using free_open_upper_local_neq.
   Qed.
 
@@ -1593,7 +1593,7 @@ Section open_metatheory.
   Proof.
     introv xin. compare values j and k.
     - rewrite (in_free_iff) in xin.
-      rewrite (ind_iff_in U) in xin.
+      rewrite (inmd_iff_in U) in xin.
       destruct xin as [w xin].
       rewrite (free_open_eq_iff U).
       setoid_rewrite (in_free_iff).
@@ -1797,7 +1797,7 @@ Section open_metatheory.
     unfold subst, open. rewrite (kbind_kbindd U).
     apply (kbindd_respectful). introv Hin.
     assert (a <> Fr x).
-    { apply (ind_implies_in U) in Hin.
+    { apply (inmd_implies_in U) in Hin.
       rewrite <- free_iff_FV in fresh.
       eapply ninf_in_neq in fresh; eauto. }
     now rewrite <- (open_spec_eq_loc k u x).
@@ -1903,7 +1903,7 @@ Section open_metatheory.
     apply (kmapd_respectful_id).
     intros w l lin.
     assert (l <> Fr x).
-    { rewrite neq_symmetry. apply (ind_implies_in) in lin.
+    { rewrite neq_symmetry. apply (inmd_implies_in) in lin.
       eapply (ninf_in_neq U). eassumption. auto. }
     now apply close_open_local.
   Qed.
@@ -1916,17 +1916,17 @@ Section open_metatheory.
       LCn U k (n - 1) (t '(k | u)).
   Proof.
     unfold LCn.
-    introv lcu lct Hin. rewrite (ind_open_iff_eq U) in Hin.
+    introv lcu lct Hin. rewrite (inmd_open_iff_eq U) in Hin.
     destruct Hin as [w1 [w2 [l1 [h1 [h2 h3]]]]].
     destruct l1.
-    - cbn in h2. rewrite ind_mret_eq_iff in h2.
+    - cbn in h2. rewrite inmd_mret_eq_iff in h2.
       destruct h2; subst. cbn. trivial.
     - specialize (lct _ _ h1). cbn in h2. compare naturals n0 and (countk k w1).
-      + rewrite ind_mret_eq_iff in h2; destruct h2; subst.
+      + rewrite inmd_mret_eq_iff in h2; destruct h2; subst.
         cbn. unfold_monoid. List.simpl_list. lia.
       + specialize (lcu w2 l h2). unfold lc_loc in *.
         destruct l; [trivial|]. unfold_monoid. rewrite countk_app. lia.
-      + rewrite ind_mret_eq_iff in h2. destruct h2; subst.
+      + rewrite inmd_mret_eq_iff in h2. destruct h2; subst.
         unfold lc_loc in *. unfold_monoid. List.simpl_list. lia.
   Qed.
 
@@ -1937,7 +1937,7 @@ Section open_metatheory.
       LCn U k n t.
   Proof.
     unfold LCn.
-    introv ngt lcu lct Hin. setoid_rewrite (ind_open_iff_eq U) in lct.
+    introv ngt lcu lct Hin. setoid_rewrite (inmd_open_iff_eq U) in lct.
     destruct l.
     - cbv. trivial.
     - compare naturals n0 and (countk k w).
@@ -1946,14 +1946,14 @@ Section open_metatheory.
         { cbn; unfold_monoid; lia. }
         { exists w (Ƶ : list K) (Bd n0).
           split; auto. cbn. compare naturals n0 and (countk k w).
-          rewrite ind_mret_eq_iff. now simpl_monoid. }
+          rewrite inmd_mret_eq_iff. now simpl_monoid. }
       + cbn. unfold_monoid; lia.
       + cbn. specialize (lct w (Bd (n0 - 1))).
         lapply lct.
         { cbn; unfold_monoid; lia. }
         { exists w (Ƶ : list K) (Bd n0).
           split; auto. cbn. compare naturals n0 and (countk k w).
-          rewrite ind_mret_eq_iff. now simpl_monoid. }
+          rewrite inmd_mret_eq_iff. now simpl_monoid. }
   Qed.
 
   Theorem open_lc_gap_eq_iff : forall k n t u,
@@ -1971,7 +1971,7 @@ Section open_metatheory.
       LCn U k (n - 1) (t '(k | mret T k (Fr x))).
   Proof.
     intros. apply open_lc_gap_eq_iff. auto.
-    intros w l hin. rewrite ind_mret_eq_iff in hin.
+    intros w l hin. rewrite inmd_mret_eq_iff in hin.
     destruct hin; subst. cbv. trivial.
   Qed.
 
@@ -2004,22 +2004,22 @@ Section open_metatheory.
   Proof.
     unfold LCn.
     introv neq lcu lct Hin.
-    rewrite (ind_open_neq_iff U) in Hin; auto.
+    rewrite (inmd_open_neq_iff U) in Hin; auto.
     destruct Hin as [Hin | Hin].
     - auto.
     - destruct Hin as [w1 [w2 [l1 [in_t [in_open ?]]]]].
       subst. destruct l1.
-      + cbn in in_open. rewrite ind_mret_iff in in_open.
+      + cbn in in_open. rewrite inmd_mret_iff in in_open.
         false. intuition.
       + destruct l.
         { cbn. trivial. }
         { cbn. cbn in in_open.
           compare naturals n0 and (countk j w1).
-          - rewrite ind_mret_iff in in_open. false; intuition.
+          - rewrite inmd_mret_iff in in_open. false; intuition.
           - specialize (lcu _ _ in_open).
             unfold lc_loc in lcu. unfold_monoid.
             rewrite countk_app. lia.
-          - rewrite ind_mret_iff in in_open. false; intuition.
+          - rewrite inmd_mret_iff in in_open. false; intuition.
         }
   Qed.
 
@@ -2034,7 +2034,7 @@ Section open_metatheory.
     destruct l.
     + cbn. auto.
     + specialize (lct w (Bd n0)).
-      apply lct. rewrite (ind_open_neq_iff U); auto.
+      apply lct. rewrite (inmd_open_neq_iff U); auto.
   Qed.
 
   Theorem open_lc_gap_neq_iff : forall k j n t u,
@@ -2054,7 +2054,7 @@ Section open_metatheory.
     intros. unfold LC.
     rewrite open_lc_gap_neq_iff; eauto.
     reflexivity. unfold LC, LCn.
-    setoid_rewrite ind_mret_iff. intuition.
+    setoid_rewrite inmd_mret_iff. intuition.
   Qed.
 
 End open_metatheory.

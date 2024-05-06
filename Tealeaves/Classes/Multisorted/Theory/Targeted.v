@@ -552,7 +552,7 @@ Section DTM_membership_targetted.
 
   (** *** Occurrences in <<kbindd>> with context *)
   (******************************************************************************)
-  Lemma ind_kbindd_eq_iff1 :
+  Lemma inmd_kbindd_eq_iff1 :
     forall `(f : W * A -> T j A) (t : U A) (wtotal : W) (a2 : A),
       (wtotal, (j, a2)) ∈md kbindd U j f t ->
       exists (w1 w2 : W) (a1 : A),
@@ -560,7 +560,7 @@ Section DTM_membership_targetted.
         /\ wtotal = w1 ● w2.
   Proof.
     introv hyp. unfold kbindd in hyp.
-    apply (ind_mbindd_iff1 U) in hyp.
+    apply (inmd_mbindd_iff1 U) in hyp.
     destruct hyp as [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]. subst.
     compare values j and k1.
     + exists w1 w2 a. splits.
@@ -569,11 +569,11 @@ Section DTM_membership_targetted.
       { reflexivity. }
     + rewrite btgd_neq in hyp2; auto.
       unfold compose in hyp2; cbn in hyp2.
-      rewrite ind_mret_iff in hyp2. destructs hyp2.
+      rewrite inmd_mret_iff in hyp2. destructs hyp2.
       subst. contradiction.
   Qed.
 
-  Lemma ind_kbindd_eq_iff2 :
+  Lemma inmd_kbindd_eq_iff2 :
     forall `(f : W * A -> T j A) (t : U A) (wtotal : W) (a2 : A),
       (exists (w1 w2 : W) (a1 : A),
         (w1, (j, a1)) ∈md t /\ (w2, (j, a2)) ∈md f (w1, a1)
@@ -581,77 +581,77 @@ Section DTM_membership_targetted.
       (wtotal, (j, a2)) ∈md kbindd U j f t.
   Proof.
     introv [w1 [w2 [a1 hyp]]]. destructs hyp. unfold kbindd.
-    apply (ind_mbindd_iff2 U).
+    apply (inmd_mbindd_iff2 U).
     exists j w1 w2 a1. rewrite btgd_eq. auto.
   Qed.
 
-  Theorem ind_kbindd_eq_iff :
+  Theorem inmd_kbindd_eq_iff :
     forall `(f : W * A -> T j A) (t : U A) (wtotal : W) (a2 : A),
       (wtotal, (j, a2)) ∈md kbindd U j f t <->
       exists (w1 w2 : W) (a1 : A),
         (w1, (j, a1)) ∈md t /\ (w2, (j, a2)) ∈md f (w1, a1)
         /\ wtotal = w1 ● w2.
   Proof.
-    split; auto using ind_kbindd_eq_iff1, ind_kbindd_eq_iff2.
+    split; auto using inmd_kbindd_eq_iff1, inmd_kbindd_eq_iff2.
   Qed.
 
-  Lemma ind_kbindd_neq_iff1 :
+  Lemma inmd_kbindd_neq_iff1 :
     forall (i : K) (Hneq : j <> i) `(f : W * A -> T j A) (t : U A) (wtotal : W) (a2 : A),
       (wtotal, (i, a2)) ∈md kbindd U j f t ->
       (wtotal, (i, a2)) ∈md t \/
       (exists (w1 w2 : W) (a1 : A), (w1, (j, a1)) ∈md t /\ (w2, (i, a2)) ∈md f (w1, a1) /\ wtotal = w1 ● w2).
   Proof.
     introv ? hyp. unfold kbindd in hyp.
-    apply (ind_mbindd_iff1 U) in hyp.
+    apply (inmd_mbindd_iff1 U) in hyp.
     destruct hyp as [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]. subst.
     compare values j and k1.
     + right. exists w1 w2 a. rewrite btgd_eq in hyp2. splits; auto.
     + left. rewrite btgd_neq in hyp2; auto.
       unfold compose in hyp2. cbn in hyp2.
-      rewrite ind_mret_iff in hyp2. destructs hyp2; subst.
+      rewrite inmd_mret_iff in hyp2. destructs hyp2; subst.
       simpl_monoid. auto.
   Qed.
 
-  Lemma ind_kbindd_neq_iff2 :
+  Lemma inmd_kbindd_neq_iff2 :
     forall (i : K) (Hneq : j <> i) `(f : W * A -> T j A) (t : U A) (wtotal : W) (a2 : A),
       (wtotal, (i, a2)) ∈md t \/
       (exists (w1 w2 : W) (a1 : A), (w1, (j, a1)) ∈md t /\ (w2, (i, a2)) ∈md f (w1, a1) /\ wtotal = w1 ● w2) ->
       (wtotal, (i, a2)) ∈md kbindd U j f t.
   Proof.
     introv ? hyp. destruct hyp as [hyp | hyp].
-    - apply (ind_mbindd_iff2 U). exists i wtotal Ƶ a2.
+    - apply (inmd_mbindd_iff2 U). exists i wtotal Ƶ a2.
       splits.
       { auto. }
       { rewrite btgd_neq; auto. unfold compose; cbn.
-        rewrite ind_mret_iff; auto. }
+        rewrite inmd_mret_iff; auto. }
       { now simpl_monoid. }
     - destruct hyp as [w1 [w2 [a1 [hyp1 [hyp2 hyp3]]]]]. subst.
-      apply (ind_mbindd_iff2 U).
+      apply (inmd_mbindd_iff2 U).
       exists j w1 w2 a1. rewrite btgd_eq. auto.
   Qed.
 
-  Theorem ind_kbindd_neq_iff :
+  Theorem inmd_kbindd_neq_iff :
     forall (i : K) (Hneq : j <> i) `(f : W * A -> T j A) (t : U A) (wtotal : W) (a2 : A),
       (wtotal, (i, a2)) ∈md kbindd U j f t <->
       (wtotal, (i, a2)) ∈md t \/
       (exists (w1 w2 : W) (a1 : A), (w1, (j, a1)) ∈md t /\ (w2, (i, a2)) ∈md f (w1, a1) /\ wtotal = w1 ● w2).
   Proof.
-    split; auto using ind_kbindd_neq_iff1, ind_kbindd_neq_iff2.
+    split; auto using inmd_kbindd_neq_iff1, inmd_kbindd_neq_iff2.
   Qed.
 
   (** *** Corollaries for <<kbind>>, <<kmapd>>, and <<kmap>>*)
   (******************************************************************************)
-  Corollary ind_kbind_eq_iff :
+  Corollary inmd_kbind_eq_iff :
     forall `(f : A -> T j A) (t : U A) (wtotal : W) (a2 : A),
       (wtotal, (j, a2)) ∈md kbind U j f t <->
       exists (w1 w2 : W) (a1 : A),
         (w1, (j, a1)) ∈md t /\ (w2, (j, a2)) ∈md f a1
         /\ wtotal = w1 ● w2.
   Proof.
-    intros. rewrite kbind_to_kbindd. now rewrite (ind_kbindd_eq_iff).
+    intros. rewrite kbind_to_kbindd. now rewrite (inmd_kbindd_eq_iff).
   Qed.
 
-  Corollary ind_kbind_neq_iff :
+  Corollary inmd_kbind_neq_iff :
     forall (i : K) (Hneq : j <> i) `(f : A -> T j A) (t : U A) (wtotal : W) (a2 : A),
       (wtotal, (i, a2)) ∈md kbind U j f t <->
       (wtotal, (i, a2)) ∈md t \/
@@ -659,45 +659,45 @@ Section DTM_membership_targetted.
         (w1, (j, a1)) ∈md t /\ (w2, (i, a2)) ∈md f a1
         /\ wtotal = w1 ● w2).
   Proof.
-    intros. rewrite kbind_to_kbindd. rewrite ind_kbindd_neq_iff; auto.
+    intros. rewrite kbind_to_kbindd. rewrite inmd_kbindd_neq_iff; auto.
     unfold compose. cbn. easy.
   Qed.
 
-  Corollary ind_kmapd_eq_iff :
+  Corollary inmd_kmapd_eq_iff :
     forall `(f : W * A -> A) (t : U A) (w : W) (a2 : A),
       (w, (j, a2)) ∈md kmapd U j f t <->
       exists (a1 : A), (w, (j, a1)) ∈md t /\ a2 = f (w, a1).
   Proof.
-    intros. unfold kmapd. rewrite (ind_mmapd_iff U).
+    intros. unfold kmapd. rewrite (inmd_mmapd_iff U).
     now rewrite tgtd_eq.
   Qed.
 
-  Corollary ind_kmapd_neq_iff :
+  Corollary inmd_kmapd_neq_iff :
     forall (i : K) (Hneq : j <> i) `(f : W * A -> A) (t : U A) (w : W) (a2 : A),
       (w, (i, a2)) ∈md kmapd U j f t <->
       (w, (i, a2)) ∈md t.
   Proof.
-    intros. unfold kmapd. rewrite (ind_mmapd_iff U).
+    intros. unfold kmapd. rewrite (inmd_mmapd_iff U).
     rewrite tgtd_neq; auto. cbn. split.
     - intros [a [hyp eq]]; subst. auto.
     - intros hyp. now (exists a2).
   Qed.
 
-  Corollary ind_kmap_eq_iff :
+  Corollary inmd_kmap_eq_iff :
     forall `(f : A -> A) (t : U A) (w : W) (a2 : A),
       (w, (j, a2)) ∈md kmap U j f t <->
       exists (a1 : A), (w, (j, a1)) ∈md t /\ a2 = f a1.
   Proof.
-    intros. unfold kmap. rewrite (ind_mmap_iff U).
+    intros. unfold kmap. rewrite (inmd_mmap_iff U).
     now rewrite tgt_eq.
   Qed.
 
-  Corollary ind_kmap_neq_iff :
+  Corollary inmd_kmap_neq_iff :
     forall (i : K) (Hneq : j <> i) `(f : A -> A) (t : U A) (w : W) (a2 : A),
       (w, (i, a2)) ∈md kmap U j f t <->
       (w, (i, a2)) ∈md t.
   Proof.
-    intros. unfold kmap. rewrite (ind_mmap_iff U).
+    intros. unfold kmap. rewrite (inmd_mmap_iff U).
     rewrite tgt_neq; auto. split.
     - intros [a [hyp eq]]; subst. auto.
     - intros hyp. now (exists a2).
@@ -711,9 +711,9 @@ Section DTM_membership_targetted.
       exists (w1 : W) (a1 : A),
         (w1, (j, a1)) ∈md t /\ (j, a2) ∈m f (w1, a1).
   Proof.
-    intros. rewrite ind_iff_in.
-    setoid_rewrite ind_iff_in.
-    setoid_rewrite ind_kbindd_eq_iff.
+    intros. rewrite inmd_iff_in.
+    setoid_rewrite inmd_iff_in.
+    setoid_rewrite inmd_kbindd_eq_iff.
     split.
     - intros [w [w1 [w2 [a1 [hyp1 [hyp2 hyp3]]]]]].
       eexists. eexists. split; eauto.
@@ -727,9 +727,9 @@ Section DTM_membership_targetted.
       (i, a2) ∈m t \/
       (exists (w1 : W) (a1 : A), (w1, (j, a1)) ∈md t /\ (i, a2) ∈m f (w1, a1)).
   Proof.
-    intros. rewrite ind_iff_in.
-    setoid_rewrite ind_iff_in.
-    setoid_rewrite ind_kbindd_neq_iff; auto.
+    intros. rewrite inmd_iff_in.
+    setoid_rewrite inmd_iff_in.
+    setoid_rewrite inmd_kbindd_neq_iff; auto.
     split.
     - intros [w [hyp | hyp]].
       + left. eauto.
@@ -748,7 +748,7 @@ Section DTM_membership_targetted.
         (j, a1) ∈m t /\ (j, a2) ∈m f a1.
   Proof.
     intros. rewrite kbind_to_kbindd. rewrite (in_kbindd_eq_iff).
-    setoid_rewrite ind_iff_in at 2.
+    setoid_rewrite inmd_iff_in at 2.
     unfold compose. cbn. firstorder.
   Qed.
 
@@ -765,12 +765,12 @@ Section DTM_membership_targetted.
       + now left.
       + right. unfold compose in hyp. cbn in hyp.
         destruct hyp as [? [a1 [hyp1 hyp2]]].
-        apply ind_implies_in in hyp1. eauto.
+        apply inmd_implies_in in hyp1. eauto.
     - intros [hyp|hyp].
       + now left.
       + right.
         destruct hyp as [a1 [hyp1 hyp2]].
-        rewrite ind_iff_in in hyp1. destruct hyp1 as [w1 hyp1].
+        rewrite inmd_iff_in in hyp1. destruct hyp1 as [w1 hyp1].
         exists w1 a1. auto.
   Qed.
 
@@ -791,8 +791,8 @@ Section DTM_membership_targetted.
     intros. unfold kmapd. rewrite (in_mmapd_iff U).
     rewrite tgtd_neq; auto. cbn. split.
     - intros [w [a [hyp eq]]]; subst.
-      eapply ind_implies_in; eauto.
-    - intros hyp. rewrite ind_iff_in in hyp.
+      eapply inmd_implies_in; eauto.
+    - intros hyp. rewrite inmd_iff_in in hyp.
       destruct hyp as [w hyp]. eauto.
   Qed.
 
