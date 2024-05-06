@@ -234,7 +234,7 @@ Ltac bound_induction :=
 (* plus with different simplification behaviour *)
 
 Definition lift (x y : nat) : nat := plus x y.
-Notation "( + x )" := (lift x) (format "( + x )").
+#[local] Notation "( + x )" := (lift x) (format "( + x )").
 #[global] Arguments lift x y/.
 
 

@@ -20,8 +20,6 @@ Module Autosubst_Shim.
     #[export] Instance Subst_DTM : Subst (T nat) :=
       @DB.subst T _ _ _ _.
 
-    Print SubstLemmas.
-
     Lemma rename_subst_DTM:
       forall (xi : nat -> nat) (s : T nat), rename xi s = s.[ren xi].
     Proof.
