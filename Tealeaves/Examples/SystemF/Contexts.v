@@ -437,8 +437,9 @@ Lemma ok_type_ctx_app : forall Δ Γ1 Γ2,
 Proof.
   intros. unfold ok_type_ctx.
   setoid_rewrite in_range_iff.
-  setoid_rewrite List.in_list_app.
-  rewrite uniq_app_iff. firstorder.
+  rewrite uniq_app_iff.
+  setoid_rewrite element_of_list_app.
+  firstorder.
 Qed.
 
 Lemma ok_type_ctx_app_comm : forall {Δ Γ1 Γ2},
@@ -725,3 +726,28 @@ Proof.
   - eapply (subst_lc_neq term); auto.
     + discriminate.
 Qed.
+
+
+(*
+(** ** Example: Typing the polymorphic identity *)
+(******************************************************************************)
+Example polymorphic_identity_function :
+  (nil ; nil ⊢ (Λ λ 0 ⋅ 0) : (∀ 0 ⟹ 0)).
+Proof.
+  apply j_univ with (L := ∅).
+  introv _.
+  cbn.
+  change (pure (F := fun A => A) ?x) with x.
+  apply j_abs with (L := ∅).
+  introv _.
+  apply j_var.
+  - auto with tea_alist.
+  - simpl_alist.
+    apply ok_tmv_tm_one.
+      unfold ok_type, scoped_env, scoped.
+      autorewrite with sysf_rw tea_rw_dom.
+      split; [fsetdec | apply lc_ty_ty_Fr].
+    + simpl_alist. now autorewrite with tea_list.
+Qed.
+
+*)

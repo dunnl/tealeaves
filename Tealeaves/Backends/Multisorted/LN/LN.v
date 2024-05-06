@@ -2,11 +2,8 @@ From Tealeaves.Backends.LN Require Import
   Atom AtomSet.
 From Tealeaves.Misc Require Import
   NaturalNumbers.
-From Tealeaves Require Import
-  Categories.TypeFamily.
 From Tealeaves.Theory Require Import
-  DecoratedTraversableMonad. (* Mostly for the imports *)
-From Tealeaves.Classes Require Import
+  DecoratedTraversableMonad (* Mostly for the imports *)
   Multisorted.DecoratedTraversableMonad.
 
 Import
@@ -21,10 +18,9 @@ Import
   DecoratedContainerFunctor.Notations
   DecoratedTraversableMonad.Notations
   LN.AtomSet.Notations
-  Multisorted.DecoratedTraversableMonad.Notations
-  Multisorted.DecoratedTraversableMonad.Notations2
-  (* ^^^ TODO This creates a conflict with <<Batch>> *)
-  Multisorted.DecoratedTraversableMonad.Notations3
+  DecoratedTraversableMonad.Notations
+  Functors.Multisorted.Batch.Notations
+  Theory.Container.Notations
   Categories.TypeFamily.Notations.
 
 #[local] Open Scope nat_scope. (* Let <<x + y>> be addition, not sum type. *)
@@ -173,7 +169,7 @@ Section local_operations.
   (** To define local closure we will take <<n = 0>>, but we can also
       consider more notions like ``local closure within a gap of 1
       binder,'' which is useful for backend reasoning. **)
-  Definition is_bound_or_free k (gap : nat) : list K * LN -> Prop :=
+  Definition lc_loc k (gap : nat) : list K * LN -> Prop :=
     fun '(w, l) =>
       match l with
       | Fr x => True
@@ -187,34 +183,36 @@ End local_operations.
 Section LocallyNamelessOperations.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    (U : Type -> Type)
+      `{MultiDecoratedTraversablePreModule (list K) T U
+          (mn_op := Monoid_op_list)
+          (mn_unit := Monoid_unit_list)}
     `{! MultiDecoratedTraversableMonad (list K) T}.
 
-  Definition open k (u : T k LN) : S LN -> S LN  :=
-    kbindd S k (open_loc k u).
+  Definition open k (u : T k LN) : U LN -> U LN  :=
+    kbindd U k (open_loc k u).
 
-  Definition close k x : S LN -> S LN :=
-    kmapd S k (close_loc k x).
+  Definition close k x : U LN -> U LN :=
+    kmapd U k (close_loc k x).
 
-  Definition subst k x (u : T k LN) : S LN -> S LN :=
-    kbind S k (subst_loc k x u).
+  Definition subst k x (u : T k LN) : U LN -> U LN :=
+    kbind U k (subst_loc k x u).
 
-  Definition free : K -> S LN -> list atom :=
-    fun k t => bind (T := list) free_loc (toklist S k t).
+  Definition free : K -> U LN -> list atom :=
+    fun k t => bind (T := list) free_loc (toklist U k t).
 
-  Definition locally_closed_gap k (gap : nat) : S LN -> Prop :=
+  Definition LCn k (gap : nat) : U LN -> Prop :=
     fun t => forall (w : list K) (l : LN),
-        (w, (k, l)) ∈md t -> is_bound_or_free k gap (w, l).
+        (w, (k, l)) ∈md t -> lc_loc k gap (w, l).
 
-  Definition locally_closed k : S LN -> Prop :=
-    locally_closed_gap k 0.
+  Definition LC k : U LN -> Prop :=
+    LCn k 0.
 
-  Definition freeset : K -> S LN -> AtomSet.t :=
+  Definition FV : K -> U LN -> AtomSet.t :=
     fun k t => LN.AtomSet.atoms (free k t).
 
-  Definition scoped : K -> S LN -> AtomSet.t -> Prop :=
-    fun k t γ => freeset k t ⊆ γ.
+  Definition scoped : K -> U LN -> AtomSet.t -> Prop :=
+    fun k t γ => FV k t ⊆ γ.
 
 End LocallyNamelessOperations.
 
@@ -234,15 +232,15 @@ Section test_notations.
   Import Notations.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! MultiDecoratedTraversableMonad (list K) T}.
 
   Context
     (k j : K)
     (t1 : T k LN)
     (t2 : T j LN)
-    (u : S LN)
+    (u : U LN)
     (x : atom)
     (n : nat).
 
@@ -275,11 +273,11 @@ Basic properties of operations
 Section operations_specifications.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! MultiDecoratedTraversableMonad (list K) T}.
 
-  Implicit Types (l : LN) (w : list K) (t : S LN) (x : atom).
+  Implicit Types (l : LN) (w : list K) (t : U LN) (x : atom).
 
   (** ** Identity and equality lemmas for operations *)
   (******************************************************************************)
@@ -346,7 +344,7 @@ Section operations_specifications.
         (w1, (k, l1)) ∈md t /\ (w2, (k, l)) ∈md open_loc k u (w1, l1) /\ w = w1 ● w2.
   Proof.
     intros. unfold open.
-    now rewrite (ind_kbindd_eq_iff S).
+    now rewrite (ind_kbindd_eq_iff U).
   Qed.
 
   Lemma ind_open_neq_iff : forall k j l w u t,
@@ -355,7 +353,7 @@ Section operations_specifications.
           (w1, (j, l1)) ∈md t /\ (w2, (k, l)) ∈md open_loc j u (w1, l1) /\ w = w1 ● w2.
   Proof.
     intros. unfold open.
-    now rewrite (ind_kbindd_neq_iff S); auto.
+    now rewrite (ind_kbindd_neq_iff U); auto.
   Qed.
 
   (** *** For [close] *)
@@ -365,7 +363,7 @@ Section operations_specifications.
         (w, (k, l1)) ∈md t /\ l = close_loc k x (w, l1).
   Proof.
     intros. unfold close.
-    rewrite (ind_kmapd_eq_iff S).
+    rewrite (ind_kmapd_eq_iff U).
     easy.
   Qed.
 
@@ -374,7 +372,7 @@ Section operations_specifications.
       (w, (k, l)) ∈md '[j | x] t <-> (w, (k, l)) ∈md t.
   Proof.
     intros. unfold close.
-    now rewrite (ind_kmapd_neq_iff S).
+    now rewrite (ind_kmapd_neq_iff U).
   Qed.
 
   (** *** For [subst] *)
@@ -384,7 +382,7 @@ Section operations_specifications.
         (w1, (k, l1)) ∈md t /\ (w2, (k, l)) ∈md subst_loc k x u l1 /\ w = w1 ● w2.
   Proof.
     intros. unfold subst.
-    now rewrite (ind_kbind_eq_iff S).
+    now rewrite (ind_kbind_eq_iff U).
   Qed.
 
   Lemma ind_subst_neq_iff : forall k j w l u t x,
@@ -393,7 +391,7 @@ Section operations_specifications.
         (w1, (j, l1)) ∈md t /\ (w2, (k, l)) ∈md subst_loc j x u l1 /\ w = w1 ● w2.
   Proof.
     intros. unfold subst.
-    now rewrite (ind_kbind_neq_iff S); auto.
+    now rewrite (ind_kbind_neq_iff U); auto.
   Qed.
 
   (** ** Context-agnostic LN analysis of operations *)
@@ -406,7 +404,7 @@ Section operations_specifications.
         (w1, (k, l1)) ∈md t /\ (k, l) ∈m open_loc k u (w1, l1).
   Proof.
     intros. unfold open.
-    now rewrite (in_kbindd_eq_iff S).
+    now rewrite (in_kbindd_eq_iff U).
   Qed.
 
   Lemma in_open_neq_iff : forall k j l u t,
@@ -415,7 +413,7 @@ Section operations_specifications.
           (w1, (j, l1)) ∈md t /\ (k, l) ∈m open_loc j u (w1, l1).
   Proof.
     intros. unfold open.
-    now rewrite (in_kbindd_neq_iff S); auto.
+    now rewrite (in_kbindd_neq_iff U); auto.
   Qed.
 
   (** *** For [close] *)
@@ -425,7 +423,7 @@ Section operations_specifications.
         (w, (k, l1)) ∈md t /\ l = close_loc k x (w, l1).
   Proof.
     intros. unfold close.
-    now rewrite (in_kmapd_eq_iff S).
+    now rewrite (in_kmapd_eq_iff U).
   Qed.
 
   Lemma in_close_neq_iff : forall k j l x t,
@@ -433,7 +431,7 @@ Section operations_specifications.
       (k, l) ∈m '[j | x] t <-> (k, l) ∈m t.
   Proof.
     intros. unfold close.
-    now rewrite (in_kmapd_neq_iff S); auto.
+    now rewrite (in_kmapd_neq_iff U); auto.
   Qed.
 
   (** *** For [subst] *)
@@ -443,7 +441,7 @@ Section operations_specifications.
         (k, l1) ∈m t /\ (k, l) ∈m subst_loc k x u l1.
   Proof.
     intros. unfold subst.
-    now rewrite (in_kbind_eq_iff S).
+    now rewrite (in_kbind_eq_iff U).
   Qed.
 
   Lemma in_subst_neq_iff : forall k j l u t x,
@@ -452,7 +450,7 @@ Section operations_specifications.
           (j, l1) ∈m t /\ (k, l) ∈m subst_loc j x u l1.
   Proof.
     intros. unfold subst.
-    now rewrite (in_kbind_neq_iff S).
+    now rewrite (in_kbind_neq_iff U).
   Qed.
 
 End operations_specifications.
@@ -462,46 +460,51 @@ End operations_specifications.
 (******************************************************************************)
 Section operations_specifications.
 
-  (** ** Characterizations for [free] and [freeset] *)
+  (** ** Characterizations for [free] and [FV] *)
   (******************************************************************************)
   Section characterize_free.
 
     Context
-      {S : Type -> Type}
-      `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+      {U : Type -> Type}
+      `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
       `{! MultiDecoratedTraversableMonad (list K) T}.
 
-    Theorem in_free_iff : forall (k : K) (t : S LN) (x : atom),
-        x ∈ free S k t <-> (k, Fr x) ∈m t.
+    #[local] Instance: Compat_ToSubset_Tolist list.
+    Proof.
+      unfold Compat_ToSubset_Tolist.
+      unfold tosubset, ToSubset_list.
+      unfold ToSubset_Tolist, ToSubset_list.
+      unfold compose. ext A l.
+      rewrite Tolist_list_id.
+      unfold tosubset.
+      reflexivity.
+    Qed.
+
+    Theorem in_free_iff : forall (k : K) (t : U LN) (x : atom),
+        x ∈ free U k t <-> (k, Fr x) ∈m t.
     Proof.
       intros. unfold free.
-      (*
-      replace (x ∈ bind free_loc (toklist S k t)) with
-        (x ∈ tolist (bind free_loc (toklist S k t))) by
+      replace (x ∈ bind free_loc (toklist U k t)) with
+        (x ∈ tolist (bind free_loc (toklist U k t))) by
         now (rewrite Tolist_list_id).
       rewrite <- in_iff_in_tolist.
       rewrite in_bind_iff.
       split.
       - intros [l [lin xin]].
         rewrite in_iff_in_toklist.
-       *)
-        (*
-        rewrite <- (in_iff_in_toklist) in lin.
         destruct l as [a|n].
         + cbv in xin. destruct xin as [?|[]].
-          subst. assumption.
+          subst. cbn in lin. assumption.
         + cbv in xin. destruct xin as [].
       - intros. exists (Fr x). rewrite <- (in_iff_in_toklist).
         split; [assumption| ].
         cbv. now left.
     Qed.
-         *)
-    Admitted.
 
-    Corollary free_iff_freeset : forall (k : K) (t : S LN) (x : atom),
-        x ∈ free S k t <-> x ∈@ freeset S k t.
+    Corollary free_iff_FV : forall (k : K) (t : U LN) (x : atom),
+        x ∈ free U k t <-> x `in` FV U k t.
     Proof.
-      intros. unfold freeset. rewrite <- in_atoms_iff.
+      intros. unfold FV. rewrite <- in_atoms_iff.
       reflexivity.
     Qed.
 
@@ -510,14 +513,14 @@ Section operations_specifications.
   (** ** [free] variables after <<open>>/<<close>>/<<subst>> *)
   (******************************************************************************)
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! MultiDecoratedTraversableMonad (list K) T}.
 
   (** *** After [open] *)
   (******************************************************************************)
   Lemma free_open_eq_iff : forall k u t x,
-      x ∈ free S k (t '(k | u)) <-> exists w l1,
+      x ∈ free U k (t '(k | u)) <-> exists w l1,
         (w, (k, l1)) ∈md t /\ x ∈ free (T k) k (open_loc k u (w, l1)).
   Proof.
     intros.
@@ -528,7 +531,7 @@ Section operations_specifications.
 
   Lemma free_open_neq_iff : forall k j u t x,
       k <> j ->
-      x ∈ free S j (t '(k | u)) <-> x ∈ free S j t \/ exists w l1,
+      x ∈ free U j (t '(k | u)) <-> x ∈ free U j t \/ exists w l1,
           (w, (k, l1)) ∈md t /\ x ∈ free (T k) j (open_loc k u (w, l1)).
   Proof.
     intros. rewrite 2(in_free_iff). setoid_rewrite in_free_iff.
@@ -538,37 +541,37 @@ Section operations_specifications.
   (** *** After [close] *)
   (******************************************************************************)
   Lemma free_close_eq_iff : forall k t x y,
-      y ∈ free S k ('[k | x] t) <-> exists w l1,
+      y ∈ free U k ('[k | x] t) <-> exists w l1,
         (w, (k, l1)) ∈md t /\ Fr y = close_loc k x (w, l1).
   Proof.
     intros. rewrite in_free_iff.
-    now rewrite (in_close_eq_iff S).
+    now rewrite (in_close_eq_iff U).
   Qed.
 
   Lemma free_close_neq_iff : forall k j t x,
       k <> j ->
-      x ∈ free S j ('[k | x] t) <-> x ∈ free S j t.
+      x ∈ free U j ('[k | x] t) <-> x ∈ free U j t.
   Proof.
     intros. rewrite 2(in_free_iff).
-    now rewrite (in_close_neq_iff S); auto.
+    now rewrite (in_close_neq_iff U); auto.
   Qed.
 
   (** *** For [subst] *)
   (******************************************************************************)
   Lemma free_subst_eq_iff : forall k u t x y,
-      y ∈ free S k (t '{k | x ~> u}) <-> exists l1,
+      y ∈ free U k (t '{k | x ~> u}) <-> exists l1,
         (k, l1) ∈m t /\ y ∈ free (T k) k (subst_loc k x u l1).
   Proof.
-    intros. rewrite (in_free_iff). setoid_rewrite (in_free_iff (S := T k)).
-    now rewrite (in_subst_eq_iff S).
+    intros. rewrite (in_free_iff). setoid_rewrite (in_free_iff (U := T k)).
+    now rewrite (in_subst_eq_iff U).
   Qed.
 
   Lemma free_subst_neq_iff : forall j k u t x y,
       k <> j ->
-      y ∈ free S j (t '{k | x ~> u}) <-> y ∈ free S j t \/ exists l1,
+      y ∈ free U j (t '{k | x ~> u}) <-> y ∈ free U j t \/ exists l1,
         (k, l1) ∈m t /\ y ∈ free (T k) j (subst_loc k x u l1).
   Proof.
-    intros. rewrite 2(in_free_iff). setoid_rewrite (in_free_iff (S := T k)).
+    intros. rewrite 2(in_free_iff). setoid_rewrite (in_free_iff (U := T k)).
     now rewrite (in_subst_neq_iff); auto.
   Qed.
 
@@ -588,11 +591,11 @@ Create HintDb tea_local.
 Section locally_nameless_local.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! MultiDecoratedTraversableMonad (list K) T}.
 
-  Implicit Types (l : LN) (w : list K) (t : S LN) (x : atom) (j k : K) (n : nat).
+  Implicit Types (l : LN) (w : list K) (t : U LN) (x : atom) (j k : K) (n : nat).
 
   (** ** Lemmas for proving (in)equalities between leaves *)
   (******************************************************************************)
@@ -629,8 +632,8 @@ Section locally_nameless_local.
     now subst. now injection hyp.
   Qed.
 
-  Lemma ninf_in_neq : forall k x l (t : S LN),
-      ~ x ∈ free S k t ->
+  Lemma ninf_in_neq : forall k x l (t : U LN),
+      ~ x ∈ free U k t ->
       (k, l) ∈m t -> Fr x <> l.
   Proof.
     introv hyp1 hyp2.
@@ -763,14 +766,14 @@ Section subst_metatheory.
   Section fix_dtm.
 
     Context
-      (S : Type -> Type)
-      `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+      (U : Type -> Type)
+      `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
       `{! MultiDecoratedTraversableMonad (list K) T}.
 
     Implicit Types
              (k : K) (j : K)
              (l : LN) (p : LN)
-             (x : atom) (t : S LN)
+             (x : atom) (t : U LN)
              (w : list K) (n : nat).
 
     (** ** LN analysis with contexts *)
@@ -820,7 +823,7 @@ Section subst_metatheory.
         exists w1 w2 : list K, (w1, k, Fr x) ∈md t /\ (w2, j, l) ∈md u /\ w = w1 ● w2.
     Proof with auto.
       intros. compare values k and j.
-      - rewrite (ind_subst_iff_eq S). setoid_rewrite (ind_subst_loc_iff_eq j).
+      - rewrite (ind_subst_iff_eq U). setoid_rewrite (ind_subst_loc_iff_eq j).
         split.
         + intros [l' [n1 [n2 conditions]]].
           right. destruct conditions as [c1 [[c2|c2] c3]].
@@ -831,7 +834,7 @@ Section subst_metatheory.
           { contradiction. }
           { exists w (Ƶ : list K) l. rewrite monoid_id_l. split... }
           { destruct hyp as [w1 [w2 ?]]. exists w1 w2 (Fr x). intuition. }
-      - rewrite (ind_subst_neq_iff S)... split.
+      - rewrite (ind_subst_neq_iff U)... split.
         + intros [? | [n1 [n2 [p [in_t in_local]]]]]...
           rewrite (ind_subst_loc_iff_neq k) in in_local...
           right. right. exists n1 n2. destruct in_local as [[? ?] ?]; subst...
@@ -895,7 +898,7 @@ Section subst_metatheory.
         (k, Fr x) ∈m t /\ (j, l) ∈m u.
     Proof with auto.
       intros. destruct_eq_args k j.
-      - rewrite (in_subst_eq_iff S).
+      - rewrite (in_subst_eq_iff U).
         setoid_rewrite (in_subst_loc_iff_eq). split.
         + intros [? [?  in_sub]].
           destruct in_sub as [[? heq] | [heq ?]]; subst...
@@ -903,7 +906,7 @@ Section subst_metatheory.
           { contradiction.  }
           { exists l... }
           { exists (Fr x). intuition. }
-      - rewrite (in_subst_neq_iff S); auto. split.
+      - rewrite (in_subst_neq_iff U); auto. split.
         + intros [? | [p [in_t in_local]] ]; auto.
           rewrite in_subst_loc_iff_neq in in_local; auto.
           destruct in_local as [? ?]; subst. auto.
@@ -933,38 +936,38 @@ Section subst_metatheory.
     (** ** Free variables after substitution *)
     (******************************************************************************)
     Corollary in_free_subst_iff_eq : forall t k u x y,
-        y ∈ free S k (t '{k | x ~> u}) <->
-        y ∈ free S k t /\ y <> x \/ x ∈ free S k t /\ y ∈ free (T k) k u.
+        y ∈ free U k (t '{k | x ~> u}) <->
+        y ∈ free U k t /\ y <> x \/ x ∈ free U k t /\ y ∈ free (T k) k u.
     Proof.
       intros. repeat rewrite (in_free_iff).
       rewrite in_subst_iff_eq. now simpl_local.
     Qed.
 
-    Corollary in_freeset_subst_iff_eq : forall t k u x y,
-        y ∈@ freeset S k (t '{k | x ~> u}) <->
-        y ∈@ freeset S k t /\ y <> x \/
-        x ∈@ freeset S k t /\ y ∈@ freeset (T k) k u.
+    Corollary in_FV_subst_iff_eq : forall t k u x y,
+        y `in` FV U k (t '{k | x ~> u}) <->
+        y `in` FV U k t /\ y <> x \/
+        x `in` FV U k t /\ y `in` FV (T k) k u.
     Proof.
-      intros. repeat rewrite <- (free_iff_freeset).
+      intros. repeat rewrite <- (free_iff_FV).
       apply in_free_subst_iff_eq.
     Qed.
 
     Corollary in_free_subst_iff_neq : forall t k j u x y,
         k <> j ->
-        y ∈ free S j (t '{k | x ~> u}) <->
-        y ∈ free S j t \/ x ∈ free S k t /\ y ∈ free (T k) j u.
+        y ∈ free U j (t '{k | x ~> u}) <->
+        y ∈ free U j t \/ x ∈ free U k t /\ y ∈ free (T k) j u.
     Proof.
       intros. repeat rewrite (in_free_iff).
       rewrite in_subst_iff_neq; auto. reflexivity.
     Qed.
 
-    Corollary in_freeset_subst_iff_neq : forall t k j u x y,
+    Corollary in_FV_subst_iff_neq : forall t k j u x y,
         k <> j ->
-        y ∈@ freeset S j (t '{k | x ~> u}) <->
-        y ∈@ freeset S j t \/
-        x ∈@ freeset S k t /\ y ∈@ freeset (T k) j u.
+        y `in` FV U j (t '{k | x ~> u}) <->
+        y `in` FV U j t \/
+        x `in` FV U k t /\ y `in` FV (T k) j u.
     Proof.
-      intros. repeat rewrite <- (free_iff_freeset).
+      intros. repeat rewrite <- (free_iff_FV).
       auto using in_free_subst_iff_neq.
     Qed.
 
@@ -1001,8 +1004,8 @@ Section subst_metatheory.
     Qed.
 
     Corollary in_free_subst_upper : forall k j t u x y,
-        y ∈ free S j (t '{k | x ~> u}) ->
-        (y ∈ free S j t /\ j <> k) \/ (y ∈ free S k t /\ y <> x /\ k = j) \/ y ∈ free (T k) j u.
+        y ∈ free U j (t '{k | x ~> u}) ->
+        (y ∈ free U j t /\ j <> k) \/ (y ∈ free U k t /\ y <> x /\ k = j) \/ y ∈ free (T k) j u.
     Proof.
       setoid_rewrite (in_free_iff). introv hyp.
       apply in_subst_upper in hyp.
@@ -1015,8 +1018,8 @@ Section subst_metatheory.
     Qed.
 
     Corollary in_free_subst_upper_eq : forall k t u x y,
-        y ∈ free S k (t '{k | x ~> u}) ->
-        (y ∈ free S k t /\ y <> x) \/ y ∈ free (T k) k u.
+        y ∈ free U k (t '{k | x ~> u}) ->
+        (y ∈ free U k t /\ y <> x) \/ y ∈ free (T k) k u.
     Proof.
       introv hyp. apply in_free_subst_upper in hyp.
       intuition.
@@ -1024,21 +1027,21 @@ Section subst_metatheory.
 
     Corollary in_free_subst_upper_neq : forall k j t u x y,
         k <> j ->
-        y ∈ free S j (t '{k | x ~> u}) ->
-        y ∈ free S j t \/ y ∈ free (T k) j u.
+        y ∈ free U j (t '{k | x ~> u}) ->
+        y ∈ free U j t \/ y ∈ free (T k) j u.
     Proof.
       introv neq hyp. apply in_free_subst_upper in hyp.
       intuition.
     Qed.
 
-    Corollary freeset_subst_upper : forall k j t u x y,
-        y ∈@ freeset S j (t '{k | x ~> u}) ->
-        k = j /\ y ∈@ (freeset S k t \\ {{x}} ∪ freeset (T k) j u)%set \/
-        k <> j /\ y ∈@ (freeset S j t ∪ freeset (T k) j u)%set.
+    Corollary FV_subst_upper : forall k j t u x y,
+        y `in` FV U j (t '{k | x ~> u}) ->
+        k = j /\ y `in` (FV U k t \\ {{x}} ∪ FV (T k) j u)%set \/
+        k <> j /\ y `in` (FV U j t ∪ FV (T k) j u)%set.
     Proof.
       setoid_rewrite AtomSet.union_spec.
       setoid_rewrite AtomSet.diff_spec.
-      setoid_rewrite <- free_iff_freeset.
+      setoid_rewrite <- free_iff_FV.
       introv hyp. apply in_free_subst_upper in hyp.
       compare values j and k.
       + left. destruct hyp as [hyp | [hyp | hyp]].
@@ -1051,40 +1054,40 @@ Section subst_metatheory.
         { intuition. }
     Qed.
 
-    Corollary freeset_subst_upper_eq : forall k t u x,
-        freeset S k (t '{k | x ~> u}) ⊆
-                (freeset S k t \\ {{x}} ∪ freeset (T k) k u).
+    Corollary FV_subst_upper_eq : forall k t u x,
+        FV U k (t '{k | x ~> u}) ⊆
+                (FV U k t \\ {{x}} ∪ FV (T k) k u).
     Proof.
-      intros. intros a hyp. apply freeset_subst_upper in hyp.
+      intros. intros a hyp. apply FV_subst_upper in hyp.
       intuition.
     Qed.
 
     Corollary scoped_subst_eq : forall t k (u : T k LN) x γ1 γ2,
-        scoped S k t γ1 ->
+        scoped U k t γ1 ->
         scoped (T k) k u γ2 ->
-        scoped S k (t '{k | x ~> u}) (γ1 \\ {{x}} ∪ γ2).
+        scoped U k (t '{k | x ~> u}) (γ1 \\ {{x}} ∪ γ2).
     Proof.
       introv St Su. unfold scoped in *.
-      etransitivity. apply freeset_subst_upper_eq. fsetdec.
+      etransitivity. apply FV_subst_upper_eq. fsetdec.
     Qed.
 
-    Corollary freeset_subst_upper_neq : forall k j t u x,
+    Corollary FV_subst_upper_neq : forall k j t u x,
         k <> j ->
-        freeset S j (t '{k | x ~> u}) ⊆
-                (freeset S j t ∪ freeset (T k) j u).
+        FV U j (t '{k | x ~> u}) ⊆
+                (FV U j t ∪ FV (T k) j u).
     Proof.
-      intros. intros a hyp. apply freeset_subst_upper in hyp.
+      intros. intros a hyp. apply FV_subst_upper in hyp.
       intuition.
     Qed.
 
     Corollary scoped_subst_neq : forall t j k u x γ1 γ2,
         j <> k ->
-        scoped S k t γ1 ->
+        scoped U k t γ1 ->
         scoped (T j) k u γ2 ->
-        scoped S k (t '{j | x ~> u}) (γ1 ∪ γ2).
+        scoped U k (t '{j | x ~> u}) (γ1 ∪ γ2).
     Proof.
       introv St Su. unfold scoped in *.
-      etransitivity. apply freeset_subst_upper_neq; assumption.
+      etransitivity. apply FV_subst_upper_neq; assumption.
       fsetdec.
     Qed.
 
@@ -1104,8 +1107,8 @@ Section subst_metatheory.
     Qed.
 
     Corollary in_free_subst_lower_eq : forall t k (u : T k LN) x y,
-        y ∈ free S k t /\ y <> x ->
-        y ∈ free S k (t '{k | x ~> u}).
+        y ∈ free U k t /\ y <> x ->
+        y ∈ free U k (t '{k | x ~> u}).
     Proof.
       setoid_rewrite (in_free_iff). intros.
       apply in_subst_lower_eq. now simpl_local.
@@ -1113,91 +1116,91 @@ Section subst_metatheory.
 
     Corollary in_free_subst_lower_neq : forall t k j u x y,
         k <> j ->
-        y ∈ free S j t ->
-        y ∈ free S j (t '{k | x ~> u}).
+        y ∈ free U j t ->
+        y ∈ free U j (t '{k | x ~> u}).
     Proof.
       setoid_rewrite (in_free_iff). intros.
       now apply in_subst_lower_neq.
     Qed.
 
-    Corollary freeset_subst_lower_eq : forall t k (u : T k LN) x,
-        freeset S k t \\ {{ x }} ⊆ freeset S k (t '{k | x ~> u}).
+    Corollary FV_subst_lower_eq : forall t k (u : T k LN) x,
+        FV U k t \\ {{ x }} ⊆ FV U k (t '{k | x ~> u}).
     Proof.
       introv. intro a. rewrite AtomSet.diff_spec.
-      do 2 rewrite <- (free_iff_freeset).
+      do 2 rewrite <- (free_iff_FV).
       intros [? ?]. apply in_free_subst_lower_eq.
       intuition.
     Qed.
 
-    Corollary freeset_subst_lower_eq_alt : forall t k (u : T k LN) x,
-        freeset S k t ⊆ freeset S k (t '{k | x ~> u}) ∪ {{ x }}.
+    Corollary FV_subst_lower_eq_alt : forall t k (u : T k LN) x,
+        FV U k t ⊆ FV U k (t '{k | x ~> u}) ∪ {{ x }}.
     Proof.
       introv. intro a. rewrite AtomSet.union_spec.
-      do 2 rewrite <- (free_iff_freeset).
+      do 2 rewrite <- (free_iff_FV).
       destruct_eq_args a x.
       - right. fsetdec.
       - left. auto using in_free_subst_lower_eq.
     Qed.
 
-    Corollary freeset_subst_lower_neq : forall t k j u x,
+    Corollary FV_subst_lower_neq : forall t k j u x,
         k <> j ->
-        freeset S j t ⊆
-                freeset S j (t '{k | x ~> u}).
+        FV U j t ⊆
+                FV U j (t '{k | x ~> u}).
     Proof.
       introv neq. intro a.
-      do 2 rewrite <- (free_iff_freeset).
+      do 2 rewrite <- (free_iff_FV).
       now apply in_free_subst_lower_neq.
     Qed.
 
     (** ** Substitution of fresh variables *)
     (******************************************************************************)
     Theorem subst_fresh : forall t k x u,
-        ~ x ∈ free S k t ->
+        ~ x ∈ free U k t ->
         t '{k | x ~> u} = t.
     Proof.
-      intros. apply (subst_id S). intros.
+      intros. apply (subst_id U). intros.
       assert (Fr x <> l).
-      eapply (ninf_in_neq S); eauto.
+      eapply (ninf_in_neq U); eauto.
       now simpl_local.
     Qed.
 
     Corollary subst_fresh_set : forall t k x u,
-        ~ x ∈@ freeset S k t ->
+        ~ x `in` FV U k t ->
         t '{k | x ~> u} = t.
     Proof.
-      setoid_rewrite <- free_iff_freeset. apply subst_fresh.
+      setoid_rewrite <- free_iff_FV. apply subst_fresh.
     Qed.
 
     Theorem free_subst_fresh : forall t k j u x,
-        ~ x ∈ free S k t ->
-        free S j (t '{k | x ~> u}) = free S j t.
+        ~ x ∈ free U k t ->
+        free U j (t '{k | x ~> u}) = free U j t.
     Proof with auto.
       introv fresh. replace (t '{k | x ~> u}) with t...
       rewrite subst_fresh...
     Qed.
 
     Corollary free_subst_fresh_eq : forall t k u x,
-        ~ x ∈ free S k t ->
-        free S k (t '{k | x ~> u}) = free S k t.
+        ~ x ∈ free U k t ->
+        free U k (t '{k | x ~> u}) = free U k t.
     Proof.
       introv fresh. replace (t '{k | x ~> u}) with t; auto.
       now rewrite subst_fresh.
     Qed.
 
-    Corollary freeset_subst_fresh : forall t k j u x,
-        ~ x ∈@ freeset S k t ->
-        freeset S j (t '{k | x ~> u}) [=] freeset S j t.
+    Corollary FV_subst_fresh : forall t k j u x,
+        ~ x `in` FV U k t ->
+        FV U j (t '{k | x ~> u}) [=] FV U j t.
     Proof.
       introv fresh. intro y.
-      rewrite <- ?(free_iff_freeset) in *.
+      rewrite <- ?(free_iff_FV) in *.
       now rewrite free_subst_fresh.
     Qed.
 
-    Corollary freeset_subst_fresh_eq : forall t k u x,
-        ~ x ∈@ freeset S k t ->
-        freeset S k (t '{k | x ~> u}) [=] freeset S k t.
+    Corollary FV_subst_fresh_eq : forall t k u x,
+        ~ x `in` FV U k t ->
+        FV U k (t '{k | x ~> u}) [=] FV U k t.
     Proof.
-      intros. apply freeset_subst_fresh; auto.
+      intros. apply FV_subst_fresh; auto.
     Qed.
 
   End fix_dtm.
@@ -1207,21 +1210,21 @@ Section subst_metatheory.
   Section fix_dtm.
 
     Context
-      (S : Type -> Type)
-      `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+      (U : Type -> Type)
+      `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
       `{! MultiDecoratedTraversableMonad (list K) T}.
 
     Implicit Types
              (k : K) (j : K)
              (l : LN) (p : LN)
-             (x : atom) (t : S LN)
+             (x : atom) (t : U LN)
              (w : list K) (n : nat).
 
     Lemma subst_subst_neq_loc : forall j k1 k2 (u1 : T k1 LN) (u2 : T k2 LN) (x1 x2 : atom),
         k1 <> k2 ->
         ~ x1 ∈ free (T k2) k1 u2 ->
-        subst (T j) k2 x2 u2 ∘ btg T k1 (subst_loc k1 x1 u1) j =
-        subst (T j) k1 x1 (subst (T k1) k2 x2 u2 u1) ∘ btg T k2 (subst_loc k2 x2 u2) j.
+        subst (T j) k2 x2 u2 ∘ btg k1 (subst_loc k1 x1 u1) j =
+        subst (T j) k1 x1 (subst (T k1) k2 x2 u2 u1) ∘ btg k2 (subst_loc k2 x2 u2) j.
     Proof with easy.
       intros. ext l. unfold compose. compare j to both of { k1 k2 }.
       - do 2 simpl_tgt_fallback.
@@ -1246,7 +1249,7 @@ Section subst_metatheory.
       intros. unfold subst.
       compose near t on left.
       compose near t on right.
-      unfold kbind. rewrite 2(mbind_mbind S).
+      unfold kbind. rewrite 2(mbind_mbind U).
       fequal. ext j. now apply subst_subst_neq_loc.
     Qed.
 
@@ -1274,7 +1277,7 @@ Section subst_metatheory.
     Proof with auto.
       intros. unfold subst.
       compose near t.
-      rewrite 2(kbind_kbind S).
+      rewrite 2(kbind_kbind U).
       fequal. now apply subst_subst_eq_local.
     Qed.
 
@@ -1305,32 +1308,32 @@ Section subst_metatheory.
     (** ** Local closure is preserved by substitution *)
     (******************************************************************************)
     Theorem subst_lc_eq : forall k u t x,
-        locally_closed S k t ->
-        locally_closed (T k) k u ->
-        locally_closed S k (subst S k x u t).
+        LC U k t ->
+        LC (T k) k u ->
+        LC U k (subst U k x u t).
     Proof.
-      unfold locally_closed. introv lct lcu hin.
-      rewrite (ind_subst_iff_eq' S) in hin.
+      unfold LC. introv lct lcu hin.
+      rewrite (ind_subst_iff_eq' U) in hin.
       destruct hin as [[? ?] | [n1 [n2 [h1 [h2 h3]]]]].
       - auto.
       - subst. specialize (lcu n2 l h2).
-        unfold is_bound_or_free in *.
+        unfold lc_loc in *.
         destruct l; auto. unfold_monoid.
         rewrite countk_app. lia.
     Qed.
 
     Theorem subst_lc_neq : forall k j u t x,
         k <> j ->
-        locally_closed S j t ->
-        locally_closed (T k) j u ->
-        locally_closed S j (subst S k x u t).
+        LC U j t ->
+        LC (T k) j u ->
+        LC U j (subst U k x u t).
     Proof.
-      unfold locally_closed. introv neq lct lcu hin.
-      rewrite (ind_subst_iff_neq' S) in hin; auto.
+      unfold LC. introv neq lct lcu hin.
+      rewrite (ind_subst_iff_neq' U) in hin; auto.
       destruct hin as [? | [n1 [n2 [h1 [h2 h3]]]]].
       - auto.
       - subst. specialize (lcu n2 l h2).
-        unfold is_bound_or_free in *.
+        unfold lc_loc in *.
         destruct l; auto. unfold_monoid.
         rewrite countk_app. lia.
     Qed.
@@ -1355,7 +1358,7 @@ Section subst_metatheory.
     Proof.
       intros. compose near t on right.
       unfold open, close, subst.
-      rewrite (kbindd_kmapd S).
+      rewrite (kbindd_kmapd U).
       symmetry. apply (kbindd_respectful_kbind k).
       symmetry. apply subst_spec_local.
     Qed.
@@ -1369,7 +1372,7 @@ Section subst_metatheory.
             end.
 
     Theorem subst_by_LN_spec : forall k x l,
-        subst S k x (mret T k l) = kmap S k (subst_loc_LN k x l).
+        subst U k x (mret T k l) = kmap U k (subst_loc_LN k x l).
     Proof.
       intros. unfold subst. ext t.
       apply kbind_respectful_kmap.
@@ -1383,7 +1386,7 @@ Section subst_metatheory.
     Theorem subst_same : forall t k x,
         t '{k | x ~> mret T k (Fr x)} = t.
     Proof.
-      intros. apply (subst_id S).
+      intros. apply (subst_id U).
       intros. compare l to atom x; now simpl_local.
     Qed.
 
@@ -1396,14 +1399,14 @@ End subst_metatheory.
 Section close_metatheory.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! MultiDecoratedTraversableMonad (list K) T}.
 
   Implicit Types
            (k : K) (j : K)
            (l : LN) (p : LN)
-           (x : atom) (t : S LN)
+           (x : atom) (t : U LN)
            (w : list K) (n : nat).
 
   (** ** Free variables after variable closing *)
@@ -1415,7 +1418,7 @@ Section close_metatheory.
   Proof.
     introv lin heq. destruct l as [la | ln].
     - cbn in heq. destruct_eq_args x la.
-      inverts heq. now apply (ind_implies_in S) in lin.
+      inverts heq. now apply (ind_implies_in U) in lin.
     - cbn in heq. compare_nats_args ln (countk k w); discriminate.
   Qed.
 
@@ -1424,14 +1427,14 @@ Section close_metatheory.
       (k, Fr y) ∈m t ->
       exists w l, (w, k, l) ∈md t /\ Fr y = close_loc k x (w, l).
   Proof.
-    introv neq yin. apply (ind_iff_in S) in yin. destruct yin as [w yin].
+    introv neq yin. apply (ind_iff_in U) in yin. destruct yin as [w yin].
     exists w. exists (Fr y). cbn. compare values x and y.
   Qed.
 
   Theorem in_free_close_iff : forall k t x y,
-      y ∈ free S k ('[k | x] t) <-> y ∈ free S k t /\ x <> y.
+      y ∈ free U k ('[k | x] t) <-> y ∈ free U k t /\ x <> y.
   Proof.
-    introv. rewrite (free_close_eq_iff S).
+    introv. rewrite (free_close_eq_iff U).
     rewrite (in_free_iff). split.
     - introv [? [? [? ?] ] ]. eauto using in_free_close_iff_loc_1.
     - intros [? ?]. eauto using in_free_close_iff_loc_2.
@@ -1439,39 +1442,39 @@ Section close_metatheory.
 
   Corollary in_free_close_iff_1 : forall k t x y,
       y <> x ->
-      y ∈ free S k ('[k | x] t) <-> y ∈ free S k t.
+      y ∈ free U k ('[k | x] t) <-> y ∈ free U k t.
   Proof.
     intros. rewrite in_free_close_iff. intuition.
   Qed.
 
-  Corollary freeset_close : forall k t x,
-      freeset S k ('[k | x] t) [=] freeset S k t \\ {{ x }}.
+  Corollary FV_close : forall k t x,
+      FV U k ('[k | x] t) [=] FV U k t \\ {{ x }}.
   Proof.
     introv. intro a. rewrite AtomSet.diff_spec.
-    rewrite <- 2(free_iff_freeset). rewrite in_free_close_iff.
+    rewrite <- 2(free_iff_FV). rewrite in_free_close_iff.
     fsetdec.
   Qed.
 
   Corollary nin_free_close : forall k t x,
-      ~ (x ∈ free S k ('[k | x] t)).
+      ~ (x ∈ free U k ('[k | x] t)).
   Proof.
     introv. rewrite in_free_close_iff. intuition.
   Qed.
 
-  Corollary nin_freeset_close : forall k t x,
-      ~ (x ∈@ freeset S k ('[k | x] t)).
+  Corollary nin_FV_close : forall k t x,
+      ~ (x `in` FV U k ('[k | x] t)).
   Proof.
-    introv. rewrite <- free_iff_freeset. apply nin_free_close.
+    introv. rewrite <- free_iff_FV. apply nin_free_close.
   Qed.
 
   (** ** Variable closing and local closure *)
   (******************************************************************************)
   Theorem close_lc_eq : forall k t x,
-      locally_closed S k t ->
-      locally_closed_gap S k 1 (close S k x t).
+      LC U k t ->
+      LCn U k 1 (close U k x t).
   Proof.
-    unfold locally_closed. introv lct hin.
-    rewrite (ind_close_iff_eq S) in hin.
+    unfold LC. introv lct hin.
+    rewrite (ind_close_iff_eq U) in hin.
     destruct hin as [l1 [? ?]]. compare l1 to atom x; subst.
     - cbn. compare values x and x. unfold_monoid; lia.
     - cbn. compare values x and a.
@@ -1484,11 +1487,11 @@ Section close_metatheory.
 
   Theorem close_lc_neq : forall k j t x,
       k <> j ->
-      locally_closed S j t ->
-      locally_closed S j (close S k x t).
+      LC U j t ->
+      LC U j (close U k x t).
   Proof.
-    unfold locally_closed. introv neq lct hin.
-    rewrite (ind_close_neq_iff S) in hin; auto.
+    unfold LC. introv neq lct hin.
+    rewrite (ind_close_neq_iff U) in hin; auto.
   Qed.
 
 End close_metatheory.
@@ -1498,14 +1501,14 @@ End close_metatheory.
 Section open_metatheory.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule (list K) T U (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
     `{! MultiDecoratedTraversableMonad (list K) T}.
 
   Implicit Types
            (k : K) (j : K)
            (l : LN) (p : LN)
-           (x : atom) (t : S LN)
+           (x : atom) (t : U LN)
            (w : list K) (n : nat).
 
   (** ** Upper and lower bounds on free variables after opening *)
@@ -1513,7 +1516,7 @@ Section open_metatheory.
   Lemma free_open_upper_local : forall t k j (u : T k LN) w l x,
       (k, l) ∈m t ->
       x ∈ free (T k) j (open_loc k u (w, l)) ->
-      k = j /\ l = Fr x /\ x ∈ free S j t \/
+      k = j /\ l = Fr x /\ x ∈ free U j t \/
       x ∈ free (T k) j u.
   Proof with auto.
     introv lin xin. rewrite in_free_iff in xin.
@@ -1528,7 +1531,7 @@ Section open_metatheory.
   Corollary free_open_upper_local_eq : forall t k (u : T k LN) w l x,
       (k, l) ∈m t ->
       x ∈ free (T k) k (open_loc k u (w, l)) ->
-      x ∈ free S k t \/ x ∈ free (T k) k u.
+      x ∈ free U k t \/ x ∈ free (T k) k u.
   Proof.
     introv lin xin.
     apply free_open_upper_local
@@ -1549,79 +1552,79 @@ Section open_metatheory.
   Qed.
 
   Theorem free_open_upper : forall t k j (u : T k LN) x,
-      x ∈ free S j (t '(k | u)) ->
-      x ∈ free S j t \/ x ∈ free (T k) j u.
+      x ∈ free U j (t '(k | u)) ->
+      x ∈ free U j t \/ x ∈ free (T k) j u.
   Proof.
     introv xin. compare values j and k.
-    - rewrite (free_open_eq_iff S) in xin.
+    - rewrite (free_open_eq_iff U) in xin.
       destruct xin as [w [l [hin ?]]].
-      eapply (ind_implies_in S) in hin.
+      eapply (ind_implies_in U) in hin.
       eauto using free_open_upper_local_eq.
-    - rewrite (free_open_neq_iff S) in xin; auto.
+    - rewrite (free_open_neq_iff U) in xin; auto.
       destruct xin as  [? |  [w [l [hin ?]]]].
-      auto. apply (ind_implies_in S) in hin.
+      auto. apply (ind_implies_in U) in hin.
       right. eauto using free_open_upper_local_neq.
   Qed.
 
-  Corollary freeset_open_upper : forall t k j (u : T k LN),
-      freeset S j (t '(k | u)) ⊆ freeset S j t ∪ freeset (T k) j u.
+  Corollary FV_open_upper : forall t k j (u : T k LN),
+      FV U j (t '(k | u)) ⊆ FV U j t ∪ FV (T k) j u.
   Proof.
     intros. intro a. rewrite AtomSet.union_spec.
-    repeat rewrite <- (free_iff_freeset).
+    repeat rewrite <- (free_iff_FV).
     auto using free_open_upper.
   Qed.
 
   Corollary free_open_upper_eq : forall t k (u : T k LN) x,
-      x ∈ free S k (t '(k | u)) ->
-      x ∈ free S k t \/ x ∈ free (T k) k u.
+      x ∈ free U k (t '(k | u)) ->
+      x ∈ free U k t \/ x ∈ free (T k) k u.
   Proof.
     intros. auto using free_open_upper.
   Qed.
 
-  Corollary freeset_open_upper_eq : forall t k (u : T k LN),
-      freeset S k (t '(k | u)) ⊆ freeset S k t ∪ freeset (T k) k u.
+  Corollary FV_open_upper_eq : forall t k (u : T k LN),
+      FV U k (t '(k | u)) ⊆ FV U k t ∪ FV (T k) k u.
   Proof.
-    intros. apply freeset_open_upper.
+    intros. apply FV_open_upper.
   Qed.
 
   Theorem free_open_lower : forall t k j u x,
-      x ∈ free S j t ->
-      x ∈ free S j (t '(k | u)).
+      x ∈ free U j t ->
+      x ∈ free U j (t '(k | u)).
   Proof.
     introv xin. compare values j and k.
     - rewrite (in_free_iff) in xin.
-      rewrite (ind_iff_in S) in xin.
+      rewrite (ind_iff_in U) in xin.
       destruct xin as [w xin].
-      rewrite (free_open_eq_iff S).
+      rewrite (free_open_eq_iff U).
       setoid_rewrite (in_free_iff).
       exists w (Fr x). now autorewrite with tea_local.
-    - rewrite (free_open_neq_iff S); auto.
+    - rewrite (free_open_neq_iff U); auto.
   Qed.
 
   Theorem free_open_lower_eq : forall t k u x,
-      x ∈ free S k t ->
-      x ∈ free S k (t '(k | u)).
+      x ∈ free U k t ->
+      x ∈ free U k (t '(k | u)).
   Proof.
     intros. auto using free_open_lower.
   Qed.
 
-  Corollary freeset_open_lower : forall t k j u,
-      freeset S j t ⊆ freeset S j (t '(k | u)).
+  Corollary FV_open_lower : forall t k j u,
+      FV U j t ⊆ FV U j (t '(k | u)).
   Proof.
-    intros. intro a. rewrite <- 2(free_iff_freeset).
+    intros. intro a. rewrite <- 2(free_iff_FV).
     apply free_open_lower.
   Qed.
 
-  Corollary freeset_open_lower_eq : forall t k u,
-      freeset S k t ⊆ freeset S k (t '(k | u)).
+  Corollary FV_open_lower_eq : forall t k u,
+      FV U k t ⊆ FV U k (t '(k | u)).
   Proof.
-    intros. apply freeset_open_lower.
+    intros. apply FV_open_lower.
   Qed.
 
   (** ** Opening a locally closed term is the identity *)
   (**************************************************************************)
   Lemma open_lc_local : forall k (u : T k LN) w l,
-      is_bound_or_free k 0 (w, l) ->
+      lc_loc k 0 (w, l) ->
       open_loc k u (w, l) = mret T k l.
   Proof.
     introv hyp. destruct l as [a | n].
@@ -1630,10 +1633,10 @@ Section open_metatheory.
   Qed.
 
   Lemma open_lc : forall k t u,
-      locally_closed S k t ->
+      LC U k t ->
       t '(k | u) = t.
   Proof.
-    introv lc. apply (open_id S). introv lin.
+    introv lc. apply (open_id U). introv lin.
     specialize (lc _ _ lin).
     destruct l; auto using open_lc_local.
   Qed.
@@ -1641,7 +1644,7 @@ Section open_metatheory.
   (** ** Opening followed by substitution *)
   (**************************************************************************)
   Lemma subst_open_eq_loc : forall k u1 u2 x,
-      locally_closed (T k) k u2 ->
+      LC (T k) k u2 ->
       subst (T k) k x u2 ∘ open_loc k u1 =
       open_loc k (u1 '{k | x ~> u2}) ⋆kdm (subst_loc k x u2 ∘ snd).
   Proof.
@@ -1664,78 +1667,104 @@ Section open_metatheory.
   Qed.
 
   Theorem subst_open_eq :  forall k u1 u2 t x,
-      locally_closed (T k) k u2 ->
+      LC (T k) k u2 ->
       t '(k | u1) '{k | x ~> u2} =
       t '{k | x ~> u2} '(k | u1 '{k | x ~> u2}).
   Proof.
     introv lc. compose near t.
     unfold open, subst at 1 3.
-    rewrite (kbind_kbindd S), (kbindd_kbind S).
+    rewrite (kbind_kbindd U), (kbindd_kbind U).
     fequal. apply subst_open_eq_loc; auto.
   Qed.
 
   Theorem subst_open_neq_loc :  forall k1 k2 (u1 : T k1 LN) (u2 : T k2 LN) (x : atom),
       k1 <> k2 ->
-      locally_closed (T k2) k1 u2 ->
-      (btgd T k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K)))) ⋆dm btgd T k1 (open_loc k1 u1) =
-      (btgd T k1 (open_loc k1 (mbind (T k1) (btg T k2 (subst_loc k2 x u2)) u1))) ⋆dm (btg T k2 (subst_loc k2 x u2) ◻ const (extract (W := prod (list K)))).
+      LC (T k2) k1 u2 ->
+      (btgd k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K)))) ⋆dm btgd k1 (open_loc k1 u1) =
+      (btgd k1 (open_loc k1 (mbind (T k1) (btg k2 (subst_loc k2 x u2)) u1))) ⋆dm (btg k2 (subst_loc k2 x u2) ◻ const (extract (W := prod (list K)))).
   Proof.
-    intros. ext k [w a]. unfold compose_dm.
-    replace (btgd T k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K))) ◻ const (incr w))
-      with  (btgd T k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K)))).
+    intros. ext k [w l]. unfold compose_dm.
+    replace (btgd k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K))) ◻ const (incr (op := Monoid_op_list) w))
+      with  (btgd k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K)))).
     2:{ ext j [w' a']. cbn. compare values j and k2. }
-    change ((btg T k2 (subst_loc k2 x u2) k ∘ const (extract (W := prod (list K))) k) (w, a))
-      with (btg T k2 (subst_loc k2 x u2) k a).
+    change ((btg k2 (subst_loc k2 x u2) k ∘ const (extract (W := prod (list K))) k) (w, l))
+      with (btg k2 (subst_loc k2 x u2) k a).
     compare values k and k1.
-    - simpl_tgt. compose near a on right.
-      rewrite (mbindd_comp_mret k1). simpl_tgt.
-      unfold const. destruct a as [y | n].
-      { cbn. compose near (Fr y) on left.
-        rewrite (mbindd_comp_mret k1). now simpl_tgt. }
-      { cbn. simpl_monoid. compare naturals n and (countk k1 w).
-        - compose near (Bd n) on left. rewrite (mbindd_comp_mret k1).
-          simpl_tgt. reflexivity.
-        - rewrite mbind_to_mbindd. fequal. ext j.
-          compare values j and k2; now simpl_tgt.
-        - compose near (Bd (n - 1)) on left.
-          rewrite (mbindd_comp_mret k1). now simpl_tgt. }
-    - compare values k and k2.
-      { simpl_tgt. unfold compose. cbn. compose near a on left.
-        rewrite (mbindd_comp_mret k2). simpl_tgt. compare a to atom x.
-        - { rewrite subst_loc_eq. unfold compose. rewrite subst_loc_eq.
-            symmetry. apply mbindd_respectful_id. introv Hin.
-            compare values k and k1.
-            + simpl_tgt. destruct a.
-              * reflexivity.
-              * cbn. unfold locally_closed, locally_closed_gap, is_bound_or_free in H2.
-                specialize (H2 w0 (Bd n) Hin). cbn in H2.
-                compare naturals n and (countk k1 (w ● w0)).
-                { contradict H2. unfold_monoid. rewrite countk_app. lia. }
-                { contradict ineqp. unfold_monoid. rewrite countk_app. lia. }
-            + now simpl_tgt. }
-        - rewrite subst_loc_fr_neq. 2:{ autorewrite with tea_local; auto. }
-          compose near (Fr a) on right. rewrite (mbindd_comp_mret k2).
-          simpl_tgt. cbn. compare values x and a.
-        - cbn.
-          compose near (Bd n) on right. rewrite (mbindd_comp_mret k2).
-          now simpl_tgt. }
-      { simpl_tgt. unfold compose. cbn. compose near a.
-        do 2 rewrite (mbindd_comp_mret k). now simpl_tgt_fallback. }
-  Qed.
+    - simpl_tgt.
+      compare values k2 and k1.
+      unfold vec_compose at 2. unfold compose at 2.
+      simpl_tgt. unfold const at 1.
+      change (extract (w, l)) with l.
+      compose near l on right.
+      rewrite (mbindd_comp_mret k1).
+      { destruct l as [y | n].
+        + rewrite open_loc_atom.
+          compose near (Fr y) on left.
+          rewrite (mbindd_comp_mret k1).
+          unfold vec_compose at 1.
+          unfold compose.
+          unfold const.
+          simpl_tgt.
+          reflexivity.
+        + unfold vec_compose.
+          simpl_tgt.
+          unfold allK at 1.
+          unfold compose at 2.
+          cbn. simpl_monoid.
+          compare naturals n and (countk k1 w).
+          { compose near (Bd n) on left.
+            rewrite (mbindd_comp_mret k1).
+            simpl_tgt. reflexivity.
+          }
+          { unfold mbind, vec_compose.
+            fequal. unfold const, compose.
+            ext j. compare values j and k2;
+              now simpl_tgt.
+          }
+          { compose near (Bd (n - 1)) on left.
+            rewrite (mbindd_comp_mret k1).
+            simpl_tgt. reflexivity.
+          }
+      }
+    - unfold vec_compose, const, compose.
+      compare values k and k2;
+        compare values k1 and k2;
+        simpl_tgt.
+      {  unfold compose. cbn.
+         compose near l on left.
+         rewrite (mbindd_comp_mret k2).
+         simpl_tgt.
+         destruct l. cbn.
+         compare values x and a.
+         + admit.
+         + compose near (Fr a) on right.
+           rewrite (mbindd_comp_mret k2).
+           simpl_tgt.
+           reflexivity.
+         + cbn. compose near (Bd n) on right.
+           rewrite (mbindd_comp_mret k2).
+           simpl_tgt.
+           reflexivity.
+      }
+      { cbn. destruct l.
+        cbn. admit. admit.
+      }
+  Admitted.
 
-  Theorem subst_open_neq :  forall k1 k2 (u1 : T k1 LN) (u2 : T k2 LN) (x : atom) (t : S LN),
+  Theorem subst_open_neq :  forall k1 k2 (u1 : T k1 LN) (u2 : T k2 LN) (x : atom) (t : U LN),
       k1 <> k2 ->
-      locally_closed (T k2) k1 u2 ->
+      LC (T k2) k1 u2 ->
       t '(k1 | u1) '{k2 | x ~> u2} =
       t '{k2 | x ~> u2} '(k1 | u1 '{k2 | x ~> u2}).
   Proof.
     introv neq lc. compose near t.
     unfold subst, open. unfold kbind, kbindd.
-    rewrite (mbind_to_mbindd S), (mbindd_mbindd S).
-    rewrite (mbindd_mbindd S). fequal.
+    rewrite (mbind_to_mbindd U), (mbindd_mbindd U).
+    rewrite (mbindd_mbindd U). fequal.
     pose (lemma := subst_open_neq_loc).
     unfold compose_dm in lemma. setoid_rewrite <- lemma; auto.
-    ext k [w a]. fequal. ext j [w' a']. compare values j and k2.
+    ext k [w a]. unfold vec_compose.
+    fequal. ext j [w' a']. compare values j and k2.
     + rewrite btgd_eq, btg_eq. cbn. reflexivity.
     + rewrite btgd_neq, btg_neq; auto.
   Qed.
@@ -1761,15 +1790,15 @@ Section open_metatheory.
    applying that theorem would introduce a local closure hypothesis
    for <<u>> that is not actually required for our purposes. *)
   Theorem open_spec_eq : forall k u t x,
-      ~ x ∈@ freeset S k t ->
+      ~ x `in` FV U k t ->
       t '(k | u) = t '(k | mret T k (Fr x)) '{k | x ~> u}.
   Proof.
     introv fresh. compose near t on right.
-    unfold subst, open. rewrite (kbind_kbindd S).
+    unfold subst, open. rewrite (kbind_kbindd U).
     apply (kbindd_respectful). introv Hin.
     assert (a <> Fr x).
-    { apply (ind_implies_in S) in Hin.
-      rewrite <- free_iff_freeset in fresh.
+    { apply (ind_implies_in U) in Hin.
+      rewrite <- free_iff_FV in fresh.
       eapply ninf_in_neq in fresh; eauto. }
     now rewrite <- (open_spec_eq_loc k u x).
   Qed.
@@ -1778,7 +1807,7 @@ Section open_metatheory.
   (**************************************************************************)
   Lemma subst_open_var_loc : forall k u x y,
       x <> y ->
-      locally_closed (T k) k u ->
+      LC (T k) k u ->
       subst (T k) k x u ∘ open_loc k (mret T k (Fr y)) =
       open_loc k (mret T k (Fr y)) ⋆kdm (subst_loc k x u ∘ extract (W := prod (list K))).
   Proof with auto.
@@ -1788,13 +1817,13 @@ Section open_metatheory.
 
   Theorem subst_open_var : forall k u t x y,
       x <> y ->
-      locally_closed (T k) k u ->
+      LC (T k) k u ->
       t '(k | mret T k (Fr y)) '{k | x ~> u} =
       t '{k | x ~> u} '(k | mret T k (Fr y)).
   Proof.
     introv neq lc. compose near t.
     unfold open, subst.
-    rewrite (kbind_kbindd S), (kbindd_kbind S).
+    rewrite (kbind_kbindd U), (kbindd_kbind U).
     fequal. apply subst_open_var_loc; auto.
   Qed.
 
@@ -1817,7 +1846,7 @@ Section open_metatheory.
   Proof.
     intros. compose near t on left.
     unfold open, close.
-    rewrite (kbindd_kmapd S).
+    rewrite (kbindd_kmapd U).
     apply (kbindd_respectful_id); intros.
     apply open_close_loc.
   Qed.
@@ -1840,7 +1869,7 @@ Section open_metatheory.
       end.
 
   Lemma open_by_LN_spec : forall k l,
-      open S k (mret T k l) = kmapd S k (open_LN_loc k l).
+      open U k (mret T k l) = kmapd U k (open_LN_loc k l).
   Proof.
     intros. unfold open. ext t.
     apply (kbindd_respectful_kmapd).
@@ -1865,29 +1894,29 @@ Section open_metatheory.
   Qed.
 
   Theorem close_open : forall k x t,
-      ~ x ∈ free S k t ->
+      ~ x ∈ free U k t ->
       '[k | x] (t '(k | mret T k (Fr x))) = t.
   Proof.
     introv fresh. compose near t on left.
     rewrite open_by_LN_spec. unfold close.
-    rewrite (kmapd_kmapd S).
+    rewrite (kmapd_kmapd U).
     apply (kmapd_respectful_id).
     intros w l lin.
     assert (l <> Fr x).
     { rewrite neq_symmetry. apply (ind_implies_in) in lin.
-      eapply (ninf_in_neq S). eassumption. auto. }
+      eapply (ninf_in_neq U). eassumption. auto. }
     now apply close_open_local.
   Qed.
 
   (** ** Opening and local closure *)
   (**************************************************************************)
   Lemma open_lc_gap_eq_1 : forall k n t u,
-      locally_closed (T k) k u ->
-      locally_closed_gap S k n t ->
-      locally_closed_gap S k (n - 1) (t '(k | u)).
+      LC (T k) k u ->
+      LCn U k n t ->
+      LCn U k (n - 1) (t '(k | u)).
   Proof.
-    unfold locally_closed_gap.
-    introv lcu lct Hin. rewrite (ind_open_iff_eq S) in Hin.
+    unfold LCn.
+    introv lcu lct Hin. rewrite (ind_open_iff_eq U) in Hin.
     destruct Hin as [w1 [w2 [l1 [h1 [h2 h3]]]]].
     destruct l1.
     - cbn in h2. rewrite ind_mret_eq_iff in h2.
@@ -1895,20 +1924,20 @@ Section open_metatheory.
     - specialize (lct _ _ h1). cbn in h2. compare naturals n0 and (countk k w1).
       + rewrite ind_mret_eq_iff in h2; destruct h2; subst.
         cbn. unfold_monoid. List.simpl_list. lia.
-      + specialize (lcu w2 l h2). unfold is_bound_or_free in *.
+      + specialize (lcu w2 l h2). unfold lc_loc in *.
         destruct l; [trivial|]. unfold_monoid. rewrite countk_app. lia.
       + rewrite ind_mret_eq_iff in h2. destruct h2; subst.
-        unfold is_bound_or_free in *. unfold_monoid. List.simpl_list. lia.
+        unfold lc_loc in *. unfold_monoid. List.simpl_list. lia.
   Qed.
 
   Lemma open_lc_gap_eq_2 : forall k n t u,
       n > 0 ->
-      locally_closed (T k) k u ->
-      locally_closed_gap S k (n - 1) (t '(k | u)) ->
-      locally_closed_gap S k n t.
+      LC (T k) k u ->
+      LCn U k (n - 1) (t '(k | u)) ->
+      LCn U k n t.
   Proof.
-    unfold locally_closed_gap.
-    introv ngt lcu lct Hin. setoid_rewrite (ind_open_iff_eq S) in lct.
+    unfold LCn.
+    introv ngt lcu lct Hin. setoid_rewrite (ind_open_iff_eq U) in lct.
     destruct l.
     - cbv. trivial.
     - compare naturals n0 and (countk k w).
@@ -1929,17 +1958,17 @@ Section open_metatheory.
 
   Theorem open_lc_gap_eq_iff : forall k n t u,
       n > 0 ->
-      locally_closed (T k) k u ->
-      locally_closed_gap S k n t <->
-      locally_closed_gap S k (n - 1) (t '(k | u)).
+      LC (T k) k u ->
+      LCn U k n t <->
+      LCn U k (n - 1) (t '(k | u)).
   Proof.
     intros; intuition (eauto using open_lc_gap_eq_1, open_lc_gap_eq_2).
   Qed.
 
   Corollary open_lc_gap_eq_var : forall k n t x,
       n > 0 ->
-      locally_closed_gap S k n t <->
-      locally_closed_gap S k (n - 1) (t '(k | mret T k (Fr x))).
+      LCn U k n t <->
+      LCn U k (n - 1) (t '(k | mret T k (Fr x))).
   Proof.
     intros. apply open_lc_gap_eq_iff. auto.
     intros w l hin. rewrite ind_mret_eq_iff in hin.
@@ -1947,21 +1976,21 @@ Section open_metatheory.
   Qed.
 
   Corollary open_lc_gap_eq_iff_1 : forall k t u,
-      locally_closed (T k) k u ->
-      locally_closed_gap S k 1 t <->
-      locally_closed S k (t '(k | u)).
+      LC (T k) k u ->
+      LCn U k 1 t <->
+      LC U k (t '(k | u)).
   Proof.
-    intros. unfold locally_closed.
+    intros. unfold LC.
     change 0 with (1 - 1).
     rewrite <- open_lc_gap_eq_iff; auto.
     reflexivity.
   Qed.
 
   Corollary open_lc_gap_eq_var_1 : forall k t x,
-      locally_closed_gap S k 1 t <->
-      locally_closed S k (t '(k | mret T k (Fr x))).
+      LCn U k 1 t <->
+      LC U k (t '(k | mret T k (Fr x))).
   Proof.
-    intros. unfold locally_closed.
+    intros. unfold LC.
     change 0 with (1 - 1).
     rewrite <- open_lc_gap_eq_var; auto.
     reflexivity.
@@ -1969,13 +1998,13 @@ Section open_metatheory.
 
   Lemma open_lc_gap_neq_1 : forall k j n t u,
       k <> j ->
-      locally_closed (T j) k u ->
-      locally_closed_gap S k n t ->
-      locally_closed_gap S k n (t '(j | u)).
+      LC (T j) k u ->
+      LCn U k n t ->
+      LCn U k n (t '(j | u)).
   Proof.
-    unfold locally_closed_gap.
+    unfold LCn.
     introv neq lcu lct Hin.
-    rewrite (ind_open_neq_iff S) in Hin; auto.
+    rewrite (ind_open_neq_iff U) in Hin; auto.
     destruct Hin as [Hin | Hin].
     - auto.
     - destruct Hin as [w1 [w2 [l1 [in_t [in_open ?]]]]].
@@ -1988,7 +2017,7 @@ Section open_metatheory.
           compare naturals n0 and (countk j w1).
           - rewrite ind_mret_iff in in_open. false; intuition.
           - specialize (lcu _ _ in_open).
-            unfold is_bound_or_free in lcu. unfold_monoid.
+            unfold lc_loc in lcu. unfold_monoid.
             rewrite countk_app. lia.
           - rewrite ind_mret_iff in in_open. false; intuition.
         }
@@ -1996,35 +2025,35 @@ Section open_metatheory.
 
   Lemma open_lc_gap_neq_2 : forall k j n t u,
       k <> j ->
-      locally_closed (T j) k u ->
-      locally_closed_gap S k n (t '(j | u)) ->
-      locally_closed_gap S k n t.
+      LC (T j) k u ->
+      LCn U k n (t '(j | u)) ->
+      LCn U k n t.
   Proof.
-    unfold locally_closed_gap.
+    unfold LCn.
     introv neq lcu lct Hin.
     destruct l.
     + cbn. auto.
     + specialize (lct w (Bd n0)).
-      apply lct. rewrite (ind_open_neq_iff S); auto.
+      apply lct. rewrite (ind_open_neq_iff U); auto.
   Qed.
 
   Theorem open_lc_gap_neq_iff : forall k j n t u,
       k <> j ->
-      locally_closed (T j) k u ->
-      locally_closed_gap S k n t <->
-      locally_closed_gap S k n (t '(j | u)).
+      LC (T j) k u ->
+      LCn U k n t <->
+      LCn U k n (t '(j | u)).
   Proof.
     intros. intuition (eauto using open_lc_gap_neq_1, open_lc_gap_neq_2).
   Qed.
 
   Corollary open_lc_gap_neq_var : forall k j t x,
       k <> j ->
-      locally_closed S k t <->
-      locally_closed S k (t '(j | mret T j (Fr x))).
+      LC U k t <->
+      LC U k (t '(j | mret T j (Fr x))).
   Proof.
-    intros. unfold locally_closed.
+    intros. unfold LC.
     rewrite open_lc_gap_neq_iff; eauto.
-    reflexivity. unfold locally_closed, locally_closed_gap.
+    reflexivity. unfold LC, LCn.
     setoid_rewrite ind_mret_iff. intuition.
   Qed.
 

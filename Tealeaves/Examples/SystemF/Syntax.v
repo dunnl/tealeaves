@@ -1,27 +1,10 @@
 From Tealeaves Require Export
-  Backends.LN
-  Misc.NaturalNumbers
-  Functors.List
   Theory.DecoratedTraversableMonad
-  Categories.TypeFamily
-  Multisorted.DecoratedTraversableMonad.
+  Theory.Multisorted.DecoratedTraversableMonad
+  Backends.Multisorted.LN.
 
-From Tealeaves.Backends Require Import
-  Atom AtomSet AssocList Multisorted.LN.
+Export LN.Notations.
 
-Export Kleisli.DecoratedTraversableMonad.Notations. (* ∈d *)
-Import Monoid.Notations. (* Ƶ and ● *)
-Import Misc.Subset.Notations. (* ∪ *)
-Export Applicative.Notations. (* <⋆> *)
-Export List.ListNotations. (* [] :: *)
-Import LN.Notations. (* operations *)
-Export LN.AtomSet.Notations.
-Export LN.AssocList.Notations. (* one, ~ *)
-Export Product.Notations. (* × *)
-Export ContainerFunctor.Notations. (* ∈ *)
-Export DecoratedContainerFunctor.Notations. (* ∈d *)
-Export Multisorted.DecoratedTraversableMonad.Notations.
-Export Multisorted.DecoratedTraversableMonad.Notations3.
 #[local] Generalizable Variables F G A B C ϕ.
 
 (** * The index [K] *)
@@ -347,7 +330,7 @@ Section DTM_instance_lemmas.
   (* for Var case *)
   Lemma mbinddt_inst_law2_case2 : forall (a : A) (k : K),
     map (F := F) (mbinddt (T k) G g) (f k (Ƶ, a)) =
-    map (F := F) (mbinddt (T k) G (fun k => g k ∘ const (incr Ƶ) k)) (f k (Ƶ, a)).
+    map (F := F) (mbinddt (T k) G (fun k => g k ∘ allK (incr Ƶ) k)) (f k (Ƶ, a)).
   Proof.
     intros. repeat fequal. ext k' [w b].
     unfold compose. cbn. now simpl_monoid.
@@ -360,7 +343,7 @@ Section DTM_instance_lemmas.
     intros. ext k [w' a].
     cbn. do 2 fequal.
     ext j [w'' b].
-    unfold compose. cbn. fequal.
+    unfold vec_compose, compose. cbn. fequal.
     now rewrite monoid_assoc.
   Qed.
 
@@ -428,6 +411,7 @@ Proof.
     change (MBind_type ?G H3 H4 H5 ?A ?B) with (mbinddt typ G (A := A) (B := B)).
     change [] with (Ƶ : list K2).
     change typ with (SystemF KType).
+    unfold vec_compose.
     rewrite <- (mbinddt_inst_law2_case2 (list K2) SystemF (H := MBind_SystemF )).
     reflexivity.
   - cbn.
@@ -639,19 +623,22 @@ Qed.
 
 (** ** <<DTPreModule>> instances *)
 (******************************************************************************)
-#[export] Instance DTP_typ: MultiDecoratedTraversablePreModule (list K2) typ SystemF :=
+#[export] Instance DTP_typ: MultiDecoratedTraversablePreModule
+                              (list K2) SystemF typ :=
   {| dtp_mbinddt_mret := @mbinddt_mret_typ;
      dtp_mbinddt_mbinddt := @mbinddt_mbinddt_typ;
      dtp_mbinddt_morphism := @mbinddt_morphism_typ;
   |}.
 
-#[export] Instance DTP_term: MultiDecoratedTraversablePreModule (list K2) term SystemF :=
+#[export] Instance DTP_term: MultiDecoratedTraversablePreModule
+                               (list K2) SystemF term :=
   {| dtp_mbinddt_mret := @mbinddt_mret_term;
      dtp_mbinddt_mbinddt := @mbinddt_mbinddt_term;
      dtp_mbinddt_morphism := @mbinddt_morphism_term;
   |}.
 
-#[export] Instance: forall k, MultiDecoratedTraversablePreModule (list K2) (SystemF k) SystemF :=
+#[export] Instance: forall k, MultiDecoratedTraversablePreModule
+                           (list K2) SystemF (SystemF k) :=
   fun k => match k with
         | KType => DTP_typ
         | KTerm => DTP_term
@@ -679,11 +666,13 @@ Definition type_ctx := alist (typ LN).
     variables, are unique. *)
 Definition ok_kind_ctx : kind_ctx -> Prop := uniq.
 
+#[export] Hint Unfold ok_kind_ctx : tea_alist.
+
 (** *** Well-formedness of type expressions in a kinding context *)
 (** A type is well-formed in a kinding context <<Δ>> when all of its
     type variables appear in Δ and the type is locally closed. *)
 Definition ok_type : kind_ctx -> typ LN -> Prop :=
-  fun Δ τ => scoped typ KType τ (domset Δ) /\ locally_closed typ KType τ.
+  fun Δ τ => scoped typ KType τ (domset Δ) /\ LC typ KType τ.
 
 (** *** Well-formedness for typing contexts *)
 (** A typing context <<Γ>> is well-formed in kinding context <<Δ>>
@@ -700,8 +689,8 @@ Definition ok_type_ctx : kind_ctx -> type_ctx -> Prop :=
 Definition ok_term : kind_ctx -> type_ctx -> term LN -> Prop :=
   fun Δ Γ t => scoped term KType t (domset Δ) /\
             scoped term KTerm t (domset Γ) /\
-            locally_closed term KTerm t /\
-            locally_closed term KType t.
+            LC term KTerm t /\
+            LC term KType t.
 
 (** ** Typing judgments *)
 (******************************************************************************)
@@ -715,8 +704,8 @@ Inductive Judgment : kind_ctx -> type_ctx -> term LN -> typ LN -> Prop :=
       (x, τ) ∈ (Γ : list (atom * typ LN)) ->
       (Δ ; Γ ⊢ tm_var (Fr x) : τ)
 | j_abs :
-    forall Δ Γ L t τ1 τ2,
-      (forall x, ~ x ∈@ L  ->
+    forall Δ Γ (L:AtomSet.t) t τ1 τ2,
+      (forall x, x `notin` L  ->
             Δ ; Γ ++ x ~ τ1 ⊢ open term KTerm (tm_var (Fr x)) t : τ2) ->
       (Δ ; Γ ⊢ tm_abs τ1 t : ty_ar τ1 τ2)
 | j_app :
@@ -726,7 +715,7 @@ Inductive Judgment : kind_ctx -> type_ctx -> term LN -> typ LN -> Prop :=
       (Δ ; Γ ⊢ tm_app t1 t2 : τ2)
 | j_univ :
     forall Δ Γ L τ t,
-      (forall x, ~ x ∈@ L ->
+      (forall x, x `notin` L ->
             Δ ++ x ~ tt ; Γ ⊢ open term KType (ty_v (Fr x)) t
                           : open typ KType (ty_v (Fr x)) τ) ->
       (Δ ; Γ ⊢ tm_tab t : ty_univ τ)
@@ -768,21 +757,3 @@ Definition preservation := forall t t' τ,
 Definition progress := forall t τ,
     (nil ; nil ⊢ t : τ) ->
     value t \/ exists t', red t t'.
-
-(*
-(** ** Example: Typing the polymorphic identity *)
-(******************************************************************************)
-Example polymorphic_identity_function :
-  (nil ; nil ⊢ (Λ λ 0 ⋅ 0) : (∀ 0 ⟹ 0)).
-Proof.
-  apply j_univ with (L := ∅). introv _.
-  cbn. apply j_abs with (L := ∅).
-  - introv _. apply j_var.
-    + auto with sysf_ctx.
-    + simpl_alist. apply ok_tmv_tm_one.
-      unfold ok_type, scoped_env, scoped.
-      autorewrite with sysf_rw tea_rw_dom.
-      split; [fsetdec | apply lc_ty_ty_Fr].
-    + simpl_alist. now autorewrite with tea_list.
-Qed.
-*)

@@ -38,7 +38,7 @@ Section assume_some_index_type.
       { mfun_mmap_id :
           `(mmap F kid = @id (F A));
         mfun_mmap_mmap : forall `(f : A -k-> B) `(g : B -k-> C),
-            mmap F g ∘ mmap F f = mmap F (g ⊙ f);
+            mmap F g ∘ mmap F f = mmap F (g ◻ f);
       }.
 
   End Multifunctor.
@@ -97,12 +97,14 @@ Section assume_some_index_type.
     Qed.
 
     Lemma mmap_mmap_compose_map : forall `(f : A -k-> B) `(g : B -k-> C),
-        mmap (F ∘ G) g ∘ mmap (F ∘ G) f = mmap (F ∘ G) (g ⊙ f).
+        mmap (F ∘ G) g ∘ mmap (F ∘ G) f = mmap (F ∘ G) (g ◻ f).
     Proof.
       introv. ext t. unfold compose. unfold_ops @MMap_compose_Map.
       compose near t on left. rewrite (mfun_mmap_mmap F).
-      fequal. ext k x. unfold Category.comp, kconst_comp, compose.
-      compose near x on left. now rewrite (fun_map_map).
+      fequal. ext k x.
+      unfold vec_compose, compose.
+      compose near x on left.
+      now rewrite (fun_map_map).
     Qed.
 
     #[global] Instance MultisortedFunctor_compose_Functor :

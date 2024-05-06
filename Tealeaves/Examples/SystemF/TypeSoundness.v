@@ -156,18 +156,13 @@ Proof.
     apply (ok_type_ctx_stren1) with (x := e).
     + assumption.
     + introv Hin.
-      enough (lemma : ~ e ∈ (bind (T := list) (fun '(x, t) => free typ KType t) Γ)).
-      {
-        assert (ContainerMonad list).
-        eapply @ContainerMonad_Traversable.
-        all: try typeclasses eauto.
-        admit.
-        rewrite (in_bind_iff) in lemma.
+      enough (lemma : ~ element_of (F := list) e (bind (T := list) (fun '(x, t) => free typ KType t) Γ)).
+      { rewrite (in_bind_iff) in lemma.
         rewrite in_range_iff in Hin. destruct Hin as [x Hin].
         contradict lemma. exists (x, t0). split; [assumption|].
         now apply free_iff_freeset. }
       { rewrite in_atoms_iff. fsetdec. }
-Admitted.
+Qed.
 
 (** *** Tactical corollaries *)
 (******************************************************************************)

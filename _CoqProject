@@ -166,15 +166,22 @@ Tealeaves/Simplification/Tests/STLC_LN.v
 Tealeaves/Simplification/Tests/STLC_DB.v
 
 # MULTISORTED
-#Tealeaves/Classes/Multisorted/Multifunctor.v
-#Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
-#Tealeaves/Backends/LN/Multisorted/LN.v
+Tealeaves/Functors/Multisorted/Batch.v
+Tealeaves/Classes/Multisorted/Multifunctor.v
+Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
+Tealeaves/Classes/Multisorted/Theory/Container.v
+Tealeaves/Classes/Multisorted/Theory/Targeted.v
+Tealeaves/Adapters/KleisliToCoalgebraic/Multisorted/DTM.v
+Tealeaves/Theory/Multisorted/DecoratedTraversableMonad.v
+Tealeaves/Backends/Multisorted/LN/LN.v
+Tealeaves/Backends/Multisorted/LN.v
+
 
 # SYSTEM F
-#Tealeaves/Examples/SystemF/Syntax.v
-#Tealeaves/Examples/SystemF/Rewriting.v
-#Tealeaves/Examples/SystemF/Contexts.v
-#Tealeaves/Examples/SystemF/TypeSoundness.v
+Tealeaves/Examples/SystemF/Syntax.v
+Tealeaves/Examples/SystemF/Rewriting.v
+Tealeaves/Examples/SystemF/Contexts.v
+Tealeaves/Examples/SystemF/TypeSoundness.v
 
 # LIST TYPES WITH DECORATIONS
 Tealeaves/Functors/ListHistory.v

@@ -1,10 +1,8 @@
-From Tealeaves Require Import
+From Tealeaves Require Export
   Categories.TypeFamily
-  Classes.EqDec_eq
   Classes.Monoid
   Classes.Functor
   Classes.Categorical.Applicative
-  Misc.Product
   Functors.Writer.
 
 Import TypeFamily.Notations.
@@ -12,6 +10,17 @@ Import Product.Notations.
 Import Monoid.Notations.
 
 #[local] Generalizable Variables A B C F G ϕ W T.
+
+(** * Miscellaneous lemmas *)
+(**************************************************************)
+Lemma pair_incr_zero {W} `{Monoid W}: forall (w: W) (A: Type),
+    incr (A := A) w ∘ pair Ƶ = pair w.
+Proof.
+  intros.
+  ext p. cbn.
+  rewrite monoid_id_l.
+  reflexivity.
+Qed.
 
 (** * Multisorted DTM typeclass *)
 (**************************************************************)
@@ -27,14 +36,14 @@ Section MultisortedDTM_typeclasses.
     Context
       (W : Type)
       (T : K -> Type -> Type)
-      (S : Type -> Type).
+      (U : Type -> Type).
 
     Class MReturn :=
       mret : forall (A : Type) (k : K), A -> T k A.
 
     Class MBind :=
       mbinddt : forall (F : Type -> Type) `{Map F} `{Pure F} `{Mult F} {A B : Type},
-        (forall (k : K), W * A -> F (T k B)) -> S A -> F (S B).
+        (forall (k : K), W * A -> F (T k B)) -> U A -> F (U B).
 
   End operations.
 
@@ -51,7 +60,7 @@ Section MultisortedDTM_typeclasses.
              {A B C : Type}
              (g : forall k, W * B -> G (T k C))
              (f : forall k, W * A -> F (T k B)) : forall k, W * A -> F (G (T k C)) :=
-    fun (k : K) '(w, a) => map (F := F) (mbinddt W T (T k) G (g ◻ const (incr w))) (f k (w, a)).
+    fun (k : K) '(w, a) => map (F := F) (mbinddt W T (T k) G (g ◻ allK (incr w))) (f k (w, a)).
 
   Infix "⋆dtm" := compose_dtm (at level 40) : tealeaves_scope.
 
@@ -59,10 +68,10 @@ Section MultisortedDTM_typeclasses.
 
     Context
       (W : Type)
-      (S : Type -> Type)
       (T : K -> Type -> Type)
+      (U : Type -> Type)
       `{! MReturn T}
-      `{! MBind W T S}
+      `{! MBind W T U}
       `{! forall k, MBind W T (T k)}
       {mn_op : Monoid_op W}
       {mn_unit : Monoid_unit W}.
@@ -82,7 +91,31 @@ Section MultisortedDTM_typeclasses.
       intros. ext k [w' a].
       cbn. do 2 fequal.
       ext j [w'' b].
-      unfold compose. cbn. fequal.
+      unfold vec_compose, compose. cbn. fequal.
+      now rewrite monoid_assoc.
+    Qed.
+
+    Lemma compose_dtm_incr_alt : forall (w : W),
+        vec_compose (C := fun k => F (G (T k C))) (g ⋆dtm f) (allK (incr w)) =
+          (g ◻ allK (incr w)) ⋆dtm (f ◻ allK (incr w)).
+    Proof.
+      intros.
+      (*
+      Check (g ⋆dtm f).
+      Check const (A := K) (incr w).
+      Check ((g ⋆dtm f)). (* forall k, W * A -> F G (T k C)) *)
+      Check vec_compose (C := fun k => F (G (T k C))) (g ⋆dtm f).
+      Check vec_compose (A := const (W * A)) (B := const (W * A))
+        (C := fun k => F (G (T k C))) (g ⋆dtm f) (const (incr w)).
+      Check (fun x => (g ⋆dtm f) ◻ x).
+      Check ((g ⋆dtm f) ◻ const (A := K) (incr w)).
+          ((fun k => g k ∘ incr w) ⋆dtm (fun k => f k ∘ incr w)).
+       *)
+      ext k [w' a].
+      cbn. do 2 fequal.
+      ext j [w'' b].
+      unfold vec_compose, compose.
+      cbn. fequal.
       now rewrite monoid_assoc.
     Qed.
 
@@ -94,10 +127,10 @@ Section MultisortedDTM_typeclasses.
 
     Context
       (W : Type)
-      (S : Type -> Type)
       (T : K -> Type -> Type)
+      (U : Type -> Type)
       `{! MReturn T}
-      `{! MBind W T S}
+      `{! MBind W T U}
       `{! forall k, MBind W T (T k)}
       {mn_op : Monoid_op W}
       {mn_unit : Monoid_unit W}.
@@ -105,7 +138,7 @@ Section MultisortedDTM_typeclasses.
     Class MultiDecoratedTraversablePreModule :=
       { dtp_monoid :> Monoid W;
         dtp_mbinddt_mret : forall A,
-            mbinddt W T S (fun a => a) (mret T A ◻ const (extract (W := (W ×)))) = @id (S A);
+            mbinddt W T U (fun a => a) (mret T A ◻ allK extract) = @id (U A);
         dtp_mbinddt_mbinddt : forall
             (F : Type -> Type)
             (G : Type -> Type)
@@ -113,15 +146,15 @@ Section MultisortedDTM_typeclasses.
             `{Applicative G}
             `(g : forall k, W * B -> G (T k C))
             `(f : forall k, W * A -> F (T k B)),
-            map (F := F) (mbinddt W T S G g) ∘ mbinddt W T S F f =
-            mbinddt W T S (F ∘ G) (g ⋆dtm f);
+            map (F := F) (mbinddt W T U G g) ∘ mbinddt W T U F f =
+            mbinddt W T U (F ∘ G) (g ⋆dtm f);
         dtp_mbinddt_morphism : forall
             (F : Type -> Type)
             (G : Type -> Type)
             `{ApplicativeMorphism F G ϕ}
             `(f : forall k, W * A -> F (T k B)),
-            ϕ (S B) ∘ mbinddt W T S F f =
-            mbinddt W T S G (fun k => ϕ (T k B) ∘ f k);
+            ϕ (U B) ∘ mbinddt W T U F f =
+            mbinddt W T U G ((fun k => ϕ (T k B)) ◻ f);
       }.
 
   End PreModule.
@@ -139,11 +172,11 @@ Section MultisortedDTM_typeclasses.
       {mn_unit : Monoid_unit W}.
 
     Class MultiDecoratedTraversableMonad :=
-      { dtm_pre :> forall k, MultiDecoratedTraversablePreModule W (T k) T;
+      { dtm_pre :> forall k, MultiDecoratedTraversablePreModule W T (T k);
         dtm_mbinddt_comp_mret :
-          forall k F `{Applicative F}
-            `(f : forall k, W * A -> F (T k B)),
-            mbinddt W T (T k) F f ∘ mret T A k = (fun a => f k (Ƶ, a));
+        forall k F `{Applicative F}
+          `(f : forall k, W * A -> F (T k B)),
+          mbinddt W T (T k) F f ∘ mret T A k = f k ∘ pair Ƶ;
       }.
 
   End DTM.
@@ -151,45 +184,50 @@ Section MultisortedDTM_typeclasses.
 End MultisortedDTM_typeclasses.
 
 Arguments mret {ix} _%function_scope {MReturn} {A}%type_scope _ _.
-Arguments mbinddt {ix} {W}%type_scope {T} (S)%function_scope {MBind} F%function_scope {H H0 H1} {A B}.
+Arguments mbinddt {ix} {W}%type_scope {T} (U)%function_scope {MBind} F%function_scope {H H0 H1} {A B}.
+
+#[local] Infix "⋆dtm" := compose_dtm (at level 40) : tealeaves_scope.
 
 (** ** Derived operations on DTMs *)
 (******************************************************************************)
 Section derived_operations.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}.
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}.
 
   (** *** Definitions *)
   (******************************************************************************)
   Section definitions.
+
+    Definition retAll `{Map F} {A:Type}: forall k:K, F A -> F (T k A) :=
+      (fun k => map (mret T k)).
 
     Context
       {A B : Type}
       (F : Type -> Type)
       `{Map F} `{Mult F} `{Pure F}.
 
-    Definition mbindd (f : forall k, W * A -> T k B) : S A -> S B :=
-      mbinddt S (fun x => x) f.
+    Definition mbindd (f : forall k, W * A -> T k B) : U A -> U B :=
+      mbinddt U (fun x => x) f.
 
-    Definition mmapdt (f : forall k, W * A -> F B) : S A -> F (S B) :=
-      mbinddt S F (fun k => map (F := F) (mret T k) ∘ f k).
+    Definition mmapdt (f : forall k, W * A -> F B) : U A -> F (U B) :=
+      mbinddt U F (retAll ◻ f).
 
-    Definition mbindt (f : forall k, A -> F (T k B)) : S A -> F (S B) :=
-      mbinddt S F (f ◻ const (extract (W := (W ×)))).
+    Definition mbindt (f : forall k, A -> F (T k B)) : U A -> F (U B) :=
+      mbinddt U F (f ◻ allK extract).
 
-    Definition mbind (f : forall k, A -> T k B) : S A -> S B :=
-      mbindd (f ◻ const (extract (W := (W ×)))).
+    Definition mbind (f : forall k, A -> T k B) : U A -> U B :=
+      mbindd (f ◻ allK extract).
 
-    Definition mmapd (f : forall k, W * A -> B) : S A -> S B :=
-      mbindd (fun k => mret T k ∘ f k).
+    Definition mmapd (f : forall k, W * A -> B) : U A -> U B :=
+      mbindd (mret T ◻ f).
 
-    Definition mmapt (f : forall k, A -> F B) : S A -> F (S B) :=
-      mbindt (fun k => map (F := F) (mret T k) ∘ f k).
+    Definition mmapt (f : forall k, A -> F B) : U A -> F (U B) :=
+      mmapdt (f ◻ allK extract).
 
-    Definition mmap (f : forall k, A -> B) : S A -> S B :=
-      mmapd (f ◻ const (extract (W := (W ×)))).
+    Definition mmap (f : forall k, A -> B) : U A -> U B :=
+      mmapd (f ◻ allK extract).
 
   End definitions.
 
@@ -203,43 +241,43 @@ Section derived_operations.
     (** *** Rewriting rules for special cases of <<mbinddt>> *)
     (******************************************************************************)
     Lemma mbindt_to_mbinddt (f : forall k, A -> F (T k B)):
-        mbindt F f = mbinddt S F (f ◻ const (extract (W := (W ×)))).
+        mbindt F f = mbinddt U F (f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
 
     Lemma mbindd_to_mbinddt (f : forall k, W * A -> T k B):
-        mbindd f = mbinddt S (fun A => A) f.
+        mbindd f = mbinddt U (fun A => A) f.
     Proof.
       reflexivity.
     Qed.
 
     Lemma mmapdt_to_mbinddt (f : K -> W * A -> F B):
-        mmapdt F f = mbinddt S F (fun k => map (F := F) (mret T k) ∘ f k).
+        mmapdt F f = mbinddt U F (retAll ◻ f).
     Proof.
       reflexivity.
     Qed.
 
     Lemma mbind_to_mbinddt (f : forall k, A -> T k B):
-        mbind f = mbinddt S (fun A => A) (f ◻ const (extract (W := (W ×)))).
+        mbind f = mbinddt U (fun A => A) (f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
 
     Lemma mmapd_to_mbinddt (f : K -> W * A -> B):
-        mmapd f = mbinddt S (fun A => A) (mret T ◻ f).
+        mmapd f = mbinddt U (fun A => A) (mret T ◻ f).
     Proof.
       reflexivity.
     Qed.
 
     Lemma mmapt_to_mbinddt (f : K -> A -> F B):
-      mmapt F f = mbinddt S F (fun k => map (F := F) (mret T k) ∘ f k ∘ extract (W := (W ×))).
+      mmapt F f = mbinddt U F (retAll ◻ f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
 
     Lemma mmap_to_mbinddt (f : K -> A -> B):
-      mmap f = mbinddt S (fun A => A) (mret T ◻ f ◻ const (extract (W := (W ×)))).
+      mmap f = mbinddt U (fun A => A) (mret T ◻ f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
@@ -253,7 +291,7 @@ Section derived_operations.
     Qed.
 
     Lemma mmapt_to_mbindt (f : K -> A -> F B):
-      mmapt F f = mbindt F (fun k => map (F := F) (mret T k) ∘ f k).
+      mmapt F f = mbindt F (retAll ◻ f).
     Proof.
       reflexivity.
     Qed.
@@ -267,7 +305,7 @@ Section derived_operations.
     (** *** Rewriting rules for special cases of <<mbindd>> *)
     (******************************************************************************)
     Lemma mbind_to_mbindd (f : forall k, A -> T k B):
-      mbind f = mbindd (f ◻ const (extract (W := (W ×)))).
+      mbind f = mbindd (f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
@@ -279,7 +317,7 @@ Section derived_operations.
     Qed.
 
     Lemma mmap_to_mbindd (f : A -k-> B):
-      mmap f = mbindd (mret T ◻ f ◻ const (extract (W := (W ×)))).
+      mmap f = mbindd (mret T ◻ f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
@@ -293,13 +331,13 @@ Section derived_operations.
     Qed.
 
     Lemma mmap_to_mmapdt (f : K -> A -> B):
-      mmap f = mmapdt (fun A => A) (f ◻ const (extract (W := (W ×)))).
+      mmap f = mmapdt (fun A => A) (f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
 
     Lemma mmapt_to_mmapdt (f : K -> A -> F B):
-      mmapt F f = mmapdt F (f ◻ const (extract (W := (W ×)))).
+      mmapt F f = mmapdt F (f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
@@ -315,7 +353,7 @@ Section derived_operations.
     (** *** Special cases of <<mmapd>> *)
     (******************************************************************************)
     Lemma mmap_to_mmapd (f : K -> A -> B):
-      mmap f = mmapd (f ◻ const (extract (W := (W ×)))).
+      mmap f = mmapd (f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
@@ -338,8 +376,8 @@ End derived_operations.
 Section derived_operations_composition.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T}
     `{Applicative F}
     `{Applicative G}
@@ -350,32 +388,33 @@ Section derived_operations_composition.
   Lemma mbindd_mbinddt: forall
       (g : forall k, W * B -> T k C)
       (f : forall k, W * A -> F (T k B)),
-      map (F := F) (mbindd S g) ∘ mbinddt S F f =
-      mbinddt S F (fun k '(w, a) => map (F := F) (mbindd (T k) (g ◻ const (incr w))) (f k (w, a))).
+      map (F := F) (mbindd U g) ∘ mbinddt U F f =
+      mbinddt U F (fun k '(w, a) => map (F := F) (mbindd (T k) (g ◻ allK (incr w))) (f k (w, a))).
   Proof.
     intros. rewrite mbindd_to_mbinddt.
-    rewrite (dtp_mbinddt_mbinddt W S T F (fun A => A)).
+    rewrite (dtp_mbinddt_mbinddt W T U F (fun A => A)).
     fequal. now erewrite Mult_compose_identity1.
   Qed.
 
   Lemma mmapdt_mbinddt: forall
       (g : K -> W * B -> G C)
       (f : forall k, W * A -> F (T k B)),
-      map (F := F) (mmapdt S G g) ∘ mbinddt S F f =
-      mbinddt S (F ∘ G) (fun k '(w, a) => map (F := F) (mmapdt (T k) G (g ◻ const (incr w))) (f k (w, a))).
+      map (F := F) (mmapdt U G g) ∘ mbinddt U F f =
+      mbinddt U (F ∘ G) (fun k '(w, a) => map (F := F) (mmapdt (T k) G (g ◻ allK (incr w))) (f k (w, a))).
   Proof.
     intros. rewrite mmapdt_to_mbinddt.
-    now rewrite (dtp_mbinddt_mbinddt W S T F G).
+    now rewrite (dtp_mbinddt_mbinddt W T U F G).
   Qed.
 
   Lemma mbindt_mbinddt: forall
       (g : forall k, B -> G (T k C))
       (f : forall k, W * A -> F (T k B)),
-      map (F := F) (mbindt S G g) ∘ mbinddt S F f =
-      mbinddt S (F ∘ G) (fun k => map (F := F) (mbindt (T k) G g) ∘ f k).
+      map (F := F) (mbindt U G g) ∘ mbinddt U F f =
+      mbinddt U (F ∘ G) (fun k => map (F := F) (mbindt (T k) G g) ∘ f k).
   Proof.
     intros. rewrite mbindt_to_mbinddt.
-    rewrite (dtp_mbinddt_mbinddt W S T F G).
+    rewrite (dtp_mbinddt_mbinddt W T U F G).
+
     fequal. ext k [w a]. unfold compose; cbn.
     fequal. rewrite mbindt_to_mbinddt.
     fequal. now ext j [w2 b].
@@ -384,14 +423,15 @@ Section derived_operations_composition.
   Lemma mbind_mbinddt: forall
       (g : forall k, B -> T k C)
       (f : forall k, W * A -> F (T k B)),
-      map (F := F) (mbind S g) ∘ mbinddt S F f =
-      mbinddt S F (fun k => map (F := F) (mbind (T k) g) ∘ f k).
+      map (F := F) (mbind U g) ∘ mbinddt U F f =
+      mbinddt U F ((fun k => map (F := F) (mbind (T k) g)) ◻ f).
   Proof.
     intros. rewrite mbind_to_mbinddt.
-    rewrite (dtp_mbinddt_mbinddt W S T F (fun A => A)).
+    rewrite (dtp_mbinddt_mbinddt W T U F (fun A => A)).
     fequal.
     - now erewrite Mult_compose_identity1.
-    - unfold compose, compose_dtm. ext k [w a].
+    - unfold vec_compose, compose, compose_dtm.
+      ext k [w a].
       fequal. rewrite mbind_to_mbinddt. fequal.
       now ext j [w2 b].
   Qed.
@@ -399,22 +439,22 @@ Section derived_operations_composition.
   Lemma mmapd_mbinddt: forall
       (g : K -> W * B -> C)
       (f : forall k, W * A -> F (T k B)),
-      map (F := F) (mmapd S g) ∘ mbinddt S F f =
-      mbinddt S F (fun k '(w, a) => map (F := F) (mmapd (T k) (g ◻ const (incr w))) (f k (w, a))).
+      map (F := F) (mmapd U g) ∘ mbinddt U F f =
+      mbinddt U F (fun k '(w, a) => map (F := F) (mmapd (T k) (g ◻ allK (incr w))) (f k (w, a))).
   Proof.
     intros. rewrite mmapd_to_mbinddt.
-    rewrite (dtp_mbinddt_mbinddt W S T F (fun A => A)).
+    rewrite (dtp_mbinddt_mbinddt W T U F (fun A => A)).
     fequal. now erewrite Mult_compose_identity1.
   Qed.
 
   Lemma mmapt_mbinddt: forall
       (g : K -> B -> G C)
       (f : forall k, W * A -> F (T k B)),
-      map (F := F) (mmapt S G g) ∘ mbinddt S F f =
-      mbinddt S (F ∘ G) (fun k => map (F := F) (mmapt (T k) G g) ∘ f k).
+      map (F := F) (mmapt U G g) ∘ mbinddt U F f =
+      mbinddt U (F ∘ G) (fun k => map (F := F) (mmapt (T k) G g) ∘ f k).
   Proof.
     intros. rewrite mmapt_to_mbinddt.
-    rewrite (dtp_mbinddt_mbinddt W S T F G).
+    rewrite (dtp_mbinddt_mbinddt W T U F G).
     fequal. ext k [w a]. unfold compose; cbn.
     fequal. rewrite mmapt_to_mbinddt.
     fequal. now ext j [w2 b].
@@ -423,8 +463,8 @@ Section derived_operations_composition.
   Lemma mmap_mbinddt: forall
       (g : K -> B -> C)
       (f : forall k, W * A -> F (T k B)),
-      map (F := F) (mmap S g) ∘ mbinddt S F f =
-      mbinddt S F (fun k => map (F := F) (mmap (T k) g) ∘ f k).
+      map (F := F) (mmap U g) ∘ mbinddt U F f =
+      mbinddt U F (fun k => map (F := F) (mmap (T k) g) ∘ f k).
   Proof.
     intros. unfold mmap. rewrite mmapd_mbinddt.
     fequal. ext k [w a]. unfold compose; cbn.
@@ -436,91 +476,162 @@ Section derived_operations_composition.
   Lemma mbinddt_mbindd: forall
       (g : forall k, W * B -> G (T k C))
       (f : forall k, W * A -> T k B),
-      mbinddt S G g ∘ mbindd S f =
-      mbinddt S G (fun k '(w, a) => mbinddt (T k) G (g ◻ const (incr w)) (f k (w, a))).
+      mbinddt U G g ∘ mbindd U f =
+      mbinddt U G (fun k '(w, a) => mbinddt (T k) G (g ◻ allK (incr w)) (f k (w, a))).
   Proof.
     intros. rewrite mbindd_to_mbinddt.
-    change (mbinddt S G g) with (map (F := (fun A => A)) (mbinddt S G g)).
-    rewrite (dtp_mbinddt_mbinddt W S T (fun A => A) G).
+    change (mbinddt U G g) with (map (F := (fun A => A)) (mbinddt U G g)).
+    rewrite (dtp_mbinddt_mbinddt W T U (fun A => A) G).
     fequal. now rewrite (Mult_compose_identity2 G).
+  Qed.
+
+  Lemma vec_compose_lemma0:
+    forall (f : K -> W * A -> B) (k:K),
+      (mret T ◻ f) k =
+        (mret T k ∘ f k).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma vec_compose_lemma1:
+    forall (f : K -> W * A -> F B) (k:K),
+      (retAll (F := F) ◻ f) k =
+        (map (F := F) (mret T k) ∘ f k).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma vec_compose_lemma2:
+    forall (A B: Type) (C: K -> Type) (g: forall k, B -> C k)
+      (f: A -> B) (k: K),
+      (g ◻ allK f) k = g k ∘ f.
+  Proof.
+    reflexivity.
   Qed.
 
   Lemma mbinddt_mmapdt: forall
       (g : forall k, W * B -> G (T k C))
       (f : K -> W * A -> F B),
-      map (F := F) (mbinddt S G g) ∘ mmapdt S F f =
-      mbinddt S (F ∘ G) (fun k '(w, a) => map (F := F) (fun b => g k (w, b)) (f k (w, a))).
+      map (F := F) (mbinddt U G g) ∘ mmapdt U F f =
+      mbinddt U (F ∘ G) (fun k '(w, a) => map (F := F) (fun b => g k (w, b)) (f k (w, a))).
   Proof.
-    intros. rewrite mmapdt_to_mbinddt.
-    rewrite (dtp_mbinddt_mbinddt W S T F G).
-    fequal. ext k [w a]. unfold compose; cbn.
+    intros.
+    rewrite mmapdt_to_mbinddt.
+    rewrite (dtp_mbinddt_mbinddt W T U F G).
+    fequal.
+    ext k [w a]. unfold compose; cbn.
+    rewrite vec_compose_lemma1.
+    unfold compose at 1.
     compose near (f k (w, a)) on left.
-    rewrite (fun_map_map).
-    fequal. ext b. unfold compose; cbn.
-    compose near b on left.
+    rewrite fun_map_map.
     rewrite (dtm_mbinddt_comp_mret W T k G).
-    cbn. now simpl_monoid.
+    rewrite vec_compose_lemma2.
+    reassociate -> on left.
+    rewrite pair_incr_zero.
+    reflexivity.
   Qed.
 
   Lemma mbinddt_mbindt: forall
       (g : forall k, W * B -> G (T k C))
       (f : forall k, A -> F (T k B)),
-      map (F := F) (mbinddt S G g) ∘ mbindt S F f =
-      mbinddt S (F ∘ G) (fun k '(w, a) => map (F := F) (mbinddt (T k) G (g ◻ const (incr w))) (f k a)).
+      map (F := F) (mbinddt U G g) ∘ mbindt U F f =
+      mbinddt U (F ∘ G) (fun k '(w, a) => map (F := F) (mbinddt (T k) G (g ◻ allK (incr w))) (f k a)).
   Proof.
     intros. rewrite mbindt_to_mbinddt.
-    now rewrite (dtp_mbinddt_mbinddt W S T F G).
+    now rewrite (dtp_mbinddt_mbinddt W T U F G).
   Qed.
 
   Lemma mbinddt_mbind: forall
       (g : forall k, W * B -> G (T k C))
       (f : forall k, A -> T k B),
-      mbinddt S G g ∘ mbind S f =
-      mbinddt S G (fun k '(w, a) => mbinddt (T k) G (g ◻ const (incr w)) (f k a)).
+      mbinddt U G g ∘ mbind U f =
+      mbinddt U G (fun k '(w, a) => mbinddt (T k) G (g ◻ allK (incr w)) (f k a)).
   Proof.
     intros. rewrite mbind_to_mbinddt.
-    change (mbinddt S G g) with (map (F := fun A => A) (mbinddt S G g)).
-    rewrite (dtp_mbinddt_mbinddt W S T (fun A => A) G).
+    change (mbinddt U G g) with (map (F := fun A => A) (mbinddt U G g)).
+    rewrite (dtp_mbinddt_mbinddt W T U (fun A => A) G).
     fequal. now rewrite (Mult_compose_identity2 G).
+  Qed.
+
+  Lemma compose_dtm_lemma1: forall
+      (g : forall k, W * B -> G (T k C))
+      (f : forall (k:K), W * A -> B),
+      g ⋆dtm (mret T ◻ f) =
+        (fun (k : K) '(w, a) => g k (w, f k (w, a))).
+  Proof.
+    intros.
+    unfold compose_dtm.
+    ext k [w a].
+    unfold_ops @Map_I.
+    rewrite vec_compose_lemma0.
+    unfold compose.
+    compose near (f k (w, a)) on left.
+    rewrite (dtm_mbinddt_comp_mret W T k); auto.
+    rewrite vec_compose_k.
+    reassociate -> on left.
+    unfold allK, const.
+    rewrite pair_incr_zero.
+    reflexivity.
+  Qed.
+
+  Lemma compose_dtm_lemma2: forall
+      (g : forall k, W * B -> G (T k C))
+      (f : forall (k:K), W * A -> F B),
+      g ⋆dtm (retAll (F := F) ◻ f) =
+      (fun (k : K) '(w, a) => map (F := F) (g k ∘ pair w) (f k (w, a))).
+  Proof.
+    intros.
+    unfold compose_dtm.
+    ext k [w a].
+    rewrite vec_compose_lemma1.
+    unfold compose.
+    compose near (f k (w, a)) on left.
+    rewrite fun_map_map.
+    rewrite (dtm_mbinddt_comp_mret W T k); auto.
+    rewrite vec_compose_k.
+    reassociate -> on left.
+    unfold allK, const.
+    rewrite pair_incr_zero.
+    reflexivity.
   Qed.
 
   Lemma mbinddt_mmapd: forall
       (g : forall k, W * B -> G (T k C))
       (f : forall k, W * A -> B),
-      mbinddt S G g ∘ mmapd S f =
-      mbinddt S G (fun k '(w, a) => g k (w, f k (w, a))).
+      mbinddt U G g ∘ mmapd U f =
+      mbinddt U G (fun k '(w, a) => g k (w, f k (w, a))).
   Proof.
-    intros. rewrite mmapd_to_mbinddt.
-    change (mbinddt S G g) with (map (F := fun A => A) (mbinddt S G g)).
-    rewrite (dtp_mbinddt_mbinddt W S T (fun A => A) G).
+    intros.
+    erewrite mmapd_to_mbinddt.
+    change (mbinddt U G g) with (map (F := fun A => A) (mbinddt U G g)).
+    rewrite (dtp_mbinddt_mbinddt W T U (fun A => A) G).
     fequal. now rewrite (Mult_compose_identity2 G).
-    ext j [w2 b]. unfold compose; cbn.
-    unfold_ops @Map_I. compose near (f j (w2, b)).
-    rewrite (dtm_mbinddt_comp_mret W T j G).
-    unfold compose; cbn.
-    now simpl_monoid.
+    rewrite compose_dtm_lemma1.
+    reflexivity.
   Qed.
 
   Lemma mbinddt_mmapt: forall
       (g : forall k, W * B -> G (T k C))
       (f : K -> A -> F B),
-      map (F := F) (mbinddt S G g) ∘ mmapt S F f =
-      mbinddt S (F ∘ G) (fun k '(w, a) => map (F := F) (fun b => g k (w, b)) (f k a)).
+      map (F := F) (mbinddt U G g) ∘ mmapt U F f =
+      mbinddt U (F ∘ G) (fun k '(w, a) => map (F := F) (fun b => g k (w, b)) (f k a)).
   Proof.
-    intros. unfold mmapt. rewrite mbinddt_mbindt.
-    fequal. ext k [w a]. unfold compose. compose near (f k a) on left.
-    rewrite (fun_map_map). fequal.
-    rewrite (dtm_mbinddt_comp_mret W T k G).
-    ext b. cbn. now simpl_monoid.
+    intros.
+    rewrite mmapt_to_mmapdt.
+    rewrite mbinddt_mmapdt.
+    reflexivity.
   Qed.
 
   Lemma mbinddt_mmap: forall
       (g : forall k, W * B -> G (T k C))
       (f : K -> A -> B),
-      mbinddt S G g ∘ mmap S f =
-      mbinddt S G (fun k '(w, a) => g k (w, f k a)).
+      mbinddt U G g ∘ mmap U f =
+      mbinddt U G (fun k '(w, a) => g k (w, f k a)).
   Proof.
-    intros. unfold mmap. now rewrite mbinddt_mmapd.
+    intros.
+    rewrite mmap_to_mmapd.
+    rewrite mbinddt_mmapd.
+    reflexivity.
   Qed.
 
 End derived_operations_composition.
@@ -530,20 +641,24 @@ End derived_operations_composition.
 Section DTM_laws.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T}.
 
   (** *** Purity *)
   (******************************************************************************)
   Lemma mbinddt_pure: forall (A : Type) `{Applicative F},
-      mbinddt S F (fun k => pure ∘ mret T k ∘ extract (W := (W ×))) = pure (A := S A).
+      (let p := ((fun k => (@pure F _ (T k A))): forall k, T k A -> F (T k A)) in
+      let r := (@mret ix T _ A) in
+      let e := (allK extract): forall k, W * A -> A
+      in mbinddt U F (p ◻ r ◻ e)) = pure (A := U A).
   Proof.
-    intros. replace (fun (k : K) => pure ∘ mret T k ∘ extract (W := (W ×)))
-              with (fun (k : K) => pure ∘ (mret T k ∘ extract (W := (W ×)) (A := A))).
-    2:{ ext k [w a]. easy. }
-    rewrite <- (dtp_mbinddt_morphism W S T (fun x => x) F (ϕ := @pure F _)).
-    now rewrite (dtp_mbinddt_mret W S T).
+    intros.
+    cbn zeta.
+    rewrite vec_compose_assoc.
+    rewrite <- (dtp_mbinddt_morphism W T U (fun x => x) F (ϕ := @pure F _)).
+    rewrite (dtp_mbinddt_mret W T U).
+    reflexivity.
   Qed.
 
 End DTM_laws.
@@ -558,11 +673,11 @@ End DTM_laws.
 Section mixed_composition_laws.
 
   Context
-    (S : Type -> Type)
+    (U : Type -> Type)
     (F G : Type -> Type)
     `{Applicative F}
     `{Applicative G}
-    `{MultiDecoratedTraversablePreModule W S T}
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T} {A B C : Type}.
 
   (** *** <<mbindd>> *)
@@ -571,38 +686,46 @@ Section mixed_composition_laws.
   Lemma mbindd_mmapdt: forall
       (g : forall k, W * B -> T k C)
       (f : forall k, W * A -> F B),
-      map (F := F) (mbindd S g) ∘ mmapdt S F f =
-      mbinddt S F (fun (k : K) '(w, a) => map (F := F) (fun b => g k (w, b)) (f k (w, a))).
+      map (F := F) (mbindd U g) ∘ mmapdt U F f =
+      mbinddt U F (fun (k : K) '(w, a) => map (F := F) (fun b => g k (w, b)) (f k (w, a))).
   Proof.
     intros. rewrite mmapdt_to_mbinddt.
     rewrite mbindd_to_mbinddt.
-    rewrite (dtp_mbinddt_mbinddt W S T F (fun x => x)).
+    rewrite (dtp_mbinddt_mbinddt W T U F (fun x => x)).
+    rewrite (compose_dtm_lemma2 U).
     fequal.
-    - now rewrite (Mult_compose_identity1 F).
-    - ext k [w a]. unfold compose; cbn.
-      compose near (f k (w, a)) on left.
-      rewrite (fun_map_map). fequal.
-      rewrite (dtm_mbinddt_comp_mret W T k (fun A =>A)).
-      ext b. unfold compose; cbn. now simpl_monoid.
+    now rewrite (Mult_compose_identity1 F).
   Qed.
 
   Lemma mbindd_mbindt: forall
       (g : forall k, W * B -> T k C)
       (f : forall k, A -> F (T k B)),
-      map (F := F) (mbindd S g) ∘ mbindt S F f =
-      mbinddt S F (fun (k : K) '(w, a) => map (F := F) (mbindd (T k) (g ◻ const (incr w))) (f k a)).
+      map (F := F) (mbindd U g) ∘ mbindt U F f =
+      mbinddt U F (fun (k : K) '(w, a) => map (F := F) (mbindd (T k) (g ◻ allK (incr w))) (f k a)).
   Proof.
-    (* TODO *)
-  Abort.
+    intros.
+    rewrite mbindd_to_mbinddt.
+    rewrite mbindt_to_mbinddt.
+    rewrite (dtp_mbinddt_mbinddt W T U F (fun x => x)).
+    fequal.
+    now rewrite (Mult_compose_identity1 F).
+  Qed.
 
   Lemma mbindd_mmapt: forall
       (g : forall k, W * B -> T k C)
       (f : forall k, A -> F B),
-      map (F := F) (mbindd S g) ∘ mmapt S F f =
-      mbinddt S F (fun (k : K) '(w, a) => map (F := F) (fun b => g k (w, b)) (f k a)).
+      map (F := F) (mbindd U g) ∘ mmapt U F f =
+      mbinddt U F (fun (k : K) '(w, a) => map (F := F) (fun b => g k (w, b)) (f k a)).
   Proof.
-    (* TODO *)
-  Abort.
+    intros.
+    rewrite mbindd_to_mbinddt.
+    rewrite mmapt_to_mbinddt.
+    rewrite (dtp_mbinddt_mbinddt W T U F (fun x => x)).
+    rewrite vec_compose_assoc.
+    rewrite (compose_dtm_lemma2 U).
+    fequal.
+    now rewrite (Mult_compose_identity1 F).
+  Qed.
 
   (* TODO Also need to put <<mmapt_mbindd>> somewhere. *)
 
@@ -612,8 +735,8 @@ Section mixed_composition_laws.
   Lemma mmapdt_mbindd: forall
       (g : forall k, W * B -> G C)
       (f : forall k, W * A -> T k B),
-      mmapdt S G g ∘ mbindd S f =
-      mbinddt S G (fun (k : K) '(w, a) => mmapdt (T k) G (g ◻ const (incr w)) (f k (w, a))).
+      mmapdt U G g ∘ mbindd U f =
+      mbinddt U G (fun (k : K) '(w, a) => mmapdt (T k) G (g ◻ allK (incr w)) (f k (w, a))).
   Proof.
     (* TODO *)
   Abort.
@@ -621,15 +744,15 @@ Section mixed_composition_laws.
   Lemma mmapdt_mbindt: forall
       (g : forall k, W * B -> G C)
       (f : forall k, A -> F (T k B)),
-      map (F := F) (mmapdt S G g) ∘ mbindt S F f =
-      mbinddt S (F ∘ G) (fun (k : K) '(w, a) => map (F := F) (mmapdt (T k) G (g ◻ const (incr w))) (f k a)).
+      map (F := F) (mmapdt U G g) ∘ mbindt U F f =
+      mbinddt U (F ∘ G) (fun (k : K) '(w, a) => map (F := F) (mmapdt (T k) G (g ◻ allK (incr w))) (f k a)).
   Proof.
     (* TODO *)
   Abort.
 
   Lemma mmapdt_mbind: forall
       (g : K -> W * B -> G C) (f : forall k, A -> T k B),
-      mmapdt S G g ∘ mbind S f = mbinddt S G (fun k '(w, a) => mmapdt (T k) G (g ◻ const (incr w)) (f k a)).
+      mmapdt U G g ∘ mbind U f = mbinddt U G (fun k '(w, a) => mmapdt (T k) G (g ◻ allK (incr w)) (f k a)).
   Proof.
     (* TODO *)
   Abort.
@@ -642,8 +765,8 @@ Section mixed_composition_laws.
   Lemma mbindt_mbindd: forall
       (g : forall k, B -> G (T k C))
       (f : forall k, W * A -> T k B),
-      mbindt S G g ∘ mbindd S f =
-      mbinddt S G (fun (k : K) '(w, a) => mbindt (T k) G g (f k (w, a))).
+      mbindt U G g ∘ mbindd U f =
+      mbinddt U G (fun (k : K) '(w, a) => mbindt (T k) G g (f k (w, a))).
   Proof.
     (* TODO *)
   Abort.
@@ -651,8 +774,8 @@ Section mixed_composition_laws.
   Lemma mbindt_mmapdt: forall
       (g : forall k, B -> G (T k C))
       (f : forall k, W * A -> F B),
-      map (F := F) (mbindt S G g) ∘ mmapdt S F f =
-      mbinddt S (F ∘ G) (fun (k : K) '(w, a) => map (F := F) (g k) (f k (w, a))).
+      map (F := F) (mbindt U G g) ∘ mmapdt U F f =
+      mbinddt U (F ∘ G) (fun (k : K) '(w, a) => map (F := F) (g k) (f k (w, a))).
   Proof.
     (* TODO *)
   Abort.
@@ -675,39 +798,38 @@ Definition compose_dm
            {A B C : Type}
            (g : forall k, W * B -> T k C)
            (f : forall k, W * A -> T k B) : forall k, W * A -> T k C :=
-  fun k '(w, a) => mbindd (T k) (g ◻ const (incr w)) (f k (w, a)).
+  fun k '(w, a) => mbindd (T k) (g ◻ allK (incr w)) (f k (w, a)).
 
 Infix "⋆dm" := compose_dm (at level 40).
 
 Section DecoratedMonad.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T} {A B C : Type}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
   Theorem mbindd_id:
-    mbindd S (mret T ◻ const (extract (W := (W ×)))) = @id (S A).
+    mbindd U (mret T ◻ allK extract) = @id (U A).
   Proof.
     intros. rewrite mbindd_to_mbinddt.
-    now rewrite <- (dtp_mbinddt_mret W S T).
+    now rewrite <- (dtp_mbinddt_mret W T U).
   Qed.
 
   Theorem mbindd_mbindd: forall
       (g : W * B ~k~> T C)
       (f : W * A ~k~> T B),
-      mbindd S g ∘ mbindd S f =
-      mbindd S (fun (k : K) '(w, a) => mbindd (T k) (g ◻ const (incr w)) (f k (w, a))).
+      mbindd U g ∘ mbindd U f =
+      mbindd U (fun (k : K) '(w, a) => mbindd (T k) (g ◻ allK (incr w)) (f k (w, a))).
   Proof.
-    intros. rewrite mbindd_to_mbinddt.
-    change_left (map (F := fun x => x) (mbinddt S (fun x : Type => x) g) ∘ (mbinddt S (fun x : Type => x) f)).
-    rewrite (dtp_mbinddt_mbinddt W S T (fun x => x) (fun x => x)).
-    ext t.
-    change (compose_dtm g f) with
-        (fun (k : K) '(w, a) => mbinddt (T k) (fun x : Type => x) (g ◻ const (incr w)) (f k (w, a))).
-    fequal. now rewrite Mult_compose_identity2.
+    intros.
+    rewrite 3mbindd_to_mbinddt.
+    change_left (map (F := fun x => x) (mbinddt U (fun x : Type => x) g) ∘ (mbinddt U (fun x : Type => x) f)).
+    rewrite (dtp_mbinddt_mbinddt W T U (fun x => x) (fun x => x)).
+    fequal.
+    now rewrite Mult_compose_identity2.
   Qed.
 
   (** *** Right unit law for monads *)
@@ -726,8 +848,8 @@ Section DecoratedMonad.
   Lemma mbindd_mbind: forall
       (g : forall k, W * B -> T k C)
       (f : A ~k~> T B),
-      mbindd S g ∘ mbind S f =
-      mbindd S (fun (k : K) '(w, a) => mbindd (T k) (g ◻ const (incr w)) (f k a)).
+      mbindd U g ∘ mbind U f =
+      mbindd U (fun (k : K) '(w, a) => mbindd (T k) (g ◻ allK (incr w)) (f k a)).
   Proof.
     intros. rewrite mbind_to_mbindd.
     now rewrite mbindd_mbindd.
@@ -736,11 +858,12 @@ Section DecoratedMonad.
   Lemma mbindd_mmapd: forall
       (g : forall k, W * B -> T k C)
       (f : forall k, W * A -> B),
-      mbindd S g ∘ mmapd S f =
-      mbindd S (fun (k : K) '(w, a) => g k (w, f k (w, a))).
+      mbindd U g ∘ mmapd U f =
+      mbindd U (fun (k : K) '(w, a) => g k (w, f k (w, a))).
   Proof.
     intros. rewrite mmapd_to_mbindd. rewrite (mbindd_mbindd).
-    fequal. ext k [w a]. unfold compose; cbn.
+    fequal. ext k [w a].
+    unfold vec_compose, compose; cbn.
     compose near (f k (w, a)).
     rewrite mbindd_to_mbinddt.
     rewrite (dtm_mbinddt_comp_mret W T k (fun A => A)).
@@ -750,8 +873,8 @@ Section DecoratedMonad.
   Lemma mbindd_mmap: forall
       (g : forall k, W * B -> T k C)
       (f : forall k, A -> B),
-      mbindd S g ∘ mmap S f =
-      mbindd S (fun (k : K) '(w, a) => g k (w, f k a)).
+      mbindd U g ∘ mmap U f =
+      mbindd U (fun (k : K) '(w, a) => g k (w, f k a)).
   Proof.
     intros. unfold mmap.
     now rewrite (mbindd_mmapd).
@@ -762,33 +885,41 @@ Section DecoratedMonad.
   Lemma mbind_mbindd: forall
       (g : forall k, B -> T k C)
       (f : forall k, W * A -> T k B),
-      mbind S g ∘ mbindd S f =
-      mbindd S (fun (k : K) => mbind (T k) g ∘ f k).
+      mbind U g ∘ mbindd U f =
+        mbindd U (fun (k : K) => mbind (T k) g ∘ f k).
   Proof.
-    intros. rewrite mbind_to_mbindd.
-    rewrite (mbindd_mbindd). fequal.
-    ext k [w a]. unfold compose; cbn.
-    unfold mbind. fequal. now ext j [w2 b].
+    intros.
+    rewrite mbind_to_mbindd.
+    rewrite mbindd_mbindd.
+    fequal.
+    ext k [w a].
+    unfold mbind, compose.
+    fequal.
+    now ext j [w2 b].
   Qed.
 
   Lemma mmapd_mbindd: forall
       (g : forall k, W * B -> C)
       (f : forall k, W * A -> T k B),
-      mmapd S g ∘ mbindd S f =
-      mbindd S (fun (k : K) '(w, a) => mmapd (T k) (g ◻ const (incr w)) (f k (w, a))).
+      mmapd U g ∘ mbindd U f =
+        mbindd U (fun (k : K) '(w, a) => mmapd (T k) (g ◻ allK (incr w)) (f k (w, a))).
   Proof.
-    intros. rewrite mmapd_to_mbindd.
-    now rewrite (mbindd_mbindd).
+    intros.
+    rewrite mmapd_to_mbindd.
+    rewrite mbindd_mbindd.
+    reflexivity.
   Qed.
 
   Lemma mmap_mbindd: forall
       (g : forall k, B -> T k C)
       (f : forall k, W * A -> T k B),
-      mbind S g ∘ mbindd S f =
-      mbindd S (fun (k : K) => mbind (T k) g ∘ f k).
+      mbind U g ∘ mbindd U f =
+      mbindd U (fun (k : K) => mbind (T k) g ∘ f k).
   Proof.
-    intros. rewrite mbind_to_mbindd.
-    rewrite (mbindd_mbindd). fequal.
+    intros.
+    rewrite mbind_to_mbindd.
+    rewrite mbindd_mbindd.
+    fequal.
     ext k [w a]. unfold compose; cbn.
     rewrite mbind_to_mbindd. fequal.
     now ext j [w2 b].
@@ -801,30 +932,42 @@ End DecoratedMonad.
 Section DecoratedTraversable.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T} {A B C : Type}
     `{Applicative F} `{Applicative G}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
   Theorem mmapdt_id:
-    mmapdt S (fun x => x) (const (extract (W := (W ×)))) = @id (S A).
+    mmapdt U (fun x => x) (allK extract) = @id (U A).
   Proof.
-    intros. unfold mmapdt. apply (dtp_mbinddt_mret W S T).
+    intros.
+    unfold mmapdt.
+    rewrite <- (dtp_mbinddt_mret W T U).
+    reflexivity.
   Qed.
 
   Theorem mmapdt_mmapdt: forall
     (g : forall k, W * B -> G C) (f : forall k, W * A -> F B),
-    map (F := F) (mmapdt S G g) ∘ mmapdt S F f =
-    mmapdt S (F ∘ G) (fun (k : K) '(w, a) => map (F := F) (fun b => g k (w, b)) (f k (w, a))).
+    map (F := F) (mmapdt U G g) ∘ mmapdt U F f =
+    mmapdt U (F ∘ G) (fun (k : K) '(w, a) => map (F := F) (fun b => g k (w, b)) (f k (w, a))).
   Proof.
-    intros. unfold mmapdt. rewrite (dtp_mbinddt_mbinddt W S T F G).
-    unfold compose_dtm. fequal. ext k [w a].
-    unfold_ops @Map_compose.  unfold compose.
+    intros.
+    unfold mmapdt.
+    rewrite (dtp_mbinddt_mbinddt W T U F G).
+    unfold compose_dtm.
+    fequal. ext k [w a].
+    unfold vec_compose, compose, retAll, allK, const.
     compose near (f k (w, a)).
-    do 2 rewrite (fun_map_map). rewrite (dtm_mbinddt_comp_mret W T k G).
-    fequal. ext b. cbn. now simpl_monoid.
+    rewrite (fun_map_map).
+    unfold_ops @Map_compose.
+    rewrite (fun_map_map).
+    rewrite (dtm_mbinddt_comp_mret W T k G).
+    fequal. ext b. unfold compose.
+    compose near b.
+    erewrite pair_incr_zero.
+    now simpl_monoid.
   Qed.
 
   (** *** Composition with <<mret>> *)
@@ -840,30 +983,36 @@ Section DecoratedTraversable.
   (** *** Purity *)
   (******************************************************************************)
   Lemma mmapdt_pure:
-      mmapdt S F (fun k => pure ∘ extract (W := (W ×))) = pure (A := S A).
+      mmapdt U F (allK pure ◻ allK extract) = pure (A := U A).
   Proof.
-    intros. unfold mmapdt.
-    replace (fun k : K => map (F := F) (mret T k) ∘ (pure ∘ extract (W := prod W)))
-      with (fun (k : K) => (pure (F := F) ∘ (mret T k ∘ extract (W := (W ×)) (A := A)))).
-    rewrite <- (dtp_mbinddt_morphism W S T (fun x => x) F (ϕ := @pure F _)).
-    now rewrite (dtp_mbinddt_mret W S T).
-    ext k [w a]. unfold compose; cbn.
-    now rewrite (app_pure_natural).
+    intros.
+    unfold mmapdt.
+    rewrite <- vec_compose_assoc.
+    replace (retAll (A := A) ◻ allK pure) with
+      ((fun k => pure (F := F)) ◻ mret (A := A) T).
+    { rewrite vec_compose_assoc.
+      rewrite <- (dtp_mbinddt_morphism W T U (fun x => x) F (ϕ := @pure F _)).
+      now rewrite (dtp_mbinddt_mret W T U). }
+    { unfold vec_compose. ext k.
+      unfold retAll, allK, const.
+      ext a. unfold compose.
+      rewrite <- app_pure_natural.
+      reflexivity. }
   Qed.
 
   (** *** Composition with special cases  on the right *)
   (******************************************************************************)
   Lemma mmapdt_mmapt: forall
       (g : K -> W * B -> G C) (f : K -> A -> F B),
-      map (F := F) (mmapdt S G g) ∘ mmapt S F f =
-      mmapdt S (F ∘ G) (fun (k : K) '(w, a) => map (F := F) (fun b => g k (w, b)) (f k a)).
+      map (F := F) (mmapdt U G g) ∘ mmapt U F f =
+      mmapdt U (F ∘ G) (fun (k : K) '(w, a) => map (F := F) (fun b => g k (w, b)) (f k a)).
   Proof.
     (* TODO *)
   Abort.
 
   Lemma mmapdt_mmapd: forall
       (g : K -> W * B -> G C) (f : K -> W * A -> B),
-      mmapdt S G g ∘ mmapd S f = mmapdt S G (fun k '(w, a) => g k (w, f k (w, a))).
+      mmapdt U G g ∘ mmapd U f = mmapdt U G (fun k '(w, a) => g k (w, f k (w, a))).
   Proof.
     (* TODO *)
   Abort.
@@ -874,15 +1023,15 @@ Section DecoratedTraversable.
   (******************************************************************************)
   Lemma mmapd_mmapdt: forall
       (g : K -> W * B -> C) (f : K -> W * A -> F B),
-      map (F := F) (mmapd S g) ∘ mmapdt S F f =
-      mmapdt S F (fun k '(w, a) => map (F := F) (fun (b : B) => (g k (w, b))) (f k (w, a))).
+      map (F := F) (mmapd U g) ∘ mmapdt U F f =
+      mmapdt U F (fun k '(w, a) => map (F := F) (fun (b : B) => (g k (w, b))) (f k (w, a))).
   Proof.
     (* TODO *)
   Abort.
 
   Lemma mmapt_mmapdt: forall
       (g : K -> B -> C) (f : K -> W * A -> F B),
-      map (F := F) (mmap S g) ∘ mmapdt S F f = mmapdt S F (fun k => map (F := F) (g k) ∘ f k).
+      map (F := F) (mmap U g) ∘ mmapdt U F f = mmapdt U F (fun k => map (F := F) (g k) ∘ f k).
   Proof.
     (* TODO *)
   Abort.
@@ -896,8 +1045,8 @@ End DecoratedTraversable.
 Section TraversableMonad.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T}
     {A B C : Type}
     (F G : Type -> Type)
@@ -906,20 +1055,21 @@ Section TraversableMonad.
   (** *** Composition and identity law *)
   (******************************************************************************)
   Theorem mbindt_id :
-    mbindt S (fun x => x) (mret T) = @id (S A).
+    mbindt U (fun x => x) (mret T) = @id (U A).
   Proof.
     intros. unfold mbindt.
-    now rewrite (dtp_mbinddt_mret W S T).
+    now rewrite (dtp_mbinddt_mret W T U).
   Qed.
 
   Theorem mbindt_mbindt :
     forall (g : forall k, B -> G (T k C))
       (f : forall k, A -> F (T k B)),
-      map (F := F) (mbindt S G g) ∘ mbindt S F f =
-      mbindt S (F ∘ G) (fun (k : K) (a : A) => map (F := F) (mbindt (T k) G g) (f k a)).
+      map (F := F) (mbindt U G g) ∘ mbindt U F f =
+      mbindt U (F ∘ G) (fun (k : K) (a : A) => map (F := F) (mbindt (T k) G g) (f k a)).
   Proof.
-    intros. unfold mbindt. rewrite (dtp_mbinddt_mbinddt W S T F G).
-    fequal. ext k [w a]. unfold compose; cbn.
+    intros. unfold mbindt. rewrite (dtp_mbinddt_mbinddt W T U F G).
+    fequal. ext k [w a].
+    unfold vec_compose, compose; cbn.
     repeat fequal. ext k2 [w2 b]. easy.
   Qed.
 
@@ -954,11 +1104,11 @@ End TraversableMonad.
 Section mixed_composition_laws2.
 
   Context
-    (S : Type -> Type)
+    (U : Type -> Type)
     (F G : Type -> Type)
     `{Applicative F}
     `{Applicative G}
-    `{MultiDecoratedTraversablePreModule W S T}
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T} {A B C : Type}.
 
   (** *** <<mbind>> on the left *)
@@ -966,12 +1116,16 @@ Section mixed_composition_laws2.
   Lemma mbind_mmapd :
     forall (g : forall k, B -> T k C)
       (f : K -> W * A -> B),
-      mbind S g ∘ mmapd S f =
-      mbindd S (g ◻ f).
+      mbind U g ∘ mmapd U f =
+      mbindd U (g ◻ f).
   Proof.
-    intros. rewrite mmapd_to_mbindd. rewrite mbind_to_mbindd.
-    rewrite (mbindd_mbindd S). fequal.
-    ext k [w a]. unfold compose; cbn.
+    intros.
+    rewrite mmapd_to_mbindd.
+    rewrite mbind_to_mbindd.
+    rewrite (mbindd_mbindd U).
+    fequal.
+    ext k [w a].
+    unfold vec_compose, compose; cbn.
     compose near (f k (w, a)) on left.
     now rewrite (mbindd_comp_mret (T := T)).
   Qed.
@@ -979,20 +1133,24 @@ Section mixed_composition_laws2.
   Lemma mbind_mmapt :
     forall (g : forall k, B -> T k C)
       (f : K -> A -> F B),
-      map (F := F) (mbind S g) ∘ mmapt S F f =
-      mbindt S F (fun k => map (F := F) (g k) ∘ f k).
+      map (F := F) (mbind U g) ∘ mmapt U F f =
+      mbindt U F (fun k => map (F := F) (g k) ∘ f k).
   Proof.
-    intros. rewrite (mmapt_to_mbindt S F).
+    intros.
+    rewrite (mmapt_to_mbindt U F).
     rewrite mbind_to_mbindt.
-    rewrite (mbindt_mbindt S F (fun A => A)).
+    rewrite (mbindt_mbindt U F (fun A => A)).
     fequal.
     - now rewrite (Mult_compose_identity1 F).
-    - ext k a. unfold compose. compose near (f k a) on left.
-      rewrite (fun_map_map). fequal.
+    - ext k a. unfold vec_compose, retAll, compose.
+      compose near (f k a) on left.
+      rewrite fun_map_map.
+      fequal.
       change (mbindt (T k) (fun A0 : Type => A0) g)
         with (mbind (T k) g).
       rewrite mbind_to_mbindd.
-      now rewrite mbindd_comp_mret.
+      rewrite mbindd_comp_mret.
+      reflexivity.
   Qed.
 
   (** *** <<mmapd>> on the left *)
@@ -1000,21 +1158,21 @@ Section mixed_composition_laws2.
   Lemma mmapd_mbind :
     forall (g : K -> W * B -> C)
       (f : forall k, A -> T k B),
-      mmapd S g ∘ mbind S f =
-      mbindd S (fun k '(w, a) => mmapd (T k) (g ◻ const (incr w)) (f k a)).
+      mmapd U g ∘ mbind U f =
+      mbindd U (fun k '(w, a) => mmapd (T k) (g ◻ allK (incr w)) (f k a)).
   Proof.
     intros. rewrite mmapd_to_mbindd. rewrite mbind_to_mbindd.
-    now rewrite (mbindd_mbindd S).
+    now rewrite (mbindd_mbindd U).
   Qed.
 
   Lemma mmapd_mmapt :
     forall (g : K -> W * B -> C)
       (f : forall k, A -> F B),
-      map (F := F) (mmapd S g) ∘ mmapt S F f =
-      mmapdt S F (fun k '(w, a) => map (F := F) (fun b => g k (w, b)) (f k a)).
+      map (F := F) (mmapd U g) ∘ mmapt U F f =
+      mmapdt U F (fun k '(w, a) => map (F := F) (fun b => g k (w, b)) (f k a)).
   Proof.
     intros. rewrite mmapd_to_mmapdt. rewrite mmapt_to_mmapdt.
-    rewrite (mmapdt_mmapdt S (G := fun A => A)). fequal.
+    rewrite (mmapdt_mmapdt U (G := fun A => A)). fequal.
     now rewrite (Mult_compose_identity1 F).
   Qed.
 
@@ -1023,27 +1181,32 @@ Section mixed_composition_laws2.
   Lemma mmapt_mbind :
     forall (g : K -> B -> G C)
       (f : forall k, A -> T k B),
-      mmapt S G g ∘ mbind S f =
-      mbindt S G (fun k => mmapt (T k) G g ∘ f k).
+      mmapt U G g ∘ mbind U f =
+      mbindt U G (fun k => mmapt (T k) G g ∘ f k).
   Proof.
-    intros. rewrite mmapt_to_mbindt. rewrite mbind_to_mbindt.
-    change (mbindt S G (fun k : K => map (F := G) (mret T k) ∘ g k))
-      with (map (F := fun A => A) (mbindt S G (fun k : K => map (F := G) (mret T k) ∘ g k))).
-    rewrite (mbindt_mbindt S (fun A => A) G).
+    intros.
+    rewrite mmapt_to_mbindt.
+    rewrite mbind_to_mbindt.
+    unfold vec_compose, retAll.
+    change (mbindt U G (fun k : K => map (F := G) (mret T k) ∘ g k))
+      with (map (F := fun A => A) (mbindt U G (fun k : K => map (F := G) (mret T k) ∘ g k))).
+    rewrite (mbindt_mbindt U (fun A => A) G).
     fequal. now rewrite (Mult_compose_identity2 G).
   Qed.
 
   Lemma mmapt_mmapd :
     forall (g : K -> B -> G C)
       (f : forall k, A -> T k B),
-      mmapt S G g ∘ mbind S f =
-      mbindt S G (fun k => mmapt (T k) G g ∘ f k).
+      mmapt U G g ∘ mbind U f =
+      mbindt U G (fun k => mmapt (T k) G g ∘ f k).
   Proof.
-    intros. rewrite mmapt_to_mbindt.
+    intros.
+    rewrite mmapt_to_mbindt.
     rewrite mbind_to_mbindt.
-    change (mbindt S G (fun k : K => map (F := G) (mret T k) ∘ g k))
-      with (map (F := fun A => A) (mbindt S G (fun k : K => map (F := G) (mret T k) ∘ g k))).
-    rewrite (mbindt_mbindt S (fun A => A) G).
+    unfold vec_compose, retAll.
+    change (mbindt U G (fun k : K => map (F := G) (mret T k) ∘ g k))
+      with (map (F := fun A => A) (mbindt U G (fun k : K => map (F := G) (mret T k) ∘ g k))).
+    rewrite (mbindt_mbindt U (fun A => A) G).
     fequal. now rewrite (Mult_compose_identity2 G).
   Qed.
 
@@ -1054,27 +1217,27 @@ End mixed_composition_laws2.
 Section Monad.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
     Theorem mbind_id : forall A,
-      mbind S (fun k => mret T k) = @id (S A).
+      mbind U (fun k => mret T k) = @id (U A).
   Proof.
     intros. rewrite mbind_to_mbindd.
-    now rewrite <- (mbindd_id S).
+    now rewrite <- (mbindd_id U).
   Qed.
 
   Theorem mbind_mbind {A B C} :
     forall (g : forall (k : K), B -> T k C) (f : forall (k : K), A -> T k B),
-      mbind S g ∘ mbind S f =
-      mbind S (fun (k : K) (a : A) => mbind (T k) g (f k a)).
+      mbind U g ∘ mbind U f =
+      mbind U (fun (k : K) (a : A) => mbind (T k) g (f k a)).
   Proof.
-    intros. do 3 rewrite (mbind_to_mbindd S).
-    rewrite (mbindd_mbindd S).
-    unfold compose; cbn. fequal.
+    intros. do 3 rewrite (mbind_to_mbindd U).
+    rewrite (mbindd_mbindd U).
+    unfold vec_compose, compose; cbn. fequal.
     ext k [w a].
     rewrite (mbind_to_mbindd (T k)).
     cbn. fequal. now ext j [w2 b].
@@ -1101,28 +1264,30 @@ End Monad.
 Section DecoratedFunctor.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
     Theorem mmapd_id : forall A,
-      mmapd S (const (extract (W := (W ×)))) = @id (S A).
+      mmapd U (allK extract) = @id (U A).
   Proof.
-    intros. rewrite mmapd_to_mmapdt.
-    now rewrite (mmapdt_id S).
+    intros.
+    rewrite mmapd_to_mmapdt.
+    rewrite (mmapdt_id U).
+    reflexivity.
   Qed.
 
   Theorem mmapd_mmapd {A B C} :
     forall (g : K -> W * B -> C) (f : K -> W * A -> B),
-      mmapd S g ∘ mmapd S f =
-      mmapd S (fun (k : K) '(w, a) => g k (w, f k (w, a))).
+      mmapd U g ∘ mmapd U f =
+      mmapd U (fun (k : K) '(w, a) => g k (w, f k (w, a))).
   Proof.
     intros. do 3 rewrite mmapd_to_mmapdt.
-    change (mmapdt S (fun A => A) g) with
-        (map (F := fun A => A) (mmapdt S (fun A => A) g)).
-    rewrite (mmapdt_mmapdt S (G := fun A => A) (F := fun A => A)).
+    change (mmapdt U (fun A => A) g) with
+        (map (F := fun A => A) (mmapdt U (fun A => A) g)).
+    rewrite (mmapdt_mmapdt U (G := fun A => A) (F := fun A => A)).
     unfold compose; cbn. fequal.
     now rewrite (Mult_compose_identity1 (fun A => A)).
   Qed.
@@ -1148,29 +1313,29 @@ End DecoratedFunctor.
 Section TraversableFunctor.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
     Theorem mmapt_id : forall A,
-      mmapt S (fun A => A) (const (@id A)) = @id (S A).
+      mmapt U (fun A => A) (allK (@id A)) = @id (U A).
   Proof.
     intros. unfold mmapt.
-    now rewrite <- (mbindt_id S).
+    now rewrite <- (mbindt_id U).
   Qed.
 
   Theorem mmapt_mmapt {A B C} :
     forall `{Applicative G} `{Applicative F}
       (g : K -> B -> G C) (f : K -> A -> F B),
-      map (F := F) (mmapt S G g) ∘ mmapt S F f =
-      mmapt S (F ∘ G) (fun (k : K) (a : A) => map (F := F) (g k) (f k a)).
+      map (F := F) (mmapt U G g) ∘ mmapt U F f =
+      mmapt U (F ∘ G) (fun (k : K) (a : A) => map (F := F) (g k) (f k a)).
   Proof.
-    intros. rewrite (mmapt_to_mmapdt S G).
-    rewrite (mmapt_to_mmapdt S F).
-    rewrite (mmapt_to_mmapdt S (F ∘ G)).
-    rewrite (mmapdt_mmapdt S).
+    intros. rewrite (mmapt_to_mmapdt U G).
+    rewrite (mmapt_to_mmapdt U F).
+    rewrite (mmapt_to_mmapdt U (F ∘ G)).
+    rewrite (mmapdt_mmapdt U).
     fequal. now ext k [w a].
   Qed.
 
@@ -1195,24 +1360,24 @@ End TraversableFunctor.
 Section Functor.
 
   Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
+    (U : Type -> Type)
+    `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T}.
 
   (** *** Composition and identity law *)
   (******************************************************************************)
   Theorem mmap_id : forall A,
-      mmap S (const (@id A)) = @id (S A).
+      mmap U (allK (@id A)) = @id (U A).
   Proof.
-    intros. apply (dtp_mbinddt_mret W S T).
+    intros. apply (dtp_mbinddt_mret W T U).
   Qed.
 
   Theorem mmap_mmap {A B C} : forall
       (g : K -> B -> C) (f : K -> A -> B),
-      mmap S g ∘ mmap S f = mmap S (g ⊙ f).
+      mmap U g ∘ mmap U f = mmap U (g ◻ f).
   Proof.
     intros. do 3 rewrite mmap_to_mmapd.
-    rewrite (mmapd_mmapd S).
+    rewrite (mmapd_mmapd U).
     fequal. now ext k [w a].
   Qed.
 
@@ -1227,2435 +1392,3 @@ Section Functor.
   Qed.
 
 End Functor.
-
-(** * Targeted operations *)
-(** In this section we ignore operations involving traversals simply
-    because they are not necessary for System F. *)
-(******************************************************************************)
-
-(** ** Targeted substitution-building combinators: [btg] and [btgd] *)
-(******************************************************************************)
-
-(* TODO : Define a version that works for applicative effects. *)
-(*
-#[program] Definition btga `{ix : Index} `{Map F} `{Pure F} `{Mult F}
- {A W : Type} (T : K -> Type -> Type) `{! MReturn T}
- (j : K) (f : W * A -> F (T j A)) : forall (k : K), W * A -> F (T k A) :=
-  fun k '(w, a) => if k == j then f (w, a) else pure ∘ mret T k a.
- *)
-
-#[program] Definition tgtd `{ix : Index} {A W : Type} (T : K -> Type -> Type)
- (j : K) (f : W * A -> A) : K -> W * A -> A :=
-  fun k '(w, a) => if k == j then f (w, a) else a.
-
-#[program] Definition tgt `{ix : Index} {A : Type} (T : K -> Type -> Type)
- (j : K) (f : A -> A) : K -> A -> A :=
-  fun k a => if k == j then f a else a.
-
-#[program] Definition btgd `{ix : Index} {A W : Type} (T : K -> Type -> Type) `{! MReturn T}
- (j : K) (f : W * A -> T j A) : forall (k : K), W * A -> T k A :=
-  fun k '(w, a) => if k == j then f (w, a) else mret T k a.
-
-#[program] Definition btg `{ix : Index} {A : Type} (T : K -> Type -> Type) `{! MReturn T}
- (j : K) (f : A -> T j A) : forall (k : K), A -> T k A :=
-  fun k => if k == j then f else mret T k.
-
-Require Import Coq.Program.Equality.
-
-(** ** Lemmas for [btgd], [btg] *)
-(******************************************************************************)
-Section btgd_lemmas.
-
-  Context
-    `{MReturn T}
-    {W A : Type}.
-
-  Lemma tgtd_eq : forall k (f : W * A -> A),
-      tgtd T k f k = f.
-  Proof.
-    introv. unfold tgtd. ext [w a].
-    compare values k and k.
-  Qed.
-
-  Lemma tgtd_neq : forall {k j} (f : W * A -> A),
-      k <> j -> tgtd T j f k = extract (W := (W ×)).
-  Proof.
-    introv. unfold tgtd. intro hyp. ext [w a].
-    compare values k and j.
-  Qed.
-
-  Lemma tgtd_id (j : K) :
-    tgtd (A := A) T j (extract (W := (W ×))) = const (extract (W := (W ×))).
-  Proof.
-    unfold tgtd. ext k [w a]. compare values k and j.
-  Qed.
-
-  Lemma tgt_eq : forall k (f : A -> A),
-      tgt T k f k = f.
-  Proof.
-    introv. unfold tgt. ext a.
-    compare values k and k.
-  Qed.
-
-  Lemma tgt_neq : forall {k j} (f : A -> A),
-      k <> j -> tgt T j f k = @id A.
-  Proof.
-    introv. unfold tgt. intro hyp. ext a.
-    compare values k and j.
-  Qed.
-
-  Lemma tgt_id (j : K) :
-    tgt (A := A) T j (@id A) = const (@id A).
-  Proof.
-    unfold tgt. ext k a. compare values k and j.
-  Qed.
-
-  Lemma btgd_eq : forall k (f : W * A -> T k A),
-      btgd T k f k = f.
-  Proof.
-    introv. unfold btgd. ext [w a].
-    compare values k and k.
-    dependent destruction DESTR_EQ.
-    cbn. reflexivity.
-  Qed.
-
-  Lemma btgd_neq : forall {k j} (f : W * A -> T j A),
-      k <> j -> btgd T j f k = mret T k ∘ extract (W := (W ×)).
-  Proof.
-    introv. unfold btgd. intro hyp. ext [w a].
-    compare values k and j.
-  Qed.
-
-  Lemma btgd_id (j : K) :
-    btgd (A := A) T j (mret T j ∘ extract (W := (W ×))) = mret T ◻ const (extract (W := (W ×))).
-  Proof.
-    unfold btgd. ext k [w a]. compare values k and j.
-  Qed.
-
-  Lemma btg_eq : forall k (f : A -> T k A),
-      btg T k f k = f.
-  Proof.
-    introv. unfold btg.
-    compare values k and k.
-    dependent destruction DESTR_EQ.
-    cbn. reflexivity.
-  Qed.
-
-  Lemma btg_neq : forall {k j} (f : A -> T j A),
-      k <> j -> btg T j f k = mret T k.
-  Proof.
-    introv. unfold btg. intro hyp.
-    compare values k and j.
-  Qed.
-
-  Lemma btg_id (j : K) :
-    btg (A := A) T j (mret T j) = mret T.
-  Proof.
-    unfold btg. ext k. compare values k and j.
-  Qed.
-
-End btgd_lemmas.
-
-(** ** Rewrite Hint registration *)
-(******************************************************************************)
-#[export] Hint Rewrite @tgt_eq @tgtd_eq @tgt_id @tgtd_id : tea_tgt.
-#[export] Hint Rewrite @btgd_eq @btg_eq @btg_id @btgd_id : tea_tgt.
-#[export] Hint Rewrite @btgd_neq @btg_neq using auto : tea_tgt.
-
-#[export] Hint Rewrite @tgt_eq @tgtd_eq @tgt_id @tgtd_id : tea_tgt_eq.
-#[export] Hint Rewrite @btgd_eq @btg_eq @btg_id @btgd_id : tea_tgt_eq.
-#[export] Hint Rewrite @tgtd_neq @tgt_neq using auto : tea_tgt_neq.
-#[export] Hint Rewrite @btgd_neq @btg_neq using auto : tea_tgt_neq.
-
-(** ** Derived targeted DTM operations *)
-(******************************************************************************)
-Section DTM_targeted.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    (j : K).
-
-  (** *** Definitions *)
-  (* For now we ignore traversals because we don't need them for System F. *)
-  (******************************************************************************)
-  Definition kbindd {A} `(f : W * A -> T j A) : S A -> S A
-    := mbindd S (btgd T j f).
-
-  Definition kbind `(f : A -> T j A) : S A -> S A
-    := mbind S (btg T j f).
-
-  Definition kmapd `(f : W * A -> A) : S A -> S A :=
-    mmapd S (tgtd T j f).
-
-  Definition kmap `(f : A -> A) : S A -> S A :=
-    mmap S (tgt T j f).
-
-  Section special_cases.
-
-    Context
-      {A : Type}.
-
-    (** *** Rewriting rules for special cases of <<kbindd>> *)
-    (******************************************************************************)
-    Lemma kbind_to_kbindd (f : A -> T j A) :
-      kbind f = kbindd (f ∘ extract (W := (W ×))).
-    Proof.
-      unfold kbind, kbindd. rewrite mbind_to_mbindd.
-      fequal. ext k [w a]. unfold compose; cbn.
-      compare values k and j.
-      - autorewrite  with tea_tgt_eq. easy.
-      - autorewrite  with tea_tgt_neq. easy.
-    Qed.
-
-    Lemma kmapd_to_kbindd (f : W * A -> A) :
-      kmapd f = kbindd (mret T j ∘ f).
-    Proof.
-      unfold kmapd, kbindd. rewrite mmapd_to_mbindd.
-      fequal. ext k [w a]. unfold compose. cbn. compare values k and j.
-    Qed.
-
-    Lemma kmap_to_kbindd (f : A -> A) :
-      kmap f = kbindd (mret T j ∘ f ∘ extract (W := (W ×))).
-    Proof.
-      unfold kmap, kbindd. rewrite mmap_to_mbindd.
-      fequal. ext k [w a]. unfold compose. cbn.
-      compare values k and j. cbn.
-      now autorewrite with tea_tgt_eq.
-      now autorewrite with tea_tgt_neq.
-    Qed.
-
-    (** *** Rewriting rules for special cases of <<kmapd>> *)
-    (******************************************************************************)
-    Lemma kmap_to_kmapd (f : A -> A) :
-      kmap f = kmapd (f ∘ extract (W := (W ×))).
-    Proof.
-      unfold kmap, kbind.
-      unfold kmapd. rewrite mmap_to_mmapd.
-      fequal. ext k. compare values j and k.
-      now autorewrite with tea_tgt_eq.
-      now autorewrite with tea_tgt_neq.
-    Qed.
-
-    (** *** Rewriting rules for special cases of <<kbind>> *)
-    (******************************************************************************)
-    Lemma kmap_to_kbind (f : A -> A) :
-      kmap f = kbind (mret T j ∘ f).
-    Proof.
-      unfold kmap, kbind.
-      rewrite mmap_to_mbind.
-      fequal. ext k. compare values j and k.
-      now autorewrite with tea_tgt_eq.
-      now autorewrite with tea_tgt_neq.
-    Qed.
-
-  End special_cases.
-
-End DTM_targeted.
-
-(** ** Decorated monad (<<kbindd>>) *)
-(******************************************************************************)
-
-Definition compose_kdm
-           `{ix : Index}
-           {W : Type}
-           {T : K -> Type -> Type}
-           `{mn_op : Monoid_op W}
-           `{mn_unit : Monoid_unit W}
-           `{forall k, MBind W T (T k)}
-           `{! MReturn T}
-           {j : K}
-           {A : Type}
-           (g : W * A -> T j A)
-           (f : W * A -> T j A) : W * A -> T j A :=
-  fun '(w, a) => kbindd (T j) j (g ∘ incr w) (f (w, a)).
-
-Infix "⋆kdm" := compose_kdm (at level 40).
-
-Section DecoratedMonad.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}
-    {j : K}
-    {A : Type}.
-
-  (** *** Composition and identity law *)
-  (******************************************************************************)
-  Theorem kbindd_id :
-    kbindd S j (mret T j ∘ (extract (W := (W ×)))) = @id (S A).
-  Proof.
-    intros. unfold kbindd. rewrite <- (mbindd_id S).
-    fequal. ext k [w a]. cbn. compare values k and j.
-  Qed.
-
-  Theorem kbindd_kbindd_eq : forall (g : W * A -> T j A) (f : W * A -> T j A),
-      kbindd S j g ∘ kbindd S j f =
-      kbindd S j (g ⋆kdm f).
-  Proof.
-    intros. unfold kbindd. rewrite (mbindd_mbindd S).
-    fequal. ext k [w a]. cbn. compare values k and j.
-    - cbn. unfold kbindd. fequal. ext k [w' a'].
-      compare values k and j.
-    - compose near a on left. rewrite mbindd_comp_mret.
-      cbn. compare values k and j.
-  Qed.
-
-  Theorem kbindd_kbindd_neq :
-    forall {i : K} (Hneq : j <> i)
-      (g : W * A -> T i A) (f : W * A -> T j A),
-      kbindd S i g ∘ kbindd S j f =
-      mbindd S (btgd T i g ⋆dm btgd T j f).
-  Proof.
-    intros. unfold kbindd. now rewrite (mbindd_mbindd S).
-  Qed.
-
-  (** *** Right unit law for monads *)
-  (******************************************************************************)
-  Theorem kbindd_comp_mret_eq : forall (f : W * A -> T j A) (a : A),
-      kbindd (T j) j f (mret T j a) = f (Ƶ, a).
-  Proof.
-    intros. unfold kbindd. compose near a on left.
-    rewrite (mbindd_comp_mret).
-    now autorewrite with tea_tgt_eq.
-  Qed.
-
-  Theorem kbindd_comp_mret_neq :
-    forall (i : K) (Hneq : j <> i)
-      (f : W * A -> T j A) (a : A),
-      kbindd (T i) j f (mret T i a) = mret T i a.
-  Proof.
-    intros. unfold kbindd. compose near a on left.
-    rewrite (mbindd_comp_mret).
-    now autorewrite with tea_tgt_neq.
-  Qed.
-
-  (** *** Composition with special cases *)
-  (******************************************************************************)
-  Lemma kmapd_kbindd : forall
-      (g : W * A -> A) (f : W * A -> T j A),
-      kmapd S j g ∘ kbindd S j f = kbindd S j (fun '(w, a) => kmapd (T j) j (g ∘ incr w) (f (w, a))).
-  Proof.
-    intros. rewrite kmapd_to_kbindd.
-    rewrite kbindd_kbindd_eq. fequal.
-    unfold compose_kdm. ext [w a].
-    now rewrite kmapd_to_kbindd.
-  Qed.
-
-  Lemma kbind_kbindd : forall
-      (g : A -> T j A) (f : W * A -> T j A),
-      kbind S j g ∘ kbindd S j f = kbindd S j (kbind (T j) j g ∘ f).
-  Proof.
-    intros. rewrite kbind_to_kbindd. rewrite kbindd_kbindd_eq.
-    fequal. unfold compose_kdm. ext [w a].
-    reassociate ->. rewrite extract_incr. now rewrite kbind_to_kbindd.
-  Qed.
-
-  Lemma kmap_kbindd : forall
-      (g : A -> A) (f : W * A -> T j A),
-      kmap S j g ∘ kbindd S j f = kbindd S j (fun '(w, a) => kmap (T j) j g (f (w, a))).
-  Proof.
-    intros. unfold kmap, kbindd. rewrite mmap_to_mbindd.
-    rewrite (mbindd_mbindd S). fequal. ext k [w a].
-    compare values j and k.
-    - autorewrite with tea_tgt_eq.
-      rewrite mmap_to_mbindd. fequal.
-      ext k' [w' a']. unfold compose; cbn. reflexivity.
-    - autorewrite with tea_tgt_neq. unfold compose; cbn.
-      compose near a on left.
-      rewrite (mbindd_comp_mret). rewrite tgt_neq; auto.
-  Qed.
-
-  Lemma kbindd_kmapd : forall
-      (g : W * A -> T j A) (f : W * A -> A),
-      kbindd S j g ∘ kmapd S j f = kbindd S j (fun '(w, a) => g (w, f (w, a))).
-  Proof.
-    intros. rewrite kmapd_to_kbindd.
-    rewrite kbindd_kbindd_eq. fequal.
-    ext (w, a). unfold compose; cbn.
-    rewrite kbindd_comp_mret_eq. unfold compose; cbn.
-    now simpl_monoid.
-  Qed.
-
-  Lemma kbindd_kbind : forall
-      (g : W * A -> T j A) (f : A -> T j A),
-      kbindd S j g ∘ kbind S j f = kbindd S j (fun '(w, a) => kbindd (T j) j (g ∘ incr w) (f a)).
-  Proof.
-    intros. rewrite kbind_to_kbindd. now rewrite kbindd_kbindd_eq.
-  Qed.
-
-  (* TODO <<kbindd_kmap>> *)
-
-End DecoratedMonad.
-
-(** ** Mixed structure composition laws *)
-(** Composition laws involving <<kbind>> and <<kmapd>> *)
-(******************************************************************************)
-
-(* TODO <<kbind_kmapd>> *)
-
-(* TODO <<kmapd_kbind>> *)
-
-(** ** Decorated functors (<<kmapd>>) *)
-(******************************************************************************)
-Section DecoratedFunctor.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}
-    {j : K}.
-
-  (** *** Composition and identity law *)
-  (******************************************************************************)
-  Theorem kmapd_id : forall A,
-      kmapd S j (extract (W := (W ×))) = @id (S A).
-  Proof.
-    intros. unfold kmapd.
-    rewrite <- (mmapd_id S).
-    fequal. ext k. compare values j and k.
-    - now autorewrite with tea_tgt.
-    - now autorewrite with tea_tgt.
-  Qed.
-
-  Theorem kmapd_kmapd : forall A,
-      forall (g : W * A -> A) (f : W * A -> A),
-        kmapd S j g ∘ kmapd S j f =
-        kmapd S j (fun '(w, a) => g (w, f (w, a))).
-  Proof.
-    intros. unfold kmapd.
-    rewrite (mmapd_mmapd S). fequal.
-    ext k [w a]. compare values j and k.
-    - now autorewrite with tea_tgt.
-    - now autorewrite with tea_tgt_neq.
-  Qed.
-
-  (** *** Composition with <<mret>> *)
-  (******************************************************************************)
-  Lemma kmapd_comp_mret_eq : forall A,
-      forall (f : W * A -> A) (a : A),
-        kmapd (T j) j f (mret T j a) = mret T j (f (Ƶ, a)).
-  Proof.
-    intros. unfold kmapd. rewrite mmapd_comp_mret.
-    now autorewrite with tea_tgt.
-  Qed.
-
-  Lemma kmapd_comp_mret_neq : forall A,
-      forall (k : K) (neq : k <> j) (f : W * A -> A) (a : A),
-        kmapd (T k) j f (mret T k a) = mret T k a.
-  Proof.
-    intros. unfold kmapd. rewrite mmapd_comp_mret.
-    now autorewrite with tea_tgt_neq.
-  Qed.
-
-  (* TODO <<kmap_kmapd>> *)
-
-  (* TODO <<kmapd_kmap>> *)
-
-End DecoratedFunctor.
-
-(** ** Monads (<<kbind>>) *)
-(******************************************************************************)
-Definition compose_km
-           `{ix : Index}
-           {W : Type}
-           {T : K -> Type -> Type}
-           `{forall k, MBind W T (T k)}
-           `{! MReturn T}
-           {j : K}
-           {A : Type}
-           (g : A -> T j A)
-           (f : A -> T j A) : A -> T j A :=
-  (kbind (T j) j g ∘ f).
-
-Infix "⋆km" := compose_km (at level 40).
-
-Section Monad.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}
-    {j : K}.
-
-  (** *** Composition and identity law *)
-  (******************************************************************************)
-    Theorem kbind_id : forall A,
-      kbind S j (mret T j) = @id (S A).
-  Proof.
-    intros. unfold kbind.
-    rewrite <- (mbind_id S). fequal.
-    ext k. compare values j and k.
-    - now autorewrite with tea_tgt_eq.
-    - now autorewrite with tea_tgt_neq.
-  Qed.
-
-  Theorem kbind_kbind : forall A,
-      forall (g f : A -> T j A),
-        kbind S j g ∘ kbind S j f =
-        kbind S j (g ⋆km f).
-  Proof.
-    intros. unfold kbind.
-    rewrite (mbind_mbind S). fequal.
-    ext k a. compare values j and k.
-    - now autorewrite with tea_tgt_eq.
-    - autorewrite with tea_tgt_neq.
-      rewrite (mbind_comp_mret k).
-      now autorewrite with tea_tgt_neq.
-  Qed.
-
-  (** *** Composition with <<mret>> *)
-  (******************************************************************************)
-  Lemma kbind_comp_mret_eq : forall A,
-    forall (f : A -> T j A) (a : A),
-      kbind (T j) j f (mret T j a) = f a.
-  Proof.
-    intros. unfold kbind. rewrite mbind_comp_mret.
-    now autorewrite with tea_tgt_eq.
-  Qed.
-
-  Lemma kbind_comp_mret_neq : forall A,
-    forall (i : K) (Hneq : j <> i) (f : A -> T j A) (a : A),
-      kbind (T i) j f (mret T i a) = mret T i a.
-  Proof.
-    intros. unfold kbind. rewrite mbind_comp_mret.
-    now autorewrite with tea_tgt_neq.
-  Qed.
-
-  (* TODO <<kmap_kbind>> *)
-
-  (* TODO <<kbind_kmap>> *)
-
-End Monad.
-
-(** ** Functors (<<kmap>>) *)
-(******************************************************************************)
-Section Functor.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}
-    {j : K}.
-
-  (** *** Composition and identity law *)
-  (******************************************************************************)
-  Theorem kmap_id : forall A,
-      kmap S j (@id A) = @id (S A).
-  Proof.
-    intros. unfold kmap.
-    rewrite <- (mmap_id S).
-    fequal. ext k. compare values k and j.
-    now autorewrite with tea_tgt_eq.
-    now autorewrite with tea_tgt_neq.
-  Qed.
-
-  Theorem kmap_kmap : forall (A : Type) (g f : A -> A),
-      kmap S j g ∘ kmap S j f = kmap S j (g ∘ f).
-  Proof.
-    intros. unfold kmap.
-    rewrite (mmap_mmap S). fequal.
-    ext k. unfold Category.comp, kconst_comp.
-    compare values j and k.
-    - now autorewrite with tea_tgt_eq.
-    - now autorewrite with tea_tgt_neq.
-  Qed.
-
-  (** *** Naturality w.r.t. <<mret>> *)
-  (******************************************************************************)
-  Lemma kmap_comp_kret_eq {A} :
-    forall (f : A -> A) (a : A),
-      kmap (T j) j f (mret T j a) = mret T j (f a).
-  Proof.
-    intros. unfold kmap. rewrite mmap_comp_mret.
-    now rewrite tgt_eq.
-  Qed.
-
-  Lemma kmap_comp_kret_neq {A} :
-    forall (i : K) (Hneq : j <> i) (f : A -> A) (a : A),
-      kmap (T i) j f (mret T i a) = mret T i a.
-  Proof.
-    intros. unfold kmap. rewrite mmap_comp_mret.
-    rewrite tgt_neq; auto.
-  Qed.
-
-End Functor.
-
-(** ** Notations **)
-(******************************************************************************)
-Module Notations.
-
-  Infix "⋆dtm" := compose_dtm (at level 40) : tealeaves_scope.
-
-  Infix "⋆kdm" := compose_kdm (at level 40) : tealeaves_scope.
-
-  Infix "⋆km" := compose_km (at level 40) : tealeaves_scope.
-
-End Notations.
-
-From Tealeaves Require Import
-  Functors.List
-  Functors.Constant.
-
-Import Product.Notations.
-Import Monoid.Notations.
-Import List.ListNotations.
-
-Open Scope list_scope.
-
-(** * Sorted lists with context *)
-(******************************************************************************)
-Section list.
-
-  Context
-    `{ix : Index}
-    `{Monoid W}.
-
-  Instance: MReturn (fun k A => list (W * (K * A))) :=
-    fun A (k : K) (a : A) =>
-      [(Ƶ, (k, a))].
-
-  (** This operation is a context- and tag-sensitive substitution operation
-   on lists of annotated values. It is used internally to reason about the
-   interaction between <<mbinddt>> and <<tomlistd>>. *)
-  Fixpoint mbinddt_list
-           `(f : forall (k : K), W * A -> list (W * (K * B)))
-           (l : list (W * (K * A))) : list (W * (K * B)) :=
-    match l with
-    | nil => nil
-    | cons (w, (k, a)) rest =>
-      map (F := list) (incr w) (f k (w, a)) ++ mbinddt_list f rest
-    end.
-
-  Lemma mbinddt_list_nil : forall
-      `(f : forall (k : K), W * A -> list (W * (K * B))),
-      mbinddt_list f nil = nil.
-  Proof.
-    intros. easy.
-  Qed.
-
-  Lemma mbinddt_list_ret : forall
-      `(f : forall (k : K), W * A -> list (W * (K * B))) (k : K) (a : A),
-      mbinddt_list f (mret (fun k A => list (W * (K * A))) k a) = f k (Ƶ, a).
-  Proof.
-    intros. cbn. List.simpl_list.
-    replace (incr (Ƶ : W)) with (@id (W * (K * B))).
-    - now rewrite (fun_map_id).
-    - ext [w [k2 b]]. cbn. now simpl_monoid.
-  Qed.
-
-  Lemma mbinddt_list_cons : forall
-      `(f : forall (k : K), W * A -> list (W * (K * B)))
-      (w : W) (k : K) (a : A)
-      (l : list (W * (K * A))),
-      mbinddt_list f ((w, (k, a)) :: l) = map (F := list) (incr w) (f k (w, a)) ++ mbinddt_list f l.
-  Proof.
-    intros. easy.
-  Qed.
-
-  Lemma mbinddt_list_app : forall
-      `(f : forall (k : K), W * A -> list (W * (K * B)))
-      (l1 l2 : list (W * (K * A))),
-      mbinddt_list f (l1 ++ l2) = mbinddt_list f l1 ++ mbinddt_list f l2.
-  Proof.
-    intros. induction l1.
-    - easy.
-    - destruct a as [w [k a]].
-      cbn. rewrite IHl1.
-      now rewrite List.app_assoc.
-  Qed.
-
-  #[global] Instance : forall `(f : forall (k : K), W * A -> list (W * (K * B))),
-      ApplicativeMorphism (const (list (W * (K * A))))
-                          (const (list (W * (K * B))))
-                          (const (mbinddt_list f)).
-  Proof.
-    intros. eapply ApplicativeMorphism_monoid_morphism.
-    Unshelve. constructor; try typeclasses eauto.
-    - easy.
-    - intros. apply mbinddt_list_app.
-  Qed.
-
-End list.
-
-(** * The <<Batch>> idiom *)
-(* This is not the true Batch functor, it has been specialized for its use case with DTMs.
- TODO: Generalize this so it can live in its own file. *)
-(******************************************************************************)
-Import Applicative.Notations.
-
-Section Batch.
-
-  #[local] Generalizable Variables D.
-  #[local] Set Implicit Arguments.
-
-  Context
-    `{ix : Index}
-    {T : K -> Type -> Type}
-    {W A B : Type}.
-
-  Inductive Batch C : Type :=
-  | Go : C -> Batch C
-  | Ap : forall (k : K), Batch (T k B -> C) -> W * A -> Batch C.
-
-  Fixpoint map_Batch `{f : C -> D} `(c : Batch C) : Batch D :=
-    match c with
-    | Go c => Go (f c)
-    | @Ap _ k rest (pair w a) =>
-      Ap (@map_Batch (T k B -> C) (T k B -> D) (compose f) rest) (w, a)
-    end.
-
-  #[global] Instance Map_Batch : Map Batch := @map_Batch.
-
-  Lemma map_id_Batch : forall (C : Type),
-      map (F := Batch) id = @id (Batch C).
-  Proof.
-    intros. ext s. induction s.
-    - easy.
-    - unfold id in *. destruct p.
-      now rewrite <- IHs at 2.
-  Qed.
-
-  Lemma map_map_Batch : forall (C D E : Type) (f : C -> D) (g : D -> E),
-      map (F := Batch) g ∘ map (F := Batch) f = map (F := Batch) (g ∘ f).
-  Proof.
-    intros. unfold compose. ext s. generalize dependent E.
-    generalize dependent D. induction s.
-    - easy.
-    - intros. destruct p. cbn. fequal.
-      apply IHs.
-  Qed.
-
-  #[global, program] Instance Functor_Batch : Functor Batch :=
-    {| fun_map_id := map_id_Batch;
-       fun_map_map := map_map_Batch;
-    |}.
-
-  (** ** Applicative Instance *)
-  (******************************************************************************)
-  #[global] Instance Pure_Batch : Pure Batch :=
-    fun (C : Type) (c : C) => Go c.
-
-  Fixpoint mult_Batch `(jc : Batch C) `(jd : Batch D) : Batch (C * D) :=
-    match jd with
-    | Go d => map (F := Batch) (fun (c : C) => (c, d)) jc
-    | Ap rest (pair w a) =>
-      Ap (map (F := Batch) strength_arrow (mult_Batch jc rest)) (pair w a)
-    end.
-
-  #[global] Instance Mult_Batch : Mult Batch :=
-    fun C D '(c, d) => mult_Batch c d.
-
-  #[local] Infix "⧆" := Ap (at level 51, left associativity) : tealeaves_scope.
-  Lemma mult_Batch_rw1 : forall `(a : A) `(b : B),
-      Go a ⊗ Go b = Go (a, b).
-  Proof.
-    easy.
-  Qed.
-
-  Lemma mult_Batch_rw2 : forall `(d : D) `(jc : Batch C),
-      jc ⊗ Go d = map (F := Batch) (pair_right d) jc.
-  Proof.
-    intros. induction jc; easy.
-  Qed.
-
-  Lemma mult_Batch_rw3 : forall `(d : D) `(jc : Batch C),
-      Go d ⊗ jc = map (F := Batch) (pair d) jc.
-  Proof.
-    induction jc.
-    - easy.
-    - destruct p. cbn; change (mult_Batch ?x ?y) with (x ⊗ y).
-      fequal. rewrite IHjc. compose near jc on left.
-      now rewrite (fun_map_map (F := Batch)).
-  Qed.
-
-  Lemma mult_Batch_rw4 : forall (w : W) (a : A) (k : K) `(jc : @Batch (T k B -> C)) `(d : D),
-      (jc ⧆ (w, a)) ⊗ Go d = map (F := Batch) (costrength_arrow ∘ pair_right d) jc ⧆ (w, a).
-  Proof.
-    easy.
-  Qed.
-
-  Lemma mult_Batch_rw5 : forall (w : W) (a : A) (k : K) `(jc : @Batch (T k B -> C)) `(d : D),
-      Go d ⊗ (jc ⧆ (w, a)) = map (F := Batch) (strength_arrow ∘ pair d) jc ⧆ (w, a).
-  Proof.
-    intros. cbn. change (mult_Batch ?x ?y) with (x ⊗ y) in *.
-    fequal. rewrite (mult_Batch_rw3 d). compose near jc on left.
-    now rewrite (fun_map_map (F := Batch)).
-  Qed.
-
-  Lemma mult_Batch_rw6 :
-    forall (w1 w2 : W) (a1 a2 : A) (k : K)
-      `(jc : Batch (T k B -> C)) `(jd : Batch (T k B -> D)),
-      (jc ⧆ (w1, a1)) ⊗ (jd ⧆ (w2, a2)) =
-      map (F := Batch) strength_arrow ((jc ⧆ (w1, a1)) ⊗ jd) ⧆ (w2, a2).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma app_pure_natural_Batch : forall (C D : Type) (f : C -> D) (x : C),
-      map (F := Batch) f (pure (F := Batch) x) = pure (F := Batch) (f x).
-  Proof.
-    easy.
-  Qed.
-
-  Lemma app_mult_natural_Batch1 : forall (C D E : Type) (f : C -> D) (x : Batch C) (y : Batch E),
-      map (F := Batch) f x ⊗ y = map (F := Batch) (map_fst f) (x ⊗ y).
-  Proof.
-    intros. generalize dependent E. induction y.
-    - intros; cbn. compose near x.
-      now do 2 rewrite (fun_map_map (F := Batch)).
-    - destruct p. cbn; change (mult_Batch ?x ?y) with (x ⊗ y).
-      rewrite IHy. compose near (x ⊗ y).
-      do 2 rewrite (fun_map_map (F := Batch)). do 2 fequal.
-      now ext [? ?].
-  Qed.
-
-  Lemma app_mult_natural_Batch2 : forall (A B D : Type) (g : B -> D) (x : Batch A) (y : Batch B),
-      x ⊗ map (F := Batch) g y = map (F := Batch) (map_snd g) (x ⊗ y).
-  Proof.
-    intros. generalize dependent D. induction y as [ANY any | ANY k rest IH [w a]].
-    - intros; cbn. compose near x on right. now rewrite (fun_map_map (F := Batch)).
-    - intros; cbn. fequal.
-      change (mult_Batch ?jx ?jy) with (jx ⊗ jy).
-      rewrite IH. compose near (x ⊗ rest).
-      do 2 rewrite (fun_map_map (F := Batch)). fequal.
-      now ext [a' mk].
-  Qed.
-
-  Lemma app_mult_natural_Batch : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : Batch A) (y : Batch B),
-      map (F := Batch) f x ⊗ map (F := Batch) g y = map (F := Batch) (map_tensor f g) (x ⊗ y).
-  Proof.
-    intros. rewrite app_mult_natural_Batch1, app_mult_natural_Batch2.
-    compose near (x ⊗ y) on left. rewrite (fun_map_map (F := Batch)). fequal.
-    now ext [a b].
-  Qed.
-
-  Lemma app_assoc_Batch : forall (A B C : Type) (x : Batch A) (y : Batch B) (z : Batch C),
-      map (F := Batch) associator ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z).
-  Proof.
-    intros. induction z as [ANY any | ANY k rest IH [w a]].
-    - do 2 rewrite mult_Batch_rw2.
-      rewrite (app_mult_natural_Batch2). compose near (x ⊗ y) on left.
-      now rewrite (fun_map_map (F := Batch)).
-    - cbn. repeat change (mult_Batch ?jx ?jy) with (jx ⊗ jy).
-      fequal. rewrite (app_mult_natural_Batch2).
-      rewrite <- IH. compose near (x ⊗ y ⊗ rest).
-      do 2 rewrite (fun_map_map (F := Batch)).
-      compose near (x ⊗ y ⊗ rest) on right.
-      rewrite (fun_map_map (F := Batch)).
-      fequal. now ext [[? ?] ?].
-  Qed.
-
-  Lemma app_unital_l_Batch : forall (A : Type) (x : Batch A),
-      map (F := Batch) left_unitor (pure (F := Batch) tt ⊗ x) = x.
-  Proof.
-    intros. induction x as [ANY any | ANY k rest IH [w a]].
-    - easy.
-    - cbn. change (mult_Batch ?jx ?jy) with (jx ⊗ jy).
-      fequal. compose near (pure (F := Batch) tt ⊗ rest).
-      rewrite (fun_map_map (F := Batch)).
-      rewrite <- IH. repeat fequal. auto.
-  Qed.
-
-  Lemma app_unital_r_Batch : forall (A : Type) (x : Batch A),
-      map (F := Batch) right_unitor (x ⊗ pure (F := Batch) tt) = x.
-  Proof.
-    intros. induction x as [ANY any | ANY k rest IH [w a]].
-    - easy.
-    - cbn in *. fequal. rewrite <- IH at 2.
-      compose near rest. now do 2 rewrite (fun_map_map (F := Batch)).
-  Qed.
-
-  Lemma app_mult_pure_Batch : forall (A B : Type) (a : A) (b : B),
-      pure (F := Batch) a ⊗ pure (F := Batch) b = pure (F := Batch) (a, b).
-  Proof.
-    intros. easy.
-  Qed.
-
-  #[global, program] Instance App_Path : Applicative Batch.
-
-  Next Obligation. apply app_mult_natural_Batch. Qed.
-  Next Obligation. apply app_assoc_Batch. Qed.
-  Next Obligation. apply app_unital_l_Batch. Qed.
-  Next Obligation. apply app_unital_r_Batch. Qed.
-
-End Batch.
-
-Arguments Ap {ix} {T}%function_scope {W A B}%type_scope [C]%type_scope {k} _ _.
-
-(** ** Notations *)
-(******************************************************************************)
-Module Notations2.
-
-  Infix "⧆" := Ap (at level 51, left associativity) : tealeaves_scope.
-
-End Notations2.
-
-Import Notations2.
-
-(** *** Examples of operations *)
-(******************************************************************************)
-Section demo.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}
-    (A B C X : Type)
-    (a1 a2 : A) (b1 b2 b3 : B)
-    (w1 w2 w3 w4 : W)
-    (c1 c2 c3 c4 : C)
-    (mk1 : C -> X) (mk2 : C -> C -> X) (mk0 : X).
-
-  (*
-  Check Go a1 ⊗ Go a2 : @Batch _ T W False False (A * A).
-  Compute Go a1 ⊗ Go a2.
-  Compute Go a1 ⊗ (Go mk1 ⧆ (w1, c1)).
-  Compute (Go mk1 ⧆ (w1, c1)) ⊗ (Go mk1 ⧆ (w2, c2)).
-  Compute (Go mk2 ⧆ (w1, c1) ⧆ (w2, c2)) ⊗ (Go mk1 ⧆ (w3, c3)).
-   *)
-
-End demo.
-
-(** ** Functoriality of [Batch] *)
-(******************************************************************************)
-Section functoriality_Batch.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Fixpoint mapfst_Batch {A1 A2 B C} (f : A1 -> A2) `(j : @Batch _ T W A1 B C) : @Batch _ T W A2 B C :=
-    match j with
-    | Go a => Go a
-    | Ap rest p => Ap (mapfst_Batch f rest) (map_snd f p)
-    end.
-
-End functoriality_Batch.
-
-(** * The <<runBatch>> operation *)
-(******************************************************************************)
-Fixpoint runBatch
-         {ix : Index} {T : K -> Type -> Type} {W A B : Type} {F : Type -> Type}
-         `{Map F} `{Mult F} `{Pure F}
-         (ϕ : forall (k : K), W * A -> F (T k B))
-         `(j : @Batch ix T W A B C) : F C :=
-  match j with
-  | Go a => pure a
-  | @Ap _ _ _ _ _ _ k rest (pair w a) => runBatch ϕ rest <⋆> ϕ k (w, a)
-  end.
-
-Section runBatch_rw.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Context
-    (A B C : Type)
-    `{Applicative F}
-    (f : forall k, W * A -> F (T k B)).
-
-  Lemma runBatch_rw1 (c : C) :
-    runBatch f (Go c) = pure c.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma runBatch_rw2 (k : K) (w : W) (a : A) (rest : Batch (T k B -> C)) :
-    runBatch f (rest ⧆ (w, a)) = runBatch f rest <⋆> f k (w, a).
-  Proof.
-    reflexivity.
-  Qed.
-
-End runBatch_rw.
-
-(** ** Naturality of of <<runBatch>> *)
-(******************************************************************************)
-Section runBatch_naturality.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}
-    `{Applicative F}.
-
-  Context
-    (A B C D : Type)
-    `{Applicative F}
-    (ϕ : forall k, W * A -> F (T k B)).
-
-  Lemma natural_runBatch (f : C -> D) (j : @Batch _ T W A B C) :
-    map (F := F) f (runBatch ϕ j) = runBatch ϕ (map (F := Batch) f j).
-  Proof.
-    generalize dependent D. induction j; intros.
-    - cbn. now rewrite (app_pure_natural).
-    - destruct p. cbn. rewrite map_ap. fequal.
-      now rewrite IHj.
-  Qed.
-
-End runBatch_naturality.
-
-(** ** <<runBatch>> is an applicative morphism **)
-(******************************************************************************)
-Section runBatch_morphism.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Context
-    (A B : Type)
-    `{Applicative F}
-    (f : forall k, W * A -> F (T k B)).
-
-  Lemma appmor_pure_runBatch : forall (C : Type) (c : C),
-      runBatch f (pure (F := Batch) c) = pure c.
-  Proof.
-    easy.
-  Qed.
-
-  Lemma appmor_mult_runBatch : forall (C D : Type) (x : Batch C) (y : Batch D),
-      runBatch f (x ⊗ y) = runBatch f x ⊗ runBatch f y.
-  Proof.
-    intros. generalize dependent x. induction y.
-    - intros. rewrite mult_Batch_rw2.
-      rewrite runBatch_rw1. rewrite triangle_4.
-      rewrite natural_runBatch; auto.
-    - intros. destruct p. rewrite runBatch_rw2.
-      unfold ap. rewrite (app_mult_natural_r F).
-      rewrite <- (app_assoc).
-      rewrite <- IHy. clear IHy.
-      compose near (runBatch f (x ⊗ y) ⊗ f k (w, a)).
-      rewrite (fun_map_map).
-      cbn. unfold ap. change (mult_Batch ?jx ?jy) with (jx ⊗ jy).
-      rewrite <- natural_runBatch; auto.
-      rewrite (app_mult_natural_l F).
-      compose near (runBatch f (x ⊗ y) ⊗ f k (w, a)) on left.
-      rewrite (fun_map_map). fequal. now ext [[? ?] ?].
-  Qed.
-
-  #[global] Instance Morphism_store_fold: ApplicativeMorphism Batch F (@runBatch _ T W A B F _ _ _ f).
-  Proof.
-    constructor; try typeclasses eauto.
-    - intros. now rewrite natural_runBatch.
-    - intros. easy.
-    - intros. apply appmor_mult_runBatch.
-  Qed.
-
-End runBatch_morphism.
-
-(** ** <<runBatch>> commutes with applicative morphisms **)
-(******************************************************************************)
-Section runBatch_morphism.
-
-
-  #[local] Generalizable All Variables.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}
-    {A B C : Type}
-    `{Applicative F}
-    `{Applicative G}
-    `{! ApplicativeMorphism F G ψ}
-    (f : forall k, W * A -> F (T k B)).
-
-  Lemma runBatch_morphism `(j : @Batch _ T W A B C) :
-    @ψ C (runBatch f j) = runBatch (fun k => @ψ (T k B) ∘ f k) j.
-  Proof.
-    induction j.
-    - cbn. now rewrite (appmor_pure).
-    - destruct p. cbn. rewrite ap_morphism_1.
-      now rewrite IHj.
-  Qed.
-
-End runBatch_morphism.
-
-(** * Shape and contents *)
-(******************************************************************************)
-From Tealeaves Require Import
-  Classes.Categorical.ContainerFunctor.
-
-Import ContainerFunctor.Notations.
-Import Misc.Subset.Notations.
-
-(** ** Operations *)
-(******************************************************************************)
-Section shape_and_contents.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Definition shape {A} : S A -> S unit :=
-    mmap S (const (const tt)).
-
-  Definition tomlistd_gen {A} (fake : Type) : S A -> list (W * (K * A)) :=
-    mmapdt (B := fake) S (const (list (W * (K * A)))) (fun k '(w, a) => [(w, (k, a))]).
-
-  Definition tomlistd {A} : S A -> list (W * (K * A)) :=
-    tomlistd_gen False.
-
-  Definition tomsetd {A} : S A -> W * (K * A) -> Prop :=
-    element_of (F := list) ∘ tomlistd.
-
-  Definition tomlist {A} : S A -> list (K * A) :=
-    map (F := list) (extract (W := (W ×))) ∘ tomlistd.
-
-  Definition tomset {A} : S A -> K * A -> Prop :=
-    element_of (F := list) ∘ tomlist.
-
-  Fixpoint filterk {A} (k : K) (l : list (W * (K * A))) : list (W * A) :=
-    match l with
-    | nil => nil
-    | cons (w, (j, a)) ts =>
-      if k == j then (w, a) :: filterk k ts else filterk k ts
-    end.
-
-  Definition toklistd {A} (k : K) : S A -> list (W * A) :=
-    filterk k ∘ tomlistd.
-
-  Definition toksetd {A} (k : K) : S A -> W * A -> Prop :=
-    element_of (F := list) ∘ toklistd k.
-
-  Definition toklist {A} (k : K) : S A -> list A :=
-    map (F := list) (extract (W := (W ×))) ∘ @toklistd A k.
-
-End shape_and_contents.
-
-(** ** Notations *)
-(******************************************************************************)
-Module Notations3.
-
-  Notation "x ∈md t" :=
-    (tomsetd _ t x) (at level 50) : tealeaves_multi_scope.
-
-  Notation "x ∈m t" :=
-    (tomset _ t x) (at level 50) : tealeaves_multi_scope.
-
-End Notations3.
-
-Import Notations3.
-
-(** ** Rewriting rules for <<filterk>> *)
-(******************************************************************************)
-Section rw_filterk.
-
-  Context
-    `{ix : Index} {W A : Type} (k : K).
-
-  Implicit Types (l : list (W * (K * A))) (w : W) (a : A).
-
-  Lemma filterk_nil : filterk k (nil : list (W * (K * A))) = nil.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma filterk_cons_eq : forall l w a, filterk k (cons (w, (k, a)) l) = (w, a) :: filterk k l.
-  Proof.
-    intros. cbn. compare values k and k.
-  Qed.
-
-  Lemma filterk_cons_neq : forall l w a j, j <> k -> filterk k (cons (w, (j, a)) l) = filterk k l.
-  Proof.
-    intros. cbn. compare values k and j.
-  Qed.
-
-  Lemma filterk_app : forall l1 l2, filterk k (l1 ++ l2) = filterk k l1 ++ filterk k l2.
-  Proof.
-    intros. induction l1.
-    - reflexivity.
-    - destruct a as [w [i a]].
-      compare values i and k.
-      + rewrite <- (List.app_comm_cons l1).
-        rewrite filterk_cons_eq.
-        rewrite filterk_cons_eq.
-        rewrite <- (List.app_comm_cons (filterk k l1)).
-        now rewrite <- IHl1.
-      + rewrite <- (List.app_comm_cons l1).
-        rewrite filterk_cons_neq; auto.
-        rewrite filterk_cons_neq; auto.
-  Qed.
-
-End rw_filterk.
-
-#[export] Hint Rewrite @filterk_nil @filterk_cons_eq @filterk_cons_neq @filterk_app : tea_list.
-
-(** ** Auxiliary lemmas for constant applicative functors *)
-(******************************************************************************)
-Section lemmas.
-
-  #[local] Generalizable Variable M.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Lemma mbinddt_constant_applicative1
-        `{Monoid M} {B : Type}
-        `(f : forall (k : K), W * A -> const M (T k B)) :
-    mbinddt (B := B) S (const M) f =
-    mbinddt (B := False) S (const M) (f : forall (k : K), W * A -> const M (T k False)).
-  Proof.
-    change_right (map (F := const M) (B := S B) (mmap S (const exfalso))
-                       ∘ (mbinddt (B := False) S (const M) (f : forall (k : K), W * A -> const M (T k False)))).
-    rewrite (mmap_mbinddt S (F := const M)).
-    reflexivity.
-  Qed.
-
-  Lemma mbinddt_constant_applicative2 (fake1 fake2 : Type) `{Monoid M}
-        `(f : forall (k : K), W * A -> const M (T k B)) :
-    mbinddt (B := fake1) S (const M)
-            (f : forall (k : K), W * A -> const M (T k fake1))
-    = mbinddt (B := fake2) S (const M)
-              (f : forall (k : K), W * A -> const M (T k fake2)).
-  Proof.
-    intros. rewrite (mbinddt_constant_applicative1 (B := fake1)).
-    rewrite (mbinddt_constant_applicative1 (B := fake2)). easy.
-  Qed.
-
-  Lemma tomlistd_equiv1 : forall (fake : Type) (A : Type),
-      tomlistd_gen S (A := A) False = tomlistd_gen S fake.
-  Proof.
-    intros. unfold tomlistd_gen at 2, mmapdt.
-    now rewrite (mbinddt_constant_applicative2 fake False).
-  Qed.
-
-  Lemma tomlistd_equiv : forall (fake1 fake2 : Type) (A : Type),
-      tomlistd_gen S (A := A) fake1 = tomlistd_gen S fake2.
-  Proof.
-    intros. rewrite <- tomlistd_equiv1.
-    rewrite <- (tomlistd_equiv1 fake2).
-    easy.
-  Qed.
-
-End lemmas.
-
-(** ** Relating <<∈m>> and <<∈md>> *)
-(******************************************************************************)
-Section DTM_membership_lemmas.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Lemma ind_iff_in : forall (k : K) (A : Type) (a : A) (t : S A),
-      (k, a) ∈m t <-> exists w, (w, (k, a)) ∈md t.
-  Proof.
-    intros. unfold tomset, tomsetd, tomlist, compose.
-    induction (tomlistd S t).
-    - cbv; split; intros []; easy.
-    - rewrite map_list_cons, in_list_cons. rewrite IHl.
-      setoid_rewrite in_list_cons.
-      split; [ intros [Hfst|[w Hrest]] | intros [w [rest1|rest2]]].
-      + destruct a0 as [w [k' a']]. exists w. left.
-        rewrite Hfst. easy.
-      + exists w. now right.
-      + left. now rewrite <- rest1.
-      + right. rewrite <- IHl.
-        rewrite (in_map_iff list). now exists (w, (k, a)).
-  Qed.
-
-  Corollary ind_implies_in : forall (k : K) (A : Type) (a : A) (w : W) (t : S A),
-      (w, (k, a)) ∈md t -> (k, a) ∈m t.
-  Proof.
-    intros. rewrite ind_iff_in. eauto.
-  Qed.
-
-End DTM_membership_lemmas.
-
-(** ** Characterizing membership in list operations *)
-(******************************************************************************)
-Section DTM_tolist.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Lemma in_filterk_iff : forall (A : Type) (l : list (W * (K * A))) (k : K) (a : A) (w : W),
-      (w, a) ∈ filterk k l <-> (w, (k, a)) ∈ l.
-  Proof.
-    intros. induction l.
-    - cbn. easy.
-    - destruct a0 as [w' [j a']]. cbn. compare values k and j.
-      + cbn. rewrite IHl. clear. split.
-        { intros [hyp1 | hyp2].
-          - inverts hyp1. now left.
-          - now right.
-        }
-        { intros [hyp1 | hyp2].
-          - inverts hyp1. now left.
-          - now right. }
-      + rewrite <- IHl. split.
-        { intro hyp. now right. }
-        { intros [hyp1 | hyp2].
-          - inverts hyp1. contradiction.
-          - auto. }
-  Qed.
-
-  Lemma ind_iff_in_tomlistd : forall (A : Type) (k : K) (a : A) (w : W) (t : S A),
-      (w, (k, a)) ∈md t <-> (w, (k, a)) ∈ tomlistd S t.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma in_iff_in_tomlistd : forall (A : Type) (k : K) (a : A) (t : S A),
-      (k, a) ∈m t <-> (k, a) ∈ tomlist S t.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma ind_iff_in_toklistd : forall (A : Type) (k : K) (a : A) (w : W) (t : S A),
-      (w, (k, a)) ∈md t <-> (w, a) ∈ toklistd S k t.
-  Proof.
-    intros. unfold toklistd. unfold compose.
-    rewrite in_filterk_iff. reflexivity.
-  Qed.
-
-  Lemma in_iff_in_toklist : forall (A : Type) (k : K) (a : A) (t : S A),
-      (k, a) ∈m t <-> a ∈ toklist S k t.
-  Proof.
-    intros. unfold toklist. unfold compose.
-    rewrite (in_map_iff list). split.
-    - intro hyp. rewrite ind_iff_in in hyp.
-      destruct hyp as [w' hyp].
-      exists (w', a). rewrite ind_iff_in_toklistd in hyp.
-      auto.
-    - intros [[w' a'] [hyp1 hyp2]]. rewrite ind_iff_in.
-      exists w'. rewrite <- ind_iff_in_toklistd in hyp1. cbn in hyp2.
-      now subst.
-  Qed.
-
-End DTM_tolist.
-
-(** ** Interaction between <<tomlistd>> and <<mret>>/<<mbindd>> *)
-(******************************************************************************)
-Section DTM_tolist.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Lemma tomlistd_gen_mret : forall (A B : Type) (a : A) (k : K),
-      tomlistd_gen (T k) B (mret T k a) = [ (Ƶ, (k, a)) ].
-  Proof.
-    intros. unfold tomlistd_gen.
-    compose near a on left.
-    now rewrite mmapdt_comp_mret.
-  Qed.
-
-  Corollary tomlistd_mret : forall (A : Type) (a : A) (k : K),
-      tomlistd (T k) (mret T k a) = [ (Ƶ, (k, a)) ].
-  Proof.
-    intros. unfold tomlistd. apply tomlistd_gen_mret.
-  Qed.
-
-  Corollary tomsetd_mret : forall (A : Type) (a : A) (k : K),
-      tomsetd (T k) (mret T k a) = {{ (Ƶ, (k, a)) }}.
-  Proof.
-    intros. unfold tomsetd, compose. rewrite tomlistd_mret.
-    apply elements_list_ret.
-  Qed.
-
-  Corollary tomlist_mret : forall (A : Type) (a : A) (k : K),
-      tomlist (T k) (mret T k a) = [ (k, a) ].
-  Proof.
-    intros. unfold tomlist, compose.
-    rewrite tomlistd_mret. easy.
-  Qed.
-
-  Corollary tomset_mret : forall (A : Type) (a : A) (k : K),
-      tomset (T k) (mret T k a) = {{ (k, a) }}.
-  Proof.
-    intros. unfold tomset, compose.
-    rewrite tomlist_mret.
-    apply elements_list_ret.
-  Qed.
-
-  Lemma tomlistd_gen_mbindd :
-    forall (fake : Type)
-      `(f : forall k, W * A -> T k B) (t : S A),
-      tomlistd_gen S fake (mbindd S f t) =
-      mbinddt_list (fun k '(w, a) => tomlistd_gen (T k) fake (f k (w, a))) (tomlistd_gen S fake t).
-  Proof.
-    intros. unfold tomlistd_gen, mmapdt.
-    compose near t on left.
-    rewrite (mbinddt_mbindd S).
-    compose near t on right.
-    change (mbinddt_list ?f) with (const (mbinddt_list f) (S fake)).
-    #[local] Set Keyed Unification. (* TODO figure out why this is here. *)
-    rewrite (dtp_mbinddt_morphism W S T
-                                  (const (list (W * (K * A))))
-                                  (const (list (W * (K * B))))
-                                  (A := A) (B := fake)).
-    #[local] Unset Keyed Unification.
-    fequal. ext k [w a].
-    cbn.
-    change (map (F := list) ?f) with (const (map (F := list) f) (S B)).
-    List.simpl_list.
-    compose near (f k (w, a)) on right.
-    (* for some reason I can't rewrite without posing first. *)
-    pose (rw := dtp_mbinddt_morphism
-                  W (T k) T
-                  (const (list (W * (K * B))))
-                  (const (list (W * (K * B))))
-                  (ϕ := (const (map (F := list) (incr w))))
-                  (A := B) (B := fake)).
-    rewrite rw. fequal. now ext k2 [w2 b].
-  Qed.
-
-  Corollary tomlistd_mbindd : forall
-      `(f : forall k, W * A -> T k B) (t : S A),
-      tomlistd S (mbindd S f t) =
-      mbinddt_list (fun k '(w, a) => tomlistd (T k) (f k (w, a))) (tomlistd S t).
-  Proof.
-    intros. unfold tomlistd. apply tomlistd_gen_mbindd.
-  Qed.
-
-End DTM_tolist.
-
-(** ** Characterizing occurrences post-operation *)
-(******************************************************************************)
-Section DTM_membership.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  (** *** Occurrences in <<mret>> *)
-  (******************************************************************************)
-  Lemma ind_mret_iff : forall (A : Type) (a1 a2 : A) (k1 k2 : K) (w : W),
-      (w, (k2, a2)) ∈md mret T k1 a1 <-> w = Ƶ /\ k1 = k2 /\ a1 = a2.
-  Proof.
-    intros. rewrite (tomsetd_mret).
-    autorewrite with tea_set.
-    split.
-    - inversion 1; now subst.
-    - introv [? [? ?]]. now subst.
-  Qed.
-
-  Corollary in_mret_iff : forall (A : Type) (a1 a2 : A) (k1 k2 : K),
-      (k2, a2) ∈m mret T k1 a1 <-> k1 = k2 /\ a1 = a2.
-  Proof.
-    intros. rewrite ind_iff_in. setoid_rewrite ind_mret_iff.
-    firstorder.
-  Qed.
-
-  Lemma ind_mret_eq_iff : forall (A : Type) (a1 a2 : A) (k : K) (w : W),
-      (w, (k, a2)) ∈md mret T k a1 <-> w = Ƶ /\ a1 = a2.
-  Proof.
-    intros. rewrite ind_mret_iff. clear. firstorder.
-  Qed.
-
-  Lemma ind_mret_neq_iff : forall (A : Type) (a1 a2 : A) (k j : K) (w : W),
-      k <> j ->
-      (w, (j, a2)) ∈md mret T k a1 <-> False.
-  Proof.
-    intros. rewrite ind_mret_iff. firstorder.
-  Qed.
-
-  Corollary in_mret_eq_iff : forall (A : Type) (a1 a2 : A) (k : K),
-      (k, a2) ∈m mret T k a1 <-> a1 = a2.
-  Proof.
-    intros. rewrite in_mret_iff. firstorder.
-  Qed.
-
-  Corollary in_mret_neq_iff : forall (A : Type) (a1 a2 : A) (k j : K),
-      k <> j ->
-      (j, a2) ∈m mret T k a1 <-> False.
-  Proof.
-    intros. rewrite ind_iff_in. setoid_rewrite ind_mret_iff.
-    firstorder.
-  Qed.
-
-  (** *** Occurrences in <<mbindd>> with context *)
-  (******************************************************************************)
-  Lemma ind_mbindd_iff1 :
-    forall `(f : forall k, W * A -> T k B) (t : S A) (k2 : K) (wtotal : W) (b : B),
-      (wtotal, (k2, b)) ∈md mbindd S f t ->
-      exists (k1 : K) (w1 w2 : W) (a : A),
-        (w1, (k1, a)) ∈md t /\ (w2, (k2, b)) ∈md f k1 (w1, a)
-        /\ wtotal = w1 ● w2.
-  Proof.
-    introv hyp. unfold tomsetd, compose in *.
-    rewrite (tomlistd_mbindd S) in hyp. induction (tomlistd S t).
-    - inversion hyp.
-    - destruct a as [w [k a]]. rewrite mbinddt_list_cons in hyp.
-      rewrite in_list_app in hyp. destruct hyp as [hyp1 | hyp2].
-      + rewrite (in_map_iff list) in hyp1.
-        destruct hyp1 as [[w2 [k2' b']] [hyp1 hyp2]].
-        inversion hyp2; subst. exists k w w2 a. splits.
-        { rewrite in_list_cons. now left. }
-        { auto. }
-        { easy. }
-      + apply IHl in hyp2. clear IHl.
-        destruct hyp2 as [k1 [w1 [w2 [a' [hyp1 [hyp2 hyp3]] ]]]].
-        subst. repeat eexists.
-        { rewrite in_list_cons. right. eauto. }
-        { auto. }
-  Qed.
-
-  Lemma ind_mbindd_iff2 :
-    forall `(f : forall k, W * A -> T k B) (t : S A) (k2 : K) (wtotal : W) (b : B),
-    (exists (k1 : K) (w1 w2 : W) (a : A),
-      (w1, (k1, a)) ∈md t /\ (w2, (k2, b)) ∈md f k1 (w1, a)
-        /\ wtotal = w1 ● w2) ->
-      (wtotal, (k2, b)) ∈md mbindd S f t.
-  Proof.
-    introv [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]. subst.
-    unfold tomsetd, compose in *. rewrite (tomlistd_mbindd S).
-    induction (tomlistd S t).
-    - inversion hyp1.
-    - destruct a0 as [w [k' a']]. rewrite mbinddt_list_cons.
-      simpl_list. rewrite in_list_cons in hyp1. destruct hyp1 as [hyp1 | hyp1].
-      + inverts hyp1. left. rewrite (in_map_iff list). exists (w2, (k2, b)).
-        now splits.
-      + right. now apply IHl in hyp1.
-  Qed.
-
-  Theorem ind_mbindd_iff :
-    forall `(f : forall k, W * A -> T k B) (t : S A) (k2 : K) (wtotal : W) (b : B),
-      (wtotal, (k2, b)) ∈md mbindd S f t <->
-      exists (k1 : K) (w1 w2 : W) (a : A),
-        (w1, (k1, a)) ∈md t /\ (w2, (k2, b)) ∈md f k1 (w1, a)
-        /\ wtotal = w1 ● w2.
-  Proof.
-    split; auto using ind_mbindd_iff1, ind_mbindd_iff2.
-  Qed.
-
-  (** *** Corollaries for other operations *)
-  (******************************************************************************)
-  Corollary ind_mbind_iff :
-    forall `(f : forall k, A -> T k B) (t : S A) (k2 : K) (wtotal : W) (b : B),
-      (wtotal, (k2, b)) ∈md mbind S f t <->
-      exists (k1 : K) (w1 w2 : W) (a : A),
-        (w1, (k1, a)) ∈md t /\ (w2, (k2, b)) ∈md f k1 a
-        /\ wtotal = w1 ● w2.
-  Proof.
-    intros. rewrite mbind_to_mbindd. apply ind_mbindd_iff.
-  Qed.
-
-  Corollary ind_mmapd_iff :
-    forall `(f : forall k, W * A -> B) (t : S A) (k : K) (w : W) (b : B),
-      (w, (k, b)) ∈md mmapd S f t <->
-      exists (a : A), (w, (k, a)) ∈md t /\ b = f k (w, a).
-  Proof.
-    intros. unfold mmapd, compose. setoid_rewrite ind_mbindd_iff.
-    unfold_ops @Map_I. setoid_rewrite ind_mret_iff.
-    split.
-    - intros [k1 [w1 [w2 [a [hyp1 [[hyp2 [hyp2' hyp2'']] hyp3]]]]]].
-      subst. exists a. simpl_monoid. auto.
-    - intros [a [hyp1 hyp2]]. subst. repeat eexists.
-      easy. now simpl_monoid.
-  Qed.
-
-  Corollary ind_mmap_iff :
-    forall `(f : K -> A -> B) (t : S A) (k : K) (w : W) (b : B),
-      (w, (k, b)) ∈md mmap S f t <->
-      exists (a : A), (w, (k, a)) ∈md t /\ b = f k a.
-  Proof.
-    intros. rewrite (mmap_to_mmapd S).
-    rewrite ind_mmapd_iff. easy.
-  Qed.
-
-  (** *** Occurrences without context *)
-  (******************************************************************************)
-  Theorem in_mbindd_iff :
-    forall `(f : forall k, W * A -> T k B) (t : S A) (k2 : K) (b : B),
-      (k2, b) ∈m mbindd S f t <->
-      exists (k1 : K) (w1 : W) (a : A),
-        (w1, (k1, a)) ∈md t
-        /\ (k2, b) ∈m (f k1 (w1, a)).
-  Proof.
-    intros.
-    rewrite ind_iff_in. setoid_rewrite ind_mbindd_iff. split.
-    - intros [wtotal [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]].
-      exists k1 w1 a. split; [auto|].
-      apply (ind_implies_in) in hyp2. auto.
-    - intros [k1 [w1 [a [hyp1 hyp2]]]].
-      rewrite ind_iff_in in hyp2. destruct hyp2 as [w2 rest].
-      exists (w1 ● w2) k1 w1 w2 a. intuition.
-  Qed.
-
-  (** *** Corollaries for other operations *)
-  (******************************************************************************)
-  Corollary in_mbind_iff :
-    forall `(f : forall k, A -> T k B) (t : S A) (k2 : K) (b : B),
-      (k2, b) ∈m mbind S f t <->
-      exists (k1 : K) (a : A), (k1, a) ∈m t /\ (k2, b) ∈m f k1 a.
-  Proof.
-    intros. unfold mbind, compose. setoid_rewrite ind_iff_in.
-    setoid_rewrite ind_mbindd_iff. cbn. split.
-    - firstorder.
-    - intros [k1 [a [[w1 hyp1] [w hyp2]]]].
-      repeat eexists; eauto.
-  Qed.
-
-  Corollary in_mmapd_iff :
-    forall `(f : forall k, W * A -> B) (t : S A) (k : K) (b : B),
-      (k, b) ∈m mmapd S f t <->
-      exists (w : W) (a : A), (w, (k, a)) ∈md t /\ b = f k (w, a).
-  Proof.
-    intros. setoid_rewrite ind_iff_in.
-    now setoid_rewrite ind_mmapd_iff.
-  Qed.
-
-  Corollary in_mmap_iff :
-    forall `(f : forall k, A -> B) (t : S A) (k : K) (b : B),
-      (k, b) ∈m mmap S f t <->
-      exists (a : A), (k, a) ∈m t /\ b = f k a.
-  Proof.
-    intros. setoid_rewrite ind_iff_in.
-    setoid_rewrite ind_mmap_iff.
-    firstorder.
-  Qed.
-
-End DTM_membership.
-
-(** ** Characterizing occurrences post-operation (targetted operations) *)
-(******************************************************************************)
-Section DTM_membership_targetted.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Context
-    (j : K)
-    {A : Type}.
-
-  (** *** Occurrences in <<kbindd>> with context *)
-  (******************************************************************************)
-  Lemma ind_kbindd_eq_iff1 :
-    forall `(f : W * A -> T j A) (t : S A) (wtotal : W) (a2 : A),
-      (wtotal, (j, a2)) ∈md kbindd S j f t ->
-      exists (w1 w2 : W) (a1 : A),
-        (w1, (j, a1)) ∈md t /\ (w2, (j, a2)) ∈md f (w1, a1)
-        /\ wtotal = w1 ● w2.
-  Proof.
-    introv hyp. unfold kbindd in hyp.
-    apply (ind_mbindd_iff1 S) in hyp.
-    destruct hyp as [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]. subst.
-    compare values j and k1.
-    + exists w1 w2 a. splits.
-      { auto. }
-      { rewrite btgd_eq in hyp2. auto. }
-      { reflexivity. }
-    + rewrite btgd_neq in hyp2; auto.
-      unfold compose in hyp2; cbn in hyp2.
-      rewrite ind_mret_iff in hyp2. destructs hyp2.
-      subst. contradiction.
-  Qed.
-
-  Lemma ind_kbindd_eq_iff2 :
-    forall `(f : W * A -> T j A) (t : S A) (wtotal : W) (a2 : A),
-      (exists (w1 w2 : W) (a1 : A),
-        (w1, (j, a1)) ∈md t /\ (w2, (j, a2)) ∈md f (w1, a1)
-        /\ wtotal = w1 ● w2) ->
-      (wtotal, (j, a2)) ∈md kbindd S j f t.
-  Proof.
-    introv [w1 [w2 [a1 hyp]]]. destructs hyp. unfold kbindd.
-    apply (ind_mbindd_iff2 S).
-    exists j w1 w2 a1. rewrite btgd_eq. auto.
-  Qed.
-
-  Theorem ind_kbindd_eq_iff :
-    forall `(f : W * A -> T j A) (t : S A) (wtotal : W) (a2 : A),
-      (wtotal, (j, a2)) ∈md kbindd S j f t <->
-      exists (w1 w2 : W) (a1 : A),
-        (w1, (j, a1)) ∈md t /\ (w2, (j, a2)) ∈md f (w1, a1)
-        /\ wtotal = w1 ● w2.
-  Proof.
-    split; auto using ind_kbindd_eq_iff1, ind_kbindd_eq_iff2.
-  Qed.
-
-  Lemma ind_kbindd_neq_iff1 :
-    forall (i : K) (Hneq : j <> i) `(f : W * A -> T j A) (t : S A) (wtotal : W) (a2 : A),
-      (wtotal, (i, a2)) ∈md kbindd S j f t ->
-      (wtotal, (i, a2)) ∈md t \/
-      (exists (w1 w2 : W) (a1 : A), (w1, (j, a1)) ∈md t /\ (w2, (i, a2)) ∈md f (w1, a1) /\ wtotal = w1 ● w2).
-  Proof.
-    introv ? hyp. unfold kbindd in hyp.
-    apply (ind_mbindd_iff1 S) in hyp.
-    destruct hyp as [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]. subst.
-    compare values j and k1.
-    + right. exists w1 w2 a. rewrite btgd_eq in hyp2. splits; auto.
-    + left. rewrite btgd_neq in hyp2; auto.
-      unfold compose in hyp2. cbn in hyp2.
-      rewrite ind_mret_iff in hyp2. destructs hyp2; subst.
-      simpl_monoid. auto.
-  Qed.
-
-  Lemma ind_kbindd_neq_iff2 :
-    forall (i : K) (Hneq : j <> i) `(f : W * A -> T j A) (t : S A) (wtotal : W) (a2 : A),
-      (wtotal, (i, a2)) ∈md t \/
-      (exists (w1 w2 : W) (a1 : A), (w1, (j, a1)) ∈md t /\ (w2, (i, a2)) ∈md f (w1, a1) /\ wtotal = w1 ● w2) ->
-      (wtotal, (i, a2)) ∈md kbindd S j f t.
-  Proof.
-    introv ? hyp. destruct hyp as [hyp | hyp].
-    - apply (ind_mbindd_iff2 S). exists i wtotal Ƶ a2.
-      splits.
-      { auto. }
-      { rewrite btgd_neq; auto. unfold compose; cbn.
-        rewrite ind_mret_iff; auto. }
-      { now simpl_monoid. }
-    - destruct hyp as [w1 [w2 [a1 [hyp1 [hyp2 hyp3]]]]]. subst.
-      apply (ind_mbindd_iff2 S).
-      exists j w1 w2 a1. rewrite btgd_eq. auto.
-  Qed.
-
-  Theorem ind_kbindd_neq_iff :
-    forall (i : K) (Hneq : j <> i) `(f : W * A -> T j A) (t : S A) (wtotal : W) (a2 : A),
-      (wtotal, (i, a2)) ∈md kbindd S j f t <->
-      (wtotal, (i, a2)) ∈md t \/
-      (exists (w1 w2 : W) (a1 : A), (w1, (j, a1)) ∈md t /\ (w2, (i, a2)) ∈md f (w1, a1) /\ wtotal = w1 ● w2).
-  Proof.
-    split; auto using ind_kbindd_neq_iff1, ind_kbindd_neq_iff2.
-  Qed.
-
-  (** *** Corollaries for <<kbind>>, <<kmapd>>, and <<kmap>>*)
-  (******************************************************************************)
-  Corollary ind_kbind_eq_iff :
-    forall `(f : A -> T j A) (t : S A) (wtotal : W) (a2 : A),
-      (wtotal, (j, a2)) ∈md kbind S j f t <->
-      exists (w1 w2 : W) (a1 : A),
-        (w1, (j, a1)) ∈md t /\ (w2, (j, a2)) ∈md f a1
-        /\ wtotal = w1 ● w2.
-  Proof.
-    intros. rewrite kbind_to_kbindd. now rewrite (ind_kbindd_eq_iff).
-  Qed.
-
-  Corollary ind_kbind_neq_iff :
-    forall (i : K) (Hneq : j <> i) `(f : A -> T j A) (t : S A) (wtotal : W) (a2 : A),
-      (wtotal, (i, a2)) ∈md kbind S j f t <->
-      (wtotal, (i, a2)) ∈md t \/
-      (exists (w1 w2 : W) (a1 : A),
-        (w1, (j, a1)) ∈md t /\ (w2, (i, a2)) ∈md f a1
-        /\ wtotal = w1 ● w2).
-  Proof.
-    intros. rewrite kbind_to_kbindd. rewrite ind_kbindd_neq_iff; auto.
-    unfold compose. cbn. easy.
-  Qed.
-
-  Corollary ind_kmapd_eq_iff :
-    forall `(f : W * A -> A) (t : S A) (w : W) (a2 : A),
-      (w, (j, a2)) ∈md kmapd S j f t <->
-      exists (a1 : A), (w, (j, a1)) ∈md t /\ a2 = f (w, a1).
-  Proof.
-    intros. unfold kmapd. rewrite (ind_mmapd_iff S).
-    now rewrite tgtd_eq.
-  Qed.
-
-  Corollary ind_kmapd_neq_iff :
-    forall (i : K) (Hneq : j <> i) `(f : W * A -> A) (t : S A) (w : W) (a2 : A),
-      (w, (i, a2)) ∈md kmapd S j f t <->
-      (w, (i, a2)) ∈md t.
-  Proof.
-    intros. unfold kmapd. rewrite (ind_mmapd_iff S).
-    rewrite tgtd_neq; auto. cbn. split.
-    - intros [a [hyp eq]]; subst. auto.
-    - intros hyp. now (exists a2).
-  Qed.
-
-  Corollary ind_kmap_eq_iff :
-    forall `(f : A -> A) (t : S A) (w : W) (a2 : A),
-      (w, (j, a2)) ∈md kmap S j f t <->
-      exists (a1 : A), (w, (j, a1)) ∈md t /\ a2 = f a1.
-  Proof.
-    intros. unfold kmap. rewrite (ind_mmap_iff S).
-    now rewrite tgt_eq.
-  Qed.
-
-  Corollary ind_kmap_neq_iff :
-    forall (i : K) (Hneq : j <> i) `(f : A -> A) (t : S A) (w : W) (a2 : A),
-      (w, (i, a2)) ∈md kmap S j f t <->
-      (w, (i, a2)) ∈md t.
-  Proof.
-    intros. unfold kmap. rewrite (ind_mmap_iff S).
-    rewrite tgt_neq; auto. split.
-    - intros [a [hyp eq]]; subst. auto.
-    - intros hyp. now (exists a2).
-  Qed.
-
-  (** *** Occurrences without context *)
-  (******************************************************************************)
-  Theorem in_kbindd_eq_iff :
-    forall `(f : W * A -> T j A) (t : S A) (a2 : A),
-      (j, a2) ∈m kbindd S j f t <->
-      exists (w1 : W) (a1 : A),
-        (w1, (j, a1)) ∈md t /\ (j, a2) ∈m f (w1, a1).
-  Proof.
-    intros. rewrite ind_iff_in.
-    setoid_rewrite ind_iff_in.
-    setoid_rewrite ind_kbindd_eq_iff.
-    split.
-    - intros [w [w1 [w2 [a1 [hyp1 [hyp2 hyp3]]]]]].
-      eexists. eexists. split; eauto.
-    - intros [w [a1 [hyp1 [w2 hyp2]]]].
-      repeat eexists; eauto.
-  Qed.
-
-  Theorem in_kbindd_neq_iff :
-    forall (i : K) (Hneq : j <> i) `(f : W * A -> T j A) (t : S A) (a2 : A),
-      (i, a2) ∈m kbindd S j f t <->
-      (i, a2) ∈m t \/
-      (exists (w1 : W) (a1 : A), (w1, (j, a1)) ∈md t /\ (i, a2) ∈m f (w1, a1)).
-  Proof.
-    intros. rewrite ind_iff_in.
-    setoid_rewrite ind_iff_in.
-    setoid_rewrite ind_kbindd_neq_iff; auto.
-    split.
-    - intros [w [hyp | hyp]].
-      + left. eauto.
-      + right. destruct hyp as [w1 [w2 [a1 [hyp1 [hyp2 hyp3]]]]].
-        repeat eexists; eauto.
-    - intros [hyp | hyp].
-      + destruct hyp as [w hyp]. eexists. left. eauto.
-      + destruct hyp as [w1 [a1 [hyp1 [w2 hyp2]]]].
-        eexists. right. repeat eexists; eauto.
-  Qed.
-
- Corollary in_kbind_eq_iff :
-    forall `(f : A -> T j A) (t : S A) (a2 : A),
-      (j, a2) ∈m kbind S j f t <->
-      exists (a1 : A),
-        (j, a1) ∈m t /\ (j, a2) ∈m f a1.
-  Proof.
-    intros. rewrite kbind_to_kbindd. rewrite (in_kbindd_eq_iff).
-    setoid_rewrite ind_iff_in at 2.
-    unfold compose. cbn. firstorder.
-  Qed.
-
-  Corollary in_kbind_neq_iff :
-    forall (i : K) (Hneq : j <> i) `(f : A -> T j A) (t : S A) (a2 : A),
-      (i, a2) ∈m kbind S j f t <->
-      (i, a2) ∈m t \/
-      (exists (a1 : A),
-        (j, a1) ∈m t /\ (i, a2) ∈m f a1).
-  Proof.
-    intros. rewrite kbind_to_kbindd. rewrite in_kbindd_neq_iff; auto.
-    split.
-    - intros [hyp|hyp].
-      + now left.
-      + right. unfold compose in hyp. cbn in hyp.
-        destruct hyp as [? [a1 [hyp1 hyp2]]].
-        apply ind_implies_in in hyp1. eauto.
-    - intros [hyp|hyp].
-      + now left.
-      + right.
-        destruct hyp as [a1 [hyp1 hyp2]].
-        rewrite ind_iff_in in hyp1. destruct hyp1 as [w1 hyp1].
-        exists w1 a1. auto.
-  Qed.
-
-  Corollary in_kmapd_eq_iff :
-    forall `(f : W * A -> A) (t : S A) (a2 : A),
-      (j, a2) ∈m kmapd S j f t <->
-      exists (w : W) (a1 : A), (w, (j, a1)) ∈md t /\ a2 = f (w, a1).
-  Proof.
-    intros. unfold kmapd. rewrite (in_mmapd_iff S).
-    now rewrite tgtd_eq.
-  Qed.
-
-  Corollary in_kmapd_neq_iff :
-    forall (i : K) (Hneq : j <> i) `(f : W * A -> A) (t : S A) (a2 : A),
-      (i, a2) ∈m kmapd S j f t <->
-      (i, a2) ∈m t.
-  Proof.
-    intros. unfold kmapd. rewrite (in_mmapd_iff S).
-    rewrite tgtd_neq; auto. cbn. split.
-    - intros [w [a [hyp eq]]]; subst.
-      eapply ind_implies_in; eauto.
-    - intros hyp. rewrite ind_iff_in in hyp.
-      destruct hyp as [w hyp]. eauto.
-  Qed.
-
-  Corollary in_kmap_eq_iff :
-    forall `(f : A -> A) (t : S A) (a2 : A),
-      (j, a2) ∈m kmap S j f t <->
-      exists (a1 : A), (j, a1) ∈m t /\ a2 = f a1.
-  Proof.
-    intros. unfold kmap. rewrite (in_mmap_iff S).
-    now rewrite tgt_eq.
-  Qed.
-
-  Corollary in_kmap_neq_iff :
-    forall (i : K) (Hneq : j <> i) `(f : A -> A) (t : S A) (a2 : A),
-      (i, a2) ∈m kmap S j f t <->
-      (i, a2) ∈m t.
-  Proof.
-    intros. unfold kmap. rewrite (in_mmap_iff S).
-    rewrite tgt_neq; auto. split.
-    - intros [a [hyp ?]]; subst. assumption.
-    - intros; now (exists a2).
-  Qed.
-
-End DTM_membership_targetted.
-
-Import Notations2.
-
-(** * Iterating over a DTM *)
-(******************************************************************************)
-Section schedule_operation.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Definition schedule {A : Type} (B : Type) : forall (k : K), W * A -> @Batch _ T W A B (T k B) :=
-    fun k '(w, a) => Go (@id (T k B)) ⧆ (w, a).
-
-  Definition iterate {A : Type} (B : Type) : S A -> @Batch _ T W A B (S B) :=
-    mbinddt S (@Batch _ T W A B) (schedule B).
-
-End schedule_operation.
-
-(** ** Representing <<mbinddt>> with <<runBatch>> *)
-(******************************************************************************)
-
-Section iterate.
-
-  Context
-    (S : Type -> Type)
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Theorem mbinddt_to_runBatch :
-    forall `{Applicative F} (A B : Type) (t : S A)
-      (f : forall k, W * A -> F (T k B)),
-      mbinddt S F f t = runBatch f (iterate S B t).
-  Proof.
-    intros. unfold iterate.
-    compose near t on right.
-    rewrite (dtp_mbinddt_morphism W S T Batch F).
-    fequal. ext k [w a]. cbn.
-    now rewrite ap1.
-  Qed.
-
-  Corollary mbindd_to_runBatch :
-    forall (A B : Type) (t : S A)
-      (f : forall k, W * A -> T k B),
-      mbindd S f t = runBatch (F := fun A => A) f (iterate S B t).
-  Proof.
-    intros. rewrite mbindd_to_mbinddt. now rewrite mbinddt_to_runBatch.
-  Qed.
-
-  Corollary mbindt_to_runBatch :
-    forall `{Applicative F} (A B : Type) (t : S A)
-      (f : forall k, A -> F (T k B)),
-      mbindt S F f t = runBatch (f ◻ const (extract (W := (W ×)))) (iterate S B t).
-  Proof.
-    intros. rewrite mbindt_to_mbinddt. now rewrite mbinddt_to_runBatch.
-  Qed.
-
-  Corollary mmapdt_to_runBatch  :
-    forall `{Applicative F} (A B : Type) (t : S A)
-      `(f : K -> W * A -> F B),
-      mmapdt S F f t = runBatch (fun k => map (F := F) (mret T k) ∘ f k) (iterate S B t).
-  Proof.
-    intros. rewrite mmapdt_to_mbinddt. now rewrite mbinddt_to_runBatch.
-  Qed.
-
-  Corollary mbind_to_runBatch :
-    forall (A B : Type) (t : S A)
-      (f : forall k, A -> T k B),
-      mbind S f t = runBatch (F := fun A => A) (f ◻ const (extract (W := (W ×)))) (iterate S B t).
-  Proof.
-    intros. rewrite mbind_to_mbinddt. now rewrite mbinddt_to_runBatch.
-  Qed.
-
-  Corollary mmapd_to_runBatch `(f : K -> W * A -> B) (t : S A) :
-    mmapd S f t = runBatch (F := fun A => A) (mret T ◻ f) (iterate S B t).
-  Proof.
-    rewrite mmapd_to_mbinddt. now rewrite mbinddt_to_runBatch.
-  Qed.
-
-  Corollary mmapt_to_runBatch `{Applicative F} `(f : K -> A -> F B) (t : S A) :
-    mmapt S F f t = runBatch (fun k => map (F := F) (mret T k) ∘ f k ∘ extract (W := (W ×))) (iterate S B t).
-  Proof.
-    rewrite mmapt_to_mbinddt. now rewrite mbinddt_to_runBatch.
-  Qed.
-
-  Corollary mmap_to_runBatch `(f : K -> A -> B) (t : S A) :
-    mmap S f t = runBatch (F := fun A => A) (mret T ◻ f ◻ const (extract (W := (W ×)))) (iterate S B t).
-  Proof.
-    rewrite mmap_to_mbinddt. now rewrite mbinddt_to_runBatch.
-  Qed.
-
-  (** ** Identities for <<tolist>> and <<foldMap>> *)
-  (******************************************************************************)
-  Lemma tomlistd_gen_to_runBatch (fake : Type) `(t : S A) :
-    tomlistd_gen S fake t = runBatch (fun k '(w, a) => [(w, (k, a))]) (iterate S fake t).
-  Proof.
-    unfold tomlistd_gen. now rewrite mmapdt_to_runBatch.
-  Qed.
-
-  Lemma tomlistd_to_runBatch  (fake : Type) `(t : S A) :
-    tomlistd S t = runBatch (fun k '(w, a) => [(w, (k, a))]) (iterate S fake t).
-  Proof.
-    unfold tomlistd. rewrite (tomlistd_equiv S False fake).
-    now rewrite tomlistd_gen_to_runBatch.
-  Qed.
-
-  Lemma tomsetd_to_runBatch  (fake : Type) `(t : S A) :
-    tomsetd S t = runBatch (F := (@const Type Type (subset (W * (K * A)))))
-                              (fun k '(w, a) => {{(w, (k, a))}}) (iterate S fake t).
-  Proof.
-    unfold tomsetd, compose. rewrite (tomlistd_to_runBatch fake).
-    change (element_of (F := list) (A := W * (K * A))) with (const (element_of (A := W * (K * A))) (S fake)).
-    cbn. (* <- needed for implicit arguments. *)
-    rewrite (runBatch_morphism (F := const (list (W * (K * A)))) (G := const (subset (W * (K * A))))).
-    unfold compose. fequal. ext k [w a].
-    unfold const.
-    apply elements_list_ret.
-  Qed.
-
-  Lemma tomlist_to_runBatch (fake : Type) `(t : S A) :
-    tomlist S t = runBatch (fun k '(w, a) => [(k, a)]) (iterate S fake t).
-  Proof.
-    unfold tomlist. unfold compose. rewrite (tomlistd_to_runBatch fake).
-    change (map (F := list) ?f) with (const (map (F := list) f) (S fake)).
-    rewrite (runBatch_morphism (F := const (list (W * (K * A))))
-                                  (G := const (list (K * A)))
-                                  (ψ := const (map (F := list) (extract (W := prod W))))).
-    fequal. now ext k [w a].
-  Qed.
-
-  (** ** Other identities *)
-  (******************************************************************************)
-  Lemma id_to_runBatch `(t : S A) :
-    t = runBatch (F := fun A => A) (mret T ◻ const (extract (W := (W ×)))) (iterate S A t).
-  Proof.
-    change t with (id t) at 1.
-    rewrite <- (dtp_mbinddt_mret W S T).
-    rewrite mbinddt_to_runBatch.
-    reflexivity.
-  Qed.
-
-End iterate.
-
-(** ** Respectfulness for <<mbindd>> *)
-(******************************************************************************)
-Section mbindd_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Theorem mbindd_respectful :
-    forall A B (t : S A) (f g : forall k, W * A -> T k B),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k (w, a))
-      -> mbindd S f t = mbindd S g t.
-  Proof.
-    introv hyp.
-    rewrite (tomsetd_to_runBatch S B t) in hyp.
-    do 2 rewrite (mbindd_to_runBatch S).
-    induction (iterate S B t).
-    - easy.
-    - destruct p. do 2 rewrite runBatch_rw2.
-      rewrite runBatch_rw2 in hyp.
-      fequal.
-      + apply IHb. intros. apply hyp.
-        cbn. now left.
-      + apply hyp. now right.
-  Qed.
-
-  (** *** For equalities with special cases *)
-  (** Corollaries with conclusions of the form <<mbindd t = f t>> for
-  other <<m*>> operations *)
-  (******************************************************************************)
-  Corollary mbindd_respectful_mbind :
-    forall A B (t : S A) (f : forall k, W * A -> T k B) (g : forall k, A -> T k B),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k a)
-      -> mbindd S f t = mbind S g t.
-  Proof.
-    introv hyp. rewrite mbind_to_mbindd.
-    apply mbindd_respectful. introv Hin.
-    unfold compose. cbn. auto.
-  Qed.
-
-  Corollary mbindd_respectful_mmapd :
-    forall A B (t : S A) (f : forall k, W * A -> T k B) (g : K -> W * A -> B),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = mret T k (g k (w, a)))
-      -> mbindd S f t = mmapd S g t.
-  Proof.
-    introv hyp. rewrite mmapd_to_mbindd.
-    apply mbindd_respectful. introv Hin.
-    unfold compose. cbn. auto.
-  Qed.
-
-  Corollary mbindd_respectful_mmap :
-    forall A B (t : S A) (f : forall k, W * A -> T k B) (g : K -> A -> B),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = mret T k (g k a))
-      -> mbindd S f t = mmap S g t.
-  Proof.
-    introv hyp. rewrite mmap_to_mbindd.
-    apply mbindd_respectful. introv Hin.
-    unfold compose. cbn. auto.
-  Qed.
-
-  Corollary mbindd_respectful_id :
-    forall A (t : S A) (f : forall k, W * A -> T k A),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = mret T k a)
-      -> mbindd S f t = t.
-  Proof.
-    intros. change t with (id t) at 2.
-    rewrite <- (mbindd_id S).
-    eapply mbindd_respectful.
-    unfold compose; cbn. auto.
-  Qed.
-
-End mbindd_respectful.
-
-(** ** Respectfulness for <<mbindd>> *)
-(******************************************************************************)
-Section mbind_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Lemma mbind_respectful :
-    forall A B (t : S A) (f g : forall k, A -> T k B),
-      (forall (k : K) (a : A), (k, a) ∈m t -> f k a = g k a)
-      -> mbind S f t = mbind S g t.
-  Proof.
-    introv hyp. rewrite mbind_to_mbindd.
-    apply mbindd_respectful. introv premise. apply ind_implies_in in premise.
-    unfold compose; cbn. auto.
-  Qed.
-
-  (** *** For equalities with other operations *)
-  (** Corollaries with conclusions of the form <<mbind t = f t>> for
-  other <<m*>> operations *)
-  (******************************************************************************)
-  Corollary mbind_respectful_mmapd :
-    forall A B (t : S A) (f : forall k, A -> T k B) (g : K -> W * A -> B),
-      (forall (k : K) (w : W) (a : A), (w, (k, a)) ∈md t -> f k a = mret T k (g k (w, a)))
-      -> mbind S f t = mmapd S g t.
-  Proof.
-    intros. rewrite mmapd_to_mbindd.
-    symmetry. apply mbindd_respectful_mbind.
-    introv Hin. symmetry. unfold compose; cbn.
-    auto.
-  Qed.
-
-  Corollary mbind_respectful_mmap :
-    forall A B (t : S A) (f : forall k, A -> T k B) (g : K -> A -> B),
-      (forall (k : K) (a : A), (k, a) ∈m t -> f k a = mret T k (g k a))
-      -> mbind S f t = mmap S g t.
-  Proof.
-    intros. rewrite mmap_to_mbind.
-    symmetry. apply mbind_respectful.
-    introv Hin. symmetry. unfold compose; cbn.
-    auto.
-  Qed.
-
-  Corollary mbind_respectful_id : forall A (t : S A) (f : forall k, A -> T k A),
-      (forall (k : K) (a : A), (k, a) ∈m t -> f k a = mret T k a)
-      -> mbind S f t = t.
-  Proof.
-    intros. change t with (id t) at 2.
-    rewrite <- (mbind_id S).
-    eapply mbind_respectful.
-    unfold compose; cbn. auto.
-  Qed.
-
-End mbind_respectful.
-
-(** ** Respectfulness for <<mmapd>> *)
-(******************************************************************************)
-Section mmapd_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Lemma mmapd_respectful :
-    forall A B (t : S A) (f g : K -> W * A -> B),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k (w, a))
-      -> mmapd S f t = mmapd S g t.
-  Proof.
-    introv hyp. do 2 rewrite mmapd_to_mbindd.
-    apply mbindd_respectful. introv premise.
-    unfold compose; cbn. fequal. auto.
-  Qed.
-
-  (** *** For equalities with other operations *)
-  (** Corollaries with conclusions of the form <<mmapd t = f t>> for
-  other <<m*>> operations *)
-  (******************************************************************************)
-  Corollary mmapd_respectful_mmap :
-    forall A (t : S A) (f : K -> W * A -> A) (g : K -> A -> A),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = g k a)
-      -> mmapd S f t = mmap S g t.
-  Proof.
-    intros. rewrite mmap_to_mmapd.
-    apply mmapd_respectful. introv Hin.
-    unfold compose; cbn; auto.
-  Qed.
-
-  Corollary mmapd_respectful_id : forall A (t : S A) (f : K -> W * A -> A),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k (w, a) = a)
-      -> mmapd S f t = t.
-  Proof.
-    intros. change t with (id t) at 2.
-    rewrite <- (mmapd_id S).
-    eapply mmapd_respectful.
-    cbn. auto.
-  Qed.
-
-End mmapd_respectful.
-
-(** ** Respectfulness for <<mmap>> *)
-(******************************************************************************)
-Section mmap_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T}.
-
-  Lemma mmap_respectful :
-    forall A B (t : S A) (f g : K -> A -> B),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k a = g k a)
-      -> mmap S f t = mmap S g t.
-  Proof.
-    introv hyp. do 2 rewrite mmap_to_mmapd.
-    now apply mmapd_respectful.
-  Qed.
-
-  Corollary mmap_respectful_id :
-    forall A (t : S A) (f : K -> A -> A),
-      (forall (w : W) (k : K) (a : A), (w, (k, a)) ∈md t -> f k a = a)
-      -> mmap S f t = t.
-  Proof.
-    intros. change t with (id t) at 2.
-    rewrite <- (mmap_id S).
-    eapply mmap_respectful.
-    auto.
-  Qed.
-
-End mmap_respectful.
-
-(** ** Respectfulness for <<kbindd>> *)
-(******************************************************************************)
-Section kbindd_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T} (j : K).
-
-  Lemma kbindd_respectful :
-    forall A (t : S A) (f g : W * A -> T j A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g (w, a))
-      -> kbindd S j f t = kbindd S j g t.
-  Proof.
-    introv hyp. unfold kbindd. apply mbindd_respectful.
-    introv premise. compare values j and k.
-    - do 2 rewrite btgd_eq. auto.
-    - do 2 (rewrite btgd_neq; auto).
-  Qed.
-
-  (** *** For equalities with special cases *)
-  (******************************************************************************)
-  Corollary kbindd_respectful_kbind :
-    forall A (t : S A) (f : W * A -> T j A) (g : A -> T j A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g a)
-      -> kbindd S j f t = kbind S j g t.
-  Proof.
-    introv hyp. rewrite kbind_to_kbindd.
-    apply kbindd_respectful. introv Hin.
-    apply hyp. auto.
-  Qed.
-
-  Corollary kbindd_respectful_kmapd :
-    forall A (t : S A) (f : W * A -> T j A) (g : W * A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = mret T j (g (w, a)))
-      -> kbindd S j f t = kmapd S j g t.
-  Proof.
-    introv hyp. rewrite kmapd_to_kbindd.
-    apply kbindd_respectful. introv Hin.
-    apply hyp. auto.
-  Qed.
-
-  Corollary kbindd_respectful_kmap :
-    forall A (t : S A) (f : W * A -> T j A) (g : A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = mret T j (g a))
-      -> kbindd S j f t = kmap S j g t.
-  Proof.
-    introv hyp. rewrite kmap_to_kmapd.
-    apply kbindd_respectful_kmapd.
-    introv Hin. apply hyp. auto.
-  Qed.
-
-  Corollary kbindd_respectful_id :
-    forall A (t : S A) (f : W * A -> T j A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = mret T j a)
-      -> kbindd S j f t = t.
-  Proof.
-    introv hyp. change t with (id t) at 2.
-    erewrite <- (kbindd_id S).
-    apply kbindd_respectful.
-    auto.
-  Qed.
-
-End kbindd_respectful.
-
-(** ** Respectfulness for mixed structures *)
-(******************************************************************************)
-Section mixed_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T} (j : K).
-
-  Corollary kbind_respectful_kmapd :
-    forall A (t : S A) (f : A -> T j A) (g : W * A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = mret T j (g (w, a)))
-      -> kbind S j f t = kmapd S j g t.
-  Proof.
-    introv hyp. rewrite kmapd_to_kbindd.
-    rewrite kbind_to_kbindd. apply kbindd_respectful.
-    introv Hin. apply hyp. auto.
-  Qed.
-
-End mixed_respectful.
-
-(** ** Respectfulness for <<kbind>> *)
-(******************************************************************************)
-Section kbindd_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T} (j : K).
-
-  Lemma kbind_respectful :
-    forall A (t : S A) (f g : A -> T j A),
-      (forall (a : A), (j, a) ∈m t -> f a = g a)
-      -> kbind S j f t = kbind S j g t.
-  Proof.
-    introv hyp. unfold kbind. apply mbind_respectful.
-    introv premise. compare values j and k.
-    - do 2 rewrite btg_eq. auto.
-    - do 2 (rewrite btg_neq; auto).
-  Qed.
-
-  (** *** For equalities with special cases *)
-  (******************************************************************************)
-  Corollary kbind_respectful_kmap :
-    forall A (t : S A) (f : A -> T j A) (g : A -> A),
-      (forall (a : A), (j, a) ∈m t -> f a = mret T j (g a))
-      -> kbind S j f t = kmap S j g t.
-  Proof.
-    introv hyp. rewrite kmap_to_kbind.
-    apply kbind_respectful.
-    introv Hin. apply hyp. auto.
-  Qed.
-
-  Corollary kbind_respectful_id :
-    forall A (t : S A) (f : A -> T j A),
-      (forall (a : A), (j, a) ∈m t -> f a = mret T j a)
-      -> kbind S j f t = t.
-  Proof.
-    introv hyp. change t with (id t) at 2.
-    rewrite <- (kbind_id S (j := j)).
-    now apply kbind_respectful.
-  Qed.
-
-End kbindd_respectful.
-
-(** ** Respectfulness for <<kmapd>> *)
-(******************************************************************************)
-Section kmapd_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T} (j : K).
-
-  Lemma kmapd_respectful :
-    forall A (t : S A) (f g : W * A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g (w, a))
-      -> kmapd S j f t = kmapd S j g t.
-  Proof.
-    introv hyp. unfold kmapd.
-    apply mmapd_respectful. introv premise.
-    compare values j and k.
-    - do 2 rewrite tgtd_eq. auto.
-    - do 2 (rewrite tgtd_neq; auto).
-  Qed.
-
-  (** *** For equalities with other operations *)
-  (******************************************************************************)
-  Corollary kmapd_respectful_kmap :
-    forall A (t : S A) (f : W * A -> A) (g : A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = g a)
-      -> kmapd S j f t = kmap S j g t.
-  Proof.
-    introv hyp. rewrite kmap_to_kmapd.
-    apply kmapd_respectful. auto.
-  Qed.
-
-  Corollary kmapd_respectful_id : forall A (t : S A) (f : W * A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f (w, a) = a)
-      -> kmapd S j f t = t.
-  Proof.
-    introv hyp. change t with (id t) at 2.
-    rewrite <- (kmapd_id (j := j) S).
-    apply kmapd_respectful. auto.
-  Qed.
-
-End kmapd_respectful.
-
-(** ** Respectfulness for <<kmap>> *)
-(******************************************************************************)
-Section kmap_respectful.
-
-  Context
-    {S : Type -> Type}
-    `{MultiDecoratedTraversablePreModule W S T}
-    `{! MultiDecoratedTraversableMonad W T} (j : K).
-
-  Lemma kmap_respectful :
-    forall A (t : S A) (f g : A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = g a)
-      -> kmap S j f t = kmap S j g t.
-  Proof.
-    introv hyp. unfold kmap. apply mmap_respectful.
-    introv premise. compare values j and k.
-    - autorewrite with tea_tgt. eauto.
-    - autorewrite with tea_tgt_neq. auto.
-  Qed.
-
-  Corollary kmap_respectful_id :
-    forall A (t : S A) (f : A -> A),
-      (forall (w : W) (a : A), (w, (j, a)) ∈md t -> f a = a)
-      -> kmap S j f t = t.
-  Proof.
-    introv hyp. change t with (id t) at 2.
-    rewrite <- (kmap_id (j := j) S).
-    apply kmap_respectful. auto.
-  Qed.
-
-End kmap_respectful.
