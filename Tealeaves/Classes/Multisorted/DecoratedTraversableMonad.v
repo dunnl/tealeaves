@@ -11,6 +11,8 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables A B C F G ϕ W T.
 
+◻ allK (incr w)
+
 (** * Miscellaneous lemmas *)
 (**************************************************************)
 Lemma pair_incr_zero {W} `{Monoid W}: forall (w: W) (A: Type),

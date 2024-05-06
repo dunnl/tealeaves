@@ -9,7 +9,7 @@ Export LN.Notations.
 
 (** * The index [K] *)
 (******************************************************************************)
-Inductive K2 : Type := KType | KTerm.
+Inductive K2 : Type := ktyp | ktrm.
 
 #[export] Instance Keq : EqDec K2 eq.
 Proof.
@@ -50,8 +50,8 @@ Arguments term V : clear implicits.
 
 Definition SystemF (k : K) (v : Type) : Type :=
   match k with
-  | KType => typ v
-  | KTerm => term v
+  | ktyp => typ v
+  | ktrm => term v
   end.
 
 (** ** Notations *)
@@ -225,37 +225,37 @@ Section operations.
   Fixpoint bind_type (f : forall (k : K), list K2 * A -> F (SystemF k B)) (t : typ A) : F (typ B) :=
     match t with
     | ty_c t =>
-      pure (ty_c t)
+        pure (ty_c t)
     | ty_v a =>
-      f KType (nil, a)
+        f ktyp (nil, a)
     | ty_ar t1 t2 =>
-      pure ty_ar <⋆> bind_type f t1 <⋆> bind_type f t2
+        pure ty_ar <⋆> bind_type f t1 <⋆> bind_type f t2
     | ty_univ body =>
-      pure ty_univ <⋆> bind_type (fun k => f k ⦿ [KType]) body
+        pure ty_univ <⋆> bind_type (f ◻ allK (incr [ktyp])) body
     end.
 
   Fixpoint bind_term (f : forall (k : K), list K2 * A -> F (SystemF k B)) (t : term A) : F (term B) :=
     match t with
     | tm_var a =>
-      f KTerm (nil, a)
+        f ktrm (nil, a)
     | tm_abs ty body =>
-      pure tm_abs
-           <⋆> bind_type (fun k => f k) ty
-           <⋆> bind_term (fun k => f k ⦿ [KTerm]) body
+        pure tm_abs
+        <⋆> bind_type f ty
+        <⋆> bind_term (f ◻ allK (incr [ktrm])) body
     | tm_app t1 t2 =>
-      pure tm_app <⋆> bind_term f t1 <⋆> bind_term f t2
+        pure tm_app <⋆> bind_term f t1 <⋆> bind_term f t2
     | tm_tab body =>
-      pure tm_tab <⋆> bind_term (fun k => f k ⦿ [KType]) body
+        pure tm_tab <⋆> bind_term (f ◻ allK (incr [ktyp])) body
     | tm_tap t1 ty =>
-      pure tm_tap <⋆> bind_term f t1 <⋆> bind_type f ty
+        pure tm_tap <⋆> bind_term f t1 <⋆> bind_type f ty
     end.
 
 End operations.
 
 #[export] Instance MReturn_SystemF : MReturn SystemF :=
   fun A k => match k with
-          | KType => ty_v
-          | KTerm => tm_var
+          | ktyp => ty_v
+          | ktrm => tm_var
           end.
 
 #[export] Instance MBind_type : MBind (list K2) SystemF typ := @bind_type.
@@ -274,16 +274,16 @@ Section example_computations.
     (c1 c2 c3 : base_typ).
 
   (** ** Demo of opening operation *)
-  Goal open (T := SystemF) typ KType (Fr x) (Bd 0) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr x) (Bd 1) = Bd 0. reflexivity. Qed.
-  Goal open typ KType (Fr x) (Fr x) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr x) (Fr y) = Fr y. reflexivity. Qed.
-  Goal open typ KType (Fr y) (Fr x) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr y) (Fr y) = Fr y. reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ Bd 0) = (∀ (Bd 0)). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ Bd 1) = (∀ (Fr x)). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ (Bd 1 ⟹ Bd 0)) = (∀ Fr x ⟹ Bd 0). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ Bd 1 ⟹ Bd 2) = (∀ Fr x ⟹ Bd 1). reflexivity. Qed.
+  Goal open (T := SystemF) typ ktyp (Fr x) (Bd 0) = Fr x. reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (Bd 1) = Bd 0. reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (Fr x) = Fr x. reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (Fr y) = Fr y. reflexivity. Qed.
+  Goal open typ ktyp (Fr y) (Fr x) = Fr x. reflexivity. Qed.
+  Goal open typ ktyp (Fr y) (Fr y) = Fr y. reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (∀ Bd 0) = (∀ (Bd 0)). reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (∀ Bd 1) = (∀ (Fr x)). reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (∀ (Bd 1 ⟹ Bd 0)) = (∀ Fr x ⟹ Bd 0). reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (∀ Bd 1 ⟹ Bd 2) = (∀ Fr x ⟹ Bd 1). reflexivity. Qed.
 
 End example_computations.
 
@@ -330,21 +330,22 @@ Section DTM_instance_lemmas.
   (* for Var case *)
   Lemma mbinddt_inst_law2_case2 : forall (a : A) (k : K),
     map (F := F) (mbinddt (T k) G g) (f k (Ƶ, a)) =
-    map (F := F) (mbinddt (T k) G (fun k => g k ∘ allK (incr Ƶ) k)) (f k (Ƶ, a)).
+    map (F := F) (mbinddt (T k) G (g ◻ allK (incr Ƶ))) (f k (Ƶ, a)).
   Proof.
-    intros. repeat fequal. ext k' [w b].
-    unfold compose. cbn. now simpl_monoid.
+    intros.
+    repeat fequal.
+    ext k' [w b].
+    rewrite vec_compose_lemma2.
+    unfold compose. cbn.
+    now simpl_monoid.
   Qed.
 
   Lemma compose_dtm_incr : forall (w : W),
-      (fun k => (g ⋆dtm f) k ∘ incr w) =
-      ((fun k => g k ∘ incr w) ⋆dtm (fun k => f k ∘ incr w)).
+      ((compose_dtm (F := F) (G := G) g f) ◻ (allK (incr w))) =
+      (g ◻ allK (incr w)) ⋆dtm (f ◻ allK (incr w)).
   Proof.
-    intros. ext k [w' a].
-    cbn. do 2 fequal.
-    ext j [w'' b].
-    unfold vec_compose, compose. cbn. fequal.
-    now rewrite monoid_assoc.
+    intros.
+    apply (compose_dtm_incr_alt W); typeclasses eauto.
   Qed.
 
 End DTM_instance_lemmas.
@@ -410,7 +411,7 @@ Proof.
   - cbn.
     change (MBind_type ?G H3 H4 H5 ?A ?B) with (mbinddt typ G (A := A) (B := B)).
     change [] with (Ƶ : list K2).
-    change typ with (SystemF KType).
+    change typ with (SystemF ktyp).
     unfold vec_compose.
     rewrite <- (mbinddt_inst_law2_case2 (list K2) SystemF (H := MBind_SystemF )).
     reflexivity.
@@ -597,7 +598,7 @@ Lemma mbinddt_comp_mret_typ :
   forall (F : Type -> Type)
     `{Applicative F}
     `(f : forall k, list K2 * A -> F (SystemF k B)),
-    mbinddt typ F f ∘ mret SystemF KType = f KType ∘ pair nil.
+    mbinddt typ F f ∘ mret SystemF ktyp = f ktyp ∘ pair nil.
 Proof.
   reflexivity.
 Qed.
@@ -606,7 +607,7 @@ Lemma mbinddt_comp_mret_term :
   forall (F : Type -> Type)
     `{Applicative F}
     `(f : forall k, list K2 * A -> F (SystemF k B)),
-    mbinddt term F f ∘ mret SystemF KTerm = f KTerm ∘ pair nil.
+    mbinddt term F f ∘ mret SystemF ktrm = f ktrm ∘ pair nil.
 Proof.
   reflexivity.
 Qed.
@@ -640,8 +641,8 @@ Qed.
 #[export] Instance: forall k, MultiDecoratedTraversablePreModule
                            (list K2) SystemF (SystemF k) :=
   fun k => match k with
-        | KType => DTP_typ
-        | KTerm => DTP_term
+        | ktyp => DTP_typ
+        | ktrm => DTP_term
         end.
 
 #[export] Instance: MultiDecoratedTraversableMonad (list K2) SystemF :=
@@ -672,7 +673,7 @@ Definition ok_kind_ctx : kind_ctx -> Prop := uniq.
 (** A type is well-formed in a kinding context <<Δ>> when all of its
     type variables appear in Δ and the type is locally closed. *)
 Definition ok_type : kind_ctx -> typ LN -> Prop :=
-  fun Δ τ => scoped typ KType τ (domset Δ) /\ LC typ KType τ.
+  fun Δ τ => scoped typ ktyp τ (domset Δ) /\ LC typ ktyp τ.
 
 (** *** Well-formedness for typing contexts *)
 (** A typing context <<Γ>> is well-formed in kinding context <<Δ>>
@@ -687,10 +688,10 @@ Definition ok_type_ctx : kind_ctx -> type_ctx -> Prop :=
     declared in <<Γ>>, and it is locally closed with respect to both
     kinds of variables. *)
 Definition ok_term : kind_ctx -> type_ctx -> term LN -> Prop :=
-  fun Δ Γ t => scoped term KType t (domset Δ) /\
-            scoped term KTerm t (domset Γ) /\
-            LC term KTerm t /\
-            LC term KType t.
+  fun Δ Γ t => scoped term ktyp t (domset Δ) /\
+            scoped term ktrm t (domset Γ) /\
+            LC term ktrm t /\
+            LC term ktyp t.
 
 (** ** Typing judgments *)
 (******************************************************************************)
@@ -706,7 +707,7 @@ Inductive Judgment : kind_ctx -> type_ctx -> term LN -> typ LN -> Prop :=
 | j_abs :
     forall Δ Γ (L:AtomSet.t) t τ1 τ2,
       (forall x, x `notin` L  ->
-            Δ ; Γ ++ x ~ τ1 ⊢ open term KTerm (tm_var (Fr x)) t : τ2) ->
+            Δ ; Γ ++ x ~ τ1 ⊢ open term ktrm (tm_var (Fr x)) t : τ2) ->
       (Δ ; Γ ⊢ tm_abs τ1 t : ty_ar τ1 τ2)
 | j_app :
     forall Δ Γ t1 t2 τ1 τ2,
@@ -716,14 +717,14 @@ Inductive Judgment : kind_ctx -> type_ctx -> term LN -> typ LN -> Prop :=
 | j_univ :
     forall Δ Γ L τ t,
       (forall x, x `notin` L ->
-            Δ ++ x ~ tt ; Γ ⊢ open term KType (ty_v (Fr x)) t
-                          : open typ KType (ty_v (Fr x)) τ) ->
+            Δ ++ x ~ tt ; Γ ⊢ open term ktyp (ty_v (Fr x)) t
+                          : open typ ktyp (ty_v (Fr x)) τ) ->
       (Δ ; Γ ⊢ tm_tab t : ty_univ τ)
 | j_inst :
     forall Δ Γ t τ1 τ2,
       ok_type Δ τ1 ->
       (Δ ; Γ ⊢ t : ty_univ τ2) ->
-      (Δ ; Γ ⊢ tm_tap t τ1 : open typ KType τ1 τ2)
+      (Δ ; Γ ⊢ tm_tap t τ1 : open typ ktyp τ1 τ2)
 where "Δ ; Γ ⊢ t : τ" := (Judgment Δ Γ t τ).
 
 (** ** Values and reduction rules *)
@@ -742,12 +743,12 @@ Inductive red : term LN -> term LN -> Prop :=
     red (tm_app t1 t2) (tm_app t1 t2')
 | red_abs : forall T t1 t2,
     value t2 ->
-    red (tm_app (tm_abs T t1) t2) (open term KTerm t2 t1)
+    red (tm_app (tm_abs T t1) t2) (open term ktrm t2 t1)
 | red_tapl : forall t t' T,
     red t t' ->
     red (tm_tap t T) (tm_tap t' T)
 | red_tab : forall T t,
-    red (tm_tap (tm_tab t) T) (open term KType T t).
+    red (tm_tap (tm_tab t) T) (open term ktyp T t).
 
 Definition preservation := forall t t' τ,
     (nil ; nil ⊢ t : τ) ->

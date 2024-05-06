@@ -175,7 +175,7 @@ Tealeaves/Adapters/KleisliToCoalgebraic/Multisorted/DTM.v
 Tealeaves/Theory/Multisorted/DecoratedTraversableMonad.v
 Tealeaves/Backends/Multisorted/LN/LN.v
 Tealeaves/Backends/Multisorted/LN.v
-
+Tealeaves/Simplification/MBinddt.v
 
 # SYSTEM F
 Tealeaves/Examples/SystemF/Syntax.v
