@@ -12,6 +12,7 @@ Tealeaves/Classes/Comonoid.v
 Tealeaves/Classes/Functor.v
 Tealeaves/Functors/Identity.v
 Tealeaves/Functors/Compose.v
+Tealeaves/Misc/Iterate.v
 Tealeaves/Misc/Strength.v
 Tealeaves/Misc/NaturalNumbers.v
 Tealeaves/Misc/Prop.v
