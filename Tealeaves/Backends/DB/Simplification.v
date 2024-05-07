@@ -7,7 +7,6 @@ From Tealeaves Require Export
 #[local] Generalizable Variables T U.
 
 Import DB.Notations.
-Import DB.DBNotations.
 
 (** * Extra lemmas *)
 (******************************************************************************)

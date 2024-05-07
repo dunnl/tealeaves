@@ -3,12 +3,10 @@ From Autosubst Require Autosubst.
 
 #[local] Generalizable Variables W T U.
 
-Module Autosubst_Shim.
-
+Module Autosubst_Instances.
   Import Autosubst.
 
   Section DTM_to_Autosubst.
-
     Context
       `{DecoratedTraversableMonadFull
           (op := Monoid_op_plus) (unit := Monoid_unit_zero) nat T}.
@@ -88,30 +86,22 @@ Module Autosubst_Shim.
     reflexivity.
   Qed.
 
-End Autosubst_Shim.
+End Autosubst_Instances.
 
+(** * Autosubst-compatible notations *)
+(******************************************************************************)
 Module Notations.
-
   Notation "( + x )" := (lift x) (format "( + x )") : tealeaves_scope.
-
   Notation "f >>> g" :=
     (compose g f)
       (at level 56, left associativity) : tealeaves_scope.
-
   Notation "s .: sigma" :=
     (scons s sigma)
       (at level 55, sigma at level 56, right associativity) : tealeaves_scope.
-
-  (*
-  Notation "sigma >> tau" := (scomp sigma tau)
-                               (at level 56, left associativity) : tealeaves_scope.
-   *)
-
   Notation "s .[ sigma ]" :=
     (subst sigma s)
       (at level 2, sigma at level 200, left associativity,
         format "s .[ sigma ]" ) : tealeaves_scope.
-
   Notation "s .[ t /]" := (subst (t .: ret) s)
                             (at level 2, t at level 200, left associativity,
                               format "s .[ t /]") : tealeaves_scope.
@@ -119,5 +109,4 @@ Module Notations.
     (subst (scons t1 (scons t2 .. (scons tn ret) .. )) s)
       (at level 2, left associativity,
         format "s '[ ' .[ t1 , '/' t2 , '/' .. , '/' tn /] ']'") : tealeaves_scope.
-
 End Notations.

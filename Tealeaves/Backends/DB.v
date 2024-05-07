@@ -1,11 +1,24 @@
 From Tealeaves.Backends.DB Require Export
-  DB Autosubst.
+  DB AutosubstShim Simplification.
 
-From Tealeaves.Backends.DB Require
-  Simplification.
+(* We do not export Backends.DB.DB.Notations by default.
+   Import it for de Bruijn operation notations. *)
 
-From Tealeaves.Misc Require Export
-  NaturalNumbers.
+(* We do not export Backends.DB.AutosubstShim.Notations by default.
+   Import it for Autosubst-compatible notations. *)
 
-From Tealeaves.Theory Require Export
-  DecoratedTraversableMonad.
+Module Notations.
+  Export Categorical.Applicative.Notations.
+  Export Kleisli.Comonad.Notations.
+  Export Kleisli.DecoratedMonad.Notations.
+  Export Kleisli.TraversableFunctor.Notations.
+  Export Kleisli.TraversableMonad.Notations.
+  Export Kleisli.DecoratedTraversableFunctor.Notations.
+  Export Kleisli.DecoratedTraversableMonad.Notations.
+  Export Kleisli.DecoratedContainerFunctor.Notations.
+  Export Categorical.ContainerFunctor.Notations.
+  Export Misc.Product.Notations.
+  Export Monoid.Notations.
+  Export Misc.Subset.Notations.
+  Export List.ListNotations.
+End Notations.

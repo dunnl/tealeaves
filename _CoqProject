@@ -143,7 +143,7 @@ Tealeaves/Backends/LN.v
 ## DB
 Tealeaves/Backends/DB/DB.v
 Tealeaves/Backends/DB/Simplification.v
-Tealeaves/Backends/DB/Autosubst.v
+Tealeaves/Backends/DB/AutosubstShim.v
 Tealeaves/Backends/DB.v
 
 ## LN TO DB
