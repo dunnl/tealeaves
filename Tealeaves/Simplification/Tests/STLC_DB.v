@@ -4,7 +4,7 @@ From Tealeaves Require Export
 
 Import STLC.Syntax.TermNotations.
 Import DB.Simplification.
-Import DB.Autosubst.Notations.
+Import DB.AutosubstShim.Notations.
 
 (** ** Rewriting lemmas for rename *)
 (******************************************************************************)
@@ -88,7 +88,7 @@ Section subst.
   Qed.
 
   Goal forall (t1 t2: Lam nat),
-      subst σ (app t1 t2: Lam nat) =
+      subst σ (app t1 t2) =
         app (subst σ t1) (subst σ t2).
   Proof.
     intros.
@@ -100,7 +100,7 @@ Section subst.
       subst σ (lam τ t: Lam nat) = lam τ (subst (up__sub σ) t).
   Proof.
     intros.
-    repeat simplify_db.
+    simplify_db_like_autosubst.
     conclude.
   Qed.
 
