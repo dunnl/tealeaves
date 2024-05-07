@@ -8,25 +8,12 @@ Import PeanoNat.Nat.
 Import Coq.Init.Nat. (* Nat notations *)
 Open Scope nat_scope.
 
+Import DecoratedContainerFunctor.Notations.
+Import DecoratedMonad.Notations.
+Import Kleisli.Comonad.Notations.
+Import Monoid.Notations.
+
 Implicit Types (ρ: nat -> nat).
-
-Module Notations.
-  Export Categorical.Applicative.Notations.
-  Export Kleisli.Comonad.Notations.
-  Export Kleisli.DecoratedMonad.Notations.
-  Export Kleisli.TraversableFunctor.Notations.
-  Export Kleisli.TraversableMonad.Notations.
-  Export Kleisli.DecoratedTraversableFunctor.Notations.
-  Export Kleisli.DecoratedTraversableMonad.Notations.
-  Export Kleisli.DecoratedContainerFunctor.Notations.
-  Export Categorical.ContainerFunctor.Notations.
-  Export Misc.Product.Notations.
-  Export Monoid.Notations.
-  Export Misc.Subset.Notations.
-  Export List.ListNotations.
-End Notations.
-
-Import Notations.
 
 #[local] Generalizable Variables W T U.
 
@@ -175,11 +162,20 @@ Ltac bound_induction :=
       try solve [lia | easy]
   end.
 
+Ltac bound_induction_in H :=
+  match goal with
+  | H: context[bound ?ix ?n] |- _ =>
+      apply (bound_ind ix n);
+      let Hord := fresh "Hord" in
+      let Hbound := fresh "Hbound" in
+      introv Hord Hbound;
+      try rewrite Hbound in *;
+      try solve [lia | easy]
+  end.
+
 (** * Incrementing/lifting indices *)
 (******************************************************************************)
-(* plus with different simplification behaviour *)
 Definition lift (x y : nat) : nat := plus x y.
-
 #[local] Notation "( + x )" := (lift x) (format "( + x )").
 #[global] Arguments lift x y/.
 
@@ -249,7 +245,6 @@ Proof.
     reflexivity.
 Qed.
 
-(* Corresponds to Autosubst's scons_comp *)
 Lemma cons_compose {X Y}: forall (σ: nat -> X) (f: X -> Y) (x: X),
     f ∘ (x ⋅ σ) = (f x) ⋅ (f ∘ σ).
 Proof.
@@ -538,6 +533,28 @@ Section renaming_theory.
     reflexivity.
   Qed.
 
+  (** ** Characterizing occurrence *)
+  (******************************************************************************)
+
+  Context
+    `{Mapdt_inst: Mapdt nat T}
+      `{! Compat_Mapd_Mapdt}
+      `{DTF_inst : ! DecoratedTraversableFunctor nat T}.
+
+  Lemma ind_rename_iff : forall l n (t:T nat) ρ,
+      (n, l) ∈d rename ρ t <-> exists l1,
+        (n, l1) ∈d t /\
+          l = (if l1 `bound in` n then l1
+               else n + ρ (l1 - n)).
+  Proof.
+    intros.
+    unfold rename in *.
+    rewrite ind_mapd_iff.
+    unfold local__ren, lift__ren.
+    setoid_rewrite add_comm at 1.
+    intuition; preprocess; eauto.
+  Qed.
+
 End renaming_theory.
 
 (** * De Bruijn operations *)
@@ -651,7 +668,6 @@ Section theory.
     reflexivity.
   Qed.
 
-  (* Autosubst: id_subst *)
   Lemma subst_ret: forall σ x,
       subst σ (ret x) = σ x.
   Proof.
@@ -943,22 +959,59 @@ Section theory.
     reflexivity.
   Qed.
 
+  (** ** Characterizing occurrence *)
+  (******************************************************************************)
+  Lemma ind_subst_iff : forall l n (t:U nat) σ,
+      (n, l) ∈d subst σ t <-> exists n1 n2 l1,
+        (n1, l1) ∈d t /\ (n2, l) ∈d local__sub σ (n1, l1) /\ n = n1 + n2.
+  Proof.
+    intros. unfold subst in *.
+    now rewrite ind_bindd_iff'.
+  Qed.
+
+  Lemma ind_subst_iff2 : forall l n (t:U nat) σ,
+      (n, l) ∈d subst σ t <->
+        ((n, l) ∈d t /\ (l `bound in` n = true))
+        \/ exists n1 n2 l1,
+          (n1, l1) ∈d t /\
+            (n2, l) ∈d local__sub σ (n1, l1) /\ n = n1 + n2.
+  Proof.
+    intros. unfold subst in *.
+    rewrite ind_bindd_iff'.
+    split.
+    - intros.
+      destruct H as [n1 [n2 [a [H1 [H2 H3]]]]].
+      assert (H2copy: (n2, l) ∈d local__sub σ (n1, a)) by apply H2.
+      unfold local__sub, lift__sub in H2.
+      bound_induction_in H2.
+      + right.
+        exists n1 n2 a. auto.
+      + rewrite ind_ret_iff in H2.
+        inversion H2; subst.
+        simpl_monoid. now left.
+    - intros. destruct H.
+      + exists n 0 l. splits.
+        { tauto. }
+        { unfold local__sub, lift__sub.
+          bound_induction. now rewrite ind_ret_iff. }
+        { easy. }
+      + assumption.
+  Qed.
+
 End theory.
 
 (** * Notations *)
 (******************************************************************************)
-Module DBNotations.
-
+Module Notations.
   Notation "↑" := S.
   Notation "'⇑'" := up__sub.
   Notation "'⇑__ren'" := up__ren.
   Notation "f ';' g" := (kc1 g f) (at level 30).
   Infix "⋅" := (scons) (at level 10).
   Notation "( + x )" := (lift x) (format "( + x )").
+End Notations.
 
-End DBNotations.
-
-Import DBNotations.
+Import Notations.
 
 (** * Other lemmas *)
 (******************************************************************************)
@@ -1003,26 +1056,18 @@ Section theory.
                         (unit := Monoid_unit_zero)
                         (op := Monoid_op_plus)}.
 
-  Lemma ind_open_iff : forall l n (t:U nat) σ,
-      (n, l) ∈d subst σ t <-> exists n1 n2 l1,
-        (n1, l1) ∈d t /\ (n2, l) ∈d local__sub σ (n1, l1) /\ n = n1 + n2.
-  Proof.
-    intros. unfold subst in *.
-    now rewrite ind_bindd_iff'.
-  Qed.
-
-  Lemma hm: forall (σ: nat -> T nat) (k d1 i1: nat),
+  Lemma closed_at_sub1: forall (σ: nat -> T nat) (k d1 i1: nat),
       (forall (n: nat), cl_at k (σ n)) ->
       cl_at (k + d1) (lift__sub d1 σ i1).
   Proof.
-    intros.
+    introv Hpremise.
     unfold cl_at, cl_at_loc in *.
     unfold lift__sub.
     remember (i1 `bound in` d1) as b.
     intros depth ix Hin.
     rewrite bound_within_spec.
-    setoid_rewrite bound_within_spec in H.
-    setoid_rewrite <- bound_lt_iff in H.
+    setoid_rewrite bound_within_spec in Hpremise.
+    setoid_rewrite <- bound_lt_iff in Hpremise.
     symmetry in Heqb.
     destruct b.
     - rewrite <- bound_lt_iff in Heqb.
@@ -1032,23 +1077,39 @@ Section theory.
       rewrite <- bound_lt_iff. lia.
     - rewrite <- bound_lt_iff.
       rewrite <- bound_ge_iff in Heqb.
-      specialize (H (i1 - d1) depth ix).
-      admit.
-  Abort.
+      rewrite ind_rename_iff in Hin.
+      destruct Hin as [l1 [Hin Heq]].
+      bound_induction_in Hin.
+      unfold lift in Heq.
+      specialize (Hpremise (i1 - d1) depth l1 Hin).
+      lia.
+  Qed.
 
-  Lemma hmm:
-    forall (t: U nat) (σ: nat -> T nat) (k: nat),
+  Lemma closed_at_sub2:
+    forall (t: T nat) (σ: nat -> T nat) (k: nat),
       (forall (n: nat), cl_at k (σ n)) ->
       cl_at k (subst σ t).
   Proof.
     introv Hprem.
     unfold cl_at in *.
     unfold cl_at_loc in *.
+    unfold bound_within in *.
+    setoid_rewrite ltb_lt.
+    setoid_rewrite ltb_lt in Hprem.
     introv Hin.
-    rewrite ind_open_iff in Hin.
+    rewrite ind_subst_iff in Hin.
     destruct Hin as [d1 [d2 [i1 [H1 [H2 H3]]]]].
-    cbn.
-  Abort.
+    unfold local__sub, lift__sub in *.
+    bound_induction_in H2.
+    + rewrite ind_rename_iff in H2.
+      preprocess.
+      unfold lift.
+      specialize (Hprem _ _ _ H).
+      bound_induction.
+    + rewrite ind_ret_iff in H2.
+      inversion H2. subst.
+      unfold transparent tcs. lia.
+  Qed.
 
   Lemma subst_pw_example (k: nat) (σ1 σ2 : nat -> T nat) (t: T nat):
     cl_at k t ->
