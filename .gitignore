@@ -11,6 +11,7 @@ Makefile.coq
 Makefile.coq.conf
 .Makefile.coq.d
 html
+html-alectryon
 # Emacs lock files
 .#*
 # Nix files

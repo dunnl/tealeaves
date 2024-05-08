@@ -170,6 +170,9 @@ Tealeaves/Backends/Adapters/LNtoDB.v
 ## FIRST ORDER LOGIC
 #Tealeaves/Examples/FOL/Syntax.v
 
+## UNTYPED LAMBDA CALCULUS
+Tealeaves/Examples/Lambda/Confluence.v
+
 ## SIMPLY TYPED LAMBDA CALCULUS
 Tealeaves/Examples/STLC/Syntax.v
 Tealeaves/Examples/STLC/CompatTest.v

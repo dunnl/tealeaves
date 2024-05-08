@@ -21,8 +21,7 @@ Since we are using the Kleisli typeclass hierarchy, we import modules under
 the namespaces ``Classes.Kleisli`` and ``Theory.Kleisli.``
 |*)
 From Tealeaves Require Export
-  Backends.LN
-  Simplification.Simplification.
+  Backends.LN.
 
 Export LN.Simplification.
 Export LN.Notations.

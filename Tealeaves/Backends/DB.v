@@ -1,5 +1,7 @@
 From Tealeaves.Backends.DB Require Export
   DB AutosubstShim Simplification.
+From Tealeaves.Simplification Require Export
+  Simplification.
 
 (* We do not export Backends.DB.DB.Notations by default.
    Import it for de Bruijn operation notations. *)

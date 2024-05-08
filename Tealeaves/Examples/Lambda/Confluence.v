@@ -8,14 +8,8 @@ From Tealeaves Require Import
 #[local] Set Implicit Arguments.
 
 Import DB.Notations.
-Import DB.DBNotations.
-Import DB.Simplification.
-Import DB.Autosubst.Notations.
-
-(*
-From Autosubst Require Import Autosubst.
-Import DB.Autosubst.Autosubst_Shim.
-*)
+(* Import DB.DB.Notations. *) (* Tealeaves notations *)
+Import DB.AutosubstShim.Notations. (* Autosubst-like notations *)
 
 Inductive lam (V : Type) :=
 | tvar : V -> lam V
@@ -83,7 +77,7 @@ Import Notations.
 
 (* One step of beta reduction *)
 Inductive step : lam nat -> lam nat -> Prop :=
-| step_beta : forall tbody targ, step (app (abs tbody) targ) (subst (targ ⋅ ret) tbody)
+| step_beta : forall tbody targ, step (app (abs tbody) targ) (subst (targ .: ret) tbody)
 | step_app_l : forall u1 u2 t, step u1 u2 -> step (app u1 t) (app u2 t)
 | step_app_r : forall u t1 t2, step t1 t2 -> step (app u t1) (app u t2)
 | step_lam : forall u1 u2, step u1 u2 -> step (abs u1) (abs u2).
@@ -166,7 +160,7 @@ Inductive par : lam nat -> lam nat -> Prop :=
 | par_beta :
   `(s1 ⇒ s2 ->
     t1 ⇒ t2 ->
-    {| (\, s1) t1 |} ⇒ subst (t2 ⋅ ret) s2)
+    {| (\, s1) t1 |} ⇒ subst (t2 .: ret) s2)
 where "t1 ⇒ t2" := (par t1 t2).
 
 #[export] Instance: Reflexive par.
@@ -281,27 +275,22 @@ Qed.
 
 Notation "σ1 ▷ σ2" := (forall x, σ1 x ⇒ σ2 x) (at level 50).
 
+Tactic Notation "asimpl" := simplify_db_like_autosubst.
+
 Lemma step_subst: forall s t,
     s ⇒ t -> forall σ, subst σ s ⇒ subst σ t.
 Proof with auto using par.
   introv Hstep.
   induction Hstep; intros σ.
-  - simplify_db. reflexivity.
-  - simplify_db...
-  - simplify_db...
-  - simplify_db.
-    replace (subst (subst σ t2 ⋅ σ) s2) with
-      (subst (subst σ t2 ⋅ ret) (subst (up__sub σ) s2)).
+  - asimpl. reflexivity.
+  - asimpl...
+  - asimpl...
+  - asimpl.
+    replace (subst (subst σ t2 .: σ) s2) with
+      (subst (subst σ t2 .: ret) (subst (up__sub σ) s2)) by now asimpl.
     apply par_beta; auto.
-    simplify_db.
-    reassociate <- on left.
-    simplify_subst_subst.
-    repeat simplify_db.
-    fequal.
-    fequal.
-    try simplify_subst;
-      rewrite ?compose_scons.
-Abort.
+    asimpl...
+Qed.
 
 Lemma par_strong_rename : `(t1 ⇒ t2 -> rename ρ t1 ⇒ rename ρ t2).
 Proof with auto with churchrosser.
@@ -310,8 +299,8 @@ Proof with auto with churchrosser.
   generalize dependent ρ.
   induction H; intros.
   - reflexivity.
-  - simplify_db_like_autosubst...
-  - simplify_db_like_autosubst...
+  - asimpl...
+  - asimpl...
     eauto with churchrosser.
   - specialize
       (@par_beta
@@ -319,22 +308,20 @@ Proof with auto with churchrosser.
          (rename (up__ren ρ) s2)
          (rename ρ t1)
          (rename ρ t2)).
-    simplify_db_like_autosubst...
+    asimpl...
 Qed.
 
-Lemma par_subst_up : forall σ1 σ2, σ1 ▷ σ2 -> ⇑ σ1 ▷ ⇑ σ2.
+Lemma par_subst_up : forall σ1 σ2, σ1 ▷ σ2 -> up__sub σ1 ▷ up__sub σ2.
 Proof.
   intros. induction x.
   - reflexivity.
   - enough (rename (+1) (σ1 x) ⇒ rename (+1) (σ2 x)).
-    simplify_db_like_autosubst.
+    asimpl.
     rewrite rename_to_subst in H0.
     cbn. auto.
     apply par_strong_rename.
     apply H.
 Qed.
-
-Import DB.Autosubst.Notations.
 
 Lemma par_strong_subst s t σ1 σ2 :
   s ⇒ t -> σ1 ▷ σ2 -> s.[σ1] ⇒ t.[σ2].
@@ -343,21 +330,21 @@ Proof with auto using par.
   generalize dependent σ1.
   generalize dependent σ2.
   induction Hstep; intros ? ? Hsub.
-  - simplify_db_like_autosubst...
-  - simplify_db_like_autosubst...
-  - simplify_db_like_autosubst.
+  - asimpl...
+  - asimpl...
+  - asimpl.
     apply par_abs.
     apply IHHstep.
     specialize (@par_subst_up _ _ Hsub).
     simplify_db_unfold_phase. auto.
-  - simplify_db_like_autosubst.
-    replace (s2.[t2.[σ2] .: σ2]) with (s2.[⇑ σ2].[t2.[σ2]/]).
+  - asimpl.
+    replace (s2.[t2.[σ2] .: σ2]) with (s2.[up__sub σ2].[t2.[σ2]/]).
     { apply par_beta.
       apply IHHstep1.
       specialize (@par_subst_up _ _ Hsub).
       simplify_db_unfold_phase; auto.
       auto. }
-    { simplify_db_like_autosubst.
+    { asimpl.
       reflexivity. }
 Qed.
 
