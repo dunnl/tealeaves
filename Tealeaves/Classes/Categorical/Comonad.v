@@ -51,7 +51,7 @@ Module ToKleisli.
   Section with_monad.
 
     Context
-      `{Categorical.Comonad.Comonad W}.
+      `{Comonad.Comonad W}.
 
     #[local] Arguments cobind W%function_scope {Cobind} (A B)%type_scope _%function_scope _.
 

@@ -1,4 +1,4 @@
-{ stdenv, nix-gitignore, coq, serapi, ocamlPackages, python310Packages, tealeaves ? null }:
+{ stdenv, nix-gitignore, coq, coq-autosubst, serapi, ocamlPackages, python310Packages, tealeaves ? null }:
 
 stdenv.mkDerivation {
   name = "tealeaves-examples";
@@ -13,6 +13,7 @@ stdenv.mkDerivation {
     ] ./.;
   nativeBuildInputs = [
     coq
+    coq-autosubst 
     ocamlPackages.findlib
     python310Packages.alectryon
     serapi

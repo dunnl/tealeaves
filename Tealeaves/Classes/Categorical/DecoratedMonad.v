@@ -61,7 +61,7 @@ Section shift_monad_lemmas.
   #[local] Generalizable Variables A.
 
   Context
-    `{Categorical.Monad.Monad T}
+    `{Monad.Monad T}
     `{Monoid W}.
 
   (** [shift] applied to a singleton simplifies to a singleton. *)
@@ -89,7 +89,7 @@ End shift_monad_lemmas.
 Section helper_lemmas.
 
   Context
-    `{Categorical.Monad.Monad T}
+    `{Monad.Monad T}
     `{Decorate W T}
     `{Monoid W}.
 
@@ -128,7 +128,7 @@ Section DecoratedFunctor_monoid_homomorphism.
     (Wsrc Wtgt : Type)
     `{Monoid_Morphism Wsrc Wtgt ϕ}
     `{Decorate Wsrc F} `{Map F} `{Return F} `{Join F}
-    `{! Categorical.DecoratedMonad.DecoratedMonad Wsrc F}.
+    `{! DecoratedMonad Wsrc F}.
 
   Instance Decorate_homomorphism :
     Decorate Wtgt F := fun A => map F (map_fst ϕ) ∘ dec F.
@@ -171,7 +171,7 @@ Section DecoratedFunctor_monoid_homomorphism.
       now rewrite (dfun_dec_extract (E := Wsrc) (F := F)).
   Qed.
 
-  Instance DecoratedMonad_morphism : Categorical.DecoratedMonad.DecoratedMonad Wtgt F.
+  Instance DecoratedMonad_morphism : DecoratedMonad.DecoratedMonad Wtgt F.
   Proof.
     inversion H.
     constructor; try typeclasses eauto.

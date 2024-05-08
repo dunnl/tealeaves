@@ -1,0 +1,13 @@
+ALECTRYONFILES = $(patsubst %,html-alectryon/%,$(subst /,.,$(subst ./,,$(VFILES:.v=.html))))
+
+#6.3.1 Substitution References
+
+html-alectryon/%.html: $(VOFILES)
+	$(info "$$@": $@)
+	$(info "$$(@:.html=)": $(@:.html=))
+	$(info "THIRD": $(subst .,/,$(@:.html=)))
+	$(info "FOURTH": $(subst html-alectryon/prosa/,,$(subst .,/,$(@:.html=))))
+	$(info "FINAL": $(patsubst %,%.v,$(subst html-alectryon/prosa/,,$(subst .,/,$(@:.html=)))))
+	alectryon -R Tealeaves/ Tealeaves $(patsubst %,%.v,$(subst html-alectryon/,,$(subst .,/,$(@:.html=)))) -o $@
+
+alectryon: $(ALECTRYONFILES)

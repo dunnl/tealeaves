@@ -30,9 +30,9 @@ Class DecoratedTraversableFunctor
           map G (dec F) ∘ dist F G);
   }.
 
-(*|
+(*
   At this stage we make sure our typeclass hierarchy works as expected.
-|*)
+*)
 Section test_typeclasses.
 
   Context

@@ -18,9 +18,10 @@ mkCoqDerivation {
     ocaml # `ocaml` is needed for `ocamldoc`, which is needed to make Makefile.coq happy
     coq-autosubst
   ];
+  outputs = [ "out" "doc"];
   installTargets = "install install-doc";
   buildFlags = [ "-j1" ];
-  extraInstallFlags = ["DOCDIR=$(out)/share/coq/${coq.coq-version}/"];
+  #extraInstallFlags = ["DOCDIR=$(doc)/share/coq/${coq.coq-version}/"];
   meta = {
     description = "A Coq framework for reusable syntax metatheory.";
     longDescription = ''
