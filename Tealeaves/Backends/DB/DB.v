@@ -163,8 +163,8 @@ Ltac bound_induction :=
   end.
 
 Ltac bound_induction_in H :=
-  match goal with
-  | H: context[bound ?ix ?n] |- _ =>
+  match type of H with
+  | context[bound ?ix ?n] =>
       apply (bound_ind ix n);
       let Hord := fresh "Hord" in
       let Hbound := fresh "Hbound" in
@@ -961,6 +961,48 @@ Section theory.
 
   (** ** Characterizing occurrence *)
   (******************************************************************************)
+  Lemma ind_local_sub1: forall (σ: nat -> T nat) n1 ix1,
+      ix1 `bound in` n1 = true ->
+                   (0, ix1) ∈d local__sub σ (n1, ix1).
+  Proof.
+    introv H.
+    unfold local__sub, lift__sub.
+    bound_induction_in H.
+    rewrite ind_ret_iff.
+    auto.
+  Qed.
+  Lemma ind_local_sub2: forall (σ: nat -> T nat) n1 ix1,
+      ix1 `bound in` n1 = false ->
+                   (0, ix1) ∈d local__sub σ (n1, ix1).
+  Proof.
+    introv H.
+    unfold local__sub, lift__sub.
+    bound_induction_in H.
+    rewrite ind_rename_iff.
+    setoid_rewrite bound_zero.
+    unfold lift.
+    change (0 + ?n) with n.
+    setoid_rewrite sub_0_r.
+  Abort.
+
+  Lemma ind_local_sub_iff: forall (σ: nat -> T nat) n2 ix2 n1 ix1,
+      (n2, ix2) ∈d local__sub σ (n1, ix1) ->
+      (ix1 >= n1 /\
+         exists l1 : nat,
+           (n2, l1) ∈d σ (ix1 - n1) /\
+             ix2 = (if l1 `bound in` n2 then l1 else n2 + (+n1) (l1 - n2)))
+      \/ (ix1 < n1 /\ n2 = 0 /\ ix2 = ix1).
+  Proof.
+    intros.
+    unfold local__sub, lift__sub in H.
+    bound_induction_in H.
+    { rewrite ind_rename_iff in H.
+      tauto. }
+    { right. rewrite ind_ret_iff in H.
+      inversion H; subst. intuition.
+    }
+  Qed.
+
   Lemma ind_subst_iff : forall l n (t:U nat) σ,
       (n, l) ∈d subst σ t <-> exists n1 n2 l1,
         (n1, l1) ∈d t /\ (n2, l) ∈d local__sub σ (n1, l1) /\ n = n1 + n2.
@@ -1079,7 +1121,7 @@ Section theory.
       rewrite <- bound_ge_iff in Heqb.
       rewrite ind_rename_iff in Hin.
       destruct Hin as [l1 [Hin Heq]].
-      bound_induction_in Hin.
+      bound_induction_in Heq.
       unfold lift in Heq.
       specialize (Hpremise (i1 - d1) depth l1 Hin).
       lia.
@@ -1110,6 +1152,51 @@ Section theory.
       inversion H2. subst.
       unfold transparent tcs. lia.
   Qed.
+
+  Lemma not_closed_at_ret:
+    forall n, ~ (cl_at n (@ret T _ nat n)).
+  Proof.
+    intros.
+    introv H.
+    specialize (H 0 n).
+    rewrite ind_ret_iff in H.
+    specialize (H ltac:(auto)).
+    unfold cl_at_loc in H.
+    rewrite bound_within_spec in H.
+    bound_induction_in H.
+  Qed.
+
+  Lemma closed_at_ret:
+    forall n, cl_at (S n) (@ret T _ nat n).
+  Proof.
+    intros.
+    unfold cl_at.
+    intros.
+    rewrite ind_ret_iff in H.
+    inversion H. subst. cbn.
+    apply leb_refl.
+  Qed.
+
+  Lemma closed_at_sub3:
+    forall (t: T nat) (σ: nat -> T nat) (k: nat),
+      (forall (n: nat), cl_at (k + n + 1) (σ n)) ->
+      cl_at k (subst σ t).
+  Proof.
+    introv Hprem.
+    unfold cl_at in *.
+    unfold cl_at_loc in *.
+    unfold bound_within in *.
+    setoid_rewrite ltb_lt.
+    setoid_rewrite ltb_lt in Hprem.
+    introv Hin.
+    rewrite ind_subst_iff in Hin.
+    destruct Hin as [n1 [n2 [i1 [H_in_t [H_in_sig H3]]]]].
+    apply ind_local_sub_iff in H_in_sig.
+    destruct H_in_sig as [Hsig | Hsig].
+    + preprocess. bound_induction.
+      unfold lift in *.
+      specialize (Hprem _ _ _ H0).
+  Abort.
 
   Lemma subst_pw_example (k: nat) (σ1 σ2 : nat -> T nat) (t: T nat):
     cl_at k t ->
