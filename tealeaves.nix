@@ -1,27 +1,33 @@
-{ lib, nix-gitignore, mkCoqDerivation, coq, coq-autosubst, ocaml, version ? null }:
+{ lib, nix-gitignore, coq, coqPackages, ocaml, ocamlPackages, python310Packages, version ? null }:
 
-mkCoqDerivation {
+coqPackages.mkCoqDerivation {
   pname = "tealeaves";
   owner = "dunnl";
   inherit version;
-  src = nix-gitignore.gitignoreSource
-    [ "docs/"
-      "extra/*.sh"
-      "images/"
-      "LICENSE"
-      "*.lock"
-      "*.nix"
-      "*.md"
-      "Makefile.examples"
+  src = nix-gitignore.gitignoreSourcePure
+    [ "**"
+      "!Tealeaves/"
+      "!_CoqProject"
+      "!Makefile"
+      "!Makefile.coq.conf"
+      "!Makefile.coq.local"
+      "!extra/"
+      #"*.vo*"
+      "*.aux"
+      "*.lia.cache"
+      "*.glob"
     ] ./.;
   nativeBuildInputs = [
     ocaml # `ocaml` is needed for `ocamldoc`, which is needed to make Makefile.coq happy
-    coq-autosubst
+    ocamlPackages.findlib
+    coqPackages.autosubst
+    python310Packages.alectryon
+    coqPackages.serapi
   ];
-  outputs = [ "out" "doc"];
-  installTargets = "install install-doc";
+  outputs = [ "out" "alectryon"];
+  installTargets = "install install-doc install-alectryon";
   buildFlags = [ "-j1" ];
-  #extraInstallFlags = ["DOCDIR=$(doc)/share/coq/${coq.coq-version}/"];
+  #extraInstallFlags = ["DOCDIR=$(out)/share/coq/${coq.coq-version}/"];
   meta = {
     description = "A Coq framework for reusable syntax metatheory.";
     longDescription = ''
