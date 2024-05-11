@@ -2,8 +2,7 @@ From Coq Require Import
   Relations.Relations
   Classes.RelationClasses.
 From Tealeaves Require Import
-  Backends.DB
-  Simplification.Simplification.
+  Backends.DB.
 
 #[local] Set Implicit Arguments.
 
