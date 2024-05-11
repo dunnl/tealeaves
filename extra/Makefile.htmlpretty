@@ -1,0 +1,15 @@
+COQDOC_EXTRA_DIR := extra/CoqdocJS
+COQDOCEXTRAFLAGS := \
+  --toc-depth 2 \
+  --index indexpage \
+  --no-lib-name \
+  --parse-comments \
+  --with-header $(COQDOC_EXTRA_DIR)/header.html \
+  --with-footer $(COQDOC_EXTRA_DIR)/footer.html
+
+export COQDOCEXTRAFLAGS
+
+htmlpretty: $(VFILES)
+	$(MAKE) -f $(COQ_MAKEFILE) html
+	cp $(COQDOC_EXTRA_DIR)/resources/* html
+
