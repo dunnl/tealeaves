@@ -1,6 +1,4 @@
-Tealeaves_old/
 .direnv/
-.#*
 *.tmp
 *.glob
 *.vo*
@@ -16,9 +14,3 @@ html-alectryon
 .#*
 # Nix files
 result
-# Everything in the ~ignore/~ directory
-ignore/
-# Ignore result of building examples with alectryon
-html-examples/
-/REMOVED/
-trv/
