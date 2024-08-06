@@ -1,7 +1,9 @@
 From Tealeaves Require Export
   Theory.DecoratedTraversableMonad
   Theory.Multisorted.DecoratedTraversableMonad
-  Backends.Multisorted.LN.
+  Backends.Multisorted.LN
+  Simplification.Simplification
+  Simplification.MBinddt.
 
 Export LN.Notations.
 
@@ -263,6 +265,29 @@ End operations.
 #[export] Instance MBind_SystemF : forall k, MBind (list K2) SystemF (SystemF k) :=
   ltac:(intros [|]; typeclasses eauto).
 
+
+Ltac use_operational_tcs :=
+  ltac_trace "use_operational_tcs";
+  change (bind_type ?F ?f) with (mbinddt typ F f).
+
+Ltac grammatical_categories_down :=
+  ltac_trace "grammatical_categories_down";
+  change (SystemF ktyp) with typ;
+  change (MBind_SystemF ktyp) with MBind_type.
+
+Ltac grammatical_categories_up :=
+  ltac_trace "grammatical_categories_up";
+  change typ with (SystemF ktyp);
+  change (MBind_type) with (MBind_SystemF ktyp).
+
+Ltac K_down :=
+  ltac_trace "K_down";
+  change (@K I2) with K2.
+
+Ltac K_up :=
+  ltac_trace "K_up";
+  change K2 with (@K I2).
+
 (** ** Example computations *)
 (******************************************************************************)
 Section example_computations.
@@ -314,7 +339,7 @@ Section DTM_instance_lemmas.
 
   Lemma mbinddt_inst_law1_case12 : forall (A : Type) (w : W),
       mbinddt S (fun A => A) (fun k => mret T k ∘ extract (W := (W ×))) (A := A) =
-      mbinddt S (fun A => A) (fun k => (mret T k ∘ extract (W := (W ×))) ⦿ w).
+        mbinddt S (fun A => A) ((fun k => mret T k ∘ extract (W := (W ×))) ◻ allK (incr w)).
   Proof.
     introv. fequal. now ext k [w' a].
   Qed.
@@ -356,27 +381,31 @@ Arguments compose_dtm_incr {W}%type_scope {T}%function_scope {H}%function_scope 
 
 (** ** <<mbinddt_mret>> *)
 (******************************************************************************)
-Lemma mbinddt_mret_typ : forall (A : Type),
-    mbinddt typ (fun A => A) (fun k => mret SystemF k ∘ extract (W := (list K2 ×))) = @id (typ A).
+Lemma mbinddt_mret_typ : forall (A: Type),
+    mbinddt typ (fun A => A) (mret SystemF ◻ allK extract) = @id (typ A).
 Proof.
   intros. ext t. unfold id. induction t.
-  - cbn. reflexivity.
-  - cbn. reflexivity.
+  - simplify_mbinddt. reflexivity.
+  - simplify_mbinddt. reflexivity.
+  - simplify_mbinddt.
+    fequal.
+    apply IHt1.
+    apply IHt2.
   - cbn. fequal.
-    + apply IHt1.
-    + apply IHt2.
-  - cbn. fequal.
-    rewrite <- mbinddt_inst_law1_case12.
-    apply IHt.
+    rewrite vec_compose_assoc.
+    K_up.
+    rewrite vec_compose_allK.
+    rewrite extract_incr.
+    assumption.
 Qed.
 
 Lemma mbinddt_mret_term : forall (A : Type),
     mbinddt term (fun A => A) (fun k => mret SystemF k ∘ extract (W := (list K2 ×))) = @id (term A).
 Proof.
   intros. ext t. unfold id. induction t.
-  - easy.
-  - cbn. fequal.
-    + change (bind_type ?F ?f) with (mbinddt typ F f).
+  - simplify_mbinddt. reflexivity.
+  - simplify_mbinddt. fequal.
+    + use_operational_tcs.
       now rewrite mbinddt_mret_typ.
     + rewrite <- mbinddt_inst_law1_case12.
       apply IHt.
@@ -413,7 +442,10 @@ Proof.
     change [] with (Ƶ : list K2).
     change typ with (SystemF ktyp).
     unfold vec_compose.
-    rewrite <- (mbinddt_inst_law2_case2 (list K2) SystemF (H := MBind_SystemF )).
+    Set Keyed Unification.
+    rewrite <- (mbinddt_inst_law2_case2 (list K2)
+                 SystemF (H := MBind_SystemF) _ _ _ ktyp).
+    Unset Keyed Unification.
     reflexivity.
   - cbn.
     rewrite <- IHt1.
@@ -465,7 +497,7 @@ Proof.
     setoid_rewrite compose_dtm_incr.
     rewrite <- IHt.
     rewrite <- (mbinddt_mbinddt_typ F G).
-    unfold compose at 6.
+    unfold compose at 2.
     do 2 rewrite (ap_compose2 G F).
     unfold compose.
     do 2 rewrite <- (ap_map (G := F)).

@@ -179,7 +179,7 @@ Tealeaves/Simplification/MBinddt.v
 
 # SYSTEM F
 Tealeaves/Examples/SystemF/Syntax.v
-Tealeaves/Examples/SystemF/Rewriting.v
+#Tealeaves/Examples/SystemF/Rewriting.v
 Tealeaves/Examples/SystemF/Contexts.v
 Tealeaves/Examples/SystemF/TypeSoundness.v
 

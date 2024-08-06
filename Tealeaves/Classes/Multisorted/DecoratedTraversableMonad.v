@@ -11,8 +11,6 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables A B C F G ϕ W T.
 
-◻ allK (incr w)
-
 (** * Miscellaneous lemmas *)
 (**************************************************************)
 Lemma pair_incr_zero {W} `{Monoid W}: forall (w: W) (A: Type),
@@ -202,8 +200,9 @@ Section derived_operations.
   (******************************************************************************)
   Section definitions.
 
-    Definition retAll `{Map F} {A:Type}: forall k:K, F A -> F (T k A) :=
-      (fun k => map (mret T k)).
+    Definition mapMret `{Map F} {A:Type}:
+      forall (k: K), F A -> F (T k A) :=
+      vec_apply (fun k => map (A := A) (B := T k A)) (mret T).
 
     Context
       {A B : Type}
@@ -214,7 +213,7 @@ Section derived_operations.
       mbinddt U (fun x => x) f.
 
     Definition mmapdt (f : forall k, W * A -> F B) : U A -> F (U B) :=
-      mbinddt U F (retAll ◻ f).
+      mbinddt U F (mapMret ◻ f).
 
     Definition mbindt (f : forall k, A -> F (T k B)) : U A -> F (U B) :=
       mbinddt U F (f ◻ allK extract).
@@ -255,7 +254,7 @@ Section derived_operations.
     Qed.
 
     Lemma mmapdt_to_mbinddt (f : K -> W * A -> F B):
-        mmapdt F f = mbinddt U F (retAll ◻ f).
+        mmapdt F f = mbinddt U F (mapMret ◻ f).
     Proof.
       reflexivity.
     Qed.
@@ -273,7 +272,7 @@ Section derived_operations.
     Qed.
 
     Lemma mmapt_to_mbinddt (f : K -> A -> F B):
-      mmapt F f = mbinddt U F (retAll ◻ f ◻ allK extract).
+      mmapt F f = mbinddt U F (mapMret ◻ f ◻ allK extract).
     Proof.
       reflexivity.
     Qed.
@@ -293,7 +292,7 @@ Section derived_operations.
     Qed.
 
     Lemma mmapt_to_mbindt (f : K -> A -> F B):
-      mmapt F f = mbindt F (retAll ◻ f).
+      mmapt F f = mbindt F (mapMret ◻ f).
     Proof.
       reflexivity.
     Qed.
@@ -497,7 +496,7 @@ Section derived_operations_composition.
 
   Lemma vec_compose_lemma1:
     forall (f : K -> W * A -> F B) (k:K),
-      (retAll (F := F) ◻ f) k =
+      (mapMret (F := F) ◻ f) k =
         (map (F := F) (mret T k) ∘ f k).
   Proof.
     reflexivity.
@@ -579,7 +578,7 @@ Section derived_operations_composition.
   Lemma compose_dtm_lemma2: forall
       (g : forall k, W * B -> G (T k C))
       (f : forall (k:K), W * A -> F B),
-      g ⋆dtm (retAll (F := F) ◻ f) =
+      g ⋆dtm (mapMret (F := F) ◻ f) =
       (fun (k : K) '(w, a) => map (F := F) (g k ∘ pair w) (f k (w, a))).
   Proof.
     intros.
@@ -960,7 +959,7 @@ Section DecoratedTraversable.
     rewrite (dtp_mbinddt_mbinddt W T U F G).
     unfold compose_dtm.
     fequal. ext k [w a].
-    unfold vec_compose, compose, retAll, allK, const.
+    unfold vec_compose, mapMret, vec_apply, compose, allK, const.
     compose near (f k (w, a)).
     rewrite (fun_map_map).
     unfold_ops @Map_compose.
@@ -990,13 +989,13 @@ Section DecoratedTraversable.
     intros.
     unfold mmapdt.
     rewrite <- vec_compose_assoc.
-    replace (retAll (A := A) ◻ allK pure) with
+    replace (mapMret (A := A) ◻ allK pure) with
       ((fun k => pure (F := F)) ◻ mret (A := A) T).
     { rewrite vec_compose_assoc.
       rewrite <- (dtp_mbinddt_morphism W T U (fun x => x) F (ϕ := @pure F _)).
       now rewrite (dtp_mbinddt_mret W T U). }
     { unfold vec_compose. ext k.
-      unfold retAll, allK, const.
+      unfold mapMret, allK, const.
       ext a. unfold compose.
       rewrite <- app_pure_natural.
       reflexivity. }
@@ -1144,7 +1143,7 @@ Section mixed_composition_laws2.
     rewrite (mbindt_mbindt U F (fun A => A)).
     fequal.
     - now rewrite (Mult_compose_identity1 F).
-    - ext k a. unfold vec_compose, retAll, compose.
+    - ext k a. unfold vec_compose, mapMret, vec_apply, compose.
       compose near (f k a) on left.
       rewrite fun_map_map.
       fequal.
@@ -1189,7 +1188,7 @@ Section mixed_composition_laws2.
     intros.
     rewrite mmapt_to_mbindt.
     rewrite mbind_to_mbindt.
-    unfold vec_compose, retAll.
+    unfold vec_compose, mapMret, vec_apply.
     change (mbindt U G (fun k : K => map (F := G) (mret T k) ∘ g k))
       with (map (F := fun A => A) (mbindt U G (fun k : K => map (F := G) (mret T k) ∘ g k))).
     rewrite (mbindt_mbindt U (fun A => A) G).
@@ -1205,7 +1204,7 @@ Section mixed_composition_laws2.
     intros.
     rewrite mmapt_to_mbindt.
     rewrite mbind_to_mbindt.
-    unfold vec_compose, retAll.
+    unfold vec_compose, mapMret, vec_apply.
     change (mbindt U G (fun k : K => map (F := G) (mret T k) ∘ g k))
       with (map (F := fun A => A) (mbindt U G (fun k : K => map (F := G) (mret T k) ∘ g k))).
     rewrite (mbindt_mbindt U (fun A => A) G).

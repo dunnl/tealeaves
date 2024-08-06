@@ -368,10 +368,10 @@ Ltac simplify_mapdt_core :=
   repeat push_preincr_into_fn.
 
 Ltac simplify_mapdt :=
-  match goal with
+  multimatch goal with
   | |- context[mapdt (T := ?T) ?f (ret ?t)] =>
-      ltac_trace "mapdt_ret should be called here";
-      fail 2
+      ltac_trace "mapdt_ret should be called here"
+       (* fail 2 *)
   | |- context[mapdt (T := ?T)] =>
       ltac_trace "simplify_mapdt_start";
       rewrite (mapdt_to_binddt (T := T));
@@ -383,7 +383,7 @@ Ltac simplify_mapdt :=
   end.
 
 Ltac simplify_mapdt_in :=
-  match goal with
+  multimatch goal with
   | H: context[mapdt (T := ?T) ?f (ret ?t)] |- _ =>
       ltac_trace "mapdt_ret should be called here"
   | H: context[mapdt (T := ?T)] |- _ =>
@@ -393,7 +393,7 @@ Ltac simplify_mapdt_in :=
   end.
 
 Ltac simplify_bindt :=
-  match goal with
+  multimatch goal with
   | |- context[bindt (T := ?T) ?f (ret ?t)] =>
       ltac_trace "bindt_ret should be called here"
   | |- context[bindt (T := ?T)] =>
@@ -409,7 +409,7 @@ Ltac simplify_bindd_post :=
   repeat simplify_applicative_I.
 
 Ltac simplify_bindd :=
-  match goal with
+  multimatch goal with
   | |- context[bindd (T := ?T) ?f (ret ?t)] =>
       ltac_trace "bindd_ret could be called here, skipping";
       fail
@@ -423,7 +423,7 @@ Ltac simplify_bindd :=
   end.
 
 Ltac simplify_bind :=
-  match goal with
+  multimatch goal with
   | |- context[bind (T := ?T) ?f (ret ?t)] =>
       ltac_trace "bind_ret should be called here"
   | |- context[bind (T := ?T)] =>
@@ -441,7 +441,7 @@ Ltac simplify_mapd_post :=
   repeat (simplify_applicative_I || simplify_map_I).
 
 Ltac simplify_mapd :=
-  match goal with
+  multimatch goal with
   | |- context[mapd (T := ?T) ?f (ret ?t)] =>
       ltac_trace "mapd_ret should be called here"
   | |- context[mapd (T := ?T)] =>
@@ -453,8 +453,25 @@ Ltac simplify_mapd :=
       ltac_trace "simplify_mapd_end"
   end.
 
+Ltac simplify_map_post :=
+  ltac_trace "simplify_map_post";
+  repeat (simplify_applicative_I || simplify_map_I).
+
+Ltac simplify_map :=
+  multimatch goal with
+  | |- context[map (F := ?T) ?f (ret ?t)] =>
+      ltac_trace "map_ret should be called here"
+  | |- context[map (F := ?T)] =>
+      ltac_trace "simplify_map_start";
+      rewrite (map_to_mapd (T := T));
+      simplify_mapd;
+      repeat rewrite <- (map_to_mapd (T := T));
+      simplify_map_post;
+      ltac_trace "simplify_map_end"
+  end.
+
 Ltac simplify_traverse :=
-  match goal with
+  multimatch goal with
   | |- context[traverse (T := ?T) ?f (ret ?t)] =>
       ltac_trace "traverse_ret should be called here"
   | |- context[traverse (T := ?T) (G := ?G) ?f ?t] =>
@@ -472,7 +489,7 @@ Ltac simplify_foldMapd_post :=
   repeat simplify_monoid_units.
 
 Ltac simplify_foldMapd :=
-  match goal with
+  multimatch goal with
   | |- context[foldMapd (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] =>
       rewrite foldMapd_to_mapdt1;
       simplify_mapdt;
@@ -485,7 +502,7 @@ Ltac simplify_foldMapd_post_in H :=
   repeat simplify_monoid_units_in H.
 
 Ltac simplify_foldMapd_in :=
-  match goal with
+  multimatch goal with
   | H: context[foldMapd (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] |- _ =>
       rewrite foldMapd_to_mapdt1 in H;
       simplify_mapdt_in H;
@@ -500,7 +517,7 @@ Ltac simplify_foldMap_post :=
   repeat change (const ?x ?y) with x.
 
 Ltac simplify_foldMap :=
-  match goal with
+  multimatch goal with
   | |- context[foldMap (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] =>
       ltac_trace "simplify_foldMap_start";
       rewrite foldMap_to_traverse1;

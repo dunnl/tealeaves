@@ -20,6 +20,12 @@ Definition vec_compose `{Index}
   (f: forall k:K, A k -> B k) :=
   fun k => g k ∘ f k.
 
+Definition vec_apply `{Index}
+  {A: K -> Type} {B: K -> Type}
+  (f: forall k:K, A k -> B k)
+  (a: forall k:K, A k): forall k, B k :=
+  fun k => f k (a k).
+
 (** * The category of constant k-families *)
 (******************************************************************************)
 Section category_kconst.

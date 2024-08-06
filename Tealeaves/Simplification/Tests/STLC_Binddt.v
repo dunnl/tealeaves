@@ -4,6 +4,24 @@ From Tealeaves Require Export
 
 Import STLC.Syntax.TermNotations.
 
+Ltac simplify_extract :=
+  first [ change ((?f ∘ extract) (?dec, ?var)) with (f var)
+        | change ((?g ∘ (?f ∘ extract)) (?dev, ?var)) with ((g ∘ f) var)
+    ].
+
+Ltac simplify_map_ret :=
+  change ((map ret ∘ ?f) ?leaf) with (map ret (f leaf));
+  rewrite map_to_ap.
+
+Ltac simplify_ret :=
+  change ((ret ∘ ?f) ?leaf) with (ret (f leaf)).
+
+Ltac simplify_leaf :=
+  try simplify_extract;
+  try simplify_map_ret;
+  try simplify_ret;
+  unfold_all_transparent_tcs.
+
 (** * Simplification tests for categorical operations *)
 (******************************************************************************)
 Section test.
@@ -14,9 +32,9 @@ Section test.
   Implicit Types (t body: Lam v1) (v: v1) (τ: typ).
   Generalizable Variables t v τ body.
 
-  (** ** Binddt *)
+  (** ** <<binddt>> and <<ret>> *)
   (******************************************************************************)
-  Section binddt.
+  Section binddt_ret.
 
     (* Interestingly, these goals won't be accepted even if we add
        Generalizable Variable f.
@@ -25,9 +43,6 @@ Section test.
        before the universal generalization of f
        affects anything *)
     Context (f: nat * v1 -> G (Lam v2)).
-
-    Ltac test := intros; assert_different; simplify_binddt; conclude.
-    Ltac test_fail := intros; simplify_binddt; reject.
 
     Goal `(binddt f (ret v) = f (Ƶ, v)).
     Proof.
@@ -80,11 +95,23 @@ Section test.
       conclude.
     Qed.
 
-    Lemma lam_binddt_11:
+  End binddt_ret.
+
+  (** ** Binddt *)
+  (******************************************************************************)
+  Section binddt.
+
+    Context (f: nat * v1 -> G (Lam v2)).
+
+    Ltac test := intros; assert_different; simplify_binddt; conclude.
+    Ltac test_fail := intros; simplify_binddt; reject.
+
+    Lemma lam_binddt_1:
       `(binddt f (ret v) = f (0, v)).
     Proof.
-      try test.
-      intros. cbn_binddt.
+      intros.
+      simplify_binddt.
+      change 0 with (Ƶ: nat).
       conclude.
     Qed.
 
@@ -108,36 +135,7 @@ Section test.
 
     Context (f: nat * v1 -> Lam v2).
 
-    Goal `(bindd f (ret v) = f (Ƶ, v)).
-    Proof.
-      intros.
-      simplify_bindd.
-      conclude.
-    Qed.
-
-    Goal `(bindd f (tvar v) = f (Ƶ, v)).
-    Proof.
-      intros.
-      simplify_bindd.
-      conclude.
-    Qed.
-
-    Goal `(bindd f (ret v) = bindd f (tvar v)).
-    Proof.
-      dup. {
-        intros.
-        rewrite bindd_to_binddt.
-        simplify_binddt.
-        simplify_binddt.
-        conclude.
-      }
-      intros.
-      simplify_bindd.
-      simplify_bindd.
-      conclude.
-    Qed.
-
-    Lemma lam_bindd_11:
+    Lemma lam_bindd_1:
       `(bindd f (ret v) = f (Ƶ, v)).
     Proof.
       intros.
@@ -145,8 +143,16 @@ Section test.
       conclude.
     Qed.
 
+    Lemma lam_bindd_1':
+      `(bindd f (tvar v) = f (Ƶ, v)).
+    Proof.
+      intros.
+      simplify_bindd.
+      conclude.
+    Qed.
+
     Lemma lam_bindd_2:
-      `(bindd f (app t1 t2) = app (V:=v2) (bindd f t1) (bindd f t2)).
+      `(bindd f (app t1 t2) = app (bindd f t1) (bindd f t2)).
     Proof.
       intros.
       simplify_bindd.
@@ -162,5 +168,151 @@ Section test.
     Qed.
 
   End bindd.
+
+  (** ** Bind *)
+  (******************************************************************************)
+  Section bind.
+
+    Context (f: v1 -> Lam v2).
+
+    Lemma lam_bind_1:
+      `(bind f (ret v) = f v).
+    Proof.
+      intros.
+      simplify_bind.
+    Abort.
+
+    Lemma lam_bind_1':
+      `(bind f (tvar v) = f v).
+    Proof.
+      intros.
+      simplify_bind.
+      conclude.
+    Qed.
+
+    Lemma lam_bind_2:
+      `(bind f (app t1 t2) = app (bind f t1) (bind f t2)).
+    Proof.
+      intros.
+      simplify_bind.
+      conclude.
+    Qed.
+
+    Lemma lam_bind_3:
+      `(bind f (lam τ body) = lam τ (bind f body)).
+    Proof.
+      intros.
+      simplify_bind.
+      conclude.
+    Qed.
+
+  End bind.
+
+  (** ** Mapdt *)
+  (******************************************************************************)
+  Section mapdt.
+
+    Context (f: nat * v1 -> G v2).
+
+    Lemma lam_mapdt_1:
+      `(mapdt f (ret v) = pure ret <⋆> (f (0, v))).
+    Proof.
+      intros.
+      progress simplify_mapdt.
+      progress simplify_leaf.
+      conclude.
+    Qed.
+
+    Lemma lam_mapdt_2:
+      `(mapdt f (app t1 t2) = pure (app (V:=v2)) <⋆> mapdt f t1 <⋆> mapdt f t2).
+    Proof.
+      intros.
+      progress simplify_mapdt.
+      conclude.
+    Qed.
+
+    Lemma lam_mapdt_3:
+      `(mapdt f (lam τ body) = pure (lam τ) <⋆> mapdt (f ⦿ 1) body).
+    Proof.
+      intros.
+      progress simplify_mapdt.
+      conclude.
+    Qed.
+
+  End mapdt.
+
+  (** ** Mapd *)
+  (******************************************************************************)
+  Section mapd.
+
+    Context (f: nat * v1 -> v2).
+
+    Lemma lam_mapd_1:
+      `(mapd f (ret (T := Lam) v) = ret (f (0, v))).
+    Proof.
+      intros.
+      progress simplify_mapd.
+      progress simplify_leaf.
+      conclude.
+    Qed.
+
+    Lemma lam_mapd_2:
+      `(mapd f (app t1 t2) = app (V:=v2) (mapd f t1) (mapd f t2)).
+    Proof.
+      intros.
+      progress simplify_mapd.
+      conclude.
+    Qed.
+
+    Lemma lam_mapd_3:
+      `(mapd f (lam τ body) = lam τ (mapd (f ⦿ 1) body)).
+    Proof.
+      intros.
+      progress simplify_mapd.
+      conclude.
+    Qed.
+
+  End mapd.
+
+  (** ** Map *)
+  (******************************************************************************)
+  Section map.
+
+    Context (f: v1 -> v2).
+
+    Lemma lam_map_1:
+      `(map f (ret (T := Lam) v) = ret (f v)).
+    Proof.
+      intros.
+      progress simplify_map.
+      simplify_leaf.
+      reflexivity.
+    Qed.
+
+    Lemma lam_map_1':
+      `(map f (tvar v) = tvar (f v)).
+    Proof.
+      intros.
+      progress simplify_map.
+      reflexivity.
+    Qed.
+
+    Lemma lam_map_2:
+      `(map f (app t1 t2) = app (map f t1) (map f t2)).
+    Proof.
+      intros.
+      simplify_map.
+      conclude.
+    Qed.
+
+    Lemma lam_map_3:
+      `(map f (lam τ body) = lam τ (map f body)).
+    Proof.
+      intros.
+      simplify_map.
+      conclude.
+    Qed.
+
+  End map.
 
 End test.
