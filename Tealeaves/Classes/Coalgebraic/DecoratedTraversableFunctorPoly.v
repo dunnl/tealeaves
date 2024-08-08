@@ -1,3 +1,4 @@
+(*
 From Tealeaves.Classes Require Export
   Monoid
   Categorical.Applicative
@@ -223,7 +224,7 @@ Section cojoin.
     (DFS (list WB' * WB') WB  (list WB' * B) (T WB  B ) C) := _.
 
 Next Obligation.
-Admitted.
+Qed.
 
 Context (T : Type -> Type -> Type) `(d : DFS (list WA  * WA ) WB  (list WA  * A) (T WB  B ) C) (WB' B' : Type).
 
@@ -258,14 +259,14 @@ Abort.
 Next Obligation.
 
   admit.
-Admitted.
+Qed.
 Next Obligation.
   admit.
-Admitted.
+Qed.
 Next Obligation.
   Check cojoin_BatchDMP rest
   admit.
-Admitted.
+Qed.
   Next Obligation.
   apply Leaf. shelve.
   constructor; auto.
@@ -307,3 +308,4 @@ Class Substitute
       (list WA * WA -> WB) ->
       (list WA * A -> G (T WB B))
       -> F WA A -> G (F WB B).
+*)
