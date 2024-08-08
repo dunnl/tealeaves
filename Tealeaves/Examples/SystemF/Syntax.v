@@ -265,6 +265,18 @@ End operations.
 #[export] Instance MBind_SystemF : forall k, MBind (list K2) SystemF (SystemF k) :=
   ltac:(intros [|]; typeclasses eauto).
 
+Ltac cbn_mbinddt_post_hook ::=
+  try match goal with
+  | |- context[bind_type ?G ?f ?τ] =>
+      change (bind_type G f τ) with (mbinddt typ G f τ)
+  | |- context[bind_term ?G ?f ?t] =>
+      change (bind_term G f t) with (mbinddt term G f t)
+    end.
+
+(*
+Ltac simplify_mbinddt_unfold_ret_hook ::=
+  unfold_ops @MReturn_SystemF.
+*)
 
 Ltac use_operational_tcs :=
   ltac_trace "use_operational_tcs";
@@ -400,21 +412,28 @@ Proof.
 Qed.
 
 Lemma mbinddt_mret_term : forall (A : Type),
-    mbinddt term (fun A => A) (fun k => mret SystemF k ∘ extract (W := (list K2 ×))) = @id (term A).
+    mbinddt term (fun A => A) (mret SystemF ◻ allK (extract (W := (list K2 ×)))) = @id (term A).
 Proof.
   intros. ext t. unfold id. induction t.
   - simplify_mbinddt. reflexivity.
-  - simplify_mbinddt. fequal.
+  - cbn_mbinddt.
+    fequal
     + use_operational_tcs.
       now rewrite mbinddt_mret_typ.
-    + rewrite <- mbinddt_inst_law1_case12.
-      apply IHt.
+    + rewrite vec_compose_assoc.
+      K_up.
+      rewrite vec_compose_allK.
+      rewrite extract_incr.
+      assumption.
   - cbn. fequal.
     + apply IHt1.
     + apply IHt2.
   - cbn. fequal.
-    rewrite <- mbinddt_inst_law1_case12.
-    apply IHt.
+    rewrite vec_compose_assoc.
+    K_up.
+    rewrite vec_compose_allK.
+    rewrite extract_incr.
+    assumption.
   - cbn. fequal.
     + apply IHt.
     + now rewrite mbinddt_mret_typ.

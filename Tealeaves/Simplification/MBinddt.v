@@ -1,14 +1,42 @@
 From Tealeaves Require Export
   Simplification.Support
   Simplification.Binddt
-  Theory.Multisorted.DecoratedTraversableMonad.
+  Theory.Multisorted.DecoratedTraversableMonad
+  Classes.Multisorted.Theory.Foldmap.
 
 Import
+  Categories.TypeFamily.Notations
   List.ListNotations
   Product.Notations
   Monoid.Notations
   ContainerFunctor.Notations
-  Subset.Notations.
+  Subset.Notations
+  Applicative.Notations.
+
+Section local_lemmas_needed.
+
+  Context
+    `{ix: Index}
+    {W: Type}
+      {T: K -> Type -> Type}
+      (U : Type -> Type)
+      `{MultiDecoratedTraversablePreModule (ix := ix) W T U}
+      `{! MultiDecoratedTraversableMonad (ix := ix) W T}.
+
+  Lemma simplify_mmapdt_at_leaves_lemma :
+    forall {k: K} {A B: Type} {G}
+      `{Applicative G}
+      (f : K -> W * A -> G B) (w: W) (a : A),
+      (mapMret (T := T) ◻ f) k (w, a) =
+        pure (mret T k) <⋆> f k (w, a).
+  Proof.
+    intros.
+    unfold mapMret, vec_apply, vec_compose.
+    rewrite <- map_to_ap.
+    reflexivity.
+  Qed.
+
+End local_lemmas_needed.
 
 (*|
 Miscellaneous
@@ -56,8 +84,11 @@ Ltac cbn_mbinddt_post_hook := idtac.
 (*|
 mbinddt
 |*)
+
+(* We surround this with "repeat" to so we don't get stuck on a false target: a left-most binddt might be "simplified" to an equal-looking expression because the
+   <<cbn>> simplifies some hidden argument, so that a right-more expression, the intended target, gets ignored *)
 Ltac cbn_mbinddt :=
-  match goal with
+  repeat match goal with
   | |- context[mbinddt (W := ?W) (T := ?T)
                 (H := ?H) (H0 := ?H0) (H1 := ?H1)
                 ?U ?F ?f ?t] =>
@@ -65,13 +96,16 @@ Ltac cbn_mbinddt :=
                          (H := H) (H0 := H0) (H1 := H1)
                          f t) in
       (* cbn_subterm e *)
-  let e' := eval cbn -[btgd btg] in e in
+  let e' := eval cbn -[K btgd btg] in e in
     progress (change e with e'); cbn_mbinddt_post_hook
 
   end.
 
+Ltac simplify_mbinddt_unfold_ret_hook := idtac.
+
 Ltac simplify_mbinddt :=
-  cbn_mbinddt.
+  cbn_mbinddt;
+  simplify_mbinddt_unfold_ret_hook.
 
 (*|
 mbindd
@@ -84,14 +118,20 @@ Ltac cbn_mbindd :=
       cbn_subterm e
   end.
 
+Ltac simplify_mbindd_post_refold_hook :=
+  repeat simplify_applicative_I.
+
+Ltac simplify_mbindd_pre_refold_hook ix := idtac.
+
 Ltac simplify_mbindd :=
   match goal with
-  | |- context[mbindd (W := ?W) (T := ?T)
+  | |- context[mbindd (ix := ?ix) (W := ?W) (T := ?T)
                 ?U ?f ?t] =>
       rewrite ?mbindd_to_mbinddt;
       simplify_mbinddt;
+      simplify_mbindd_pre_refold_hook ix;
       rewrite <- ?mbindd_to_mbinddt;
-      repeat simplify_applicative_I
+      simplify_mbindd_post_refold_hook
   end.
 
 (*|
@@ -105,14 +145,41 @@ Ltac cbn_mbind :=
       cbn_subterm e
   end.
 
+(* after unfolding,
+   mbindd U (f ◻ allK extract) (C x1 x2)
+   is simplified to
+   C (mbindd typ ((f ◻ allK extract) ◻ allK (incr [ktyp])) x1) ...
+ *)
+Ltac simplify_mbind_pre_refold_hook ix :=
+  repeat ( rewrite vec_compose_assoc;
+           rewrite (vec_compose_allK (H := ix));
+           rewrite extract_incr).
+
+Ltac simplify_mbind_post_refold_hook := idtac.
+
+(* At a k-annotated leaf,
+   mbind f (Ret x)
+   becomes
+   (f ◻ allK (extract (W := ?W))) k (Ƶ, x)] =>
+ *)
+
+Ltac simplify_mbind_at_leaf_hook :=
+  repeat match goal with
+      |- context [(?f ◻ allK (extract (W := ?W))) ?k (?w, ?a)] =>
+        change ((?f ◻ allK (extract (W := ?W))) ?k (?w, ?a))
+        with (f k a)
+    end.
+
 Ltac simplify_mbind :=
   match goal with
-  | |- context[mbind (W := ?W) (T := ?T)
+  | |- context[mbind (ix := ?ix) (W := ?W) (T := ?T)
                 ?U ?f ?t] =>
       rewrite ?mbind_to_mbindd;
       simplify_mbindd;
+      simplify_mbind_pre_refold_hook ix;
       rewrite <- ?mbind_to_mbindd;
-      repeat simplify_applicative_I
+      simplify_mbind_post_refold_hook;
+      simplify_mbind_at_leaf_hook
   end.
 
 (*|
@@ -127,34 +194,56 @@ Ltac cbn_mmapdt :=
       cbn_subterm e
   end.
 
+Ltac reassociate_in_args ix :=
+  match goal with
+  | |- context[(?h ◻ ?g) ◻ ?f] =>
+      (* rewrite (vec_compose_assoc (H := ix) h g f) *)
+      rewrite vec_compose_assoc
+  end.
+
+(* After unfolding,
+       mbinddt U (mapMret ◻ f) (C x1 x2)
+       is simplified to (where w is C's decoration for x1)
+       pure C <⋆> mbinddt U ((mapMret ◻ f) ◻ allK (incr w)) x1 <⋆> ...
+ *)
+Ltac simplify_mmapdt_pre_refold_hook ix :=
+  repeat reassociate_in_args ix.
+
+Ltac simplify_mmapdt_post_refold_hook := idtac.
+
+Ltac simplify_mmapdt_at_leaves_hook :=
+  rewrite ?(simplify_mmapdt_at_leaves_lemma _).
+
 Ltac simplify_mmapdt :=
-  cbn_mmapdt.
+  match goal with
+  | |- context[mmapdt (W := ?W) (T := ?T) (ix := ?ix)
+                ?U ?f ?t] =>
+      rewrite ?mmapdt_to_mbinddt;
+      simplify_mbinddt;
+      simplify_mmapdt_pre_refold_hook ix;
+      rewrite <- ?mmapdt_to_mbinddt;
+      simplify_mmapdt_post_refold_hook;
+      simplify_mmapdt_at_leaves_hook
+  end.
 
 (*|
 mmap
 |*)
-(*
-Ltac cbn_mmap :=
+
+Ltac simplify_mmapd_pre_refold_hook ix := idtac.
+Ltac simplify_mmapd_post_refold_hook :=
+    repeat simplify_applicative_I.
+
+Ltac simplify_mmapd :=
   match goal with
-  | |- context[mmap (W := ?W) (T := ?T)
+  | |- context[mmapd (W := ?W) (T := ?T) (ix := ?ix)
                 ?U ?f ?t] =>
-      let e := constr:(mmap (W := W) (T := T) U f t) in
-      cbn_subterm e
+      rewrite ?mmapd_to_mmapdt;
+      simplify_mmapdt;
+      simplify_mmapd_pre_refold_hook ix;
+      rewrite <- ?mmapdt_to_mbinddt;
+      simplify_mmapd_post_refold_hook
   end.
-
-Ltac simplify_mmap :=
-  match goal with
-  | |- context[mmap (W := ?W) (T := ?T)
-                ?U ?f ?t] =>
-      rewrite ?mmap_to_mmapd;
-      simplify_mmapd;
-      rewrite <- ?mmap_to_mmapd;
-      repeat simplify_applicative_I
-  end.
-*)
-
-
-
 
 
 (*

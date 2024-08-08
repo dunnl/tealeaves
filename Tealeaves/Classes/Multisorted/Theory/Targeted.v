@@ -125,6 +125,42 @@ Section DTM_targeted.
   Definition kmap `(f : A -> A) : U A -> U A :=
     mmap U (tgt j f).
 
+  Section traversals.
+
+    Context `{Applicative G}.
+
+    Definition tgtdt {A} (k : K) (f : W * A -> G A) : W * A -k-> G A :=
+      fun j '(w, a) => if k == j then f (w, a) else pure a.
+
+    Definition tgtdt_def {A B} (k : K) (f def : W * A -> G B) : W * A -k-> G B :=
+      fun j => if k == j then f else def.
+
+    Definition tgtt {A} (k : K) (f : A -> G A) : A -k-> G A :=
+      fun j => if k == j then f else pure.
+
+    Definition tgtt_def {A B} (k : K) (f def : A -> G B) : A -k-> G B :=
+      fun j => if k == j then f else def.
+
+    Definition kmapdt `(f : W * A -> G A) : U A -> G (U A) :=
+      mmapdt U G (tgtdt j f).
+
+    Definition ktraverse `(f : A -> G A) : U A -> G (U A) :=
+      mmapt U G (tgtt j f).
+
+    Lemma kmapdt_to_mmapdt `(f : W * A -> G A):
+      kmapdt f = mmapdt U G (tgtdt j f).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma kmapt_to_mtraverse `(f : A -> G A):
+      ktraverse f = mmapt U G (tgtt j f).
+    Proof.
+      reflexivity.
+    Qed.
+
+  End traversals.
+
   Section special_cases.
 
     Context
