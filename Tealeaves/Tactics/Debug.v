@@ -1,4 +1,4 @@
-Definition DEBUG : bool := true.
+Definition DEBUG : bool := false.
 
 Tactic Notation "ltac_trace" string(x) :=
   let debug := eval compute in DEBUG in

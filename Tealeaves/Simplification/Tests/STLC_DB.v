@@ -4,6 +4,7 @@ From Tealeaves Require Export
 
 Import STLC.Syntax.TermNotations.
 Import DB.Simplification.
+Import DB.AutosubstShim.Notations.
 
 (** ** Rewriting lemmas for rename *)
 (******************************************************************************)
@@ -49,7 +50,7 @@ Section subst.
     conclude.
   Qed.
 
-  Theorem term_subst2: forall (t1 t2: Lam nat) (n: nat),
+  Theorem term_subst2: forall (t1 t2: Lam nat),
       subst σ (app t1 t2: Lam nat) = app (subst σ t1) (subst σ t2).
   Proof.
     intros.
@@ -62,6 +63,44 @@ Section subst.
   Proof.
     intros.
     simplify_subst.
+    conclude.
+  Qed.
+
+End subst.
+
+(** ** Rewriting lemmas for rename *)
+(******************************************************************************)
+Section subst.
+
+  Context (σ: nat -> Lam nat).
+
+  Goal subst ret = id.
+  Proof.
+    simplify_db.
+    conclude.
+  Qed.
+
+  Goal forall t, subst ret t = t.
+  Proof.
+    intros.
+    simplify_db.
+    conclude.
+  Qed.
+
+  Goal forall (t1 t2: Lam nat),
+      subst σ (app t1 t2) =
+        app (subst σ t1) (subst σ t2).
+  Proof.
+    intros.
+    simplify_db.
+    conclude.
+  Qed.
+
+  Goal forall (τ: typ) (t: Lam nat),
+      subst σ (lam τ t: Lam nat) = lam τ (subst (up__sub σ) t).
+  Proof.
+    intros.
+    simplify_db_like_autosubst.
     conclude.
   Qed.
 

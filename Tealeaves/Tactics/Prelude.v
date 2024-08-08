@@ -35,11 +35,16 @@ Notation "g ∘ f" := (compose g f) (at level 40, left associativity).
     functors that would later need to be unfolded. TODO Get rid of this. *)
 Notation "F ○ G" := (fun X => F (G X)) (at level 40, left associativity).
 
-Lemma compose_assoc `{f : C -> D} `{g : B -> C} `{h : A -> B} :
+Polymorphic Definition compose_assoc `{f : C -> D} `{g : B -> C} `{h : A -> B} :
+  f ∘ (g ∘ h) = (f ∘ g) ∘ h := ltac:(reflexivity).
+
+(*
+Lemma compose_assoc :
   f ∘ (g ∘ h) = (f ∘ g) ∘ h.
 Proof.
   reflexivity.
 Qed.
+*)
 
 Definition const {A B : Type} (b : B) : A -> B := fun _ => b.
 

@@ -1,13 +1,9 @@
-From Tealeaves.Backends.LN Require Export
-  Atom AtomSet AssocList LN.
-
-From Tealeaves.Backends.LN Require
-  Simplification.
-
-From Tealeaves.Misc Require Export
-  NaturalNumbers.
 From Tealeaves.Theory Require Export
   DecoratedTraversableMonad.
+From Tealeaves.Backends.LN Require Export
+  Atom AtomSet AssocList LN Simplification.
+From Tealeaves.Simplification Require Export
+  Simplification.
 
 Module Notations.
   Export Categorical.Applicative.Notations. (* <⋆> *)
