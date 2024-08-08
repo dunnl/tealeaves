@@ -55,7 +55,18 @@ Section state_monad.
 
   #[export] Instance Monad_State : Monad (State S).
   Proof.
-  Admitted.
+    constructor.
+    - intros. ext a. cbv.
+      now destruct (f a).
+    - constructor.
+      + intros. ext s.
+        cbv. destruct s.
+        fequal. ext s. now destruct (p s).
+      + intros. ext s.
+        cbv. destruct s. fequal.
+        ext s. destruct (p s).
+        now destruct (f a).
+  Qed.
 
   (*
   #[export] Instance Join_State : Join (State S) :=
