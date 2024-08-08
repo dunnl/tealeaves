@@ -39,6 +39,14 @@ Section local_lemmas_needed.
       free U (T := T) k = foldMapk U k free_loc.
   Proof.
     intros.
+    unfold free.
+    ext x.
+    unfold foldMapk.
+    unfold foldMapm.
+    unfold foldMapmd.
+
+    Search toklist.
+    ext s.
   Admitted.
 
   Lemma FV_to_free : forall (k: K) (t: U LN),
