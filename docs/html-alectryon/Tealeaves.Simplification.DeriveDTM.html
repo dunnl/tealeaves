@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>DeriveDTM.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Theory.DecoratedTraversableMonad
+  Simplification.Support
+  Simplification.Binddt.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> DecoratedTraversableMonad.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Deriving DTM laws expressions *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm_custom_IH</span> := <span class="kp">constr</span>:(tt).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">induction_term</span> t :=
+  <span class="kr">let</span> <span class="nv">custIH</span> := derive_dtm_custom_IH <span class="kr">in</span>
+  <span class="kr">let</span> <span class="nv">T</span> := <span class="kp">type of</span> custIH <span class="kr">in</span>
+  <span class="kr">match</span> T <span class="kr">with</span>
+  | unit =&gt;
+      ltac_trace <span class="s2">&quot;derive_dtm|Using standard induction&quot;</span>;
+      <span class="nb">induction</span> t
+  | _ =&gt;
+      ltac_trace <span class="s2">&quot;derive_dtm|Using custom induction principle&quot;</span>;
+      <span class="nb">induction</span> t <span class="nb">using</span> custIH
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm_solve_ret_case</span> :=
+  <span class="kp">solve</span> [<span class="kp">repeat</span> simplify_post_binddt_ret; <span class="bp">reflexivity</span> ].</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Proving the first law *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm1</span> :=
+  <span class="kp">first</span> [ <span class="bp">reflexivity</span> |
+          <span class="kr">let</span> <span class="nv">v</span> := <span class="kp">fresh</span> <span class="s2">&quot;var&quot;</span> <span class="kr">in</span>
+          <span class="bp">now</span> ext v].</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Proving the second law *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm2_ret_case</span> :=
+  ltac_trace <span class="s2">&quot;derive_dtm2_ret_case&quot;</span>;
+  cbn_binddt;
+  derive_dtm_solve_ret_case;
+  ltac_trace <span class="s2">&quot;derive_dtm2_ret_case_finished&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm2_IH_step</span> :=
+  ltac_trace <span class="s2">&quot;derive_dtm2_IH_step&quot;</span>;
+  simplify_binddt_core;
+  <span class="kp">repeat</span> simplify_applicative_I;
+  <span class="kp">repeat</span> rewrite_with_any; <span class="c">(* try to use IH wherever possible *)</span>
+  <span class="kp">try</span> <span class="bp">easy</span>; <span class="c">(* hopefully this solves it, otherwise let the user take over *)</span>
+  <span class="kp">repeat</span> fequal;
+  ltac_trace <span class="s2">&quot;derive_dtm2_IH_step_finished&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">assert_match_dtm2</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) (ret ∘ extract) = id] =&gt;
+      ltac_trace <span class="s2">&quot;assert_match_dtm2|match&quot;</span>
+  | |- _ =&gt; <span class="kp">fail</span> <span class="s2">&quot;assert_match_setup|no match&quot;</span>
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm2_setup</span> :=
+  <span class="nb">intros</span>;
+  <span class="kr">let</span> <span class="nv">t</span> := <span class="kp">fresh</span> <span class="s2">&quot;t&quot;</span> <span class="kr">in</span>
+  ext t;
+  <span class="nb">change</span> (id <span class="nl">?t</span>) <span class="kr">with</span> t;
+  induction_term t.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm2</span> :=
+  assert_match_dtm2;
+  derive_dtm2_setup;
+  if_goal_match_binddt_ret
+    derive_dtm2_ret_case
+    derive_dtm2_IH_step.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Proving the third law *)</span>
+<span class="sd">(******************************************************************************)</span>
+
+<span class="c">(* map f (pure x) ~~~&gt; pure (f x)</span>
+<span class="c">   map f (x &lt;⋆&gt; y) ~~~&gt; ((map f ∘ x) &lt;⋆&gt; y)</span>
+<span class="c">   map f ((x &lt;⋆&gt; y) &lt;⋆&gt; z) ~~~&gt; ((map f ∘) ∘ x &lt;⋆&gt; y) &lt;⋆&gt; z</span>
+<span class="c"> *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">push_outer_map_into_pure</span> :=
+  <span class="kp">repeat</span> <span class="nb">rewrite</span> map_ap;
+  <span class="c">(* Distribute outer &lt;&lt;map&gt;&gt; into the constructor *)</span>
+  <span class="nb">rewrite</span> app_pure_natural.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp"><span class="c">(* Fuse &lt;&lt;map f&gt;&gt; and the &lt;&lt;pure C&gt;&gt; into &lt;&lt;pure (f ∘ C)&gt;&gt; *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_lhs</span> :=
+  push_outer_map_into_pure.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* First pass on the RHS where we invoke the IH as much as possible *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_rhs_kc7_preincr</span> :=
+  <span class="kp">try</span> <span class="kr">match goal with</span>
+    | |- <span class="kp">context</span>[@preincr _ _ _ ((<span class="nl">?G1</span> ∘ <span class="nl">?G2</span>) <span class="nl">?x</span>)] =&gt;
+        <span class="nb">change</span> ((G1 ∘ G2) x) <span class="kr">with</span> (G1 (G2 x))
+    <span class="c">(* this step deals with composition blocking</span>
+<span class="c">           rewrite kc7_preincr *)</span> <span class="kr">end</span>;
+  <span class="kp">repeat</span> <span class="nb">rewrite</span> &lt;- kc7_preincr.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_rhs_invoke_IH</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+    | IH: <span class="kp">context</span>[binddt (_ ⋆<span class="mi">7</span> _) <span class="nl">?t</span>] |- _ =&gt;
+        <span class="nb">rewrite</span> &lt;- IH
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_rhs_step1</span> :=
+  dtm3_rhs_kc7_preincr;
+  dtm3_rhs_invoke_IH.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* Second pass on the RHS where we invoke applicative laws *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_rhs_unfold_ap_compose</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[ap (<span class="nl">?G1</span> ∘ <span class="nl">?G2</span>)] =&gt;
+      (<span class="nb">rewrite_strat</span> innermost
+         (terms (ap_compose2 G2 G1)))
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_push_map_right_to_left</span> :=
+  <span class="nb">rewrite</span> &lt;- ap_map;
+  push_outer_map_into_pure.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_rhs_one_constructor</span> :=
+  dtm3_rhs_unfold_ap_compose;
+  push_outer_map_into_pure;
+  dtm3_push_map_right_to_left.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_rhs_step2</span> :=
+  unfold_ops @Pure_compose;
+  <span class="kp">repeat</span> dtm3_rhs_one_constructor.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">dtm3_rhs</span> :=
+  dtm3_rhs_step1;
+  dtm3_rhs_step2.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm3_ret_case</span> :=
+  ltac_trace <span class="s2">&quot;derive_dtm3|ret case setup&quot;</span>;
+  <span class="nb">unfold</span> kc7;
+  <span class="kp">do</span> <span class="mi">2</span> simplify_binddt_core;
+  <span class="kp">try</span> simplify_preincr_zero;
+  <span class="bp">reflexivity</span>;
+  ltac_trace <span class="s2">&quot;derive_dtm3|ret case end&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm3_IH_step</span> :=
+  ltac_trace <span class="s2">&quot;derive_dtm3|IH step start&quot;</span>;
+  <span class="kp">do</span> <span class="mi">2</span> simplify_binddt_core;
+  dtm3_lhs;
+  dtm3_rhs;
+  <span class="kp">try</span> <span class="bp">easy</span>;
+  ltac_trace <span class="s2">&quot;derive_dtm3|IH step finished&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">assert_match_dtm3</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[map (binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) <span class="nl">?g</span>) ∘
+                binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) <span class="nl">?f</span>] =&gt;
+      ltac_trace <span class="s2">&quot;setup_dtm_proof_guess_law3&quot;</span>;
+      infer_applicative_functors
+  | |- _ =&gt; <span class="kp">fail</span> <span class="s2">&quot;derive_dtm3_setup: no match&quot;</span>
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm3_setup</span> :=
+  ltac_trace <span class="s2">&quot;derive_dtm3|setup&quot;</span>;
+  assert_match_dtm3;
+  <span class="kr">let</span> <span class="nv">t</span> := <span class="kp">fresh</span> <span class="s2">&quot;t&quot;</span> <span class="kr">in</span>
+  ext t;
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[map (binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) <span class="nl">?g</span>) ∘
+                binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) <span class="nl">?f</span>] =&gt;
+      <span class="nb">generalize dependent</span> f;
+      <span class="nb">generalize dependent</span> g;
+      <span class="nb">change</span> ((<span class="nl">?g</span> ∘ <span class="nl">?f</span>) t) <span class="kr">with</span> (g (f t));
+      induction_term t; <span class="nb">intros</span> g f
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm3</span> :=
+  <span class="nb">intros</span>;
+  derive_dtm3_setup;
+  if_goal_match_binddt_ret
+    derive_dtm3_ret_case
+    derive_dtm3_IH_step.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Proving the fourt law *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm4_ret_case</span> :=
+  ltac_trace <span class="s2">&quot;derive_dtm4|ret case start&quot;</span>;
+  <span class="bp">reflexivity</span>; <span class="c">(* should solve &lt;&lt;ret&gt;&gt; case *)</span>
+  ltac_trace <span class="s2">&quot;derive_dtm4|ret case end&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm4_simplify_hom</span> :=
+  <span class="kp">repeat</span> <span class="nb">rewrite</span> ap_morphism_1;
+  <span class="nb">rewrite</span> appmor_pure.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm4_IH_step</span> :=
+  ltac_trace <span class="s2">&quot;derive_dtm4|IH step start&quot;</span>;
+  <span class="kp">repeat</span> simplify_binddt_core;
+  derive_dtm4_simplify_hom;
+  <span class="kp">repeat</span> rewrite_with_any; <span class="c">(* try to use IH wherever possible *)</span>
+  <span class="kp">try</span> <span class="bp">easy</span>; <span class="c">(* hopefully this solves it, otherwise let the user take over *)</span>
+  <span class="kp">repeat</span> fequal;
+  ltac_trace <span class="s2">&quot;derive_dtm4|IH step end&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm4_setup</span> :=
+  <span class="kr">match goal with</span>
+    |- <span class="kp">context</span>[(<span class="nl">?ϕ</span> (_ <span class="nl">?B</span>) ∘ binddt <span class="nl">?f</span>) = binddt (<span class="nl">?ϕ</span> (_ <span class="nl">?B</span>) ∘ <span class="nl">?f</span>)] =&gt;
+      ltac_trace <span class="s2">&quot;setup_dtm_proof_guess_law4&quot;</span>;
+      infer_applicative_functors;
+      <span class="kr">let</span> <span class="nv">t</span> := <span class="kp">fresh</span> <span class="s2">&quot;t&quot;</span> <span class="kr">in</span>
+      ext t;
+      <span class="nb">generalize dependent</span> f;
+      <span class="nb">change</span> ((<span class="nl">?g</span> ∘ <span class="nl">?f</span>) t) <span class="kr">with</span> (g (f t));
+      induction_term t; <span class="nb">intro</span> f
+  | |- _ =&gt; <span class="kp">fail</span> <span class="s2">&quot;derive_dtm4_setup: no match&quot;</span>
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm4</span> :=
+  <span class="nb">intros</span>;
+  derive_dtm4_setup;
+  if_goal_match_binddt_ret
+    derive_dtm4_ret_case
+    derive_dtm4_IH_step.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Putting it together *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">setup_dtm_proof</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[(binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) <span class="nl">?f</span> ∘ ret)] =&gt;
+      derive_dtm1
+  | |- <span class="kp">context</span>[binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) (ret ∘ extract) = id] =&gt;
+      derive_dtm2
+  | |- <span class="kp">context</span>[map (binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) <span class="nl">?g</span>) ∘
+                binddt (T := <span class="nl">?T</span>) (U := <span class="nl">?U</span>) <span class="nl">?f</span>] =&gt;
+      derive_dtm3
+  | |- <span class="kp">context</span>[(<span class="nl">?ϕ</span> <span class="nl">?B</span> ∘ binddt <span class="nl">?f</span>) = binddt (<span class="nl">?ϕ</span> <span class="nl">?B</span> ∘ <span class="nl">?f</span>)] =&gt;
+      derive_dtm4
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm_law</span> :=
+  <span class="nb">intros</span>; setup_dtm_proof.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">derive_dtm</span> :=
+  <span class="kr">match goal with</span>
+  | |- DecoratedTraversableMonad <span class="nl">?W</span> <span class="nl">?T</span> =&gt;
+      <span class="nb">constructor</span>;
+      <span class="kp">try</span> (<span class="kp">timeout</span> <span class="mi">1</span> <span class="nb">typeclasses eauto</span>);
+      <span class="kp">try</span> (<span class="kr">match goal with</span>
+           | |- DecoratedTraversableRightPreModule <span class="nl">?W</span> <span class="nl">?T</span> <span class="nl">?U</span> =&gt;
+               <span class="nb">constructor</span>
+           <span class="kr">end</span>);
+      derive_dtm_law
+  <span class="kr">end</span>.</span></span></pre>
+</div>
+</div></body>
+</html>

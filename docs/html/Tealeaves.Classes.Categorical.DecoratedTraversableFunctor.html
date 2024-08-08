@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Categorical.DecoratedTraversableFunctor</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#"><span class="id" title="library">Classes.Categorical.DecoratedFunctor</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#"><span class="id" title="library">Classes.Categorical.TraversableFunctor</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#Notations"><span class="id" title="module">Monoid.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Strength.html#Notations"><span class="id" title="module">Strength.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Product.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#Notations"><span class="id" title="module">TraversableFunctor.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Strength.html#Notations"><span class="id" title="module">Strength.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">T</span> <span class="id" title="var">E</span> <span class="id" title="var">G</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> <span class="id" title="var">W</span> <span class="id" title="var">op</span> <span class="id" title="var">zero</span> <span class="id" title="var">F</span> <span class="id" title="var">ϕ</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab334"></a><h1 class="section">Decorated-traversable functors</h1>
+
+</div>
+<div class="code">
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">F</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Map</span>} {<span class="id" title="var">A</span> <span class="id" title="var">B</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">f</span>%<span class="id" title="var">function_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <span class="id" title="var">F</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">ApplicativeDist</span>} <span class="id" title="var">G</span>%<span class="id" title="var">function_scope</span><br/>
+&nbsp;&nbsp;{<span class="id" title="var">H</span> <span class="id" title="var">H0</span> <span class="id" title="var">H1</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <span class="id" title="var">T</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Return</span>} (<span class="id" title="var">A</span>)%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab335"></a><h2 class="section">Typeclass</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="DecoratedTraversableFunctor" class="idref" href="#DecoratedTraversableFunctor"><span class="id" title="record">DecoratedTraversableFunctor</span></a><br/>
+&nbsp;&nbsp;(<a id="E:1" class="idref" href="#E:1"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;(<a id="F:2" class="idref" href="#F:2"><span class="id" title="binder">F</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;`{<a id="H:3" class="idref" href="#H:3"><span class="id" title="binder">Map</span></a> <a id="H:3" class="idref" href="#H:3"><span class="id" title="binder">F</span></a>} `{<a id="H0:4" class="idref" href="#H0:4"><span class="id" title="binder">Decorate</span></a> <a id="H0:4" class="idref" href="#H0:4"><span class="id" title="binder">E</span></a> <a id="H0:4" class="idref" href="#H0:4"><span class="id" title="binder">F</span></a>} `{<a id="H1:5" class="idref" href="#H1:5"><span class="id" title="binder">ApplicativeDist</span></a> <a id="H1:5" class="idref" href="#H1:5"><span class="id" title="binder">F</span></a>} :=<br/>
+&nbsp;&nbsp;{ <a id="dtfun_decorated" class="idref" href="#dtfun_decorated"><span class="id" title="projection">dtfun_decorated</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#DecoratedFunctor"><span class="id" title="class">DecoratedFunctor</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#E:1"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#F:2"><span class="id" title="variable">F</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="dtfun_traversable" class="idref" href="#dtfun_traversable"><span class="id" title="projection">dtfun_traversable</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#TraversableFunctor"><span class="id" title="class">TraversableFunctor</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#F:2"><span class="id" title="variable">F</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="dtfun_compat" class="idref" href="#dtfun_compat"><span class="id" title="projection">dtfun_compat</span></a> : <span class="id" title="keyword">∀</span> `{<a id="H5:13" class="idref" href="#H5:13"><span class="id" title="binder">Applicative</span></a> <a id="H5:13" class="idref" href="#H5:13"><span class="id" title="binder">G</span></a>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#F:2"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#G:9"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#F:2"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Misc.Strength.html#8319486a697349ec48617741566c6caf"><span class="id" title="notation">σ</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#dec"><span class="id" title="definition">dec</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#F:2"><span class="id" title="variable">F</span></a> (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#G:9"><span class="id" title="variable">G</span></a> <span class="id" title="var">A</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#G:9"><span class="id" title="variable">G</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#dec"><span class="id" title="definition">dec</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#F:2"><span class="id" title="variable">F</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#F:2"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#G:9"><span class="id" title="variable">G</span></a>);<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+&nbsp;&nbsp;At&nbsp;this&nbsp;stage&nbsp;we&nbsp;make&nbsp;sure&nbsp;our&nbsp;typeclass&nbsp;hierarchy&nbsp;works&nbsp;as&nbsp;expected.<br/>
+*)</span><br/>
+<span class="id" title="keyword">Section</span> <a id="test_typeclasses" class="idref" href="#test_typeclasses"><span class="id" title="section">test_typeclasses</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H2:21" class="idref" href="#H2:21"><span class="id" title="binder">DecoratedTraversableFunctor</span></a> <a id="H2:21" class="idref" href="#H2:21"><span class="id" title="binder">E</span></a> <a id="H2:21" class="idref" href="#H2:21"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Functor</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">T</span></a>. <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">DecoratedFunctor</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">E</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">T</span></a>. <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">TraversableFunctor</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">T</span></a>. <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="comment">(*<br/>
+&nbsp;&nbsp;Goal&nbsp;ListableFunctor&nbsp;T.&nbsp;typeclasses&nbsp;eauto.&nbsp;Qed.<br/>
+&nbsp;&nbsp;Goal&nbsp;SetlikeFunctor&nbsp;T.&nbsp;typeclasses&nbsp;eauto.&nbsp;Qed.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableFunctor.html#test_typeclasses"><span class="id" title="section">test_typeclasses</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

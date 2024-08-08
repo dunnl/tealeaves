@@ -1,0 +1,339 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Categorical.Bimonad</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+This file implements bimonads. A <span class="inlinecode"><a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad"><span class="id" title="record">Bimonad</span></a></span> is a functor equipped
+    with a monad/comonad structure and a distributive law over itself,
+    which ensures the composition (W ∘ W) is also a monad and a
+    comonad. Additionally there are some coherence laws, below, which
+    may be read into several equivalent ways: 
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> The cojoin is a monad homomorphism (W → W ∘ W) and the counit a homomorphism (W → 1)
+
+</li>
+<li> The join is a comonad homomorphism (W ∘ W → W) and the unit a homomorphism (1 → W)
+
+</li>
+<li> W is a monoid in the category of comonoids (in the category of endofunctors)
+
+</li>
+<li> W is a comonoid in the category of monoids (in the category of endofunctors)
+
+</li>
+</ul>
+ 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#"><span class="id" title="library">Classes.Categorical.Monad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#"><span class="id" title="library">Classes.Categorical.Comonad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#"><span class="id" title="library">Classes.Categorical.BeckDistributiveLaw</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Product.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Functor.html#Notations"><span class="id" title="module">Functor.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Notations"><span class="id" title="module">Monad.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#Notations"><span class="id" title="module">Comonad.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">W</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">F</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Map</span>} {<span class="id" title="var">A</span> <span class="id" title="var">B</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">f</span>%<span class="id" title="var">function_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <span class="id" title="var">T</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Join</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <span class="id" title="var">T</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Return</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <span class="id" title="var">W</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="keyword">Extract</span>} (<span class="id" title="var">A</span>)%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <span class="id" title="var">W</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Cojoin</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab271"></a><h1 class="section">Bimonad typeclass</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="Bimonad" class="idref" href="#Bimonad"><span class="id" title="section">Bimonad</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="W:1" class="idref" href="#W:1"><span class="id" title="binder">W</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">Map</span></a> <a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">W</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:3" class="idref" href="#H0:3"><span class="id" title="binder">Return</span></a> <a id="H0:3" class="idref" href="#H0:3"><span class="id" title="binder">W</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H1:4" class="idref" href="#H1:4"><span class="id" title="binder">Join</span></a> <a id="H1:4" class="idref" href="#H1:4"><span class="id" title="binder">W</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H2:5" class="idref" href="#H2:5"><span class="id" title="binder">Cojoin</span></a> <a id="H2:5" class="idref" href="#H2:5"><span class="id" title="binder">W</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H3:6" class="idref" href="#H3:6"><span class="id" title="binder">Extract</span></a> <a id="H3:6" class="idref" href="#H3:6"><span class="id" title="binder">W</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H11:14" class="idref" href="#H11:14"><span class="id" title="binder">BeckDistributiveLaw</span></a> <a id="H11:14" class="idref" href="#H11:14"><span class="id" title="binder">W</span></a> <a id="H11:14" class="idref" href="#H11:14"><span class="id" title="binder">W</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="Bimonad" class="idref" href="#Bimonad"><span class="id" title="record">Bimonad</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <a id="bimonad_monad" class="idref" href="#bimonad_monad"><span class="id" title="projection">bimonad_monad</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Monad"><span class="id" title="class">Monad</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="bimonad_comonad" class="idref" href="#bimonad_comonad"><span class="id" title="projection">bimonad_comonad</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#Comonad"><span class="id" title="class">Comonad</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="bimonad_distributive_law" class="idref" href="#bimonad_distributive_law"><span class="id" title="projection">bimonad_distributive_law</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#BeckDistributiveLaw"><span class="id" title="class">BeckDistributiveLaw</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="bimonad_dist_counit_r" class="idref" href="#bimonad_dist_counit_r"><span class="id" title="projection">bimonad_dist_counit_r</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#bdist"><span class="id" title="definition">bdist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="bimonad_dist_counit_l" class="idref" href="#bimonad_dist_counit_l"><span class="id" title="projection">bimonad_dist_counit_l</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#bdist"><span class="id" title="definition">bdist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="bimonad_cap" class="idref" href="#bimonad_cap"><span class="id" title="projection">bimonad_cap</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="bimonad_baton" class="idref" href="#bimonad_baton"><span class="id" title="projection">bimonad_baton</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <span class="id" title="var">A</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="bimonad_cup" class="idref" href="#bimonad_cup"><span class="id" title="projection">bimonad_cup</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="bimonad_butterfly" class="idref" href="#bimonad_butterfly"><span class="id" title="projection">bimonad_butterfly</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#bdist"><span class="id" title="definition">bdist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad.W"><span class="id" title="variable">W</span></a>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad"><span class="id" title="section">Bimonad</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab272"></a><h1 class="section">Kleisli lifting operation <code>bibind</code></h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="Bimonad_kleisli_operations" class="idref" href="#Bimonad_kleisli_operations"><span class="id" title="section">Bimonad_kleisli_operations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="W:31" class="idref" href="#W:31"><span class="id" title="binder">W</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:32" class="idref" href="#H:32"><span class="id" title="binder">Map</span></a> <a id="H:32" class="idref" href="#H:32"><span class="id" title="binder">W</span></a>} `{<a id="H0:33" class="idref" href="#H0:33"><span class="id" title="binder">Join</span></a> <a id="H0:33" class="idref" href="#H0:33"><span class="id" title="binder">W</span></a>} `{<a id="H1:34" class="idref" href="#H1:34"><span class="id" title="binder">Cojoin</span></a> <a id="H1:34" class="idref" href="#H1:34"><span class="id" title="binder">W</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H2:35" class="idref" href="#H2:35"><span class="id" title="binder">BeckDistribution</span></a> <a id="H2:35" class="idref" href="#H2:35"><span class="id" title="binder">W</span></a> <a id="H2:35" class="idref" href="#H2:35"><span class="id" title="binder">W</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="bibind" class="idref" href="#bibind"><span class="id" title="definition">bibind</span></a> {<a id="A:36" class="idref" href="#A:36"><span class="id" title="binder">A</span></a> <a id="B:37" class="idref" href="#B:37"><span class="id" title="binder">B</span></a>} : <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#A:36"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#B:37"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#A:36"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#B:37"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="f:38" class="idref" href="#f:38"><span class="id" title="binder">f</span></a> ⇒ <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#f:38"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="twist" class="idref" href="#twist"><span class="id" title="definition">twist</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#278ce2a34b83a8295656f6eff2db54a7"><span class="id" title="notation">⇒</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= <span class="id" title="keyword">fun</span> <a id="A:39" class="idref" href="#A:39"><span class="id" title="binder">A</span></a> ⇒ <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#bdist"><span class="id" title="definition">bdist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="kcomposebi" class="idref" href="#kcomposebi"><span class="id" title="definition">kcomposebi</span></a> {<a id="A:40" class="idref" href="#A:40"><span class="id" title="binder">A</span></a> <a id="B:41" class="idref" href="#B:41"><span class="id" title="binder">B</span></a> <a id="C:42" class="idref" href="#C:42"><span class="id" title="binder">C</span></a>} :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#B:41"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#C:42"><span class="id" title="variable">C</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#A:40"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#B:41"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#A:40"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#C:42"><span class="id" title="variable">C</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="g:43" class="idref" href="#g:43"><span class="id" title="binder">g</span></a> <a id="f:44" class="idref" href="#f:44"><span class="id" title="binder">f</span></a> ⇒ <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#g:43"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#twist"><span class="id" title="definition">twist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#B:41"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#f:44"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations.W"><span class="id" title="variable">W</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Bimonad_kleisli_operations"><span class="id" title="section">Bimonad_kleisli_operations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Notations" class="idref" href="#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="8d2fa02ae039ea02781c1513e699b7ec" class="idref" href="#8d2fa02ae039ea02781c1513e699b7ec"><span class="id" title="notation">&quot;</span></a>g ⋆bi f" := (<a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#kcomposebi"><span class="id" title="definition">kcomposebi</span></a> <span class="id" title="var">_</span> <span class="id" title="var">g</span> <span class="id" title="var">f</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70) : <span class="id" title="var">tealeaves_scope</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+<span class="comment">(**&nbsp;**&nbsp;Specifications&nbsp;for&nbsp;suboperations&nbsp;*)</span><br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Section&nbsp;Bimonad_suboperations.<br/>
+<br/>
+&nbsp;&nbsp;Context<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{Bimonad&nbsp;W}.<br/>
+<br/>
+&nbsp;&nbsp;Lemma&nbsp;cobind_to_bibind&nbsp;:&nbsp;forall&nbsp;`(f&nbsp;:&nbsp;W&nbsp;A&nbsp;-&gt;&nbsp;B),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;cobind&nbsp;W&nbsp;f&nbsp;=&nbsp;bibind&nbsp;W&nbsp;(ret&nbsp;W&nbsp;∘&nbsp;f).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;bibind.&nbsp;unfold_ops&nbsp;@Cobind_Cojoin.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;(mon_join_map_ret&nbsp;W).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Lemma&nbsp;bind_to_bibind&nbsp;:&nbsp;forall&nbsp;`(f&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;W&nbsp;B),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bind&nbsp;W&nbsp;f&nbsp;=&nbsp;bibind&nbsp;W&nbsp;(f&nbsp;∘&nbsp;extract&nbsp;W).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;bibind.&nbsp;unfold_ops&nbsp;@Bind_Join.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-.&nbsp;reassociate&nbsp;-&gt;.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;(com_map_extr_cojoin&nbsp;W).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Lemma&nbsp;map_to_bibind&nbsp;:&nbsp;forall&nbsp;`(f&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;B),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;map&nbsp;W&nbsp;f&nbsp;=&nbsp;bibind&nbsp;W&nbsp;(ret&nbsp;W&nbsp;∘&nbsp;f&nbsp;∘&nbsp;extract&nbsp;W).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;bibind.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;2&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(mon_join_map_ret&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;(com_map_extr_cojoin&nbsp;W).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+End&nbsp;Bimonad_suboperations.<br/>
+<br/>
+<span class="comment">(**&nbsp;**&nbsp;Bimonadic&nbsp;Kleisli&nbsp;composition&nbsp;laws&nbsp;*)</span><br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Section&nbsp;Bimonad_kleisli_composition.<br/>
+<br/>
+&nbsp;&nbsp;Context<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{Bimonad&nbsp;W}.<br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(**&nbsp;Composition&nbsp;where&nbsp;&lt;&lt;g&gt;&gt;&nbsp;is&nbsp;a&nbsp;co-Kleisli&nbsp;arrow&nbsp;reduces&nbsp;to&nbsp;usual<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Kleisli&nbsp;composition.&nbsp;*)</span><br/>
+&nbsp;&nbsp;Lemma&nbsp;bi_kcompose1&nbsp;{A&nbsp;B&nbsp;C}&nbsp;:&nbsp;forall&nbsp;(g&nbsp;:&nbsp;B&nbsp;-&gt;&nbsp;W&nbsp;C)&nbsp;(f&nbsp;:&nbsp;W&nbsp;A&nbsp;-&gt;&nbsp;W&nbsp;B),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(g&nbsp;∘&nbsp;extract&nbsp;W)&nbsp;⋆bi&nbsp;f&nbsp;=&nbsp;g&nbsp;⋆&nbsp;f.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;kcomposebi,&nbsp;kcompose.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-.&nbsp;unfold&nbsp;twist.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(map&nbsp;W&nbsp;(join&nbsp;W)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(fun_map_map&nbsp;W).&nbsp;rewrite&nbsp;(bimonad_cap&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(bdist&nbsp;W&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(bimonad_dist_counit_r&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(map&nbsp;W&nbsp;(cojoin&nbsp;W)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@extract&nbsp;W&nbsp;_));&nbsp;unfold_ops&nbsp;@Map_I.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-.&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(cojoin&nbsp;W&nbsp;(A&nbsp;:=&nbsp;B)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(com_map_extr_cojoin&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(map&nbsp;W&nbsp;f).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@extract&nbsp;W&nbsp;_));&nbsp;unfold_ops&nbsp;@Map_I.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;-&gt;.&nbsp;rewrite&nbsp;(com_extract_cojoin&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(**&nbsp;Composition&nbsp;where&nbsp;&lt;&lt;f&gt;&gt;&nbsp;is&nbsp;a&nbsp;Kleisli&nbsp;arrow&nbsp;reduces&nbsp;to&nbsp;usual<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;co-Kleisli&nbsp;composition.&nbsp;*)</span><br/>
+&nbsp;&nbsp;Lemma&nbsp;bi_kcompose2&nbsp;{A&nbsp;B&nbsp;C}&nbsp;:&nbsp;forall&nbsp;(g&nbsp;:&nbsp;W&nbsp;B&nbsp;-&gt;&nbsp;W&nbsp;C)&nbsp;(f&nbsp;:&nbsp;W&nbsp;A&nbsp;-&gt;&nbsp;B),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g&nbsp;⋆bi&nbsp;(ret&nbsp;W&nbsp;∘&nbsp;f)&nbsp;=&nbsp;g&nbsp;co⋆&nbsp;f.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;kcomposebi,&nbsp;kcompose.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-.&nbsp;unfold&nbsp;twist.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(map&nbsp;W&nbsp;(ret&nbsp;W)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(fun_map_map&nbsp;W).&nbsp;rewrite&nbsp;(bimonad_cup&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(map&nbsp;W&nbsp;(ret&nbsp;W)&nbsp;(A&nbsp;:=&nbsp;W&nbsp;B)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(dist_unit_r&nbsp;W&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(ret&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@ret&nbsp;W&nbsp;_));&nbsp;unfold_ops&nbsp;@Map_I.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-.&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(map&nbsp;W&nbsp;(ret&nbsp;W)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(mon_join_map_ret&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(ret&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@ret&nbsp;W&nbsp;_));&nbsp;unfold_ops&nbsp;@Map_I.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-.&nbsp;rewrite&nbsp;(mon_join_ret&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+End&nbsp;Bimonad_kleisli_composition.<br/>
+<br/>
+<span class="comment">(**&nbsp;**&nbsp;Functoriality&nbsp;of&nbsp;<span class="inlinecode"><span class="id" title="var">bibind</span></span>&nbsp;*)</span><br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Section&nbsp;Bimonad_bibind.<br/>
+<br/>
+&nbsp;&nbsp;Context<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{Bimonad&nbsp;W}.<br/>
+<br/>
+&nbsp;&nbsp;Definition&nbsp;bind_id&nbsp;{A}&nbsp;:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;bibind&nbsp;W&nbsp;(ret&nbsp;W&nbsp;∘&nbsp;extract&nbsp;W)&nbsp;=&nbsp;@id&nbsp;(W&nbsp;A).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;bibind.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;do&nbsp;2&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(com_map_extr_cojoin&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;(mon_join_map_ret&nbsp;W).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Definition&nbsp;bind_functorial&nbsp;{A&nbsp;B&nbsp;C}&nbsp;:&nbsp;forall&nbsp;(g&nbsp;:&nbsp;W&nbsp;B&nbsp;-&gt;&nbsp;W&nbsp;C)&nbsp;(f&nbsp;:&nbsp;W&nbsp;A&nbsp;-&gt;&nbsp;W&nbsp;B),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bibind&nbsp;W&nbsp;(g&nbsp;⋆bi&nbsp;f)&nbsp;=&nbsp;bibind&nbsp;W&nbsp;g&nbsp;∘&nbsp;bibind&nbsp;W&nbsp;f.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;bibind.&nbsp;unfold&nbsp;kcomposebi.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(**&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(mon_join_join&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(**&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(com_cojoin_cojoin&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(**&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(map&nbsp;W&nbsp;(map&nbsp;W&nbsp;g)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;(map&nbsp;W&nbsp;(map&nbsp;W&nbsp;g))&nbsp;with&nbsp;(map&nbsp;(W&nbsp;∘&nbsp;W)&nbsp;g).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;Keyed&nbsp;Unification.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@join&nbsp;W&nbsp;_)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Unset&nbsp;Keyed&nbsp;Unification.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(**&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;near&nbsp;(map&nbsp;W&nbsp;(map&nbsp;W&nbsp;f)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;(map&nbsp;W&nbsp;(map&nbsp;W&nbsp;f))&nbsp;with&nbsp;(map&nbsp;(W&nbsp;∘&nbsp;W)&nbsp;f).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;Keyed&nbsp;Unification.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@cojoin&nbsp;W&nbsp;_)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Unset&nbsp;Keyed&nbsp;Unification.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;right.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(**&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(join&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(bimonad_butterfly&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(join&nbsp;W).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;Keyed&nbsp;Unification.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@join&nbsp;W&nbsp;_)&nbsp;(μ&nbsp;W)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Unset&nbsp;Keyed&nbsp;Unification.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;near&nbsp;(map&nbsp;W&nbsp;(cojoin&nbsp;W)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Set&nbsp;Keyed&nbsp;Unification.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@cojoin&nbsp;W&nbsp;_)&nbsp;(cojoin&nbsp;W)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Unset&nbsp;Keyed&nbsp;Unification.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;twist.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;repeat&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;W).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+End&nbsp;Bimonad_bibind.<br/>
+*)</span><br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

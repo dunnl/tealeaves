@@ -21,12 +21,11 @@ the namespaces ``Classes.Algebraic`` and ``Theory.Algebraic.``
 |*)
 
 From Tealeaves Require Export
-  Classes.DT.Monad
+  Classes.Categorical.DecoratedTraversableMonad
   Classes.Monoid
-  Classes.Listable.Functor
-  Data.Natural.
+  Misc.NaturalNumbers.
 
-Import Traversable.Functor.Notations.
+Import Categorical.TraversableFunctor.Notations.
 Import List.ListNotations.
 Import Strength.Notations.
 Import Monoid.Notations.
@@ -98,49 +97,49 @@ variable. The first thing we must show is that ``term`` is actually
 *functor* in this type argument.
 |*)
 
-Fixpoint fmap_term {A B : Type} (f : A -> B) (t : term A) : term B :=
+Fixpoint map_term {A B : Type} (f : A -> B) (t : term A) : term B :=
   match t with
   | Var a => Var (f a)
-  | Lam X t => Lam X (fmap_term f t)
-  | Ap t1 t2 => Ap (fmap_term f t1) (fmap_term f t2)
+  | Lam X t => Lam X (map_term f t)
+  | Ap t1 t2 => Ap (map_term f t1) (map_term f t2)
   end.
 
-#[export] Instance Fmap_term : Fmap term := @fmap_term.
+#[export] Instance Map_term : Map term := @map_term.
 
-Theorem fmap_id : forall A, fmap term id = @id (term A).
+Theorem map_id : forall A, map id = @id (term A).
 Proof.
   intros. ext t. unfold transparent tcs. basic t.
 Qed.
 
-Theorem fmap_fmap : forall A B C (f : A -> B) (g : B -> C),
-    fmap term g ∘ fmap term f = fmap term (g ∘ f).
+Theorem map_map : forall A B C (f : A -> B) (g : B -> C),
+    map g ∘ map f = map (g ∘ f).
 Proof.
   intros. ext t. unfold transparent tcs.
   unfold compose. basic t.
 Qed.
 
 #[export] Instance Functor_term : Functor term :=
-  {| fun_fmap_id := @fmap_id;
-     fun_fmap_fmap := @fmap_fmap;
+  {| fun_map_id := @map_id;
+     fun_map_map := @map_map;
   |}.
 
 (*|
-Rewriting rules for ``fmap``
+Rewriting rules for ``map``
 -----------------------------
 |*)
 
-Section fmap_term_rewrite.
+Section map_term_rewrite.
 
   Context
     `{f : A -> B}.
 
-  Lemma fmap_term_ap : forall (t1 t2 : term A),
-      fmap term f (@Ap A t1 t2) = @Ap B (fmap term f t1) (fmap term f t2).
+  Lemma map_term_ap : forall (t1 t2 : term A),
+      map f (@Ap A t1 t2) = @Ap B (map f t1) (map f t2).
   Proof.
     reflexivity.
   Qed.
 
-End fmap_term_rewrite.
+End map_term_rewrite.
 
 (*|
 Decorated Functor instance
@@ -157,7 +156,7 @@ Fixpoint dec_term {A} (t : term A) : term (nat * A) :=
 #[export] Instance Decorate_term : Decorate nat term := @dec_term.
 
 Theorem dec_natural : forall A B (f : A -> B),
-    fmap term (fmap (prod nat) f) ∘ dec term = dec term ∘ fmap term f.
+    map (F := term) (map f) ∘ dec term = dec term ∘ map (F := term) f.
 Proof.
   intros. unfold compose. ext t. induction t.
   - now cbn.
@@ -169,12 +168,13 @@ Qed.
 Proof.
   constructor.
   - typeclasses eauto.
-  - apply Functor_compose.
+  - apply Functor_compose;
+      typeclasses eauto.
   - apply dec_natural.
 Qed.
 
 Theorem dec_extract : forall A,
-    fmap term (extract (prod nat)) ∘ dec term = @id (term A).
+    map (F := term) (extract) ∘ dec term = @id (term A).
 Proof.
   intros. unfold compose. ext t. induction t.
   - reflexivity.
@@ -183,7 +183,7 @@ Proof.
 Qed.
 
 Theorem dec_dec : forall A,
-    dec term ∘ dec term = fmap term (cojoin (prod nat)) ∘ dec term (A := A).
+    dec term ∘ dec term = map (F := term) (cojoin) ∘ dec term (A := A).
 Proof.
   intros. unfold compose. ext t. induction t.
   - reflexivity.
@@ -243,17 +243,17 @@ Traversable Functor instance
 
 Import Applicative.Notations.
 
-Fixpoint dist_term `{Fmap F} `{Pure F} `{Mult F} {A : Type}
+Fixpoint dist_term `{Map F} `{Pure F} `{Mult F} {A : Type}
          (t : term (F A)) : F (term A) :=
   match t with
-  | Var a => fmap F (@Var A) a
-  | Lam X t => fmap F (Lam X) (dist_term t)
-  | Ap t1 t2 => (pure F (@Ap A))
+  | Var a => map (@Var A) a
+  | Lam X t => map (Lam X) (dist_term t)
+  | Ap t1 t2 => (pure (@Ap A))
                  <⋆> dist_term t1
                  <⋆> dist_term t2
   end.
 
-#[export] Instance: Dist term := @dist_term.
+#[export] Instance: ApplicativeDist term := @dist_term.
 
 (*|
 Rewriting rules for ``dist``
@@ -268,32 +268,32 @@ Section term_dist_rewrite.
   Variable (A : Type).
 
   Lemma dist_term_var_1 : forall (x : G A),
-    dist term G (@Var (G A) x) = pure G (@Var A) <⋆> x.
+    dist term G (@Var (G A) x) = pure (@Var A) <⋆> x.
   Proof.
-    intros. cbn. now rewrite fmap_to_ap.
+    intros. cbn. now rewrite map_to_ap.
   Qed.
 
   Lemma dist_term_var_2 : forall (x : G A),
-    dist term G (@Var (G A) x) = fmap G (@Var A) x.
+    dist term G (@Var (G A) x) = map (@Var A) x.
   Proof.
     reflexivity.
   Qed.
 
   Lemma dist_term_lam_1 : forall (X : typ) (t : term (G A)),
-      dist term G (Lam X t) = pure G (Lam X) <⋆> (dist term G t).
+      dist term G (Lam X t) = pure (Lam X) <⋆> (dist term G t).
   Proof.
-    intros. cbn. now rewrite fmap_to_ap.
+    intros. cbn. now rewrite map_to_ap.
   Qed.
 
   Lemma dist_term_lam_2 : forall (X : typ) (t : term (G A)),
-      dist term G (Lam X t) = fmap G (Lam X) (dist term G t).
+      dist term G (Lam X t) = map (Lam X) (dist term G t).
   Proof.
     reflexivity.
   Qed.
 
   Lemma dist_term_ap_1 : forall (t1 t2 : term (G A)),
       dist term G (Ap t1 t2) =
-      (pure G (@Ap A))
+      (pure (@Ap A))
         <⋆> dist term G t1
         <⋆> dist term G t2.
   Proof.
@@ -302,11 +302,11 @@ Section term_dist_rewrite.
 
   Lemma dist_term_ap_2 : forall (t1 t2 : term (G A)),
       dist term G (Ap t1 t2) =
-      (fmap G (@Ap A) (dist term G t1)
+      (map (@Ap A) (dist term G t1)
             <⋆> dist term G t2).
   Proof.
     intros. rewrite dist_term_ap_1.
-    now rewrite fmap_to_ap.
+    now rewrite map_to_ap.
   Qed.
 
 End term_dist_rewrite.
@@ -322,26 +322,27 @@ Naturality of ``dist``
 |*)
 
   Lemma dist_natural_term : forall `(f : A -> B),
-      fmap (G ∘ term) f ∘ dist term G =
-      dist term G ∘ fmap (term ∘ G) f.
+      map (F := G ∘ term) f ∘ dist term G =
+      dist term G ∘ map (F := term ∘ G) f.
   Proof.
     intros; cbn. ext t.
-    unfold_ops @Fmap_compose. unfold compose. induction t.
-    + cbn. compose near a. now rewrite 2(fun_fmap_fmap G).
+    unfold_ops @Map_compose. unfold compose. induction t.
+    + cbn. compose near a.
+      now rewrite 2(fun_map_map).
     + cbn. rewrite <- IHt.
       compose near (dist term G t).
-      now rewrite 2(fun_fmap_fmap G).
+      now rewrite 2(fun_map_map).
     + rewrite (dist_term_ap_2).
-      rewrite (fmap_term_ap).
+      rewrite (map_term_ap).
       rewrite (dist_term_ap_2).
       rewrite <- IHt1, <- IHt2.
-      rewrite <- ap_fmap.
-      rewrite fmap_ap. fequal.
+      rewrite <- ap_map.
+      rewrite map_ap. fequal.
       compose near (dist term G t1).
-      rewrite (fun_fmap_fmap G).
-      rewrite (fun_fmap_fmap G).
+      rewrite (fun_map_map).
+      rewrite (fun_map_map).
       compose near (dist term G t1) on right.
-      rewrite (fun_fmap_fmap G).
+      rewrite (fun_map_map).
       reflexivity.
   Qed.
 
@@ -372,37 +373,38 @@ Traversal laws
   #[local] Set Keyed Unification.
   Lemma dist_linear_term : forall `{Applicative G1} `{Applicative G2} (A : Type),
       dist term (G1 ∘ G2) =
-      fmap G1 (dist term G2) ∘ dist term G1 (A := G2 A).
+      map (F := G1) (dist term G2) ∘ dist term G1 (A := G2 A).
   Proof.
     intros. unfold compose. ext t. induction t.
-    - cbn. compose near a on right. now rewrite (fun_fmap_fmap G1).
+    - cbn. compose near a on right.
+      now rewrite (fun_map_map).
     - cbn. rewrite IHt. compose near (dist term G1 t).
-      change (fmap (G1 ○ G2) (Lam X)) with (fmap G1 (fmap G2 (@Lam A X))).
-      rewrite (fun_fmap_fmap G1).
-      now rewrite (fun_fmap_fmap G1).
+      change (map (F := G1 ○ G2) (Lam X)) with (map (F := G1) (map (F := G2) (@Lam A X))).
+      rewrite (fun_map_map).
+      now rewrite (fun_map_map).
     - rewrite dist_term_ap_2.
       rewrite (dist_term_ap_2 (G := G1 ○ G2)).
-      rewrite fmap_ap.
+      rewrite map_ap.
       compose near ((dist term G1 t1)).
-      rewrite (fun_fmap_fmap G1).
+      rewrite (fun_map_map).
       rewrite (ap_compose2 G2 G1).
       rewrite IHt1, IHt2.
-      rewrite <- ap_fmap. fequal.
+      rewrite <- ap_map. fequal.
       repeat (compose near (dist term G1 t1) on left;
-              rewrite (fun_fmap_fmap G1)).
+              rewrite (fun_map_map (F := G1))).
       fequal. ext s1 s2. unfold compose; cbn.
-      unfold precompose. now rewrite (fmap_to_ap).
+      unfold precompose. now rewrite (map_to_ap).
   Qed.
   #[local] Unset Keyed Unification.
 
   Lemma dist_morph_term : forall `{ApplicativeMorphism G1 G2 ϕ} A,
-      dist term G2 ∘ fmap term (ϕ A) = ϕ (term A) ∘ dist term G1.
+      dist term G2 ∘ map (ϕ A) = ϕ (term A) ∘ dist term G1.
   Proof.
     intros. ext t. unfold compose. induction t.
-    - cbn. now rewrite <- (appmor_natural G1 G2).
+    - cbn. now rewrite <- (appmor_natural).
     - cbn. rewrite IHt.
-      now rewrite (appmor_natural G1 G2).
-    - rewrite fmap_term_ap. inversion H9.
+      now rewrite (appmor_natural).
+    - rewrite map_term_ap. inversion H9.
       rewrite dist_term_ap_2.
       rewrite IHt1. rewrite IHt2.
       rewrite dist_term_ap_2. rewrite (ap_morphism_1).
@@ -424,38 +426,42 @@ Decorated-Traversable Functor instance
 |*)
 
 Lemma dtfun_compat_term1 : forall `{Applicative G} (X : typ) {A},
-    fmap G (dec term ∘ Lam X) ∘ δ term G (A := A) =
-    fmap G (curry (shift term) 1 ∘ Lam X) ∘ fmap G (dec term) ∘ δ term G.
+    map (dec term ∘ Lam X) ∘ δ term G (A := A) =
+    map (F := G) (curry (shift term) 1 ∘ Lam X) ∘ map (dec term) ∘ δ term G.
 Proof.
-  intros. rewrite (fun_fmap_fmap G). reflexivity.
+  intros. rewrite (fun_map_map). reflexivity.
 Qed.
 
 Theorem dtfun_compat_term :
         `(forall `{Applicative G} {A : Type},
-             dist term G ∘ fmap term (strength G) ∘ dec term (A := G A) =
-             fmap G (dec term) ∘ dist term G).
+             dist term G ∘ map (strength) ∘ dec term (A := G A) =
+             map (F := G) (dec term) ∘ dist term G).
 Proof.
   intros. ext t. unfold compose. induction t.
-  - cbn. compose near a. now rewrite 2(fun_fmap_fmap G).
+  - cbn. compose near a. now rewrite 2(fun_map_map).
   - cbn. do 2 (compose near (dec term t) on left;
-               rewrite (fun_fmap_fmap term)).
-    reassociate <-. rewrite (strength_shift1 nat G).
-    rewrite <- (fun_fmap_fmap term); unfold compose.
-    change (fmap term (fmap G ?f)) with (fmap (term ∘ G) f).
-    compose near ((fmap term (σ G) (dec term t))).
+               rewrite (fun_map_map)).
+    reassociate <-.
+    rewrite incr_spec.
+    rewrite (strength_shift1 (W := nat) G).
+    rewrite <- (fun_map_map); unfold compose.
+    change (map (map ?f)) with (map (F := term ∘ G) f).
+    compose near ((map (σ (F := G)) (dec term t))).
     unfold_compose_in_compose.
     rewrite <- (natural (ϕ := @dist term _ G _ _ _)).
     unfold compose.
     rewrite IHt. compose near (δ term G t).
-    rewrite (fun_fmap_fmap G).
+    rewrite (fun_map_map).
     compose near (δ term G t) on left.
-    unfold_ops @Fmap_compose; rewrite 2(fun_fmap_fmap G).
+    unfold_ops @Map_compose; rewrite 2(fun_map_map).
     fequal. ext t'; unfold compose; cbn.
-    compose near (dec term t') on right; now rewrite (fun_fmap_fmap term).
-  - cbn. rewrite IHt1, IHt2. rewrite fmap_ap. rewrite fmap_ap.
-    rewrite pure_ap_fmap. rewrite <- ap_fmap.
-    rewrite (app_pure_natural G). rewrite <- (fmap_to_ap).
-    compose near (δ term G t1) on left. rewrite (fun_fmap_fmap G).
+    compose near (dec term t') on right.
+    rewrite (fun_map_map (F := term)).
+    now rewrite incr_spec.
+  - cbn. rewrite IHt1, IHt2. rewrite map_ap. rewrite map_ap.
+    rewrite pure_ap_map. rewrite <- ap_map.
+    rewrite (app_pure_natural). rewrite <- (map_to_ap).
+    compose near (δ term G t1) on left. rewrite (fun_map_map).
     reflexivity.
 Qed.
 
@@ -484,13 +490,13 @@ Fixpoint join_term {A : Type} (t : term (term A)) : term A :=
 #[export] Instance Join_term : Join term := @join_term.
 
 Theorem ret_natural : forall A B (f : A -> B),
-    fmap term f ∘ ret term = ret term ∘ f.
+    map f ∘ ret (T := term)  = ret ∘ f.
 Proof.
   reflexivity.
 Qed.
 
 Theorem join_natural : forall A B (f : A -> B),
-    fmap term f ∘ join term = join term ∘ fmap term (fmap term f).
+    map f ∘ join = join (T := term) ∘ map (map f).
 Proof.
   intros. ext t. unfold transparent tcs.
   unfold compose. basic t.
@@ -511,20 +517,21 @@ Proof.
 Qed.
 
 Theorem join_ret : forall A,
-    join term ∘ ret term = @id (term A).
+    join ∘ ret (T := term) = @id (term A).
 Proof.
   reflexivity.
 Qed.
 
-Theorem join_fmap_ret : forall A,
-    join term ∘ fmap term (ret term) = @id (term A).
+Theorem join_map_ret : forall A,
+    join (T := term) ∘ map (F := term) (ret (T := term)) = @id (term A).
 Proof.
-  intros. unfold compose. unfold transparent tcs.
+  intros. unfold compose.
+  unfold transparent tcs.
   ext t. basic t.
 Qed.
 
 Theorem join_join : forall A,
-    join term ∘ join term = join term (A := A) ∘ fmap term (join term).
+    join (T := term) ∘ join (T := term) = join (A := A) ∘ map (join (T := term)).
 Proof.
   intros. unfold compose. unfold transparent tcs.
   ext t. basic t.
@@ -532,7 +539,7 @@ Qed.
 
 #[export] Instance Monad_term : Monad term :=
   {| mon_join_ret := join_ret;
-     mon_join_fmap_ret := join_fmap_ret;
+     mon_join_map_ret := join_map_ret;
      mon_join_join := join_join |}.
 
 (*|
@@ -541,14 +548,14 @@ Decorated Monad instance
 |*)
 
 Theorem dec_ret : forall A,
-    dec term ∘ ret term (A := A) = ret term ∘ pair Ƶ.
+    dec term ∘ ret (A := A) = ret (T := term) ∘ pair Ƶ.
 Proof.
   reflexivity.
 Qed.
 
 Theorem dec_join : forall A,
-    dec term ∘ join term (A := A) =
-    join term ∘ fmap term (shift term) ∘ dec term ∘ fmap term (dec term).
+    dec term ∘ join (T := term) (A := A) =
+    join (T := term) ∘ map (F := term) (shift term) ∘ dec term ∘ map (F := term) (dec term).
 Proof.
   intros. unfold compose. ext t. induction t.
   - cbn -[shift]. now rewrite (shift_zero term).
@@ -572,36 +579,38 @@ Traversable Monad instance
 |*)
 
 Theorem trvmon_ret_term `{Applicative G} :
-  `(dist term G ∘ ret term (A := G A) = fmap G (ret term)).
+  `(dist term G ∘ ret (T := term) (A := G A) = map (ret (T := term))).
 Proof.
   intros. ext x. reflexivity.
 Qed.
 
+From Tealeaves Require Import Categories.TraversableFunctor.
+
 #[local] Set Keyed Unification.
 Theorem trvmon_join_term `{Applicative G} :
-  `(dist term G ∘ join term = fmap G (join term) ∘ dist (term ∘ term) G (A := A)).
+  `(dist term G ∘ join (T := term) = map (join (T := term)) ∘ dist (term ∘ term) G (A := A)).
 Proof.
   intros. ext t. unfold compose. induction t.
   - cbn. compose near (dist term G a).
-    rewrite (fun_fmap_fmap G).
-    replace (join term ∘ Var (A := term A)) with (@id (term A)).
-    now rewrite (fun_fmap_id G).
+    rewrite (fun_map_map).
+    replace (join ∘ Var (A := term A)) with (@id (term A)).
+    now rewrite (fun_map_id).
     apply (join_ret).
   - cbn. rewrite IHt.
     unfold_ops @Dist_compose. unfold compose.
-    compose near (dist term G (fmap term (dist term G) t)).
-    rewrite (fun_fmap_fmap G).
-    rewrite (fun_fmap_fmap G).
+    compose near (dist term G (map (dist term G) t)).
+    rewrite (fun_map_map).
+    rewrite (fun_map_map).
     reflexivity.
   - cbn. rewrite IHt1, IHt2.
     unfold_ops @Dist_compose. unfold compose.
-    rewrite <- fmap_to_ap.
-    rewrite <- fmap_to_ap.
-    rewrite <- ap_fmap. rewrite fmap_ap.
-    fequal. compose near ((dist term G (fmap term (dist term G) t1))).
-    repeat rewrite (fun_fmap_fmap G).
-    compose near ((dist term G (fmap term (dist term G) t1))) on left.
-    rewrite (fun_fmap_fmap G).
+    rewrite <- map_to_ap.
+    rewrite <- map_to_ap.
+    rewrite <- ap_map. rewrite map_ap.
+    fequal. compose near ((dist term G (map (dist term G) t1))).
+    repeat rewrite (fun_map_map).
+    compose near ((dist term G (map (dist term G) t1))) on left.
+    rewrite (fun_map_map).
     fequal.
 Qed.
 #[local] Set Keyed Unification.

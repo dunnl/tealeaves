@@ -1,37 +1,61 @@
-COQDOC_EXTRA_DIR:=extra/CoqdocJS
-COQDOCFLAGS:= \
-  --external 'http://ssr2.msr-inria.inria.fr/doc/ssreflect-1.5/' Ssreflect \
-  --external 'http://ssr2.msr-inria.inria.fr/doc/mathcomp-1.5/' MathComp \
-  --toc --toc-depth 2 --html --interpolate \
-  --index indexpage --no-lib-name --parse-comments \
-  --with-header $(COQDOC_EXTRA_DIR)/header.html --with-footer $(COQDOC_EXTRA_DIR)/footer.html
-export COQDOCFLAGS
-COQMAKEFILE:=Makefile.coq
-COQ_PROJ:=_CoqProject
-VS:=$(wildcard *.v)
+SHELL = bash
+COQ_MAKEFILE  := Makefile.coq
+COQ_PROJ     := _CoqProject
+COQ_VS       := $(shell find Tealeaves/ -name "*.v")
+RM_ARTIFACTS := extra/remove_artifacts.sh
+export COQ_MAKEFILE
 
-all: html
+all: htmlpretty
 
-clean: $(COQMAKEFILE)
-	rm -fr html
-	@$(MAKE) -f $(COQMAKEFILE) $@
-	rm -f $(COQMAKEFILE)
-
-html: $(COQMAKEFILE) $(VS)
-	rm -fr html
-	@$(MAKE) -f $(COQMAKEFILE) $@
-	cp $(COQDOC_EXTRA_DIR)/resources/* html
-
-#alectryon: $(COQMAKEFILE) $(COQMF_VFILES)
-#	rm -fr html-alectryon
-#	alectryon --output-directory html-alectryon $(COQMF_VFILES)
-
-$(COQMAKEFILE): $(COQ_PROJ) $(VS)
+# Generate Makefile.coq from _CoqProject and .v files
+# $(COQ_VS) forces regeneration whenever a .v has a more recent timestamp
+# $(COQ_PROJ) forces regeneration whenever a _CoqProject has a more recent timestamp
+$(COQ_MAKEFILE): $(COQ_PROJ) $(COQ_VS)
+	@echo "Generating Makefile.coq" #with $(COQ_VS)"
 	coq_makefile -f $(COQ_PROJ) -o $@
 
-%: $(COQMAKEFILE) force
-	@$(MAKE) -f $(COQMAKEFILE) $@
+$(COQ_VS):
+	@echo "This statement shouldn't be reached, but was reached via $@"
 
-force $(COQ_PROJ) $(VS): ;
+# html: Generate Coqdocs
+# gallinahtml: Generate Coqdocs without proofs
+# html-pretty: Generate Coqdocs with CoqdocJS
+# alectryon: Generate HTML with Alectryon
+html gallinahtml htmlpretty alectryon: $(COQ_MAKEFILE)
+	$(MAKE) -f $(COQ_MAKEFILE) $@
 
-.PHONY: clean all force
+# Any target not matched above will be passed to Makefile.coq
+%: $(COQ_MAKEFILE) force
+	@echo "'%' pattern target running for target \"$@\""
+	$(MAKE) -f $(COQ_MAKEFILE) $@
+
+# Supress Makefile's auto-rebuilding target
+# # https://stackoverflow.com/questions/67251937/makefile-match-anything-rule-picks-up-makefile-target
+Makefile: ;
+
+# Placeholder if we wanted to generate _CoqProject
+$(COQ_PROJ): ;
+
+install-examples:
+	cp html-examples/* ${out} -r
+
+# The last command requires GNU find and deletes empty directories
+# under Tealeaves/
+clean: $(COQ_MAKEFILE)
+	$(MAKE) -f $(COQ_MAKEFILE) $@
+	rm -f $(COQ_MAKEFILE)
+	$(RM_ARTIFACTS)
+	find Tealeaves/ . -type d -empty -delete
+
+clean-html:
+	rm -fr html
+
+clean-all: clean clean-html
+
+# Warning: this interactively destroys all files not under version
+# control
+clean-repo: clean
+	git clean -xdi -e Makefile.coq.conf -e Makefile.coq.local -e ".*"
+
+force: ;
+.PHONY: clean all force clean-repo examples-html install-examples

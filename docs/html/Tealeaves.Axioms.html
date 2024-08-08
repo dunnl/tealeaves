@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Axioms</h1>
+
+<div class="code">
+<span class="comment">(*|<br/>
+###########
+Tealeaves.Axioms
+###########<br/>
+<br/>
+============================<br/>
+Axioms&nbsp;imported&nbsp;by&nbsp;Tealeaves<br/>
+============================<br/>
+<br/>
+These&nbsp;two&nbsp;exports&nbsp;bring&nbsp;in&nbsp;two&nbsp;axioms.<br/>
+<br/>
+function&nbsp;extensionality<br/>
+&nbsp;&nbsp;..&nbsp;math::<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\forall&nbsp;x,&nbsp;f&nbsp;x&nbsp;=&nbsp;g&nbsp;x&nbsp;\to&nbsp;f&nbsp;=&nbsp;g<br/>
+<br/>
+and<br/>
+<br/>
+propositional&nbsp;extensionality<br/>
+&nbsp;&nbsp;..&nbsp;math::<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\forall&nbsp;\phi&nbsp;\psi,&nbsp;(\phi&nbsp;\iff&nbsp;\psi)&nbsp;\iff&nbsp;\phi&nbsp;=&nbsp;\psi<br/>
+|*)</span><br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Coq.Logic</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Logic.FunctionalExtensionality.html#"><span class="id" title="library">FunctionalExtensionality</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Logic.PropExtensionality.html#"><span class="id" title="library">PropExtensionality</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab1"></a><h2 class="section">Support for reasoning with extensionality</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">ext_destruct</span> <span class="id" title="var">pat</span> :=<br/>
+&nbsp;&nbsp;(<span class="id" title="keyword">let</span> <span class="id" title="var">tmp</span> := <span class="id" title="tactic">fresh</span> "TMP" <span class="id" title="tactic">in</span> <span class="id" title="tactic">extensionality</span> <span class="id" title="var">tmp</span>; <span class="id" title="tactic">destruct</span> <span class="id" title="var">tmp</span> <span class="id" title="keyword">as</span> <span class="id" title="var">pat</span>)<br/>
+&nbsp;&nbsp;+ (<span class="id" title="tactic">extensionality</span> <span class="id" title="var">pat</span>) + (<span class="id" title="tactic">fail</span> "ext failed, make sure your names are fresh").<br/>
+
+<br/>
+<span class="id" title="keyword">Tactic Notation</span> "ext" <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">pat</span>) := <span class="id" title="var">ext_destruct</span> <span class="id" title="var">pat</span>.<br/>
+<span class="id" title="keyword">Tactic Notation</span> "ext" <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">x</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">y</span>) := <span class="id" title="var">ext</span> <span class="id" title="var">x</span>; <span class="id" title="var">ext</span> <span class="id" title="var">y</span>.<br/>
+<span class="id" title="keyword">Tactic Notation</span> "ext" <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">x</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">y</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">z</span>) := <span class="id" title="var">ext</span> <span class="id" title="var">x</span>; <span class="id" title="var">ext</span> <span class="id" title="var">y</span>; <span class="id" title="var">ext</span> <span class="id" title="var">z</span>.<br/>
+<span class="id" title="keyword">Tactic Notation</span> "ext" <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">x</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">y</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">z</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">w</span>) := <span class="id" title="var">ext</span> <span class="id" title="var">x</span>; <span class="id" title="var">ext</span> <span class="id" title="var">y</span>; <span class="id" title="var">ext</span> <span class="id" title="var">z</span>.<br/>
+<span class="id" title="keyword">Tactic Notation</span> "ext" <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">x</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">y</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">z</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">w</span>) := <span class="id" title="var">ext</span> <span class="id" title="var">x</span>; <span class="id" title="var">ext</span> <span class="id" title="var">y</span>; <span class="id" title="var">ext</span> <span class="id" title="var">z</span>; <span class="id" title="var">ext</span> <span class="id" title="var">w</span>.<br/>
+<span class="id" title="keyword">Tactic Notation</span> "ext" <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">x</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">y</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">z</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">w</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">w</span>) := <span class="id" title="var">ext</span> <span class="id" title="var">x</span>; <span class="id" title="var">ext</span> <span class="id" title="var">y</span>; <span class="id" title="var">ext</span> <span class="id" title="var">z</span>; <span class="id" title="var">ext</span> <span class="id" title="var">w</span>; <span class="id" title="var">ext</span> <span class="id" title="var">u</span>.<br/>
+<span class="id" title="keyword">Tactic Notation</span> "ext" <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">x</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">y</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">z</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">w</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">u</span>) <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">v</span>) := <span class="id" title="var">ext</span> <span class="id" title="var">x</span>; <span class="id" title="var">ext</span> <span class="id" title="var">y</span>; <span class="id" title="var">ext</span> <span class="id" title="var">z</span>; <span class="id" title="var">ext</span> <span class="id" title="var">w</span>; <span class="id" title="var">ext</span> <span class="id" title="var">u</span>; <span class="id" title="var">ext</span> <span class="id" title="var">v</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Reduce an equality between propositions to the two directions of
+mutual implication using the propositional extensionality axiom. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Tactic Notation</span> "propext" := <span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Logic.PropExtensionality.html#propositional_extensionality"><span class="id" title="axiom">propositional_extensionality</span></a>; <span class="id" title="tactic">split</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Reduce an equality between propositions to the two directions of
+mutual implication using the propositional extensionality axiom. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Tactic Notation</span> "setext" :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>; <span class="id" title="tactic">repeat</span> (<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := <span class="id" title="tactic">fresh</span> "x" <span class="id" title="tactic">in</span> <span class="id" title="var">ext</span> <span class="id" title="var">x</span>); <span class="id" title="var">propext</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Tactic Notation</span> "setext" <span class="id" title="var">simple_intropattern</span>(<span class="id" title="var">pat</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>; <span class="id" title="var">ext</span> <span class="id" title="var">pat</span>; <span class="id" title="var">propext</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;[global] Set Universe Polymorphism.*)</span><br/>
+<span class="id" title="keyword">Inductive</span> <a id="unit" class="idref" href="#unit"><span class="id" title="inductive">unit</span></a> : <span class="id" title="keyword">Type</span> :=  <a id="tt" class="idref" href="#tt"><span class="id" title="constructor">tt</span></a> : <a class="idref" href="Tealeaves.Axioms.html#unit:1"><span class="id" title="inductive">unit</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

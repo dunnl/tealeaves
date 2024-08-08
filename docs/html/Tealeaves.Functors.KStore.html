@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Functors.KStore</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Batch.html#"><span class="id" title="library">Functors.Batch</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Vector.html#"><span class="id" title="library">Functors.Vector</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">G</span> <span class="id" title="var">ϕ</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Notations"><span class="id" title="module">Applicative.Notations</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab595"></a><h1 class="section">The <span class="inlinecode"><a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a></span> functor</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Inductive</span> <a id="KStore" class="idref" href="#KStore"><span class="id" title="record">KStore</span></a> <a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a> <a id="B:2" class="idref" href="#B:2"><span class="id" title="binder">B</span></a> <a id="C:3" class="idref" href="#C:3"><span class="id" title="binder">C</span></a> :=<br/>
+&nbsp;&nbsp;{ <a id="length" class="idref" href="#length"><span class="id" title="projection">length</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="contents" class="idref" href="#contents"><span class="id" title="projection">contents</span></a> : <a class="idref" href="Tealeaves.Functors.Vector.html#:::'VEC'_x"><span class="id" title="notation">VEC</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#length:5"><span class="id" title="method">length</span></a> <a class="idref" href="Tealeaves.Functors.Vector.html#:::'VEC'_x"><span class="id" title="notation">A</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="build" class="idref" href="#build"><span class="id" title="projection">build</span></a> : <a class="idref" href="Tealeaves.Functors.Vector.html#:::'VEC'_x"><span class="id" title="notation">VEC</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#length:5"><span class="id" title="method">length</span></a> <a class="idref" href="Tealeaves.Functors.Vector.html#:::'VEC'_x"><span class="id" title="notation">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#C:3"><span class="id" title="variable">C</span></a>;<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="kstore" class="idref" href="#kstore"><span class="id" title="definition">kstore</span></a> {<a id="A:8" class="idref" href="#A:8"><span class="id" title="binder">A</span></a> <a id="B:9" class="idref" href="#B:9"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>}: <a class="idref" href="Tealeaves.Functors.KStore.html#A:8"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:8"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:9"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:9"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="a:10" class="idref" href="#a:10"><span class="id" title="binder">a</span></a> ⇒ <a class="idref" href="Tealeaves.Functors.KStore.html#Build_KStore"><span class="id" title="constructor">Build_KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:8"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:9"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:9"><span class="id" title="variable">B</span></a> 1 (<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Vectors.Vector.html#cons"><span class="id" title="constructor">Vector.cons</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:8"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#a:10"><span class="id" title="variable">a</span></a> 0 (<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Vectors.Vector.html#nil"><span class="id" title="constructor">Vector.nil</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:8"><span class="id" title="variable">A</span></a>)) <a class="idref" href="Tealeaves.Functors.Vector.html#unone"><span class="id" title="definition">unone</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab596"></a><h2 class="section">Functor instance</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="map" class="idref" href="#map"><span class="id" title="section">map</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<a id="A:11" class="idref" href="#A:11"><span class="id" title="binder">A</span></a> <a id="B:12" class="idref" href="#B:12"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="map_KStore" class="idref" href="#map_KStore"><span class="id" title="definition">map_KStore</span></a> : <span class="id" title="keyword">∀</span> (<a id="C:13" class="idref" href="#C:13"><span class="id" title="binder">C</span></a> <a id="D:14" class="idref" href="#D:14"><span class="id" title="binder">D</span></a> : <span class="id" title="keyword">Type</span>) (<a id="f:15" class="idref" href="#f:15"><span class="id" title="binder">f</span></a> : <a class="idref" href="Tealeaves.Functors.KStore.html#C:13"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#D:14"><span class="id" title="variable">D</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#C:13"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#D:14"><span class="id" title="variable">D</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">X</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">econstructor</span>. <span class="id" title="var">eassumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">f</span>. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Map_KStore" class="idref" href="#Map_KStore"><span class="id" title="instance">Map_KStore</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> (<a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a>) := <a class="idref" href="Tealeaves.Functors.KStore.html#map_KStore"><span class="id" title="definition">map_KStore</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="map_id_KStore" class="idref" href="#map_id_KStore"><span class="id" title="lemma">map_id_KStore</span></a> : <span class="id" title="keyword">∀</span> (<a id="C:16" class="idref" href="#C:16"><span class="id" title="binder">C</span></a> : <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a>) (@<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#C:16"><span class="id" title="variable">C</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#C:16"><span class="id" title="variable">C</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">ext</span> <span class="id" title="var">k</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">k</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">len</span> <span class="id" title="var">contents</span> <span class="id" title="var">make</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="map_map_KStore" class="idref" href="#map_map_KStore"><span class="id" title="lemma">map_map_KStore</span></a> : <span class="id" title="keyword">∀</span> (<a id="C:17" class="idref" href="#C:17"><span class="id" title="binder">C</span></a> <a id="D:18" class="idref" href="#D:18"><span class="id" title="binder">D</span></a> <a id="E:19" class="idref" href="#E:19"><span class="id" title="binder">E</span></a> : <span class="id" title="keyword">Type</span>) (<a id="f:20" class="idref" href="#f:20"><span class="id" title="binder">f</span></a> : <a class="idref" href="Tealeaves.Functors.KStore.html#C:17"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#D:18"><span class="id" title="variable">D</span></a>) (<a id="g:21" class="idref" href="#g:21"><span class="id" title="binder">g</span></a> : <a class="idref" href="Tealeaves.Functors.KStore.html#D:18"><span class="id" title="variable">D</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#E:19"><span class="id" title="variable">E</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a>) <a class="idref" href="Tealeaves.Functors.KStore.html#g:21"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a>) <a class="idref" href="Tealeaves.Functors.KStore.html#f:20"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a>) (<a class="idref" href="Tealeaves.Functors.KStore.html#g:21"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#f:20"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">ext</span> <span class="id" title="var">k</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">k</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">len</span> <span class="id" title="var">contents</span> <span class="id" title="var">make</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Functor_KStore" class="idref" href="#Functor_KStore"><span class="id" title="instance">Functor_KStore</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Functor"><span class="id" title="class">Functor</span></a> (<a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#map.B"><span class="id" title="variable">B</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">fun_map_id</span></a> := @<a class="idref" href="Tealeaves.Functors.KStore.html#map_id_KStore"><span class="id" title="lemma">map_id_KStore</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a> := @<a class="idref" href="Tealeaves.Functors.KStore.html#map_map_KStore"><span class="id" title="lemma">map_map_KStore</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Functors.KStore.html#map"><span class="id" title="section">map</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab597"></a><h2 class="section">Applicative instance</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="pure_KStore" class="idref" href="#pure_KStore"><span class="id" title="definition">pure_KStore</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:22" class="idref" href="#A:22"><span class="id" title="binder">A</span></a> <a id="B:23" class="idref" href="#B:23"><span class="id" title="binder">B</span></a> <a id="C:24" class="idref" href="#C:24"><span class="id" title="binder">C</span></a> : <span class="id" title="keyword">Type</span>), <a class="idref" href="Tealeaves.Functors.KStore.html#C:24"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:22"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:23"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#C:24"><span class="id" title="variable">C</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> (<a class="idref" href="Tealeaves.Functors.KStore.html#Build_KStore"><span class="id" title="constructor">Build_KStore</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> 0).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Vectors.Vector.html#nil"><span class="id" title="constructor">Vector.nil</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">_</span>; <span class="id" title="tactic">apply</span> <span class="id" title="var">X</span>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Pure_KStore" class="idref" href="#Pure_KStore"><span class="id" title="instance">Pure_KStore</span></a> (<a id="A:25" class="idref" href="#A:25"><span class="id" title="binder">A</span></a> <a id="B:26" class="idref" href="#B:26"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>): <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Pure"><span class="id" title="class">Pure</span></a> (<a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:25"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:26"><span class="id" title="variable">B</span></a>) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.KStore.html#pure_KStore"><span class="id" title="definition">pure_KStore</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="mult_KStore" class="idref" href="#mult_KStore"><span class="id" title="definition">mult_KStore</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:27" class="idref" href="#A:27"><span class="id" title="binder">A</span></a> <a id="B:28" class="idref" href="#B:28"><span class="id" title="binder">B</span></a> <a id="C:29" class="idref" href="#C:29"><span class="id" title="binder">C</span></a> <a id="D:30" class="idref" href="#D:30"><span class="id" title="binder">D</span></a> : <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:27"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:28"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#C:29"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:27"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:28"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#D:30"><span class="id" title="variable">D</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:27"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:28"><span class="id" title="variable">B</span></a> (<a class="idref" href="Tealeaves.Functors.KStore.html#C:29"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#D:30"><span class="id" title="variable">D</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> [<span class="id" title="var">k1</span> <span class="id" title="var">k2</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">k1</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">k2</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> (<a class="idref" href="Tealeaves.Functors.KStore.html#Build_KStore"><span class="id" title="constructor">Build_KStore</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span> (<span class="id" title="var">C</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <span class="id" title="var">D</span>) (<span class="id" title="var">length0</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <span class="id" title="var">length1</span>)).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Vectors.Vector.html#append"><span class="id" title="definition">Vector.append</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intro</span> <span class="id" title="var">t</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Vectors.VectorDef.html#splitat"><span class="id" title="definition">VectorDef.splitat</span></a> <span class="id" title="var">length0</span>) <span class="id" title="tactic">in</span> <span class="id" title="var">t</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">t</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">tc</span> <span class="id" title="var">td</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">auto</span>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Mult_KStore" class="idref" href="#Mult_KStore"><span class="id" title="instance">Mult_KStore</span></a> (<a id="A:31" class="idref" href="#A:31"><span class="id" title="binder">A</span></a> <a id="B:32" class="idref" href="#B:32"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>):<br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Mult"><span class="id" title="class">Mult</span></a> (<a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:31"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:32"><span class="id" title="variable">B</span></a>) := <a class="idref" href="Tealeaves.Functors.KStore.html#mult_KStore"><span class="id" title="definition">mult_KStore</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Applicative_KStore" class="idref" href="#Applicative_KStore"><span class="id" title="instance">Applicative_KStore</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="A:33" class="idref" href="#A:33"><span class="id" title="binder">A</span></a> <a id="B:34" class="idref" href="#B:34"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>), <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Applicative"><span class="id" title="class">Applicative</span></a> (<a class="idref" href="Tealeaves.Functors.KStore.html#KStore"><span class="id" title="record">KStore</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#A:33"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.KStore.html#B:34"><span class="id" title="variable">B</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">x</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">y</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">t</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Vectors.VectorDef.html#splitat"><span class="id" title="definition">VectorDef.splitat</span></a> <span class="id" title="var">length0</span> <span class="id" title="var">t</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">x</span>, <span class="id" title="var">y</span>, <span class="id" title="var">z</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="var">length0</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <span class="id" title="var">length1</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <span class="id" title="var">length2</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">length0</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">(</span></a><span class="id" title="var">length1</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <span class="id" title="var">length2</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">)</span></a>)%<span class="id" title="var">nat</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+<span class="comment">(**&nbsp;*&nbsp;Cata&nbsp;for&nbsp;&lt;&lt;KStore&gt;&gt;&nbsp;*)</span><br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Section&nbsp;cata.<br/>
+<br/>
+&nbsp;&nbsp;Context<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(A&nbsp;B&nbsp;:&nbsp;Type).<br/>
+<br/>
+&nbsp;&nbsp;Definition&nbsp;cata&nbsp;`{Mult&nbsp;G}&nbsp;`{Map&nbsp;G}&nbsp;`{Pure&nbsp;G}:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;forall&nbsp;(f&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;G&nbsp;B)&nbsp;C,&nbsp;KStore&nbsp;A&nbsp;B&nbsp;C&nbsp;-&gt;&nbsp;G&nbsp;C.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros&nbsp;f&nbsp;C&nbsp;<span class="inlinecode"><span class="id" title="var">len</span></span> <span class="inlinecode"><span class="id" title="var">contents</span></span> <span class="inlinecode"><span class="id" title="var">make</span></span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;pose&nbsp;(x&nbsp;:=&nbsp;traverse&nbsp;(T&nbsp;:=&nbsp;VEC&nbsp;len)&nbsp;(G&nbsp;:=&nbsp;G)&nbsp;f&nbsp;contents).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;apply&nbsp;(map&nbsp;(F&nbsp;:=&nbsp;G)&nbsp;make&nbsp;x).<br/>
+&nbsp;&nbsp;Defined.<br/>
+<br/>
+&nbsp;&nbsp;[local] Instance Natural_cata:
+    forall `{Applicative G} (f : A -> G B),
+      Natural (cata f).
+  Proof.
+    constructor; try typeclasses eauto.
+    intros. ext k.
+    unfold compose. destruct k.
+    cbn. compose near ((traverse (T := VEC length0) f contents0)) on left.
+    rewrite (fun_map_map (F := G)).
+    reflexivity.
+  Qed.
+
+  Lemma traverse_Vector_KStore: forall len kstore contents,
+      traverse (T := VEC len)
+               (G := KStore A B) kstore contents =
+        {| length := len; contents := contents; build := (@id _) |}.
+  Proof.
+    intros len kstore contents.
+    induction contents.
+    - cbn.
+      unfold_ops @Pure_KStore.
+      unfold pure_KStore.
+      fequal.
+      ext b. rewrite toNil. reflexivity.
+    - cbn.
+      change_left (pure (F := KStore A B)
+                        (Basics.flip (fun a : B => Vector.cons B a n))
+                   <⋆> traverse (T := VEC n) (G := KStore A B) kstore contents0
+                   <⋆> kstore h).
+      rename h into a.
+      rewrite IHcontents.
+  Abort.
+
+  Lemma cata_kstore : forall C, cata kstore C = @id (KStore A B C).
+  Proof.
+    intros C. ext k. destruct k as [len contents make].
+    unfold id.
+    unfold cata.
+    Fail (now rewrite traverse_Vector_KStore).
+  Abort.
+
+  Lemma cata_appmor
+  `{ApplicativeMorphism G1 G2 ϕ}:
+    forall (f : A -> G1 B) C, ϕ C ∘ cata f C = cata (ϕ B ∘ f) C.
+  Proof.
+    intros. ext k.
+    inversion H5. unfold compose. induction k.
+    cbn. rewrite appmor_natural.
+    compose near (contents0).
+    rewrite (trf_traverse_morphism (T := VEC length0)).
+    reflexivity.
+  Qed.
+
+End cata.
+*)</span><br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

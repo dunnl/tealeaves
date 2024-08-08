@@ -1,0 +1,377 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Simplification.MBinddt</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Simplification.Support.html#"><span class="id" title="library">Simplification.Support</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Simplification.Binddt.html#"><span class="id" title="library">Simplification.Binddt</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Theory.Multisorted.DecoratedTraversableMonad.html#"><span class="id" title="library">Theory.Multisorted.DecoratedTraversableMonad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Multisorted.Theory.Foldmap.html#"><span class="id" title="library">Classes.Multisorted.Theory.Foldmap</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Categories.TypeFamily.html#Notations"><span class="id" title="module">Categories.TypeFamily.Notations</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Lists.List.html#ListNotations"><span class="id" title="module">List.ListNotations</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Product.Notations</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Monoid.html#Notations"><span class="id" title="module">Monoid.Notations</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ContainerFunctor.html#Notations"><span class="id" title="module">ContainerFunctor.Notations</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.Subset.html#Notations"><span class="id" title="module">Subset.Notations</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Notations"><span class="id" title="module">Applicative.Notations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="local_lemmas_needed" class="idref" href="#local_lemmas_needed"><span class="id" title="section">local_lemmas_needed</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="ix:1" class="idref" href="#ix:1"><span class="id" title="binder">ix</span></a>: <a class="idref" href="Tealeaves.Categories.TypeFamily.html#Index"><span class="id" title="class">Index</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<a id="W:2" class="idref" href="#W:2"><span class="id" title="binder">W</span></a>: <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<a id="T:3" class="idref" href="#T:3"><span class="id" title="binder">T</span></a>: <a class="idref" href="Tealeaves.Categories.TypeFamily.html#K"><span class="id" title="method">K</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="U:4" class="idref" href="#U:4"><span class="id" title="binder">U</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">MultiDecoratedTraversablePreModule</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">(</span></a><a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">ix</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">:=</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">ix</span></a><a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">)</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">W</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">T</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">U</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">!</span></a> <a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">MultiDecoratedTraversableMonad</span></a> <a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">(</span></a><a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">ix</span></a> <a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">:=</span></a> <a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">ix</span></a><a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">)</span></a> <a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">W</span></a> <a id="MultiDecoratedTraversableMonad0:11" class="idref" href="#MultiDecoratedTraversableMonad0:11"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="simplify_mmapdt_at_leaves_lemma" class="idref" href="#simplify_mmapdt_at_leaves_lemma"><span class="id" title="lemma">simplify_mmapdt_at_leaves_lemma</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> {<a id="k:12" class="idref" href="#k:12"><span class="id" title="binder">k</span></a>: <a class="idref" href="Tealeaves.Categories.TypeFamily.html#K"><span class="id" title="method">K</span></a>} {<a id="A:13" class="idref" href="#A:13"><span class="id" title="binder">A</span></a> <a id="B:14" class="idref" href="#B:14"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>} {<a id="G:15" class="idref" href="#G:15"><span class="id" title="binder">G</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H4:19" class="idref" href="#H4:19"><span class="id" title="binder">Applicative</span></a> <a id="H4:19" class="idref" href="#H4:19"><span class="id" title="binder">G</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="f:20" class="idref" href="#f:20"><span class="id" title="binder">f</span></a> : <a class="idref" href="Tealeaves.Categories.TypeFamily.html#K"><span class="id" title="method">K</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#local_lemmas_needed.W"><span class="id" title="variable">W</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#A:13"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#G:15"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#B:14"><span class="id" title="variable">B</span></a>) (<a id="w:21" class="idref" href="#w:21"><span class="id" title="binder">w</span></a>: <a class="idref" href="Tealeaves.Simplification.MBinddt.html#local_lemmas_needed.W"><span class="id" title="variable">W</span></a>) (<a id="a:22" class="idref" href="#a:22"><span class="id" title="binder">a</span></a> : <a class="idref" href="Tealeaves.Simplification.MBinddt.html#A:13"><span class="id" title="variable">A</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mapMret"><span class="id" title="definition">mapMret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Simplification.MBinddt.html#local_lemmas_needed.T"><span class="id" title="variable">T</span></a>) <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">◻</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#f:20"><span class="id" title="variable">f</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">k</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">w</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">a</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#pure"><span class="id" title="definition">pure</span></a> (<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mret"><span class="id" title="definition">mret</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#local_lemmas_needed.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#k:12"><span class="id" title="variable">k</span></a>) <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#0c61d814eb957f5c7288668d24a48d19"><span class="id" title="notation">&lt;⋆&gt;</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#f:20"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#k:12"><span class="id" title="variable">k</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Simplification.MBinddt.html#w:21"><span class="id" title="variable">w</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#a:22"><span class="id" title="variable">a</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mapMret"><span class="id" title="definition">mapMret</span></a>, <a class="idref" href="Tealeaves.Categories.TypeFamily.html#vec_apply"><span class="id" title="definition">vec_apply</span></a>, <a class="idref" href="Tealeaves.Categories.TypeFamily.html#vec_compose"><span class="id" title="definition">vec_compose</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#map_to_ap"><span class="id" title="lemma">map_to_ap</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#local_lemmas_needed"><span class="id" title="section">local_lemmas_needed</span></a>.<br/>
+
+<br/>
+<span class="comment">(*|<br/>
+Miscellaneous<br/>
+|*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">normalize_K</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[@<a class="idref" href="Tealeaves.Categories.TypeFamily.html#K"><span class="id" title="method">K</span></a> ?<span class="id" title="var">Ix</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#K"><span class="id" title="method">K</span></a>, <span class="id" title="var">Ix</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab1110"></a><h1 class="section">Rewriting with binddt</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="ToBinddt" class="idref" href="#ToBinddt"><span class="id" title="module">ToBinddt</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac</span> <span class="id" title="var">rewrite_core_ops_to_mbinddt</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;map&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmap"><span class="id" title="definition">mmap</span></a> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "mmap_to_mbinddt";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">progress</span> (<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmap_to_mbinddt"><span class="id" title="lemma">mmap_to_mbinddt</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;mapd/bind/traverse&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbind"><span class="id" title="definition">mbind</span></a> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "mbind_to_mbinddt";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">progress</span> (<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbind_to_mbinddt"><span class="id" title="lemma">mbind_to_mbinddt</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapd"><span class="id" title="definition">mmapd</span></a> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "mmapd_to_mbinddt";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">progress</span> (<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapd_to_mbinddt"><span class="id" title="lemma">mmapd_to_mbinddt</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;mmapdt/bindd/bindt&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapdt"><span class="id" title="definition">mmapdt</span></a> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "mmapdt_to_mbinddt";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">progress</span> (<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapdt_to_mbinddt"><span class="id" title="lemma">mmapdt_to_mbinddt</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbindd"><span class="id" title="definition">mbindd</span></a> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "mbindd_to_mbinddt";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">progress</span> (<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbindd_to_mbinddt"><span class="id" title="lemma">mbindd_to_mbinddt</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableMonad.html#bindt"><span class="id" title="definition">bindt</span></a> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "bindt_to_mbinddt";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">progress</span> (<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbindt_to_mbinddt"><span class="id" title="lemma">mbindt_to_mbinddt</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Simplification.MBinddt.html#ToBinddt"><span class="id" title="module">ToBinddt</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">cbn_mbinddt_post_hook</span> := <span class="id" title="tactic">idtac</span>.<br/>
+
+<br/>
+<span class="comment">(*|<br/>
+mbinddt<br/>
+|*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;We&nbsp;surround&nbsp;this&nbsp;with&nbsp;"repeat"&nbsp;to&nbsp;so&nbsp;we&nbsp;don't&nbsp;get&nbsp;stuck&nbsp;on&nbsp;a&nbsp;false&nbsp;target:&nbsp;a&nbsp;left-most&nbsp;binddt&nbsp;might&nbsp;be&nbsp;"simplified"&nbsp;to&nbsp;an&nbsp;equal-looking&nbsp;expression&nbsp;because&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;&lt;&lt;cbn&gt;&gt;&nbsp;simplifies&nbsp;some&nbsp;hidden&nbsp;argument,&nbsp;so&nbsp;that&nbsp;a&nbsp;right-more&nbsp;expression,&nbsp;the&nbsp;intended&nbsp;target,&nbsp;gets&nbsp;ignored&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">cbn_mbinddt</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbinddt"><span class="id" title="definition">mbinddt</span></a> (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">H</span> := ?<span class="id" title="var">H</span>) (<span class="id" title="var">H0</span> := ?<span class="id" title="var">H0</span>) (<span class="id" title="var">H1</span> := ?<span class="id" title="var">H1</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?<span class="id" title="var">U</span> ?<span class="id" title="var">F</span> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="keyword">constr</span>:(<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbinddt"><span class="id" title="definition">mbinddt</span></a> (<span class="id" title="var">W</span> := <span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) <span class="id" title="var">U</span> <span class="id" title="var">F</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">H</span> := <span class="id" title="var">H</span>) (<span class="id" title="var">H0</span> := <span class="id" title="var">H0</span>) (<span class="id" title="var">H1</span> := <span class="id" title="var">H1</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">f</span> <span class="id" title="var">t</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;cbn_subterm&nbsp;e&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e'</span> := <span class="id" title="tactic">eval</span> <span class="id" title="var">cbn</span> -[<span class="id" title="var">K</span> <span class="id" title="var">btgd</span> <span class="id" title="var">btg</span>] <span class="id" title="tactic">in</span> <span class="id" title="var">e</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">progress</span> (<span class="id" title="tactic">change</span> <span class="id" title="var">e</span> <span class="id" title="keyword">with</span> <span class="id" title="var">e'</span>); <span class="id" title="var">cbn_mbinddt_post_hook</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbinddt_unfold_ret_hook</span> := <span class="id" title="tactic">idtac</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbinddt</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">cbn_mbinddt</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_mbinddt_unfold_ret_hook</span>.<br/>
+
+<br/>
+<span class="comment">(*|<br/>
+mbindd<br/>
+|*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">cbn_mbindd</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbindd"><span class="id" title="definition">mbindd</span></a> (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?<span class="id" title="var">U</span> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="keyword">constr</span>:(<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbindd"><span class="id" title="definition">mbindd</span></a> (<span class="id" title="var">W</span> := <span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) <span class="id" title="var">U</span> <span class="id" title="var">f</span> <span class="id" title="var">t</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn_subterm</span> <span class="id" title="var">e</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbindd_post_refold_hook</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_applicative_I</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbindd_pre_refold_hook</span> <span class="id" title="var">ix</span> := <span class="id" title="tactic">idtac</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbindd</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbindd"><span class="id" title="definition">mbindd</span></a> (<span class="id" title="var">ix</span> := ?<span class="id" title="var">ix</span>) (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?<span class="id" title="var">U</span> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> ?<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbindd_to_mbinddt"><span class="id" title="lemma">mbindd_to_mbinddt</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mbinddt</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mbindd_pre_refold_hook</span> <span class="id" title="var">ix</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- ?<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbindd_to_mbinddt"><span class="id" title="lemma">mbindd_to_mbinddt</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mbindd_post_refold_hook</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*|<br/>
+mbind<br/>
+|*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">cbn_mbind</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbind"><span class="id" title="definition">mbind</span></a> (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?<span class="id" title="var">U</span> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="keyword">constr</span>:(<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbind"><span class="id" title="definition">mbind</span></a> (<span class="id" title="var">W</span> := <span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) <span class="id" title="var">U</span> <span class="id" title="var">f</span> <span class="id" title="var">t</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn_subterm</span> <span class="id" title="var">e</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;after&nbsp;unfolding,<br/>
+&nbsp;&nbsp;&nbsp;mbindd&nbsp;U&nbsp;(f&nbsp;◻&nbsp;allK&nbsp;extract)&nbsp;(C&nbsp;x1&nbsp;x2)<br/>
+&nbsp;&nbsp;&nbsp;is&nbsp;simplified&nbsp;to<br/>
+&nbsp;&nbsp;&nbsp;C&nbsp;(mbindd&nbsp;typ&nbsp;((f&nbsp;◻&nbsp;allK&nbsp;extract)&nbsp;◻&nbsp;allK&nbsp;(incr&nbsp;<span class="inlinecode"><span class="id" title="var">ktyp</span></span>))&nbsp;x1)&nbsp;...<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbind_pre_refold_hook</span> <span class="id" title="var">ix</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> ( <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#vec_compose_assoc"><span class="id" title="lemma">vec_compose_assoc</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Categories.TypeFamily.html#vec_compose_allK"><span class="id" title="lemma">vec_compose_allK</span></a> (<span class="id" title="var">H</span> := <span class="id" title="var">ix</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Functors.Writer.html#extract_incr"><span class="id" title="lemma">extract_incr</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbind_post_refold_hook</span> := <span class="id" title="tactic">idtac</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;At&nbsp;a&nbsp;k-annotated&nbsp;leaf,<br/>
+&nbsp;&nbsp;&nbsp;mbind&nbsp;f&nbsp;(Ret&nbsp;x)<br/>
+&nbsp;&nbsp;&nbsp;becomes<br/>
+&nbsp;&nbsp;&nbsp;(f&nbsp;◻&nbsp;allK&nbsp;(extract&nbsp;(W&nbsp;:=&nbsp;?W)))&nbsp;k&nbsp;(Ƶ,&nbsp;x)]&nbsp;=&gt;<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbind_at_leaf_hook</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|- <span class="id" title="keyword">context</span> [<a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">(</span></a>?<span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">◻</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#allK"><span class="id" title="definition">allK</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>))<a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">?</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">k</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">(?</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">w</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">?</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">a</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">)</span></a>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">(</span></a>?<span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">◻</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#allK"><span class="id" title="definition">allK</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>))<a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">?</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">k</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">(?</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">w</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">?</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">a</span></a><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">)</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<span class="id" title="var">f</span> <span class="id" title="var">k</span> <span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mbind</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbind"><span class="id" title="definition">mbind</span></a> (<span class="id" title="var">ix</span> := ?<span class="id" title="var">ix</span>) (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?<span class="id" title="var">U</span> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> ?<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbind_to_mbindd"><span class="id" title="lemma">mbind_to_mbindd</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mbindd</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mbind_pre_refold_hook</span> <span class="id" title="var">ix</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- ?<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mbind_to_mbindd"><span class="id" title="lemma">mbind_to_mbindd</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mbind_post_refold_hook</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mbind_at_leaf_hook</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*|<br/>
+mmapdt<br/>
+|*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">cbn_mmapdt</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapdt"><span class="id" title="definition">mmapdt</span></a> (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?<span class="id" title="var">U</span> ?<span class="id" title="var">F</span> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="keyword">constr</span>:(<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapdt"><span class="id" title="definition">mmapdt</span></a> (<span class="id" title="var">W</span> := <span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) <span class="id" title="var">U</span> <span class="id" title="var">F</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">f</span> <span class="id" title="var">t</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn_subterm</span> <span class="id" title="var">e</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">reassociate_in_args</span> <span class="id" title="var">ix</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">(</span></a>?<span class="id" title="var">h</span> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">◻</span></a> ?<span class="id" title="var">g</span><a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#220507b818767551b87430f96eda63fb"><span class="id" title="notation">◻</span></a> ?<span class="id" title="var">f</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;rewrite&nbsp;(vec_compose_assoc&nbsp;(H&nbsp;:=&nbsp;ix)&nbsp;h&nbsp;g&nbsp;f)&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Categories.TypeFamily.html#vec_compose_assoc"><span class="id" title="lemma">vec_compose_assoc</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;After&nbsp;unfolding,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mbinddt&nbsp;U&nbsp;(mapMret&nbsp;◻&nbsp;f)&nbsp;(C&nbsp;x1&nbsp;x2)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;simplified&nbsp;to&nbsp;(where&nbsp;w&nbsp;is&nbsp;C's&nbsp;decoration&nbsp;for&nbsp;x1)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pure&nbsp;C&nbsp;&lt;⋆&gt;&nbsp;mbinddt&nbsp;U&nbsp;((mapMret&nbsp;◻&nbsp;f)&nbsp;◻&nbsp;allK&nbsp;(incr&nbsp;w))&nbsp;x1&nbsp;&lt;⋆&gt;&nbsp;...<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mmapdt_pre_refold_hook</span> <span class="id" title="var">ix</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">reassociate_in_args</span> <span class="id" title="var">ix</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mmapdt_post_refold_hook</span> := <span class="id" title="tactic">idtac</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mmapdt_at_leaves_hook</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> ?(<a class="idref" href="Tealeaves.Simplification.MBinddt.html#simplify_mmapdt_at_leaves_lemma"><span class="id" title="lemma">simplify_mmapdt_at_leaves_lemma</span></a> <span class="id" title="var">_</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mmapdt</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapdt"><span class="id" title="definition">mmapdt</span></a> (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">ix</span> := ?<span class="id" title="var">ix</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?<span class="id" title="var">U</span> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> ?<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapdt_to_mbinddt"><span class="id" title="lemma">mmapdt_to_mbinddt</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mbinddt</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mmapdt_pre_refold_hook</span> <span class="id" title="var">ix</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- ?<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapdt_to_mbinddt"><span class="id" title="lemma">mmapdt_to_mbinddt</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mmapdt_post_refold_hook</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mmapdt_at_leaves_hook</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*|<br/>
+mmap<br/>
+|*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mmapd_pre_refold_hook</span> <span class="id" title="var">ix</span> := <span class="id" title="tactic">idtac</span>.<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mmapd_post_refold_hook</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_applicative_I</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_mmapd</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapd"><span class="id" title="definition">mmapd</span></a> (<span class="id" title="var">W</span> := ?<span class="id" title="var">W</span>) (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">ix</span> := ?<span class="id" title="var">ix</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;?<span class="id" title="var">U</span> ?<span class="id" title="var">f</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> ?<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapd_to_mmapdt"><span class="id" title="lemma">mmapd_to_mmapdt</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mmapdt</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mmapd_pre_refold_hook</span> <span class="id" title="var">ix</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- ?<a class="idref" href="Tealeaves.Classes.Multisorted.DecoratedTraversableMonad.html#mmapdt_to_mbinddt"><span class="id" title="lemma">mmapdt_to_mbinddt</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_mmapd_post_refold_hook</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+<span class="comment">(**&nbsp;*&nbsp;Miscellaneous&nbsp;lemmas&nbsp;*)</span><br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Lemma&nbsp;filterk_incr&nbsp;:&nbsp;forall&nbsp;(A&nbsp;:&nbsp;Type)&nbsp;(k&nbsp;:&nbsp;K)&nbsp;(l&nbsp;:&nbsp;list&nbsp;(list&nbsp;K2&nbsp;*&nbsp;(K&nbsp;*&nbsp;A)))&nbsp;(inc&nbsp;:&nbsp;list&nbsp;K2),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;filterk&nbsp;k&nbsp;(map&nbsp;(F&nbsp;:=&nbsp;list)&nbsp;(incr&nbsp;inc)&nbsp;l)&nbsp;=&nbsp;map&nbsp;(F&nbsp;:=&nbsp;list)&nbsp;(incr&nbsp;inc)&nbsp;(filterk&nbsp;k&nbsp;l).<br/>
+Proof.<br/>
+&nbsp;&nbsp;intros.&nbsp;induction&nbsp;l.<br/>
+&nbsp;&nbsp;-&nbsp;easy.<br/>
+&nbsp;&nbsp;-&nbsp;destruct&nbsp;a&nbsp;as&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">ctx</span></span> <span class="inlinecode">[<span class="id" title="var">j</span></span> <span class="inlinecode"><span class="id" title="var">a</span>]</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;map_list_cons.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;(incr&nbsp;inc&nbsp;(ctx,&nbsp;(j,&nbsp;a)))&nbsp;with&nbsp;(inc&nbsp;++&nbsp;ctx,&nbsp;(j,&nbsp;a)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;compare&nbsp;values&nbsp;k&nbsp;and&nbsp;j.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;do&nbsp;2&nbsp;rewrite&nbsp;filterk_cons_eq.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;autorewrite&nbsp;with&nbsp;tea_list.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;IHl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+&nbsp;rewrite&nbsp;filterk_cons_neq;&nbsp;auto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;filterk_cons_neq;&nbsp;auto.<br/>
+Qed.<br/>
+<br/>
+<span class="comment">(**&nbsp;*&nbsp;Simplification&nbsp;support&nbsp;*)</span><br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Lemma&nbsp;mextract_preincr2&nbsp;:<br/>
+&nbsp;&nbsp;forall&nbsp;`{ix:&nbsp;Index}&nbsp;{W&nbsp;:&nbsp;Type}&nbsp;{op&nbsp;:&nbsp;Monoid_op&nbsp;W}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{A:&nbsp;Type}&nbsp;{B&nbsp;:&nbsp;K&nbsp;-&gt;&nbsp;Type}&nbsp;(f:&nbsp;forall&nbsp;k,&nbsp;A&nbsp;-&gt;&nbsp;B&nbsp;k)&nbsp;(w&nbsp;:&nbsp;W),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(f&nbsp;◻&nbsp;const&nbsp;(extract&nbsp;(W&nbsp;:=&nbsp;prod&nbsp;W)&nbsp;(A&nbsp;:=&nbsp;A)))&nbsp;◻&nbsp;const&nbsp;(incr&nbsp;w)&nbsp;=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(f&nbsp;◻&nbsp;const&nbsp;(extract&nbsp;(W&nbsp;:=&nbsp;prod&nbsp;W))).<br/>
+Proof.<br/>
+&nbsp;&nbsp;intros.<br/>
+&nbsp;&nbsp;ext&nbsp;k.&nbsp;ext&nbsp;<span class="inlinecode"><span class="id" title="var">w'</span></span> <span class="inlinecode"><span class="id" title="var">a</span></span>.<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+Qed.<br/>
+<br/>
+<br/>
+Ltac&nbsp;simplify&nbsp;:=<br/>
+&nbsp;&nbsp;match&nbsp;goal&nbsp;with<br/>
+&nbsp;&nbsp;|&nbsp;|-&nbsp;context<span class="inlinecode"><span class="id" title="var">mbinddt</span></span> <span class="inlinecode"><span class="id" title="var">typ</span></span> <span class="inlinecode">?<span class="id" title="var">f</span></span> <span class="inlinecode">?<span class="id" title="var">t</span></span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;first&nbsp;<span class="inlinecode"></span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_type_rw1</span></span>
+            <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_type_rw2</span></span>
+            <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_type_rw3</span></span>
+            <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_type_rw4</span></span> <span class="inlinecode"></span><br/>
+&nbsp;&nbsp;|&nbsp;|-&nbsp;context<span class="inlinecode"><span class="id" title="var">mbinddt</span></span> <span class="inlinecode"><span class="id" title="var">term</span></span> <span class="inlinecode">?<span class="id" title="var">f</span></span> <span class="inlinecode">?<span class="id" title="var">t</span></span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;first&nbsp;<span class="inlinecode"></span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_term_rw1</span></span>
+            <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_term_rw2</span></span>
+            <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_term_rw3</span></span>
+            <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_term_rw4</span></span>
+            <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="tactic">rewrite</span></span> <span class="inlinecode"><span class="id" title="var">mbinddt_term_rw5</span></span> <span class="inlinecode"></span><br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;new&nbsp;stuff&nbsp;*)</span><br/>
+&nbsp;&nbsp;|&nbsp;|-&nbsp;context<span class="inlinecode">(?<span class="id" title="var">f</span></span> <span class="inlinecode">◻</span> <span class="inlinecode"><span class="id" title="var">allK</span></span> <span class="inlinecode"><span class="id" title="var">extract</span>)</span> <span class="inlinecode">◻</span> <span class="inlinecode"><span class="id" title="var">allK</span></span> <span class="inlinecode">(<span class="id" title="var">incr</span></span> <span class="inlinecode">?<span class="id" title="var">w</span>)</span>&nbsp;=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;mextract_preincr2<br/>
+&nbsp;&nbsp;end.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

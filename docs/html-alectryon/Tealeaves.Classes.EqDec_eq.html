@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>EqDec_eq.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Require Export</span> Coq.Classes.EquivDec.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Require Export</span> Coq.Structures.Equalities.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Set Implicit Arguments</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Types with decidable equality *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">EqDec_eq</span> (<span class="nv">A</span> : <span class="kt">Type</span>) :=
+  eq_dec : <span class="kr">forall</span> (<span class="nv">x</span> <span class="nv">y</span> : A), {x = y} + {x &lt;&gt; y}.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="eqdec-eq-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="eqdec-eq-v-chk0">#[export] <span class="kn">Instance</span> <span class="nf">EqDec_eq_of_EqDec</span> (<span class="nv">A</span> : <span class="kt">Type</span>) `(@EqDec A eq eq_equivalence) : EqDec_eq A.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>EqDec A eq</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">EqDec_eq A</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="eqdec-eq-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="eqdec-eq-v-chk1"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>EqDec A eq</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">EqDec_eq A</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">trivial</span>.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Defined</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Declare Scope</span> coqeqdec_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Open Scope</span> coqeqdec_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;x == y&quot;</span> := (eq_dec x y) (<span class="kn">at level</span> <span class="mi">70</span>) : coqeqdec_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="eqdec-eq-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="eqdec-eq-v-chk2"><span class="kn">Theorem</span> <span class="nf">eq_dec_refl</span> {<span class="nv">A</span> : <span class="kt">Type</span>} `{EqDec_eq A} (x : A) : eq_dec x x = <span class="nb">left</span> eq_refl.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>EqDec_eq A</span></span></span><br><span><var>x</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(x == x) = <span class="nb">left</span> eq_refl</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="eqdec-eq-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="eqdec-eq-v-chk3"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>EqDec_eq A</span></span></span><br><span><var>x</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(x == x) = <span class="nb">left</span> eq_refl</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="eqdec-eq-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="eqdec-eq-v-chk4"><span class="nb">destruct</span> (eq_dec x x); [|<span class="bp">contradiction</span>].</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>EqDec_eq A</span></span></span><br><span><var>x</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br><span><var>e</var><span class="hyp-type"><b>: </b><span>x = x</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="nb">left</span> e = <span class="nb">left</span> eq_refl</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">f_equal</span>; <span class="nb">apply</span> (Eqdep_dec.UIP_dec eq_dec).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Support for decidable equalities *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">destruct_eq_args</span> x y :=
+  <span class="kr">let</span> <span class="nv">DESTR_EQ</span> := <span class="kp">fresh</span> <span class="s2">&quot;DESTR_EQ&quot;</span> <span class="kr">in</span>
+  <span class="kr">let</span> <span class="nv">DESTR_NEQ</span> := <span class="kp">fresh</span> <span class="s2">&quot;DESTR_NEQ&quot;</span> <span class="kr">in</span>
+  <span class="nb">destruct</span> (x == y) <span class="kr">as</span> [DESTR_EQ | DESTR_NEQ];
+  <span class="kr">let</span> <span class="nv">DESTR_EQs</span> := <span class="kp">fresh</span> <span class="s2">&quot;DESTR_EQs&quot;</span> <span class="kr">in</span>
+  <span class="kr">let</span> <span class="nv">DESTR_NEQs</span> := <span class="kp">fresh</span> <span class="s2">&quot;DESTR_NEQs&quot;</span> <span class="kr">in</span>
+  <span class="nb">destruct</span> (y == x) <span class="kr">as</span> [DESTR_EQs | DESTR_NEQs];
+  [ <span class="nb">subst</span>; <span class="kp">try</span> <span class="nb">rewrite</span> eq_dec_refl <span class="kr">in</span> *; <span class="kp">try</span> <span class="bp">easy</span> | <span class="nb">subst</span>; <span class="kp">try</span> <span class="bp">easy</span> ].</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;compare&quot;</span> <span class="s2">&quot;values&quot;</span> <span class="kp">constr</span>(x) <span class="s2">&quot;and&quot;</span> <span class="kp">constr</span>(y) :=
+  destruct_eq_args x y.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;compare&quot;</span> <span class="kp">constr</span>(x) <span class="s2">&quot;to&quot;</span> <span class="s2">&quot;both&quot;</span> <span class="s2">&quot;of &quot;</span> <span class="s2">&quot;{&quot;</span> <span class="kp">constr</span>(y) <span class="kp">constr</span>(z) <span class="s2">&quot;}&quot;</span> :=
+  <span class="nb">compare</span> values x <span class="kn">and</span> y; <span class="kp">try</span> <span class="nb">compare</span> values x <span class="kn">and</span> z; <span class="kp">try</span> <span class="nb">compare</span> values y <span class="kn">and</span> z.</span></span></pre>
+</div>
+</div></body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Simplification.DeriveDTM</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Theory.DecoratedTraversableMonad.html#"><span class="id" title="library">Theory.DecoratedTraversableMonad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Simplification.Support.html#"><span class="id" title="library">Simplification.Support</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Simplification.Binddt.html#"><span class="id" title="library">Simplification.Binddt</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#Notations"><span class="id" title="module">DecoratedTraversableMonad.Notations</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab765"></a><h1 class="section">Deriving DTM laws expressions</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm_custom_IH</span> := <span class="id" title="keyword">constr</span>:(<a class="idref" href="Tealeaves.Axioms.html#tt"><span class="id" title="constructor">tt</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">induction_term</span> <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">custIH</span> := <span class="id" title="var">derive_dtm_custom_IH</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">T</span> := <span class="id" title="keyword">type</span> <span class="id" title="keyword">of</span> <span class="id" title="var">custIH</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">T</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Axioms.html#unit"><span class="id" title="inductive">unit</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm|Using standard induction";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm|Using custom induction principle";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">t</span> <span class="id" title="keyword">using</span> <span class="id" title="var">custIH</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm_solve_ret_case</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">solve</span> [<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_post_binddt_ret</span>; <span class="id" title="tactic">reflexivity</span> ].<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab766"></a><h2 class="section">Proving the first law</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm1</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">first</span> [ <span class="id" title="tactic">reflexivity</span> |<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">v</span> := <span class="id" title="tactic">fresh</span> "var" <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">ext</span> <span class="id" title="var">v</span>].<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab767"></a><h2 class="section">Proving the second law</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm2_ret_case</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm2_ret_case";<br/>
+&nbsp;&nbsp;<span class="id" title="var">cbn_binddt</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">derive_dtm_solve_ret_case</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm2_ret_case_finished".<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm2_IH_step</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm2_IH_step";<br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_binddt_core</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_applicative_I</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">rewrite_with_any</span>; <span class="comment">(*&nbsp;try&nbsp;to&nbsp;use&nbsp;IH&nbsp;wherever&nbsp;possible&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>; <span class="comment">(*&nbsp;hopefully&nbsp;this&nbsp;solves&nbsp;it,&nbsp;otherwise&nbsp;let&nbsp;the&nbsp;user&nbsp;take&nbsp;over&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">fequal</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm2_IH_step_finished".<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">assert_match_dtm2</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "assert_match_dtm2|match"<br/>
+&nbsp;&nbsp;| |- <span class="id" title="var">_</span> ⇒ <span class="id" title="tactic">fail</span> "assert_match_setup|no match"<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm2_setup</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="tactic">fresh</span> "t" <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">t</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> ?<span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> <span class="id" title="var">t</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">induction_term</span> <span class="id" title="var">t</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm2</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">assert_match_dtm2</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">derive_dtm2_setup</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">if_goal_match_binddt_ret</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm2_ret_case</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm2_IH_step</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab768"></a><h2 class="section">Proving the third law</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="comment">(*&nbsp;map&nbsp;f&nbsp;(pure&nbsp;x)&nbsp;~~~&gt;&nbsp;pure&nbsp;(f&nbsp;x)<br/>
+&nbsp;&nbsp;&nbsp;map&nbsp;f&nbsp;(x&nbsp;&lt;⋆&gt;&nbsp;y)&nbsp;~~~&gt;&nbsp;((map&nbsp;f&nbsp;∘&nbsp;x)&nbsp;&lt;⋆&gt;&nbsp;y)<br/>
+&nbsp;&nbsp;&nbsp;map&nbsp;f&nbsp;((x&nbsp;&lt;⋆&gt;&nbsp;y)&nbsp;&lt;⋆&gt;&nbsp;z)&nbsp;~~~&gt;&nbsp;((map&nbsp;f&nbsp;∘)&nbsp;∘&nbsp;x&nbsp;&lt;⋆&gt;&nbsp;y)&nbsp;&lt;⋆&gt;&nbsp;z<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">push_outer_map_into_pure</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#map_ap"><span class="id" title="lemma">map_ap</span></a>;<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Distribute&nbsp;outer&nbsp;&lt;&lt;map&gt;&gt;&nbsp;into&nbsp;the&nbsp;constructor&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#app_pure_natural"><span class="id" title="method">app_pure_natural</span></a>.<br/>
+<span class="comment">(*&nbsp;Fuse&nbsp;&lt;&lt;map&nbsp;f&gt;&gt;&nbsp;and&nbsp;the&nbsp;&lt;&lt;pure&nbsp;C&gt;&gt;&nbsp;into&nbsp;&lt;&lt;pure&nbsp;(f&nbsp;∘&nbsp;C)&gt;&gt;&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_lhs</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">push_outer_map_into_pure</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;First&nbsp;pass&nbsp;on&nbsp;the&nbsp;RHS&nbsp;where&nbsp;we&nbsp;invoke&nbsp;the&nbsp;IH&nbsp;as&nbsp;much&nbsp;as&nbsp;possible&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_rhs_kc7_preincr</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[@<a class="idref" href="Tealeaves.Classes.Monoid.html#preincr"><span class="id" title="definition">preincr</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> (<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a>?<span class="id" title="var">G1</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">G2</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">?</span></a><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">x</span></a>)] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><span class="id" title="var">G1</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <span class="id" title="var">G2</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">x</span></a>) <span class="id" title="keyword">with</span> (<span class="id" title="var">G1</span> (<span class="id" title="var">G2</span> <span class="id" title="var">x</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;this&nbsp;step&nbsp;deals&nbsp;with&nbsp;composition&nbsp;blocking<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;kc7_preincr&nbsp;*)</span> <span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">rewrite</span> &lt;- <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#kc7_preincr"><span class="id" title="lemma">kc7_preincr</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_rhs_invoke_IH</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">IH</span>: <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">_</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#255bbd5b9391b0fe2117bea7e8c461d4"><span class="id" title="notation">⋆7</span></a> <span class="id" title="var">_</span>) ?<span class="id" title="var">t</span>] |- <span class="id" title="var">_</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <span class="id" title="var">IH</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_rhs_step1</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">dtm3_rhs_kc7_preincr</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">dtm3_rhs_invoke_IH</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Second&nbsp;pass&nbsp;on&nbsp;the&nbsp;RHS&nbsp;where&nbsp;we&nbsp;invoke&nbsp;applicative&nbsp;laws&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_rhs_unfold_ap_compose</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#ap"><span class="id" title="definition">ap</span></a> (?<span class="id" title="var">G1</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">G2</span>)] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">rewrite_strat</span> <span class="id" title="var">innermost</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">terms</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#ap_compose2"><span class="id" title="lemma">ap_compose2</span></a> <span class="id" title="var">G2</span> <span class="id" title="var">G1</span>)))<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_push_map_right_to_left</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#ap_map"><span class="id" title="lemma">ap_map</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">push_outer_map_into_pure</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_rhs_one_constructor</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">dtm3_rhs_unfold_ap_compose</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">push_outer_map_into_pure</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">dtm3_push_map_right_to_left</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_rhs_step2</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Pure_compose"><span class="id" title="instance">Pure_compose</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">dtm3_rhs_one_constructor</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">dtm3_rhs</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">dtm3_rhs_step1</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">dtm3_rhs_step2</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm3_ret_case</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm3|ret case setup";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#kc7"><span class="id" title="definition">kc7</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">do</span> 2 <span class="id" title="var">simplify_binddt_core</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="var">simplify_preincr_zero</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm3|ret case end".<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm3_IH_step</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm3|IH step start";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">do</span> 2 <span class="id" title="var">simplify_binddt_core</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">dtm3_lhs</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">dtm3_rhs</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm3|IH step finished".<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">assert_match_dtm3</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">g</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">f</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "setup_dtm_proof_guess_law3";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">infer_applicative_functors</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="var">_</span> ⇒ <span class="id" title="tactic">fail</span> "derive_dtm3_setup: no match"<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm3_setup</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm3|setup";<br/>
+&nbsp;&nbsp;<span class="id" title="var">assert_match_dtm3</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="tactic">fresh</span> "t" <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">t</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">g</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">f</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">generalize</span> <span class="id" title="tactic">dependent</span> <span class="id" title="var">f</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">generalize</span> <span class="id" title="tactic">dependent</span> <span class="id" title="var">g</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a>?<span class="id" title="var">g</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">f</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">t</span></a>) <span class="id" title="keyword">with</span> (<span class="id" title="var">g</span> (<span class="id" title="var">f</span> <span class="id" title="var">t</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">induction_term</span> <span class="id" title="var">t</span>; <span class="id" title="tactic">intros</span> <span class="id" title="var">g</span> <span class="id" title="var">f</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm3</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">derive_dtm3_setup</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">if_goal_match_binddt_ret</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm3_ret_case</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm3_IH_step</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab769"></a><h2 class="section">Proving the fourt law</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm4_ret_case</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm4|ret case start";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>; <span class="comment">(*&nbsp;should&nbsp;solve&nbsp;&lt;&lt;ret&gt;&gt;&nbsp;case&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm4|ret case end".<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm4_simplify_hom</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#ap_morphism_1"><span class="id" title="lemma">ap_morphism_1</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#appmor_pure"><span class="id" title="method">appmor_pure</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm4_IH_step</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm4|IH step start";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_binddt_core</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">derive_dtm4_simplify_hom</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">rewrite_with_any</span>; <span class="comment">(*&nbsp;try&nbsp;to&nbsp;use&nbsp;IH&nbsp;wherever&nbsp;possible&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="var">easy</span>; <span class="comment">(*&nbsp;hopefully&nbsp;this&nbsp;solves&nbsp;it,&nbsp;otherwise&nbsp;let&nbsp;the&nbsp;user&nbsp;take&nbsp;over&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">fequal</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm4|IH step end".<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm4_setup</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|- <span class="id" title="keyword">context</span>[<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a>?<span class="id" title="var">ϕ</span> (<span class="id" title="var">_</span> ?<span class="id" title="var">B</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> ?<span class="id" title="var">f</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (?<span class="id" title="var">ϕ</span> (<span class="id" title="var">_</span> ?<span class="id" title="var">B</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">f</span>)] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "setup_dtm_proof_guess_law4";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">infer_applicative_functors</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="tactic">fresh</span> "t" <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">t</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">generalize</span> <span class="id" title="tactic">dependent</span> <span class="id" title="var">f</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a>?<span class="id" title="var">g</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">f</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">t</span></a>) <span class="id" title="keyword">with</span> (<span class="id" title="var">g</span> (<span class="id" title="var">f</span> <span class="id" title="var">t</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">induction_term</span> <span class="id" title="var">t</span>; <span class="id" title="tactic">intro</span> <span class="id" title="var">f</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="var">_</span> ⇒ <span class="id" title="tactic">fail</span> "derive_dtm4_setup: no match"<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm4</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">derive_dtm4_setup</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">if_goal_match_binddt_ret</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm4_ret_case</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm4_IH_step</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab770"></a><h2 class="section">Putting it together</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">setup_dtm_proof</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[(<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a>)] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm1</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm2</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">g</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">f</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm3</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a>?<span class="id" title="var">ϕ</span> ?<span class="id" title="var">B</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> ?<span class="id" title="var">f</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (?<span class="id" title="var">ϕ</span> ?<span class="id" title="var">B</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">f</span>)] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm4</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm_law</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>; <span class="id" title="var">setup_dtm_proof</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#DecoratedTraversableMonad"><span class="id" title="class">DecoratedTraversableMonad</span></a> ?<span class="id" title="var">W</span> ?<span class="id" title="var">T</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">try</span> (<span class="id" title="var">timeout</span> 1 <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">try</span> (<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| |- <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#DecoratedTraversableRightPreModule"><span class="id" title="class">DecoratedTraversableRightPreModule</span></a> ?<span class="id" title="var">W</span> ?<span class="id" title="var">T</span> ?<span class="id" title="var">U</span> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">constructor</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm_law</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

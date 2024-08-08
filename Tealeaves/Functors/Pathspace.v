@@ -2,14 +2,14 @@
     the set of proofs of equality between any two terms of <<A>>. *)
 
 From Tealeaves Require Export
-  Applicative.
+  Classes.Categorical.Applicative.
 
 (** * Pathspace applicative functor *)
 (******************************************************************************)
 Inductive PathSpace (A : Type) : Type :=
 | path : forall (x y : A), x = y -> PathSpace A.
 
-#[export] Instance Fmap_Path : Fmap PathSpace :=
+#[export] Instance Map_Path : Map PathSpace :=
   fun A B (f : A -> B) '(@path _ x y p)
   => @path _ (f x) (f y) (ltac:(subst; auto)).
 

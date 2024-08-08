@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>Monad.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Classes.Functor
+  Classes.Kleisli.Monad (Return, ret)
+  Classes.Categorical.Applicative
+  Functors.Identity
+  Functors.Compose
+  Misc.Strength.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Functor.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Product.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Functor.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Strength.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Generalizable Variables</span> <span class="nf">W</span> T A.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> ret (T)%function_scope {Return} (A)%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> map F%function_scope {Map} (A B)%type_scope f%function_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Monads *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">Join</span> (<span class="nv">T</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) :=
+  join : T ∘ T ⇒ T.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">Monad</span>
+  (<span class="nv">T</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+  `{Map T} `{Return T} `{Join T} :=
+  { mon_functor :&gt; Functor T;
+    mon_ret_natural :&gt; Natural (@ret T _);
+    mon_join_natural :&gt; Natural (join);
+    mon_join_ret : <span class="c">(* left unit law *)</span>
+    `(join A ∘ ret T (T A) = @id (T A));
+    mon_join_map_ret : <span class="c">(* right unit law *)</span>
+    `(join A ∘ map T A (T A) (ret T A) = @id (T A));
+    mon_join_join : <span class="c">(* associativity *)</span>
+    `(join A ∘ join (T A) =
+        join A ∘ map T (T (T A)) (T A) (join A));
+  }.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[<span class="kn">global</span>] <span class="kn">Arguments</span> join {T}%function_scope {Join} {A}%type_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> join _%function_scope {Join} A%type_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Monad homomorphisms *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">monad_homomorphism</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    (<span class="nv">T</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+    (<span class="nv">U</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+    `{Monad T}
+    `{Monad U}.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">Monad_Hom</span> (<span class="nv">ϕ</span> : T ⇒ U) :=
+    { mhom_domain : Monad T;
+      mhom_codomain : Monad U;
+      mhom_natural : Natural ϕ;
+      mhom_ret :
+        `(ϕ A ∘ ret T A = ret U A);
+      mhom_join :
+        `(ϕ A ∘ join T A = join U A ∘ ϕ (U A) ∘ map T (T A) (U A) (ϕ A));
+    }.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">monad_homomorphism</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Notations *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">Notations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;&#39;μ&#39;&quot;</span> := (join) : tealeaves_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;&#39;η&#39;&quot;</span> := (ret) : tealeaves_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">Notations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * The identity monad *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Return_I</span> : Return (<span class="kr">fun</span> <span class="nv">A</span> =&gt; A) := (<span class="kr">fun</span> <span class="nv">A</span> (<span class="nv">a</span> : A) =&gt; a).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Join_I</span> : Join (<span class="kr">fun</span> <span class="nv">A</span> =&gt; A) := (<span class="kr">fun</span> <span class="nv">A</span> (<span class="nv">a</span> : A) =&gt; a).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export, program] <span class="kn">Instance</span> <span class="nf">Monad_I</span> : Monad (<span class="kr">fun</span> <span class="nv">A</span> =&gt; A).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Solve All Obligations with</span>
+  (<span class="nb">constructor</span>; <span class="kp">try</span> <span class="nb">typeclasses eauto</span>; <span class="nb">intros</span>; <span class="bp">now</span> ext t).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Miscellaneous properties *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">tensor_laws</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    `{Monad T}
+    {W : <span class="kt">Type</span>}.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="monad-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="monad-v-chk0"><span class="kn">Theorem</span> <span class="nf">strength_return</span>  {<span class="nv">A</span> <span class="nv">B</span>} (<span class="nv">a</span> : A) (<span class="nv">b</span> : B) :
+    strength (b, ret T A a) = ret T (B * A) (b, a).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Map T</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Return T</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Join T</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>Monad T</span></span></span><br><span><var>W, A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">σ (b, ret T A a) = ret T (B * A) (b, a)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="monad-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="monad-v-chk1"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Map T</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Return T</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Join T</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>Monad T</span></span></span><br><span><var>W, A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">σ (b, ret T A a) = ret T (B * A) (b, a)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="monad-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="monad-v-chk2"><span class="nb">unfold</span> strength.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Map T</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Return T</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Join T</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>Monad T</span></span></span><br><span><var>W, A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map T A (B * A) (pair b) (ret T A a) =
+ret T (B * A) (b, a)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="monad-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="monad-v-chk3">compose near a on <span class="nb">left</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Map T</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Return T</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Join T</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>Monad T</span></span></span><br><span><var>W, A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(map T A (B * A) (pair b) ∘ ret T A) a =
+ret T (B * A) (b, a)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="monad-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="monad-v-chk4"><span class="nb">change</span> (@compose <span class="nl">?B</span>) <span class="kr">with</span> (@compose ((<span class="kr">fun</span> <span class="nv">A</span> =&gt; A) B)).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Map T</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Return T</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Join T</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>Monad T</span></span></span><br><span><var>W, A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(map T A (B * A) (pair b) ∘ ret T A) a =
+ret T (B * A) (b, a)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">now</span> <span class="nb">rewrite</span> natural.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">tensor_laws</span>.</span></span></pre>
+</div>
+</div></body>
+</html>

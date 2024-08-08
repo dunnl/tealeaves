@@ -1,32 +1,65 @@
 From Tealeaves Require Import
   Functors.List
-  Backends.LN.Atom
-  Backends.LN.AtomSet
-  Backends.LN.AssocList
-  LN.Multisorted.LN
-  Multisorted.Classes.DTM
+  Backends.Multisorted.LN
   Examples.SystemF.Syntax
-  Examples.SystemF.Rewriting.
+  Simplification.Tests.SystemF_LN.
 
 From Coq Require Import
   Sorting.Permutation.
 
-(*
-From Tealeaves.Examples Require Import
-  SystemF.Syntax.
-  SystemF.Rewriting.
-*)
-
 Implicit Types (x : atom).
 
 Import AtomSet.Notations.
-Import Classes.Setlike.Functor.Notations.
+Import ContainerFunctor.Notations.
 Import LN.AssocList.Notations.
 Import List.ListNotations.
 
 Create HintDb sysf_ctx.
 
 #[local] Generalizable Variables F G A B C ϕ W T.
+#[local] Open Scope set_scope.
+
+(* Misc *)
+
+Lemma rw_subst_type_var_neq {x y} τ':
+  x <> y ->
+  subst typ ktyp x τ' (ty_v (Fr y)) = ty_v (Fr y).
+Proof.
+  intros.
+  simplify_subst.
+  cbn. destruct_eq_args x y.
+Qed.
+
+Lemma rw_subst_term_var_neq {x y} {τ} :
+  x <> y ->
+  subst term ktyp x τ (tm_var (Fr y)) = tm_var (Fr y).
+Proof.
+  intros.
+  simplify_subst.
+  cbn. destruct_eq_args x y.
+Qed.
+
+Lemma FV_trm_type_empty: forall τ,
+    FV typ ktrm τ [=] ∅.
+Proof.
+  intros.
+  induction τ; simplify_FV; fsetdec.
+Qed.
+
+Lemma subst_in_type_id: forall x u τ,
+    subst typ ktrm x u τ = τ.
+Proof.
+  intros.
+  eapply (subst_fresh_set typ).
+  rewrite FV_trm_type_empty.
+  fsetdec.
+Qed.
+
+Lemma LC_typ_trm: forall τ,
+    LC typ ktrm τ.
+Proof.
+  intros. induction τ; now simplify_LC.
+Qed.
 
 (** * Tactical support *)
 (******************************************************************************)
@@ -61,8 +94,8 @@ Section scope_lemmas.
 
   Context
     (S : Type -> Type)
-    `{DTPreModule (list K) S T (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
-    `{! DTM (list K) T}.
+    `{MultiDecoratedTraversablePreModule (list K) T S (mn_op := Monoid_op_list) (mn_unit := Monoid_unit_list)}
+    `{! MultiDecoratedTraversableMonad (list K) T}.
 
   (** *** Permutation *)
   (******************************************************************************)
@@ -120,7 +153,7 @@ Section scope_lemmas.
   (******************************************************************************)
   Lemma scoped_stren_mid : forall (k : K) (t : S LN) (X : Type) (γ1 γ2 : alist X) (x : atom) (x' : X),
       scoped S k t (domset (γ1 ++ x ~ x' ++ γ2)) ->
-      ~ x ∈@ (freeset S k t) ->
+      ~ x `in` (FV S k t) ->
       scoped S k t (domset (γ1 ++ γ2)).
   Proof.
     introv hyp hnotin. unfold scoped in *.
@@ -129,7 +162,7 @@ Section scope_lemmas.
 
   Corollary scoped_stren_l : forall (k : K) (t : S LN) (X : Type) (γ : alist X) (x : atom) (x' : X),
       scoped S k t (domset (x ~ x' ++ γ)) ->
-      ~ x ∈@ (freeset S k t) ->
+      ~ x `in` (FV S k t) ->
       scoped S k t (domset γ).
   Proof.
     introv Hscope Hnotin. change γ with (nil ++ γ).
@@ -138,7 +171,7 @@ Section scope_lemmas.
 
   Corollary scoped_stren_r : forall (k : K) (t : S LN) (X : Type) (γ : alist X) (x : atom) (x' : X),
       scoped S k t (domset (γ ++ x ~ x')) ->
-      ~ x ∈@ (freeset S k t) ->
+      ~ x `in` (FV S k t) ->
       scoped S k t (domset γ).
   Proof.
     introv Hscope Hnotin. replace γ with (γ ++ nil) by (now List.simpl_list).
@@ -155,7 +188,7 @@ Section scope_lemmas.
       scoped S k (subst S k x t2 t1) (domset (γ1 ++ γ2)).
   Proof.
     introv hyp1 hyp2. unfold scoped in *. autorewrite with tea_rw_dom in *.
-    etransitivity. apply (freeset_subst_upper_eq S). fsetdec.
+    etransitivity. apply (FV_subst_upper_eq S). fsetdec.
   Qed.
 
   Corollary scoped_sub_eq_r :
@@ -192,7 +225,7 @@ Section scope_lemmas.
       scoped S k1 (subst S k2 x t2 t1) (domset γ).
   Proof.
     introv hyp1 hyp2. unfold scoped in *. autorewrite with tea_rw_dom in *.
-    etransitivity. apply (freeset_subst_upper_neq S); auto. fsetdec.
+    etransitivity. apply (FV_subst_upper_neq S); auto. fsetdec.
   Qed.
 
   (** *** Other *)
@@ -203,7 +236,7 @@ Section scope_lemmas.
       scoped S k t1 (domset (envmap f γ1)).
   Proof.
     introv Hscope. unfold scoped in *.
-    now rewrite domset_fmap.
+    now rewrite domset_map.
   Qed.
 
 End scope_lemmas.
@@ -314,7 +347,7 @@ Qed.
 (** A well-formed type is locally closed. *)
 Lemma ok_type_lc : forall Δ τ,
     ok_type Δ τ ->
-    locally_closed typ KType τ.
+    LC typ ktyp τ.
 Proof.
   unfold ok_type. tauto.
 Qed.
@@ -365,7 +398,7 @@ Qed.
 (******************************************************************************)
 Lemma ok_type_stren : forall Δ1 Δ2 x τ,
     ok_type (Δ1 ++ x ~ tt ++ Δ2) τ ->
-    ~ x ∈@ (freeset typ KType τ) ->
+    ~ x `in` (FV typ ktyp τ) ->
     ok_type (Δ1 ++ Δ2) τ.
 Proof.
   introv [? ?] ?. unfold ok_type.
@@ -374,7 +407,7 @@ Qed.
 
 Corollary ok_type_stren1 : forall Δ x τ,
     ok_type (Δ ++ x ~ tt) τ ->
-    ~ x ∈@ (freeset typ KType τ) ->
+    ~ x `in` (FV typ ktyp τ) ->
     ok_type Δ τ.
 Proof.
   introv H1 H2. change_alist (Δ ++ x ~ tt ++ []) in H1.
@@ -386,10 +419,10 @@ Qed.
 Lemma ok_type_sub : forall Δ1 Δ2 x τ1 τ2,
     ok_type (Δ1 ++ x ~ tt ++ Δ2) τ1 ->
     ok_type (Δ1 ++ Δ2) τ2 ->
-    ok_type (Δ1 ++ Δ2) (subst typ KType x τ2 τ1).
+    ok_type (Δ1 ++ Δ2) (subst typ ktyp x τ2 τ1).
 Proof.
   unfold ok_type. introv [? ?] [? ?]. split.
-  - pose (lemma := scoped_sub_eq_mid typ KType).
+  - pose (lemma := scoped_sub_eq_mid typ ktyp).
     eapply lemma; eassumption.
   - auto using (subst_lc_eq typ).
 Qed.
@@ -397,7 +430,7 @@ Qed.
 Corollary ok_type_sub1 : forall Δ x τ1 τ2,
     ok_type (Δ ++ x ~ tt) τ1 ->
     ok_type Δ τ2 ->
-    ok_type Δ (subst typ KType x τ2 τ1).
+    ok_type Δ (subst typ ktyp x τ2 τ1).
 Proof.
   introv H1 H2. change_alist (Δ ++ x ~ tt ++ []) in H1.
   change_alist (Δ ++ []) in H2. change_alist (Δ ++ []).
@@ -420,7 +453,7 @@ Qed.
 
 Lemma ok_type_ctx_cons : forall Δ Γ x τ,
     ok_type_ctx Δ Γ ->
-    ~ (x ∈@ domset Γ) ->
+    ~ (x `in` domset Γ) ->
     ok_type Δ τ ->
     ok_type_ctx Δ (x ~ τ ++ Γ).
 Proof.
@@ -447,8 +480,9 @@ Lemma ok_type_ctx_app : forall Δ Γ1 Γ2,
 Proof.
   intros. unfold ok_type_ctx.
   setoid_rewrite in_range_iff.
-  setoid_rewrite List.in_list_app.
-  rewrite uniq_app_iff. firstorder.
+  rewrite uniq_app_iff.
+  setoid_rewrite element_of_list_app.
+  firstorder.
 Qed.
 
 Lemma ok_type_ctx_app_comm : forall {Δ Γ1 Γ2},
@@ -571,7 +605,7 @@ Qed.
 (******************************************************************************)
 Lemma ok_type_ctx_stren : forall Δ1 Δ2 x Γ,
     ok_type_ctx (Δ1 ++ x ~ tt ++ Δ2) Γ ->
-    (forall t : typ LN, t ∈ range Γ -> ~ x ∈@ freeset typ KType t) ->
+    (forall t : typ LN, t ∈ range Γ -> ~ x `in` FV typ ktyp t) ->
     ok_type_ctx (Δ1 ++ Δ2) Γ.
 Proof.
   introv [hunit hok] hfresh.
@@ -582,7 +616,7 @@ Qed.
 
 Corollary ok_type_ctx_stren1 : forall Δ x Γ,
     ok_type_ctx (Δ ++ x ~ tt) Γ ->
-    (forall t : typ LN, t ∈ range Γ -> ~ x ∈@ freeset typ KType t) ->
+    (forall t : typ LN, t ∈ range Γ -> ~ x `in` FV typ ktyp t) ->
     ok_type_ctx Δ Γ.
 Proof.
   introv hyp1 hyp2. change_alist (Δ ++ x ~ tt ++ []) in hyp1.
@@ -592,11 +626,11 @@ Qed.
 Lemma ok_type_ctx_sub : forall Δ1 Δ2 x Γ τ,
     ok_type_ctx (Δ1 ++ x ~ tt ++ Δ2) Γ ->
     ok_type (Δ1 ++ Δ2) τ ->
-    locally_closed typ KType τ ->
-    ok_type_ctx (Δ1 ++ Δ2) (envmap (subst typ KType x τ) Γ).
+    LC typ ktyp τ ->
+    ok_type_ctx (Δ1 ++ Δ2) (envmap (subst typ ktyp x τ) Γ).
 Proof.
   introv [hunit hok] Hscope lc. unfold ok_type_ctx. split.
-  - now apply uniq_fmap2.
+  - now apply uniq_map2.
   - intros τ2 τ2in.
     rewrite in_range_iff in τ2in.
     setoid_rewrite in_envmap_iff in τ2in.
@@ -648,7 +682,7 @@ Qed.
 (******************************************************************************)
 Lemma ok_term_stren_delta : forall Δ1 Δ2 x Γ t,
     ok_term (Δ1 ++ x ~ tt ++ Δ2) Γ t ->
-    ~ x ∈@ (freeset term KType t) ->
+    ~ x `in` (FV term ktyp t) ->
     ok_term (Δ1 ++ Δ2) Γ t.
 Proof.
   introv Hok Hfresh. unfold ok_term in *.
@@ -660,7 +694,7 @@ Qed.
 Lemma ok_term_sub_delta : forall Δ1 Δ2 x τ Γ t,
     ok_term (Δ1 ++ x ~ tt ++ Δ2) Γ t ->
     ok_type (Δ1 ++ Δ2) τ ->
-    ok_term (Δ1 ++ Δ2) (envmap (subst typ KType x τ) Γ) (subst term KType x τ t).
+    ok_term (Δ1 ++ Δ2) (envmap (subst typ ktyp x τ) Γ) (subst term ktyp x τ t).
 Proof.
   introv Hokt Hokτ. unfold ok_term, ok_type in *.
   intuition.
@@ -668,10 +702,11 @@ Proof.
   - apply scoped_envmap.
     eapply (scoped_sub_neq term); eauto.
     + discriminate.
-    + apply rw_scoped_KTerm_type.
+    + unfold scoped.
+      rewrite FV_trm_type_empty. fsetdec.
   - eapply (subst_lc_neq term); auto.
     + discriminate.
-    + now apply rw_lc_KTerm_type.
+    + apply LC_typ_trm.
   - eapply (subst_lc_eq term); auto.
 Qed.
 
@@ -686,7 +721,7 @@ Lemma ok_term_perm_gamma : forall Δ Γ1 Γ2 t,
     ok_term Δ Γ2 t.
 Proof.
   intros. unfold ok_term.
-  pose (lemma := scoped_perm_iff term (KTerm : K)).
+  pose (lemma := scoped_perm_iff term (ktrm : K)).
   now rewrite lemma; eauto.
 Qed.
 
@@ -712,7 +747,7 @@ Qed.
 (******************************************************************************)
 Lemma ok_term_stren_gamma : forall Δ Γ1 Γ2 x τ t,
     ok_term Δ (Γ1 ++ x ~ τ ++ Γ2) t ->
-    ~ x ∈@ (freeset term KTerm t) ->
+    ~ x `in` (FV term ktrm t) ->
     ok_term Δ (Γ1 ++ Γ2) t.
 Proof.
   introv Hok Hfresh. unfold ok_term in *.
@@ -724,7 +759,7 @@ Qed.
 Lemma ok_term_sub_gamma : forall Δ Γ1 Γ2 x τ u t,
     ok_term Δ (Γ1 ++ x ~ τ ++ Γ2) t ->
     ok_term Δ (Γ1 ++ Γ2) u ->
-    ok_term Δ (Γ1 ++ Γ2) (subst term KTerm x u t).
+    ok_term Δ (Γ1 ++ Γ2) (subst term ktrm x u t).
 Proof.
   introv Hokt Hoku. unfold ok_term, ok_type in *.
   intuition.
@@ -735,3 +770,28 @@ Proof.
   - eapply (subst_lc_neq term); auto.
     + discriminate.
 Qed.
+
+
+(*
+(** ** Example: Typing the polymorphic identity *)
+(******************************************************************************)
+Example polymorphic_identity_function :
+  (nil ; nil ⊢ (Λ λ 0 ⋅ 0) : (∀ 0 ⟹ 0)).
+Proof.
+  apply j_univ with (L := ∅).
+  introv _.
+  cbn.
+  change (pure (F := fun A => A) ?x) with x.
+  apply j_abs with (L := ∅).
+  introv _.
+  apply j_var.
+  - auto with tea_alist.
+  - simpl_alist.
+    apply ok_tmv_tm_one.
+      unfold ok_type, scoped_env, scoped.
+      autorewrite with sysf_rw tea_rw_dom.
+      split; [fsetdec | apply lc_ty_ty_Fr].
+    + simpl_alist. now autorewrite with tea_list.
+Qed.
+
+*)

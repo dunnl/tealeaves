@@ -1,7 +1,7 @@
 From Tealeaves Require Import
   LN.Atom LN.AtomSet
-  Classes.Listable.Functor
-  Classes.Traversable.Functor
+  Classes.Categorical.ShapelyFunctor
+  Classes.Kleisli.TraversableFunctor
   Functors.Writer.
 
 From Coq Require Import
@@ -11,7 +11,7 @@ From Coq Require Import
 Import Product.Notations.
 Import List.ListNotations.
 Import LN.AtomSet.Notations.
-Import Setlike.Functor.Notations.
+Import ContainerFunctor.Notations.
 
 Create HintDb tea_alist.
 
@@ -23,8 +23,8 @@ alone.  Technically the functor is the composition of [list] and
 <<prod atom>>. *)
 (******************************************************************************)
 Module Notations.
-  Notation "'one'" := (ret list).
-  Notation "x ~ a" := (ret list (x, a)) (at level 50).
+  Notation "'one'" := (ret (T := list)).
+  Notation "x ~ a" := (ret (T := list) (x, a)) (at level 50).
 End Notations.
 
 Import Notations.
@@ -33,12 +33,14 @@ Definition alist := list ∘ (atom ×).
 
 (** ** Functor instance for <<alist>> *)
 (******************************************************************************)
-#[export] Instance Functor_alist : Functor alist := Functor_compose.
+#[export] Instance Functor_alist : Functor alist :=
+  Functor_compose list (prod atom).
 
 (** ** DT functor instance for <<alist>> *)
 (******************************************************************************)
 Section DecoratedTraversableFunctor_alist.
 
+  (*
   (** ** Traversable instance *)
   (******************************************************************************)
   #[global] Instance Dist_alist : Dist alist
@@ -47,7 +49,6 @@ Section DecoratedTraversableFunctor_alist.
   #[global] Instance Traversable_alist : TraversableFunctor alist
     := Traversable_compose.
 
-  (*
   (** ** Decorated instance *)
   (******************************************************************************)
   #[global] Instance Decorate_alist :
@@ -97,7 +98,7 @@ End DecoratedTraversableFunctor_alist.
 (** [envmap] is just [fmap] specialized to <<alist>>. *)
 
 Definition envmap {A B } : (A -> B) -> alist A -> alist B :=
-  fmap alist.
+  map (F := alist).
 
 (** ** Rewriting principles for [envmap] *)
 (******************************************************************************)
@@ -111,7 +112,7 @@ Section envmap_lemmas.
   Lemma envmap_nil : forall f,
     envmap f (@nil (atom * A)) = nil.
   Proof.
-    unfold envmap. unfold_ops @Fmap_compose.
+    unfold envmap. unfold_ops @Map_compose.
     now simpl_list.
   Qed.
 
@@ -130,7 +131,7 @@ Section envmap_lemmas.
   Lemma envmap_app : forall f Γ1 Γ2,
     envmap f (Γ1 ++ Γ2) = envmap f Γ1 ++ envmap f Γ2.
   Proof.
-    intros. unfold envmap. unfold_ops @Fmap_compose.
+    intros. unfold envmap. unfold_ops @Map_compose.
     now simpl_list.
   Qed.
 
@@ -153,8 +154,9 @@ Section in_envmap_lemmas.
       (x, b) ∈ (envmap f l : list (atom * B)) <->
       exists a : A, (x, a) ∈ (l : list (atom * A)) /\ f a = b.
   Proof.
-    intros. unfold envmap. unfold_ops @Fmap_compose @Fmap_prod.
-    rewrite (in_fmap_iff list). split; intros; preprocess; eauto.
+    intros. unfold envmap. unfold_ops @Map_compose @Map_reader.
+    rewrite (in_map_iff list).
+    split; intros; preprocess; eauto.
   Qed.
 
 End in_envmap_lemmas.
@@ -286,7 +288,7 @@ End in_theorems.
 
 (** [dom] computes the list of keys of an association list. *)
 Definition dom {A} (Γ : alist A) : list atom :=
-  fmap list fst Γ.
+  map fst Γ.
 
 (** [domset] computes the keys as an [AtomSet.t] for use with <<fsetdec>>. *)
 Definition domset {A} (Γ : alist A) : AtomSet.t :=
@@ -294,7 +296,7 @@ Definition domset {A} (Γ : alist A) : AtomSet.t :=
 
 (** [range] computes the list of values of an association list. *)
 Definition range {A} ( Γ : alist A) : list A :=
-  fmap list (extract (atom ×))  Γ.
+  map (extract (W := (atom ×))) Γ.
 
 (** ** Rewriting lemmas for [dom] *)
 (******************************************************************************)
@@ -327,19 +329,20 @@ Section dom_lemmas.
     intros. unfold dom. now simpl_list.
   Qed.
 
-  Lemma dom_fmap : forall {B} {f : A -> B} (l : alist A),
+  Lemma dom_map : forall {B} {f : A -> B} (l : alist A),
       dom (envmap f l) = dom l.
   Proof.
     intros. unfold dom, envmap. compose near l on left.
-    unfold_ops @Fmap_compose.
-    rewrite (fun_fmap_fmap list _ _ _ (fmap (prod atom) f) fst).
+    unfold_ops @Map_compose.
+    change (alist A) with (list (prod atom A)) at 1.
+    rewrite (fun_map_map (F := list)).
     fequal. now ext [? ?].
   Qed.
 
 End dom_lemmas.
 
 Create HintDb tea_rw_dom.
-#[export] Hint Rewrite dom_nil dom_cons dom_app dom_one dom_fmap : tea_rw_dom.
+#[export] Hint Rewrite dom_nil dom_cons dom_app dom_one dom_map : tea_rw_dom.
 
 Lemma push_not : forall P Q,
     ~ (P \/ Q) <-> ~P /\ ~ Q.
@@ -390,7 +393,7 @@ Section domset_lemmas.
     fsetdec.
   Qed.
 
-  Lemma domset_fmap : forall {B} {f : A -> B} (Γ : alist A),
+  Lemma domset_map : forall {B} {f : A -> B} (Γ : alist A),
       domset (envmap f Γ) [=] domset Γ.
   Proof.
     intros. unfold domset. autorewrite with tea_rw_dom.
@@ -400,7 +403,7 @@ Section domset_lemmas.
 End domset_lemmas.
 
 #[export] Hint Rewrite domset_nil domset_cons
-  domset_one domset_app domset_fmap : tea_rw_dom.
+  domset_one domset_app domset_map : tea_rw_dom.
 
 (** ** Rewriting lemmas for [range] *)
 (******************************************************************************)
@@ -434,13 +437,13 @@ Section range_lemmas.
     now autorewrite with tea_list.
   Qed.
 
-  Lemma range_fmap : forall {B} {f : A -> B} (Γ : alist A),
-      range (envmap f Γ) = fmap list f (range Γ).
+  Lemma range_map : forall {B} {f : A -> B} (Γ : alist A),
+      range (envmap f Γ) = map f (range Γ).
   Proof.
     intros. unfold range, envmap. compose near Γ.
-    unfold_ops @Fmap_compose.
-    rewrite (fun_fmap_fmap list _ _ _ (fmap (prod atom) f) (extract (prod atom))).
-    rewrite (fun_fmap_fmap list _ _ _ (extract (prod atom)) f).
+    unfold_ops @Map_compose.
+    rewrite (fun_map_map (F := list) _ _ _ (map (F := prod atom) f) (extract (W := (prod atom)))).
+    rewrite (fun_map_map (F := list) _ _ _ extract f).
     fequal. now ext [? ?].
   Qed.
 
@@ -448,7 +451,7 @@ End range_lemmas.
 
 Create HintDb tea_rw_range.
 #[export] Hint Rewrite range_nil range_cons
-     range_one range_app range_fmap : tea_rw_range.
+     range_one range_app range_map : tea_rw_range.
 
 (** ** Rewriting lemmas for [∈] [dom] *)
 (******************************************************************************)
@@ -466,7 +469,10 @@ Section in_dom_lemmas.
   Lemma in_dom_cons : forall (x y : atom) (a : A) (Γ : alist A),
       y ∈ dom ((x, a) :: Γ) <-> y = x \/ y ∈ dom Γ.
   Proof.
-    intros; now autorewrite with tea_rw_dom tea_list.
+    intros; autorewrite with tea_rw_dom.
+    rewrite @element_of_list_app.
+    rewrite @element_of_list_one.
+    reflexivity.
   Qed.
 
   Lemma in_dom_one : forall (x y : atom) (a : A),
@@ -481,7 +487,7 @@ Section in_dom_lemmas.
     intros; now autorewrite with tea_rw_dom tea_list.
   Qed.
 
-  Lemma in_dom_fmap : forall {B} {f : A -> B} (Γ : alist A) x,
+  Lemma in_dom_map : forall {B} {f : A -> B} (Γ : alist A) x,
       x ∈ dom (envmap f Γ) <-> x ∈ dom Γ.
   Proof.
     intros; now autorewrite with tea_rw_dom.
@@ -490,7 +496,7 @@ Section in_dom_lemmas.
 End in_dom_lemmas.
 
 #[export] Hint Rewrite in_dom_nil in_dom_one in_dom_cons
-  in_dom_app in_dom_fmap : tea_rw_dom.
+  in_dom_app in_dom_map : tea_rw_dom.
 
 (** ** Rewriting lemmas for [∈] [domset] *)
 (******************************************************************************)
@@ -500,32 +506,32 @@ Section in_domset_lemmas.
     (A : Type).
 
   Lemma in_domset_nil : forall x,
-      x ∈@ domset (@nil (atom * A)) <-> False.
+      x `in` domset (@nil (atom * A)) <-> False.
   Proof.
     intros. autorewrite with tea_rw_dom. fsetdec.
   Qed.
 
   Lemma in_domset_one : forall (x y : atom) (a : A),
-      y ∈@ domset (x ~ a) <-> y = x.
+      y `in` domset (x ~ a) <-> y = x.
   Proof.
     intros. autorewrite with tea_rw_dom.
     fsetdec.
   Qed.
 
   Lemma in_domset_cons : forall (x y : atom) (a : A) (Γ : alist A),
-      y ∈@ domset ((x, a) :: Γ) <-> y = x \/ y ∈@ domset Γ.
+      y `in` domset ((x, a) :: Γ) <-> y = x \/ y `in` domset Γ.
   Proof.
     intros. autorewrite with tea_rw_dom. fsetdec.
   Qed.
 
   Lemma in_domset_app : forall x (Γ1 Γ2 : alist A),
-    x ∈@ domset (Γ1 ++ Γ2) <-> x ∈@ domset Γ1 \/ x ∈@ domset Γ2.
+    x `in` domset (Γ1 ++ Γ2) <-> x `in` domset Γ1 \/ x `in` domset Γ2.
   Proof.
     intros. autorewrite with tea_rw_dom. fsetdec.
   Qed.
 
-  Lemma in_domset_fmap : forall {B} {f : A -> B} (l : alist A) x,
-      x ∈@ domset (envmap f l) <-> x ∈@ domset l.
+  Lemma in_domset_map : forall {B} {f : A -> B} (l : alist A) x,
+      x `in` domset (envmap f l) <-> x `in` domset l.
   Proof.
     intros. autorewrite with tea_rw_dom. fsetdec.
   Qed.
@@ -533,7 +539,7 @@ Section in_domset_lemmas.
 End in_domset_lemmas.
 
 #[export] Hint Rewrite in_domset_nil in_domset_one
-     in_domset_cons in_domset_app in_domset_fmap : tea_rw_dom.
+     in_domset_cons in_domset_app in_domset_map : tea_rw_dom.
 
 (** ** Elements of [range] *)
 (******************************************************************************)
@@ -566,16 +572,16 @@ Section in_range_lemmas.
     intros; now autorewrite with tea_rw_range tea_list.
   Qed.
 
-  Lemma in_range_fmap : forall {B} {f : A -> B} (l : alist A) (b : B),
+  Lemma in_range_map : forall {B} {f : A -> B} (l : alist A) (b : B),
       b ∈ range (envmap f l) <-> exists a, a ∈ range l /\ f a = b.
   Proof.
-    intros. autorewrite with tea_rw_range. now rewrite (in_fmap_iff list).
+    intros. autorewrite with tea_rw_range. now rewrite (in_map_iff list).
   Qed.
 
 End in_range_lemmas.
 
 #[export] Hint Rewrite in_range_nil in_range_one
-  in_range_cons in_range_app in_range_fmap : tea_rw_range.
+  in_range_cons in_range_app in_range_map : tea_rw_range.
 
 (** * Specifications for operations on association lists *)
 (******************************************************************************)
@@ -593,26 +599,26 @@ Section in_operations_lemmas.
   Lemma in_dom_iff : forall (x : atom),
     x ∈ dom Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
   Proof.
-    intros. unfold dom. rewrite (in_fmap_iff list).
+    intros. unfold dom. rewrite (in_map_iff list).
     splits*.
   Qed.
 
   Lemma in_range_iff : forall a,
       a ∈ range Γ <-> exists x : atom, (x, a) ∈ (Γ : list (atom * A)).
   Proof.
-    intros. unfold range. rewrite (in_fmap_iff list).
+    intros. unfold range. rewrite (in_map_iff list).
     splits*.
   Qed.
 
   Lemma in_domset_iff : forall x,
-      x ∈@ domset Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
+      x `in` domset Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
   Proof.
     unfold domset. intro x. rewrite <- in_atoms_iff.
     setoid_rewrite in_dom_iff. easy.
   Qed.
 
   Lemma in_domset_iff_dom : forall x,
-      x ∈@ domset Γ <-> x ∈ dom Γ.
+      x `in` domset Γ <-> x ∈ dom Γ.
   Proof.
     intros. setoid_rewrite in_domset_iff.
     setoid_rewrite in_dom_iff. easy.
@@ -660,7 +666,7 @@ Section in_in.
 
   Lemma in_in_domset : forall x a Γ,
       (x, a) ∈ Γ ->
-      x ∈@ domset (A := A) Γ.
+      x `in` domset (A := A) Γ.
   Proof.
     setoid_rewrite in_domset_iff. eauto.
   Qed.
@@ -780,7 +786,7 @@ Tactic Notation "alist" "induction" ident(E) "as" simple_intropattern(P) :=
 Inductive uniq {A} : alist A -> Prop :=
 | uniq_nil : uniq nil
 | uniq_push : forall (x : atom) (v : A) ( Γ : alist A),
-    uniq  Γ -> ~ x ∈@ domset  Γ -> uniq (x ~ v ++  Γ).
+    uniq  Γ -> ~ x `in` domset  Γ -> uniq (x ~ v ++  Γ).
 
 (** <<disjoint E F>> whenever the keys of <<E>> and <<F>> contain no
 common elements. *)
@@ -813,28 +819,28 @@ Section disjoint_rewriting_lemmas.
   Qed.
 
   Lemma disjoint_cons_l : forall (x : atom) (a : A) (Γ1 : alist A) (Γ2 : alist B),
-      disjoint ((x, a) :: Γ1) Γ2 <-> ~ x ∈@ domset Γ2 /\ disjoint Γ1 Γ2.
+      disjoint ((x, a) :: Γ1) Γ2 <-> ~ x `in` domset Γ2 /\ disjoint Γ1 Γ2.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     intuition fsetdec.
   Qed.
 
   Lemma disjoint_cons_r : forall (x : atom) (b : B) (Γ1 : alist A) (Γ2 : alist B),
-      disjoint Γ1 ((x, b) :: Γ2) <-> ~ x ∈@ domset Γ1 /\ disjoint Γ1 Γ2.
+      disjoint Γ1 ((x, b) :: Γ2) <-> ~ x `in` domset Γ1 /\ disjoint Γ1 Γ2.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     intuition fsetdec.
   Qed.
 
   Lemma disjoint_one_l : forall (x : atom) (a : A) (Γ2 : alist B),
-      disjoint (x ~ a) Γ2 <-> ~ x ∈@ domset Γ2.
+      disjoint (x ~ a) Γ2 <-> ~ x `in` domset Γ2.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     intuition fsetdec.
   Qed.
 
   Lemma disjoint_one_r : forall (x : atom) (b : B) (Γ1 : alist A),
-      disjoint Γ1 (x ~ b) <-> ~ x ∈@ domset Γ1.
+      disjoint Γ1 (x ~ b) <-> ~ x `in` domset Γ1.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     intuition fsetdec.
@@ -854,14 +860,14 @@ Section disjoint_rewriting_lemmas.
     intuition fsetdec.
   Qed.
 
-  Lemma disjoint_fmap_l : forall (Γ1 : alist A) (Γ2 : alist B) (f : A -> C),
+  Lemma disjoint_map_l : forall (Γ1 : alist A) (Γ2 : alist B) (f : A -> C),
       disjoint (envmap f Γ1) Γ2 <-> disjoint Γ1 Γ2.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
     reflexivity.
   Qed.
 
-  Lemma disjoint_fmap_r : forall (Γ1 : alist A) (Γ2 : alist B) (f : A -> C),
+  Lemma disjoint_map_r : forall (Γ1 : alist A) (Γ2 : alist B) (f : A -> C),
     disjoint Γ2 (envmap f Γ1) <-> disjoint Γ1 Γ2.
   Proof.
     intros. unfold disjoint. autorewrite with tea_rw_dom.
@@ -873,7 +879,7 @@ End disjoint_rewriting_lemmas.
 Create HintDb tea_rw_disj.
 #[export] Hint Rewrite @disjoint_nil_l @disjoint_nil_r @disjoint_cons_l @disjoint_cons_r
      @disjoint_one_l @disjoint_one_r @disjoint_app_l @disjoint_app_r
-     @disjoint_fmap_l @disjoint_fmap_r : tea_rw_disj.
+     @disjoint_map_l @disjoint_map_r : tea_rw_disj.
 
 
 
@@ -930,25 +936,25 @@ Section disjoint_auto_lemmas.
   Qed.
 
   Lemma disjoint_one_l1 : forall x a (Γ : alist B),
-      disjoint (x ~ a) Γ -> ~ x ∈@ domset Γ.
+      disjoint (x ~ a) Γ -> ~ x `in` domset Γ.
   Proof.
     introv. now autorewrite with tea_rw_disj.
   Qed.
 
   Lemma disjoint_one_l2 : forall x a (Γ : alist B),
-      ~ x ∈@ domset Γ -> disjoint (x ~ a) Γ.
+      ~ x `in` domset Γ -> disjoint (x ~ a) Γ.
   Proof.
     introv. now autorewrite with tea_rw_disj.
   Qed.
 
   Lemma disjoint_cons_hd : forall x a (Γ1 : alist A) (Γ2 : alist B),
-      disjoint ((x, a) :: Γ1) Γ2 -> ~ x ∈@ domset Γ2.
+      disjoint ((x, a) :: Γ1) Γ2 -> ~ x `in` domset Γ2.
   Proof.
     introv. now autorewrite with tea_rw_disj.
   Qed.
 
   Lemma disjoint_cons_hd_one : forall x a (Γ1 : alist A) (Γ2 : alist B),
-      disjoint (x ~ a ++ Γ1) Γ2 -> ~ x ∈@ domset Γ2.
+      disjoint (x ~ a ++ Γ1) Γ2 -> ~ x `in` domset Γ2.
   Proof.
     introv. now autorewrite with tea_rw_disj.
   Qed.
@@ -961,16 +967,16 @@ Section disjoint_auto_lemmas.
 
   Lemma disjoint_dom1 : forall x (Γ1 : alist A) (Γ2 : alist B),
       disjoint Γ1 Γ2 ->
-      x ∈@ domset Γ1 ->
-      ~ x ∈@ domset Γ2.
+      x `in` domset Γ1 ->
+      ~ x `in` domset Γ2.
   Proof.
     unfold disjoint in *. fsetdec.
   Qed.
 
   Lemma disjoint_dom2 : forall x (Γ1 : alist A) (Γ2 : alist B),
       disjoint Γ1 Γ2 ->
-      x ∈@ domset Γ2 ->
-      ~ x ∈@ domset Γ1.
+      x `in` domset Γ2 ->
+      ~ x `in` domset Γ1.
   Proof.
     unfold disjoint in *. fsetdec.
   Qed.
@@ -1037,13 +1043,13 @@ Section uniq_auto_lemmas.
 
   Lemma uniq_cons2 : forall x a,
       uniq ((x, a) :: Γ1) ->
-      ~ x ∈@ domset Γ1.
+      ~ x `in` domset Γ1.
   Proof.
     now inversion 1.
   Qed.
 
   Lemma uniq_cons_3 : forall x a,
-      ~ x ∈@ domset Γ1 ->
+      ~ x `in` domset Γ1 ->
       uniq Γ1 ->
       uniq ((x, a) :: Γ1).
   Proof.
@@ -1098,7 +1104,7 @@ Section uniq_auto_lemmas.
 
   Lemma uniq_app_5 : forall x a Γ,
       uniq (x ~ a ++ Γ) ->
-      ~ x ∈@ domset Γ.
+      ~ x `in` domset Γ.
   Proof.
     now inversion 1.
   Qed.
@@ -1138,16 +1144,16 @@ Section uniq_auto_lemmas.
       + now autorewrite with tea_rw_dom in *.
   Qed.
 
-  Lemma uniq_fmap1 : forall (f : A -> B),
-      uniq (fmap (list ∘ prod atom) f Γ1) ->
+  Lemma uniq_map1 : forall (f : A -> B),
+      uniq (map (F := list ∘ prod atom) f Γ1) ->
       uniq Γ1.
   Proof.
     intros. eapply uniq_envmap1. exact H.
   Qed.
 
-  Lemma uniq_fmap2 : forall (f : A -> B),
+  Lemma uniq_map2 : forall (f : A -> B),
       uniq Γ1 ->
-      uniq (fmap (list ∘ prod atom) f Γ1).
+      uniq (map (F := list ∘ prod atom) f Γ1).
   Proof.
     intros. now apply uniq_envmap2.
   Qed.
@@ -1178,7 +1184,7 @@ Section uniq_rewriting_lemmas.
   Qed.
 
   Lemma uniq_cons_iff : forall x a Γ,
-      uniq ((x, a) :: Γ) <->  ~ x ∈@ domset Γ /\ uniq Γ.
+      uniq ((x, a) :: Γ) <->  ~ x `in` domset Γ /\ uniq Γ.
   Proof.
     split.
     - eauto with tea_alist.
@@ -1203,8 +1209,8 @@ Section uniq_rewriting_lemmas.
     intuition eauto with tea_alist.
   Qed.
 
-  Lemma uniq_fmap_iff : forall Γ1 (f : A -> B),
-      uniq (fmap (list ∘ prod atom) f Γ1) <-> uniq Γ1.
+  Lemma uniq_map_iff : forall Γ1 (f : A -> B),
+      uniq (map (F := list ∘ prod atom) f Γ1) <-> uniq Γ1.
   Proof.
     intros. now rewrite uniq_envmap_iff.
   Qed.
@@ -1213,7 +1219,7 @@ End uniq_rewriting_lemmas.
 
 Create HintDb tea_rw_uniq.
 #[export] Hint Rewrite uniq_nil_iff uniq_cons_iff
-     uniq_one_iff uniq_app_iff uniq_envmap_iff uniq_fmap_iff : tea_rw_uniq.
+     uniq_one_iff uniq_app_iff uniq_envmap_iff uniq_map_iff : tea_rw_uniq.
 
 (** ** More facts about [uniq] *)
 (* *********************************************************************** *)
@@ -1226,8 +1232,8 @@ Section uniq_theorems.
 
   Lemma uniq_insert_mid : forall x a Γ1 Γ2,
     uniq (Γ1 ++ Γ2) ->
-    ~ x ∈@ domset Γ1 ->
-    ~ x ∈@ domset Γ2 ->
+    ~ x `in` domset Γ1 ->
+    ~ x `in` domset Γ2 ->
     uniq (Γ1 ++ x ~ a ++ Γ2).
   Proof.
     intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
@@ -1260,7 +1266,7 @@ Section uniq_theorems.
     intuition.
   Qed.
 
-  Lemma uniq_fmap_app_l : forall Γ1 Γ2 (f : A -> A),
+  Lemma uniq_map_app_l : forall Γ1 Γ2 (f : A -> A),
     uniq (Γ1 ++ Γ2) ->
     uniq (envmap f Γ1 ++ Γ2).
   Proof.
@@ -1270,7 +1276,7 @@ Section uniq_theorems.
 
   Lemma fresh_mid_tail : forall x a Γ1 Γ2,
     uniq (Γ1 ++ x ~ a ++ Γ2) ->
-    ~ x ∈@ domset Γ2.
+    ~ x `in` domset Γ2.
   Proof.
     intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
     tauto.
@@ -1278,7 +1284,7 @@ Section uniq_theorems.
 
   Lemma fresh_mid_head : forall x a Γ1 Γ2,
     uniq (Γ1 ++ x ~ a ++ Γ2) ->
-    ~ x ∈@ domset Γ1.
+    ~ x `in` domset Γ1.
   Proof.
     intros. autorewrite with tea_rw_uniq tea_rw_disj in *.
     tauto.
@@ -1298,8 +1304,8 @@ Section in_theorems_uniq.
   Lemma in_app_uniq_iff : forall x a Γ1 Γ2,
       uniq (Γ1 ++ Γ2) ->
       (x, a) ∈ (Γ1 ++ Γ2) <->
-      ((x, a) ∈ Γ1 /\ ~ x ∈@ domset Γ2) \/
-      ((x, a) ∈ Γ2 /\ ~ x ∈@ domset Γ1).
+      ((x, a) ∈ Γ1 /\ ~ x `in` domset Γ2) \/
+      ((x, a) ∈ Γ2 /\ ~ x `in` domset Γ1).
   Proof.
     introv H. autorewrite with tea_rw_uniq tea_rw_in in *.
     destructs H. split.
@@ -1316,7 +1322,7 @@ Section in_theorems_uniq.
   Lemma in_cons_uniq_iff : forall x y (a b : A) Γ,
     uniq ((y, b) :: Γ) ->
     (x, a) ∈ ((y, b) :: Γ) <->
-     (x = y /\ a = b /\ ~ x ∈@ domset Γ) \/
+     (x = y /\ a = b /\ ~ x `in` domset Γ) \/
      ((x, a) ∈ Γ /\ x <> y).
   Proof.
     introv. change_alist (y ~ b ++ Γ).
@@ -1431,7 +1437,7 @@ Section binds_theorems.
   Lemma fresh_app_l : forall x a Γ1 Γ2,
     uniq (Γ1 ++ Γ2) ->
     (x, a) ∈ Γ1 ->
-    ~ x ∈@ (domset Γ2).
+    ~ x `in` (domset Γ2).
   Proof.
     intros. autorewrite with tea_rw_uniq in *.
     preprocess. apply in_in_domset in H0.
@@ -1441,7 +1447,7 @@ Section binds_theorems.
   Lemma fresh_app_r : forall x a Γ1 Γ2,
     uniq (Γ1 ++ Γ2) ->
     (x, a) ∈ Γ2 ->
-    ~ x ∈@ domset Γ1.
+    ~ x `in` domset Γ1.
   Proof.
     intros. autorewrite with tea_rw_uniq in *.
     preprocess. apply in_in_domset in H0.
@@ -1478,7 +1484,7 @@ Section permute_lemmas.
       x ∈ dom l1 <-> x ∈ dom l2.
   Proof.
     setoid_rewrite in_dom_iff.
-    setoid_rewrite (List.perm_set_eq Hperm).
+    setoid_rewrite (permutation_spec Hperm).
     reflexivity.
   Qed.
 
@@ -1494,7 +1500,7 @@ Section permute_lemmas.
       a ∈ range l1 <-> a ∈ range l2.
   Proof.
     setoid_rewrite in_range_iff.
-    setoid_rewrite (List.perm_set_eq Hperm).
+    setoid_rewrite (permutation_spec Hperm).
     reflexivity.
   Qed.
 
@@ -1528,7 +1534,7 @@ Qed.
 Lemma binds_perm : forall (A : Type) (l1 l2 : list (atom * A)) (x : atom) (a : A),
     Permutation l1 l2 -> (x, a) ∈ l1 <-> (x, a) ∈ l2.
 Proof.
-  intros. now erewrite List.perm_set_eq; eauto.
+  intros. now erewrite permutation_spec; eauto.
 Qed.
 
 Create HintDb tea_rw_perm.
@@ -1537,7 +1543,7 @@ Create HintDb tea_rw_perm.
 
 (** For any given finite set of atoms, we can generate an atom fresh
     for it. *)
-Lemma atom_fresh : forall L : AtomSet.t, { x : atom | ~ x ∈@ L }.
+Lemma atom_fresh : forall L : AtomSet.t, { x : atom | ~ x `in` L }.
 Proof.
   intros L. destruct (atom_fresh_for_list (AtomSet.elements L)) as [a H].
   rewrite <- in_elements_iff in H.

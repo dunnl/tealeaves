@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>Prelude.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  <span class="kn">Axioms</span>
+  <span class="nv">Tactics</span>.LibTactics.</span></span></pre><p>Declare a scope for Tealeaves' notations.</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Declare Scope</span> tealeaves_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Delimit Scope</span> tealeaves_scope <span class="kr">with</span> tea.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[<span class="kn">global</span>] <span class="kn">Open Scope</span> tealeaves_scope.</span></span></pre><p>Open &lt;&lt;type_scope&gt;&gt; globally because (*) should mean [prod]</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input">#[<span class="kn">global</span>] <span class="kn">Open Scope</span> type_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * General operations *)</span>
+
+<span class="sd">(** General-purpose functions used throughout Tealeaves. *)</span>
+<span class="sd">(******************************************************************************)</span>
+
+<span class="sd">(** We use &lt;&lt;exfalso&gt;&gt; to reason about traversable functors. *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">exfalso</span> {<span class="nv">A</span> : <span class="kt">Type</span>} : <span class="kt">False</span> -&gt; A :=
+  <span class="kr">fun</span> <span class="nv">bot</span> =&gt; <span class="kr">match</span> bot <span class="kr">with</span> <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Generalizable All Variables</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Polymorphic</span> <span class="kn">Definition</span> <span class="nf">compose</span> {<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span>} (<span class="nv">g</span> : B -&gt; C) (<span class="nv">f</span> : A -&gt; B) : A -&gt; C := <span class="kr">fun</span> <span class="nv">a</span> =&gt; g (f a).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;g ∘ f&quot;</span> := (compose g f) (<span class="kn">at level</span> <span class="mi">40</span>, <span class="kn">left associativity</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** Helpful to avoid inserting a hidden &lt;&lt;compose&gt;&gt; between two</span>
+<span class="sd">    functors that would later need to be unfolded. TODO Get rid of this. *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;F ○ G&quot;</span> := (<span class="kr">fun</span> <span class="nv">X</span> =&gt; F (G X)) (<span class="kn">at level</span> <span class="mi">40</span>, <span class="kn">left associativity</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Polymorphic</span> <span class="kn">Definition</span> <span class="nf">compose_assoc</span> `{f : C -&gt; D} `{g : B -&gt; C} `{h : A -&gt; B} :
+  f ∘ (g ∘ h) = (f ∘ g) ∘ h := <span class="kp">ltac</span>:(<span class="bp">reflexivity</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(*</span>
+<span class="c">Lemma compose_assoc :</span>
+<span class="c">  f ∘ (g ∘ h) = (f ∘ g) ∘ h.</span>
+<span class="c">Proof.</span>
+<span class="c">  reflexivity.</span>
+<span class="c">Qed.</span>
+<span class="c">*)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">const</span> {<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>} (<span class="nv">b</span> : B) : A -&gt; B := <span class="kr">fun</span> <span class="nv">_</span> =&gt; b.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">evalAt</span> {<span class="nv">A</span> <span class="nv">B</span>} (<span class="nv">a</span> : A) (<span class="nv">f</span> : A -&gt; B) := f a.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">strength_arrow</span> `(p : A * (B -&gt; C)) : B -&gt; A * C := <span class="kr">fun</span> <span class="nv">b</span> =&gt; (fst p, snd p b).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">costrength_arrow</span> `(p : (A -&gt; B) * C) : A -&gt; B * C := <span class="kr">fun</span> <span class="nv">a</span> =&gt; (fst p a, snd p).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">pair_right</span> {<span class="nv">A</span> <span class="nv">B</span>} : B -&gt; A -&gt; A * B := <span class="kr">fun</span> <span class="nv">b</span> <span class="nv">a</span> =&gt; (a, b).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">precompose</span> {<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span>} := (<span class="kr">fun</span> (<span class="nv">f</span> : A -&gt; B) (<span class="nv">g</span> : B -&gt; C)  =&gt; g ○ f).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk0"><span class="kn">Theorem</span> <span class="nf">commute_hom_action1</span> :
+  <span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span> : <span class="kt">Type</span>) (<span class="nv">f1</span> : A -&gt; B) (<span class="nv">f2</span> : B -&gt; C) (<span class="nv">f3</span> : C -&gt; D),
+    compose f3 (precompose f1 f2) = precompose f1 (compose f3 f2).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span> : <span class="kt">Type</span>) (<span class="nv">f1</span> : A -&gt; B) (<span class="nv">f2</span> : B -&gt; C)
+  (<span class="nv">f3</span> : C -&gt; D),
+f3 ∘ precompose f1 f2 = precompose f1 (f3 ∘ f2)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk1"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span> : <span class="kt">Type</span>) (<span class="nv">f1</span> : A -&gt; B) (<span class="nv">f2</span> : B -&gt; C)
+  (<span class="nv">f3</span> : C -&gt; D),
+f3 ∘ precompose f1 f2 = precompose f1 (f3 ∘ f2)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk2"><span class="kn">Theorem</span> <span class="nf">commute_hom_action2</span> :
+  <span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span> : <span class="kt">Type</span>) (<span class="nv">f1</span> : A -&gt; B) (<span class="nv">f3</span> : C -&gt; D),
+    compose f3 ∘ precompose f1 = precompose f1 ∘ compose f3.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span> : <span class="kt">Type</span>) (<span class="nv">f1</span> : A -&gt; B) (<span class="nv">f3</span> : C -&gt; D),
+compose f3 ∘ precompose f1 =
+precompose f1 ∘ compose f3</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk3"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span> : <span class="kt">Type</span>) (<span class="nv">f1</span> : A -&gt; B) (<span class="nv">f3</span> : C -&gt; D),
+compose f3 ∘ precompose f1 =
+precompose f1 ∘ compose f3</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Tactics *)</span>
+<span class="sd">(******************************************************************************)</span>
+
+<span class="sd">(** ** Tactics for rewriting *)</span>
+<span class="sd">(******************************************************************************)</span>
+
+<span class="sd">(** *** Rewriting the left or right side of an equation *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">get_lhs</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="nl">?R</span> <span class="nl">?f</span> <span class="nl">?g</span> =&gt;
+    <span class="kp">constr</span>:(f)
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">get_rhs</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="nl">?R</span> <span class="nl">?f</span> <span class="nl">?g</span> =&gt;
+    <span class="kp">constr</span>:(g)
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">change_left</span> new :=
+  <span class="kr">match goal with</span>
+  | |- <span class="nl">?R</span> <span class="nl">?f</span> <span class="nl">?g</span> =&gt;
+    <span class="nb">change</span> (R new g)
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">change_right</span> new :=
+  <span class="kr">match goal with</span>
+  | |- <span class="nl">?R</span> <span class="nl">?f</span> <span class="nl">?g</span> =&gt;
+    <span class="nb">change</span> (R f new)
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;change&quot;</span> <span class="s2">&quot;left&quot;</span> <span class="kp">constr</span>(new) := change_left new.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;change&quot;</span> <span class="s2">&quot;right&quot;</span> <span class="kp">constr</span>(new) := change_right new.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** *** Re-association of an expression *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;&lt;-&quot;</span> := <span class="nb">rewrite</span> compose_assoc.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;&lt;-&quot;</span> <span class="s2">&quot;in&quot;</span> <span class="kn">ident</span>(h) := <span class="nb">rewrite</span> compose_assoc <span class="kr">in</span> h.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;-&gt;&quot;</span> := <span class="nb">rewrite</span> &lt;- compose_assoc.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;-&gt;&quot;</span> <span class="s2">&quot;in&quot;</span> <span class="kn">ident</span>(h):= <span class="nb">rewrite</span> &lt;- compose_assoc <span class="kr">in</span> h.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">guard_left</span> x :=
+  <span class="kr">let</span> <span class="nv">lhs</span> := get_lhs <span class="kr">in</span> <span class="nb">pose</span> (x := lhs); change_left x.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">guard_right</span> x :=
+  <span class="kr">let</span> <span class="nv">rhs</span> := get_rhs <span class="kr">in</span> <span class="nb">pose</span> (x := rhs); change_right x.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">reassociate_left_on_right</span> :=
+  <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">fresh</span> <span class="s2">&quot;guard&quot;</span> <span class="kr">in</span>
+  guard_left x; reassociate &lt;-; <span class="nb">subst</span> x.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">reassociate_right_on_right</span> :=
+  <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">fresh</span> <span class="s2">&quot;guard&quot;</span> <span class="kr">in</span>
+  guard_left x; reassociate -&gt;; <span class="nb">subst</span> x.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">reassociate_left_on_left</span> :=
+  <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">fresh</span> <span class="s2">&quot;guard&quot;</span> <span class="kr">in</span>
+  guard_right x; reassociate &lt;-; <span class="nb">subst</span> x.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">reassociate_right_on_left</span> :=
+  <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">fresh</span> <span class="s2">&quot;guard&quot;</span> <span class="kr">in</span>
+  guard_right x; reassociate -&gt;; <span class="nb">subst</span> x.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;&lt;-&quot;</span> <span class="s2">&quot;on&quot;</span> <span class="s2">&quot;left&quot;</span> := reassociate_left_on_left.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;-&gt;&quot;</span> <span class="s2">&quot;on&quot;</span> <span class="s2">&quot;left&quot;</span> := reassociate_right_on_left.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;&lt;-&quot;</span> <span class="s2">&quot;on&quot;</span> <span class="s2">&quot;right&quot;</span> := reassociate_left_on_right.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;-&gt;&quot;</span> <span class="s2">&quot;on&quot;</span> <span class="s2">&quot;right&quot;</span> := reassociate_right_on_right.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** We wrap &lt;&lt;reassociate_xxx_near&gt;&gt; with &lt;&lt;progress&gt;&gt; to detect situations in</span>
+<span class="sd">    which the &lt;&lt;change&gt;&gt; simply fails to match (and thus has no effect), which</span>
+<span class="sd">    in practice indicates a user mistake. *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">reassociate_right_near</span> f3 :=
+  <span class="kp">progress</span> (<span class="nb">change</span> (<span class="nl">?f1</span> ∘ <span class="nl">?f2</span> ∘ f3) <span class="kr">with</span> (f1 ∘ (f2 ∘ f3))).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">reassociate_left_near</span> f1 :=
+  <span class="kp">progress</span> (<span class="nb">change</span> (f1 ∘ (<span class="nl">?f2</span> ∘ <span class="nl">?f3</span>)) <span class="kr">with</span> (f1 ∘ f2 ∘ f3)).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;-&gt;&quot;</span> <span class="s2">&quot;near&quot;</span> <span class="kp">uconstr</span>(f3) := reassociate_right_near f3.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;reassociate&quot;</span> <span class="s2">&quot;&lt;-&quot;</span> <span class="s2">&quot;near&quot;</span> <span class="kp">uconstr</span>(f1) := reassociate_left_near f1.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** *** Expressing functions as compositions *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">compose_near</span> arg :=
+  <span class="kp">progress</span> (<span class="nb">change</span> (<span class="nl">?f</span> (<span class="nl">?g</span> arg)) <span class="kr">with</span> ((f ∘ g) arg)).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">compose_near_on_left</span> arg :=
+  <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">fresh</span> <span class="s2">&quot;guard&quot;</span> <span class="kr">in</span>
+  guard_right x; compose_near arg; <span class="nb">subst</span> x.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">compose_near_on_right</span> arg :=
+  <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">fresh</span> <span class="s2">&quot;guard&quot;</span> <span class="kr">in</span>
+  guard_left x; compose_near arg; <span class="nb">subst</span> x.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;compose&quot;</span> <span class="s2">&quot;near&quot;</span> <span class="kp">constr</span>(arg) := compose_near arg.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;compose&quot;</span> <span class="s2">&quot;near&quot;</span> <span class="kp">constr</span>(arg) <span class="s2">&quot;on&quot;</span> <span class="s2">&quot;left&quot;</span> := compose_near_on_left arg.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;compose&quot;</span> <span class="s2">&quot;near&quot;</span> <span class="kp">constr</span>(arg) <span class="s2">&quot;on&quot;</span> <span class="s2">&quot;right&quot;</span> := compose_near_on_right arg.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** *** Rewriting with setoids *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;rewrites&quot;</span> <span class="kp">uconstr</span>(r1) :=
+  <span class="nb">setoid_rewrite</span> r1.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;rewrites&quot;</span> <span class="kp">uconstr</span>(r1) <span class="s2">&quot;,&quot;</span> <span class="kp">uconstr</span>(r2) :=
+  rewrites r1; rewrites r2.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;rewrites&quot;</span> <span class="kp">uconstr</span>(r1) <span class="s2">&quot;,&quot;</span> <span class="kp">uconstr</span>(r2) <span class="s2">&quot;,&quot;</span> <span class="kp">uconstr</span>(r3):=
+  rewrites r1; rewrites r2, r3.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;rewrites&quot;</span> <span class="kp">uconstr</span>(r1) <span class="s2">&quot;,&quot;</span> <span class="kp">uconstr</span>(r2) <span class="s2">&quot;,&quot;</span> <span class="kp">uconstr</span>(r3) <span class="s2">&quot;,&quot;</span> <span class="kp">uconstr</span>(r4) :=
+  rewrites r1; rewrites r2, r3, r4.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Unfolding operational typeclasses *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">head_of</span> expr :=
+  <span class="kr">match</span> expr <span class="kr">with</span>
+  | <span class="nl">?f</span> <span class="nl">?x</span> =&gt; head_of f
+  | <span class="nl">?head</span> =&gt; head
+  | _ =&gt; <span class="kp">fail</span>
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">head_of_matches</span> expr head :=
+  <span class="kr">match</span> expr <span class="kr">with</span>
+  | <span class="nl">?f</span> <span class="nl">?x</span> =&gt;
+    head_of_matches f head
+  | head =&gt; <span class="kp">idtac</span>
+  | _ =&gt; <span class="kp">fail</span>
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk4"><span class="kn">Goal</span> <span class="kt">False</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kt">False</span></div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk5"><span class="kn">Fail</span> head_of_matches <span class="mi">0</span> S. <span class="c">(* Tactic failure. *)</span></label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
+Tactic failure.</blockquote></div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kt">False</span></div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk6">head_of_matches (S <span class="mi">0</span>) S. <span class="c">(* Success *)</span></label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kt">False</span></div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk7">head_of_matches <span class="mi">5</span> S. <span class="c">(* Success *)</span></label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kt">False</span></div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Abort</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** Unfold operational typeclasses in the goal. *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">unfold_operational_tc</span> inst :=
+  <span class="kp">repeat</span> (<span class="kr">match goal with</span>
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?maybe_inst</span>] =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op maybe_inst) <span class="kr">with</span> maybe_inst
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?maybe_inst</span>] =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F maybe_inst) <span class="kr">with</span> maybe_inst
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?maybe_inst</span>] =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G inst) <span class="kr">with</span> maybe_inst
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?maybe_inst</span>] =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G H inst) <span class="kr">with</span> maybe_inst
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?maybe_inst</span>] =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G H I inst) <span class="kr">with</span> maybe_inst
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?J</span> <span class="nl">?maybe_inst</span>] =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G H I J inst) <span class="kr">with</span> maybe_inst
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?J</span> <span class="nl">?K</span> <span class="nl">?maybe_inst</span>] =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G H I J K inst) <span class="kr">with</span> maybe_inst
+          <span class="kr">end</span>); <span class="nb">unfold</span> inst.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** Unfold operational typeclasses in hypotheses. *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">unfold_operational_tc_hyp</span> :=
+  <span class="kp">repeat</span> (<span class="kr">match goal with</span>
+          | H : <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?maybe_inst</span>] |- _ =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op maybe_inst) <span class="kr">with</span> maybe_inst <span class="kr">in</span> H
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?maybe_inst</span>] |- _ =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F maybe_inst) <span class="kr">with</span> maybe_inst
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?maybe_inst</span>] |- _ =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G inst) <span class="kr">with</span> maybe_inst
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?maybe_inst</span>] |- _ =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G H inst) <span class="kr">with</span> maybe_inst
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?maybe_inst</span>] |- _ =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G H I inst) <span class="kr">with</span> maybe_inst
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?J</span> <span class="nl">?maybe_inst</span>] |- _ =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G H I J inst) <span class="kr">with</span> maybe_inst
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?J</span> <span class="nl">?K</span> <span class="nl">?maybe_inst</span>] |- _ =&gt;
+            head_of_matches maybe_inst inst;
+            <span class="nb">change</span> (op F G H I J K inst) <span class="kr">with</span> maybe_inst
+          <span class="kr">end</span>); <span class="nb">unfold</span> inst.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;unfold_ops&quot;</span> <span class="kp">constr</span>(inst) :=
+  unfold_operational_tc inst.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;unfold_ops&quot;</span> <span class="kp">constr</span>(inst) <span class="kp">constr</span>(inst1) :=
+  unfold_ops inst; unfold_ops inst1.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;unfold_ops&quot;</span> <span class="kp">constr</span>(inst) <span class="kp">constr</span>(inst1) <span class="kp">constr</span>(inst2) :=
+  unfold_ops inst; unfold_ops inst1 inst2.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;unfold_ops&quot;</span> <span class="kp">constr</span>(inst) <span class="s2">&quot;in&quot;</span> <span class="s2">&quot;*&quot;</span> :=
+  unfold_operational_tc inst;
+    unfold_operational_tc_hyp inst.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;unfold_ops&quot;</span> <span class="kp">constr</span>(inst) <span class="kp">constr</span>(inst1) <span class="s2">&quot;in&quot;</span> <span class="s2">&quot;*&quot;</span> :=
+  unfold_ops inst <span class="kr">in</span> *; unfold_ops inst1 <span class="kr">in</span> *.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;unfold_ops&quot;</span> <span class="kp">constr</span>(inst) <span class="kp">constr</span>(inst1) <span class="kp">constr</span>(inst2) <span class="s2">&quot;in&quot;</span> <span class="s2">&quot;*&quot;</span> :=
+  unfold_ops inst <span class="kr">in</span> *; unfold_ops inst1 <span class="kr">in</span> *; unfold_ops inst2 <span class="kr">in</span> *.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** Unfold all operational typeclasses. This will unfold anything that</span>
+<span class="sd">    looks like an operational typeclass. *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">unfold_all_transparent_tcs</span> :=
+  <span class="kp">repeat</span> (<span class="kr">match goal with</span>
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?inst</span>] =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op inst) <span class="kr">with</span> x
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?inst</span>] =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F inst) <span class="kr">with</span> x
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?inst</span>] =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G inst) <span class="kr">with</span> x
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?inst</span>] =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G H inst) <span class="kr">with</span> x
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?inst</span>] =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G H I inst) <span class="kr">with</span> x
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?J</span> <span class="nl">?inst</span>] =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G H I J inst) <span class="kr">with</span> x
+          | |- <span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?J</span> <span class="nl">?K</span> <span class="nl">?inst</span>] =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G H I J K inst) <span class="kr">with</span> x
+          <span class="kr">end</span>); <span class="nb">cbn</span> beta zeta.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">unfold_all_transparent_tcs_hyp</span> :=
+  <span class="kp">repeat</span> (<span class="kr">match goal with</span>
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?inst</span>] |- _ =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op inst) <span class="kr">with</span> x
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?inst</span>] |- _ =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F inst) <span class="kr">with</span> x
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?inst</span>] |- _ =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G inst) <span class="kr">with</span> x
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?inst</span>] |- _ =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G H inst) <span class="kr">with</span> x
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?inst</span>] |- _ =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G H I inst) <span class="kr">with</span> x
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?J</span> <span class="nl">?inst</span>] |- _ =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G H I J inst) <span class="kr">with</span> x
+          | H :<span class="kp">context</span>[<span class="nl">?op</span> <span class="nl">?F</span> <span class="nl">?G</span> <span class="nl">?H</span> <span class="nl">?I</span> <span class="nl">?J</span> <span class="nl">?K</span> <span class="nl">?inst</span>] |- _ =&gt;
+            <span class="kr">let</span> <span class="nv">hd</span> := get_head inst <span class="kr">in</span>
+            <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">eval</span> <span class="nb">unfold</span> hd <span class="nb">at</span> <span class="mi">1</span> <span class="kr">in</span> inst <span class="kr">in</span>
+                <span class="nb">change</span> (op F G H I J K inst) <span class="kr">with</span> x
+          <span class="kr">end</span>); <span class="nb">cbn</span> beta zeta.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;unfold&quot;</span> <span class="s2">&quot;transparent&quot;</span> <span class="s2">&quot;tcs&quot;</span> :=
+  unfold_all_transparent_tcs.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;unfold&quot;</span> <span class="s2">&quot;transparent&quot;</span> <span class="s2">&quot;tcs&quot;</span> <span class="s2">&quot;in&quot;</span> <span class="s2">&quot;*&quot;</span> :=
+  unfold_all_transparent_tcs; unfold_all_transparent_tcs_hyp.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Support for comparing natural numbers *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Coq.Arith <span class="kn">Require Import</span>
+     PeanoNat Compare_dec.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** This gives access to the [lia] tactic *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Require Export</span> Psatz.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** This lemma reduces a goal to three subgoals based on the possible ordering</span>
+<span class="sd">    between two natural numbers. Each branch may invoke two hypothesis, one</span>
+<span class="sd">    stipulating the ordering and the other stipulating an equation for</span>
+<span class="sd">    [Nat.compare]. *)</span>
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk8"><span class="kn">Lemma</span> <span class="nf">comparison_naturals</span> : <span class="kr">forall</span> (<span class="nv">n</span> <span class="nv">m</span> : nat) (<span class="nv">p</span> : <span class="kt">Prop</span>),
+    (n ?= m = Lt -&gt; n &lt; m -&gt; p) -&gt;
+    (n ?= m = Eq -&gt; n = m -&gt; p) -&gt;
+    (n ?= m = Gt -&gt; n &gt; m -&gt; p) -&gt;
+    p.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">n</span> <span class="nv">m</span> : nat) (<span class="nv">p</span> : <span class="kt">Prop</span>),
+((n ?= m) = Lt -&gt; n &lt; m -&gt; p) -&gt;
+((n ?= m) = Eq -&gt; n = m -&gt; p) -&gt;
+((n ?= m) = Gt -&gt; n &gt; m -&gt; p) -&gt; p</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chk9"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">n</span> <span class="nv">m</span> : nat) (<span class="nv">p</span> : <span class="kt">Prop</span>),
+((n ?= m) = Lt -&gt; n &lt; m -&gt; p) -&gt;
+((n ?= m) = Eq -&gt; n = m -&gt; p) -&gt;
+((n ?= m) = Gt -&gt; n &gt; m -&gt; p) -&gt; p</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="prelude-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="prelude-v-chka"><span class="nb">intros</span> n m ? <span class="nl">?lt</span> <span class="nl">?eq</span> <span class="nl">?gt</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>n, m</var><span class="hyp-type"><b>: </b><span>nat</span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span><span class="kt">Prop</span></span></span></span><br><span><var>lt</var><span class="hyp-type"><b>: </b><span>(n ?= m) = Lt -&gt; n &lt; m -&gt; p</span></span></span><br><span><var>eq</var><span class="hyp-type"><b>: </b><span>(n ?= m) = Eq -&gt; n = m -&gt; p</span></span></span><br><span><var>gt</var><span class="hyp-type"><b>: </b><span>(n ?= m) = Gt -&gt; n &gt; m -&gt; p</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">p</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">destruct</span> (lt_eq_lt_dec n m) <span class="kr">as</span> [[? | ?] |];
+    <span class="nb">rewrite</span> <span class="nl">?Nat</span>.compare_eq_iff,
+    <span class="nl">?Nat</span>.compare_lt_iff, <span class="nl">?Nat</span>.compare_gt_iff <span class="kr">in</span> *;
+    <span class="nb">auto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** Compare natural numbers with [comparison_naturals], the try rewriting</span>
+<span class="sd">    occurrences in [Nat.compare] and other basic tactics.*)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">compare_nats_args</span> n k :=
+  <span class="nb">apply</span> (@comparison_naturals n k);
+  (<span class="kr">let</span> <span class="nv">ineq</span> := <span class="kp">fresh</span> <span class="s2">&quot;ineq&quot;</span>
+    <span class="kr">with</span> ineqp := <span class="kp">fresh</span> <span class="s2">&quot;ineqp&quot;</span>
+    <span class="kr">with</span> ineqrw := <span class="kp">fresh</span> <span class="s2">&quot;ineqrw&quot;</span> <span class="kr">in</span>
+    <span class="nb">intros</span> ineqrw ineqp;
+    <span class="kp">repeat</span> <span class="nb">rewrite</span> ineqrw <span class="kr">in</span> *;
+    <span class="c">(* In the n = k case, substitute the equality *)</span>
+    <span class="kp">try</span> <span class="kr">match</span> <span class="kp">type of</span> ineqp <span class="kr">with</span>
+        | <span class="nl">?x</span> = <span class="nl">?y</span> =&gt; <span class="nb">subst</span>
+        <span class="kr">end</span>; <span class="kp">try</span> <span class="bp">lia</span>; <span class="kp">repeat</span> <span class="nb">f_equal</span>; <span class="kp">try</span> <span class="bp">lia</span>; <span class="kp">try</span> <span class="bp">reflexivity</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;compare&quot;</span> <span class="s2">&quot;naturals&quot;</span> <span class="kp">constr</span>(n) <span class="s2">&quot;and&quot;</span> <span class="kp">constr</span>(m) :=
+  compare_nats_args n m.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** General tactics *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">invert_pair_eq</span> :=
+  <span class="kr">match goal with</span>
+  | H : (<span class="nl">?x</span>, <span class="nl">?y</span>) = (<span class="nl">?z</span>, <span class="nl">?w</span>) |- _ =&gt;
+      <span class="nb">inversion</span> H
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">injection_all</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+    | H : <span class="nl">?f</span> = <span class="nl">?g</span> |- _ =&gt;
+        <span class="nb">injection</span> H; <span class="nb">intros</span>; <span class="nb">clear</span> H
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">destruct_all_existentials</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+    | H : <span class="kr">exists</span> (<span class="nv">x</span> : <span class="nl">?A</span>), <span class="nl">?P</span> |- _ =&gt;
+        <span class="kr">let</span> <span class="nv">x</span> := <span class="kp">fresh</span> <span class="s2">&quot;x&quot;</span> <span class="kr">in</span>
+        <span class="kr">let</span> <span class="nv">H&#39;</span> := <span class="kp">fresh</span> <span class="s2">&quot;H&quot;</span> <span class="kr">in</span>
+        <span class="nb">destruct</span> H <span class="kr">as</span> [x H&#39;]
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">destruct_all_pairs</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+    | H : <span class="nl">?P1</span> /\ <span class="nl">?P2</span> |- _ =&gt;
+        <span class="nb">destruct</span> H
+    | H : prod <span class="nl">?A</span> <span class="nl">?B</span> |- _ =&gt;
+        <span class="nb">destruct</span> H
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">preprocess</span> :=
+  <span class="kp">repeat</span> (destruct_all_pairs +
+            destruct_all_existentials +
+            injection_all + <span class="nb">subst</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;pp&quot;</span> tactic(tac) :=
+  preprocess; tac.</span></span></pre>
+</div>
+</div></body>
+</html>

@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>Formalizing STLC with Tealeaves</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document" id="formalizing-stlc-with-tealeaves">
+<h1 class="title">Formalizing STLC with Tealeaves</h1>
+<h2 class="subtitle" id="kleisli-presentation">Kleisli presentation</h2>
+
+<p>This file gives a tutorial on proving the decorated traversable monad
+laws the for the syntax of the simply-typed lambda calculus (STLC).</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title"><a class="reference internal" href="#top">Table of Contents</a></p>
+<ul class="simple">
+<li><a class="reference internal" href="#imports-and-setup" id="toc-entry-1">Imports and setup</a></li>
+<li><a class="reference internal" href="#using-tealeaves-with-stlc" id="toc-entry-2">Using Tealeaves with STLC</a><ul>
+<li><a class="reference internal" href="#notations" id="toc-entry-3">Notations</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#definition-of-binddt" id="toc-entry-4">Definition of binddt</a></li>
+<li><a class="reference internal" href="#instantiation-of-derived-functions" id="toc-entry-5">Instantiation of derived functions</a></li>
+</ul>
+</div>
+<div class="section" id="imports-and-setup">
+<h1><a class="toc-backref" href="#toc-entry-1">Imports and setup</a></h1>
+<p>Since we are using the Kleisli typeclass hierarchy, we import modules under
+the namespaces <tt class="docutils literal">Classes.Kleisli</tt> and <tt class="docutils literal">Theory.Kleisli.</tt></p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Backends.LN.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> LN.Simplification.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> LN.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Set Implicit Arguments</span>.</span></span></pre></div>
+<div class="section" id="using-tealeaves-with-stlc">
+<h1><a class="toc-backref" href="#toc-entry-2">Using Tealeaves with STLC</a></h1>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Parameter</span> <span class="nv">base_typ</span> : <span class="kt">Type</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Inductive</span> <span class="nf">typ</span> :=
+| base : base_typ -&gt; typ
+| arr : typ -&gt; typ -&gt; typ.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Coercion</span> <span class="nf">base</span> : base_typ &gt;-&gt; typ.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Inductive</span> <span class="nf">Lam</span> (<span class="nv">V</span> : <span class="kt">Type</span>) :=
+| tvar : V -&gt; Lam V
+| lam  : typ -&gt; Lam V -&gt; Lam V
+| app  : Lam V -&gt; Lam V -&gt; Lam V.</span></span></pre><div class="section" id="notations">
+<h2><a class="toc-backref" href="#toc-entry-3">Notations</a></h2>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">TermNotations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;&#39;term&#39;&quot;</span> := (Lam LN).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;&#39;λ&#39;&quot;</span> := (lam) (<span class="kn">at level</span> <span class="mi">45</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;⟨ t ⟩ ( u )&quot;</span> := (app t u) (<span class="kn">at level</span> <span class="mi">80</span>, t <span class="kn">at level</span> <span class="mi">40</span>, u <span class="kn">at level</span> <span class="mi">40</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;A ⟹ B&quot;</span> := (arr A B) (<span class="kn">at level</span> <span class="mi">40</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">TermNotations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> TermNotations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">lnvar</span> := @tvar LN.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">bvar</span> := @tvar LN ○ Bd.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">fvar</span> := @tvar LN ○ Fr.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Coercion</span> <span class="nf">lnvar</span>: LN &gt;-&gt; Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Coercion</span> <span class="nf">bvar</span>: nat &gt;-&gt; Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Coercion</span> <span class="nf">fvar</span>: atom &gt;-&gt; Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Coercion</span> <span class="nf">Bd</span>: nat &gt;-&gt; LN.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Coercion</span> <span class="nf">Fr</span>: atom &gt;-&gt; LN.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* Help the simplification tactics unfold coercions to expose a</span>
+<span class="c">   &lt;&lt;tvar&gt;&gt; constructor, which is needed to find a match for</span>
+<span class="c">   &lt;&lt;bindd f (ret x)&gt;&gt; *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[<span class="kn">global</span>] <span class="kn">Hint Unfold</span> fvar bvar: tea_ret_coercions.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">test_notations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    (<span class="nv">β</span> : <span class="kt">Type</span>)
+    (<span class="nv">x</span> <span class="nv">y</span> <span class="nv">z</span> : atom)
+    (<span class="nv">b</span> : β) (<span class="nv">τ</span> : typ).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk0"><span class="kn">Check</span> <span class="mi">1</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="mi">1</span>
+     : nat</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk1"><span class="kn">Check</span> (<span class="mi">1</span>: LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="mi">1</span> : LN
+     : LN</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk2"><span class="kn">Check</span> (<span class="mi">1</span>: Lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="mi">1</span> : term
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk3"><span class="kn">Check</span> <span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">1</span>)).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">(<span class="kr">λ</span>) τ (tvar <span class="mi">1</span>)
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk4"><span class="kn">Check</span> <span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">Bd</span> <span class="mi">1</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">(<span class="kr">λ</span>) τ <span class="mi">1</span>
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk5"><span class="kn">Check</span> <span class="kr">λ</span> <span class="nv">τ</span> <span class="mi">1</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">(<span class="kr">λ</span>) τ <span class="mi">1</span>
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk6"><span class="kn">Check</span> <span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Fr x)).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">(<span class="kr">λ</span>) τ (tvar x)
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk7"><span class="kn">Check</span> <span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">Fr</span> <span class="nv">x</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">(<span class="kr">λ</span>) τ x
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk8"><span class="kn">Check</span> <span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">x</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">(<span class="kr">λ</span>) τ x
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk9"><span class="kn">Check</span> ⟨<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">1</span>))⟩ (tvar (Fr x)).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">⟨ (<span class="kr">λ</span>) τ (tvar <span class="mi">1</span>) ⟩ (tvar x)
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chka"><span class="kn">Check</span> ⟨<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">Bd</span> <span class="mi">1</span>)⟩ (Fr x).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">⟨ (<span class="kr">λ</span>) τ <span class="mi">1</span> ⟩ (x)
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chkb"><span class="kn">Check</span> ⟨<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">Bd</span> <span class="mi">1</span>)⟩ (x).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">⟨ (<span class="kr">λ</span>) τ <span class="mi">1</span> ⟩ (x)
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chkc" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chkc"><span class="kn">Check</span> ⟨<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Fr x))⟩ (tvar (Bd <span class="mi">0</span>)).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">⟨ (<span class="kr">λ</span>) τ (tvar x) ⟩ (tvar <span class="mi">0</span>)
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chkd" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chkd"><span class="kn">Check</span> ⟨<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">Fr</span> <span class="nv">x</span>)⟩ (Bd <span class="mi">0</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">⟨ (<span class="kr">λ</span>) τ x ⟩ (<span class="mi">0</span>)
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chke" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chke"><span class="kn">Check</span> ⟨<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">x</span>⟩ (<span class="mi">0</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">⟨ (<span class="kr">λ</span>) τ x ⟩ (<span class="mi">0</span>)
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">test_notations</span>.</span></span></pre></div>
+</div>
+<div class="section" id="definition-of-binddt">
+<h1><a class="toc-backref" href="#toc-entry-4">Definition of binddt</a></h1>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Fixpoint</span> <span class="nf">binddt_Lam</span> (<span class="nv">G</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) `{Map G} `{Pure G} `{Mult G}
+    {v1 v2 : <span class="kt">Type</span>} (f : nat * v1 -&gt; G (Lam v2)) (t : Lam v1) : G (Lam v2) :=
+  <span class="kr">match</span> t <span class="kr">with</span>
+  | tvar v =&gt; f (<span class="mi">0</span>, v)
+  | lam τ body =&gt; pure (lam τ) &lt;⋆&gt; binddt_Lam (f ⦿ <span class="mi">1</span>) body
+  | app t1 t2 =&gt; pure (@app v2) &lt;⋆&gt; binddt_Lam f t1 &lt;⋆&gt; binddt_Lam f t2
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Return_STLC</span>: Return Lam := tvar.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Binddt_STLC</span>: Binddt nat Lam Lam := @binddt_Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chkf" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chkf">#[export] <span class="kn">Instance</span> <span class="nf">DTM_STLC</span>: DecoratedTraversableMonad nat Lam.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableMonad nat Lam</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk10"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableMonad nat Lam</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  <span class="c">(* We duplicate the goal just for the purpose of debugging the tactics *)</span>
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk11">dup.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableMonad nat Lam</div></blockquote><div class="alectryon-extra-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableMonad nat Lam</div></blockquote></div></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk12" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk12">{</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableMonad nat Lam</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk13" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk13"><span class="nb">constructor</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">Monoid nat</div></blockquote><div class="alectryon-extra-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">G</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H</span> : Map G) (<span class="nv">H0</span> : Pure G)
+  (<span class="nv">H1</span> : Mult G),
+Applicative G -&gt;
+<span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : nat * A -&gt; G (Lam B)),
+binddt f ∘ ret = f ∘ ret</div></blockquote><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableRightPreModule nat Lam Lam</div></blockquote></div></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk14" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk14"><span class="nb">typeclasses eauto</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">G</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H</span> : Map G) (<span class="nv">H0</span> : Pure G)
+  (<span class="nv">H1</span> : Mult G),
+Applicative G -&gt;
+<span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : nat * A -&gt; G (Lam B)),
+binddt f ∘ ret = f ∘ ret</div></blockquote><div class="alectryon-extra-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableRightPreModule nat Lam Lam</div></blockquote></div></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk15" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk15">-</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">G</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H</span> : Map G) (<span class="nv">H0</span> : Pure G)
+  (<span class="nv">H1</span> : Mult G),
+Applicative G -&gt;
+<span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : nat * A -&gt; G (Lam B)),
+binddt f ∘ ret = f ∘ ret</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input">derive_dtm1.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk16">-</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableRightPreModule nat Lam Lam</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk17" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk17"><span class="nb">constructor</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">A</span> : <span class="kt">Type</span>, binddt (ret ∘ extract) = id</div></blockquote><div class="alectryon-extra-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">G1</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H</span> : Map G1) (<span class="nv">H0</span> : Pure G1)
+  (<span class="nv">H1</span> : Mult G1),
+Applicative G1 -&gt;
+<span class="kr">forall</span> (<span class="nv">G2</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H3</span> : Map G2)
+  (<span class="nv">H4</span> : Pure G2) (<span class="nv">H5</span> : Mult G2),
+Applicative G2 -&gt;
+<span class="kr">forall</span> (<span class="nv">B</span> <span class="nv">C</span> : <span class="kt">Type</span>) (<span class="nv">g</span> : nat * B -&gt; G2 (Lam C))
+  (<span class="nv">A</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : nat * A -&gt; G1 (Lam B)),
+map (binddt g) ∘ binddt f = binddt (g ⋆<span class="mi">7</span> f)</div></blockquote><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">G1</span> <span class="nv">G2</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H</span> : Map G1)
+  (<span class="nv">H0</span> : Mult G1) (<span class="nv">H1</span> : Pure G1) (<span class="nv">H2</span> : Map G2)
+  (<span class="nv">H3</span> : Mult G2) (<span class="nv">H4</span> : Pure G2)
+  (<span class="nv">ϕ</span> : <span class="kr">forall</span> <span class="nv">A</span> : <span class="kt">Type</span>, G1 A -&gt; G2 A),
+ApplicativeMorphism G1 G2 ϕ -&gt;
+<span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : nat * A -&gt; G1 (Lam B)),
+ϕ (Lam B) ∘ binddt f = binddt (ϕ (Lam B) ∘ f)</div></blockquote></div></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">      </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk18" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk18">+</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">A</span> : <span class="kt">Type</span>, binddt (ret ∘ extract) = id</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input">derive_dtm2.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">      </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk19" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk19">+</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">G1</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H</span> : Map G1) (<span class="nv">H0</span> : Pure G1)
+  (<span class="nv">H1</span> : Mult G1),
+Applicative G1 -&gt;
+<span class="kr">forall</span> (<span class="nv">G2</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H3</span> : Map G2)
+  (<span class="nv">H4</span> : Pure G2) (<span class="nv">H5</span> : Mult G2),
+Applicative G2 -&gt;
+<span class="kr">forall</span> (<span class="nv">B</span> <span class="nv">C</span> : <span class="kt">Type</span>) (<span class="nv">g</span> : nat * B -&gt; G2 (Lam C))
+  (<span class="nv">A</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : nat * A -&gt; G1 (Lam B)),
+map (binddt g) ∘ binddt f = binddt (g ⋆<span class="mi">7</span> f)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input">derive_dtm3.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">      </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk1a" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk1a">+</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">G1</span> <span class="nv">G2</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) (<span class="nv">H</span> : Map G1)
+  (<span class="nv">H0</span> : Mult G1) (<span class="nv">H1</span> : Pure G1) (<span class="nv">H2</span> : Map G2)
+  (<span class="nv">H3</span> : Mult G2) (<span class="nv">H4</span> : Pure G2)
+  (<span class="nv">ϕ</span> : <span class="kr">forall</span> <span class="nv">A</span> : <span class="kt">Type</span>, G1 A -&gt; G2 A),
+ApplicativeMorphism G1 G2 ϕ -&gt;
+<span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : nat * A -&gt; G1 (Lam B)),
+ϕ (Lam B) ∘ binddt f = binddt (ϕ (Lam B) ∘ f)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input">derive_dtm4.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk1b" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk1b">}</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableMonad nat Lam</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input">derive_dtm.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span></span></pre></div>
+<div class="section" id="instantiation-of-derived-functions">
+<h1><a class="toc-backref" href="#toc-entry-5">Instantiation of derived functions</a></h1>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Map_STLC</span>: Map Lam
+  := Map_Binddt nat Lam Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Mapd_STLC</span>: Mapd nat Lam
+  := Mapd_Binddt nat Lam Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Traverse_STLC</span>: Traverse Lam
+  := Traverse_Binddt nat Lam Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Mapdt_STLC</span>: Mapdt nat Lam
+  := Mapdt_Binddt nat Lam Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Bind_STLC</span>: Bind Lam Lam
+  := Bind_Binddt nat Lam Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Bindd_STLC</span>: Bindd nat Lam Lam
+  := Bindd_Binddt nat Lam Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Bindt_STLC</span>: Bindt Lam Lam
+  := Bindt_Binddt nat Lam Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">ToSubset_STLC</span>: ToSubset Lam
+  := ToSubset_Traverse.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">ToBatch_STLC</span>: ToBatch Lam
+  := ToBatch_Traverse.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">DTMFull_STLC</span>:
+  DecoratedTraversableMonadFull nat Lam
+  := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat Lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">LNNotations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;t &#39;{ x ~&gt; u }&quot;</span> :=
+    (<span class="nb">subst</span> x (u: Lam LN) (t: Lam LN)) (<span class="kn">at level</span> <span class="mi">35</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;t &#39; ( u )&quot;</span> :=
+    (open (u: Lam LN) (t : Lam LN)) (<span class="kn">at level</span> <span class="mi">35</span>, <span class="kn">format</span> <span class="s2">&quot;t  &#39; ( u )&quot;</span> ).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;&#39; [ x ] t&quot;</span> :=
+    (close x (t: Lam LN)) (<span class="kn">at level</span> <span class="mi">35</span>, <span class="kn">format</span> <span class="s2">&quot;&#39; [ x ]  t&quot;</span> ).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">LNNotations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> LNNotations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">test_operations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    (<span class="nv">β</span> : <span class="kt">Type</span>)
+    (<span class="nv">x</span> <span class="nv">y</span> <span class="nv">z</span> : atom)
+    (<span class="nv">b</span> : β) (<span class="nv">τ</span> : typ).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk1c" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk1c"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">0</span>))) &#39;(Bd <span class="mi">0</span>: Lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk1d" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk1d"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">0</span>))) &#39;(Bd <span class="mi">1</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk1e" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk1e"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">1</span>))) &#39;(<span class="mi">0</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk1f" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk1f"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">Bd</span> <span class="mi">1</span>)) &#39;(<span class="mi">0</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk20" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk20"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="mi">1</span>) &#39;(<span class="mi">0</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk21" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk21"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="mi">1</span>) &#39;(<span class="mi">0</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk22" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk22"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">x</span>) &#39;{x ~&gt; y}.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ
+    (<span class="kr">if</span> AtomSetProperties.FM.eq_dec x x
+     <span class="kr">then</span> tvar y
+     <span class="kr">else</span> tvar x)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk23" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk23"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">y</span>) &#39;{x ~&gt; y}.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ
+    (<span class="kr">if</span> AtomSetProperties.FM.eq_dec x y
+     <span class="kr">then</span> tvar y
+     <span class="kr">else</span> tvar y)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk24" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk24"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">x</span>) &#39;{x ~&gt; <span class="mi">0</span>}.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ
+    (<span class="kr">if</span> AtomSetProperties.FM.eq_dec x x
+     <span class="kr">then</span> tvar <span class="mi">0</span>
+     <span class="kr">else</span> tvar x)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk25" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk25"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="mi">0</span>) &#39;{x ~&gt; y}.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+  <span class="c">(* test something *)</span>
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk26" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk26"><span class="kn">Eval</span> <span class="nb">cbn</span> <span class="kr">in</span> LC (<span class="kr">λ</span> <span class="nv">τ</span> <span class="mi">0</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= LC ((<span class="kr">λ</span>) τ <span class="mi">0</span>)
+: <span class="kt">Prop</span></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span> (<span class="nv">body</span>: Lam LN).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk27" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk27"><span class="kn">Eval</span> <span class="nb">cbn</span> <span class="kr">in</span> FV (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">body</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= atoms
+    (binddt ((map ret ∘ free_loc ∘ extract) ⦿ <span class="mi">1</span>)
+       body)
+: AtomSet.t</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk28" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk28"><span class="kn">Eval</span> <span class="nb">cbn</span> <span class="kr">in</span> LCn <span class="mi">3</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">body</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= LCn <span class="mi">3</span> ((<span class="kr">λ</span>) τ body)
+: <span class="kt">Prop</span></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk29" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk29"><span class="kn">Goal</span> LC (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">body</span>).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>β</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>x, y, z</var><span class="hyp-type"><b>: </b><span>atom</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>β</span></span></span><br><span><var>τ</var><span class="hyp-type"><b>: </b><span>typ</span></span></span><br><span><var>body</var><span class="hyp-type"><b>: </b><span>term</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">LC ((<span class="kr">λ</span>) τ body)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk2a" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk2a">simplify.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>β</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>x, y, z</var><span class="hyp-type"><b>: </b><span>atom</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>β</span></span></span><br><span><var>τ</var><span class="hyp-type"><b>: </b><span>typ</span></span></span><br><span><var>body</var><span class="hyp-type"><b>: </b><span>term</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">LCn <span class="mi">1</span> body</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Abort</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk2b" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk2b"><span class="kn">Goal</span> FV (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">body</span>) = FV (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">body</span>).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>β</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>x, y, z</var><span class="hyp-type"><b>: </b><span>atom</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>β</span></span></span><br><span><var>τ</var><span class="hyp-type"><b>: </b><span>typ</span></span></span><br><span><var>body</var><span class="hyp-type"><b>: </b><span>term</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">FV ((<span class="kr">λ</span>) τ body) = FV ((<span class="kr">λ</span>) τ body)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk2c" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk2c">simplify.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>β</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>x, y, z</var><span class="hyp-type"><b>: </b><span>atom</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>β</span></span></span><br><span><var>τ</var><span class="hyp-type"><b>: </b><span>typ</span></span></span><br><span><var>body</var><span class="hyp-type"><b>: </b><span>term</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">FV body = FV body</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Abort</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk2d" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk2d"><span class="kn">Goal</span>  (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">body</span>) &#39;{x ~&gt; y} = (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">body</span>).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>β</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>x, y, z</var><span class="hyp-type"><b>: </b><span>atom</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>β</span></span></span><br><span><var>τ</var><span class="hyp-type"><b>: </b><span>typ</span></span></span><br><span><var>body</var><span class="hyp-type"><b>: </b><span>term</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">λ</span>) τ body &#39;{ x ~&gt; y} = (<span class="kr">λ</span>) τ body</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk2e" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk2e"><span class="nb">cbn</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>β</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>x, y, z</var><span class="hyp-type"><b>: </b><span>atom</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>β</span></span></span><br><span><var>τ</var><span class="hyp-type"><b>: </b><span>typ</span></span></span><br><span><var>body</var><span class="hyp-type"><b>: </b><span>term</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">pure ((<span class="kr">λ</span>) τ)
+  (binddt ((subst_loc x y ∘ extract) ⦿ <span class="mi">1</span>) body) =
+(<span class="kr">λ</span>) τ body</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Abort</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk2f" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk2f"><span class="kn">Goal</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">body</span> &#39;{x ~&gt; y}) = <span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">body</span>).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>β</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>x, y, z</var><span class="hyp-type"><b>: </b><span>atom</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>β</span></span></span><br><span><var>τ</var><span class="hyp-type"><b>: </b><span>typ</span></span></span><br><span><var>body</var><span class="hyp-type"><b>: </b><span>term</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">λ</span>) τ (body &#39;{ x ~&gt; y}) = (<span class="kr">λ</span>) τ body</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk30" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk30">simplify.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>β</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>x, y, z</var><span class="hyp-type"><b>: </b><span>atom</span></span></span><br><span><var>b</var><span class="hyp-type"><b>: </b><span>β</span></span></span><br><span><var>τ</var><span class="hyp-type"><b>: </b><span>typ</span></span></span><br><span><var>body</var><span class="hyp-type"><b>: </b><span>term</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">λ</span>) τ (body &#39;{ x ~&gt; y}) = (<span class="kr">λ</span>) τ body</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Abort</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk31" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk31"><span class="kn">Check</span> (<span class="mi">1</span>: LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="mi">1</span> : LN
+     : LN</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk32" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk32"><span class="kn">Check</span> (<span class="mi">1</span>: Lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message"><span class="mi">1</span> : term
+     : term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk33" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk33"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">0</span>))) &#39;(x: Lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  <span class="c">(*</span>
+<span class="c">    This will fail if LN.v&#39;s polymorphic notations are used</span>
+<span class="c">    due to typeclass resolution</span>
+<span class="c">  Set Typeclasses Debug.</span>
+<span class="c">  Fail Timeout 1 Compute (λ τ (tvar (Bd 0))) &#39;(x: LN).</span>
+<span class="c">  *)</span>
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk34" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk34"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">1</span>))) &#39;(tvar (Fr x)).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar x)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk35" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk35"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">0</span>))) &#39;(Bd <span class="mi">0</span>: Lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk36" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk36"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">0</span>))) &#39;(Bd <span class="mi">1</span>: Lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk37" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk37"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">1</span>))) &#39;(Bd <span class="mi">0</span>: Lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">0</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk38" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk38"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> (<span class="nv">tvar</span> (Bd <span class="mi">1</span>))) &#39;(Bd <span class="mi">1</span>: Lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ (tvar <span class="mi">1</span>)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk39" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk39"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">x</span>) &#39;{x ~&gt; (y: Lam LN)}.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ
+    (<span class="kr">if</span> AtomSetProperties.FM.eq_dec x x
+     <span class="kr">then</span> tvar y
+     <span class="kr">else</span> tvar x)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk3a" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk3a"><span class="kn">Compute</span> (<span class="kr">λ</span> <span class="nv">τ</span> <span class="nv">y</span>) &#39;{x ~&gt; (y: Lam LN)}.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= (<span class="kr">λ</span>) τ
+    (<span class="kr">if</span> AtomSetProperties.FM.eq_dec x y
+     <span class="kr">then</span> tvar y
+     <span class="kr">else</span> tvar y)
+: term</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">test_operations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">ctx</span> := list (atom * typ).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Reserved Notation</span> <span class="s2">&quot;Γ ⊢ t : τ&quot;</span> (<span class="kn">at level</span> <span class="mi">90</span>, t <span class="kn">at level</span> <span class="mi">99</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Implicit Types</span> (<span class="nv">t</span>: term) (<span class="nv">Γ</span>: ctx) (<span class="nv">x</span>: atom) (<span class="nv">τ</span>: typ)
+  (<span class="nv">L</span>: AtomSet.t).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Inductive</span> <span class="nf">Judgment</span>: ctx -&gt; term -&gt; typ -&gt; <span class="kt">Prop</span> :=
+| j_var:
+    <span class="kr">forall</span> <span class="nv">Γ</span> <span class="nv">x</span> <span class="nv">τ</span>
+      (<span class="nv">Huniq</span>: uniq Γ)
+      (<span class="nv">Hin</span>: (x, τ) ∈ Γ),
+      Γ ⊢ x: τ
+| j_abs:
+    <span class="kr">forall</span> <span class="nv">L</span> <span class="nv">Γ</span> <span class="nv">τ1</span> <span class="nv">τ2</span> <span class="nv">t</span>,
+      (<span class="kr">forall</span> <span class="nv">x</span>,
+          x `notin` L -&gt;
+          Γ ++ x ~ τ1 ⊢ t &#39;(x): τ2) -&gt;
+      Γ ⊢ <span class="kr">λ</span> <span class="nv">τ1</span> <span class="nv">t</span>: τ1 ⟹ τ2
+| j_app:
+    <span class="kr">forall</span> <span class="nv">Γ</span> (<span class="nv">t1</span> <span class="nv">t2</span>: Lam LN) (<span class="nv">τ1</span> <span class="nv">τ2</span>: typ),
+      Γ ⊢ t1: τ1 ⟹ τ2 -&gt;
+      Γ ⊢ t2: τ1 -&gt;
+      Γ ⊢ ⟨t1⟩ (t2): τ2
+<span class="kn">where</span> <span class="s2">&quot;Γ ⊢ t : τ&quot;</span> := (Judgment Γ t τ).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">typing_induction_on</span> J :=
+  <span class="kr">let</span>  <span class="nv">x</span> := <span class="kp">fresh</span> <span class="s2">&quot;x&quot;</span> <span class="kr">in</span>
+  <span class="kr">let</span> <span class="nv">τ</span> := <span class="kp">fresh</span> <span class="s2">&quot;τ&quot;</span> <span class="kr">in</span>
+  <span class="kr">let</span> <span class="nv">τ1</span> := <span class="kp">fresh</span> <span class="s2">&quot;τ1&quot;</span> <span class="kr">in</span>
+  <span class="kr">let</span> <span class="nv">τ2</span> := <span class="kp">fresh</span> <span class="s2">&quot;τ2&quot;</span> <span class="kr">in</span>
+  <span class="kr">let</span> <span class="nv">body</span> := <span class="kp">fresh</span> <span class="s2">&quot;body&quot;</span> <span class="kr">in</span>
+  <span class="nb">induction</span> J <span class="kr">as</span>
+    [ Γ x τ Huniq Hin
+    | L Γ τ1 τ2 body Jbody IHbody
+    | Γ t1 t2 τ1 τ2 J1 IHJ1 J2 IHJ2 ].</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">typing_induction</span> :=
+  <span class="kr">match goal with</span>
+  | J: <span class="kp">context</span>[Judgment <span class="nl">?Γ</span> <span class="nl">?t</span> <span class="nl">?τ</span>] |- _ =&gt;
+      typing_induction_on J
+  <span class="kr">end</span>.</span></span></pre></div>
+</div>
+</div></body>
+</html>

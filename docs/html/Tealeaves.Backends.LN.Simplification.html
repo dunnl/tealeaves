@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Backends.LN.Simplification</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.LN.LN.html#"><span class="id" title="library">Backends.LN.LN</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Simplification.Support.html#"><span class="id" title="library">Simplification.Support</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Simplification.Binddt.html#"><span class="id" title="library">Simplification.Binddt</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#Notations"><span class="id" title="module">Monoid.Notations</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Lists.List.html#ListNotations"><span class="id" title="module">List.ListNotations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> "'P'" := <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#pure"><span class="id" title="definition">pure</span></a>.<br/>
+#[<span class="id" title="var">local</span>]  <span class="id" title="keyword">Notation</span> "'BD'" := <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Create HintDb</span> <span class="id" title="var">tea_ret_coercions</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab863"></a><h1 class="section">Simplifying LCn</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab864"></a><h2 class="section">Simplifying LCn at the leaves</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_arithmetic</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[(?<span class="id" title="var">x</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> 0)%<span class="id" title="var">nat</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">replace</span> (<span class="id" title="var">x</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> 0)%<span class="id" title="var">nat</span> <span class="id" title="keyword">with</span> <span class="id" title="var">x</span> <span class="id" title="tactic">by</span> <span class="id" title="var">lia</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[(0 <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> ?<span class="id" title="var">x</span>)%<span class="id" title="var">nat</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">replace</span> (0 <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <span class="id" title="var">x</span>)%<span class="id" title="var">nat</span> <span class="id" title="keyword">with</span> <span class="id" title="var">x</span> <span class="id" title="tactic">by</span> <span class="id" title="var">lia</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_lc_loc_under_binder</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc"><span class="id" title="definition">lc_loc</span></a> ?<span class="id" title="var">n</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#fcaa5764fd0dfe80ce5bd02e55897919"><span class="id" title="notation">⦿</span></a> 1] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc_S"><span class="id" title="lemma">lc_loc_S</span></a><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc"><span class="id" title="definition">lc_loc</span></a> ?<span class="id" title="var">n</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#fcaa5764fd0dfe80ce5bd02e55897919"><span class="id" title="notation">⦿</span></a> ?<span class="id" title="var">m</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc_preincr"><span class="id" title="lemma">lc_loc_preincr</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_lc_loc_leaf</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc"><span class="id" title="definition">lc_loc</span></a> ?<span class="id" title="var">n</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>?<span class="id" title="var">w</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Fr"><span class="id" title="constructor">Fr</span></a> ?<span class="id" title="var">x</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc_Fr"><span class="id" title="lemma">lc_loc_Fr</span></a><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc"><span class="id" title="definition">lc_loc</span></a> 0 <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>0<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> ?<span class="id" title="var">b</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc_00Bd"><span class="id" title="lemma">lc_loc_00Bd</span></a><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc"><span class="id" title="definition">lc_loc</span></a> 0 <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>?<span class="id" title="var">w</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> ?<span class="id" title="var">b</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc_0Bd"><span class="id" title="lemma">lc_loc_0Bd</span></a><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc"><span class="id" title="definition">lc_loc</span></a> ?<span class="id" title="var">n</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>?<span class="id" title="var">w</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> ?<span class="id" title="var">b</span><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#lc_loc_nBd"><span class="id" title="lemma">lc_loc_nBd</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab865"></a><h2 class="section">Simplifying LCn</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_LC_local</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_LC_local";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_lc_loc_under_binder</span>;<br/>
+&nbsp;&nbsp;( <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_plus"><span class="id" title="instance">Monoid_op_plus</span></a> @<a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_zero"><span class="id" title="instance">Monoid_unit_zero</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="var">simplify_lc_loc_leaf</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_arithmetic</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_LC</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_LC_start";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#LC"><span class="id" title="definition">LC</span></a> ?<span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn"><span class="id" title="definition">LCn</span></a> 0 <span class="id" title="var">t</span>);<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn_spec"><span class="id" title="lemma">LCn_spec</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_Forall_ctx</span>;<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;IF&nbsp;bottomed&nbsp;out&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_LC_local</span>;<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;ELSE&nbsp;IF&nbsp;refolding&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">rewrite</span> &lt;- <a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn_spec"><span class="id" title="lemma">LCn_spec</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn"><span class="id" title="definition">LCn</span></a> 0 ?<span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#LC"><span class="id" title="definition">LC</span></a> <span class="id" title="var">t</span>);<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_LC_end".<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_LC_in</span> <span class="id" title="var">H</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#LC"><span class="id" title="definition">LC</span></a> ?<span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn"><span class="id" title="definition">LCn</span></a> 0 <span class="id" title="var">t</span>) <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn_spec"><span class="id" title="lemma">LCn_spec</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_Forall_ctx_in</span> <span class="id" title="var">H</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">rewrite</span> &lt;- <a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn_spec"><span class="id" title="lemma">LCn_spec</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn"><span class="id" title="definition">LCn</span></a> 0 ?<span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#LC"><span class="id" title="definition">LC</span></a> <span class="id" title="var">t</span>) <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab866"></a><h1 class="section">Simplifying free and FV</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="free_loc_Bd" class="idref" href="#free_loc_Bd"><span class="id" title="lemma">free_loc_Bd</span></a>: <span class="id" title="keyword">∀</span> <a id="b:1" class="idref" href="#b:1"><span class="id" title="binder">b</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.LN.LN.html#free_loc"><span class="id" title="definition">free_loc</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#b:1"><span class="id" title="variable">b</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Lists.List.html#ae9a5e1034e143b218b09d8e454472bd"><span class="id" title="notation">[]</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="free_loc_Fr" class="idref" href="#free_loc_Fr"><span class="id" title="lemma">free_loc_Fr</span></a>: <span class="id" title="keyword">∀</span> <a id="x:2" class="idref" href="#x:2"><span class="id" title="binder">x</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.LN.LN.html#free_loc"><span class="id" title="definition">free_loc</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#Fr"><span class="id" title="constructor">Fr</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#x:2"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Lists.List.html#ddd65c2f7ee73ecec433744948d846bb"><span class="id" title="notation">[</span></a><a class="idref" href="Tealeaves.Backends.LN.Simplification.html#x:2"><span class="id" title="variable">x</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Lists.List.html#ddd65c2f7ee73ecec433744948d846bb"><span class="id" title="notation">]</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="free_to_foldMap" class="idref" href="#free_to_foldMap"><span class="id" title="lemma">free_to_foldMap</span></a> {<a id="T:3" class="idref" href="#T:3"><span class="id" title="binder">T</span></a>} `{<a id="H:4" class="idref" href="#H:4"><span class="id" title="binder">Traverse</span></a> <a id="H:4" class="idref" href="#H:4"><span class="id" title="binder">T</span></a>}: <span class="id" title="keyword">∀</span> (<a id="t:5" class="idref" href="#t:5"><span class="id" title="binder">t</span></a>: <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#T:3"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.LN.LN.html#free"><span class="id" title="definition">free</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#t:5"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Theory.TraversableFunctor.html#foldMap"><span class="id" title="definition">foldMap</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#free_loc"><span class="id" title="definition">free_loc</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#t:5"><span class="id" title="variable">t</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_free_loc</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#free_loc"><span class="id" title="definition">free_loc</span></a> ?<span class="id" title="var">v</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="keyword">constr</span>:(<a class="idref" href="Tealeaves.Backends.LN.LN.html#free_loc"><span class="id" title="definition">free_loc</span></a> <span class="id" title="var">v</span>)<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e'</span> := <span class="id" title="tactic">eval</span> <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> <span class="id" title="var">e</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> <span class="id" title="var">e</span> <span class="id" title="keyword">with</span> <span class="id" title="var">e'</span> <span class="id" title="tactic">in</span> ×<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_free_post</span> :=<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;simplifying&nbsp;foldmap&nbsp;exposes&nbsp;●&nbsp;with&nbsp;lists&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_monoid_append</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_free</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_free";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#free"><span class="id" title="definition">free</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_foldMap</span>;<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;^^&nbsp;this&nbsp;exposes&nbsp;●&nbsp;with&nbsp;lists&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_monoid_append</span>;<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;IF&nbsp;bottomed&nbsp;out&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_free_loc";<br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_free_loc</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_free";<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;ELSE&nbsp;IF&nbsp;refolding&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.Theory.TraversableFunctor.html#foldMap"><span class="id" title="definition">foldMap</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#free_loc"><span class="id" title="definition">free_loc</span></a> ?<span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#free"><span class="id" title="definition">free</span></a> <span class="id" title="var">t</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">refold_FV</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.AtomSet.html#atoms"><span class="id" title="definition">atoms</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#free"><span class="id" title="definition">free</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>)] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Backends.LN.AtomSet.html#atoms"><span class="id" title="definition">atoms</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#free"><span class="id" title="definition">free</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#FV"><span class="id" title="definition">FV</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.AtomSet.html#atoms"><span class="id" title="definition">atoms</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#free"><span class="id" title="definition">free</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) ?<span class="id" title="var">t</span>)] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Backends.LN.AtomSet.html#atoms"><span class="id" title="definition">atoms</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#free"><span class="id" title="definition">free</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) <span class="id" title="var">t</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#FV"><span class="id" title="definition">FV</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_FV</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_FV_start";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#FV"><span class="id" title="definition">FV</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_free</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">autorewrite</span> <span class="id" title="keyword">with</span> <span class="id" title="var">tea_rw_atoms</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">refold_FV</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_FV_end".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab867"></a><h1 class="section">Simplifying open</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">refold_open</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#bindd"><span class="id" title="definition">bindd</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#open_loc"><span class="id" title="definition">open_loc</span></a> ?<span class="id" title="var">u</span>) ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#bindd"><span class="id" title="definition">bindd</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#open_loc"><span class="id" title="definition">open_loc</span></a> <span class="id" title="var">u</span>) <span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#open"><span class="id" title="definition">open</span></a> <span class="id" title="var">u</span> <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_open</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_open_start";<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#open"><span class="id" title="definition">open</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">simplify_bindd</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">refold_open</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_open_end".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab868"></a><h1 class="section">Simplifying subst</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">refold_subst</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#subst_loc"><span class="id" title="definition">subst_loc</span></a> ?<span class="id" title="var">x</span> ?<span class="id" title="var">u</span>) ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">try</span> <span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#subst_loc"><span class="id" title="definition">subst_loc</span></a> <span class="id" title="var">x</span> <span class="id" title="var">u</span>) <span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#subst"><span class="id" title="definition">subst</span></a> <span class="id" title="var">x</span> <span class="id" title="var">u</span> <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="subst_to_bind" class="idref" href="#subst_to_bind"><span class="id" title="lemma">subst_to_bind</span></a> {<a id="T:6" class="idref" href="#T:6"><span class="id" title="binder">T</span></a> <a id="U:7" class="idref" href="#U:7"><span class="id" title="binder">U</span></a>}<br/>
+&nbsp;&nbsp;`{<a id="H:8" class="idref" href="#H:8"><span class="id" title="binder">Return</span></a> <a id="H:8" class="idref" href="#H:8"><span class="id" title="binder">T</span></a>} `{<a id="H0:9" class="idref" href="#H0:9"><span class="id" title="binder">Bind</span></a> <a id="H0:9" class="idref" href="#H0:9"><span class="id" title="binder">T</span></a> <a id="H0:9" class="idref" href="#H0:9"><span class="id" title="binder">U</span></a>}: <span class="id" title="keyword">∀</span> <a id="x:10" class="idref" href="#x:10"><span class="id" title="binder">x</span></a> (<a id="u:11" class="idref" href="#u:11"><span class="id" title="binder">u</span></a>: <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#T:6"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a>) (<a id="t:12" class="idref" href="#t:12"><span class="id" title="binder">t</span></a>: <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#U:7"><span class="id" title="variable">U</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.LN.LN.html#subst"><span class="id" title="definition">subst</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#x:10"><span class="id" title="variable">x</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#u:11"><span class="id" title="variable">u</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#t:12"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#subst_loc"><span class="id" title="definition">subst_loc</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#x:10"><span class="id" title="variable">x</span></a> <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#u:11"><span class="id" title="variable">u</span></a>) <a class="idref" href="Tealeaves.Backends.LN.Simplification.html#t:12"><span class="id" title="variable">t</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;mret&nbsp;is&nbsp;some&nbsp;expression&nbsp;being&nbsp;tested&nbsp;for&nbsp;matching<br/>
+&nbsp;&nbsp;&nbsp;(ret&nbsp;x)&nbsp;for&nbsp;some&nbsp;x&nbsp;*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">try_change_to_ret</span> <span class="id" title="var">T</span> <span class="id" title="var">exp</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">exp</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="keyword">context</span>[?<span class="id" title="var">mret</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<span class="id" title="var">mret</span> <span class="id" title="var">t</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_subst</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_subst| start";<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#subst"><span class="id" title="definition">subst</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) ?<span class="id" title="var">x</span> ?<span class="id" title="var">u</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_subst| test for ret";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">try_change_to_ret</span> <span class="id" title="var">T</span> <span class="id" title="var">t</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.LN.LN.html#subst_ret"><span class="id" title="lemma">subst_ret</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_subst| changed to ret";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_subst_local</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#subst"><span class="id" title="definition">subst</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) ?<span class="id" title="var">x</span> ?<span class="id" title="var">u</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_subst| not ret";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Backends.LN.Simplification.html#subst_to_bind"><span class="id" title="lemma">subst_to_bind</span></a> <span class="id" title="var">x</span> <span class="id" title="var">u</span> <span class="id" title="var">t</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_bind</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">refold_subst</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="var">_</span> ⇒ <span class="id" title="tactic">fail</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_ln_subst_end".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab869"></a><h1 class="section">Simplifying everything</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify_LN</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">autounfold</span> <span class="id" title="keyword">with</span> <span class="id" title="var">tea_ret_coercions</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "simplify_LN";<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#LCn"><span class="id" title="definition">LCn</span></a> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_LC</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#LC"><span class="id" title="definition">LC</span></a> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_LC</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#free"><span class="id" title="definition">free</span></a> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_free</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#FV"><span class="id" title="definition">FV</span></a> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_FV</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#open"><span class="id" title="definition">open</span></a> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_open</span><br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Backends.LN.LN.html#subst"><span class="id" title="definition">subst</span></a> ?<span class="id" title="var">x</span> ?<span class="id" title="var">u</span> ?<span class="id" title="var">t</span>] ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">simplify_subst</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">simplify</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_LN</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">simplify_derived_operations</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">simpl_list</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

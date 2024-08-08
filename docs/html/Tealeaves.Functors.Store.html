@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Functors.Store</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#"><span class="id" title="library">Classes.Functor</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="keyword">Implicit</span> <span class="id" title="var">Arguments</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">X</span> <span class="id" title="var">Y</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">F</span> <span class="id" title="var">i</span> <span class="id" title="var">o</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab465"></a><h1 class="section">The <span class="inlinecode"><a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a></span> functor</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="fix_parameters" class="idref" href="#fix_parameters"><span class="id" title="section">fix_parameters</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a> <a id="B:2" class="idref" href="#B:2"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="Store" class="idref" href="#Store"><span class="id" title="inductive">Store</span></a> <a id="C:3" class="idref" href="#C:3"><span class="id" title="binder">C</span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;| <a id="MkStore" class="idref" href="#MkStore"><span class="id" title="constructor">MkStore</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Functors.Store.html#fix_parameters.B"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#C:3"><span class="id" title="variable">C</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#fix_parameters.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#Store:4"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#C:3"><span class="id" title="variable">C</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="map_Store" class="idref" href="#map_Store"><span class="id" title="definition">map_Store</span></a> `{<a id="f:8" class="idref" href="#f:8"><span class="id" title="binder">f</span></a> : <a id="X:6" class="idref" href="#X:6"><span class="id" title="binder">X</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a id="Y:7" class="idref" href="#Y:7"><span class="id" title="binder">Y</span></a>} (<a id="c:9" class="idref" href="#c:9"><span class="id" title="binder">c</span></a> : <a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:6"><span class="id" title="variable">X</span></a>) : <a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#Y:7"><span class="id" title="variable">Y</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Tealeaves.Functors.Store.html#c:9"><span class="id" title="variable">c</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Functors.Store.html#MkStore"><span class="id" title="constructor">MkStore</span></a> <span class="id" title="var">mk</span> <span class="id" title="var">a</span> ⇒ <a class="idref" href="Tealeaves.Functors.Store.html#MkStore"><span class="id" title="constructor">MkStore</span></a> (<a class="idref" href="Tealeaves.Functors.Store.html#f:8"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <span class="id" title="var">mk</span>) <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Map_Batch" class="idref" href="#Map_Batch"><span class="id" title="instance">Map_Batch</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> := @<a class="idref" href="Tealeaves.Functors.Store.html#map_Store"><span class="id" title="definition">map_Store</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>, <span class="id" title="var">program</span>] <span class="id" title="keyword">Instance</span> <a id="Functor_Batch" class="idref" href="#Functor_Batch"><span class="id" title="instance">Functor_Batch</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Functor"><span class="id" title="class">Functor</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Solve</span> <span class="id" title="keyword">All</span> <span class="id" title="keyword">Obligations</span> <span class="id" title="keyword">with</span> (<span class="id" title="tactic">intros</span>; <span class="id" title="var">now</span> <span class="id" title="var">ext</span> [?]).<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Functors.Store.html#fix_parameters"><span class="id" title="section">fix_parameters</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab466"></a><h1 class="section"><code>Store</code> as a parameterized comonad</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="parameterized" class="idref" href="#parameterized"><span class="id" title="section">parameterized</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Unset</span> <span class="id" title="keyword">Implicit</span> <span class="id" title="var">Arguments</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="extract_Store" class="idref" href="#extract_Store"><span class="id" title="definition">extract_Store</span></a> {<a id="A:11" class="idref" href="#A:11"><span class="id" title="binder">A</span></a> <a id="B:12" class="idref" href="#B:12"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>} (<a id="s:13" class="idref" href="#s:13"><span class="id" title="binder">s</span></a> : @<a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#B:12"><span class="id" title="variable">B</span></a>) : <a class="idref" href="Tealeaves.Functors.Store.html#B:12"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Tealeaves.Functors.Store.html#s:13"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Functors.Store.html#MkStore"><span class="id" title="constructor">MkStore</span></a> <span class="id" title="var">mk</span> <span class="id" title="var">b</span> ⇒ <span class="id" title="var">mk</span> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="cojoin_Store" class="idref" href="#cojoin_Store"><span class="id" title="definition">cojoin_Store</span></a> {<a id="A:15" class="idref" href="#A:15"><span class="id" title="binder">A</span></a> <a id="C:16" class="idref" href="#C:16"><span class="id" title="binder">C</span></a> <a id="X:17" class="idref" href="#X:17"><span class="id" title="binder">X</span></a> : <span class="id" title="keyword">Type</span>} (<a id="B:18" class="idref" href="#B:18"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>) (<a id="s:19" class="idref" href="#s:19"><span class="id" title="binder">s</span></a> : @<a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#A:15"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#C:16"><span class="id" title="variable">C</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:17"><span class="id" title="variable">X</span></a>) : @<a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#A:15"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#B:18"><span class="id" title="variable">B</span></a> (@<a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#B:18"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#C:16"><span class="id" title="variable">C</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:17"><span class="id" title="variable">X</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Tealeaves.Functors.Store.html#s:19"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Functors.Store.html#MkStore"><span class="id" title="constructor">MkStore</span></a> <span class="id" title="var">mk</span> <span class="id" title="var">a</span> ⇒ <a class="idref" href="Tealeaves.Functors.Store.html#MkStore"><span class="id" title="constructor">MkStore</span></a> (<span class="id" title="keyword">fun</span> <a id="b:21" class="idref" href="#b:21"><span class="id" title="binder">b</span></a> ⇒ <a class="idref" href="Tealeaves.Functors.Store.html#MkStore"><span class="id" title="constructor">MkStore</span></a> <span class="id" title="var">mk</span> <a class="idref" href="Tealeaves.Functors.Store.html#b:21"><span class="id" title="variable">b</span></a>) <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="A:22" class="idref" href="#A:22"><span class="id" title="binder">A</span></a> <a id="B:23" class="idref" href="#B:23"><span class="id" title="binder">B</span></a> <a id="C:24" class="idref" href="#C:24"><span class="id" title="binder">C</span></a> <a id="X:25" class="idref" href="#X:25"><span class="id" title="binder">X</span></a> : <span class="id" title="keyword">Type</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="extr_cojoin" class="idref" href="#extr_cojoin"><span class="id" title="lemma">extr_cojoin</span></a> : `(<a class="idref" href="Tealeaves.Functors.Store.html#extract_Store"><span class="id" title="definition">extract_Store</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#cojoin_Store"><span class="id" title="definition">cojoin_Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (@<a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.B"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.C"><span class="id" title="variable">C</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">now</span> <span class="id" title="var">ext</span> [<span class="id" title="var">i1</span> <span class="id" title="var">mk</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="map_extr_cojoin" class="idref" href="#map_extr_cojoin"><span class="id" title="lemma">map_extr_cojoin</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#extract_Store"><span class="id" title="definition">extract_Store</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#cojoin_Store"><span class="id" title="definition">cojoin_Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.B"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (@<a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.B"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.C"><span class="id" title="variable">C</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">now</span> <span class="id" title="var">ext</span> [<span class="id" title="var">i1</span> <span class="id" title="var">mk</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="cojoin_cojoin" class="idref" href="#cojoin_cojoin"><span class="id" title="lemma">cojoin_cojoin</span></a> : `(<a class="idref" href="Tealeaves.Functors.Store.html#cojoin_Store"><span class="id" title="definition">cojoin_Store</span></a> <span class="id" title="var">B2</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> @<a class="idref" href="Tealeaves.Functors.Store.html#cojoin_Store"><span class="id" title="definition">cojoin_Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.A"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.C"><span class="id" title="variable">C</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized.X"><span class="id" title="variable">X</span></a> <span class="id" title="var">B1</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<a class="idref" href="Tealeaves.Functors.Store.html#cojoin_Store"><span class="id" title="definition">cojoin_Store</span></a> <span class="id" title="var">B1</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#cojoin_Store"><span class="id" title="definition">cojoin_Store</span></a> <span class="id" title="var">B2</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">now</span> <span class="id" title="var">ext</span> [<span class="id" title="var">i1</span> <span class="id" title="var">mk</span>].<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Functors.Store.html#parameterized"><span class="id" title="section">parameterized</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab467"></a><h1 class="section">A representation lemma</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="runStore" class="idref" href="#runStore"><span class="id" title="definition">runStore</span></a> `{<a id="H:29" class="idref" href="#H:29"><span class="id" title="binder">Map</span></a> <a id="H:29" class="idref" href="#H:29"><span class="id" title="binder">F</span></a>} `(<a id="f:32" class="idref" href="#f:32"><span class="id" title="binder">f</span></a> : <a id="A:30" class="idref" href="#A:30"><span class="id" title="binder">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#F:28"><span class="id" title="variable">F</span></a> <a id="B:31" class="idref" href="#B:31"><span class="id" title="binder">B</span></a>) : <span class="id" title="keyword">∀</span> <a id="X:33" class="idref" href="#X:33"><span class="id" title="binder">X</span></a>, <a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:33"><span class="id" title="variable">X</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#F:28"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:33"><span class="id" title="variable">X</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="A:34" class="idref" href="#A:34"><span class="id" title="binder">A</span></a> '(<a id="pat:37" class="idref" href="#pat:37"><span class="id" title="binder">MkStore</span></a> <a id="pat:37" class="idref" href="#pat:37"><span class="id" title="binder">mk</span></a> <a id="pat:37" class="idref" href="#pat:37"><span class="id" title="binder">a</span></a>) ⇒ <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#mk:36"><span class="id" title="variable">mk</span></a> (<a class="idref" href="Tealeaves.Functors.Store.html#f:32"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#a:35"><span class="id" title="variable">a</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="runStore_inv" class="idref" href="#runStore_inv"><span class="id" title="definition">runStore_inv</span></a> `{<a id="H:39" class="idref" href="#H:39"><span class="id" title="binder">Map</span></a> <a id="H:39" class="idref" href="#H:39"><span class="id" title="binder">F</span></a>} `(<a id="run:43" class="idref" href="#run:43"><span class="id" title="binder">run</span></a> : <span class="id" title="keyword">∀</span> <a id="X:40" class="idref" href="#X:40"><span class="id" title="binder">X</span></a>, @<a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a id="A:41" class="idref" href="#A:41"><span class="id" title="binder">A</span></a> <a id="B:42" class="idref" href="#B:42"><span class="id" title="binder">B</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:40"><span class="id" title="variable">X</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#F:38"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:40"><span class="id" title="variable">X</span></a>) : <a class="idref" href="Tealeaves.Functors.Store.html#A:41"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#F:38"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#B:42"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> (<a id="a:44" class="idref" href="#a:44"><span class="id" title="binder">a</span></a> : <a class="idref" href="Tealeaves.Functors.Store.html#A:41"><span class="id" title="variable">A</span></a>) ⇒ <a class="idref" href="Tealeaves.Functors.Store.html#run:43"><span class="id" title="variable">run</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#B:42"><span class="id" title="variable">B</span></a> (<a class="idref" href="Tealeaves.Functors.Store.html#MkStore"><span class="id" title="constructor">MkStore</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#a:44"><span class="id" title="variable">a</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="representation" class="idref" href="#representation"><span class="id" title="section">representation</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:47" class="idref" href="#H:47"><span class="id" title="binder">Functor</span></a> <a id="H:47" class="idref" href="#H:47"><span class="id" title="binder">F</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="store_repr1" class="idref" href="#store_repr1"><span class="id" title="lemma">store_repr1</span></a> : <span class="id" title="keyword">∀</span> `(<a id="f:50" class="idref" href="#f:50"><span class="id" title="binder">f</span></a> : <a id="i:48" class="idref" href="#i:48"><span class="id" title="binder">i</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#representation.F"><span class="id" title="variable">F</span></a> <a id="o:49" class="idref" href="#o:49"><span class="id" title="binder">o</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Store.html#runStore_inv"><span class="id" title="definition">runStore_inv</span></a> (<a class="idref" href="Tealeaves.Functors.Store.html#runStore"><span class="id" title="definition">runStore</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#f:50"><span class="id" title="variable">f</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#f:50"><span class="id" title="variable">f</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">ext</span> <span class="id" title="var">i1</span>. <span class="id" title="var">cbn</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">fun_map_id</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="runStore2" class="idref" href="#runStore2"><span class="id" title="lemma">runStore2</span></a> : <span class="id" title="keyword">∀</span> `(<a id="55d2d7b84827e60e091777d3ed117599" class="idref" href="#55d2d7b84827e60e091777d3ed117599"><span class="id" title="binder">ϕ</span></a> : <span class="id" title="keyword">∀</span> <a id="X:51" class="idref" href="#X:51"><span class="id" title="binder">X</span></a>, @<a class="idref" href="Tealeaves.Functors.Store.html#Store"><span class="id" title="inductive">Store</span></a> <a id="A:52" class="idref" href="#A:52"><span class="id" title="binder">A</span></a> <a id="B:53" class="idref" href="#B:53"><span class="id" title="binder">B</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:51"><span class="id" title="variable">X</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#representation.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#X:51"><span class="id" title="variable">X</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#Natural"><span class="id" title="class">Natural</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#55d2d7b84827e60e091777d3ed117599"><span class="id" title="variable">ϕ</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Store.html#runStore"><span class="id" title="definition">runStore</span></a> (<a class="idref" href="Tealeaves.Functors.Store.html#runStore_inv"><span class="id" title="definition">runStore_inv</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#55d2d7b84827e60e091777d3ed117599"><span class="id" title="variable">ϕ</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Functors.Store.html#55d2d7b84827e60e091777d3ed117599"><span class="id" title="variable">ϕ</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Functors.Store.html#runStore"><span class="id" title="definition">runStore</span></a>, <a class="idref" href="Tealeaves.Functors.Store.html#runStore_inv"><span class="id" title="definition">runStore_inv</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">X</span> [<span class="id" title="var">mk</span> <span class="id" title="var">a</span>]. <span class="id" title="var">compose</span> <span class="id" title="var">near</span> (<a class="idref" href="Tealeaves.Functors.Store.html#MkStore"><span class="id" title="constructor">MkStore</span></a> (@<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <span class="id" title="var">B</span>) <span class="id" title="var">a</span>) <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a> (<span class="id" title="var">ϕ</span> := <span class="id" title="var">ϕ</span>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Functors.Store.html#representation"><span class="id" title="section">representation</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

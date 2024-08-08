@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Categorical.TraversableMonad</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#"><span class="id" title="library">Classes.Categorical.Monad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#"><span class="id" title="library">Classes.Categorical.TraversableFunctor</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Functor.html#Notations"><span class="id" title="module">Functor.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Notations"><span class="id" title="module">Monad.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Notations"><span class="id" title="module">Applicative.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">F</span> <span class="id" title="var">G</span> <span class="id" title="var">T</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab332"></a><h1 class="section">Traversable monads</h1>
+
+</div>
+<div class="code">
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <span class="id" title="var">F</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">ApplicativeDist</span>} <span class="id" title="var">G</span>%<span class="id" title="var">function_scope</span>  {<span class="id" title="var">H</span> <span class="id" title="var">H0</span> <span class="id" title="var">H1</span>} <span class="id" title="var">A</span>%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">F</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Map</span>} {<span class="id" title="var">A</span> <span class="id" title="var">B</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">f</span>%<span class="id" title="var">function_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <span class="id" title="var">F</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">ApplicativeDist</span>} <span class="id" title="var">G</span>%<span class="id" title="var">function_scope</span><br/>
+&nbsp;&nbsp;{<span class="id" title="var">H</span> <span class="id" title="var">H0</span> <span class="id" title="var">H1</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <span class="id" title="var">T</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Return</span>} (<span class="id" title="var">A</span>)%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <span class="id" title="var">T</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Join</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab333"></a><h2 class="section">Typeclass</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="TraversableMonad" class="idref" href="#TraversableMonad"><span class="id" title="record">TraversableMonad</span></a><br/>
+&nbsp;&nbsp;(<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;`{<a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">Map</span></a> <a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">T</span></a>} `{<a id="H0:3" class="idref" href="#H0:3"><span class="id" title="binder">Return</span></a> <a id="H0:3" class="idref" href="#H0:3"><span class="id" title="binder">T</span></a>} `{<a id="H1:4" class="idref" href="#H1:4"><span class="id" title="binder">Join</span></a> <a id="H1:4" class="idref" href="#H1:4"><span class="id" title="binder">T</span></a>} `{<a id="H2:5" class="idref" href="#H2:5"><span class="id" title="binder">ApplicativeDist</span></a> <a id="H2:5" class="idref" href="#H2:5"><span class="id" title="binder">T</span></a>} :=<br/>
+&nbsp;&nbsp;{ <a id="trvmon_monad" class="idref" href="#trvmon_monad"><span class="id" title="projection">trvmon_monad</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Monad"><span class="id" title="class">Monad</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="trvmon_functor" class="idref" href="#trvmon_functor"><span class="id" title="projection">trvmon_functor</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#TraversableFunctor"><span class="id" title="class">TraversableFunctor</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="trvmon_ret" class="idref" href="#trvmon_ret"><span class="id" title="projection">trvmon_ret</span></a> : <span class="id" title="keyword">∀</span> `{<a id="H6:13" class="idref" href="#H6:13"><span class="id" title="binder">Applicative</span></a> <a id="H6:13" class="idref" href="#H6:13"><span class="id" title="binder">G</span></a>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#G:9"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#G:9"><span class="id" title="variable">G</span></a> <span class="id" title="var">A</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#G:9"><span class="id" title="variable">G</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a> <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="trvmon_join" class="idref" href="#trvmon_join"><span class="id" title="projection">trvmon_join</span></a> : <span class="id" title="keyword">∀</span> `{<a id="H6:20" class="idref" href="#H6:20"><span class="id" title="binder">Applicative</span></a> <a id="H6:20" class="idref" href="#H6:20"><span class="id" title="binder">G</span></a>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#G:16"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a> (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#G:16"><span class="id" title="variable">G</span></a> <span class="id" title="var">A</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#G:16"><span class="id" title="variable">G</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#G:16"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.TraversableMonad.html#G:16"><span class="id" title="variable">G</span></a>));<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Section&nbsp;TraversableMonad_listable.<br/>
+<br/>
+&nbsp;&nbsp;Context<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{TraversableMonad&nbsp;T}.<br/>
+<br/>
+&nbsp;&nbsp;Instance&nbsp;ApplicativeMorphism_join_list&nbsp;:&nbsp;forall&nbsp;A&nbsp;:&nbsp;Type,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ApplicativeMorphism<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(const&nbsp;(list&nbsp;(list&nbsp;A)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(const&nbsp;(list&nbsp;A))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(fun&nbsp;X&nbsp;=&gt;&nbsp;@join&nbsp;list&nbsp;Join_list&nbsp;A).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;constructor;&nbsp;try&nbsp;typeclasses&nbsp;eauto.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;intros&nbsp;X&nbsp;Y&nbsp;f&nbsp;x.&nbsp;cbv&nbsp;in&nbsp;x.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(@map_const_spec&nbsp;(list&nbsp;A)&nbsp;X&nbsp;Y&nbsp;f).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(@map_const_spec&nbsp;(list&nbsp;(list&nbsp;A))&nbsp;X&nbsp;Y&nbsp;f).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;intros&nbsp;X&nbsp;x.&nbsp;cbn.&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;-&nbsp;intros&nbsp;X&nbsp;Y&nbsp;x&nbsp;y.&nbsp;cbv&nbsp;in&nbsp;x,&nbsp;y.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;(?x&nbsp;⊗&nbsp;?y)&nbsp;with&nbsp;(List.app&nbsp;x&nbsp;y).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;join_list_app.<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Theorem&nbsp;tolist_ret&nbsp;:&nbsp;forall&nbsp;A&nbsp;:&nbsp;Type,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tolist&nbsp;T&nbsp;∘&nbsp;ret&nbsp;T&nbsp;=&nbsp;ret&nbsp;list&nbsp;(A&nbsp;:=&nbsp;A).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold_ops&nbsp;@Tolist_Traversable.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;T).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left.&nbsp;reassociate&nbsp;&lt;-&nbsp;near&nbsp;(dist&nbsp;T&nbsp;(Const&nbsp;(list&nbsp;A))).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@ret&nbsp;T&nbsp;_));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold_ops&nbsp;@Map_I.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;near&nbsp;(map&nbsp;T&nbsp;(@mkConst&nbsp;(list&nbsp;A)&nbsp;False)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@ret&nbsp;T&nbsp;_));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unfold_ops&nbsp;@Map_I.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;near&nbsp;(dist&nbsp;T&nbsp;_).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(trvmon_ret&nbsp;T).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ext&nbsp;a.&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Theorem&nbsp;tolist_join&nbsp;:&nbsp;forall&nbsp;A&nbsp;:&nbsp;Type,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tolist&nbsp;T&nbsp;∘&nbsp;join&nbsp;T&nbsp;=&nbsp;join&nbsp;list&nbsp;∘&nbsp;tolist&nbsp;T&nbsp;∘&nbsp;map&nbsp;T&nbsp;(tolist&nbsp;T)&nbsp;(A&nbsp;:=&nbsp;T&nbsp;A).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;rewrite&nbsp;(traversable_tolist_spec&nbsp;T&nbsp;False).&nbsp;reassociate&nbsp;-&gt;.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold&nbsp;traverse.&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(natural&nbsp;(ϕ&nbsp;:=&nbsp;@join&nbsp;T&nbsp;_)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;left.&nbsp;rewrite&nbsp;(trvmon_join&nbsp;T&nbsp;(G&nbsp;:=&nbsp;const&nbsp;(list&nbsp;A))).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;(map&nbsp;(const&nbsp;(list&nbsp;A))&nbsp;(join&nbsp;T)&nbsp;∘&nbsp;?f)&nbsp;with&nbsp;f.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;T).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;repeat&nbsp;reassociate&nbsp;&lt;-.&nbsp;fequal.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;unfold_ops&nbsp;@Dist_compose.&nbsp;fequal.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(traversable_tolist_spec&nbsp;T&nbsp;False).&nbsp;unfold&nbsp;traverse.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;right.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(dist_morph&nbsp;T&nbsp;(ϕ&nbsp;:=&nbsp;(fun&nbsp;X&nbsp;:&nbsp;Type&nbsp;=&gt;&nbsp;@join&nbsp;list&nbsp;Join_list&nbsp;A))).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;-&gt;&nbsp;on&nbsp;right.&nbsp;rewrite&nbsp;(fun_map_map&nbsp;T).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(mon_join_ret&nbsp;list).&nbsp;rewrite&nbsp;(fun_map_id&nbsp;T).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;(?f&nbsp;∘&nbsp;id)&nbsp;with&nbsp;f.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;(dist_const1&nbsp;T&nbsp;(T&nbsp;False)).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;[global] Instance ListableMonad_TraversableMonad : ListableMonad T :=
+    {| lmon_ret := tolist_ret;
+       lmon_join := tolist_join;
+    |}.
+
+End TraversableMonad_listable.
+*)</span><br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

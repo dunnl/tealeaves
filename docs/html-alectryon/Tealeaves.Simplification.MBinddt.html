@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>MBinddt.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Simplification.Support
+  Simplification.Binddt
+  Theory.Multisorted.DecoratedTraversableMonad
+  Classes.Multisorted.Theory.Foldmap.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span>
+  Categories.TypeFamily.Notations
+  List.ListNotations
+  Product.Notations
+  Monoid.Notations
+  ContainerFunctor.Notations
+  Subset.Notations
+  Applicative.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">local_lemmas_needed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    `{ix: Index}
+    {W: <span class="kt">Type</span>}
+      {T: K -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span>}
+      (U : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+      `{MultiDecoratedTraversablePreModule (ix := ix) W T U}
+      `{! MultiDecoratedTraversableMonad (ix := ix) W T}.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="mbinddt-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="mbinddt-v-chk0"><span class="kn">Lemma</span> <span class="nf">simplify_mmapdt_at_leaves_lemma</span> :
+    <span class="kr">forall</span> {<span class="nv">k</span>: K} {<span class="nv">A</span> <span class="nv">B</span>: <span class="kt">Type</span>} {<span class="nv">G</span>}
+      `{Applicative G}
+      (f : K -&gt; W * A -&gt; G B) (w: W) (a : A),
+      (mapMret (T := T) ◻ f) k (w, a) =
+        pure (mret T k) &lt;⋆&gt; f k (w, a).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>ix</var><span class="hyp-type"><b>: </b><span>Index</span></span></span><br><span><var>W</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>T</var><span class="hyp-type"><b>: </b><span>K -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>U</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>MReturn0</var><span class="hyp-type"><b>: </b><span>MReturn T</span></span></span><br><span><var>MBind0</var><span class="hyp-type"><b>: </b><span>MBind W T U</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span><span class="kr">forall</span> <span class="nv">k</span> : K, MBind W T (T k)</span></span></span><br><span><var>mn_op</var><span class="hyp-type"><b>: </b><span>Monoid_op W</span></span></span><br><span><var>mn_unit</var><span class="hyp-type"><b>: </b><span>Monoid_unit W</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversablePreModule W T U</span></span></span><br><span><var>MultiDecoratedTraversableMonad0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversableMonad
+  W T</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">k</span> : K) (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">G</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+  (<span class="nv">H1</span> : Map G) (<span class="nv">H2</span> : Pure G) (<span class="nv">H3</span> : Mult G),
+Applicative G -&gt;
+<span class="kr">forall</span> (<span class="nv">f</span> : K -&gt; W * A -&gt; G B) (<span class="nv">w</span> : W) (<span class="nv">a</span> : A),
+(mapMret ◻ f) k (w, a) =
+pure (mret T k) &lt;⋆&gt; f k (w, a)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="mbinddt-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="mbinddt-v-chk1"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>ix</var><span class="hyp-type"><b>: </b><span>Index</span></span></span><br><span><var>W</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>T</var><span class="hyp-type"><b>: </b><span>K -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>U</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>MReturn0</var><span class="hyp-type"><b>: </b><span>MReturn T</span></span></span><br><span><var>MBind0</var><span class="hyp-type"><b>: </b><span>MBind W T U</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span><span class="kr">forall</span> <span class="nv">k</span> : K, MBind W T (T k)</span></span></span><br><span><var>mn_op</var><span class="hyp-type"><b>: </b><span>Monoid_op W</span></span></span><br><span><var>mn_unit</var><span class="hyp-type"><b>: </b><span>Monoid_unit W</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversablePreModule W T U</span></span></span><br><span><var>MultiDecoratedTraversableMonad0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversableMonad
+  W T</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">k</span> : K) (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">G</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+  (<span class="nv">H1</span> : Map G) (<span class="nv">H2</span> : Pure G) (<span class="nv">H3</span> : Mult G),
+Applicative G -&gt;
+<span class="kr">forall</span> (<span class="nv">f</span> : K -&gt; W * A -&gt; G B) (<span class="nv">w</span> : W) (<span class="nv">a</span> : A),
+(mapMret ◻ f) k (w, a) =
+pure (mret T k) &lt;⋆&gt; f k (w, a)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="mbinddt-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="mbinddt-v-chk2"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>ix</var><span class="hyp-type"><b>: </b><span>Index</span></span></span><br><span><var>W</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>T</var><span class="hyp-type"><b>: </b><span>K -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>U</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>MReturn0</var><span class="hyp-type"><b>: </b><span>MReturn T</span></span></span><br><span><var>MBind0</var><span class="hyp-type"><b>: </b><span>MBind W T U</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span><span class="kr">forall</span> <span class="nv">k</span> : K, MBind W T (T k)</span></span></span><br><span><var>mn_op</var><span class="hyp-type"><b>: </b><span>Monoid_op W</span></span></span><br><span><var>mn_unit</var><span class="hyp-type"><b>: </b><span>Monoid_unit W</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversablePreModule W T U</span></span></span><br><span><var>MultiDecoratedTraversableMonad0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversableMonad
+  W T</span></span></span><br><span><var>k</var><span class="hyp-type"><b>: </b><span>K</span></span></span><br><span><var>A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>G</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Map G</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>Pure G</span></span></span><br><span><var>H3</var><span class="hyp-type"><b>: </b><span>Mult G</span></span></span><br><span><var>H4</var><span class="hyp-type"><b>: </b><span>Applicative G</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>K -&gt; W * A -&gt; G B</span></span></span><br><span><var>w</var><span class="hyp-type"><b>: </b><span>W</span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(mapMret ◻ f) k (w, a) =
+pure (mret T k) &lt;⋆&gt; f k (w, a)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="mbinddt-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="mbinddt-v-chk3"><span class="nb">unfold</span> mapMret, vec_apply, vec_compose.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>ix</var><span class="hyp-type"><b>: </b><span>Index</span></span></span><br><span><var>W</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>T</var><span class="hyp-type"><b>: </b><span>K -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>U</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>MReturn0</var><span class="hyp-type"><b>: </b><span>MReturn T</span></span></span><br><span><var>MBind0</var><span class="hyp-type"><b>: </b><span>MBind W T U</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span><span class="kr">forall</span> <span class="nv">k</span> : K, MBind W T (T k)</span></span></span><br><span><var>mn_op</var><span class="hyp-type"><b>: </b><span>Monoid_op W</span></span></span><br><span><var>mn_unit</var><span class="hyp-type"><b>: </b><span>Monoid_unit W</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversablePreModule W T U</span></span></span><br><span><var>MultiDecoratedTraversableMonad0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversableMonad
+  W T</span></span></span><br><span><var>k</var><span class="hyp-type"><b>: </b><span>K</span></span></span><br><span><var>A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>G</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Map G</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>Pure G</span></span></span><br><span><var>H3</var><span class="hyp-type"><b>: </b><span>Mult G</span></span></span><br><span><var>H4</var><span class="hyp-type"><b>: </b><span>Applicative G</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>K -&gt; W * A -&gt; G B</span></span></span><br><span><var>w</var><span class="hyp-type"><b>: </b><span>W</span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(map (mret T k) ∘ f k) (w, a) =
+pure (mret T k) &lt;⋆&gt; f k (w, a)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="mbinddt-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="mbinddt-v-chk4"><span class="nb">rewrite</span> &lt;- map_to_ap.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>ix</var><span class="hyp-type"><b>: </b><span>Index</span></span></span><br><span><var>W</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>T</var><span class="hyp-type"><b>: </b><span>K -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>U</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>MReturn0</var><span class="hyp-type"><b>: </b><span>MReturn T</span></span></span><br><span><var>MBind0</var><span class="hyp-type"><b>: </b><span>MBind W T U</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span><span class="kr">forall</span> <span class="nv">k</span> : K, MBind W T (T k)</span></span></span><br><span><var>mn_op</var><span class="hyp-type"><b>: </b><span>Monoid_op W</span></span></span><br><span><var>mn_unit</var><span class="hyp-type"><b>: </b><span>Monoid_unit W</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversablePreModule W T U</span></span></span><br><span><var>MultiDecoratedTraversableMonad0</var><span class="hyp-type"><b>: </b><span>MultiDecoratedTraversableMonad
+  W T</span></span></span><br><span><var>k</var><span class="hyp-type"><b>: </b><span>K</span></span></span><br><span><var>A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>G</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Map G</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>Pure G</span></span></span><br><span><var>H3</var><span class="hyp-type"><b>: </b><span>Mult G</span></span></span><br><span><var>H4</var><span class="hyp-type"><b>: </b><span>Applicative G</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>K -&gt; W * A -&gt; G B</span></span></span><br><span><var>w</var><span class="hyp-type"><b>: </b><span>W</span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(map (mret T k) ∘ f k) (w, a) =
+map (mret T k) (f k (w, a))</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">local_lemmas_needed</span>.</span></span></pre><p>Miscellaneous</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">normalize_K</span> :=
+  <span class="kp">repeat</span>
+    <span class="kr">match goal with</span>
+    | |- <span class="kp">context</span>[@K <span class="nl">?Ix</span>] =&gt;
+        <span class="nb">unfold</span> K, Ix
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Rewriting with binddt *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">ToBinddt</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">rewrite_core_ops_to_mbinddt</span> :=
+    <span class="kr">match goal with</span>
+    <span class="c">(* map *)</span>
+    | |- <span class="kp">context</span>[mmap <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+        ltac_trace <span class="s2">&quot;mmap_to_mbinddt&quot;</span>;
+        <span class="kp">progress</span> (<span class="nb">rewrite</span> mmap_to_mbinddt)
+    <span class="c">(* mapd/bind/traverse *)</span>
+    | |- <span class="kp">context</span>[mbind <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+        ltac_trace <span class="s2">&quot;mbind_to_mbinddt&quot;</span>;
+        <span class="kp">progress</span> (<span class="nb">rewrite</span> mbind_to_mbinddt)
+    | |- <span class="kp">context</span>[mmapd <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+        ltac_trace <span class="s2">&quot;mmapd_to_mbinddt&quot;</span>;
+        <span class="kp">progress</span> (<span class="nb">rewrite</span> mmapd_to_mbinddt)
+    <span class="c">(* mmapdt/bindd/bindt *)</span>
+    | |- <span class="kp">context</span>[mmapdt <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+        ltac_trace <span class="s2">&quot;mmapdt_to_mbinddt&quot;</span>;
+        <span class="kp">progress</span> (<span class="nb">rewrite</span> mmapdt_to_mbinddt)
+    | |- <span class="kp">context</span>[mbindd <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+        ltac_trace <span class="s2">&quot;mbindd_to_mbinddt&quot;</span>;
+        <span class="kp">progress</span> (<span class="nb">rewrite</span> mbindd_to_mbinddt)
+    | |- <span class="kp">context</span>[bindt <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+        ltac_trace <span class="s2">&quot;bindt_to_mbinddt&quot;</span>;
+        <span class="kp">progress</span> (<span class="nb">rewrite</span> mbindt_to_mbinddt)
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">ToBinddt</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">cbn_mbinddt_post_hook</span> := <span class="kp">idtac</span>.</span></span></pre><p>mbinddt</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-wsp"><span class="c">(* We surround this with &quot;repeat&quot; to so we don&#39;t get stuck on a false target: a left-most binddt might be &quot;simplified&quot; to an equal-looking expression because the</span>
+<span class="c">   &lt;&lt;cbn&gt;&gt; simplifies some hidden argument, so that a right-more expression, the intended target, gets ignored *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">cbn_mbinddt</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[mbinddt (W := <span class="nl">?W</span>) (T := <span class="nl">?T</span>)
+                (H := <span class="nl">?H</span>) (H0 := <span class="nl">?H0</span>) (H1 := <span class="nl">?H1</span>)
+                <span class="nl">?U</span> <span class="nl">?F</span> <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+      <span class="kr">let</span> <span class="nv">e</span> := <span class="kp">constr</span>:(mbinddt (W := W) (T := T) U F
+                         (H := H) (H0 := H0) (H1 := H1)
+                         f t) <span class="kr">in</span>
+      <span class="c">(* cbn_subterm e *)</span>
+  <span class="kr">let</span> <span class="nv">e&#39;</span> := <span class="kp">eval</span> <span class="nb">cbn</span> -[K btgd btg] <span class="kr">in</span> e <span class="kr">in</span>
+    <span class="kp">progress</span> (<span class="nb">change</span> e <span class="kr">with</span> e&#39;); cbn_mbinddt_post_hook
+
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbinddt_unfold_ret_hook</span> := <span class="kp">idtac</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbinddt</span> :=
+  cbn_mbinddt;
+  simplify_mbinddt_unfold_ret_hook.</span></span></pre><p>mbindd</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">cbn_mbindd</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[mbindd (W := <span class="nl">?W</span>) (T := <span class="nl">?T</span>)
+                <span class="nl">?U</span> <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+      <span class="kr">let</span> <span class="nv">e</span> := <span class="kp">constr</span>:(mbindd (W := W) (T := T) U f t) <span class="kr">in</span>
+      cbn_subterm e
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbindd_post_refold_hook</span> :=
+  <span class="kp">repeat</span> simplify_applicative_I.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbindd_pre_refold_hook</span> ix := <span class="kp">idtac</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbindd</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[mbindd (ix := <span class="nl">?ix</span>) (W := <span class="nl">?W</span>) (T := <span class="nl">?T</span>)
+                <span class="nl">?U</span> <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+      <span class="nb">rewrite</span> <span class="nl">?mbindd_to_mbinddt</span>;
+      simplify_mbinddt;
+      simplify_mbindd_pre_refold_hook ix;
+      <span class="nb">rewrite</span> &lt;- <span class="nl">?mbindd_to_mbinddt</span>;
+      simplify_mbindd_post_refold_hook
+  <span class="kr">end</span>.</span></span></pre><p>mbind</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">cbn_mbind</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[mbind (W := <span class="nl">?W</span>) (T := <span class="nl">?T</span>)
+                <span class="nl">?U</span> <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+      <span class="kr">let</span> <span class="nv">e</span> := <span class="kp">constr</span>:(mbind (W := W) (T := T) U f t) <span class="kr">in</span>
+      cbn_subterm e
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* after unfolding,</span>
+<span class="c">   mbindd U (f ◻ allK extract) (C x1 x2)</span>
+<span class="c">   is simplified to</span>
+<span class="c">   C (mbindd typ ((f ◻ allK extract) ◻ allK (incr [ktyp])) x1) ...</span>
+<span class="c"> *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbind_pre_refold_hook</span> ix :=
+  <span class="kp">repeat</span> ( <span class="nb">rewrite</span> vec_compose_assoc;
+           <span class="nb">rewrite</span> (vec_compose_allK (H := ix));
+           <span class="nb">rewrite</span> extract_incr).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbind_post_refold_hook</span> := <span class="kp">idtac</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* At a k-annotated leaf,</span>
+<span class="c">   mbind f (Ret x)</span>
+<span class="c">   becomes</span>
+<span class="c">   (f ◻ allK (extract (W := ?W))) k (Ƶ, x)] =&gt;</span>
+<span class="c"> *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbind_at_leaf_hook</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+      |- <span class="kp">context</span> [(<span class="nl">?f</span> ◻ allK (extract (W := <span class="nl">?W</span>))) <span class="nl">?k</span> (<span class="nl">?w</span>, <span class="nl">?a</span>)] =&gt;
+        <span class="nb">change</span> ((<span class="nl">?f</span> ◻ allK (extract (W := <span class="nl">?W</span>))) <span class="nl">?k</span> (<span class="nl">?w</span>, <span class="nl">?a</span>))
+        <span class="kr">with</span> (f k a)
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mbind</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[mbind (ix := <span class="nl">?ix</span>) (W := <span class="nl">?W</span>) (T := <span class="nl">?T</span>)
+                <span class="nl">?U</span> <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+      <span class="nb">rewrite</span> <span class="nl">?mbind_to_mbindd</span>;
+      simplify_mbindd;
+      simplify_mbind_pre_refold_hook ix;
+      <span class="nb">rewrite</span> &lt;- <span class="nl">?mbind_to_mbindd</span>;
+      simplify_mbind_post_refold_hook;
+      simplify_mbind_at_leaf_hook
+  <span class="kr">end</span>.</span></span></pre><p>mmapdt</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">cbn_mmapdt</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[mmapdt (W := <span class="nl">?W</span>) (T := <span class="nl">?T</span>)
+                <span class="nl">?U</span> <span class="nl">?F</span> <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+      <span class="kr">let</span> <span class="nv">e</span> := <span class="kp">constr</span>:(mmapdt (W := W) (T := T) U F
+                         f t) <span class="kr">in</span>
+      cbn_subterm e
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">reassociate_in_args</span> ix :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[(<span class="nl">?h</span> ◻ <span class="nl">?g</span>) ◻ <span class="nl">?f</span>] =&gt;
+      <span class="c">(* rewrite (vec_compose_assoc (H := ix) h g f) *)</span>
+      <span class="nb">rewrite</span> vec_compose_assoc
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* After unfolding,</span>
+<span class="c">       mbinddt U (mapMret ◻ f) (C x1 x2)</span>
+<span class="c">       is simplified to (where w is C&#39;s decoration for x1)</span>
+<span class="c">       pure C &lt;⋆&gt; mbinddt U ((mapMret ◻ f) ◻ allK (incr w)) x1 &lt;⋆&gt; ...</span>
+<span class="c"> *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mmapdt_pre_refold_hook</span> ix :=
+  <span class="kp">repeat</span> reassociate_in_args ix.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mmapdt_post_refold_hook</span> := <span class="kp">idtac</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mmapdt_at_leaves_hook</span> :=
+  <span class="nb">rewrite</span> ?(simplify_mmapdt_at_leaves_lemma _).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mmapdt</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[mmapdt (W := <span class="nl">?W</span>) (T := <span class="nl">?T</span>) (ix := <span class="nl">?ix</span>)
+                <span class="nl">?U</span> <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+      <span class="nb">rewrite</span> <span class="nl">?mmapdt_to_mbinddt</span>;
+      simplify_mbinddt;
+      simplify_mmapdt_pre_refold_hook ix;
+      <span class="nb">rewrite</span> &lt;- <span class="nl">?mmapdt_to_mbinddt</span>;
+      simplify_mmapdt_post_refold_hook;
+      simplify_mmapdt_at_leaves_hook
+  <span class="kr">end</span>.</span></span></pre><p>mmap</p>
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mmapd_pre_refold_hook</span> ix := <span class="kp">idtac</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mmapd_post_refold_hook</span> :=
+    <span class="kp">repeat</span> simplify_applicative_I.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_mmapd</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[mmapd (W := <span class="nl">?W</span>) (T := <span class="nl">?T</span>) (ix := <span class="nl">?ix</span>)
+                <span class="nl">?U</span> <span class="nl">?f</span> <span class="nl">?t</span>] =&gt;
+      <span class="nb">rewrite</span> <span class="nl">?mmapd_to_mmapdt</span>;
+      simplify_mmapdt;
+      simplify_mmapd_pre_refold_hook ix;
+      <span class="nb">rewrite</span> &lt;- <span class="nl">?mmapdt_to_mbinddt</span>;
+      simplify_mmapd_post_refold_hook
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+
+<span class="c">(*</span>
+<span class="c">(** * Miscellaneous lemmas *)</span>
+<span class="c">(******************************************************************************)</span>
+<span class="c">Lemma filterk_incr : forall (A : Type) (k : K) (l : list (list K2 * (K * A))) (inc : list K2),</span>
+<span class="c">    filterk k (map (F := list) (incr inc) l) = map (F := list) (incr inc) (filterk k l).</span>
+<span class="c">Proof.</span>
+<span class="c">  intros. induction l.</span>
+<span class="c">  - easy.</span>
+<span class="c">  - destruct a as  [ctx [j a]].</span>
+<span class="c">    rewrite map_list_cons.</span>
+<span class="c">    change (incr inc (ctx, (j, a))) with (inc ++ ctx, (j, a)).</span>
+<span class="c">    compare values k and j.</span>
+<span class="c">    + do 2 rewrite filterk_cons_eq.</span>
+<span class="c">      autorewrite with tea_list.</span>
+<span class="c">      now rewrite IHl.</span>
+<span class="c">    + rewrite filterk_cons_neq; auto.</span>
+<span class="c">      rewrite filterk_cons_neq; auto.</span>
+<span class="c">Qed.</span>
+
+<span class="c">(** * Simplification support *)</span>
+<span class="c">(******************************************************************************)</span>
+<span class="c">Lemma mextract_preincr2 :</span>
+<span class="c">  forall `{ix: Index} {W : Type} {op : Monoid_op W}</span>
+<span class="c">    {A: Type} {B : K -&gt; Type} (f: forall k, A -&gt; B k) (w : W),</span>
+<span class="c">    (f ◻ const (extract (W := prod W) (A := A))) ◻ const (incr w) =</span>
+<span class="c">      (f ◻ const (extract (W := prod W))).</span>
+<span class="c">Proof.</span>
+<span class="c">  intros.</span>
+<span class="c">  ext k. ext [w&#39; a].</span>
+<span class="c">  reflexivity.</span>
+<span class="c">Qed.</span>
+
+
+<span class="c">Ltac simplify :=</span>
+<span class="c">  match goal with</span>
+<span class="c">  | |- context[mbinddt typ ?f ?t] =&gt;</span>
+<span class="c">      first [ rewrite mbinddt_type_rw1</span>
+<span class="c">            | rewrite mbinddt_type_rw2</span>
+<span class="c">            | rewrite mbinddt_type_rw3</span>
+<span class="c">            | rewrite mbinddt_type_rw4 ]</span>
+<span class="c">  | |- context[mbinddt term ?f ?t] =&gt;</span>
+<span class="c">      first [ rewrite mbinddt_term_rw1</span>
+<span class="c">            | rewrite mbinddt_term_rw2</span>
+<span class="c">            | rewrite mbinddt_term_rw3</span>
+<span class="c">            | rewrite mbinddt_term_rw4</span>
+<span class="c">            | rewrite mbinddt_term_rw5 ]</span>
+<span class="c">  (* new stuff *)</span>
+<span class="c">  | |- context[(?f ◻ allK extract) ◻ allK (incr ?w)] =&gt;</span>
+<span class="c">      rewrite mextract_preincr2</span>
+<span class="c">  end.</span>
+<span class="c"> *)</span></span></pre>
+</div>
+</div></body>
+</html>

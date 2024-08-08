@@ -1,24 +1,17 @@
 From Tealeaves Require Export
-  Functors.List
-  Categories.TypeFamilies
-  Classes.Kleisli.Decorated.Monad (* preincr *)
-  Multisorted.Classes.DTM.
+  Theory.DecoratedTraversableMonad
+  Theory.Multisorted.DecoratedTraversableMonad
+  Backends.Multisorted.LN
+  Simplification.Simplification
+  Simplification.MBinddt.
 
-From Tealeaves.Backends.LN Require Import
-  Atom AtomSet AssocList Multisorted.LN.
-
-Import AtomSet.Notations.
-Import Tealeaves.Classes.Monoid.Notations.
-Import Tealeaves.Data.Product.Notations.
-Import Tealeaves.Classes.Applicative.Notations.
-Import Multisorted.Classes.DTM.Notations.
-Import List.ListNotations.
+Export LN.Notations.
 
 #[local] Generalizable Variables F G A B C ϕ.
 
 (** * The index [K] *)
 (******************************************************************************)
-Inductive K2 : Type := KType | KTerm.
+Inductive K2 : Type := ktyp | ktrm.
 
 #[export] Instance Keq : EqDec K2 eq.
 Proof.
@@ -59,8 +52,8 @@ Arguments term V : clear implicits.
 
 Definition SystemF (k : K) (v : Type) : Type :=
   match k with
-  | KType => typ v
-  | KTerm => term v
+  | ktyp => typ v
+  | ktrm => term v
   end.
 
 (** ** Notations *)
@@ -234,43 +227,78 @@ Section operations.
   Fixpoint bind_type (f : forall (k : K), list K2 * A -> F (SystemF k B)) (t : typ A) : F (typ B) :=
     match t with
     | ty_c t =>
-      pure F (ty_c t)
+        pure (ty_c t)
     | ty_v a =>
-      f KType (nil, a)
+        f ktyp (nil, a)
     | ty_ar t1 t2 =>
-      pure F (ty_ar) <⋆> (bind_type f t1) <⋆> (bind_type f t2)
+        pure ty_ar <⋆> bind_type f t1 <⋆> bind_type f t2
     | ty_univ body =>
-      pure F (ty_univ) <⋆> (bind_type (fun k => preincr [KType] (f k)) body)
+        pure ty_univ <⋆> bind_type (f ◻ allK (incr [ktyp])) body
     end.
 
   Fixpoint bind_term (f : forall (k : K), list K2 * A -> F (SystemF k B)) (t : term A) : F (term B) :=
     match t with
     | tm_var a =>
-      f KTerm (nil, a)
+        f ktrm (nil, a)
     | tm_abs ty body =>
-      pure F (tm_abs)
-           <⋆> bind_type (fun k => f k) ty
-           <⋆> bind_term (fun k => f k ∘ incr [KTerm]) body
+        pure tm_abs
+        <⋆> bind_type f ty
+        <⋆> bind_term (f ◻ allK (incr [ktrm])) body
     | tm_app t1 t2 =>
-      pure F tm_app <⋆> bind_term f t1 <⋆> bind_term f t2
+        pure tm_app <⋆> bind_term f t1 <⋆> bind_term f t2
     | tm_tab body =>
-      pure F tm_tab <⋆> (bind_term (fun k => f k ∘ incr [KType]) body)
+        pure tm_tab <⋆> bind_term (f ◻ allK (incr [ktyp])) body
     | tm_tap t1 ty =>
-      pure F tm_tap <⋆> bind_term f t1 <⋆> bind_type f ty
+        pure tm_tap <⋆> bind_term f t1 <⋆> bind_type f ty
     end.
 
 End operations.
 
 #[export] Instance MReturn_SystemF : MReturn SystemF :=
   fun A k => match k with
-          | KType => ty_v
-          | KTerm => tm_var
+          | ktyp => ty_v
+          | ktrm => tm_var
           end.
 
 #[export] Instance MBind_type : MBind (list K2) SystemF typ := @bind_type.
 #[export] Instance MBind_term : MBind (list K2) SystemF term := @bind_term.
 #[export] Instance MBind_SystemF : forall k, MBind (list K2) SystemF (SystemF k) :=
   ltac:(intros [|]; typeclasses eauto).
+
+Ltac cbn_mbinddt_post_hook ::=
+  try match goal with
+  | |- context[bind_type ?G ?f ?τ] =>
+      change (bind_type G f τ) with (mbinddt typ G f τ)
+  | |- context[bind_term ?G ?f ?t] =>
+      change (bind_term G f t) with (mbinddt term G f t)
+    end.
+
+(*
+Ltac simplify_mbinddt_unfold_ret_hook ::=
+  unfold_ops @MReturn_SystemF.
+*)
+
+Ltac use_operational_tcs :=
+  ltac_trace "use_operational_tcs";
+  change (bind_type ?F ?f) with (mbinddt typ F f).
+
+Ltac grammatical_categories_down :=
+  ltac_trace "grammatical_categories_down";
+  change (SystemF ktyp) with typ;
+  change (MBind_SystemF ktyp) with MBind_type.
+
+Ltac grammatical_categories_up :=
+  ltac_trace "grammatical_categories_up";
+  change typ with (SystemF ktyp);
+  change (MBind_type) with (MBind_SystemF ktyp).
+
+Ltac K_down :=
+  ltac_trace "K_down";
+  change (@K I2) with K2.
+
+Ltac K_up :=
+  ltac_trace "K_up";
+  change K2 with (@K I2).
 
 (** ** Example computations *)
 (******************************************************************************)
@@ -283,16 +311,16 @@ Section example_computations.
     (c1 c2 c3 : base_typ).
 
   (** ** Demo of opening operation *)
-  Goal open (T := SystemF) typ KType (Fr x) (Bd 0) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr x) (Bd 1) = Bd 0. reflexivity. Qed.
-  Goal open typ KType (Fr x) (Fr x) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr x) (Fr y) = Fr y. reflexivity. Qed.
-  Goal open typ KType (Fr y) (Fr x) = Fr x. reflexivity. Qed.
-  Goal open typ KType (Fr y) (Fr y) = Fr y. reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ Bd 0) = (∀ (Bd 0)). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ Bd 1) = (∀ (Fr x)). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ (Bd 1 ⟹ Bd 0)) = (∀ Fr x ⟹ Bd 0). reflexivity. Qed.
-  Goal open typ KType (Fr x) (∀ Bd 1 ⟹ Bd 2) = (∀ Fr x ⟹ Bd 1). reflexivity. Qed.
+  Goal open (T := SystemF) typ ktyp (Fr x) (Bd 0) = Fr x. reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (Bd 1) = Bd 0. reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (Fr x) = Fr x. reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (Fr y) = Fr y. reflexivity. Qed.
+  Goal open typ ktyp (Fr y) (Fr x) = Fr x. reflexivity. Qed.
+  Goal open typ ktyp (Fr y) (Fr y) = Fr y. reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (∀ Bd 0) = (∀ (Bd 0)). reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (∀ Bd 1) = (∀ (Fr x)). reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (∀ (Bd 1 ⟹ Bd 0)) = (∀ Fr x ⟹ Bd 0). reflexivity. Qed.
+  Goal open typ ktyp (Fr x) (∀ Bd 1 ⟹ Bd 2) = (∀ Fr x ⟹ Bd 1). reflexivity. Qed.
 
 End example_computations.
 
@@ -314,16 +342,16 @@ Section DTM_instance_lemmas.
     {mn_unit : Monoid_unit W}.
 
   Lemma mbinddt_inst_law1_case1 : forall (A : Type) (t : S A) (w : W),
-      (mbinddt S (fun A => A) (fun k => mret T k ∘ extract (W ×)) t = t) ->
-      (mbinddt S (fun A => A) (fun k => mret T k ∘ extract (W ×) ∘ incr w) t = t).
+      (mbinddt S (fun A => A) (fun k => mret T k ∘ extract (W := (W ×))) t = t) ->
+      (mbinddt S (fun A => A) (fun k => (mret T k ∘ extract (W := (W ×))) ⦿ w) t = t).
   Proof.
     introv IH. rewrite <- IH at 2.
     fequal. ext k [w' a]. easy.
   Qed.
 
   Lemma mbinddt_inst_law1_case12 : forall (A : Type) (w : W),
-      mbinddt S (fun A => A) (fun k => mret T k ∘ extract (W ×)) (A := A) =
-      mbinddt S (fun A => A) (fun k => mret T k ∘ extract (W ×) ∘ incr w).
+      mbinddt S (fun A => A) (fun k => mret T k ∘ extract (W := (W ×))) (A := A) =
+        mbinddt S (fun A => A) ((fun k => mret T k ∘ extract (W := (W ×))) ◻ allK (incr w)).
   Proof.
     introv. fequal. now ext k [w' a].
   Qed.
@@ -338,22 +366,23 @@ Section DTM_instance_lemmas.
 
   (* for Var case *)
   Lemma mbinddt_inst_law2_case2 : forall (a : A) (k : K),
-    fmap F (mbinddt (T k) G g) (f k (Ƶ, a)) =
-    fmap F (mbinddt (T k) G (fun k => g k ∘ const (incr Ƶ) k)) (f k (Ƶ, a)).
+    map (F := F) (mbinddt (T k) G g) (f k (Ƶ, a)) =
+    map (F := F) (mbinddt (T k) G (g ◻ allK (incr Ƶ))) (f k (Ƶ, a)).
   Proof.
-    intros. repeat fequal. ext k' [w b].
-    unfold compose. cbn. now simpl_monoid.
+    intros.
+    repeat fequal.
+    ext k' [w b].
+    rewrite vec_compose_lemma2.
+    unfold compose. cbn.
+    now simpl_monoid.
   Qed.
 
   Lemma compose_dtm_incr : forall (w : W),
-      (fun k => (g ⋆dtm f) k ∘ incr w) =
-      ((fun k => g k ∘ incr w) ⋆dtm (fun k => f k ∘ incr w)).
+      ((compose_dtm (F := F) (G := G) g f) ◻ (allK (incr w))) =
+      (g ◻ allK (incr w)) ⋆dtm (f ◻ allK (incr w)).
   Proof.
-    intros. ext k [w' a].
-    cbn. do 2 fequal.
-    ext j [w'' b].
-    unfold compose. cbn. fequal.
-    now rewrite monoid_assoc.
+    intros.
+    apply (compose_dtm_incr_alt W); typeclasses eauto.
   Qed.
 
 End DTM_instance_lemmas.
@@ -364,37 +393,47 @@ Arguments compose_dtm_incr {W}%type_scope {T}%function_scope {H}%function_scope 
 
 (** ** <<mbinddt_mret>> *)
 (******************************************************************************)
-Lemma mbinddt_mret_typ : forall (A : Type),
-    mbinddt typ (fun A => A) (fun k => mret SystemF k ∘ extract (list K2 ×)) = @id (typ A).
+Lemma mbinddt_mret_typ : forall (A: Type),
+    mbinddt typ (fun A => A) (mret SystemF ◻ allK extract) = @id (typ A).
 Proof.
   intros. ext t. unfold id. induction t.
-  - cbn. reflexivity.
-  - cbn. reflexivity.
+  - simplify_mbinddt. reflexivity.
+  - simplify_mbinddt. reflexivity.
+  - simplify_mbinddt.
+    fequal.
+    apply IHt1.
+    apply IHt2.
   - cbn. fequal.
-    + apply IHt1.
-    + apply IHt2.
-  - cbn. fequal.
-    unfold preincr.
-    rewrite <- mbinddt_inst_law1_case12.
-    apply IHt.
+    rewrite vec_compose_assoc.
+    K_up.
+    rewrite vec_compose_allK.
+    rewrite extract_incr.
+    assumption.
 Qed.
 
 Lemma mbinddt_mret_term : forall (A : Type),
-    mbinddt term (fun A => A) (fun k => mret SystemF k ∘ extract (list K2 ×)) = @id (term A).
+    mbinddt term (fun A => A) (mret SystemF ◻ allK (extract (W := (list K2 ×)))) = @id (term A).
 Proof.
   intros. ext t. unfold id. induction t.
-  - easy.
-  - cbn. fequal.
-    + change (bind_type ?F ?f) with (mbinddt typ F f).
+  - simplify_mbinddt. reflexivity.
+  - cbn_mbinddt.
+    fequal
+    + use_operational_tcs.
       now rewrite mbinddt_mret_typ.
-    + rewrite <- mbinddt_inst_law1_case12.
-      apply IHt.
+    + rewrite vec_compose_assoc.
+      K_up.
+      rewrite vec_compose_allK.
+      rewrite extract_incr.
+      assumption.
   - cbn. fequal.
     + apply IHt1.
     + apply IHt2.
   - cbn. fequal.
-    rewrite <- mbinddt_inst_law1_case12.
-    apply IHt.
+    rewrite vec_compose_assoc.
+    K_up.
+    rewrite vec_compose_allK.
+    rewrite extract_incr.
+    assumption.
   - cbn. fequal.
     + apply IHt.
     + now rewrite mbinddt_mret_typ.
@@ -409,44 +448,50 @@ Lemma mbinddt_mbinddt_typ :
     `{Applicative G}
     `(g : forall k, list K2 * B -> G (SystemF k C))
     `(f : forall k, list K2 * A -> F (SystemF k B)),
-    fmap F (mbinddt typ G g) ∘ mbinddt typ F f =
+    map (F := F) (mbinddt typ G g) ∘ mbinddt typ F f =
     mbinddt typ (F ∘ G) (g ⋆dtm f).
 Proof.
   intros. ext t. generalize dependent f. generalize dependent g.
   unfold compose at 1. induction t; intros g f.
   - cbn.
-    rewrite (app_pure_natural F).
+    rewrite (app_pure_natural).
     reflexivity.
   - cbn.
     change (MBind_type ?G H3 H4 H5 ?A ?B) with (mbinddt typ G (A := A) (B := B)).
     change [] with (Ƶ : list K2).
-    change typ with (SystemF KType).
-    rewrite <- (mbinddt_inst_law2_case2 (list K2) SystemF (H := MBind_SystemF )).
+    change typ with (SystemF ktyp).
+    unfold vec_compose.
+    Set Keyed Unification.
+    rewrite <- (mbinddt_inst_law2_case2 (list K2)
+                 SystemF (H := MBind_SystemF) _ _ _ ktyp).
+    Unset Keyed Unification.
     reflexivity.
   - cbn.
     rewrite <- IHt1.
     rewrite <- IHt2.
     do 2 rewrite (ap_compose2 G F).
-    rewrite <- (ap_fmap (G := F)).
-    rewrite <- (ap_fmap (G := F)).
-    do 2 rewrite fmap_ap.
-    do 2 rewrite fmap_ap.
-    do 3 (compose near (pure (F ∘ G) (ty_ar (V := C)));
-          rewrite (fun_fmap_fmap F)).
+    rewrite <- (ap_map (G := F)).
+    rewrite <- (ap_map (G := F)).
+    do 2 rewrite map_ap.
+    do 2 rewrite map_ap.
+    assert (Functor F) by apply app_functor.
+    do 3 (compose near (pure (F := (F ∘ G)) (ty_ar (V := C)));
+          rewrite (fun_map_map (F := F))).
     unfold_ops @Pure_compose.
-    rewrite (app_pure_natural F).
-    rewrite (app_pure_natural F).
+    rewrite (app_pure_natural).
+    rewrite (app_pure_natural).
     reflexivity.
   - cbn. setoid_rewrite compose_dtm_incr.
     rewrite <- IHt.
     rewrite (ap_compose2 G F).
-    rewrite <- (ap_fmap (G := F)).
-    compose near (pure (F ∘ G) (ty_univ (V := C))).
-    rewrite (fun_fmap_fmap F).
+    rewrite <- (ap_map (G := F)).
+    compose near (pure (F := F ∘ G) (ty_univ (V := C))).
+    assert (Functor F) by apply app_functor.
+    rewrite (fun_map_map (F := F)).
     unfold_ops @Pure_compose.
-    rewrite (app_pure_natural F).
-    rewrite fmap_ap.
-    rewrite (app_pure_natural F).
+    rewrite (app_pure_natural).
+    rewrite map_ap.
+    rewrite (app_pure_natural).
     reflexivity.
 Qed.
 
@@ -457,11 +502,12 @@ Lemma mbinddt_mbinddt_term :
     `{Applicative G}
     `(g : forall k, list K2 * B -> G (SystemF k C))
     `(f : forall k, list K2 * A -> F (SystemF k B)),
-    fmap F (mbinddt term G g) ∘ mbinddt term F f =
+    map (F := F) (mbinddt term G g) ∘ mbinddt term F f =
     mbinddt term (F ∘ G) (g ⋆dtm f).
 Proof.
   intros. ext t. generalize dependent f. generalize dependent g.
-  unfold compose at 1. induction t; intros g f.
+  unfold compose at 1. induction t; intros g f;
+    assert (Functor F) by apply app_functor.
   - cbn.
     change (MBind_term ?G H3 H4 H5 ?A ?B) with (mbinddt term G (A := A) (B := B)).
     fequal. fequal. now ext k [w a].
@@ -470,58 +516,58 @@ Proof.
     setoid_rewrite compose_dtm_incr.
     rewrite <- IHt.
     rewrite <- (mbinddt_mbinddt_typ F G).
-    unfold compose at 6.
+    unfold compose at 2.
     do 2 rewrite (ap_compose2 G F).
     unfold compose.
-    do 2 rewrite <- (ap_fmap (G := F)).
+    do 2 rewrite <- (ap_map (G := F)).
     unfold_ops @Pure_compose.
-    rewrite (app_pure_natural F).
-    do 4 rewrite fmap_ap.
-    compose near ((pure F (ap G (pure G (@tm_abs C))))).
-    rewrite (fun_fmap_fmap F).
-    do 3 rewrite (app_pure_natural F).
+    rewrite (app_pure_natural).
+    do 4 rewrite map_ap.
+    compose near ((pure (F := F) (ap G (pure (F := G) (@tm_abs C))))).
+    rewrite (fun_map_map (F := F)).
+    do 3 rewrite (app_pure_natural).
     reflexivity.
   - cbn.
     rewrite <- IHt1.
     rewrite <- IHt2.
     do 2 rewrite (ap_compose2 G F).
-    do 2 rewrite <- (ap_fmap (G := F)).
-    do 4 rewrite fmap_ap.
-    compose near (pure (F ∘ G) (@tm_app C)).
-    rewrite (fun_fmap_fmap F).
-    compose near (pure (F ∘ G) (@tm_app C)).
-    rewrite (fun_fmap_fmap F).
-    compose near (pure (F ∘ G) (@tm_app C)).
-    rewrite (fun_fmap_fmap F).
+    do 2 rewrite <- (ap_map (G := F)).
+    do 4 rewrite map_ap.
+    compose near (pure (F := F ∘ G) (@tm_app C)).
+    rewrite (fun_map_map (F := F)).
+    compose near (pure (F := F ∘ G) (@tm_app C)).
+    rewrite (fun_map_map (F := F)).
+    compose near (pure (F := F ∘ G) (@tm_app C)).
+    rewrite (fun_map_map (F := F)).
     unfold_ops @Pure_compose.
-    do 2 rewrite (app_pure_natural F).
+    do 2 rewrite (app_pure_natural).
     reflexivity.
   - cbn.
     setoid_rewrite compose_dtm_incr.
     rewrite <- IHt.
     rewrite (ap_compose2 G F).
-    rewrite <- (ap_fmap (G := F)).
-    rewrite fmap_ap.
+    rewrite <- (ap_map (G := F)).
+    rewrite map_ap.
     unfold_ops @Pure_compose.
-    do 3 rewrite (app_pure_natural F).
+    do 3 rewrite (app_pure_natural).
     reflexivity.
   - cbn.
     rewrite <- IHt.
     rewrite <- (mbinddt_mbinddt_typ F G).
     unfold compose at 4.
     do 2 rewrite (ap_compose2 G F).
-    repeat rewrite <- (ap_fmap (G := F)).
+    repeat rewrite <- (ap_map (G := F)).
     change (bind_type ?F ?f) with (mbinddt typ F f).
-    do 4 rewrite fmap_ap.
-    compose near (pure (F ∘ G) (@tm_tap C)).
-    rewrite (fun_fmap_fmap F).
-    compose near (pure (F ∘ G) (@tm_tap C)).
-    rewrite (fun_fmap_fmap F).
-    compose near (pure (F ∘ G) (@tm_tap C)).
-    rewrite (fun_fmap_fmap F).
+    do 4 rewrite map_ap.
+    compose near (pure (F := F ∘ G) (@tm_tap C)).
+    rewrite (fun_map_map (F := F)).
+    compose near (pure (F := F ∘ G) (@tm_tap C)).
+    rewrite (fun_map_map (F := F)).
+    compose near (pure (F := F ∘ G) (@tm_tap C)).
+    rewrite (fun_map_map (F := F)).
     unfold_ops @Pure_compose.
-    rewrite (app_pure_natural F).
-    rewrite (app_pure_natural F).
+    rewrite (app_pure_natural).
+    rewrite (app_pure_natural).
     reflexivity.
 Qed.
 
@@ -539,19 +585,19 @@ Lemma mbinddt_morphism_typ :
     mbinddt typ G (fun k => ϕ (SystemF k B) ∘ f k).
 Proof.
   intros. ext t. generalize dependent f. unfold compose. induction t; intro f.
-  - cbn. rewrite (appmor_pure F G). reflexivity.
+  - cbn. rewrite (appmor_pure). reflexivity.
   - reflexivity.
   - cbn.
     rewrite <- IHt1. clear IHt1.
     rewrite <- IHt2. clear IHt2.
     rewrite ap_morphism_1.
     rewrite ap_morphism_1.
-    rewrite (appmor_pure F G).
+    rewrite (appmor_pure).
     reflexivity.
   - cbn.
     rewrite <- IHt. clear IHt.
     rewrite ap_morphism_1.
-    rewrite (appmor_pure F G).
+    rewrite (appmor_pure).
     reflexivity.
 Qed.
 
@@ -568,7 +614,7 @@ Proof.
   - cbn.
     rewrite <- IHt. clear IHt.
     do 2 rewrite ap_morphism_1.
-    rewrite (appmor_pure F G).
+    rewrite (appmor_pure).
     change (bind_type ?F ?f) with (mbinddt typ F f).
     compose near t on left.
     rewrite (mbinddt_morphism_typ F G).
@@ -578,17 +624,17 @@ Proof.
     rewrite <- IHt2. clear IHt2.
     rewrite ap_morphism_1.
     rewrite ap_morphism_1.
-    rewrite (appmor_pure F G).
+    rewrite (appmor_pure).
     reflexivity.
   - cbn.
     rewrite <- IHt. clear IHt.
     rewrite ap_morphism_1.
-    rewrite (appmor_pure F G).
+    rewrite (appmor_pure).
     reflexivity.
   - cbn.
     rewrite <- IHt. clear IHt.
     do 2 rewrite ap_morphism_1.
-    rewrite (appmor_pure F G).
+    rewrite (appmor_pure).
     change (bind_type ?F ?f) with (mbinddt typ F f).
     compose near t0 on left.
     rewrite (mbinddt_morphism_typ F G).
@@ -603,7 +649,7 @@ Lemma mbinddt_comp_mret_typ :
   forall (F : Type -> Type)
     `{Applicative F}
     `(f : forall k, list K2 * A -> F (SystemF k B)),
-    mbinddt typ F f ∘ mret SystemF KType = f KType ∘ pair nil.
+    mbinddt typ F f ∘ mret SystemF ktyp = f ktyp ∘ pair nil.
 Proof.
   reflexivity.
 Qed.
@@ -612,7 +658,7 @@ Lemma mbinddt_comp_mret_term :
   forall (F : Type -> Type)
     `{Applicative F}
     `(f : forall k, list K2 * A -> F (SystemF k B)),
-    mbinddt term F f ∘ mret SystemF KTerm = f KTerm ∘ pair nil.
+    mbinddt term F f ∘ mret SystemF ktrm = f ktrm ∘ pair nil.
 Proof.
   reflexivity.
 Qed.
@@ -629,35 +675,34 @@ Qed.
 
 (** ** <<DTPreModule>> instances *)
 (******************************************************************************)
-#[export] Instance DTP_typ: DTPreModule (list K2) typ SystemF :=
+#[export] Instance DTP_typ: MultiDecoratedTraversablePreModule
+                              (list K2) SystemF typ :=
   {| dtp_mbinddt_mret := @mbinddt_mret_typ;
      dtp_mbinddt_mbinddt := @mbinddt_mbinddt_typ;
      dtp_mbinddt_morphism := @mbinddt_morphism_typ;
   |}.
 
-#[export] Instance DTP_term: DTPreModule (list K2) term SystemF :=
+#[export] Instance DTP_term: MultiDecoratedTraversablePreModule
+                               (list K2) SystemF term :=
   {| dtp_mbinddt_mret := @mbinddt_mret_term;
      dtp_mbinddt_mbinddt := @mbinddt_mbinddt_term;
      dtp_mbinddt_morphism := @mbinddt_morphism_term;
   |}.
 
-#[export] Instance: forall k, DTPreModule (list K2) (SystemF k) SystemF :=
+#[export] Instance: forall k, MultiDecoratedTraversablePreModule
+                           (list K2) SystemF (SystemF k) :=
   fun k => match k with
-        | KType => DTP_typ
-        | KTerm => DTP_term
+        | ktyp => DTP_typ
+        | ktrm => DTP_term
         end.
 
-#[export] Instance: DTM (list K2) SystemF :=
+#[export] Instance: MultiDecoratedTraversableMonad (list K2) SystemF :=
   {| dtm_mbinddt_comp_mret := mbinddt_comp_mret_F;
   |}.
 
 (** * System F type system and operational rules *)
 (******************************************************************************)
 Reserved Notation "Δ ; Γ ⊢ t : τ" (at level 90, t at level 99).
-
-Import Tealeaves.Classes.Setlike.Functor.Notations.
-Export LN.AtomSet.Notations.
-Export LN.AssocList.Notations.
 
 (** ** Contexts and well-formedness predicates *)
 (******************************************************************************)
@@ -673,11 +718,13 @@ Definition type_ctx := alist (typ LN).
     variables, are unique. *)
 Definition ok_kind_ctx : kind_ctx -> Prop := uniq.
 
+#[export] Hint Unfold ok_kind_ctx : tea_alist.
+
 (** *** Well-formedness of type expressions in a kinding context *)
 (** A type is well-formed in a kinding context <<Δ>> when all of its
     type variables appear in Δ and the type is locally closed. *)
 Definition ok_type : kind_ctx -> typ LN -> Prop :=
-  fun Δ τ => scoped typ KType τ (domset Δ) /\ locally_closed typ KType τ.
+  fun Δ τ => scoped typ ktyp τ (domset Δ) /\ LC typ ktyp τ.
 
 (** *** Well-formedness for typing contexts *)
 (** A typing context <<Γ>> is well-formed in kinding context <<Δ>>
@@ -692,10 +739,10 @@ Definition ok_type_ctx : kind_ctx -> type_ctx -> Prop :=
     declared in <<Γ>>, and it is locally closed with respect to both
     kinds of variables. *)
 Definition ok_term : kind_ctx -> type_ctx -> term LN -> Prop :=
-  fun Δ Γ t => scoped term KType t (domset Δ) /\
-            scoped term KTerm t (domset Γ) /\
-            locally_closed term KTerm t /\
-            locally_closed term KType t.
+  fun Δ Γ t => scoped term ktyp t (domset Δ) /\
+            scoped term ktrm t (domset Γ) /\
+            LC term ktrm t /\
+            LC term ktyp t.
 
 (** ** Typing judgments *)
 (******************************************************************************)
@@ -709,9 +756,9 @@ Inductive Judgment : kind_ctx -> type_ctx -> term LN -> typ LN -> Prop :=
       (x, τ) ∈ (Γ : list (atom * typ LN)) ->
       (Δ ; Γ ⊢ tm_var (Fr x) : τ)
 | j_abs :
-    forall Δ Γ L t τ1 τ2,
-      (forall x, ~ x ∈@ L  ->
-            Δ ; Γ ++ x ~ τ1 ⊢ open term KTerm (tm_var (Fr x)) t : τ2) ->
+    forall Δ Γ (L:AtomSet.t) t τ1 τ2,
+      (forall x, x `notin` L  ->
+            Δ ; Γ ++ x ~ τ1 ⊢ open term ktrm (tm_var (Fr x)) t : τ2) ->
       (Δ ; Γ ⊢ tm_abs τ1 t : ty_ar τ1 τ2)
 | j_app :
     forall Δ Γ t1 t2 τ1 τ2,
@@ -720,15 +767,15 @@ Inductive Judgment : kind_ctx -> type_ctx -> term LN -> typ LN -> Prop :=
       (Δ ; Γ ⊢ tm_app t1 t2 : τ2)
 | j_univ :
     forall Δ Γ L τ t,
-      (forall x, ~ x ∈@ L ->
-            Δ ++ x ~ tt ; Γ ⊢ open term KType (ty_v (Fr x)) t
-                          : open typ KType (ty_v (Fr x)) τ) ->
+      (forall x, x `notin` L ->
+            Δ ++ x ~ tt ; Γ ⊢ open term ktyp (ty_v (Fr x)) t
+                          : open typ ktyp (ty_v (Fr x)) τ) ->
       (Δ ; Γ ⊢ tm_tab t : ty_univ τ)
 | j_inst :
     forall Δ Γ t τ1 τ2,
       ok_type Δ τ1 ->
       (Δ ; Γ ⊢ t : ty_univ τ2) ->
-      (Δ ; Γ ⊢ tm_tap t τ1 : open typ KType τ1 τ2)
+      (Δ ; Γ ⊢ tm_tap t τ1 : open typ ktyp τ1 τ2)
 where "Δ ; Γ ⊢ t : τ" := (Judgment Δ Γ t τ).
 
 (** ** Values and reduction rules *)
@@ -747,12 +794,12 @@ Inductive red : term LN -> term LN -> Prop :=
     red (tm_app t1 t2) (tm_app t1 t2')
 | red_abs : forall T t1 t2,
     value t2 ->
-    red (tm_app (tm_abs T t1) t2) (open term KTerm t2 t1)
+    red (tm_app (tm_abs T t1) t2) (open term ktrm t2 t1)
 | red_tapl : forall t t' T,
     red t t' ->
     red (tm_tap t T) (tm_tap t' T)
 | red_tab : forall T t,
-    red (tm_tap (tm_tab t) T) (open term KType T t).
+    red (tm_tap (tm_tab t) T) (open term ktyp T t).
 
 Definition preservation := forall t t' τ,
     (nil ; nil ⊢ t : τ) ->
@@ -762,21 +809,3 @@ Definition preservation := forall t t' τ,
 Definition progress := forall t τ,
     (nil ; nil ⊢ t : τ) ->
     value t \/ exists t', red t t'.
-
-(*
-(** ** Example: Typing the polymorphic identity *)
-(******************************************************************************)
-Example polymorphic_identity_function :
-  (nil ; nil ⊢ (Λ λ 0 ⋅ 0) : (∀ 0 ⟹ 0)).
-Proof.
-  apply j_univ with (L := ∅). introv _.
-  cbn. apply j_abs with (L := ∅).
-  - introv _. apply j_var.
-    + auto with sysf_ctx.
-    + simpl_alist. apply ok_tmv_tm_one.
-      unfold ok_type, scoped_env, scoped.
-      autorewrite with sysf_rw tea_rw_dom.
-      split; [fsetdec | apply lc_ty_ty_Fr].
-    + simpl_alist. now autorewrite with tea_list.
-Qed.
-*)

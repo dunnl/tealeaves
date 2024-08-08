@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>TraversableMonad.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Classes.Categorical.Monad
+  Classes.Categorical.TraversableFunctor.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Functor.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Monad.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Applicative.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Generalizable Variables</span> <span class="nf">F</span> G T A B.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Traversable monads *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> dist F%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} A%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> map F%function_scope {Map} {A B}%type_scope f%function_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> dist F%function_scope {ApplicativeDist} G%function_scope
+  {H H0 H1} {A}%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> ret T%function_scope {Return} (A)%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> join T%function_scope {Join} {A}%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Typeclass *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">TraversableMonad</span>
+  (<span class="nv">T</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+  `{Map T} `{Return T} `{Join T} `{ApplicativeDist T} :=
+  { trvmon_monad :&gt; Monad T;
+    trvmon_functor :&gt; TraversableFunctor T;
+    trvmon_ret : <span class="kr">forall</span> `{Applicative G},
+      `(dist T G ∘ ret T (G A) = map G (ret T A));
+    trvmon_join : <span class="kr">forall</span> `{Applicative G},
+      `(dist T G ∘ join T (A := G A) = map G (join T) ∘ dist T G ∘ map T (dist T G));
+  }.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(*</span>
+<span class="c">(******************************************************************************)</span>
+<span class="c">Section TraversableMonad_listable.</span>
+
+<span class="c">  Context</span>
+<span class="c">    `{TraversableMonad T}.</span>
+
+<span class="c">  Instance ApplicativeMorphism_join_list : forall A : Type,</span>
+<span class="c">      ApplicativeMorphism</span>
+<span class="c">        (const (list (list A)))</span>
+<span class="c">        (const (list A))</span>
+<span class="c">        (fun X =&gt; @join list Join_list A).</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. constructor; try typeclasses eauto.</span>
+<span class="c">    - intros X Y f x. cbv in x.</span>
+<span class="c">      rewrite (@map_const_spec (list A) X Y f).</span>
+<span class="c">      rewrite (@map_const_spec (list (list A)) X Y f).</span>
+<span class="c">      reflexivity.</span>
+<span class="c">    - intros X x. cbn. reflexivity.</span>
+<span class="c">    - intros X Y x y. cbv in x, y.</span>
+<span class="c">      change (?x ⊗ ?y) with (List.app x y).</span>
+<span class="c">      now rewrite join_list_app.</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  Theorem tolist_ret : forall A : Type,</span>
+<span class="c">      tolist T ∘ ret T = ret list (A := A).</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. unfold_ops @Tolist_Traversable.</span>
+<span class="c">    rewrite &lt;- (fun_map_map T).</span>
+<span class="c">    repeat reassociate -&gt; on left. reassociate &lt;- near (dist T (Const (list A))).</span>
+<span class="c">    rewrite (natural (ϕ := @ret T _));</span>
+<span class="c">      unfold_ops @Map_I.</span>
+<span class="c">    repeat reassociate -&gt; on left.</span>
+<span class="c">    reassociate &lt;- near (map T (@mkConst (list A) False)).</span>
+<span class="c">    rewrite (natural (ϕ := @ret T _));</span>
+<span class="c">      unfold_ops @Map_I.</span>
+<span class="c">    repeat reassociate -&gt; on left;</span>
+<span class="c">      reassociate &lt;- near (dist T _).</span>
+<span class="c">    rewrite (trvmon_ret T).</span>
+<span class="c">    ext a. reflexivity.</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  Theorem tolist_join : forall A : Type,</span>
+<span class="c">      tolist T ∘ join T = join list ∘ tolist T ∘ map T (tolist T) (A := T A).</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. rewrite (traversable_tolist_spec T False). reassociate -&gt;.</span>
+<span class="c">    unfold traverse. reassociate -&gt; on left.</span>
+<span class="c">    rewrite (natural (ϕ := @join T _)).</span>
+<span class="c">    reassociate &lt;- on left. rewrite (trvmon_join T (G := const (list A))).</span>
+<span class="c">    change (map (const (list A)) (join T) ∘ ?f) with f.</span>
+<span class="c">    rewrite &lt;- (fun_map_map T).</span>
+<span class="c">    repeat reassociate &lt;-. fequal.</span>
+<span class="c">    unfold_ops @Dist_compose. fequal.</span>
+<span class="c">    rewrite (traversable_tolist_spec T False). unfold traverse.</span>
+<span class="c">    reassociate &lt;- on right.</span>
+<span class="c">    rewrite &lt;- (dist_morph T (ϕ := (fun X : Type =&gt; @join list Join_list A))).</span>
+<span class="c">    reassociate -&gt; on right. rewrite (fun_map_map T).</span>
+<span class="c">    rewrite (mon_join_ret list). rewrite (fun_map_id T).</span>
+<span class="c">    change (?f ∘ id) with f.</span>
+<span class="c">    now rewrite (dist_const1 T (T False)).</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  #[global] Instance ListableMonad_TraversableMonad : ListableMonad T :=</span>
+<span class="c">    {| lmon_ret := tolist_ret;</span>
+<span class="c">       lmon_join := tolist_join;</span>
+<span class="c">    |}.</span>
+
+<span class="c">End TraversableMonad_listable.</span>
+<span class="c">*)</span></span></pre>
+</div>
+</div></body>
+</html>

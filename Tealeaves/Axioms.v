@@ -48,3 +48,6 @@ Tactic Notation "setext" :=
 
 Tactic Notation "setext" simple_intropattern(pat) :=
   intros; ext pat; propext.
+
+(* #[global] Set Universe Polymorphism.*)
+Inductive unit : Type :=  tt : unit.

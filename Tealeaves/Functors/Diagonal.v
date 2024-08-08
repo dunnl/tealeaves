@@ -1,11 +1,11 @@
 From Tealeaves Require Export
-  Applicative.
+  Classes.Categorical.Applicative.
 
 (** * Diagonal (duplication) applicative functor *)
 (******************************************************************************)
 Definition dup (A : Type) : Type := A * A.
 
-#[export] Instance Fmap_dup : Fmap dup :=
+#[export] Instance Map_dup : Map dup :=
   fun A B f => map_both f : A * A -> B * B.
 
 #[export, program] Instance End_dup : Functor dup.

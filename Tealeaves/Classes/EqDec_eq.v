@@ -1,7 +1,7 @@
 Require Export Coq.Classes.EquivDec.
 Require Export Coq.Structures.Equalities.
 
-Set Implicit Arguments.
+#[local] Set Implicit Arguments.
 
 (** * Types with decidable equality *)
 (******************************************************************************)
@@ -12,9 +12,9 @@ Class EqDec_eq (A : Type) :=
 Proof. trivial. Defined.
 
 Declare Scope coqeqdec_scope.
-Notation "x == y" := (eq_dec x y) (at level 70) : coqeqdec_scope.
-
 Open Scope coqeqdec_scope.
+
+Notation "x == y" := (eq_dec x y) (at level 70) : coqeqdec_scope.
 
 Theorem eq_dec_refl {A : Type} `{EqDec_eq A} (x : A) : eq_dec x x = left eq_refl.
 Proof.

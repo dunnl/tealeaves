@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>Bimonad.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-wsp"><span class="sd">(** This file implements bimonads. A [Bimonad] is a functor equipped</span>
+<span class="sd">    with a monad/comonad structure and a distributive law over itself,</span>
+<span class="sd">    which ensures the composition (W ∘ W) is also a monad and a</span>
+<span class="sd">    comonad. Additionally there are some coherence laws, below, which</span>
+<span class="sd">    may be read into several equivalent ways: *)</span>
+<span class="sd">(**</span>
+<span class="sd">    - The cojoin is a monad homomorphism (W → W ∘ W) and the counit a homomorphism (W → 1)</span>
+<span class="sd">    - The join is a comonad homomorphism (W ∘ W → W) and the unit a homomorphism (1 → W)</span>
+<span class="sd">    - W is a monoid in the category of comonoids (in the category of endofunctors)</span>
+<span class="sd">    - W is a comonoid in the category of monoids (in the category of endofunctors)</span>
+<span class="sd"> *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Classes.Categorical.Monad
+  Classes.Categorical.Comonad
+  Classes.Categorical.BeckDistributiveLaw.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Product.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Functor.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Monad.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Comonad.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Generalizable Variables</span> <span class="nf">W</span> A B.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> map F%function_scope {Map} {A B}%type_scope f%function_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> join T%function_scope {Join} {A}%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> ret T%function_scope {Return} {A}%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> extract W%function_scope {Extract} (A)%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Arguments</span> cojoin W%function_scope {Cojoin} {A}%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Bimonad typeclass *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">Bimonad</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    (<span class="nv">W</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+    `{Map W}
+    `{Return W}
+    `{Join W}
+    `{Cojoin W}
+    `{Extract W}
+    `{BeckDistributiveLaw W W}.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">Bimonad</span> :=
+    { bimonad_monad :&gt; Monad W;
+      bimonad_comonad :&gt; Comonad W;
+      bimonad_distributive_law :&gt; BeckDistributiveLaw W W;
+      bimonad_dist_counit_r :
+      `(map W (extract W A) ∘ bdist W W = extract W (W A));
+      bimonad_dist_counit_l :
+      `(extract W (W A) ∘ bdist W W = map W (extract W A));
+      bimonad_cap :
+      `(extract W A ∘ join W = extract W A ∘ extract W (W A));
+      bimonad_baton :
+      `(extract W A ∘ ret W = @id A);
+      bimonad_cup :
+      `(cojoin W ∘ ret W = ret W ∘ ret W (A := A));
+      bimonad_butterfly :
+        `(cojoin W ∘ join W (A := A) =
+          map W (join W) ∘ join W ∘ map W (bdist W W) ∘ cojoin W ∘ map W (cojoin W));
+    }.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">Bimonad</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Kleisli lifting operation &lt;&lt;bibind&gt;&gt; *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">Bimonad_kleisli_operations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    (<span class="nv">W</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+    `{Map W} `{Join W} `{Cojoin W}
+    `{BeckDistribution W W}.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">bibind</span> {<span class="nv">A</span> <span class="nv">B</span>} : (W A -&gt; W B) -&gt; (W A -&gt; W B) :=
+    <span class="kr">fun</span> <span class="nv">f</span> =&gt; join W ∘ map W f ∘ cojoin W.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">twist</span> : W ∘ W ⇒ W ∘ W
+    := <span class="kr">fun</span> <span class="nv">A</span> =&gt; map W (join W) ∘ bdist W W ∘ map W (cojoin W).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">kcomposebi</span> {<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span>} :
+    (W B -&gt; W C) -&gt;
+    (W A -&gt; W B) -&gt;
+    (W A -&gt; W C) :=
+    <span class="kr">fun</span> <span class="nv">g</span> <span class="nv">f</span> =&gt; join W ∘ map W g ∘ twist B ∘ map W f ∘ cojoin W.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">Bimonad_kleisli_operations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">Notations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;g ⋆bi f&quot;</span> := (kcomposebi _ g f) (<span class="kn">at level</span> <span class="mi">70</span>) : tealeaves_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">Notations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(*</span>
+<span class="c">(** ** Specifications for suboperations *)</span>
+<span class="c">(******************************************************************************)</span>
+<span class="c">Section Bimonad_suboperations.</span>
+
+<span class="c">  Context</span>
+<span class="c">    `{Bimonad W}.</span>
+
+<span class="c">  Lemma cobind_to_bibind : forall `(f : W A -&gt; B),</span>
+<span class="c">      cobind W f = bibind W (ret W ∘ f).</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. unfold bibind. unfold_ops @Cobind_Cojoin.</span>
+<span class="c">    rewrite &lt;- (fun_map_map W). reassociate &lt;-.</span>
+<span class="c">    now rewrite (mon_join_map_ret W).</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  Lemma bind_to_bibind : forall `(f : A -&gt; W B),</span>
+<span class="c">      bind W f = bibind W (f ∘ extract W).</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. unfold bibind. unfold_ops @Bind_Join.</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    reassociate &lt;-. reassociate -&gt;.</span>
+<span class="c">    now rewrite (com_map_extr_cojoin W).</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  Lemma map_to_bibind : forall `(f : A -&gt; B),</span>
+<span class="c">      map W f = bibind W (ret W ∘ f ∘ extract W).</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. unfold bibind.</span>
+<span class="c">    do 2 rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    repeat reassociate &lt;-.</span>
+<span class="c">    rewrite (mon_join_map_ret W).</span>
+<span class="c">    reassociate -&gt;.</span>
+<span class="c">    now rewrite (com_map_extr_cojoin W).</span>
+<span class="c">  Qed.</span>
+
+<span class="c">End Bimonad_suboperations.</span>
+
+<span class="c">(** ** Bimonadic Kleisli composition laws *)</span>
+<span class="c">(******************************************************************************)</span>
+<span class="c">Section Bimonad_kleisli_composition.</span>
+
+<span class="c">  Context</span>
+<span class="c">    `{Bimonad W}.</span>
+
+<span class="c">  (** Composition where &lt;&lt;g&gt;&gt; is a co-Kleisli arrow reduces to usual</span>
+<span class="c">      Kleisli composition. *)</span>
+<span class="c">  Lemma bi_kcompose1 {A B C} : forall (g : B -&gt; W C) (f : W A -&gt; W B),</span>
+<span class="c">      (g ∘ extract W) ⋆bi f = g ⋆ f.</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. unfold kcomposebi, kcompose.</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    reassociate &lt;-. unfold twist.</span>
+<span class="c">    repeat reassociate &lt;-.</span>
+<span class="c">    reassociate -&gt; near (map W (join W)).</span>
+<span class="c">    rewrite (fun_map_map W). rewrite (bimonad_cap W).</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    repeat reassociate &lt;-.</span>
+<span class="c">    reassociate -&gt; near (bdist W W).</span>
+<span class="c">    rewrite (bimonad_dist_counit_r W).</span>
+<span class="c">    reassociate -&gt; near (map W (cojoin W)).</span>
+<span class="c">    rewrite &lt;- (natural (ϕ := @extract W _)); unfold_ops @Map_I.</span>
+<span class="c">    reassociate &lt;-. reassociate -&gt; near (cojoin W (A := B)).</span>
+<span class="c">    rewrite (com_map_extr_cojoin W).</span>
+<span class="c">    reassociate -&gt; near (map W f).</span>
+<span class="c">    rewrite &lt;- (natural (ϕ := @extract W _)); unfold_ops @Map_I.</span>
+<span class="c">    repeat reassociate -&gt;. rewrite (com_extract_cojoin W).</span>
+<span class="c">    reflexivity.</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  (** Composition where &lt;&lt;f&gt;&gt; is a Kleisli arrow reduces to usual</span>
+<span class="c">      co-Kleisli composition. *)</span>
+<span class="c">  Lemma bi_kcompose2 {A B C} : forall (g : W B -&gt; W C) (f : W A -&gt; B),</span>
+<span class="c">      g ⋆bi (ret W ∘ f) = g co⋆ f.</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. unfold kcomposebi, kcompose.</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    reassociate &lt;-. unfold twist.</span>
+<span class="c">    repeat reassociate &lt;-.</span>
+<span class="c">    reassociate -&gt; near (map W (ret W)).</span>
+<span class="c">    rewrite (fun_map_map W). rewrite (bimonad_cup W).</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    repeat reassociate &lt;-.</span>
+<span class="c">    reassociate -&gt; near (map W (ret W) (A := W B)).</span>
+<span class="c">    rewrite (dist_unit_r W W).</span>
+<span class="c">    reassociate -&gt; near (ret W).</span>
+<span class="c">    rewrite (natural (ϕ := @ret W _)); unfold_ops @Map_I.</span>
+<span class="c">    reassociate &lt;-. reassociate -&gt; near (map W (ret W)).</span>
+<span class="c">    rewrite (mon_join_map_ret W).</span>
+<span class="c">    reassociate -&gt; near (ret W).</span>
+<span class="c">    rewrite (natural (ϕ := @ret W _)); unfold_ops @Map_I.</span>
+<span class="c">    reassociate &lt;-. rewrite (mon_join_ret W).</span>
+<span class="c">    reflexivity.</span>
+<span class="c">  Qed.</span>
+
+<span class="c">End Bimonad_kleisli_composition.</span>
+
+<span class="c">(** ** Functoriality of [bibind] *)</span>
+<span class="c">(******************************************************************************)</span>
+<span class="c">Section Bimonad_bibind.</span>
+
+<span class="c">  Context</span>
+<span class="c">    `{Bimonad W}.</span>
+
+<span class="c">  Definition bind_id {A} :</span>
+<span class="c">    bibind W (ret W ∘ extract W) = @id (W A).</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. unfold bibind.</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    do 2 reassociate -&gt; on left.</span>
+<span class="c">    rewrite (com_map_extr_cojoin W).</span>
+<span class="c">    reassociate &lt;- on left.</span>
+<span class="c">    now rewrite (mon_join_map_ret W).</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  Definition bind_functorial {A B C} : forall (g : W B -&gt; W C) (f : W A -&gt; W B),</span>
+<span class="c">      bibind W (g ⋆bi f) = bibind W g ∘ bibind W f.</span>
+<span class="c">  Proof.</span>
+<span class="c">    intros. unfold bibind. unfold kcomposebi.</span>
+<span class="c">    (** *)</span>
+<span class="c">    repeat reassociate -&gt; on left.</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    repeat  reassociate &lt;- on left.</span>
+<span class="c">    rewrite &lt;- (mon_join_join W).</span>
+<span class="c">    (** *)</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    repeat reassociate -&gt; on left.</span>
+<span class="c">    rewrite &lt;- (com_cojoin_cojoin W).</span>
+<span class="c">    repeat  reassociate &lt;- on left.</span>
+<span class="c">    (** *)</span>
+<span class="c">    repeat reassociate -&gt; on left.</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    repeat  reassociate &lt;- on left.</span>
+<span class="c">    reassociate -&gt; near (map W (map W g)).</span>
+<span class="c">    change (map W (map W g)) with (map (W ∘ W) g).</span>
+<span class="c">    Set Keyed Unification.</span>
+<span class="c">    rewrite &lt;- (natural (ϕ := @join W _)).</span>
+<span class="c">    Unset Keyed Unification.</span>
+<span class="c">    (** *)</span>
+<span class="c">    rewrite &lt;- (fun_map_map W).</span>
+<span class="c">    repeat reassociate -&gt; on left.</span>
+<span class="c">    reassociate &lt;- near (map W (map W f)).</span>
+<span class="c">    change (map W (map W f)) with (map (W ∘ W) f).</span>
+<span class="c">    Set Keyed Unification.</span>
+<span class="c">    rewrite (natural (ϕ := @cojoin W _)).</span>
+<span class="c">    Unset Keyed Unification.</span>
+<span class="c">    repeat reassociate &lt;- on left.</span>
+<span class="c">    repeat reassociate &lt;- on right.</span>
+<span class="c">    (** *)</span>
+<span class="c">    reassociate -&gt; near (join W).</span>
+<span class="c">    rewrite (bimonad_butterfly W).</span>
+<span class="c">    repeat reassociate &lt;-.</span>
+<span class="c">    reassociate -&gt; near (join W).</span>
+<span class="c">    Set Keyed Unification.</span>
+<span class="c">    rewrite (natural (ϕ := @join W _) (μ W)).</span>
+<span class="c">    Unset Keyed Unification.</span>
+<span class="c">    reassociate -&gt; near (map W (cojoin W)).</span>
+<span class="c">    Set Keyed Unification.</span>
+<span class="c">    rewrite &lt;- (natural (ϕ := @cojoin W _) (cojoin W)).</span>
+<span class="c">    Unset Keyed Unification.</span>
+<span class="c">    unfold twist.</span>
+<span class="c">    repeat reassociate &lt;-.</span>
+<span class="c">    now repeat rewrite &lt;- (fun_map_map W).</span>
+<span class="c">  Qed.</span>
+
+<span class="c">End Bimonad_bibind.</span>
+<span class="c">*)</span></span></pre>
+</div>
+</div></body>
+</html>

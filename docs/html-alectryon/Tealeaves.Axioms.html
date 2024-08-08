@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>Tealeaves.Axioms</title>
+<script type="text/javascript" defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js?config=TeX-AMS_CHTML"></script>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running . Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document" id="tealeaves-axioms">
+<h1 class="title">Tealeaves.Axioms</h1>
+<h2 class="subtitle" id="axioms-imported-by-tealeaves">Axioms imported by Tealeaves</h2>
+
+<p>These two exports bring in two axioms.</p>
+<dl class="docutils">
+<dt>function extensionality</dt>
+<dd><div class="math first last">
+\begin{equation*}
+\forall x, f x = g x \to f = g
+\end{equation*}
+</div>
+</dd>
+</dl>
+<p>and</p>
+<dl class="docutils">
+<dt>propositional extensionality</dt>
+<dd><div class="math first last">
+\begin{equation*}
+\forall \phi \psi, (\phi \iff \psi) \iff \phi = \psi
+\end{equation*}
+</div>
+<div class="math first last">
+\begin{equation*}
+.. coq::
+\end{equation*}
+</div>
+<div class="math first last">
+\begin{equation*}
+   From Coq.Logic Require Export
+        FunctionalExtensionality
+        PropExtensionality.
+\end{equation*}
+</div>
+<div class="math first last">
+\begin{equation*}
+   (** ** Support for reasoning with extensionality *)
+   (******************************************************************************)
+   Ltac ext_destruct pat :=
+     (let tmp := fresh &quot;TMP&quot; in extensionality tmp; destruct tmp as pat)
+     + (extensionality pat) + (fail &quot;ext failed, make sure your names are fresh&quot;).
+\end{equation*}
+</div>
+<div class="math first last">
+\begin{equation*}
+   Tactic Notation &quot;ext&quot; simple_intropattern(pat) := ext_destruct pat.
+   Tactic Notation &quot;ext&quot; simple_intropattern(x) simple_intropattern(y) := ext x; ext y.
+   Tactic Notation &quot;ext&quot; simple_intropattern(x) simple_intropattern(y) simple_intropattern(z) := ext x; ext y; ext z.
+   Tactic Notation &quot;ext&quot; simple_intropattern(x) simple_intropattern(y) simple_intropattern(z) simple_intropattern(w) := ext x; ext y; ext z.
+   Tactic Notation &quot;ext&quot; simple_intropattern(x) simple_intropattern(y) simple_intropattern(z) simple_intropattern(w) := ext x; ext y; ext z; ext w.
+   Tactic Notation &quot;ext&quot; simple_intropattern(x) simple_intropattern(y) simple_intropattern(z) simple_intropattern(w) simple_intropattern(w) := ext x; ext y; ext z; ext w; ext u.
+   Tactic Notation &quot;ext&quot; simple_intropattern(x) simple_intropattern(y) simple_intropattern(z) simple_intropattern(w) simple_intropattern(u) simple_intropattern(v) := ext x; ext y; ext z; ext w; ext u; ext v.
+\end{equation*}
+</div>
+<div class="math first last">
+\begin{equation*}
+   (** Reduce an equality between propositions to the two directions of
+   mutual implication using the propositional extensionality axiom. *)
+   Tactic Notation &quot;propext&quot; := apply propositional_extensionality; split.
+\end{equation*}
+</div>
+<div class="math first last">
+\begin{equation*}
+   (** Reduce an equality between propositions to the two directions of
+   mutual implication using the propositional extensionality axiom. *)
+   Tactic Notation &quot;setext&quot; :=
+     intros; repeat (let x := fresh &quot;x&quot; in ext x); propext.
+\end{equation*}
+</div>
+<div class="math first last">
+\begin{equation*}
+   Tactic Notation &quot;setext&quot; simple_intropattern(pat) :=
+     intros; ext pat; propext.
+\end{equation*}
+</div>
+<div class="math first last">
+\begin{equation*}
+   (* #[global] Set Universe Polymorphism.*)
+   Inductive unit : Type :=  tt : unit.
+\end{equation*}
+</div>
+</dd>
+</dl>
+</div>
+</div></body>
+</html>

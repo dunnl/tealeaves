@@ -1,10 +1,12 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Applicative.
+  Classes.Categorical.Applicative.
 
 Import Monoid.Notations.
 
 #[local] Generalizable Variables W M N ϕ.
+
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 
 (** * Inductive definition of the constant functor *)
 (******************************************************************************)
@@ -29,7 +31,7 @@ Qed.
 Definition retag {V A B} : Const V A -> Const V B :=
   mkConst ∘ unconst.
 
-#[global] Instance Fmap_Const {V} : Fmap (Const V) :=
+#[global] Instance Map_Const {V} : Map (Const V) :=
   fun A B f x => mkConst (unconst x).
 
 #[global, program] Instance End_Const {V} : Functor (Const V).
@@ -41,8 +43,8 @@ Solve All Obligations with
 
 #[global] Hint Rewrite (@unconst_mkConst) (@mkConst_unconst) : tea_applicative.
 
-Lemma fmap_Const_1 : forall V (A B : Type) (f : A -> B) (x : Const V A),
-    unconst (fmap (Const V) f x) = unconst x.
+Lemma map_Const_1 : forall V (A B : Type) (f : A -> B) (x : Const V A),
+    unconst (map (Const V) f x) = unconst x.
 Proof.
   introv. now destruct x.
 Qed.
@@ -84,14 +86,15 @@ Section const_ops.
 
 End const_ops.
 
-#[global] Instance ApplicativeMorphism_Monoid_Morphism `(f : M1 -> M2) `{Monoid_Morphism M1 M2 f} :
+#[global] Instance ApplicativeMorphism_Monoid_Morphism
+  `(f : M1 -> M2) `{Monoid M1} `{Monoid M2} `{! Monoid_Morphism M1 M2 f} :
   ApplicativeMorphism (Const M1) (Const M2) (@mapConst M1 M2 f).
 Proof.
-  match goal with H : Monoid_Morphism f |- _ => inversion H end.
+  match goal with H : Monoid_Morphism _ _ f |- _ => inversion H end.
   constructor; try typeclasses eauto.
   - introv. destruct x. reflexivity.
-  - intros. cbn. rewrite (monmor_unit). reflexivity.
-  - intros. destruct x, y. cbn. rewrite (monmor_op). reflexivity.
+  - intros. cbn. rewrite monmor_unit. reflexivity.
+  - intros. destruct x, y. cbn. rewrite monmor_op. reflexivity.
 Qed.
 
 (** * Computational definition of the constant functor *)
@@ -107,11 +110,11 @@ Section constant_functor.
     Context
       `{Monoid M}.
 
-    #[global] Instance Fmap_const : Fmap (const M) :=
+    #[global] Instance Map_const : Map (const M) :=
       fun X Y f t => t.
 
-    Theorem fmap_const_spec : forall (X Y : Type) (f : X -> Y),
-        fmap (const M) f = id.
+    Theorem map_const_spec : forall (X Y : Type) (f : X -> Y),
+        map (const M) f = id.
     Proof.
       reflexivity.
     Qed.
@@ -142,11 +145,30 @@ Section constant_functor.
 
   End with_monoid.
 
-  #[global] Instance ApplicativeMorphism_monoid_morphism `{hom : Monoid_Morphism ϕ (A := M) (B := N)} :
+  #[global] Instance ApplicativeMorphism_monoid_morphism
+   `{Monoid M} `{Monoid N}
+    `{hom: ! Monoid_Morphism M N ϕ } :
     ApplicativeMorphism (const M) (const N) (const ϕ).
   Proof.
     inversion hom.
     constructor; now try typeclasses eauto.
+  Qed.
+
+
+  Lemma map_compose_const {F} `{Functor F} `{M : Type} :
+    @Map_compose F (const M) _ _ = @Map_const (F M).
+  Proof.
+    ext A' B' f' t.
+    unfold_ops @Map_compose @Map_const.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+  Lemma mult_compose_const {G} `{Applicative G} `{Monoid M} :
+    @Mult_compose G (const M) _ _ _ = @Mult_const (G M) (Monoid_op_applicative G M).
+  Proof.
+    ext A' B' [m1 m2].
+    reflexivity.
   Qed.
 
 End constant_functor.

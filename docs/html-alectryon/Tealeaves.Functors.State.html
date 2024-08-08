@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>State.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Classes.Kleisli.Monad.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * State monad *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Inductive</span> <span class="nf">State</span> (<span class="nv">S</span> <span class="nv">A</span> : <span class="kt">Type</span>) :=
+| mkState : (S -&gt; S * A) -&gt; State S A.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Arguments</span> mkState {S A}%type_scope _.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">state_monad</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    {<span class="nv">S</span> : <span class="kt">Type</span>}.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">runState</span> {<span class="nv">A</span>} : State S A -&gt; S -&gt; S * A :=
+    <span class="kr">fun</span> <span class="nv">st</span> <span class="nv">s</span> =&gt; <span class="kr">match</span> st <span class="kr">with</span>
+             | mkState run =&gt; run s
+             <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">runStateValue</span> {<span class="nv">A</span>} : State S A -&gt; S -&gt; A :=
+    <span class="kr">fun</span> <span class="nv">st</span> <span class="nv">s</span> =&gt; snd (runState st s).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">runStateState</span> {<span class="nv">A</span>} : State S A -&gt; S -&gt; S :=
+    <span class="kr">fun</span> <span class="nv">st</span> <span class="nv">s</span> =&gt; fst (runState st s).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Map_State</span> : Map (State S) :=
+    <span class="kr">fun</span> <span class="nv">A</span> <span class="nv">B</span> (<span class="nv">f</span> : A -&gt; B) (<span class="nv">st</span> : State S A) =&gt;
+      <span class="kr">match</span> st <span class="kr">with</span>
+      | mkState r =&gt;
+        mkState (<span class="kr">fun</span> <span class="nv">s</span> =&gt; <span class="kr">match</span> (r s) <span class="kr">with</span> (s&#39;, a) =&gt; (s&#39;, f a) <span class="kr">end</span>)
+      <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk0">#[export] <span class="kn">Instance</span> <span class="nf">Functor_State</span> : Functor (State S).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">Functor (State S)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk1"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">Functor (State S)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk2"><span class="nb">constructor</span>; <span class="kp">try</span> <span class="nb">typeclasses eauto</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">A</span> : <span class="kt">Type</span>, map id = id</div></blockquote><div class="alectryon-extra-goals"><input class="alectryon-extra-goal-toggle" id="state-v-chk3" style="display: none" type="checkbox"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><label class="goal-separator" for="state-v-chk3"><hr></label><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : A -&gt; B) (<span class="nv">g</span> : B -&gt; C),
+map g ∘ map f = map (g ∘ f)</div></blockquote></div></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk4">-</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">A</span> : <span class="kt">Type</span>, map id = id</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk5"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map id = id</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk6">ext [st].</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map id (mkState st) = id (mkState st)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk7"><span class="nb">unfold</span> id.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map (<span class="kr">fun</span> <span class="nv">x</span> : A =&gt; x) (mkState st) = mkState st</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">      </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk8"><span class="nb">cbn</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">mkState (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt; <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, a)) =
+mkState st</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk9">fequal.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">fun</span> <span class="nv">s</span> : S =&gt; <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, a)) = st</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chka">ext s.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br><span><var>s</var><span class="hyp-type"><b>: </b><span>S</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, a)) = st s</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">now</span> <span class="nb">destruct</span> (st s).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chkb">-</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : A -&gt; B) (<span class="nv">g</span> : B -&gt; C),
+map g ∘ map f = map (g ∘ f)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chkc" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chkc"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; C</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map g ∘ map f = map (g ∘ f)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chkd" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chkd">ext [st].</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; C</span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(map g ∘ map f) (mkState st) =
+map (g ∘ f) (mkState st)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chke" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chke"><span class="nb">unfold</span> compose.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; C</span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map g (map f (mkState st)) = map (g ○ f) (mkState st)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">      </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chkf" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chkf"><span class="nb">cbn</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; C</span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">mkState
+  (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+   <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, f a) <span class="kr">in</span>
+   (s&#39;, g a)) =
+mkState
+  (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt; <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, g (f a)))</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk10">fequal.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; C</span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+ <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, f a) <span class="kr">in</span>
+ (s&#39;, g a)) =
+(<span class="kr">fun</span> <span class="nv">s</span> : S =&gt; <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, g (f a)))</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk11">ext s.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; C</span></span></span><br><span><var>st</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br><span><var>s</var><span class="hyp-type"><b>: </b><span>S</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, f a) <span class="kr">in</span>
+ (s&#39;, g a)) = (<span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := st s <span class="kr">in</span> (s&#39;, g (f a)))</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">now</span> <span class="nb">destruct</span> (st s).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Return_State</span> : Return (State S) :=
+    <span class="kr">fun</span> <span class="nv">A</span> (<span class="nv">a</span> : A) =&gt; mkState (<span class="kr">fun</span> <span class="nv">s</span> =&gt; (s, a)).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Bind_State</span> : Bind (State S) (State S) :=
+    <span class="kr">fun</span> <span class="nv">A</span> <span class="nv">B</span> (<span class="nv">f</span>: A -&gt; State S B) (<span class="nv">st1</span>: State S A) =&gt;
+      <span class="kr">match</span> st1 <span class="kr">with</span>
+      | mkState action =&gt;
+          mkState
+            (<span class="kr">fun</span> <span class="nv">s</span> =&gt; <span class="kr">match</span> (action s) <span class="kr">with</span>
+                     (s&#39;, a) =&gt; runState (f a) s&#39;
+                   <span class="kr">end</span>)
+      <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk12" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk12">#[export] <span class="kn">Instance</span> <span class="nf">Monad_State</span> : Monad (State S).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">Monad (State S)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk13" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk13"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">Monad (State S)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk14" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk14"><span class="nb">constructor</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : A -&gt; State S B),
+bind f ∘ ret = f</div></blockquote><div class="alectryon-extra-goals"><input class="alectryon-extra-goal-toggle" id="state-v-chk15" style="display: none" type="checkbox"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><label class="goal-separator" for="state-v-chk15"><hr></label><div class="goal-conclusion">RightPreModule (State S) (State S)</div></blockquote></div></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk16">-</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">f</span> : A -&gt; State S B),
+bind f ∘ ret = f</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk17" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk17"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">bind f ∘ ret = f</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk18" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk18">ext a.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(bind f ∘ ret) a = f a</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk19" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk19"><span class="nb">cbv</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">mkState
+  (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+   <span class="kr">match</span> f a <span class="kr">with</span>
+   | mkState run =&gt; run s
+   <span class="kr">end</span>) = f a</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">      </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">now</span> <span class="nb">destruct</span> (f a).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk1a" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk1a">-</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">RightPreModule (State S) (State S)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk1b" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk1b"><span class="nb">constructor</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">A</span> : <span class="kt">Type</span>, bind ret = id</div></blockquote><div class="alectryon-extra-goals"><input class="alectryon-extra-goal-toggle" id="state-v-chk1c" style="display: none" type="checkbox"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><label class="goal-separator" for="state-v-chk1c"><hr></label><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> : <span class="kt">Type</span>) (<span class="nv">g</span> : B -&gt; State S C)
+  (<span class="nv">f</span> : A -&gt; State S B),
+bind g ∘ bind f = bind (kc1 g f)</div></blockquote></div></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">      </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk1d" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk1d">+</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">A</span> : <span class="kt">Type</span>, bind ret = id</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk1e" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk1e"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">bind ret = id</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk1f" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk1f">ext s.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>s</var><span class="hyp-type"><b>: </b><span>State S A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">bind ret s = id s</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">        </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk20" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk20"><span class="nb">cbv</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>s</var><span class="hyp-type"><b>: </b><span>State S A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">match</span> s <span class="kr">with</span>
+| mkState action =&gt;
+    mkState
+      (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt; <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := action s <span class="kr">in</span> (s&#39;, a))
+<span class="kr">end</span> = s</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk21" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk21"><span class="nb">destruct</span> s.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">mkState (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt; <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span> (s&#39;, a)) =
+mkState p</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">        </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk22" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk22">fequal.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">fun</span> <span class="nv">s</span> : S =&gt; <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span> (s&#39;, a)) = p</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk23" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk23">ext s.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br><span><var>s</var><span class="hyp-type"><b>: </b><span>S</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span> (s&#39;, a)) = p s</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">now</span> <span class="nb">destruct</span> (p s).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">      </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk24" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk24">+</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> : <span class="kt">Type</span>) (<span class="nv">g</span> : B -&gt; State S C)
+  (<span class="nv">f</span> : A -&gt; State S B),
+bind g ∘ bind f = bind (kc1 g f)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk25" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk25"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; State S C</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">bind g ∘ bind f = bind (kc1 g f)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk26" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk26">ext s.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; State S C</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br><span><var>s</var><span class="hyp-type"><b>: </b><span>State S A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(bind g ∘ bind f) s = bind (kc1 g f) s</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">        </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk27" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk27"><span class="nb">cbv</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; State S C</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br><span><var>s</var><span class="hyp-type"><b>: </b><span>State S A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">match</span>
+  <span class="kr">match</span> s <span class="kr">with</span>
+  | mkState action =&gt;
+      mkState
+        (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+         <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := action s <span class="kr">in</span>
+         <span class="kr">match</span> f a <span class="kr">with</span>
+         | mkState run =&gt; run s&#39;
+         <span class="kr">end</span>)
+  <span class="kr">end</span>
+<span class="kr">with</span>
+| mkState action =&gt;
+    mkState
+      (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+       <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := action s <span class="kr">in</span>
+       <span class="kr">match</span> g a <span class="kr">with</span>
+       | mkState run =&gt; run s&#39;
+       <span class="kr">end</span>)
+<span class="kr">end</span> =
+<span class="kr">match</span> s <span class="kr">with</span>
+| mkState action =&gt;
+    mkState
+      (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+       <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := action s <span class="kr">in</span>
+       <span class="kr">match</span>
+         <span class="kr">match</span> f a <span class="kr">with</span>
+         | mkState action0 =&gt;
+             mkState
+               (<span class="kr">fun</span> <span class="nv">s0</span> : S =&gt;
+                <span class="kr">let</span> (<span class="nv">s&#39;0</span>, a0) := action0 s0 <span class="kr">in</span>
+                <span class="kr">match</span> g a0 <span class="kr">with</span>
+                | mkState run =&gt; run s&#39;0
+                <span class="kr">end</span>)
+         <span class="kr">end</span>
+       <span class="kr">with</span>
+       | mkState run =&gt; run s&#39;
+       <span class="kr">end</span>)
+<span class="kr">end</span></div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk28" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk28"><span class="nb">destruct</span> s.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; State S C</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">mkState
+  (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+   <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) :=
+     <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span>
+     <span class="kr">match</span> f a <span class="kr">with</span>
+     | mkState run =&gt; run s&#39;
+     <span class="kr">end</span> <span class="kr">in</span>
+   <span class="kr">match</span> g a <span class="kr">with</span>
+   | mkState run =&gt; run s&#39;
+   <span class="kr">end</span>) =
+mkState
+  (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+   <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span>
+   <span class="kr">match</span>
+     <span class="kr">match</span> f a <span class="kr">with</span>
+     | mkState action =&gt;
+         mkState
+           (<span class="kr">fun</span> <span class="nv">s0</span> : S =&gt;
+            <span class="kr">let</span> (<span class="nv">s&#39;0</span>, a0) := action s0 <span class="kr">in</span>
+            <span class="kr">match</span> g a0 <span class="kr">with</span>
+            | mkState run =&gt; run s&#39;0
+            <span class="kr">end</span>)
+     <span class="kr">end</span>
+   <span class="kr">with</span>
+   | mkState run =&gt; run s&#39;
+   <span class="kr">end</span>)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk29" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk29">fequal.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; State S C</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+ <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) :=
+   <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span>
+   <span class="kr">match</span> f a <span class="kr">with</span>
+   | mkState run =&gt; run s&#39;
+   <span class="kr">end</span> <span class="kr">in</span>
+ <span class="kr">match</span> g a <span class="kr">with</span>
+ | mkState run =&gt; run s&#39;
+ <span class="kr">end</span>) =
+(<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+ <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span>
+ <span class="kr">match</span>
+   <span class="kr">match</span> f a <span class="kr">with</span>
+   | mkState action =&gt;
+       mkState
+         (<span class="kr">fun</span> <span class="nv">s0</span> : S =&gt;
+          <span class="kr">let</span> (<span class="nv">s&#39;0</span>, a0) := action s0 <span class="kr">in</span>
+          <span class="kr">match</span> g a0 <span class="kr">with</span>
+          | mkState run =&gt; run s&#39;0
+          <span class="kr">end</span>)
+   <span class="kr">end</span>
+ <span class="kr">with</span>
+ | mkState run =&gt; run s&#39;
+ <span class="kr">end</span>)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">        </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk2a" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk2a">ext s.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; State S C</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br><span><var>s</var><span class="hyp-type"><b>: </b><span>S</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">let</span> (<span class="nv">s&#39;</span>, a) :=
+   <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span>
+   <span class="kr">match</span> f a <span class="kr">with</span>
+   | mkState run =&gt; run s&#39;
+   <span class="kr">end</span> <span class="kr">in</span>
+ <span class="kr">match</span> g a <span class="kr">with</span>
+ | mkState run =&gt; run s&#39;
+ <span class="kr">end</span>) =
+(<span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := p s <span class="kr">in</span>
+ <span class="kr">match</span>
+   <span class="kr">match</span> f a <span class="kr">with</span>
+   | mkState action =&gt;
+       mkState
+         (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+          <span class="kr">let</span> (<span class="nv">s&#39;0</span>, a0) := action s <span class="kr">in</span>
+          <span class="kr">match</span> g a0 <span class="kr">with</span>
+          | mkState run =&gt; run s&#39;0
+          <span class="kr">end</span>)
+   <span class="kr">end</span>
+ <span class="kr">with</span>
+ | mkState run =&gt; run s&#39;
+ <span class="kr">end</span>)</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="state-v-chk2b" style="display: none" type="checkbox"><label class="alectryon-input" for="state-v-chk2b"><span class="nb">destruct</span> (p s).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>S, A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>B -&gt; State S C</span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; State S B</span></span></span><br><span><var>p</var><span class="hyp-type"><b>: </b><span>S -&gt; S * A</span></span></span><br><span><var>s, s0</var><span class="hyp-type"><b>: </b><span>S</span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">(<span class="kr">let</span> (<span class="nv">s&#39;</span>, a) :=
+   <span class="kr">match</span> f a <span class="kr">with</span>
+   | mkState run =&gt; run s0
+   <span class="kr">end</span> <span class="kr">in</span>
+ <span class="kr">match</span> g a <span class="kr">with</span>
+ | mkState run =&gt; run s&#39;
+ <span class="kr">end</span>) =
+<span class="kr">match</span>
+  <span class="kr">match</span> f a <span class="kr">with</span>
+  | mkState action =&gt;
+      mkState
+        (<span class="kr">fun</span> <span class="nv">s</span> : S =&gt;
+         <span class="kr">let</span> (<span class="nv">s&#39;</span>, a) := action s <span class="kr">in</span>
+         <span class="kr">match</span> g a <span class="kr">with</span>
+         | mkState run =&gt; run s&#39;
+         <span class="kr">end</span>)
+  <span class="kr">end</span>
+<span class="kr">with</span>
+| mkState run =&gt; run s0
+<span class="kr">end</span></div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">        </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">now</span> <span class="nb">destruct</span> (f a).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+  <span class="c">(*</span>
+<span class="c">  #[export] Instance Join_State : Join (State S) :=</span>
+<span class="c">    fun A (st : State S (State S A)) =&gt;</span>
+<span class="c">      match st with</span>
+<span class="c">      | mkState r =&gt;</span>
+<span class="c">        mkState (fun s =&gt; match (r s) with (s&#39;, st&#39;) =&gt; runState st&#39; s&#39; end)</span>
+<span class="c">      end.</span>
+
+<span class="c">  Instance Natural_ret : Natural (@ret (State S) _).</span>
+<span class="c">  Proof.</span>
+<span class="c">    ltac:(constructor; try typeclasses eauto).</span>
+<span class="c">    reflexivity.</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  Instance Natural_join : Natural (@join (State S) _).</span>
+<span class="c">  Proof.</span>
+<span class="c">    ltac:(constructor; try typeclasses eauto).</span>
+<span class="c">    intros. ext [st]. cbn. fequal.</span>
+<span class="c">    ext s. destruct (st s); cbn. now (destruct s1).</span>
+<span class="c">  Qed.</span>
+
+<span class="c">  #[export] Instance Monad_State : Monad (State S).</span>
+<span class="c">  Proof.</span>
+<span class="c">    constructor; try typeclasses eauto.</span>
+<span class="c">    - intros. now (ext [st]).</span>
+<span class="c">    - intros. ext [st]. unfold id.</span>
+<span class="c">      cbn. fequal. ext s. now destruct (st s).</span>
+<span class="c">    - intros. ext [st]. unfold compose; cbn.</span>
+<span class="c">      fequal. ext s. destruct (st s). now (destruct s1).</span>
+<span class="c">  Qed.</span>
+<span class="c">   *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">state_monad</span>.</span></span></pre>
+</div>
+</div></body>
+</html>

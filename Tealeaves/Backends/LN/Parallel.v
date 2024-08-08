@@ -1,10 +1,16 @@
+From Tealeaves.Backends.LN Require Import
+  Atom AtomSet.
 From Tealeaves Require Import
-     Util.Prelude Util.EqDec_eq
-     LN.Atom LN.AtomSet LN.Leaf
-     Classes.DecoratedTraversableModule
-     Functors.Maybe.
+  Misc.NaturalNumbers
+  Functors.Option.
+From Tealeaves.Theory Require Import
+  TraversableFunctor
+  DecoratedTraversableMonad.
+
+#[local] Generalizable Variable T.
 
 Import DecoratedTraversableMonad.Notations.
+Import DecoratedContainerFunctor.Notations.
 Import LN.AtomSet.Notations.
 Open Scope tealeaves_scope.
 Open Scope set_scope.
@@ -26,11 +32,11 @@ Proof.
   - compare values n and n1; auto.
 Qed.
 
-Instance EqDec_leaf : EquivDec.EqDec leaf eq := eq_dec_leaf.
+#[export] Instance EqDec_leaf : EquivDec.EqDec leaf eq := eq_dec_leaf.
 
-Fixpoint nth {A} (n : nat) (l : list A) : Maybe A :=
+Fixpoint nth {A} (n : nat) (l : list A) : option A :=
   match n, l with
-  | O, x :: l' => Just x
+  | O, x :: l' => Some x
   | O, other => None
   | S m, nil => None
   | S m, x :: t => nth m t
@@ -79,20 +85,20 @@ Section local_operations.
 
   Definition subst_loc x (u : T leaf) : leaf -> T leaf :=
     fun l => match l with
-          | Fr y => if x == y then u else ret T (Fr y)
-          | Bd grp ix => ret T (Bd grp ix)
+          | Fr y => if x == y then u else ret (T := T) (Fr y)
+          | Bd grp ix => ret (T := T) (Bd grp ix)
           end.
 
-  Definition open_loc (binders : list (T leaf)) : list nat * leaf -> Maybe (T leaf) :=
+  Definition open_loc (binders : list (T leaf)) : list nat * leaf -> option (T leaf) :=
     fun p => match p with
           | (w, l) =>
             match l with
-            | Fr x => Just (ret T (Fr x))
+            | Fr x => Some (ret (T := T) (Fr x))
             | Bd grp ix =>
               match Nat.compare grp (length w) with
-              | Lt => Just (ret T (Bd grp ix))
+              | Lt => Some (ret (T := T) (Bd grp ix))
               | Eq => nth ix binders
-              | Gt => Just (ret T (Bd (grp - 1) ix))
+              | Gt => Some (ret (T := T) (Bd (grp - 1) ix))
               end
             end
           end.
@@ -104,7 +110,7 @@ Section local_operations.
             | Fr x => True
             | Bd grp ix =>
               match nth grp w with
-              | Just size => ix < size
+              | Some size => ix < size
               | None => False
               end
             end
@@ -116,26 +122,29 @@ End local_operations.
 (******************************************************************************)
 Section LocallyNamelessOperations.
 
-  About DecoratedTraversableModule.
   Context
     (T : Type -> Type)
-    `{DecoratedTraversableMonad (list nat)
+    `{DecoratedTraversableMonadFull (list nat)
                                  (op := @List.app nat) (unit := nil) T}.
 
-  Definition open (binders : list (T leaf)) : T leaf -> Maybe (T leaf)  :=
-    binddt T (open_loc binders).
+  Definition open (binders : list (T leaf)) : T leaf -> option (T leaf)  :=
+    binddt (T := T) (open_loc binders).
 
   Definition locally_closed : T leaf -> Prop :=
     fun t => forall w l, (w, l) ∈d t -> is_bound_or_free (w, l).
 
   Corollary open_respectful_id (us : list (T leaf)) : forall (t : T leaf),
-      (forall w a, (w, a) ∈d t -> open_loc us (w, a) = Just (ret T a)) -> binddt T (open_loc us) t = pure Maybe t.
+      (forall w a, (w, a) ∈d t -> open_loc us (w, a) = Some (ret (T := T) a)) ->
+      binddt (open_loc us) t = pure t.
   Proof.
-    intros. now apply (binddt_respectful_id T).
+    intros.
+    apply (binddt_respectful_pure).
+    typeclasses eauto.
+    assumption.
   Qed.
 
   Theorem correct : forall (t : T leaf) (us : list (T leaf)),
-      locally_closed t -> open us t = Just t.
+      locally_closed t -> open us t = Some t.
   Proof.
     introv LC. unfold locally_closed in LC.
     apply open_respectful_id.

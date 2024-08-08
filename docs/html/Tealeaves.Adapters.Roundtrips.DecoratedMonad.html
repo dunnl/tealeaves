@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Adapters.Roundtrips.DecoratedMonad</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.DecoratedMonad.html#"><span class="id" title="library">Adapters.CategoricalToKleisli.DecoratedMonad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#"><span class="id" title="library">Adapters.KleisliToCategorical.DecoratedMonad</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Product.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Notations"><span class="id" title="module">Monad.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Notations"><span class="id" title="module">Kleisli.Monad.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variable</span> <span class="id" title="var">T</span> <span class="id" title="var">W</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab700"></a><h1 class="section">Categorical ~&gt; Kleisli ~&gt; Categorical</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Roundtrip1" class="idref" href="#Roundtrip1"><span class="id" title="module">Roundtrip1</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="mapT:2" class="idref" href="#mapT:2"><span class="id" title="binder">mapT</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="decT:4" class="idref" href="#decT:4"><span class="id" title="binder">decT</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#Decorate"><span class="id" title="class">Decorate</span></a> <a id="W:3" class="idref" href="#W:3"><span class="id" title="binder">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="joinT:5" class="idref" href="#joinT:5"><span class="id" title="binder">joinT</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Join"><span class="id" title="class">Join</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="retT:6" class="idref" href="#retT:6"><span class="id" title="binder">retT</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Return"><span class="id" title="class">Return</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:9" class="idref" href="#H:9"><span class="id" title="binder">Monoid</span></a> <a id="H:9" class="idref" href="#H:9"><span class="id" title="binder">W</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">!</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">Categorical.DecoratedMonad.DecoratedMonad</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">W</span></a> <a id="H0:10" class="idref" href="#H0:10"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Roundtrip1.bindd'" class="idref" href="#Roundtrip1.bindd'"><span class="id" title="instance">bindd'</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#Bindd"><span class="id" title="class">Bindd</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.DecoratedMonad.html#ToKleisli.Bindd_dec"><span class="id" title="instance">ToKleisli.Bindd_dec</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Roundtrip1.map'" class="idref" href="#Roundtrip1.map'"><span class="id" title="definition">map'</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Map_Bindd"><span class="id" title="instance">Map_Bindd</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Roundtrip1.dec'" class="idref" href="#Roundtrip1.dec'"><span class="id" title="definition">dec'</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#Decorate"><span class="id" title="class">Decorate</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Decorate_Bindd"><span class="id" title="instance">Decorate_Bindd</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Roundtrip1.join'" class="idref" href="#Roundtrip1.join'"><span class="id" title="definition">join'</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Join"><span class="id" title="class">Join</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Join_Bindd"><span class="id" title="instance">Join_Bindd</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Roundtrip1.Unnamed_thm" class="idref" href="#Roundtrip1.Unnamed_thm"><span class="id" title="definition">mapT</span></a> <a id="Roundtrip1.Unnamed_thm" class="idref" href="#Roundtrip1.Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Roundtrip1.Unnamed_thm" class="idref" href="#Roundtrip1.Unnamed_thm"><span class="id" title="definition">map'</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.map'"><span class="id" title="definition">map'</span></a>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Map_Bindd"><span class="id" title="instance">Map_Bindd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#bindd"><span class="id" title="definition">bindd</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.bindd'"><span class="id" title="instance">bindd'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.DecoratedMonad.html#ToKleisli.Bindd_dec"><span class="id" title="instance">ToKleisli.Bindd_dec</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> →.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#dfun_dec_extract"><span class="id" title="method">dfun_dec_extract</span></a> (<span class="id" title="var">E</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.W"><span class="id" title="axiom">W</span></a>) (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;-.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_map_ret"><span class="id" title="method">mon_join_map_ret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Roundtrip1.Unnamed_thm0" class="idref" href="#Roundtrip1.Unnamed_thm0"><span class="id" title="definition">decT</span></a> <a id="Roundtrip1.Unnamed_thm0" class="idref" href="#Roundtrip1.Unnamed_thm0"><span class="id" title="definition">=</span></a> <a id="Roundtrip1.Unnamed_thm0" class="idref" href="#Roundtrip1.Unnamed_thm0"><span class="id" title="definition">dec'</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.dec'"><span class="id" title="definition">dec'</span></a>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Decorate_Bindd"><span class="id" title="instance">Decorate_Bindd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#bindd"><span class="id" title="definition">bindd</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.bindd'"><span class="id" title="instance">bindd'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.DecoratedMonad.html#ToKleisli.Bindd_dec"><span class="id" title="instance">ToKleisli.Bindd_dec</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_map_ret"><span class="id" title="method">mon_join_map_ret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Roundtrip1.Unnamed_thm1" class="idref" href="#Roundtrip1.Unnamed_thm1"><span class="id" title="definition">joinT</span></a> <a id="Roundtrip1.Unnamed_thm1" class="idref" href="#Roundtrip1.Unnamed_thm1"><span class="id" title="definition">=</span></a> <a id="Roundtrip1.Unnamed_thm1" class="idref" href="#Roundtrip1.Unnamed_thm1"><span class="id" title="definition">join'</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.join'"><span class="id" title="definition">join'</span></a>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Join_Bindd"><span class="id" title="instance">Join_Bindd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#bindd"><span class="id" title="definition">bindd</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.bindd'"><span class="id" title="instance">bindd'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.DecoratedMonad.html#ToKleisli.Bindd_dec"><span class="id" title="instance">ToKleisli.Bindd_dec</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> →.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#dfun_dec_extract"><span class="id" title="method">dfun_dec_extract</span></a> (<span class="id" title="var">E</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.W"><span class="id" title="axiom">W</span></a>) (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip1"><span class="id" title="module">Roundtrip1</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab701"></a><h1 class="section">Kleisli ~&gt; Categorical ~&gt; Kleisli</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Roundtrip2" class="idref" href="#Roundtrip2"><span class="id" title="module">Roundtrip2</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="binddT:13" class="idref" href="#binddT:13"><span class="id" title="binder">binddT</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#Bindd"><span class="id" title="class">Bindd</span></a> <a id="W:11" class="idref" href="#W:11"><span class="id" title="binder">W</span></a> <a id="T:12" class="idref" href="#T:12"><span class="id" title="binder">T</span></a> <span class="id" title="var">T</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="retT:14" class="idref" href="#retT:14"><span class="id" title="binder">retT</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Return"><span class="id" title="class">Return</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#T:12"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:17" class="idref" href="#H:17"><span class="id" title="binder">Monoid</span></a> <a id="H:17" class="idref" href="#H:17"><span class="id" title="binder">W</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:18" class="idref" href="#H0:18"><span class="id" title="binder">@</span></a><a id="H0:18" class="idref" href="#H0:18"><span class="id" title="binder">Kleisli.DecoratedMonad.DecoratedMonad</span></a> <a id="H0:18" class="idref" href="#H0:18"><span class="id" title="binder">W</span></a> <a id="H0:18" class="idref" href="#H0:18"><span class="id" title="binder">T</span></a> <a id="H0:18" class="idref" href="#H0:18"><span class="id" title="binder">retT</span></a> <a id="H0:18" class="idref" href="#H0:18"><span class="id" title="binder">binddT</span></a> <a id="H0:18" class="idref" href="#H0:18"><span class="id" title="binder">_</span></a> <a id="H0:18" class="idref" href="#H0:18"><span class="id" title="binder">_</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Roundtrip2.map'" class="idref" href="#Roundtrip2.map'"><span class="id" title="instance">map'</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Map_Bindd"><span class="id" title="instance">Map_Bindd</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Roundtrip2.dec'" class="idref" href="#Roundtrip2.dec'"><span class="id" title="instance">dec'</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#Decorate"><span class="id" title="class">Decorate</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Decorate_Bindd"><span class="id" title="instance">Decorate_Bindd</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Roundtrip2.join'" class="idref" href="#Roundtrip2.join'"><span class="id" title="instance">join'</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Join"><span class="id" title="class">Join</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Join_Bindd"><span class="id" title="instance">Join_Bindd</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Roundtrip2.bindd'" class="idref" href="#Roundtrip2.bindd'"><span class="id" title="definition">bindd'</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#Bindd"><span class="id" title="class">Bindd</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.DecoratedMonad.html#ToKleisli.Bindd_dec"><span class="id" title="instance">ToKleisli.Bindd_dec</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">binddT</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">bindd'</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.bindd'"><span class="id" title="definition">bindd'</span></a>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.DecoratedMonad.html#ToKleisli.Bindd_dec"><span class="id" title="instance">ToKleisli.Bindd_dec</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.map'"><span class="id" title="instance">map'</span></a>, <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedFunctor.html#dec"><span class="id" title="definition">dec</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.dec'"><span class="id" title="instance">dec'</span></a>, <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.join'"><span class="id" title="instance">join'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Map_Bindd"><span class="id" title="instance">Map_Bindd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Join_Bindd"><span class="id" title="instance">Join_Bindd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.DecoratedMonad.html#Decorate_Bindd"><span class="id" title="instance">Decorate_Bindd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_compose_in_compose</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#kmond_bindd2"><span class="id" title="lemma">kmond_bindd2</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#kmond_bindd2"><span class="id" title="lemma">kmond_bindd2</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#kc5_50"><span class="id" title="lemma">kc5_50</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>) (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <span class="id" title="var">A</span>)) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span>:=<a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>) (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#kc5_54"><span class="id" title="lemma">kc5_54</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Functors.Reader.html#Map_reader"><span class="id" title="instance">Map_reader</span></a> ?<span class="id" title="var">x</span>) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Functors.Categorical.Reader.html#Map_prod"><span class="id" title="instance">Map_prod</span></a> <span class="id" title="var">x</span>) <span class="id" title="tactic">in</span> ×.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;^^&nbsp;Fix&nbsp;this&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a> (<span class="id" title="var">ϕ</span> := @<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2.W"><span class="id" title="axiom">W</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a> <span class="id" title="var">_</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#kc4_04"><span class="id" title="lemma">kc4_04</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.DecoratedMonad.html#Roundtrip2"><span class="id" title="module">Roundtrip2</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

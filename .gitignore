@@ -1,19 +1,17 @@
 .direnv/
-.#*
 *.tmp
 *.glob
 *.vo*
 *.aux
 *.lia.cache
+Makefile.coq.local
 Makefile.coq
 Makefile.coq.conf
 .Makefile.coq.d
-html
+/html
+/html-alectryon
 # Emacs lock files
 .#*
 # Nix files
 result
-# Everything in the ~ignore/~ directory
-ignore/
-# Ignore result of building examples with alectryon
-html-examples/
+result-alectryon
