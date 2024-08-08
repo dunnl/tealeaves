@@ -4,9 +4,6 @@ From Tealeaves Require Export
   Simplification.MBinddt
   Simplification.Tests.SystemF_Binddt.
 
-About btgd.
-About tgtdt.
-
 #[local] Generalizable Variables G.
 #[local] Arguments mbinddt {ix} {W}%type_scope {T} U%function_scope
   {MBind} {F}%function_scope {H H0 H1 A B} _ _.

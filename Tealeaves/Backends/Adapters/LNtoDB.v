@@ -172,7 +172,15 @@ Section translate.
       (e, Bd n) ∈d t ->
       bound n e = true.
   Proof.
-  Admitted.
+    introv HLC Hin. cbn.
+    unfold LC, LCn in HLC.
+    specialize (HLC e (Bd n) Hin).
+    unfold lc_loc in HLC.
+    replace (e + 0) with e in * by lia.
+    destruct e.
+    lia.
+    rewrite PeanoNat.Nat.leb_le. lia.
+  Qed.
 
   Lemma bound_in_plus: forall n depth,
       bound (n + depth) depth = false.
@@ -183,14 +191,6 @@ Section translate.
       rewrite Compare_dec.leb_iff_conv.
       lia.
   Qed.
-
-  Lemma mapdt_respectful_pure {G} `{Applicative G} :
-    forall A (t : U A) (f : nat * A -> G A),
-      (forall (e : nat) (a : A), (e, a) ∈d t -> f (e, a) = pure a)
-      -> mapdt (G := G) (T := U) f t = pure (F := G) t.
-  Proof.
-    introv hyp.
-  Admitted.
 
   Lemma toDB_Fr: forall (n: nat) (a: atom) (k: key),
       a ∈ k ->
@@ -315,7 +315,7 @@ Section translate.
     rewrite mapdt_mapdt.
     all: try typeclasses eauto.
     change (Some (Some t)) with (pure (F := option ∘ option) t).
-    apply (mapdt_respectful_pure (G := option ∘ option)).
+    apply (mapdt_respectful_pure _ (G := option ∘ option)).
     intros.
     now rewrite (LN_DB_roundtrip_loc t).
   Qed.
@@ -394,7 +394,7 @@ Section translate.
     rewrite mapdt_mapdt.
     all: try typeclasses eauto.
     change (Some (Some t)) with (pure (F := option ∘ option) t).
-    apply (mapdt_respectful_pure (G := option ∘ option)).
+    apply (mapdt_respectful_pure _ (G := option ∘ option)).
     intros.
     now rewrite (DB_LN_roundtrip_loc t k gap).
   Qed.

@@ -612,3 +612,20 @@ Proof.
     + destruct_all_existentials.
       eauto using red.
 Qed.
+
+Print Assumptions progress_theorem.
+(* Axioms:
+base_typ : Type
+*)
+Print Assumptions preservation_theorem.
+(*
+Axioms:
+propositional_extensionality : forall P Q : Prop, P <-> Q -> P = Q
+functional_extensionality_dep
+  : forall (A : Type) (B : A -> Type) (f g : forall x : A, B x),
+    (forall x : A, f x = g x) -> f = g
+Eqdep.Eq_rect_eq.eq_rect_eq
+  : forall (U : Type) (p : U) (Q : U -> Type) (x : Q p) (h : p = p),
+    x = rew [Q] h in x
+base_typ : Type
+*)

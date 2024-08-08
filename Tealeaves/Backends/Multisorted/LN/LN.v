@@ -1699,7 +1699,6 @@ Section open_metatheory.
       rewrite btgd_eq.
       replace (incr w (ret l)) with (w, l).
       2:{ cbn; now simpl_monoid. }
-      Search open_loc subst.
       cbn. destruct l.
       - compose near (Fr a) on left;
            rewrite mbindd_comp_mret;
@@ -1761,8 +1760,7 @@ Section open_metatheory.
               compare naturals n and (countk k1 w + countk k1 w'). }
           + (* k <> k1 *)
             rewrite btgd_neq; auto.
-        - Search subst_loc "neq".
-          rewrite subst_loc_fr_neq.
+        - rewrite subst_loc_fr_neq.
           compose near (Fr a) on right.
           rewrite mbindd_comp_mret.
           rewrite btgd_neq; auto.

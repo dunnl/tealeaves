@@ -250,7 +250,7 @@ Qed.
 #[export] Hint Resolve step_in_par : churchrosser.
 
 Goal `(t1 ⇒ t2 -> t1 →* t2).
-Proof with (info_eauto with churchrosser).
+Proof with (eauto with churchrosser).
   induction 1.
   - reflexivity.
   - etransitivity...
