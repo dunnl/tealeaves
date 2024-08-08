@@ -89,6 +89,20 @@ Section foldmap.
     reflexivity.
   Qed.
 
+  Lemma foldMapkd_to_foldMapmd `{! Monoid M} {A} (f : W * A -> M) {k: K}:
+    foldMapkd k f = foldMapmd (tgt_def (A := W * A) k f (const Ƶ)).
+  Proof.
+    intros.
+    rewrite foldMapkd_to_kmapdt.
+    rewrite kmapdt_to_mmapdt.
+    rewrite foldMapmd_to_mmapdt.
+    unfold mmapdt.
+    rewrite (mbinddt_constant_applicative2 U A False).
+    fequal. fequal. ext j [w a].
+    unfold tgtdt, tgt_def.
+    destruct_eq_args k j.
+  Qed.
+
   Lemma foldMapk_to_foldMapkd `{! Monoid M} {A} (f : A -> M) {k: K}:
     foldMapk k f = foldMapkd k (f ∘ extract (W := prod W)).
   Proof.
@@ -317,14 +331,32 @@ Section forall_and_exists.
         Forallkd k (fun '(w, a) => P (w, a)) t.
   Proof.
     intros.
-    rewrite Forallkd_to_Forallmd.
-    change (forall (w : W) (a : A), (w, (k, a)) ∈md t -> P (w, a))
-      with (forall (w : W) (a : A), (w, (k, a)) ∈md t ->
-                               ((fun '(w, (k, a)) => P (w, a)) (w, (k, a)))).
-    (* specialize (Forallmd_spec (fun '(w, (k, a)) => P (w, a)) t). *)
-    specialize (Forallmd_spec (fun '(w, (j, a)) => if k == j then P (w, a) else True) t).
-    introv Hyp. propext.
-    - intros.
-  Admitted.
+    unfold Forallkd, Forallmd, tosetmd.
+    rewrite (foldMapkd_to_foldMapmd U).
+    rewrite (foldMapmd_through_tolist U).
+    unfold compose.
+    apply propositional_extensionality.
+    induction (tolistmd U t).
+    - cbv; intuition.
+    - destruct a as [w [j a]].
+      cbn. unfold tgt_def.
+      destruct_eq_args k j.
+      { split.
+        + introv hyp. split.
+          * cbn. apply hyp. now left.
+          * apply IHl. auto.
+        + introv [case1 case2] [Heq | Hin].
+          * inversion Heq; subst. cbv in *; tauto.
+          * unfold foldMap_list, compose in IHl.
+            rewrite <- IHl in case2. auto. }
+      { split.
+        + introv hyp. split.
+          * cbv. easy.
+          * apply IHl. auto.
+        + introv [case1 case2] [Heq | Hin].
+          * inversion Heq; subst. cbv in *; tauto.
+          * unfold foldMap_list, compose in IHl.
+            rewrite <- IHl in case2. auto. }
+  Qed.
 
 End forall_and_exists.
