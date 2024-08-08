@@ -159,7 +159,7 @@ Proof.
       with (ty_univ (subst typ ktyp x τ' τ2)) in IHj.
     2:{ now simplify_subst. }
     rewrite (subst_open_eq typ); auto.
-    2:{ clear IHj j. eapply ok_type_lc; eauto.}
+    2:{ clear IHj j. eapply ok_type_lc; eauto. }
     auto using j_inst with sysf_ctx.
 Qed.
 

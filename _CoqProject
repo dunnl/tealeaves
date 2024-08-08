@@ -183,7 +183,6 @@ Tealeaves/Examples/SystemF/Syntax.v
 Tealeaves/Simplification/Tests/SystemF_Binddt.v
 Tealeaves/Simplification/Tests/SystemF_Targeted.v
 Tealeaves/Simplification/Tests/SystemF_LN.v
-#Tealeaves/Examples/SystemF/Rewriting.v
 Tealeaves/Examples/SystemF/Contexts.v
 Tealeaves/Examples/SystemF/TypeSoundness.v
 
