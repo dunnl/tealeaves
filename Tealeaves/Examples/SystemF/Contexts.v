@@ -1,11 +1,8 @@
 From Tealeaves Require Import
   Functors.List
   Backends.Multisorted.LN
-  Examples.SystemF.Syntax.
-
-(*
-  Examples.SystemF.Rewriting.
-*)
+  Examples.SystemF.Syntax
+  Simplification.Tests.SystemF_LN.
 
 From Coq Require Import
   Sorting.Permutation.
@@ -20,6 +17,49 @@ Import List.ListNotations.
 Create HintDb sysf_ctx.
 
 #[local] Generalizable Variables F G A B C ϕ W T.
+#[local] Open Scope set_scope.
+
+(* Misc *)
+
+Lemma rw_subst_type_var_neq {x y} τ':
+  x <> y ->
+  subst typ ktyp x τ' (ty_v (Fr y)) = ty_v (Fr y).
+Proof.
+  intros.
+  simplify_subst.
+  cbn. destruct_eq_args x y.
+Qed.
+
+Lemma rw_subst_term_var_neq {x y} {τ} :
+  x <> y ->
+  subst term ktyp x τ (tm_var (Fr y)) = tm_var (Fr y).
+Proof.
+  intros.
+  simplify_subst.
+  cbn. destruct_eq_args x y.
+Qed.
+
+Lemma FV_trm_type_empty: forall τ,
+    FV typ ktrm τ [=] ∅.
+Proof.
+  intros.
+  induction τ; simplify_FV; fsetdec.
+Qed.
+
+Lemma subst_in_type_id: forall x u τ,
+    subst typ ktrm x u τ = τ.
+Proof.
+  intros.
+  eapply (subst_fresh_set typ).
+  rewrite FV_trm_type_empty.
+  fsetdec.
+Qed.
+
+Lemma LC_typ_trm: forall τ,
+    LC typ ktrm τ.
+Proof.
+  intros. induction τ; now simplify_LC.
+Qed.
 
 (** * Tactical support *)
 (******************************************************************************)
@@ -662,12 +702,13 @@ Proof.
   - apply scoped_envmap.
     eapply (scoped_sub_neq term); eauto.
     + discriminate.
-    + admit.
+    + unfold scoped.
+      rewrite FV_trm_type_empty. fsetdec.
   - eapply (subst_lc_neq term); auto.
     + discriminate.
-    + admit.
+    + apply LC_typ_trm.
   - eapply (subst_lc_eq term); auto.
-Admitted.
+Qed.
 
 (** ** Structural properties of <<ok_term Δ Γ t>> in <<Γ>> *)
 (******************************************************************************)
