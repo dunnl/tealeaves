@@ -1683,73 +1683,102 @@ Section open_metatheory.
       (btgd k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K)))) ⋆dm btgd k1 (open_loc k1 u1) =
       (btgd k1 (open_loc k1 (mbind (T k1) (btg k2 (subst_loc k2 x u2)) u1))) ⋆dm (btg k2 (subst_loc k2 x u2) ◻ const (extract (W := prod (list K)))).
   Proof.
-    intros. ext k [w l]. unfold compose_dm.
-    replace (btgd k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K))) ◻ const (incr (op := Monoid_op_list) w))
-      with  (btgd k2 (subst_loc k2 x u2 ∘ extract (W := prod (list K)))).
-    2:{ ext j [w' a']. cbn. compare values j and k2. }
-    change ((btg k2 (subst_loc k2 x u2) k ∘ const (extract (W := prod (list K))) k) (w, l))
-      with (btg k2 (subst_loc k2 x u2) k a).
-    compare values k and k1.
-    - simpl_tgt.
-      compare values k2 and k1.
-      unfold vec_compose at 2. unfold compose at 2.
-      simpl_tgt. unfold const at 1.
-      change (extract (w, l)) with l.
+    introv Hneq HLC. ext j [w l].
+    unfold compose_dm.
+    compare values j and k1.
+    { (* j = k1 *)
+      rewrite btgd_eq.
+      replace ((btg k2 (subst_loc k2 x u2) ◻ const extract) k1 (w, l))
+        with (btg k2 (subst_loc k2 x u2) k1 l) by (compare values k1 and k1).
+      rewrite btg_neq; auto.
       compose near l on right.
-      rewrite (mbindd_comp_mret k1).
-      { destruct l as [y | n].
-        + rewrite open_loc_atom.
-          compose near (Fr y) on left.
-          rewrite (mbindd_comp_mret k1).
-          unfold vec_compose at 1.
-          unfold compose.
-          unfold const.
-          simpl_tgt.
-          reflexivity.
-        + unfold vec_compose.
-          simpl_tgt.
-          unfold allK at 1.
-          unfold compose at 2.
-          cbn. simpl_monoid.
-          compare naturals n and (countk k1 w).
-          { compose near (Bd n) on left.
-            rewrite (mbindd_comp_mret k1).
-            simpl_tgt. reflexivity.
-          }
-          { unfold mbind, vec_compose.
-            fequal. unfold const, compose.
-            ext j. compare values j and k2;
-              now simpl_tgt.
-          }
-          { compose near (Bd (n - 1)) on left.
-            rewrite (mbindd_comp_mret k1).
-            simpl_tgt. reflexivity.
-          }
+      rewrite mbindd_comp_mret.
+      unfold vec_compose at 2.
+      unfold allK at 2, const.
+      unfold compose at 2 3.
+      rewrite btgd_eq.
+      replace (incr w (ret l)) with (w, l).
+      2:{ cbn; now simpl_monoid. }
+      Search open_loc subst.
+      cbn. destruct l.
+      - compose near (Fr a) on left;
+           rewrite mbindd_comp_mret;
+           unfold compose; cbn;
+          compare values k1 and k2.
+      - compare naturals n and (countk k1 w).
+        + compose near (Bd n) on left.
+          rewrite mbindd_comp_mret;
+            unfold compose; cbn;
+            compare values k1 and k2.
+        + unfold mbind; fequal.
+          unfold vec_compose, allK, const.
+          ext j.
+          destruct_eq_args j k2.
+          * rewrite btg_eq, btgd_eq.
+            reassociate ->.
+            replace (extract ∘ incr w) with (extract (A := LN)).
+            reflexivity.
+            symmetry; apply (extract_incr (A := LN) w).
+          * rewrite btgd_neq; auto.
+            rewrite btg_neq; auto.
+            reassociate ->.
+            replace (extract ∘ incr w) with (extract (A := LN)).
+            reflexivity.
+            symmetry; apply (extract_incr (A := LN) w).
+        + compose near (Bd (n - 1)) on left.
+          rewrite mbindd_comp_mret;
+            unfold compose; cbn;
+            compare values k1 and k2.
+    }
+    { (* j <> k1 *)
+      rewrite btgd_neq; auto.
+      unfold vec_compose, const, compose.
+      cbn. compose near l on left.
+      rewrite mbindd_comp_mret.
+      compare values j and k2.
+      { (* j = k2 *)
+        rewrite btgd_eq.
+        rewrite btg_eq.
+        unfold compose, allK, const. cbn.
+        compare l to atom x.
+        - (* l = Fr x *)
+          cbn. destruct_eq_args x x.
+          symmetry.
+          apply mbindd_respectful_id.
+          intros w' k l Hin.
+          compare values k and k1.
+          + (* k = k1 *)
+            unfold LC, LCn in HLC.
+            specialize (HLC _ _ Hin).
+            unfold lc_loc in HLC.
+            destruct l.
+            {  cbn. compare values k1 and k1.
+               now destruct DESTR_EQ0.
+            }
+            { rewrite btgd_eq.
+              cbn. unfold_ops @Monoid_op_list.
+              rewrite countk_app.
+              compare naturals n and (countk k1 w + countk k1 w'). }
+          + (* k <> k1 *)
+            rewrite btgd_neq; auto.
+        - Search subst_loc "neq".
+          rewrite subst_loc_fr_neq.
+          compose near (Fr a) on right.
+          rewrite mbindd_comp_mret.
+          rewrite btgd_neq; auto.
+          inversion 1. congruence.
+        - cbn. compose near (Bd n) on right.
+          rewrite mbindd_comp_mret.
+          rewrite btgd_neq; auto.
       }
-    - unfold vec_compose, const, compose.
-      compare values k and k2;
-        compare values k1 and k2;
-        simpl_tgt.
-      {  unfold compose. cbn.
-         compose near l on left.
-         rewrite (mbindd_comp_mret k2).
-         simpl_tgt.
-         destruct l. cbn.
-         compare values x and a.
-         + admit.
-         + compose near (Fr a) on right.
-           rewrite (mbindd_comp_mret k2).
-           simpl_tgt.
-           reflexivity.
-         + cbn. compose near (Bd n) on right.
-           rewrite (mbindd_comp_mret k2).
-           simpl_tgt.
-           reflexivity.
-      }
-      { cbn. destruct l.
-        cbn. admit. admit.
-      }
-  Admitted.
+      { (* j <> k2 *)
+        rewrite btgd_neq; auto.
+        rewrite btg_neq; auto.
+        compose near l on right.
+        rewrite (mbindd_comp_mret).
+        rewrite btgd_neq; auto. }
+    }
+  Qed.
 
   Theorem subst_open_neq :  forall k1 k2 (u1 : T k1 LN) (u2 : T k2 LN) (x : atom) (t : U LN),
       k1 <> k2 ->
@@ -1758,9 +1787,11 @@ Section open_metatheory.
       t '{k2 | x ~> u2} '(k1 | u1 '{k2 | x ~> u2}).
   Proof.
     introv neq lc. compose near t.
-    unfold subst, open. unfold kbind, kbindd.
+    unfold subst, open.
+    unfold kbind, kbindd.
     rewrite (mbind_to_mbindd U), (mbindd_mbindd U).
-    rewrite (mbindd_mbindd U). fequal.
+    rewrite (mbindd_mbindd U).
+    fequal.
     pose (lemma := subst_open_neq_loc).
     unfold compose_dm in lemma. setoid_rewrite <- lemma; auto.
     ext k [w a]. unfold vec_compose.
