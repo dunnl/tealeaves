@@ -39,15 +39,23 @@ Section local_lemmas_needed.
       free U (T := T) k = foldMapk U k free_loc.
   Proof.
     intros.
-    unfold free.
-    ext x.
+    unfold free. ext t.
+    unfold toklist, compose.
     unfold foldMapk.
-    unfold foldMapm.
-    unfold foldMapmd.
-
-    Search toklist.
-    ext s.
-  Admitted.
+    rewrite foldMapm_to_foldMapmd.
+    rewrite (foldMapmd_through_tolist U).
+    unfold toklistd.
+    unfold compose.
+    induction (tolistmd U t).
+    - reflexivity.
+    - destruct a as [w [j l']].
+      cbn.
+      unfold tgt_def.
+      unfold_ops @Monoid_op_list.
+      unfold vec_compose, compose.
+      cbn. destruct_eq_args k j.
+      cbn. rewrite IHl. fequal.
+  Qed.
 
   Lemma FV_to_free : forall (k: K) (t: U LN),
       FV U k t = atoms (free U (T := T) k t).
