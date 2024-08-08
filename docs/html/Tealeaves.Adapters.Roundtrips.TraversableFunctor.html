@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Adapters.Roundtrips.TraversableFunctor</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#"><span class="id" title="library">Classes.Categorical.TraversableFunctor</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#"><span class="id" title="library">Classes.Kleisli.TraversableFunctor</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.TraversableFunctor.html#"><span class="id" title="library">Adapters.CategoricalToKleisli.TraversableFunctor</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.TraversableFunctor.html#"><span class="id" title="library">Adapters.KleisliToCategorical.TraversableFunctor</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab702"></a><h1 class="section">Categorical ~&gt; Kleisli ~&gt; Categorical</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Roundtrip1" class="idref" href="#Roundtrip1"><span class="id" title="module">Roundtrip1</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="mapT:2" class="idref" href="#mapT:2"><span class="id" title="binder">mapT</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="distT:3" class="idref" href="#distT:3"><span class="id" title="binder">distT</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#ApplicativeDist"><span class="id" title="class">ApplicativeDist</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:4" class="idref" href="#H:4"><span class="id" title="binder">!</span></a> <a id="H:4" class="idref" href="#H:4"><span class="id" title="binder">Categorical.TraversableFunctor.TraversableFunctor</span></a> <a id="H:4" class="idref" href="#H:4"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Roundtrip1.traverse'" class="idref" href="#Roundtrip1.traverse'"><span class="id" title="instance">traverse'</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Traverse"><span class="id" title="class">Traverse</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.TraversableFunctor.html#ToKleisli.Traverse_dist"><span class="id" title="instance">ToKleisli.Traverse_dist</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Roundtrip1.map'" class="idref" href="#Roundtrip1.map'"><span class="id" title="definition">map'</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Map_Traverse"><span class="id" title="definition">Map_Traverse</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Roundtrip1.dist'" class="idref" href="#Roundtrip1.dist'"><span class="id" title="definition">dist'</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#ApplicativeDist"><span class="id" title="class">ApplicativeDist</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.TraversableFunctor.html#ToCategorical.Dist_Traverse"><span class="id" title="instance">ToCategorical.Dist_Traverse</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Roundtrip1.Unnamed_thm" class="idref" href="#Roundtrip1.Unnamed_thm"><span class="id" title="definition">mapT</span></a> <a id="Roundtrip1.Unnamed_thm" class="idref" href="#Roundtrip1.Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Roundtrip1.Unnamed_thm" class="idref" href="#Roundtrip1.Unnamed_thm"><span class="id" title="definition">map'</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.map'"><span class="id" title="definition">map'</span></a>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Map_Traverse"><span class="id" title="definition">Map_Traverse</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.traverse'"><span class="id" title="instance">traverse'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.TraversableFunctor.html#ToKleisli.Traverse_dist"><span class="id" title="instance">ToKleisli.Traverse_dist</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist_unit"><span class="id" title="method">dist_unit</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Roundtrip1.Unnamed_thm0" class="idref" href="#Roundtrip1.Unnamed_thm0"><span class="id" title="definition">distT</span></a> <a id="Roundtrip1.Unnamed_thm0" class="idref" href="#Roundtrip1.Unnamed_thm0"><span class="id" title="definition">=</span></a> <a id="Roundtrip1.Unnamed_thm0" class="idref" href="#Roundtrip1.Unnamed_thm0"><span class="id" title="definition">dist'</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.dist'"><span class="id" title="definition">dist'</span></a>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.TraversableFunctor.html#ToCategorical.Dist_Traverse"><span class="id" title="instance">ToCategorical.Dist_Traverse</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.traverse'"><span class="id" title="instance">traverse'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.TraversableFunctor.html#ToKleisli.Traverse_dist"><span class="id" title="instance">ToKleisli.Traverse_dist</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">G</span> <span class="id" title="var">Hmap</span> <span class="id" title="var">Hpure</span> <span class="id" title="var">Hmult</span>. <span class="id" title="var">ext</span> <span class="id" title="var">A</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">fun_map_id</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1.T"><span class="id" title="axiom">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip1"><span class="id" title="module">Roundtrip1</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab703"></a><h1 class="section">Kleisli ~&gt; Categorical ~&gt; Kleisli</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Roundtrip2" class="idref" href="#Roundtrip2"><span class="id" title="module">Roundtrip2</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="T:5" class="idref" href="#T:5"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="traverseT:6" class="idref" href="#traverseT:6"><span class="id" title="binder">traverseT</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Traverse"><span class="id" title="class">Traverse</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#T:5"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">@</span></a><a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">Classes.Kleisli.TraversableFunctor.TraversableFunctor</span></a> <a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">T</span></a> <a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">_</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Roundtrip2.map'" class="idref" href="#Roundtrip2.map'"><span class="id" title="instance">map'</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Map_Traverse"><span class="id" title="definition">Map_Traverse</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Roundtrip2.dist'" class="idref" href="#Roundtrip2.dist'"><span class="id" title="instance">dist'</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#ApplicativeDist"><span class="id" title="class">ApplicativeDist</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.TraversableFunctor.html#ToCategorical.Dist_Traverse"><span class="id" title="instance">ToCategorical.Dist_Traverse</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Roundtrip2.traverse'" class="idref" href="#Roundtrip2.traverse'"><span class="id" title="definition">traverse'</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Traverse"><span class="id" title="class">Traverse</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.TraversableFunctor.html#ToKleisli.Traverse_dist"><span class="id" title="instance">ToKleisli.Traverse_dist</span></a> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">∀</span></a> <a id="G:8" class="idref" href="#G:8"><span class="id" title="binder">G</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">`{</span></a><a id="H3:12" class="idref" href="#H3:12"><span class="id" title="binder">Applicative</span></a> <a id="H3:12" class="idref" href="#H3:12"><span class="id" title="binder">G</span></a><a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">},</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">@</span></a><a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">traverseT</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">G</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">_</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">_</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">_</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">@</span></a><a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">traverse'</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">G</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">_</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">_</span></a> <a id="Roundtrip2.Unnamed_thm" class="idref" href="#Roundtrip2.Unnamed_thm"><span class="id" title="definition">_</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.traverse'"><span class="id" title="definition">traverse'</span></a>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.TraversableFunctor.html#ToKleisli.Traverse_dist"><span class="id" title="instance">ToKleisli.Traverse_dist</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.map'"><span class="id" title="instance">map'</span></a>, <a class="idref" href="Tealeaves.Classes.Categorical.TraversableFunctor.html#dist"><span class="id" title="definition">dist</span></a>, <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.dist'"><span class="id" title="instance">dist'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.KleisliToCategorical.TraversableFunctor.html#ToCategorical.Dist_Traverse"><span class="id" title="instance">ToCategorical.Dist_Traverse</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Map_Traverse"><span class="id" title="definition">Map_Traverse</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>) (<span class="id" title="var">G</span> := <span class="id" title="var">G</span>) (@<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<span class="id" title="var">G</span> <span class="id" title="var">B</span>))) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <span class="id" title="keyword">fun</span> <a id="A:14" class="idref" href="#A:14"><span class="id" title="binder">A</span></a> ⇒ <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#A:13"><span class="id" title="variable">A</span></a>) (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>) (<span class="id" title="var">G</span> := <span class="id" title="var">G</span>) (@<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<span class="id" title="var">G</span> <span class="id" title="var">B</span>)))).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#trf_traverse_traverse"><span class="id" title="method">trf_traverse_traverse</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2.T"><span class="id" title="axiom">T</span></a>) (<span class="id" title="var">G1</span> := <span class="id" title="keyword">fun</span> <a id="A:17" class="idref" href="#A:17"><span class="id" title="binder">A</span></a> ⇒ <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#A:15"><span class="id" title="variable">A</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse_app_l"><span class="id" title="lemma">traverse_app_l</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.Roundtrips.TraversableFunctor.html#Roundtrip2"><span class="id" title="module">Roundtrip2</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

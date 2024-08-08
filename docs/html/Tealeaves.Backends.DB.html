@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Backends.DB</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves.Backends.DB</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.DB.DB.html#"><span class="id" title="library">DB</span></a> <a class="idref" href="Tealeaves.Backends.DB.AutosubstShim.html#"><span class="id" title="library">AutosubstShim</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#"><span class="id" title="library">Simplification</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves.Simplification</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Simplification.Simplification.html#"><span class="id" title="library">Simplification</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;We&nbsp;do&nbsp;not&nbsp;export&nbsp;Backends.DB.DB.Notations&nbsp;by&nbsp;default.<br/>
+&nbsp;&nbsp;&nbsp;Import&nbsp;it&nbsp;for&nbsp;de&nbsp;Bruijn&nbsp;operation&nbsp;notations.&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;We&nbsp;do&nbsp;not&nbsp;export&nbsp;Backends.DB.AutosubstShim.Notations&nbsp;by&nbsp;default.<br/>
+&nbsp;&nbsp;&nbsp;Import&nbsp;it&nbsp;for&nbsp;Autosubst-compatible&nbsp;notations.&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Notations" class="idref" href="#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Notations"><span class="id" title="module">Categorical.Applicative.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#Notations"><span class="id" title="module">Kleisli.Comonad.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedMonad.html#Notations"><span class="id" title="module">Kleisli.DecoratedMonad.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Notations"><span class="id" title="module">Kleisli.TraversableFunctor.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableMonad.html#Notations"><span class="id" title="module">Kleisli.TraversableMonad.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableFunctor.html#Notations"><span class="id" title="module">Kleisli.DecoratedTraversableFunctor.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#Notations"><span class="id" title="module">Kleisli.DecoratedTraversableMonad.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedContainerFunctor.html#Notations"><span class="id" title="module">Kleisli.DecoratedContainerFunctor.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Categorical.ContainerFunctor.html#Notations"><span class="id" title="module">Categorical.ContainerFunctor.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Misc.Product.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#Notations"><span class="id" title="module">Monoid.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Misc.Subset.html#Notations"><span class="id" title="module">Misc.Subset.Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Lists.List.html#ListNotations"><span class="id" title="module">List.ListNotations</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Backends.DB.html#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Misc.NaturalNumbers</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Monoid.html#"><span class="id" title="library">Classes.Monoid</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab54"></a><h1 class="section">Natural numbers with addition</h1>
+
+</div>
+<div class="code">
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="Monoid_op_plus" class="idref" href="#Monoid_op_plus"><span class="id" title="instance">Monoid_op_plus</span></a> : <a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid_op"><span class="id" title="class">Monoid_op</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#plus"><span class="id" title="abbreviation">plus</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="Monoid_unit_zero" class="idref" href="#Monoid_unit_zero"><span class="id" title="instance">Monoid_unit_zero</span></a> : <a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid_unit"><span class="id" title="class">Monoid_unit</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := 0.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>, <span class="id" title="var">program</span>] <span class="id" title="keyword">Instance</span> <a id="Monoid_Nat" class="idref" href="#Monoid_Nat"><span class="id" title="instance">Monoid_Nat</span></a> : @<a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid"><span class="id" title="class">Monoid</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_plus"><span class="id" title="instance">Monoid_op_plus</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_zero"><span class="id" title="instance">Monoid_unit_zero</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Solve</span> <span class="id" title="keyword">Obligations</span> <span class="id" title="keyword">with</span> (<span class="id" title="tactic">intros</span>; <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>; <span class="id" title="var">lia</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab55"></a><h1 class="section">Natural numbers with maximum</h1>
+
+</div>
+<div class="code">
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Monoid_op_max" class="idref" href="#Monoid_op_max"><span class="id" title="instance">Monoid_op_max</span></a> : <a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid_op"><span class="id" title="class">Monoid_op</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#max"><span class="id" title="abbreviation">max</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="Monoid_unit_max" class="idref" href="#Monoid_unit_max"><span class="id" title="instance">Monoid_unit_max</span></a> : <a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid_unit"><span class="id" title="class">Monoid_unit</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := 0.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>, <span class="id" title="var">program</span>] <span class="id" title="keyword">Instance</span> <a id="Monoid_Nat_max" class="idref" href="#Monoid_Nat_max"><span class="id" title="instance">Monoid_Nat_max</span></a> : @<a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid"><span class="id" title="class">Monoid</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_max"><span class="id" title="instance">Monoid_op_max</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_max"><span class="id" title="instance">Monoid_unit_max</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Solve</span> <span class="id" title="keyword">Obligations</span> <span class="id" title="keyword">with</span> (<span class="id" title="tactic">intros</span>; <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>; <span class="id" title="var">lia</span>).<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="PreOrder_Nat_lt" class="idref" href="#PreOrder_Nat_lt"><span class="id" title="instance">PreOrder_Nat_lt</span></a>:<br/>
+&nbsp;&nbsp;@<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Classes.RelationClasses.html#PreOrder"><span class="id" title="class">PreOrder</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#le"><span class="id" title="inductive">le</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">cbv</span>; <span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="PreOrderedMonoidLaws_Nat_plus" class="idref" href="#PreOrderedMonoidLaws_Nat_plus"><span class="id" title="instance">PreOrderedMonoidLaws_Nat_plus</span></a>:<br/>
+&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Monoid.html#PreOrderedMonoidLaws"><span class="id" title="class">PreOrderedMonoidLaws</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#le"><span class="id" title="inductive">le</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_plus"><span class="id" title="instance">Monoid_op_plus</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_zero"><span class="id" title="instance">Monoid_unit_zero</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>; <span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="PreOrderedMonoid_Nat_plus" class="idref" href="#PreOrderedMonoid_Nat_plus"><span class="id" title="instance">PreOrderedMonoid_Nat_plus</span></a>:<br/>
+&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Monoid.html#PreOrderedMonoid"><span class="id" title="class">PreOrderedMonoid</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#le"><span class="id" title="inductive">le</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_plus"><span class="id" title="instance">Monoid_op_plus</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_zero"><span class="id" title="instance">Monoid_unit_zero</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="PreOrderedMonoidPos_Nat_plus" class="idref" href="#PreOrderedMonoidPos_Nat_plus"><span class="id" title="instance">PreOrderedMonoidPos_Nat_plus</span></a>:<br/>
+&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Monoid.html#PreOrderedMonoidPos"><span class="id" title="class">PreOrderedMonoidPos</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#le"><span class="id" title="inductive">le</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_plus"><span class="id" title="instance">Monoid_op_plus</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_zero"><span class="id" title="instance">Monoid_unit_zero</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">cbv</span>. <span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="PreOrderedMonoidLaws_Nat_max" class="idref" href="#PreOrderedMonoidLaws_Nat_max"><span class="id" title="instance">PreOrderedMonoidLaws_Nat_max</span></a>:<br/>
+&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Monoid.html#PreOrderedMonoidLaws"><span class="id" title="class">PreOrderedMonoidLaws</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#le"><span class="id" title="inductive">le</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_max"><span class="id" title="instance">Monoid_op_max</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_max"><span class="id" title="instance">Monoid_unit_max</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>; <span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="PreOrderedMonoid_Nat_max" class="idref" href="#PreOrderedMonoid_Nat_max"><span class="id" title="instance">PreOrderedMonoid_Nat_max</span></a>:<br/>
+&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Monoid.html#PreOrderedMonoid"><span class="id" title="class">PreOrderedMonoid</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#le"><span class="id" title="inductive">le</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_max"><span class="id" title="instance">Monoid_op_max</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_max"><span class="id" title="instance">Monoid_unit_max</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="PreOrderedMonoidPos_Nat_max" class="idref" href="#PreOrderedMonoidPos_Nat_max"><span class="id" title="instance">PreOrderedMonoidPos_Nat_max</span></a>:<br/>
+&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Monoid.html#PreOrderedMonoidPos"><span class="id" title="class">PreOrderedMonoidPos</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Peano.html#le"><span class="id" title="inductive">le</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_op_max"><span class="id" title="instance">Monoid_op_max</span></a> <a class="idref" href="Tealeaves.Misc.NaturalNumbers.html#Monoid_unit_max"><span class="id" title="instance">Monoid_unit_max</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">cbv</span>. <span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

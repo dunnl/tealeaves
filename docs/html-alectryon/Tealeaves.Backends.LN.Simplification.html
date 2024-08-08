@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>Simplification.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Backends.LN.LN
+  Simplification.Support
+  Simplification.Binddt.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Monoid.Notations List.ListNotations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Notation</span> <span class="s2">&quot;&#39;P&#39;&quot;</span> := pure.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local]  <span class="kn">Notation</span> <span class="s2">&quot;&#39;BD&#39;&quot;</span> := binddt.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Create HintDb</span> tea_ret_coercions.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Simplifying LCn *)</span>
+<span class="sd">(******************************************************************************)</span>
+
+<span class="sd">(** ** Simplifying LCn at the leaves *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_arithmetic</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[(<span class="nl">?x</span> + <span class="mi">0</span>)%nat] =&gt;
+      <span class="nb">replace</span> (x + <span class="mi">0</span>)%nat <span class="kr">with</span> x <span class="bp">by</span> <span class="bp">lia</span>
+  | |- <span class="kp">context</span>[(<span class="mi">0</span> + <span class="nl">?x</span>)%nat] =&gt;
+      <span class="nb">replace</span> (<span class="mi">0</span> + x)%nat <span class="kr">with</span> x <span class="bp">by</span> <span class="bp">lia</span>
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_lc_loc_under_binder</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[lc_loc <span class="nl">?n</span> ⦿ <span class="mi">1</span>] =&gt;
+      <span class="nb">rewrite</span> lc_loc_S
+  | |- <span class="kp">context</span>[lc_loc <span class="nl">?n</span> ⦿ <span class="nl">?m</span>] =&gt;
+      <span class="nb">rewrite</span> lc_loc_preincr
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_lc_loc_leaf</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[lc_loc <span class="nl">?n</span> (<span class="nl">?w</span>, Fr <span class="nl">?x</span>)] =&gt;
+      <span class="nb">rewrite</span> lc_loc_Fr
+  | |- <span class="kp">context</span>[lc_loc <span class="mi">0</span> (<span class="mi">0</span>, Bd <span class="nl">?b</span>)] =&gt;
+      <span class="nb">rewrite</span> lc_loc_00Bd
+  | |- <span class="kp">context</span>[lc_loc <span class="mi">0</span> (<span class="nl">?w</span>, Bd <span class="nl">?b</span>)] =&gt;
+      <span class="nb">rewrite</span> lc_loc_0Bd
+  | |- <span class="kp">context</span>[lc_loc <span class="nl">?n</span> (<span class="nl">?w</span>, Bd <span class="nl">?b</span>)] =&gt;
+      <span class="nb">rewrite</span> lc_loc_nBd
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Simplifying LCn *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_LC_local</span> :=
+  ltac_trace <span class="s2">&quot;simplify_LC_local&quot;</span>;
+  <span class="kp">repeat</span> simplify_lc_loc_under_binder;
+  ( unfold_ops @Monoid_op_plus @Monoid_unit_zero;
+    <span class="kp">try</span> simplify_lc_loc_leaf;
+    <span class="kp">repeat</span> simplify_arithmetic).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_LC</span> :=
+  ltac_trace <span class="s2">&quot;simplify_ln_LC_start&quot;</span>;
+  <span class="kp">repeat</span> <span class="nb">change</span> (LC <span class="nl">?t</span>) <span class="kr">with</span> (LCn <span class="mi">0</span> t);
+  <span class="nb">rewrite</span> LCn_spec;
+  simplify_Forall_ctx;
+  <span class="c">(* IF bottomed out *)</span>
+  simplify_LC_local;
+  <span class="c">(* ELSE IF refolding *)</span>
+  <span class="kp">repeat</span> <span class="nb">rewrite</span> &lt;- LCn_spec;
+  <span class="kp">repeat</span> <span class="nb">change</span> (LCn <span class="mi">0</span> <span class="nl">?t</span>) <span class="kr">with</span> (LC t);
+  ltac_trace <span class="s2">&quot;simplify_ln_LC_end&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_LC_in</span> H :=
+  <span class="kp">repeat</span> <span class="nb">change</span> (LC <span class="nl">?t</span>) <span class="kr">with</span> (LCn <span class="mi">0</span> t) <span class="kr">in</span> H;
+  <span class="nb">rewrite</span> LCn_spec <span class="kr">in</span> H;
+  simplify_Forall_ctx_in H;
+  <span class="kp">repeat</span> <span class="nb">rewrite</span> &lt;- LCn_spec <span class="kr">in</span> H;
+  <span class="kp">repeat</span> <span class="nb">change</span> (LCn <span class="mi">0</span> <span class="nl">?t</span>) <span class="kr">with</span> (LC t) <span class="kr">in</span> H.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Simplifying free and FV *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="simplification-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="simplification-v-chk0"><span class="kn">Lemma</span> <span class="nf">free_loc_Bd</span>: <span class="kr">forall</span> <span class="nv">b</span>,
+    free_loc (Bd b) = [].</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">b</span> : nat, free_loc (Bd b) = []</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="simplification-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="simplification-v-chk1"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">b</span> : nat, free_loc (Bd b) = []</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="simplification-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="simplification-v-chk2"><span class="kn">Lemma</span> <span class="nf">free_loc_Fr</span>: <span class="kr">forall</span> <span class="nv">x</span>,
+    free_loc (Fr x) = [x].</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">x</span> : atom, free_loc (Fr x) = [x]</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="simplification-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="simplification-v-chk3"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">x</span> : atom, free_loc (Fr x) = [x]</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="simplification-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="simplification-v-chk4"><span class="kn">Lemma</span> <span class="nf">free_to_foldMap</span> {<span class="nv">T</span>} `{Traverse T}: <span class="kr">forall</span> (<span class="nv">t</span>: T LN),
+    free t = foldMap free_loc t.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Traverse T</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">t</span> : T LN, free t = foldMap free_loc t</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="simplification-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="simplification-v-chk5"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Traverse T</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> <span class="nv">t</span> : T LN, free t = foldMap free_loc t</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_free_loc</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[free_loc <span class="nl">?v</span>] =&gt;
+      <span class="kr">let</span> <span class="nv">e</span> := <span class="kp">constr</span>:(free_loc v)<span class="kr">in</span>
+      <span class="kr">let</span> <span class="nv">e&#39;</span> := <span class="kp">eval</span> <span class="nb">cbn</span> <span class="kr">in</span> e <span class="kr">in</span>
+        <span class="nb">change</span> e <span class="kr">with</span> e&#39; <span class="kr">in</span> *
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_free_post</span> :=
+  <span class="c">(* simplifying foldmap exposes ● with lists *)</span>
+  <span class="kp">repeat</span> simplify_monoid_append.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_free</span> :=
+  ltac_trace <span class="s2">&quot;simplify_free&quot;</span>;
+  <span class="nb">unfold</span> free;
+  simplify_foldMap;
+  <span class="c">(* ^^ this exposes ● with lists *)</span>
+  <span class="kp">repeat</span> simplify_monoid_append;
+  <span class="c">(* IF bottomed out *)</span>
+  ltac_trace <span class="s2">&quot;simplify_free_loc&quot;</span>;
+  simplify_free_loc;
+  ltac_trace <span class="s2">&quot;simplify_free&quot;</span>;
+  <span class="c">(* ELSE IF refolding *)</span>
+  <span class="kp">repeat</span> <span class="nb">change</span> (foldMap free_loc <span class="nl">?t</span>) <span class="kr">with</span> (free t).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">refold_FV</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+    | |- <span class="kp">context</span>[atoms ○ free (T := <span class="nl">?T</span>)] =&gt;
+        <span class="nb">change</span> (atoms ○ free (T := T))
+        <span class="kr">with</span> (FV (T := T))
+    | |- <span class="kp">context</span>[atoms (free (T := <span class="nl">?T</span>) <span class="nl">?t</span>)] =&gt;
+        <span class="nb">change</span> (atoms (free (T := T) t))
+        <span class="kr">with</span> (FV (T := T) t)
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_FV</span> :=
+  ltac_trace <span class="s2">&quot;simplify_ln_FV_start&quot;</span>;
+  <span class="nb">unfold</span> FV;
+  simplify_free;
+  <span class="nb">autorewrite with</span> tea_rw_atoms;
+  refold_FV;
+  ltac_trace <span class="s2">&quot;simplify_ln_FV_end&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Simplifying open *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">refold_open</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[bindd (open_loc <span class="nl">?u</span>) <span class="nl">?t</span>] =&gt;
+      <span class="kp">try</span> <span class="nb">change</span> (bindd (open_loc u) t) <span class="kr">with</span> (open u t)
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_open</span> :=
+  ltac_trace <span class="s2">&quot;simplify_ln_open_start&quot;</span>;
+  <span class="nb">unfold</span> open;
+  simplify_bindd;
+  refold_open;
+  ltac_trace <span class="s2">&quot;simplify_ln_open_end&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+
+<span class="sd">(** * Simplifying subst *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">refold_subst</span> :=
+  <span class="kp">repeat</span> <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[bind (subst_loc <span class="nl">?x</span> <span class="nl">?u</span>) <span class="nl">?t</span>] =&gt;
+      <span class="kp">try</span> <span class="nb">change</span> (bind (subst_loc x u) t) <span class="kr">with</span> (<span class="nb">subst</span> x u t)
+    <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="simplification-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="simplification-v-chk6"><span class="kn">Lemma</span> <span class="nf">subst_to_bind</span> {<span class="nv">T</span> <span class="nv">U</span>}
+  `{Return T} `{Bind T U}: <span class="kr">forall</span> <span class="nv">x</span> (<span class="nv">u</span>: T LN) (<span class="nv">t</span>: U LN),
+    <span class="nb">subst</span> x u t = bind (subst_loc x u) t.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T, U</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Return T</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Bind T U</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">x</span> : atom) (<span class="nv">u</span> : T LN) (<span class="nv">t</span> : U LN),
+<span class="nb">subst</span> x u t = bind (subst_loc x u) t</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="simplification-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="simplification-v-chk7"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>T, U</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Return T</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Bind T U</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">x</span> : atom) (<span class="nv">u</span> : T LN) (<span class="nv">t</span> : U LN),
+<span class="nb">subst</span> x u t = bind (subst_loc x u) t</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* mret is some expression being tested for matching</span>
+<span class="c">   (ret x) for some x *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">try_change_to_ret</span> T exp :=
+  <span class="kr">match</span> exp <span class="kr">with</span>
+  | <span class="kp">context</span>[<span class="nl">?mret</span> <span class="nl">?t</span>] =&gt;
+      <span class="nb">change</span> (mret t) <span class="kr">with</span> (ret (T := T) t)
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_subst</span> :=
+  ltac_trace <span class="s2">&quot;simplify_ln_subst| start&quot;</span>;
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[<span class="nb">subst</span> (T := <span class="nl">?T</span>) <span class="nl">?x</span> <span class="nl">?u</span> <span class="nl">?t</span>] =&gt;
+      ltac_trace <span class="s2">&quot;simplify_ln_subst| test for ret&quot;</span>;
+      try_change_to_ret T t;
+      <span class="nb">rewrite</span> subst_ret;
+      ltac_trace <span class="s2">&quot;simplify_ln_subst| changed to ret&quot;</span>;
+      simplify_subst_local
+  | |- <span class="kp">context</span>[<span class="nb">subst</span> (T := <span class="nl">?T</span>) <span class="nl">?x</span> <span class="nl">?u</span> <span class="nl">?t</span>] =&gt;
+      ltac_trace <span class="s2">&quot;simplify_ln_subst| not ret&quot;</span>;
+      <span class="nb">rewrite</span> (subst_to_bind x u t);
+      simplify_bind;
+      refold_subst
+  | |- _ =&gt; <span class="kp">fail</span>
+  <span class="kr">end</span>;
+  ltac_trace <span class="s2">&quot;simplify_ln_subst_end&quot;</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+
+<span class="sd">(** * Simplifying everything *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify_LN</span> :=
+  <span class="nb">autounfold with</span> tea_ret_coercions;
+  ltac_trace <span class="s2">&quot;simplify_LN&quot;</span>;
+  <span class="kr">match goal with</span>
+  | |- <span class="kp">context</span>[LCn <span class="nl">?t</span>] =&gt;
+      simplify_LC
+  | |- <span class="kp">context</span>[LC <span class="nl">?t</span>] =&gt;
+      simplify_LC
+  | |- <span class="kp">context</span>[free <span class="nl">?t</span>] =&gt;
+      simplify_free
+  | |- <span class="kp">context</span>[FV <span class="nl">?t</span>] =&gt;
+      simplify_FV
+  | |- <span class="kp">context</span>[open <span class="nl">?t</span>] =&gt;
+      simplify_open
+  | |- <span class="kp">context</span>[<span class="nb">subst</span> <span class="nl">?x</span> <span class="nl">?u</span> <span class="nl">?t</span>] =&gt;
+      simplify_subst
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">simplify</span> :=
+  <span class="kp">repeat</span> simplify_LN;
+  <span class="kp">repeat</span> simplify_derived_operations;
+  simpl_list.</span></span></pre>
+</div>
+</div></body>
+</html>

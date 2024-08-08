@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Categories.Type</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+This file contains a <span class="inlinecode"><a class="idref" href="Tealeaves.Classes.Category.html#Category"><span class="id" title="record">Category</span></a></span> instance for the category of types
+    and morphisms, the underlying category of the
+    <code>Tealeaves.Ordinary.*</code> interface. 
+</div>
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Category.html#"><span class="id" title="library">Classes.Category</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#"><span class="id" title="library">Classes.Functor</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#"><span class="id" title="library">Classes.Categorical.Monad</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">T</span> <span class="id" title="var">F</span> <span class="id" title="var">G</span> <span class="id" title="var">ϕ</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab337"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Classes.Category.html#Category"><span class="id" title="record">Category</span></a></span> instance</h1>
+
+</div>
+<div class="code">
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span>: <a class="idref" href="Tealeaves.Classes.Category.html#Arrows"><span class="id" title="class">Arrows</span></a> <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> (<a id="a:1" class="idref" href="#a:1"><span class="id" title="binder">a</span></a> <a id="b:2" class="idref" href="#b:2"><span class="id" title="binder">b</span></a> : <span class="id" title="keyword">Type</span>) ⇒ <a class="idref" href="Tealeaves.Categories.Type.html#a:1"><span class="id" title="variable">a</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#b:2"><span class="id" title="variable">b</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span>: <a class="idref" href="Tealeaves.Classes.Category.html#Identities"><span class="id" title="class">Identities</span></a> <span class="id" title="keyword">Type</span> := @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span>: <a class="idref" href="Tealeaves.Classes.Category.html#Composition"><span class="id" title="class">Composition</span></a> <span class="id" title="keyword">Type</span> := <span class="id" title="keyword">fun</span> <a id="A:3" class="idref" href="#A:3"><span class="id" title="binder">A</span></a> <a id="B:4" class="idref" href="#B:4"><span class="id" title="binder">B</span></a> <a id="C:5" class="idref" href="#C:5"><span class="id" title="binder">C</span></a> <a id="f:6" class="idref" href="#f:6"><span class="id" title="binder">f</span></a> <a id="g:7" class="idref" href="#g:7"><span class="id" title="binder">g</span></a> ⇒ <a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#f:6"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#g:7"><span class="id" title="variable">g</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span>: <a class="idref" href="Tealeaves.Classes.Category.html#Category"><span class="id" title="class">Category</span></a> <span class="id" title="keyword">Type</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">extensionality</span> <span class="id" title="var">i</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">extensionality</span> <span class="id" title="var">i</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab338"></a><h1 class="section">Instances for general categories</h1>
+
+</div>
+<div class="code">
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Fmap_ordinary" class="idref" href="#Fmap_ordinary"><span class="id" title="instance">Fmap_ordinary</span></a> `{<a id="H:9" class="idref" href="#H:9"><span class="id" title="binder">H</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a id="F:8" class="idref" href="#F:8"><span class="id" title="binder">F</span></a>} : <a class="idref" href="Tealeaves.Classes.Category.html#Fmap"><span class="id" title="class">Category.Fmap</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#F:8"><span class="id" title="variable">F</span></a> := <span class="id" title="var">H</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Functor_ordinary" class="idref" href="#Functor_ordinary"><span class="id" title="instance">Functor_ordinary</span></a> `{<a id="H:12" class="idref" href="#H:12"><span class="id" title="binder">Functor.Functor</span></a> <a id="H:12" class="idref" href="#H:12"><span class="id" title="binder">F</span></a>} : <a class="idref" href="Tealeaves.Classes.Category.html#Functor"><span class="id" title="class">Category.Functor</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#F:10"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#Fmap_ordinary"><span class="id" title="instance">Fmap_ordinary</span></a> :=<br/>
+&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.Category.html#fmap_id"><span class="id" title="method">Category.fmap_id</span></a> := <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">Functor.fun_map_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Category.html#fmap_fmap"><span class="id" title="method">Category.fmap_fmap</span></a> := <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">Functor.fun_map_map</span></a>;<br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Natural_ordinary" class="idref" href="#Natural_ordinary"><span class="id" title="instance">Natural_ordinary</span></a> `{<a id="H:18" class="idref" href="#H:18"><span class="id" title="binder">H</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Natural"><span class="id" title="class">Functor.Natural</span></a> <a id="F:13" class="idref" href="#F:13"><span class="id" title="binder">F</span></a> <a id="G:15" class="idref" href="#G:15"><span class="id" title="binder">G</span></a> <a id="e3a7058d3a449362769e400afccbdd6c" class="idref" href="#e3a7058d3a449362769e400afccbdd6c"><span class="id" title="binder">ϕ</span></a>} : <a class="idref" href="Tealeaves.Classes.Category.html#Natural"><span class="id" title="class">Category.Natural</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#e3a7058d3a449362769e400afccbdd6c"><span class="id" title="variable">ϕ</span></a> := @<a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">Functor.natural</span></a> <span class="id" title="var">F</span> <span class="id" title="var">_</span> <span class="id" title="var">G</span> <span class="id" title="var">_</span> <span class="id" title="var">ϕ</span> <span class="id" title="var">H</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Join_ordinary" class="idref" href="#Join_ordinary"><span class="id" title="instance">Join_ordinary</span></a> `{<a id="H:20" class="idref" href="#H:20"><span class="id" title="binder">H</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Join"><span class="id" title="class">Monad.Join</span></a> <a id="T:19" class="idref" href="#T:19"><span class="id" title="binder">T</span></a>} : <a class="idref" href="Tealeaves.Classes.Category.html#Join"><span class="id" title="class">Category.Join</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#T:19"><span class="id" title="variable">T</span></a> := <span class="id" title="var">H</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Ret_ordinary" class="idref" href="#Ret_ordinary"><span class="id" title="instance">Ret_ordinary</span></a> `{<a id="H:22" class="idref" href="#H:22"><span class="id" title="binder">H</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Return"><span class="id" title="class">Monad.Return</span></a> <a id="T:21" class="idref" href="#T:21"><span class="id" title="binder">T</span></a>} : <a class="idref" href="Tealeaves.Classes.Category.html#Return"><span class="id" title="class">Category.Return</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#T:21"><span class="id" title="variable">T</span></a> := <span class="id" title="var">H</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Monad_ordinary" class="idref" href="#Monad_ordinary"><span class="id" title="instance">Monad_ordinary</span></a> `{<a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">H</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Monad"><span class="id" title="class">Monad.Monad</span></a> <a id="T:23" class="idref" href="#T:23"><span class="id" title="binder">T</span></a>} : <a class="idref" href="Tealeaves.Classes.Category.html#Monad"><span class="id" title="class">Category.Monad</span></a> <a class="idref" href="Tealeaves.Categories.Type.html#T:23"><span class="id" title="variable">T</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Categories.Type.html#Functor_ordinary"><span class="id" title="instance">Functor_ordinary</span></a>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Categories.Type.html#Natural_ordinary"><span class="id" title="instance">Natural_ordinary</span></a>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Categories.Type.html#Natural_ordinary"><span class="id" title="instance">Natural_ordinary</span></a>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_map_ret"><span class="id" title="method">Monad.mon_join_map_ret</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>)).<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_ret"><span class="id" title="method">Monad.mon_join_ret</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>)).<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_join"><span class="id" title="method">Monad.mon_join_join</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>)).<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

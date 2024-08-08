@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Categorical.ShapelyFunctor</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ContainerFunctor.html#"><span class="id" title="library">Classes.Categorical.ContainerFunctor</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.List.html#"><span class="id" title="library">Misc.List</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Functor.html#Notations"><span class="id" title="module">Classes.Functor.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">G</span> <span class="id" title="var">F</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab293"></a><h1 class="section">Shapely functors</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab294"></a><h2 class="section">The <span class="inlinecode"><a class="idref" href="Tealeaves.Classes.Multisorted.Theory.Container.html#shape"><span class="id" title="definition">shape</span></a></span> operation</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="shape" class="idref" href="#shape"><span class="id" title="definition">shape</span></a> `{<a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">Map</span></a> <a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">F</span></a>} {<a id="A:3" class="idref" href="#A:3"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>} : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:1"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:3"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:1"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Axioms.html#unit"><span class="id" title="inductive">unit</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<a class="idref" href="Tealeaves.Tactics.Prelude.html#const"><span class="id" title="definition">const</span></a> <a class="idref" href="Tealeaves.Axioms.html#tt"><span class="id" title="constructor">tt</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab295"></a><h3 class="section">Basic reasoning principles for <code>shape</code></h3>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Theorem</span> <a id="shape_map" class="idref" href="#shape_map"><span class="id" title="lemma">shape_map</span></a> `{<a id="H:6" class="idref" href="#H:6"><span class="id" title="binder">Functor</span></a> <a id="H:6" class="idref" href="#H:6"><span class="id" title="binder">F</span></a>} : <span class="id" title="keyword">∀</span> (<a id="A:7" class="idref" href="#A:7"><span class="id" title="binder">A</span></a> <a id="B:8" class="idref" href="#B:8"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>) (<a id="f:9" class="idref" href="#f:9"><span class="id" title="binder">f</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:7"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#B:8"><span class="id" title="variable">B</span></a>) (<a id="t:10" class="idref" href="#t:10"><span class="id" title="binder">t</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:4"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:7"><span class="id" title="variable">A</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:4"><span class="id" title="variable">F</span></a>) (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#f:9"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t:10"><span class="id" title="variable">t</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:4"><span class="id" title="variable">F</span></a>) <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t:10"><span class="id" title="variable">t</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">t</span> <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="shape_shape" class="idref" href="#shape_shape"><span class="id" title="lemma">shape_shape</span></a> `{<a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">Functor</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">F</span></a>} : <span class="id" title="keyword">∀</span> (<a id="A:14" class="idref" href="#A:14"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>) (<a id="t:15" class="idref" href="#t:15"><span class="id" title="binder">t</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:11"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:14"><span class="id" title="variable">A</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t:15"><span class="id" title="variable">t</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t:15"><span class="id" title="variable">t</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">t</span> <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="shape_map_eq" class="idref" href="#shape_map_eq"><span class="id" title="lemma">shape_map_eq</span></a> `{<a id="H:18" class="idref" href="#H:18"><span class="id" title="binder">Functor</span></a> <a id="H:18" class="idref" href="#H:18"><span class="id" title="binder">F</span></a>} : <span class="id" title="keyword">∀</span> (<a id="A1:19" class="idref" href="#A1:19"><span class="id" title="binder">A1</span></a> <a id="A2:20" class="idref" href="#A2:20"><span class="id" title="binder">A2</span></a> <a id="B:21" class="idref" href="#B:21"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>) (<a id="f:22" class="idref" href="#f:22"><span class="id" title="binder">f</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A1:19"><span class="id" title="variable">A1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#B:21"><span class="id" title="variable">B</span></a>) (<a id="g:23" class="idref" href="#g:23"><span class="id" title="binder">g</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A2:20"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#B:21"><span class="id" title="variable">B</span></a>) <a id="t:24" class="idref" href="#t:24"><span class="id" title="binder">t</span></a> <a id="u:25" class="idref" href="#u:25"><span class="id" title="binder">u</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#f:22"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t:24"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#g:23"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#u:25"><span class="id" title="variable">u</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t:24"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#u:25"><span class="id" title="variable">u</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">hyp</span>. <span class="id" title="tactic">cut</span> (<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">f</span> <span class="id" title="var">t</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">g</span> <span class="id" title="var">u</span>)).<br/>
+&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> 2(<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape_map"><span class="id" title="lemma">shape_map</span></a>).<br/>
+&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">hyp</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab296"></a><h2 class="section">Shapeliness</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="shapeliness" class="idref" href="#shapeliness"><span class="id" title="definition">shapeliness</span></a> (<a id="F:26" class="idref" href="#F:26"><span class="id" title="binder">F</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;`{<a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">Map</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">F</span></a>} `{<a id="H0:28" class="idref" href="#H0:28"><span class="id" title="binder">Tolist</span></a> <a id="H0:28" class="idref" href="#H0:28"><span class="id" title="binder">F</span></a>} := <span class="id" title="keyword">∀</span> <a id="A:29" class="idref" href="#A:29"><span class="id" title="binder">A</span></a> (<a id="t1:30" class="idref" href="#t1:30"><span class="id" title="binder">t1</span></a> <a id="t2:31" class="idref" href="#t2:31"><span class="id" title="binder">t2</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:26"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:29"><span class="id" title="variable">A</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:30"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:31"><span class="id" title="variable">t2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a> <a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:30"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:31"><span class="id" title="variable">t2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:30"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:31"><span class="id" title="variable">t2</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab297"></a><h2 class="section">Typeclass for shapely functors</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="ShapelyFunctor" class="idref" href="#ShapelyFunctor"><span class="id" title="record">ShapelyFunctor</span></a><br/>
+&nbsp;&nbsp;(<a id="F:32" class="idref" href="#F:32"><span class="id" title="binder">F</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) `{<a id="H:33" class="idref" href="#H:33"><span class="id" title="binder">Map</span></a> <a id="H:33" class="idref" href="#H:33"><span class="id" title="binder">F</span></a>} `{<a id="H0:34" class="idref" href="#H0:34"><span class="id" title="binder">Tolist</span></a> <a id="H0:34" class="idref" href="#H0:34"><span class="id" title="binder">F</span></a>} :=<br/>
+&nbsp;&nbsp;{ <a id="shp_natural" class="idref" href="#shp_natural"><span class="id" title="projection">shp_natural</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Functor.html#Natural"><span class="id" title="class">Natural</span></a> (@<a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:32"><span class="id" title="variable">F</span></a> <span class="id" title="var">_</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="shp_functor" class="idref" href="#shp_functor"><span class="id" title="projection">shp_functor</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Functor.html#Functor"><span class="id" title="class">Functor</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:32"><span class="id" title="variable">F</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="shp_shapeliness" class="idref" href="#shp_shapeliness"><span class="id" title="projection">shp_shapeliness</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shapeliness"><span class="id" title="definition">shapeliness</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:32"><span class="id" title="variable">F</span></a>;<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab298"></a><h2 class="section">Shapely natural transformations</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="ShapelyTransformation" class="idref" href="#ShapelyTransformation"><span class="id" title="record">ShapelyTransformation</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<a id="F:39" class="idref" href="#F:39"><span class="id" title="binder">F</span></a> <a id="G:40" class="idref" href="#G:40"><span class="id" title="binder">G</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Map0:41" class="idref" href="#Map0:41"><span class="id" title="binder">!</span></a> <a id="Map0:41" class="idref" href="#Map0:41"><span class="id" title="binder">Map</span></a> <a id="Map0:41" class="idref" href="#Map0:41"><span class="id" title="binder">F</span></a>} `{<a id="H:42" class="idref" href="#H:42"><span class="id" title="binder">Tolist</span></a> <a id="H:42" class="idref" href="#H:42"><span class="id" title="binder">F</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Map1:43" class="idref" href="#Map1:43"><span class="id" title="binder">!</span></a> <a id="Map1:43" class="idref" href="#Map1:43"><span class="id" title="binder">Map</span></a> <a id="Map1:43" class="idref" href="#Map1:43"><span class="id" title="binder">G</span></a>} `{<a id="H0:44" class="idref" href="#H0:44"><span class="id" title="binder">Tolist</span></a> <a id="H0:44" class="idref" href="#H0:44"><span class="id" title="binder">G</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="4806ffaf42bcf9741ed57b2ee128749d" class="idref" href="#4806ffaf42bcf9741ed57b2ee128749d"><span class="id" title="binder">ϕ</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:39"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#278ce2a34b83a8295656f6eff2db54a7"><span class="id" title="notation">⇒</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#G:40"><span class="id" title="variable">G</span></a>) :=<br/>
+&nbsp;&nbsp;{ <a id="ltrans_commute" class="idref" href="#ltrans_commute"><span class="id" title="projection">ltrans_commute</span></a> : `(<a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#F:39"><span class="id" title="variable">F</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#G:40"><span class="id" title="variable">G</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#4806ffaf42bcf9741ed57b2ee128749d"><span class="id" title="variable">ϕ</span></a> <span class="id" title="var">A</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="ltrans_natural" class="idref" href="#ltrans_natural"><span class="id" title="projection">ltrans_natural</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Natural"><span class="id" title="class">Natural</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#4806ffaf42bcf9741ed57b2ee128749d"><span class="id" title="variable">ϕ</span></a>;<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab299"></a><h1 class="section">Various characterizations of shapeliness</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="listable_functor_respectful_definitions" class="idref" href="#listable_functor_respectful_definitions"><span class="id" title="section">listable_functor_respectful_definitions</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="F:50" class="idref" href="#F:50"><span class="id" title="binder">F</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:51" class="idref" href="#H:51"><span class="id" title="binder">Map</span></a> <a id="H:51" class="idref" href="#H:51"><span class="id" title="binder">F</span></a>} `{<a id="H0:52" class="idref" href="#H0:52"><span class="id" title="binder">Tolist</span></a> <a id="H0:52" class="idref" href="#H0:52"><span class="id" title="binder">F</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="tolist_map_injective" class="idref" href="#tolist_map_injective"><span class="id" title="definition">tolist_map_injective</span></a> := <span class="id" title="keyword">∀</span> <a id="A:53" class="idref" href="#A:53"><span class="id" title="binder">A</span></a> <a id="B:54" class="idref" href="#B:54"><span class="id" title="binder">B</span></a> (<a id="t1:55" class="idref" href="#t1:55"><span class="id" title="binder">t1</span></a> <a id="t2:56" class="idref" href="#t2:56"><span class="id" title="binder">t2</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#listable_functor_respectful_definitions.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:53"><span class="id" title="variable">A</span></a>) (<a id="f:57" class="idref" href="#f:57"><span class="id" title="binder">f</span></a> <a id="g:58" class="idref" href="#g:58"><span class="id" title="binder">g</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:53"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#B:54"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#f:57"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:55"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#g:58"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:56"><span class="id" title="variable">t2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:55"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:56"><span class="id" title="variable">t2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#f:57"><span class="id" title="variable">f</span></a> (<a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:55"><span class="id" title="variable">t1</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#g:58"><span class="id" title="variable">g</span></a> (<a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:56"><span class="id" title="variable">t2</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="tolist_map_respectful" class="idref" href="#tolist_map_respectful"><span class="id" title="definition">tolist_map_respectful</span></a> := <span class="id" title="keyword">∀</span> <a id="A:59" class="idref" href="#A:59"><span class="id" title="binder">A</span></a> <a id="B:60" class="idref" href="#B:60"><span class="id" title="binder">B</span></a> (<a id="t1:61" class="idref" href="#t1:61"><span class="id" title="binder">t1</span></a> <a id="t2:62" class="idref" href="#t2:62"><span class="id" title="binder">t2</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#listable_functor_respectful_definitions.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:59"><span class="id" title="variable">A</span></a>) (<a id="f:63" class="idref" href="#f:63"><span class="id" title="binder">f</span></a> <a id="g:64" class="idref" href="#g:64"><span class="id" title="binder">g</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:59"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#B:60"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:61"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:62"><span class="id" title="variable">t2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#f:63"><span class="id" title="variable">f</span></a> (<a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:61"><span class="id" title="variable">t1</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#g:64"><span class="id" title="variable">g</span></a> (<a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:62"><span class="id" title="variable">t2</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#f:63"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:61"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#g:64"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:62"><span class="id" title="variable">t2</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="tolist_map_respectful_iff" class="idref" href="#tolist_map_respectful_iff"><span class="id" title="definition">tolist_map_respectful_iff</span></a> := <span class="id" title="keyword">∀</span> <a id="A:65" class="idref" href="#A:65"><span class="id" title="binder">A</span></a> <a id="B:66" class="idref" href="#B:66"><span class="id" title="binder">B</span></a> (<a id="t1:67" class="idref" href="#t1:67"><span class="id" title="binder">t1</span></a> <a id="t2:68" class="idref" href="#t2:68"><span class="id" title="binder">t2</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#listable_functor_respectful_definitions.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:65"><span class="id" title="variable">A</span></a>) (<a id="f:69" class="idref" href="#f:69"><span class="id" title="binder">f</span></a> <a id="g:70" class="idref" href="#g:70"><span class="id" title="binder">g</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#A:65"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#B:66"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:67"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:68"><span class="id" title="variable">t2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">∧</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#f:69"><span class="id" title="variable">f</span></a> (<a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:67"><span class="id" title="variable">t1</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#g:70"><span class="id" title="variable">g</span></a> (<a class="idref" href="Tealeaves.Misc.List.html#tolist"><span class="id" title="definition">tolist</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:68"><span class="id" title="variable">t2</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">↔</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#f:69"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t1:67"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#g:70"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#t2:68"><span class="id" title="variable">t2</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#listable_functor_respectful_definitions"><span class="id" title="section">listable_functor_respectful_definitions</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">unfold_list_properness</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shapeliness"><span class="id" title="definition">shapeliness</span></a>,<br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful"><span class="id" title="definition">tolist_map_respectful</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful_iff"><span class="id" title="definition">tolist_map_respectful_iff</span></a> <span class="id" title="tactic">in</span> ×.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab300"></a><h2 class="section">Equivalences</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="tolist_respectfulness_characterizations" class="idref" href="#tolist_respectfulness_characterizations"><span class="id" title="section">tolist_respectfulness_characterizations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:73" class="idref" href="#H:73"><span class="id" title="binder">Functor</span></a> <a id="H:73" class="idref" href="#H:73"><span class="id" title="binder">F</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:74" class="idref" href="#H0:74"><span class="id" title="binder">Tolist</span></a> <a id="H0:74" class="idref" href="#H0:74"><span class="id" title="binder">F</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Natural0:75" class="idref" href="#Natural0:75"><span class="id" title="binder">!</span></a> <a id="Natural0:75" class="idref" href="#Natural0:75"><span class="id" title="binder">Natural</span></a> <a id="Natural0:75" class="idref" href="#Natural0:75"><span class="id" title="binder">(@</span></a><a id="Natural0:75" class="idref" href="#Natural0:75"><span class="id" title="binder">tolist</span></a> <a id="Natural0:75" class="idref" href="#Natural0:75"><span class="id" title="binder">F</span></a> <a id="Natural0:75" class="idref" href="#Natural0:75"><span class="id" title="binder">_</span></a><a id="Natural0:75" class="idref" href="#Natural0:75"><span class="id" title="binder">)</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Theorem</span> <a id="tolist_map_injective_proof" class="idref" href="#tolist_map_injective_proof"><span class="id" title="lemma">tolist_map_injective_proof</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_injective"><span class="id" title="definition">tolist_map_injective</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">heq</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">cut</span> (<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">f</span> <span class="id" title="var">t1</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape"><span class="id" title="definition">shape</span></a> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">g</span> <span class="id" title="var">t2</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> 2(<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape_map"><span class="id" title="lemma">shape_map</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">heq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">t1</span>; <span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">t2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">do</span> 2 <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">heq</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="shapeliness_equiv_1" class="idref" href="#shapeliness_equiv_1"><span class="id" title="lemma">shapeliness_equiv_1</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shapeliness"><span class="id" title="definition">shapeliness</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful"><span class="id" title="definition">tolist_map_respectful</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful"><span class="id" title="definition">tolist_map_respectful</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">hyp</span> <span class="id" title="var">hshape</span> <span class="id" title="var">hcontents</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">hyp</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> 2(<a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shape_map"><span class="id" title="lemma">shape_map</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">t1</span> <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>; <span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">t2</span> <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> &lt;- 2(<a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="shapeliness_equiv_2" class="idref" href="#shapeliness_equiv_2"><span class="id" title="lemma">shapeliness_equiv_2</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful"><span class="id" title="definition">tolist_map_respectful</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful_iff"><span class="id" title="definition">tolist_map_respectful_iff</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful"><span class="id" title="definition">tolist_map_respectful</span></a>, <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful_iff"><span class="id" title="definition">tolist_map_respectful_iff</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">introv</span> [? ?]. <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_injective_proof"><span class="id" title="lemma">tolist_map_injective_proof</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="shapeliness_equiv_3" class="idref" href="#shapeliness_equiv_3"><span class="id" title="lemma">shapeliness_equiv_3</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful_iff"><span class="id" title="definition">tolist_map_respectful_iff</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shapeliness"><span class="id" title="definition">shapeliness</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#shapeliness"><span class="id" title="definition">shapeliness</span></a>, <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_map_respectful_iff"><span class="id" title="definition">tolist_map_respectful_iff</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">hyp1</span> <span class="id" title="var">hyp2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">replace</span> <span class="id" title="var">t1</span> <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <span class="id" title="var">t1</span>) <span class="id" title="tactic">by</span> (<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">fun_map_id</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a>))).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">replace</span> <span class="id" title="var">t2</span> <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <span class="id" title="var">t2</span>) <span class="id" title="tactic">by</span> (<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">fun_map_id</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations.F"><span class="id" title="variable">F</span></a>))).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">hyp1</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">fun_map_id</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Categorical.ShapelyFunctor.html#tolist_respectfulness_characterizations"><span class="id" title="section">tolist_respectfulness_characterizations</span></a>.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+<span class="comment">(**&nbsp;*&nbsp;<span class="inlinecode"><span class="id" title="tactic">fold</span></span>&nbsp;and&nbsp;<span class="inlinecode"><span class="id" title="var">foldMap</span></span>&nbsp;operations&nbsp;*)</span><br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Section&nbsp;fold.<br/>
+<br/>
+&nbsp;&nbsp;Generalizable&nbsp;Variable&nbsp;M&nbsp;ϕ.<br/>
+<br/>
+&nbsp;&nbsp;Context<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{ShapelyFunctor&nbsp;F}.<br/>
+<br/>
+&nbsp;&nbsp;Definition&nbsp;fold&nbsp;`{Monoid_op&nbsp;M}&nbsp;`{Monoid_unit&nbsp;M}&nbsp;:&nbsp;F&nbsp;M&nbsp;-&gt;&nbsp;M&nbsp;:=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;List.fold&nbsp;∘&nbsp;tolist&nbsp;F.<br/>
+<br/>
+&nbsp;&nbsp;Definition&nbsp;foldMap&nbsp;{A}&nbsp;`{Monoid_op&nbsp;M}&nbsp;`{Monoid_unit&nbsp;M}&nbsp;(f&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;M)&nbsp;:&nbsp;F&nbsp;A&nbsp;-&gt;&nbsp;M&nbsp;:=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;fold&nbsp;∘&nbsp;map&nbsp;F&nbsp;f.<br/>
+<br/>
+&nbsp;&nbsp;Lemma&nbsp;fold_mon_hom&nbsp;:&nbsp;forall&nbsp;`(ϕ&nbsp;:&nbsp;M1&nbsp;-&gt;&nbsp;M2)&nbsp;`{Hϕ&nbsp;:&nbsp;Monoid_Morphism&nbsp;M1&nbsp;M2&nbsp;ϕ},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ϕ&nbsp;∘&nbsp;fold&nbsp;=&nbsp;fold&nbsp;∘&nbsp;map&nbsp;F&nbsp;ϕ.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros&nbsp;?&nbsp;?&nbsp;ϕ;&nbsp;intros.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;left&nbsp;(ϕ&nbsp;∘&nbsp;List.fold&nbsp;∘&nbsp;tolist&nbsp;F).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;change&nbsp;right&nbsp;(List.fold&nbsp;∘&nbsp;(tolist&nbsp;F&nbsp;∘&nbsp;map&nbsp;F&nbsp;ϕ)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;natural.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;(List.fold_mon_hom&nbsp;ϕ).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Lemma&nbsp;foldMap_map&nbsp;{A&nbsp;B}&nbsp;`{Monoid&nbsp;M}&nbsp;{f&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;B}&nbsp;{g&nbsp;:&nbsp;B&nbsp;-&gt;&nbsp;M}&nbsp;:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;foldMap&nbsp;g&nbsp;∘&nbsp;map&nbsp;F&nbsp;f&nbsp;=&nbsp;foldMap&nbsp;(g&nbsp;∘&nbsp;f).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;foldMap.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;(F&nbsp;:=&nbsp;F)).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Theorem&nbsp;foldMap_hom&nbsp;{A}&nbsp;`{Monoid_Morphism&nbsp;M1&nbsp;M2&nbsp;ϕ}&nbsp;{f&nbsp;:&nbsp;A&nbsp;-&gt;&nbsp;M1}&nbsp;:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;ϕ&nbsp;∘&nbsp;foldMap&nbsp;f&nbsp;=&nbsp;foldMap&nbsp;(ϕ&nbsp;∘&nbsp;f).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;foldMap.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;rewrite&nbsp;(fold_mon_hom&nbsp;ϕ).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;now&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;(F&nbsp;:=&nbsp;F)).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+End&nbsp;fold.<br/>
+<br/>
+<span class="comment">(**&nbsp;**&nbsp;Folding&nbsp;over&nbsp;identity&nbsp;and&nbsp;composition&nbsp;functors&nbsp;*)</span><br/>
+<span class="comment">(******************************************************************************)</span><br/>
+Section&nbsp;fold_monoidal_structure.<br/>
+<br/>
+&nbsp;&nbsp;Theorem&nbsp;fold_I&nbsp;(A&nbsp;:&nbsp;Type)&nbsp;`(Monoid&nbsp;A)&nbsp;:&nbsp;forall&nbsp;(a&nbsp;:&nbsp;A),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fold&nbsp;a&nbsp;=&nbsp;a.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;intros.&nbsp;cbn.&nbsp;now&nbsp;rewrite&nbsp;(monoid_id_l).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+End&nbsp;fold_monoidal_structure.<br/>
+*)</span><br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

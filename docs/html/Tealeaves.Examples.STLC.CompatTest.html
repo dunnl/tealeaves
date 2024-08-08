@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Examples.STLC.CompatTest</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.LN.html#"><span class="id" title="library">Backends.LN</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#"><span class="id" title="library">Examples.STLC.Syntax</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="Tealeaves.Backends.LN.html#Notations"><span class="id" title="module">LN.Notations</span></a>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">G</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="keyword">Implicit</span> <span class="id" title="var">Arguments</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab1111"></a><h1 class="section">Language definition</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Inductive</span> <a id="term" class="idref" href="#term"><span class="id" title="inductive">term</span></a> :=<br/>
+| <a id="atm" class="idref" href="#atm"><span class="id" title="constructor">atm</span></a> : <a class="idref" href="Tealeaves.Backends.LN.Atom.html#atom"><span class="id" title="abbreviation">atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a><br/>
+| <a id="ix" class="idref" href="#ix"><span class="id" title="constructor">ix</span></a>  : <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a><br/>
+| <a id="lam" class="idref" href="#lam"><span class="id" title="constructor">lam</span></a> : <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#typ"><span class="id" title="inductive">typ</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a><br/>
+| <a id="app" class="idref" href="#app"><span class="id" title="constructor">app</span></a> : <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab1112"></a><h2 class="section">Instantiate Tealeaves</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Fixpoint</span> <a id="to_T" class="idref" href="#to_T"><span class="id" title="definition">to_T</span></a> (<a id="t:3" class="idref" href="#t:3"><span class="id" title="binder">t</span></a>: <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term"><span class="id" title="inductive">term</span></a>) : <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#Lam"><span class="id" title="inductive">Syntax.Lam</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#t:3"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#atm"><span class="id" title="constructor">atm</span></a> <span class="id" title="var">a</span> ⇒ <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#tvar"><span class="id" title="constructor">Syntax.tvar</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#Fr"><span class="id" title="constructor">Fr</span></a> <span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#ix"><span class="id" title="constructor">ix</span></a> <span class="id" title="var">n</span> ⇒ <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#tvar"><span class="id" title="constructor">Syntax.tvar</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> <span class="id" title="var">n</span>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#lam"><span class="id" title="constructor">lam</span></a> τ <span class="id" title="var">t</span> ⇒ <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#lam"><span class="id" title="constructor">Syntax.lam</span></a> τ (<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T:4"><span class="id" title="definition">to_T</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#t:3"><span class="id" title="variable">t</span></a>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#app"><span class="id" title="constructor">app</span></a> <span class="id" title="var">t1</span> <span class="id" title="var">t2</span> ⇒ <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#app"><span class="id" title="constructor">Syntax.app</span></a> (<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T:4"><span class="id" title="definition">to_T</span></a> <span class="id" title="var">t1</span>) (<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T:4"><span class="id" title="definition">to_T</span></a> <span class="id" title="var">t2</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="to_T_inv" class="idref" href="#to_T_inv"><span class="id" title="definition">to_T_inv</span></a> (<a id="t:6" class="idref" href="#t:6"><span class="id" title="binder">t</span></a>: <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#Lam"><span class="id" title="inductive">Syntax.Lam</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a>) : <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term"><span class="id" title="inductive">term</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#t:6"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#tvar"><span class="id" title="constructor">tvar</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#Fr"><span class="id" title="constructor">Fr</span></a> <span class="id" title="var">a</span>) ⇒ <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#atm"><span class="id" title="constructor">atm</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#tvar"><span class="id" title="constructor">tvar</span></a> (<a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> <span class="id" title="var">n</span>) ⇒ <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#ix"><span class="id" title="constructor">ix</span></a> <span class="id" title="var">n</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#lam"><span class="id" title="constructor">Syntax.lam</span></a> τ <span class="id" title="var">t</span> ⇒ <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#lam"><span class="id" title="constructor">lam</span></a> τ (<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T_inv:7"><span class="id" title="definition">to_T_inv</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#t:6"><span class="id" title="variable">t</span></a>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#app"><span class="id" title="constructor">Syntax.app</span></a> <span class="id" title="var">t1</span> <span class="id" title="var">t2</span> ⇒ <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#app"><span class="id" title="constructor">app</span></a> (<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T_inv:7"><span class="id" title="definition">to_T_inv</span></a> <span class="id" title="var">t1</span>) (<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T_inv:7"><span class="id" title="definition">to_T_inv</span></a> <span class="id" title="var">t2</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="to_T_iso" class="idref" href="#to_T_iso"><span class="id" title="lemma">to_T_iso</span></a>: <span class="id" title="keyword">∀</span> (<a id="t:9" class="idref" href="#t:9"><span class="id" title="binder">t</span></a> : <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term"><span class="id" title="inductive">term</span></a>), <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T_inv"><span class="id" title="definition">to_T_inv</span></a> (<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T"><span class="id" title="definition">to_T</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#t:9"><span class="id" title="variable">t</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#t:9"><span class="id" title="variable">t</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">t</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHt</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHt1</span>, <span class="id" title="var">IHt2</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="to_T_iso_inv" class="idref" href="#to_T_iso_inv"><span class="id" title="lemma">to_T_iso_inv</span></a>: <span class="id" title="keyword">∀</span> (<a id="t:10" class="idref" href="#t:10"><span class="id" title="binder">t</span></a> : <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#Lam"><span class="id" title="inductive">Syntax.Lam</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a>), <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T"><span class="id" title="definition">to_T</span></a> (<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T_inv"><span class="id" title="definition">to_T_inv</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#t:10"><span class="id" title="variable">t</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#t:10"><span class="id" title="variable">t</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">t</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">v</span>; <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHt</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">cbn</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IHt1</span>, <span class="id" title="var">IHt2</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="STLC_SIG" class="idref" href="#STLC_SIG"><span class="id" title="module">STLC_SIG</span></a> &lt;: <a class="idref" href="Tealeaves.Backends.LN.html#SyntaxSIG"><span class="id" title="module">SyntaxSIG</span></a> <span class="id" title="keyword">with</span> <span class="id" title="keyword">Definition</span> <span class="id" title="var">term</span> := <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term"><span class="id" title="inductive">term</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.term" class="idref" href="#STLC_SIG.term"><span class="id" title="definition">term</span></a> : <span class="id" title="keyword">Type</span> := <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term"><span class="id" title="inductive">term</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.T" class="idref" href="#STLC_SIG.T"><span class="id" title="definition">T</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#Lam"><span class="id" title="inductive">Syntax.Lam</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.ret_inst" class="idref" href="#STLC_SIG.ret_inst"><span class="id" title="definition">ret_inst</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#Return_STLC"><span class="id" title="instance">Syntax.Return_STLC</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.binddt_inst" class="idref" href="#STLC_SIG.binddt_inst"><span class="id" title="definition">binddt_inst</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#Binddt_STLC"><span class="id" title="instance">Syntax.Binddt_STLC</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.monad_inst" class="idref" href="#STLC_SIG.monad_inst"><span class="id" title="definition">monad_inst</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#DTM_STLC"><span class="id" title="instance">Syntax.DTM_STLC</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.to_T" class="idref" href="#STLC_SIG.to_T"><span class="id" title="definition">to_T</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T"><span class="id" title="definition">to_T</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.to_T_inv" class="idref" href="#STLC_SIG.to_T_inv"><span class="id" title="definition">to_T_inv</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T_inv"><span class="id" title="definition">to_T_inv</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.to_T_iso" class="idref" href="#STLC_SIG.to_T_iso"><span class="id" title="definition">to_T_iso</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T_iso"><span class="id" title="lemma">to_T_iso</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.to_T_iso_inv" class="idref" href="#STLC_SIG.to_T_iso_inv"><span class="id" title="definition">to_T_iso_inv</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#to_T_iso_inv"><span class="id" title="lemma">to_T_iso_inv</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.from_atom" class="idref" href="#STLC_SIG.from_atom"><span class="id" title="definition">from_atom</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#atm"><span class="id" title="constructor">atm</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.from_ix" class="idref" href="#STLC_SIG.from_ix"><span class="id" title="definition">from_ix</span></a> := <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#ix"><span class="id" title="constructor">ix</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.from_atom_Ret" class="idref" href="#STLC_SIG.from_atom_Ret"><span class="id" title="definition">from_atom_Ret</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.from_atom"><span class="id" title="definition">from_atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.to_T_inv"><span class="id" title="definition">to_T_inv</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> @<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.T"><span class="id" title="definition">T</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.ret_inst"><span class="id" title="definition">ret_inst</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Fr"><span class="id" title="constructor">Fr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">ltac</span>:(<span class="id" title="tactic">reflexivity</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.from_ix_Ret" class="idref" href="#STLC_SIG.from_ix_Ret"><span class="id" title="definition">from_ix_Ret</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.from_ix"><span class="id" title="definition">from_ix</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.to_T_inv"><span class="id" title="definition">to_T_inv</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> @<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.T"><span class="id" title="definition">T</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.ret_inst"><span class="id" title="definition">ret_inst</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">ltac</span>:(<span class="id" title="tactic">reflexivity</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG"><span class="id" title="module">STLC_SIG</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Theory" class="idref" href="#Theory"><span class="id" title="module">Theory</span></a> &lt;: <a class="idref" href="Tealeaves.Backends.LN.html#TheorySIG"><span class="id" title="module">TheorySIG</span></a><br/>
+&nbsp;&nbsp;:= <a class="idref" href="Tealeaves.Backends.LN.html#MakeTheory"><span class="id" title="module">MakeTheory</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG"><span class="id" title="module">STLC_SIG</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#Theory"><span class="id" title="module">Theory</span></a>.<br/>
+<span class="comment">(*<br/>
+Import&nbsp;Theory.Notations.<br/>
+*)</span><br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

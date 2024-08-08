@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.21.2: https://docutils.sourceforge.io/" />
+<title>Pathspace.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-wsp"><span class="sd">(** This file defines the pathspace functor which maps a type &lt;&lt;A&gt;&gt; to</span>
+<span class="sd">    the set of proofs of equality between any two terms of &lt;&lt;A&gt;&gt;. *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Classes.Categorical.Applicative.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Pathspace applicative functor *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Inductive</span> <span class="nf">PathSpace</span> (<span class="nv">A</span> : <span class="kt">Type</span>) : <span class="kt">Type</span> :=
+| path : <span class="kr">forall</span> (<span class="nv">x</span> <span class="nv">y</span> : A), x = y -&gt; PathSpace A.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Map_Path</span> : Map PathSpace :=
+  <span class="kr">fun</span> <span class="nv">A</span> <span class="nv">B</span> (<span class="nv">f</span> : A -&gt; B) &#39;(@path _ x y p)
+  =&gt; @path _ (f x) (f y) (<span class="kp">ltac</span>:(<span class="nb">subst</span>; <span class="nb">auto</span>)).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export, program] <span class="kn">Instance</span> <span class="nf">Path_End</span> : Functor PathSpace.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Solve All Obligations with</span>
+    (<span class="nb">intros</span>; ext [? ?]; <span class="bp">now</span> <span class="nb">destruct</span> e).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Pure_Path</span> : Pure PathSpace :=
+  <span class="kr">fun</span> (<span class="nv">A</span> : <span class="kt">Type</span>) (<span class="nv">a</span> : A) =&gt; @path A a a eq_refl.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Path_Mult</span> : Mult PathSpace :=
+  <span class="kp">ltac</span>:(<span class="nb">refine</span> (<span class="kr">fun</span> <span class="nv">A</span> <span class="nv">B</span> &#39;(@path _ a1 a2 eqa, @path _ b1 b2 eqb) =&gt;
+                  @path _ (a1, b1) (a2, b2) _); <span class="nb">subst</span>; <span class="bp">reflexivity</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export, program] <span class="kn">Instance</span> <span class="nf">App_Path</span> : Applicative PathSpace.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Solve All Obligations with</span>
+    (<span class="nb">intros</span>; <span class="bp">now</span> <span class="kp">repeat</span> (<span class="kr">match goal with</span>
+                         | x : PathSpace <span class="nl">?A</span> |- _ =&gt;
+                           <span class="nb">destruct</span> x; <span class="nb">subst</span> <span class="kr">end</span>)).</span></span></pre>
+</div>
+</div></body>
+</html>

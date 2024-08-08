@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Functor</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+This file implements the ordinary endofunctors of functional programming. 
+</div>
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Tactics.Prelude.html#"><span class="id" title="library">Tactics.Prelude</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">F</span> <span class="id" title="var">G</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> "F ⇒ G" := (<span class="id" title="keyword">∀</span> <a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>, <span class="id" title="var">F</span> <a class="idref" href="Tealeaves.Classes.Functor.html#A:1"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="var">G</span> <a class="idref" href="Tealeaves.Classes.Functor.html#A:1"><span class="id" title="variable">A</span></a>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 50) : <span class="id" title="var">tealeaves_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab47"></a><h1 class="section">Endofunctors</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="Map" class="idref" href="#Map"><span class="id" title="record">Map</span></a> (<a id="F:2" class="idref" href="#F:2"><span class="id" title="binder">F</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;<a id="map" class="idref" href="#map"><span class="id" title="projection">map</span></a> : <span class="id" title="keyword">∀</span> (<a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a> <a id="B:5" class="idref" href="#B:5"><span class="id" title="binder">B</span></a> : <span class="id" title="keyword">Type</span>) (<a id="f:6" class="idref" href="#f:6"><span class="id" title="binder">f</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#B:5"><span class="id" title="variable">B</span></a>), <a class="idref" href="Tealeaves.Classes.Functor.html#F:2"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#F:2"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#B:5"><span class="id" title="variable">B</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> {<span class="id" title="var">F</span>}%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Map</span>} {<span class="id" title="var">A</span> <span class="id" title="var">B</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">f</span>%<span class="id" title="var">function_scope</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">F</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Map</span>} (<span class="id" title="var">A</span> <span class="id" title="var">B</span>)%<span class="id" title="var">type_scope</span> <span class="id" title="var">f</span>%<span class="id" title="var">function_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="Functor" class="idref" href="#Functor"><span class="id" title="record">Functor</span></a> (<a id="F:8" class="idref" href="#F:8"><span class="id" title="binder">F</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) `{<a id="map_instance:9" class="idref" href="#map_instance:9"><span class="id" title="binder">map_instance</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#F:8"><span class="id" title="variable">F</span></a>} : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;{ <a id="fun_map_id" class="idref" href="#fun_map_id"><span class="id" title="projection">fun_map_id</span></a> : <span class="id" title="keyword">∀</span> (<a id="A:11" class="idref" href="#A:11"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#F:8"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:11"><span class="id" title="variable">A</span></a> (@<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:11"><span class="id" title="variable">A</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Classes.Functor.html#F:8"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:11"><span class="id" title="variable">A</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="fun_map_map" class="idref" href="#fun_map_map"><span class="id" title="projection">fun_map_map</span></a> : <span class="id" title="keyword">∀</span> (<a id="A:13" class="idref" href="#A:13"><span class="id" title="binder">A</span></a> <a id="B:14" class="idref" href="#B:14"><span class="id" title="binder">B</span></a> <a id="C:15" class="idref" href="#C:15"><span class="id" title="binder">C</span></a> : <span class="id" title="keyword">Type</span>) (<a id="f:16" class="idref" href="#f:16"><span class="id" title="binder">f</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#A:13"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#B:14"><span class="id" title="variable">B</span></a>) (<a id="g:17" class="idref" href="#g:17"><span class="id" title="binder">g</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#B:14"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#C:15"><span class="id" title="variable">C</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#F:8"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#B:14"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#C:15"><span class="id" title="variable">C</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#g:17"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#F:8"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:13"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#B:14"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#f:16"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#F:8"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:13"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#C:15"><span class="id" title="variable">C</span></a> (<a class="idref" href="Tealeaves.Classes.Functor.html#g:17"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#f:16"><span class="id" title="variable">f</span></a>);<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab48"></a><h2 class="section">Natural transformations</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="Natural" class="idref" href="#Natural"><span class="id" title="record">Natural</span></a> `{<a id="H:20" class="idref" href="#H:20"><span class="id" title="binder">Map</span></a> <a id="H:20" class="idref" href="#H:20"><span class="id" title="binder">F</span></a>} `{<a id="H0:22" class="idref" href="#H0:22"><span class="id" title="binder">Map</span></a> <a id="H0:22" class="idref" href="#H0:22"><span class="id" title="binder">G</span></a>} (<a id="d6512886ebafe0aefa5d44eb1f64d285" class="idref" href="#d6512886ebafe0aefa5d44eb1f64d285"><span class="id" title="binder">ϕ</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#F:19"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#1243d099ab01c2819f865a3a891cef9d"><span class="id" title="notation">⇒</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#G:21"><span class="id" title="variable">G</span></a>) :=<br/>
+&nbsp;&nbsp;{ <a id="natural_src" class="idref" href="#natural_src"><span class="id" title="projection">natural_src</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Functor"><span class="id" title="class">Functor</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#F:19"><span class="id" title="variable">F</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="natural_tgt" class="idref" href="#natural_tgt"><span class="id" title="projection">natural_tgt</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Functor"><span class="id" title="class">Functor</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#G:21"><span class="id" title="variable">G</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="natural" class="idref" href="#natural"><span class="id" title="projection">natural</span></a> : <span class="id" title="keyword">∀</span> `(<a id="f:29" class="idref" href="#f:29"><span class="id" title="binder">f</span></a> : <a id="A:27" class="idref" href="#A:27"><span class="id" title="binder">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a id="B:28" class="idref" href="#B:28"><span class="id" title="binder">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#G:21"><span class="id" title="variable">G</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:27"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#B:28"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#f:29"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#d6512886ebafe0aefa5d44eb1f64d285"><span class="id" title="variable">ϕ</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:27"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#d6512886ebafe0aefa5d44eb1f64d285"><span class="id" title="variable">ϕ</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#B:28"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#F:19"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#A:27"><span class="id" title="variable">A</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#B:28"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#f:29"><span class="id" title="variable">f</span></a><br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab49"></a><h1 class="section">Notations</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Notations" class="idref" href="#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="278ce2a34b83a8295656f6eff2db54a7" class="idref" href="#278ce2a34b83a8295656f6eff2db54a7"><span class="id" title="notation">&quot;</span></a>F ⇒ G" := (<span class="id" title="keyword">∀</span> <a id="A:31" class="idref" href="#A:31"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>, <span class="id" title="var">F</span> <a class="idref" href="Tealeaves.Classes.Functor.html#A:31"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="var">G</span> <a class="idref" href="Tealeaves.Classes.Functor.html#A:31"><span class="id" title="variable">A</span></a>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 50) : <span class="id" title="var">tealeaves_scope</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Functor.html#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

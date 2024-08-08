@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Comonoid</h1>
+
+<div class="code">
+<span class="comment">(*|<br/>
+This&nbsp;files&nbsp;defines&nbsp;typeclasses&nbsp;for&nbsp;comonoids_&nbsp;in&nbsp;the&nbsp;category&nbsp;of&nbsp;Coq&nbsp;types&nbsp;and&nbsp;functions<br/>
+<br/>
+..&nbsp;_comonoids:&nbsp;https://ncatlab.org/nlab/show/comonoid<br/>
+<br/>
+Just&nbsp;like&nbsp;in&nbsp;the&nbsp;category&nbsp;of&nbsp;sets,&nbsp;where<br/>
+<br/>
+&nbsp;&nbsp;Every&nbsp;set&nbsp;can&nbsp;be&nbsp;made&nbsp;into&nbsp;a&nbsp;comonoid&nbsp;in&nbsp;Set&nbsp;(with&nbsp;the&nbsp;cartesian&nbsp;product)&nbsp;in&nbsp;a&nbsp;unique&nbsp;way.<br/>
+<br/>
+comonoids&nbsp;in&nbsp;Coq's&nbsp;category&nbsp;are&nbsp;not&nbsp;particularly&nbsp;varied:&nbsp;there&nbsp;is&nbsp;one&nbsp;comonoid&nbsp;on&nbsp;each&nbsp;type.<br/>
+|*)</span><br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Tactics.Prelude.html#"><span class="id" title="library">Prelude</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.Product.html#"><span class="id" title="library">Misc.Product</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">a</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab43"></a><h1 class="section">Comonoids</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab44"></a><h2 class="section">Operational typeclasses</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="Comonoid_Counit" class="idref" href="#Comonoid_Counit"><span class="id" title="record">Comonoid_Counit</span></a> <a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a> := <a id="comonoid_counit" class="idref" href="#comonoid_counit"><span class="id" title="projection">comonoid_counit</span></a> : <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:1"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Axioms.html#unit"><span class="id" title="inductive">unit</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="Comonoid_Comult" class="idref" href="#Comonoid_Comult"><span class="id" title="record">Comonoid_Comult</span></a> <a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a> := <a id="comonoid_comult" class="idref" href="#comonoid_comult"><span class="id" title="projection">comonoid_comult</span></a> : <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:4"><span class="id" title="variable">A</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="Tealeaves.Classes.Comonoid.html#comonoid_comult"><span class="id" title="definition">comonoid_comult</span></a> {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span> {<span class="id" title="var">Comonoid_Comult</span>}.<br/>
+
+<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="Tealeaves.Classes.Comonoid.html#comonoid_counit"><span class="id" title="definition">comonoid_counit</span></a> <span class="id" title="var">A</span>%<span class="id" title="var">type_scope</span> {<span class="id" title="var">Comonoid_Counit</span>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab45"></a><h2 class="section">Comonoid typeclass</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="Comonoid" class="idref" href="#Comonoid"><span class="id" title="record">Comonoid</span></a> (<a id="A:7" class="idref" href="#A:7"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>) `{<a id="H:8" class="idref" href="#H:8"><span class="id" title="binder">Comonoid_Comult</span></a> <a id="H:8" class="idref" href="#H:8"><span class="id" title="binder">A</span></a>} `{<a id="H0:9" class="idref" href="#H0:9"><span class="id" title="binder">Comonoid_Counit</span></a> <a id="H0:9" class="idref" href="#H0:9"><span class="id" title="binder">A</span></a>} :=<br/>
+&nbsp;&nbsp;{ <a id="comonoid_assoc" class="idref" href="#comonoid_assoc"><span class="id" title="projection">comonoid_assoc</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Misc.Product.html#associator"><span class="id" title="definition">associator</span></a> (<a class="idref" href="Tealeaves.Misc.Product.html#map_fst"><span class="id" title="definition">map_fst</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#comonoid_comult"><span class="id" title="definition">comonoid_comult</span></a> (<a class="idref" href="Tealeaves.Classes.Comonoid.html#comonoid_comult"><span class="id" title="definition">comonoid_comult</span></a> <span class="id" title="var">a</span>)) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.Product.html#map_snd"><span class="id" title="definition">map_snd</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#comonoid_comult"><span class="id" title="definition">comonoid_comult</span></a> (<a class="idref" href="Tealeaves.Classes.Comonoid.html#comonoid_comult"><span class="id" title="definition">comonoid_comult</span></a> <span class="id" title="var">a</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="comonoid_id_l" class="idref" href="#comonoid_id_l"><span class="id" title="projection">comonoid_id_l</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> (<a class="idref" href="Tealeaves.Classes.Comonoid.html#comonoid_comult"><span class="id" title="definition">comonoid_comult</span></a> <span class="id" title="var">a</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">a</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="comonoid_id_r" class="idref" href="#comonoid_id_r"><span class="id" title="projection">comonoid_id_r</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#snd"><span class="id" title="definition">snd</span></a> (<a class="idref" href="Tealeaves.Classes.Comonoid.html#comonoid_comult"><span class="id" title="definition">comonoid_comult</span></a> <span class="id" title="var">a</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">a</span>);<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab46"></a><h1 class="section">The "copy" comonoid</h1>
+
+<div class="paragraph"> </div>
+
+ Everything is a <span class="inlinecode"><a class="idref" href="Tealeaves.Classes.Comonoid.html#Comonoid"><span class="id" title="record">Comonoid</span></a></span>. In fact, the copy comonoid is the only
+    one, and the comonoid laws are proved by reflexivity. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="diagonal" class="idref" href="#diagonal"><span class="id" title="definition">diagonal</span></a> {<a id="A:17" class="idref" href="#A:17"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>} := <span class="id" title="keyword">fun</span> <a id="a:18" class="idref" href="#a:18"><span class="id" title="binder">a</span></a> : <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:17"><span class="id" title="variable">A</span></a> ⇒ <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Comonoid.html#a:18"><span class="id" title="variable">a</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#a:18"><span class="id" title="variable">a</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Comonoid_Counit_diagonal" class="idref" href="#Comonoid_Counit_diagonal"><span class="id" title="instance">Comonoid_Counit_diagonal</span></a> <a id="A:19" class="idref" href="#A:19"><span class="id" title="binder">A</span></a> : <a class="idref" href="Tealeaves.Classes.Comonoid.html#Comonoid_Counit"><span class="id" title="class">Comonoid_Counit</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:19"><span class="id" title="variable">A</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> ⇒ <a class="idref" href="Tealeaves.Axioms.html#tt"><span class="id" title="constructor">tt</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Comonoid_Comult_diagonal" class="idref" href="#Comonoid_Comult_diagonal"><span class="id" title="instance">Comonoid_Comult_diagonal</span></a> <a id="A:20" class="idref" href="#A:20"><span class="id" title="binder">A</span></a> : <a class="idref" href="Tealeaves.Classes.Comonoid.html#Comonoid_Comult"><span class="id" title="class">Comonoid_Comult</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:20"><span class="id" title="variable">A</span></a> := @<a class="idref" href="Tealeaves.Classes.Comonoid.html#diagonal"><span class="id" title="definition">diagonal</span></a> <span class="id" title="var">A</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>, <span class="id" title="var">program</span>] <span class="id" title="keyword">Instance</span> <a id="Comonoid_diagonal" class="idref" href="#Comonoid_diagonal"><span class="id" title="instance">Comonoid_diagonal</span></a> {<a id="A:21" class="idref" href="#A:21"><span class="id" title="binder">A</span></a>} :<br/>
+&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Comonoid.html#Comonoid"><span class="id" title="class">Comonoid</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:21"><span class="id" title="variable">A</span></a> (<a class="idref" href="Tealeaves.Classes.Comonoid.html#Comonoid_Comult_diagonal"><span class="id" title="instance">Comonoid_Comult_diagonal</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:21"><span class="id" title="variable">A</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="Tealeaves.Classes.Comonoid.html#Comonoid_Counit_diagonal"><span class="id" title="instance">Comonoid_Counit_diagonal</span></a> <a class="idref" href="Tealeaves.Classes.Comonoid.html#A:21"><span class="id" title="variable">A</span></a>).<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
