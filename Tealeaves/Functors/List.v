@@ -1303,6 +1303,107 @@ Proof.
   introv perm. induction perm; firstorder.
 Qed.
 
+
+(** * SameSet *)
+Print Permutation.
+
+Inductive SameSetRight {A : Type} : list A -> list A -> Prop :=
+| ssetr_nil : SameSetRight [] []
+| ssetr_skip : forall (x : A) (l l' : list A), SameSetRight l l' -> SameSetRight (x :: l) (x :: l')
+| ssetr_swap : forall (x y : A) (l : list A), SameSetRight (y :: x :: l) (x :: y :: l)
+| ssetr_dup_r : forall (x : A) (l : list A), SameSetRight (x :: l) (x :: x :: l)
+| ssetr_trans : forall l l' l'' : list A, SameSetRight l l' -> SameSetRight l' l'' -> SameSetRight l l''.
+
+
+Inductive SameSet {A : Type} : list A -> list A -> Prop :=
+| sset_nil : SameSet [] []
+| sset_skip : forall (x : A) (l l' : list A), SameSet l l' -> SameSet (x :: l) (x :: l')
+| sset_swap : forall (x y : A) (l : list A), SameSet (y :: x :: l) (x :: y :: l)
+| sset_dup_r : forall (x : A) (l : list A), SameSet (x :: l) (x :: x :: l)
+| sset_dup_l : forall (x : A) (l : list A), SameSet (x :: x :: l) (x :: l)
+| sset_trans : forall l l' l'' : list A, SameSet l l' -> SameSet l' l'' -> SameSet l l''.
+
+From Tealeaves Require Import Classes.EqDec_eq.
+
+Lemma sameset_refl: forall (A: Type) (l: list A),
+    SameSet l l.
+Proof.
+  intros. induction l.
+  - apply sset_nil.
+  - apply sset_skip.
+    assumption.
+Qed.
+
+Lemma sameset_nil: forall (A: Type) (l: list A),
+    SameSet [] l -> l = [].
+Proof.
+  intros. remember [] as l'.
+  induction H; subst; try solve [inversion Heql'].
+  - reflexivity.
+  - specialize (IHSameSet1 ltac:(reflexivity)).
+    subst. auto.
+Qed.
+
+Lemma sametset_dup_right: forall (A: Type) (a: A) (l: list A),
+    SameSet (a :: l) (a :: a :: l).
+Proof.
+  intros. apply sset_dup_r.
+Qed.
+
+Example ex1: forall (A: Type) (a: A),
+    SameSet [a; a] [a].
+Proof.
+  intros. apply sset_dup_l.
+Qed.
+
+Lemma sameset_sym: forall (A: Type) (l l': list A),
+    SameSet l l' -> SameSet l' l.
+Proof.
+  intros. induction H.
+  - apply sset_nil.
+  - apply sset_skip. auto.
+  - apply sset_swap.
+  - apply sset_dup_l.
+  - apply sset_dup_r.
+  - eapply sset_trans; eauto.
+Qed.
+
+Lemma sameset_spec_one: forall (A: Type) `{EqDec_eq A} (l: list A) (a: A),
+  (forall (a0 : A), a0 ∈ l <-> a0 = a) -> SameSet [a] l.
+Proof.
+  introv Heq Hsame. induction l.
+  - specialize (Hsame a).
+    autorewrite with tea_list in Hsame. tauto.
+  - assert (a0 = a).
+    { apply (Hsame a0). now left. }
+    subst; clear Hsame.
+    destruct l.
+    + apply sameset_refl.
+    + destruct_eq_args a a0.
+      * admit.
+      * admit.
+Abort.
+
+Theorem sameset_spec : forall {A} `{EqDec_eq A} {l1 l2 : list A},
+    (forall a, a ∈ l1 <-> a ∈ l2) -> SameSet l1 l2.
+Proof.
+  introv Heqdec Hsame.
+  assert (Hsame1: forall a : A, a ∈ l1 -> a ∈ l2).
+  { intro a. apply Hsame. }
+  assert (Hsame2: forall a : A, a ∈ l2 -> a ∈ l1).
+  { intro a. apply Hsame. }
+  clear Hsame.
+  generalize dependent l2.
+  induction l1; intros l2 Hsame1 Hsame2.
+  - induction l2.
+    + apply sset_nil.
+    + false.
+      apply (Hsame2 a).
+      now left.
+  - destruct l1.
+    + clear IHl1.
+Abort.
+
 (** * Misc *)
 (******************************************************************************)
 Lemma map_preserve_length:
