@@ -552,6 +552,18 @@ Abort.
 
 Definition kdtfunp_axiom1: Prop := forall (A : Type),
     mapdt (G := fun A => A) extract = @id (list A).
+Lemma proof1: kdtfunp_axiom1.
+Proof.
+  unfold kdtfunp_axiom1.
+  intros. ext l. induction l.
+  - cbn. reflexivity.
+  - rewrite mapdt_spec.
+    rewrite mapdt_list_telescope_rw_cons.
+    rewrite <- mapdt_spec.
+    rewrite extract_preincr.
+    rewrite IHl.
+    reflexivity.
+Qed.
 
 Generalizable All Variables.
 
@@ -587,24 +599,145 @@ Proof.
     cbn.
 Abort.
 
+Fixpoint dupfst {A:Type} (l: list A): list A :=
+  match l with
+  | nil => nil
+  | cons a l' =>  cons a (cons a l')
+  end.
+
+Definition dup {A:Type} := fun (a: A) => (a, a).
+(*
+Lemma dupfst_pointfree: forall (A: Type) (a: A) (l: list A),
+    (* (compose dec ∘ cons) a l = dec (cons a l).*)
+    (compose dupfst ∘ cons) a l = (precompose dup ∘ cons) a l.
+Proof.
+  reflexivity.
+Qed.
+ *)
+
+Lemma ap_ci: forall `{ApplicativeCommutativeIdempotent G} {A B: Type} (f: G (A -> B)) (a: G A),
+    f <⋆> a = (map evalAt a) <⋆> f.
+Proof.
+  intros.
+  unfold ap.
+  inversion H2.
+  rewrite appci_commutative.
+  compose near (a ⊗ f).
+  rewrite (fun_map_map).
+  rewrite (app_mult_natural_l G).
+  compose near (a ⊗ f) on right.
+  rewrite (fun_map_map).
+  fequal.
+  ext [x y].
+  cbn. reflexivity.
+Qed.
+
+Definition double_input {A B: Type} (f: A -> A -> B): A -> B :=
+  uncurry f ∘ dup.
+
+Lemma ap_cidup: forall `{ApplicativeCommutativeIdempotent G} {A B: Type} (f: G (A -> A -> B)) (a: G A),
+    f <⋆> a <⋆> a = (map double_input f) <⋆> a.
+Proof.
+  intros.
+  unfold ap.
+  inversion H2.
+  rewrite (app_mult_natural_l G).
+  compose near (f ⊗ a ⊗ a).
+  rewrite (fun_map_map).
+  rewrite <- (app_assoc_inv G).
+  rewrite appci_idempotent.
+  rewrite (app_mult_natural_r G).
+  compose near (f ⊗ a).
+  rewrite (fun_map_map).
+  compose near (f ⊗ a).
+  rewrite (fun_map_map).
+  (* rhs *)
+  rewrite (app_mult_natural_l G).
+  compose near (f ⊗ a).
+  rewrite (fun_map_map).
+  fequal.
+  ext [x y].
+  cbn. reflexivity.
+Qed.
+
+Lemma key_principle_simplified {A B: Type}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
+  (f: A  -> G B) (l: list A):
+  map (F := G) dupfst (traverse f l) = traverse f (dupfst l).
+Proof.
+  intros.
+  induction l.
+  - cbn. rewrite app_pure_natural. reflexivity.
+  - rewrite traverse_list_cons.
+    cbn.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- ap4.
+    rewrite (ap_ci (pure (@cons B)) (f a)) at 2.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    repeat rewrite ap2.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite ap_cidup.
+    rewrite app_pure_natural.
+    rewrite ap3.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    fequal.
+Qed.
+
+Lemma dec_pointfree: forall (A: Type) (a: A) (l: list A),
+    (* (compose dec ∘ cons) a l = dec (cons a l).*)
+    (compose dec ∘ cons) a l = ((precompose (map (incr [a]) ∘ dec)) ∘ precompose (pair nil) cons) a l.
+Proof.
+  intros.
+  About mult.
+  unfold compose, precompose. cbn.
+Abort.
+
+Lemma key_principle {A B: Type}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! Applicative G}
+  (f: A  -> G B) (l: list A):
+  map (F := G) (decorate_telescoping_list_alt) (traverse f l) =
+    traverse (T := list) (traverse (T := Z) f) (decorate_telescoping_list_alt l).
+Proof.
+  intros.
+  induction l.
+  - rewrite traverse_list_nil.
+    rewrite app_pure_natural.
+    rewrite decorate_telescoping_list_rw_nil.
+    rewrite traverse_list_nil.
+    reflexivity.
+  - rewrite traverse_list_cons.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    (* right *)
+    rewrite decorate_telescoping_list_rw_cons.
+    rewrite traverse_list_cons.
+    cbn.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    compose near (dec l).
+    rewrite (traverse_map).
+Admitted.
+
+
 Definition kdtfunp_axiom2: Prop :=
   forall `{ApplicativeCommutativeIdempotent G1} `{ApplicativeCommutativeIdempotent G2}
     {A B C : Type} (g : list B * B -> G2 C) (f : list A * A -> G1 B),
     map (mapdt g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (compose_arrows g f).
 
-
-Lemma proof1: kdtfunp_axiom1.
-Proof.
-  unfold kdtfunp_axiom1.
-  intros. ext l. induction l.
-  - cbn. reflexivity.
-  - rewrite mapdt_spec.
-    rewrite mapdt_list_telescope_rw_cons.
-    rewrite <- mapdt_spec.
-    rewrite extract_preincr.
-    rewrite IHl.
-    reflexivity.
-Qed.
 
 Lemma proof2: kdtfunp_axiom2.
 Proof.
@@ -638,4 +771,77 @@ Proof.
     unfold compose at 6.
     unfold preincr, compose.
     cbn.
+Abort.
+
+
+Lemma proof2: kdtfunp_axiom2.
+Proof.
+  unfold kdtfunp_axiom2.
+  intros.
+  ext l.
+  generalize dependent f.
+  generalize dependent g.
+  unfold compose at 1.
+  induction l; intros g f.
+  - cbn.
+    rewrite app_pure_natural.
+    reflexivity.
+  - unfold mapdt at 2.
+    unfold mapdt at 2.
+    unfold compose_arrows.
+    rewrite <- (traverse_map (T := list) (G2 := (G1 ∘ G2))
+                 (H := Traverse_list)
+                 (H2 := @Map_compose G1 G2 H3 H)
+                 (H3 := (@Pure_compose G1 G2 H4 H0))
+                 (H4 := @Mult_compose G1 G2 H5 H H1)
+                 (A := (prod (list A) A)) (C := C)).
+    Set Keyed Unification.
+    rewrite <- (traverse_map (T := list)  (G2 := (G1 ∘ G2))
+                 (H := Traverse_list)
+                 (H2 := @Map_compose G1 G2 H3 H)
+                 (H3 := (@Pure_compose G1 G2 H4 H0))
+                 (H4 := @Mult_compose G1 G2 H5 H H1)).
+    unfold traverse.
+    rewrite <- key_principle.
+
+
+(** * Proof that decoration is SSR *)
+From Tealeaves Require Import
+  Classes.Categorical.ContainerFunctor
+  Classes.Kleisli.Theory.TraversableFunctor.
+
+Import ContainerFunctor.Notations.
+
+#[export] Instance ToSubset_Z: ToSubset Z := ToSubset_Traverse.
+
+#[export] Instance Traverse_LZ: Traverse (list ∘ Z) :=
+  fun A B _ _ A B f l => traverse (T := list) (traverse (T := Z) f) l.
+#[export] Instance ToSubset_LZ: ToSubset (list ∘ Z) := ToSubset_Traverse.
+
+Import Subset.Notations.
+
+Lemma decoration_is_SSR1: forall (A: Type) (l: list A),
+  forall (a: A), a ∈ l -> tosubset (F := list ∘ Z) (dec l) a.
+Proof.
+  introv Hin.
+  induction l.
+  - inversion Hin.
+  - inversion Hin.
+    + subst.
+      rewrite decorate_telescoping_list_rw_cons.
+      unfold_ops @ToSubset_LZ.
+      unfold_ops @ToSubset_Traverse.
+      unfold foldMap.
+      unfold_ops @Traverse_LZ.
+      rewrite traverse_list_cons.
+      unfold ap at 1 2.
+      unfold_ops @Mult_const.
+      unfold_ops @Monoid_op_subset.
+      unfold_ops @Pure_const.
+      left.
+      right. cbn. right. easy.
+    + clear Hin. specialize (IHl H).
+      clear H.
+      rewrite decorate_telescoping_list_rw_cons.
+      right.
 Abort.
