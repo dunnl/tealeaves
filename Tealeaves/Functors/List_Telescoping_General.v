@@ -606,14 +606,15 @@ Fixpoint dupfst {A:Type} (l: list A): list A :=
   end.
 
 Definition dup {A:Type} := fun (a: A) => (a, a).
-(*
 Lemma dupfst_pointfree: forall (A: Type) (a: A) (l: list A),
     (* (compose dec ∘ cons) a l = dec (cons a l).*)
+    (*
     (compose dupfst ∘ cons) a l = (precompose dup ∘ cons) a l.
+     *)
+    1 = 1.
 Proof.
   reflexivity.
 Qed.
- *)
 
 Lemma ap_ci: forall `{ApplicativeCommutativeIdempotent G} {A B: Type} (f: G (A -> B)) (a: G A),
     f <⋆> a = (map evalAt a) <⋆> f.
@@ -630,6 +631,43 @@ Proof.
   fequal.
   ext [x y].
   cbn. reflexivity.
+Qed.
+
+Definition flip {A B C} := @CRelationClasses.flip A B C.
+
+Lemma ap_ci2: forall `{ApplicativeCommutativeIdempotent G} {A B C: Type} (f: G (A -> B -> C)) (a: G A) (b: G B),
+    f <⋆> a <⋆> b = (map flip f) <⋆> b <⋆> a.
+Proof.
+  intros.
+  unfold ap.
+  (* left *)
+  rewrite (app_mult_natural_l G).
+  compose near (f ⊗ a ⊗ b).
+  rewrite (fun_map_map).
+  (* right *)
+  rewrite (app_mult_natural_l G).
+  compose near (map flip f ⊗ b ⊗ a).
+  rewrite (fun_map_map).
+  rewrite (app_mult_natural_l G).
+  rewrite (app_mult_natural_l G).
+  compose near (f ⊗ b ⊗ a).
+  rewrite (fun_map_map).
+  rewrite <- (app_assoc_inv G _ _ _ f b a).
+  compose near (f ⊗ (b ⊗ a)) on right.
+  rewrite (fun_map_map).
+
+  inversion H2.
+  rewrite (appci_commutative _ _ b a).
+
+  rewrite (app_mult_natural_r G).
+  compose near (f ⊗ (a ⊗ b)) on right.
+  rewrite fun_map_map.
+  rewrite <- (app_assoc _ _ _ f a b).
+  compose near (f ⊗ a ⊗ b) on right.
+  rewrite (fun_map_map).
+  fequal.
+  ext [[xf xa] xb].
+  reflexivity.
 Qed.
 
 Definition double_input {A B: Type} (f: A -> A -> B): A -> B :=
@@ -694,17 +732,404 @@ Proof.
     fequal.
 Qed.
 
-Lemma dec_pointfree: forall (A: Type) (a: A) (l: list A),
+Lemma key_principle_simplified2 {A B: Type}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
+  (f: A  -> G B) (l: list A):
+  map (F := G) (List.rev (A := B)) (traverse f l) = traverse f (List.rev l).
+Proof.
+  induction l.
+  - cbn. rewrite app_pure_natural. reflexivity.
+  - rewrite traverse_list_cons.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    (* rhs *)
+    cbn.
+    rewrite (traverse_list_app G).
+    rewrite <- IHl.
+    Search ap "ap" map.
+    rewrite <- ap_map.
+    rewrite app_pure_natural.
+    change [a] with (ret a).
+    rewrite (traverse_list_one G).
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite (ap_ci2 _ (traverse f l) (f a)).
+    rewrite app_pure_natural.
+    fequal.
+Qed.
+
+Print Instances Traverse.
+
+#[export] Instance Traverse_two: Traverse (fun A => A * A).
+Proof.
+  intros G GMap GPure GMult A B f [a1 a2].
+  exact (pure pair <⋆> f a1 <⋆> f a2).
+Defined.
+
+#[export] Instance TraversableFunctor_two: TraversableFunctor (fun A => A * A).
+Proof.
+  constructor.
+  - intros. ext [a1 a2]. reflexivity.
+  - intros. ext [a1 a2]. unfold compose, kc2.
+    cbn.
+    do 2 rewrite map_ap.
+    rewrite app_pure_natural.
+    change (fun a => G1 (G2 a)) with (G1 ∘ G2).
+    rewrite (ap_compose2 G2 G1).
+    rewrite (ap_compose2 G2 G1).
+    unfold_ops @Pure_compose.
+    rewrite app_pure_natural.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    unfold compose at 4 5.
+    rewrite <- (ap_map).
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- (ap_map).
+    rewrite app_pure_natural.
+    reflexivity.
+  - intros.
+    ext [a1 a2].
+    unfold compose at 1.
+    cbn.
+    rewrite ap_morphism_1.
+    rewrite ap_morphism_1.
+    rewrite appmor_pure.
+    reflexivity.
+Qed.
+
+
+Definition FourTuple (A: Type) : Type := A * (A * (A * A)).
+
+Definition mkFour {A: Type} : A -> A -> A -> A -> FourTuple A :=
+  (fun x1 x2 x3 x4 => (x1, (x2, (x3, x4)))).
+
+#[export] Instance Traverse_FourTuple: Traverse FourTuple.
+Proof.
+  intros G GMap GPure GMult A B f [a1 [a2 [a3 a4]]].
+  exact (pure mkFour <⋆> f a1 <⋆> f a2 <⋆> f a3 <⋆> f a4).
+Defined.
+
+#[export] Instance TraversableFunctor_FourTuple: TraversableFunctor FourTuple.
+Proof.
+  constructor.
+  - intros.
+    ext [a1 [a2 [a3 a4]]].
+    reflexivity.
+  - intros.
+    ext [a1 [a2 [a3 a4]]].
+    unfold compose, kc2.
+    cbn.
+    (* left *)
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    (* right *)
+    unfold compose at 5 6 7 8.
+    change (fun a => G1 (G2 a)) with (G1 ∘ G2).
+    unfold_ops @Pure_compose.
+    rewrite (ap_compose2 G2 G1 _ (map g (f a1))).
+    rewrite app_pure_natural.
+    rewrite (ap_compose2 G2 G1 _ (map g (f a2))).
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite (ap_compose2 G2 G1 _ (map g (f a3))).
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite (ap_compose2 G2 G1 _ (map g (f a4))).
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+
+    rewrite <- (ap_map).
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- (ap_map).
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- (ap_map).
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- (ap_map).
+    rewrite app_pure_natural.
+    reflexivity.
+  - intros.
+    ext [a1 [a2 [a3 a4]]].
+    unfold compose.
+    cbn.
+    rewrite ap_morphism_1.
+    rewrite ap_morphism_1.
+    rewrite ap_morphism_1.
+    rewrite ap_morphism_1.
+    rewrite appmor_pure.
+    reflexivity.
+Qed.
+
+Fixpoint square {A:Type} (p: A * A): FourTuple A :=
+  match p with
+  | pair a1 a2 => (a1, (a1, (a1, a2)))
+  end.
+
+Notation "'apply'" := (fun '(f0, a0) => f0 a0).
+
+Lemma square_commute {A B: Type}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
+  (f: A  -> G B) (p: A * A):
+  map (F := G) square (traverse (T := fun A => A * A) f p) =
+    traverse (T := FourTuple) f (square p).
+Proof.
+  induction p.
+  cbn.
+  rewrite map_ap.
+  rewrite map_ap.
+  rewrite app_pure_natural.
+
+  rewrite ap_cidup.
+  rewrite map_ap.
+  rewrite app_pure_natural.
+  rewrite ap_cidup.
+  rewrite app_pure_natural.
+  reflexivity.
+
+(*
+  unfold ap.
+  rewrite (app_mult_natural_l G).
+  compose near (pure (compose square (A := B) ∘ pair) ⊗ f a ⊗ f b).
+  rewrite fun_map_map.
+
+  rewrite (app_mult_natural_l G).
+  compose near
+    ((map apply (map apply (pure mkFour ⊗ f a) ⊗ f a) ⊗ f a ⊗ f b)).
+  rewrite fun_map_map.
+
+  rewrite (app_mult_natural_l G).
+  rewrite (app_mult_natural_l G).
+  compose near ((map apply (pure mkFour ⊗ f a) ⊗ f a ⊗ f a ⊗ f b)).
+  rewrite fun_map_map.
+
+  rewrite (app_mult_natural_l G).
+  rewrite (app_mult_natural_l G).
+  rewrite (app_mult_natural_l G).
+  compose near (pure (mkFour (A := B)) ⊗ f a ⊗ f a ⊗ f a ⊗ f b).
+  rewrite (fun_map_map).
+  *)
+Qed.
+
+
+Fixpoint pairall {A:Type} (l: list A): list (A * A) :=
+  match l with
+  | nil => nil
+  | cons a l' =>  cons (a, a) (map (pair a) l')
+  end.
+
+Lemma pairall_commute {A B: Type}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
+  (f: A  -> G B) (l: list A):
+  map (F := G) pairall (traverse f l) =
+    traverse (T := list) (traverse (T := fun A => A * A) f) (pairall l).
+Proof.
+  induction l.
+  - cbn. rewrite app_pure_natural. reflexivity.
+  - rewrite traverse_list_cons.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    cbn.
+
+    compose near l on right.
+    rewrite traverse_map.
+
+    assert (Hrw: (traverse (T := fun A => A * A) f ∘ pair (A := A) (B := A) a)
+             = (ap G (pure (F := G) (pair (A := B) (B := B)) <⋆> f a)) ∘ f ).
+    { ext a'. unfold compose. cbn. reflexivity. }
+    rewrite Hrw.
+    clear Hrw.
+
+    clear IHl.
+
+
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite ap_cidup.
+    rewrite app_pure_natural.
+    induction l.
+    + cbn.
+      rewrite (ap_ci _ (pure (@nil B))).
+      rewrite map_to_ap.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite (ap_ci _ (pure (@nil (B * B)))).
+      rewrite map_to_ap.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      reflexivity.
+    + rewrite traverse_list_cons.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+
+      (* rhs *)
+      rewrite traverse_list_cons.
+      unfold compose at 9.
+
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite (ap3 _ (@cons (B * B))).
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite (ap3 _ (@pair B B)).
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      setoid_rewrite (ap_ci _ (f a0)) at 2.
+      rewrite <- ap4.
+      rewrite map_to_ap.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite ap_cidup.
+      rewrite map_ap.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+
+
+      rewrite (ap_ci _ (f a0)).
+      rewrite map_to_ap.
+      rewrite (ap3 _ (@cons B)).
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+
+Abort.
+
+Lemma dec_pointfree1: forall (A: Type) (a: A) (l: list A),
     (* (compose dec ∘ cons) a l = dec (cons a l).*)
     (compose dec ∘ cons) a l = ((precompose (map (incr [a]) ∘ dec)) ∘ precompose (pair nil) cons) a l.
 Proof.
   intros.
-  About mult.
   unfold compose, precompose. cbn.
+  reflexivity.
+Qed.
+
+
+Lemma dec_pointfree2: forall (A: Type) (a: A) (l: list A),
+    (* (compose dec ∘ cons) a l = dec (cons a l).*)
+    (compose dec ∘ cons) a l = ((precompose (map (incr [a]) ∘ dec)) ∘ precompose (pair nil) cons) a l.
+Proof.
+  intros.
+  unfold compose, precompose. cbn.
+  reflexivity.
+Qed.
+
+Lemma trav_incr_rw: forall (A B: Type) `{Applicative G} (f: A -> G B) (a: A),
+    traverse (T := Z) f ∘ incr [a] =
+      ap G (pure (map_fst ∘ cons) <⋆> f a) ∘ traverse (T := Z) f.
+Proof.
+  intros. ext [l a'].
+  unfold compose.
+  cbn.
+  (* lhs *)
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite ap2.
+  rewrite ap3.
+  rewrite <- ap4.
+  rewrite ap2.
+  rewrite ap2.
+  reflexivity.
+Qed.
+
+Definition penguin {A B: Type}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G}:
+  forall (a: G A) (b: G B), G B :=
+  fun a b => (map (F := G) (const (@id B)) a) <⋆> b.
+
+Infix "|⋆>" := penguin (at level 50).
+
+
+#[export] Instance Traverse_LZ: Traverse (list ∘ Z) :=
+  fun A B _ _ A B f l => traverse (T := list) (traverse (T := Z) f) l.
+
+Lemma key_principle_lemma {A B: Type}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! Applicative G}
+  (f: A  -> G B) (b : G B) (l: list (list A * A)):
+  traverse (T := list) (ap G (map (F := G) (incr ∘ ret (T := list)) b)) (map (F := list) (traverse (T := Z) f) l) =
+    (traverse (T := list ∘ Z) f l).
+Proof.
+  induction l.
+  - cbn. reflexivity.
+  - unfold penguin in *.
 Abort.
 
 Lemma key_principle {A B: Type}
-  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! Applicative G}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
   (f: A  -> G B) (l: list A):
   map (F := G) (decorate_telescoping_list_alt) (traverse f l) =
     traverse (T := list) (traverse (T := Z) f) (decorate_telescoping_list_alt l).
@@ -716,7 +1141,9 @@ Proof.
     rewrite decorate_telescoping_list_rw_nil.
     rewrite traverse_list_nil.
     reflexivity.
-  - rewrite traverse_list_cons.
+  - cbn.
+
+    rewrite traverse_list_cons.
     rewrite map_ap.
     rewrite map_ap.
     rewrite app_pure_natural.
@@ -730,6 +1157,39 @@ Proof.
     rewrite ap2.
     compose near (dec l).
     rewrite (traverse_map).
+    rewrite (trav_incr_rw);[|typeclasses eauto].
+    change (map_fst ∘ cons (A := B)) with (incr (W := list B) (A := B) ∘ ret).
+    rewrite <- (map_to_ap (incr ∘ ret)).
+    rewrite <- (traverse_map).
+    unfold compose at 4.
+    { induction l.
+      - cbn.
+        rewrite ap_ci2.
+        rewrite app_pure_natural.
+        rewrite ap2.
+        rewrite (ap_ci2 _ (f a)).
+        rewrite app_pure_natural.
+        rewrite ap2.
+        fequal.
+      - clear IHl0.
+        rewrite ap_ci2.
+        rewrite app_pure_natural.
+        rewrite (ap_ci2 _ (f a)).
+        rewrite app_pure_natural.
+        fequal.
+        rewrite <- map_to_ap.
+        rewrite <- map_to_ap.
+        rewrite decorate_telescoping_list_rw_cons.
+        rewrite map_list_cons.
+        cbn.
+        Search map traverse "map" "trav".
+        Search pure ap.
+        traverse.
+
+        rewrite <- ap_compose2.
+        Set Printing All.
+        cbn.
+
 Admitted.
 
 
@@ -814,8 +1274,6 @@ Import ContainerFunctor.Notations.
 
 #[export] Instance ToSubset_Z: ToSubset Z := ToSubset_Traverse.
 
-#[export] Instance Traverse_LZ: Traverse (list ∘ Z) :=
-  fun A B _ _ A B f l => traverse (T := list) (traverse (T := Z) f) l.
 #[export] Instance ToSubset_LZ: ToSubset (list ∘ Z) := ToSubset_Traverse.
 
 Import Subset.Notations.
