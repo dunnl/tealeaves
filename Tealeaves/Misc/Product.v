@@ -184,3 +184,11 @@ Qed.
 
 Definition dup_left {A B} : A * B -> A * (A * B) :=
   fun '(a, b) => (a, (a, b)).
+
+(** ** Functorial properties *)
+(******************************************************************************)
+Lemma map_fst_compose {A B C X: Type}: forall (f: A -> B) (g: B -> C),
+    map_fst g ∘ map_fst f = map_fst (Y := X) (g ∘ f).
+Proof.
+  intros. ext [a x]. reflexivity.
+Qed.
