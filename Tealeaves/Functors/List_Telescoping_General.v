@@ -768,6 +768,12 @@ Proof.
   exact (pure pair <⋆> f a1 <⋆> f a2).
 Defined.
 
+Lemma traverse_two_rw {A B: Type} {G} `{Map G} `{Mult G} `{Pure G} (f: A -> G B) (a1 a2: A):
+  traverse (T := fun A => A * A) f (a1, a2) = pure pair <⋆> f a1 <⋆> f a2.
+Proof.
+  reflexivity.
+Qed.
+
 #[export] Instance TraversableFunctor_two: TraversableFunctor (fun A => A * A).
 Proof.
   constructor.
@@ -937,6 +943,227 @@ Lemma pairall_commute {A B: Type}
   map (F := G) pairall (traverse f l) =
     traverse (T := list) (traverse (T := fun A => A * A) f) (pairall l).
 Proof.
+  (*
+  destruct l as [|a l IHa].
+  - cbn.
+    rewrite app_pure_natural.
+    reflexivity.
+  -  change (pairall (a :: l)) with ((a, a) :: map (pair a) l).
+     rewrite traverse_list_cons.
+     rewrite map_ap.
+     rewrite map_ap.
+     rewrite app_pure_natural.
+     rewrite traverse_list_cons.
+     rewrite traverse_two_rw.
+     rewrite <- ap4.
+     rewrite ap2.
+     rewrite <- ap4.
+     rewrite ap2.
+     rewrite ap2.
+     unfold ap.
+     rewrite (app_mult_natural_l G).
+     compose near (pure (compose (pairall (A := B)) ∘ cons) ⊗ f a ⊗ traverse f l).
+     rewrite (fun_map_map).
+     rewrite (app_mult_natural_l G).
+     rewrite (app_mult_natural_l G).
+     rewrite (app_mult_natural_l G).
+     compose near (@pure G H1 (B -> B -> list (B * B) -> list (B * B))
+             (@compose B (B * B) (list (B * B) -> list (B * B)) (@cons (B * B)) ∘ @pair B B) ⊗ f a ⊗
+           f a
+           ⊗ @traverse list Traverse_list G H H1 H0 (A * A) (B * B)
+               (@traverse (fun A0 : Type => A0 * A0) Traverse_two G H H1 H0 A B f)
+               (@map list Map_list A (A * A) (@pair A A a) l)).
+     rewrite fun_map_map.
+     rewrite map_fst_compose.
+     compose near (@pure G H1 (B -> B -> list (B * B) -> list (B * B))
+             (@compose B (B * B) (list (B * B) -> list (B * B)) (@cons (B * B)) ∘ @pair B B) ⊗ f a ⊗
+           f a
+           ⊗ @traverse list Traverse_list G H H1 H0 (A * A) (B * B)
+               (@traverse (fun A0 : Type => A0 * A0) Traverse_two G H H1 H0 A B f)
+               (@map list Map_list A (A * A) (@pair A A a) l)).
+     rewrite fun_map_map.
+
+     induction l as [|b bs IHb].
+     { cbn.
+       rewrite <- (app_assoc_inv G _ _ _ _ (f a) (f a)).
+       inversion ApplicativeCommutativeIdempotent0.
+       rewrite appci_idempotent.
+       rewrite (app_mult_natural_r G).
+       compose near (((pure (compose (cons (A := B * B)) ∘ pair) ⊗ f a))).
+       rewrite (fun_map_map).
+       rewrite (app_mult_natural_l G).
+       compose near (pure (compose (cons (A := B * B)) ∘ pair) ⊗ f a ⊗ pure (@nil (B * B))).
+       rewrite (fun_map_map).
+       *)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  destruct l.
+  - cbn.
+    rewrite app_pure_natural.
+    reflexivity.
+  - rewrite traverse_list_cons.
+    change (pairall (a :: l)) with ((a, a) :: map (pair a) l).
+    rewrite traverse_list_cons.
+    assert (Hrw: traverse f (a, a) = map dup (f a)).
+    { cbn.
+      rewrite ap_cidup.
+      rewrite app_pure_natural.
+      rewrite map_to_ap.
+      reflexivity. }
+    rewrite Hrw; clear Hrw.
+    rewrite (map_to_ap dup).
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+
+
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+
+    induction l as [|x xs IH].
+    { rewrite traverse_list_nil.
+      rewrite map_list_nil.
+      rewrite traverse_list_nil.
+
+      rewrite ap_ci.
+      rewrite map_to_ap.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+
+      rewrite (ap_ci _ (pure (@nil (B * B)))).
+      rewrite map_to_ap.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+      reflexivity. }
+    { rewrite traverse_list_cons.
+      rewrite <- ap4.
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+
+      rewrite ap3.
+      change (fun f0 => f0 (@cons B)) with (evalAt (B := B -> list B -> list (B * B)) (@cons B)).
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+      (*
+      rewrite (ap_ci _ (f x)).
+      rewrite map_to_ap.
+      rewrite <- ap4.
+      rewrite <- ap4.
+      rewrite ap2.
+      rewrite ap2.
+       *)
+
+
+      (* rhs *)
+      rewrite map_list_cons.
+      rewrite traverse_list_cons.
+      rewrite <- ap4.
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- ap4.
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+
+      rewrite (ap3 _ (@cons (B * B))).
+      change (fun f0 => f0 (@cons (B * B))) with (evalAt (B := B * B -> list (B * B) -> list (B * B)) (@cons (B * B))).
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+      rewrite traverse_two_rw.
+      rewrite <- ap4.
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+      rewrite (ap3 _ (@pair B B)).
+      change (fun f0 => f0 (@pair B B)) with (evalAt (B := B -> B -> list (B * B) -> list (B * B)) (@pair B B)).
+      rewrite <- (ap4 _ _ (f a)).
+      rewrite ap2.
+      rewrite ap2.
+      rewrite ap_cidup.
+      rewrite app_pure_natural.
+
+
+      clear IH.
+      induction xs as [|y ys IHy].
+      - cbn.
+
+        rewrite ap3.
+        rewrite <- ap4.
+        change (fun f0 : list B -> list (B * B) => f0 []) with (evalAt (B := list (B * B)) (@nil B)).
+        rewrite ap2.
+        rewrite <- (ap4 _ _ (f a)).
+        rewrite ap2.
+        rewrite ap2.
+
+        rewrite ap3.
+        rewrite <- ap4.
+        change (fun f0 : list (B * B) -> list (B * B) => f0 []) with (evalAt (B := list (B * B)) (@nil (B * B))).
+        rewrite ap2.
+        rewrite <- (ap4 _ _ (f a)).
+        rewrite ap2.
+        rewrite ap2.
+        fequal.
+      - rewrite traverse_list_cons.
+        rewrite <- ap4.
+        rewrite <- (ap4 _ _ (f x)).
+        rewrite ap2.
+        rewrite <- (ap4 _ _ (f a)).
+        rewrite ap2.
+        rewrite ap2.
+        rewrite <- ap4.
+        rewrite <- (ap4 _ _ (f x)).
+        rewrite ap2.
+        rewrite <- (ap4 _ _ (f a)).
+        rewrite ap2.
+        rewrite ap2.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   induction l.
   - cbn. rewrite app_pure_natural. reflexivity.
   - rewrite traverse_list_cons.
