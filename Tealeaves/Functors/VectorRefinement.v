@@ -1350,3 +1350,54 @@ Proof.
   - rewrite traverse_Vector_vcons.
     cbn.
 Abort.
+
+(** * SameSetRight *)
+(******************************************************************************)
+Inductive SameSetRight {A : Type}: forall (n m: nat), Vector n A -> Vector m A -> Type :=
+| ssetr_nil : SameSetRight 0 0 vnil vnil
+| sset_dup: forall (n: nat) (a: A) (v: Vector n A),
+    SameSetRight (S n) (S (S n)) (vcons n a v) (vcons (S n) a (vcons n a v))
+| sset_skip: forall (n m: nat) (a: A) (v1: Vector n A) (v2: Vector m A),
+    SameSetRight n m v1 v2 -> SameSetRight (S n) (S m) (vcons n a v1) (vcons m a v2)
+| sset_swap: forall (n: nat) (a1 a2: A) (v: Vector n A),
+    SameSetRight (S (S n)) (S (S n)) (vcons (S n) a1 (vcons n a2 v)) (vcons (S n) a2 (vcons n a1 v))
+| sset_trans: forall (n m p: nat) (v1: Vector n A) (v2: Vector m A) (v3: Vector p A),
+    SameSetRight n m v1 v2 -> SameSetRight m p v2 v3 -> SameSetRight n p v1 v3.
+
+Definition vdup: forall (n : nat) {A: Type},
+    Vector (S n) A -> Vector (S (S n)) A.
+Proof.
+Abort.
+
+Definition vswap: forall (n : nat) {A: Type},
+    Vector (S (S n)) A -> Vector (S (S n)) A.
+Proof.
+Abort.
+
+Definition vskip: forall (n : nat) {A: Type} (f: Vector n A -> Vector n A),
+    Vector (S n) A -> Vector (S n) A.
+Proof.
+Abort.
+
+
+(** * Inversion or induction? principles *)
+Section inversion.
+
+  Context {A: Type}.
+
+  Definition vcons_fn: forall (n: nat) (B: Type),
+      (A -> Vector n A -> B) -> Vector (S n) A -> B.
+  Proof.
+  Abort.
+
+  Search "ap" ap.
+
+End inversion.
+
+Definition statement: Type := forall (A: Type) (n m: nat) (v1: Vector n A) (v2: Vector m A),
+    SameSetRight n m v1 v2 ->
+    {ϕ : forall (X: Type), Vector n X -> Vector m X | ϕ A v1 = v2}.
+
+Goal statement.
+  unfold statement. intros.
+Abort.
