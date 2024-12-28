@@ -207,3 +207,8 @@ Tealeaves/Simplification/Tests/STLC_Binddt.v
 Tealeaves/Simplification/Tests/STLC_Container.v
 Tealeaves/Simplification/Tests/STLC_LN.v
 Tealeaves/Simplification/Tests/STLC_DB.v
+
+# NOMINAL
+Tealeaves/Classes/Categorical/ApplicativeCommutativeIdempotent.v
+Tealeaves/Examples/LambdaNominal/Syntax.v
+Tealeaves/Functors/List_Telescoping_General.v
