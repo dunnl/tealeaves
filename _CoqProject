@@ -19,6 +19,7 @@ Tealeaves/Misc/Prop.v
 Tealeaves/Misc/Subset.v
 Tealeaves/Misc/List.v
 Tealeaves/Classes/Categorical/Applicative.v
+Tealeaves/Classes/Categorical/ApplicativeCommutativeIdempotent.v
 Tealeaves/Classes/Kleisli/KApplicative.v
 Tealeaves/Classes/Kleisli/Monad.v
 Tealeaves/Classes/Kleisli/Comonad.v
@@ -55,6 +56,7 @@ Tealeaves/Categories/DecoratedTraversableFunctor.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Functors/Subset.v
 Tealeaves/Functors/List.v
+Tealeaves/Functors/List_Telescoping_General.v
 Tealeaves/Functors/Ctxset.v
 Tealeaves/Functors/Environment.v
 Tealeaves/Classes/Kleisli/ContainerMonad.v
@@ -72,6 +74,7 @@ Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
 Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
+Tealeaves/Classes/Kleisli/Theory/TraversableCommutativeIdempotent.v
 Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
@@ -209,6 +212,4 @@ Tealeaves/Simplification/Tests/STLC_LN.v
 Tealeaves/Simplification/Tests/STLC_DB.v
 
 # NOMINAL
-Tealeaves/Classes/Categorical/ApplicativeCommutativeIdempotent.v
 Tealeaves/Examples/LambdaNominal/Syntax.v
-Tealeaves/Functors/List_Telescoping_General.v

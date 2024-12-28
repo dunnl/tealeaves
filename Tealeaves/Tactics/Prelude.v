@@ -50,6 +50,11 @@ Definition const {A B : Type} (b : B) : A -> B := fun _ => b.
 
 Definition evalAt {A B} (a : A) (f : A -> B) := f a.
 
+Definition applyFn {A B: Type}: ((A -> B) * A) -> B :=
+  fun '(f, a) => f a.
+
+Definition flip {A B C: Type} := @CRelationClasses.flip A B C.
+
 Definition strength_arrow `(p : A * (B -> C)) : B -> A * C := fun b => (fst p, snd p b).
 
 Definition costrength_arrow `(p : (A -> B) * C) : A -> B * C := fun a => (fst p a, snd p).

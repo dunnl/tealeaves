@@ -1380,8 +1380,8 @@ Proof.
 Abort.
 
 
-(** * Inversion or induction? principles *)
-Section inversion.
+(** * Elimination principles *)
+Section elimination.
 
   Context {A: Type}.
 
@@ -1390,14 +1390,13 @@ Section inversion.
   Proof.
   Abort.
 
-  Search "ap" ap.
+End elimination.
 
-End inversion.
-
-Definition statement: Type := forall (A: Type) (n m: nat) (v1: Vector n A) (v2: Vector m A),
+Definition SSR_Goal: Type :=
+  forall (A: Type) (n m: nat) (v1: Vector n A) (v2: Vector m A),
     SameSetRight n m v1 v2 ->
     {ϕ : forall (X: Type), Vector n X -> Vector m X | ϕ A v1 = v2}.
 
-Goal statement.
-  unfold statement. intros.
+Goal SSR_Goal.
+  unfold SSR_Goal. intros.
 Abort.
