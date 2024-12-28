@@ -399,7 +399,7 @@ Proof.
     reflexivity.
 Qed.
 
-#[export] Instance: Traverse Z.
+#[export] Instance Traverse_Z: Traverse Z.
 Proof.
   intros G MapG PureG MultG A B f.
   unfold Z.
@@ -566,7 +566,6 @@ Proof.
 Qed.
 
 Generalizable All Variables.
-
 
 Lemma key_principle {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! Applicative G}
@@ -747,7 +746,6 @@ Proof.
     cbn.
     rewrite (traverse_list_app G).
     rewrite <- IHl.
-    Search ap "ap" map.
     rewrite <- ap_map.
     rewrite app_pure_natural.
     change [a] with (ret a).
@@ -759,8 +757,6 @@ Proof.
     rewrite app_pure_natural.
     fequal.
 Qed.
-
-Print Instances Traverse.
 
 #[export] Instance Traverse_two: Traverse (fun A => A * A).
 Proof.
@@ -805,7 +801,6 @@ Proof.
     rewrite appmor_pure.
     reflexivity.
 Qed.
-
 
 Definition FourTuple (A: Type) : Type := A * (A * (A * A)).
 
@@ -886,7 +881,6 @@ Fixpoint square {A:Type} (p: A * A): FourTuple A :=
   end.
 
 Notation "'apply'" := (fun '(f0, a0) => f0 a0).
-
 Lemma square_commute {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
   (f: A  -> G B) (p: A * A):
@@ -930,7 +924,6 @@ Proof.
   *)
 Qed.
 
-
 Fixpoint pairall {A:Type} (l: list A): list (A * A) :=
   match l with
   | nil => nil
@@ -952,7 +945,6 @@ Lemma pairall_cons_pf {A:Type}:
 Proof.
   reflexivity.
 Qed.
-
 
 Lemma pairall_commute_cons_simpler {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G}
@@ -1013,7 +1005,7 @@ Qed.
 
 Lemma pairall_commute_cons {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
-  (f: A -> G B) (a: A) (x: A) (l: list A):
+  (f: A -> G B) (a: A) (l: list A):
   l <> nil ->
   map (F := G) (fun b => map (F := list) (pair b)) (f a) <⋆> (traverse (T := list) f l) =
     traverse (traverse (T := fun A => A * A) f) (map (pair a) l).
@@ -1279,10 +1271,10 @@ Proof.
     rewrite app_pure_natural.
     reflexivity.
     easy.
-    easy.
 Qed.
 
 
+(*
 Lemma pairall_commute {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
   (f: A  -> G B) (l: list A):
@@ -1696,6 +1688,7 @@ Proof.
       rewrite ap2.
 
 Abort.
+*)
 
 Lemma dec_pointfree1: forall (A: Type) (a: A) (l: list A),
     (* (compose dec ∘ cons) a l = dec (cons a l).*)
@@ -1762,7 +1755,7 @@ Infix "|⋆>" := penguin (at level 50).
 
 #[export] Instance Traverse_LZ: Traverse (list ∘ Z) :=
   fun A B _ _ A B f l => traverse (T := list) (traverse (T := Z) f) l.
-
+(*
 Lemma key_principle_lemma {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! Applicative G}
   (f: A  -> G B) (b : G B) (l: list (list A * A)):
@@ -1773,77 +1766,27 @@ Proof.
   - cbn. reflexivity.
   - unfold penguin in *.
 Abort.
+*)
 
-Lemma key_principle {A B: Type}
+Lemma decorate_commute {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
   (f: A  -> G B) (l: list A):
   map (F := G) (decorate_telescoping_list_alt) (traverse f l) =
     traverse (T := list) (traverse (T := Z) f) (decorate_telescoping_list_alt l).
 Proof.
-  intros.
-  induction l.
-  - rewrite traverse_list_nil.
-    rewrite app_pure_natural.
-    rewrite decorate_telescoping_list_rw_nil.
-    rewrite traverse_list_nil.
-    reflexivity.
+  destruct l.
   - cbn.
-
-    rewrite traverse_list_cons.
-    rewrite map_ap.
-    rewrite map_ap.
     rewrite app_pure_natural.
-    (* right *)
+    reflexivity.
+  - rewrite traverse_list_cons.
     rewrite decorate_telescoping_list_rw_cons.
     rewrite traverse_list_cons.
-    cbn.
-    rewrite ap2.
-    rewrite <- ap4.
-    rewrite ap2.
-    rewrite ap2.
-    compose near (dec l).
-    rewrite (traverse_map).
-    rewrite (trav_incr_rw);[|typeclasses eauto].
-    change (map_fst ∘ cons (A := B)) with (incr (W := list B) (A := B) ∘ ret).
-    rewrite <- (map_to_ap (incr ∘ ret)).
-    rewrite <- (traverse_map).
-    unfold compose at 4.
-    { induction l.
-      - cbn.
-        rewrite ap_ci2.
-        rewrite app_pure_natural.
-        rewrite ap2.
-        rewrite (ap_ci2 _ (f a)).
-        rewrite app_pure_natural.
-        rewrite ap2.
-        fequal.
-      - clear IHl0.
-        rewrite ap_ci2.
-        rewrite app_pure_natural.
-        rewrite (ap_ci2 _ (f a)).
-        rewrite app_pure_natural.
-        fequal.
-        rewrite <- map_to_ap.
-        rewrite <- map_to_ap.
-        rewrite decorate_telescoping_list_rw_cons.
-        rewrite map_list_cons.
-        cbn.
-        Search map traverse "map" "trav".
-        Search pure ap.
-        traverse.
-
-        rewrite <- ap_compose2.
-        Set Printing All.
-        cbn.
-
-Admitted.
-
+Abort.
 
 Definition kdtfunp_axiom2: Prop :=
   forall `{ApplicativeCommutativeIdempotent G1} `{ApplicativeCommutativeIdempotent G2}
     {A B C : Type} (g : list B * B -> G2 C) (f : list A * A -> G1 B),
     map (mapdt g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (compose_arrows g f).
-
 
 Lemma proof2: kdtfunp_axiom2.
 Proof.
@@ -1879,7 +1822,6 @@ Proof.
     cbn.
 Abort.
 
-
 Lemma proof2: kdtfunp_axiom2.
 Proof.
   unfold kdtfunp_axiom2.
@@ -1908,8 +1850,8 @@ Proof.
                  (H3 := (@Pure_compose G1 G2 H4 H0))
                  (H4 := @Mult_compose G1 G2 H5 H H1)).
     unfold traverse.
-    rewrite <- key_principle.
-
+    try rewrite <- key_principle.
+Abort.
 
 (** * Proof that decoration is SSR *)
 From Tealeaves Require Import
