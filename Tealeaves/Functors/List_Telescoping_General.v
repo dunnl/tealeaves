@@ -958,82 +958,58 @@ Lemma pairall_commute_cons_simpler {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G}
   `{! ApplicativeCommutativeIdempotent G}
   (f: A -> G B) (a: A) (x: A) (l: list A):
-  map (map ○ pair) (f a) <⋆> traverse f l = traverse (traverse f) (map (pair a) l) ->
-  map (map ○ pair) (f a) <⋆> traverse f (x :: l) = traverse (traverse f) (map (pair a) (x :: l)).
+  map (map ∘ pair) (f a) <⋆> traverse f l = traverse (traverse f) (map (pair a) l) ->
+  map (map ∘ pair) (f a) <⋆> traverse f (x :: l) = traverse (traverse f) (map (pair a) (x :: l)).
 Proof.
   introv IH.
-  cbn.
-  rewrite <- IH; clear IH.
+  (* RHS *)
+  Check  map (F := G) (map (F := list) ∘ pair) (f a).
+  rewrite map_list_cons.
+  rewrite (traverse_list_cons _ _ _ _ (a, x)).
+  rewrite traverse_two_rw.
+  rewrite <- IH.
+  clear IH.
+  (* LHS *)
+  rewrite traverse_list_cons.
   rewrite <- ap4.
   rewrite <- ap4.
   rewrite <- ap4.
-  repeat rewrite ap2.
+  rewrite ap2.
+  rewrite ap2.
   rewrite ap3.
   change (fun f0 => f0 cons) with
     (evalAt (A := B -> list B -> list B) (B := B -> list B -> list (B * B)) cons).
   rewrite <- ap4.
   rewrite ap2.
   rewrite ap2.
-  rewrite (ap_ci _ (f x)).
-  rewrite map_to_ap.
-
-
-  rewrite <- ap4.
-  rewrite <- ap4.
-  rewrite ap2.
-  rewrite ap2.
-
-  rewrite <- ap4.
-  rewrite <- ap4.
-  rewrite ap2.
-  rewrite ap2.
-  rewrite <- ap4.
-  rewrite ap2.
-  rewrite <- ap4.
-  rewrite ap2.
-  rewrite ap2.
-  rewrite (ap_ci (pure (compose (compose ∘ cons) ∘ pair) <⋆> f a) (f x)).
-  rewrite (map_to_ap (evalAt)).
-  rewrite <- ap4.
-  rewrite <- ap4.
-  repeat rewrite ap2.
-  rewrite (ap_ci2 _ (f a)).
-  rewrite map_ap.
-  rewrite map_ap.
-  rewrite app_pure_natural.
-
-  rewrite (map_to_ap) at 2.
-  rewrite <- ap4.
-  rewrite <- ap4.
-  rewrite <- ap4.
-  rewrite <- ap4.
-  repeat rewrite ap2.
-  rewrite <- (map_to_ap (map ○ pair)).
-  rewrite ap_cidup.
-  rewrite map_ap.
-  rewrite map_ap.
-  rewrite map_ap.
-  rewrite app_pure_natural.
-
-  rewrite map_ap.
-  rewrite map_ap.
-  rewrite app_pure_natural.
-  rewrite <- ap4.
-  rewrite ap2.
-  rewrite <- ap4.
-  rewrite ap2.
-  rewrite ap2.
-
-  fequal
-  rewrite <- ap4.
-  rewrite ap2.
-  rewrite ap2.
-  rewrite <- (map_to_ap (map ○ pair)).
   rewrite <- map_to_ap.
-  fequal.  ext asdf.
+  compose near (f a) on left.
+  rewrite (fun_map_map).
+  rewrite <- ap4.
+  rewrite <- ap4.
+  rewrite <- ap4.
+  do 8 rewrite <- ap4.
+  repeat rewrite ap2.
+  rewrite <- map_to_ap.
+  rewrite <- ap_map.
+  rewrite map_ap.
+  compose near (f a) on right.
+  compose near (f a) on right.
+  rewrite (fun_map_map).
+  unfold compose at 7.
+  rewrite (ap_ci2 _ _ (f a)).
+  compose near (f a) on right.
+  compose near (f a) on right.
+  rewrite (fun_map_map).
+  unfold compose at 7.
+  rewrite map_to_ap.
+  rewrite map_to_ap.
+  rewrite ap_cidup.
+  rewrite <- map_to_ap.
+  rewrite app_pure_natural.
+  rewrite <- map_to_ap.
   fequal.
-
-Admitted.
+Qed.
 
 Lemma pairall_commute_cons {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
