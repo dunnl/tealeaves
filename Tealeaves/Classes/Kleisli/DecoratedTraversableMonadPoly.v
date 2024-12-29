@@ -1,40 +1,86 @@
 From Tealeaves Require Export
-  Classes.Monoid
   Classes.Categorical.Applicative
-  (* Classes.Categorical.Comonad *)
-  Functors.ListHistory.
+  Classes.Kleisli.DecoratedTraversableCommIdemFunctor
+  Classes.Kleisli.Monad
+  Functors.Writer
+  Functors.List
+  Functors.List_Telescoping_General.
 
+Import Applicative.Notations.
 Import Monoid.Notations.
 Import Product.Notations.
 Import List.ListNotations.
+Import DecoratedTraversableCommIdemFunctor.Notations.
 
 #[local] Generalizable Variables ϕ T W G A B C D F M.
 
 #[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
 
-Class Substitute
-  (T : Type -> Type -> Type)
-  (F : Type -> Type -> Type) :=
-  substitute :
-    forall (WA WB : Type) (G : Type -> Type)
-      `{Map G} `{Pure G} `{Mult G}
-      (A B : Type),
-      (list WA * WA -> WB) ->
-      (list WA * A -> G (T WB B))
-      -> F WA A -> G (F WB B).
+(** U = type of newly inserted syntax
+    T = type of syntax substituted into
+    B1 = type of binders before substitution
+    B2 = new type of binders after substitution
+    A1 = type of variables before substitution
+    A2 = new type of variables after substitution *)
 
-#[local] Arguments substitute {T F}%function_scope {Substitute}
-  {WA WB}%type_scope {G}%function_scope {H H0 H1} {A B}%type_scope
+Class Substitute
+  (U : Type -> Type -> Type)
+  (T : Type -> Type -> Type) :=
+  substitute:
+    forall (B1 A1 B2 A2: Type)
+      (G : Type -> Type) `{Map G} `{Pure G} `{Mult G},
+      (list B1 * B1 -> G B2) -> (* rename binders *)
+      (list B1 * A1 -> G (U B2 A2)) -> (* insert subtrees *)
+      T B1 A1 -> (* press button *)
+      G (T B2 A2). (* receive bacon *)
+
+#[global] Arguments substitute {U T}%function_scope {Substitute}
+  {B1 A1 B2 A2}%type_scope
+  {G}%function_scope {H H0 H1}
   (_ _)%function_scope _.
 
-
+(*
 Definition kcompose_rename
   {WA WB WC} :
   (list WB * WB -> WC) ->
   (list WA * WA -> WB) ->
   (list WA * WA -> WC) :=
   fun ρg ρf '(ctx, wa) => ρg (hmap ρf ctx, ρf (ctx, wa)).
+ *)
 
+
+Definition kc_subvar {U} `{Substitute U U}:
+   forall {B1 A1 B2 A2 B3 A3: Type}
+     {G1 : Type -> Type} `{Map G1} `{Pure G1} `{Mult G1}
+     {G2 : Type -> Type} `{Map G2} `{Pure G2} `{Mult G2},
+     (list B2 * B2 -> G2 B3) -> (* second op to rename binders *)
+     (list B2 * A2 -> G2 (U B3 A3)) -> (* second op to insert terms *)
+     (list B1 * B1 -> G1 B2) -> (* first op to rename binders *)
+     (list B1 * A1 -> G1 (U B2 A2)) -> (* first op to insert terms *)
+     (list B1 * A1 -> (G1 ∘ G2) (U B3 A3)).
+Proof.
+  introv mapG1 pureG1 multG1.
+  introv mapG2 pureG2 multG2.
+  intros ρ2 σ2 ρ1 σ1.
+  intros [ctx a].
+  Check σ1 (ctx, a).
+  Check mapdt_ci (Z := Z) ρ1 ctx : G1 (list B2).
+  Check pure pair
+    <⋆> (mapdt_ci (Z := Z) ρ1 ctx : G1 (list B2))
+    <⋆> σ1 (ctx, a).
+  Check map (fun '(ctx2, u) => substitute (ρ2 ⦿ ctx2) (σ2 ⦿ ctx2) u).
+  Check
+    map (fun '(ctx2, u) => substitute (ρ2 ⦿ ctx2) (σ2 ⦿ ctx2) u)
+        (pure pair
+           <⋆> (mapdt_ci (Z := Z) ρ1 ctx : G1 (list B2))
+           <⋆> σ1 (ctx, a)).
+  apply (map (fun '(ctx2, u) => substitute (ρ2 ⦿ ctx2) (σ2 ⦿ ctx2) u)
+        (pure pair
+           <⋆> (mapdt_ci (Z := Z) ρ1 ctx : G1 (list B2))
+           <⋆> σ1 (ctx, a))).
+Defined.
+
+(*
 Definition kcompose_dtmp
   {A B C WA WB WC}
   `{Map G1} `{Pure G1} `{Mult G1}
@@ -47,37 +93,53 @@ Definition kcompose_dtmp
   (list WA * A -> G1 (G2 (T WC C))) :=
   fun ρg g ρf f '(wa, a) =>
     map (F := G1) (substitute (ρg ⦿ hmap ρf wa) (g ⦿ hmap ρf wa)) (f (wa, a)).
+*)
 
-
+(*
 #[local] Infix "⋆ren" := kcompose_rename (at level 60) : tealeaves_scope.
 #[local] Notation "| r1 || s1 | '⋆sub' | r2 || s2 |" := (kcompose_dtmp r1 s1 r2 s2) (r1 at level 0, s1 at level 0, r2 at level 0, s2 at level 0, at level 60) : tealeaves_scope.
+ *)
 
 Class DecoratedTraversableMonadPoly
     (T : Type -> Type -> Type)
     `{forall W, Return (T W)}
     `{Substitute T T} :=
-  { kdtm_binddt0 :
-    forall (WA WB A B : Type) `{Applicative G}
-      (ρ : list WA * WA -> WB) (f : list WA * A -> G (T WB B)),
-      substitute ρ f ∘ ret (T WA) A = f ∘ ret (list WA ×) A;
-    kdtm_substitute1 :
-    forall (W A : Type),
-      substitute (G := fun A => A) (extract (W := (list W ×))) (ret (T W) A ∘ extract (W := (list W ×))) = @id (T W A);
-    kdtm_substitute2 :
-    forall (A B C : Type)
-      `{Applicative G1} `{Applicative G2}
-      (WA WB WC : Type)
-      (ρg : list WB * WB -> WC)
-      (g : list WB * B -> G2 (T WC C))
-      (ρf : list WA * WA -> WB)
-      (f : list WA * A -> G1 (T WB B)),
-      map (F := G1) (substitute ρg g) ∘ substitute ρf f =
-        substitute (G := G1 ∘ G2) (ρg ⋆ren ρf) (| ρg || g | ⋆sub | ρf || f |);
+  { kdtmp_substitute1:
+    forall (B1 B2 A1 A2 : Type)
+      `{Applicative G}
+      (ρ : list B1 * B1 -> G B2)
+      (σ : list B1 * A1 -> G (T B2 A2)),
+      substitute ρ σ ∘ ret (T B1) A1 = σ ∘ ret (list B1 ×) A1;
+    kdtm_substitute2:
+    forall (B A : Type),
+      substitute (G := fun A => A)
+        (extract (W := (list B ×)))
+        (ret (T B) A ∘ extract (W := (list B ×)))
+      = @id (T B A);
+    kdtm_substitute3:
+    forall (B1 B2 B3: Type)
+      (A1 A2 A3: Type)
+      `{ApplicativeCommutativeIdempotent G1}
+      `{ApplicativeCommutativeIdempotent G2}
+      (ρ1 : list B1 * B1 -> G1 B2)
+      (ρ2 : list B2 * B2 -> G2 B3)
+      (σ1 : list B1 * A1 -> G1 (T B2 A2))
+      (σ2 : list B2 * A2 -> G2 (T B3 A3)),
+      map (F := G1) (substitute (G := G2) ρ2 σ2) ∘ substitute (G := G1) (T := T) (U := T) ρ1 σ1 =
+        substitute (T := T) (U := T) (G := G1 ∘ G2)
+          (ρ2 ⋆6_ci ρ1) (kc_subvar ρ2 σ2 ρ1 σ1);
     kdtm_morph :
-    forall (WA WB : Type) (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ} (ρ : list WA * WA -> WB) `(f : list WA * A -> G1 (T WB B)),
-      ϕ (T WB B) ∘ substitute ρ f = substitute ρ (ϕ (T WB B) ∘ f);
+    forall (B1 A1 B2 A2 : Type) (G1 G2 : Type -> Type)
+      `{morph : ApplicativeMorphism G1 G2 ϕ}
+      (ρ : list B1 * B1 -> G1 B2)
+      (σ : list B1 * A1 -> G1 (T B2 A2)),
+      ϕ (T B2 A2) ∘ substitute ρ σ =
+        substitute (ϕ B2 ∘ ρ) (ϕ (T B2 A2) ∘ σ);
   }.
 
+
+
+(*
 Section compose_laws.
 
   #[local] Generalizable All Variables.
@@ -120,3 +182,4 @@ Section compose_laws.
   Qed.
 
 End compose_laws.
+*)

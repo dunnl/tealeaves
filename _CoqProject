@@ -135,7 +135,7 @@ Tealeaves/Functors/ListHistory.v
 Tealeaves/Functors/List_Telescoping.v
 
 # FULLY NOMINAL DTMS
-#Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
 
 # SIMPLIFICATION
