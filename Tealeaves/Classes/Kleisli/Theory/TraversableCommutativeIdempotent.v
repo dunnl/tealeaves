@@ -293,7 +293,6 @@ Lemma compose_compose {A B C D: Type}:
     - clear Hnotnil.
       destruct xs as [| y ys ].
       + clear IHxs.
-
         (* LHS *)
         rewrite map_list_one.
         change ([(a, x)]) with (ret (a, x)).
@@ -329,45 +328,7 @@ Lemma compose_compose {A B C D: Type}:
         assumption.
   Qed.
 
-  (*
   Lemma pairall_commute {A B: Type}
-    (f: A  -> G B) (l: list A):
-    map (F := G) pairall (traverse f l) =
-      traverse (T := list) (traverse (T := fun A => A * A) f) (pairall l).
-  Proof.
-    destruct l.
-    - cbn.
-      rewrite app_pure_natural.
-      reflexivity.
-    - (* RHS *)
-      rewrite pairall_spec.
-      rewrite pairall_commute_cons; [| discriminate].
-      (* ^^ rely on (a :: l <> []) *)
-      rewrite traverse_list_cons.
-      rewrite map_ap.
-      rewrite map_ap.
-      rewrite app_pure_natural.
-      rewrite map_to_ap.
-      rewrite <- ap4.
-      rewrite <- ap4.
-      rewrite <- ap4.
-      rewrite ap2.
-      rewrite ap2.
-      rewrite <- (ap4 _ _ (f a)).
-      rewrite ap2.
-      rewrite ap2.
-      rewrite ap3.
-      rewrite <- ap4.
-      rewrite ap2.
-      rewrite ap2.
-      rewrite ap_cidup.
-      rewrite app_pure_natural.
-      reflexivity.
-  Qed.
-*)
-
-
-  Lemma pairall_commute2 {A B: Type}
     (f: A  -> G B) (l: list A):
     map (F := G) pairall (traverse f l) =
       traverse (T := list) (traverse (T := fun A => A * A) f) (pairall l).
@@ -382,6 +343,7 @@ Lemma compose_compose {A B C D: Type}:
       rewrite map_ap.
       rewrite app_pure_natural.
 
+      (* RHS *)
       rewrite pairall_spec.
       rewrite pairall_commute_cons; [| discriminate].
       rewrite map_to_ap.
