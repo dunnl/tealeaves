@@ -232,6 +232,7 @@ Section Backwards.
        repeat rewrite <- ap4;
          repeat rewrite ap2.
        rewrite ap3;
+         unfold evalAt;
          repeat rewrite <- ap4;
          repeat rewrite ap2.
        unfold compose.
@@ -258,9 +259,11 @@ Section Backwards.
        repeat rewrite <- ap4;
          repeat rewrite ap2.
        rewrite ap3;
+         unfold evalAt;
        repeat rewrite <- ap4;
          repeat rewrite ap2.
        rewrite ap3;
+         unfold evalAt;
        repeat rewrite <- ap4;
          repeat rewrite ap2.
        reflexivity.

@@ -640,7 +640,7 @@ Section ApplicativeFunctor_ap.
   Qed.
 
   Theorem ap3 : forall `(f : G (A -> B)) (a : A),
-      f <⋆> pure a = pure (fun f => f a) <⋆> f.
+      f <⋆> pure a = pure (evalAt a) <⋆> f.
   Proof.
     intros. unfold ap. rewrite triangle_3, triangle_4.
     unfold strength. compose near f.
@@ -848,7 +848,7 @@ Section with_monoid.
       unfold_ops @Monoid_unit_applicative.
       rewrite ap_curry.
       rewrite <- map_to_ap.
-      rewrite ap3.
+      rewrite ap3. unfold evalAt.
       rewrite pure_ap_map.
       change x with (id x) at 2. rewrite <- (fun_map_id).
       fequal. ext m.

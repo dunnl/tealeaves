@@ -223,6 +223,7 @@ Section bindt_rewriting_lemmas.
       repeat rewrite ap2.
       repeat fequal.
       ext x y z. unfold compose.
+      unfold evalAt.
       now rewrite List.app_assoc.
   Qed.
 
@@ -1305,7 +1306,6 @@ Qed.
 
 
 (** * SameSet *)
-Print Permutation.
 
 Inductive SameSetRight {A : Type} : list A -> list A -> Prop :=
 | ssetr_nil : SameSetRight [] []
