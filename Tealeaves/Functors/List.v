@@ -169,6 +169,14 @@ Proof.
   - cbn. now rewrite IHrest.
 Qed.
 
+#[export] Instance Compat_Map_Traverse_list:
+  Compat_Map_Traverse list
+  := ltac:(typeclasses eauto).
+
+#[export] Instance Compat_Map_Bind_list:
+  Compat_Map_Bind list list
+  := ltac:(typeclasses eauto).
+
 (** ** Rewriting lemmas for <<bindt>> *)
 (******************************************************************************)
 Section bindt_rewriting_lemmas.
@@ -459,6 +467,10 @@ Qed.
 #[export] Instance TraversableRightModule_list:
   TraversableRightModule list list :=
   {| ktmod_monad := _; |}.
+
+#[export] Instance TraversableFunctor_list:
+  TraversableFunctor list :=
+  TraversableFunctor_TraversableMonad.
 
 (** * List algebras and folds *)
 (******************************************************************************)
