@@ -1,15 +1,15 @@
 From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableFunctor
-  Classes.Kleisli.TraversableMonad
-  Classes.Kleisli.TraversableFunctor
+  Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Categorical.ApplicativeCommutativeIdempotent
   Functors.List
   Functors.Diagonal.
 
 Import Applicative.Notations.
 Import Monoid.Notations.
+Import TraversableFunctor.Notations.
 Import DecoratedTraversableFunctor.Notations.
-Import Kleisli.TraversableFunctor.Notations.
+Import DecoratedTraversableCommIdemFunctor.Notations.
 Import List.ListNotations.
 
 (** * Prefix Decoration operation for the [List] functor *)
@@ -122,7 +122,7 @@ Section decorate_prefix_list_rw.
     - cbn.
       change (incr []) with (incr (A := A) (Ƶ: list A)).
       rewrite incr_zero.
-      rewrite map_id.
+      rewrite (fun_map_id (F := list)).
       reflexivity.
     - (* left *)
       rewrite <- List.app_comm_cons.
@@ -353,7 +353,7 @@ Proof.
   unfold Compat_Map_Traverse.
   ext A B f [l a].
   cbn. unfold id. fequal.
-  rewrite map_to_traverse.
+  rewrite (map_to_traverse (T := list)).
   reflexivity.
 Qed.
 
@@ -379,7 +379,8 @@ End traverse_Z_rw.
 Proof.
   constructor.
   - intros. ext [l a].
-    cbn. now rewrite trf_traverse_id.
+    cbn.
+    now rewrite trf_traverse_id.
   - intros. ext [l a].
     unfold compose.
     cbn.
@@ -474,11 +475,15 @@ End mapdt_list_prefix_rw.
 (** ** Decomposed version *)
 (******************************************************************************)
 Definition mapdt_list_prefix
-  {A B: Type}
-  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G}
-  (f: list A * A -> G B) (l: list A): G (list B) :=
+  `{G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  {A B: Type} (f: list A * A -> G B) (l: list A): G (list B) :=
   traverse (T := list) (G := G) f (decorate_prefix_list l).
 
+#[export] Instance Mapdt_CommIdem_list_prefix:
+  Mapdt_CommIdem Z list := @mapdt_list_prefix.
+
+(** ** Specifications *)
+(******************************************************************************)
 Lemma mapdt_list_prefix_spec
   {A B: Type}
   `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! Applicative G}
@@ -517,13 +522,14 @@ Qed.
 
 (** ** Kleisli composition *)
 (******************************************************************************)
-Definition compose_arrows
+Definition compose_arrows_manual
   {A B C: Type}
   `{G1: Type -> Type} `{Map G1} `{Mult G1} `{Pure G1}
   `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
   (g: list B * B -> G2 C) (f: list A * A -> G1 B)
   : list A * A -> G1 (G2 C) :=
   map g ∘ traverse (T := Z) f ∘ cojoin (W := Z).
+
 
 (** *** Inlined version *)
 (******************************************************************************)
@@ -544,10 +550,10 @@ Lemma compose_arrows_equiv
   `{G1: Type -> Type} `{Map G1} `{Mult G1} `{Pure G1} `{! Applicative G1}
   `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
   (g: list B * B -> G2 C) (f: list A * A -> G1 B):
-  compose_arrows g f = compose_arrows2 g f.
+  g ⋆6_ci f = compose_arrows2 g f.
 Proof.
   ext [l a].
-  unfold compose_arrows.
+  unfold kc6_ci.
   unfold compose.
   cbn.
   do 3 fequal.
@@ -555,7 +561,9 @@ Proof.
   reflexivity.
 Qed.
 
+(*
 (** *** Preincrement *)
+(* There does not seem to be a good statement of a property like this *)
 (******************************************************************************)
 Lemma compose_arrows_preincr
   {A B C: Type}
@@ -563,7 +571,7 @@ Lemma compose_arrows_preincr
   `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
   (g: list B * B -> G2 C) (f: list A * A -> G1 B)
   (ctx: list A):
-  (compose_arrows g f) ⦿ ctx =
+  (g ⋆6_ci f) ⦿ ctx =
     (compose_arrows2 g f) ⦿ ctx.
 Proof.
   intros.
@@ -592,6 +600,7 @@ Proof.
   rewrite map_ap.
   rewrite app_pure_natural.
 Abort.
+*)
 
 (** *** Examples *)
 (******************************************************************************)
@@ -616,18 +625,11 @@ Section test.
   Abort.
 
   Goal map (mapdt_list_prefix_ g) (mapdt_list_prefix_ f list3) =
-         mapdt_list_prefix_ (compose_arrows g f) list3.
+         mapdt_list_prefix_ (G := G ∘ G) (kc6_ci (Z := Z) g f) list3.
   Proof.
     cbn.
-    unfold compose_arrows.
+    unfold kc6_ci.
     unfold compose at 1 2.
-    cbn.
-    repeat rewrite map_ap.
-    do 30 rewrite <- ap4.
-    repeat rewrite app_pure_natural.
-    repeat rewrite ap2.
-    unfold compose.
-    cbn.
   Abort.
 
 End test.
@@ -637,11 +639,9 @@ End test.
 
 (** ** Unit law *)
 (******************************************************************************)
-Definition kdtfunp_axiom1: Prop := forall (A : Type),
+Lemma kdtfci_mapdt1_list_prefix: forall (A : Type),
     mapdt_list_prefix (G := fun A => A) extract = @id (list A).
-Lemma proof1: kdtfunp_axiom1.
 Proof.
-  unfold kdtfunp_axiom1.
   intros. ext l. induction l.
   - cbn. reflexivity.
   - rewrite mapdt_list_prefix_spec.
@@ -949,35 +949,13 @@ Proof.
   reflexivity.
 Qed.
 
-#[export] Instance Traverse_LZ: Traverse (list ∘ Z) :=
-  fun A B _ _ A B f l => traverse (T := list) (traverse (T := Z) f) l.
-
-Definition kdtfunp_axiom2: Prop :=
-  forall `{ApplicativeCommutativeIdempotent G1} `{ApplicativeCommutativeIdempotent G2}
-    {A B C : Type} (g : list B * B -> G2 C) (f : list A * A -> G1 B),
+Lemma kdtfci_mapdt2_list_prefix:
+  forall `{ApplicativeCommutativeIdempotent G1}
+    `{ApplicativeCommutativeIdempotent G2}
+    {A B C : Type} (g : Z B -> G2 C) (f : Z A -> G1 B),
     map (mapdt_list_prefix g) ∘ mapdt_list_prefix f =
-      mapdt_list_prefix (G := G1 ∘ G2) (compose_arrows g f).
-
-(*
-Lemma decorate_commute {A B: Type}
-  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G} `{! ApplicativeCommutativeIdempotent G}
-  (f: A  -> G B) (l: list A):
-  map (F := G) (decorate_prefix_list) (traverse f l) =
-    traverse (T := list) (traverse (T := Z) f) (decorate_prefix_list l).
+      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆6_ci f).
 Proof.
-  induction l as [|x xs IHx].
-  - cbn.
-    rewrite app_pure_natural.e
-    reflexivity.
-  - rewrite traverse_list_cons.
-    rewrite decorate_prefix_list_rw_cons.
-    rewrite traverse_list_cons.
-Abort.
- *)
-
-Lemma proof2: kdtfunp_axiom2.
-Proof.
-  unfold kdtfunp_axiom2.
   intros.
   unfold mapdt_list_prefix.
   ext l.
@@ -986,7 +964,7 @@ Proof.
   reassociate -> on left.
   reassociate <- near (map dec).
   rewrite decorate_commute.
-  unfold compose_arrows.
+  unfold kc6_ci.
   rewrite <- (traverse_map (A := Z A) (T := list) (G2 := G1 ∘ G2)
                (map (F := G1) g ∘ traverse (T := Z) f) (cojoin (W := Z))).
   unfold compose at 4 6.
@@ -997,30 +975,39 @@ Proof.
   reflexivity.
 Qed.
 
-Definition axiom3 :=
-  forall (G1 G2 : Type -> Type)
-    (H0 : Map G1) (H1 : Mult G1)
-    (H2 : Pure G1) (H3 : Map G2)
-    (H4 : Mult G2) (H5 : Pure G2)
-    (ϕ : forall A : Type, G1 A -> G2 A),
-    ApplicativeMorphism G1 G2 ϕ ->
-    forall (A B : Type) (f : A -> G1 B),
-      ϕ (Z B) ∘ traverse f = traverse (ϕ B ∘ f).
-
-Lemma proof3: axiom3.
+(** ** Homomorphism law *)
+(******************************************************************************)
+Lemma kdtfci_morph_list_prefix:
+  forall `{ApplicativeMorphism G1 G2 ϕ}
+      {A B : Type} (f : Z A -> G1 B),
+      mapdt_ci (ϕ B ∘ f) = ϕ (list B) ∘ mapdt_ci f.
 Proof.
-  unfold axiom3.
-  intros.
-  ext [l a].
-  unfold compose.
-  cbn.
-  rewrite ap_morphism_1.
-  rewrite ap_morphism_1.
-  rewrite appmor_pure.
-  compose near l on left.
-  rewrite trf_traverse_morphism.
-  reflexivity.
-Qed.
+  intros. ext l.
+  generalize dependent f.
+  induction l as [| b bs IHbs ]; intro f.
+  - unfold compose. cbn.
+    now rewrite appmor_pure.
+  - cbn.
+    unfold compose at 3.
+    cbn.
+    rewrite ap_morphism_1.
+    rewrite ap_morphism_1.
+    rewrite appmor_pure.
+    compose near (dec bs).
+    assert (Applicative G2) by now inversion H5.
+    rewrite (traverse_map).
+    reassociate -> near (incr [b]).
+Admitted.
+
+(** ** Typeclass Instance *)
+(******************************************************************************)
+#[export] Instance DecoratedTraversableCommIdemFunctor_list_prefix:
+  DecoratedTraversableCommIdemFunctor Z list :=
+    { kdtfci_mapdt1 := kdtfci_mapdt1_list_prefix;
+      kdtfci_mapdt2 := @kdtfci_mapdt2_list_prefix;
+      kdtfci_morph  := @kdtfci_morph_list_prefix
+    }.
+
 
 (*
 (** * Proof that decoration is SSR *)
