@@ -348,6 +348,15 @@ Proof.
   exact (pure pair <⋆> (traverse (T:=list) f l) <⋆> f a).
 Defined.
 
+#[export] Instance Compat_Map_Traverse: Compat_Map_Traverse Z.
+Proof.
+  unfold Compat_Map_Traverse.
+  ext A B f [l a].
+  cbn. unfold id. fequal.
+  rewrite map_to_traverse.
+  reflexivity.
+Qed.
+
 (** *** Traversable Z *)
 (******************************************************************************)
 Section traverse_Z_rw.
@@ -807,11 +816,13 @@ Section commute_law.
   Qed.
 
   Theorem decorate_commute {A B: Type}
-    (f: A  -> G B) (l: list A):
-    map (decorate_prefix_list) (traverse f l) =
-      traverse (T := list) (traverse (T := Z) f) (decorate_prefix_list l).
+    (f: A  -> G B):
+    map (decorate_prefix_list) ∘ traverse f =
+      traverse (T := list) (traverse (T := Z) f) ∘ decorate_prefix_list.
   Proof.
     intros.
+    unfold compose.
+    ext l.
     induction l as [| x xs IHxs ].
     - (* LHS *)
       rewrite traverse_list_nil.
@@ -968,78 +979,48 @@ Lemma proof2: kdtfunp_axiom2.
 Proof.
   unfold kdtfunp_axiom2.
   intros.
-  ext l.
-
-  Search "mapdt" "spec".
   unfold mapdt_list_prefix.
+  ext l.
   change (?f ○ ?g) with (f ∘ g).
   rewrite <- fun_map_map.
   reassociate -> on left.
   reassociate <- near (map dec).
   rewrite decorate_commute.
+  unfold compose_arrows.
+  rewrite <- (traverse_map (A := Z A) (T := list) (G2 := G1 ∘ G2)
+               (map (F := G1) g ∘ traverse (T := Z) f) (cojoin (W := Z))).
+  unfold compose at 4 6.
+  rewrite <- cojoin_assoc_lemma.
+  reassociate <- on left.
+  reassociate <- on left.
+  rewrite trf_traverse_traverse.
+  reflexivity.
+Qed.
 
-  rewrite mapdt_list_prefix
+Definition axiom3 :=
+  forall (G1 G2 : Type -> Type)
+    (H0 : Map G1) (H1 : Mult G1)
+    (H2 : Pure G1) (H3 : Map G2)
+    (H4 : Mult G2) (H5 : Pure G2)
+    (ϕ : forall A : Type, G1 A -> G2 A),
+    ApplicativeMorphism G1 G2 ϕ ->
+    forall (A B : Type) (f : A -> G1 B),
+      ϕ (Z B) ∘ traverse f = traverse (ϕ B ∘ f).
 
-
-  generalize dependent f.
-  generalize dependent g.
-  unfold compose at 1.
-  induction l; intros g f.
-  - cbn.
-    rewrite app_pure_natural.
-    reflexivity.
-  - (* left side *)
-    rewrite mapdt_list_prefix_spec.
-    rewrite mapdt_list_prefix_rw_cons.
-    rewrite <- mapdt_list_prefix_spec.
-    do 2 rewrite map_ap; rewrite app_pure_natural.
-    (* right side *)
-    rewrite (mapdt_list_prefix_spec (G := G1 ∘ G2) (compose_arrows g f)).
-    rewrite mapdt_list_prefix_rw_cons.
-    rewrite <- mapdt_list_prefix_spec.
-    rewrite compose_arrows_equiv.
-    unfold compose_arrows2.
-    rewrite map_ap.
-    rewrite map_ap.
-    rewrite mapdt_list_prefix_rw_nil.
-    rewrite app_pure_natural.
-    rewrite ap2.
-    rewrite <- map_to_ap.
-    unfold compose at 6.
-    unfold preincr, compose.
-    cbn.
-Abort.
-
-Lemma proof2: kdtfunp_axiom2.
+Lemma proof3: axiom3.
 Proof.
-  unfold kdtfunp_axiom2.
+  unfold axiom3.
   intros.
-  ext l.
-  generalize dependent f.
-  generalize dependent g.
-  unfold compose at 1.
-  induction l; intros g f.
-  - cbn.
-    rewrite app_pure_natural.
-    reflexivity.
-  - unfold mapdt_list_prefix at 2.
-    unfold mapdt_list_prefix at 2.
-    unfold compose_arrows.
-    rewrite <- (traverse_map (T := list) (G2 := (G1 ∘ G2))
-                 (H := Traverse_list)
-                 (H2 := @Map_compose G1 G2 H3 H)
-                 (H3 := (@Pure_compose G1 G2 H4 H0))
-                 (H4 := @Mult_compose G1 G2 H5 H H1)
-                 (A := (prod (list A) A)) (C := C)).
-    Set Keyed Unification.
-    rewrite <- (traverse_map (T := list)  (G2 := (G1 ∘ G2))
-                 (H := Traverse_list)
-                 (H2 := @Map_compose G1 G2 H3 H)
-                 (H3 := (@Pure_compose G1 G2 H4 H0))
-                 (H4 := @Mult_compose G1 G2 H5 H H1)).
-    unfold traverse.
-    try rewrite <- key_principle.
-Abort.
+  ext [l a].
+  unfold compose.
+  cbn.
+  rewrite ap_morphism_1.
+  rewrite ap_morphism_1.
+  rewrite appmor_pure.
+  compose near l on left.
+  rewrite trf_traverse_morphism.
+  reflexivity.
+Qed.
 
 (*
 (** * Proof that decoration is SSR *)
