@@ -194,15 +194,32 @@ Section Cojoin_Z_rw.
     reflexivity.
   Qed.
 
-  Lemma cojoin_Z_rw_preincr: forall (ctx: list A)(l: list A) (a: A),
+  Lemma cojoin_Z_rw_preincr_one: forall (ctx: A) (l: list A) (a: A),
+      (cojoin (W := Z) ⦿ [ctx]) (l, a) =
+        map_both (cons ([], ctx) ∘ map (incr [ctx])) (incr [ctx])
+          (cojoin (W := Z) (l, a)).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma cojoin_Z_rw_preincr: forall (ctx: list A) (l: list A) (a: A),
       (cojoin (W := Z) ⦿ ctx) (l, a) =
-        (cojoin (W := Z) ⦿ ctx) (l, a).
+        map_both (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx)
+          (cojoin (W := Z) (l, a)).
   Proof.
     intros.
     cbn.
-    unfold_ops @Cojoin_Z.
-    intros.
+    change (?x ● ?y) with (x ++ y).
+    rewrite decorate_prefix_list_rw_app.
     reflexivity.
+  Qed.
+
+  Lemma cojoin_Z_rw_preincr_pf: forall (ctx: list A),
+      cojoin (W := Z) ⦿ ctx =
+        map_both (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx) ∘ cojoin.
+  Proof.
+    intros. ext [l a].
+    now rewrite cojoin_Z_rw_preincr.
   Qed.
 
 End Cojoin_Z_rw.
@@ -371,6 +388,60 @@ Section traverse_Z_rw.
     reflexivity.
   Qed.
 
+
+  Lemma traverse_Z_incr_lemma: forall (ctx: list A) (g: list A * A -> G B) (j: list (list A * A)) (l: list A) (a: A),
+      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
+        pure (compose pair ∘ app (A:=B)) <⋆> traverse g (dec ctx) <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a).
+  Proof.
+    intros.
+    unfold compose. cbn.
+    unfold id.
+    rewrite (traverse_list_app G).
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    compose near j on left.
+    rewrite traverse_map.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_Z_incr_lemma2: forall (ctx: list A) (g: list A * A -> G B) j l a,
+      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
+        map incr (traverse g (dec ctx)) <⋆> (pure pair <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a)).
+  Proof.
+    intros.
+    rewrite traverse_Z_incr_lemma.
+    Check pure (compose pair ∘ app (A:=B)) <⋆> traverse g (dec ctx) <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a).
+    Check pure pair <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a).
+    Check traverse g (dec ctx).
+    Check map incr (traverse g (dec ctx)).
+    rewrite map_to_ap.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite ap3.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    reflexivity.
+  Qed.
+
+  Lemma traverse_Z_incr_lemma3: forall (ctx: list A) (g: list A * A -> G B) j l a,
+      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
+        map incr (traverse g (dec ctx)) <⋆> (traverse (T := Z) (g ⦿ ctx) (j, (l, a))).
+  Proof.
+    intros.
+    rewrite traverse_Z_incr_lemma2.
+    reflexivity.
+  Qed.
+
 End traverse_Z_rw.
 
 (** *** Traversable Z *)
@@ -520,6 +591,41 @@ Proof.
     reflexivity.
 Qed.
 
+(*
+#[local] Generalizable Variable  G.
+
+Lemma mapdt_list_prefix_rw_preincr {A B} `{Applicative G}:
+  forall (g: list A * A -> G B) ctx l,
+    l <> nil ->
+      mapdt_list_prefix (g ⦿ ctx) l =
+        pure (@app B) <⋆> mapdt_list_prefix g ctx <⋆> mapdt_list_prefix g l.
+  Proof.
+    intros.
+    rewrite mapdt_list_prefix_spec.
+    rewrite mapdt_list_prefix_spec2.
+    destruct l as [| a l].
+    - contradiction.
+    - rewrite decorate_prefix_list_rw_cons.
+      rewrite traverse_list_cons.
+      (* LHS *)
+      unfold preincr at 1.
+      unfold compose at 1.
+      unfold incr at 1.
+      change (@nil A) with (Ƶ: list A) at 1.
+      rewrite monoid_id_l.
+      compose near (dec l) on left.
+      rewrite traverse_map.
+      replace (g ⦿ ctx ∘ incr [a]) with (g ⦿ (ctx ++ [a])).
+      2:{ unfold preincr, incr, compose.
+          ext [pl pa].
+          unfold_ops @Monoid_op_list.
+          now rewrite List.app_assoc. }
+      (* RHS *)
+      cbn.
+  Abort.
+  *)
+
+
 (** ** Kleisli composition *)
 (******************************************************************************)
 Definition compose_arrows_manual
@@ -561,46 +667,56 @@ Proof.
   reflexivity.
 Qed.
 
-(*
+
 (** *** Preincrement *)
-(* There does not seem to be a good statement of a property like this *)
 (******************************************************************************)
 Lemma compose_arrows_preincr
   {A B C: Type}
   `{G1: Type -> Type} `{Map G1} `{Mult G1} `{Pure G1} `{! Applicative G1}
   `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
   (g: list B * B -> G2 C) (f: list A * A -> G1 B)
-  (ctx: list A):
-  (g ⋆6_ci f) ⦿ ctx =
-    (compose_arrows2 g f) ⦿ ctx.
+  (ctx: list A): forall l a,
+  ((g ⋆6_ci f) ⦿ ctx) (l, a) =
+    map g (map incr (traverse f (dec ctx)) <⋆> traverse (f ⦿ ctx) (dec l, (l, a))).
 Proof.
   intros.
-  unfold compose_arrows at 1.
+  unfold kc6_ci.
+  rewrite (preincr_assoc
+              (map (F := G1) g ∘ traverse (T := Z) f)
+              (cojoin (W := Z))).
+  Set Keyed Unification.
+  rewrite (cojoin_Z_rw_preincr_pf (A := A) ctx).
+  Unset Keyed Unification.
+  unfold compose at 2 4.
   unfold_ops @Cojoin_Z.
-  ext [zl za].
-  unfold preincr at 1.
-  unfold compose at 1 2 3.
-  cbn.
-  unfold_ops @Monoid_op_list; rewrite decorate_prefix_list_rw_app.
-  rewrite (traverse_list_app G1).
-  compose near (decorate_prefix_list zl) on left.
-  rewrite traverse_map.
-  rewrite <- ap4.
-  rewrite <- ap4.
-  rewrite ap2.
-  rewrite ap2.
-  rewrite ap2.
+  compose near (dec l, (l, a)) on left.
+  reassociate -> on left.
+  About traverse_Z_incr_lemma3.
+  change (list B * B) with (Z B).
+  unfold compose at 2.
+  Set Keyed Unification.
+  rewrite (traverse_Z_incr_lemma3 (H := H) (H1 := H0) (H0 := H1) ctx f (dec l) l a).
+  Unset Keyed Unification.
+  (*
   rewrite map_ap.
-  rewrite map_ap.
-  rewrite map_ap.
-  rewrite app_pure_natural.
-  (* right hand size *)
-  unfold compose_arrows2.
-  rewrite map_ap.
-  rewrite map_ap.
-  rewrite app_pure_natural.
+  compose near (traverse f (dec ctx)) on left.
+  rewrite fun_map_map.
+  *)
+  reflexivity.
+Qed.
+
+Lemma compose_arrows_bob
+  {A B C: Type}
+  `{G1: Type -> Type} `{Map G1} `{Mult G1} `{Pure G1} `{! Applicative G1}
+  `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
+  (g: list B * B -> G2 C) (f: list A * A -> G1 B)
+  (ctx: list A): forall l a,
+    ((g ⋆6_ci f) ⦿ ctx) (l, a) =
+      (g ⋆6_ci (f ⦿ ctx)) (l, a).
+Proof.
+  intros.
+  try  rewrite (compose_arrows_preincr g f ctx l a).
 Abort.
-*)
 
 (** *** Examples *)
 (******************************************************************************)
@@ -997,7 +1113,11 @@ Proof.
     assert (Applicative G2) by now inversion H5.
     rewrite (traverse_map).
     reassociate -> near (incr [b]).
-Admitted.
+    rewrite <- trf_traverse_morphism.
+    assert (Applicative G1) by now inversion H5.
+    rewrite (traverse_map).
+    reflexivity.
+Qed.
 
 (** ** Typeclass Instance *)
 (******************************************************************************)
