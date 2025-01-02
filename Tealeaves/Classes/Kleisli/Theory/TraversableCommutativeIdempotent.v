@@ -220,12 +220,6 @@ Section ci_traversable_hom_examples.
         assumption.
   Qed.
   *)
-Lemma compose_compose {A B C D: Type}:
-    forall (g: B -> C) (h: C -> D),
-      (compose h ∘ compose (A := A) g) = compose (h ∘ g).
-  Proof.
-    reflexivity.
-  Qed.
 
   Lemma pairall_commute_cons_Inductive_Step {A B: Type}
     (f: A -> G B) (a: A) (x: A) (l: list A):

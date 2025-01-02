@@ -63,6 +63,20 @@ Definition pair_right {A B} : B -> A -> A * B := fun b a => (a, b).
 
 Definition precompose {A B C} := (fun (f : A -> B) (g : B -> C)  => g ○ f).
 
+Lemma compose_compose {A B C D: Type}:
+  forall (g: B -> C) (h: C -> D),
+    (compose h ∘ compose (A := A) g) = compose (h ∘ g).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma precompose_precompose {A B C D: Type}:
+  forall (g: B -> C) (h: A -> B),
+    (precompose h ∘ precompose g) = precompose (C := D) (g ∘ h).
+Proof.
+  reflexivity.
+Qed.
+
 Theorem commute_hom_action1 :
   forall (A B C D : Type) (f1 : A -> B) (f2 : B -> C) (f3 : C -> D),
     compose f3 (precompose f1 f2) = precompose f1 (compose f3 f2).
