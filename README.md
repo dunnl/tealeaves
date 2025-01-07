@@ -90,3 +90,32 @@ A multisorted definition of DTMs is contained in [Tealeaves/Classes/Multisorted]
 | [Tealeaves/Simplification](/Tealeaves/Simplification)             | Simplication tactics for backends for downstream use                                  |
 
 Additionally, subdirectories named `Theory/` are scattered in various places. Mostly these contain definitions and lemmas regarding various DTM concepts which, for whatever reason (e.g. to avoid cyclic dependencies), are formalized in files separately from those defining the relevant concepts.
+
+## Naming Conventions
+
+### Kleisli Composition
+
+| Decorated | Traversable | Monad | Composition operation             |
+|-----------|-------------|-------|-----------------------------------|
+| 0         | 0           | 0     | compose (kc0)                     |
+| 1         | 0           | 0     | kc1 (now kc4, oops!)              |
+| 0         | 1           | 0     | kc2                               |
+| 1         | 1           | 0     | kc3 (now kc6, oops!)              |
+| 0         | 0           | 1     | kc (would be kc4, now kc1, oops!) |
+| 1         | 0           | 1     | kc5                               |
+| 0         | 1           | 1     | kc6 (now kc3, oops!)              |
+| 1         | 1           | 1     | kc7                               |
+
+
+### Typeclasses Field Names
+
+| Decorated | Traversable | Monad | Class prefix    | Categorical prefix |
+|-----------|-------------|-------|-----------------|--------------------|
+| 0         | 0           | 0     | fun             |                    |
+| 1         | 0           | 0     | dfun            |                    |
+| 0         | 1           | 0     | trf             |                    |
+| 1         | 1           | 0     | kdtfun / kdtfci |                    |
+| 0         | 0           | 1     | kmon            |                    |
+| 1         | 0           | 1     | kmond           |                    |
+| 0         | 1           | 1     | ktm             |                    |
+| 1         | 1           | 1     | kdtm            |                    |
