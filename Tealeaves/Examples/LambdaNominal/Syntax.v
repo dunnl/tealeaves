@@ -11,6 +11,7 @@ From Tealeaves Require Export
   Classes.Categorical.ApplicativeCommutativeIdempotent
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Kleisli.DecoratedTraversableMonadPoly
+  Backends.LN.Atom
   Functors.List.
 
 Import Product.Notations.
@@ -44,13 +45,13 @@ Definition of binddt
 ========================================
 |*)
 Program Fixpoint binddt_term {b1 v1 b2 v2 : Type}
-  (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
+  {G : Type -> Type} `{Map G} `{Pure G} `{Mult G}
   (ρ : list b1 * b1 -> G b2)
   (f : list b1 * v1 -> G (term b2 v2))
   (t : term b1 v1) : G (term b2 v2) :=
   match t with
   | tvar _ v => f (nil, v)
-  | lam v body => pure (@lam b2 v2)  <⋆> ρ (nil, v) <⋆> binddt_term (ρ ⦿ [v]) (preincr f [v]) body
+  | lam v body => pure (@lam b2 v2)  <⋆> ρ (nil, v) <⋆> binddt_term (ρ ⦿ [v]) (f ⦿ [v]) body
   | app t1 t2 => pure (@app b2 v2)
                   <⋆> binddt_term ρ f t1
                   <⋆> binddt_term ρ f t2
@@ -62,6 +63,182 @@ Program Fixpoint binddt_term {b1 v1 b2 v2 : Type}
 #[export] Instance Substitute_lambda_term: Substitute term term :=
   @binddt_term.
 
+
+Parameters (x y z: atom).
+
+Example term1 : term atom atom := lam x (app (lam y (tvar _ z)) (tvar _ x)).
+
+(*|
+========================================
+Decomposition into bindt and dec
+========================================
+|*)
+Fixpoint dec_term_rec {b1 v1 : Type} (ctx: list b1)
+  (t: term b1 v1) : term (list b1 * b1) (list b1 * v1) :=
+  match t with
+  | tvar _ v => tvar _ (ctx, v)
+  | lam v body => lam (ctx, v) (dec_term_rec (ctx ++ [v]) body)
+  | app t1 t2 => app (dec_term_rec ctx t1) (dec_term_rec ctx t2)
+  end.
+
+Definition dec_term {b1 v1 : Type}:
+  term b1 v1 ->
+  term (list b1 * b1) (list b1 * v1) :=
+  dec_term_rec nil.
+
+Compute dec_term term1.
+
+Fixpoint bindt_term {b1 v1 b2 v2 : Type}
+  {G : Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  (ρ : b1 -> G b2)
+  (σ : v1 -> G (term b2 v2))
+  (t : term b1 v1) : G (term b2 v2) :=
+  match t with
+  | tvar _ v => σ v
+  | lam v body => pure (@lam b2 v2)
+                   <⋆> ρ v
+                   <⋆> bindt_term ρ σ body
+  | app t1 t2 => pure (@app b2 v2)
+                  <⋆> bindt_term ρ σ t1
+                  <⋆> bindt_term ρ σ t2
+  end.
+
+(*|
+========================================
+Decoration commutes with bindt
+========================================
+|*)
+Section commute.
+
+  Context (b1 b2 v1 v2: Type).
+  Context `{ApplicativeCommutativeIdempotent G}.
+
+  Section decompose.
+
+    Context (ρ: list b1 * b1 -> G b2).
+    Context (σ: list b1 * v1 -> G (term b2 v2)).
+
+    Lemma binddt_decompose_rec: forall (ctx: list b1),
+        binddt_term (ρ ⦿ ctx) (σ ⦿ ctx) =
+          bindt_term ρ σ ∘ dec_term_rec ctx.
+    Proof.
+      intros. ext t.
+      unfold compose.
+      generalize dependent ctx.
+      induction t; intro ctx.
+      - unfold preincr, compose. cbn.
+        change (@nil b1) with (Ƶ: list b1).
+        rewrite monoid_id_l.
+        reflexivity.
+      - unfold preincr. cbn. unfold compose. cbn.
+        change (@nil b1) with (Ƶ: list b1).
+        rewrite monoid_id_l. cbn.
+        unfold preincr.
+        change (?x ○ incr ctx) with (x ∘ incr ctx).
+        reassociate -> on left.
+        rewrite incr_incr.
+        reassociate -> on left.
+        rewrite incr_incr.
+        change (?x ∘ incr ?w) with (x ⦿ w).
+        rewrite IHt.
+        reflexivity.
+      - cbn.
+        rewrite IHt1.
+        rewrite IHt2.
+        reflexivity.
+    Qed.
+
+    Lemma binddt_decompose:
+        binddt_term ρ σ =
+          bindt_term ρ σ ∘ dec_term.
+    Proof.
+      ext t.
+      unfold dec_term.
+      rewrite <- binddt_decompose_rec.
+      change (@nil b1) with (Ƶ: list b1).
+      rewrite preincr_zero.
+      rewrite preincr_zero.
+      reflexivity.
+    Qed.
+
+  End decompose.
+
+
+  Section decompose.
+
+    Context (ρ: b1 -> G b2).
+    Context (σ': list b1 * v1 -> G (term b2 v2)).
+    Context (σ: v1 -> G (term b2 v2)).
+
+    Section Traverse_Reader.
+
+      Context {E: Type}.
+
+      #[export] Instance Traverse_Reader: Traverse (prod E).
+      Proof.
+        intros J Hmap Hpure Hmult A B f.
+        exact (strength ∘ map (F := prod E) f).
+      Defined.
+
+    End Traverse_Reader.
+
+  Lemma bindt_dec_commute: forall (t: term b1 v1), False.
+  Proof.
+    intros.
+    clear σ'.
+    Check bindt_term ρ σ.
+    Check map (F := G) dec_term.
+    Check map (F := G) dec_term ∘ bindt_term ρ σ.
+    Check σ.
+    Check traverse (T := (list b2 ×)) σ.
+    Check dec_term t.
+    Check bindt_term (v2 := list b2 * v2) (traverse (T := Z) ρ) _ ∘ dec_term (b1 := b1) (v1 := v1).
+    assert (list b1 * v1 -> G (term (list b2 * b2) (list b2 * v2))).
+    { Check fun '(w, v) => traverse (T := list) ρ w.
+      Check fun '(w, v) => traverse (T := Z) ρ w.
+      Check fun '(w, v) => map (F := G) (dec_term) (σ v).
+      Check fun '(w, v) => pure pair
+                          <⋆> traverse (T := Z) ρ w
+                          <⋆> map (F := G) (dec_term) (σ v).
+      admit.
+    }
+  Admitted.
+
+  End decompose.
+
+End commute.
+
+Lemma composition:
+  forall (B1 B2 B3: Type)
+    (A1 A2 A3: Type)
+    `{ApplicativeCommutativeIdempotent G1}
+    `{ApplicativeCommutativeIdempotent G2}
+    (ρ1 : list B1 * B1 -> G1 B2)
+    (ρ2 : list B2 * B2 -> G2 B3)
+    (σ1 : list B1 * A1 -> G1 (term B2 A2))
+    (σ2 : list B2 * A2 -> G2 (term B3 A3)),
+    map (F := G1) (substitute (G := G2) ρ2 σ2) ∘ substitute (G := G1)
+      (T := term) (U := term) ρ1 σ1 =
+      substitute (T := term) (U := term) (G := G1 ∘ G2)
+        (ρ2 ⋆6_ci ρ1) (kc_subvar ρ2 σ2 ρ1 σ1).
+Proof.
+  intros.
+  unfold substitute.
+  unfold Substitute_lambda_term.
+  rewrite binddt_decompose.
+  rewrite binddt_decompose.
+  rewrite binddt_decompose.
+
+  (* RHS *)
+  unfold kc6_ci.
+  unfold kc_subvar.
+Abort.
+
+(*|
+========================================
+Axioms
+========================================
+|*)
 Lemma kdtmp_substitute1_term:
     forall (B1 B2 A1 A2 : Type)
       `{Applicative G}
@@ -104,19 +281,67 @@ Composition law
 ========================================
 |*)
 Lemma composition_lambda_case:
-   forall (B1 B2 B3: Type)
-    (A1 A2 A3: Type)
+   forall {B1 B2 B3: Type}
+     {A1 A2 A3: Type}
     `{ApplicativeCommutativeIdempotent G1}
     `{ApplicativeCommutativeIdempotent G2}
-    (ρ1 : list B1 * B1 -> G1 B2)
     (ρ2 : list B2 * B2 -> G2 B3)
-    (σ1 : list B1 * A1 -> G1 (term B2 A2))
-    (σ2 : list B2 * A2 -> G2 (term B3 A3)),
-     forall (b: B1) (t: term B1 A1),
-       (map (F := G1) (substitute ρ2 σ2) (substitute ρ1 σ1 t) =
+    (σ2 : list B2 * A2 -> G2 (term B3 A3))
+    (b: B1) (t : term B1 A1),
+     (forall (ρ1 : list B1 * B1 -> G1 B2)
+        (σ1 : list B1 * A1 -> G1 (term B2 A2)),
+         (map (F := G1) (substitute ρ2 σ2) (substitute ρ1 σ1 t) =
+            substitute (G := G1 ∘ G2)
+              (ρ2 ⋆6_ci ρ1)
+              (kc_subvar ρ2 σ2 ρ1 σ1) t)) ->
+     forall (ρ1 : list B1 * B1 -> G1 B2) (σ1 : list B1 * A1 -> G1 (term B2 A2)),
+       (map (F := G1) (substitute ρ2 σ2) (substitute ρ1 σ1 ((λ) b t)) =
           substitute (G := G1 ∘ G2)
             (ρ2 ⋆6_ci ρ1)
-            (kc_subvar ρ2 σ2 ρ1 σ1) t) ->
+            (kc_subvar ρ2 σ2 ρ1 σ1) ((λ) b t)).
+Proof.
+  intros.
+  cbn.
+  (* LHS *)
+  rewrite map_ap.
+  rewrite map_ap.
+  rewrite app_pure_natural.
+
+  unfold kc6_ci.
+
+  (* unfold composes *)
+  unfold_ops @Pure_compose.
+  rewrite (ap_compose2 G2 G1).
+  rewrite (ap_compose2 G2 G1).
+  rewrite app_pure_natural.
+  rewrite map_ap.
+  rewrite app_pure_natural.
+
+  unfold compose at 4 5.
+  rewrite <- ap_map.
+  rewrite app_pure_natural.
+  cbn.
+  rewrite <- ap4.
+  rewrite ap2.
+  rewrite <- ap4.
+  do 3 rewrite ap2.
+Abort.
+
+Lemma composition_lambda_case:
+   forall {B1 B2 B3: Type}
+     {A1 A2 A3: Type}
+    `{ApplicativeCommutativeIdempotent G1}
+    `{ApplicativeCommutativeIdempotent G2}
+    (ρ2 : list B2 * B2 -> G2 B3)
+    (σ2 : list B2 * A2 -> G2 (term B3 A3))
+    (b: B1) (t : term B1 A1),
+     (forall (ρ1 : list B1 * B1 -> G1 B2)
+        (σ1 : list B1 * A1 -> G1 (term B2 A2)),
+         (map (F := G1) (substitute ρ2 σ2) (substitute ρ1 σ1 t) =
+            substitute (G := G1 ∘ G2)
+              (ρ2 ⋆6_ci ρ1)
+              (kc_subvar ρ2 σ2 ρ1 σ1) t)) ->
+     forall (ρ1 : list B1 * B1 -> G1 B2) (σ1 : list B1 * A1 -> G1 (term B2 A2)),
        (map (F := G1) (substitute ρ2 σ2) (substitute ρ1 σ1 ((λ) b t)) =
           substitute (G := G1 ∘ G2)
             (ρ2 ⋆6_ci ρ1)
@@ -125,6 +350,14 @@ Proof.
   intros.
   rename H7 into IHt.
   cbn.
+
+
+
+
+
+
+
+
   (* LHS *)
   rewrite map_ap.
   rewrite map_ap.
@@ -155,8 +388,10 @@ Proof.
   rewrite traverse_list_nil.
   rewrite ap2.
 
+
+
   (* outer *)
-  destruct t.
+  induction t as [a1 | b1 tbody IHtbody | t1 IHt1 t2 IHt2  ].
   { cbn.
     (* LHS *)
     unfold preincr at 1.
@@ -246,7 +481,9 @@ Lemma composition:
 Proof.
   intros. ext t.
   unfold compose at 1.
-  induction t.
+  generalize dependent σ1.
+  generalize dependent ρ1.
+  induction t; intros ρ1 σ1.
   - cbn.
     (* LHS *)
     rewrite map_to_ap.
@@ -259,7 +496,7 @@ Proof.
     rewrite preincr_zero.
     rewrite preincr_zero.
     reflexivity.
-  - auto using composition_lambda_case.
+  - apply (composition_lambda_case ρ2 σ2 b t); auto.
   - cbn.
     (* LHS *)
     rewrite map_to_ap.
