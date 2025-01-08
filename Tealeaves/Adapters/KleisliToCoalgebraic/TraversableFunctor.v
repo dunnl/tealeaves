@@ -23,7 +23,7 @@ Import Kleisli.TraversableFunctor.Notations.
 
 (** ** <<ToBatch>> instance *)
 (******************************************************************************)
-#[local] Instance ToBatch_Traverse `{Traverse T}
+#[export] Instance ToBatch_Traverse `{Traverse T}
   : Coalgebraic.TraversableFunctor.ToBatch T :=
   (fun A B => traverse (G := Batch A B) (batch B) :
      T A -> Batch A B (T B)).
@@ -164,6 +164,18 @@ Section laws.
     rewrite toBatch_to_traverse.
     rewrite (trf_traverse_morphism (morphism := mapfst_Batch1_Hom f)).
     rewrite ret_natural.
+    reflexivity.
+  Qed.
+
+  Lemma toBatch_mapsnd: forall (A B : Type) (f : A -> B),
+      mapsnd_Batch f ∘ toBatch (A' := B) = map (map f) ∘ toBatch (A := A).
+  Proof.
+    intros.
+    rewrite toBatch_to_traverse.
+    rewrite (trf_traverse_morphism (morphism := mapsnd_Batch2_Hom f)).
+    rewrite ret_dinatural.
+    rewrite toBatch_to_traverse.
+    rewrite map_traverse.
     reflexivity.
   Qed.
 

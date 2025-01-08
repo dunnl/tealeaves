@@ -1832,7 +1832,7 @@ Proof.
     unfold mapdt_list_prefix at 3.
     change (map _ g ∘ ?x ∘ ?y ∘ ?z) with (g ⋆2 (x ∘ y ∘ z)).
     rewrite <- trf_traverse_traverse.
-    rewrite <- traverse_map
+    rewrite <- traverse_map.
 Abort.
 
 (** ** Homomorphism law *)
