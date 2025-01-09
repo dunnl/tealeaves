@@ -395,6 +395,24 @@ Section deconstruction.
       now (subst; apply Batch_make_sim1).
     Qed.
 
+    About "rew _ in _".
+
+    Lemma Batch_make_rw_alt
+      `(b1: Batch A B C)
+      `(b2: Batch A B C)
+      `{v: Vector (length_Batch b1) B}
+      (Heq: b1 = b2):
+      Batch_make b1 v =
+        Batch_make b2
+          (coerce
+             (eq_ind_r
+                (fun z => length_Batch z = length_Batch b2) eq_refl Heq)
+            in v).
+    Proof.
+      subst. cbn.
+      now rewrite coerce_Vector_eq_refl.
+    Qed.
+
     Lemma Batch_make_compose
             `(b: Batch A B C)
             `(f: C -> D)

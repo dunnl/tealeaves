@@ -1,13 +1,14 @@
 From Tealeaves Require Export
   Classes.Categorical.Applicative
   Classes.Kleisli.TraversableFunctor
+  Classes.Kleisli.Theory.TraversableFunctor (* foldMap *)
   Functors.List.
 
 From Coq Require Import
   Logic.ProofIrrelevance.
 
 #[local] Generalizable Variables ϕ T G A B C D M F n m p v.
-
+Import Monoid.Notations.
 Import Applicative.Notations.
 
 (** * Refinement-style vectors *)
@@ -1055,7 +1056,7 @@ Definition traverse_Vector
 
 (** ** Rewriting rules *)
 (******************************************************************************)
-Lemma traverse_Vector_rw1:
+Lemma traverse_Vector_vnil:
   forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
     {A B : Type} (f : A -> G B),
     traverse f vnil = pure vnil.
@@ -1064,7 +1065,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma traverse_Vector_rw2:
+Lemma traverse_Vector_rw_lemma:
   forall (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
     {A B : Type} (f : A -> G B)
     (a : A) (l: list A)
@@ -1087,24 +1088,41 @@ Proof.
   intros.
   destruct v.
   unfold vcons.
-  rewrite traverse_Vector_rw2.
+  rewrite traverse_Vector_rw_lemma.
   fequal.
   fequal.
   fequal.
   apply proof_irrelevance.
 Qed.
 
-(*
-Lemma traverse_Vector_rw
-  (n : nat) (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-          {A B : Type} (f : A -> G B)
-          (a: A) (l: list A) (pf: length (a :: l) = n):
-    traverse f (exist (fun l => length l = n) (a :: l) pf) =
-      traverse f (exist (fun l => length l = n) (a :: l) pf).
+(** *** Rewriting rules for foldmap *)
+(******************************************************************************)
+Lemma foldMap_Vector_vnil:
+  forall (M : Type) `{Monoid_op M} `{Monoid_unit M}
+    {A : Type} (f : A -> M) (v: Vector 0 A),
+    foldMap f v = Ƶ.
 Proof.
-  cbn.
-Abort.
- *)
+  intros.
+  rewrite (Vector_nil_eq v).
+  reflexivity.
+Qed.
+
+Lemma foldMap_Vector_vcons:
+  forall (n : nat) (M : Type) `{op: Monoid_op M} `{unit: Monoid_unit M}
+    `{! Monoid M}
+    {A : Type} (f : A -> M) (v : Vector n A) (a : A),
+    foldMap f (vcons n a v) = f a ● foldMap f v.
+Proof.
+  intros.
+  unfold foldMap.
+  rewrite traverse_Vector_vcons.
+  unfold_ops @Pure_const.
+  unfold_ops @Map_const.
+  unfold ap.
+  unfold_ops @Mult_const.
+  rewrite monoid_id_r.
+  reflexivity.
+Qed.
 
 (** ** Miscellaneous *)
 (******************************************************************************)
@@ -1228,7 +1246,7 @@ Lemma traverse_Vector_id `{v : Vector n A}:
   traverse (G := fun A => A) id v = v.
 Proof.
   induction v using Vector_induction.
-  - rewrite traverse_Vector_rw1.
+  - rewrite traverse_Vector_vnil.
     reflexivity.
   - rewrite traverse_Vector_vcons.
     rewrite IHv.
@@ -1252,9 +1270,9 @@ Proof.
   intros.
   unfold compose at 1.
   induction v using Vector_induction.
-  - do 2 rewrite traverse_Vector_rw1.
+  - do 2 rewrite traverse_Vector_vnil.
     rewrite app_pure_natural.
-    rewrite traverse_Vector_rw1.
+    rewrite traverse_Vector_vnil.
     reflexivity.
   - rewrite traverse_Vector_vcons.
     rewrite map_ap.
@@ -1296,7 +1314,7 @@ Lemma trf_traverse_morphism_Vector :
 Proof.
   intros.
   induction v using Vector_induction.
-  - do 2 rewrite traverse_Vector_rw1.
+  - do 2 rewrite traverse_Vector_vnil.
     rewrite appmor_pure.
     reflexivity.
   - rewrite traverse_Vector_vcons.
@@ -1342,7 +1360,7 @@ Lemma Vector_traverse_rev
     traverse f (Vector_rev v).
 Proof.
   induction v using Vector_induction.
-  - rewrite traverse_Vector_rw1.
+  - rewrite traverse_Vector_vnil.
     unfold vnil.
     cbn.
     repeat fequal.

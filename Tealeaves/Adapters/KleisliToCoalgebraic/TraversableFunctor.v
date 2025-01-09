@@ -155,8 +155,9 @@ Section laws.
 
   (** *** Naturality of <<toBatch>> *)
   (******************************************************************************)
-  Lemma toBatch_mapfst : forall (A B : Type) (f : A -> B) (C : Type),
-    toBatch (A' := C) ∘ map f = mapfst_Batch f ∘ toBatch.
+  Lemma toBatch_mapfst : forall (A B A' : Type) (f : A -> B),
+      toBatch (A := B) (A' := A') ∘ map f =
+        mapfst_Batch f ∘ toBatch (A := A) (A' := A').
   Proof.
     intros.
     rewrite toBatch_to_traverse.
@@ -167,8 +168,9 @@ Section laws.
     reflexivity.
   Qed.
 
-  Lemma toBatch_mapsnd: forall (A B : Type) (f : A -> B),
-      mapsnd_Batch f ∘ toBatch (A' := B) = map (map f) ∘ toBatch (A := A).
+  Lemma toBatch_mapsnd: forall (X A A' : Type) (f : A -> A'),
+      mapsnd_Batch f ∘ toBatch =
+        map (map f) ∘ toBatch (A := X) (A' := A).
   Proof.
     intros.
     rewrite toBatch_to_traverse.
