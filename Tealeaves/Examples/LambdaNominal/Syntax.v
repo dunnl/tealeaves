@@ -9,8 +9,10 @@ Imports and setup
 |*)
 From Tealeaves Require Export
   Classes.Categorical.ApplicativeCommutativeIdempotent
+  Classes.Categorical.TraversableFunctor
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Kleisli.DecoratedTraversableMonadPoly
+  Functors.Categorical.List
   Backends.LN.Atom
   Functors.List.
 
@@ -26,10 +28,10 @@ Import Applicative.Notations.
 
 (** * Language definition *)
 (******************************************************************************)
-Inductive term (b v : Type) :=
-| tvar : v -> term b v
-| lam : b -> term b v -> term b v
-| app : term b v -> term b v -> term b v.
+Inductive term (b v: Type) :=
+| tvar: v -> term b v
+| lam: b -> term b v -> term b v
+| app: term b v -> term b v -> term b v.
 
 (** ** Notations and automation *)
 (******************************************************************************)
@@ -44,11 +46,11 @@ Import Notations.
 Definition of binddt
 ========================================
 |*)
-Program Fixpoint binddt_term {b1 v1 b2 v2 : Type}
-  {G : Type -> Type} `{Map G} `{Pure G} `{Mult G}
-  (ρ : list b1 * b1 -> G b2)
-  (f : list b1 * v1 -> G (term b2 v2))
-  (t : term b1 v1) : G (term b2 v2) :=
+Program Fixpoint binddt_term {b1 v1 b2 v2: Type}
+  {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  (ρ: list b1 * b1 -> G b2)
+  (f: list b1 * v1 -> G (term b2 v2))
+  (t: term b1 v1): G (term b2 v2) :=
   match t with
   | tvar _ v => f (nil, v)
   | lam v body => pure (@lam b2 v2)  <⋆> ρ (nil, v) <⋆> binddt_term (ρ ⦿ [v]) (f ⦿ [v]) body
@@ -63,36 +65,159 @@ Program Fixpoint binddt_term {b1 v1 b2 v2 : Type}
 #[export] Instance Substitute_lambda_term: Substitute term term :=
   @binddt_term.
 
-
 Parameters (x y z: atom).
 
-Example term1 : term atom atom := lam x (app (lam y (tvar _ z)) (tvar _ x)).
+Example term1: term atom atom := lam x (app (lam y (tvar _ z)) (tvar _ x)).
 
 (*|
-========================================
-Decomposition into bindt and dec
-========================================
+============================================
+Decomposition into categorical components
+============================================
 |*)
-Fixpoint dec_term_rec {b1 v1 : Type} (ctx: list b1)
-  (t: term b1 v1) : term (list b1 * b1) (list b1 * v1) :=
+Fixpoint dec_term_rec {b1 v1: Type} (ctx: list b1)
+  (t: term b1 v1): term (list b1 * b1) (list b1 * v1) :=
   match t with
   | tvar _ v => tvar _ (ctx, v)
   | lam v body => lam (ctx, v) (dec_term_rec (ctx ++ [v]) body)
   | app t1 t2 => app (dec_term_rec ctx t1) (dec_term_rec ctx t2)
   end.
 
-Definition dec_term {b1 v1 : Type}:
+Definition dec_term {b1 v1: Type}:
   term b1 v1 ->
   term (list b1 * b1) (list b1 * v1) :=
   dec_term_rec nil.
 
 Compute dec_term term1.
 
-Fixpoint bindt_term {b1 v1 b2 v2 : Type}
-  {G : Type -> Type} `{Map G} `{Pure G} `{Mult G}
-  (ρ : b1 -> G b2)
-  (σ : v1 -> G (term b2 v2))
-  (t : term b1 v1) : G (term b2 v2) :=
+Fixpoint dist_term {b1 v1: Type}
+  {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  (t: term (G b1) (G v1)): G (term b1 v1) :=
+  match t with
+  | tvar _ v => map (@tvar b1 v1) v
+  | lam v body => pure (@lam b1 v1)
+                   <⋆> v
+                   <⋆> dist_term body
+  | app t1 t2 => pure (@app b1 v1)
+                  <⋆> dist_term t1
+                  <⋆> dist_term t2
+  end.
+
+Fixpoint join_term {b1 v1: Type} (t: term b1 (term b1 v1)): term b1 v1 :=
+  match t with
+  | tvar _ tv => tv
+  | lam v body => lam v (join_term body)
+  | app t1 t2 => app (join_term t1) (join_term t2)
+  end.
+
+Fixpoint map_term {b1 v1 b2 v2: Type} (ρ: b1 -> b2) (σ: v1 -> v2)
+  (t: term b1 v1): term b2 v2 :=
+  match t with
+  | tvar _ v => (@tvar b2 v2) (σ v)
+  | lam v body => lam (ρ v) (map_term ρ σ body)
+  | app t1 t2 => app (map_term ρ σ t1) (map_term ρ σ t2)
+  end.
+
+Lemma binddt_decomposed:
+  forall (b1 b2 v1 v2: Type)
+    `{ApplicativeCommutativeIdempotent G}
+    (ρ: list b1 * b1 -> G b2)
+    (σ: list b1 * v1 -> G (term b2 v2)),
+    substitute ρ σ =
+      map (F := G) join_term ∘ dist_term ∘ map_term ρ σ ∘ dec_term.
+Proof.
+  intros.
+  unfold compose.
+  ext t.
+  generalize dependent ρ.
+  generalize dependent σ.
+  induction t; intros σ ρ.
+  - cbn.
+    compose near (σ ([], v)).
+    rewrite (fun_map_map).
+    admit.
+  - cbn.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    assert (Hequiv:
+             map_term ρ σ (dec_term_rec [b] t)
+            = map_term (ρ ⦿ [b]) (σ ⦿ [b]) (dec_term t)).
+    admit.
+    rewrite Hequiv.
+    clear Hequiv.
+    rewrite IHt.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    reflexivity.
+  - cbn.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite IHt1.
+    rewrite IHt2.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- ap_map.
+    rewrite app_pure_natural.
+    reflexivity.
+Admitted.
+
+
+Definition dist_pair
+  {b1 v1: Type}
+  `{ApplicativeCommutativeIdempotent G}:
+  list (G b1) * G v1 -> G (list b1 * v1) :=
+  fun '(x, y) => pure (@pair (list b1) v1) <⋆> dist list G x <⋆> y.
+
+Lemma dist_dec_commute:
+  forall (b1 b2 v1 v2: Type)
+    `{ApplicativeCommutativeIdempotent G},
+    map (F := G) dec_term ∘ dist_term (b1 := b1) (v1 := v1) =
+      dist_term ∘ map_term dist_pair dist_pair ∘ dec_term.
+Proof.
+  intros. ext t. unfold compose.
+  induction t.
+  - cbn.
+    compose near v on left.
+    rewrite fun_map_map.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite ap2.
+    rewrite <- map_to_ap.
+    reflexivity.
+  - cbn.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    admit.
+  - cbn.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- IHt1.
+    rewrite <- IHt2.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite <- ap_map.
+    rewrite app_pure_natural.
+    reflexivity.
+Admitted.
+
+
+(*
+Fixpoint bindt_term {b1 v1 b2 v2: Type}
+  {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  (ρ: b1 -> G b2)
+  (σ: v1 -> G (term b2 v2))
+  (t: term b1 v1): G (term b2 v2) :=
   match t with
   | tvar _ v => σ v
   | lam v body => pure (@lam b2 v2)
@@ -102,6 +227,7 @@ Fixpoint bindt_term {b1 v1 b2 v2 : Type}
                   <⋆> bindt_term ρ σ t1
                   <⋆> bindt_term ρ σ t2
   end.
+*)
 
 (*|
 ========================================

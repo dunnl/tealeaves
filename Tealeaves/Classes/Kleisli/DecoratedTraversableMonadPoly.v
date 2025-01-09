@@ -110,13 +110,13 @@ Class DecoratedTraversableMonadPoly
       (ρ : list B1 * B1 -> G B2)
       (σ : list B1 * A1 -> G (T B2 A2)),
       substitute ρ σ ∘ ret (T B1) A1 = σ ∘ ret (list B1 ×) A1;
-    kdtm_substitute2:
+    kdtmp_substitute2:
     forall (B A : Type),
       substitute (G := fun A => A)
         (extract (W := (list B ×)))
         (ret (T B) A ∘ extract (W := (list B ×)))
       = @id (T B A);
-    kdtm_substitute3:
+    kdtmp_substitute3:
     forall (B1 B2 B3: Type)
       (A1 A2 A3: Type)
       `{ApplicativeCommutativeIdempotent G1}
@@ -128,7 +128,7 @@ Class DecoratedTraversableMonadPoly
       map (F := G1) (substitute (G := G2) ρ2 σ2) ∘ substitute (G := G1) (T := T) (U := T) ρ1 σ1 =
         substitute (T := T) (U := T) (G := G1 ∘ G2)
           (ρ2 ⋆6_ci ρ1) (kc_subvar ρ2 σ2 ρ1 σ1);
-    kdtm_morph :
+    kdtmp_morph :
     forall (B1 A1 B2 A2 : Type) (G1 G2 : Type -> Type)
       `{morph : ApplicativeMorphism G1 G2 ϕ}
       (ρ : list B1 * B1 -> G1 B2)

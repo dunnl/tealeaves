@@ -1,15 +1,23 @@
+From Tealeaves Require Import
+  Classes.Categorical.TraversableFunctor
+  Functors.List.
+
+Import List.ListNotations.
+Import Applicative.Notations.
+
+#[local] Open Scope list_scope.
+#[local] Generalizable Variable G.
 
 (** * Traversable instance for [list] *)
 (******************************************************************************)
-#[global] Instance Dist_list : ApplicativeDist list :=
+#[global] Instance Dist_list: ApplicativeDist list :=
   fun G map mlt pur A =>
     (fix dist (l : list (G A)) :=
        match l with
-       | nil => pure G nil
+       | nil => pure nil
        | cons x xs =>
-         (pure G (@cons A) <⋆> x) <⋆> (dist xs)
+           pure (F := G) (@cons A) <⋆> x <⋆> (dist xs)
        end).
-
 
 (** ** Rewriting lemmas for <<dist>> *)
 (******************************************************************************)
@@ -21,34 +29,35 @@ Section list_dist_rewrite.
   Variable (A : Type).
 
   Lemma dist_list_nil :
-    dist list G (@nil (G A)) = pure G nil.
+    dist list G (@nil (G A)) = pure nil.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dist_list_cons_1 : forall (x : G A) (xs : list (G A)),
+
+  Lemma dist_list_cons_1: forall (x : G A) (xs : list (G A)),
       dist list G (x :: xs) =
-      (pure G cons <⋆> x) <⋆> (dist list G xs).
+      pure cons <⋆> x <⋆> (dist list G xs).
   Proof.
     reflexivity.
   Qed.
 
   Lemma dist_list_cons_2 : forall (x : G A) (xs : list (G A)),
       dist list G (x :: xs) =
-      (map G (@cons A) x) <⋆> (dist list G xs).
+      map (@cons A) x <⋆> dist list G xs.
   Proof.
     intros. rewrite dist_list_cons_1.
     now rewrite map_to_ap.
   Qed.
 
-  Lemma dist_list_one (a : G A) : dist list G [ a ] = map G (ret list _) a.
+  Lemma dist_list_one (a : G A) : dist list G [ a ] = map (ret (T := list)) a.
   Proof.
     cbn. rewrite map_to_ap. rewrite ap3.
     rewrite <- ap4. now do 2 rewrite ap2.
   Qed.
 
   Lemma dist_list_app : forall (l1 l2 : list (G A)),
-      dist list G (l1 ++ l2) = pure G (@app _) <⋆> dist list G l1 <⋆> dist list G l2.
+      dist list G (l1 ++ l2) = pure (@app _) <⋆> dist list G l1 <⋆> dist list G l2.
   Proof.
     intros. induction l1.
     - cbn. rewrite ap2. change (app []) with (@id (list A)).
@@ -62,10 +71,10 @@ Section list_dist_rewrite.
       fequal. rewrite <- ap_map.
       rewrite map_ap. fequal.
       compose near a.
-      rewrite (fun_map_map G).
-      rewrite (fun_map_map G).
+      rewrite (fun_map_map).
+      rewrite (fun_map_map).
       compose near a on left.
-      now rewrite (fun_map_map G).
+      now rewrite (fun_map_map).
   Qed.
 
 End list_dist_rewrite.
@@ -75,8 +84,9 @@ End list_dist_rewrite.
 
 Section dist_list_properties.
 
-  #[local] Arguments dist _%function_scope {Dist} _%function_scope {H H0 H1}
-    A%type_scope _.
+  #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+  #[local] Arguments dist _%function_scope {ApplicativeDist}
+    _%function_scope {H H0 H1} A%type_scope _.
 
   Generalizable All Variables.
 
@@ -85,22 +95,23 @@ Section dist_list_properties.
       (map G (@cons B ○ f) a) <⋆> map G (map list f) (dist list G A l).
   Proof.
     intros. rewrite map_ap. rewrite <- ap_map.
-    fequal. compose near a. now rewrite 2(fun_map_map G).
+    fequal. compose near a.
+    now rewrite 2(fun_map_map).
   Qed.
 
   Lemma dist_list_2 : forall `{Applicative G} `(f : A -> B) (a : G A) (l : list (G A)),
-      map G (map list f) ((pure G (@cons A) <⋆> a) <⋆> dist list G A l) =
-      (pure G cons <⋆> map G f a) <⋆> map G (map list f) (dist list G A l).
+      map G (map list f) ((pure (@cons A) <⋆> a) <⋆> dist list G A l) =
+      (pure cons <⋆> map G f a) <⋆> map G (map list f) (dist list G A l).
   Proof.
     intros. rewrite <- map_to_ap.
     rewrite map_ap.
     compose near a on left.
-    rewrite (fun_map_map G).
+    rewrite (fun_map_map).
     rewrite pure_ap_map.
-    unfold ap. rewrite (app_mult_natural G).
+    unfold ap. rewrite (app_mult_natural).
     rewrite (app_mult_natural_1 G).
     compose near ((a ⊗ dist list G A l)) on right.
-    rewrite (fun_map_map G). fequal. ext [? ?].
+    rewrite (fun_map_map). fequal. ext [? ?].
     reflexivity.
   Qed.
 
@@ -110,11 +121,12 @@ Section dist_list_properties.
   Proof.
     intros; cbn. unfold_ops @Map_compose. unfold compose.
     ext l. induction l.
-    + cbn. now rewrite (app_pure_natural G).
+    + cbn. now rewrite (app_pure_natural).
     + rewrite dist_list_cons_2.
       rewrite map_list_cons, dist_list_cons_2.
       rewrite <- IHl. rewrite dist_list_1.
-      compose near a on right. now rewrite (fun_map_map G).
+      compose near a on right.
+      now rewrite (fun_map_map).
   Qed.
 
   Instance dist_natural_list_ : forall `{Applicative G}, Natural (@dist list _ G _ _ _).
@@ -127,14 +139,19 @@ Section dist_list_properties.
       dist list G2 A ∘ map list (ϕ A) = ϕ (list A) ∘ dist list G1 A.
   Proof.
     intros. ext l. unfold compose. induction l.
-    - cbn. now rewrite (appmor_pure G1 G2).
-    - specialize (appmor_app_F G1 G2);
-        specialize (appmor_app_G G1 G2);
-        intros.
-      rewrite map_list_cons, dist_list_cons_2.
+    - rewrite map_list_nil.
+      rewrite dist_list_nil.
+      rewrite dist_list_nil.
+      rewrite appmor_pure.
+      reflexivity.
+    - infer_applicative_instances.
+      rewrite map_list_cons.
       rewrite dist_list_cons_2.
-      rewrite IHl. rewrite ap_morphism_1.
-      fequal. now rewrite (appmor_natural G1 G2 A).
+      rewrite dist_list_cons_2.
+      rewrite IHl.
+      rewrite ap_morphism_1.
+      rewrite (appmor_natural).
+      reflexivity.
   Qed.
 
   Lemma dist_unit_list : forall (A : Type),
@@ -160,31 +177,30 @@ Section dist_list_properties.
       unfold_ops @Mult_compose @Pure_compose @Map_compose.
       rewrite (ap_compose2 G2 G1).
       compose near a on left.
-      rewrite (fun_map_map G1).
+      rewrite (fun_map_map).
       unfold ap at 1.
-      rewrite (app_mult_natural G1).
+      rewrite (app_mult_natural).
       unfold ap at 2. rewrite (app_mult_natural_1 G1).
       fequal. compose near (a ⊗ dist list G1 (G2 A) l).
-      repeat rewrite (fun_map_map G1). fequal.
-      ext [? ?]. cbn. unfold compose. now rewrite map_to_ap.
+      rewrite (fun_map_map).
+      rewrite (fun_map_map).
+      fequal.
+      ext [? ?].
+      cbn. unfold compose.
+      now rewrite map_to_ap.
   Qed.
   #[local] Unset Keyed Unification.
 
 End dist_list_properties.
 
-#[export] Instance Traversable_list : Categorical.Classes.Traversable.Functor.TraversableFunctor list :=
+#[export] Instance Traversable_list: Categorical.TraversableFunctor.TraversableFunctor list :=
   {| dist_natural := @dist_natural_list_;
      dist_morph := @dist_morph_list;
      dist_unit := @dist_unit_list;
      dist_linear := @dist_linear_list;
   |}.
 
-
-
-
-
-
-
+(*
 (** * Traversable monad instance for [list] *)
 (******************************************************************************)
 Section TraversableMonad_list.
@@ -351,3 +367,4 @@ Section bind_rewriting_lemmas.
 
 End bind_rewriting_lemmas.
 
+*)

@@ -58,6 +58,7 @@ Tealeaves/Categories/DecoratedTraversableFunctor.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Functors/Subset.v
 Tealeaves/Functors/List.v
+Tealeaves/Functors/Categorical/List.v
 Tealeaves/Functors/List_Telescoping_General.v
 Tealeaves/Functors/Ctxset.v
 Tealeaves/Functors/Environment.v
@@ -164,6 +165,10 @@ Tealeaves/Backends/DB.v
 ## LN TO DB
 Tealeaves/Backends/Adapters/Key.v
 Tealeaves/Backends/Adapters/LNtoDB.v
+
+## Named
+Tealeaves/Backends/Named/Names.v
+Tealeaves/Backends/Named/Named.v
 
 # MULTISORTED
 Tealeaves/Functors/Multisorted/Batch.v
