@@ -255,19 +255,19 @@ End shapeliness.
 
 (** * Deconstructing with refinement-type vectors *)
 (******************************************************************************)
-  Section deconstruction.
+Section deconstruction.
 
   Context
     `{DecoratedTraversableFunctor E T}
-    `{Traverse T}
-    `{Map T}
-    `{toBatch_inst: ToBatch T}
-    `{ToSubset T}
-    `{! TraversableFunctor T}
-    `{! Compat_Map_Mapdt}
-    `{! Compat_ToBatch_Traverse}
-    `{! Compat_ToSubset_Traverse T}
-    `{! Compat_Traverse_Mapdt}.
+      `{Traverse T}
+      `{Map T}
+      `{toBatch_inst: ToBatch T}
+      `{ToSubset T}
+      `{! TraversableFunctor T}
+      `{! Compat_Map_Mapdt}
+      `{! Compat_ToBatch_Traverse}
+      `{! Compat_ToSubset_Traverse T}
+      `{! Compat_Traverse_Mapdt}.
 
   #[local] Generalizable Variables v.
 
@@ -411,7 +411,7 @@ End shapeliness.
     Qed.
 
   End trav_make_lemmas.
-  *)
+   *)
 
   (** ** Miscellaneous *)
   (******************************************************************************)
@@ -447,14 +447,18 @@ End shapeliness.
       unfold compose.
       apply (transitive_Vector_sim
                (v2 := map extract (Batch_contents (B := False) (toBatch6 t)))).
-      vec_symmetry.
-      apply map_coerce_Vector.
-      unfold Vector_sim.
-      rewrite Batch_contents_natural.
-      compose near t.
-      do 2 rewrite <- toBatch6_toBatch.
-      apply Batch_contents_toBatch_sim.
-    Qed.
+      { vec_symmetry.
+        unfold Vector_sim.
+        rewrite Batch_contents_natural.
+        rewrite <- map_coerce_Vector.
+        compose near t on left.
+        rewrite <- toBatch6_toBatch.
+        Search Batch_contents toBatch6.
+        admit.
+      }
+      try apply Batch_contents_toBatch_sim.
+      admit.
+    Admitted.
 
     Lemma toBatch_mapdt_make {A A' B} {t: T A} {v: Vector (plength t) B}:
       toBatch (A' := A') (mapdt_make t v) =
@@ -477,15 +481,15 @@ End shapeliness.
       rewrite Batch_put_get.
       vector_sim.
     Qed.
-    *)
+     *)
 
     (** *** put-put *)
     (******************************************************************************)
     Lemma mapdt_make_make
-            `(t: T A) `(v: Vector (plength t) B)
-            `(v1: Vector _ B')
-            (v2: Vector _ B')
-            (pf: v1 ~~ v2):
+      `(t: T A) `(v: Vector (plength t) B)
+      `(v1: Vector _ B')
+      (v2: Vector _ B')
+      (pf: v1 ~~ v2):
       mapdt_make (mapdt_make t v) v1 =
         mapdt_make t v2.
     Proof.
@@ -499,7 +503,7 @@ End shapeliness.
         (at level 10, F at level 20).
 
     Lemma mapdt_same_shape
-            `(t1: T A) `(t2: T A'):
+      `(t1: T A) `(t2: T A'):
       shape t1 = shape t2 ->
       forall B, mapdt_make (B := B) t1 ~!~ mapdt_make t2.
     Proof.
@@ -558,3 +562,59 @@ End shapeliness.
   Qed.
 
 End deconstruction.
+
+(** * Lifting context-sensitive relations over Decorated-Traversable functors *)
+(******************************************************************************)
+
+From Tealeaves Require
+  Adapters.KleisliToCategorical.DecoratedTraversableFunctor.
+
+Section lifting_relations.
+
+  Context
+    `{DecoratedTraversableFunctor E T}
+      `{Map T}
+      `{Mapd E T}
+      `{Traverse T}
+      `{ToBatch T}
+      `{! Compat_Map_Mapdt}
+      `{! Compat_Mapd_Mapdt}
+      `{! Compat_ToBatch_Traverse}
+      `{! Compat_Traverse_Mapdt}.
+
+  Import Adapters.KleisliToCategorical.DecoratedTraversableFunctor.
+  Import ToCategorical.
+
+
+  Lemma shape_decorate1
+    (A: Type) (t: T A):
+    shape (F := T) (dec T t) = shape t.
+  Proof.
+    unfold dec.
+    unfold_ops @Decorate_Mapdt.
+    unfold shape.
+  Abort.
+
+  Lemma Hshape_decorate
+    (A B: Type) (t : T A) (u: T B)
+    (Hshape: shape t = shape u):
+    shape (dec T t) = shape (dec T u).
+  Proof.
+    Set Printing Implicit.
+    unfold dec.
+    unfold Decorate_Mapdt.
+    unfold shape.
+    compose near t.
+    unfold_ops @Map_compose.
+  Abort.
+
+  (*
+  Definition zip_decorate
+    (A B: Type) (t : T A) (u: T B)
+    (Hshape: shape t = shape u):
+    map (cojoin (E ×)) (dec T (same_shape_zip A B t u Hshape)) =
+      dec T (same_shape_zip (E * A) (E * B) (dec T t) (dec T u) _).
+  *)
+
+
+End lifting_relations.
