@@ -167,7 +167,7 @@ End named_local_operations.
 
 (** ** Localized operations *)
 (******************************************************************************)
-Section locally_nameless_local_operations.
+Section named_local_operations.
 
   Context
     (T : Type -> Type -> Type)
@@ -193,10 +193,12 @@ Section locally_nameless_local_operations.
       (deconflict_binder_local  (FV u))
       (subst_local (FV u) x u).
 
+  (*
   Definition alpha_equiv: T name name -> T name name -> Prop :=
     substitute (G := subset) (U := T)
       (const (const True))
       (alpha_equiv_local).
+*)
 
   (*
   Fixpoint lookup_binding_ix_rec (n : nat) (l : list name) (nm : name) : option nat :=
@@ -216,33 +218,4 @@ Section locally_nameless_local_operations.
 *)
 
 
-End locally_nameless_local_operations.
-
-
-(** ** Localized operations *)
-(******************************************************************************)
-Section locally_nameless_local_operations.
-
-  Context
-    (T : Type -> Type -> Type)
-    `{forall W, Return (T W)}
-    `{Binddt T T}.
-
-
-  Require Import Tealeaves.Backends.LN.
-
-
-  Definition name_to_atom : name -> atom.
-  Admitted.
-
-  Definition translate_local : list name * name -> T unit LN :=
-    fun '(l, y) =>
-      match is_bound l y with
-      | Bound remain opened =>
-          ret (T unit) (Bd (length opened))
-      | Unbound =>
-          ret (T unit) (Fr (name_to_atom y))
-      end.
-
-  Definition translate : T name name -> T unit LN :=
-    binddt T (T := T) name unit (fun A => A) (fun _ => tt) (translate_local).
+End named_local_operations.

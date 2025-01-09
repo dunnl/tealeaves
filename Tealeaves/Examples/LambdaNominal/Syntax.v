@@ -212,7 +212,6 @@ Proof.
 Admitted.
 
 
-(*
 Fixpoint bindt_term {b1 v1 b2 v2: Type}
   {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
   (ρ: b1 -> G b2)
@@ -227,7 +226,6 @@ Fixpoint bindt_term {b1 v1 b2 v2: Type}
                   <⋆> bindt_term ρ σ t1
                   <⋆> bindt_term ρ σ t2
   end.
-*)
 
 (*|
 ========================================
@@ -327,6 +325,7 @@ Section commute.
                           <⋆> traverse (T := Z) ρ w
                           <⋆> map (F := G) (dec_term) (σ v).
       admit.
+
     }
   Admitted.
 
