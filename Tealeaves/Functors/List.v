@@ -1,5 +1,6 @@
 From Tealeaves Require Import
   Classes.Categorical.Monad
+  Classes.Kleisli.TraversableFunctor
   Classes.Kleisli.TraversableMonad
   Classes.Categorical.ContainerFunctor
   Classes.Categorical.ShapelyFunctor.

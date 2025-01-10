@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Classes.Categorical.Comonad
+  Classes.Kleisli.Comonad
   Classes.Categorical.ApplicativeCommutativeIdempotent
   Classes.Kleisli.TraversableFunctor.
 
@@ -26,7 +26,7 @@ Section kleisli_composition.
 
   Context
     {Z: Type -> Type}
-      `{Cojoin Z}
+      `{Mapdt_CommIdem Z Z}
       `{Traverse Z}.
 
   Definition kc6_ci
@@ -36,7 +36,7 @@ Section kleisli_composition.
     (Z A -> G1 B) ->
     (Z A -> (G1 ∘ G2) C) :=
     fun g f => map (F := G1) (A := Z B) (B := G2 C) g ∘
-              traverse (T := Z) (G := G1) f ∘ cojoin (W := Z).
+              mapdt_ci (T := Z) (G := G1) f.
 
 End kleisli_composition.
 
@@ -45,8 +45,11 @@ End kleisli_composition.
 (** ** Typeclasses *)
 (******************************************************************************)
 Class DecoratedTraversableCommIdemFunctor
-  (Z: Type -> Type) `{Cojoin Z} `{Extract Z} `{Traverse Z}
-  (T : Type -> Type) `{! Mapdt_CommIdem Z T} :=
+  (Z: Type -> Type)
+  (T: Type -> Type)
+  `{Extract Z}
+  `{Mapdt_ZZ: Mapdt_CommIdem Z Z}
+  `{Mapdt_ZT: Mapdt_CommIdem Z T} :=
   { kdtfci_mapdt1 : forall (A : Type),
       mapdt_ci (G := fun A => A) extract = @id (T A);
     kdtfci_mapdt2 :

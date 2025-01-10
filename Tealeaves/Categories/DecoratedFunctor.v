@@ -1,6 +1,8 @@
 From Tealeaves Require Import
   Classes.Categorical.DecoratedFunctor
-  Classes.Categorical.RightComodule.
+  Classes.Categorical.RightComodule
+  Classes.Categorical.Bimonad
+  Functors.Writer.
 
 #[local] Generalizable Variables E T W F G.
 

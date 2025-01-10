@@ -81,8 +81,8 @@ Section const_ops.
   #[global, program] Instance Applicative_Const `{Monoid M} : Applicative (Const M).
 
   Solve Obligations with
-      (intros; unfold transparent tcs in *; cbn; simpl_monoid;
-      now auto with tea_applicative).
+    (intros; unfold transparent tcs in *; cbn; simpl_monoid;
+     now auto with tea_applicative).
 
 End const_ops.
 

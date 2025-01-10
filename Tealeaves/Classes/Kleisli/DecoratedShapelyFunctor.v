@@ -1,8 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedFunctor
   Classes.Categorical.ShapelyFunctor
-  Functors.Ctxset
-  Functors.Environment.
+  Functors.Early.Environment.
 
 Import Monoid.Notations.
 Import Functor.Notations.

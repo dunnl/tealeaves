@@ -93,7 +93,7 @@ Module ToKleisli.
       change (?mu ∘ id) with mu.
       rewrite <- fun_map_map.
       do 2 reassociate -> on left.
-      rewrite dfun_dec_extract.
+      rewrite kdf_dec_extract.
       reassociate <- on left.
       rewrite (mon_join_map_ret (T := T)).
       reflexivity.
@@ -170,7 +170,7 @@ Module ToKleisli.
         reassociate <- on left.
         reassociate -> near (dec T A).
         (* Change decorate-then-decorate into decorate-then-duplicate *)
-        rewrite dfun_dec_dec.
+        rewrite kdf_dec_dec.
         reassociate <- on left.
         (* Now move <<μ B>> towards <<μ C>> *)
         unfold shift; rewrite incr_spec.

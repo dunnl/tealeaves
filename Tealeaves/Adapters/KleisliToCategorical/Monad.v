@@ -21,6 +21,12 @@ Module Instance.
     Existing Instance Functor_Monad.
     Existing Instance MonadFull_Monad.
 
+    About MonadFull_Monad.
+    About Functor_Monad.
+    About MonadFull.
+    Search map_bind.
+    About map_bind.
+
     #[local] Instance CategoricalFromKleisli_Monad: Classes.Categorical.Monad.Monad T.
     Proof.
       constructor.

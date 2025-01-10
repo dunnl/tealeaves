@@ -88,6 +88,7 @@ Section tensor_strength.
     ext [[? ?] t]. unfold strength, compose. cbn.
     compose_near t. do 2 rewrite (fun_map_map).
     reflexivity.
+
   Qed.
 
 End tensor_strength.

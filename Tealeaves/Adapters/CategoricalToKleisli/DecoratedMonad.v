@@ -56,7 +56,7 @@ Module ToKleisli.
       reassociate <-.
       rewrite (mon_join_map_ret (T := T)).
       reassociate ->.
-      rewrite (dfun_dec_extract (E := W) (F := T)).
+      rewrite (kdf_dec_extract (E := W) (F := T)).
       reflexivity.
     Qed.
 

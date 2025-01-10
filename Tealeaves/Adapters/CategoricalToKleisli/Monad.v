@@ -92,7 +92,7 @@ Section ToKleisli_laws.
 
   Context
     (T : Type -> Type)
-   `{Monad T}.
+   `{Categorical.Monad.Monad T}.
 
   Generalizable All Variables.
   Import Kleisli.Monad.Notations.

@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Functor
-  Misc.Subset
-  Misc.List.
+  Functors.Early.Subset
+  Functors.Early.List.
 
 From Coq Require Import
   Relations.Relation_Definitions

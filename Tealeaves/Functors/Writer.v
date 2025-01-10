@@ -1,108 +1,164 @@
 From Tealeaves Require Export
-  Classes.Monoid
-  Classes.Kleisli.Monad
-  Classes.Kleisli.Comonad
+  Functors.Early.Writer
   Functors.Reader.
-
-Import Product.Notations.
-Import Functor.Notations.
-Import Monoid.Notations.
-Import Monad.Notations.
-Import Comonad.Notations.
 
 #[local] Generalizable Variables W T F A M.
 
-(** * Writer monad *)
-(******************************************************************************)
+From Tealeaves Require Export
+  Classes.Monoid
+  Classes.Categorical.Bimonad
+  Classes.Categorical.RightModule
+  Misc.Product.
 
-(** ** Kleisli *)
+Import Strength.Notations.
+Import Monad.Notations.
+Import Monoid.Notations.
+Import Product.Notations.
+
+#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
+#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
+
+(** * Writer bimonad *)
 (******************************************************************************)
-Section writer_monad.
+#[export] Instance BeckDistribution_strength (W : Type) (T : Type -> Type) `{Map T}:
+  BeckDistribution (W ×) T := (@strength T _ W).
+
+(** ** <<T ∘ (W ×)>> is a monad *)
+(******************************************************************************)
+Section strength_as_writer_distributive_law.
 
   Context
     `{Monoid W}.
 
-  #[export] Instance Return_Writer : Return (W ×) :=
-    fun A (a : A) => (Ƶ, a).
-
-  #[export] Instance Bind_Writer : Bind (W ×) (W ×) :=
-    fun A B (f : A -> W * B) (p : W * A) =>
-      map_fst (uncurry (@monoid_op W _)) (α^-1 (map_snd f p)).
-
-  #[export] Instance Natural_ret_Writer : Natural (@ret (W ×) Return_Writer).
-  Proof.
-    constructor; try typeclasses eauto.
-    intros A B f. now ext a.
-  Qed.
-
-  Lemma Writer_kmon_bind0 : forall (A B : Type) (f : A -> W * B),
-      bind f ∘ ret = f.
-  Proof.
-    intros. ext a.
-    unfold compose.
-    unfold transparent tcs.
-    cbn. destruct (f a).
-    cbn. now simpl_monoid.
-  Qed.
-
-  Lemma Writer_kmon_bind1 : forall A : Type,
-      bind (ret (A := A)) = id.
-  Proof.
-    intros. ext [m a]. unfold transparent tcs.
-    cbn. now simpl_monoid.
-  Qed.
-
-  Lemma Writer_kmon_bind2 : forall (A B C : Type) (g : B -> W * C) (f : A -> W * B),
-      bind g ∘ bind f = bind (g ⋆1 f).
-  Proof.
-    intros. ext [m a]. unfold_ops @Bind_Writer.
-    unfold kc1, bind, compose. cbn.
-    unfold id. destruct (f a). cbn. unfold id. destruct (g b).
-    cbn. unfold id. now simpl_monoid.
-  Qed.
-
-  #[export] Instance RightPreModule_writer :
-    Kleisli.Monad.RightPreModule (W ×) (W ×) :=
-    {| kmod_bind1 := Writer_kmon_bind1;
-       kmod_bind2 := Writer_kmon_bind2;
-    |}.
-
-  #[export] Instance Monad_writer : Kleisli.Monad.Monad (W ×) :=
-    {| kmon_bind0 := Writer_kmon_bind0;
-    |}.
-
-  (** ** Miscellaneous properties *)
-  (******************************************************************************)
-  Lemma extract_pair {A : Type} :
-    forall (w : W), extract ∘ pair w = @id A.
+  Lemma strength_ret_l `{Functor F} : forall A : Type,
+      σ ∘ ret (W ×) (F A) =
+      map F (ret (W ×) A).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma extract_incr {A : Type} :
-    forall (w : W), extract ∘ incr w (A := A) = extract.
+  Lemma strength_join_l `{Functor F} : forall A : Type,
+      σ ∘ join (T := (W ×)) (A := F A) =
+      map F (join (T := (W ×)) (A := A)) ∘ σ ∘ map (W ×) σ.
+  Proof.
+    intros. ext [w1 [w2 t]]. unfold compose; cbn.
+    compose near t. rewrite fun_map_map.
+    compose near t on right. rewrite fun_map_map.
+    reflexivity.
+  Qed.
+
+  Context
+    `{Monad T}.
+
+  #[export, program] Instance BeckDistributiveLaw_strength :
+    BeckDistributiveLaw (W ×) T :=
+    {| bdist_join_r := strength_join T W;
+       bdist_unit_r := strength_ret T W;
+       bdist_join_l := strength_join_l;
+       bdist_unit_l := strength_ret_l;
+    |}.
+
+  #[export] Instance: Monad (T ∘ (W ×)) := Monad_Beck.
+
+End strength_as_writer_distributive_law.
+
+(** ** <<(W ×)>> is a bimonad *)
+(******************************************************************************)
+Section writer_bimonad_instance.
+
+  Context
+    `{Monoid W}.
+
+  Lemma writer_dist_involution : forall (A : Type),
+      bdist (prod W) (prod W) ∘ bdist (prod W) (prod W) = @id (W * (W * A)).
+  Proof.
+    intros. now ext [? [? ?]].
+  Qed.
+
+  Lemma bimonad_dist_counit_l : forall A,
+      extract (W ×) (W * A) ∘ bdist (W ×) (W ×) =
+      map (W ×) (extract (W ×) A).
+  Proof.
+    intros. now ext [w1 [w2 a]].
+  Qed.
+
+  Lemma bimonad_dist_counit_r : forall A,
+      map (W ×) (extract (W ×) A) ∘ bdist (W ×) (W ×) =
+      extract (W ×) (W * A).
+  Proof.
+    intros. now ext [w1 [w2 a]].
+  Qed.
+
+  Lemma bimonad_baton : forall A,
+      extract (W ×) A ∘ ret (W ×) A = @id A.
+  Proof.
+    intros. reflexivity.
+  Qed.
+
+  Lemma bimonad_cup : forall A,
+      cojoin (W ×) ∘ ret (W ×) A = ret (W ×) (W * A) ∘ ret (W ×) A.
+  Proof.
+    intros. reflexivity.
+  Qed.
+
+  Lemma bimonad_cap : forall A,
+      extract (W ×) A ∘ join (T := (W ×)) = extract (W ×) A ∘ extract (W ×) (W * A).
+  Proof.
+    intros. now ext [w1 [w2 a]].
+  Qed.
+
+  Lemma bimonad_butterfly : forall (A : Type),
+      cojoin (W ×) ∘ join (T := (W ×)) (A := A) =
+      map (W ×) (join (T := (W ×))) ∘ join ∘ map (W ×) (bdist (W ×) (W ×))
+           ∘ cojoin (W ×) ∘ map (W ×) (cojoin (W ×)).
+  Proof.
+    intros. now ext [w1 [w2 a]].
+  Qed.
+
+  #[export] Instance Bimonad_Writer : Bimonad (W ×) :=
+    {| bimonad_monad := Monad_Categorical_writer;
+       bimonad_comonad := Comonad_reader W;
+       Bimonad.bimonad_dist_counit_l := @bimonad_dist_counit_l;
+       Bimonad.bimonad_dist_counit_r := @bimonad_dist_counit_r;
+       Bimonad.bimonad_distributive_law := BeckDistributiveLaw_strength;
+       Bimonad.bimonad_cup := @bimonad_cup;
+       Bimonad.bimonad_cap := @bimonad_cap;
+       Bimonad.bimonad_baton := @bimonad_baton;
+       Bimonad.bimonad_butterfly := @bimonad_butterfly;
+    |}.
+
+End writer_bimonad_instance.
+
+(** ** <<incr>> *)
+(******************************************************************************)
+Section incr.
+
+  Lemma extract_incr `{Monoid W} {A : Type} :
+    forall (w : W), extract (W ×) A ∘ incr w = extract (W ×) A.
   Proof.
     intros. now ext [w' a].
   Qed.
 
-  Lemma extract_preincr {A : Type} :
-    forall (w : W), extract ⦿ w = extract (A := A).
+End incr.
+
+(** ** Miscellaneous properties *)
+(******************************************************************************)
+Section Writer_miscellaneous.
+
+  Context
+    `{Monoid W}.
+
+  (* This rewrite is useful when proving decoration-traversal compatibility
+     in the binder case. *)
+  Theorem strength_shift1 : forall (F : Type -> Type) `{Functor F} (w : W) (A : Type),
+      σ ∘ μ (T := (W ×)) ∘ pair w = map F (μ (T := (W ×)) ∘ pair w) ∘ strength (F := F) (B := A).
   Proof.
-    intros. now ext [w' a].
+    intros. ext [w' x]. unfold compose; cbn.
+    compose near x. now rewrite fun_map_map.
   Qed.
 
-  Lemma extract_preincr2 {A B : Type} (f : A -> B) :
-    forall (w : W), (f ∘ extract) ⦿ w = f ∘ extract.
-  Proof.
-    intros. now ext [w' a].
-  Qed.
 
-  Lemma preincr_ret {A B : Type} : forall (f : W * A -> B) (w : W),
-      (f ⦿ w) ∘ ret = f ∘ pair w.
-  Proof.
-    intros. ext a. cbv.
-    change (op w unit0) with (w ● Ƶ).
-    now simpl_monoid.
-  Qed.
+End Writer_miscellaneous.
 
-End writer_monad.

@@ -1,7 +1,7 @@
 From Tealeaves Require Import
   Classes.EqDec_eq
   Classes.Category
-  Functors.Writer.
+  Functors.Early.Reader.
 
 Export EqDec_eq.
 Import Product.Notations.
@@ -253,28 +253,28 @@ Section targeted_morphisms.
 
   (** *** Lemmas for [tgtd] *)
   (******************************************************************************)
-  #[program] Definition tgtd `{ix : Index} {A W : Type}
-    (j : K) (f : W * A -> A) : K -> W * A -> A :=
+  #[program] Definition tgtd `{ix : Index} {A E : Type}
+    (j : K) (f : E * A -> A) : K -> E * A -> A :=
     fun k '(w, a) => if k == j then f (w, a) else a.
 
-  Context {W A: Type}.
+  Context {E A: Type}.
 
-  Lemma tgtd_eq : forall k (f : W * A -> A),
-      tgtd (W := W) k f k = f.
+  Lemma tgtd_eq : forall k (f : E * A -> A),
+      tgtd (E := E) k f k = f.
   Proof.
     introv. unfold tgtd. ext [w a].
     compare values k and k.
   Qed.
 
-  Lemma tgtd_neq : forall {k j} (f : W * A -> A),
-      k <> j -> tgtd j f k = extract (W := (W ×)).
+  Lemma tgtd_neq : forall {k j} (f : E * A -> A),
+      k <> j -> tgtd j f k = extract (W := (E ×)).
   Proof.
     introv. unfold tgtd. intro hyp. ext [w a].
     compare values k and j.
   Qed.
 
   Lemma tgtd_id (j : K) :
-    tgtd (W := W) (A := A) j extract = allK extract.
+    tgtd (E := E) (A := A) j extract = allK extract.
   Proof.
     unfold tgtd. ext k [w a]. compare values k and j.
   Qed.

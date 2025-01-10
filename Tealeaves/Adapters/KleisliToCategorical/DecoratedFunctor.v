@@ -32,7 +32,7 @@ Section properties.
   Proof.
     intros.
     unfold_ops @Decorate_Mapd.
-    rewrite dfun_mapd2.
+    rewrite kdf_mapd2.
     rewrite <- cojoin_spec.
     rewrite map_mapd.
     reflexivity.
@@ -45,7 +45,7 @@ Section properties.
     unfold_ops @Decorate_Mapd.
     rewrite map_mapd.
     change (?f ∘ id) with f.
-    rewrite dfun_mapd1.
+    rewrite kdf_mapd1.
     reflexivity.
   Qed.
 
@@ -63,9 +63,9 @@ Section properties.
   Qed.
 
   #[export] Instance: Categorical.DecoratedFunctor.DecoratedFunctor E T :=
-    {| dfun_dec_natural := dec_natural;
-       dfun_dec_dec := dec_dec;
-       dfun_dec_extract := dec_extract;
+    {| kdf_dec_natural := dec_natural;
+       kdf_dec_dec := dec_dec;
+       kdf_dec_extract := dec_extract;
     |}.
 
 End properties.

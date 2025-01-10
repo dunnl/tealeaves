@@ -29,7 +29,7 @@ Module ToKleisli.
     Proof.
       introv. unfold_ops @Mapdt_distdec.
       reassociate -> on left.
-      rewrite (dfun_dec_extract (E := E) (F := T)).
+      rewrite (kdf_dec_extract (E := E) (F := T)).
       now rewrite (dist_unit (F := T)).
     Qed.
 
@@ -61,7 +61,7 @@ Module ToKleisli.
       rewrite <- (natural (ϕ := @dec E T _)).
       repeat reassociate ->.
       repeat fequal.
-      rewrite (dfun_dec_dec (E := E) (F := T)).
+      rewrite (kdf_dec_dec (E := E) (F := T)).
       reassociate <-. unfold_ops @Map_compose.
       rewrite (fun_map_map (F := T)).
       do 2 fequal. now ext [e a].

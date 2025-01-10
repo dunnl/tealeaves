@@ -41,7 +41,7 @@ Module ToKleisli.
     Theorem mapd_id {A} : @mapd E F _ A A (extract (E ×)) = @id (F A).
     Proof.
       introv. unfold_ops @Mapd_dec.
-      apply (dfun_dec_extract).
+      apply (kdf_dec_extract).
     Qed.
 
     Theorem mapd_mapd (A B C : Type) (g : E * B -> C) (f : E * A -> B) :
@@ -55,7 +55,7 @@ Module ToKleisli.
       unfold transparent tcs.
       rewrite (fun_map_map (F := F)).
       reassociate -> on left.
-      rewrite (dfun_dec_dec).
+      rewrite (kdf_dec_dec).
       reassociate <- on left.
       rewrite (fun_map_map (F := F)).
       repeat fequal.
@@ -64,8 +64,8 @@ Module ToKleisli.
     Qed.
 
     #[export] Instance DecoratedFunctor: Kleisli.DecoratedFunctor.DecoratedFunctor E F :=
-      {| dfun_mapd1 := @mapd_id;
-        dfun_mapd2 := @mapd_mapd
+      {| kdf_mapd1 := @mapd_id;
+        kdf_mapd2 := @mapd_mapd
       |}.
 
   End with_functor.
@@ -88,7 +88,7 @@ Section DecoratedFunctor_misc.
     rewrite <- (natural (ϕ := @dec E T _)).
     unfold_ops @Map_compose.
     reassociate ->.
-    rewrite  (dfun_dec_dec (E := E) (F := T)).
+    rewrite  (kdf_dec_dec (E := E) (F := T)).
     reassociate <-.
     rewrite (fun_map_map (F := T)).
     fequal. fequal.

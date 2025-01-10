@@ -2,8 +2,8 @@
 From Tealeaves Require Export
   Classes.Monoid
   Classes.Categorical.DecoratedFunctor
-  Classes.Categorical.Monad
-  Functors.Categorical.Writer.
+  Classes.Categorical.RightModule
+  Functors.Early.Writer.
 
 Import Monoid.Notations.
 
@@ -46,7 +46,7 @@ Section DecoratedModule.
   Class DecoratedRightModule :=
     { dmod_monad :> DecoratedMonad W T;
       dmod_functor :> DecoratedFunctor W T;
-      dmon_module :> RightModule F T;
+      dmon_module :> Categorical.RightModule.RightModule F T;
       dmod_action : forall (A : Type),
         dec F ∘ right_action F (A := A) =
           right_action F ∘ map F (shift T) ∘ dec F ∘ map F (dec T);

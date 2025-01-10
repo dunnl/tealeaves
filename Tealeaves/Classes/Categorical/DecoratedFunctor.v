@@ -1,7 +1,6 @@
 From Tealeaves Require Export
   Classes.Categorical.Comonad
-  Functors.Categorical.Reader
-  Functors.Categorical.Writer.
+  Functors.Early.Writer.
 
 Import Monoid.Notations.
 Import Product.Notations.

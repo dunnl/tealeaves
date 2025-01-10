@@ -112,10 +112,14 @@ Additionally, subdirectories named `Theory/` are scattered in various places. Mo
 | Decorated | Traversable | Monad | Class prefix    | Categorical prefix |
 |-----------|-------------|-------|-----------------|--------------------|
 | 0         | 0           | 0     | fun             |                    |
-| 1         | 0           | 0     | dfun            |                    |
+| 1         | 0           | 0     | kdf             | dfun (doh!)        |
 | 0         | 1           | 0     | trf             |                    |
 | 1         | 1           | 0     | kdtfun / kdtfci |                    |
 | 0         | 0           | 1     | kmon            |                    |
-| 1         | 0           | 1     | kmond           |                    |
-| 0         | 1           | 1     | ktm             |                    |
+| 1         | 0           | 1     | kdm/kdmod       |                    |
+| 0         | 1           | 1     | ktm/ktmod       |                    |
 | 1         | 1           | 1     | kdtm            |                    |
+
+| Other class                       | Class prefix |
+| Kleisli.DecoratedContainerFunctor | dcont        |
+

@@ -13,15 +13,16 @@ Import Kleisli.Monad.Notations.
 Module Roundtrip1.
 
   Context
-    `{Return T}
-    `{map1 : Map T}
-    `{join1 : Join T}
+    `{ret_T: Return T}
+    `{map_T: Map T}
+    `{join_T: Join T}
     `{! Categorical.Monad.Monad T}.
 
   #[local] Instance bind_derived: Bind T T :=
     CategoricalToKleisli.Monad.ToKleisli.Bind_Join T.
 
   Definition map2 :=  Map_Bind.
+  About Map_Bind.
   Definition join2 := Join_Bind T.
 
   Goal map1 = map2.
