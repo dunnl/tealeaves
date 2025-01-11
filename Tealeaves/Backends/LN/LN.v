@@ -259,7 +259,7 @@ Section locally_nameless_basic_principles.
     `{! Compat_Bindd_Binddt nat T T}
     `{! Compat_Bindt_Binddt nat T T}
     `{! Compat_ToSubset_Traverse T}
-    `{! Compat_ToBatch_Traverse}.
+    `{! Compat_ToBatch_Traverse T}.
 
   Context
     `{Map_U_inst : Map U}
@@ -280,7 +280,7 @@ Section locally_nameless_basic_principles.
     `{! Compat_Bindd_Binddt nat T U}
     `{! Compat_Bindt_Binddt nat T U}
     `{! Compat_ToSubset_Traverse U}
-    `{! Compat_ToBatch_Traverse}.
+    `{! Compat_ToBatch_Traverse U}.
 
   Context
     `{Monad_inst : ! DecoratedTraversableMonad nat T}
@@ -385,11 +385,10 @@ Section locally_nameless_basic_principles.
       apply PeanoNat.Nat.max_lub.
       + destruct a as [n l].
         unfold level_loc.
-        unfold lc_loc in H1.
+        unfold lc_loc in H.
         destruct l.
         * lia.
-        * unfold monoid_op, Monoid_op_plus in H1.
-          lia.
+        * lia.
       + auto.
   Qed.
 
@@ -852,7 +851,7 @@ Section locally_nameless_free_variables.
     `{! Compat_Bindd_Binddt nat T T}
     `{! Compat_Bindt_Binddt nat T T}
     `{! Compat_ToSubset_Traverse T}
-    `{! Compat_ToBatch_Traverse}.
+    `{! Compat_ToBatch_Traverse T}.
 
   Context
     `{Map_U_inst : Map U}
@@ -873,7 +872,7 @@ Section locally_nameless_free_variables.
     `{! Compat_Bindd_Binddt nat T U}
     `{! Compat_Bindt_Binddt nat T U}
     `{! Compat_ToSubset_Traverse U}
-    `{! Compat_ToBatch_Traverse}.
+    `{! Compat_ToBatch_Traverse U}.
 
   Context
     `{Monad_inst : ! DecoratedTraversableMonad nat T}
@@ -1011,7 +1010,7 @@ Section locally_nameless_metatheory.
     `{! Compat_Bindd_Binddt nat T T}
     `{! Compat_Bindt_Binddt nat T T}
     `{! Compat_ToSubset_Traverse T}
-    `{! Compat_ToBatch_Traverse}.
+    `{! Compat_ToBatch_Traverse T}.
 
   Context
     `{Map_U_inst : Map U}
@@ -1032,7 +1031,7 @@ Section locally_nameless_metatheory.
     `{! Compat_Bindd_Binddt nat T U}
     `{! Compat_Bindt_Binddt nat T U}
     `{! Compat_ToSubset_Traverse U}
-    `{! Compat_ToBatch_Traverse}.
+    `{! Compat_ToBatch_Traverse U}.
 
   Context
     `{Monad_inst : ! DecoratedTraversableMonad nat T}

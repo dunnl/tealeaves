@@ -42,7 +42,7 @@ Section runBatch.
      `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
   Theorem toBatch6_toBatch
-    {A B} `{ToBatch T} `{! Compat_ToBatch_Traverse}:
+    {A B} `{ToBatch T} `{! Compat_ToBatch_Traverse T}:
     toBatch (T := T) (A := A) (A' := B) =
       mapfst_Batch extract ∘ toBatch6 (T := T) (A := A).
   Proof.
@@ -252,7 +252,7 @@ Qed.
 Lemma toBatch6_mapfst3
   `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
   `{ToBatch_inst: ToBatch T}
-  `{! Compat_ToBatch_Traverse}
+  `{! Compat_ToBatch_Traverse T}
   {A A' B : Type} (f : E * A -> A') :
   toBatch (A := A') (A' := B) ∘ mapd (T := T) f =
     mapfst_Batch f ∘ toBatch6 (T := T) (A := A) (B := B).
@@ -273,7 +273,7 @@ Section to_coalgebraic.
   Context
     `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctorFull E T}
       `{ToBatch_inst: ToBatch T}
-      `{! Compat_ToBatch_Traverse}.
+      `{! Compat_ToBatch_Traverse T}.
 
   Lemma double_Batch6_spec : forall A B C,
       double_batch6 (E := E) (A := A) (B := B) C = batch C ⋆6 batch B.

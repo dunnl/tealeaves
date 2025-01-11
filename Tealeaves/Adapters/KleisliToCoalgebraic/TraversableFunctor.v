@@ -23,17 +23,16 @@ Import Kleisli.TraversableFunctor.Notations.
 
 (** ** <<ToBatch>> instance *)
 (******************************************************************************)
-#[export] Instance ToBatch_Traverse `{Traverse T}
+#[local] Instance ToBatch_Traverse `{Traverse T}
   : Coalgebraic.TraversableFunctor.ToBatch T :=
   (fun A B => traverse (G := Batch A B) (batch B) :
      T A -> Batch A B (T B)).
 
-Class Compat_ToBatch_Traverse
+Class Compat_ToBatch_Traverse (T: Type -> Type)
   `{Traverse_inst : Traverse T}
   `{ToBatch_inst : ToBatch T} :=
-  compat_toBatch_traverse :
-  forall A B, @toBatch T ToBatch_inst A B =
-           @traverse T Traverse_inst (Batch A B) _ _ _ A B (batch B).
+  compat_toBatch_traverse:
+    @ToBatch_inst = @ToBatch_Traverse T Traverse_inst.
 
 Lemma toBatch_to_traverse
   `{Compat_ToBatch_Traverse T} :
@@ -46,7 +45,7 @@ Proof.
 Qed.
 
 #[export] Instance Compat_ToBatch_Traverse_Self
-  `{Traverse T} : Compat_ToBatch_Traverse := ltac:(hnf; reflexivity).
+  `{Traverse T} : Compat_ToBatch_Traverse T := ltac:(hnf; reflexivity).
 
 (** ** Laws *)
 (******************************************************************************)
@@ -58,7 +57,7 @@ Section laws.
       `{Traverse T}
       `{! Kleisli.TraversableFunctor.TraversableFunctor T}
       `{! Compat_Map_Traverse T}
-      `{! Compat_ToBatch_Traverse}.
+      `{! Compat_ToBatch_Traverse T}.
 
   (** *** Factoring operations through <<toBatch>> *)
   (******************************************************************************)

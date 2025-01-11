@@ -162,8 +162,8 @@ Section translate.
       `{ToSubset_U: ToSubset U}
       `{! Compat_ToSubset_Traverse T}
       `{! Compat_ToSubset_Traverse U}
-      `{! Compat_ToBatch_Traverse (T := T)}
-      `{! Compat_ToBatch_Traverse (T := U)}.
+      `{! Compat_ToBatch_Traverse T}
+      `{! Compat_ToBatch_Traverse U}.
 
   (** ** Boring admitted lemmas *)
   (******************************************************************************)

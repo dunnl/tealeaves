@@ -52,6 +52,14 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma coerce_Vector_eq_refl_pf:
+  forall {A: Type} {n},
+    coerce_Vector_length eq_refl = @id (Vector n A).
+Proof.
+  intros. ext v.
+  apply coerce_Vector_eq_refl.
+Qed.
+
 Lemma coerce_Vector_compose
         {n m p: nat} `{v: Vector n A}
         (Heq1: n = m)
@@ -313,6 +321,19 @@ Proof.
   vec_fun_symmetry.
   apply Vector_coerce_fun_sim_l'.
   now vec_fun_symmetry.
+Qed.
+
+Lemma Vector_coerce_fun_coerce
+        {n m A B} {f: Vector n A -> B} {g: Vector m A -> B}:
+  forall (Heq: n = m),
+    f ~!~ g ->
+    f = (g ○ coerce_Vector_length Heq).
+Proof.
+  intros.
+  ext v.
+  apply Vector_coerce_fun_sim_r'.
+  assumption.
+  reflexivity.
 Qed.
 
 (** ** Notions of equality assuming proof-irrelevance axiom *)
@@ -980,7 +1001,7 @@ Qed.
 
 (** ** Rewriting rules *)
 (******************************************************************************)
-Lemma map_Vector_rw1:
+Lemma map_Vector_vnil:
   forall {A B : Type} (f : A -> B),
     map f vnil = vnil.
 Proof.
