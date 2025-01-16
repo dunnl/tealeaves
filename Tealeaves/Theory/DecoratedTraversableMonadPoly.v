@@ -1,10 +1,16 @@
 From Tealeaves Require Export
   Functors.Batch
+  Classes.Kleisli.DecoratedTraversableFunctorPoly
+  Classes.Kleisli.Theory.DecoratedTraversableFunctorPoly
   Classes.Kleisli.DecoratedTraversableMonadPoly
   Classes.Kleisli.DecoratedContainerFunctor
   Classes.Kleisli.DecoratedShapelyFunctor
   Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
   Functors.Environment
+  Functors.Batch2
+  Functors.List_Telescoping_General
+  Functors.Z2
+  Classes.Kleisli.Theory.DecoratedTraversableFunctor
   Theory.TraversableFunctor.
 
 Import Product.Notations.
@@ -18,128 +24,6 @@ Import Applicative.Notations.
 
 #[local] Generalizable Variables F M E T G A B C ϕ.
 
-(** * Mapdt Poly *)
-(******************************************************************************)
-Class MapdtPoly (T: Type -> Type -> Type) :=
-    mapdtp:
-      forall (A1 A2 B1 B2: Type)
-        (G : Type -> Type)
-        `{Gmap: Map G} `{Gpure: Pure G} `{Gmult: Mult G},
-        (list B1 * B1 -> G B2) ->
-        (list B1 * A1 -> G A2) ->
-        T B1 A1 ->
-        G (T B2 A2).
-
-Arguments mapdtp {T}%function_scope {MapdtPoly} {A1 A2 B1 B2}%type_scope
-  {G}%function_scope {Gmap Gpure Gmult} (_ _)%function_scope _.
-
-Section decorated_traversable_monad_poly_mapdt.
-
-  Context
-    `{T: Type -> Type -> Type}
-    `{DecoratedTraversableMonadPoly T}.
-
-  #[export] Instance Mapdtp_Substitute: MapdtPoly T :=
-    fun A1 A2 B1 B2 G Gmap Gpure Gmult ρ σ =>
-        substitute ρ (map (F := G) (ret (T := T B2)) ∘ σ).
-End decorated_traversable_monad_poly_mapdt.
-
-(** * The [Batch] idiom *)
-(******************************************************************************)
-Inductive Batch2 (A1 A2 B1 B2 C : Type) : Type :=
-| Done : C -> Batch2 A1 A2 B1 B2 C
-| StepA : Batch2 A1 A2 B1 B2 (A2 -> C) -> A1 -> Batch2 A1 A2 B1 B2 C
-| StepB : Batch2 A1 A2 B1 B2 (B2 -> C) -> B1 -> Batch2 A1 A2 B1 B2 C.
-
-#[global] Arguments Done  {A1 A2 B1 B2 C}%type_scope _.
-#[global] Arguments StepA {A1 A2 B1 B2 C}%type_scope _ _.
-#[global] Arguments StepB {A1 A2 B1 B2 C}%type_scope _ _.
-
-(** ** Functor instance *)
-(******************************************************************************)
-
-(** *** Map operations *)
-(******************************************************************************)
-Fixpoint map_Batch2 {A1 A2 B1 B2: Type} {C1 C2: Type} (f : C1 -> C2)
-  (b : Batch2 A1 A2 B1 B2 C1): Batch2 A1 A2 B1 B2 C2 :=
-  match b with
-  | Done c => Done (f c)
-  | StepA mk a => StepA (map_Batch2 (compose f) mk) a
-  | StepB mk b => StepB (map_Batch2 (compose f) mk) b
-  end.
-
-#[export] Instance Map_Batch2 {A1 A2 B1 B2: Type}: Map (Batch2 A1 A2 B1 B2) :=
-  @map_Batch2 A1 A2 B1 B2.
-
-(** ** Applicative instance *)
-(******************************************************************************)
-
-(** *** Operations *)
-(******************************************************************************)
-#[export] Instance Pure_Batch2 {A1 A2 B1 B2}: Pure (@Batch2 A1 A2 B1 B2) :=
-  @Done A1 A2 B1 B2.
-
-#[program] Fixpoint mult_Batch {A1 A2 B1 B2} {C1 C2: Type}
-  (b1 : Batch2 A1 A2 B1 B2 C1)
-  (b2 : Batch2 A1 A2 B1 B2 C2):
-  Batch2 A1 A2 B1 B2 (C1 * C2) :=
-    match b2 with
-    | Done c2 => map (F := Batch2 A1 A2 B1 B2) (fun (c1 : C1) => (c1, c2)) b1
-    | StepA mk a =>
-        StepA
-          (map (F := Batch2 A1 A2 B1 B2) strength_arrow (mult_Batch b1 mk))
-          a
-    | StepB mk b =>
-        StepB
-          (map (F := Batch2 A1 A2 B1 B2) strength_arrow (mult_Batch b1 mk))
-          b
-    end.
-
-#[export] Instance Mult_Batch2 {A1 A2 B1 B2: Type}:
-  Mult (Batch2 A1 A2 B1 B2) :=
-  fun C1 C2 => uncurry (@mult_Batch A1 A2 B1 B2 C1 C2).
-
-About runBatch.
-
-(** ** The <<runBatch>> operation *)
-(******************************************************************************)
-Fixpoint runBatch2 {A1 A2 B1 B2: Type}
-  (F : Type -> Type) `{Map F} `{Mult F} `{Pure F}
-  (ϕB : B1 -> F B2)
-  (ϕA : A1 -> F A2)
-  {C : Type} (b : Batch2 A1 A2 B1 B2 C) : F C :=
-  match b with
-  | Done c => pure c
-  | StepA mk a => runBatch2 F ϕB ϕA (C := A2 -> C) mk <⋆> ϕA a
-  | StepB mk b => runBatch2 F ϕB ϕA (C := B2 -> C) mk <⋆> ϕB b
-  end.
-
-(** * "Element of" relations *)
-(******************************************************************************)
-Section element_of.
-
-  Context
-    `{T: Type -> Type -> Type}
-      `{DecoratedTraversableMonadPoly T}.
-
-  Definition binder_of {A B: Type}:
-    T B A -> list B * B -> Prop :=
-    mapdtp (B2 := False) (A2 := False)
-      (G := const (subset (list B * B)))
-      (Gpure := Pure_const) (Gmult := Mult_const)
-      (@eq (list B * B))
-      (const (const False)).
-
-  Definition leaf_of {A B: Type}:
-    T B A -> list B * A -> Prop :=
-    mapdtp (B2 := False) (A2 := False)
-      (G := const (subset (list B * A)))
-      (Gpure := Pure_const) (Gmult := Mult_const)
-      (const (const False))
-      (@eq (list B * A)).
-
-End element_of.
-
 (** * Factoring through runBatch *)
 (******************************************************************************)
 Section decorated_traversable_monad_poly_toBatch.
@@ -148,13 +32,15 @@ Section decorated_traversable_monad_poly_toBatch.
     `{T: Type -> Type -> Type}
       `{DecoratedTraversableMonadPoly T}.
 
+  Import DecoratedTraversableMonadPoly.DerivedInstances.
+
   Definition toBatchA {A1 A2 B1 B2: Type}:
       A1 -> Batch2 A1 A2 B1 B2 A2 :=
-    fun a1 => StepA (Done (C := A2 -> A2) id) a1.
+    fun a1 => StepA (Done2 (C := A2 -> A2) id) a1.
 
   Definition toBatchB {A1 A2 B1 B2: Type}:
       B1 -> Batch2 A1 A2 B1 B2 B2 :=
-    fun b1 => StepB (Done (C := B2 -> B2) id) b1.
+    fun b1 => StepB (Done2 (C := B2 -> B2) id) b1.
 
   Definition toBatchp {A1 A2 B1 B2: Type}:
       T B1 A1 ->
@@ -209,7 +95,7 @@ Section decorated_traversable_monad_poly_toBatch.
     intros.
     unfold toBatchp.
     unfold mapdtp.
-    unfold Mapdtp_Substitute.
+    unfold MapdtPoly_Substitute.
     rewrite (kdtmp_morph _ _ _ _ _ _
                  (ϕ := fun C => runBatch2 G ϕB ϕA (C := C))
                  (morph := ApplicativeMorphism_runBatch2)).
@@ -237,9 +123,9 @@ Section decorated_traversable_monad_poly_toBatch.
 
     Lemma mapdtp_pw:
       (forall (b_occ: list B1 * B1),
-          binder_of t b_occ -> ρ1 b_occ = ρ2 b_occ) ->
+          binder_of_ctx t b_occ -> ρ1 b_occ = ρ2 b_occ) ->
       (forall (v_occ: list B1 * A1),
-          leaf_of t v_occ -> σ1 v_occ = σ2 v_occ) ->
+          leaf_of_ctx t v_occ -> σ1 v_occ = σ2 v_occ) ->
       mapdtp (G := fun A => A) ρ1 σ1 t =
         mapdtp (G := fun A => A) ρ2 σ2 t.
     Proof.

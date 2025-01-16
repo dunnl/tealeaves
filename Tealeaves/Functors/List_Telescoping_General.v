@@ -1,8 +1,10 @@
-From Tealeaves Require Import
+From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Categorical.ApplicativeCommutativeIdempotent
+  Classes.Categorical.Comonad
   Functors.List
+  Functors.Pair
   Functors.Diagonal.
 
 Import Applicative.Notations.
@@ -139,25 +141,13 @@ Section decorate_prefix_list_rw.
 
 End decorate_prefix_list_rw.
 
-
-(** * Cartesian product bifunctor *)
-(******************************************************************************)
-Definition map_both {A B C D: Type} (f : A -> B) (g: C -> D) : A * C -> B * D :=
-  map_snd g ∘ map_fst f.
-
-Definition traverse_both
-  {A B C D: Type}
-  {G} `{Map G} `{Mult G} `{Pure G}
-  (f : A -> G B) (g: C -> G D) : A * C -> G (B * D) :=
-  fun '(a, c) => pure pair <⋆> f a <⋆> g c.
-
 (** * The <<Z>> Comonad *)
 (******************************************************************************)
 Definition Z: Type -> Type := fun A => list A * A.
 
 (** ** Functor instance *)
 (******************************************************************************)
-#[export] Instance Map_Z: Map Z := fun A B f => map_both (map (F := list) f) f.
+#[export] Instance Map_Z: Map Z := fun A B f => map_pair (map (F := list) f) f.
 
 #[export] Instance Functor_Z: Functor Z.
 Proof.
@@ -166,8 +156,6 @@ Proof.
   - intros. ext [l a]. cbn. unfold id.
     compose near l on left. rewrite fun_map_map. reflexivity.
 Qed.
-
-From Tealeaves Require Import Categorical.Comonad.
 
 (** ** Categorical comonad instance *)
 (******************************************************************************)
@@ -205,7 +193,9 @@ Section Cojoin_Z_rw.
 
   Lemma cojoin_Z_rw_preincr_one: forall (ctx: A) (l: list A) (a: A),
       (cojoin (W := Z) ⦿ [ctx]) (l, a) =
-        map_both (cons ([], ctx) ∘ map (incr [ctx])) (incr [ctx])
+        map_pair
+          (cons ([], ctx) ∘ map (incr [ctx]))
+          (incr [ctx])
           (cojoin (W := Z) (l, a)).
   Proof.
     reflexivity.
@@ -213,7 +203,7 @@ Section Cojoin_Z_rw.
 
   Lemma cojoin_Z_rw_preincr: forall (ctx: list A) (l: list A) (a: A),
       (cojoin (W := Z) ⦿ ctx) (l, a) =
-        map_both (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx)
+        map_pair (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx)
           (cojoin (W := Z) (l, a)).
   Proof.
     intros.
@@ -225,7 +215,7 @@ Section Cojoin_Z_rw.
 
   Lemma cojoin_Z_rw_preincr_pf: forall (ctx: list A),
       cojoin (W := Z) ⦿ ctx =
-        map_both (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx) ∘ cojoin.
+        map_pair (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx) ∘ cojoin.
   Proof.
     intros. ext [l a].
     now rewrite cojoin_Z_rw_preincr.
@@ -395,7 +385,7 @@ Proof.
   intros G MapG PureG MultG A B f.
   unfold Z.
   intros [l a].
-  (* exact (mult (map_both (traverse (T := list) f) f (l, a))).*)
+  (* exact (mult (map_pair (traverse (T := list) f) f (l, a))).*)
   exact (pure pair <⋆> (traverse (T:=list) f l) <⋆> f a).
 Defined.
 
@@ -433,7 +423,7 @@ Section traverse_Z_spec.
     (h:  X -> list A) (j: Y -> A).
 
   Lemma traverse_Z_map:
-      traverse (T := Z) f ∘ map_both h j =
+      traverse (T := Z) f ∘ map_pair h j =
         traverse_both (traverse f ∘ h) (f ∘ j).
   Proof.
     ext [x y].
@@ -468,7 +458,7 @@ Section traverse_Z_rw.
 
 
   Lemma traverse_Z_incr_lemma: forall (ctx: list A) (g: list A * A -> G B) (j: list (list A * A)) (l: list A) (a: A),
-      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
+      (traverse (T := Z) g ∘ map_pair (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
         pure (compose pair ∘ app (A:=B)) <⋆> traverse g (dec ctx) <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a).
   Proof.
     intros.
@@ -486,7 +476,7 @@ Section traverse_Z_rw.
   Qed.
 
   Lemma traverse_Z_incr_lemma2: forall (ctx: list A) (g: list A * A -> G B) j l a,
-      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
+      (traverse (T := Z) g ∘ map_pair (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
         map incr (traverse g (dec ctx)) <⋆> (pure pair <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a)).
   Proof.
     intros.
@@ -512,7 +502,7 @@ Section traverse_Z_rw.
   Qed.
 
   Lemma traverse_Z_incr_lemma3: forall (ctx: list A) (g: list A * A -> G B) j l a,
-      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
+      (traverse (T := Z) g ∘ map_pair (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
         map incr (traverse g (dec ctx)) <⋆> (traverse (T := Z) (g ⦿ ctx) (j, (l, a))).
   Proof.
     intros.
@@ -524,7 +514,7 @@ End traverse_Z_rw.
 
 (** *** Traversable Z *)
 (******************************************************************************)
-#[export] Instance: TraversableFunctor Z.
+#[export] Instance TraversableFunctor_Z: TraversableFunctor Z.
 Proof.
   constructor.
   - intros. ext [l a].
@@ -1176,6 +1166,8 @@ Definition compose_arrows3
   (g: list B * B -> G2 C) (f: list A * A -> G1 B)
   : list A * A -> G1 (G2 C) :=
   map (F := G1) g ∘ mapdt_ci (T := Z) (Z := Z) f.
+
+Definition kc_Z := @compose_arrows3.
 
 (** *** Equivalence *)
 (******************************************************************************)

@@ -1,15 +1,11 @@
 From Tealeaves Require Export
   Classes.Categorical.Applicative
-  Classes.Kleisli.DecoratedTraversableCommIdemFunctor
-  Classes.Kleisli.Monad
-  Functors.Writer
-  Functors.List
+  Classes.Categorical.ApplicativeCommutativeIdempotent
   Functors.List_Telescoping_General.
 
 Import Applicative.Notations.
 Import Monoid.Notations.
 Import Product.Notations.
-Import List.ListNotations.
 Import DecoratedTraversableCommIdemFunctor.Notations.
 
 #[local] Generalizable Variables ϕ T W G A B C D F M.
@@ -49,36 +45,23 @@ Definition kcompose_rename
  *)
 
 
-Definition kc_subvar {U} `{Substitute U U}:
-   forall {B1 A1 B2 A2 B3 A3: Type}
-     {G1 : Type -> Type} `{Map G1} `{Pure G1} `{Mult G1}
-     {G2 : Type -> Type} `{Map G2} `{Pure G2} `{Mult G2},
-     (list B2 * B2 -> G2 B3) -> (* second op to rename binders *)
-     (list B2 * A2 -> G2 (U B3 A3)) -> (* second op to insert terms *)
-     (list B1 * B1 -> G1 B2) -> (* first op to rename binders *)
-     (list B1 * A1 -> G1 (U B2 A2)) -> (* first op to insert terms *)
-     (list B1 * A1 -> (G1 ∘ G2) (U B3 A3)).
-Proof.
-  introv mapG1 pureG1 multG1.
-  introv mapG2 pureG2 multG2.
-  intros ρ2 σ2 ρ1 σ1.
-  intros [ctx a].
-  Check σ1 (ctx, a).
-  Check mapdt_ci (Z := Z) ρ1 ctx : G1 (list B2).
-  Check pure pair
-    <⋆> (mapdt_ci (Z := Z) ρ1 ctx : G1 (list B2))
-    <⋆> σ1 (ctx, a).
-  Check map (fun '(ctx2, u) => substitute (ρ2 ⦿ ctx2) (σ2 ⦿ ctx2) u).
-  Check
+Definition kc_subvar {U}
+  `{Substitute U U}
+  {G1 : Type -> Type}
+  `{map_G1: Map G1} `{pure_G1: Pure G1} `{mult_G1: Mult G1}
+  {G2 : Type -> Type}
+  `{map_G2: Map G2} `{pure_G2: Pure G2} `{mult_G2: Mult G2}
+  {B1 A1 B2 A2 B3 A3: Type}
+  (ρ2: list B2 * B2 -> G2 B3) (* second op to rename binders *)
+  (σ2: list B2 * A2 -> G2 (U B3 A3)) (* second op to insert terms *)
+  (ρ1: list B1 * B1 -> G1 B2) (* first op to rename binders *)
+  (σ1: list B1 * A1 -> G1 (U B2 A2)) (* first op to insert terms *)
+  : list B1 * A1 -> (G1 ∘ G2) (U B3 A3) :=
+  fun '(ctx, a) =>
     map (fun '(ctx2, u) => substitute (ρ2 ⦿ ctx2) (σ2 ⦿ ctx2) u)
         (pure pair
-           <⋆> (mapdt_ci (Z := Z) ρ1 ctx : G1 (list B2))
+           <⋆> mapdt_ci (Z := Z) ρ1 ctx
            <⋆> σ1 (ctx, a)).
-  apply (map (fun '(ctx2, u) => substitute (ρ2 ⦿ ctx2) (σ2 ⦿ ctx2) u)
-        (pure pair
-           <⋆> (mapdt_ci (Z := Z) ρ1 ctx : G1 (list B2))
-           <⋆> σ1 (ctx, a))).
-Defined.
 
 (*
 Definition kcompose_dtmp
@@ -101,17 +84,17 @@ Definition kcompose_dtmp
  *)
 
 Class DecoratedTraversableMonadPoly
-    (T : Type -> Type -> Type)
+    (T: Type -> Type -> Type)
     `{forall W, Return (T W)}
     `{Substitute T T} :=
   { kdtmp_substitute1:
-    forall (B1 B2 A1 A2 : Type)
+    forall (B1 B2 A1 A2: Type)
       `{Applicative G}
-      (ρ : list B1 * B1 -> G B2)
-      (σ : list B1 * A1 -> G (T B2 A2)),
+      (ρ: list B1 * B1 -> G B2)
+      (σ: list B1 * A1 -> G (T B2 A2)),
       substitute ρ σ ∘ ret (T B1) A1 = σ ∘ ret (list B1 ×) A1;
     kdtmp_substitute2:
-    forall (B A : Type),
+    forall (B A: Type),
       substitute (G := fun A => A)
         (extract (W := (list B ×)))
         (ret (T B) A ∘ extract (W := (list B ×)))
@@ -121,22 +104,52 @@ Class DecoratedTraversableMonadPoly
       (A1 A2 A3: Type)
       `{ApplicativeCommutativeIdempotent G1}
       `{ApplicativeCommutativeIdempotent G2}
-      (ρ1 : list B1 * B1 -> G1 B2)
-      (ρ2 : list B2 * B2 -> G2 B3)
-      (σ1 : list B1 * A1 -> G1 (T B2 A2))
-      (σ2 : list B2 * A2 -> G2 (T B3 A3)),
-      map (F := G1) (substitute (G := G2) ρ2 σ2) ∘ substitute (G := G1) (T := T) (U := T) ρ1 σ1 =
+      (ρ1: list B1 * B1 -> G1 B2)
+      (ρ2: list B2 * B2 -> G2 B3)
+      (σ1: list B1 * A1 -> G1 (T B2 A2))
+      (σ2: list B2 * A2 -> G2 (T B3 A3)),
+      map (F := G1) (substitute (G := G2) ρ2 σ2) ∘
+        substitute (G := G1) (T := T) (U := T) ρ1 σ1 =
         substitute (T := T) (U := T) (G := G1 ∘ G2)
           (ρ2 ⋆6_ci ρ1) (kc_subvar ρ2 σ2 ρ1 σ1);
     kdtmp_morph :
-    forall (B1 A1 B2 A2 : Type) (G1 G2 : Type -> Type)
-      `{morph : ApplicativeMorphism G1 G2 ϕ}
-      (ρ : list B1 * B1 -> G1 B2)
-      (σ : list B1 * A1 -> G1 (T B2 A2)),
+    forall (B1 A1 B2 A2: Type) (G1 G2: Type -> Type)
+      `{morph: ApplicativeMorphism G1 G2 ϕ}
+      (ρ: list B1 * B1 -> G1 B2)
+      (σ: list B1 * A1 -> G1 (T B2 A2)),
       ϕ (T B2 A2) ∘ substitute ρ σ =
         substitute (ϕ B2 ∘ ρ) (ϕ (T B2 A2) ∘ σ);
   }.
 
+
+From  Tealeaves Require
+  Classes.Kleisli.TraversableFunctorPoly
+  Classes.Kleisli.DecoratedTraversableFunctorPoly.
+
+Module DerivedInstances.
+
+  Import TraversableFunctorPoly.
+  Import DecoratedTraversableFunctorPoly.
+
+  Section decorated_traversable_monad_poly_derived_instances.
+
+  Context
+    `{T: Type -> Type -> Type}
+    `{DecoratedTraversableMonadPoly T}.
+
+  #[export] Instance MapdtPoly_Substitute: MapdtPoly T :=
+    fun A1 A2 B1 B2 G Gmap Gpure Gmult ρ σ =>
+      substitute ρ (map (ret (T B2) A2) ∘ σ).
+
+  #[export] Instance TraversePoly_Substitute: TraversePoly T :=
+    fun A1 A2 B1 B2 G Gmap Gpure Gmult ρ σ =>
+      substitute
+        (ρ ∘ extract (W := prod (list B1)))
+        (map (ret (T B2) A2) ∘ σ ∘ extract (W := prod (list B1))).
+
+  End decorated_traversable_monad_poly_derived_instances.
+
+End DerivedInstances.
 
 
 (*

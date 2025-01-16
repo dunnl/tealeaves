@@ -193,29 +193,12 @@ Section named_local_operations.
       (deconflict_binder_local  (FV u))
       (subst_local (FV u) x u).
 
+
   (*
   Definition alpha_equiv: T name name -> T name name -> Prop :=
     substitute (G := subset) (U := T)
       (const (const True))
       (alpha_equiv_local).
 *)
-
-  (*
-  Fixpoint lookup_binding_ix_rec (n : nat) (l : list name) (nm : name) : option nat :=
-    match l with
-    | nil => None
-    | cons nm' rest =>
-        if nm == nm'
-        then Some n
-        else lookup_binding_ix_rec (S n) rest nm
-    end.
-
-  Definition lookup_binding_ix (l : list name) (nm : name) : option nat :=
-    lookup_binding_ix_rec 0 l nm.
-
-
-  Check binddt T name name (fun A => A -> Prop) (extract (list name ×) (A:=name)) (alpha_equiv_local).
-*)
-
 
 End named_local_operations.
