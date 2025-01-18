@@ -29,8 +29,8 @@ Tealeaves/Classes/Kleisli/Applicative.v
 Tealeaves/Classes/Kleisli/Monad.v
 Tealeaves/Classes/Kleisli/Comonad.v
 Tealeaves/Adapters/CategoricalToKleisli/Monad.v
-#Tealeaves/Adapters/KleisliToCategorical/Monad.v
-#Tealeaves/Adapters/Roundtrips/Monad.v
+Tealeaves/Adapters/KleisliToCategorical/Monad.v
+Tealeaves/Adapters/Roundtrips/Monad.v
 # Decorated Functors
 Tealeaves/Functors/Early/Reader.v
 Tealeaves/Classes/Categorical/DecoratedFunctor.v

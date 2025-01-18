@@ -1,4 +1,4 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Adapters.CategoricalToKleisli.Monad
   Adapters.KleisliToCategorical.Monad.
 
@@ -10,68 +10,87 @@ Import Kleisli.Monad.Notations.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
-Module Roundtrip1.
+Section categorical_to_kleisli_to_categorical.
 
   Context
-    `{ret_T: Return T}
-    `{map_T: Map T}
-    `{join_T: Join T}
+    `{Return_T: Return T}
+    `{Map_T: Map T}
+    `{Join_T: Join T}
     `{! Categorical.Monad.Monad T}.
 
-  #[local] Instance bind_derived: Bind T T :=
+  (* Derive the Kleisli operation *)
+  Definition bind': Bind T T :=
     CategoricalToKleisli.Monad.ToKleisli.Bind_Join T.
 
-  Definition map2 :=  Map_Bind.
-  About Map_Bind.
-  Definition join2 := Join_Bind T.
+  (* Re-derive the categorical operations *)
+  Definition map2: Map T :=
+    Kleisli.Monad.DerivedOperations.Map_Bind T T
+      (Bind_TU := bind').
 
-  Goal map1 = map2.
+  Definition join2: Join T :=
+    Adapters.KleisliToCategorical.Monad.DerivedOperations.Join_Bind T
+      (Bind_TT := bind').
+
+  Lemma map_roundtrip: Map_T = map2.
   Proof.
     ext A B f.
-    unfold map2, Map_Bind,
-      bind, bind_derived, ToKleisli.Bind_Join.
+    unfold map2.
+    unfold DerivedOperations.Map_Bind.
+    unfold bind.
+    unfold bind'.
+    unfold ToKleisli.Bind_Join.
     rewrite <- (fun_map_map (F := T)).
-    reassociate <-.
+    reassociate <- on right.
     rewrite (mon_join_map_ret (T := T)).
     reflexivity.
   Qed.
 
-  Goal join1 = join2.
+  Lemma join_roundtrip: Join_T = join2.
   Proof.
-    ext A t.
-    unfold join2, Join_Bind,
-      bind, bind_derived, ToKleisli.Bind_Join.
+    ext A.
+    unfold join2.
+    unfold DerivedOperations.Join_Bind.
+    unfold bind.
+    unfold bind'.
+    unfold ToKleisli.Bind_Join.
     rewrite (fun_map_id (F := T)).
     reflexivity.
   Qed.
 
-End Roundtrip1.
+End categorical_to_kleisli_to_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (******************************************************************************)
-Section RoundTrip2.
+Section kleisli_to_categorical_to_kleisli.
 
   Context
-    `{Return T}
-    `{bind1 : Bind T T}
+    `{Return_T: Return T}
+    `{Bind_TT: Bind T T}
     `{! Kleisli.Monad.Monad T}.
 
-  Definition map_derived := Map_Bind.
-  Definition join_derived := Join_Bind.
-  Definition bind2 : Bind T T := ToKleisli.Bind_Join T (H := Map_Bind).
+  Definition map': Map T := DerivedOperations.Map_Bind T T.
+  Definition join': Join T := DerivedOperations.Join_Bind T.
 
-  Goal bind1 = bind2.
+  Definition bind2: Bind T T :=
+    ToKleisli.Bind_Join T (map_T := map') (join_T := join').
+
+  Goal Bind_TT = bind2.
   Proof.
     ext A B f.
-    unfold bind2, ToKleisli.Bind_Join.
-    unfold join, Join_Bind.
-    unfold map, Map_Bind.
+    unfold bind2.
+    unfold ToKleisli.Bind_Join.
+    unfold join.
+    unfold join'.
+    unfold DerivedOperations.Join_Bind.
+    unfold map.
+    unfold map'.
+    unfold DerivedOperations.Map_Bind.
     unfold_compose_in_compose.
     rewrite (kmon_bind2 (T := T)).
-    fequal. unfold kc1.
-    reassociate <-.
+    unfold kc.
+    reassociate <- on right.
     rewrite (kmon_bind0 (T := T)).
     reflexivity.
   Qed.
 
-End RoundTrip2.
+End kleisli_to_categorical_to_kleisli.
