@@ -4,31 +4,37 @@ From Tealeaves Require Export
 
 Import Product.Notations.
 Import Functor.Notations.
-Import Kleisli.Monad.Notations.
+Import Comonad.Notations.
 
 #[local] Generalizable Variable T.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
-Module Roundtrip1.
+Section decorated_functor_categorical_kleisli_categorical.
 
   Context
-    (E : Type)
-    (T : Type -> Type)
-    `{mapT : Map T}
-    `{decT : Decorate E T}
+    (E: Type)
+    (T: Type -> Type)
+    `{Map_T: Map T}
+    `{Decorate_ET: Decorate E T}
     `{! Categorical.DecoratedFunctor.DecoratedFunctor E T}.
 
-  #[local] Instance mapd' : Mapd E T := ToKleisli.Mapd_dec E T.
+  Definition mapd': Mapd E T :=
+    DerivedOperations.Mapd_Categorical E T.
 
-  Definition map' : Map T := Map_Mapd.
-  Definition dec' : Decorate E T := Decorate_Mapd E T.
+  Definition map2: Map T :=
+    DerivedOperations.Map_Mapd E T (Mapd_ET := mapd').
 
-  Goal mapT = map'.
+  Definition dec2: Decorate E T :=
+    DerivedOperations.Decorate_Mapd E T (Mapd_ET := mapd').
+
+  Goal Map_T = map2.
   Proof.
-    unfold map'. unfold_ops @Map_Mapd.
-    unfold mapd, mapd'.
-    unfold_ops @ToKleisli.Mapd_dec.
+    unfold map2.
+    unfold_ops @DerivedOperations.Map_Mapd.
+    unfold mapd.
+    unfold mapd'.
+    unfold DerivedOperations.Mapd_Categorical.
     ext A B f.
     rewrite <- (fun_map_map (F := T)).
     reassociate ->.
@@ -36,44 +42,52 @@ Module Roundtrip1.
     reflexivity.
   Qed.
 
-  Goal decT = dec'.
+  Goal Decorate_ET = dec2.
   Proof.
-    unfold dec'. unfold_ops @Decorate_Mapd.
-    unfold mapd, mapd'.
-    unfold_ops @ToKleisli.Mapd_dec.
+    unfold dec2.
+    unfold_ops @DerivedOperations.Decorate_Mapd.
+    unfold mapd.
+    unfold mapd'.
+    unfold_ops @DerivedOperations.Mapd_Categorical.
     ext A.
     rewrite (fun_map_id (F := T)).
     reflexivity.
   Qed.
 
-End Roundtrip1.
+End decorated_functor_categorical_kleisli_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (******************************************************************************)
-Module Roundtrip2.
+Section decorated_functor_kleisli_categorical_kleisli.
 
   Context
-    (E : Type)
-    (T : Type -> Type)
-    `{mapdT : Mapd E T}
+    (E: Type)
+    (T: Type -> Type)
+    `{Mapd_ET: Mapd E T}
     `{! Kleisli.DecoratedFunctor.DecoratedFunctor E T}.
 
-  #[local] Instance map' : Map T := Map_Mapd.
-  #[local] Instance dec' : Decorate E T := Decorate_Mapd E T.
+  Definition map': Map T := DerivedOperations.Map_Mapd E T.
+  Definition dec': Decorate E T := DerivedOperations.Decorate_Mapd E T.
 
-  Definition mapd' : Mapd E T := ToKleisli.Mapd_dec E T.
+  Definition mapd2: Mapd E T :=
+    DerivedOperations.Mapd_Categorical E T
+      (Map_F := map') (Decorate_EF := dec').
 
-  Goal mapdT = mapd'.
+  Goal Mapd_ET = mapd2.
   Proof.
-    unfold mapd'. unfold_ops @ToKleisli.Mapd_dec.
-    unfold map, map', dec, dec'.
-    unfold_ops @Map_Mapd.
-    unfold_ops @Decorate_Mapd.
+    unfold mapd2.
+    unfold DerivedOperations.Mapd_Categorical.
+    unfold map.
+    unfold map'.
+    unfold DerivedOperations.Map_Mapd.
+    unfold dec.
+    unfold dec'.
+    unfold DerivedOperations.Decorate_Mapd.
     ext A B f.
     unfold_compose_in_compose.
-    rewrite (dfun_mapd2 (E := E) (T := T)).
-    rewrite kc4_04.
+    rewrite (kdf_mapd2 (E := E) (T := T)).
+    rewrite kc1_01.
     reflexivity.
   Qed.
 
-End Roundtrip2.
+End decorated_functor_kleisli_categorical_kleisli.

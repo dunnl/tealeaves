@@ -3,25 +3,30 @@ From Tealeaves Require Import
   Classes.Categorical.RightModule
   Classes.Kleisli.Monad.
 
+Import Kleisli.Monad.Notations.
+
 #[local] Generalizable Variables T A B C.
 
 (** * Categorical Monad to Kleisli Monad *)
 (******************************************************************************)
-Module ToKleisli.
 
-  Export Kleisli.Monad.
-  Import Kleisli.Monad.Notations.
+(** ** Derived <<bind>> Operation *)
+(******************************************************************************)
+Module DerivedOperations.
 
-  (** * Derived <<bind>> Operation *)
-  (******************************************************************************)
-  #[export] Instance Bind_Join (T: Type -> Type)
+  #[export] Instance Bind_Categorical (T: Type -> Type)
     `{map_T: Map T}
     `{join_T: Join T}
     : Bind T T :=
     fun {A B} (f: A -> T B) => join ∘ map (F := T) f.
+End DerivedOperations.
 
-  (** ** Categorical Monad Laws *)
-  (******************************************************************************)
+(** ** Derived Kleisli Monad Laws *)
+(******************************************************************************)
+Module DerivedInstances.
+
+  Import CategoricalToKleisli.Monad.DerivedOperations.
+
   Section with_monad.
 
     Context
@@ -34,7 +39,7 @@ Module ToKleisli.
         bind (ret (T := T) (A := A)) = @id (T A).
     Proof.
       intros.
-      unfold_ops @Bind_Join.
+      unfold_ops @Bind_Categorical.
       rewrite (mon_join_map_ret (T := T)).
       reflexivity.
     Qed.
@@ -47,7 +52,7 @@ Module ToKleisli.
     Proof.
       introv.
       unfold kc.
-      unfold_ops @Bind_Join.
+      unfold_ops @Bind_Categorical.
       rewrite <- 2(fun_map_map (F := T)).
       reassociate <- on right.
       reassociate <- on right.
@@ -64,7 +69,7 @@ Module ToKleisli.
     Lemma mon_bind_comp_ret: forall (A B: Type) (f: A -> T B),
         bind f ∘ ret = f.
     Proof.
-      intros. unfold_ops @Bind_Join.
+      intros. unfold_ops @Bind_Categorical.
       reassociate -> on left.
       unfold_compose_in_compose; (* these rewrites are not visible *)
         change (@compose A) with (@compose ((fun A => A) A)).
@@ -85,7 +90,7 @@ Module ToKleisli.
 
   End with_monad.
 
-End ToKleisli.
+End DerivedInstances.
 
 (*
 (** ** Derived laws *)
@@ -103,7 +108,7 @@ Section ToKleisli_laws.
   Lemma map_to_bind: forall `(f: A -> B),
       map T f = bind (ret T B ∘ f).
   Proof.
-    intros. unfold_ops @Bind_Join.
+    intros. unfold_ops @Bind_Categorical.
     rewrite <- (fun_map_map (F := T)).
     reassociate <-.
     rewrite (mon_join_map_ret (T := T)).
@@ -155,9 +160,8 @@ End ToKleisli_laws.
 (******************************************************************************)
 Module ToKleisliRightModule.
 
-  Import ToKleisli.
-  Export Kleisli.Monad.
-  Import Kleisli.Monad.Notations.
+  Import DerivedOperations.
+  Import DerivedInstances.
 
   #[export] Instance Bind_RightAction
     (T U: Type -> Type)
@@ -185,7 +189,7 @@ Module ToKleisliRightModule.
         bind g ∘ bind f = bind (g ⋆ f).
     Proof.
       introv. unfold kc.
-      unfold_ops @Bind_Join.
+      unfold_ops @Bind_Categorical.
       unfold_ops @Bind_RightAction.
       rewrite <- 2(fun_map_map (F := F)).
       reassociate <- on right.

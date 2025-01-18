@@ -7,65 +7,85 @@ Import Product.Notations.
 
 #[local] Generalizable Variables T E A B C.
 
-#[export] Instance Decorate_Mapd
-  (E : Type) (T : Type -> Type) `{Mapd E T}
-  : Decorate E T := fun A => mapd (@id ((E ×) A)).
+(** * Categorical Decorated Functors to Kleisli Decorated Functors *)
+(******************************************************************************)
 
-Section properties.
+(** ** Derived <<mapd>> Operation *)
+(******************************************************************************)
+Module DerivedOperations.
 
-  Context
-    (E : Type)
-    (T : Type -> Type)
-    `{Kleisli.DecoratedFunctor.DecoratedFunctorFull E T}.
+  #[export] Instance Decorate_Mapd
+    (E: Type) (T: Type -> Type) `{Mapd_ET: Mapd E T}:
+  Decorate E T := fun A => mapd (@id ((E ×) A)).
 
-  Lemma cojoin_spec : forall (A : Type),
-      cojoin (W := (E ×)) =
-        id (A := E * (E * A)) ⋆4 id (A := E * A).
-  Proof.
-    intros.
-    unfold kc4.
-    reflexivity.
-  Qed.
+End DerivedOperations.
 
-  Lemma dec_dec : forall (A : Type),
-      dec T ∘ dec T = map (cojoin (W := (E ×))) ∘ dec T (A := A).
-  Proof.
-    intros.
-    unfold_ops @Decorate_Mapd.
-    rewrite kdf_mapd2.
-    rewrite <- cojoin_spec.
-    rewrite map_mapd.
-    reflexivity.
-  Qed.
+(** ** Derived Decorated Functor Laws *)
+(******************************************************************************)
+Module DerivedInstances.
 
-  Lemma dec_extract : forall (A : Type),
-      map (F := T) extract ∘ dec T = @id (T A).
-  Proof.
-    intros.
-    unfold_ops @Decorate_Mapd.
-    rewrite map_mapd.
-    change (?f ∘ id) with f.
-    rewrite kdf_mapd1.
-    reflexivity.
-  Qed.
+  Section properties.
 
-  Lemma dec_natural : Natural (@dec E T _).
-  Proof.
-    constructor.
-    - typeclasses eauto.
-    - typeclasses eauto.
-    - intros.
-      unfold_ops @Map_compose.
+    Context
+      (E: Type)
+      (T: Type -> Type)
+      `{Kleisli.DecoratedFunctor.DecoratedFunctor E T}.
+
+    Import KleisliToCategorical.DecoratedFunctor.DerivedOperations.
+    Import Kleisli.DecoratedFunctor.DerivedOperations.
+    Import Kleisli.DecoratedFunctor.DerivedInstances.
+
+    Lemma cojoin_spec: forall (A: Type),
+        cojoin (W := (E ×)) =
+          id (A := E * (E * A)) ⋆1 id (A := E * A).
+    Proof.
+      intros.
+      unfold kc1.
+      reflexivity.
+    Qed.
+
+    Lemma dec_dec: forall (A: Type),
+        dec T ∘ dec T = map (cojoin (W := (E ×))) ∘ dec T (A := A).
+    Proof.
+      intros.
+      unfold_ops @Decorate_Mapd.
+      rewrite kdf_mapd2.
+      rewrite <- cojoin_spec.
+      rewrite map_mapd.
+      reflexivity.
+    Qed.
+
+    Lemma dec_extract: forall (A: Type),
+        map (F := T) extract ∘ dec T = @id (T A).
+    Proof.
+      intros.
       unfold_ops @Decorate_Mapd.
       rewrite map_mapd.
-      rewrite mapd_map.
+      change (?f ∘ id) with f.
+      rewrite kdf_mapd1.
       reflexivity.
-  Qed.
+    Qed.
 
-  #[export] Instance: Categorical.DecoratedFunctor.DecoratedFunctor E T :=
-    {| kdf_dec_natural := dec_natural;
-       kdf_dec_dec := dec_dec;
-       kdf_dec_extract := dec_extract;
-    |}.
+    Lemma dec_natural: Natural (@dec E T _).
+    Proof.
+      constructor.
+      - typeclasses eauto.
+      - typeclasses eauto.
+      - intros.
+        unfold_ops @Map_compose.
+        unfold_ops @Decorate_Mapd.
+        rewrite map_mapd.
+        rewrite mapd_map.
+        reflexivity.
+    Qed.
 
-End properties.
+    #[export] Instance CategoricalDecoratedFunctor_Kleisli:
+      Categorical.DecoratedFunctor.DecoratedFunctor E T :=
+      {| dfun_dec_natural := dec_natural;
+         dfun_dec_dec := dec_dec;
+         dfun_dec_extract := dec_extract;
+      |}.
+
+  End properties.
+
+End DerivedInstances.

@@ -47,7 +47,10 @@ Class DecoratedHom
 (******************************************************************************)
 Module DerivedOperations.
 
-  #[export] Instance Map_Mapd `{Mapd_ET: Mapd E T}: Map T :=
+  #[export] Instance Map_Mapd
+    (E: Type)
+    (T: Type -> Type)
+    `{Mapd_ET: Mapd E T}: Map T :=
   fun (A B: Type) (f: A -> B) => mapd (f ∘ extract).
 
 End DerivedOperations.
@@ -60,7 +63,7 @@ Class Compat_Map_Mapd (E: Type) (T: Type -> Type)
 
 #[export] Instance Compat_Map_Mapd_Self
   `{Mapd_ET: Mapd E T}:
-  Compat_Map_Mapd E T (Map_T := DerivedOperations.Map_Mapd).
+  Compat_Map_Mapd E T (Map_T := DerivedOperations.Map_Mapd E T).
 Proof.
   reflexivity.
 Qed.

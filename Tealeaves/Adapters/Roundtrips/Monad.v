@@ -20,7 +20,7 @@ Section categorical_to_kleisli_to_categorical.
 
   (* Derive the Kleisli operation *)
   Definition bind': Bind T T :=
-    CategoricalToKleisli.Monad.ToKleisli.Bind_Join T.
+    CategoricalToKleisli.Monad.DerivedOperations.Bind_Categorical T.
 
   (* Re-derive the categorical operations *)
   Definition map2: Map T :=
@@ -38,7 +38,7 @@ Section categorical_to_kleisli_to_categorical.
     unfold DerivedOperations.Map_Bind.
     unfold bind.
     unfold bind'.
-    unfold ToKleisli.Bind_Join.
+    unfold DerivedOperations.Bind_Categorical.
     rewrite <- (fun_map_map (F := T)).
     reassociate <- on right.
     rewrite (mon_join_map_ret (T := T)).
@@ -52,7 +52,7 @@ Section categorical_to_kleisli_to_categorical.
     unfold DerivedOperations.Join_Bind.
     unfold bind.
     unfold bind'.
-    unfold ToKleisli.Bind_Join.
+    unfold DerivedOperations.Bind_Categorical.
     rewrite (fun_map_id (F := T)).
     reflexivity.
   Qed.
@@ -72,13 +72,13 @@ Section kleisli_to_categorical_to_kleisli.
   Definition join': Join T := DerivedOperations.Join_Bind T.
 
   Definition bind2: Bind T T :=
-    ToKleisli.Bind_Join T (map_T := map') (join_T := join').
+    DerivedOperations.Bind_Categorical T (map_T := map') (join_T := join').
 
   Goal Bind_TT = bind2.
   Proof.
     ext A B f.
     unfold bind2.
-    unfold ToKleisli.Bind_Join.
+    unfold DerivedOperations.Bind_Categorical.
     unfold join.
     unfold join'.
     unfold DerivedOperations.Join_Bind.
@@ -94,3 +94,4 @@ Section kleisli_to_categorical_to_kleisli.
   Qed.
 
 End kleisli_to_categorical_to_kleisli.
+

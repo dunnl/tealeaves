@@ -35,10 +35,17 @@ Tealeaves/Adapters/Roundtrips/Monad.v
 Tealeaves/Functors/Early/Reader.v
 Tealeaves/Classes/Categorical/DecoratedFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedFunctor.v
+Tealeaves/Adapters/CategoricalToKleisli/Comonad.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctor.v
+Tealeaves/Adapters/KleisliToCategorical/DecoratedFunctor.v
+Tealeaves/Adapters/Roundtrips/DecoratedFunctor.v
 # Decorated Monads
 Tealeaves/Functors/Early/Writer.v
 Tealeaves/Classes/Categorical/DecoratedMonad.v
 Tealeaves/Classes/Kleisli/DecoratedMonad.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedMonad.v
+Tealeaves/Adapters/KleisliToCategorical/DecoratedMonad.v
+Tealeaves/Adapters/Roundtrips/DecoratedMonad.v
 # Traversable Functors
 Tealeaves/Classes/Categorical/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableFunctor.v

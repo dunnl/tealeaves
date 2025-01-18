@@ -4,33 +4,39 @@ From Tealeaves Require Export
 
 Import Product.Notations.
 Import Monad.Notations.
-Import Kleisli.Monad.Notations.
+Import Kleisli.DecoratedMonad.Notations.
 
 #[local] Generalizable Variable T W.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
-Module Roundtrip1.
+Module decorated_monad_categorical_kleisli_categorical.
 
   Context
-    `{mapT : Map T}
-    `{decT : Decorate W T}
-    `{joinT : Join T}
-    `{retT : Return T}
+    `{mapT: Map T}
+    `{decT: Decorate W T}
+    `{joinT: Join T}
+    `{retT: Return T}
     `{Monoid W}
     `{! Categorical.DecoratedMonad.DecoratedMonad W T}.
 
-  #[local] Instance bindd' : Bindd W T T := ToKleisli.Bindd_dec W T.
+  Definition bindd': Bindd W T T :=
+    DerivedOperations.Bindd_Categorical W T.
 
-  Definition map' : Map T := Map_Bindd W T.
-  Definition dec' : Decorate W T := Decorate_Bindd W T.
-  Definition join' : Join T := Join_Bindd W T.
+  Definition map2: Map T :=
+    DerivedOperations.Map_Bindd W T T (Bindd_WTU := bindd').
+  Definition dec2: Decorate W T :=
+    DerivedOperations.Decorate_Bindd W T (Bindd_WTT := bindd').
+  Definition join2: Join T :=
+    DerivedOperations.Join_Bindd W T (Bindd_WTT := bindd').
 
-  Goal mapT = map'.
+  Goal mapT = map2.
   Proof.
-    unfold map'. unfold_ops @Map_Bindd.
-    unfold bindd, bindd'.
-    unfold_ops @ToKleisli.Bindd_dec.
+    unfold map2.
+    unfold_ops @DerivedOperations.Map_Bindd.
+    unfold bindd.
+    unfold bindd'.
+    unfold_ops @DerivedOperations.Bindd_Categorical.
     ext A B f.
     rewrite <- (fun_map_map (F := T)).
     reassociate <-.
@@ -42,65 +48,74 @@ Module Roundtrip1.
     reflexivity.
   Qed.
 
-  Goal decT = dec'.
+  Goal decT = dec2.
   Proof.
-    unfold dec'. unfold_ops @Decorate_Bindd.
-    unfold bindd, bindd'.
-    unfold_ops @ToKleisli.Bindd_dec.
+    unfold dec2.
+    unfold_ops @DerivedOperations.Decorate_Bindd.
+    unfold bindd.
+    unfold bindd'.
+    unfold_ops @DerivedOperations.Bindd_Categorical.
     ext A.
     rewrite (mon_join_map_ret (T := T)).
     reflexivity.
   Qed.
 
-  Goal joinT = join'.
+  Goal joinT = join2.
   Proof.
-    unfold join'. unfold_ops @Join_Bindd.
-    unfold bindd, bindd'.
-    unfold_ops @ToKleisli.Bindd_dec.
+    unfold join2.
+    unfold_ops @DerivedOperations.Join_Bindd.
+    unfold bindd.
+    unfold bindd'.
+    unfold_ops @DerivedOperations.Bindd_Categorical.
     ext A.
     reassociate ->.
     rewrite (dfun_dec_extract (E := W) (F := T)).
     reflexivity.
   Qed.
 
-End Roundtrip1.
+End decorated_monad_categorical_kleisli_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (******************************************************************************)
-Module Roundtrip2.
+Module decorated_monad_kleisli_categorical_kleisli.
 
   Context
-    `{binddT : Bindd W T T}
-    `{retT : Return T}
+    `{binddT: Bindd W T T}
+    `{retT: Return T}
     `{Monoid W}
-    `{@Kleisli.DecoratedMonad.DecoratedMonad W T retT binddT _ _}.
+    `{@Kleisli.DecoratedMonad.DecoratedMonad W T _ _ retT binddT}.
 
-  #[local] Instance map' : Map T := Map_Bindd W T.
-  #[local] Instance dec' : Decorate W T := Decorate_Bindd W T.
-  #[local] Instance join' : Join T := Join_Bindd W T.
+  Definition map': Map T :=
+    DerivedOperations.Map_Bindd W T T.
+  Definition dec': Decorate W T :=
+    DerivedOperations.Decorate_Bindd W T.
+  Definition join': Join T :=
+    DerivedOperations.Join_Bindd W T.
 
-  Definition bindd' : Bindd W T T := ToKleisli.Bindd_dec W T.
+  Definition bindd2: Bindd W T T :=
+    DerivedOperations.Bindd_Categorical W T
+      (Map_T := map') (Join_T := join') (Decorate_WT := dec').
 
-  Goal binddT = bindd'.
+  Goal binddT = bindd2.
   Proof.
-    unfold bindd'. unfold_ops @ToKleisli.Bindd_dec.
+    unfold bindd2.
+    unfold_ops @DerivedOperations.Bindd_Categorical.
     unfold map, map', dec, dec', join, join'.
-    unfold_ops @Map_Bindd.
-    unfold_ops @Join_Bindd.
-    unfold_ops @Decorate_Bindd.
+    unfold_ops @DerivedOperations.Map_Bindd.
+    unfold_ops @DerivedOperations.Join_Bindd.
+    unfold_ops @DerivedOperations.Decorate_Bindd.
     ext A B f.
     unfold_compose_in_compose.
-    rewrite (kmond_bindd2 (T := T)).
-    rewrite (kmond_bindd2 (T := T)).
+    rewrite (kdm_bindd2 (T := T)).
+    rewrite (kdm_bindd2 (T := T)).
     fequal.
-    rewrite (kc5_50).
-    change (ret (T := T) (A := W * A)) with (ret (T:=T) (A := W * A) ∘ id).
-    rewrite (kc5_54).
-    change (Map_reader ?x) with (Map_prod x) in *.
-    (* TODO ^^ Fix this *)
+    rewrite kc5_50.
+    change (ret (T := T) (A := W * A)) with
+      (ret (T:=T) (A := W * A) ∘ id).
+    rewrite kc5_51.
     rewrite <- (natural (ϕ := @extract (W ×) _)).
-    rewrite kc4_04.
+    rewrite kc1_01.
     reflexivity.
   Qed.
 
-End Roundtrip2.
+End decorated_monad_kleisli_categorical_kleisli.
