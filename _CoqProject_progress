@@ -1,12 +1,11 @@
 # Adapters
-Tealeaves/Adapters/CategoricalToKleisli/Monad.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedMonad.v
 Tealeaves/Adapters/CategoricalToKleisli/TraversableFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/TraversableMonad.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonad.v
-Tealeaves/Adapters/KleisliToCategorical/Monad.v
+
 Tealeaves/Adapters/KleisliToCategorical/DecoratedFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedMonad.v
 Tealeaves/Adapters/KleisliToCategorical/TraversableFunctor.v
@@ -22,7 +21,6 @@ Tealeaves/Adapters/CoalgebraicToKleisli/TraversableMonad.v
 Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
 # Roundtrips
-Tealeaves/Adapters/Roundtrips/Monad.v
 Tealeaves/Adapters/Roundtrips/DecoratedFunctor.v
 Tealeaves/Adapters/Roundtrips/DecoratedMonad.v
 Tealeaves/Adapters/Roundtrips/TraversableFunctor.v

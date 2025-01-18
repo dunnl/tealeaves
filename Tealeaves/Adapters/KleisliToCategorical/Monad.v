@@ -2,8 +2,9 @@ From Tealeaves Require Export
   Classes.Categorical.Monad
   Classes.Kleisli.Monad.
 
-(** * Categorical monads to Kleisli monads *)
+(** * Categorical Monads to Kleisli Monads *)
 (******************************************************************************)
+
 #[export] Instance Join_Bind
   (T : Type -> Type)
   `{Return T} `{Bind T T} : Join T :=
@@ -15,19 +16,13 @@ Module Instance.
 
     Context
       (T : Type -> Type)
-        `{Classes.Kleisli.Monad.Monad T}.
+      `{Classes.Kleisli.Monad.Monad T}.
 
-    Existing Instance Map_Bind.
-    Existing Instance Functor_Monad.
-    Existing Instance MonadFull_Monad.
+    Existing Instance Kleisli.Monad.DerivedOperations.Map_Bind.
+    Existing Instance Kleisli.Monad.DerivedInstances.Functor_Monad.
 
-    About MonadFull_Monad.
-    About Functor_Monad.
-    About MonadFull.
-    Search map_bind.
-    About map_bind.
-
-    #[local] Instance CategoricalFromKleisli_Monad: Classes.Categorical.Monad.Monad T.
+    #[local] Instance CategoricalFromKleisli_Monad:
+      Classes.Categorical.Monad.Monad T.
     Proof.
       constructor.
       -

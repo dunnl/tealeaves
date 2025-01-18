@@ -15,7 +15,6 @@ Import Strength.Notations.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 #[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope
   {H H0 H1} {A}%type_scope _.
-#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
 
 (** ** Typeclass *)
 (******************************************************************************)
