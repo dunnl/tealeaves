@@ -5,10 +5,11 @@ From Tealeaves Require Export
   Classes.Kleisli.DecoratedMonad
   Classes.Categorical.DecoratedFunctor (shift).
 
+Import Comonad.Notations.
 Import Kleisli.Monad.Notations.
 Import Categorical.Monad.Notations.
 Import Product.Notations.
-Import Misc.Subset.Notations.
+Import Functors.Early.Subset.Notations.
 Import Monoid.Notations.
 Import DecoratedMonad.Notations.
 
@@ -62,7 +63,8 @@ Section ctxset.
   Proof.
     intros.
     rewrite ctxset_mapd_spec, ctxset_map_spec.
-    now rewrite map_to_cobind_reader.
+    rewrite (map_to_cobind (W := (E ×))).
+    reflexivity.
   Qed.
 
   Lemma kdf_subset_mapd1 :
@@ -75,7 +77,7 @@ Section ctxset.
 
   Lemma kdf_subset_mapd2 :
     forall (A B C: Type) (g: E * B -> C) (f: E * A -> B),
-      mapd g ∘ mapd f = mapd (kc4 g f).
+      mapd g ∘ mapd f = mapd (g ⋆1 f).
   Proof.
     intros. do 2 rewrite ctxset_mapd_spec.
     rewrite (fun_map_map (E * A) (E * B) (E * C) (F := subset)).
@@ -172,7 +174,7 @@ Section ctxset.
         bind (T := subset) (shift subset ∘ cobind (W := (W ×)) f).
   Proof.
     intros. ext s [w b]. unfold shift.
-    rewrite (map_strength_cobind_spec W (G := subset)).
+    rewrite (map_strength_cobind_spec (G := subset)).
     unfold_ops @Bind_subset @Bindd_ctxset @Map_subset.
     propext.
     - intros [wa [a [contra [w' [Hin Heq]]]]].

@@ -182,6 +182,12 @@ Proof.
   now intros ? ? [? ?].
 Qed.
 
+Lemma product_map_slide_pf {X Y Z W} : forall (f : X -> Z) (g : Y -> W),
+    map_fst f ∘ map_snd g = map_snd g ∘ map_fst f.
+Proof.
+  intros. now ext [x y].
+Qed.
+
 Definition dup_left {A B} : A * B -> A * (A * B) :=
   fun '(a, b) => (a, (a, b)).
 

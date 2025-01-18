@@ -1,4 +1,6 @@
 From Tealeaves Require Export
+  Classes.Kleisli.Theory.DecoratedMonad
+  Classes.Kleisli.Theory.DecoratedContainerFunctor
   Classes.Kleisli.DecoratedContainerMonad.
 
 Import Monoid.Notations.
@@ -65,7 +67,7 @@ Section decorated_container_monad_theory.
       toctxset ∘ ret (T := T) (A := A) =
         ret (T := ctxset W).
   Proof.
-    apply kmond_hom_ret.
+    apply kdm_hom_ret.
   Qed.
 
   Theorem ind_ret_iff : forall {A : Type} (w : W) (a1 a2 : A),
@@ -75,7 +77,7 @@ Section decorated_container_monad_theory.
     compose near a2 on left.
     rewrite element_ctx_of_toctxset.
     reassociate -> on left.
-    rewrite (kmond_hom_ret (ϕ := @toctxset W T _)).
+    rewrite (kdm_hom_ret (ϕ := @toctxset W T _)).
     unfold evalAt, compose;
     unfold_ops @Return_ctxset.
     intuition.
@@ -85,7 +87,7 @@ Section decorated_container_monad_theory.
       toctxset ∘ bindd (U := U) f =
         bindd (U := ctxset W) (toctxset ∘ f) ∘ toctxset (F := U).
   Proof.
-    apply kmoddpar_hom_bind.
+    apply kdmod_parhom_bind.
   Qed.
 
   Theorem ind_bindd_iff : forall w t f b,
@@ -98,7 +100,7 @@ Section decorated_container_monad_theory.
     compose near t on left.
     rewrite element_ctx_of_toctxset.
     reassociate -> on left.
-    rewrite (kmoddpar_hom_bind (ϕ := @toctxset W U _)).
+    rewrite (kdmod_parhom_bind (ϕ := @toctxset W U _)).
     reflexivity.
   Qed.
 
@@ -207,7 +209,7 @@ Section decorated_container_monad_theory.
       -> bindd f t = t.
   Proof.
     intros. change t with (id t) at 2.
-    rewrite <- kmodd_bindd1.
+    rewrite <- kdmod_bindd1.
     eapply bindd_respectful.
     eauto.
   Qed.

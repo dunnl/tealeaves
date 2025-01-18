@@ -1,9 +1,9 @@
 From Tealeaves Require Import
-  Classes.Kleisli.Monad (Return, ret)
-  Classes.Kleisli.DecoratedTraversableMonad
   Classes.Categorical.Applicative
-  Functors.Writer
-  Functors.Batch.
+  Classes.Categorical.Monad (Return, ret)
+  Classes.Kleisli.DecoratedTraversableMonad
+  Functors.Early.Batch
+  Functors.Early.Writer.
 
 Import Batch.Notations.
 Import Monoid.Notations.
@@ -17,13 +17,18 @@ Import Applicative.Notations.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 #[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 
-(** * Traversable monads as coalgebras *)
+(** * Coalgebraic Decorated Traversable Monads *)
+(******************************************************************************)
+
+(** ** The <<toBatch7>> Operation *)
 (******************************************************************************)
 Class ToBatch7 (W : Type) (T U : Type -> Type) :=
   toBatch7 : forall A B, U A -> Batch (W * A) (T B) (U B).
 
 #[global] Arguments toBatch7 {W}%type_scope {T U}%function_scope {ToBatch7} {A B}%type_scope _.
 
+(** ** The <<cojoin_Batch7>> Operation *)
+(******************************************************************************)
 Section cojoin.
 
   Context
@@ -76,7 +81,7 @@ Section cojoin.
 
 End cojoin.
 
-(** ** Characterizing <<cojoin_BatchDM>> via <<runBatch>> *)
+(** ** Characterizing <<cojoin_Batch7>> via <<runBatch>> *)
 (******************************************************************************)
 Section section.
 
@@ -144,6 +149,8 @@ Section section.
 
 End section.
 
+(** ** Typeclass *)
+(******************************************************************************)
 Class DecoratedTraversableMonad (W : Type) (T : Type -> Type)
   `{Monoid_op W} `{Monoid_unit W} `{Return T} `{ToBatch7 W T T} :=
   { dtm_monoid :> Monoid W;

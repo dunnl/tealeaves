@@ -6,10 +6,10 @@ Import Kleisli.Comonad.Notations.
 
 #[local] Generalizable Variables E T.
 
-(** * Decorated functors *)
+(** * Decorated Functors *)
 (******************************************************************************)
 
-(** ** <<Mapd>> operation *)
+(** ** <<mapd>> Operation *)
 (******************************************************************************)
 Class Mapd (E: Type) (T: Type -> Type) :=
   mapd: forall (A B: Type), (E * A -> B) -> T A -> T B.
@@ -17,7 +17,9 @@ Class Mapd (E: Type) (T: Type -> Type) :=
 #[global] Arguments mapd {E}%type_scope {T}%function_scope
   {Mapd} {A B}%type_scope _%function_scope _.
 
-(** Kleisli composition is [kc4] as for comonads *)
+(** ** Kleisli Composition *)
+(** Kleisli composition is [kc1] *)
+(******************************************************************************)
 
 (** ** Typeclasses *)
 (******************************************************************************)
@@ -25,10 +27,10 @@ Class DecoratedFunctor (E: Type) (T: Type -> Type) `{Mapd E T} :=
   { kdf_mapd1: forall (A: Type),
       mapd (extract (A := A)) = @id (T A);
     kdf_mapd2: forall (A B C: Type) (g: E * B -> C) (f: E * A -> B),
-      mapd g ∘ mapd f = mapd (g ⋆4 f);
+      mapd g ∘ mapd f = mapd (g ⋆1 f);
   }.
 
-(** ** Decoration-preserving natural transformations *)
+(** ** Homomorphisms between Decorated Functors *)
 (******************************************************************************)
 Class DecoratedHom
   (E: Type) (T1 T2: Type -> Type)
@@ -37,3 +39,111 @@ Class DecoratedHom
   { dhom_natural:
     forall (A B: Type) (f: E * A -> B), mapd f ∘ ϕ A = ϕ B ∘ mapd f;
   }.
+
+(** * Derived Structures *)
+(******************************************************************************)
+
+(** ** Derived Operations *)
+(******************************************************************************)
+Module DerivedOperations.
+
+  #[export] Instance Map_Mapd `{Mapd_ET: Mapd E T}: Map T :=
+  fun (A B: Type) (f: A -> B) => mapd (f ∘ extract).
+
+End DerivedOperations.
+
+Class Compat_Map_Mapd (E: Type) (T: Type -> Type)
+  `{Map_T: Map T}
+  `{Mapd_ET: Mapd E T}: Prop :=
+  compat_map_mapd:
+    Map_T = @DerivedOperations.Map_Mapd E T Mapd_ET.
+
+#[export] Instance Compat_Map_Mapd_Self
+  `{Mapd_ET: Mapd E T}:
+  Compat_Map_Mapd E T (Map_T := DerivedOperations.Map_Mapd).
+Proof.
+  reflexivity.
+Qed.
+
+Corollary map_to_mapd
+  `{Compat_Map_Mapd E T}: forall (A B: Type) (f: A -> B),
+    map f = mapd (f ∘ extract).
+Proof.
+  rewrite compat_map_mapd.
+  reflexivity.
+Qed.
+
+(** ** Derived Composition Laws *)
+(******************************************************************************)
+Section derived_instances.
+
+  Context
+    `{DecoratedFunctor E T}
+    `{Map_T: Map T}
+    `{! Compat_Map_Mapd E T}.
+
+  Lemma map_mapd:
+    forall (A B C: Type)
+      (g: B -> C)
+      (f: E * A -> B),
+      map g ∘ mapd f = mapd (g ∘ f).
+  Proof.
+    intros.
+    rewrite map_to_mapd.
+    rewrite kdf_mapd2.
+    rewrite kc1_01.
+    reflexivity.
+  Qed.
+
+  Lemma mapd_map:
+    forall (A B C: Type) (g: E * B -> C) (f: A -> B),
+      mapd g ∘ map f = mapd (g ∘ map f).
+  Proof.
+    intros.
+    rewrite map_to_mapd.
+    rewrite kdf_mapd2.
+    rewrite kc1_10.
+    reflexivity.
+  Qed.
+
+  Lemma map_map: forall (A B C: Type) (f: A -> B) (g: B -> C),
+      map g ∘ map f = map (F := T) (g ∘ f).
+  Proof.
+    intros.
+    rewrite map_to_mapd.
+    rewrite map_to_mapd.
+    rewrite kdf_mapd2.
+    rewrite kc1_00.
+    rewrite map_to_mapd.
+    reflexivity.
+  Qed.
+
+  Lemma map_id: forall (A: Type),
+      map (@id A) = @id (T A).
+  Proof.
+    intros.
+    rewrite map_to_mapd.
+    change (id ∘ ?f) with f.
+    rewrite kdf_mapd1.
+    reflexivity.
+  Qed.
+
+End derived_instances.
+
+(** ** Derived Typeclass Instances *)
+(******************************************************************************)
+Module DerivedInstances.
+
+  #[export] Instance Functor_DecoratedFunctor
+    (E: Type) (T: Type -> Type)
+    `{DecoratedFunctor_ET: DecoratedFunctor E T}
+    `{Map_T: Map T}
+    `{! Compat_Map_Mapd E T}:
+  Classes.Functor.Functor T :=
+    {| fun_map_id := map_id;
+       fun_map_map := map_map;
+    |}.
+
+  Include DerivedOperations.
+
+End DerivedInstances.

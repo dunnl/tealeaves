@@ -10,62 +10,61 @@ Import TraversableFunctor.Notations.
 (** * CI-Decorated Traversable functor *)
 (******************************************************************************)
 
-(** ** The [mapdt_ci] operation *)
+(** ** The <<mapdt_ci>> Operation *)
 (******************************************************************************)
-Class Mapdt_CommIdem (Z : Type -> Type) (T : Type -> Type) :=
+Class Mapdt_CommIdem (W: Type -> Type) (T: Type -> Type) :=
   mapdt_ci :
-    forall (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-      (A B : Type), (Z A -> G B) -> T A -> G (T B).
+    forall (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
+      (A B: Type), (W A -> G B) -> T A -> G (T B).
 
-#[global] Arguments mapdt_ci {Z T}%function_scope {Mapdt_CommIdem}
+#[global] Arguments mapdt_ci {W T}%function_scope {Mapdt_CommIdem}
   {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope.
 
-(** ** "Kleisli" composition *)
+(** ** Kleisli Composition *)
 (******************************************************************************)
 Section kleisli_composition.
 
   Context
-    {Z: Type -> Type}
-      `{Mapdt_CommIdem Z Z}
-      `{Traverse Z}.
+    {W: Type -> Type}
+    `{Mapdt_CommIdem W W}.
 
-  Definition kc6_ci
-    {G1 G2 : Type -> Type}
-    `{Map G1} `{Pure G1} `{Mult G1} {A B C : Type}:
-    (Z B -> G2 C) ->
-    (Z A -> G1 B) ->
-    (Z A -> (G1 ∘ G2) C) :=
-    fun g f => map (F := G1) (A := Z B) (B := G2 C) g ∘
-              mapdt_ci (T := Z) (G := G1) f.
+  Definition kc3_ci
+    {G1 G2: Type -> Type}
+    `{Map G1} `{Pure G1} `{Mult G1} {A B C: Type}:
+    (W B -> G2 C) ->
+    (W A -> G1 B) ->
+    (W A -> (G1 ∘ G2) C) :=
+    fun g f => map (F := G1) (A := W B) (B := G2 C) g ∘
+              mapdt_ci (T := W) (G := G1) f.
 
 End kleisli_composition.
 
-#[local] Infix "⋆6_ci" := (kc6_ci) (at level 60) : tealeaves_scope.
+#[local] Infix "⋆3_ci" := (kc3_ci) (at level 60): tealeaves_scope.
 
 (** ** Typeclasses *)
 (******************************************************************************)
 Class DecoratedTraversableCommIdemFunctor
-  (Z: Type -> Type)
+  (W: Type -> Type)
   (T: Type -> Type)
-  `{Extract Z}
-  `{Mapdt_ZZ: Mapdt_CommIdem Z Z}
-  `{Mapdt_ZT: Mapdt_CommIdem Z T} :=
-  { kdtfci_mapdt1 : forall (A : Type),
+  `{Extract_W: Extract W}
+  `{Mapdt_WW: Mapdt_CommIdem W W}
+  `{Mapdt_WT: Mapdt_CommIdem W T} :=
+  { kdtfci_mapdt1: forall (A: Type),
       mapdt_ci (G := fun A => A) extract = @id (T A);
     kdtfci_mapdt2 :
     forall `{ApplicativeCommutativeIdempotent G1}
       `{ApplicativeCommutativeIdempotent G2}
-      {A B C : Type} (g : Z B -> G2 C) (f : Z A -> G1 B),
+      (A B C: Type) (g: W B -> G2 C) (f: W A -> G1 B),
       map (mapdt_ci g) ∘ mapdt_ci (T := T) f =
-        mapdt_ci (G := G1 ∘ G2) (g ⋆6_ci f);
+        mapdt_ci (G := G1 ∘ G2) (g ⋆3_ci f);
     kdtfci_morph :
     forall `{ApplicativeMorphism G1 G2 ϕ}
-      {A B : Type} (f : Z A -> G1 B),
+      (A B: Type) (f: W A -> G1 B),
       mapdt_ci (ϕ B ∘ f) = ϕ (T B) ∘ mapdt_ci f;
   }.
 
-(** ** Notations *)
+(** * Notations *)
 (******************************************************************************)
 Module Notations.
-  #[global] Infix "⋆6_ci" := (kc6_ci) (at level 60) : tealeaves_scope.
+  #[global] Infix "⋆3_ci" := (kc3_ci) (at level 60): tealeaves_scope.
 End Notations.

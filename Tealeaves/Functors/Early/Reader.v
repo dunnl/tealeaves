@@ -1,9 +1,13 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Misc.Product
   Misc.Strength
   Classes.Comonoid
   Classes.Kleisli.Comonad
   Classes.Categorical.Comonad.
+
+Export Misc.Product.
+Export Misc.Strength.
+Export Classes.Comonoid.
 
 Import Product.Notations.
 
@@ -123,24 +127,23 @@ Section with_E.
     Comonad.Functor_Comonad (E ×).
    *)
 
-  Lemma map_to_cobind_reader: forall A B (f: A -> B),
-      map f = cobind (f ∘ extract).
+  #[export] Instance Map_Cobind_Compat_Reader: Compat_Map_Cobind (E ×).
   Proof.
-    reflexivity.
-  Qed.
-
-  (** *** Miscellaneous properties *)
-  (******************************************************************************)
-  Lemma map_strength_cobind_spec {G} `{Functor G}:
-    forall (A B C: Type) (f: E * A -> G B) (g: E * B -> C),
-      map g ∘ strength ∘ cobind (W := (E ×)) f =
-        (fun '(w, a) => map (g ∘ pair w) (f (w, a))).
-  Proof.
-    intros. ext [w a].
-    unfold strength, compose; cbn.
-    compose near (f (w, a)) on left.
-    rewrite fun_map_map.
     reflexivity.
   Qed.
 
 End with_E.
+
+(** *** Miscellaneous properties *)
+(******************************************************************************)
+Lemma map_strength_cobind_spec {E G} `{Functor G}:
+  forall (A B C: Type) (f: E * A -> G B) (g: E * B -> C),
+    map g ∘ strength ∘ cobind (W := (E ×)) f =
+      (fun '(e, a) => map (g ∘ pair e) (f (e, a))).
+Proof.
+  intros. ext [w a].
+  unfold strength, compose; cbn.
+  compose near (f (w, a)) on left.
+  rewrite fun_map_map.
+  reflexivity.
+Qed.

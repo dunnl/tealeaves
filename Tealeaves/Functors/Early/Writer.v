@@ -94,12 +94,13 @@ Section writer_monad.
   Qed.
 
   Lemma Writer_kmon_bind2: forall (A B C: Type) (g: B -> W * C) (f: A -> W * B),
-      bind g ∘ bind f = bind (g ⋆1 f).
+      bind g ∘ bind f = bind (g ⋆ f).
   Proof.
     intros. ext [m a]. unfold_ops @Bind_Writer.
-    unfold kc1, bind, compose. cbn.
+    unfold kc, bind, compose. cbn.
     unfold id. destruct (f a). cbn. unfold id. destruct (g b).
-    cbn. unfold id. now simpl_monoid.
+    cbn. unfold id.
+    now simpl_monoid.
   Qed.
 
   #[export] Instance RightPreModule_writer :

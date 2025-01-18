@@ -2,8 +2,7 @@ From Tealeaves Require Export
   Classes.Kleisli.DecoratedFunctor
   Classes.Categorical.ContainerFunctor
   Functors.Early.Subset
-  Functors.Early.Ctxset
-  Functors.Early.Environment.
+  Functors.Early.Ctxset.
 
 Import ContainerFunctor.Notations.
 Import Monoid.Notations.

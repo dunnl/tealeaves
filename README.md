@@ -123,3 +123,7 @@ Additionally, subdirectories named `Theory/` are scattered in various places. Mo
 | Other class                       | Class prefix |
 | Kleisli.DecoratedContainerFunctor | dcont        |
 
+
+## Other conventions
+- `T` is the monad, `U` is the module
+`Bind T U` means substitute `T` in `U` i.e. `(A -> TB) -> UA -> UB.

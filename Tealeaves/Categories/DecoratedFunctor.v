@@ -2,7 +2,7 @@ From Tealeaves Require Import
   Classes.Categorical.DecoratedFunctor
   Classes.Categorical.RightComodule
   Classes.Categorical.Bimonad
-  Functors.Writer.
+  Functors.Early.Writer.
 
 #[local] Generalizable Variables E T W F G.
 

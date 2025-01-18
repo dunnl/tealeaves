@@ -61,7 +61,7 @@ Section shift_monad_lemmas.
   #[local] Generalizable Variables A.
 
   Context
-    `{Monad.Monad T}
+    `{Monad T}
     `{Monoid W}.
 
   (** [shift] applied to a singleton simplifies to a singleton. *)
@@ -89,7 +89,7 @@ End shift_monad_lemmas.
 Section helper_lemmas.
 
   Context
-    `{Monad.Monad T}
+    `{Monad T}
     `{Decorate W T}
     `{Monoid W}.
 

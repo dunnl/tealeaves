@@ -51,7 +51,7 @@ Section Derived.
       reflexivity.
   Qed.
 
-  Import Categorical.Applicative (Mult, Applicative).
+  Import Categorical.Applicative (Mult).
 
   #[local] Instance Mult_PureAp: Mult G :=
     fun A B (p: G A * G B) =>
@@ -60,7 +60,11 @@ Section Derived.
       end.
 
   #[local] Instance CatApp_App
-    `{! KApplicative.Applicative G}:
+    (* I want to write
+       `{! Kleisli.Applicative.Applicative G}:
+       but Alectryon complains about it for unknown reasons
+     *)
+    `{! Applicative G}:
     Categorical.Applicative.Applicative G.
   Proof.
     constructor.

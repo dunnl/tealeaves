@@ -3,15 +3,18 @@ From Tealeaves Require Export
   Classes.Kleisli.ContainerMonad
   Classes.Kleisli.Theory.Monad.
 
+#[local] Generalizable Variables U T A B.
+
+Import ContainerFunctor.Notations.
 
 Section corollaries.
 
   Context
     `{ContainerMonad T}
-    `{Map_inst : Map T}
+    `{Map_inst: Map T}
     `{! Compat_Map_Bind T T}.
 
-  Lemma ret_injective : forall (A : Type) (a a' : A),
+  Lemma ret_injective: forall (A: Type) (a a': A),
       ret a = ret a' -> a = a'.
   Proof.
     introv hyp.
@@ -24,7 +27,7 @@ Section corollaries.
   Qed.
 
   Theorem in_ret_iff :
-    forall (A : Type) (a1 a2 : A), a1 ∈ ret a2 <-> a1 = a2.
+    forall (A: Type) (a1 a2: A), a1 ∈ ret a2 <-> a1 = a2.
   Proof.
     intros.
     compose near a2 on left.
@@ -35,7 +38,7 @@ Section corollaries.
   Qed.
 
   Theorem in_bind_iff :
-    forall `(f : A -> T B) (t : T A) (b : B),
+    forall `(f: A -> T B) (t: T A) (b: B),
       b ∈ bind f t <-> exists a, a ∈ t /\ b ∈ f a.
   Proof.
     intros. compose near t on left.
@@ -45,15 +48,15 @@ Section corollaries.
     reflexivity.
   Qed.
 
-  Corollary bind_respectful : forall (A B : Type) (t : T A) (f g : A -> T B),
+  Corollary bind_respectful: forall (A B: Type) (t: T A) (f g: A -> T B),
       (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t.
   Proof.
     apply contm_pointwise.
   Qed.
 
   Corollary bind_respectful_map :
-    forall `(f1 : A -> T B) `(f2 : A -> B) (t : T A),
-      (forall (a : A), a ∈ t -> f1 a = ret (f2 a)) -> bind f1 t = map f2 t.
+    forall `(f1: A -> T B) `(f2: A -> B) (t: T A),
+      (forall (a: A), a ∈ t -> f1 a = ret (f2 a)) -> bind f1 t = map f2 t.
   Proof.
     introv hyp.
     rewrite compat_map_bind.
@@ -61,8 +64,8 @@ Section corollaries.
   Qed.
 
   Corollary bind_respectful_id :
-    forall `(f1 : A -> T A) (t : T A),
-      (forall (a : A), a ∈ t -> f1 a = ret a) -> bind f1 t = t.
+    forall `(f1: A -> T A) (t: T A),
+      (forall (a: A), a ∈ t -> f1 a = ret a) -> bind f1 t = t.
   Proof.
     introv hyp.
     change t with (id t) at 2.
@@ -80,7 +83,7 @@ Section corollaries.
     `{! Compat_Map_Bind U T}.
 
   Theorem mod_in_bind_iff :
-    forall `(f : A -> T B) (t : U A) (b : B),
+    forall `(f: A -> T B) (t: U A) (b: B),
       b ∈ bind f t <-> exists a, a ∈ t /\ b ∈ f a.
   Proof.
     intros.
@@ -91,15 +94,15 @@ Section corollaries.
     reflexivity.
   Qed.
 
-  Corollary mod_bind_respectful : forall (A B : Type) (t : U A) (f g : A -> T B),
+  Corollary mod_bind_respectful: forall (A B: Type) (t: U A) (f g: A -> T B),
       (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t.
   Proof.
     apply contmod_pointwise.
   Qed.
 
   Corollary mod_bind_respectful_map :
-    forall `(f1 : A -> T B) `(f2 : A -> B) (t : U A),
-      (forall (a : A), a ∈ t -> f1 a = ret (f2 a)) -> bind f1 t = map f2 t.
+    forall `(f1: A -> T B) `(f2: A -> B) (t: U A),
+      (forall (a: A), a ∈ t -> f1 a = ret (f2 a)) -> bind f1 t = map f2 t.
   Proof.
     introv hyp.
     rewrite compat_map_bind.
@@ -107,8 +110,8 @@ Section corollaries.
   Qed.
 
   Corollary mod_bind_respectful_id :
-    forall `(f1 : A -> T A) (t : U A),
-      (forall (a : A), a ∈ t -> f1 a = ret a) ->
+    forall `(f1: A -> T A) (t: U A),
+      (forall (a: A), a ∈ t -> f1 a = ret a) ->
       bind f1 t = t.
   Proof.
     introv hyp.

@@ -1,7 +1,6 @@
 From Tealeaves Require Export
   Classes.Functor
-  Functors.Early.Subset
-  Functors.Early.List.
+  Functors.Early.Subset.
 
 From Coq Require Import
   Relations.Relation_Definitions
@@ -10,7 +9,6 @@ From Coq Require Import
 Import Monoid.Notations.
 Import Functor.Notations.
 Import Subset.Notations.
-Import List.ListNotations.
 
 #[local] Generalizable Variables F T A.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.

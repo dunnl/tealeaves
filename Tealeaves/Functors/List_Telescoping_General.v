@@ -3,7 +3,8 @@ From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Categorical.ApplicativeCommutativeIdempotent
   Functors.List
-  Functors.Diagonal.
+  Functors.Diagonal
+  Functors.Writer.
 
 Import Applicative.Notations.
 Import Monoid.Notations.
@@ -582,7 +583,7 @@ Section commute_law.
         destruct x as [l b].
         (* LHS *)
         rewrite map_list_one.
-        change ([?x]) with (ret x) at 1.
+        change ([?x]) with (ret (T := list) x) at 1.
         rewrite (traverse_list_one G).
         unfold incr at 1.
         change ([?a] ● ?l) with (a :: l).
@@ -599,7 +600,7 @@ Section commute_law.
         rewrite ap2.
 
         (* RHS *)
-        change ([?x]) with (ret x) at 1.
+        change ([?x]) with (ret (T := list) x) at 1.
         rewrite (traverse_list_one G).
         rewrite traverse_Z_rw.
         rewrite map_ap.
@@ -738,13 +739,13 @@ Section commute_law.
       reflexivity.
     - destruct xs as [| y ys ].
       { (* LHS *)
-        change [x] with (ret x) at 1.
+        change [x] with (ret (T := list) x) at 1.
         rewrite (traverse_list_one G).
         compose near (f x) on left.
         rewrite (fun_map_map).
         (* RHS *)
         rewrite decorate_prefix_list_rw_one.
-        change [?pair] with (ret pair) at 1.
+        change [?pair] with (ret (T := list) pair) at 1.
         rewrite (traverse_list_one G).
         rewrite traverse_Z_rw.
         rewrite map_ap.
@@ -1175,7 +1176,7 @@ Definition compose_arrows3
   `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
   (g: list B * B -> G2 C) (f: list A * A -> G1 B)
   : list A * A -> G1 (G2 C) :=
-  map (F := G1) g ∘ mapdt_ci (T := Z) (Z := Z) f.
+  map (F := G1) g ∘ mapdt_ci (T := Z) (W := Z) f.
 
 (** *** Equivalence *)
 (******************************************************************************)
@@ -1184,10 +1185,10 @@ Lemma compose_arrows_equiv
   `{G1: Type -> Type} `{Map G1} `{Mult G1} `{Pure G1} `{! Applicative G1}
   `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
   (g: list B * B -> G2 C) (f: list A * A -> G1 B):
-  g ⋆6_ci f = compose_arrows2 g f.
+  g ⋆3_ci f = compose_arrows2 g f.
 Proof.
   ext [l a].
-  unfold kc6_ci.
+  unfold kc3_ci.
   unfold compose.
   cbn.
   reflexivity.
@@ -1198,7 +1199,7 @@ Lemma compose_arrows_equiv2
   `{G1: Type -> Type} `{Map G1} `{Mult G1} `{Pure G1} `{! Applicative G1}
   `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
   (g: list B * B -> G2 C) (f: list A * A -> G1 B):
-  g ⋆6_ci f = compose_arrows3 g f.
+  g ⋆3_ci f = compose_arrows3 g f.
 Proof.
   reflexivity.
 Qed.
@@ -1216,12 +1217,12 @@ Section preincrement_kc.
       (g: list B * B -> G2 C)
       (f: list A * A -> G1 B)
       (ctx: list A):
-    (kc6_ci (G1 := G1) (G2 := G2) g f ⦿ ctx) =
+    (kc3_ci (G1 := G1) (G2 := G2) g f ⦿ ctx) =
       ap G1 (map (preincr g) (traverse f (dec ctx))) ∘
-        mapdt_ci (T := Z) (Z := Z) (f ⦿ ctx).
+        mapdt_ci (T := Z) (W := Z) (f ⦿ ctx).
   Proof.
     Set Keyed Unification.
-    unfold kc6_ci.
+    unfold kc3_ci.
     rewrite (preincr_assoc (map g ∘ traverse f) (cojoin (W := Z))).
     change (list ?X * ?X) with (Z X).
     rewrite (cojoin_Z_rw_preincr_pf ctx).
@@ -1272,7 +1273,7 @@ Section preincrement_kc.
       (g: list B * B -> G2 C)
       (f: list A * A -> G1 B)
       (ctx: list A):
-      (g ⋆6_ci f) ⦿ ctx =
+      (g ⋆3_ci f) ⦿ ctx =
         map (F := G1) g ∘
           ap G1 (map incr (traverse f (dec ctx))) ∘
           traverse (f ⦿ ctx) ∘ cojoin (W := Z) (A := A).
@@ -1302,26 +1303,27 @@ Lemma kc_preincr1
   `{G2: Type -> Type} `{Map G2} `{Mult G2} `{Pure G2}
   (g: list B * B -> G2 C) (f: list A * A -> G1 B)
   (ctx: list A): forall l a,
-  ((kc6_ci (G1 := G1) (G2 := G2) g f) ⦿ ctx) (l, a) =
+  ((kc3_ci (G1 := G1) (G2 := G2) g f) ⦿ ctx) (l, a) =
     map g (map incr (traverse f (dec ctx)) <⋆> traverse (f ⦿ ctx) (dec l, (l, a))).
 Proof.
   intros.
-  unfold kc6_ci.
+  unfold kc3_ci.
   rewrite (preincr_assoc
-              (map (F := G1) g ∘ traverse (T := Z) f)
-              (cojoin (W := Z))).
+              (map (F := G1) (A := Z B) g)
+              (mapdt_ci f (W := Z))
+              ctx).
   Set Keyed Unification.
+  unfold mapdt_ci.
+  unfold Mapdt_Z.
+  rewrite preincr_assoc.
   rewrite (cojoin_Z_rw_preincr_pf (A := A) ctx).
   Unset Keyed Unification.
-  unfold compose at 2 4.
+  unfold compose at 2 3 4.
   unfold_ops @Cojoin_Z.
   compose near (dec l, (l, a)) on left.
-  reassociate -> on left.
-  About traverse_Z_incr_lemma3.
   change (list B * B) with (Z B).
-  unfold compose at 2.
   Set Keyed Unification.
-  rewrite (traverse_Z_incr_lemma3 (H := H) (H1 := H0) (H0 := H1) ctx f (dec l) l a).
+  rewrite (traverse_Z_incr_lemma3 ctx f (dec l) l a).
   Unset Keyed Unification.
   reflexivity.
 Qed.
@@ -1363,9 +1365,9 @@ Definition test
   (E * A -> G1 (G2 C)) :=
   map g ∘ mapdt f.
 
-Goal test = kc6.
+Goal test = kc3.
   ext g f.
-  unfold kc6.
+  unfold kc3.
   unfold test.
   unfold mapdt.
   unfold Mapdt_Reader.
@@ -1397,10 +1399,10 @@ Section test.
   Abort.
 
   Goal map (mapdt_list_prefix_ g) (mapdt_list_prefix_ f list3) =
-         mapdt_list_prefix_ (G := G ∘ G) (kc6_ci (Z := Z) g f) list3.
+         mapdt_list_prefix_ (G := G ∘ G) (kc3_ci (W := Z) g f) list3.
   Proof.
     cbn.
-    unfold kc6_ci.
+    unfold kc3_ci.
     unfold compose at 1 2.
   Abort.
 
@@ -1429,7 +1431,7 @@ Lemma kdtfci_mapdt2_list_prefix:
     `{ApplicativeCommutativeIdempotent G2}
     {A B C : Type} (g : Z B -> G2 C) (f : Z A -> G1 B),
     map (mapdt_list_prefix g) ∘ mapdt_list_prefix f =
-      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆6_ci f).
+      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆3_ci f).
 Proof.
   intros.
   change (mapdt_list_prefix ?f) with
@@ -1444,7 +1446,7 @@ Proof.
   change (traverse (T := list) ?f ∘ decorate_prefix_list)
     with  (mapdt_list_prefix f).
   (* RHS *)
-  unfold kc6_ci.
+  unfold kc3_ci.
   unfold mapdt_list_prefix at 2.
   rewrite <- (traverse_map (A := Z A) (T := list) (G2 := G1 ∘ G2)
                (map (F := G1) g ∘ traverse (T := Z) f) (cojoin (W := Z))).
@@ -1469,8 +1471,8 @@ Lemma kdtfci_mapdt2_list_prefix2_lemma1:
   forall `{ApplicativeCommutativeIdempotent G1}
     `{ApplicativeCommutativeIdempotent G2}
     {A B C : Type} (g : Z B -> G2 C) (f : Z A -> G1 B) (ctx: list A),
-    mapdt_list_prefix (G := G1 ∘ G2) ((g ⋆6_ci f) ⦿ ctx) =
-      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆6_ci (f ⦿ ctx)).
+    mapdt_list_prefix (G := G1 ∘ G2) ((g ⋆3_ci f) ⦿ ctx) =
+      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆3_ci (f ⦿ ctx)).
 Proof.
   intros.
   rewrite kc_preincr2.
@@ -1748,7 +1750,7 @@ Lemma kdtfci_mapdt2_list_prefix_direct_lemma:
     `{ApplicativeCommutativeIdempotent G2}
     {A B C : Type} (g : Z B -> G2 C) (f : Z A -> G1 B) (ctx: list A),
     map G1 (mapdt_list_prefix g) ∘ (fun l => pure (@app B) <⋆> mapdt_list_prefix f ctx <⋆> mapdt_list_prefix (f ⦿ ctx) l) =
-      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆6_ci f) ∘ app ctx.
+      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆3_ci f) ∘ app ctx.
 Proof.
   intros.
   ext l.
@@ -1786,7 +1788,7 @@ Lemma kdtfci_mapdt2_list_prefix_direct:
     `{ApplicativeCommutativeIdempotent G2}
     {A B C : Type} (g : Z B -> G2 C) (f : Z A -> G1 B),
     map G1 (mapdt_list_prefix g) ∘ mapdt_list_prefix f =
-      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆6_ci f).
+      mapdt_list_prefix (G := G1 ∘ G2) (g ⋆3_ci f).
 Proof.
   intros.
   ext l.
@@ -1818,7 +1820,7 @@ Proof.
     rewrite app_pure_natural.
 
     (* inner *)
-    unfold kc6_ci at 1.
+    unfold kc3_ci at 1.
     unfold compose at 4 5.
     rewrite <- ap_map.
     rewrite app_pure_natural.
@@ -1841,7 +1843,7 @@ Lemma kdtfci_morph_list_prefix:
   forall `{ApplicativeMorphism G1 G2 ϕ}
       {A B : Type} (f : Z A -> G1 B),
     mapdt_ci (ϕ B ∘ f) =
-      ϕ (list B) ∘ mapdt_ci (Z := Z) (T := list) (A := A) (B := B) f.
+      ϕ (list B) ∘ mapdt_ci (W := Z) (T := list) (A := A) (B := B) f.
 Proof.
   intros. ext l.
   generalize dependent f.

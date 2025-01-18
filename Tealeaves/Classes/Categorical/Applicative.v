@@ -20,7 +20,7 @@ Class Mult (F : Type -> Type) :=
 #[local] Notation "x ⊗ y" := (mult (x, y)) (at level 50, left associativity).
 
 Class Applicative (G : Type -> Type)
-    `{Map G} `{Pure G} `{Mult G} :=
+  `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G} :=
   { app_functor :> Functor G;
     app_pure_natural : forall (A B : Type) (f : A -> B) (x : A),
       map f (pure x) = pure (f x);
@@ -58,6 +58,24 @@ Class ApplicativeMorphism (F G : Type -> Type)
     appmor_mult : forall (A B : Type) (x : F A) (y : F B),
       ϕ (x ⊗ y) = ϕ x ⊗ ϕ y;
   }.
+
+Section pointfree.
+
+  Context `{ApplicativeMorphism F G ϕ}.
+
+  Lemma appmor_natural_pf: forall (A B : Type) (f : A -> B),
+      ϕ B ∘ map f = map f ∘ ϕ A.
+  Proof.
+    intros. ext x. apply appmor_natural.
+  Qed.
+
+  Lemma appmor_pure_pf: forall (A : Type) (a : A),
+      ϕ A ∘ pure = pure.
+  Proof.
+    intros. ext x. apply appmor_pure.
+  Qed.
+
+End pointfree.
 
 #[export] Instance Natural_ApplicativeMorphism
   `{morphism : ApplicativeMorphism F G ϕ} : Natural ϕ.
@@ -562,10 +580,10 @@ Section applicative_compose_laws.
     ApplicativeMorphism F2 (G1 ∘ F2) (fun A => ϕ1 (F2 A)).
   Proof.
     change F2 with ((fun A => A) ∘ F2) at 1.
-    change H3 with (Map_compose (fun X => X) F2) at 1.
-    change H5 with (@mult F2 _) at 1.
+    change Map_G0 with (Map_compose (fun X => X) F2) at 1.
+    change Mult_G0 with (@mult F2 _) at 1.
     rewrite <- (Mult_compose_identity2 F2).
-    change H4 with (@pure F2 _) at 1.
+    change Pure_G0 with (@pure F2 _) at 1.
     rewrite <- (Pure_compose_identity2 F2).
     apply (ApplicativeMorphism_parallel_left
              (fun X => X) F2 G1).
@@ -580,10 +598,10 @@ Section applicative_compose_laws.
   Proof.
     Set Printing Implicit.
     change F1 with (F1 ∘ (fun A => A)) at 1.
-    change H3 with (Map_compose F1 (fun X => X)) at 1.
-    change H5 with (@mult F1 _) at 1.
+    change Map_G0 with (Map_compose F1 (fun X => X)) at 1.
+    change Mult_G0 with (@mult F1 _) at 1.
     rewrite <- (Mult_compose_identity1 F1).
-    change H4 with (@pure F1 _) at 1.
+    change Pure_G0 with (@pure F1 _) at 1.
     rewrite <- (Pure_compose_identity1 F1).
     apply (ApplicativeMorphism_parallel_right
              F1 (fun X => X) G2).
@@ -870,12 +888,12 @@ Section with_hom.
   Context
     `{Applicative G}
     (M1 M2 : Type)
-    `{Monoid_Morphism M1 M2 ϕ}.
+    `{morphism: Monoid_Morphism M1 M2 ϕ}.
 
   #[export] Instance Monoid_hom_applicative :
     Monoid_Morphism (G M1) (G M2) (map (F := G) ϕ).
   Proof.
-    inversion H3.
+    inversion morphism.
     constructor.
     - typeclasses eauto.
     - typeclasses eauto.

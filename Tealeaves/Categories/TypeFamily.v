@@ -1,7 +1,8 @@
 From Tealeaves Require Import
   Classes.EqDec_eq
   Classes.Category
-  Functors.Early.Reader.
+  Functors.Early.Reader
+  Classes.Categorical.Comonad (extract).
 
 Export EqDec_eq.
 Import Product.Notations.

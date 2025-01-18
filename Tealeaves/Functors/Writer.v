@@ -1,14 +1,14 @@
 From Tealeaves Require Export
   Functors.Early.Writer
-  Functors.Reader.
+  Functors.Reader
+  Misc.Product
+  Classes.Monoid.
 
 #[local] Generalizable Variables W T F A M.
 
-From Tealeaves Require Export
-  Classes.Monoid
+From Tealeaves Require Import
   Classes.Categorical.Bimonad
-  Classes.Categorical.RightModule
-  Misc.Product.
+  Classes.Categorical.RightModule.
 
 Import Strength.Notations.
 Import Monad.Notations.
@@ -149,6 +149,8 @@ Section Writer_miscellaneous.
 
   Context
     `{Monoid W}.
+
+  Import Categorical.Monad.Notations.
 
   (* This rewrite is useful when proving decoration-traversal compatibility
      in the binder case. *)

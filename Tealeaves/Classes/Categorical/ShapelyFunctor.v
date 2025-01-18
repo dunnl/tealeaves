@@ -1,22 +1,33 @@
 From Tealeaves Require Export
   Classes.Categorical.ContainerFunctor
-  Misc.List.
+  Functors.Early.List.
 
-Import Classes.Functor.Notations.
+Import Monoid.
+Import Functor.Notations.
+Import List.ListNotations.
 
 #[local] Generalizable Variables G F A B.
+
+(** * <<Tolist>> and <<TolistCtx>> operations *)
+(******************************************************************************)
+Import Classes.Functor.Notations.
+
+Class Tolist (F: Type -> Type) :=
+  tolist: F ⇒ list.
+
+#[global] Arguments tolist {F}%function_scope {Tolist} {A}%type_scope _.
 
 (** * Shapely functors *)
 (******************************************************************************)
 
 (** ** The [shape] operation *)
 (******************************************************************************)
-Definition shape `{Map F} {A : Type} : F A -> F unit :=
+Definition shape `{Map F} {A: Type}: F A -> F unit :=
   map (const tt).
 
 (** *** Basic reasoning principles for <<shape>> *)
 (******************************************************************************)
-Theorem shape_map `{Functor F} : forall (A B : Type) (f : A -> B) (t : F A),
+Theorem shape_map `{Functor F}: forall (A B: Type) (f: A -> B) (t: F A),
     shape (F := F) (map f t) =
       shape (F := F) t.
 Proof.
@@ -24,7 +35,7 @@ Proof.
   unfold shape. now rewrite fun_map_map.
 Qed.
 
-Theorem shape_shape `{Functor F} : forall (A : Type) (t : F A),
+Theorem shape_shape `{Functor F}: forall (A: Type) (t: F A),
     shape (shape t) = shape t.
 Proof.
   intros.  compose near t on left.
@@ -32,7 +43,7 @@ Proof.
 Qed.
 
 
-Lemma shape_map_eq `{Functor F} : forall (A1 A2 B : Type) (f : A1 -> B) (g : A2 -> B) t u,
+Lemma shape_map_eq `{Functor F}: forall (A1 A2 B: Type) (f: A1 -> B) (g: A2 -> B) t u,
     map f t = map g u -> shape t = shape u.
 Proof.
 
@@ -43,28 +54,28 @@ Qed.
 
 (** ** Shapeliness *)
 (******************************************************************************)
-Definition shapeliness (F : Type -> Type)
-  `{Map F} `{Tolist F} := forall A (t1 t2 : F A),
+Definition shapeliness (F: Type -> Type)
+  `{Map F} `{Tolist F} := forall A (t1 t2: F A),
     shape t1 = shape t2 /\ tolist t1 = tolist t2 -> t1 = t2.
 
 (** ** Typeclass for shapely functors *)
 (******************************************************************************)
 Class ShapelyFunctor
-  (F : Type -> Type) `{Map F} `{Tolist F} :=
+  (F: Type -> Type) `{Map F} `{Tolist F} :=
   { shp_natural :> Natural (@tolist F _);
     shp_functor :> Functor F;
-    shp_shapeliness : shapeliness F;
+    shp_shapeliness: shapeliness F;
   }.
 
 (** ** Shapely natural transformations *)
 (******************************************************************************)
 Class ShapelyTransformation
-      {F G : Type -> Type}
+      {F G: Type -> Type}
       `{! Map F} `{Tolist F}
       `{! Map G} `{Tolist G}
-      (ϕ : F ⇒ G) :=
-  { ltrans_commute : `(tolist (F := F) = tolist (F := G) ∘ ϕ A);
-    ltrans_natural : Natural ϕ;
+      (ϕ: F ⇒ G) :=
+  { ltrans_commute: `(tolist (F := F) = tolist (F := G) ∘ ϕ A);
+    ltrans_natural: Natural ϕ;
   }.
 
 (** * Various characterizations of shapeliness *)
@@ -72,20 +83,20 @@ Class ShapelyTransformation
 Section listable_functor_respectful_definitions.
 
   Context
-    (F : Type -> Type)
+    (F: Type -> Type)
     `{Map F} `{Tolist F}.
 
-  Definition tolist_map_injective := forall A B (t1 t2 : F A) (f g : A -> B),
+  Definition tolist_map_injective := forall A B (t1 t2: F A) (f g: A -> B),
       map f t1 = map g t2 ->
       shape t1 = shape t2 /\
       map f (tolist t1) = map g (tolist t2).
 
-  Definition tolist_map_respectful := forall A B (t1 t2 : F A) (f g : A -> B),
+  Definition tolist_map_respectful := forall A B (t1 t2: F A) (f g: A -> B),
       shape t1 = shape t2 ->
       map f (tolist t1) = map g (tolist t2) ->
       map f t1 = map g t2.
 
-  Definition tolist_map_respectful_iff := forall A B (t1 t2 : F A) (f g : A -> B),
+  Definition tolist_map_respectful_iff := forall A B (t1 t2: F A) (f g: A -> B),
       shape t1 = shape t2 /\
       map f (tolist t1) = map g (tolist t2) <->
       map f t1 = map g t2.
@@ -106,7 +117,7 @@ Section tolist_respectfulness_characterizations.
     `{Tolist F}
     `{! Natural (@tolist F _)}.
 
-  Theorem tolist_map_injective_proof : tolist_map_injective F.
+  Theorem tolist_map_injective_proof: tolist_map_injective F.
   Proof.
     introv heq. split.
     - cut (shape (map f t1) = shape (map g t2)).
@@ -118,7 +129,7 @@ Section tolist_respectfulness_characterizations.
       now rewrite heq.
   Qed.
 
-  Lemma shapeliness_equiv_1 : shapeliness F -> tolist_map_respectful F.
+  Lemma shapeliness_equiv_1: shapeliness F -> tolist_map_respectful F.
   Proof.
     unfold tolist_map_respectful.
     introv hyp hshape hcontents.
@@ -147,7 +158,6 @@ Section tolist_respectfulness_characterizations.
 
 End tolist_respectfulness_characterizations.
 
-(*
 (** * [fold] and [foldMap] operations *)
 (******************************************************************************)
 Section fold.
@@ -157,46 +167,53 @@ Section fold.
   Context
     `{ShapelyFunctor F}.
 
-  Definition fold `{Monoid_op M} `{Monoid_unit M} : F M -> M :=
-    List.fold ∘ tolist F.
+  Definition crush
+    `{monoid_op: Monoid_op M}
+    `{monoid_unit: Monoid_unit M}:
+    F M -> M := crush_list ∘ tolist.
 
-  Definition foldMap {A} `{Monoid_op M} `{Monoid_unit M} (f : A -> M) : F A -> M :=
-    fold ∘ map F f.
+  Definition foldMap {A}
+    `{monoid_op: Monoid_op M}
+    `{monoid_unit: Monoid_unit M}
+    (f: A -> M): F A -> M :=
+    crush ∘ map f.
 
-  Lemma fold_mon_hom : forall `(ϕ : M1 -> M2) `{Hϕ : Monoid_Morphism M1 M2 ϕ},
-      ϕ ∘ fold = fold ∘ map F ϕ.
+  Lemma crush_mon_hom: forall `(ϕ: M1 -> M2) `{Hϕ: Monoid_Morphism M1 M2 ϕ},
+      ϕ ∘ crush = crush ∘ map ϕ.
   Proof.
     intros ? ? ϕ; intros.
-    change left (ϕ ∘ List.fold ∘ tolist F).
-    change right (List.fold ∘ (tolist F ∘ map F ϕ)).
+    change left (ϕ ∘ crush_list ∘ tolist).
+    change right (crush_list ∘ (tolist ∘ map ϕ)).
     rewrite <- natural.
-    now rewrite (List.fold_mon_hom ϕ).
+    rewrite (crush_list_mon_hom ϕ).
+    reflexivity.
   Qed.
 
-  Lemma foldMap_map {A B} `{Monoid M} {f : A -> B} {g : B -> M} :
-    foldMap g ∘ map F f = foldMap (g ∘ f).
+  Lemma foldMap_map {A B} `{Monoid M} {f: A -> B} {g: B -> M} :
+    foldMap g ∘ map f = foldMap (g ∘ f).
   Proof.
     intros. unfold foldMap.
     now rewrite <- (fun_map_map (F := F)).
   Qed.
 
-  Theorem foldMap_hom {A} `{Monoid_Morphism M1 M2 ϕ} {f : A -> M1} :
+  Theorem foldMap_hom {A} `{Monoid_Morphism M1 M2 ϕ} {f: A -> M1} :
     ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
   Proof.
     intros. unfold foldMap.
     reassociate <- on left.
-    rewrite (fold_mon_hom ϕ).
+    rewrite (crush_mon_hom ϕ).
     now rewrite <- (fun_map_map (F := F)).
   Qed.
 
 End fold.
 
+(*
 (** ** Folding over identity and composition functors *)
 (******************************************************************************)
 Section fold_monoidal_structure.
 
-  Theorem fold_I (A : Type) `(Monoid A) : forall (a : A),
-      fold a = a.
+  Theorem fold_I (A: Type) `(Monoid A): forall (a: A),
+      foldMap a = a.
   Proof.
     intros. cbn. now rewrite (monoid_id_l).
   Qed.

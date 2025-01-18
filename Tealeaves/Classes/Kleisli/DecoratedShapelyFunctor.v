@@ -8,6 +8,12 @@ Import Functor.Notations.
 Import Subset.Notations.
 Import List.ListNotations.
 
+
+Class TolistCtx (F : Type -> Type) (W : Type) :=
+  tolist_ctx : forall (A : Type), F A -> list (W * A).
+
+#[global] Arguments tolist_ctx {F}%function_scope {W} {TolistCtx} {A}%type_scope _.
+
 (** * ToCtxlist operation *)
 (******************************************************************************)
 Class ToCtxlist (E : Type) (F : Type -> Type) :=

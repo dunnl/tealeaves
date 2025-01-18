@@ -1,6 +1,5 @@
 From Tealeaves Require Export
   Classes.Functor
-  Classes.Kleisli.Monad (Return, ret)
   Classes.Categorical.Applicative
   Functors.Identity
   Functors.Compose
@@ -12,15 +11,15 @@ Import Functor.Notations.
 Import Strength.Notations.
 
 #[local] Generalizable Variables W T A.
-
-#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
 #[local] Arguments map F%function_scope {Map} (A B)%type_scope f%function_scope _.
 
 (** * Monads *)
 (******************************************************************************)
+Class Return (T: Type -> Type) :=
+  ret: (fun A => A) ⇒ T.
+
 Class Join (T : Type -> Type) :=
   join : T ∘ T ⇒ T.
-
 Class Monad
   (T : Type -> Type)
   `{Map T} `{Return T} `{Join T} :=
@@ -28,16 +27,18 @@ Class Monad
     mon_ret_natural :> Natural (@ret T _);
     mon_join_natural :> Natural (join);
     mon_join_ret : (* left unit law *)
-    `(join A ∘ ret T (T A) = @id (T A));
+    `(join A ∘ ret (T A) = @id (T A));
     mon_join_map_ret : (* right unit law *)
-    `(join A ∘ map T A (T A) (ret T A) = @id (T A));
+    `(join A ∘ map T A (T A) (ret A) = @id (T A));
     mon_join_join : (* associativity *)
     `(join A ∘ join (T A) =
         join A ∘ map T (T (T A)) (T A) (join A));
   }.
 
+#[global] Arguments ret {T}%function_scope {Return} {A}%type_scope.
+#[local]  Arguments ret (T)%function_scope {Return} (A)%type_scope.
 #[global] Arguments join {T}%function_scope {Join} {A}%type_scope.
-#[local] Arguments join _%function_scope {Join} A%type_scope.
+#[local]  Arguments join (T)%function_scope {Join} (A)%type_scope.
 
 (** * Monad homomorphisms *)
 (******************************************************************************)

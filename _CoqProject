@@ -12,228 +12,45 @@ Tealeaves/Classes/Comonoid.v
 Tealeaves/Misc/Iterate.v
 Tealeaves/Misc/NaturalNumbers.v
 Tealeaves/Misc/Prop.v
-Tealeaves/Misc/Subset.v
-Tealeaves/Misc/List.v
 Tealeaves/Classes/Functor.v
 Tealeaves/Functors/Identity.v
 Tealeaves/Functors/Compose.v
 Tealeaves/Misc/Strength.v
 Tealeaves/Classes/Categorical/Applicative.v
 Tealeaves/Classes/Categorical/ApplicativeCommutativeIdempotent.v
-Tealeaves/Classes/Kleisli/KApplicative.v
-Tealeaves/Classes/Kleisli/Monad.v
-Tealeaves/Classes/Kleisli/Comonad.v
 Tealeaves/Classes/Categorical/Monad.v
 Tealeaves/Classes/Categorical/Comonad.v
-Tealeaves/Functors/Early/Reader.v
-Tealeaves/Functors/Early/Writer.v
-Tealeaves/Classes/Kleisli/DecoratedFunctor.v
-Tealeaves/Classes/Kleisli/DecoratedMonad.v
-Tealeaves/Functors/Early/Subset.v
-Tealeaves/Functors/Early/List.v
-Tealeaves/Classes/Categorical/ContainerFunctor.v
-Tealeaves/Classes/Kleisli/ContainerMonad.v
-Tealeaves/Classes/Categorical/ShapelyFunctor.v
-#Tealeaves/Classes/Kleisli/ShapelyMonad.v
-Tealeaves/Classes/Kleisli/TraversableFunctor.v
-Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
-Tealeaves/Classes/Kleisli/TraversableMonad.v
-Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
-Tealeaves/Classes/Kleisli/DecoratedTraversableCommIdemFunctor.v
-Tealeaves/Classes/Kleisli/DecoratedTraversableMonad.v
 Tealeaves/Classes/Categorical/BeckDistributiveLaw.v
 Tealeaves/Classes/Categorical/Bimonad.v
 Tealeaves/Classes/Categorical/RightModule.v
 Tealeaves/Classes/Categorical/RightComodule.v
 Tealeaves/Classes/Categorical/ParamComonad.v
+Tealeaves/Classes/Kleisli/Applicative.v
+Tealeaves/Classes/Kleisli/Monad.v
+Tealeaves/Classes/Kleisli/Comonad.v
+# Decorated Functors and Monads
+Tealeaves/Functors/Early/Reader.v
+Tealeaves/Functors/Early/Writer.v
 Tealeaves/Classes/Categorical/DecoratedFunctor.v
 Tealeaves/Classes/Categorical/DecoratedMonad.v
+Tealeaves/Classes/Kleisli/DecoratedFunctor.v
+Tealeaves/Classes/Kleisli/DecoratedMonad.v
+# Traversable Functors and Monads
 Tealeaves/Classes/Categorical/TraversableFunctor.v
 Tealeaves/Classes/Categorical/TraversableMonad.v
-Tealeaves/Functors/Early/Ctxset.v
-Tealeaves/Functors/Early/Environment.v
-Tealeaves/Classes/Categorical/DecoratedTraversableFunctor.v
-Tealeaves/Classes/Categorical/DecoratedTraversableMonad.v
-Tealeaves/Classes/Kleisli/DecoratedContainerFunctor.v
-Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
-Tealeaves/Classes/Kleisli/DecoratedContainerMonad.v
-#Tealeaves/Classes/Kleisli/DecoratedShapelyMonad.v
-Tealeaves/Classes/Kleisli/Theory/Monad.v
-Tealeaves/Classes/Kleisli/Theory/Comonad.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedFunctor.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedMonad.v
-####### WIP
-Tealeaves/Classes/Kleisli/Theory/ContainerMonad.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedContainerFunctor.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedContainerMonad.v
-Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
-#Tealeaves/Classes/Kleisli/Theory/TraversableCommutativeIdempotent.v
-Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
-#Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
-
-Tealeaves/Functors/Reader.v
-Tealeaves/Functors/Writer.v
-Tealeaves/Functors/Constant.v
-Tealeaves/Functors/Subset.v
-Tealeaves/Functors/List.v
-Tealeaves/Functors/Categorical/List.v
-Tealeaves/Functors/List_Telescoping_General.v
-Tealeaves/Functors/Ctxset.v
-Tealeaves/Functors/Environment.v
-
-Tealeaves/Categories/Type.v
-Tealeaves/Categories/TypeFamily.v
-Tealeaves/Categories/DecoratedFunctor.v
-Tealeaves/Categories/TraversableFunctor.v
-Tealeaves/Categories/DecoratedTraversableFunctor.v
-
-
-Tealeaves/Functors/Backwards.v
-Tealeaves/Functors/Diagonal.v
-Tealeaves/Functors/Option.v
-Tealeaves/Functors/Pathspace.v
-Tealeaves/Functors/ProductFunctor.v
-Tealeaves/Functors/State.v
-Tealeaves/Functors/Store.v
-
-# CONTAINER/COALGEBRAIC STUFF
-Tealeaves/Functors/Vector.v
-Tealeaves/Functors/VectorRefinement.v
-Tealeaves/Functors/Batch.v
-Tealeaves/Functors/KStore.v
-Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
-# END CONTAINER STUFF
+Tealeaves/Classes/Kleisli/TraversableFunctor.v
+Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
+Tealeaves/Classes/Kleisli/TraversableMonad.v
+Tealeaves/Functors/Early/Batch.v
 Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
 Tealeaves/Classes/Coalgebraic/TraversableMonad.v
+# Decorated Traversable Functors and Monads
+Tealeaves/Classes/Categorical/DecoratedTraversableFunctor.v
+Tealeaves/Classes/Categorical/DecoratedTraversableMonad.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableCommIdemFunctor.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableMonad.v
 Tealeaves/Classes/Coalgebraic/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonad.v
-Tealeaves/Adapters/CategoricalToKleisli/Monad.v
-Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctor.v
-Tealeaves/Adapters/CategoricalToKleisli/DecoratedMonad.v
-Tealeaves/Adapters/CategoricalToKleisli/TraversableFunctor.v
-Tealeaves/Adapters/CategoricalToKleisli/TraversableMonad.v
-Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonad.v
-Tealeaves/Adapters/KleisliToCategorical/Monad.v
-Tealeaves/Adapters/KleisliToCategorical/DecoratedFunctor.v
-Tealeaves/Adapters/KleisliToCategorical/DecoratedMonad.v
-Tealeaves/Adapters/KleisliToCategorical/TraversableFunctor.v
-Tealeaves/Adapters/KleisliToCategorical/TraversableMonad.v
-Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableMonad.v
-Tealeaves/Adapters/KleisliToCoalgebraic/TraversableFunctor.v
-Tealeaves/Adapters/KleisliToCoalgebraic/TraversableMonad.v
-Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableMonad.v
-Tealeaves/Adapters/CoalgebraicToKleisli/TraversableFunctor.v
-Tealeaves/Adapters/CoalgebraicToKleisli/TraversableMonad.v
-Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
-Tealeaves/Adapters/Roundtrips/Monad.v
-Tealeaves/Adapters/Roundtrips/DecoratedFunctor.v
-Tealeaves/Adapters/Roundtrips/DecoratedMonad.v
-Tealeaves/Adapters/Roundtrips/TraversableFunctor.v
-Tealeaves/Adapters/Roundtrips/TraversableMonad.v
-Tealeaves/Adapters/Roundtrips/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
-Tealeaves/Adapters/MonadToApplicative.v
-Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
 
-# HIGH-LEVEL THEORY
-Tealeaves/Theory/Batch.v
-Tealeaves/Theory/TraversableFunctor.v
-Tealeaves/Theory/TraversableMonad.v
-Tealeaves/Theory/DecoratedTraversableFunctor.v
-Tealeaves/Theory/DecoratedTraversableMonad.v
 
-# LIST TYPES WITH DECORATIONS
-Tealeaves/Functors/ListHistory.v
-Tealeaves/Functors/List_Telescoping.v
-
-# FULLY NOMINAL DTMS
-Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
-#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
-
-# SIMPLIFICATION
-Tealeaves/Simplification/Support.v
-Tealeaves/Simplification/Binddt.v
-Tealeaves/Simplification/DeriveDTM.v
-Tealeaves/Simplification/Simplification.v
-
-# BACKENDS
-
-## LN
-Tealeaves/Backends/LN/Atom.v
-Tealeaves/Backends/LN/AtomSet.v
-Tealeaves/Backends/LN/AssocList.v
-Tealeaves/Backends/LN/LN.v
-Tealeaves/Backends/LN/Simplification.v
-Tealeaves/Backends/LN/Parallel.v
-Tealeaves/Backends/LN.v
-
-## DB
-Tealeaves/Backends/DB/DB.v
-Tealeaves/Backends/DB/Simplification.v
-Tealeaves/Backends/DB/AutosubstShim.v
-Tealeaves/Backends/DB.v
-
-## LN TO DB
-Tealeaves/Backends/Adapters/Key.v
-Tealeaves/Backends/Adapters/LNtoDB.v
-
-## Named
-Tealeaves/Backends/Named/Names.v
-Tealeaves/Backends/Named/Named.v
-
-# MULTISORTED
-Tealeaves/Functors/Multisorted/Batch.v
-Tealeaves/Classes/Multisorted/Multifunctor.v
-Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
-Tealeaves/Classes/Multisorted/Theory/Container.v
-Tealeaves/Classes/Multisorted/Theory/Targeted.v
-Tealeaves/Adapters/KleisliToCoalgebraic/Multisorted/DTM.v
-Tealeaves/Theory/Multisorted/DecoratedTraversableMonad.v
-Tealeaves/Backends/Multisorted/LN/LN.v
-Tealeaves/Backends/Multisorted/LN.v
-Tealeaves/Simplification/MBinddt.v
-
-# EXAMPLES
-
-## FIRST ORDER LOGIC
-#Tealeaves/Examples/FOL/Syntax.v
-
-## UNTYPED LAMBDA CALCULUS
-Tealeaves/Examples/Lambda/Confluence.v
-
-## SIMPLY TYPED LAMBDA CALCULUS
-Tealeaves/Examples/STLC/Syntax.v
-Tealeaves/Examples/STLC/CompatTest.v
-Tealeaves/Examples/STLC/SyntaxCategorical.v
-Tealeaves/Examples/STLC/TypeSoundness.v
-
-# SYSTEM F
-Tealeaves/Classes/Multisorted/Theory/Foldmap.v
-Tealeaves/Examples/SystemF/Syntax.v
-Tealeaves/Simplification/Tests/SystemF_Binddt.v
-Tealeaves/Simplification/Tests/SystemF_Targeted.v
-Tealeaves/Simplification/Tests/SystemF_LN.v
-Tealeaves/Examples/SystemF/Contexts.v
-Tealeaves/Examples/SystemF/TypeSoundness.v
-
-# VARIADIC BINDERS
-Tealeaves/Examples/VariadicLet/Terms.v
-Tealeaves/Examples/VariadicLet/Instances/Simple.v
-Tealeaves/Examples/VariadicLet/Instances/LetIn.v
-Tealeaves/Examples/VariadicLet/Instances/LetRec.v
-
-# SIMPLIFICATION TESTS
-Tealeaves/Simplification/Tests/Support.v
-Tealeaves/Simplification/Tests/STLC_Binddt.v
-Tealeaves/Simplification/Tests/STLC_Container.v
-Tealeaves/Simplification/Tests/STLC_LN.v
-Tealeaves/Simplification/Tests/STLC_DB.v
-
-# NOMINAL
-Tealeaves/Examples/LambdaNominal/Syntax.v
