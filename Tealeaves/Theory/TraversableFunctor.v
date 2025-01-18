@@ -80,63 +80,175 @@ Proof.
       exists (b', mk). tauto. }
 Qed.
 
-(** * Traversing vectors *)
-(******************************************************************************)
-Section traverse_vector.
+(** * Theory About Batch *)
+Section Batch_theory.
 
-  #[export] Instance Compat_Map_Traverse_Vector {n: nat}:
-    Compat_Map_Traverse (Vector n).
-  Proof.
-    hnf. ext A B f.
-    unfold_ops @Map_Traverse.
-    ext v. induction v using Vector_induction.
-    - rewrite map_Vector_vnil.
-      rewrite traverse_Vector_vnil.
-      reflexivity.
-    - rewrite map_Vector_vcons.
-      rewrite traverse_Vector_vcons.
-      rewrite IHv.
-      reflexivity.
-  Qed.
-
-  #[export] Instance ToSubset_Vector {n}: ToSubset (Vector n).
-  Proof.
-    unfold Vector.
-    intro A.
-    intros [contents Pflen].
-    intro a.
-    exact (a ∈ contents).
-  Defined.
-
-  Lemma tosubset_Vector_vnil: forall (A: Type),
-      tosubset (@vnil A) = ∅.
-  Proof.
-    tauto.
-  Qed.
-
-  Lemma tosubset_Vector_vcons: forall (n: nat) (A: Type) (a: A) (v: Vector n A),
-      tosubset (vcons n a v) = {{a}} ∪ tosubset v.
+  Lemma Batch_make_precompose1:
+    forall {A B C' C D: Type} (b: Batch A B (C -> D)) (f: C' -> C)
+      (v: Vector (length_Batch b) B)
+      (v': Vector (length_Batch (map (precompose f) b)) B)
+      (Hsim: v ~~ v')
+      (c: C'),
+      Batch_make (map (precompose f) b) v' c =
+        Batch_make b v (f c).
   Proof.
     intros.
-    destruct v.
-    cbn. tauto.
+    rewrite (Batch_make_compose_rw2 b (precompose f) v').
+    unfold precompose.
+    fequal.
+    apply Vector_sim_eq.
+    apply Vector_coerce_sim_l'.
+    symmetry.
+    assumption.
   Qed.
 
-  #[export] Instance Compat_ToSubset_Traverse_Vector {n: nat}:
-    Compat_ToSubset_Traverse (Vector n).
+  Lemma Batch_make_precompose2:
+    forall {A B C' C D: Type} (b: Batch A B (C -> D)) (f: C' -> C)
+      (v: Vector (length_Batch (map (precompose f) b)) B)
+      (c: C'),
+      Batch_make (map (precompose f) b) v c =
+        Batch_make b (coerce eq_sym (batch_length_map (precompose f) b) in v) (f c).
   Proof.
-    hnf. ext A v.
-    unfold_ops @ToSubset_Traverse.
-    induction v using Vector_induction.
-    - reflexivity.
-    - rewrite foldMap_Vector_vcons;
-        try typeclasses eauto.
-      rewrite tosubset_Vector_vcons.
-      rewrite IHv.
-      reflexivity.
+    intros.
+    apply Batch_make_precompose1.
+    apply Vector_coerce_sim_l.
   Qed.
 
-End traverse_vector.
+  Ltac hide_lhs :=
+    match goal with
+    | |- ?lhs = ?rhs =>
+        let name := fresh "lhs" in
+        remember lhs as name
+    end.
+
+  Lemma Batch_make_natural1:
+    forall {A B B' C: Type} (b: Batch A B' C) (f: B -> B')
+      (v: Vector (length_Batch b) B)
+      (v': Vector (length_Batch (mapsnd_Batch B B' f b)) B),
+      v ~~ v' ->
+      Batch_make b (map f v) =
+        Batch_make (mapsnd_Batch _ _ f b) v'.
+  Proof.
+    introv Hsim.
+    induction b.
+    - cbn in v, v'.
+      rewrite (Vector_nil_eq v).
+      rewrite (Vector_nil_eq v').
+      reflexivity.
+    - cbn in v, v'.
+      (* LHS *)
+      rewrite Batch_make_rw2.
+      rewrite (Vector_surjective_pairing2 (v := v)).
+      rewrite (map_Vector_vcons f (length_Batch b) _ (Vector_hd v)).
+      rewrite Vector_tl_vcons.
+      rewrite Vector_hd_vcons.
+      (* RHS *)
+      try rewrite (mapsnd_Batch_rw2 (B := B) f a b).
+      (* ^^^ fails for some reason *)
+      cbn.
+      rewrite (Batch_make_precompose2 (mapsnd_Batch B B' f b) _).
+      assert (cut: f (Vector_hd v) = f (Vector_hd v')).
+      { inversion Hsim.
+        fequal.
+        apply (Vector_hd_sim Hsim). }
+      rewrite cut.
+      specialize (IHb (Vector_tl v)).
+      specialize (IHb
+                    (coerce eq_sym (batch_length_map (precompose f)
+                                      (mapsnd_Batch B B' f b))
+                      in Vector_tl v')).
+      rewrite IHb.
+      + reflexivity.
+      + apply Vector_coerce_sim_r'.
+        apply Vector_tl_sim.
+        assumption.
+  Qed.
+
+  Lemma map_coerce_Vector:
+    forall (n m: nat) (Heq: n = m)
+      (A B: Type) (f: A -> B) (v: Vector n A),
+      coerce Heq in (map f v) = map f (coerce Heq in v).
+  Proof.
+    intros.
+    apply Vector_sim_eq.
+    apply (transitive_Vector_sim (v2 := map f v)).
+    - apply symmetric_Vector_sim.
+      apply Vector_coerce_sim_r.
+    - apply map_coerce_Vector.
+  Qed.
+
+  Lemma Batch_make_natural2:
+    forall {A B B' C: Type} (b: Batch A B' C) (f: B -> B')
+      (v: Vector (length_Batch (mapsnd_Batch B B' f b)) B),
+      Batch_make (mapsnd_Batch _ _ f b) v =
+        Batch_make b (coerce (eq_sym (batch_length_mapsnd f b)) in (map f v)).
+  Proof.
+    intros.
+    symmetry.
+    rewrite map_coerce_Vector.
+    apply (Batch_make_natural1 b f _ v).
+    apply Vector_coerce_sim_l.
+  Qed.
+
+End Batch_theory.
+
+(** * Theory Concerning Vectors *)
+(******************************************************************************)
+
+#[export] Instance Compat_Map_Traverse_Vector {n: nat}:
+  Compat_Map_Traverse (Vector n).
+Proof.
+  hnf. ext A B f.
+  unfold_ops @Map_Traverse.
+  ext v. induction v using Vector_induction.
+  - rewrite map_Vector_vnil.
+    rewrite traverse_Vector_vnil.
+    reflexivity.
+  - rewrite map_Vector_vcons.
+    rewrite traverse_Vector_vcons.
+    rewrite IHv.
+    reflexivity.
+Qed.
+
+(** * <<tosubset>> on Vectors *)
+(******************************************************************************)
+
+#[export] Instance ToSubset_Vector {n}: ToSubset (Vector n).
+Proof.
+  unfold Vector.
+  intro A.
+  intros [contents Pflen].
+  intro a.
+  exact (a ∈ contents).
+Defined.
+
+Lemma tosubset_Vector_vnil: forall (A: Type),
+    tosubset (@vnil A) = ∅.
+Proof.
+  tauto.
+Qed.
+
+Lemma tosubset_Vector_vcons: forall (n: nat) (A: Type) (a: A) (v: Vector n A),
+    tosubset (vcons n a v) = {{a}} ∪ tosubset v.
+Proof.
+  intros.
+  destruct v.
+  cbn. tauto.
+Qed.
+
+#[export] Instance Compat_ToSubset_Traverse_Vector {n: nat}:
+  Compat_ToSubset_Traverse (Vector n).
+Proof.
+  hnf. ext A v.
+  unfold_ops @ToSubset_Traverse.
+  induction v using Vector_induction.
+  - reflexivity.
+  - rewrite foldMap_Vector_vcons;
+      try typeclasses eauto.
+    rewrite tosubset_Vector_vcons.
+    rewrite IHv.
+    reflexivity.
+Qed.
 
 (** * Zipping vectors *)
 (******************************************************************************)
@@ -429,7 +541,7 @@ Proof.
       exists (Vector_hd v2). auto.
 Qed.
 
-(** * Misc *)
+(** * Miscellaneous Properties Concerning <<toBatch>>*)
 (******************************************************************************)
 Section stuff.
 
@@ -440,6 +552,8 @@ Section stuff.
       `{! Compat_Map_Traverse T}
       `{! Compat_ToBatch_Traverse T}.
 
+  (** ** Relating <<tolist>> and <<Batch_contents ∘ toBatch>> *)
+  (******************************************************************************)
   Lemma Batch_contents_tolist:
     forall {A B} (t: T A),
       Vector_to_list A (Batch_contents (toBatch (A' := B) t)) =
@@ -459,6 +573,8 @@ Section stuff.
       reflexivity.
   Qed.
 
+  (** ** <<Batch_contents ∘ toBatch>> is Independent of <<B>> *)
+  (******************************************************************************)
   Lemma Batch_contents_toBatch_sim:
     forall {A B B'} (t: T A),
       Batch_contents
@@ -473,6 +589,8 @@ Section stuff.
     reflexivity.
   Qed.
 
+  (** ** <<shape>> commutes with <<toBatch>> *)
+  (******************************************************************************)
   Lemma shape_toBatch_spec: forall (A B: Type) (t: T A),
       shape (toBatch (A' := B) t) =
         toBatch (A' := B) (shape t).
@@ -484,6 +602,8 @@ Section stuff.
     reflexivity.
   Qed.
 
+  (** ** Similar <<shape>>d terms have similar <<toBatch>> <<shape>>s*)
+  (******************************************************************************)
   Lemma toBatch_shape:
     forall {A' B} `(t1: T A) (t2: T A'),
       shape t1 = shape t2 ->
@@ -498,6 +618,8 @@ Section stuff.
     reflexivity.
   Qed.
 
+  (** ** Similar <<shape>>d <<toBatch>> implies similar <<shape>>s*)
+  (******************************************************************************)
   Lemma toBatch_shape_inv:
     forall {A' B} `(t1: T A) (t2: T A'),
       shape (F := BATCH1 B (T B))
@@ -519,7 +641,7 @@ Section stuff.
 
 End stuff.
 
-(** ** Batch_to_list *)
+(** * Batch_to_list *)
 (******************************************************************************)
 Section Batch.
 
@@ -739,7 +861,7 @@ Section length.
 
 End length.
 
-(** * Deconstructing with refinement-type vectors *)
+(** * Factorizing Terms into <<shape>> and <<contents>> *)
 (******************************************************************************)
 Section deconstruction.
 
@@ -891,6 +1013,53 @@ Section deconstruction.
       - vector_sim.
     Qed.
 
+  (** ** Naturality of <<trav_contents>> and <<trav_make>> *)
+  (******************************************************************************)
+  Lemma trav_contents_natural:
+    forall (A B: Type) (t: T A) (f: A -> B),
+      trav_contents (map f t) ~~ map f (trav_contents t).
+  Proof.
+    intros.
+    unfold Vector_sim.
+    unfold trav_contents.
+    rewrite <- coerce_Vector_contents.
+    rewrite <- map_coerce_Vector.
+    compose near t on left.
+    rewrite toBatch_mapfst.
+    unfold compose at 2.
+    rewrite <- coerce_Vector_contents.
+    rewrite Batch_contents_natural.
+    reflexivity.
+  Qed.
+
+  Lemma trav_make_natural:
+    forall (A B C: Type) (t: T A) (f: B -> C) (v: Vector (plength t) B),
+      trav_make t (map f v) = map f (trav_make t v).
+  Proof.
+    intros.
+    unfold trav_make.
+    rewrite (Batch_make_compose_rw1 (toBatch t) (map f)).
+    assert (cut: map (map f) (toBatch t) =
+                   mapsnd_Batch _ _ f (toBatch t)).
+    { compose near t.
+      now rewrite (toBatch_mapsnd). }
+    rewrite (Batch_make_rw_alt
+               (map (map f) (toBatch t))
+               (mapsnd_Batch _ _ f (toBatch t))
+               cut).
+    rewrite Batch_make_natural2.
+    apply Batch_make_sim1.
+    rewrite map_coerce_Vector.
+    rewrite map_coerce_Vector.
+    rewrite coerce_Vector_compose.
+    rewrite coerce_Vector_compose.
+    rewrite coerce_Vector_compose.
+    fequal; fequal; apply Vector_sim_eq.
+    apply Vector_coerce_sim_r'.
+    apply Vector_coerce_sim_l'.
+    reflexivity.
+  Qed.
+
     (*
     Lemma toBatch_trav_make {A A' B} {t: T A} {v: Vector (plength t) B}:
       toBatch (A' := A') (trav_make t v) =
@@ -1027,7 +1196,7 @@ Section deconstruction.
       - vector_sim.
     Qed.
 
-    (** *** Lemmas regarding <<plength>> *)
+    (** ** Lemmas regarding <<plength>> *)
     (******************************************************************************)
     Lemma plength_trav_make: forall `(t: T A) `(v: Vector _ B),
         plength t = plength (trav_make t v).
@@ -1055,6 +1224,8 @@ Section deconstruction.
         rewrite (trav_make_make t v v1 v2); auto.
     Qed.
 
+    (** ** Lemmas regarding <<shape>> and <<trav_make>> *)
+    (******************************************************************************)
     Lemma trav_same_shape
             `(t1: T A) `(t2: T A'):
       shape t1 = shape t2 ->
@@ -1229,9 +1400,9 @@ Section pw_Batch.
 
 End pw_Batch.
 
-(** * Lifting relations over Traversable functors *)
+(** * Unclassified Stuff??? *)
 (******************************************************************************)
-Section lifting_relations.
+Section misc.
 
   Context
     `{Classes.Kleisli.TraversableFunctor.TraversableFunctor T}
@@ -1241,157 +1412,6 @@ Section lifting_relations.
     `{! Compat_Map_Traverse T}
     `{! Compat_ToSubset_Traverse T}
     `{! Compat_ToBatch_Traverse T}.
-
-  Lemma trav_contents_natural:
-    forall (A B: Type) (t: T A) (f: A -> B),
-      trav_contents (map f t) ~~ map f (trav_contents t).
-  Proof.
-    intros.
-    unfold Vector_sim.
-    unfold trav_contents.
-    rewrite <- coerce_Vector_contents.
-    rewrite <- map_coerce_Vector.
-    compose near t on left.
-    rewrite toBatch_mapfst.
-    unfold compose at 2.
-    rewrite Batch_contents_natural.
-    reflexivity.
-  Qed.
-
-  Lemma Batch_make_precompose1:
-    forall {A B C' C D: Type} (b: Batch A B (C -> D)) (f: C' -> C)
-      (v: Vector (length_Batch b) B)
-      (v': Vector (length_Batch (map (precompose f) b)) B)
-      (Hsim: v ~~ v')
-      (c: C'),
-      Batch_make (map (precompose f) b) v' c =
-        Batch_make b v (f c).
-  Proof.
-    intros.
-    rewrite (Batch_make_compose_rw2 b (precompose f) v').
-    unfold precompose.
-    fequal.
-    apply Vector_sim_eq.
-    apply Vector_coerce_sim_l'.
-    symmetry.
-    assumption.
-  Qed.
-
-  Lemma Batch_make_precompose2:
-    forall {A B C' C D: Type} (b: Batch A B (C -> D)) (f: C' -> C)
-      (v: Vector (length_Batch (map (precompose f) b)) B)
-      (c: C'),
-      Batch_make (map (precompose f) b) v c =
-        Batch_make b (coerce eq_sym (batch_length_map (precompose f) b) in v) (f c).
-  Proof.
-    intros.
-    apply Batch_make_precompose1.
-    apply Vector_coerce_sim_l.
-  Qed.
-
-  Ltac hide_lhs :=
-    match goal with
-    | |- ?lhs = ?rhs =>
-        let name := fresh "lhs" in
-        remember lhs as name
-    end.
-
-  Lemma Batch_make_natural1:
-    forall {A B B' C: Type} (b: Batch A B' C) (f: B -> B')
-      (v: Vector (length_Batch b) B)
-      (v': Vector (length_Batch (mapsnd_Batch B B' f b)) B),
-      v ~~ v' ->
-      Batch_make b (map f v) =
-        Batch_make (mapsnd_Batch _ _ f b) v'.
-  Proof.
-    introv Hsim.
-    induction b.
-    - cbn in v, v'.
-      rewrite (Vector_nil_eq v).
-      rewrite (Vector_nil_eq v').
-      reflexivity.
-    - cbn in v, v'.
-      (* LHS *)
-      rewrite Batch_make_rw2.
-      rewrite (Vector_surjective_pairing2 (v := v)).
-      rewrite (map_Vector_vcons f (length_Batch b) _ (Vector_hd v)).
-      rewrite Vector_tl_vcons.
-      rewrite Vector_hd_vcons.
-      (* RHS *)
-      try rewrite (mapsnd_Batch_rw2 (B := B) f a b).
-      (* ^^^ fails for some reason *)
-      cbn.
-      rewrite (Batch_make_precompose2 (mapsnd_Batch B B' f b) _).
-      assert (cut: f (Vector_hd v) = f (Vector_hd v')).
-      { inversion Hsim.
-        fequal.
-        apply (Vector_hd_sim Hsim). }
-      rewrite cut.
-      specialize (IHb (Vector_tl v)).
-      specialize (IHb
-                    (coerce eq_sym (batch_length_map (precompose f)
-                                      (mapsnd_Batch B B' f b))
-                      in Vector_tl v')).
-      rewrite IHb.
-      + reflexivity.
-      + apply Vector_coerce_sim_r'.
-        apply Vector_tl_sim.
-        assumption.
-  Qed.
-
-  Lemma map_coerce_Vector:
-    forall (n m: nat) (Heq: n = m)
-      (A B: Type) (f: A -> B) (v: Vector n A),
-      coerce Heq in (map f v) = map f (coerce Heq in v).
-  Proof.
-    intros.
-    apply Vector_sim_eq.
-    apply (transitive_Vector_sim (v2 := map f v)).
-    - apply symmetric_Vector_sim.
-      apply Vector_coerce_sim_r.
-    - apply map_coerce_Vector.
-  Qed.
-
-  Lemma Batch_make_natural2:
-    forall {A B B' C: Type} (b: Batch A B' C) (f: B -> B')
-      (v: Vector (length_Batch (mapsnd_Batch B B' f b)) B),
-      Batch_make (mapsnd_Batch _ _ f b) v =
-        Batch_make b (coerce (eq_sym (batch_length_mapsnd f b)) in (map f v)).
-  Proof.
-    intros.
-    symmetry.
-    rewrite map_coerce_Vector.
-    apply (Batch_make_natural1 b f _ v).
-    apply Vector_coerce_sim_l.
-  Qed.
-
-  Lemma trav_make_natural:
-    forall (A B C: Type) (t: T A) (f: B -> C) (v: Vector (plength t) B),
-      trav_make t (map f v) = map f (trav_make t v).
-  Proof.
-    intros.
-    unfold trav_make.
-    rewrite (Batch_make_compose_rw1 (toBatch t) (map f)).
-    assert (cut: map (map f) (toBatch t) =
-                   mapsnd_Batch _ _ f (toBatch t)).
-    { compose near t.
-      now rewrite (toBatch_mapsnd). }
-    rewrite (Batch_make_rw_alt
-               (map (map f) (toBatch t))
-               (mapsnd_Batch _ _ f (toBatch t))
-               cut).
-    rewrite Batch_make_natural2.
-    apply Batch_make_sim1.
-    rewrite map_coerce_Vector.
-    rewrite map_coerce_Vector.
-    rewrite coerce_Vector_compose.
-    rewrite coerce_Vector_compose.
-    rewrite coerce_Vector_compose.
-    fequal; fequal; apply Vector_sim_eq.
-    apply Vector_coerce_sim_r'.
-    apply Vector_coerce_sim_l'.
-    reflexivity.
-  Qed.
 
   Lemma map_sim_function `{Functor F} (A B: Type) (n m: nat):
     forall (f: Vector n A -> B) (g: Vector m A -> B)
@@ -1655,9 +1675,24 @@ not just subset applicative. *)
     - apply same_shape_zip_contents_snd.
   Qed.
 
+End misc.
+
+(** * Lifting relations over Traversable functors *)
+(******************************************************************************)
+Section lifting_relations.
+
   Definition lift_relation {X} {A B:Type} `{Traverse X}
     (R: A -> B -> Prop): X A -> X B -> Prop :=
     traverse (G := subset) R.
+
+  Context
+    `{Classes.Kleisli.TraversableFunctor.TraversableFunctor T}
+    `{ToMap_inst: Map T}
+    `{ToSubset_inst: ToSubset T}
+    `{ToBatch_inst: ToBatch T}
+    `{! Compat_Map_Traverse T}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToBatch_Traverse T}.
 
   Lemma relation_spec1:
     forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B),
@@ -1710,7 +1745,7 @@ not just subset applicative. *)
           apply IHn; auto.
   Qed.
 
-  Lemma relation_spec2:
+  Lemma relation_to_zipped:
     forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B),
       lift_relation R t u ->
         (exists zipped: T (A * B),
@@ -1754,7 +1789,7 @@ not just subset applicative. *)
   Abort.
 
 
-  Lemma relation_spec3:
+  Lemma relation_spec:
     forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B)
       (Heq: plength u = plength t),
       lift_relation R t u <->
@@ -1787,14 +1822,42 @@ not just subset applicative. *)
         apply Vector_coerce_sim_l.
   Qed.
 
+  Lemma relation_natural1:
+    forall (A B1 B2: Type) (R: B1 -> B2 -> Prop) (t: T A) (f: A -> B1),
+      lift_relation R (map f t) = lift_relation (R ∘ map f) t.
+  Proof.
+    intros.
+    unfold lift_relation.
+    compose near t on left.
+    rewrite (traverse_map (G2 := subset) R f).
+    reflexivity.
+  Qed.
+
+  Lemma relation_natural2:
+    forall (B1 A B2: Type) (R: B1 -> B2 -> Prop) (t: T B1) (u: T A) (f: A -> B2),
+      lift_relation R t (map f u) = lift_relation (precompose f ∘ R) t u.
+  Proof.
+    intros.
+    apply propositional_extensionality.
+    rewrite relation_spec1.
+    rewrite relation_spec1.
+    split.
+    - intros [trav_contents_map_u [H1 H2]].
+      rewrite map_spec in H2.
+      rewrite trav_make_natural in H2.
+      try exists (trav_contents u).
+  Abort.
+
   Lemma relation_respectful:
     forall (A B1 B2: Type) (R: B1 -> B2 -> Prop) (t: T A) (f: A -> B1) (g: A -> B2),
     (forall (a: A), a ∈ t -> R (f a) (g a)) -> lift_relation R (map f t) (map g t).
   Proof.
     introv hyp.
-    rewrite relation_spec3.
+    rewrite relation_spec.
     split.
-    admit.
+    rewrite shape_map.
+    rewrite shape_map.
+    reflexivity.
     unfold element_of in hyp.
     rewrite tosubset_spec in hyp.
     destruct (trav_contents t).
