@@ -1,7 +1,5 @@
 From Tealeaves Require Export
-  Classes.Kleisli.DecoratedFunctor
-  Classes.Kleisli.Theory.Comonad
-  Classes.Monoid.
+  Classes.Kleisli.DecoratedFunctor.
 
 Import Monoid.Notations.
 Import Product.Notations.
@@ -21,5 +19,3 @@ Definition DecoratedFunctorFull_DecoratedFunctor
   `{DecoratedFunctor E T}:
   `{DecoratedFunctorFull E T} :=
   {| kdff_df := _ |}.
-
-

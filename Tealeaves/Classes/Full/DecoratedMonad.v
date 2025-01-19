@@ -1,6 +1,5 @@
 From Tealeaves Require Export
-  Classes.Kleisli.DecoratedMonad
-  Classes.Kleisli.Theory.Monad.
+  Classes.Kleisli.DecoratedMonad.
 
 Import DecoratedMonad.Notations.
 Import Kleisli.Comonad.Notations.
@@ -50,6 +49,8 @@ Class DecoratedRightModuleFull
 
 Section MonadFull.
 
+  Import DecoratedMonad.DerivedOperations.
+
   #[local] Instance DecoratedMonadFull_DecoratedMonad
     (W: Type) (T: Type -> Type)
     `{Monad_inst: DecoratedMonad W T} :
@@ -73,11 +74,6 @@ Section MonadFull.
       (Bind_U_inst := Bind_Bindd W T U) :=
     {| kmoddf_kmond := _
     |}.
-
-  #[export] Instance MonadFull_DecoratedMonadFull :
-    MonadFull T :=
-    {| kmonf_kmon := _ |}.
-
 
   #[local] Instance DecoratedRightModuleFull_DecoratedMonadFull
     (W: Type) (T: Type -> Type)

@@ -32,22 +32,19 @@ Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
 
 
 
-Tealeaves/Classes/Kleisli/Theory/Monad.v
-Tealeaves/Classes/Kleisli/Theory/Comonad.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedFunctor.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedMonad.v
 
-Tealeaves/Classes/Kleisli/Theory/ContainerMonad.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedContainerFunctor.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedContainerMonad.v
 
 ####### Core theory
-Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
+
 #Tealeaves/Classes/Kleisli/Theory/TraversableCommutativeIdempotent.v
 Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
 #Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
+
+#Tealeaves/Classes/Kleisli/Theory/ContainerMonad.v
+#Tealeaves/Classes/Kleisli/Theory/DecoratedContainerFunctor.v
+#Tealeaves/Classes/Kleisli/Theory/DecoratedContainerMonad.v
 
 
 # HIGH-LEVEL THEORY

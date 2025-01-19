@@ -154,3 +154,13 @@ Tealeaves/Functors/List_Telescoping_General.v
 ##########################################################
 #Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
+##########################################################
+# "FULL" TYPECLASSES                                     #
+##########################################################
+Tealeaves/Classes/Full/Monad.v
+Tealeaves/Classes/Full/DecoratedFunctor.v
+Tealeaves/Classes/Full/DecoratedMonad.v
+##########################################################
+# THEORY                                                 #
+##########################################################
+Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
