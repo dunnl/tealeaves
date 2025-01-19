@@ -6,23 +6,49 @@ Import Product.Notations.
 
 #[local] Generalizable Variables ϕ F G A B C.
 
-Class ApplicativeCommutativeIdempotent (G : Type -> Type)
-    `{Map G} `{Pure G} `{Mult G} :=
-  { appci_applicative :> Applicative G;
-    appci_idempotent : forall (A : Type) (x : G A),
-      x ⊗ x = map (fun a => (a, a)) x;
-    appci_commutative : forall (A B : Type) (x : G A) (y: G B),
-      x ⊗ y = map (fun '(x, y) => (y, x)) (y ⊗ x);
+Class Center (G : Type -> Type)
+  `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
+  (A: Type) (a: G A): Prop :=
+    { appcenter_left: forall (B: Type) (x: G B),
+        x ⊗ a = map (fun '(x, y) => (y, x)) (a ⊗ x);
+      appcenter_right: forall (B: Type) (x: G B),
+        a ⊗ x = map (fun '(x, y) => (y, x)) (x ⊗ a);
+    }.
+
+Class Idempotent (G : Type -> Type)
+  `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
+  (A: Type) (a: G A): Prop :=
+  { appidem: a ⊗ a = map (fun a => (a, a)) a;
   }.
 
+Class IdempotentCenter (G : Type -> Type)
+  `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
+  (A: Type) (a: G A): Prop :=
+  { appic_idem :> Idempotent G A a;
+    appic_center :> Center G A a;
+  }.
+
+Class ApplicativeCommutativeIdempotent (G : Type -> Type)
+  `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G} :=
+  { appci_applicative :> Applicative G;
+    appci_appic :> forall (A : Type) (a : G A),
+        IdempotentCenter G A a;
+  }.
+
+#[global] Arguments appcenter_left {G}%function_scope {mapG pureG multG}
+  {A}%type_scope (a) {Center} {B}%type_scope x.
+#[global] Arguments appcenter_right {G}%function_scope {mapG pureG multG}
+  {A}%type_scope (a) {Center} {B}%type_scope x.
+#[global] Arguments appidem {G}%function_scope {mapG pureG multG}
+  {A}%type_scope (a) {Idempotent}.
 
 Lemma ap_ci: forall `{ApplicativeCommutativeIdempotent G} {A B: Type} (f: G (A -> B)) (a: G A),
     f <⋆> a = (map evalAt a) <⋆> f.
 Proof.
   intros.
   unfold ap.
-  inversion H2.
-  rewrite appci_commutative.
+  (* left or right doesn't matter *)
+  rewrite (appcenter_right f a).
   compose near (a ⊗ f).
   rewrite (fun_map_map).
   rewrite (app_mult_natural_l G).
@@ -54,8 +80,7 @@ Proof.
   compose near (f ⊗ (b ⊗ a)) on right.
   rewrite (fun_map_map).
 
-  inversion H2.
-  rewrite (appci_commutative _ _ b a).
+  rewrite (appcenter_left a b).
 
   rewrite (app_mult_natural_r G).
   compose near (f ⊗ (a ⊗ b)) on right.
@@ -78,12 +103,11 @@ Lemma ap_cidup: forall `{ApplicativeCommutativeIdempotent G} {A B: Type} (f: G (
 Proof.
   intros.
   unfold ap.
-  inversion H2.
   rewrite (app_mult_natural_l G).
   compose near (f ⊗ a ⊗ a).
   rewrite (fun_map_map).
   rewrite <- (app_assoc_inv G).
-  rewrite appci_idempotent.
+  rewrite (appidem a).
   rewrite (app_mult_natural_r G).
   compose near (f ⊗ a).
   rewrite (fun_map_map).
@@ -104,3 +128,51 @@ Definition penguin {A B: Type}
   fun a b => (map (F := G) (const (@id B)) a) <⋆> b.
 
 Infix "|⋆>" := penguin (at level 50).
+
+Lemma ap_swap {A B: Type} {G: Type -> Type}
+  `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
+  `{appG: ! Applicative G}
+  (f: G (A -> B)) (a: G A)
+  `{center_a: ! Center G A a}:
+    f <⋆> a = (map evalAt a) <⋆> f.
+Proof.
+  unfold ap.
+  rewrite (appcenter_left a).
+  compose near (a ⊗ f).
+  rewrite (fun_map_map).
+  rewrite (app_mult_natural_l G).
+  compose near (a ⊗ f) on right.
+  rewrite (fun_map_map).
+  fequal.
+  ext [x y].
+  cbn. reflexivity.
+Qed.
+
+Lemma ap_contract {A B: Type} {G: Type -> Type}
+  `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
+  `{appG: ! Applicative G}
+  (f: G (A -> A -> B))
+  (a: G A)
+  `{idem_a: ! Idempotent G A a}:
+  f <⋆> a <⋆> a = (map double_input f) <⋆> a.
+Proof.
+  unfold ap.
+  unfold ap.
+  rewrite (app_mult_natural_l G).
+  compose near (f ⊗ a ⊗ a).
+  rewrite (fun_map_map).
+  rewrite <- (app_assoc_inv G).
+  rewrite (appidem a).
+  rewrite (app_mult_natural_r G).
+  compose near (f ⊗ a).
+  rewrite (fun_map_map).
+  compose near (f ⊗ a).
+  rewrite (fun_map_map).
+  (* rhs *)
+  rewrite (app_mult_natural_l G).
+  compose near (f ⊗ a).
+  rewrite (fun_map_map).
+  fequal.
+  ext [x y].
+  cbn. reflexivity.
+Qed.

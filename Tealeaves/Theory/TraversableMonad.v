@@ -30,7 +30,7 @@ Section traversable_monad_theory.
       `{! Compat_Traverse_Bindt T T}
       `{! Compat_Bind_Bindt T T}
       `{! Compat_ToSubset_Traverse T}
-      `{! Compat_ToBatch_Traverse}.
+      `{! Compat_ToBatch_Traverse T}.
 
   Context
       `{Map_U_inst : Map U}
@@ -43,7 +43,7 @@ Section traversable_monad_theory.
       `{! Compat_Traverse_Bindt T U}
       `{! Compat_Bind_Bindt T U}
       `{! Compat_ToSubset_Traverse U}
-      `{! Compat_ToBatch_Traverse (T := U)}.
+      `{! Compat_ToBatch_Traverse U}.
 
   Context
     `{Monad_inst : ! TraversableMonad T}
@@ -130,7 +130,7 @@ Section instances.
       `{! Compat_Traverse_Bindt T T}
       `{! Compat_Bind_Bindt T T}
       `{! Compat_ToSubset_Traverse T}
-      `{! Compat_ToBatch_Traverse}.
+      `{! Compat_ToBatch_Traverse T}.
 
   Context
       `{Map_U_inst : Map U}
@@ -143,7 +143,7 @@ Section instances.
       `{! Compat_Traverse_Bindt T U}
       `{! Compat_Bind_Bindt T U}
       `{! Compat_ToSubset_Traverse U}
-      `{! Compat_ToBatch_Traverse (T := U)}.
+      `{! Compat_ToBatch_Traverse U}.
 
   Context
     `{Monad_inst : ! TraversableMonad T}

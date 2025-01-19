@@ -156,7 +156,7 @@ Section shapeliness.
       `{! Compat_Map_Mapd}
       `{! Compat_Map_Traverse T}
       `{! Compat_Mapd_Mapdt}
-      `{! Compat_ToBatch_Traverse}
+      `{! Compat_ToBatch_Traverse T}
       `{! Compat_Traverse_Mapdt}.
 
   Lemma mapd_shape {A B}: forall (f: E * A -> B) t,
@@ -200,7 +200,7 @@ Section shapeliness.
           cbn in *.
           inversion premise.
           fequal.
-          { specialize (Hinj (e'', a) (e'', a') H11).
+          { specialize (Hinj (e'', a) (e'', a') H10).
             now inversion Hinj. }
           { apply IHe. auto. }
   Qed.
@@ -265,7 +265,7 @@ Section deconstruction.
       `{ToSubset T}
       `{! TraversableFunctor T}
       `{! Compat_Map_Mapdt}
-      `{! Compat_ToBatch_Traverse}
+      `{! Compat_ToBatch_Traverse T}
       `{! Compat_ToSubset_Traverse T}
       `{! Compat_Traverse_Mapdt}.
 
@@ -453,7 +453,6 @@ Section deconstruction.
         rewrite <- map_coerce_Vector.
         compose near t on left.
         rewrite <- toBatch6_toBatch.
-        Search Batch_contents toBatch6.
         admit.
       }
       try apply Batch_contents_toBatch_sim.
@@ -526,7 +525,7 @@ Section deconstruction.
     unfold mapdt_contents.
     unfold trav_make.
     change  (map (?f ○ ?g)) with (map (f ∘ g)).
-    assert (Functor G) by now inversion H10.
+    assert (Functor G) by now inversion H9.
     rewrite <- (fun_map_map (F := G)).
     unfold compose at 1.
     do 2 change (map ?f (forwards ?x)) with (forwards (map f x)).
@@ -579,7 +578,7 @@ Section lifting_relations.
       `{ToBatch T}
       `{! Compat_Map_Mapdt}
       `{! Compat_Mapd_Mapdt}
-      `{! Compat_ToBatch_Traverse}
+      `{! Compat_ToBatch_Traverse T}
       `{! Compat_Traverse_Mapdt}.
 
   Import Adapters.KleisliToCategorical.DecoratedTraversableFunctor.
@@ -600,7 +599,6 @@ Section lifting_relations.
     (Hshape: shape t = shape u):
     shape (dec T t) = shape (dec T u).
   Proof.
-    Set Printing Implicit.
     unfold dec.
     unfold Decorate_Mapdt.
     unfold shape.
@@ -614,7 +612,32 @@ Section lifting_relations.
     (Hshape: shape t = shape u):
     map (cojoin (E ×)) (dec T (same_shape_zip A B t u Hshape)) =
       dec T (same_shape_zip (E * A) (E * B) (dec T t) (dec T u) _).
-  *)
+   *)
+
+
+  Definition lift_relation_ctx {A B:Type}
+    (R: E * A -> E * B -> Prop): T A -> T B -> Prop :=
+    precompose (dec T) ∘ mapdt (T := T) (G := subset) R.
+
+  Lemma relation_ctx_spec1:
+    forall (A B: Type) (R: E * A -> E * B -> Prop) (t: T A) (u: T B),
+      lift_relation_ctx R t u <->
+        (exists a : Vector (plength t) (E * B),
+            traverse (G := subset) R (mapdt_contents t) a /\
+              mapdt_make t a = dec T u).
+  Proof.
+    intros.
+    unfold lift_relation_ctx.
+    unfold compose at 1.
+    unfold precompose.
+    rewrite (mapdt_repr (E := E) (T := T)).
+    unfold_ops @Map_subset.
+    compose near (mapdt_contents t).
+    rewrite (traverse_commutative_idem
+               (T' := Vector (plength t)) (E * A) (E * B) R).
+    reflexivity.
+  Qed.
+
 
 
 End lifting_relations.

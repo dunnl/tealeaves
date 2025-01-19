@@ -39,6 +39,12 @@ Section Backwards.
         reflexivity.
     Qed.
 
+    #[export] Instance Natural_forwards: Natural (@forwards F).
+    Proof.
+      constructor; try typeclasses eauto.
+      intros. ext [x]. reflexivity.
+    Qed.
+
   End functor.
 
   (** ** Applicative instance *)

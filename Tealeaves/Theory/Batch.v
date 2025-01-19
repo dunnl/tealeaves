@@ -395,8 +395,6 @@ Section deconstruction.
       now (subst; apply Batch_make_sim1).
     Qed.
 
-    About "rew _ in _".
-
     Lemma Batch_make_rw_alt
       `(b1: Batch A B C)
       `(b2: Batch A B C)
