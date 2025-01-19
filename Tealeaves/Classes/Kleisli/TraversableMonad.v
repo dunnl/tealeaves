@@ -152,13 +152,13 @@ Module DerivedOperations.
       `{Return_T: Return T}
       `{Bindt_TU: Bindt T U}.
 
-    #[local] Instance Map_Bindt: Map U :=
+    #[export] Instance Map_Bindt: Map U :=
       fun (A B: Type) (f: A -> B) => bindt (G := fun A => A) (ret (T := T) ∘ f).
 
-    #[local] Instance Bind_Bindt: Bind T U
+    #[export] Instance Bind_Bindt: Bind T U
       := fun A B f => bindt (T := T) (G := fun A => A) f.
 
-    #[local] Instance Traverse_Bindt: Traverse U
+    #[export] Instance Traverse_Bindt: Traverse U
       := fun G _ _ _ A B f => bindt (map (F := G) (ret (T := T)) ∘ f).
 
   End operations.
@@ -291,7 +291,8 @@ Section traversable_monad_identity_applicative.
   Lemma bindt_app_id_l :
     forall {A B: Type} `{Applicative G} (f: A -> G (T B)),
       @bindt T U _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G)
-        (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f = bindt f.
+        (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f =
+        bindt (G := G) f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity2 G).
   Qed.
@@ -299,7 +300,8 @@ Section traversable_monad_identity_applicative.
   Lemma bindt_app_id_r :
     forall {A B: Type} `{Applicative G} (f: A -> G (T B)),
       @bindt T U _ (G ∘ (fun A => A)) (Map_compose G (fun A => A))
-        (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f = bindt f.
+        (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f =
+        bindt (G := G) f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity1 G).
   Qed.

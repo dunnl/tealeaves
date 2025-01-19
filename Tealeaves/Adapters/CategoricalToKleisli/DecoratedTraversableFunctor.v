@@ -7,38 +7,55 @@ Import Product.Notations.
 
 #[local] Generalizable Variables G ϕ.
 
-(** * Kleisli presentation of decorated-traversable functors *)
+(** * Kleisli Decorated Traversable Functors from Categorical Decorated Traversable Functors *)
 (******************************************************************************)
-Module ToKleisli.
 
-  #[export] Instance Mapdt_distdec
-    (E : Type)
-    (T : Type -> Type)
-    `{Map T} `{Decorate E T} `{ApplicativeDist T} : Mapdt E T :=
-  fun (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    (A B : Type) (f : E * A -> G B) => (dist T G ∘ map f ∘ dec T : T A -> G (T B)).
+(** ** Derived Operations *)
+(******************************************************************************)
+Module DerivedOperations.
+
+  #[export] Instance Mapdt_Categorical
+    (E: Type)
+    (T: Type -> Type)
+    `{Map T}
+    `{Decorate E T}
+    `{ApplicativeDist T}:
+  Mapdt E T :=
+  fun (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    (A B: Type) (f: E * A -> G B) =>
+    (dist T G ∘ map f ∘ dec T: T A -> G (T B)).
+
+End DerivedOperations.
+
+(** ** Derived Instances *)
+(******************************************************************************)
+Module DerivedInstances.
+
+  Import DerivedOperations.
 
   Section with_functor.
 
     Context
-      (E : Type)
-      (T : Type -> Type)
+      (E: Type)
+      (T: Type -> Type)
       `{Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-    Theorem mapdt_id : forall (A : Type), mapdt (G := fun A => A) (extract (W := (E ×))) = @id (T A).
+    Theorem mapdt_id: forall (A: Type),
+        mapdt (G := fun A => A) (extract (W := (E ×))) = @id (T A).
     Proof.
-      introv. unfold_ops @Mapdt_distdec.
+      introv. unfold_ops @Mapdt_Categorical.
       reassociate -> on left.
-      rewrite (kdf_dec_extract (E := E) (F := T)).
-      now rewrite (dist_unit (F := T)).
+      rewrite (dfun_dec_extract (E := E) (F := T)).
+      rewrite (dist_unit (F := T)).
+      reflexivity.
     Qed.
 
-    Theorem mapdt_mapdt :
+    Theorem mapdt_mapdt:
       forall `{Applicative G1} `{Applicative G2}
-        (A B C : Type) (g : E * B -> G2 C) (f : E * A -> G1 B),
-        map (mapdt g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (g ⋆6 f).
+        (A B C: Type) (g: E * B -> G2 C) (f: E * A -> G1 B),
+        map (mapdt g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (g ⋆3 f).
     Proof.
-      intros. unfold transparent tcs. unfold kc6.
+      intros. unfold transparent tcs. unfold kc3.
       rewrite <- (fun_map_map (F := G1)).
       repeat reassociate <- on left.
       change (?f ∘ map (dec T) ∘ dist T G1 ∘ ?g) with
@@ -61,14 +78,16 @@ Module ToKleisli.
       rewrite <- (natural (ϕ := @dec E T _)).
       repeat reassociate ->.
       repeat fequal.
-      rewrite (kdf_dec_dec (E := E) (F := T)).
+      rewrite (dfun_dec_dec (E := E) (F := T)).
       reassociate <-. unfold_ops @Map_compose.
       rewrite (fun_map_map (F := T)).
       do 2 fequal. now ext [e a].
     Qed.
 
-    Theorem mapdt_mapdt_morphism : forall `{ApplicativeMorphism G1 G2 ϕ} (A B : Type) (f : E * A -> G1 B),
-        mapdt (ϕ B ∘ f) = ϕ (T B) ∘ mapdt f.
+    Theorem mapdt_mapdt_morphism:
+      forall `{ApplicativeMorphism G1 G2 ϕ}
+        (A B: Type) (f: E * A -> G1 B),
+        ϕ (T B) ∘ mapdt f = mapdt (ϕ B ∘ f).
     Proof.
       intros. unfold transparent tcs.
       do 2 reassociate <-.
@@ -77,12 +96,15 @@ Module ToKleisli.
       reflexivity.
     Qed.
 
-    #[local] Instance: Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
-      {| kdtfun_mapdt1 := @mapdt_id;
-        kdtfun_mapdt2 := @mapdt_mapdt;
-        kdtfun_morph := @mapdt_mapdt_morphism;
+    (** ** Typeclass Instance *)
+    (******************************************************************************)
+    #[local] Instance:
+      Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
+      {| kdtf_mapdt1 := @mapdt_id;
+         kdtf_mapdt2 := @mapdt_mapdt;
+         kdtf_morph := @mapdt_mapdt_morphism;
       |}.
 
   End with_functor.
 
-End ToKleisli.
+End DerivedInstances.

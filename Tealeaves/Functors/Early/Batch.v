@@ -443,7 +443,8 @@ Proof.
   now rewrite mapfst_Batch1.
 Qed.
 
-#[export] Instance mapfst_Batch1_Hom {B: Type} `(f: A1 -> A2):
+#[export] Instance ApplicativeMorphism_mapfst_Batch
+  {B: Type} `(f: A1 -> A2):
   ApplicativeMorphism (Batch A1 B) (Batch A2 B) (fun C => mapfst_Batch _ _ f).
 Proof.
   intros.
@@ -481,7 +482,7 @@ Proof.
   now rewrite mapsnd_Batch1.
 Qed.
 
-#[export] Instance mapsnd_Batch2_Hom {A B1 B2: Type} `(f: B1 -> B2):
+#[export] Instance ApplicativeMorphism_mapsnd_Batch {A B1 B2: Type} `(f: B1 -> B2):
   ApplicativeMorphism (Batch A B2) (Batch A B1) (fun C => mapsnd_Batch B1 B2 f).
 Proof.
   intros.
@@ -693,13 +694,32 @@ Section parameterised_monad.
 
   (** ** Other Laws *)
   (******************************************************************************)
-  Lemma runBatch_batch: forall (G: Type -> Type) `{Applicative G} (A B: Type) (f: A -> G B),
+  Lemma runBatch_batch:
+    forall (G: Type -> Type) `{Applicative G} (A B: Type) (f: A -> G B),
       runBatch G f B ∘ batch A B = f.
   Proof.
     intros. ext a. cbn.
     now rewrite ap1.
   Qed.
 
+  Lemma runBatch_batch_id: forall (A B: Type),
+      runBatch (Batch A B) (batch A B) B =
+        @id (Batch A B B).
+  Proof.
+    intros. ext b.
+    induction b as [C c | C rest IHrest a].
+    - reflexivity.
+    - cbn. unfold id in *.
+      fequal. rewrite IHrest.
+      compose near rest.
+      rewrite (fun_map_map (F := Batch A B)).
+      compose near rest.
+      rewrite (fun_map_map (F := Batch A B)).
+      unfold compose, strength_arrow.
+      change rest with (id rest) at 2.
+      rewrite <- (fun_map_id (F := Batch A B)).
+      fequal.
+  Qed.
 
   (** ** Monad Laws *)
   (******************************************************************************)
@@ -728,7 +748,7 @@ Section parameterised_monad.
       compose near rest on left.
       rewrite (fun_map_map).
       replace (compose (fun '(f, a0) => f a0)
-                 ∘ (strength_arrow ∘ (fun c : B -> C => (c, id))))
+                 ∘ (strength_arrow ∘ (fun c: B -> C => (c, id))))
         with (@id (B -> C)).
       2:{ symmetry.
           ext f b.
@@ -1063,8 +1083,222 @@ Section parameterized.
 
 End parameterized.
 
+(** * <<Batch>> is Traversable in the First Argument *)
+(******************************************************************************)
+Fixpoint traverse_Batch (B C: Type) (G: Type -> Type)
+  `{Map G} `{Pure G} `{Mult G} (A A': Type) (f: A -> G A')
+  (b: Batch A B C): G (Batch A' B C) :=
+  match b with
+  | Done _ _ _ c => pure G (Done A' B C c)
+  | Step _ _ _ rest a =>
+      pure G (Step A' B C) <⋆>
+        traverse_Batch B (B -> C) G A A' f rest <⋆>
+        f a
+  end.
+
+#[export] Instance Traverse_Batch1:
+  forall (B C: Type), Traverse (BATCH1 B C) := traverse_Batch.
+
+(** ** Rewriting Lemmas *)
+(******************************************************************************)
+Lemma traverse_Batch_rw1:
+  forall (B C: Type)
+  (G: Type -> Type)
+  `{Map G} `{Pure G} `{Mult G}
+  (A A': Type) (f: A -> G A') (c: C),
+    traverse f (Done A B C c) =
+      pure G (Done A' B C c).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma traverse_Batch_rw1':
+  forall (B C: Type)
+  (G: Type -> Type)
+  `{Map G} `{Pure G} `{Mult G}
+  (A A': Type) (f: A -> G A'),
+    (traverse f ∘ pure (Batch A B)) =
+      pure (G ∘ Batch A' B) (A := C).
+Proof.
+  intros.
+  unfold_ops @Pure_Batch.
+  unfold_ops @Pure_compose.
+  unfold pure at 2.
+  unfold compose at 1; ext c.
+  rewrite traverse_Batch_rw1.
+  reflexivity.
+Qed.
+
+Lemma traverse_Batch_rw2:
+  forall`{Map G} `{Pure G} `{Mult G}
+    `{! Applicative G}
+     (B C: Type)
+  (A A': Type) (f: A -> G A')
+  (k: Batch A B (B -> C)) (a: A),
+    traverse f (k ⧆ a) =
+      map G (Step A' B C) (traverse (G := G) f k) <⋆> f a.
+Proof.
+  intros. cbn.
+  rewrite <- map_to_ap.
+  reflexivity.
+Qed.
+
+Lemma traverse_Batch_rw2':
+  forall`{Map G} `{Pure G} `{Mult G}
+    `{! Applicative G}
+     (B C: Type)
+  (A A': Type) (f: A -> G A')
+  (k: Batch A B (B -> C)) (a: A),
+    traverse f (k ⧆ a) =
+      map G (Step A' B C) (traverse (G := G) f k) <⋆> f a.
+Proof.
+  intros.
+  rewrite traverse_Batch_rw2.
+  reflexivity.
+Qed.
+
+(** ** Traversable Functor Laws *)
+(******************************************************************************)
+Lemma trf_traverse_id_Batch :
+  forall B C A: Type, traverse (T := BATCH1 B C) (G := fun X: Type => X) (@id A) = id.
+Proof.
+  intros. ext b.
+  unfold id.
+  induction b as [C c | C rest IHrest].
+  - cbn. reflexivity.
+  - cbn.
+    change (Traverse_Batch1 B (B -> C)) with (@traverse (BATCH1 B (B -> C)) _).
+    rewrite IHrest.
+    reflexivity.
+Qed.
+
+Lemma trf_traverse_traverse_Batch (B C: Type) :
+  forall `(H0: Map G1) (H1: Pure G1) (H2: Mult G1),
+    Applicative G1 ->
+    forall `(H4: Map G2) (H5: Pure G2) (H6: Mult G2),
+      Applicative G2 ->
+      forall (A A' A'': Type) (g: A' -> G2 A'') (f: A -> G1 A'),
+        map G1 (traverse (T := BATCH1 B C) g) ∘
+          traverse (T := BATCH1 B C) f =
+          traverse (T := BATCH1 B C) (G := G1 ∘ G2) (g ⋆2 f).
+Proof.
+  intros. ext b.
+  unfold id.
+  induction b as [C c | C rest IHrest].
+  - cbn. unfold compose.
+    cbn. rewrite app_pure_natural.
+    reflexivity.
+  - cbn.
+    (* RHS *)
+    change (Traverse_Batch1 B (B -> C))
+      with (@traverse (BATCH1 B (B -> C)) _).
+    (* cleanup *)
+    rewrite (ap_compose1 G2 G1).
+    rewrite (ap_compose1 G2 G1).
+    rewrite <- map_to_ap.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    (* <<unfold_ops Pure_compose>> prevents << rewrite <- IHrest>> *)
+    unfold pure at 2; unfold Pure_compose at 1.
+    rewrite ap2.
+    (* deal with <<rest>> *)
+    rewrite <- IHrest.
+    unfold compose at 4.
+    rewrite <- ap_map.
+    rewrite app_pure_natural.
+    unfold kc2.
+    unfold compose at 4.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    (* LHS *)
+    unfold compose; cbn.
+    fold (@traverse (BATCH1 B (B -> C)) _).
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    reflexivity.
+Qed.
+
+Lemma trf_traverse_morphism_Batch :
+  forall (B C: Type) (G1 G2: Type -> Type)
+    `{ApplicativeMorphism G1 G2 ϕ},
+    forall (A A': Type) (f: A -> G1 A'),
+      ϕ (BATCH1 B C A') ∘ traverse (T := BATCH1 B C) (G := G1) f =
+        traverse (T := BATCH1 B C) (G := G2) (ϕ A' ∘ f).
+Proof.
+  intros. ext b.
+  induction b as [C c | C rest IHrest].
+  - unfold compose; cbn.
+    now rewrite appmor_pure.
+  - cbn.
+    unfold compose at 1. cbn.
+    change (Traverse_Batch1 B (B -> C))
+      with (@traverse (BATCH1 B (B -> C)) _).
+    rewrite <- IHrest.
+    rewrite <- (appmor_pure (F := G1) (G := G2)).
+    rewrite (ap_morphism_1 (ϕ := ϕ)).
+    rewrite (ap_morphism_1 (ϕ := ϕ)).
+    reflexivity.
+Qed.
+
+#[export] Instance TraversableFunctor_Batch: forall (B C: Type),
+    TraversableFunctor (BATCH1 B C) := fun B C =>
+  {| trf_traverse_id := trf_traverse_id_Batch B C;
+     trf_traverse_traverse := @trf_traverse_traverse_Batch B C;
+     trf_traverse_morphism := @trf_traverse_morphism_Batch B C;
+  |}.
+
+Lemma map_compat_traverse_Batch1: forall (B C: Type),
+    @map (BATCH1 B C) _ = @traverse (BATCH1 B C) _ (fun A => A) Map_I Pure_I Mult_I.
+Proof.
+  intros.
+  ext A A' f b.
+  induction b as [C c | C rest IHrest a].
+  - reflexivity.
+  - cbn.
+    change (Traverse_Batch1 B (B -> C)) with
+      (@traverse (BATCH1 B (B -> C)) _).
+    rewrite <- IHrest.
+    reflexivity.
+Qed.
+
+#[export] Instance Compat_Map_Traverse_Batch1:
+  forall B C, @Compat_Map_Traverse (BATCH1 B C) _ _.
+Proof.
+  intros. hnf.
+  ext X Y f.
+  change_left (map (BATCH1 B C) f).
+  rewrite map_compat_traverse_Batch1.
+  reflexivity.
+Qed.
+
+(** ** <<runBatch>> Characterized by <<traverse>> *)
+(******************************************************************************)
+Lemma runBatch_via_traverse {A B: Type}
+  {F: Type -> Type} `{Map F} `{Mult F} `{Pure F} `{! Applicative F}
+  (ϕ: A -> F B) (C: Type) :
+  runBatch F ϕ C = map F extract_Batch ∘ traverse (G := F) (T := BATCH1 B C) ϕ.
+Proof.
+  intros. ext b.
+  induction b as [C c | C rest IHrest].
+  - unfold compose; cbn.
+    rewrite app_pure_natural.
+    reflexivity.
+  - cbn.
+    rewrite IHrest.
+    unfold compose; cbn.
+    fold (@traverse (BATCH1 B (B -> C)) _).
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite map_to_ap.
+    reflexivity.
+Qed.
+
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
-  Infix "⧆" := (Step _ _ _) (at level 51, left associativity) : tealeaves_scope.
+  Infix "⧆" := (Step _ _ _) (at level 51, left associativity): tealeaves_scope.
 End Notations.

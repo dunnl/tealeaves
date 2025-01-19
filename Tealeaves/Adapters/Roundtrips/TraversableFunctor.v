@@ -87,3 +87,9 @@ Module traversable_functor_kleisli_categorical_kleisli.
   Qed.
 
 End traversable_functor_kleisli_categorical_kleisli.
+
+(** * Coalgebraic ~> Kleisli ~> Coalgebraic (TODO) *)
+(******************************************************************************)
+
+(** * Kleisli ~> Coalgebraic ~> Kleisli (TODO) *)
+(******************************************************************************)

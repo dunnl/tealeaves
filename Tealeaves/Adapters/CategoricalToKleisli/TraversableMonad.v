@@ -7,20 +7,30 @@ Import Kleisli.TraversableMonad.Notations.
 
 #[local] Generalizable Variables T G ϕ.
 
-(** * Traversable monads to Kleisli traversable monads *)
+(** * Kleisli Traversable Monads from Categorical Traversable Monads *)
 (******************************************************************************)
-Module ToKleisli.
 
-  (** ** Operation *)
-  (******************************************************************************)
-  #[export] Instance Bindt_categorical
-    (T : Type -> Type) `{Map T} `{Join T} `{ApplicativeDist T}
-  : Bindt T T | 1000
-  := fun (G : Type -> Type) _ _ _ (A B : Type) (f : A -> G (T B)) =>
-                   map (F := G) join ∘ dist T G ∘ map (F := T) f.
+(** ** Operation *)
+(******************************************************************************)
+Module DerivedOperations.
 
-  (** ** Laws *)
-  (******************************************************************************)
+  #[export] Instance Bindt_Categorical
+    (T: Type -> Type)
+    `{Map_T: Map T} `{Join_T: Join T}
+    `{Dist_T: ApplicativeDist T}
+ : Bindt T T | 1000
+  := fun (G: Type -> Type) _ _ _ (A B: Type)
+       (f: A -> G (T B)) =>
+       map (F := G) join ∘ dist T G ∘ map (F := T) f.
+
+End DerivedOperations.
+
+(** ** Derived Laws *)
+(******************************************************************************)
+Module DerivedInstances.
+
+  Import DerivedOperations.
+
   Section with_monad.
 
     Context
@@ -29,9 +39,9 @@ Module ToKleisli.
     (** *** Identity law *)
     (******************************************************************************)
     Lemma ktm_bindt1_T :
-      forall (A : Type), bindt (G := fun A => A) (ret (T := T)) = @id (T A).
+      forall (A: Type), bindt (G := fun A => A) (ret (T := T)) = @id (T A).
     Proof.
-      intros. unfold bindt. unfold_ops @Bindt_categorical.
+      intros. unfold bindt. unfold_ops @Bindt_Categorical.
       unfold_ops @Map_I. rewrite (dist_unit (F := T)).
       change (?g ∘ id ∘ ?f) with (g ∘ f).
       now rewrite (mon_join_map_ret (T := T)).
@@ -39,14 +49,14 @@ Module ToKleisli.
 
     (** *** Composition law *)
     (******************************************************************************)
-    Lemma ktm_bindt2_T : forall
+    Lemma ktm_bindt2_T: forall
         `{Applicative G1} `{Applicative G2}
-        (A B C : Type)
-        (g : B -> G2 (T C)) (f : A -> G1 (T B)),
-        map (bindt g) ∘ bindt f = bindt (G := G1 ∘ G2) (g ⋆3 f).
+        (A B C: Type)
+        (g: B -> G2 (T C)) (f: A -> G1 (T B)),
+        map (bindt g) ∘ bindt f = bindt (G := G1 ∘ G2) (g ⋆6 f).
     Proof.
       intros. unfold bindt at 1 2 3.
-      unfold_ops @Bindt_categorical.
+      unfold_ops @Bindt_Categorical.
       reassociate -> on right. repeat reassociate <-.
       rewrite (fun_map_map (F := G1)).
       reassociate -> near join. rewrite (natural (ϕ := @join T _)).
@@ -100,12 +110,12 @@ Module ToKleisli.
 
     (** *** Unit law *)
     (******************************************************************************)
-    Lemma ktm_bindt0_T : forall
-        (G1 : Type -> Type) `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
-        (A B: Type) (f : A -> G1 (T B)),
+    Lemma ktm_bindt0_T: forall
+        (G1: Type -> Type) `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
+        (A B: Type) (f: A -> G1 (T B)),
         bindt f ∘ ret = f.
     Proof.
-      intros. unfold_ops @Bindt_categorical.
+      intros. unfold_ops @Bindt_Categorical.
       reassociate -> on left.
       rewrite (natural (Natural := Monad.mon_ret_natural)).
       unfold_ops @Map_I.
@@ -119,11 +129,11 @@ Module ToKleisli.
 
     (** *** Morphism law *)
     (******************************************************************************)
-    Lemma ktm_morph_T : forall `{ApplicativeMorphism G1 G2 ϕ},
-        forall (A B : Type) (f : A -> G1 (T B)), ϕ (T B) ∘ bindt f = bindt (ϕ (T B) ∘ f).
+    Lemma ktm_morph_T: forall `{ApplicativeMorphism G1 G2 ϕ},
+        forall (A B: Type) (f: A -> G1 (T B)), ϕ (T B) ∘ bindt f = bindt (ϕ (T B) ∘ f).
     Proof.
       introv morph. intros.
-      unfold_ops @Bindt_categorical.
+      unfold_ops @Bindt_Categorical.
       do 2 reassociate <- on left.
       unfold compose. ext a.
       rewrite (appmor_natural _ (T B) join).
@@ -137,10 +147,10 @@ Module ToKleisli.
     (** *** Purity law *)
     (******************************************************************************)
     Theorem bindt_purity_T
-      `{Applicative G1} `{Applicative G2} : forall (A B : Type) (f : A -> G1 (T B)),
+      `{Applicative G1} `{Applicative G2}: forall (A B: Type) (f: A -> G1 (T B)),
         bindt (G := G2 ∘ G1) (pure (F := G2) ∘ f) = pure (F := G2) ∘ bindt f.
     Proof.
-      intros. unfold_ops @Bindt_categorical.
+      intros. unfold_ops @Bindt_Categorical.
       reassociate -> on left.
       rewrite (map_purity_2 (T := T) (G2 := G2) f).
       do 2 reassociate <- on left.
@@ -165,4 +175,4 @@ Module ToKleisli.
 
   End with_monad.
 
-End ToKleisli.
+End DerivedInstances.

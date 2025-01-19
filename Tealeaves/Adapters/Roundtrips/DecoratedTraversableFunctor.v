@@ -4,7 +4,7 @@ From Tealeaves Require Export
 
 Import Product.Notations.
 Import Functor.Notations.
-Import Kleisli.Monad.Notations.
+Import Kleisli.DecoratedTraversableFunctor.Notations.
 
 #[local] Generalizable Variable T.
 
@@ -13,24 +13,30 @@ Import Kleisli.Monad.Notations.
 Module Roundtrip1.
 
   Context
-    (E : Type)
-    (T : Type -> Type)
-    `{mapT : Map T}
-    `{distT : ApplicativeDist T}
-    `{decorateT : Decorate E T}
+    (E: Type)
+    (T: Type -> Type)
+    `{mapT: Map T}
+    `{distT: ApplicativeDist T}
+    `{decorateT: Decorate E T}
     `{! Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-  #[local] Instance mapdt' : Mapdt E T := ToKleisli.Mapdt_distdec E T.
+  #[local] Instance mapdt': Mapdt E T :=
+    DerivedOperations.Mapdt_Categorical E T.
 
-  Definition map' : Map T := Map_Mapdt.
-  Definition decorate' : Decorate E T := ToCategorical.Decorate_Mapdt E T.
-  Definition dist' : ApplicativeDist T := ToCategorical.Dist_Mapdt E T.
+  Definition map2: Map T :=
+    DerivedOperations.Map_Mapdt.
+  Definition decorate2: Decorate E T :=
+    DerivedOperations.Decorate_Mapdt E T.
+  Definition dist2: ApplicativeDist T :=
+    DerivedOperations.Dist_Mapdt E T.
 
-  Goal mapT = map'.
+  Goal mapT = map2.
   Proof.
-    unfold map'. unfold_ops @Map_Mapdt.
-    unfold mapdt, mapdt'.
-    unfold_ops @ToKleisli.Mapdt_distdec.
+    unfold map2.
+    unfold DerivedOperations.Map_Mapdt.
+    unfold mapdt.
+    unfold mapdt'.
+    unfold DerivedOperations.Mapdt_Categorical.
     ext A B f.
     rewrite (dist_unit (F := T)).
     rewrite <- (fun_map_map (F := T)).
@@ -40,25 +46,30 @@ Module Roundtrip1.
     reflexivity.
   Qed.
 
-  Goal distT = dist'.
+  Goal distT = dist2.
   Proof.
-    unfold dist'. unfold_ops ToCategorical.Dist_Mapdt.
-    unfold mapdt, mapdt'.
-    unfold_ops @ToKleisli.Mapdt_distdec.
-    ext G Hmap Hpure Hmult. ext A.
+    ext G Hmap Hpure Hmult A.
+    unfold dist2.
+    unfold DerivedOperations.Dist_Mapdt.
+    unfold mapdt.
+    unfold mapdt'.
+    unfold DerivedOperations.Mapdt_Categorical.
     reassociate -> on right.
     rewrite (dfun_dec_extract (E := E) (F := T)).
     reflexivity.
   Qed.
 
-  Goal decorateT = decorate'.
+  Goal decorateT = decorate2.
   Proof.
-    unfold decorate'. unfold_ops @ToCategorical.Decorate_Mapdt.
-    unfold mapdt, mapdt'.
-    unfold_ops @ToKleisli.Mapdt_distdec.
     ext A.
+    unfold decorate2.
+    unfold DerivedOperations.Decorate_Mapdt.
+    unfold mapdt.
+    unfold mapdt'.
+    unfold DerivedOperations.Mapdt_Categorical.
     rewrite (dist_unit (F := T)).
-    now rewrite (fun_map_id (F := T)).
+    rewrite (fun_map_id (F := T)).
+    reflexivity.
   Qed.
 
 End Roundtrip1.
@@ -68,36 +79,46 @@ End Roundtrip1.
 Module Roundtrip2.
 
   Context
-    (E : Type)
-    (T : Type -> Type)
-    `{mapdtT : Mapdt E T}
+    (E: Type)
+    (T: Type -> Type)
+    `{mapdtT: Mapdt E T}
     `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-  #[local] Instance map' : Map T := Map_Mapdt.
-  #[local] Instance dist' : ApplicativeDist T := ToCategorical.Dist_Mapdt E T.
-  #[local] Instance decorate' : Decorate E T := ToCategorical.Decorate_Mapdt E T.
+  #[local] Instance map': Map T :=
+    DerivedOperations.Map_Mapdt.
+  #[local] Instance dist': ApplicativeDist T :=
+    DerivedOperations.Dist_Mapdt E T.
+  #[local] Instance decorate': Decorate E T :=
+    DerivedOperations.Decorate_Mapdt E T.
 
-  Definition mapdt' : Mapdt E T := ToKleisli.Mapdt_distdec E T.
+  Definition mapdt2: Mapdt E T :=
+    DerivedOperations.Mapdt_Categorical E T.
 
-  Goal forall G `{Applicative G}, @mapdtT G _ _ _ = @mapdt' G _ _ _.
+  Goal forall G `{Applicative G},
+      @mapdtT G _ _ _ = @mapdt2 G _ _ _.
   Proof.
     intros.
-    unfold mapdt'. unfold_ops @ToKleisli.Mapdt_distdec.
-    unfold map, map', dist, dist', dec, decorate'.
     ext A B f.
-    unfold_ops @ToCategorical.Dist_Mapdt.
-    unfold_ops @Map_Mapdt.
-    unfold_ops @ToCategorical.Decorate_Mapdt.
+    unfold mapdt2.
+    unfold DerivedOperations.Mapdt_Categorical.
+    unfold map.
+    unfold map'.
+    unfold DerivedOperations.Map_Mapdt.
+    unfold dist.
+    unfold dist'.
+    unfold DerivedOperations.Dist_Mapdt.
+    unfold dec.
+    unfold decorate'.
+    unfold DerivedOperations.Decorate_Mapdt.
     rewrite <- map_to_mapdt.
     rewrite mapdt_map.
     change (mapdt (extract ∘ map f))
       with (map (F := fun A => A) (mapdt (extract ∘ map f))).
-    rewrite (kdtfun_mapdt2 (G2 := G) (G1 := fun A => A)).
-    rewrite mapdt_app_l.
-    fequal.
-    unfold kc6.
+    rewrite (kdtf_mapdt2 (G2 := G) (G1 := fun A => A)).
+    rewrite mapdt_app_id_l.
+    rewrite <- (natural (ϕ := fun A => extract)).
+    rewrite kc3_23.
     unfold_ops @Map_I.
-    ext [w a].
     reflexivity.
   Qed.
 

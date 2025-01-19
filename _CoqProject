@@ -31,7 +31,9 @@ Tealeaves/Classes/Kleisli/Comonad.v
 Tealeaves/Adapters/CategoricalToKleisli/Monad.v
 Tealeaves/Adapters/KleisliToCategorical/Monad.v
 Tealeaves/Adapters/Roundtrips/Monad.v
-# Decorated Functors
+##########################################################
+# DECORATED FUNCTORS                                     #
+##########################################################
 Tealeaves/Functors/Early/Reader.v
 Tealeaves/Classes/Categorical/DecoratedFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedFunctor.v
@@ -39,14 +41,18 @@ Tealeaves/Adapters/CategoricalToKleisli/Comonad.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedFunctor.v
 Tealeaves/Adapters/Roundtrips/DecoratedFunctor.v
-# Decorated Monads
+##########################################################
+# DECORATED MONADS                                       #
+##########################################################
 Tealeaves/Functors/Early/Writer.v
 Tealeaves/Classes/Categorical/DecoratedMonad.v
 Tealeaves/Classes/Kleisli/DecoratedMonad.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedMonad.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedMonad.v
 Tealeaves/Adapters/Roundtrips/DecoratedMonad.v
-# Traversable Functors
+##########################################################
+# TRAVERSABLE FUNCTORS                                   #
+##########################################################
 Tealeaves/Classes/Categorical/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
@@ -54,19 +60,36 @@ Tealeaves/Functors/Early/Batch.v
 Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/TraversableFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/TraversableFunctor.v
+Tealeaves/Adapters/CoalgebraicToKleisli/TraversableFunctor.v
+Tealeaves/Adapters/KleisliToCoalgebraic/TraversableFunctor.v
 Tealeaves/Adapters/Roundtrips/TraversableFunctor.v
-# Traversable Monads
+##########################################################
+# TRAVERSABLE MONADS                                     #
+##########################################################
 Tealeaves/Classes/Categorical/TraversableMonad.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v
 Tealeaves/Classes/Coalgebraic/TraversableMonad.v
-# Decorated Traversable Functors
+Tealeaves/Adapters/CategoricalToKleisli/TraversableMonad.v
+Tealeaves/Adapters/KleisliToCategorical/TraversableMonad.v
+Tealeaves/Adapters/CoalgebraicToKleisli/TraversableMonad.v
+Tealeaves/Adapters/KleisliToCoalgebraic/TraversableMonad.v
+Tealeaves/Adapters/Roundtrips/TraversableMonad.v
+##########################################################
+# DECORATED TRAVERSABLE FUNCTORS                         #
+##########################################################
 Tealeaves/Classes/Categorical/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableCommIdemFunctor.v
 Tealeaves/Classes/Coalgebraic/DecoratedTraversableFunctor.v
-# Decorated Traversable Monads
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctor.v
+Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableFunctor.v
+Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableFunctor.v
+Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableFunctor.v
+Tealeaves/Adapters/Roundtrips/DecoratedTraversableFunctor.v
+##########################################################
+# DECORATED TRAVERSABLE MONADS                           #
+##########################################################
 Tealeaves/Classes/Kleisli/DecoratedTraversableMonad.v
-Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonad.v
 Tealeaves/Classes/Categorical/DecoratedTraversableMonad.v
-
+Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonad.v
 

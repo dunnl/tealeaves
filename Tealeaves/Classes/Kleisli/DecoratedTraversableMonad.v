@@ -1840,14 +1840,15 @@ Section derived_instances.
 
     Lemma mapdt_morph:
       forall (A B: Type) (f: W * A -> G1 B),
-        mapdt (ϕ B ∘ f) = ϕ (U B) ∘ mapdt (T := U) f.
+        ϕ (U B) ∘ mapdt (T := U) f = mapdt (ϕ B ∘ f).
     Proof.
       intros.
       inversion Hmorph.
       rewrite mapdt_to_binddt.
-      reassociate <- on left.
+      rewrite mapdt_to_binddt.
+      reassociate <- on right.
       rewrite (natural (ϕ := ϕ)).
-      reassociate -> on left.
+      reassociate -> on right.
       rewrite <- (kdtm_morph G1 G2).
       rewrite <- mapdt_to_binddt.
       reflexivity.

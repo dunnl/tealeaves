@@ -1,4 +1,4 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Categorical.TraversableMonad
   Classes.Kleisli.TraversableMonad
   Classes.Coalgebraic.TraversableMonad
@@ -7,70 +7,85 @@ From Tealeaves Require Export
   Adapters.CoalgebraicToKleisli.TraversableMonad
   Adapters.KleisliToCoalgebraic.TraversableMonad.
 
-#[local] Generalizable Variables T.
+Import Kleisli.TraversableMonad.Notations.
+Import Functors.Early.Batch.
 
-#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments bindt {T} (U)%function_scope {Bindt} G%function_scope
-  {H H0 H1} {A B}%type_scope _%function_scope _.
+#[local] Generalizable Variables T.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
 Module Categorical_Kleisli_Categorical.
 
   Context
-    `{mapT : Map T}
-    `{distT : ApplicativeDist T}
-    `{joinT : Join T}
+    `{mapT: Map T}
+    `{distT: ApplicativeDist T}
+    `{joinT: Join T}
     `{Return T}
     `{! Categorical.TraversableMonad.TraversableMonad T}.
 
-  #[local] Instance bindt' : Bindt T T := ToKleisli.Bindt_categorical T.
+  Definition bindt':
+    Bindt T T :=
+    CategoricalToKleisli.TraversableMonad.DerivedOperations.Bindt_Categorical T.
 
-  Definition map'  : Map T := Map_Bindt T T.
-  Definition dist' : ApplicativeDist T := Dist_Bindt T.
-  Definition join' : Join T := Join_Bindt T.
+  Definition map2: Map T :=
+    DerivedOperations.Map_Bindt T T (Bindt_TU := bindt').
 
-  Goal mapT = map'.
+  Definition dist2: ApplicativeDist T :=
+    DerivedOperations.Dist_Bindt T (Bindt_TT := bindt').
+
+  Definition join2: Join T :=
+    DerivedOperations.Join_Bindt T (Bindt_TT := bindt').
+
+  Goal mapT = map2.
   Proof.
-    unfold map'. unfold_ops @Map_Bindt.
-    unfold bindt, bindt'.
-    unfold_ops @ToKleisli.Bindt_categorical.
     ext A B f.
+    unfold map2.
+    unfold DerivedOperations.Map_Bindt.
+    unfold bindt.
+    unfold bindt'.
+    unfold DerivedOperations.Bindt_Categorical.
     unfold_ops @Map_I.
     rewrite (dist_unit (F := T)).
     change (?g ∘ id) with g.
     rewrite <- (fun_map_map (F := T)).
     reassociate <- on right.
-    now rewrite (mon_join_map_ret (T := T)).
+    rewrite (mon_join_map_ret (T := T)).
+    reflexivity.
   Qed.
 
-  Goal forall G `{Applicative G}, @distT G _ _ _ = @dist' _ _ _ _.
+  Goal forall G `{Applicative G},
+      @distT G _ _ _ = @dist2 G _ _ _.
   Proof.
     intros.
-    unfold dist'. unfold_ops Dist_Bindt.
-    unfold bindt, bindt'.
-    unfold_ops @ToKleisli.Bindt_categorical.
     ext A.
-    change (map T (map G (ret T A))) with (map (T ∘ G) (ret T A)).
+    unfold dist2.
+    unfold DerivedOperations.Dist_Bindt.
+    unfold bindt.
+    unfold bindt'.
+    unfold DerivedOperations.Bindt_Categorical.
+    change (map (map (ret (T := T)))) with
+      (map (F := T ∘ G) (ret (T := T) (A := A))).
     reassociate -> on right.
     unfold_compose_in_compose.
-    rewrite <- (natural (Natural := dist_natural (F := T)) (ϕ := @dist T _ G _ _ _)).
+    rewrite <- (natural (Natural := dist_natural (F := T))
+                 (ϕ := @dist T _ G _ _ _)).
     reassociate <- on right.
     unfold_ops @Map_compose.
-    inversion H4.
     rewrite (fun_map_map (F := G)).
     rewrite (mon_join_map_ret (T := T)).
     rewrite (fun_map_id (F := G)).
     reflexivity.
   Qed.
 
-  Goal joinT = join'.
+  Goal joinT = join2.
   Proof.
-    unfold join'. unfold_ops @Join_Bindt.
-    unfold bindt, bindt'.
-    unfold_ops @ToKleisli.Bindt_categorical.
-    ext A. rewrite (fun_map_id (F := T)).
+    ext A.
+    unfold join2.
+    unfold DerivedOperations.Join_Bindt.
+    unfold bindt.
+    unfold bindt'.
+    unfold DerivedOperations.Bindt_Categorical.
+    rewrite (fun_map_id (F := T)).
     unfold_ops @Map_I.
     rewrite (dist_unit (F := T)).
     reflexivity.
@@ -83,82 +98,61 @@ End Categorical_Kleisli_Categorical.
 Module Kleisli_Categorical_Kleisli.
 
   Context
-    `{bindtT : Bindt T T}
+    `{bindtT: Bindt T T}
     `{Return T}
     `{! Kleisli.TraversableMonad.TraversableMonad T}.
 
-  #[local] Instance map'  : Map T  := Map_Bindt T T.
-  #[local] Instance dist' : ApplicativeDist T := Dist_Bindt T.
-  #[local] Instance join' : Join T := Join_Bindt T.
+  Definition map': Map T :=
+    DerivedOperations.Map_Bindt T T.
+  Definition dist': ApplicativeDist T :=
+    DerivedOperations.Dist_Bindt T.
+  Definition join': Join T :=
+    DerivedOperations.Join_Bindt T.
 
-  Definition bindt' : Bindt T T := ToKleisli.Bindt_categorical T.
+  Definition bindt2: Bindt T T :=
+    DerivedOperations.Bindt_Categorical T
+      (Map_T := map') (Join_T := join') (Dist_T := dist').
 
-  Goal forall A B G `{Applicative G}, @bindtT G _ _ _ A B = @bindt' G _ _ _ A B.
+  Goal forall A B G `{Applicative G},
+      @bindtT G _ _ _ A B = @bindt2 G _ _ _ A B.
   Proof.
     intros. ext f.
-    unfold bindt'. unfold_ops @ToKleisli.Bindt_categorical.
-    unfold join, join', dist, dist', map at 2, map'.
-    unfold_ops @Join_Bindt.
-    unfold_ops @Dist_Bindt.
-    unfold_ops @Map_Bindt.
-    change (?g ∘ id) with g.
+    unfold bindt2.
+    unfold DerivedOperations.Bindt_Categorical.
+    unfold join.
+    unfold join'.
+    unfold DerivedOperations.Join_Bindt.
+    unfold dist.
+    unfold dist'.
+    unfold DerivedOperations.Dist_Bindt.
+    unfold map at 3.
+    unfold map'.
+    unfold DerivedOperations.Map_Bindt.
     reassociate -> on right.
-    change (bindt T G (map G (ret T (T B))))
-      with (map (fun A => A) (bindt T G (map G (ret T (T B))))).
+    change (bindt (A := G (T B)) (B := T B)
+              (map (F := G) (ret (A := T B)))) with
+      (map (F := fun A => A) (bindt (A := G (T B)) (B := T B)
+                             (map (F := G) ret))).
     unfold_compose_in_compose.
     rewrite (ktm_bindt2 (G1 := fun A => A)).
-    unfold kc3.
+    unfold kc6.
     unfold_ops @Map_I.
     reassociate <- on right.
     rewrite (ktm_bindt0 (T := T)).
-    rewrite (bindt_app_l).
+    rewrite (bindt_app_id_l).
     change ((fun A => A) ∘ ?G) with G.
-    Set Printing Implicit.
     unfold compose at 2.
-    rewrite (ktm_bindt2 (B:= (T B)) (T := T) (G1 := G) (G2 := fun A => A)).
-    rewrite (bindt_app_r).
-    unfold bindt.
-    fequal.
-    unfold kc3.
+    rewrite (ktm_bindt2 (T := T) (G1 := G) (G2 := fun A => A)).
+    rewrite bindt_app_id_r.
+    unfold kc6.
     reassociate <-.
-    inversion H4.
-    rewrite (fun_map_map (F := G)).
-    rewrite (ktm_bindt0 (T := T) (G := fun A => A)).
-    rewrite (fun_map_id (F := G)).
+    rewrite (fun_map_map).
+    rewrite (ktm_bindt0 (G := fun A => A)).
+    rewrite fun_map_id.
     reflexivity.
   Qed.
 
 End Kleisli_Categorical_Kleisli.
-
-(** * Kleisli ~> Coalgebraic ~> Kleisli *)
-(******************************************************************************)
-Module Kleisli_Coalgebraic_Kleisli.
-
-  Context
-    `{bindtT : Bindt T T}
-    `{Return T}
-    `{! Kleisli.TraversableMonad.TraversableMonad T}.
-
-  #[local] Instance toBatch3' : ToBatch3 T T :=
-    ToBatch3_Bindt.
-
-  #[local] Instance bindt' : Bindt T T :=
-    Bindt_ToBatch3 T T.
-
-  Goal forall A B G `{Applicative G}, @bindtT G _ _ _ A B = @bindt' G _ _ _ A B.
-  Proof.
-    intros. ext f.
-    unfold bindt'.
-    unfold_ops @Bindt_ToBatch3.
-    unfold toBatch3.
-    unfold toBatch3'.
-    unfold_ops @ToBatch3_Bindt.
-    erewrite (ktm_morph).
-    rewrite (runBatch_batch G).
-    reflexivity.
-  Qed.
-
-End Kleisli_Coalgebraic_Kleisli.
 
 
 (** * Coalgebraic ~> Kleisli ~> Coalgebraic *)
@@ -166,43 +160,61 @@ End Kleisli_Coalgebraic_Kleisli.
 Module Coalgebraic_Kleisli_Coalgebraic.
 
   Context
-    `{toBatch3T : ToBatch3 T T}
+    `{toBatch6_T: ToBatch6 T T}
     `{Return T}
     `{! Coalgebraic.TraversableMonad.TraversableMonad T}.
 
-  #[local] Instance bindt': Bindt T T :=
-    @Bindt_ToBatch3 T T toBatch3T.
+  Definition bindt': Bindt T T :=
+    @DerivedOperations.Bindt_ToBatch6 T T toBatch6_T.
 
-  #[local] Instance toBatch3': ToBatch3 T T :=
-    @ToBatch3_Bindt T T bindt'.
+  Definition toBatch6_2: ToBatch6 T T :=
+    @DerivedOperations.ToBatch6_Bindt T T bindt'.
 
-  Lemma runBatch_batch2 : forall (A B : Type),
-      runBatch (Batch A B) (batch A B) B = @id (Batch A B B).
-  Proof.
-    intros. ext b.
-    induction b as [C c | C rest IHrest a].
-    - reflexivity.
-    - cbn. unfold id in *.
-      fequal. rewrite IHrest.
-      compose near rest.
-      rewrite (fun_map_map (F := Batch A B)).
-      compose near rest.
-      rewrite (fun_map_map (F := Batch A B)).
-      unfold compose, strength_arrow.
-      change rest with (id rest) at 2.
-      rewrite <- (fun_map_id (F := Batch A B)).
-      fequal.
-  Qed.
-
-  Goal forall A B, @toBatch3T A B = @toBatch3' A B.
+  Goal forall A B, @toBatch6_T A B = @toBatch6_2 A B.
   Proof.
     intros.
-    unfold toBatch3'. unfold_ops @ToBatch3_Bindt.
+    unfold toBatch6_2.
+    unfold DerivedOperations.ToBatch6_Bindt.
     unfold bindt.
     unfold bindt'.
-    unfold_ops @Bindt_ToBatch3.
-    rewrite runBatch_batch2.
+    unfold DerivedOperations.Bindt_ToBatch6.
+    rewrite runBatch_batch_id.
     reflexivity.
   Qed.
 
 End Coalgebraic_Kleisli_Coalgebraic.
+
+
+(** * Kleisli ~> Coalgebraic ~> Kleisli *)
+(******************************************************************************)
+Module Kleisli_Coalgebraic_Kleisli.
+
+  Context
+    `{bindtT: Bindt T T}
+    `{Return T}
+    `{! Kleisli.TraversableMonad.TraversableMonad T}.
+
+  Definition toBatch6': ToBatch6 T T :=
+    DerivedOperations.ToBatch6_Bindt.
+
+  Definition bindt2: Bindt T T :=
+    DerivedOperations.Bindt_ToBatch6 T T
+      (H := toBatch6').
+
+  Goal forall A B G `{Applicative G},
+      @bindtT G _ _ _ A B = @bindt2 G _ _ _ A B.
+  Proof.
+    intros. ext f.
+    unfold bindt2.
+    unfold DerivedOperations.Bindt_ToBatch6.
+    unfold toBatch6.
+    unfold toBatch6'.
+    unfold DerivedOperations.ToBatch6_Bindt.
+    rewrite (ktm_morph (U := T)
+               (morphism := Batch.ApplicativeMorphism_runBatch)
+               (ϕ := Batch.runBatch G f)).
+    rewrite (Batch.runBatch_batch G).
+    reflexivity.
+  Qed.
+
+End Kleisli_Coalgebraic_Kleisli.

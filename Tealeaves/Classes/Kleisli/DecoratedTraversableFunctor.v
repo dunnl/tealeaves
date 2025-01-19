@@ -43,14 +43,15 @@ Definition kc3
 (******************************************************************************)
 Class DecoratedTraversableFunctor
   (E: Type) (T: Type -> Type) `{Mapdt E T} :=
-  { kdtfun_mapdt1: forall (A: Type),
+  { kdtf_mapdt1: forall (A: Type),
       mapdt (G := fun A => A) extract = @id (T A);
-    kdtfun_mapdt2 :
+    kdtf_mapdt2 :
     forall `{Applicative G1} `{Applicative G2}
       {A B C: Type} (g: E * B -> G2 C) (f: E * A -> G1 B),
       map (mapdt g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (g ⋆3 f);
-    kdtfun_morph: forall `{ApplicativeMorphism G1 G2 ϕ} {A B: Type} (f: E * A -> G1 B),
-      mapdt (ϕ B ∘ f) = ϕ (T B) ∘ mapdt f;
+    kdtf_morph: forall `{morphism: ApplicativeMorphism G1 G2 ϕ}
+                    {A B: Type} (f: E * A -> G1 B),
+      ϕ (T B) ∘ mapdt f = mapdt (ϕ B ∘ f);
   }.
 
 (** ** Kleisli Category Laws *)
@@ -69,9 +70,9 @@ Module DerivedOperations.
     Context
       `{Mapdt_ET: Mapdt E T}.
 
-    #[local] Instance Mapd_Mapdt: Mapd E T := fun A B f => mapdt (G := fun A => A) f.
-    #[local] Instance Traverse_Mapdt: Traverse T := fun G _ _ _ A B f => mapdt (f ∘ extract).
-    #[local] Instance Map_Mapdt: Map T := fun A B f => mapdt (G := fun A => A) (f ∘ extract).
+    #[export] Instance Mapd_Mapdt: Mapd E T := fun A B f => mapdt (G := fun A => A) f.
+    #[export] Instance Traverse_Mapdt: Traverse T := fun G _ _ _ A B f => mapdt (f ∘ extract).
+    #[export] Instance Map_Mapdt: Map T := fun A B f => mapdt (G := fun A => A) (f ∘ extract).
 
   End operations.
 End DerivedOperations.
@@ -499,7 +500,7 @@ Section composition.
   Proof.
     intros.
     rewrite traverse_to_mapdt.
-    rewrite kdtfun_mapdt2.
+    rewrite kdtf_mapdt2.
     rewrite kc3_23.
     reflexivity.
   Qed.
@@ -509,7 +510,7 @@ Section composition.
   Proof.
     intros.
     rewrite mapd_to_mapdt.
-    rewrite (kdtfun_mapdt2 (G2 := fun A => A)).
+    rewrite (kdtf_mapdt2 (G2 := fun A => A)).
     rewrite mapdt_app_id_r.
     reflexivity.
   Qed.
@@ -519,7 +520,7 @@ Section composition.
   Proof.
     intros.
     rewrite (map_to_mapdt (T := T)).
-    rewrite (kdtfun_mapdt2 (G2 := fun A => A)).
+    rewrite (kdtf_mapdt2 (G2 := fun A => A)).
     rewrite mapdt_app_id_r.
     rewrite kc3_03.
     reflexivity.
@@ -534,7 +535,7 @@ Section composition.
   Proof.
     intros.
     rewrite traverse_to_mapdt.
-    rewrite kdtfun_mapdt2.
+    rewrite kdtf_mapdt2.
     rewrite kc3_32.
     reflexivity.
   Qed.
@@ -546,7 +547,7 @@ Section composition.
     rewrite mapd_to_mapdt.
     change (mapdt g)
       with (map (F := fun A => A) (mapdt g)).
-    rewrite (kdtfun_mapdt2 (G1 := fun A => A)).
+    rewrite (kdtf_mapdt2 (G1 := fun A => A)).
     rewrite mapdt_app_id_l.
     rewrite kc3_31.
     reflexivity.
@@ -559,7 +560,7 @@ Section composition.
     rewrite map_to_mapdt.
     change (mapdt g)
       with (map (F := fun A => A) (mapdt g)).
-    rewrite (kdtfun_mapdt2 (G1 := fun A => A)).
+    rewrite (kdtf_mapdt2 (G1 := fun A => A)).
     rewrite mapdt_app_id_l.
     rewrite kc3_30.
     reflexivity.
@@ -575,7 +576,7 @@ Section composition.
     do 2 rewrite mapd_to_mapdt.
     change (mapdt ?g)
       with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
-    rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
+    rewrite (kdtf_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
     rewrite mapdt_app_id_l.
     rewrite kc3_01.
     reflexivity.
@@ -589,7 +590,7 @@ Section composition.
     rewrite map_to_mapdt.
     change (mapdt ?g)
       with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
-    rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
+    rewrite (kdtf_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
     rewrite mapdt_app_id_l.
     rewrite kc3_11.
     reflexivity.
@@ -602,7 +603,7 @@ Section composition.
     do 2 rewrite mapd_to_mapdt.
     change (mapdt ?g)
       with (map (F := fun A => A) (mapdt (G := fun A => A) g)) at 1.
-    rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
+    rewrite (kdtf_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
     rewrite mapdt_app_id_l.
     rewrite kc3_11.
     rewrite mapd_to_mapdt.
@@ -614,7 +615,7 @@ Section composition.
   Proof.
     intros.
     do 3 rewrite traverse_to_mapdt.
-    rewrite kdtfun_mapdt2.
+    rewrite kdtf_mapdt2.
     rewrite kc3_22.
     reflexivity.
   Qed.
@@ -626,7 +627,7 @@ Section composition.
     do 3 rewrite map_to_mapdt.
     change_left (map (F := fun A => A)
                    (mapdt (T := T) (g ∘ extract)) ∘ mapdt (T := T) (f ∘ extract)).
-    rewrite (kdtfun_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
+    rewrite (kdtf_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
     rewrite mapdt_app_id_l.
     rewrite kc3_00.
     reflexivity.
@@ -640,7 +641,7 @@ Section composition.
     intros.
     rewrite traverse_to_mapdt.
     change (id ∘ ?f) with f.
-    now rewrite kdtfun_mapdt1.
+    now rewrite kdtf_mapdt1.
   Qed.
 
   Lemma mapd_id: forall A: Type,
@@ -648,7 +649,7 @@ Section composition.
   Proof.
     intros.
     rewrite mapd_to_mapdt.
-    rewrite kdtfun_mapdt1.
+    rewrite kdtf_mapdt1.
     reflexivity.
   Qed.
 
@@ -658,7 +659,7 @@ Section composition.
     intros.
     rewrite map_to_mapdt.
     change (id ∘ ?f) with f.
-    rewrite kdtfun_mapdt1.
+    rewrite kdtf_mapdt1.
     reflexivity.
   Qed.
 
@@ -671,8 +672,9 @@ Section composition.
   Proof.
     intros.
     infer_applicative_instances.
-    do 2 rewrite traverse_to_mapdt.
-    rewrite <- kdtfun_morph.
+    rewrite traverse_to_mapdt.
+    rewrite traverse_to_mapdt.
+    rewrite kdtf_morph.
     reflexivity.
   Qed.
 

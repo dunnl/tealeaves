@@ -101,8 +101,10 @@ Section section.
     apply e.
   Qed.
 
-  #[export] Instance AppMor_cojoin_BatchDM: forall (A B C: Type),
-      ApplicativeMorphism (Batch (E * A) C) (Batch (E * A) B ∘ Batch (E * B) C)
+  #[export] Instance ApplicativeMorphism_cojoin_Batch3:
+    forall (A B C: Type),
+      ApplicativeMorphism (Batch (E * A) C)
+        (Batch (E * A) B ∘ Batch (E * B) C)
         (@cojoin_Batch3 E _ _ A C B).
   Proof.
     intros.

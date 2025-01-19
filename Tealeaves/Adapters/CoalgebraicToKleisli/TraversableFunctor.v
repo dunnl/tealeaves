@@ -1,6 +1,7 @@
-From Tealeaves Require Export
-  Functors.Batch
-  Classes.Coalgebraic.TraversableFunctor.
+From Tealeaves Require Import
+  Functors.Early.Batch
+  Classes.Coalgebraic.TraversableFunctor
+  Classes.Kleisli.TraversableFunctor.
 
 Import Batch.Notations.
 Import Applicative.Notations.
@@ -8,12 +9,26 @@ Import Kleisli.TraversableFunctor.Notations.
 
 #[local] Generalizable Variables ϕ T G A B C.
 
-#[export] Instance Traverse_ToBatch
-  (T : Type -> Type) `{ToBatch T} : Traverse T :=
-    fun G _ _ _ A B f =>
-      runBatch G f (T B) ∘ toBatch.
 
-Section with_algebra.
+(** * Categorical Traversable Monads from Kleisli Traversable Monads *)
+(******************************************************************************)
+
+(** ** Derived Operations *)
+(******************************************************************************)
+Module DerivedOperations.
+
+  #[export] Instance Traverse_ToBatch
+    (T : Type -> Type) `{ToBatch T} : Traverse T :=
+  fun G _ _ _ A B f =>
+    runBatch G f (T B) ∘ toBatch.
+
+End DerivedOperations.
+
+(** ** Derived Instances *)
+(******************************************************************************)
+Module DerivedInstances.
+
+  Import DerivedOperations.
 
   Context
     `{Coalgebraic.TraversableFunctor.TraversableFunctor T}.
@@ -92,4 +107,4 @@ Section with_algebra.
       trf_traverse_morphism := @traverse_morphism;
     |}.
 
-End with_algebra.
+End DerivedInstances.

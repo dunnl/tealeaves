@@ -107,7 +107,7 @@ Section cojoin6_alt.
     reflexivity.
   Qed.
 
-  #[export] Instance AppMor_cojoin_Batch6: forall (A B C: Type),
+  #[export] Instance ApplicativeMorphism_cojoin_Batch6: forall (A B C: Type),
       ApplicativeMorphism
         (Batch A (T C))
         (Batch A (T B) ∘ Batch B (T C))
