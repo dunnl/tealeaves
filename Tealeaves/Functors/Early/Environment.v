@@ -1,8 +1,7 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Categorical.Monad
   Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedTraversableMonad
-  Classes.Categorical.DecoratedFunctor (shift)
   Functors.Early.Subset
   Functors.Early.Ctxset
   Functors.Early.List.

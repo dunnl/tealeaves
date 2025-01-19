@@ -1,5 +1,6 @@
 From Tealeaves Require Import
   Classes.Categorical.DecoratedFunctor
+  Classes.Categorical.DecoratedMonad (shift, shift_map2, shift_spec, shift_zero, shift_extract)
   Classes.Categorical.RightComodule
   Classes.Categorical.Bimonad
   Functors.Early.Writer.
@@ -10,6 +11,7 @@ Import Monad.Notations.
 Import Strength.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
+Import Categorical.Monad.Notations.
 
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 #[local] Arguments dec {E}%type_scope F%function_scope {Decorate} {A}%type_scope _.

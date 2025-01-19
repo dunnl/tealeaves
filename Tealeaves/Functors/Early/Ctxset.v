@@ -1,9 +1,11 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Functors.Early.Subset
   Functors.Early.Reader (map_strength_cobind_spec)
   Classes.Kleisli.DecoratedFunctor
   Classes.Kleisli.DecoratedMonad
-  Classes.Categorical.DecoratedFunctor (shift).
+  Classes.Categorical.DecoratedMonad (shift).
+
+Export Functors.Early.Subset.
 
 Import Comonad.Notations.
 Import Kleisli.Monad.Notations.
@@ -174,7 +176,7 @@ Section ctxset.
         bind (T := subset) (shift subset ∘ cobind (W := (W ×)) f).
   Proof.
     intros. ext s [w b]. unfold shift.
-    rewrite (map_strength_cobind_spec (G := subset)).
+    rewrite (map_strength_cobind_spec _ (G := subset)).
     unfold_ops @Bind_subset @Bindd_ctxset @Map_subset.
     propext.
     - intros [wa [a [contra [w' [Hin Heq]]]]].
@@ -302,7 +304,7 @@ Section ctxset.
     rewrite bind_set_one.
     change (cobind f (η a)) with (Ƶ, f (Ƶ, a)).
     unfold ctxset. (* hidden *)
-    rewrite (DecoratedFunctor.shift_zero subset).
+    rewrite (DecoratedMonad.shift_zero subset).
     reflexivity.
   Qed.
 

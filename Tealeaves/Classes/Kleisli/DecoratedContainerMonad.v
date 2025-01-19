@@ -1,4 +1,5 @@
 From Tealeaves Require Export
+  Classes.Kleisli.DecoratedMonad
   Classes.Kleisli.DecoratedContainerFunctor.
 
 Import DecoratedContainerFunctor.Notations.

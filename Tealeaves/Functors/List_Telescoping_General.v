@@ -109,7 +109,12 @@ Section decorate_prefix_list_rw.
   Qed.
 
   Lemma decorate_prefix_list_rw_cons: forall (a: A) (l: list A),
-    decorate_prefix_list (a :: l) = ([], a) :: map (incr [a]) (decorate_prefix_list l).
+      decorate_prefix_list (a :: l) =
+        ([], a) :: map (incr [a]) (decorate_prefix_list l).
+        (*
+        ([], a) :: map (A := Z A) (B := Z A)
+          (incr [a]) (decorate_prefix_list l).
+          *)
   Proof.
     intros. cbn.
     reflexivity.
@@ -155,6 +160,24 @@ Definition traverse_both
 (** * The <<Z>> Comonad *)
 (******************************************************************************)
 Definition Z: Type -> Type := fun A => list A * A.
+
+Ltac unfold_Z:=
+  repeat change (Z ?A) with (list A * A).
+
+Ltac unfold_Z_in H:=
+  repeat change (Z ?A) with (list A * A) in H.
+
+Ltac unfold_Z_all:=
+  repeat change (Z ?A) with (list A * A) in *.
+
+Ltac fold_Z :=
+  repeat change (list ?A * ?A) with (Z A).
+
+Ltac fold_Z_in H :=
+  repeat change (list ?A * ?A) with (Z A) in H.
+
+Ltac fold_Z_all :=
+  repeat change (list ?A * ?A) with (Z A) in *.
 
 (** ** Functor instance *)
 (******************************************************************************)
@@ -234,7 +257,14 @@ Section Cojoin_Z_rw.
 
 End Cojoin_Z_rw.
 
-#[export] Instance Extract_Z: Extract Z := fun A => snd.
+#[export] Instance Extract_Z: Extract Z :=
+  fun (A: Type) => @snd (list A) A.
+
+Lemma extract_incr: forall (A: Type) (ctx: list A),
+    extract (W := Z) ∘ incr ctx = extract (W := Z).
+Proof.
+  intros. ext [l a]. reflexivity.
+Qed.
 
 #[export] Instance Natural_decorate_prefix_list: Natural (@decorate_prefix_list).
 Proof.
@@ -281,9 +311,9 @@ Proof.
   reflexivity.
 Qed.
 
-#[local] Notation "'dec'" := decorate_prefix_list.
-
 Section map_args.
+
+  #[local] Notation "'dec'" := decorate_prefix_list.
 
   Arguments map (F)%function_scope {Map} {A B}%type_scope f%function_scope _.
 
@@ -372,18 +402,20 @@ Proof.
   intros. ext l. unfold compose.
   induction l.
   - reflexivity.
-  - cbn. compose near (dec l).
+  - rewrite decorate_prefix_list_rw_cons.
+    rewrite map_list_cons.
+    change (extract ([], a)) with a.
+    compose near (decorate_prefix_list l).
     rewrite (fun_map_map).
-    enough (Hrw: extract (W := Z) (A := A) ∘ incr [a] = extract).
-    Set Keyed Unification.
-    rewrite Hrw.
-    now rewrite IHl.
-    Unset Keyed Unification.
-    now ext [pl pa].
+    rewrite extract_incr.
+    fold_Z_all.
+    rewrite IHl.
+    reflexivity.
 Qed.
 
 Lemma decorate_prefix_list_cojoin: forall (A: Type),
-    map cojoin ∘ decorate_prefix_list = decorate_prefix_list ∘ decorate_prefix_list (A := A).
+    map cojoin ∘ decorate_prefix_list =
+      decorate_prefix_list ∘ decorate_prefix_list (A := A).
 Proof.
   intros. ext l. unfold compose.
   now rewrite cojoin_assoc_lemma.
@@ -468,9 +500,18 @@ Section traverse_Z_rw.
   Qed.
 
 
-  Lemma traverse_Z_incr_lemma: forall (ctx: list A) (g: list A * A -> G B) (j: list (list A * A)) (l: list A) (a: A),
-      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
-        pure (compose pair ∘ app (A:=B)) <⋆> traverse g (dec ctx) <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a).
+  Lemma traverse_Z_incr_lemma:
+    forall (ctx: list A)
+      (g: list A * A -> G B)
+      (j: list (list A * A))
+      (l: list A) (a: A),
+      (traverse (T := Z) g ∘
+         map_both (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx))
+        (j, (l, a)) =
+        pure (compose pair ∘ app (A:=B))
+          <⋆> traverse g (decorate_prefix_list ctx)
+          <⋆> traverse (g ⦿ ctx) j
+          <⋆> (g ⦿ ctx) (l, a).
   Proof.
     intros.
     unfold compose. cbn.
@@ -486,16 +527,18 @@ Section traverse_Z_rw.
     reflexivity.
   Qed.
 
-  Lemma traverse_Z_incr_lemma2: forall (ctx: list A) (g: list A * A -> G B) j l a,
-      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
-        map incr (traverse g (dec ctx)) <⋆> (pure pair <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a)).
+  Lemma traverse_Z_incr_lemma2:
+    forall (ctx: list A)
+      (g: list A * A -> G B)
+      j l a,
+      (traverse (T := Z) g
+         ∘ map_both (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx))
+        (j, (l, a)) =
+        map incr (traverse g (decorate_prefix_list ctx))
+          <⋆> (pure pair <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a)).
   Proof.
     intros.
     rewrite traverse_Z_incr_lemma.
-    Check pure (compose pair ∘ app (A:=B)) <⋆> traverse g (dec ctx) <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a).
-    Check pure pair <⋆> traverse (g ⦿ ctx) j <⋆> (g ⦿ ctx) (l, a).
-    Check traverse g (dec ctx).
-    Check map incr (traverse g (dec ctx)).
     rewrite map_to_ap.
     rewrite <- ap4.
     rewrite <- ap4.
@@ -512,9 +555,15 @@ Section traverse_Z_rw.
     reflexivity.
   Qed.
 
-  Lemma traverse_Z_incr_lemma3: forall (ctx: list A) (g: list A * A -> G B) j l a,
-      (traverse (T := Z) g ∘ map_both (app (dec ctx) ∘ map (incr ctx)) (incr ctx)) (j, (l, a)) =
-        map incr (traverse g (dec ctx)) <⋆> (traverse (T := Z) (g ⦿ ctx) (j, (l, a))).
+  Lemma traverse_Z_incr_lemma3:
+    forall (ctx: list A)
+      (g: list A * A -> G B)
+      j l a,
+      (traverse (T := Z) g ∘
+         map_both (app (decorate_prefix_list ctx) ∘ map (incr ctx)) (incr ctx))
+        (j, (l, a)) =
+        map incr (traverse g (decorate_prefix_list ctx)) <⋆>
+          (traverse (T := Z) (g ⦿ ctx) (j, (l, a))).
   Proof.
     intros.
     rewrite traverse_Z_incr_lemma2.
@@ -570,8 +619,10 @@ Section commute_law.
   Lemma decorate_commute_cons {A B: Type}
     (f: A -> G B) (a: A) (l: list (list A * A)):
     l <> nil ->
-    (traverse (T := list) (traverse (T := Z) f) (map (F := list) (incr [a]) l)) =
-      map (F := G) (map (F := list) ∘ incr ∘ ret (T := list)) (f a) <⋆>
+    (traverse (T := list) (traverse (T := Z) f)
+       (map (F := list) (A := Z A) (B := Z A) (incr [a]) l)) =
+      map (F := G) (map (F := list) (A := Z B) (B := Z B)
+                      ∘ incr ∘ ret (T := list)) (f a) <⋆>
         traverse (T := list) (traverse (T := Z) f) l.
   Proof.
     introv Hneqnil.
@@ -765,29 +816,23 @@ Section commute_law.
         rewrite app_pure_natural.
 
         (* RHS *)
-        rewrite decorate_prefix_list_rw_cons.
+        rewrite decorate_prefix_list_rw_cons; fold_Z.
         rewrite traverse_list_cons.
-
         rewrite traverse_Z_rw.
         rewrite <- ap4.
         rewrite ap2.
         rewrite <- ap4.
         rewrite ap2.
         rewrite ap2.
-
         rewrite traverse_list_nil.
         rewrite ap2.
-
-        Set Keyed Unification.
-        rewrite (decorate_commute_cons f x (dec rest)). (* where prior lemma gets used! *)
-        Unset Keyed Unification.
+        rewrite (decorate_commute_cons f x (decorate_prefix_list rest)).
+        (* where prior lemma gets used! *)
         2: { subst. cbn. discriminate. }
-
         rewrite <- ap4.
         rewrite <- ap4.
         rewrite ap2.
         rewrite ap2.
-
         rewrite map_to_ap.
         rewrite <- ap4.
         rewrite <- ap4.
@@ -829,8 +874,8 @@ Section commute_law.
     rewrite <- ap4.
     repeat rewrite ap2.
     (* RHS *)
-    change ((traverse (traverse f)) (dec l))
-      with ((traverse (traverse f) ∘ dec) l).
+    change ((traverse (traverse f)) (decorate_prefix_list l))
+      with ((traverse (traverse f) ∘ decorate_prefix_list) l).
     rewrite <- decorate_commute.
     unfold compose at 4.
     rewrite <- ap_map.
@@ -930,6 +975,21 @@ Definition mapdt_list_prefix
 #[export] Instance Mapdt_CommIdem_list_prefix:
   Mapdt_CommIdem Z list := @mapdt_list_prefix.
 
+Lemma mapdt_list_prefix_decorate:
+  forall `{G: Type -> Type} `{Map G} `{Pure G} `{Mult G} `{! Applicative G}
+    {A B: Type} (f: Z (Z A) -> G B),
+    mapdt_list_prefix f ∘ decorate_prefix_list =
+      mapdt_list_prefix (f ∘ cojoin (W := Z)).
+Proof.
+  intros.
+  unfold mapdt_list_prefix.
+  reassociate -> on left.
+  rewrite <- decorate_prefix_list_cojoin.
+  reassociate <- on left.
+  rewrite (traverse_map).
+  reflexivity.
+Qed.
+
 (** *** Rewriting principles *)
 (******************************************************************************)
 Section mapdt_list_prefix_rw.
@@ -949,7 +1009,7 @@ Section mapdt_list_prefix_rw.
         pure (@List.cons B) <⋆> f (nil, a) <⋆> mapdt_list_prefix (f ⦿ [a]) l.
   Proof.
     intros. cbn.
-    compose near (dec l) on left.
+    compose near (decorate_prefix_list l) on left.
     rewrite traverse_map.
     reflexivity.
   Qed.
@@ -1138,7 +1198,11 @@ Lemma mapdt_list_prefix_rw_preincr {A B} `{Applicative G}:
       cbn.
   Abort.
   *)
-
+#[export] Instance Mapdt_Z: Mapdt_CommIdem Z Z.
+Proof.
+  intros G Gmap Gpure Gmult A B f.
+  exact (traverse (T := Z) f ∘ cojoin (W := Z)).
+Defined.
 
 (** ** Kleisli composition *)
 (******************************************************************************)
@@ -1164,12 +1228,6 @@ Definition compose_arrows2
 
 (** *** Another version *)
 (******************************************************************************)
-#[export] Instance Mapdt_Z: Mapdt_CommIdem Z Z.
-Proof.
-  intros G Gmap Gpure Gmult A B f.
-  exact (traverse (T := Z) f ∘ cojoin (W := Z)).
-Defined.
-
 Definition compose_arrows3
   {A B C: Type}
   `{G1: Type -> Type} `{Map G1} `{Mult G1} `{Pure G1}
@@ -1218,15 +1276,16 @@ Section preincrement_kc.
       (f: list A * A -> G1 B)
       (ctx: list A):
     (kc3_ci (G1 := G1) (G2 := G2) g f ⦿ ctx) =
-      ap G1 (map (preincr g) (traverse f (dec ctx))) ∘
+      ap (A := Z B) G1 (map (preincr g) (traverse f (decorate_prefix_list ctx))) ∘
         mapdt_ci (T := Z) (W := Z) (f ⦿ ctx).
   Proof.
-    Set Keyed Unification.
     unfold kc3_ci.
+    unfold_ops @Mapdt_Z.
+    reassociate <- on left.
     rewrite (preincr_assoc (map g ∘ traverse f) (cojoin (W := Z))).
-    change (list ?X * ?X) with (Z X).
-    rewrite (cojoin_Z_rw_preincr_pf ctx).
-    do 2 reassociate <- on left.
+    fold_Z; change (Z (Z ?A)) with ((Z ∘ Z) A);
+      rewrite (cojoin_Z_rw_preincr_pf ctx).
+    reassociate <- on left.
     change (map g ∘ traverse f ∘ ?x ∘ ?y)
       with (map g ∘ (traverse f ∘ x) ∘ y).
     rewrite traverse_Z_map.
@@ -1235,7 +1294,7 @@ Section preincrement_kc.
     rewrite map_ap.
     rewrite app_pure_natural.
     rewrite (traverse_list_app G1).
-    compose near (dec l) on left.
+    compose near (decorate_prefix_list l) on left.
     rewrite traverse_map.
     rewrite <- ap4.
     rewrite ap2.
@@ -1253,7 +1312,6 @@ Section preincrement_kc.
     rewrite ap2.
     rewrite ap2.
     reflexivity.
-    Unset Keyed Unification.
   Qed.
 
   Lemma ap_spec {G}: forall `{Applicative G} (g: G (A -> B)),
@@ -1275,7 +1333,7 @@ Section preincrement_kc.
       (ctx: list A):
       (g ⋆3_ci f) ⦿ ctx =
         map (F := G1) g ∘
-          ap G1 (map incr (traverse f (dec ctx))) ∘
+          ap G1 (map incr (traverse f (decorate_prefix_list ctx))) ∘
           traverse (f ⦿ ctx) ∘ cojoin (W := Z) (A := A).
   Proof.
     rewrite kc_preincr.
@@ -1283,13 +1341,14 @@ Section preincrement_kc.
     change (?x ○ ?y) with (x ∘ y).
     rewrite <- fun_map_map.
     unfold compose at 3.
-    change (ap G1 (map (compose g) (map incr (traverse f (dec ctx))))) with
-      ((ap G1 ∘ map (compose g)) (map incr (traverse f (dec ctx)))).
+    change (ap G1 (map (compose g)
+                     (map incr (traverse f (decorate_prefix_list ctx))))) with
+      ((ap G1 ∘ map (compose g))
+         (map incr (traverse f (decorate_prefix_list ctx)))).
     rewrite <- map_ap2.
     unfold compose at 3.
     reflexivity.
   Qed.
-
 
 End preincrement_kc.
 
@@ -1304,7 +1363,8 @@ Lemma kc_preincr1
   (g: list B * B -> G2 C) (f: list A * A -> G1 B)
   (ctx: list A): forall l a,
   ((kc3_ci (G1 := G1) (G2 := G2) g f) ⦿ ctx) (l, a) =
-    map g (map incr (traverse f (dec ctx)) <⋆> traverse (f ⦿ ctx) (dec l, (l, a))).
+    map g (map incr (traverse f (decorate_prefix_list ctx))
+             <⋆> traverse (f ⦿ ctx) (decorate_prefix_list l, (l, a))).
 Proof.
   intros.
   unfold kc3_ci.
@@ -1312,19 +1372,16 @@ Proof.
               (map (F := G1) (A := Z B) g)
               (mapdt_ci f (W := Z))
               ctx).
-  Set Keyed Unification.
   unfold mapdt_ci.
   unfold Mapdt_Z.
+  unfold_Z.
   rewrite preincr_assoc.
-  rewrite (cojoin_Z_rw_preincr_pf (A := A) ctx).
-  Unset Keyed Unification.
-  unfold compose at 2 3 4.
+  fold_Z; change (Z (Z ?A)) with ((Z ∘ Z) A);
+    rewrite (cojoin_Z_rw_preincr_pf (A := A) ctx).
+  unfold compose at 2 3 5.
   unfold_ops @Cojoin_Z.
-  compose near (dec l, (l, a)) on left.
-  change (list B * B) with (Z B).
-  Set Keyed Unification.
-  rewrite (traverse_Z_incr_lemma3 ctx f (dec l) l a).
-  Unset Keyed Unification.
+  compose near (decorate_prefix_list l, (l, a)) on left.
+  rewrite (traverse_Z_incr_lemma3 ctx f (decorate_prefix_list l) l a).
   reflexivity.
 Qed.
 
@@ -1434,39 +1491,22 @@ Lemma kdtfci_mapdt2_list_prefix:
       mapdt_list_prefix (G := G1 ∘ G2) (g ⋆3_ci f).
 Proof.
   intros.
-  change (mapdt_list_prefix ?f) with
-    (traverse (T := list) f ∘ decorate_prefix_list).
+  unfold mapdt_list_prefix at 1 2.
   rewrite <- fun_map_map.
   reassociate -> on left.
-  reassociate <- near (map dec).
+  reassociate <- near (map decorate_prefix_list).
   rewrite decorate_commute.
-  reassociate <- on left.
-  reassociate <- on left.
+  do 2 reassociate <- on left.
   rewrite (trf_traverse_traverse).
   change (traverse (T := list) ?f ∘ decorate_prefix_list)
     with  (mapdt_list_prefix f).
-  (* RHS *)
-  unfold kc3_ci.
-  unfold mapdt_list_prefix at 2.
-  rewrite <- (traverse_map (A := Z A) (T := list) (G2 := G1 ∘ G2)
-               (map (F := G1) g ∘ traverse (T := Z) f) (cojoin (W := Z))).
-  reassociate -> on right.
-  rewrite decorate_prefix_list_cojoin.
-  reassociate <- on right.
-  change (traverse (G := G1 ∘ G2) (T := list) ?x ∘ decorate_prefix_list)
-    with  (mapdt_list_prefix (G := G1 ∘ G2) x).
-  change (map g ∘ traverse f) with (g ⋆2 traverse f).
+  rewrite (mapdt_list_prefix_decorate
+             (A := A) (B := C) (G := G1 ∘ G2)).
   reflexivity.
 Qed.
 
 (** ** Composition law (Direct Proof!) *)
 (******************************************************************************)
-#[local] Arguments traverse T%function_scope {Traverse} {G}%function_scope
-  {H H0 H1} {A B}%type_scope _%function_scope _.
-About map.
-
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-
 Lemma kdtfci_mapdt2_list_prefix2_lemma1:
   forall `{ApplicativeCommutativeIdempotent G1}
     `{ApplicativeCommutativeIdempotent G2}
@@ -1478,107 +1518,19 @@ Proof.
   rewrite kc_preincr2.
   change (map _ g ∘ ?x ∘ ?y ∘ ?z) with (g ⋆2 (x ∘ y ∘ z)).
   unfold mapdt_list_prefix at 1.
-  change (?lhs ○ dec) with (lhs ∘ dec).
-  rewrite <- trf_traverse_traverse.
-  rewrite <- traverse_map.
-  reassociate -> near dec.
-  reassociate -> near dec.
-  rewrite decorate_prefix_list_cojoin.
-  do 2 reassociate <-.
-  enough (cut: ap G1 (map G1 (incr (A := B)) (traverse list f (dec ctx))) = id).
-  Set Keyed Unification.
-  rewrite cut.
-  change (id ∘ ?f) with f.
 Abort.
-
-(*
-Lemma wildguess
-  {A B C: Type}
-  `{G: Type -> Type}
-  `{Map G} `{Mult G} `{Pure G}
-  `{! ApplicativeCommutativeIdempotent G}
-  (g: G (B -> C)) (incb : B -> B) (f: A -> G B) (l: list A):
-  l <> nil ->
-  traverse list (ap G g ∘ f) l =
-    (ap G (map G (map list) g) ∘ traverse list f) l.
-Proof.
-  introv Hneqnil. unfold compose.
-  destruct l as [| a as' ].
-  - rewrite traverse_list_nil.
-    rewrite traverse_list_nil.
-    rewrite map_to_ap.
-    rewrite ap3.
-    rewrite <- ap4.
-    do 2 rewrite ap2.
-    change (evalAt [] ∘ map list (A := B) (B := C)) with
-      (const (A := B -> C) (@nil C)).
-    contradiction.
-  - rewrite traverse_list_cons.
-    rewrite <- ap4.
-    rewrite ap2.
-    (*
-    rewrite IHas.
-    rewrite <- ap4.
-    rewrite <- ap4.
-    rewrite ap2.
-    rewrite <- ap4.
-    rewrite ap2.
-    rewrite ap2.
-    rewrite <- ap_map.
-    rewrite map_ap.
-    rewrite map_ap.
-    rewrite app_pure_natural.
-    rewrite (ap_ci2 _ (f a) g).
-    rewrite map_ap.
-    rewrite app_pure_natural.
-    rewrite ap_cidup.
-    rewrite app_pure_natural.
-    *)
-    (* RHS *)
-    rewrite traverse_list_cons.
-    rewrite <- ap4.
-    rewrite <- ap_map.
-    rewrite app_pure_natural.
-    rewrite <- ap4.
-    rewrite <- ap4.
-    rewrite ap2.
-    rewrite ap2.
-    rewrite ap3.
-
-    rewrite <- ap4.
-    rewrite ap2.
-    rewrite ap2.
-
-    (* LHS again *)
-    clear Hneqnil.
-    induction as' as [| x xs IHxs].
-    + cbn.
-      rewrite ap3.
-      rewrite <- ap4.
-      rewrite ap2.
-      rewrite <- ap4.
-      rewrite ap2.
-      rewrite ap2.
-
-      rewrite ap3.
-      rewrite <- ap4.
-      rewrite ap2.
-      rewrite <- ap4.
-      rewrite ap2.
-      rewrite ap2.
-      reflexivity.
-Admitted.
-*)
-
 
 Lemma kdtfci_mapdt2_list_prefix_direct_lemma2:
   forall `{ApplicativeCommutativeIdempotent G1}
     `{ApplicativeCommutativeIdempotent G2}
     {A B : Type} (f : Z A -> G1 B),
     forall (ctx: list A),
-      ap G1 (map G1 incr (traverse list f (dec ctx))) ∘ traverse Z (f ⦿ ctx) =
-        traverse_both (ap G1 (pure (app (A:=B)) <⋆> traverse list f (dec ctx))
-                         ∘ traverse list (f ⦿ ctx))
+      ap G1 (map (F := G1) incr
+               (traverse (T := list) f (decorate_prefix_list ctx)))
+        ∘ traverse (T := Z) (f ⦿ ctx) =
+        traverse_both (ap G1 (pure (app (A:=B))
+                                <⋆> traverse (T := list) f (decorate_prefix_list ctx))
+                         ∘ traverse (T := list) (f ⦿ ctx))
           (f ⦿ ctx).
 Proof.
   intros.
@@ -1599,9 +1551,9 @@ Proof.
   rewrite <- ap4.
   rewrite ap2.
   rewrite ap2.
-
   (* RHS *)
-  rewrite <- ap4.
+  unfold compose at 6.
+  try rewrite <- ap4.
   rewrite ap2.
   rewrite <- ap4.
   rewrite ap2.
@@ -1614,11 +1566,14 @@ Lemma kdtfci_mapdt2_list_prefix_direct_lemma3:
   forall `{ApplicativeCommutativeIdempotent G1}
     `{ApplicativeCommutativeIdempotent G2}
     {A B : Type} (f : Z A -> G1 B),
-    forall (ctx: list A),
-      ap G1 (map G1 incr (traverse list f (dec ctx))) ∘ traverse Z (f ⦿ ctx) ∘ cojoin =
-        traverse Z f ∘ cojoin ∘ incr ctx.
+  forall (ctx: list A),
+    traverse (T := Z) f ∘ cojoin (W := Z) ∘ incr ctx =
+    ap G1 (map (F := G1) incr (traverse (T := list) f (decorate_prefix_list ctx)))
+      ∘ traverse (T := Z) (f ⦿ ctx) ∘ cojoin.
+
 Proof.
   intros.
+  symmetry.
   ext [binders leaf].
   unfold compose at 1 2.
   rewrite map_to_ap.
@@ -1642,19 +1597,19 @@ Proof.
   rewrite <- ap4.
   rewrite ap2.
   rewrite ap2.
-  compose near (dec binders) on right.
+  compose near (decorate_prefix_list binders) on right.
   rewrite traverse_map.
   reflexivity.
 Qed.
 
-
+(*
 Lemma kdtfci_mapdt2_list_prefix_direct_lemma4:
   forall `{ApplicativeCommutativeIdempotent G1}
     {A B : Type} (f : Z A -> G1 B) (ctx: list A),
     ap G1 (pure (app (A:=B))
-             <⋆> traverse list f (dec ctx))
+             <⋆> traverse list f (decorate_prefix_list ctx))
       ∘ traverse list (f ⦿ ctx)
-    = traverse list f ∘ app (dec ctx).
+    = traverse list f ∘ app (decorate_prefix_list ctx).
 Proof.
   intros.
   ext lz.
@@ -1689,14 +1644,14 @@ Lemma kdtfci_mapdt2_list_prefix_direct_lemma5:
   forall `{ApplicativeCommutativeIdempotent G1}
     {A B : Type} (f : Z A -> G1 B) (ctx: A) (l: list A),
     traverse list
-      (traverse_both (traverse list f ∘ (app (dec [ctx]) ∘ map list (incr [ctx])))
-         (f ⦿ [ctx]) ∘ cojoin) (dec l)
+      (traverse_both (traverse list f ∘ (app (decorate_prefix_list [ctx]) ∘ map list (incr [ctx])))
+         (f ⦿ [ctx]) ∘ cojoin) (decorate_prefix_list l)
     =
-      map G1 (map list ∘ incr (A := B)) (traverse list f (dec [ctx]))
+      map G1 (map list ∘ incr (A := B)) (traverse list f (decorate_prefix_list [ctx]))
           <⋆>
         (traverse list
            (traverse_both (traverse list f ∘ map list (incr [ctx]))
-              (f ⦿ [ctx]) ∘ cojoin) (dec l)).
+              (f ⦿ [ctx]) ∘ cojoin) (decorate_prefix_list l)).
 Proof.
   intros.
   induction l as [| a as' IHas].
@@ -1706,8 +1661,8 @@ Abort.
 Lemma kdtfci_mapdt2_list_prefix_direct_lemma6:
   forall `{ApplicativeCommutativeIdempotent G1}
     {A B : Type} (f : Z A -> G1 B),
-    traverse list (traverse Z f ∘ cojoin) ∘ dec =
-      map G1 dec ∘ traverse list f ∘ dec.
+    traverse list (traverse Z f ∘ cojoin) ∘ decorate_prefix_list =
+      map G1 decorate_prefix_list ∘ traverse list f ∘ decorate_prefix_list.
 Proof.
   intros.
   ext l.
@@ -1717,7 +1672,7 @@ Proof.
   - cbn.
     rewrite app_pure_natural.
     reflexivity.
-  - remember (map G1 dec (traverse list f (dec (a :: as')))) as rhs.
+  - remember (map G1 decorate_prefix_list (traverse list f (decorate_prefix_list (a :: as')))) as rhs.
     (* LHS *)
     rewrite decorate_prefix_list_rw_cons.
     rewrite traverse_list_cons.
@@ -1725,7 +1680,7 @@ Proof.
     cbn.
     rewrite ap2.
     rewrite <- ap4; repeat rewrite ap2.
-    compose near (dec as') on left.
+    compose near (decorate_prefix_list as') on left.
     rewrite traverse_map.
     reassociate -> on left.
     change (?x ∘ incr ?y) with (x ⦿ y).
@@ -1836,6 +1791,7 @@ Proof.
     rewrite <- trf_traverse_traverse.
     rewrite <- traverse_map.
 Abort.
+*)
 
 (** ** Homomorphism law *)
 (******************************************************************************)
@@ -1856,7 +1812,7 @@ Proof.
     rewrite ap_morphism_1.
     rewrite ap_morphism_1.
     rewrite appmor_pure.
-    compose near (dec bs).
+    compose near (decorate_prefix_list bs).
     assert (Applicative G2) by now inversion H5.
     rewrite (traverse_map).
     reassociate -> near (incr [b]).

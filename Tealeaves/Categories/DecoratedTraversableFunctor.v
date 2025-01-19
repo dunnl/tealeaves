@@ -1,5 +1,8 @@
 From Tealeaves Require Import
   Classes.Categorical.DecoratedTraversableFunctor
+  Classes.Categorical.Monad
+  Classes.Categorical.DecoratedMonad
+  Classes.Monoid
   Categories.DecoratedFunctor
   Categories.TraversableFunctor.
 

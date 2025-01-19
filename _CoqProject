@@ -97,3 +97,60 @@ Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableMonad.v
 Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableMonad.v
 Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
 Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
+##########################################################
+# CATEGORIES                                             #
+##########################################################
+Tealeaves/Categories/Type.v
+Tealeaves/Categories/TypeFamily.v
+Tealeaves/Categories/DecoratedFunctor.v
+Tealeaves/Categories/TraversableFunctor.v
+Tealeaves/Categories/DecoratedTraversableFunctor.v
+##########################################################
+# CONTAINER-LIKE FUNCTORS AND MONADS                     #
+##########################################################
+Tealeaves/Functors/Early/Subset.v
+Tealeaves/Classes/Categorical/ContainerFunctor.v
+Tealeaves/Classes/Kleisli/ContainerMonad.v
+##########################################################
+# DECORATED CONTAINER-LIKE FUNCTORS AND MONADS           #
+##########################################################
+Tealeaves/Functors/Early/Ctxset.v
+Tealeaves/Classes/Kleisli/DecoratedContainerFunctor.v
+Tealeaves/Classes/Kleisli/DecoratedContainerMonad.v
+##########################################################
+# SHAPELY FUNCTORS AND MONADS                            #
+##########################################################
+Tealeaves/Functors/Early/List.v
+Tealeaves/Classes/Categorical/ShapelyFunctor.v
+#Tealeaves/Classes/Kleisli/ShapelyMonad.v
+##########################################################
+# DECORATED SHAPELY FUNCTORS AND MONADS                  #
+##########################################################
+Tealeaves/Functors/Early/Environment.v
+Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
+#Tealeaves/Classes/Kleisli/DecoratedShapelyMonad.v
+##########################################################
+# FUNCTORS                                               #
+##########################################################
+Tealeaves/Functors/Ctxset.v
+Tealeaves/Functors/Constant.v
+Tealeaves/Functors/Diagonal.v
+Tealeaves/Functors/Environment.v
+Tealeaves/Functors/List.v
+Tealeaves/Functors/Categorical/List.v
+Tealeaves/Functors/Option.v
+Tealeaves/Functors/Pathspace.v
+Tealeaves/Functors/ProductFunctor.v
+Tealeaves/Functors/Reader.v
+Tealeaves/Functors/State.v
+Tealeaves/Functors/Store.v
+Tealeaves/Functors/Subset.v
+Tealeaves/Functors/Writer.v
+# Backwards comes later becauase it refers to some other functors
+Tealeaves/Functors/Backwards.v
+Tealeaves/Functors/List_Telescoping_General.v
+##########################################################
+# POLYMORPHICALLY DECORATED DTFs AND DTMs                #
+##########################################################
+#Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
+#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v

@@ -6,51 +6,18 @@ Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
 Tealeaves/Adapters/MonadToApplicative.v
 
 
-# Container-like Functors and Monads
-Tealeaves/Functors/Early/Subset.v
-Tealeaves/Classes/Categorical/ContainerFunctor.v
-Tealeaves/Classes/Kleisli/ContainerMonad.v
-# Shapely Functors and Monads
-Tealeaves/Functors/Early/List.v
-Tealeaves/Classes/Categorical/ShapelyFunctor.v
-#Tealeaves/Classes/Kleisli/ShapelyMonad.v
-# Decorated Container Functors and Monads
-Tealeaves/Functors/Early/Ctxset.v
-Tealeaves/Classes/Kleisli/DecoratedContainerFunctor.v
-Tealeaves/Classes/Kleisli/DecoratedContainerMonad.v
-# Decorated Shapely Functors and Monads
-Tealeaves/Functors/Early/Environment.v
-Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
-#Tealeaves/Classes/Kleisli/DecoratedShapelyMonad.v
-
-
 # Functors
-Tealeaves/Functors/Backwards.v
-Tealeaves/Functors/Ctxset.v
-Tealeaves/Functors/Constant.v
-Tealeaves/Functors/Diagonal.v
-Tealeaves/Functors/Environment.v
-Tealeaves/Functors/List.v
-Tealeaves/Functors/Categorical/List.v
-Tealeaves/Functors/Option.v
-Tealeaves/Functors/Pathspace.v
-Tealeaves/Functors/ProductFunctor.v
-Tealeaves/Functors/Reader.v
-Tealeaves/Functors/State.v
-Tealeaves/Functors/Store.v
-Tealeaves/Functors/Subset.v
-Tealeaves/Functors/Writer.v
-Tealeaves/Functors/List_Telescoping_General.v
 
 
 
-# Categories
-Tealeaves/Categories/Type.v
-Tealeaves/Categories/TypeFamily.v
-#Tealeaves/Categories/DecoratedFunctor.v
-#Tealeaves/Categories/TraversableFunctor.v
-#Tealeaves/Categories/DecoratedTraversableFunctor.v
 
+
+# CONTAINER/COALGEBRAIC STUFF
+Tealeaves/Functors/Vector.v
+Tealeaves/Functors/VectorRefinement.v
+Tealeaves/Functors/KStore.v
+Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
+# END CONTAINER STUFF
 
 
 
@@ -83,13 +50,6 @@ Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
 #Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
 
 
-# CONTAINER/COALGEBRAIC STUFF
-Tealeaves/Functors/Vector.v
-Tealeaves/Functors/VectorRefinement.v
-Tealeaves/Functors/KStore.v
-Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
-# END CONTAINER STUFF
-
 # HIGH-LEVEL THEORY
 Tealeaves/Theory/Batch.v
 Tealeaves/Theory/TraversableFunctor.v
@@ -101,9 +61,7 @@ Tealeaves/Theory/DecoratedTraversableMonad.v
 Tealeaves/Functors/ListHistory.v
 Tealeaves/Functors/List_Telescoping.v
 
-# FULLY NOMINAL DTMS
-Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
-#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
+
 
 # SIMPLIFICATION
 Tealeaves/Simplification/Support.v

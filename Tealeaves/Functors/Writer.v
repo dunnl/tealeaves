@@ -61,18 +61,6 @@ Section strength_as_writer_distributive_law.
 End strength_as_writer_distributive_law.
 
 
-(** ** <<incr>> *)
-(******************************************************************************)
-Section incr.
-
-  Lemma extract_incr `{Monoid W} {A : Type} :
-    forall (w : W), extract (W ×) A ∘ incr w = extract (W ×) A.
-  Proof.
-    intros. now ext [w' a].
-  Qed.
-
-End incr.
-
 (** ** Miscellaneous properties *)
 (******************************************************************************)
 Section Writer_miscellaneous.
