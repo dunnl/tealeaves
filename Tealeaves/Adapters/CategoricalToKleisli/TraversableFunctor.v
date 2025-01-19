@@ -4,46 +4,59 @@ From Tealeaves Require Import
 
 #[local] Generalizable Variables T G ϕ.
 
-(** * Kleisi presentation of traversable functors *)
+(** * Kleisli Traversable Functors from Categorical Traversable Functors *)
 (******************************************************************************)
-Module ToKleisli.
 
-  #[export] Instance Traverse_dist
-    (T : Type -> Type) `{Map T} `{ApplicativeDist T}
-  : Traverse T :=
-  fun (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    (A B : Type) (f : A -> G B) => dist T G ∘ map f.
+(** ** Derived Operations *)
+(******************************************************************************)
+Module DerivedOperations.
+
+  #[export] Instance Traverse_Categorical
+    (T: Type -> Type)
+    `{Map_T: Map T}
+    `{Dist_T: ApplicativeDist T}:
+  Traverse T :=
+  fun (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    (A B: Type) (f: A -> G B) => dist T G ∘ map f.
+
+End DerivedOperations.
+
+(** ** Derived Laws *)
+(******************************************************************************)
+Module DerivedInstances.
+
+  Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
 
   Section with_functor.
 
     Context
-      `{Classes.Categorical.TraversableFunctor.TraversableFunctor T}.
+      `{Categorical.TraversableFunctor.TraversableFunctor T}.
 
-    Theorem traverse_id : forall (A : Type),
+    Theorem traverse_id: forall (A: Type),
         traverse (G := fun A => A) id = @id (T A).
     Proof.
-      intros. unfold traverse. unfold_ops @Traverse_dist. ext t.
+      intros. unfold traverse. unfold_ops @Traverse_Categorical. ext t.
       rewrite (dist_unit (F := T)).
       rewrite (fun_map_id (F := T)).
       reflexivity.
     Qed.
 
-    Theorem traverse_id_purity : forall `{Applicative G} (A : Type),
+    Theorem traverse_id_purity: forall `{Applicative G} (A: Type),
         traverse (pure (F := G)) = @pure G _ (T A).
     Proof.
       intros. unfold traverse.
-      unfold_ops @Traverse_dist.
+      unfold_ops @Traverse_Categorical.
       ext t. rewrite map_purity_1.
       reflexivity.
     Qed.
 
-    Lemma traverse_traverse `{Applicative G1} `{Applicative G2} :
-      forall (A B C : Type) (g : B -> G2 C) (f : A -> G1 B),
+    Lemma traverse_traverse `{Applicative G1} `{Applicative G2}:
+      forall (A B C: Type) (g: B -> G2 C) (f: A -> G1 B),
         map (F := G1) (traverse (G := G2) g) ∘ traverse (G := G1) f =
           traverse (G := G1 ∘ G2) (map g ∘ f).
     Proof.
       introv. unfold traverse.
-      unfold_ops @Traverse_dist.
+      unfold_ops @Traverse_Categorical.
       rewrite (dist_linear (F := T)).
       repeat reassociate <-.
       rewrite <- (fun_map_map (F := T)).
@@ -57,10 +70,12 @@ Module ToKleisli.
       now rewrite (fun_map_map (F := G1)).
     Qed.
 
-    Lemma traverse_morphism `{morph : ApplicativeMorphism G1 G2 ϕ} : forall (A B : Type) (f : A -> G1 B),
+    Lemma traverse_morphism `{morph: ApplicativeMorphism G1 G2 ϕ}:
+      forall (A B: Type) (f: A -> G1 B),
         ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f).
     Proof.
-      intros. unfold traverse.  unfold_ops @Traverse_dist.
+      intros. unfold traverse.
+      unfold_ops @Traverse_Categorical.
       reassociate <-.
       rewrite <- (dist_morph (F := T)).
       reassociate ->.
@@ -75,4 +90,4 @@ Module ToKleisli.
 
   End with_functor.
 
-End ToKleisli.
+End DerivedInstances.

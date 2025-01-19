@@ -1,32 +1,36 @@
 # Adapters
 
 
-Tealeaves/Adapters/CategoricalToKleisli/TraversableFunctor.v
-Tealeaves/Adapters/CategoricalToKleisli/TraversableMonad.v
-Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonad.v
 
-Tealeaves/Adapters/KleisliToCategorical/TraversableFunctor.v
+Tealeaves/Adapters/CategoricalToKleisli/TraversableMonad.v
 Tealeaves/Adapters/KleisliToCategorical/TraversableMonad.v
+Tealeaves/Adapters/Roundtrips/TraversableMonad.v
+
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableFunctor.v
+Tealeaves/Adapters/Roundtrips/DecoratedTraversableFunctor.v
+
+
 Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableMonad.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonad.v
+Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
+Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
+
+
+
 Tealeaves/Adapters/KleisliToCoalgebraic/TraversableFunctor.v
 Tealeaves/Adapters/KleisliToCoalgebraic/TraversableMonad.v
 Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableMonad.v
 
-
 Tealeaves/Adapters/CoalgebraicToKleisli/TraversableFunctor.v
 Tealeaves/Adapters/CoalgebraicToKleisli/TraversableMonad.v
 Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
+
 # Roundtrips
-Tealeaves/Adapters/Roundtrips/TraversableFunctor.v
-Tealeaves/Adapters/Roundtrips/TraversableMonad.v
-Tealeaves/Adapters/Roundtrips/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
+
 Tealeaves/Adapters/MonadToApplicative.v
-Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
 
 
 # Container-like Functors and Monads

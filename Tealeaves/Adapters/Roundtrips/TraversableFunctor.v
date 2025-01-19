@@ -6,68 +6,84 @@ From Tealeaves Require Export
 
 (** * Categorical ~> Kleisli ~> Categorical *)
 (******************************************************************************)
-Module Roundtrip1.
+Module traversable_functor_categorical_kleisli_categorical.
 
   Context
-    (T : Type -> Type)
-    `{mapT : Map T}
-    `{distT : ApplicativeDist T}
+    (T: Type -> Type)
+    `{mapT: Map T}
+    `{distT: ApplicativeDist T}
     `{! Categorical.TraversableFunctor.TraversableFunctor T}.
 
-  #[local] Instance traverse' : Traverse T := ToKleisli.Traverse_dist T.
+  #[local] Instance traverse': Traverse T :=
+    DerivedOperations.Traverse_Categorical T.
 
-  Definition map' : Map T := Map_Traverse T.
-  Definition dist' : ApplicativeDist T := ToCategorical.Dist_Traverse T.
+  Definition map2: Map T :=
+    DerivedOperations.Map_Traverse T.
+  Definition dist2: ApplicativeDist T :=
+    DerivedOperations.Dist_Traverse T.
 
-  Goal mapT = map'.
+  Goal mapT = map2.
   Proof.
-    unfold map'. unfold_ops @Map_Traverse.
-    unfold traverse, traverse'.
-    unfold_ops @ToKleisli.Traverse_dist.
+    unfold map2.
+    unfold DerivedOperations.Map_Traverse.
+    unfold traverse.
+    unfold traverse'.
+    unfold DerivedOperations.Traverse_Categorical.
     ext A B f.
     rewrite (dist_unit (F := T)).
     reflexivity.
   Qed.
 
-  Goal distT = dist'.
+  Goal distT = dist2.
   Proof.
-    unfold dist'. unfold_ops @ToCategorical.Dist_Traverse.
-    unfold traverse, traverse'.
-    unfold_ops @ToKleisli.Traverse_dist.
+    unfold dist2.
+    unfold DerivedOperations.Dist_Traverse.
+    unfold traverse.
+    unfold traverse'.
+    unfold DerivedOperations.Traverse_Categorical.
     ext G Hmap Hpure Hmult. ext A.
     rewrite (fun_map_id (F := T)).
     reflexivity.
   Qed.
 
-End Roundtrip1.
+End traversable_functor_categorical_kleisli_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (******************************************************************************)
-Module Roundtrip2.
+Module traversable_functor_kleisli_categorical_kleisli.
 
   Context
-    (T : Type -> Type)
-    `{traverseT : Traverse T}
+    (T: Type -> Type)
+    `{traverseT: Traverse T}
     `{@Classes.Kleisli.TraversableFunctor.TraversableFunctor T _}.
 
-  #[local] Instance map' : Map T := Map_Traverse T.
-  #[local] Instance dist' : ApplicativeDist T := ToCategorical.Dist_Traverse T.
+  Definition map': Map T :=
+    DerivedOperations.Map_Traverse T.
 
-  Definition traverse' : Traverse T := ToKleisli.Traverse_dist T.
+  Definition dist': ApplicativeDist T :=
+    DerivedOperations.Dist_Traverse T.
 
-  Goal forall G `{Applicative G}, @traverseT G _ _ _ = @traverse' G _ _ _.
+  Definition traverse2: Traverse T :=
+    DerivedOperations.Traverse_Categorical T
+      (Map_T := map') (Dist_T := dist').
+
+  Goal forall (G: Type -> Type) `{Applicative G},
+      @traverseT G _ _ _ = @traverse2 G _ _ _.
   Proof.
     intros.
-    unfold traverse'. unfold_ops @ToKleisli.Traverse_dist.
+    unfold traverse2.
+    unfold DerivedOperations.Traverse_Categorical.
+    unfold dist.
+    unfold dist'.
+    unfold DerivedOperations.Dist_Traverse.
     unfold map, map', dist, dist'.
     ext A B f.
-    unfold_ops @ToCategorical.Dist_Traverse.
-    unfold_ops @Map_Traverse.
+    unfold DerivedOperations.Map_Traverse.
     change (traverse (T := T) (G := G) (@id (G B))) with
       (map (F := fun A => A) (traverse (T := T) (G := G) (@id (G B)))).
     rewrite (trf_traverse_traverse (T := T) (G1 := fun A => A)).
-    rewrite (traverse_app_l).
+    rewrite (traverse_app_id_l).
     reflexivity.
   Qed.
 
-End Roundtrip2.
+End traversable_functor_kleisli_categorical_kleisli.

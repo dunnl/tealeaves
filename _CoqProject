@@ -52,6 +52,9 @@ Tealeaves/Classes/Kleisli/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
 Tealeaves/Functors/Early/Batch.v
 Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
+Tealeaves/Adapters/CategoricalToKleisli/TraversableFunctor.v
+Tealeaves/Adapters/KleisliToCategorical/TraversableFunctor.v
+Tealeaves/Adapters/Roundtrips/TraversableFunctor.v
 # Traversable Monads
 Tealeaves/Classes/Categorical/TraversableMonad.v
 Tealeaves/Classes/Kleisli/TraversableMonad.v

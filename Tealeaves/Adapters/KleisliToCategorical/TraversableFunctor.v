@@ -4,43 +4,48 @@ From Tealeaves Require Export
 
 #[local] Generalizable Variables ϕ G.
 
-(** * Traversable Functors: Kleisli to Algebraic *)
+(** * Categorical Traversable Functors from Kleisli Traversable Functors *)
 (******************************************************************************)
 
-Module ToCategorical.
+(** ** Derived Operations *)
+(******************************************************************************)
+Module DerivedOperations.
 
-  (** ** Operations *)
-  (******************************************************************************)
   #[export] Instance Dist_Traverse (T : Type -> Type) `{Traverse T}
   : ApplicativeDist T := fun G _ _ _ A => traverse (@id (G A)).
 
-  (** ** Laws *)
-  (******************************************************************************)
+End DerivedOperations.
+
+(** ** Derived Instances *)
+(******************************************************************************)
+Module DerivedInstances.
+
   Section proofs.
 
-  Context
-    (W : Type)
-    (T : Type -> Type)
-    `{Kleisli.TraversableFunctor.TraversableFunctor T}.
+    Context
+      (T : Type -> Type)
+      `{Kleisli.TraversableFunctor.TraversableFunctor T}.
 
-  Existing Instance Map_Traverse.
+    Import KleisliToCategorical.TraversableFunctor.DerivedOperations.
+    Import Kleisli.TraversableFunctor.DerivedOperations.
+    Import Kleisli.TraversableFunctor.DerivedInstances.
 
-  (** *** Traversable functor instance *)
-  (******************************************************************************)
-  Lemma dist_natural_T : forall (G : Type -> Type) (H2 : Map G) (H3 : Pure G) (H4 : Mult G),
-      Applicative G -> Natural (@dist T _ G H2 H3 H4).
-  Proof.
-    intros. constructor.
-    - typeclasses eauto.
-    - typeclasses eauto.
-    - intros. unfold_ops @Map_compose @Dist_Traverse @Map_Traverse.
-      rewrite (trf_traverse_traverse (G1 := G) (G2 := fun A => A)).
-      change (traverse (@id (G B))) with (map (F := fun A => A) (traverse (@id (G B)))).
-      rewrite (trf_traverse_traverse (G1 := fun A => A) (G2 := G)).
-      (* TODO Cleanup this part *)
-      fequal. rewrite (Mult_compose_identity1 G), (Mult_compose_identity2 G).
-      reflexivity.
-  Qed.
+    Lemma dist_natural_T:
+      forall (G : Type -> Type)
+        (H2 : Map G) (H3 : Pure G) (H4 : Mult G),
+        Applicative G -> Natural (@dist T _ G H2 H3 H4).
+    Proof.
+      intros. constructor.
+      - typeclasses eauto.
+      - typeclasses eauto.
+      - intros. unfold_ops @Map_compose @Dist_Traverse @Map_Traverse.
+        rewrite (trf_traverse_traverse (G1 := G) (G2 := fun A => A)).
+        change (traverse (@id (G B))) with (map (F := fun A => A) (traverse (@id (G B)))).
+        rewrite (trf_traverse_traverse (G1 := fun A => A) (G2 := G)).
+        (* TODO Cleanup this part *)
+        fequal. rewrite (Mult_compose_identity1 G), (Mult_compose_identity2 G).
+        reflexivity.
+    Qed.
 
   Lemma dist_morph_T : forall G1 G2 `{ApplicativeMorphism G1 G2 ϕ},
     forall A : Type, dist T G2 ∘ map (ϕ A) = ϕ (T A) ∘ dist T G1.
@@ -82,4 +87,4 @@ Module ToCategorical.
 
   End proofs.
 
-End ToCategorical.
+End DerivedInstances.
