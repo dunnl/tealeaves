@@ -92,4 +92,8 @@ Tealeaves/Adapters/Roundtrips/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableMonad.v
 Tealeaves/Classes/Categorical/DecoratedTraversableMonad.v
 Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonad.v
-
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonad.v
+Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableMonad.v
+Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableMonad.v
+Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
+Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v

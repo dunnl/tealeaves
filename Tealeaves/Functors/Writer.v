@@ -20,10 +20,6 @@ Import Product.Notations.
 #[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
 #[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
 
-(** * Writer bimonad *)
-(******************************************************************************)
-#[export] Instance BeckDistribution_strength (W : Type) (T : Type -> Type) `{Map T}:
-  BeckDistribution (W ×) T := (@strength T _ W).
 
 (** ** <<T ∘ (W ×)>> is a monad *)
 (******************************************************************************)
@@ -64,72 +60,6 @@ Section strength_as_writer_distributive_law.
 
 End strength_as_writer_distributive_law.
 
-(** ** <<(W ×)>> is a bimonad *)
-(******************************************************************************)
-Section writer_bimonad_instance.
-
-  Context
-    `{Monoid W}.
-
-  Lemma writer_dist_involution : forall (A : Type),
-      bdist (prod W) (prod W) ∘ bdist (prod W) (prod W) = @id (W * (W * A)).
-  Proof.
-    intros. now ext [? [? ?]].
-  Qed.
-
-  Lemma bimonad_dist_counit_l : forall A,
-      extract (W ×) (W * A) ∘ bdist (W ×) (W ×) =
-      map (W ×) (extract (W ×) A).
-  Proof.
-    intros. now ext [w1 [w2 a]].
-  Qed.
-
-  Lemma bimonad_dist_counit_r : forall A,
-      map (W ×) (extract (W ×) A) ∘ bdist (W ×) (W ×) =
-      extract (W ×) (W * A).
-  Proof.
-    intros. now ext [w1 [w2 a]].
-  Qed.
-
-  Lemma bimonad_baton : forall A,
-      extract (W ×) A ∘ ret (W ×) A = @id A.
-  Proof.
-    intros. reflexivity.
-  Qed.
-
-  Lemma bimonad_cup : forall A,
-      cojoin (W ×) ∘ ret (W ×) A = ret (W ×) (W * A) ∘ ret (W ×) A.
-  Proof.
-    intros. reflexivity.
-  Qed.
-
-  Lemma bimonad_cap : forall A,
-      extract (W ×) A ∘ join (T := (W ×)) = extract (W ×) A ∘ extract (W ×) (W * A).
-  Proof.
-    intros. now ext [w1 [w2 a]].
-  Qed.
-
-  Lemma bimonad_butterfly : forall (A : Type),
-      cojoin (W ×) ∘ join (T := (W ×)) (A := A) =
-      map (W ×) (join (T := (W ×))) ∘ join ∘ map (W ×) (bdist (W ×) (W ×))
-           ∘ cojoin (W ×) ∘ map (W ×) (cojoin (W ×)).
-  Proof.
-    intros. now ext [w1 [w2 a]].
-  Qed.
-
-  #[export] Instance Bimonad_Writer : Bimonad (W ×) :=
-    {| bimonad_monad := Monad_Categorical_writer;
-       bimonad_comonad := Comonad_reader W;
-       Bimonad.bimonad_dist_counit_l := @bimonad_dist_counit_l;
-       Bimonad.bimonad_dist_counit_r := @bimonad_dist_counit_r;
-       Bimonad.bimonad_distributive_law := BeckDistributiveLaw_strength;
-       Bimonad.bimonad_cup := @bimonad_cup;
-       Bimonad.bimonad_cap := @bimonad_cap;
-       Bimonad.bimonad_baton := @bimonad_baton;
-       Bimonad.bimonad_butterfly := @bimonad_butterfly;
-    |}.
-
-End writer_bimonad_instance.
 
 (** ** <<incr>> *)
 (******************************************************************************)

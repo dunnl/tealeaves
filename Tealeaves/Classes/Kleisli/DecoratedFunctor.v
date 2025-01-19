@@ -1,5 +1,6 @@
 From Tealeaves Require Export
-  Functors.Early.Reader
+  Functors.Early.Reader.
+From Tealeaves Require Import
   Classes.Kleisli.Comonad.
 
 Import Kleisli.Comonad.Notations.

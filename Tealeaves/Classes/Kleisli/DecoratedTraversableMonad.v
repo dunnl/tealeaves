@@ -242,9 +242,11 @@ Module DerivedOperations.
     #[export] Instance Map_Binddt: Map U :=
       fun (A B: Type) (f: A -> B) =>
         binddt (G := fun A => A) (ret (T := T) ∘ f ∘ extract (W := (W ×))).
+
     #[export] Instance Mapdt_Binddt: Mapdt W U
       := fun G _ _ _ A B f =>
            binddt (map (F := G) (ret (T := T)) ∘ f).
+
     #[export] Instance Bindd_Binddt: Bindd W T U
       := fun A B f => binddt (G := fun A => A) f.
 
@@ -1546,37 +1548,6 @@ Section other_composition_laws.
       rewrite (compat_mapdt_binddt W T T).
       unfold DerivedOperations.Mapdt_Binddt.
       reflexivity.
-      (*
-      Set Printing All.
-      Print Instances Compat_Mapdt_Binddt.
-      About compat_mapdt_binddt.
-      Set Typeclasses Debug.
-      About Compat_Full_Binddt0.
-      About Compat_Mapdt_Binddt.
-      Print Instances Mapdt.
-      (*
-      assert (Compat_Mapdt_Binddt W T T).
-      Set Printing All.
-      typeclasses eauto.
-       *)
-      Set Printing All.
-      Hint Unfold mapdt: typeclasses_instances.
-      About compat_mapdt_binddt.
-      assert (@Compat_Mapdt_Binddt W T T Return_T
-                (@mapdt W T Mapdt_T) Binddt_T).
-      { try typeclasses eauto.
-        unfold mapdt.
-        try typeclasses eauto.
-      }
-      clear H1.
-      try rewrite (compat_mapdt_binddt W T T
-                     (Binddt_inst := Binddt_T)
-                     (Return_T := Return_T)).
-      rewrite (compat_mapdt_binddt W T T
-                 (Mapdt_inst := ltac:(auto))
-                 (Return_T := Return_T)).
-                 (Compat_Mapdt_Binddt := compat_mapdt_binddt_full _ _ _)).
-       *)
     Qed.
 
     Lemma bindt_mapdt: forall
@@ -1804,6 +1775,16 @@ Section derived_instances.
     reflexivity.
   Qed.
 
+  Lemma traverse_ret:
+    forall (G: Type -> Type) `{Applicative G} (A B: Type) (f: A -> G B),
+      traverse f ∘ ret (T := T) = map ret ∘ f.
+  Proof.
+    intros.
+    rewrite traverse_to_binddt.
+    rewrite (kdtm_binddt0).
+    reflexivity.
+  Qed.
+
   Lemma bind_ret:
     forall (A B: Type) (f: A -> T B),
       bind f ∘ ret (T := T) = f.
@@ -1876,7 +1857,8 @@ End derived_instances.
 
 (** ** Derived Typeclass Instances *)
 (******************************************************************************)
-Section derived_instances.
+Module DerivedInstances.
+  Section derived_instances.
 
     Context
       (W: Type)
@@ -1930,6 +1912,21 @@ Section derived_instances.
       - apply (mapdt_morph G1 G2 ϕ).
     Qed.
 
+    #[export] Instance: Monad T.
+    Proof.
+      constructor; intros.
+      2: typeclasses eauto.
+      rewrite bind_ret.
+      reflexivity.
+    Qed.
+
+    #[export] Instance: Functor T.
+    Proof.
+      constructor; intros.
+      - apply map_id.
+      - apply map_map.
+    Qed.
+
     Context
       (U: Type -> Type)
       `{Map_U_inst: Map U}
@@ -1966,7 +1963,7 @@ Section derived_instances.
         kdmod_bindd2 := bindd_bindd;
       |}.
 
-    #[export] Instance: DecoratedRightModule W T U :=
+    #[local] Instance: DecoratedRightModule W T U :=
       {| kdmod_monad := _
       |}.
 
@@ -1987,7 +1984,8 @@ Section derived_instances.
       DecoratedTraversableRightModule W T T :=
       {| kdtmod_premod := kdtm_premod ; |}.
 
-End derived_instances.
+  End derived_instances.
+End DerivedInstances.
 
 (** * Notations *)
 (******************************************************************************)

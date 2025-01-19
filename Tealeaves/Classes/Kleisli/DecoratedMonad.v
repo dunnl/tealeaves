@@ -1,5 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedFunctor
+  Classes.Kleisli.Monad
+  Classes.Kleisli.Comonad
   Functors.Early.Writer.
 
 Import Monoid.Notations.
@@ -561,7 +563,7 @@ Section decorated_monad_derived_composition_laws.
     `{! Compat_Map_Bindd W T U}
     `{! Compat_Bind_Bindd W T U}
     `{! Compat_Mapd_Bindd W T U}
-    `{! DecoratedRightModule W T U}
+    `{! DecoratedRightPreModule W T U}
     `{! DecoratedMonad W T}.
 
   Context (A B C: Type).
@@ -748,7 +750,7 @@ Section decorated_monad_derivedances.
     `{! Compat_Map_Bindd W T U}
     `{! Compat_Bind_Bindd W T U}
     `{! Compat_Mapd_Bindd W T U}
-    `{! DecoratedRightModule W T U}
+    `{! DecoratedRightPreModule W T U}
     `{! DecoratedMonad W T}.
 
   #[local] Existing Instance DecoratedRightModule_DecoratedMonad.

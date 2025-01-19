@@ -1,6 +1,7 @@
 From Tealeaves Require Import
   Classes.Categorical.DecoratedFunctor
   Classes.Kleisli.DecoratedFunctor
+  Classes.Kleisli.Comonad (kc1, cobind)
   CategoricalToKleisli.Comonad.
 
 #[local] Generalizable Variables E F.

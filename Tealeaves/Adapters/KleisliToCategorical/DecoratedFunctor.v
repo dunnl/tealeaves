@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedFunctor
-  Classes.Categorical.DecoratedFunctor.
+  Classes.Categorical.DecoratedFunctor
+  Classes.Kleisli.Comonad.
 
 Import Kleisli.Comonad.Notations.
 Import Product.Notations.

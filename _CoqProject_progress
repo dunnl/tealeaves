@@ -1,12 +1,8 @@
 # Adapters
 
-Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableMonad.v
-Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonad.v
-Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableMonad.v
-Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
-Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
-Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
 
+
+Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
 Tealeaves/Adapters/MonadToApplicative.v
 
 
@@ -73,11 +69,12 @@ Tealeaves/Classes/Kleisli/Theory/Monad.v
 Tealeaves/Classes/Kleisli/Theory/Comonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedFunctor.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedMonad.v
+
 Tealeaves/Classes/Kleisli/Theory/ContainerMonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedContainerFunctor.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedContainerMonad.v
 
-####### WIP
+####### Core theory
 Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
 #Tealeaves/Classes/Kleisli/Theory/TraversableCommutativeIdempotent.v
 Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v

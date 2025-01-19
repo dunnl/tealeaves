@@ -56,7 +56,6 @@ Module DerivedInstances.
                  (morphism := ApplicativeMorphism_mapfst_Batch
                                 (extract (W := prod E) (A := A)))
                  (batch A)).
-      Check mapdt (mapfst_Batch (E * A) A extract ∘ batch A).
       rewrite (kdtf_morph
                  (G1 := Batch A A)
                  (G2 := fun A => A)

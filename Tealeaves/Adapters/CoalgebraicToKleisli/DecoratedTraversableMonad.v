@@ -1,7 +1,7 @@
 From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableMonad
   Classes.Coalgebraic.DecoratedTraversableMonad
-  Functors.Batch.
+  Functors.Early.Batch.
 
 Import Batch.Notations.
 Import Monoid.Notations.
@@ -69,12 +69,13 @@ Section with_algebra.
   Qed.
 
   Lemma kdtm_binddt1_T : forall (A : Type),
-      binddt (G := fun A : Type => A) (ret (T := T) ∘ extract (W := (W ×))) = @id (T A).
+      binddt (G := fun A : Type => A)
+        (ret (T := T) ∘ extract (W := (W ×))) = @id (T A).
   Proof.
     intros.
     unfold_ops @Binddt_ToBatch7.
-    rewrite (runBatch_spec (F := fun A => A)).
-    rewrite <- map_to_traverse.
+    rewrite (runBatch_via_traverse (F := fun A => A)).
+    rewrite <- TraversableFunctor.map_to_traverse.
     apply dtm_extract.
   Qed.
 
@@ -118,21 +119,22 @@ Section with_algebra.
     reflexivity.
   Qed.
 
-(* TODO
-
   #[export] Instance DecoratedTraversableRightPreModule_Kleisli_Coalgebra :
-    Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
-    {|
-      kdtm_binddt1 := kdtm_binddt1_T;
-      kdtm_binddt2 := kdtm_binddt2_T;
-      kdtm_morph := kdtm_morph_T;
-    |}.
+    Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T.
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - intros. apply (kdtm_binddt0_T G).
+    - constructor; intros.
+      + apply kdtm_binddt1_T.
+      + apply (kdtm_binddt2_T G1 G2); auto.
+      + apply kdtm_morph_T; auto.
+  Qed.
 
   #[export] Instance DecoratedTraversableMonad_Kleisli_Coalgebra :
     Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
     {|
       kdtm_binddt0 := kdtm_binddt0_T;
     |}.
-    *)
 
 End with_algebra.

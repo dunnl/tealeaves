@@ -1,14 +1,15 @@
 From Tealeaves Require Export
-  Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Categorical.DecoratedTraversableMonad
-  Classes.Kleisli.DecoratedTraversableMonad.
+  Classes.Kleisli.DecoratedTraversableMonad
+  Classes.Categorical.Bimonad (bimonad_baton).
 
-Import DecoratedTraversableMonad.Notations.
-Import DecoratedMonad.Notations.
+Import Kleisli.DecoratedTraversableMonad.Notations.
+Import Kleisli.DecoratedMonad.Notations.
+Import Kleisli.TraversableMonad.Notations.
+Import Kleisli.Comonad.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
 Import Functor.Notations.
-Import Kleisli.Comonad.Notations.
 
 #[local] Generalizable Variables T A B C.
 
@@ -23,19 +24,19 @@ Import Kleisli.Comonad.Notations.
   G%function_scope {H H0 H1} {A B}%type_scope _%function_scope.
 #[local] Arguments bindd {W}%type_scope {T} (U)%function_scope {Bindd} {A B}%type_scope _ _.
 #[local] Arguments traverse T%function_scope {Traverse} G%function_scope
-  {H H0 H1} {A B}%type_scope _%function_scope _.
+  {Map_G Pure_G Mult_G} {A B}%type_scope _%function_scope _.
 
 (** * DTMs from Kleisli DTMs *)
 (******************************************************************************)
 
-Module ToCategorical.
-
-  (** ** Operations *)
-  (******************************************************************************)
+(** ** Derived Operations *)
+(******************************************************************************)
+Module DerivedOperations.
   Section operations.
+
     Context
-      (W : Type)
-      (T : Type -> Type)
+      (W: Type)
+      (T: Type -> Type)
       `{Binddt W T T}
       `{Return T}.
 
@@ -47,18 +48,22 @@ Module ToCategorical.
       fun G _ _ _ A => binddt (T := T) (map G (ret T A) ∘ extract (W ×) (G A)).
 
   End operations.
+End DerivedOperations.
 
-  (** ** Laws *)
-  (******************************************************************************)
+(** ** Derived Instances *)
+(******************************************************************************)
+Module DerivedInstances.
+
   Section with_monad.
 
     Context
-      (W : Type)
-      (T : Type -> Type)
-      `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonadFull W T}.
+      (W: Type)
+      (T: Type -> Type)
+      `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
-    Existing Instances
-      Map_Binddt.
+    Import KleisliToCategorical.DecoratedTraversableMonad.DerivedOperations.
+    Import Kleisli.DecoratedTraversableMonad.DerivedOperations.
+    Import Kleisli.DecoratedTraversableMonad.DerivedInstances.
 
     #[local] Tactic Notation "unfold_everything" :=
       unfold_ops @Map_compose;
@@ -76,9 +81,9 @@ Module ToCategorical.
     #[local] Tactic Notation "mapd_to_map" :=
       rewrite <- map_to_mapd.
 
-    (** *** Monad instance *)
+    (** ** Monad Instance *)
     (******************************************************************************)
-    Lemma ret_natural : Natural (@ret T _).
+    Lemma ret_natural: Natural (@ret T _).
     Proof.
       constructor.
       - typeclasses eauto.
@@ -89,43 +94,48 @@ Module ToCategorical.
         reflexivity.
     Qed.
 
-    Lemma join_natural : Natural (@join T _).
+    Lemma join_natural: Natural (@join T _).
     Proof.
       constructor.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros.
-        unfold_everything.
-        binddt_to_bindd.
+        unfold join.
+        unfold Join_Binddt.
+        change (map T f) with (map (fun A => A) (map T f)).
         unfold_compose_in_compose.
-        rewrite map_bindd.
-        binddt_to_bindd.
-        rewrite bindd_map.
+        rewrite (map_binddt (W := W) (T := T) (U := T)
+                   (G1 := fun A => A)).
+        unfold_ops @Map_I.
+        change (map (T ∘ T) f) with (map T (map T f)).
+        rewrite (binddt_map (G2 := fun A => A) (T := T) (U := T)).
         rewrite <- (natural (Natural := Natural_extract_reader W)
                            (ϕ := @extract (W ×) _) (map T f)).
         reflexivity.
     Qed.
 
-    Lemma join_ret : `(join T ∘ ret T (T A) = @id (T A)).
+    Lemma join_ret: `(join T ∘ ret T (T A) = @id (T A)).
     Proof.
       intros.
       unfold_ops @Join_Binddt.
       unfold_compose_in_compose.
       rewrite (kdtm_binddt0 (G := fun A => A)).
-      now rewrite bimonad_baton.
+      rewrite (bimonad_baton (prod W)).
+      reflexivity.
     Qed.
 
-    Lemma join_map_ret : `(join T ∘ map T (ret T A) = @id (T A)).
+    Lemma join_map_ret: `(join T ∘ map T (ret T A) = @id (T A)).
     Proof.
       intros.
-      unfold_everything.
-      unfold_compose_in_compose.
+      unfold join.
+      unfold Join_Binddt.
       binddt_to_bindd.
+      unfold_compose_in_compose.
       rewrite bindd_map.
       rewrite <- (natural (Natural := Natural_extract_reader W)
                          (ϕ := @extract (W ×) _)).
       unfold_ops @Map_I.
-      rewrite kmond_bindd1.
+      rewrite kdm_bindd1.
       reflexivity.
     Qed.
 
@@ -133,126 +143,131 @@ Module ToCategorical.
       `(join T ∘ join T (A := T A) = join T ∘ map T (join T)).
     Proof.
       intros.
-      unfold_everything.
+      unfold join.
+      unfold Join_Binddt.
       repeat binddt_to_bindd.
       unfold_compose_in_compose.
       (* Merge LHS *)
-      rewrite (kmond_bindd2 (T := T)).
+      rewrite (kdm_bindd2 (T := T)).
       (* Merge RHS *)
       rewrite (bindd_map).
       rewrite <- (natural (Natural := Natural_extract_reader W)
                          (ϕ := @extract (W ×) _)).
       unfold_ops @Map_I.
-      unfold kc5.
-      fequal.
-      ext [w t].
-      rewrite extract_preincr.
+      change (extract ?W ?A) with (id ∘ extract W A) at 1.
+      change (extract ?W ?A) with (id ∘ extract W A) at 2.
+      rewrite kc5_44.
       reflexivity.
     Qed.
 
-    #[local] Instance: Categorical.Monad.Monad T :=
-      {| Monad.mon_ret_natural := ret_natural;
-        mon_join_natural := join_natural;
-        mon_join_ret := join_ret;
-        mon_join_map_ret := join_map_ret;
-        mon_join_join := join_join;
+    #[export] Instance: Categorical.Monad.Monad T :=
+      {| mon_ret_natural := ret_natural;
+         mon_join_natural := join_natural;
+         mon_join_ret := join_ret;
+         mon_join_map_ret := join_map_ret;
+         mon_join_join := join_join;
       |}.
 
-
-    (** *** Decorated functor laws *)
+    (** ** Decorated Functor Instance *)
     (******************************************************************************)
-    Lemma dec_dec : forall (A : Type),
+    Lemma dec_dec: forall (A: Type),
         dec T ∘ dec T = map T (cojoin (W ×)) ∘ dec T (A := A).
     Proof.
       intros.
-      unfold_everything.
+      (* LHS *)
+      unfold dec at 1 2.
+      unfold Decorate_Binddt at 1 2.
       do 2 binddt_to_bindd.
       unfold_compose_in_compose.
-      (* Merge LHS *)
-      rewrite (kmond_bindd2 (T := T)).
-      (* Merge RHS *)
-      rewrite map_to_bindd.
-      rewrite (kmond_bindd2 (T := T)).
-      fequal.
-      rewrite kc5_05.
-      change (ret T (W * A)) with (ret T (W * A) ∘ id) at 1.
-      rewrite kc5_54.
-      unfold kc4.
+      rewrite (kdm_bindd2 (T := T)).
+      change (ret ?T ?A) with (ret T A ∘ id) at 1.
+      change (ret ?T ?A) with (ret T A ∘ id) at 2.
+      rewrite kc5_11.
+      (* RHS *)
+      unfold dec at 1.
+      unfold Decorate_Binddt at 1.
+      binddt_to_bindd.
+      rewrite map_bindd.
       rewrite (natural (ϕ := ret T)).
       reflexivity.
     Qed.
 
-    Lemma dec_extract : forall (A : Type),
+    Lemma dec_extract: forall (A: Type),
         map T (extract (W ×) A) ∘ dec T = @id (T A).
     Proof.
       intros.
-      unfold_everything.
+      unfold dec.
+      unfold Decorate_Binddt.
       binddt_to_bindd.
-      unfold_ops @Map_I.
       rewrite map_bindd.
       rewrite (natural (ϕ := ret T)).
       unfold_ops @Map_I.
-      rewrite kmond_bindd1.
+      rewrite kdm_bindd1.
       reflexivity.
     Qed.
 
-    Lemma dec_natural : Natural (@dec W T _).
+    Lemma dec_natural: Natural (@dec W T _).
     Proof.
       constructor.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros.
-        unfold_everything.
+        unfold dec.
+        unfold Decorate_Binddt.
         do 2 binddt_to_bindd.
+        change (map (T ○ prod W) f) with (map T (map (prod W) f)).
         rewrite map_bindd.
-        rewrite bindd_map.
         rewrite (natural (ϕ := ret T)).
+        rewrite bindd_map.
         reflexivity.
     Qed.
 
-    #[local] Instance: Categorical.DecoratedFunctor.DecoratedFunctor W T :=
+    #[export] Instance: Categorical.DecoratedFunctor.DecoratedFunctor W T :=
       {| dfun_dec_natural := dec_natural;
-        dfun_dec_dec := dec_dec;
-        dfun_dec_extract := dec_extract;
+         dfun_dec_dec := dec_dec;
+         dfun_dec_extract := dec_extract;
       |}.
 
-    (** *** Decorated monad laws *)
+    (** ** Decorated Monad Instance *)
     (******************************************************************************)
-    Lemma dmon_ret_ : forall (A : Type),
+    Lemma dmon_ret_: forall (A: Type),
         dec T ∘ ret T A = ret T (W * A) ∘ pair Ƶ (B:=A).
     Proof.
       intros.
       unfold_everything.
       binddt_to_bindd.
-      now rewrite (kmond_bindd0 (T := T)).
+      now rewrite (kdm_bindd0 (T := T)).
     Qed.
 
-    Lemma dmon_join_ : forall (A : Type),
+    Lemma dmon_join_: forall (A: Type),
         dec T ∘ join T (A:=A) = join T ∘ map T (shift T) ∘ dec T ∘ map T (dec T).
     Proof.
       intros.
-      unfold shift. unfold strength.
-      unfold_everything.
+      unfold shift.
+      unfold strength.
+      unfold join, Join_Binddt.
+      repeat binddt_to_bindd.
+      unfold dec, Decorate_Binddt.
       repeat binddt_to_bindd.
       unfold_compose_in_compose.
       (* Fuse LHS *)
-      rewrite (kmond_bindd2 (T := T)) at 1.
+      rewrite (kdm_bindd2 (T := T)) at 1.
       change (extract (W ×) (T A))
         with (id ∘ extract (W ×) (T A)) at 1.
-      rewrite kc5_51.
+      rewrite kc5_54.
       rewrite (fun_map_id (F := (W ×))).
       change (?f ∘ id) with f.
       (* Fuse RHS *)
       rewrite map_to_bindd.
-      rewrite (kmond_bindd2 (T := T)).
+      rewrite (kdm_bindd2 (T := T)).
       reassociate -> near (extract (W ×) _).
-      rewrite (kc5_54).
-      rewrite (kc4_id_l).
-      rewrite (kmond_bindd2 (T := T)).
+      rewrite (kc5_51).
+      rewrite (kc1_id_l).
+      rewrite (kdm_bindd2 (T := T)).
       change (ret T ((W × ) (T ((W × ) A))))
         with ((ret T ((W × ) (T ((W × ) A)))) ∘ id).
-      rewrite (kc5_54).
-      rewrite (kc4_04).
+      rewrite (kc5_51).
+      rewrite (kc1_01).
       change (?f ∘ id) with f.
       rewrite bindd_map.
       (* Now compare inner functions *)
@@ -267,15 +282,15 @@ Module ToCategorical.
       reflexivity.
     Qed.
 
-    #[local] Instance: Categorical.DecoratedMonad.DecoratedMonad W T :=
+    #[export] Instance: Categorical.DecoratedMonad.DecoratedMonad W T :=
       {| dmon_ret := dmon_ret_;
-        dmon_join := dmon_join_;
+         dmon_join := dmon_join_;
       |}.
 
-    (** *** Traversable functor instance *)
+    (** ** Traversable Functor instance *)
     (******************************************************************************)
     Lemma dist_natural_T :
-      forall (G : Type -> Type) (H2 : Map G) (H3 : Pure G) (H4 : Mult G)
+      forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G)
         (Happ: Applicative G),
         Natural (@dist T _ G H2 H3 H4).
     Proof.
@@ -283,26 +298,31 @@ Module ToCategorical.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros.
-        unfold_everything.
+        unfold dist, Dist_Binddt.
+        change (map (G ○ T) f) with (map G (map T f)).
         rewrite map_binddt.
-        rewrite binddt_map.
-        (* LHS *)
         reassociate <- on left.
         rewrite (fun_map_map (F := G)).
+        rewrite (natural (ϕ := ret T)).
         (* RHS *)
+        change (map (T ○ G) f) with (map T (map G f)).
+        rewrite binddt_map.
         reassociate -> on right.
         rewrite <- (natural (Natural := Natural_extract_reader W)
                            (ϕ := @extract (W ×) _)).
         unfold_ops Map_I.
         reassociate <- on right.
         rewrite (fun_map_map (F := G)).
-        rewrite (natural (ϕ := ret T)).
+
         reflexivity.
     Qed.
 
-    Lemma dist_morph_T : forall (G1 G2 : Type -> Type) (H2 : Map G1) (H4 : Mult G1) (H3 : Pure G1) (H5 : Map G2)
-                           (H7 : Mult G2) (H6 : Pure G2) (ϕ : forall A : Type, G1 A -> G2 A),
-        ApplicativeMorphism G1 G2 ϕ -> forall A : Type, dist T G2 ∘ map T (ϕ A) = ϕ (T A) ∘ dist T G1.
+    Lemma dist_morph_T:
+      forall (G1 G2: Type -> Type)
+        (H2: Map G1) (H4: Mult G1) (H3: Pure G1) (H5: Map G2)
+        (H7: Mult G2) (H6: Pure G2) (ϕ: forall A: Type, G1 A -> G2 A),
+        ApplicativeMorphism G1 G2 ϕ ->
+        forall A: Type, dist T G2 ∘ map T (ϕ A) = ϕ (T A) ∘ dist T G1.
     Proof.
       introv morph; inversion morph; intros.
       unfold_ops @Dist_Binddt.
@@ -317,42 +337,46 @@ Module ToCategorical.
       reflexivity.
     Qed.
 
-    Lemma dist_unit_T : forall A : Type,
-        dist T (fun A0 : Type => A0) = @id (T A).
+    Lemma dist_unit_T: forall A: Type,
+        dist T (fun A0: Type => A0) = @id (T A).
     Proof.
       intros. unfold_ops @Dist_Binddt.
       apply (kdtm_binddt1).
     Qed.
 
-    #[local] Instance TraversableMonadFull_Categorical_of_Kleisli: TraversableMonadFull T.
+    (*
+    #[export] Instance TraversableMonadFull_Categorical_of_Kleisli: TraversableMonadFull T.
     Proof.
       constructor; typeclasses eauto.
     Qed.
+     *)
 
-    Lemma dist_linear_T : forall (G1 : Type -> Type) (H2 : Map G1) (H3 : Pure G1) (H4 : Mult G1),
+    Lemma dist_linear_T: forall (G1: Type -> Type) (H2: Map G1) (H3: Pure G1) (H4: Mult G1),
         Applicative G1 ->
-        forall (G2 : Type -> Type) (H6 : Map G2) (H7 : Pure G2) (H8 : Mult G2),
-          Applicative G2 -> forall A : Type, dist T (G1 ∘ G2) (A := A) = map G1 (dist T G2) ∘ dist T G1.
+        forall (G2: Type -> Type) (H6: Map G2) (H7: Pure G2) (H8: Mult G2),
+          Applicative G2 -> forall A: Type, dist T (G1 ∘ G2) (A := A) = map G1 (dist T G2) ∘ dist T G1.
     Proof.
       intros. unfold_ops @Dist_Binddt.
       rewrite (kdtm_binddt2); try typeclasses eauto.
-      fequal.
-      rewrite (kc7_33).
-      rewrite (kc3_id_l').
+      change (map G2 (ret T A)) with (map G2 (ret T A) ∘ id).
+      rewrite kc7_27.
+      reassociate <- on right.
+      rewrite (fun_map_map).
+      rewrite (traverse_ret G2).
       reflexivity.
     Qed.
 
     #[export] Instance: Categorical.TraversableFunctor.TraversableFunctor T :=
       {| dist_natural := dist_natural_T;
-        dist_morph := dist_morph_T;
-        dist_unit := dist_unit_T;
-        dist_linear := dist_linear_T;
+         dist_morph := dist_morph_T;
+         dist_unit := dist_unit_T;
+         dist_linear := dist_linear_T;
       |}.
 
-    (** *** Traversable monad instance *)
+    (** ** Traversable Monad Instance *)
     (******************************************************************************)
-    Lemma trvmon_ret_T : forall (G : Type -> Type) (H3 : Map G) (H4 : Pure G) (H5 : Mult G),
-        Applicative G -> forall A : Type, dist T G ∘ ret T (G A) = map G (ret T A).
+    Lemma trvmon_ret_T: forall (G: Type -> Type) (H3: Map G) (H4: Pure G) (H5: Mult G),
+        Applicative G -> forall A: Type, dist T G ∘ ret T (G A) = map G (ret T A).
     Proof.
       intros. unfold_ops @Dist_Binddt @Map_Binddt.
       rewrite (kdtm_binddt0).
@@ -360,10 +384,10 @@ Module ToCategorical.
     Qed.
 
     Lemma trvmon_join_T :
-      forall (G : Type -> Type) (H3 : Map G)
-        (H4 : Pure G) (H5 : Mult G)
+      forall (G: Type -> Type) (H3: Map G)
+        (H4: Pure G) (H5: Mult G)
         (Happ: Applicative G),
-      forall A : Type, dist T G ∘ join T = map G (join T) ∘ dist T G ∘ map T (dist T G (A := A)).
+      forall A: Type, dist T G ∘ join T = map G (join T) ∘ dist T G ∘ map T (dist T G (A := A)).
     Proof.
       intros.
       unfold_ops @Dist_Binddt @Join_Binddt.
@@ -390,12 +414,12 @@ Module ToCategorical.
         trvmon_join := trvmon_join_T;
       |}.
 
-    (** *** Decorated Traversable functor instance *)
+    (** ** Decorated Traversable Functor instance *)
     (******************************************************************************)
     Lemma dtfun_compat_T :
-      forall (G : Type -> Type) (H2 : Map G) (H3 : Pure G) (H4 : Mult G)
+      forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G)
         (Happ: Applicative G),
-      forall A : Type,
+      forall A: Type,
           dist T G ∘ map T (strength) ∘ dec (A := G A) T = map G (dec T) ∘ dist T G.
     Proof.
       intros. unfold_ops @Dist_Binddt @Decorate_Binddt.
@@ -409,7 +433,7 @@ Module ToCategorical.
       rewrite (mapdt_mapd).
       rewrite (bindd_mapdt).
       rewrite mapdt_to_binddt.
-      rewrite kc4_04.
+      rewrite kc1_01.
       fequal.
       ext [w a].
       unfold compose. cbn.
@@ -429,4 +453,4 @@ Module ToCategorical.
       ltac:(constructor; typeclasses eauto).
 
   End with_monad.
-End ToCategorical.
+End DerivedInstances.

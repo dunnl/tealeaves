@@ -264,7 +264,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
         (fun '(w, a) => map (g ∘ pair w) (f (w, a))).
   Proof.
     intros. unfold kc3.
-    rewrite map_strength_cobind_spec.
+    rewrite (map_strength_cobind_spec E).
     reflexivity.
   Qed.
 

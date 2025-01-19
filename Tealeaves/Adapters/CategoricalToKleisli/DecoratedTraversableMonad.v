@@ -13,36 +13,47 @@ Import Strength.Notations.
 
 #[local] Generalizable Variables W T G ϕ A B C.
 
-(** * Kleisli presentation of D-T monads *)
-(******************************************************************************)
-Module ToKleisli.
+#[local] Tactic Notation "bring" constr(x) "and" constr(y) "together" :=
+  change (?f ∘ x ∘ y ∘ ?g) with (f ∘ (x ∘ y) ∘ g).
 
-  #[export] Instance Binddt_categorical
-    (W : Type)
-    (T : Type -> Type)
+(** * Kleisli DTMs from Categorical DTMs *)
+(******************************************************************************)
+
+(** ** Derived Operations *)
+(******************************************************************************)
+Module DerivedOperations.
+
+  #[export] Instance Binddt_Categorical
+    (W: Type)
+    (T: Type -> Type)
     `{Map T}
     `{Decorate W T}
     `{ApplicativeDist T}
-    `{Join T} : Binddt W T T :=
-  fun (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B : Type)
-    (f : W * A -> G (T B)) =>
+    `{Join T}: Binddt W T T :=
+  fun (G: Type -> Type) `{Map G} `{Pure G} `{Mult G} (A B: Type)
+    (f: W * A -> G (T B)) =>
     map (F := G) join ∘ dist T G ∘ map f ∘ dec T.
 
-  #[local] Tactic Notation "bring" constr(x) "and" constr(y) "together" :=
-    change (?f ∘ x ∘ y ∘ ?g) with (f ∘ (x ∘ y) ∘ g).
+End DerivedOperations.
+
+(** ** Derived Instances *)
+(******************************************************************************)
+Module DerivedInstances.
+
+  Import DerivedOperations.
 
   Section adapter.
 
     Context
-      `{Classes.Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
+      `{Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
     Context
-      (G1 : Type -> Type) `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
-      (G2 : Type -> Type) `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}.
+      (G1: Type -> Type) `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
+      (G2: Type -> Type) `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}.
 
     Definition kcompose_dtm_alt {A B C} :=
-      fun `(g : W * B -> G2 (T C))
-        `(f : W * A -> G1 (T B))
+      fun `(g: W * B -> G2 (T C))
+        `(f: W * A -> G1 (T B))
       => (map (F := G1) ((map (F := G2) (μ))
                     ∘ δ T G2
                     ∘ map (F := T) (g ∘ μ (T := (W ×)))
@@ -52,13 +63,13 @@ Module ToKleisli.
           ∘ cobind (W := (W ×)) f.
 
     Lemma equiv' {A B C} :
-      forall  `(g : W * B -> G2 (T C))
-         `(f : W * A -> G1 (T B)),
+      forall  `(g: W * B -> G2 (T C))
+         `(f: W * A -> G1 (T B)),
         g ⋆7 f =
           kcompose_dtm_alt g f.
     Proof.
       intros. unfold kc7.
-      unfold_ops @Binddt_categorical.
+      unfold_ops @Binddt_Categorical.
       ext [w a].
       unfold kcompose_dtm_alt.
       unfold compose at 6. cbn.
@@ -87,26 +98,26 @@ Module ToKleisli.
     Theorem kdtm_binddt1_T {A} :
       binddt (G := fun A => A) (η (T := T) ∘ extract) = @id (T A).
     Proof.
-      unfold_ops @Binddt_categorical.
+      unfold_ops @Binddt_Categorical.
       change (map (F := fun A => A) ?f) with f.
       rewrite (dist_unit (F := T)).
       change (?mu ∘ id) with mu.
       rewrite <- fun_map_map.
       do 2 reassociate -> on left.
-      rewrite kdf_dec_extract.
+      rewrite dfun_dec_extract.
       reassociate <- on left.
       rewrite (mon_join_map_ret (T := T)).
       reflexivity.
     Qed.
 
-    Theorem kdtm_binddt0_T : forall
-        (G : Type -> Type) `{Map G} `{Pure G} `{Mult G} `{! Applicative G}
-        (A B : Type)
-        (f : W * A -> G (T B)),
+    Theorem kdtm_binddt0_T: forall
+        (G: Type -> Type) `{Map G} `{Pure G} `{Mult G} `{! Applicative G}
+        (A B: Type)
+        (f: W * A -> G (T B)),
         binddt f ∘ η (T := T) = f ∘ η (T := (W ×)).
     Proof.
       intros.
-      unfold_ops @Binddt_categorical.
+      unfold_ops @Binddt_Categorical.
       reassociate -> on left.
       rewrite (dmon_ret (W := W) (T := T)).
       reassociate <- on left.
@@ -125,11 +136,11 @@ Module ToKleisli.
     Section binddt_binddt.
 
       Context
-        (G1 : Type -> Type)
+        (G1: Type -> Type)
           `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
-          (G2 : Type -> Type)
+          (G2: Type -> Type)
           `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}
-          `(g : W * B -> G2 (T C)) `(f : W * A -> G1 (T B)).
+          `(g: W * B -> G2 (T C)) `(f: W * A -> G1 (T B)).
 
       #[local] Arguments map (F)%function_scope {Map} {A B}%type_scope f%function_scope _.
       #[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope {H H0 H1} (A)%type_scope _.
@@ -142,7 +153,7 @@ Module ToKleisli.
         rewrite (equiv' _ _ g f).
         unfold kcompose_dtm_alt.
         (* ********** *)
-        unfold binddt at 1 2; unfold Binddt_categorical.
+        unfold binddt at 1 2; unfold Binddt_Categorical.
         assert (Functor G1) by now inversion Applicative0.
         assert (Functor G2) by now inversion Applicative1.
         (* Normalize associativity *)
@@ -170,7 +181,7 @@ Module ToKleisli.
         reassociate <- on left.
         reassociate -> near (dec T A).
         (* Change decorate-then-decorate into decorate-then-duplicate *)
-        rewrite kdf_dec_dec.
+        rewrite dfun_dec_dec.
         reassociate <- on left.
         (* Now move <<μ B>> towards <<μ C>> *)
         unfold shift; rewrite incr_spec.
@@ -240,11 +251,11 @@ Module ToKleisli.
 
     Lemma kdtm_morph_T :
       forall `{ApplicativeMorphism G1 G2 ϕ},
-      forall (A B : Type) (f : W * A -> G1 (T B)),
+      forall (A B: Type) (f: W * A -> G1 (T B)),
         ϕ (T B) ∘ binddt (G := G1) f = binddt (G := G2) (ϕ (T B) ∘ f).
     Proof.
       introv morph. intros.
-      unfold_ops @Binddt_categorical.
+      unfold_ops @Binddt_Categorical.
       do 3 reassociate <- on left.
       fequal.
       unfold compose. ext t.
@@ -256,6 +267,8 @@ Module ToKleisli.
       now rewrite (fun_map_map (F := T)).
     Qed.
 
+    (** ** Typeclass Instances *)
+    (******************************************************************************)
     #[export] Instance: Kleisli.DecoratedTraversableMonad.DecoratedTraversableRightPreModule W T T :=
       {|
         kdtm_binddt1 := @kdtm_binddt1_T;
@@ -269,4 +282,4 @@ Module ToKleisli.
 
   End with_monad.
 
-End ToKleisli.
+End DerivedInstances.
