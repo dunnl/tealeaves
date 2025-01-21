@@ -80,7 +80,7 @@ Section cojoin6_alt.
 
   Lemma cojoin_Batch6_to_runBatch: forall (A B B': Type),
       @cojoin_Batch6 _ _ A B B' =
-        runBatch (Batch A (T B) ∘ Batch B (T B'))
+        @runBatch A (T B') (Batch A (T B) ∘ Batch B (T B')) _ _ _
           (double_batch6 (B := B) (C := B')).
   Proof.
     intros.
@@ -91,8 +91,9 @@ Section cojoin6_alt.
       rewrite IHrest.
       do 3
         (compose near
-           (runBatch (Batch A (T B) ∘ Batch B (T B'))
-              double_batch6 (T B' -> R) rest) on right;
+           (@runBatch A (T B') (Batch A (T B) ∘ Batch B (T B'))
+                      _ _ _
+              (double_batch6) (T B' -> R) rest) on right;
          rewrite (fun_map_map (F := Batch A (T B)))).
       reflexivity.
   Qed.

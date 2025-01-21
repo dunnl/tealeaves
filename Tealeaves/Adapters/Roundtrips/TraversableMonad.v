@@ -212,7 +212,7 @@ Module Kleisli_Coalgebraic_Kleisli.
     unfold DerivedOperations.ToBatch6_Bindt.
     rewrite (ktm_morph (U := T)
                (morphism := Batch.ApplicativeMorphism_runBatch)
-               (ϕ := Batch.runBatch G f)).
+               (ϕ := @Batch.runBatch _ _ G _ _ _ f)).
     rewrite (Batch.runBatch_batch G).
     reflexivity.
   Qed.

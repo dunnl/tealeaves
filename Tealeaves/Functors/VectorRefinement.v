@@ -144,6 +144,17 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma Vector_fun_sim_length:
+  forall {A B: Type} {n m: nat}
+    {f: Vector n A -> B}
+    {g: Vector m A -> B},
+    f ~!~ g -> n = m.
+Proof.
+  intros.
+  unfold Vector_fun_sim in H.
+  tauto.
+Qed.
+
 (** *** Relation properties *)
 (******************************************************************************)
 

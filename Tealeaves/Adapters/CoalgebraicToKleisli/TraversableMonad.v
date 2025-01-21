@@ -18,7 +18,7 @@ Module DerivedOperations.
 
   #[export] Instance Bindt_ToBatch6
     (T U : Type -> Type) `{ToBatch6 T U} : Bindt T U :=
-  fun F _ _ _ A B f => runBatch F f (U B) ∘ toBatch6.
+  fun G _ _ _ A B f => runBatch (G := G) f (C := U B) ∘ toBatch6.
 
 End DerivedOperations.
 
@@ -41,7 +41,7 @@ Module DerivedInstances.
       (g : B -> G2 (T C))
       (f : A -> G1 (T B)) :
       kc6 (G1 := G1) (G2 := G2) g f =
-        runBatch G1 f (G2 (T C)) ∘ map (F := Batch A (T B)) (runBatch G2 g (T C))
+        runBatch f (C := G2 (T C)) ∘ map (F := Batch A (T B)) (runBatch g)
           ∘ double_batch6.
     Proof.
       ext a.
@@ -72,7 +72,7 @@ Module DerivedInstances.
     Proof.
       intros.
       unfold_ops Bindt_ToBatch6.
-      assert (cut: runBatch (fun A => A) (ret (T := T) (A := A)) (T A) =
+      assert (cut: runBatch (G := fun A => A) (ret (T := T) (A := A)) (C := T A) =
                      extract_Batch ∘ mapfst_Batch _ _ ret).
       { unfold compose. ext b. induction b.
         - reflexivity.
@@ -93,7 +93,7 @@ Module DerivedInstances.
       unfold_ops Bindt_ToBatch6.
       reassociate <- on left.
       rewrite <- (fun_map_map (F := G1)).
-      reassociate -> near (runBatch G1 f (T B)).
+      reassociate -> near (runBatch f).
       rewrite natural.
       reassociate <- on left.
       reassociate -> near toBatch6.

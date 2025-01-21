@@ -13,7 +13,7 @@ Import Applicative.Notations.
 
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
-#[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
+#[local] Arguments runBatch {A B}%type_scope {G}%function_scope {H H0 H1} f%function_scope {C}%type_scope b.
 
 (** * Coalgebraic Decorated Traversable Functors *)
 (******************************************************************************)
@@ -63,7 +63,7 @@ Section section.
   (* TODO Cleanup *)
   Lemma cojoin_Batch3_to_runBatch: forall (A B B': Type),
       (@cojoin_Batch3 E T _ A B B') =
-        (fun C => runBatch (F := Batch (E * A) B' ∘ Batch (E * B') _)
+        (fun C => runBatch (G := Batch (E * A) B' ∘ Batch (E * B') _)
           (double_batch3 B)).
   Proof.
     intros. ext C b.

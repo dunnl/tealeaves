@@ -9,7 +9,6 @@ Import Kleisli.TraversableFunctor.Notations.
 
 #[local] Generalizable Variables ϕ T G A B C.
 
-
 (** * Categorical Traversable Monads from Kleisli Traversable Monads *)
 (******************************************************************************)
 
@@ -20,7 +19,7 @@ Module DerivedOperations.
   #[export] Instance Traverse_ToBatch
     (T : Type -> Type) `{ToBatch T} : Traverse T :=
   fun G _ _ _ A B f =>
-    runBatch G f (T B) ∘ toBatch.
+    runBatch (G := G) f (C := T B) ∘ toBatch.
 
 End DerivedOperations.
 
@@ -37,8 +36,8 @@ Module DerivedInstances.
     forall `{Applicative G1}
       `{Applicative G2}
       `(g : B -> G2 C) `(f : A -> G1 B),
-      g ⋆2 f = runBatch G1 f (G2 C) ∘
-                 map (F := Batch A B) (runBatch G2 g C) ∘
+      g ⋆2 f = runBatch (G := G1) f (C := G2 C) ∘
+                 map (F := Batch A B) (runBatch (G := G2) g) ∘
                  double_batch.
   Proof.
     intros.
@@ -76,21 +75,24 @@ Module DerivedInstances.
     rewrite <- (fun_map_map (F := G1)).
     reassociate -> on left.
     reassociate <- near (map (toBatch (A := B) (A' := C))).
-    rewrite (natural (ϕ := runBatch G1 f)).
+    rewrite (natural (ϕ := @runBatch _ _ _ _ _ _ f)).
     reassociate -> on left.
     rewrite <- trf_duplicate.
     rewrite cojoin_Batch_to_runBatch.
     reassociate <- on left.
     reassociate <- on left.
-    rewrite (natural (ϕ := runBatch G1 f)).
+    rewrite (natural (ϕ := @runBatch _ _ _ _ _ _ f)).
     rewrite (runBatch_morphism'
-               (homomorphism := ApplicativeMorphism_parallel (Batch A B) (Batch B C) G1 G2)).
+               (homomorphism :=
+                  ApplicativeMorphism_parallel
+                    (Batch A B) (Batch B C) G1 G2)).
     rewrite kc2_spec.
     reflexivity.
   Qed.
 
   Lemma traverse_morphism :
-    forall `{morphism : ApplicativeMorphism G1 G2 ϕ} (A B : Type) (f : A -> G1 B),
+    forall `{morphism : ApplicativeMorphism G1 G2 ϕ}
+      (A B : Type) (f : A -> G1 B),
       ϕ (T B) ∘ traverse f = traverse (T := T) (ϕ B ∘ f).
   Proof.
     intros.

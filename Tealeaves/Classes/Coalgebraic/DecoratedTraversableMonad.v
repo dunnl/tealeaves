@@ -15,7 +15,6 @@ Import Applicative.Notations.
 
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
-#[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 
 (** * Coalgebraic Decorated Traversable Monads *)
 (******************************************************************************)
@@ -106,7 +105,7 @@ Section section.
 
   Lemma cojoin_Batch7_to_runBatch : forall (A A' A'' : Type) (R : Type),
       cojoin_Batch7 (A := A) (A' := A') (A'' := A'') (R := R) =
-        runBatch (F := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A'))
+        runBatch (G := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A'))
           double_batch7.
   Proof.
     intros. ext b.
@@ -115,7 +114,7 @@ Section section.
     - cbn.
       do 3 compose near
         (runBatch
-           (F := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A'))
+           (G := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A'))
            double_batch7
            continuation).
       do 3 rewrite (fun_map_map (F := Batch (W * A) (T A''))).
@@ -141,7 +140,7 @@ Section section.
     intros.
     assert (lemma :
              @cojoin_Batch7 W T op H0 A A' A'' =
-               fun R => runBatch (F := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A')) double_batch7).
+               fun R => runBatch (G := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A')) double_batch7).
     { ext R. now rewrite cojoin_Batch7_to_runBatch. }
     rewrite lemma.
     apply ApplicativeMorphism_runBatch.

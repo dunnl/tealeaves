@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Categorical.Applicative
   Classes.Kleisli.TraversableFunctor
-  Functors.List.
+  Functors.Early.List.
 
 Import Applicative.Notations.
 

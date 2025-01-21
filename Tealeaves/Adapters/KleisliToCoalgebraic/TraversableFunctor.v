@@ -25,6 +25,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 Class Compat_ToBatch_Traverse
+  (T: Type -> Type)
   `{Traverse_inst: Traverse T}
   `{ToBatch_inst: ToBatch T} :=
   compat_toBatch_traverse :
@@ -42,7 +43,7 @@ Proof.
 Qed.
 
 #[export] Instance Compat_ToBatch_Traverse_Self
-  `{Traverse T}: Compat_ToBatch_Traverse
+  `{Traverse T}: Compat_ToBatch_Traverse T
                    (ToBatch_inst := DerivedOperations.ToBatch_Traverse)
   := ltac:(hnf; reflexivity).
 

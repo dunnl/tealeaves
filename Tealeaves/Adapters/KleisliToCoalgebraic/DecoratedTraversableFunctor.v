@@ -9,8 +9,6 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables E G T M A B.
 
-#[local] Arguments runBatch {A B}%type_scope {F}%function_scope
-  {H H0 H1} ϕ%function_scope {C}%type_scope b.
 #[local] Arguments batch {A} (B)%type_scope _.
 
 

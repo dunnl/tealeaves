@@ -2,9 +2,9 @@ From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Categorical.ApplicativeCommutativeIdempotent
-  Functors.List
+  Functors.Early.List
   Functors.Diagonal
-  Functors.Writer.
+  Functors.Early.Writer.
 
 Import Applicative.Notations.
 Import Monoid.Notations.
@@ -615,6 +615,8 @@ Section commute_law.
   Context
     `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G}
       `{! ApplicativeCommutativeIdempotent G}.
+
+  Import Categorical.Monad (Return, ret).
 
   Lemma decorate_commute_cons {A B: Type}
     (f: A -> G B) (a: A) (l: list (list A * A)):

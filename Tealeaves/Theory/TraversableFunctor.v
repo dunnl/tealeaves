@@ -7,7 +7,7 @@ From Tealeaves Require Export
 
 From Tealeaves Require Export
   Classes.Categorical.ShapelyFunctor
-  Theory.Batch
+  Functors.Batch
   Functors.List.
 
 Import Subset.Notations.
@@ -20,156 +20,56 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables F T G A B C M ϕ.
 
+#[local] Arguments mapfst_Batch {B C A1 A2}%type_scope
+  f%function_scope b.
+#[local] Arguments mapsnd_Batch {A B1 B2 C}%type_scope
+  f%function_scope b.
 
-
-(** * Miscellaneous Properties Concerning <<toBatch>>*)
+(** * Length of <<toBatch>> is polymorphic *)
 (******************************************************************************)
-Section stuff.
+Lemma length_Batch_independent
+  `{TraversableFunctor T}
+  `{ToBatch T}
+  `{Map T}
+  `{! Compat_Map_Traverse T}
+  `{! Compat_ToBatch_Traverse T}
+  : forall `(t: T A) B C,
+    length_Batch (toBatch (A' := B) t) =
+      length_Batch (toBatch (A' := C) t).
+Proof.
+  intros.
+  rewrite length_Batch_spec.
+  rewrite length_Batch_spec.
+  compose near t on left.
+  compose near t on right.
+  rewrite <- traverse_through_runBatch.
+  rewrite <- traverse_through_runBatch.
+  rewrite (traverse_const2 _ B C).
+  reflexivity.
+Qed.
 
-  Context
-    `{TraversableFunctor T}
-      `{Map T}
-      `{ToBatch T}
-      `{! Compat_Map_Traverse T}
-      `{! Compat_ToBatch_Traverse T}.
-
-  (** ** Relating <<tolist>> and <<Batch_contents ∘ toBatch>> *)
-  (******************************************************************************)
-  Lemma Batch_contents_tolist:
-    forall {A B} (t: T A),
-      Vector_to_list A (Batch_contents (toBatch (A' := B) t)) =
-        List.rev (tolist t).
-  Proof.
-    intros.
-    rewrite tolist_to_foldMap.
-    rewrite (foldMap_through_runBatch2 A B).
-    unfold compose.
-    induction (toBatch t).
-    - reflexivity.
-    - cbn.
-      rewrite Vector_to_list_vcons.
-      rewrite IHb.
-      unfold_ops @Monoid_op_list @Return_list.
-      rewrite List.rev_unit.
-      reflexivity.
-  Qed.
-
-  (** ** <<Batch_contents ∘ toBatch>> is Independent of <<B>> *)
-  (******************************************************************************)
-  Lemma Batch_contents_toBatch_sim:
-    forall {A B B'} (t: T A),
-      Batch_contents
-        (toBatch (A' := B) t) ~~
-        Batch_contents (toBatch (A' := B') t).
-  Proof.
-    intros.
-    unfold Vector_sim.
-    change (proj1_sig ?v) with (Vector_to_list _ v).
-    rewrite Batch_contents_tolist.
-    rewrite Batch_contents_tolist.
-    reflexivity.
-  Qed.
-
-  (** ** <<shape>> commutes with <<toBatch>> *)
-  (******************************************************************************)
-  Lemma shape_toBatch_spec: forall (A B: Type) (t: T A),
-      shape (toBatch (A' := B) t) =
-        toBatch (A' := B) (shape t).
-  Proof.
-    intros.
-    compose near t on right.
-    unfold shape at 2.
-    rewrite toBatch_mapfst.
-    reflexivity.
-  Qed.
-
-  (** ** Similar <<shape>>d terms have similar <<toBatch>> <<shape>>s*)
-  (******************************************************************************)
-  Lemma toBatch_shape:
-    forall {A' B} `(t1: T A) (t2: T A'),
-      shape t1 = shape t2 ->
-      shape (F := BATCH1 B (T B))
-        (toBatch (A' := B) t1) =
-        shape (F := BATCH1 B (T B))
-          (toBatch (A' := B) t2).
-  Proof.
-    introv Hshape.
-    do 2 rewrite shape_toBatch_spec.
-    rewrite Hshape.
-    reflexivity.
-  Qed.
-
-  (** ** Similar <<shape>>d <<toBatch>> implies similar <<shape>>s*)
-  (******************************************************************************)
-  Lemma toBatch_shape_inv:
-    forall {A' B} `(t1: T A) (t2: T A'),
-      shape (F := BATCH1 B (T B))
-        (toBatch (A' := B) t1) =
-        shape (F := BATCH1 B (T B))
-          (toBatch (A' := B) t2) ->
-      shape t1 = shape t2.
-  Proof.
-    introv Hshape.
-    unfold shape.
-    do 2 rewrite map_through_runBatch.
-    do 2 rewrite shape_toBatch_spec in Hshape.
-    unfold shape in Hshape.
-    do 2 rewrite map_through_runBatch in Hshape.
-    unfold compose in Hshape.
-    unfold compose.
-    destruct (@toBatch T _ A unit t1).
-  Abort.
-
-End stuff.
-
-(** * Batch_to_list *)
+(** * Traversable Functors are Containers *)
 (******************************************************************************)
-Section Batch.
 
-  Definition Batch_to_list: forall `(b: Batch A B C), list A.
-  Proof.
-    intros. apply (tolist (F := BATCH1 B C) b).
-  Defined.
-
-  Lemma Batch_contents_list: forall `(b: Batch A B C),
-      proj1_sig (Batch_contents b) = List.rev (Batch_to_list b).
-  Proof.
-    intros.
-    induction b.
-    - reflexivity.
-    - cbn.
-      rewrite proj_vcons.
-      rewrite IHb.
-      rewrite <- List.rev_unit.
-      reflexivity.
-  Qed.
-
-  Lemma Batch_to_list_rw2 {A B C}: forall (b: Batch A B (B -> C)) (a: A),
-      Batch_to_list (b ⧆ a) = Batch_to_list b ++ (a::nil).
-  Proof.
-    intros.
-    cbn.
-    reflexivity.
-  Qed.
-
-End Batch.
-
-(** * Proof that traversable functors are shapely over lists *)
+(** ** Traversable Functors are Shapely *)
 (******************************************************************************)
 Section shapeliness.
 
   Context
     `{TraversableFunctor T}
     `{Map T}
-    `{! Compat_Map_Traverse T}
     `{ToBatch T}
+    `{! Compat_Map_Traverse T}
     `{! Compat_ToBatch_Traverse T}.
 
   Lemma shapeliness_tactical: forall (A: Type) (b1 b2: Batch A A (T A)),
-      runBatch (const (list A)) (ret (T := list)) _ b1 =
-        runBatch (const (list A)) (ret (T := list) (A := A)) _ b2 ->
-      mapfst_Batch A unit (const tt) b1 = mapfst_Batch A unit (const tt) b2 ->
-      runBatch (fun A => A) id (T A) b1 = runBatch (fun A => A) id (T A) b2.
+      runBatch (G := const (list A))
+        (ret (T := list)) b1 =
+        runBatch (G := const (list A))
+          (ret (T := list) (A := A)) b2 ->
+      mapfst_Batch (const tt) b1 = mapfst_Batch (const tt) b2 ->
+      b1 = b2.
+    (* runBatch (fun A => A) id (T A) b1 = runBatch (fun A => A) id (T A) b2. *)
   Proof.
     introv Hlist Hshape.
     induction b1 as [C c1 | C rest1 IHrest1 a1];
@@ -189,6 +89,16 @@ Section shapeliness.
       t1 = t2.
   Proof.
     introv [hyp1 hyp2].
+    change (id t1 = id t2).
+    rewrite id_through_runBatch.
+    unfold compose.
+    enough (cut: toBatch (A := A) (A' := A) t1 = toBatch t2)
+      by now rewrite cut.
+    assert (toBatch (A' := A) (shape t1) = toBatch (shape t2)).
+    { now rewrite hyp1. }
+    rewrite <- shape_toBatch_spec in H2.
+    rewrite <- shape_toBatch_spec in H2.
+
     assert (hyp1': (toBatch (A := unit) (A' := A) ∘ shape) t1 =
                       (toBatch (A := unit) (A' := A) ∘ shape) t2).
     { unfold compose, shape in *. now rewrite hyp1. }
@@ -197,14 +107,13 @@ Section shapeliness.
     rewrite toBatch_mapfst in hyp1.
     rewrite (tolist_through_runBatch A t1) in hyp2.
     rewrite (tolist_through_runBatch A t2) in hyp2.
-    change (id t1 = id t2).
-    rewrite id_through_runBatch.
+
     unfold compose. auto using shapeliness_tactical.
   Qed.
 
 End shapeliness.
 
-(** * Pointwise reasoning for operations *)
+(** ** Pointwise Reasoning *)
 (******************************************************************************)
 Section pointwise.
 
@@ -277,8 +186,20 @@ Section pointwise.
     assumption.
   Qed.
 
+  (** ** Typeclass Instances *)
+  (******************************************************************************)
   #[export] Instance ContainerFunctor_Traverse:
     ContainerFunctor T.
+  Proof.
+    constructor.
+    - rewrite compat_tosubset_traverse.
+      typeclasses eauto.
+    - typeclasses eauto.
+    - intros. now apply map_respectful.
+  Qed.
+
+  #[export] Instance ShapelyFunctor_Traverse:
+    ShapelyFunctor T.
   Proof.
     constructor.
     - rewrite compat_tosubset_traverse.
@@ -323,21 +244,6 @@ Section length.
     intros.
     symmetry.
     apply plength_eq_length.
-  Qed.
-
-  Lemma length_Batch_independent: forall `(t: T A) B C,
-      length_Batch (toBatch (A' := B) t) =
-        length_Batch (toBatch (A' := C) t).
-  Proof.
-    intros.
-    rewrite length_Batch_spec.
-    rewrite length_Batch_spec.
-    compose near t on left.
-    compose near t on right.
-    rewrite <- traverse_through_runBatch.
-    rewrite <- traverse_through_runBatch.
-    rewrite (traverse_const2 _ B C).
-    reflexivity.
   Qed.
 
 End length.
@@ -761,7 +667,7 @@ Section deconstruction.
 
 End deconstruction.
 
-(** * Auto-refining <<Batch>> *)
+(** * Annotating <<Batch>> with Proofs of Occurrence *)
 (******************************************************************************)
 Require Import ContainerFunctor.
 

@@ -133,6 +133,7 @@ Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
 ##########################################################
 # BASIC THEORY                                           #
 ##########################################################
+Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
@@ -142,7 +143,7 @@ Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
 ##########################################################
 Tealeaves/Functors/Ctxset.v
 Tealeaves/Functors/Diagonal.v
-Tealeaves/Functors/Categorical/List.v
+#Tealeaves/Functors/Categorical/List.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/Reader.v
@@ -150,7 +151,6 @@ Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
 Tealeaves/Functors/Subset.v
 Tealeaves/Functors/Writer.v
-Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/List_Telescoping_General.v
 Tealeaves/Functors/Vector.v
 Tealeaves/Functors/VectorRefinement.v

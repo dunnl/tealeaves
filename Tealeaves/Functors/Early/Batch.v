@@ -494,7 +494,6 @@ Qed.
 
 (** * The <<runBatch>> Operation *)
 (******************************************************************************)
-
 Fixpoint runBatch {A B: Type}
   (F: Type -> Type) `{Map F} `{Mult F} `{Pure F}
    (ϕ: A -> F B) (C: Type) (b: Batch A B C): F C :=
@@ -1302,3 +1301,8 @@ Qed.
 Module Notations.
   Infix "⧆" := (Step _ _ _) (at level 51, left associativity): tealeaves_scope.
 End Notations.
+
+(** * Arguments *)
+(******************************************************************************)
+#[global] Arguments runBatch {A B}%type_scope {G}%function_scope
+  {H H0 H1} f%function_scope {C}%type_scope b: rename.

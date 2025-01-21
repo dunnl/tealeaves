@@ -10,10 +10,6 @@ Import DecoratedTraversableFunctor.Notations.
 
 #[local] Generalizable Variables E T G ϕ.
 
-#[local] Arguments runBatch {A B}%type_scope
-  {F}%function_scope
-  {H H0 H1} ϕ%function_scope {C}%type_scope b.
-
 (** * Coalgebraic DTFs to Kleisli DTFs *)
 (******************************************************************************)
 
@@ -46,8 +42,8 @@ Module DerivedInstances.
       forall (A B C: Type)
         (g: E * B -> G2 C) (f: E * A -> G1 B),
         g ⋆3 f =
-          runBatch (F := G1) f (C := G2 C) ∘
-            map (F := Batch (E * A) B) (runBatch (F := G2) g (C := C)) ∘
+          runBatch (G := G1) f (C := G2 C) ∘
+            map (F := Batch (E * A) B) (runBatch (G := G2) g (C := C)) ∘
             double_batch3 C.
     Proof.
       intros. ext [e a].

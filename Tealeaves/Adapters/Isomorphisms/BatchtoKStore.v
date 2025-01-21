@@ -14,7 +14,7 @@ Section batch_to.
 
   Definition Batch_to_KStore {A B C}: Batch A B C -> KStore A B C.
   Proof.
-    eapply (runBatch (KStore A B) kstore).
+    eapply (runBatch (G := KStore A B) kstore).
   Defined.
 
   Definition KStore_length: forall A B C,

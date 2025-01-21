@@ -11,10 +11,10 @@ Import DecoratedTraversableMonad.Notations.
 
 #[local] Generalizable Variables U W T G ϕ.
 
-#[local] Arguments runBatch {A B}%type_scope {F}%function_scope {H H0 H1} ϕ%function_scope {C}%type_scope b.
 #[local] Arguments batch {A} (B)%type_scope _.
 #[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
+
 
 (** * Coalgebraic DTMs to Kleisli DTM *)
 (******************************************************************************)
@@ -34,8 +34,8 @@ Section with_algebra.
     forall (A B C : Type)
       (g : W * B -> G2 (T C)) (f : W * A -> G1 (T B)),
       g ⋆7 f =
-        runBatch (F := G1) f (C := G2 (T C)) ∘
-          map (F := Batch (W * A) (T B)) (runBatch (F := G2) g (C := T C)) ∘
+        runBatch (G := G1) f (C := G2 (T C)) ∘
+          map (F := Batch (W * A) (T B)) (runBatch (G := G2) g (C := T C)) ∘
           double_batch7.
   Proof.
     intros. ext [w a].

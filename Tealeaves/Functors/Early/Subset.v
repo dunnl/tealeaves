@@ -4,6 +4,7 @@ From Tealeaves Require Export
   Classes.Monoid.
 
 From Tealeaves Require Import
+  Classes.Categorical.ApplicativeCommutativeIdempotent
   Classes.Kleisli.Monad.
 
 Import Kleisli.Monad.Notations.
@@ -279,3 +280,122 @@ Proof.
   intros. now rewrite H. specialize (lemma a).
   cbv in lemma. symmetry. now rewrite <- lemma.
 Qed.
+
+(** * Applicative instances for subset *)
+(******************************************************************************)
+Section subset_applicative_instance.
+
+  Import Applicative.Notations.
+
+  #[export] Instance Pure_subset: Pure subset := @eq.
+
+  #[export] Instance Mult_subset: Mult subset :=
+    fun A B '(sa, sb) '(a, b) => sa a /\ sb b.
+
+  #[export] Instance Applicative_subset: Applicative subset.
+  Proof.
+    constructor.
+    - apply Functor_subset.
+    - intros. change (pure ?x) with (ret x).
+      now simpl_subset.
+    - intros. unfold_ops @Mult_subset.
+      ext [c d]. cbv. propext.
+      + intros [[a [Ha1 Ha2]] [b [Hb1 Hb2]]].
+        exists (a, b). subst. intuition.
+      + intros [[a b] [Hab1 Hab2]].
+        inversion Hab2. subst. intuition eauto.
+    - intros. ext [a [b c]]. cbv.
+      propext.
+      + intros [[[a' b'] c'] [Ht1 Ht2]].
+        inversion Ht2; subst. tauto.
+      + intros. exists (a, b, c). tauto.
+    - intros. ext a. cbv.
+      propext.
+      + intros [[tt' a'] [H1 H2]]. now subst.
+      + intros Xa. exists (tt, a). tauto.
+    - intros. ext a. cbv.
+      propext.
+      + intros [[a' tt'] [H1 H2]]. now subst.
+      + intros Xa. exists (a, tt). tauto.
+    - intros. ext [a' b']. cbv. propext.
+      + intuition. now subst.
+      + intros X; inversion X; now subst.
+  Qed.
+
+  Lemma subset_ap_spec:
+    forall (A B: Type) (sf: subset (A -> B)) (sa: subset A) (b: B),
+      (sf <⋆> sa) b = exists (f: A -> B) (a: A), sa a /\ sf f /\ f a = b.
+  Proof.
+    intros.
+    unfold ap.
+    unfold_ops @Map_subset.
+    unfold_ops @Mult_subset.
+    propext.
+    - intros [[f a] [[hyp1 hyp2] hyp3]].
+      exists f a. auto.
+    - intros [f [a [hyp1 [hyp2 hyp3]]]].
+      subst. exists (f, a). tauto.
+  Qed.
+
+  Lemma fn_nequal_counterexample:
+    forall (A B: Type) (f g: A -> B),
+      (exists (a: A), (f a <> g a)) -> f <> g.
+  Proof.
+    intros.
+    intro contra.
+    destruct H as [a Hneq].
+    rewrite contra in Hneq.
+    contradiction.
+  Qed.
+
+  Corollary subset_nequal_counterexample:
+    forall (A: Type) (a: A) (s1 s2: subset A),
+      s1 a -> ~ s2 a ->
+      s1 <> s2.
+  Proof.
+    intros.
+    apply fn_nequal_counterexample.
+    exists a. intro contra.
+    rewrite contra in H.
+    contradiction.
+  Qed.
+
+  Example not_subset_idem:
+    ~ (forall (A: Type) (s: subset A),
+          s ⊗ s = map (fun a: A => (a, a)) s).
+  Proof.
+    intro contra.
+    specialize (contra nat ({{1}} ∪ {{2}})).
+    generalize contra.
+    pose (ctx := subset_nequal_counterexample (nat * nat) (1, 2)).
+    unfold not in ctx.
+    unfold map, Map_subset, mult,Mult_subset.
+    apply ctx.
+    - simpl_subset. tauto.
+    - intros [a [_ false]].
+      now inversion false.
+  Qed.
+
+  Lemma subset_commutative:
+    forall (A: Type) (sA: subset A), Center subset%tea A sA.
+  Proof.
+    intros. constructor; intros;
+     unfold_ops @Mult_subset;
+       unfold_ops @Map_subset.
+     - rename x into sB.
+       ext [b a].
+       propext.
+       + intros [Ha Hb].
+         exists (a, b). tauto.
+       + intros [[a' b'] [H1 H2]].
+         inversion H2. subst. tauto.
+     - rename x into sB.
+       ext [a b].
+       propext.
+       + intros [Ha Hb].
+         exists (b, a). tauto.
+       + intros [[b' a'] [H1 H2]].
+         inversion H2. subst. tauto.
+  Qed.
+
+End subset_applicative_instance.
