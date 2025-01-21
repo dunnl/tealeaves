@@ -8,7 +8,7 @@ Import List.ListNotations.
 
 #[local] Generalizable Variables G F A B.
 
-(** * <<Tolist>> and <<TolistCtx>> operations *)
+(** * The <<Tolist>> Operation *)
 (******************************************************************************)
 Import Classes.Functor.Notations.
 
@@ -158,7 +158,7 @@ Section tolist_respectfulness_characterizations.
 
 End tolist_respectfulness_characterizations.
 
-(** * [fold] and [foldMap] operations *)
+(** ** [fold] and [foldMap] operations *)
 (******************************************************************************)
 Section fold.
 
@@ -219,4 +219,117 @@ Section fold_monoidal_structure.
   Qed.
 
 End fold_monoidal_structure.
+*)
+
+(*
+TODO
+
+(** * Enumerating elements of listable functors *)
+(******************************************************************************)
+Section ToSubset_Tolist.
+
+  #[local] Instance ToSubset_Tolist `{Tolist F}: ToSubset F :=
+  fun A => tosubset ∘ tolist.
+
+End ToSubset_Tolist.
+
+Class Compat_ToSubset_Tolist
+  (F: Type -> Type)
+  `{H_tosubset: ToSubset F}
+  `{H_tolist: Tolist F}: Prop :=
+  compat_element_tolist :
+    @tosubset F H_tosubset =
+      @tosubset F (@ToSubset_Tolist F H_tolist).
+
+Lemma tosubset_to_tolist `{Compat_ToSubset_Tolist F} :
+  forall (A: Type),
+    tosubset (F := F) (A := A) = tosubset (F := list) ∘ tolist.
+Proof.
+  now rewrite compat_element_tolist.
+Qed.
+
+Theorem in_iff_in_tolist `{Compat_ToSubset_Tolist F} :
+  forall (A: Type) (t: F A) (a: A),
+    a ∈ t <-> a ∈ tolist t.
+Proof.
+  intros. unfold element_of.
+  now rewrite compat_element_tolist.
+Qed.
+
+#[export] Instance Natural_Element_Tolist :
+  forall `{ShapelyFunctor F}, Natural (@tosubset F ToSubset_Tolist).
+Proof.
+  constructor; try typeclasses eauto.
+  intros A B f. unfold tosubset, ToSubset_Tolist. ext t.
+  reassociate <- on left. rewrite (natural (G := subset)).
+  reassociate -> on left. now rewrite natural.
+Qed.
+
+(** * Shapely functors are container-like *)
+(******************************************************************************)
+Section ShapelyFunctor_setlike.
+
+  Context
+    `{ShapelyFunctor F}.
+
+  Lemma shapeliness_iff :
+    forall (A: Type) (t u: F A),
+      t = u <-> shape t = shape u /\ tolist t = tolist u.
+  Proof.
+    intros. split.
+    + intros; subst; auto.
+    + apply (shp_shapeliness).
+  Qed.
+
+  Lemma shapely_map_eq_iff :
+    forall (A B: Type) (t: F A) (f g: A -> B),
+      map f t = map g t <->
+      map f (tolist t) = map g (tolist t).
+  Proof.
+    intros.
+    compose near t on right. rewrite 2(natural).
+    unfold compose. split.
+    - introv heq. now rewrite heq.
+    - intros. apply (shp_shapeliness). rewrite 2(shape_map).
+      auto.
+  Qed.
+
+  Context
+    `{ToSubset F}
+      `{! Compat_ToSubset_Tolist F}.
+
+  Lemma compat_element_tolist_natural :
+    `{Natural (@tosubset F _)}.
+  Proof.
+    constructor; try typeclasses eauto.
+    intros.
+    rewrite compat_element_tolist.
+    rewrite (natural (Natural := Natural_Element_Tolist)).
+    reflexivity.
+  Qed.
+
+  Theorem shapely_pointwise_iff :
+    forall (A B: Type) (t: F A) (f g: A -> B),
+      (forall (a: A), a ∈ t -> f a = g a) <-> map f t = map g t.
+  Proof.
+    introv.
+    rewrite shapely_map_eq_iff.
+    setoid_rewrite in_iff_in_tolist.
+    rewrite map_rigidly_respectful_list.
+    reflexivity.
+  Qed.
+
+  Corollary shapely_pointwise :
+    forall (A B: Type) (t: F A) (f g: A -> B),
+      (forall (a: A), a ∈ t -> f a = g a) -> map f t = map g t.
+  Proof.
+   introv. rewrite shapely_pointwise_iff. auto.
+  Qed.
+
+  #[export] Instance ContainerFunctor_Shapely :
+    ContainerFunctor F :=
+    {| cont_natural := compat_element_tolist_natural;
+       cont_pointwise := shapely_pointwise; |}.
+
+End ShapelyFunctor_setlike.
 *)

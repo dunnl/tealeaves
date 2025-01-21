@@ -13,10 +13,6 @@ Tealeaves/Adapters/MonadToApplicative.v
 
 
 # CONTAINER/COALGEBRAIC STUFF
-Tealeaves/Functors/Vector.v
-Tealeaves/Functors/VectorRefinement.v
-Tealeaves/Functors/KStore.v
-Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
 # END CONTAINER STUFF
 
 

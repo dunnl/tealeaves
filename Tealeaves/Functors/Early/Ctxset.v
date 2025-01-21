@@ -125,19 +125,18 @@ Section ctxset.
   Proof.
     intros. unfold ctxset.
     rewrite ctxset_mapd_spec.
-    Fail typeclasses eauto.
-  Admitted.
+    typeclasses eauto.
+  Qed.
 
   #[export] Instance map_ctxset_morphism: forall `(f: A -> B),
       Monoid_Morphism (ctxset E A) (ctxset E B) (map f).
   Proof.
     intros. unfold ctxset.
     rewrite ctxset_map_spec.
-    Fail typeclasses eauto.
-  Admitted.
+    typeclasses eauto.
+  Qed.
 
 End ctxset.
-
 
 (** * The <<ctxset>> monad *)
 (******************************************************************************)
@@ -308,7 +307,8 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  (*
+  (* TODO
+
   Lemma ctxset_bindd1: forall A: Type,
       bindd (T := ctxset W) (ret (T := ctxset W) ∘ extract) = @id (ctxset W A).
   Proof.

@@ -129,26 +129,42 @@ Tealeaves/Classes/Categorical/ShapelyFunctor.v
 Tealeaves/Functors/Early/Environment.v
 Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
 #Tealeaves/Classes/Kleisli/DecoratedShapelyMonad.v
+
+##########################################################
+# BASIC THEORY                                           #
+##########################################################
+Tealeaves/Functors/Constant.v
+Tealeaves/Functors/ProductFunctor.v
+Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
+
 ##########################################################
 # FUNCTORS                                               #
 ##########################################################
 Tealeaves/Functors/Ctxset.v
-Tealeaves/Functors/Constant.v
 Tealeaves/Functors/Diagonal.v
-Tealeaves/Functors/Environment.v
-Tealeaves/Functors/List.v
 Tealeaves/Functors/Categorical/List.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
-Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Functors/Reader.v
 Tealeaves/Functors/State.v
 Tealeaves/Functors/Store.v
 Tealeaves/Functors/Subset.v
 Tealeaves/Functors/Writer.v
-# Backwards comes later becauase it refers to some other functors
 Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/List_Telescoping_General.v
+Tealeaves/Functors/Vector.v
+Tealeaves/Functors/VectorRefinement.v
+Tealeaves/Functors/KStore.v
+
+##########################################################
+# TRAVERSAL THEORY                                       #
+##########################################################
+Tealeaves/Functors/Batch.v
+Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
+Tealeaves/Functors/List.v
+Tealeaves/Functors/Environment.v
+
+
 ##########################################################
 # POLYMORPHICALLY DECORATED DTFs AND DTMs                #
 ##########################################################
@@ -160,7 +176,4 @@ Tealeaves/Functors/List_Telescoping_General.v
 Tealeaves/Classes/Full/Monad.v
 Tealeaves/Classes/Full/DecoratedFunctor.v
 Tealeaves/Classes/Full/DecoratedMonad.v
-##########################################################
-# THEORY                                                 #
-##########################################################
-Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
+

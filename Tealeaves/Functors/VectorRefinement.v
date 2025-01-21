@@ -1074,7 +1074,6 @@ Definition traverse_Vector
 #[export] Instance Traverse_Vector {n}: Traverse (Vector n)
   := traverse_Vector n.
 
-
 (** ** Rewriting rules *)
 (******************************************************************************)
 Lemma traverse_Vector_vnil:
@@ -1143,6 +1142,24 @@ Proof.
   unfold_ops @Mult_const.
   rewrite monoid_id_r.
   reflexivity.
+Qed.
+
+(** ** Compatibility with <<map>> *)
+(******************************************************************************)
+#[export] Instance Compat_Map_Traverse_Vector {n: nat}:
+  Compat_Map_Traverse (Vector n).
+Proof.
+  hnf. ext A B f v.
+  change_left (map (F := Vector n) f v).
+  change_right (traverse (G := fun A => A) (T := Vector n) f v).
+  induction v using Vector_induction.
+  - rewrite map_Vector_vnil.
+    rewrite traverse_Vector_vnil.
+    reflexivity.
+  - rewrite map_Vector_vcons.
+    rewrite traverse_Vector_vcons.
+    rewrite IHv.
+    reflexivity.
 Qed.
 
 (** ** Miscellaneous *)
@@ -1439,3 +1456,330 @@ Definition SSR_Goal: Type :=
 Goal SSR_Goal.
   unfold SSR_Goal. intros.
 Abort.
+
+(** * <<tosubset>> on Vectors *)
+(******************************************************************************)
+Import ContainerFunctor.Notations.
+Import Subset.Notations.
+
+#[export] Instance ToSubset_Vector {n}: ToSubset (Vector n) :=
+  fun A v => tosubset (F := list) (proj1_sig v).
+
+Lemma tosubset_Vector_vnil: forall (A: Type),
+    tosubset (@vnil A) = ∅.
+Proof.
+  tauto.
+Qed.
+
+Lemma tosubset_Vector_vcons: forall (n: nat) (A: Type) (a: A) (v: Vector n A),
+    tosubset (vcons n a v) = {{a}} ∪ tosubset v.
+Proof.
+  intros.
+  destruct v.
+  cbn. tauto.
+Qed.
+
+#[export] Instance Compat_ToSubset_Traverse_Vector {n: nat}:
+  Compat_ToSubset_Traverse (Vector n).
+Proof.
+  hnf. ext A v.
+  unfold_ops @ToSubset_Traverse.
+  induction v using Vector_induction.
+  - reflexivity.
+  - rewrite foldMap_Vector_vcons;
+      try typeclasses eauto.
+    rewrite tosubset_Vector_vcons.
+    rewrite IHv.
+    reflexivity.
+Qed.
+
+(** * Zipping vectors *)
+(******************************************************************************)
+Definition Vector_zip_eq:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B),
+    Vector n (A * B).
+Proof.
+  introv v1 v2.
+  induction n.
+  - exact vnil.
+  - apply vcons.
+    exact (Vector_hd v1, Vector_hd v2).
+    apply IHn.
+    exact (Vector_tl v1).
+    exact (Vector_tl v2).
+Defined.
+
+Lemma Vector_zip_eq_vcons:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B)
+    (a: A) (b: B),
+    Vector_zip_eq A B (S n)
+      (vcons n a v1) (vcons n b v2) =
+      vcons n (a, b) (Vector_zip_eq A B n v1 v2).
+Proof.
+  intros.
+  rewrite (Vector_surjective_pairing2).
+  rewrite (Vector_surjective_pairing2).
+  rewrite Vector_hd_vcons.
+  rewrite Vector_tl_vcons.
+  cbn.
+  rewrite Vector_hd_vcons.
+  rewrite Vector_hd_vcons.
+  rewrite Vector_hd_vcons.
+  rewrite Vector_tl_vcons.
+  rewrite Vector_tl_vcons.
+  rewrite Vector_tl_vcons.
+  reflexivity.
+Qed.
+
+Lemma Vector_zip_eq_fst:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B),
+    map fst (Vector_zip_eq A B n v1 v2) = v1.
+Proof.
+  intros.
+  induction n.
+  - rewrite (Vector_nil_eq v1).
+    rewrite (Vector_nil_eq v2).
+    apply Vector_sim_eq.
+    reflexivity.
+  - rewrite (Vector_surjective_pairing2 (v := v1)).
+    rewrite (Vector_surjective_pairing2 (v := v2)).
+    rewrite Vector_zip_eq_vcons.
+    rewrite map_Vector_vcons.
+    cbn.
+    rewrite IHn.
+    reflexivity.
+Qed.
+
+Lemma Vector_zip_eq_snd:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B),
+    map snd (Vector_zip_eq A B n v1 v2) = v2.
+Proof.
+  intros.
+  induction n.
+  - rewrite (Vector_nil_eq v1).
+    rewrite (Vector_nil_eq v2).
+    apply Vector_sim_eq.
+    reflexivity.
+  - rewrite (Vector_surjective_pairing2 (v := v1)).
+    rewrite (Vector_surjective_pairing2 (v := v2)).
+    rewrite Vector_zip_eq_vcons.
+    rewrite map_Vector_vcons.
+    cbn.
+    rewrite IHn.
+    reflexivity.
+Qed.
+
+Lemma Vector_zip_eq_sim:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B)
+    (v3: Vector n B),
+    v2 ~~ v3 ->
+    Vector_zip_eq A B n v1 v2 =
+      Vector_zip_eq A B n v1 v3.
+Proof.
+  introv Hsim.
+  induction n.
+  - reflexivity.
+  - rewrite (Vector_surjective_pairing2 (v := v1)).
+    rewrite (Vector_surjective_pairing2 (v := v2)).
+    rewrite Vector_zip_eq_vcons.
+    rewrite (Vector_surjective_pairing2 (v := v3)).
+    rewrite Vector_zip_eq_vcons.
+    rewrite (Vector_hd_sim Hsim).
+    assert (Vector_tl v2 ~~ Vector_tl v3)
+      by now apply Vector_tl_sim.
+    fequal. auto.
+Qed.
+
+(** ** Generalized zip operation *)
+(******************************************************************************)
+Definition Vector_zip
+  (A B: Type) (n m: nat)
+  (v1: Vector n A)
+  (v2: Vector m B)
+  (Heq: n = m): Vector n (A * B) :=
+  Vector_zip_eq A B n v1 (coerce (eq_sym Heq) in v2).
+
+(* This verison is less convenient than the above one in some
+ respects because it cannot reduce unless the proof of equality is
+ eq_refl. *)
+Definition Vector_zip_alt
+  (A B: Type) (n m: nat)
+  (v1: Vector n A)
+  (v2: Vector m B)
+  (Heq: n = m): Vector n (A * B) :=
+    (match Heq in (_ = m) return Vector m B -> Vector n (A * B) with
+     | eq_refl => Vector_zip_eq A B n v1
+     end) v2.
+
+Lemma Vector_zip_eq_spec:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B),
+    Vector_zip_eq A B n v1 v2 =
+      Vector_zip A B n n v1 v2 eq_refl.
+Proof.
+  intros.
+  unfold Vector_zip.
+  change (@eq_sym nat n n (@eq_refl nat n))
+    with (@eq_refl nat n).
+  rewrite coerce_Vector_eq_refl.
+  reflexivity.
+Qed.
+
+(* This lemma is not (apparently?) provable for Vector_zip_alt.
+It is only provable here because the applied lemmas already depend on proof irrelevance internally *)
+Lemma Vector_zip_proof_irrelevance:
+  forall (A B: Type) (n m: nat)
+    (v1: Vector n A)
+    (v2: Vector m B)
+    (Heq1: n = m)
+    (Heq2: n = m),
+    Vector_zip A B n m v1 v2 Heq1 =
+      Vector_zip A B n m v1 v2 Heq2.
+Proof.
+  intros.
+  unfold Vector_zip.
+  apply Vector_zip_eq_sim.
+  apply (transitive_Vector_sim (v2 := v2)).
+  apply Vector_coerce_sim_l.
+  apply Vector_coerce_sim_r.
+Qed.
+
+Lemma Vector_zip_proof_irrelevance2:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B)
+    (Heq: n = n),
+    Vector_zip A B n n v1 v2 Heq =
+      Vector_zip_eq A B n v1 v2.
+Proof.
+  intros.
+  unfold Vector_zip.
+  apply Vector_zip_eq_sim.
+  apply Vector_coerce_sim_l.
+Qed.
+
+Lemma Vector_zip_fst:
+  forall (A B: Type) (n m: nat)
+    (v1: Vector n A)
+    (v2: Vector m B)
+    (Heq: n = m),
+    map fst (Vector_zip A B n m v1 v2 Heq) = v1.
+Proof.
+  intros.
+  subst.
+  apply Vector_zip_eq_fst.
+Qed.
+
+Lemma Vector_zip_snd:
+  forall (A B: Type) (n m: nat)
+    (v1: Vector n A)
+    (v2: Vector m B)
+    (Heq: n = m),
+    map snd (Vector_zip A B n m v1 v2 Heq) ~~ v2.
+Proof.
+  intros.
+  subst.
+  rewrite <- Vector_zip_eq_spec.
+  rewrite Vector_zip_eq_snd.
+  reflexivity.
+Qed.
+
+Lemma Vector_zip_vcons1:
+  forall (A B: Type) (n m: nat)
+    (v1: Vector n A)
+    (v2: Vector m B)
+    (Heq: n = m)
+    (a: A) (b: B),
+    Vector_zip A B (S n) (S m)
+      (vcons n a v1) (vcons m b v2) (f_equal S Heq) =
+      vcons n (a, b) (Vector_zip A B n m v1 v2 Heq).
+Proof.
+  intros. destruct Heq.
+  rewrite <- Vector_zip_eq_spec.
+  rewrite Vector_zip_proof_irrelevance2.
+  rewrite Vector_zip_eq_vcons.
+  reflexivity.
+Qed.
+
+Lemma Vector_zip_vcons2:
+  forall (A B: Type) (n m: nat)
+    (v1: Vector n A)
+    (v2: Vector m B)
+    (Heq: S n = S m)
+    (a: A) (b: B),
+    Vector_zip A B (S n) (S m)
+      (vcons n a v1) (vcons m b v2) Heq =
+      vcons n (a, b) (Vector_zip A B n m v1 v2 (S_uncons Heq)).
+Proof.
+  intros.
+  inversion Heq.
+  subst.
+  rewrite Vector_zip_proof_irrelevance2.
+  rewrite Vector_zip_proof_irrelevance2.
+  apply Vector_zip_eq_vcons.
+Qed.
+
+(** ** Relating vectors *)
+(******************************************************************************)
+Lemma vcons_eq_inv: forall (n: nat) (A: Type) (a1 a2: A) (v1 v2: Vector n A),
+    vcons n a1 v1 = vcons n a2 v2 ->
+    a1 = a2 /\ v1 = v2.
+Proof.
+  intros.
+  assert (proj1_sig (vcons n a1 v1) = proj1_sig (vcons n a2 v2)).
+  { now rewrite H. }
+  rewrite proj_vcons in *.
+  rewrite proj_vcons in *.
+  inversion H0. split. auto.
+  apply Vector_sim_eq; auto.
+Qed.
+
+Lemma Forall_zip_spec:
+  forall (A B: Type) (n: nat) (R: A -> B -> Prop)
+    (v1: Vector n A) (v2: Vector n B),
+    traverse (G := subset) (T := Vector n) R v1 v2 =
+      foldMap (M := Prop)
+        (op := Monoid_op_and) (unit := Monoid_unit_true)
+        (uncurry R) (Vector_zip_eq A B n v1 v2).
+Proof.
+  intros.
+  induction n.
+  - rewrite (Vector_nil_eq v1).
+    rewrite (Vector_nil_eq v2).
+    cbn. propext; easy.
+  - rewrite (Vector_surjective_pairing2 (v := v1)).
+    rewrite (Vector_surjective_pairing2 (v := v2)).
+    rewrite Vector_zip_eq_vcons.
+    rewrite traverse_Vector_vcons.
+    rewrite foldMap_Vector_vcons.
+    2: typeclasses eauto.
+    rewrite subset_ap_spec.
+    propext.
+    + intros [f_vcons [a_hdv2 [hyp1 [hyp2 hyp3]]]].
+      rewrite <- map_to_ap in hyp2.
+      unfold map, Map_subset in hyp2.
+      destruct hyp2 as [b [hyp21 hyp22]].
+      subst.
+      apply vcons_eq_inv in hyp3.
+      destruct hyp3; subst.
+      rewrite <- IHn.
+      split; auto.
+    + intros [hyp1 hyp2].
+      rewrite <- IHn in hyp2.
+      exists (vcons n (Vector_hd v2)).
+      exists (Vector_tl v2). split; auto.
+      split; auto. rewrite <- map_to_ap.
+      unfold_ops @Map_subset.
+      exists (Vector_hd v2). auto.
+Qed.

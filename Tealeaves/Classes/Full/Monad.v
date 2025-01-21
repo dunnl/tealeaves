@@ -65,8 +65,6 @@ Class Compat_Join_Bind
       @bind T T bind_T A B f = @join T join_T B ∘ @map T map_T A (T B) f;
   }.
 
-About Compat_Join_Bind.
-
 (** ** Rewriting *)
 (******************************************************************************)
 Lemma join_to_bind

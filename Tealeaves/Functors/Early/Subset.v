@@ -48,7 +48,7 @@ Ltac solve_basic_subset :=
   unfold transparent tcs; unfold_subset; unfold compose; try setext;
   first [tauto | firstorder (subst; (solve auto + eauto)) ].
 
-(** ** Subset monoid instance *)
+(** * The <<subset>> Monoid *)
 (******************************************************************************)
 Section subset_monoid.
 
@@ -85,7 +85,7 @@ End subset_monoid.
 
 Solve Obligations with (intros; unfold transparent tcs; solve_basic_subset).
 
-(** *** Querying for an element is a monoid homomorphism *)
+(** ** Querying for an element is a monoid homomorphism *)
 (******************************************************************************)
 #[export] Instance Monmor_el {A: Type} (a: A) :
   @Monoid_Morphism (subset A) Prop
@@ -100,15 +100,15 @@ Proof.
   - reflexivity.
 Qed.
 
-(** * The <<subset>> functor *)
+(** * The <<subset>> Functor *)
 (******************************************************************************)
 
-(** ** Functor instance *)
+(** ** The Map Operation *)
 (******************************************************************************)
 #[export] Instance Map_subset: Map subset :=
   fun A B f s b => exists (a: A), s a /\ f a = b.
 
-(** *** Rewriting rules *)
+(** ** Rewriting rules *)
 (******************************************************************************)
 Definition map_set_nil `{f: A -> B} :
   map f ∅ = ∅ := ltac:(solve_basic_subset).
@@ -132,7 +132,7 @@ Definition map_set_add `{f: A -> B} {x y} :
   @map_set_nil  @map_set_one  @map_set_add
  : tea_set.
 
-(** *** Functor laws *)
+(** ** Functor laws *)
 (******************************************************************************)
 Lemma map_id_subset: forall (A: Type), map id = id (A := subset A).
 Proof.
@@ -158,16 +158,51 @@ Qed.
      fun_map_map := map_map_subset;
   |}.
 
-(** ** Kleisli monad instance *)
+(** ** Mapping is a Monoid Homomorphism *)
+(******************************************************************************)
+#[export] Instance Monoid_Morphism_subset_map:
+  forall (A B: Type) (f: A -> B), Monoid_Morphism (subset A) (subset B) (map f).
+Proof.
+  intros.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - ext b. apply propositional_extensionality.
+    firstorder.
+  - intros. ext b. apply propositional_extensionality.
+    firstorder.
+Qed.
+
+(** * Monad Instance (Categorical) *)
 (******************************************************************************)
 #[export] Instance Return_subset: Return subset := fun A a b => a = b.
 
 #[local] Notation "{{ x }}" := (@ret subset _ _ x).
 
+(** ** Monad Laws *)
+(******************************************************************************)
+#[export] Instance Natural_Return_subset: Natural (@ret subset _).
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - intros. ext a. ext b.
+    unfold_ops @Map_I @Map_subset @Return_subset.
+    unfold compose.
+    propext.
+    firstorder (now subst).
+    firstorder (now subst).
+Qed.
+
+(* TODO *)
+
+(** * Monad Instances (Kleisli) *)
+(******************************************************************************)
+
 #[export] Instance Bind_subset: Bind subset subset := fun A B f s_a =>
 (fun b => exists (a: A), s_a a /\ f a b).
 
-(** *** Rewriting laws *)
+(** ** Rewriting laws *)
 (******************************************************************************)
 Definition set_in_ret: forall A (a b: A),
     (ret a) b = (a = b) := ltac:(reflexivity).
@@ -196,7 +231,7 @@ Qed.
   @bind_set_nil  @bind_set_one  @bind_set_add
  : tea_set.
 
-(** *** Monad laws *)
+(** ** Monad Laws *)
 (******************************************************************************)
 Lemma set_bind0: forall (A B: Type) (f: A -> subset B),
     bind f ∘ ret = f.

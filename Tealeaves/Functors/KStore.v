@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Functors.Batch
+  Functors.Early.Batch
   Functors.Vector.
 
 #[local] Generalizable Variables G ϕ.
