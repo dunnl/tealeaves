@@ -126,6 +126,20 @@ Ltac change_right new :=
 Tactic Notation "change" "left" constr(new) := change_left new.
 Tactic Notation "change" "right" constr(new) := change_right new.
 
+Ltac hide_lhs :=
+  match goal with
+  | |- ?lhs = ?rhs =>
+      let name := fresh "lhs" in
+      remember lhs as name
+  end.
+
+Ltac hide_rhs :=
+  match goal with
+  | |- ?lhs = ?rhs =>
+      let name := fresh "rhs" in
+      remember rhs as name
+  end.
+
 (** *** Re-association of an expression *)
 (******************************************************************************)
 Tactic Notation "reassociate" "<-" := rewrite compose_assoc.

@@ -21,6 +21,66 @@ Import Kleisli.TraversableFunctor.Notations.
 #[local] Arguments pure F%function_scope {Pure} {A}%type_scope _.
 #[local] Arguments mult F%function_scope {Mult} {A B}%type_scope _.
 
+(** * <<foldMap>> Rewriting Lemmas *)
+(******************************************************************************)
+Section Batch_foldMap_rewriting.
+
+  Context {A B C: Type}.
+
+  Lemma foldMap_Batch_rw2:
+    forall `{Monoid M}
+      (f: A -> M) (a: A) (rest: Batch A B (B -> C)),
+      foldMap (T := BATCH1 B C) f (rest ⧆ a) =
+        foldMap f rest ● f a.
+  Proof.
+    intros.
+    unfold foldMap.
+    rewrite traverse_Batch_rw2.
+    reflexivity.
+  Qed.
+
+  (** ** <<tolist>> *)
+  (******************************************************************************)
+  Import List.ListNotations.
+
+  Lemma tolist_Batch_rw2: forall (b: Batch A B (B -> C)) (a: A),
+      tolist (b ⧆ a) = tolist b ++ [a].
+  Proof.
+    intros.
+    reflexivity.
+  Qed.
+
+  (** ** <<tosubset>> *)
+  (******************************************************************************)
+  Import Subset.Notations.
+  #[export] Instance ToSubset_Batch1 {B C}: ToSubset (BATCH1 B C) :=
+    ToSubset_Traverse.
+
+  Lemma tosubset_Batch_rw2: forall (b: Batch A B (B -> C)) (a: A),
+      tosubset (b ⧆ a) = tosubset b ∪ {{a}}.
+  Proof.
+    intros.
+    rewrite tosubset_to_foldMap.
+    rewrite foldMap_Batch_rw2.
+    reflexivity.
+  Qed.
+
+  (** ** <<a ∈ _>> *)
+  (******************************************************************************)
+  Import ContainerFunctor.Notations.
+
+  Lemma element_of_Batch_rw2: forall `(b: Batch A B (B -> C)) a a',
+      a' ∈ (b ⧆ a) = (a' ∈ b \/ a' = a).
+  Proof.
+    intros.
+    rewrite element_of_to_foldMap.
+    rewrite element_of_to_foldMap.
+    rewrite foldMap_Batch_rw2.
+    reflexivity.
+  Qed.
+
+End Batch_foldMap_rewriting.
+
 (** * Simultaneous Induction on Two <<Batch>>es of the Same Shape *)
 (******************************************************************************)
 Section shape_induction.
@@ -149,6 +209,8 @@ Section runBatch_monoid.
 End runBatch_monoid.
 
 (** * The <<length_Batch>> Operation *)
+(** This function is introduced because using <<plength>> has less desirable
+    simplification behavior, which makes programming functions like <<Batch_make>>  difficult *)
 (******************************************************************************)
 From Tealeaves Require Import Misc.NaturalNumbers.
 
@@ -162,19 +224,36 @@ Section length.
 
   Lemma length_Batch_spec {A B C: Type} (b: Batch A B C):
     length_Batch b =
-      runBatch (G := @const Type Type nat) (fun _ => 1) b.
+      plength (T := BATCH1 B C) b.
   Proof.
-    intros.
     induction b.
     - reflexivity.
     - cbn. rewrite IHb.
-      unfold_ops @Monoid_op_plus.
-      lia.
+      unfold_all_transparent_tcs.
+      rewrite PeanoNat.Nat.add_1_r.
+      reflexivity.
+  Qed.
+
+  Lemma length_Batch_spec2 {A B C: Type} (b: Batch A B C):
+    length_Batch b =
+      runBatch (G := @const Type Type nat) (fun _ => 1) b.
+  Proof.
+    rewrite length_Batch_spec.
+    induction b.
+    - reflexivity.
+    - cbn. rewrite <- IHb.
+      reflexivity.
   Qed.
 
   (** ** Rewriting Rules *)
   (** TODO *)
   (******************************************************************************)
+  Lemma length_Batch_rw2 {A B C: Type}:
+    forall (b: Batch A B (B -> C)) (a: A),
+      length_Batch (b ⧆ a) = S (length_Batch b).
+  Proof.
+    reflexivity.
+  Qed.
 
   (** ** Length is the Same as the Underlying <<list>> *)
   (* The length of a <<Batch>> is the same as the length of the
@@ -421,6 +500,32 @@ Section deconstruction.
     Qed.
 
   End rw.
+
+  (** ** Relating <<tolist>> and <<Batch_contents>> *)
+  (******************************************************************************)
+  Ltac hide_rhs :=
+    match goal with
+    | |- ?lhs = ?rhs =>
+        let name := fresh "rhs" in
+        remember rhs as name
+    end.
+
+  Lemma tolist_Batch_contents {A B C}: forall (b: Batch A B C),
+      proj1_sig (Batch_contents b) = List.rev (tolist b).
+  Proof.
+    intros.
+    induction b.
+    - reflexivity.
+    - rewrite Batch_contents_rw2.
+      hide_rhs; cbn; rewrite Heqrhs; clear Heqrhs.
+      (* ^^ Simplify a hidden (length_Batch (b ⧆ a) without affecting RHS. *)
+      (* ^^ rewrite Batch_contents_rw2 fails due to binders *)
+      rewrite proj_vcons.
+      rewrite tolist_Batch_rw2.
+      rewrite List.rev_unit.
+      rewrite <- IHb.
+      reflexivity.
+  Qed.
 
   (** ** Same Shape Iff Same <<Batch_make>> *)
   (******************************************************************************)
@@ -982,13 +1087,6 @@ Section Batch_theory.
     apply Vector_coerce_sim_l.
   Qed.
 
-  Ltac hide_lhs :=
-    match goal with
-    | |- ?lhs = ?rhs =>
-        let name := fresh "lhs" in
-        remember lhs as name
-    end.
-
   Lemma Batch_make_natural1:
     forall {A B B' C: Type} (b: Batch A B' C) (f: B -> B')
       (v: Vector (length_Batch b) B)
@@ -1060,143 +1158,6 @@ Section Batch_theory.
 
 End Batch_theory.
 
-(** * Miscellaneous Properties Concerning <<toBatch>>*)
-(******************************************************************************)
-Section stuff.
-
-  #[local] Generalizable Variable  T.
-
-  Import Coalgebraic.TraversableFunctor.
-  Import Adapters.KleisliToCoalgebraic.TraversableFunctor.
-
-  Context
-    `{Kleisli.TraversableFunctor.TraversableFunctor T}
-    `{Map T}
-    `{ToBatch T}
-    `{! Compat_Map_Traverse T}
-    `{! Compat_ToBatch_Traverse T}.
-
-  (** ** Relating <<tolist>> and <<Batch_contents ∘ toBatch>> *)
-  (******************************************************************************)
-  Lemma Batch_contents_tolist:
-    forall {A B} (t: T A),
-      Vector_to_list A (Batch_contents (toBatch (A' := B) t)) =
-        List.rev (tolist t).
-  Proof.
-    intros.
-    rewrite tolist_to_foldMap.
-    rewrite (foldMap_through_runBatch2 A B).
-    unfold compose.
-    induction (toBatch t).
-    - reflexivity.
-    - cbn.
-      rewrite Vector_to_list_vcons.
-      rewrite IHb.
-      unfold_ops @Monoid_op_list @Return_list.
-      rewrite List.rev_unit.
-      reflexivity.
-  Qed.
-
-  (** ** <<Batch_contents ∘ toBatch>> is Independent of <<B>> *)
-  (******************************************************************************)
-  Lemma Batch_contents_toBatch_sim:
-    forall {A B B'} (t: T A),
-      Batch_contents
-        (toBatch (A' := B) t) ~~
-        Batch_contents (toBatch (A' := B') t).
-  Proof.
-    intros.
-    unfold Vector_sim.
-    change (proj1_sig ?v) with (Vector_to_list _ v).
-    rewrite Batch_contents_tolist.
-    rewrite Batch_contents_tolist.
-    reflexivity.
-  Qed.
-
-  (** ** <<shape>> commutes with <<toBatch>> *)
-  (******************************************************************************)
-  Lemma shape_toBatch_spec: forall (A B: Type) (t: T A),
-      shape (toBatch (A' := B) t) =
-        toBatch (A' := B) (shape t).
-  Proof.
-    intros.
-    compose near t on right.
-    unfold shape at 2.
-    rewrite toBatch_mapfst.
-    reflexivity.
-  Qed.
-
-  (** ** Similar <<shape>>d terms have similar <<toBatch>> <<shape>>s*)
-  (******************************************************************************)
-  Lemma toBatch_shape:
-    forall {A' B} `(t1: T A) (t2: T A'),
-      shape t1 = shape t2 ->
-      shape (F := BATCH1 B (T B))
-        (toBatch (A' := B) t1) =
-        shape (F := BATCH1 B (T B))
-          (toBatch (A' := B) t2).
-  Proof.
-    introv Hshape.
-    do 2 rewrite shape_toBatch_spec.
-    rewrite Hshape.
-    reflexivity.
-  Qed.
-
-  (** ** Similar <<shape>>d <<toBatch>> implies similar <<shape>>s*)
-  (******************************************************************************)
-  Lemma toBatch_shape_inv:
-    forall {A' B} `(t1: T A) (t2: T A'),
-      shape (F := BATCH1 B (T B))
-        (toBatch (A' := B) t1) =
-        shape (F := BATCH1 B (T B))
-          (toBatch (A' := B) t2) ->
-      shape t1 = shape t2.
-  Proof.
-    introv Hshape.
-    unfold shape.
-    do 2 rewrite map_through_runBatch.
-    do 2 rewrite shape_toBatch_spec in Hshape.
-    unfold shape in Hshape.
-    do 2 rewrite map_through_runBatch in Hshape.
-    unfold compose in Hshape.
-    unfold compose.
-    destruct (@toBatch T _ A unit t1).
-  Abort.
-
-End stuff.
-
-(** * Batch_to_list *)
-(******************************************************************************)
-Section Batch.
-
-  Definition Batch_to_list: forall `(b: Batch A B C), list A.
-  Proof.
-    intros. apply (tolist (F := BATCH1 B C) b).
-  Defined.
-
-  Lemma Batch_contents_list: forall `(b: Batch A B C),
-      proj1_sig (Batch_contents b) = List.rev (Batch_to_list b).
-  Proof.
-    intros.
-    induction b.
-    - reflexivity.
-    - cbn.
-      rewrite proj_vcons.
-      rewrite IHb.
-      rewrite <- List.rev_unit.
-      reflexivity.
-  Qed.
-
-  Lemma Batch_to_list_rw2 {A B C}: forall (b: Batch A B (B -> C)) (a: A),
-      Batch_to_list (b ⧆ a) = Batch_to_list b ++ (a::nil).
-  Proof.
-    intros.
-    cbn.
-    reflexivity.
-  Qed.
-
-End Batch.
-
 (** ** Misc *)
 (******************************************************************************)
 Section spec.
@@ -1236,7 +1197,6 @@ Section spec.
   Qed.
 
 End spec.
-
 
 (** * Representation theorems *)
 (******************************************************************************)
@@ -1302,3 +1262,103 @@ Proof.
   rewrite traverse_double_backwards.
   reflexivity.
 Qed.
+
+
+(** * Annotating <<Batch>> with Proofs of Occurrence *)
+(******************************************************************************)
+Require Import ContainerFunctor.
+
+Import ContainerFunctor.Notations.
+Import Applicative.Notations.
+Import Functors.Subset.
+Import Subset.Notations.
+
+Section annotate_Batch_elements.
+
+  (** ** Lemmas regarding <<tosubset>> *)
+  (******************************************************************************)
+  Definition tosubset_Step1 {A B C:Type}:
+    forall (a': A) (rest: Batch A B (B -> C)),
+      forall (a: A),
+        tosubset (F := BATCH1 B (B -> C)) rest a ->
+        tosubset (F := BATCH1 B C) (Step rest a') a.
+  Proof.
+    introv.
+    rewrite tosubset_Batch_rw2.
+    simpl_subset.
+    tauto.
+  Defined.
+
+  Definition tosubset_Step2 {A B C:Type}:
+    forall (rest: Batch A B (B -> C)) (a: A),
+      tosubset (F := BATCH1 B C) (Step rest a) a.
+  Proof.
+    intros.
+    rewrite tosubset_Batch_rw2.
+    simpl_subset.
+    tauto.
+  Qed.
+
+  Definition element_of_Step1 {A B C:Type}:
+    forall (a': A) (rest: Batch A B (B -> C)),
+    forall (a: A),
+      a ∈ rest ->
+      a ∈ (Step rest a').
+  Proof.
+    introv.
+    rewrite element_of_Batch_rw2.
+    tauto.
+  Defined.
+
+  Definition element_of_Step2 {A B C:Type}:
+    forall (rest: Batch A B (B -> C)) (a: A),
+      a ∈ (Step rest a).
+  Proof.
+    intros.
+    rewrite element_of_Batch_rw2.
+    tauto.
+  Qed.
+
+  (** ** Annotation Operation *)
+  (******************************************************************************)
+  Definition sigMap {A: Type} (P Q: A -> Prop) (Himpl: forall a, P a -> Q a):
+    sig P -> sig Q :=
+    fun σ => match σ with
+          | exist _ a h => exist Q a (Himpl a h)
+          end.
+
+  Lemma annotate_occurrence_helper {A B C: Type}:
+    forall (a: A) (b_orig: Batch A B (B -> C))
+      (b_recc: Batch {a'| element_of (F := BATCH1 B (B -> C))
+                           a' b_orig} B (B -> C)),
+      Batch {a'| element_of (F := BATCH1 B C) a' (b_orig ⧆ a)} B (B -> C).
+  Proof.
+    intros a b_orig b_recc.
+    apply (map (BATCH1 B (B -> C))
+             (sigMap (fun a0 : A => a0 ∈ b_orig)
+                (fun a0 : A => a0 ∈ (b_orig ⧆ a))
+                (element_of_Step1 a b_orig)) b_recc).
+  Defined.
+
+  Fixpoint annotate_occurrence
+   {A B C: Type}
+   (b: Batch A B C):
+    Batch {a| element_of (F := BATCH1 B C) a b} B C :=
+    match b with
+    | Done c => Done c
+    | Step rest a =>
+        Step (annotate_occurrence_helper a rest (annotate_occurrence rest))
+          (exist (tosubset (rest ⧆ a))
+          a (element_of_Step2 rest a))
+    end.
+
+  (** * <<runBatch>> Assuming Proofs of Occurrence *)
+  (******************************************************************************)
+  Definition runBatch_with_occurrence
+    {A B C} (G: Type -> Type)
+    `{Applicative G}:
+    forall (b: Batch A B C)
+      `(f: {a | element_of (F := BATCH1 B C) a b} -> G B), G C :=
+    fun b f => runBatch f (annotate_occurrence b).
+
+End annotate_Batch_elements.
