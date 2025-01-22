@@ -94,7 +94,7 @@ Definition Vector_sim {n m A}:
   Vector n A -> Vector m A -> Prop :=
   fun v1 v2 => proj1_sig v1 = proj1_sig v2.
 
-Infix "~~" := (Vector_sim) (at level 30).
+#[local] Infix "~~" := (Vector_sim) (at level 30).
 
 (* Without <<n = m>>, functions with <<n <> m>> are related which is
 awkward and blocks transitivity. >> *)
@@ -103,7 +103,7 @@ Definition Vector_fun_sim {n m A B}:
   fun f1 f2 => n = m /\ forall v1 v2, v1 ~~ v2 ->
                      f1 v1 = f2 v2.
 
-Infix "~!~" := (Vector_fun_sim) (at level 30).
+#[local] Infix "~!~" := (Vector_fun_sim) (at level 30).
 
 Definition Vector_fun_indep {n A B} (f: Vector n A -> B)
   : Prop := f ~!~ f.
@@ -403,6 +403,39 @@ Proof.
   apply (exist (fun l => length l = S n) (cons a vlist)).
   cbn. fequal. assumption.
 Defined.
+
+(** *** Inversion of smart constructor equality *)
+(******************************************************************************)
+Lemma vcons_eq_inv_both: forall (n: nat) (A: Type) (a1 a2: A) (v1 v2: Vector n A),
+    vcons n a1 v1 = vcons n a2 v2 ->
+    a1 = a2 /\ v1 = v2.
+Proof.
+  intros.
+  destruct v1 as [l1 len1].
+  destruct v2 as [l2 len2].
+  cbn in H.
+  inversion H.
+  split; auto.
+  apply Vector_sim_eq.
+  unfold Vector_sim.
+  assumption.
+Qed.
+
+Lemma vcons_eq_inv_hd: forall (n: nat) (A: Type) (a1 a2: A) (v1 v2: Vector n A),
+    vcons n a1 v1 = vcons n a2 v2 ->
+    a1 = a2.
+Proof.
+  intros.
+  apply vcons_eq_inv_both in H; tauto.
+Qed.
+
+Lemma vcons_eq_inv_tl: forall (n: nat) (A: Type) (a1 a2: A) (v1 v2: Vector n A),
+    vcons n a1 v1 = vcons n a2 v2 ->
+    v1 = v2.
+Proof.
+  intros.
+  apply vcons_eq_inv_both in H; tauto.
+Qed.
 
 (** *** Projecting the smart constructors *)
 (******************************************************************************)
@@ -1010,6 +1043,23 @@ Proof.
   reflexivity.
 Qed.
 
+(** ** Mapping similar functions over Functors *)
+(******************************************************************************)
+(** The <<Heq>> argument is redundant in the sense it is derivable
+      from f ~!~ g. However, it's more convenient to let the caller
+      give a proof as the alternative is to wrap the output in an
+      existential quantifier *)
+Lemma map_sim_function `{Functor F} (A B: Type) (n m: nat):
+  forall (f: Vector n A -> B) (g: Vector m A -> B)
+    (Heq: n = m),
+    f ~!~ g ->
+    map (F := F) f = map (precoerce Heq in g).
+Proof.
+  introv Hsim.
+  rewrite (Vector_coerce_fun_coerce Heq Hsim).
+  reflexivity.
+Qed.
+
 (** ** Rewriting rules *)
 (******************************************************************************)
 Lemma map_Vector_vnil:
@@ -1085,6 +1135,11 @@ Definition traverse_Vector
 #[export] Instance Traverse_Vector {n}: Traverse (Vector n)
   := traverse_Vector n.
 
+
+#[export] Instance ToBatch_Vector {n: nat}:
+  Coalgebraic.TraversableFunctor.ToBatch (Vector n) :=
+  KleisliToCoalgebraic.TraversableFunctor.DerivedOperations.ToBatch_Traverse.
+
 (** ** Rewriting rules *)
 (******************************************************************************)
 Lemma traverse_Vector_vnil:
@@ -1139,9 +1194,9 @@ Proof.
 Qed.
 
 Lemma foldMap_Vector_vcons:
-  forall (n : nat) (M : Type) `{op: Monoid_op M} `{unit: Monoid_unit M}
+  forall {M: Type} `{op: Monoid_op M} `{unit: Monoid_unit M}
     `{! Monoid M}
-    {A : Type} (f : A -> M) (v : Vector n A) (a : A),
+    (n : nat) {A : Type} (f : A -> M) (v : Vector n A) (a : A),
     foldMap f (vcons n a v) = f a ● foldMap f v.
 Proof.
   intros.
@@ -1152,6 +1207,53 @@ Proof.
   unfold ap.
   unfold_ops @Mult_const.
   rewrite monoid_id_r.
+  reflexivity.
+Qed.
+
+Corollary plength_Vector {n: nat} {A: Type}:
+  forall (v: Vector n A), plength v = n.
+Proof.
+  intros.
+  induction v using Vector_induction.
+  - reflexivity.
+  - unfold plength.
+    rewrite (foldMap_Vector_vcons).
+    auto.
+Qed.
+
+
+(** ** Relation between <<Vector_to_list>> and <<tolist>> *)
+(******************************************************************************)
+Lemma Vector_to_list_tolist {A}: forall (n: nat) (v: Vector n A),
+    Vector_to_list _ v = tolist v.
+Proof.
+  intros.
+  rewrite tolist_to_foldMap.
+  induction v using Vector_induction.
+  - rewrite Vector_to_list_vnil.
+    rewrite foldMap_Vector_vnil.
+    reflexivity.
+  - rewrite Vector_to_list_vcons.
+    rewrite foldMap_Vector_vcons.
+    rewrite IHv.
+    reflexivity.
+Qed.
+
+(** ** Traversing over similar vectors *)
+(******************************************************************************)
+Lemma map_sim_function_traverse_Vector
+  `{Applicative G} (A B: Type) (n m: nat):
+  forall (f: A -> G B) (Heq: n = m) (v1: Vector n A) (v2: Vector m A),
+    v1 ~~ v2 ->
+    map (coerce_Vector_length Heq) (traverse f v1) =
+      (traverse f v2).
+
+Proof.
+  introv Hsim.
+  destruct Heq.
+  rewrite coerce_Vector_eq_refl_pf.
+  rewrite (fun_map_id).
+  rewrite (Vector_sim_eq _ _ Hsim).
   reflexivity.
 Qed.
 
@@ -1522,6 +1624,16 @@ Proof.
     exact (Vector_tl v2).
 Defined.
 
+Lemma Vector_zip_eq_vnil:
+  forall (A B: Type)
+    (v1: Vector 0 A)
+    (v2: Vector 0 B),
+    Vector_zip_eq A B 0 v1 v2 = vnil.
+Proof.
+  intros.
+  reflexivity.
+Qed.
+
 Lemma Vector_zip_eq_vcons:
   forall (A B: Type) (n: nat)
     (v1: Vector n A)
@@ -1610,6 +1722,63 @@ Proof.
       by now apply Vector_tl_sim.
     fequal. auto.
 Qed.
+
+(** ** Traversing a Zip by A Relation *)
+(******************************************************************************)
+Section traverse_zipped_vector.
+
+  Context {A B: Type} {R: A -> B -> Prop}.
+
+  Lemma traverse_zipped_vector:
+    forall (n: nat) (v1: Vector n A) (v2: Vector n B),
+      traverse R v1 v2 =
+        foldMap (uncurry R)
+          (Vector_zip_eq A B n v1 v2).
+  Proof.
+    intros.
+    induction n.
+    - rewrite (Vector_nil_eq v1).
+      rewrite (Vector_nil_eq v2).
+      rewrite Vector_zip_eq_vnil.
+      rewrite traverse_Vector_vnil.
+      rewrite foldMap_Vector_vnil.
+      unfold_ops @Pure_subset @Monoid_unit_true.
+      now propext.
+    - rewrite (Vector_surjective_pairing2 (v := v1)).
+      rewrite (Vector_surjective_pairing2 (v := v2)).
+      rewrite traverse_Vector_vcons.
+      rewrite Vector_zip_eq_vcons.
+      rewrite foldMap_Vector_vcons.
+      unfold_ops @Monoid_op_and.
+      unfold uncurry at 1.
+      rewrite subset_ap_spec.
+      propext.
+      + intros [vcons' [vb [rest1 [rest2 rest3]]]].
+        rewrite subset_ap_spec in rest2.
+        destruct rest2 as [f [a [rest4 [rest5 rest6]]]].
+        subst.
+        unfold pure, Pure_subset in rest5.
+        subst.
+        apply vcons_eq_inv_both in rest3.
+        destruct rest3 as [rest7 rest8].
+        subst.
+        split.
+        * assumption.
+        * rewrite <- IHn. assumption.
+      + intros [H_R_hd H_R_rest].
+        exists (vcons (A := B) n (Vector_hd v2)).
+        exists (Vector_tl v2). split.
+        * rewrite IHn. assumption.
+        * split.
+          { rewrite subset_ap_spec.
+            exists (vcons (A := B) n).
+            exists (Vector_hd v2).
+            split.
+            assumption. easy. }
+          { reflexivity. }
+  Qed.
+
+End traverse_zipped_vector.
 
 (** ** Generalized zip operation *)
 (******************************************************************************)
@@ -1774,7 +1943,6 @@ Proof.
     rewrite Vector_zip_eq_vcons.
     rewrite traverse_Vector_vcons.
     rewrite foldMap_Vector_vcons.
-    2: typeclasses eauto.
     rewrite subset_ap_spec.
     propext.
     + intros [f_vcons [a_hdv2 [hyp1 [hyp2 hyp3]]]].
@@ -1794,3 +1962,91 @@ Proof.
       unfold_ops @Map_subset.
       exists (Vector_hd v2). auto.
 Qed.
+
+(** * Appending Vectors *)
+(******************************************************************************)
+Definition Vector_append:
+  forall {A: Type} {n m: nat} (v1: Vector n A) (v2: Vector m A),
+    Vector (n + m) A.
+Proof.
+  intros.
+  destruct v1 as [l1 H1].
+  destruct v2 as [l2 H2].
+  exists (l1 ++ l2).
+  rewrite List.app_length.
+  subst.
+  reflexivity.
+Defined.
+
+Lemma Vector_append_vnil_l: forall (A: Type) (n: nat) (v: Vector n A),
+    Vector_append vnil v ~~ v.
+Proof.
+  intros.
+  unfold Vector_sim.
+  destruct v as [l Hlen].
+  reflexivity.
+Qed.
+
+Lemma Vector_append_vnil_r: forall (A: Type) (n: nat) (v: Vector n A),
+    Vector_append v vnil ~~ v.
+Proof.
+  intros.
+  unfold Vector_sim.
+  destruct v as [l Hlen].
+  cbn.
+  now rewrite List.app_nil_end.
+Qed.
+
+Lemma Vector_append_assoc:
+  forall (A: Type) (n m p: nat)
+    (v1: Vector n A)
+    (v2: Vector m A)
+    (v3: Vector p A),
+    Vector_append (Vector_append v1 v2) v3 ~~
+      Vector_append v1 (Vector_append v2 v3).
+Proof.
+  intros.
+  unfold Vector_sim.
+  destruct v1 as [l1 Hlen1].
+  destruct v2 as [l2 Hlen2].
+  destruct v3 as [l3 Hlen3].
+  cbn.
+  now rewrite List.app_assoc.
+Qed.
+
+Lemma proj_Vector_append:
+  forall {A: Type} {n m: nat} (v1: Vector n A) (v2: Vector m A),
+    proj1_sig (Vector_append v1 v2) =
+      proj1_sig v1 ++ proj1_sig v2.
+Proof.
+  intros.
+  destruct v1 as [l1 Hlen1].
+  destruct v2 as [l2 Hlen2].
+  reflexivity.
+Qed.
+
+(** * Reversing Vectors *)
+(******************************************************************************)
+Lemma reverse_Vector
+  {A: Type} {n: nat} (v: Vector n A): Vector n A.
+Proof.
+  destruct v as [l len].
+  exists (List.rev l).
+  rewrite List.rev_length.
+  assumption.
+Defined.
+
+Lemma proj_reverse_Vector
+  {A: Type} {n: nat} (v: Vector n A):
+  proj1_sig (reverse_Vector v) =
+    List.rev (proj1_sig v).
+Proof.
+  now destruct v.
+Qed.
+
+(** * Notations *)
+(******************************************************************************)
+Module Notations.
+  #[global] Infix "~~" := (Vector_sim) (at level 30).
+  #[global] Infix "~!~" := (Vector_fun_sim) (at level 30).
+End Notations.

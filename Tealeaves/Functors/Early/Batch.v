@@ -1156,6 +1156,23 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma traverse_Batch_ap_rw2:
+  forall`{Map G} `{Pure G} `{Mult G}
+    `{! Applicative G}
+     (B C: Type)
+  (A A': Type) (f: A -> G A')
+  {X Y: Type}
+  (lhs: Batch A B (X -> Y))
+  (rhs: Batch A B X),
+    traverse (T := BATCH1 B Y) f (lhs <⋆> rhs) =
+      pure G (ap (Batch A' B) (A := X) (B := Y))
+        <⋆> traverse (T := BATCH1 B (X -> Y)) f lhs
+        <⋆> traverse (T := BATCH1 B X) f rhs.
+Proof.
+  intros.
+  destruct lhs.
+Abort.
+
 (** ** Traversable Functor Laws *)
 (******************************************************************************)
 Lemma trf_traverse_id_Batch :

@@ -1,12 +1,13 @@
-From Tealeaves.Classes Require Export
-  Monoid
-  Categorical.Applicative
-  Categorical.Monad
-  Categorical.ShapelyFunctor
-  Kleisli.TraversableFunctor.
+From Tealeaves Require Export
+  Classes.Monoid
+  Classes.Categorical.Applicative
+  Classes.Categorical.Monad
+  Classes.Categorical.ShapelyFunctor
+  Classes.Kleisli.TraversableFunctor
+  Functors.Early.Batch.
 
 From Tealeaves.Functors Require Import
-  Early.Batch
+  List
   Constant
   VectorRefinement.
 
@@ -14,6 +15,7 @@ Import Early.Batch.Notations.
 Import Monoid.Notations.
 Import Applicative.Notations.
 Import Kleisli.TraversableFunctor.Notations.
+Import VectorRefinement.Notations.
 
 #[local] Generalizable Variables ψ ϕ W F G M A B C D X Y O.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
@@ -38,6 +40,104 @@ Section Batch_foldMap_rewriting.
     rewrite traverse_Batch_rw2.
     reflexivity.
   Qed.
+
+End Batch_foldMap_rewriting.
+
+(** ** <<foldMap>> Rewriting for << <⋆> >> *)
+(******************************************************************************)
+Lemma foldMap_Batch_map {A B C C': Type}:
+  forall `{Monoid M}
+    (f: A -> M)
+    (g: C -> C')
+    (b: Batch A B C),
+    foldMap (T := BATCH1 B C) f b =
+      foldMap (T := BATCH1 B C') f (map (Batch A B) g b).
+Proof.
+  intros.
+  generalize dependent C'.
+  induction b; intros.
+  - reflexivity.
+  - rewrite foldMap_Batch_rw2.
+    rewrite map_Batch_rw2.
+    rewrite foldMap_Batch_rw2.
+    specialize (IHb _ (compose g)).
+    rewrite IHb.
+    reflexivity.
+Qed.
+
+Lemma foldMap_Batch_mult_Done {A B C D: Type}
+  `{Monoid M}(f: A -> M):
+  forall (c: C) (b2: Batch A B D),
+    foldMap (T := BATCH1 B (C * D))
+      f (Done c ⊗ b2) = foldMap f b2.
+Proof.
+  intros.
+  induction b2.
+  - reflexivity.
+  - rewrite foldMap_Batch_rw2.
+    rewrite <- IHb2.
+    cbn.
+    unfold_ops @Pure_const.
+    rewrite monoid_id_r.
+    change (Traverse_Batch1 B (B -> C * C0) (const M) Map_const
+              (fun (X : Type) (_ : X) => Ƶ) Mult_const A False f)
+      with (foldMap (T := BATCH1 B (B -> C * C0)) f).
+    rewrite <- foldMap_Batch_map.
+    reflexivity.
+Qed.
+
+Lemma foldMap_Batch_mult {A B C D: Type}
+  `{Monoid M}(f: A -> M):
+  forall (b1: Batch A B C) (b2: Batch A B D),
+    foldMap (T := BATCH1 B (C * D))
+      f (b1 ⊗ b2) =
+      foldMap f b1 ● foldMap f b2.
+Proof.
+  intros.
+  induction b2.
+  - cbn.
+    rewrite <- foldMap_Batch_map.
+    unfold_ops @Pure_const.
+    rewrite monoid_id_l.
+    reflexivity.
+  - rewrite foldMap_Batch_rw2.
+    rewrite <- monoid_assoc.
+    rewrite <- IHb2; clear IHb2.
+    induction b1.
+    + rewrite foldMap_Batch_mult_Done.
+      rewrite foldMap_Batch_mult_Done.
+      rewrite foldMap_Batch_rw2.
+      reflexivity.
+    + cbn.
+      unfold_ops @Pure_const.
+      rewrite monoid_id_r.
+      change (Traverse_Batch1 B (B -> C * C0) (const M) Map_const
+                (fun (X : Type) (_ : X) => Ƶ) Mult_const A False f)
+        with (foldMap (T := BATCH1 B (B -> C * C0)) f).
+      rewrite <- foldMap_Batch_map.
+      reflexivity.
+Qed.
+
+Lemma foldMap_Batch_ap_rw2 {A B: Type}:
+  forall `{Monoid M}
+    (f: A -> M)
+    {X Y: Type}
+    (lhs: Batch A B (X -> Y))
+    (rhs: Batch A B X),
+    foldMap (T := BATCH1 B Y) f (lhs <⋆> rhs) =
+      foldMap (T := BATCH1 B (X -> Y)) f lhs
+        ● foldMap (T := BATCH1 B X) f rhs.
+Proof.
+  intros.
+  unfold ap.
+  rewrite <- foldMap_Batch_map.
+  rewrite foldMap_Batch_mult.
+  reflexivity.
+Qed.
+
+Section Batch_foldMap_rewriting_derived.
+
+  Context {A B C: Type}.
 
   (** ** <<tolist>> *)
   (******************************************************************************)
@@ -79,7 +179,7 @@ Section Batch_foldMap_rewriting.
     reflexivity.
   Qed.
 
-End Batch_foldMap_rewriting.
+End Batch_foldMap_rewriting_derived.
 
 (** * Simultaneous Induction on Two <<Batch>>es of the Same Shape *)
 (******************************************************************************)
@@ -89,7 +189,7 @@ Section shape_induction.
     {A1 A2 B C : Type}
       {b1: Batch A1 B C}
       {b2: Batch A2 B C}
-      (Hshape: shape b1 = shape b2)
+      (Hshape: shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2)
       (P : forall C : Type,
           Batch A1 B C ->
           Batch A2 B C ->
@@ -102,7 +202,8 @@ Section shape_induction.
           (b2 : Batch A2 B (B -> C)),
           P (B -> C) b1 b2 ->
           forall (a1 : A1) (a2: A2)
-            (Hshape: shape (Step b1 a1) = shape (Step b2 a2)),
+            (Hshape: shape (F := BATCH1 B C)  (Step b1 a1) =
+                       shape (F := BATCH1 B C) (Step b2 a2)),
             P C (Step b1 a1) (Step b2 a2)).
 
   Lemma Batch_simultaneous_ind: P C b1 b2.
@@ -340,7 +441,7 @@ Section length.
   Lemma length_Batch_shape:
     forall `(b1: Batch A1 B C)
       `(b2: Batch A2 B C),
-      shape b1 = shape b2 ->
+      shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2 ->
       length_Batch b1 = length_Batch b2.
   Proof.
     introv Hshape.
@@ -527,11 +628,63 @@ Section deconstruction.
       reflexivity.
   Qed.
 
+  (** ** Rewriting Rules for << <⋆> >> *)
+  (******************************************************************************)
+  Section rewrite_Batch_contents.
+
+    Context {A B: Type}.
+
+    Lemma Batch_contents_rw_pure:
+      forall X (x: X), Batch_contents (pure (Batch A B) x) = vnil.
+    Proof.
+      intros.
+      reflexivity.
+    Qed.
+
+    Lemma Batch_contents_rw_mult:
+      forall {C D} (x: Batch A B C) (y: Batch A B D),
+        Batch_contents (x ⊗ y) ~~
+          Vector_append (Batch_contents y)
+          (Batch_contents x).
+    Proof.
+      intros.
+      unfold Vector_sim.
+      rewrite tolist_Batch_contents.
+      rewrite tolist_to_foldMap.
+      rewrite foldMap_Batch_mult.
+      unfold_ops @Monoid_op_list.
+      rewrite List.rev_app_distr.
+      rewrite proj_Vector_append.
+      rewrite tolist_Batch_contents.
+      rewrite tolist_Batch_contents.
+      reflexivity.
+    Qed.
+
+    Lemma Batch_contents_rw_app:
+      forall X Y (f: Batch A B (X -> Y)) (x: Batch A B X),
+        Batch_contents (f <⋆> x) ~~
+          Vector_append (Batch_contents x) (Batch_contents f).
+    Proof.
+      intros.
+      unfold Vector_sim.
+      rewrite tolist_Batch_contents.
+      rewrite tolist_to_foldMap.
+      rewrite proj_Vector_append.
+      rewrite foldMap_Batch_ap_rw2.
+      unfold_ops @Monoid_op_list.
+      rewrite List.rev_app_distr.
+      rewrite tolist_Batch_contents.
+      rewrite tolist_Batch_contents.
+      reflexivity.
+    Qed.
+
+  End rewrite_Batch_contents.
+
   (** ** Same Shape Iff Same <<Batch_make>> *)
   (******************************************************************************)
   Lemma Batch_make_shape:
     forall `(b1: Batch A1 B C) `(b2: Batch A2 B C),
-      shape b1 = shape b2 ->
+      shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2 ->
       Batch_make b1 ~!~ Batch_make b2.
   Proof.
     introv Hshape.
@@ -554,7 +707,7 @@ Section deconstruction.
   Lemma Batch_make_shape_rev:
     forall `(b1: Batch A1 B C) `(b2: Batch A2 B C),
       Batch_make b1 ~!~ Batch_make b2 ->
-      shape b1 = shape b2.
+      shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2.
   Proof.
       intros.
       unfold Vector_fun_sim in *.
@@ -582,7 +735,7 @@ Section deconstruction.
 
   Corollary Batch_make_shape_iff:
     forall `(b1: Batch A1 B C) `(b2: Batch A2 B C),
-      shape b1 = shape b2 <->
+      shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2 <->
         Batch_make b1 ~!~ Batch_make b2.
   Proof.
     intros.
@@ -594,7 +747,7 @@ Section deconstruction.
   (******************************************************************************)
   Lemma Batch_shape_spec:
     forall `(b: Batch A B C),
-      shape b =
+      shape (F := BATCH1 B C) b =
         Batch_replace_contents b (Vector_tt (length_Batch b)).
   Proof.
     intros.
@@ -637,7 +790,7 @@ Section deconstruction.
   (******************************************************************************)
   Lemma Batch_replace_contents_shape:
     forall `(b1: Batch A1 B C) `(b2: Batch A2 B C),
-      shape b1 = shape b2 ->
+      shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2 ->
       forall (A': Type),
         Batch_replace_contents
           (A' := A') b1
@@ -664,7 +817,7 @@ Section deconstruction.
         (A' := A') b1
         ~!~ Batch_replace_contents
         (A' := A') b2) ->
-    shape b1 = shape b2.
+    shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2.
   Proof.
     introv Hsim.
     rewrite Batch_shape_spec.
@@ -682,7 +835,7 @@ Section deconstruction.
         (A' := A') b1
         ~!~ Batch_replace_contents
         (A' := A') b2) <->
-      shape b1 = shape b2.
+      shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2.
   Proof.
     intros. split.
     - intros. now apply Batch_replace_contents_shape_rev.
@@ -736,7 +889,7 @@ Section deconstruction.
     `(b2: Batch A2 B C)
     `{v1: Vector (length_Batch b1) B}
     `{v2: Vector (length_Batch b2) B}
-    (Heq: shape b1 = shape b2)
+    (Heq: shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2)
     (Hsim: v1 ~~ v2):
     Batch_make b1 v1 = Batch_make b2 v2.
   Proof.
@@ -762,7 +915,7 @@ Section deconstruction.
 
   (** Rewrite the <<Batch>> argument to an equal one by
       coercing the length proof in the vector. *)
-  Lemma Batch_make_rw
+  Lemma Batch_make_rw_alt
     `(b1: Batch A B C)
     `(b2: Batch A B C)
     `{v: Vector (length_Batch b1) B}
@@ -774,7 +927,7 @@ Section deconstruction.
     now (subst; apply Batch_make_sim1).
   Qed.
 
-  Lemma Batch_make_rw_alt
+  Lemma Batch_make_rw
     `(b1: Batch A B C)
     `(b2: Batch A B C)
     `{v: Vector (length_Batch b1) B}
@@ -824,7 +977,7 @@ Section deconstruction.
     `(b2: Batch A2 B C)
     `{v1: Vector (length_Batch b1) A'}
     `{v2: Vector (length_Batch b2) A'}
-    (Heq: shape b1 = shape b2)
+    (Heq: shape (F := BATCH1 B C) b1 = shape (F := BATCH1 B C) b2)
     (Hsim: v1 ~~ v2):
     Batch_replace_contents b1 v1 = Batch_replace_contents b2 v2.
   Proof.
@@ -965,7 +1118,8 @@ Section deconstruction.
 
   Lemma Batch_shape_replace_contents:
     forall {A A' B C: Type} (b: Batch A B C) `(v: Vector _ A'),
-      shape b = shape (Batch_replace_contents b v).
+      shape (F := BATCH1 B C) b =
+        shape (F := BATCH1 B C) (Batch_replace_contents b v).
   Proof.
     intros.
     induction b.
@@ -1049,6 +1203,36 @@ Section deconstruction.
     Qed.
 
   End lens_laws.
+
+  (** ** Batch is Shapely *)
+  (******************************************************************************)
+  Section Batch_shapely.
+
+    Context {A B C: Type}.
+
+    Lemma Batch_shapeliness: forall (b1 b2: Batch A B C),
+        (shape (F := BATCH1 B C) b1 =
+           shape (F := BATCH1 B C) b2) ->
+        tolist (F := BATCH1 B C) b1 = tolist b2 ->
+        b1 = b2.
+    Proof.
+      introv Hshape.
+      apply (Batch_simultaneous_ind Hshape).
+      - intros; reflexivity.
+      - intros X b1' b2' Heq a1 a2 Hshape' Hlist.
+        rewrite tolist_Batch_rw2 in Hlist.
+        rewrite tolist_Batch_rw2 in Hlist.
+        do 2 change (?x::nil) with (ret list _ x) in Hlist.
+        assert (a1 = a2).
+        { eapply list_app_inv_r2; eauto. }
+        assert (b1' = b2').
+        { apply Heq. eapply list_app_inv_l2.
+          eauto. }
+        subst.
+        reflexivity.
+    Qed.
+
+  End Batch_shapely.
 
 End deconstruction.
 

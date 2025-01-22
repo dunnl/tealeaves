@@ -318,28 +318,35 @@ Definition foldMap
 
 Section foldMap.
 
-  Context
-    `{TraversableFunctor T}
-    `{Map T}
-    `{! Compat_Map_Traverse T}.
-
   (** ** As a special case of <<traverse>> *)
   (******************************************************************************)
-  Lemma foldMap_to_traverse1 `{Monoid M}: forall `(f: A -> M),
+  Lemma foldMap_to_traverse1
+    `{Traverse T}
+    `{Monoid M}: forall `(f: A -> M),
       foldMap (T := T) f =
         traverse (G := const M) (B := False) f.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMap_to_traverse2 `{Monoid M}: forall (fake: Type) `(f: A -> M),
-      foldMap f = traverse (G := const M) (B := fake) f.
+  Lemma foldMap_to_traverse2
+    `{Traverse T}
+    `{! TraversableFunctor T}
+    `{Map T}
+    `{! Compat_Map_Traverse T}
+    `{Monoid M}: forall (fake: Type) `(f: A -> M),
+      foldMap (T := T) f = traverse (G := const M) (B := fake) f.
   Proof.
     intros.
     rewrite foldMap_to_traverse1.
     rewrite (traverse_const1 fake f).
     reflexivity.
   Qed.
+
+  Context
+    `{TraversableFunctor T}
+    `{Map T}
+    `{! Compat_Map_Traverse T}.
 
   (** ** Composition with <<map>> and <<traverse>> *)
   (******************************************************************************)
@@ -410,6 +417,23 @@ Section foldMap.
     change (fun _: Type => M) with (const (A := Type) M).
     rewrite (traverse_const1 fake).
     rewrite (traverse_through_runBatch (G := const M)).
+    reflexivity.
+  Qed.
+
+  (** ** Factorizing through <<toBatch>> *)
+  (******************************************************************************)
+  Lemma foldMap_through_toBatch
+      `{ToBatch T}
+      `{! Compat_ToBatch_Traverse T}
+      `{Monoid M}: forall (A fake: Type) `(f: A -> M) (t: T A),
+      foldMap f t = foldMap f (toBatch (A' := fake) t).
+  Proof.
+    intros.
+    rewrite (foldMap_through_runBatch2 A fake).
+    rewrite runBatch_via_traverse.
+    unfold_ops @Map_const.
+    unfold compose.
+    rewrite (foldMap_to_traverse2 fake).
     reflexivity.
   Qed.
 
@@ -493,10 +517,21 @@ Section tolist.
     reflexivity.
   Qed.
 
-  (** ** Factoring <<tolist>> through <<runBatch>> *)
+  (** ** Factoring <<tolist>> through <<runBatch>> and <<toBatch>> *)
   (******************************************************************************)
   Import Coalgebraic.TraversableFunctor.
   Import KleisliToCoalgebraic.TraversableFunctor.
+
+  Corollary tolist_through_toBatch
+  `{ToBatch T}
+  `{! Compat_ToBatch_Traverse T}
+    {A: Type} (tag: Type) `(t: T A) :
+    tolist t = tolist (toBatch (A' := tag) t).
+  Proof.
+    rewrite (tolist_to_foldMap).
+    rewrite (foldMap_through_toBatch A tag).
+    reflexivity.
+  Qed.
 
   Corollary tolist_through_runBatch
   `{ToBatch T}
@@ -819,6 +854,78 @@ Proof.
   rewrite <- list_plength_length.
   reflexivity.
 Qed.
+
+(** * <<foldMap>> by a Commutative Monoid *)
+(******************************************************************************)
+Section foldMap_commutative_monoid.
+
+  Import List.ListNotations.
+
+  #[local] Arguments foldMap {T}%function_scope {H} {M}%type_scope
+    (op) {unit} {A}%type_scope f%function_scope _.
+
+  Lemma foldMap_opposite_list
+    `{unit: Monoid_unit M}
+    `{op: Monoid_op M}
+    `{! Monoid M} {A}: forall (f: A -> M) (l: list A),
+      foldMap op f l = foldMap (Monoid_op_Opposite op) f (List.rev l).
+  Proof.
+    intros.
+    do 2 rewrite foldMap_eq_foldMap_list.
+    induction l.
+    - reflexivity.
+    - rewrite foldMap_list_cons.
+      change (List.rev (a :: l)) with (List.rev l ++ [a]).
+      rewrite foldMap_list_app.
+      rewrite IHl.
+      unfold_ops @Monoid_op_Opposite.
+      rewrite foldMap_list_one.
+      reflexivity.
+  Qed.
+
+  Lemma foldMap_comm_list
+    `{unit: Monoid_unit M}
+    `{op: Monoid_op M}
+    `{! Monoid M}
+    {A: Type}
+    `{comm: ! CommutativeMonoidOp op}
+    : forall (f: A -> M) (l: list A),
+      foldMap op f l = foldMap op f (List.rev l).
+  Proof.
+    intros.
+    induction l.
+    - reflexivity.
+    - rewrite foldMap_eq_foldMap_list.
+      rewrite foldMap_list_cons.
+      rewrite (comm_mon_swap (f a)).
+      change (List.rev (a :: l)) with (List.rev l ++ [a]).
+      rewrite foldMap_list_app.
+      rewrite foldMap_list_one.
+      rewrite <- foldMap_eq_foldMap_list.
+      rewrite IHl.
+      reflexivity.
+  Qed.
+
+  Lemma foldMap_comm
+    `{unit: Monoid_unit M}
+    `{op: Monoid_op M}
+    `{! Monoid M}
+    `{comm: ! CommutativeMonoidOp op}
+    `{TraversableFunctor T} {A: Type}:
+    forall (f: A -> M) (t: T A),
+      foldMap op f t =
+        foldMap (Monoid_op_Opposite op) f t.
+  Proof.
+    intros.
+    rewrite (foldMap_through_tolist _ f).
+    rewrite (foldMap_through_tolist (op := Monoid_op_Opposite op)).
+    unfold compose.
+    rewrite foldMap_opposite_list.
+    rewrite <- foldMap_comm_list.
+    reflexivity.
+  Qed.
+
+End foldMap_commutative_monoid.
 
 (** * Notations *)
 (******************************************************************************)

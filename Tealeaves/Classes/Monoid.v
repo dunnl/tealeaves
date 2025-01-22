@@ -209,7 +209,7 @@ From Coq Require Export
   Relations
   Classes.RelationClasses.
 
-(** * Preorder Monoids *)
+(** * Preordered Monoids *)
 (******************************************************************************)
 Class PreOrderedMonoidLaws
   (M : Type)
@@ -272,6 +272,53 @@ Section lemmas.
   Qed.
 
 End lemmas.
+
+(** * The Opposite Monoid *)
+(******************************************************************************)
+#[local] Generalizable Variable  M.
+
+#[local] Instance Monoid_op_Opposite {M} (op: Monoid_op M):
+  Monoid_op M := fun m1 m2 => m2 ● m1.
+
+#[export] Instance Monoid_Opposite
+  `{unit: Monoid_unit M}
+  `{op: Monoid_op M}
+  `{! Monoid M}:
+  @Monoid M (Monoid_op_Opposite op) unit.
+Proof.
+  constructor; unfold_ops @Monoid_op_Opposite;
+    intros.
+  - now rewrite monoid_assoc.
+  - now rewrite monoid_id_r.
+  - now rewrite monoid_id_l.
+Qed.
+
+Lemma Monoid_op_Opposite_involutive `{op: Monoid_op M}:
+  Monoid_op_Opposite (Monoid_op_Opposite op) = op.
+Proof.
+  reflexivity.
+Qed.
+
+(** * Commutative Monoids *)
+(******************************************************************************)
+Class CommutativeMonoidOp {M: Type}
+  (op: Monoid_op M) :=
+  { comm_mon_swap: forall (m1 m2: M),
+      m1 ● m2 = m2 ● m1;
+  }.
+
+#[export] Instance CommutativeMonoidOp_Opposite
+  `{op: Monoid_op M}
+  `{comm: ! CommutativeMonoidOp op}:
+  CommutativeMonoidOp (Monoid_op_Opposite op).
+Proof.
+  constructor.
+  intros.
+  unfold Monoid_op.
+  unfold_ops @Monoid_op_Opposite.
+  rewrite comm_mon_swap.
+  reflexivity.
+Qed.
 
 (** * Notations *)
 (******************************************************************************)

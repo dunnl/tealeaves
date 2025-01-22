@@ -86,6 +86,12 @@ End subset_monoid.
 
 Solve Obligations with (intros; unfold transparent tcs; solve_basic_subset).
 
+#[export] Instance CommutativeMonoidOp_subset: forall (A: Type),
+    CommutativeMonoidOp (M := subset A) Monoid_op_subset.
+Proof.
+  intros; constructor; solve_basic_subset.
+Qed.
+
 (** ** Querying for an element is a monoid homomorphism *)
 (******************************************************************************)
 #[export] Instance Monmor_el {A: Type} (a: A) :

@@ -50,44 +50,47 @@ Qed.
 (** ** Derived Laws *)
 (******************************************************************************)
 Module DerivedInstances.
+  Section instances.
 
-  Import DerivedOperations.
 
-  Context
-    `{Traverse T}
-    `{! Kleisli.TraversableFunctor.TraversableFunctor T}.
+    Context
+      `{Traverse T}
+      `{ToBatch T}
+      `{! Kleisli.TraversableFunctor.TraversableFunctor T}
+      `{! Compat_ToBatch_Traverse T}.
 
-  (** *** Coalgebra laws *)
-  (******************************************************************************)
-  Lemma toBatch_extract_Kleisli: forall (A: Type),
-      extract_Batch ∘ toBatch = @id (T A).
-  Proof.
-    intros.
-    rewrite toBatch_to_traverse.
-    rewrite (trf_traverse_morphism (ϕ := @extract_Batch A)).
-    rewrite extract_Batch_batch.
-    rewrite trf_traverse_id.
-    reflexivity.
-  Qed.
+    (** *** Coalgebra laws *)
+    (******************************************************************************)
+    Lemma toBatch_extract_Kleisli: forall (A: Type),
+        extract_Batch ∘ toBatch = @id (T A).
+    Proof.
+      intros.
+      rewrite toBatch_to_traverse.
+      rewrite (trf_traverse_morphism (ϕ := @extract_Batch A)).
+      rewrite extract_Batch_batch.
+      rewrite trf_traverse_id.
+      reflexivity.
+    Qed.
 
-  Lemma toBatch_duplicate_Kleisli: forall (A B C: Type),
-      cojoin_Batch ∘ toBatch =
-        map (F := Batch A B) (toBatch (A' := C)) ∘ toBatch (A' := B).
-  Proof.
-    intros.
-    rewrite toBatch_to_traverse.
-    rewrite (trf_traverse_morphism (ϕ := @cojoin_Batch A B C)).
-    rewrite cojoin_Batch_batch.
-    rewrite toBatch_to_traverse.
-    rewrite toBatch_to_traverse.
-    rewrite (trf_traverse_traverse (G1 := Batch A B) (G2 := Batch B C)).
-    reflexivity.
-  Qed.
+    Lemma toBatch_duplicate_Kleisli: forall (A B C: Type),
+        cojoin_Batch ∘ toBatch =
+          map (F := Batch A B) (toBatch (A' := C)) ∘ toBatch (A' := B).
+    Proof.
+      intros.
+      rewrite toBatch_to_traverse.
+      rewrite (trf_traverse_morphism (ϕ := @cojoin_Batch A B C)).
+      rewrite cojoin_Batch_batch.
+      rewrite toBatch_to_traverse.
+      rewrite toBatch_to_traverse.
+      rewrite (trf_traverse_traverse (G1 := Batch A B) (G2 := Batch B C)).
+      reflexivity.
+    Qed.
 
-  #[export] Instance Coalgebraic_Traversable_of_Kleisli :
-    Coalgebraic.TraversableFunctor.TraversableFunctor T :=
-    {| trf_extract := toBatch_extract_Kleisli;
-       trf_duplicate := toBatch_duplicate_Kleisli;
-    |}.
+    #[export] Instance Coalgebraic_Traversable_of_Kleisli :
+      Coalgebraic.TraversableFunctor.TraversableFunctor T :=
+      {| trf_extract := toBatch_extract_Kleisli;
+         trf_duplicate := toBatch_duplicate_Kleisli;
+      |}.
 
+  End instances.
 End DerivedInstances.

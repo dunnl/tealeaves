@@ -143,6 +143,7 @@ Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
 ##########################################################
 Tealeaves/Functors/Ctxset.v
 Tealeaves/Functors/Diagonal.v
+Tealeaves/Functors/List.v
 #Tealeaves/Functors/Categorical/List.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
@@ -161,7 +162,6 @@ Tealeaves/Functors/KStore.v
 ##########################################################
 Tealeaves/Functors/Batch.v
 Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
-Tealeaves/Functors/List.v
 Tealeaves/Functors/Environment.v
 
 
