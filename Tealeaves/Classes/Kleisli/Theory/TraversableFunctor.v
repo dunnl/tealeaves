@@ -855,6 +855,56 @@ Proof.
   reflexivity.
 Qed.
 
+(** ** Naturality of <<plength>> *)
+(******************************************************************************)
+From Tealeaves Require Import
+  Classes.Categorical.ShapelyFunctor (shape, shape_map).
+
+Section naturality_plength.
+
+  Context
+    `{TraversableFunctor T}
+    `{Map T}
+    `{! Compat_Map_Traverse T}.
+
+  Lemma natural_plength
+    {A B: Type}:
+    forall (f: A -> B) (t: T A),
+      plength (map f t) = plength t.
+  Proof.
+    intros.
+    compose near t on left.
+    unfold plength.
+    rewrite (foldMap_map).
+    reflexivity.
+  Qed.
+
+  Corollary plength_shape
+    {A: Type}:
+    forall (t: T A),
+      plength (shape t) = plength t.
+  Proof.
+    intros.
+    unfold shape.
+    rewrite natural_plength.
+    reflexivity.
+  Qed.
+
+  Corollary same_shape_implies_plength
+    {A B: Type}:
+    forall (t: T A) (u: T B),
+      shape t = shape u ->
+      plength t = plength u.
+  Proof.
+    introv Hshape.
+    rewrite <- plength_shape.
+    rewrite <- (plength_shape u).
+    rewrite Hshape.
+    reflexivity.
+  Qed.
+
+End naturality_plength.
+
 (** * <<foldMap>> by a Commutative Monoid *)
 (******************************************************************************)
 Section foldMap_commutative_monoid.

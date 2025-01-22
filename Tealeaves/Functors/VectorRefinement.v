@@ -155,6 +155,47 @@ Proof.
   tauto.
 Qed.
 
+(** ** Notions of equality assuming proof-irrelevance axiom *)
+(******************************************************************************)
+Lemma Vector_eq_list_eq:
+  forall (A: Type) (n: nat) (l1 l2 : list A)
+    (p1 : length l1 = n)
+    (p2 : length l2 = n),
+    (l1 = l2) =
+      (exist (fun l => length l = n) l1 p1 =
+         exist (fun l => length l = n) l2 p2).
+Proof.
+  intros.
+  propext.
+  + intros. subst.
+    fequal.
+    apply proof_irrelevance.
+  + intros.
+    inversion H.
+    reflexivity.
+Qed.
+
+(** Proof irrelevance implies similarity entails equality *)
+Lemma Vector_eq:
+  forall (A: Type) (n: nat)
+    (v1 v2: Vector n A),
+    proj1_sig v1 = proj1_sig v2 ->
+    v1 = v2.
+Proof.
+  intros.
+  destruct v1.
+  destruct v2.
+  cbn in H.
+  erewrite Vector_eq_list_eq in H.
+  eassumption.
+Defined.
+
+Lemma Vector_sim_eq {n A} (v1 v2: Vector n A):
+  v1 ~~ v2 -> v1 = v2.
+Proof.
+  apply Vector_eq.
+Qed.
+
 (** *** Relation properties *)
 (******************************************************************************)
 
@@ -171,7 +212,12 @@ Qed.
   Reflexive (@Vector_fun_sim n n A B).
 Proof.
   unfold Reflexive. intro f.
-Abort.
+  unfold Vector_fun_sim.
+  split; auto.
+  intros.
+  apply Vector_sim_eq in H.
+  now subst.
+Qed.
 
 (** **** Symmetry *)
 (******************************************************************************)
@@ -281,27 +327,21 @@ Qed.
 Lemma Vector_coerce_fun_sim_l
         {n m A B} {f: Vector n A -> B}:
   forall (Heq: m = n),
-    f ~!~ f ->
     (f ○ coerce_Vector_length Heq) ~!~ f.
 Proof.
-  unfold Vector_fun_sim.
   intros Heq. destruct Heq.
-  split.
-  - reflexivity.
-  - intros v1 v2.
-    rewrite coerce_Vector_eq_refl.
-    apply H.
+  rewrite coerce_Vector_eq_refl_pf.
+  reflexivity.
 Qed.
 
 Lemma Vector_coerce_fun_sim_r
         {n m A B} {f: Vector n A -> B}:
   forall (Heq: m = n),
-    f ~!~ f ->
     f ~!~ (f ○ coerce_Vector_length Heq).
 Proof.
   intros.
   vec_fun_symmetry.
-  now apply Vector_coerce_fun_sim_l.
+  apply Vector_coerce_fun_sim_l.
 Qed.
 
 Lemma Vector_coerce_fun_sim_l'
@@ -345,47 +385,6 @@ Proof.
   apply Vector_coerce_fun_sim_r'.
   assumption.
   reflexivity.
-Qed.
-
-(** ** Notions of equality assuming proof-irrelevance axiom *)
-(******************************************************************************)
-Lemma Vector_eq_list_eq:
-  forall (A: Type) (n: nat) (l1 l2 : list A)
-    (p1 : length l1 = n)
-    (p2 : length l2 = n),
-    (l1 = l2) =
-      (exist (fun l => length l = n) l1 p1 =
-         exist (fun l => length l = n) l2 p2).
-Proof.
-  intros.
-  propext.
-  + intros. subst.
-    fequal.
-    apply proof_irrelevance.
-  + intros.
-    inversion H.
-    reflexivity.
-Qed.
-
-(** Proof irrelevance implies similarity entails equality *)
-Lemma Vector_eq:
-  forall (A: Type) (n: nat)
-    (v1 v2: Vector n A),
-    proj1_sig v1 = proj1_sig v2 ->
-    v1 = v2.
-Proof.
-  intros.
-  destruct v1.
-  destruct v2.
-  cbn in H.
-  erewrite Vector_eq_list_eq in H.
-  eassumption.
-Defined.
-
-Lemma Vector_sim_eq {n A} (v1 v2: Vector n A):
-  v1 ~~ v2 -> v1 = v2.
-Proof.
-  apply Vector_eq.
 Qed.
 
 (** ** Derived constructors *)
@@ -1043,6 +1042,70 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma map_coerce_Vector2:
+  forall (A B: Type) (f: A -> B) (n m: nat) (Heq: n = m) (v: Vector n A),
+    map f (coerce Heq in v) = coerce Heq in (map f v).
+Proof.
+  intros.
+  unfold Vector_sim.
+  subst.
+  rewrite coerce_Vector_eq_refl.
+  rewrite coerce_Vector_eq_refl.
+  reflexivity.
+Qed.
+
+Lemma Vector_coerce_map_l'
+  {n m p} `{f: A -> B}
+  `{w: Vector p A} `{v: Vector n B}
+  (Heq: p = m):
+    coerce Heq in (map f w) ~~ v ->
+    map f (coerce Heq in w) ~~ v.
+Proof.
+  intros.
+  rewrite (map_coerce_Vector2).
+  assumption.
+Qed.
+
+Lemma Vector_coerce_map_r'
+  {n m p} `{f: A -> B}
+  `{w: Vector p A} `{v: Vector n B}
+  (Heq: p = m):
+  (v ~~ coerce Heq in (map f w)) ->
+  v ~~ map f (coerce Heq in w).
+Proof.
+  intros.
+  rewrite (map_coerce_Vector2).
+  assumption.
+Qed.
+
+Ltac vector_sim ::=
+  repeat (match goal with
+          | |- _ => reflexivity
+          | |- _ => assumption
+          | |- ?v ~~ coerce ?Heq in ?v =>
+              apply Vector_coerce_sim_r
+          | |- coerce ?Heq in ?v ~~ ?v =>
+              apply Vector_coerce_sim_l
+          | |- ?v ~~ coerce ?Heq in ?w =>
+              apply Vector_coerce_sim_r'
+          | |- coerce ?Heq in ?w ~~ ?v =>
+              apply Vector_coerce_sim_l'
+          | |- Vector_tl ?v ~~ Vector_tl ?w =>
+              apply Vector_tl_sim
+          | |- ?v ~!~ precoerce ?Heq in ?v =>
+              apply Vector_coerce_fun_sim_r
+          | |- precoerce ?Heq in ?v ~~ ?v =>
+              apply Vector_coerce_fun_sim_l
+          | |- ?v ~~ precoerce ?Heq in ?w =>
+              apply Vector_coerce_fun_sim_r'
+          | |- precoerce ?Heq in ?w ~~ ?v =>
+              apply Vector_coerce_fun_sim_l'
+          | |- map ?f (coerce ?Heq in ?w) ~~ ?v =>
+              apply Vector_coerce_map_l'
+          | |- ?v ~~ map ?f (coerce ?Heq in ?w) =>
+              apply Vector_coerce_map_r'
+          end).
+
 (** ** Mapping similar functions over Functors *)
 (******************************************************************************)
 (** The <<Heq>> argument is redundant in the sense it is derivable
@@ -1624,11 +1687,15 @@ Proof.
     exact (Vector_tl v2).
 Defined.
 
+#[global] Arguments Vector_zip_eq {A B}%type_scope {n}%nat_scope v1 v2.
+
+(** ** Rewriting Lemmas *)
+(******************************************************************************)
 Lemma Vector_zip_eq_vnil:
   forall (A B: Type)
     (v1: Vector 0 A)
     (v2: Vector 0 B),
-    Vector_zip_eq A B 0 v1 v2 = vnil.
+    Vector_zip_eq v1 v2 = vnil.
 Proof.
   intros.
   reflexivity.
@@ -1639,9 +1706,9 @@ Lemma Vector_zip_eq_vcons:
     (v1: Vector n A)
     (v2: Vector n B)
     (a: A) (b: B),
-    Vector_zip_eq A B (S n)
+    Vector_zip_eq
       (vcons n a v1) (vcons n b v2) =
-      vcons n (a, b) (Vector_zip_eq A B n v1 v2).
+      vcons n (a, b) (Vector_zip_eq v1 v2).
 Proof.
   intros.
   rewrite (Vector_surjective_pairing2).
@@ -1658,11 +1725,13 @@ Proof.
   reflexivity.
 Qed.
 
+(** ** Roundtrip Properties *)
+(******************************************************************************)
 Lemma Vector_zip_eq_fst:
   forall (A B: Type) (n: nat)
     (v1: Vector n A)
     (v2: Vector n B),
-    map fst (Vector_zip_eq A B n v1 v2) = v1.
+    map fst (Vector_zip_eq v1 v2) = v1.
 Proof.
   intros.
   induction n.
@@ -1683,7 +1752,7 @@ Lemma Vector_zip_eq_snd:
   forall (A B: Type) (n: nat)
     (v1: Vector n A)
     (v2: Vector n B),
-    map snd (Vector_zip_eq A B n v1 v2) = v2.
+    map snd (Vector_zip_eq v1 v2) = v2.
 Proof.
   intros.
   induction n.
@@ -1700,28 +1769,178 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma Vector_zip_eq_sim:
+(** ** <<_sim>> Properties *)
+(******************************************************************************)
+Lemma Vector_zip_eq_sim_both:
   forall (A B: Type) (n: nat)
     (v1: Vector n A)
     (v2: Vector n B)
-    (v3: Vector n B),
-    v2 ~~ v3 ->
-    Vector_zip_eq A B n v1 v2 =
-      Vector_zip_eq A B n v1 v3.
+    (v3: Vector n A)
+    (v4: Vector n B),
+    v1 ~~ v3 ->
+    v2 ~~ v4 ->
+    Vector_zip_eq v1 v2 =
+      Vector_zip_eq v3 v4.
 Proof.
-  introv Hsim.
+  introv Hsim1 Hsim2.
   induction n.
   - reflexivity.
   - rewrite (Vector_surjective_pairing2 (v := v1)).
     rewrite (Vector_surjective_pairing2 (v := v2)).
     rewrite Vector_zip_eq_vcons.
     rewrite (Vector_surjective_pairing2 (v := v3)).
+    rewrite (Vector_surjective_pairing2 (v := v4)).
     rewrite Vector_zip_eq_vcons.
-    rewrite (Vector_hd_sim Hsim).
-    assert (Vector_tl v2 ~~ Vector_tl v3)
-      by now apply Vector_tl_sim.
-    fequal. auto.
+    rewrite (Vector_hd_sim Hsim1).
+    rewrite (Vector_hd_sim Hsim2).
+    fequal.
+    apply IHn;
+    auto using Vector_tl_sim.
 Qed.
+
+Corollary Vector_zip_eq_sim1:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B)
+    (v3: Vector n A),
+    v1 ~~ v3 ->
+    Vector_zip_eq v1 v2 =
+      Vector_zip_eq v3 v2.
+Proof.
+  introv Hsim.
+  now apply Vector_zip_eq_sim_both.
+Qed.
+
+Corollary Vector_zip_eq_sim2:
+  forall (A B: Type) (n: nat)
+    (v1: Vector n A)
+    (v2: Vector n B)
+    (v3: Vector n B),
+    v2 ~~ v3 ->
+    Vector_zip_eq v1 v2 =
+      Vector_zip_eq v1 v3.
+Proof.
+  introv Hsim.
+  now apply Vector_zip_eq_sim_both.
+Qed.
+
+(** ** <<_sim>> Properties for <<n <> m *)
+(******************************************************************************)
+Lemma Vector_zip_eq_sim_poly_both:
+  forall (A B: Type) (n m: nat)
+    (v1: Vector n A)
+    (v2: Vector n B)
+    (v3: Vector m A)
+    (v4: Vector m B),
+    v1 ~~ v3 ->
+    v2 ~~ v4 ->
+    Vector_zip_eq v1 v2 ~~
+      Vector_zip_eq v3 v4.
+Proof.
+  introv Hsim1 Hsim2.
+  assert (n = m).
+  { eapply Vector_sim_length.
+    eassumption. }
+  subst.
+  erewrite Vector_zip_eq_sim_both; eauto.
+  reflexivity.
+Qed.
+
+Corollary Vector_zip_eq_sim_poly1:
+  forall (A B: Type) (n m: nat)
+    (v1: Vector n A)
+    (v2: Vector n B)
+    (v3: Vector m A)
+    (Hsim: v1 ~~ v3),
+    Vector_zip_eq v1 v2 ~~
+      Vector_zip_eq v3 (coerce (Vector_sim_length v1 v3 Hsim) in v2).
+Proof.
+  intros.
+  apply Vector_zip_eq_sim_poly_both.
+  eauto.
+  vector_sim.
+Qed.
+
+
+Corollary Vector_zip_eq_sim_poly2:
+  forall (A B: Type) (n m: nat)
+    (v1: Vector n A)
+    (v2: Vector n B)
+    (v3: Vector m B)
+    (Hsim: v3 ~~ v2),
+    Vector_zip_eq v1 v2 ~~
+      Vector_zip_eq v1 (coerce (Vector_sim_length v3 v2 Hsim) in v3).
+Proof.
+  intros.
+  apply Vector_zip_eq_sim_poly_both.
+  reflexivity.
+  vector_sim.
+  symmetry.
+  assumption.
+Qed.
+
+(** ** Naturality Properties *)
+(******************************************************************************)
+From Tealeaves Require Import Functors.Pair.
+
+Section zipped_vector_naturality.
+
+  Lemma natural_Vector_zip_eq
+    {A1 A2 B1 B2: Type} {n: nat}:
+    forall (v1: Vector n A1)
+      (v2: Vector n B1)
+      (f: A1 -> A2) (g: B1 -> B2),
+      map (map_pair f g) (Vector_zip_eq v1 v2) =
+        Vector_zip_eq (map f v1) (map g v2).
+  Proof.
+    intros.
+    induction n as [| m].
+    - rewrite (Vector_nil_eq v1).
+      rewrite (Vector_nil_eq v2).
+      apply Vector_sim_eq.
+      reflexivity.
+    - rewrite (Vector_surjective_pairing2 (v := v1)).
+      rewrite (Vector_surjective_pairing2 (v := v2)).
+      rewrite map_Vector_vcons.
+      rewrite map_Vector_vcons.
+      rewrite Vector_zip_eq_vcons.
+      rewrite Vector_zip_eq_vcons.
+      rewrite map_Vector_vcons.
+      rewrite IHm.
+      reflexivity.
+  Qed.
+
+  Corollary natural_fst_Vector_zip_eq
+    {A1 A2 B: Type} {n: nat}:
+    forall (v1: Vector n A1)
+      (v2: Vector n B)
+      (f: A1 -> A2),
+      Vector_zip_eq (map f v1) v2 =
+        map (map_fst f) (Vector_zip_eq v1 v2).
+  Proof.
+    intros.
+    rewrite map_fst_to_pair.
+    rewrite natural_Vector_zip_eq.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+  Corollary natural_snd_Vector_zip_eq
+    {A B1 B2: Type} {n: nat}:
+    forall (v1: Vector n A)
+      (v2: Vector n B1)
+      (g: B1 -> B2),
+      Vector_zip_eq v1 (map g v2) =
+        map (map_snd g) (Vector_zip_eq v1 v2).
+  Proof.
+    intros.
+    rewrite map_snd_to_pair.
+    rewrite natural_Vector_zip_eq.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+End zipped_vector_naturality.
 
 (** ** Traversing a Zip by A Relation *)
 (******************************************************************************)
@@ -1733,7 +1952,7 @@ Section traverse_zipped_vector.
     forall (n: nat) (v1: Vector n A) (v2: Vector n B),
       traverse R v1 v2 =
         foldMap (uncurry R)
-          (Vector_zip_eq A B n v1 v2).
+          (Vector_zip_eq v1 v2).
   Proof.
     intros.
     induction n.
@@ -1787,7 +2006,7 @@ Definition Vector_zip
   (v1: Vector n A)
   (v2: Vector m B)
   (Heq: n = m): Vector n (A * B) :=
-  Vector_zip_eq A B n v1 (coerce (eq_sym Heq) in v2).
+  Vector_zip_eq v1 (coerce (eq_sym Heq) in v2).
 
 (* This verison is less convenient than the above one in some
  respects because it cannot reduce unless the proof of equality is
@@ -1798,14 +2017,14 @@ Definition Vector_zip_alt
   (v2: Vector m B)
   (Heq: n = m): Vector n (A * B) :=
     (match Heq in (_ = m) return Vector m B -> Vector n (A * B) with
-     | eq_refl => Vector_zip_eq A B n v1
+     | eq_refl => Vector_zip_eq v1
      end) v2.
 
 Lemma Vector_zip_eq_spec:
   forall (A B: Type) (n: nat)
     (v1: Vector n A)
     (v2: Vector n B),
-    Vector_zip_eq A B n v1 v2 =
+    Vector_zip_eq v1 v2 =
       Vector_zip A B n n v1 v2 eq_refl.
 Proof.
   intros.
@@ -1829,7 +2048,7 @@ Lemma Vector_zip_proof_irrelevance:
 Proof.
   intros.
   unfold Vector_zip.
-  apply Vector_zip_eq_sim.
+  apply Vector_zip_eq_sim2.
   apply (transitive_Vector_sim (v2 := v2)).
   apply Vector_coerce_sim_l.
   apply Vector_coerce_sim_r.
@@ -1841,11 +2060,11 @@ Lemma Vector_zip_proof_irrelevance2:
     (v2: Vector n B)
     (Heq: n = n),
     Vector_zip A B n n v1 v2 Heq =
-      Vector_zip_eq A B n v1 v2.
+      Vector_zip_eq v1 v2.
 Proof.
   intros.
   unfold Vector_zip.
-  apply Vector_zip_eq_sim.
+  apply Vector_zip_eq_sim2.
   apply Vector_coerce_sim_l.
 Qed.
 
@@ -1931,7 +2150,7 @@ Lemma Forall_zip_spec:
     traverse (G := subset) (T := Vector n) R v1 v2 =
       foldMap (M := Prop)
         (op := Monoid_op_and) (unit := Monoid_unit_true)
-        (uncurry R) (Vector_zip_eq A B n v1 v2).
+        (uncurry R) (Vector_zip_eq v1 v2).
 Proof.
   intros.
   induction n.
