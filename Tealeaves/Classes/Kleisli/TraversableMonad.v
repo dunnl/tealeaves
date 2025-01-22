@@ -733,13 +733,15 @@ Module DerivedInstances.
       {| kmon_bind0 := bind_ret;
       |}.
 
-    #[export] Instance TraversableRightModule_TraversableMonad:
+    #[local] Instance TraversableRightModule_TraversableMonad:
       TraversableRightModule T T :=
       {| ktmod_monad := _; |}.
 
+    (*
     #[export] Instance Functor_TraversableMonad: Functor T
       := DerivedInstances.Functor_TraversableFunctor.
     (* or DerivedInstances.Functor_Monad. *)
+    *)
 
     Context
       `{Map_U_inst: Map U}
@@ -749,9 +751,9 @@ Module DerivedInstances.
       `{! Compat_Map_Bindt T U}
       `{! Compat_Traverse_Bindt T U}
       `{! Compat_Bind_Bindt T U}
-      `{! TraversableRightModule T U}.
+      `{! TraversableRightPreModule T U}.
 
-    #[export] Instance TraversableFunctor_TraversableRightModule:
+    #[export] Instance TraversableFunctor_TraversableRightPreModule:
       TraversableFunctor U.
     Proof.
       constructor; intros.
@@ -759,9 +761,6 @@ Module DerivedInstances.
       - apply traverse_traverse.
       - apply traverse_morphism.
     Qed.
-
-    #[export] Instance Functor_TraversableRightModule:
-      Functor U :=  DerivedInstances.Functor_TraversableFunctor.
 
     #[export] Instance RightPreModule_TraversableRightPreModule:
       RightPreModule T U :=

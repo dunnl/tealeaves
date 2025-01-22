@@ -28,9 +28,8 @@ Class Compat_ToBatch_Traverse
   (T: Type -> Type)
   `{Traverse_inst: Traverse T}
   `{ToBatch_inst: ToBatch T} :=
-  compat_toBatch_traverse :
-  forall A B, @toBatch T ToBatch_inst A B =
-           @traverse T Traverse_inst (Batch A B) _ _ _ A B (batch B).
+  compat_toBatch_traverse:
+    ToBatch_inst = DerivedOperations.ToBatch_Traverse.
 
 Lemma toBatch_to_traverse
   `{Compat_ToBatch_Traverse T} :

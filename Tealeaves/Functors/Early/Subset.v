@@ -205,9 +205,12 @@ Qed.
 
 (** * Monad Instances (Kleisli) *)
 (******************************************************************************)
-
 #[export] Instance Bind_subset: Bind subset subset := fun A B f s_a =>
 (fun b => exists (a: A), s_a a /\ f a b).
+
+#[export] Instance Compat_Map_Bind_subset :
+  `{Compat_Map_Bind (Map_U := Map_subset) subset subset} :=
+  ltac:(reflexivity).
 
 (** ** Rewriting laws *)
 (******************************************************************************)
@@ -275,6 +278,14 @@ Qed.
 
 #[export] Instance RightModule_subset: RightModule subset subset :=
   {| kmod_monad := _;
+  |}.
+
+(** ** <<bind>> is a monoid homomorphism *)
+(******************************************************************************)
+#[export] Instance Monmor_bind {A B f} :
+  Monoid_Morphism (subset A) (subset B) (bind f) :=
+  {| monmor_unit := @bind_set_nil A B f;
+     monmor_op := @bind_set_add A B f;
   |}.
 
 (** ** Misc laws *)

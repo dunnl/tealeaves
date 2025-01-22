@@ -23,12 +23,32 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
+Class Compat_ToBatch6_Bindt
+  (T: Type -> Type)
+  (U: Type -> Type)
+  `{Bindt_TU: Bindt T U}
+  `{ToBatch6_TU: ToBatch6 T U} :=
+  compat_toBatch6_bindt:
+    ToBatch6_TU = DerivedOperations.ToBatch6_Bindt.
+
+Lemma toBatch6_to_bindt
+  `{Compat_ToBatch6_Bindt T U} :
+  forall A B, toBatch6 (T := T) (U := U) (A := A) B =
+           bindt (G := Batch A (T B)) (batch (T B)).
+Proof.
+  intros.
+  rewrite compat_toBatch6_bindt.
+  reflexivity.
+Qed.
+
+#[export] Instance Compat_ToBatch6_Bindt_Self
+  `{Bindt T U}: Compat_ToBatch6_Bindt T U
+                  (ToBatch6_TU := DerivedOperations.ToBatch6_Bindt)
+  := ltac:(hnf; reflexivity).
+
 (** ** Derived Laws *)
 (******************************************************************************)
 Module DerivedInstances.
-
-  Import DerivedOperations.
-
   Section to_coalgebraic.
 
     Context
@@ -38,9 +58,18 @@ Module DerivedInstances.
       `{! Compat_Map_Bindt T U}
       `{! Kleisli.TraversableMonad.TraversableRightPreModule T U}.
 
-    Lemma double_batch6_spec: forall A B C,
-        double_batch6 (A := A) = batch (T C) ⋆6 batch (T B).
+    Context
+      `{ToBatch6 T T}
+      `{ToBatch6 T U}
+      `{! Compat_ToBatch6_Bindt T U}
+      `{! Compat_ToBatch6_Bindt T T}.
+
+    Lemma double_batch6_spec: forall (A B C: Type),
+        double_batch6 (T := T) (A := A) =
+          batch (T C) ⋆6 batch (T B).
     Proof.
+      intros.
+      rewrite compat_toBatch6_bindt.
       reflexivity.
     Qed.
 
@@ -48,7 +77,7 @@ Module DerivedInstances.
         toBatch6 B ∘ ret (T := T) (A := A) = batch (T B).
     Proof.
       intros.
-      unfold_ops @ToBatch6_Bindt.
+      rewrite toBatch6_to_bindt.
       rewrite (ktm_bindt0 A).
       reflexivity.
     Qed.
@@ -58,7 +87,7 @@ Module DerivedInstances.
     Proof.
       intros.
       reassociate -> on left.
-      unfold_ops @ToBatch6_Bindt.
+      rewrite toBatch6_to_bindt.
       rewrite (ktm_morph
                  (G1 := Batch A (T A))
                  (G2 := Batch (T A) (T A))
@@ -84,7 +113,7 @@ Module DerivedInstances.
           map (F := Batch A (T B)) (toBatch6 C) ∘ toBatch6 (U := U) B.
     Proof.
       intros.
-      unfold_ops @ToBatch6_Bindt.
+      rewrite toBatch6_to_bindt.
       change (Batch A (T B) (Batch B (T C) ?x))
         with ((Batch A (T B) ∘ Batch B (T C)) x).
       erewrite (ktm_morph (T := T)
@@ -94,6 +123,8 @@ Module DerivedInstances.
                   (ϕ := @cojoin_Batch6 T _ A B C)).
       unfold_compose_in_compose.
       rewrite (cojoin_Batch6_batch).
+      rewrite toBatch6_to_bindt.
+      rewrite toBatch6_to_bindt.
       rewrite (ktm_bindt2 _ _).
       rewrite double_batch6_spec.
       reflexivity.
@@ -115,6 +146,12 @@ Module DerivedInstances.
         `{Bindt T U}
         `{! Compat_Map_Bindt T U}
         `{! Kleisli.TraversableMonad.TraversableRightPreModule T U}.
+      
+    Context
+      `{ToBatch6 T T}
+      `{ToBatch6 T U}
+      `{! Compat_ToBatch6_Bindt T U}
+      `{! Compat_ToBatch6_Bindt T T}.
 
       #[export] Instance:
         Coalgebraic.TraversableMonad.TraversableRightPreModule T T :=

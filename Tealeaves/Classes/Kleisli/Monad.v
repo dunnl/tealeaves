@@ -245,11 +245,12 @@ Section derived_instances.
   #[local] Generalizable Variables U A B C.
 
   Context
-    `{RightModule_TU: RightModule T U}
+    `{RightModule_TU: RightPreModule T U}
     `{Map_U: Map U}
     `{Map_T: Map T}
     `{! Compat_Map_Bind T U}
-    `{! Compat_Map_Bind T T}.
+    `{! Compat_Map_Bind T T}
+    `{Monad_T: ! Monad T}.
 
   (** *** Composition between [bind] and [map] *)
   (******************************************************************************)

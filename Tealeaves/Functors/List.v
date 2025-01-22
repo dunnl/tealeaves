@@ -1,5 +1,6 @@
 From Tealeaves Require Import
   Classes.Categorical.Monad
+  Classes.Kleisli.Monad
   Classes.Kleisli.TraversableFunctor
   Classes.Kleisli.TraversableMonad
   Classes.Categorical.ContainerFunctor
@@ -18,9 +19,6 @@ Import Applicative.Notations.
 Export EqNotations.
 
 #[local] Generalizable Variables M A B G ϕ.
-
-
-
 
 (** * List algebras and folds *)
 (******************************************************************************)

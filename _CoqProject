@@ -137,6 +137,7 @@ Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
+Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
 
 ##########################################################
 # FUNCTORS                                               #

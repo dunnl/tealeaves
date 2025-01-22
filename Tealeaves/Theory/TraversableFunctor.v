@@ -30,7 +30,7 @@ Import VectorRefinement.Notations.
   f%function_scope b.
 
 
-(** * Miscellaneous Properties Concerning <<toBatch>>*)
+(** * Miscellaneous Properties Concerning <<toBatch>> *)
 (******************************************************************************)
 Section stuff.
 

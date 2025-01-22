@@ -16,34 +16,36 @@ Import Subset.Notations.
 
 #[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
 
+(** * Theory of Traversable Monads *)
+(******************************************************************************)
 Section traversable_monad_theory.
 
   Context
     `{ret_inst : Return T}
-      `{Map_T_inst : Map T}
-      `{Traverse_T_inst : Traverse T}
-      `{Bind_T_inst : Bind T T}
-      `{Bindt_T_inst : Bindt T T}
-      `{ToSubset_T_inst: ToSubset T}
-      `{ToBatch_T_inst: ToBatch T}
-      `{! Compat_Map_Bindt T T}
-      `{! Compat_Traverse_Bindt T T}
-      `{! Compat_Bind_Bindt T T}
-      `{! Compat_ToSubset_Traverse T}
-      `{! Compat_ToBatch_Traverse T}.
+    `{Map_T_inst : Map T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{ToSubset_T_inst: ToSubset T}
+    `{ToBatch_T_inst: ToBatch T}
+    `{! Compat_Map_Bindt T T}
+    `{! Compat_Traverse_Bindt T T}
+    `{! Compat_Bind_Bindt T T}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToBatch_Traverse T}.
 
   Context
-      `{Map_U_inst : Map U}
-      `{Traverse_U_inst : Traverse U}
-      `{Bind_U_inst : Bind T U}
-      `{Bindt_U_inst : Bindt T U}
-      `{ToSubset_U_inst: ToSubset U}
-      `{ToBatch_U_inst: ToBatch U}
-      `{! Compat_Map_Bindt T U}
-      `{! Compat_Traverse_Bindt T U}
-      `{! Compat_Bind_Bindt T U}
-      `{! Compat_ToSubset_Traverse U}
-      `{! Compat_ToBatch_Traverse U}.
+    `{Map_U_inst : Map U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{ToSubset_U_inst: ToSubset U}
+    `{ToBatch_U_inst: ToBatch U}
+    `{! Compat_Map_Bindt T U}
+    `{! Compat_Traverse_Bindt T U}
+    `{! Compat_Bind_Bindt T U}
+    `{! Compat_ToSubset_Traverse U}
+    `{! Compat_ToBatch_Traverse U}.
 
   Context
     `{Monad_inst : ! TraversableMonad T}

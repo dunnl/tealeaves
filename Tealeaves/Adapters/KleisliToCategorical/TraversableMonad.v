@@ -40,6 +40,7 @@ Module DerivedInstances.
     Import DerivedOperations.
     Import Kleisli.TraversableMonad.DerivedOperations.
     Import Kleisli.TraversableMonad.DerivedInstances.
+    Import Kleisli.TraversableFunctor.DerivedInstances.
 
     (** *** Monad instance *)
     (******************************************************************************)
@@ -47,7 +48,8 @@ Module DerivedInstances.
     Proof.
       constructor.
       - typeclasses eauto.
-      - typeclasses eauto.
+      - inversion H.
+        typeclasses eauto.
       - intros.
         rewrite map_to_bindt.
         rewrite (ktm_bindt0 (T := T) (G := fun A => A)).
