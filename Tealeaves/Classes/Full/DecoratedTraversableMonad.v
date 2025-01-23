@@ -117,3 +117,22 @@ Section MonadFull.
   Qed.
 
 End MonadFull.
+
+(*
+
+Class DecoratedContainerMonadFull
+  (W : Type) (T : Type -> Type)
+  `{Map T}
+  `{Mapd W T}
+  `{Bind T T}
+  `{Bindd W T T}
+  `{Return T}
+  `{Monoid_op W}
+  `{Monoid_unit W}
+  `{Monoid W}
+  `{ToCtxset W T} `{ToSubset T} :=
+  { dconmf_dconm :> DecoratedContainerMonad W T;
+    dconmf_functor :> DecoratedMonadFull W T;
+    dconmf_element_compat :> Compat_ToSubset_ToCtxset;
+  }.
+*)

@@ -134,8 +134,11 @@ Section decorated_monad_kleisli_composition.
    *)
 
   Context
-    `{DecoratedTraversableMonad W T}.
-
+    `{Return T}
+    `{Binddt W T T}
+    `{op: Monoid_op W}
+    `{unit: Monoid_unit W}
+    `{! Monoid W}.
 
   (** *** Interaction with [incr], [preincr] *)
   (******************************************************************************)
@@ -165,6 +168,9 @@ Section decorated_monad_kleisli_composition.
     Qed.
 
   End incr.
+
+  Context
+    `{! DecoratedTraversableMonad W T}.
 
   Context
     `{Applicative G}
@@ -1883,16 +1889,22 @@ Module DerivedInstances.
       `{! Compat_Bindt_Binddt W T T}
       `{Monad_inst: ! DecoratedTraversableMonad W T}.
 
-    #[export] Instance: DecoratedRightPreModule W T T :=
+    #[export] Instance
+      DecoratedRightPreModule_DecoratedTraversableMonad:
+      DecoratedRightPreModule W T T :=
       {| kdmod_bindd1 := bindd_id;
         kdmod_bindd2 := bindd_bindd;
       |}.
 
-    #[export] Instance: DecoratedMonad W T :=
+    #[export] Instance
+      DecoratedMonad_DecoratedTraversableMonad:
+      DecoratedMonad W T :=
       {| kdm_bindd0 := bindd_ret;
       |}.
 
-    #[export] Instance: TraversableRightPreModule T T.
+    #[export] Instance
+      TraversableRightPreModule_DecoratedTraversableMonad:
+      TraversableRightPreModule T T.
     Proof.
       constructor; intros.
       - apply bindt_id.
@@ -1900,11 +1912,15 @@ Module DerivedInstances.
       - apply (bindt_morph G1 G2 ϕ).
     Qed.
 
-    #[export] Instance: TraversableMonad T :=
+    #[export] Instance
+      TraversableMonad_DecoratedTraversableMonad
+      : TraversableMonad T :=
       {| ktm_bindt0 := bindt_ret;
       |}.
 
-    #[export] Instance: DecoratedTraversableFunctor W T.
+    #[export] Instance
+      DecoratedTraversableFunctor_DecoratedTraversableMonad:
+      DecoratedTraversableFunctor W T.
     Proof.
       constructor; intros.
       - apply mapdt_id.
@@ -1912,19 +1928,46 @@ Module DerivedInstances.
       - apply (mapdt_morph G1 G2 ϕ).
     Qed.
 
-    #[export] Instance: Monad T.
-    Proof.
-      constructor; intros.
-      2: typeclasses eauto.
-      rewrite bind_ret.
-      reflexivity.
-    Qed.
+    #[export] Instance
+      Monad_DecoratedTraversableMonad:
+      Monad T :=
+      DerivedInstances.Monad_DecoratedMonad W T.
 
-    #[export] Instance: Functor T.
+    #[export] Instance
+      Functor_DecoratedTraversableMonad:
+      Functor T.
     Proof.
       constructor; intros.
       - apply map_id.
       - apply map_map.
+    Qed.
+
+    #[local] Instance
+      DecoratedTraversableRightModule_DecoratedTraversableMonad:
+      DecoratedTraversableRightModule W T T.
+    Proof.
+      constructor; typeclasses eauto.
+    Qed.
+
+    #[local] Instance
+      TraversableRightModule_DecoratedTraversableMonad:
+      TraversableRightModule T T.
+    Proof.
+      constructor; typeclasses eauto.
+    Qed.
+
+    #[local] Instance
+      DecoratedRightModule_DecoratedTraversableMonad:
+      DecoratedRightModule W T T.
+    Proof.
+      constructor; typeclasses eauto.
+    Qed.
+
+    #[local] Instance
+      RightModule_DecoratedTraversableMonad:
+      RightModule T T.
+    Proof.
+      constructor; typeclasses eauto.
     Qed.
 
     Context
@@ -1946,7 +1989,9 @@ Module DerivedInstances.
       `{! Compat_Bindt_Binddt W T U}
       `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
 
-    #[export] Instance: TraversableRightPreModule T U.
+    #[export] Instance
+      TraversableRightPreModule_DecoratedTraversableRightPreModule:
+      TraversableRightPreModule T U.
     Proof.
       constructor; intros.
       - apply bindt_id.
@@ -1954,20 +1999,16 @@ Module DerivedInstances.
       - apply (bindt_morph G1 G2 ϕ).
     Qed.
 
-    #[export] Instance: TraversableRightModule T U :=
-      {| ktmod_monad := _
-      |}.
-
-    #[export] Instance: DecoratedRightPreModule W T U :=
+    #[export] Instance
+      DecoratedRightPreModule_DecoratedTraversableRightPreModule:
+      DecoratedRightPreModule W T U :=
       {| kdmod_bindd1 := bindd_id;
         kdmod_bindd2 := bindd_bindd;
       |}.
 
-    #[local] Instance: DecoratedRightModule W T U :=
-      {| kdmod_monad := _
-      |}.
-
-    #[export] Instance: DecoratedTraversableFunctor W U.
+    #[export] Instance
+      DecoratedTraversableFunctor_DecoratedTraversableRightPreModule:
+      DecoratedTraversableFunctor W U.
     Proof.
       constructor; intros.
       - apply mapdt_id.
@@ -1975,14 +2016,31 @@ Module DerivedInstances.
       - apply (mapdt_morph G1 G2 ϕ).
     Qed.
 
-    #[local] Instance: DecoratedRightModule W T T :=
+    #[local] Instance
+      DecoratedTraversableRightModule_DecoratedTraversableRightPreModule:
+      DecoratedTraversableRightModule W T U.
+    Proof.
+      constructor; typeclasses eauto.
+    Qed.
+
+    #[local] Instance
+      TraversableRightModule_DecoratedTraversableRightPreModule:
+      TraversableRightModule T U :=
+      {| ktmod_monad := _
+      |}.
+
+    #[local] Instance
+      DecoratedRightModule_DecoratedTraversableRightPreModule:
+      DecoratedRightModule W T U :=
       {| kdmod_monad := _
       |}.
 
     #[local] Instance
-      DecoratedTraversableRightModule_DecoratedTraversableMonad:
-      DecoratedTraversableRightModule W T T :=
-      {| kdtmod_premod := kdtm_premod ; |}.
+      RightModule_DecoratedTraversableRightPreModule:
+      RightModule T T.
+    Proof.
+      constructor; typeclasses eauto.
+    Qed.
 
   End derived_instances.
 End DerivedInstances.

@@ -1,5 +1,10 @@
-From Tealeaves Require Import Backends.DB.DB Backends.DB.Simplification.
-From Autosubst Require Autosubst.
+From Tealeaves.Backends Require Import
+  DB.DB
+  DB.Simplification.
+From Autosubst Require
+  Autosubst.
+
+Import DecoratedTraversableMonad.UsefulInstances.
 
 #[local] Generalizable Variables W T U.
 
@@ -8,18 +13,18 @@ Module Autosubst_Instances.
 
   Section DTM_to_Autosubst.
     Context
-      `{DecoratedTraversableMonadFull
-          (op := Monoid_op_plus) (unit := Monoid_unit_zero) nat T}.
+      `{DecoratedTraversableMonad
+       (op := Monoid_op_plus) (unit := Monoid_unit_zero) nat T}.
 
     #[export] Instance Ids_DTM: Ids (T nat) :=
       @ret T _ nat.
     #[export] Instance Rename_DTM: Rename (T nat) :=
       @DB.rename T _.
-    #[export] Instance Subst_DTM : Subst (T nat) :=
+    #[export] Instance Subst_DTM: Subst (T nat) :=
       @DB.subst T _ _ _ _.
 
     Lemma rename_subst_DTM:
-      forall (xi : nat -> nat) (s : T nat), rename xi s = s.[ren xi].
+      forall (xi: nat -> nat) (s: T nat), rename xi s = s.[ren xi].
     Proof.
       intros.
       unfold_ops @Rename_DTM @Subst_DTM.
@@ -28,7 +33,7 @@ Module Autosubst_Instances.
     Qed.
 
     Lemma subst_id_DTM:
-      forall s : T nat, s.[ids] = s.
+      forall s: T nat, s.[ids] = s.
     Proof.
       intros.
       unfold_ops @Ids_DTM @Subst_DTM.
@@ -36,7 +41,7 @@ Module Autosubst_Instances.
       reflexivity.
     Qed.
 
-    Lemma id_subst_DTM: forall (sigma : nat -> T nat) (x : nat),
+    Lemma id_subst_DTM: forall (sigma: nat -> T nat) (x: nat),
         (ids x).[sigma] = sigma x.
     Proof.
       intros.
@@ -46,7 +51,7 @@ Module Autosubst_Instances.
     Qed.
 
     Lemma subst_comp_DTM:
-      forall (sigma tau : nat -> T nat) (s : T nat),
+      forall (sigma tau: nat -> T nat) (s: T nat),
         s.[sigma].[tau] = s.[scomp sigma tau].
     Proof.
       intros.
@@ -77,7 +82,7 @@ Module Autosubst_Instances.
     reflexivity.
   Qed.
 
-  Lemma up_eq `{Return T} `{Mapd nat T} {X:Type}:
+  Lemma up_eq `{Return T} `{Binddt nat T T} {X:Type}:
     up__sub (T := T) = up.
   Proof.
     ext σ ix.
@@ -91,22 +96,22 @@ End Autosubst_Instances.
 (** * Autosubst-compatible notations *)
 (******************************************************************************)
 Module Notations.
-  Notation "( + x )" := (lift x) (format "( + x )") : tealeaves_scope.
+  Notation "( + x )" := (lift x) (format "( + x )"): tealeaves_scope.
   Notation "f >>> g" :=
     (compose g f)
-      (at level 56, left associativity) : tealeaves_scope.
+      (at level 56, left associativity): tealeaves_scope.
   Notation "s .: sigma" :=
     (scons s sigma)
-      (at level 55, sigma at level 56, right associativity) : tealeaves_scope.
+      (at level 55, sigma at level 56, right associativity): tealeaves_scope.
   Notation "s .[ sigma ]" :=
     (subst sigma s)
       (at level 2, sigma at level 200, left associativity,
-        format "s .[ sigma ]" ) : tealeaves_scope.
+        format "s .[ sigma ]" ): tealeaves_scope.
   Notation "s .[ t /]" := (subst (t .: ret) s)
                             (at level 2, t at level 200, left associativity,
-                              format "s .[ t /]") : tealeaves_scope.
+                              format "s .[ t /]"): tealeaves_scope.
   Notation "s .[ t1 , t2 , .. , tn /]" :=
     (subst (scons t1 (scons t2 .. (scons tn ret) .. )) s)
       (at level 2, left associativity,
-        format "s '[ ' .[ t1 , '/' t2 , '/' .. , '/' tn /] ']'") : tealeaves_scope.
+        format "s '[ ' .[ t1 , '/' t2 , '/' .. , '/' tn /] ']'"): tealeaves_scope.
 End Notations.

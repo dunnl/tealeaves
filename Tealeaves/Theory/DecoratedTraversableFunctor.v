@@ -1,13 +1,13 @@
 From Tealeaves Require Export
   Functors.Batch
+  Adapters.KleisliToCategorical.DecoratedTraversableFunctor
+  Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
+  Classes.Coalgebraic.TraversableFunctor
+  Classes.Coalgebraic.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Kleisli.Theory.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedContainerFunctor
   Classes.Kleisli.DecoratedShapelyFunctor
-  Classes.Coalgebraic.TraversableFunctor
-  Classes.Coalgebraic.DecoratedTraversableFunctor
-  Adapters.KleisliToCategorical.DecoratedTraversableFunctor
-  Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
   Functors.Environment
   Theory.TraversableFunctor.
 
@@ -784,20 +784,26 @@ Section deconstruction.
 
 End deconstruction.
 
+  End runBatch.
+  End theory.
+
 (** * Lifting context-sensitive relations over Decorated-Traversable functors *)
 (******************************************************************************)
 Section lifting_relations.
 
   Context
-    `{DecoratedTraversableFunctor E T}
-    `{Map T}
-    `{Mapd E T}
-    `{Traverse T}
-    `{ToBatch T}
-    `{! Compat_Map_Mapdt E T}
+    `{Mapdt_inst: Mapdt E T}
+    `{Traverse_inst: Traverse T}
+    `{Mapd_inst: Mapd E T}
+    `{Map_inst: Map T}
+    `{ToBatch_inst: ToBatch T}
+    `{ToBatch3_inst: ToBatch3 E T}
+    `{! Compat_Traverse_Mapdt E T}
     `{! Compat_Mapd_Mapdt E T}
+    `{! Compat_Map_Mapdt E T}
     `{! Compat_ToBatch_Traverse T}
-    `{! Compat_Traverse_Mapdt E T}.
+    `{! Compat_ToBatch3_Mapdt E T}
+    `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
   Import Categorical.DecoratedFunctor.
   Import KleisliToCategorical.DecoratedTraversableFunctor.DerivedOperations.
@@ -860,6 +866,4 @@ Section lifting_relations.
 
 End lifting_relations.
 
-  End runBatch.
 
-End theory.

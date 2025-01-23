@@ -21,6 +21,6 @@ Module Notations.
   Export Categorical.ContainerFunctor.Notations.
   Export Misc.Product.Notations.
   Export Monoid.Notations.
-  Export Misc.Subset.Notations.
+  Export Subset.Notations.
   Export List.ListNotations.
 End Notations.

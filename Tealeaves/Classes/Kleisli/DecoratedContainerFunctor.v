@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedFunctor
   Classes.Categorical.ContainerFunctor
+  Classes.Categorical.Comonad (Extract, extract)
   Functors.Early.Subset
   Functors.Early.Ctxset.
 
@@ -23,6 +24,31 @@ Class ToCtxset (E: Type) (F: Type -> Type) :=
 #[global] Arguments toctxset {E}%type_scope {F}%function_scope
   {ToCtxset} {A}%type_scope _.
 
+(** ** Compatibility with <<tosubset>> *)
+(******************************************************************************)
+Definition ToSubset_ToCtxset
+  `{ToCtxset_ET: ToCtxset E T}: ToSubset T :=
+  fun A => map (F := subset) extract ∘ toctxset.
+
+Class Compat_ToSubset_ToCtxset (E: Type) (T: Type -> Type)
+  `{ToCtxset_ET: ToCtxset E T}
+  `{ToSubset_T: ToSubset T}: Prop :=
+  compat_tosubset_toctxset:
+    ToSubset_T =
+      (ToSubset_ToCtxset (ToCtxset_ET := ToCtxset_ET)).
+
+Lemma tosubset_to_toctxset
+  `{ToCtxset_ET: ToCtxset E T}
+  `{ToSubset_T: ToSubset T}
+  `{! Compat_ToSubset_ToCtxset E T}:
+  forall (A: Type), tosubset (F := T) (A := A) =
+                 map (F := subset) extract ∘ toctxset.
+Proof.
+  intros.
+  rewrite compat_tosubset_toctxset.
+  reflexivity.
+Qed.
+
 (** ** <<element_ctx_of>> operation (∈d) *)
 (******************************************************************************)
 Definition element_ctx_of `{ToCtxset E T} {A: Type}:
@@ -35,6 +61,7 @@ Lemma element_ctx_of_toctxset `{ToCtxset E T} {A: Type}:
 Proof.
   reflexivity.
 Qed.
+
 (** ** Typeclass *)
 (******************************************************************************)
 Class DecoratedContainerFunctor

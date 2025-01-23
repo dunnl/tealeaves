@@ -1,6 +1,7 @@
 From Tealeaves Require Import
   Classes.Kleisli.DecoratedContainerFunctor
-  Classes.Kleisli.Theory.DecoratedFunctor.
+  Classes.Kleisli.DecoratedFunctor
+  Classes.Categorical.Comonad (Extract, extract).
 
 #[local] Generalizable Variables E T.
 
@@ -8,31 +9,25 @@ Import DecoratedContainerFunctor.Notations.
 Import ContainerFunctor.Notations.
 Import Subset.Notations.
 
-(** ** Compatibility *)
+(** * Derived Properties of <<DecoratedContainerFunctor>> *)
 (******************************************************************************)
-Section compat.
+
+(** ** Relating <<a ∈ t>> to <<(e, a) ∈d t>> *)
+(******************************************************************************)
+Section relating_element_to_element_ctx.
 
   Context
-    `{ToCtxset_inst: ToCtxset E T}.
+    `{ToCtxset_inst: ToCtxset E T}
+    `{ToSubset_inst: ToSubset T}
+    `{! Compat_ToSubset_ToCtxset E T}.
 
-  Definition ToSubset_ToCtxset: ToSubset T :=
-    fun A => map (F := subset) extract ∘ toctxset.
-
-  Class Compat_ToSubset_ToCtxset
-    `{ToSubset_inst: ToSubset T}: Prop :=
-    compat_elements_elements_ctx :
-      @tosubset T ToSubset_inst =
-        @tosubset T ToSubset_ToCtxset.
-
-  Lemma ind_iff_in
-    `{Compat_ToSubset_ToCtxset}:
+  Lemma ind_iff_in:
     forall (A: Type) (t: T A) (a: A),
       a ∈ t <-> exists (e: E), (e, a) ∈d t.
   Proof.
     intros.
     change_left ((evalAt a ∘ tosubset) t).
-    rewrite compat_elements_elements_ctx.
-    unfold_ops @ToSubset_ToCtxset.
+    rewrite tosubset_to_toctxset.
     unfold_ops @Map_subset.
     unfold evalAt, compose.
     split.
@@ -42,8 +37,7 @@ Section compat.
       eauto.
   Qed.
 
-  Lemma ind_implies_in
-    `{Compat_ToSubset_ToCtxset}:
+  Lemma ind_implies_in:
     forall (A: Type) (e: E) (a: A) (t: T A),
       (e, a) ∈d t -> a ∈ t.
   Proof.
@@ -52,54 +46,7 @@ Section compat.
     eauto.
   Qed.
 
-End compat.
-
-(*
-Class DecoratedContainerFunctorFull
-  (E: Type) (F: Type -> Type)
-  `{Map F} `{Mapd E F}
-  `{ToSubset F}
-  `{ToCtxset E F} :=
-  { dcontf_functor :> DecoratedFunctorFull E F;
-    dcontf_dcont :> DecoratedContainerFunctor E F;
-    dcontf_compat :> Compat_ToSubset_ToCtxset;
-  }.
- *)
-
-(** * Container instance for <<ctxset>> *)
-(******************************************************************************)
-Section Container_ctxset.
-
-  Context {E: Type}.
-
-  Instance ToCtxset_ctxset: ToCtxset E (ctxset E) :=
-    fun (A: Type) (s: ctxset E A) => s.
-
-  Instance Natural_elements_ctx_ctxset :
-    DecoratedHom E (ctxset E) (ctxset E)
-      (@toctxset E (ctxset E) _).
-  Proof.
-    constructor. reflexivity.
-  Qed.
-
-  Lemma ctxset_pointwise: forall (A B: Type) (t: ctxset E A) (f g: E * A -> B),
-      (forall (e: E) (a: A), (e, a) ∈d t -> f (e, a) = g (e, a)) ->
-      mapd f t = mapd g t.
-  Proof.
-    introv hyp. ext [e b]. cbv in *. propext.
-    - intros [a [Hin Heq]].
-      specialize (hyp e a Hin).
-      subst. eauto.
-    - intros [a [Hin Heq]].
-      specialize (hyp e a Hin).
-      subst. eauto.
-  Qed.
-
-  Instance ContainerFunctor_ctxset: DecoratedContainerFunctor E (ctxset E) :=
-    {| dcont_pointwise := ctxset_pointwise;
-    |}.
-
-End Container_ctxset.
+End relating_element_to_element_ctx.
 
 (** * Basic properties of decorated containers *)
 (******************************************************************************)
@@ -111,7 +58,7 @@ Section decorated_container_functor_theory.
     `{ToCtxset_ET: ToCtxset E T}
     `{ToSubset_T: ToSubset T}
     `{! Compat_Map_Mapd E T}
-    `{! Compat_ToSubset_ToCtxset}
+    `{! Compat_ToSubset_ToCtxset E T}
     `{! DecoratedContainerFunctor E T}
     {A B: Type}.
 
@@ -166,7 +113,8 @@ Section decorated_container_functor_theory.
     apply dcont_pointwise.
   Qed.
 
-  Corollary mapd_respectful_id: forall t (f: E * A -> A),
+  Corollary mapd_respectful_id `{! Functor T}:
+    forall (t: T A) (f: E * A -> A),
       (forall e a, (e, a) ∈d t -> f (e, a) = a) -> mapd f t = t.
   Proof.
     introv hyp.

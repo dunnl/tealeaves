@@ -17,7 +17,9 @@ Section Applicative_Monad.
   Context
     `{Categorical.Monad.Monad T}.
 
-  Import CategoricalToKleisli.Monad.ToKleisli.
+  Import Kleisli.Monad.
+  Import CategoricalToKleisli.Monad.DerivedOperations.
+  Import CategoricalToKleisli.Monad.DerivedInstances.
 
   #[global] Instance Pure_Monad : Pure T := @ret T _.
 
@@ -39,7 +41,8 @@ Section Applicative_Monad.
   Proof.
     intros. unfold_ops @Mult_Monad.
     compose near x.
-    rewrite (Monad.bind_map T), (Monad.map_bind T).
+    rewrite bind_map.
+    rewrite map_bind.
     fequal. ext c; unfold compose; cbn. compose near y.
     now rewrite 2(fun_map_map (F := T)).
   Qed.
@@ -48,15 +51,17 @@ Section Applicative_Monad.
       map α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z).
   Proof.
     intros. unfold_ops @Mult_Monad.
-    compose near x on left. rewrite (kmon_bind2 (T := T)).
-    compose near x on left. rewrite (Monad.map_bind T).
+    compose near x on left.
+    rewrite (kmon_bind2 (T := T)).
+    compose near x on left.
+    rewrite (map_bind).
     fequal. ext a; unfold compose; cbn.
-    compose near y on right. rewrite (Monad.map_bind T).
+    compose near y on right. rewrite (map_bind).
     unfold compose; cbn. compose near z on right.
-    unfold kc1. unfold compose; cbn.
+    unfold kc. unfold compose; cbn.
     compose near y on left.
-    rewrite (Monad.bind_map T). compose near y on left.
-    rewrite (Monad.map_bind T). fequal. ext b. unfold compose; cbn.
+    rewrite (bind_map). compose near y on left.
+    rewrite (map_bind). fequal. ext b. unfold compose; cbn.
     compose near z.
     now do 2 (rewrite (fun_map_map (F := T))).
   Qed.
@@ -75,7 +80,7 @@ Section Applicative_Monad.
       map right_unitor (x ⊗ pure tt) = x.
   Proof.
     intros. unfold_ops @Mult_Monad @Pure_Monad.
-    compose near x. rewrite (Monad.map_bind T).
+    compose near x. rewrite (map_bind).
     replace (map right_unitor ∘ (fun a : A => strength (a, ret tt)))
       with (ret (T := T) (A := A)).
     now rewrite mon_bind_id.

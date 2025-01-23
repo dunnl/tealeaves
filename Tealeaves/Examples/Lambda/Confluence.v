@@ -7,8 +7,6 @@ From Tealeaves Require Import
 #[local] Set Implicit Arguments.
 
 Import DB.Notations.
-(* Import DB.DB.Notations. *) (* Tealeaves notations *)
-Import DB.AutosubstShim.Notations. (* Autosubst-like notations *)
 
 Inductive lam (V : Type) :=
 | tvar : V -> lam V
@@ -31,23 +29,23 @@ Proof.
 Qed.
 
 #[export] Instance Map_STLC: Map lam
-  := Map_Binddt nat lam lam.
+  := DerivedOperations.Map_Binddt nat lam lam.
 #[export] Instance Mapd_STLC: Mapd nat lam
-  := Mapd_Binddt nat lam lam.
+  := DerivedOperations.Mapd_Binddt nat lam lam.
 #[export] Instance Traverse_STLC: Traverse lam
-  := Traverse_Binddt nat lam lam.
+  := DerivedOperations.Traverse_Binddt nat lam lam.
 #[export] Instance Mapdt_STLC: Mapdt nat lam
-  := Mapdt_Binddt nat lam lam.
+  := DerivedOperations.Mapdt_Binddt nat lam lam.
 #[export] Instance Bind_STLC: Bind lam lam
-  := Bind_Binddt nat lam lam.
+  := DerivedOperations.Bind_Binddt nat lam lam.
 #[export] Instance Bindd_STLC: Bindd nat lam lam
-  := Bindd_Binddt nat lam lam.
+  := DerivedOperations.Bindd_Binddt nat lam lam.
 #[export] Instance Bindt_STLC: Bindt lam lam
-  := Bindt_Binddt nat lam lam.
+  := DerivedOperations.Bindt_Binddt nat lam lam.
 #[export] Instance ToSubset_STLC: ToSubset lam
   := ToSubset_Traverse.
 #[export] Instance ToBatch_STLC: ToBatch lam
-  := ToBatch_Traverse.
+  := DerivedOperations.ToBatch_Traverse.
 
 Import Notations.
 
@@ -57,6 +55,9 @@ Generalizable Variables s t u v x y σ τ ρ.
 Create HintDb churchrosser.
 
 Declare Custom Entry lambda.
+
+(* Import DB.DB.Notations. *) (* Tealeaves notations *)
+Import DB.AutosubstShim.Notations. (* Autosubst-like notations *)
 
 Module Notations.
   Notation "{| e |}" :=

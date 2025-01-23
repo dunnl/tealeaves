@@ -1,5 +1,4 @@
 From Tealeaves Require Export
-  Classes.Kleisli.Theory.DecoratedMonad
   Classes.Kleisli.Theory.DecoratedContainerFunctor
   Classes.Kleisli.DecoratedContainerMonad.
 
@@ -12,65 +11,58 @@ Import DecoratedContainerFunctor.Notations.
 
 #[local] Generalizable Variables A T U W.
 
-Class DecoratedContainerMonadFull
-  (W : Type) (T : Type -> Type)
-  `{Map T}
-  `{Mapd W T}
-  `{Bind T T}
-  `{Bindd W T T}
-  `{Return T}
-  `{Monoid_op W}
-  `{Monoid_unit W}
-  `{Monoid W}
-  `{ToCtxset W T} `{ToSubset T} :=
-  { dconmf_dconm :> DecoratedContainerMonad W T;
-    dconmf_functor :> DecoratedMonadFull W T;
-    dconmf_element_compat :> Compat_ToSubset_ToCtxset;
-  }.
 
 (** * Basic properties of containers *)
 (******************************************************************************)
 Section decorated_container_monad_theory.
 
   Context
-    `{op : Monoid_op W}
-      `{unit : Monoid_unit W}
-      `{ret_inst : Return T}
-      `{Bindd_T_inst : Bindd W T T}
-      `{Mapd_T_inst : Mapd W T}
-      `{Bind_T_inst : Bind T T}
-      `{Map_T_inst : Map T}
-      `{Map_Bindd_T_inst : ! Compat_Map_Bindd W T T}
-      `{Bind_Bindd_T_inst : ! Compat_Bind_Bindd W T T}
-      `{Mapd_Bindd_T_inst : ! Compat_Mapd_Bindd W T T}
-      `{ToCtxset_T_inst : ToCtxset W T}
-      `{ToSubset_T_inst : ToSubset T}
-      `{! Compat_ToSubset_ToCtxset (E := W) (T := T)}
-      `{! DecoratedContainerMonad W T}
-      `{Mapd_U_inst : Mapd W U}
-      `{Bind_U_inst : Bind T U}
-      `{Map_U_inst : Map U}
-      `{Bindd_U_inst : Bindd W T U}
-      `{Map_Bindd_inst : ! Compat_Map_Bindd W T U}
-      `{Bind_Bindd_inst : ! Compat_Bind_Bindd W T U}
-      `{Mapd_Bindd_inst : ! Compat_Mapd_Bindd W T U}
-      `{ToCtxset_U_inst : ToCtxset W U}
-      `{ToSubset_U_inst : ToSubset U}
-      `{! Compat_ToSubset_ToCtxset (E := W) (T := U)}
-      `{Module_inst : ! DecoratedContainerRightModule W T U}.
+    `{op: Monoid_op W}
+    `{unit: Monoid_unit W}.
 
-  Variables (A B : Type).
+  Context
+    `{ret_inst: Return T}
+    `{Bindd_T_inst: Bindd W T T}
+    `{Mapd_T_inst: Mapd W T}
+    `{Bind_T_inst: Bind T T}
+    `{Map_T_inst: Map T}
+    `{Map_Bindd_T_inst: ! Compat_Map_Bindd W T T}
+    `{Bind_Bindd_T_inst: ! Compat_Bind_Bindd W T T}
+    `{Mapd_Bindd_T_inst: ! Compat_Mapd_Bindd W T T}.
 
-  Implicit Types (t : U A) (b : B) (w : W) (a : A).
+  Context
+    `{ToCtxset_T_inst: ToCtxset W T}
+    `{ToSubset_T_inst: ToSubset T}
+    `{! Compat_ToSubset_ToCtxset W T}
+    `{! DecoratedContainerMonad W T}.
 
-  Lemma dconm_morphism_ret : forall (A : Type),
+  Context
+    `{Mapd_U_inst: Mapd W U}
+    `{Bind_U_inst: Bind T U}
+    `{Map_U_inst: Map U}
+    `{Bindd_U_inst: Bindd W T U}
+    `{Map_Bindd_inst: ! Compat_Map_Bindd W T U}
+    `{Bind_Bindd_inst: ! Compat_Bind_Bindd W T U}
+    `{Mapd_Bindd_inst: ! Compat_Mapd_Bindd W T U}.
+
+  Context
+    `{ToCtxset_U_inst: ToCtxset W U}
+    `{ToSubset_U_inst: ToSubset U}
+    `{! Compat_ToSubset_ToCtxset W U}
+    `{Module_inst: ! DecoratedContainerRightModule W T U}.
+
+  Variables (A B: Type).
+
+  Implicit Types (t: U A) (b: B) (w: W) (a: A).
+
+  Lemma dconm_morphism_ret: forall (A: Type),
       toctxset ∘ ret (T := T) (A := A) =
         ret (T := ctxset W).
   Proof.
     apply kdm_hom_ret.
   Qed.
 
-  Theorem ind_ret_iff : forall {A : Type} (w : W) (a1 a2 : A),
+  Theorem ind_ret_iff: forall {A: Type} (w: W) (a1 a2: A),
       (w, a1) ∈d ret (T := T) a2 <-> w = Ƶ /\ a1 = a2.
   Proof.
     intros.
@@ -83,17 +75,17 @@ Section decorated_container_monad_theory.
     intuition.
   Qed.
 
-  Lemma dconm_morphism_bind : forall (A B : Type) (f : W * A -> T B),
+  Lemma dconm_morphism_bind: forall (A B: Type) (f: W * A -> T B),
       toctxset ∘ bindd (U := U) f =
         bindd (U := ctxset W) (toctxset ∘ f) ∘ toctxset (F := U).
   Proof.
     apply kdmod_parhom_bind.
   Qed.
 
-  Theorem ind_bindd_iff : forall w t f b,
+  Theorem ind_bindd_iff: forall w t f b,
       (w, b) ∈d bindd (U := U) f t <->
-        exists (wa : W) (a : A), (wa, a) ∈d t /\
-                              exists wb : W, (wb, b) ∈d f (wa, a) /\
+        exists (wa: W) (a: A), (wa, a) ∈d t /\
+                              exists wb: W, (wb, b) ∈d f (wa, a) /\
                                           w = wa ● wb.
   Proof.
     introv.
@@ -105,9 +97,9 @@ Section decorated_container_monad_theory.
   Qed.
 
   Theorem ind_bindd_iff' :
-    forall `(f : W * A -> T B) (t : U A) (wtotal : W) (b : B),
+    forall `(f: W * A -> T B) (t: U A) (wtotal: W) (b: B),
       (wtotal, b) ∈d bindd f t <->
-        exists (w1 w2 : W) (a : A),
+        exists (w1 w2: W) (a: A),
           (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
           /\ wtotal = w1 ● w2.
   Proof.
@@ -117,10 +109,10 @@ Section decorated_container_monad_theory.
       (repeat eexists); eauto.
   Qed.
 
-  Corollary ind_bind_iff : forall w t f b,
+  Corollary ind_bind_iff: forall w t f b,
       (w, b) ∈d bind f t <->
-        exists (wa : W) (a : A), (wa, a) ∈d t /\
-                   exists wb : W, (wb, b) ∈d f a /\
+        exists (wa: W) (a: A), (wa, a) ∈d t /\
+                   exists wb: W, (wb, b) ∈d f a /\
                                w = wa ● wb.
   Proof.
     introv.
@@ -131,7 +123,7 @@ Section decorated_container_monad_theory.
 
   Corollary ind_bind_iff': forall w t f b,
       (w, b) ∈d bind f t <->
-        exists (wa wb : W) (a : A),
+        exists (wa wb: W) (a: A),
           (wa, a) ∈d t /\
             (wb, b) ∈d f a /\
             w = wa ● wb.
@@ -142,9 +134,9 @@ Section decorated_container_monad_theory.
       (repeat eexists); eauto.
   Qed.
 
-  Corollary in_bindd_iff : forall t f b,
+  Corollary in_bindd_iff: forall t f b,
       b ∈ bindd (U := U) f t <->
-        exists (wa : W) (a : A),
+        exists (wa: W) (a: A),
           (wa, a) ∈d t /\ b ∈ f (wa, a).
   Proof.
     introv.
@@ -160,8 +152,8 @@ Section decorated_container_monad_theory.
 
   (******************************************************************************)
   Corollary bindd_respectful :
-    forall A B (t : U A) (f : W * A -> T B) (g : W * A -> T B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g (w, a))
+    forall A B (t: U A) (f: W * A -> T B) (g: W * A -> T B),
+      (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = g (w, a))
       -> bindd f t = bindd g t.
   Proof.
     introv hyp.
@@ -170,8 +162,8 @@ Section decorated_container_monad_theory.
   Qed.
 
   Corollary bindd_respectful_bind :
-    forall A B (t : U A) (f : W * A -> T B) (g : A -> T B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = g a)
+    forall A B (t: U A) (f: W * A -> T B) (g: A -> T B),
+      (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = g a)
       -> bindd f t = bind g t.
   Proof.
     introv hyp.
@@ -182,8 +174,8 @@ Section decorated_container_monad_theory.
   Qed.
 
   Corollary bindd_respectful_mapd :
-    forall A B (t : U A) (f : W * A -> T B) (g : W * A -> B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret (g (w, a)))
+    forall A B (t: U A) (f: W * A -> T B) (g: W * A -> B),
+      (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = ret (g (w, a)))
       -> bindd f t = mapd g t.
   Proof.
     introv hyp.
@@ -193,8 +185,8 @@ Section decorated_container_monad_theory.
   Qed.
 
   Corollary bindd_respectful_map :
-    forall A B (t : U A) (f : W * A -> T B) (g : A -> B),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret (g a))
+    forall A B (t: U A) (f: W * A -> T B) (g: A -> B),
+      (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = ret (g a))
       -> bindd f t = map g t.
   Proof.
     introv hyp.
@@ -204,8 +196,8 @@ Section decorated_container_monad_theory.
   Qed.
 
   Corollary bindd_respectful_id :
-    forall A (t : U A) (f : W * A -> T A),
-      (forall (w : W) (a : A), (w, a) ∈d t -> f (w, a) = ret a)
+    forall A (t: U A) (f: W * A -> T A),
+      (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = ret a)
       -> bindd f t = t.
   Proof.
     intros. change t with (id t) at 2.
@@ -217,7 +209,7 @@ Section decorated_container_monad_theory.
 End decorated_container_monad_theory.
 
 
-(** ** Instance for <<env>> *)
+(** ** Instance for <<env>> *) (* TODO *)
 (******************************************************************************)
 (*
 #[export] Instance DecoratedContainerMonad_env `{Monoid W} :

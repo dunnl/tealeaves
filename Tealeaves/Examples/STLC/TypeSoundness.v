@@ -83,7 +83,7 @@ Proof.
   - specialize_freshly IHbody.
     simplify.
     assert (step1 : FV body ⊆ FV (body '(e: term)))
-      by apply FV_open_lower.
+      by apply (FV_open_lower (Binddt_TU := Binddt_STLC)).
     assert (step2 : forall x, x `in` FV body -> x `in` (domset (Γ ++ e ~ τ1)))
       by fsetdec.
     intros x xin.
@@ -101,7 +101,7 @@ Theorem lc_lam : forall (L : AtomSet.t) (t : term) (X : typ),
     LC (λ X t).
 Proof.
   introv HLC.
-  simplify_LC.
+  simplify_LN.
   specialize_freshly HLC.
   change (fvar e) with (ret (Fr e)) in HLC.
   rewrite <- open_var_lcn_1 in HLC.

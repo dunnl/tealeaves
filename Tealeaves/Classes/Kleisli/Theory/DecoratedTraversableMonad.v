@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableMonad
-  Classes.Kleisli.Theory.DecoratedTraversableFunctor.
+  Classes.Kleisli.Theory.DecoratedTraversableFunctor
+  Classes.Kleisli.Theory.DecoratedContainerMonad.
 
 Import Monoid.Notations.
 Import Subset.Notations.
@@ -37,7 +38,6 @@ Section composition.
     `{! Compat_Mapdt_Binddt W T T}
     `{! Compat_Bindd_Binddt W T T}
     `{! Compat_Bindt_Binddt W T T}.
-
 
   Context
     `{Map_U_inst : Map U}

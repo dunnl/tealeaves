@@ -1,5 +1,7 @@
 From Tealeaves Require Import
   Classes.Categorical.Monad
+  Classes.Coalgebraic.TraversableFunctor
+  Adapters.KleisliToCoalgebraic.TraversableFunctor
   Classes.Kleisli.Monad
   Classes.Kleisli.TraversableFunctor
   Classes.Kleisli.TraversableMonad
@@ -19,6 +21,11 @@ Import Applicative.Notations.
 Export EqNotations.
 
 #[local] Generalizable Variables M A B G ϕ.
+
+(** * <<toBatch>> Instance *)
+(******************************************************************************)
+#[export] Instance ToBatch_list: ToBatch list :=
+  DerivedOperations.ToBatch_Traverse.
 
 (** * List algebras and folds *)
 (******************************************************************************)

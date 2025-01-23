@@ -8,9 +8,6 @@ Export LN.Notations.
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
 
-(* TODO: this is needed because <<list>> has no other instance *)
-#[export] Existing Instance ToBatch_Traverse.
-
 (** * Language definition *)
 (******************************************************************************)
 Inductive term (v : Type) :=

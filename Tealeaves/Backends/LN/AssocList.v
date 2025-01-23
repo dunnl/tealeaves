@@ -1,5 +1,7 @@
 From Tealeaves Require Import
   LN.Atom LN.AtomSet
+  Classes.Categorical.Monad (Return, ret)
+  Classes.Categorical.Comonad (Extract, extract)
   Classes.Categorical.ShapelyFunctor
   Classes.Kleisli.TraversableFunctor
   Functors.Writer.

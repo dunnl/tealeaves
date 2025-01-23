@@ -18,7 +18,8 @@ Module DerivedOperations.
     `{map_T: Map T}
     `{join_T: Join T}
     : Bind T T :=
-    fun {A B} (f: A -> T B) => join ∘ map (F := T) f.
+  fun {A B} (f: A -> T B) => join ∘ map (F := T) f.
+
 End DerivedOperations.
 
 (** ** Derived Kleisli Monad Laws *)
@@ -31,6 +32,21 @@ Module DerivedInstances.
 
     Context
       `{Categorical.Monad.Monad T}.
+
+    (** ** Derived <<bind>> is Compatible with Original <map>> *)
+    (******************************************************************************)
+    #[export] Instance Compat_Map_Bind_Derived:
+      Compat_Map_Bind T T.
+    Proof.
+      hnf. ext A B f.
+      change_left (map f).
+      unfold DerivedOperations.Map_Bind.
+      unfold bind, Bind_Categorical.
+      rewrite <- fun_map_map.
+      reassociate <- on right.
+      rewrite mon_join_map_ret.
+      reflexivity.
+    Qed.
 
     (** *** Identity law *)
     (******************************************************************************)

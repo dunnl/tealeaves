@@ -3,6 +3,7 @@ From Tealeaves Require Export
   Classes.Kleisli.Theory.TraversableFunctor
   Classes.Kleisli.DecoratedContainerFunctor
   Classes.Kleisli.DecoratedShapelyFunctor
+  Classes.Kleisli.Theory.DecoratedContainerFunctor
   Functors.Early.Environment.
 
 #[local] Generalizable Variable E T M ϕ A B C G.
@@ -324,6 +325,30 @@ End mapdt_toctxlist.
 #[export] Instance ToCtxset_Mapdt
   `{Mapdt E T}: ToCtxset E T :=
   fun A => foldMapd (ret (T := subset) (A := E * A)).
+
+(** A <<tosubset>> that is compatible with <<traverse>>
+is compatible with the <<toctxset>> that is compatible with <<mapdt>>,
+if <<traverse>> is compatible with <<mapdt>> *)
+#[export] Instance Compat_ToSubset_ToCtxset_Traverse
+  `{Mapdt E T}
+  `{Traverse T}
+  `{ToSubset_T: ToSubset T}
+  `{! Compat_Traverse_Mapdt E T}
+  `{! Compat_ToSubset_Traverse T}
+  `{! DecoratedTraversableFunctor E T}:
+  Compat_ToSubset_ToCtxset E T (ToSubset_T := ToSubset_T).
+Proof.
+  hnf.
+  rewrite compat_tosubset_traverse.
+  unfold_ops @ToSubset_Traverse.
+  unfold ToSubset_ToCtxset.
+  unfold_ops @ToCtxset_Mapdt.
+  ext A.
+  rewrite foldMap_to_foldMapd.
+  rewrite foldMapd_morphism.
+  rewrite (natural (ϕ := @ret subset _)).
+  reflexivity.
+Qed.
 
 Section mapdt_toctxset.
 

@@ -1,7 +1,8 @@
 From Tealeaves Require Export
   Classes.Kleisli.ContainerMonad
   Classes.Kleisli.TraversableMonad
-  Classes.Kleisli.Theory.TraversableFunctor.
+  Classes.Kleisli.Theory.TraversableFunctor
+  Classes.Kleisli.Theory.ContainerMonad.
 
 Import Monoid.Notations.
 Import Applicative.Notations.

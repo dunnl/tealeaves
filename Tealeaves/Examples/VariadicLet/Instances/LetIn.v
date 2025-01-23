@@ -39,29 +39,31 @@ Fixpoint binddt_term
 #[export] Instance Binddt_term: Binddt nat term term := @binddt_term.
 
 #[export] Instance Map_term: Map term
-  := Map_Binddt nat term term.
+  := DerivedOperations.Map_Binddt nat term term.
 #[export] Instance Mapd_term: Mapd nat term
-  := Mapd_Binddt nat term term.
+  := DerivedOperations.Mapd_Binddt nat term term.
 #[export] Instance Traverse_term: Traverse term
-  := Traverse_Binddt nat term term.
+  := DerivedOperations.Traverse_Binddt nat term term.
 #[export] Instance Mapdt_term: Mapdt nat term
-  := Mapdt_Binddt nat term term.
+  := DerivedOperations.Mapdt_Binddt nat term term.
 #[export] Instance Bind_term: Bind term term
-  := Bind_Binddt nat term term.
+  := DerivedOperations.Bind_Binddt nat term term.
 #[export] Instance Bindd_term: Bindd nat term term
-  := Bindd_Binddt nat term term.
+  := DerivedOperations.Bindd_Binddt nat term term.
 #[export] Instance Bindt_term: Bindt term term
-  := Bindt_Binddt nat term term.
+  := DerivedOperations.Bindt_Binddt nat term term.
 #[export] Instance ToSubset_term: ToSubset term
   := ToSubset_Traverse.
 #[export] Instance ToBatch_term: ToBatch term
-  := ToBatch_Traverse.
+  := DerivedOperations.ToBatch_Traverse.
+#[export] Instance ToBatch3_term: ToBatch3 nat term
+  := DerivedOperations.ToBatch3_Mapdt.
 
 Definition subst_in_defs
   `{Applicative G} {v1 v2 : Type}
   (f : nat * v1 -> G (term v2)):
   list (term v1) -> G (list (term v2)) :=
-  binddt (Binddt := Mapdt_Binddt_compose (Mapdt_F := Mapdt_List_Telescope))
+  binddt (Binddt := Mapdt_Binddt_compose (Mapdt_F := Mapdt_Telescoping_List))
     (U := list ∘ term) f.
 
 Section rewriting.
@@ -87,7 +89,7 @@ Section rewriting.
       do 2 fequal.
       unfold subst_in_defs.
       unfold_ops @Mapdt_Binddt_compose.
-      unfold_ops @Mapdt_List_Telescope.
+      unfold_ops @Mapdt_Telescoping_List.
       match goal with
       | |- context[(fun '(w1, t) => ?binddt (f ⦿ w1) t)] =>
           replace (fun '(w1, t) => binddt (f ⦿ w1) t) with
@@ -140,11 +142,11 @@ Section rewriting.
 
       Lemma binddt_pointfree_letin: forall `(l:list A),
           compose (binddt g) ∘ letin (v:=B) ∘
-            mapdt_make (H := Mapdt_List_Telescope) l (B := term B) =
+            mapdt_make (Mapdt_inst := Mapdt_Telescoping_List) l (B := term B) =
             ((compose (precompose (binddt (g ⦿ length l)) ∘ ap G2) ∘
                 precompose (subst_in_defs g) ∘
                 ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘
-              mapdt_make (H := Mapdt_List_Telescope) l (B := term B).
+              mapdt_make (Mapdt_inst := Mapdt_Telescoping_List) l (B := term B).
       Proof.
         intros A l.
         ext l' body.
@@ -205,8 +207,7 @@ Proof.
   auto.
 Qed.
 
-
-Set Keyed Unification.
+#[local] Set Keyed Unification.
 
 Theorem dtm3_term:
   forall `{Applicative G1} `{Applicative G2},
@@ -223,11 +224,11 @@ Proof.
     unfold subst_in_defs.
     unfold_ops @Mapdt_Binddt_compose.
     compose near defs on left.
-    rewrite kdtfun_mapdt2.
+    rewrite kdtf_mapdt2.
     apply (mapdt_respectful (G := G1 ∘ G2) (T := list) _ _ defs).
     intros e t' Hin.
     rewrite <- (kc7_preincr g f e).
-    rewrite kc6_spec.
+    rewrite kc3_spec.
     apply ind_implies_in in Hin.
     rewrite <- (IHdefs t' Hin (g ⦿ e) (f ⦿ e)).
     reflexivity.
@@ -263,7 +264,7 @@ Proof.
   unfold subst_in_defs.
   unfold_ops @Mapdt_Binddt_compose.
   change ((?g ∘ ?f) ⦿ ?w) with (g ∘ (f ⦿ w)).
-  rewrite <- kdtfun_morph.
+  rewrite kdtf_morph.
   apply mapdt_respectful;[typeclasses eauto|].
   introv Hin.
   unfold compose.

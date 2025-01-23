@@ -28,6 +28,8 @@ From Tealeaves Require Import
 
 Import LN.Notations.
 
+Import DecoratedTraversableMonad.UsefulInstances.
+
 #[local] Generalizable Variables W T U.
 #[local] Open Scope nat_scope.
 
@@ -120,50 +122,14 @@ Definition toDB
 
 Section translate.
 
-  #[local] Existing Instance ToBatch_Traverse.
-
   Context
-    `{ret_inst : Return T}
-      `{Map_T_inst : Map T}
-      `{Mapd_T_inst : Mapd nat T}
-      `{Traverse_T_inst : Traverse T}
-      `{Bind_T_inst : Bind T T}
-      `{Mapdt_T_inst : Mapdt nat T}
-      `{Bindd_T_inst : Bindd nat T T}
-      `{Bindt_T_inst : Bindt T T}
-      `{Binddt_T_inst : Binddt nat T T}
-      `{! Compat_Map_Binddt nat T T}
-      `{! Compat_Mapd_Binddt nat T T}
-      `{! Compat_Traverse_Binddt nat T T}
-      `{! Compat_Bind_Binddt nat T T}
-      `{! Compat_Mapdt_Binddt nat T T}
-      `{! Compat_Bindd_Binddt nat T T}
-      `{! Compat_Bindt_Binddt nat T T}
-      `{Monad_inst : ! DecoratedTraversableMonad nat T}
-      `{Map_U_inst : Map U}
-      `{Mapd_U_inst : Mapd nat U}
-      `{Traverse_U_inst : Traverse U}
-      `{Bind_U_inst : Bind T U}
-      `{Mapdt_U_inst : Mapdt nat U}
-      `{Bindd_U_inst : Bindd nat T U}
-      `{Bindt_U_inst : Bindt T U}
-      `{Binddt_U_inst : Binddt nat T U}
-      `{! Compat_Map_Binddt nat T U}
-      `{! Compat_Mapd_Binddt nat T U}
-      `{! Compat_Traverse_Binddt nat T U}
-      `{! Compat_Bind_Binddt nat T U}
-      `{! Compat_Mapdt_Binddt nat T U}
-      `{! Compat_Bindd_Binddt nat T U}
-      `{! Compat_Bindt_Binddt nat T U}
-      `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
+    `{Return_T: Return T}
+    `{Binddt_TT: Binddt nat T T}
+    `{Binddt_TU: Binddt nat T U}
+    `{Monad_inst: ! DecoratedTraversableMonad nat T}
+    `{Module_inst: ! DecoratedTraversableRightPreModule nat T U
                         (unit := Monoid_unit_zero)
-                        (op := Monoid_op_plus)}
-      `{ToSubset_T: ToSubset T}
-      `{ToSubset_U: ToSubset U}
-      `{! Compat_ToSubset_Traverse T}
-      `{! Compat_ToSubset_Traverse U}
-      `{! Compat_ToBatch_Traverse T}
-      `{! Compat_ToBatch_Traverse U}.
+                        (op := Monoid_op_plus)}.
 
   (** ** Boring admitted lemmas *)
   (******************************************************************************)
@@ -217,14 +183,14 @@ Section translate.
   Proof.
     introv Hin.
     unfold toDB_from_key.
-    rewrite mapdt_through_runBatch.
+    rewrite DecoratedTraversableFunctor.mapdt_through_runBatch.
     unfold compose at 1.
     unfold whole_key in Hin.
     unfold element_of in Hin.
     rewrite (tosubset_through_runBatch2 _ nat) in Hin.
-    rewrite toBatch6_toBatch in Hin.
+    rewrite toBatch_to_toBatch3 in Hin.
     unfold compose in Hin.
-    induction (toBatch6 t).
+    induction (toBatch3 t).
     - cbv. eauto.
     - rewrite runBatch_rw2.
       assert (H: (forall x : atom,
@@ -282,10 +248,10 @@ Section translate.
       LC t ->
       whole_key t k ->
       (depth, l) ∈d t ->
-      (toLN_loc k ⋆6 toDB_loc k) (depth, l) = pure (F := option ∘ option) l.
+      (toLN_loc k ⋆3 toDB_loc k) (depth, l) = pure (F := option ∘ option) l.
   Proof.
     introv Hlc Hwhole Hin.
-    rewrite kc6_spec.
+    rewrite kc3_spec.
     unfold whole_key in Hwhole.
     destruct l as [x|n].
     - rewrite toDB_loc_rw2.
@@ -368,12 +334,12 @@ Section translate.
       cl_at gap t ->
       contains_ix_upto gap k ->
       (depth, n) ∈d t ->
-      (toDB_loc k ⋆6 toLN_loc k) (depth, n) =
+      (toDB_loc k ⋆3 toLN_loc k) (depth, n) =
         pure (F := option ∘ option) n.
   Proof.
     introv Huniq Hclosed Hcont Helt.
     unfold_ops @Pure_compose @Pure_option.
-    rewrite kc6_spec.
+    rewrite kc3_spec.
     unfold toLN_loc.
     bound_induction.
     apply (DB_LN_roundtrip_loc1 t k gap depth n

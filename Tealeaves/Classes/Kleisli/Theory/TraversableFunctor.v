@@ -575,9 +575,8 @@ Class Compat_ToSubset_Traverse
   (T: Type -> Type)
   `{ToSubset_inst: ToSubset T}
   `{Traverse_inst: Traverse T}: Prop :=
-  compat_tosubset_traverse :
-    @tosubset T ToSubset_inst =
-      @tosubset T (@ToSubset_Traverse T Traverse_inst).
+  compat_tosubset_traverse:
+    ToSubset_inst = @ToSubset_Traverse T Traverse_inst.
 
 #[export] Instance Compat_ToSubset_Traverse_Self
   `{Traverse_T: Traverse T}:

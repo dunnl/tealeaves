@@ -18,7 +18,7 @@ From Tealeaves Require Export
 #[local] Open Scope nat_scope.
 
 #[local] Notation "'P'" := pure.
-#[local]  Notation "'BD'" := binddt.
+#[local] Notation "'BD'" := binddt.
 
 Fixpoint binddt_term
   (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
@@ -42,23 +42,23 @@ Fixpoint binddt_term
 #[export] Instance Binddt_term: Binddt nat term term := @binddt_term.
 
 #[export] Instance Map_term: Map term
-  := Map_Binddt nat term term.
+  := DerivedOperations.Map_Binddt nat term term.
 #[export] Instance Mapd_term: Mapd nat term
-  := Mapd_Binddt nat term term.
+  := DerivedOperations.Mapd_Binddt nat term term.
 #[export] Instance Traverse_term: Traverse term
-  := Traverse_Binddt nat term term.
+  := DerivedOperations.Traverse_Binddt nat term term.
 #[export] Instance Mapdt_term: Mapdt nat term
-  := Mapdt_Binddt nat term term.
+  := DerivedOperations.Mapdt_Binddt nat term term.
 #[export] Instance Bind_term: Bind term term
-  := Bind_Binddt nat term term.
+  := DerivedOperations.Bind_Binddt nat term term.
 #[export] Instance Bindd_term: Bindd nat term term
-  := Bindd_Binddt nat term term.
+  := DerivedOperations.Bindd_Binddt nat term term.
 #[export] Instance Bindt_term: Bindt term term
-  := Bindt_Binddt nat term term.
+  := DerivedOperations.Bindt_Binddt nat term term.
 #[export] Instance ToSubset_term: ToSubset term
   := ToSubset_Traverse.
 #[export] Instance ToBatch_term: ToBatch term
-  := ToBatch_Traverse.
+  := DerivedOperations.ToBatch_Traverse.
 
 Definition subst_in_defs
   `{Applicative G} {v1 v2 : Type}
@@ -227,10 +227,10 @@ Proof.
     unfold subst_in_defs.
     unfold_ops @Mapdt_Binddt_compose.
     compose near defs on left.
-    rewrite kdtfun_mapdt2.
+    rewrite kdtf_mapdt2.
     apply (mapdt_respectful (G := G1 ∘ G2) (T := list) _ _ defs).
     intros e t' Hin.
-    rewrite kc6_spec.
+    rewrite kc3_spec.
     setoid_rewrite <- (kc7_preincr g f e).
     apply ind_implies_in in Hin.
     rewrite <- (IHdefs t' Hin (g ⦿ e) (f ⦿ e)).
@@ -269,7 +269,7 @@ Proof.
   unfold subst_in_defs.
   unfold_ops @Mapdt_Binddt_compose.
   change ((?g ∘ ?f) ⦿ ?w) with (g ∘ (f ⦿ w)).
-  rewrite <- kdtfun_morph.
+  rewrite kdtf_morph.
   apply mapdt_respectful;[typeclasses eauto|].
   introv Hin.
   unfold compose.

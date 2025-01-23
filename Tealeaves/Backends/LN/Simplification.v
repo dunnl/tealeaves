@@ -118,12 +118,12 @@ Ltac simplify_free :=
 
 Ltac refold_FV :=
   repeat match goal with
-    | |- context[atoms ○ free (T := ?T)] =>
-        change (atoms ○ free (T := T))
-        with (FV (T := T))
-    | |- context[atoms (free (T := ?T) ?t)] =>
-        change (atoms (free (T := T) t))
-        with (FV (T := T) t)
+    | |- context[atoms ○ free (U := ?T)] =>
+        change (atoms ○ free (U := T))
+        with (FV (U := T))
+    | |- context[atoms (free (U := ?T) ?t)] =>
+        change (atoms (free (U := T) t))
+        with (FV (U := T) t)
     end.
 
 Ltac simplify_FV :=
@@ -176,13 +176,13 @@ Ltac try_change_to_ret T exp :=
 Ltac simplify_subst :=
   ltac_trace "simplify_ln_subst| start";
   match goal with
-  | |- context[subst (T := ?T) ?x ?u ?t] =>
+  | |- context[subst (U := ?T) ?x ?u ?t] =>
       ltac_trace "simplify_ln_subst| test for ret";
       try_change_to_ret T t;
       rewrite subst_ret;
       ltac_trace "simplify_ln_subst| changed to ret";
       simplify_subst_local
-  | |- context[subst (T := ?T) ?x ?u ?t] =>
+  | |- context[subst (U := ?T) ?x ?u ?t] =>
       ltac_trace "simplify_ln_subst| not ret";
       rewrite (subst_to_bind x u t);
       simplify_bind;

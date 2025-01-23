@@ -23,6 +23,7 @@ the namespaces ``Classes.Algebraic`` and ``Theory.Algebraic.``
 From Tealeaves Require Export
   Classes.Categorical.DecoratedTraversableMonad
   Classes.Monoid
+  Functors.Writer
   Misc.NaturalNumbers.
 
 Import Categorical.TraversableFunctor.Notations.
@@ -45,28 +46,28 @@ between types, starting with base types. The syntax of STLC is defined
 with three constructors as usual.
 |*)
 
-Parameter base_typ : Type.
+Parameter base_typ: Type.
 
 Inductive typ :=
-| base : base_typ -> typ
-| arr : typ -> typ -> typ.
+| base: base_typ -> typ
+| arr: typ -> typ -> typ.
 
-Coercion base : base_typ >-> typ.
+Coercion base: base_typ >-> typ.
 
 (* we give more informative names to [Lam]'s arguments
  than Coq would infer otherwise *)
-Inductive term (A : Type) :=
-| Var : A -> term A
-| Lam : forall (X : typ) (t : term A), term A
-| Ap : term A -> term A -> term A.
+Inductive term (A: Type) :=
+| Var: A -> term A
+| Lam: forall (X: typ) (t: term A), term A
+| Ap: term A -> term A -> term A.
 
 Module Notations.
   Notation "'λ' X ⋅ body" :=
-    (Lam X body) (at level 45) : tealeaves_scope.
+    (Lam X body) (at level 45): tealeaves_scope.
   Notation "[ t1 ] [ t2 ]" :=
-    (Ap t1 t2) (at level 40) : tealeaves_scope.
+    (Ap t1 t2) (at level 40): tealeaves_scope.
   Notation "A ⟹ B" :=
-    (arr A B) (at level 40) : tealeaves_scope.
+    (arr A B) (at level 40): tealeaves_scope.
 End Notations.
 
 Import Notations.
@@ -81,8 +82,8 @@ hypotheses in context (up to two times), then calling ``reflexivity``.
 Ltac basic t :=
   induction t;
   [ reflexivity |
-    simpl; match goal with H : _ |- _ => rewrite H end; reflexivity |
-    simpl; do 2 match goal with H : _ |- _ => rewrite H end; reflexivity ].
+    simpl; match goal with H: _ |- _ => rewrite H end; reflexivity |
+    simpl; do 2 match goal with H: _ |- _ => rewrite H end; reflexivity ].
 
 (*|
 =====================
@@ -97,28 +98,28 @@ variable. The first thing we must show is that ``term`` is actually
 *functor* in this type argument.
 |*)
 
-Fixpoint map_term {A B : Type} (f : A -> B) (t : term A) : term B :=
+Fixpoint map_term {A B: Type} (f: A -> B) (t: term A): term B :=
   match t with
   | Var a => Var (f a)
   | Lam X t => Lam X (map_term f t)
   | Ap t1 t2 => Ap (map_term f t1) (map_term f t2)
   end.
 
-#[export] Instance Map_term : Map term := @map_term.
+#[export] Instance Map_term: Map term := @map_term.
 
-Theorem map_id : forall A, map id = @id (term A).
+Theorem map_id: forall A, map id = @id (term A).
 Proof.
   intros. ext t. unfold transparent tcs. basic t.
 Qed.
 
-Theorem map_map : forall A B C (f : A -> B) (g : B -> C),
+Theorem map_map: forall A B C (f: A -> B) (g: B -> C),
     map g ∘ map f = map (g ∘ f).
 Proof.
   intros. ext t. unfold transparent tcs.
   unfold compose. basic t.
 Qed.
 
-#[export] Instance Functor_term : Functor term :=
+#[export] Instance Functor_term: Functor term :=
   {| fun_map_id := @map_id;
      fun_map_map := @map_map;
   |}.
@@ -131,9 +132,9 @@ Rewriting rules for ``map``
 Section map_term_rewrite.
 
   Context
-    `{f : A -> B}.
+    `{f: A -> B}.
 
-  Lemma map_term_ap : forall (t1 t2 : term A),
+  Lemma map_term_ap: forall (t1 t2: term A),
       map f (@Ap A t1 t2) = @Ap B (map f t1) (map f t2).
   Proof.
     reflexivity.
@@ -146,16 +147,16 @@ Decorated Functor instance
 ===========================
 |*)
 
-Fixpoint dec_term {A} (t : term A) : term (nat * A) :=
+Fixpoint dec_term {A} (t: term A): term (nat * A) :=
   match t with
   | Var a => Var (Ƶ, a)
   | Lam τ t => Lam τ (shift term (1, dec_term t))
   | Ap t1 t2 => Ap (dec_term t1) (dec_term t2)
   end.
 
-#[export] Instance Decorate_term : Decorate nat term := @dec_term.
+#[export] Instance Decorate_term: Decorate nat term := @dec_term.
 
-Theorem dec_natural : forall A B (f : A -> B),
+Theorem dec_natural: forall A B (f: A -> B),
     map (F := term) (map f) ∘ dec term = dec term ∘ map (F := term) f.
 Proof.
   intros. unfold compose. ext t. induction t.
@@ -173,7 +174,7 @@ Proof.
   - apply dec_natural.
 Qed.
 
-Theorem dec_extract : forall A,
+Theorem dec_extract: forall A,
     map (F := term) (extract) ∘ dec term = @id (term A).
 Proof.
   intros. unfold compose. ext t. induction t.
@@ -182,7 +183,7 @@ Proof.
   - unfold id. cbn. now fequal.
 Qed.
 
-Theorem dec_dec : forall A,
+Theorem dec_dec: forall A,
     dec term ∘ dec term = map (F := term) (cojoin) ∘ dec term (A := A).
 Proof.
   intros. unfold compose. ext t. induction t.
@@ -191,7 +192,7 @@ Proof.
   - cbn. fequal; auto.
 Qed.
 
-#[export] Instance DecoratedFunctor_term : DecoratedFunctor nat term.
+#[export] Instance DecoratedFunctor_term: DecoratedFunctor nat term.
 Proof.
   constructor.
   - typeclasses eauto.
@@ -208,27 +209,27 @@ Rewriting rules for ``dec``
 Section dec_term_rewrite.
 
   Context
-    `{f : A -> B}.
+    `{f: A -> B}.
 
-  Lemma dec_term1 : forall (x : A),
+  Lemma dec_term1: forall (x: A),
       dec term (Var x) = Var (0, x).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dec_term21 : forall (X : typ) (t : term A),
+  Lemma dec_term21: forall (X: typ) (t: term A),
       dec term (Lam X t) = shift term (1, Lam X (dec term t)).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dec_term22 : forall (X : typ) (t : term A),
+  Lemma dec_term22: forall (X: typ) (t: term A),
       dec term (Lam X t) = Lam X (shift term (1, dec term t)).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dec_term3 : forall (t1 t2 : term A),
+  Lemma dec_term3: forall (t1 t2: term A),
       dec term (Ap t1 t2) = Ap (dec term t1) (dec term t2).
   Proof.
     reflexivity.
@@ -243,8 +244,8 @@ Traversable Functor instance
 
 Import Applicative.Notations.
 
-Fixpoint dist_term `{Map F} `{Pure F} `{Mult F} {A : Type}
-         (t : term (F A)) : F (term A) :=
+Fixpoint dist_term `{Map F} `{Pure F} `{Mult F} {A: Type}
+         (t: term (F A)): F (term A) :=
   match t with
   | Var a => map (@Var A) a
   | Lam X t => map (Lam X) (dist_term t)
@@ -265,33 +266,33 @@ Section term_dist_rewrite.
   Context
     `{Applicative G}.
 
-  Variable (A : Type).
+  Variable (A: Type).
 
-  Lemma dist_term_var_1 : forall (x : G A),
+  Lemma dist_term_var_1: forall (x: G A),
     dist term G (@Var (G A) x) = pure (@Var A) <⋆> x.
   Proof.
     intros. cbn. now rewrite map_to_ap.
   Qed.
 
-  Lemma dist_term_var_2 : forall (x : G A),
+  Lemma dist_term_var_2: forall (x: G A),
     dist term G (@Var (G A) x) = map (@Var A) x.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dist_term_lam_1 : forall (X : typ) (t : term (G A)),
+  Lemma dist_term_lam_1: forall (X: typ) (t: term (G A)),
       dist term G (Lam X t) = pure (Lam X) <⋆> (dist term G t).
   Proof.
     intros. cbn. now rewrite map_to_ap.
   Qed.
 
-  Lemma dist_term_lam_2 : forall (X : typ) (t : term (G A)),
+  Lemma dist_term_lam_2: forall (X: typ) (t: term (G A)),
       dist term G (Lam X t) = map (Lam X) (dist term G t).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dist_term_ap_1 : forall (t1 t2 : term (G A)),
+  Lemma dist_term_ap_1: forall (t1 t2: term (G A)),
       dist term G (Ap t1 t2) =
       (pure (@Ap A))
         <⋆> dist term G t1
@@ -300,7 +301,7 @@ Section term_dist_rewrite.
     reflexivity.
   Qed.
 
-  Lemma dist_term_ap_2 : forall (t1 t2 : term (G A)),
+  Lemma dist_term_ap_2: forall (t1 t2: term (G A)),
       dist term G (Ap t1 t2) =
       (map (@Ap A) (dist term G t1)
             <⋆> dist term G t2).
@@ -321,7 +322,7 @@ Naturality of ``dist``
 -----------------------------
 |*)
 
-  Lemma dist_natural_term : forall `(f : A -> B),
+  Lemma dist_natural_term: forall `(f: A -> B),
       map (F := G ∘ term) f ∘ dist term G =
       dist term G ∘ map (F := term ∘ G) f.
   Proof.
@@ -360,7 +361,7 @@ Traversal laws
 -----------------------------
 |*)
 
-  Lemma dist_unit_term : forall (A : Type),
+  Lemma dist_unit_term: forall (A: Type),
       dist term (fun A => A) = @id (term A).
   Proof.
     intros. ext t. induction t.
@@ -371,7 +372,7 @@ Traversal laws
   Qed.
 
   #[local] Set Keyed Unification.
-  Lemma dist_linear_term : forall `{Applicative G1} `{Applicative G2} (A : Type),
+  Lemma dist_linear_term: forall `{Applicative G1} `{Applicative G2} (A: Type),
       dist term (G1 ∘ G2) =
       map (F := G1) (dist term G2) ∘ dist term G1 (A := G2 A).
   Proof.
@@ -397,14 +398,15 @@ Traversal laws
   Qed.
   #[local] Unset Keyed Unification.
 
-  Lemma dist_morph_term : forall `{ApplicativeMorphism G1 G2 ϕ} A,
+  Lemma dist_morph_term: forall `{ApplicativeMorphism G1 G2 ϕ} A,
       dist term G2 ∘ map (ϕ A) = ϕ (term A) ∘ dist term G1.
   Proof.
     intros. ext t. unfold compose. induction t.
     - cbn. now rewrite <- (appmor_natural).
     - cbn. rewrite IHt.
       now rewrite (appmor_natural).
-    - rewrite map_term_ap. inversion H9.
+    - rewrite map_term_ap.
+      infer_applicative_instances.
       rewrite dist_term_ap_2.
       rewrite IHt1. rewrite IHt2.
       rewrite dist_term_ap_2. rewrite (ap_morphism_1).
@@ -413,7 +415,7 @@ Traversal laws
 
 End dist_term_properties.
 
-#[export] Instance TraversableFunctor_term : TraversableFunctor term :=
+#[export] Instance TraversableFunctor_term: TraversableFunctor term :=
   {| dist_natural := @dist_Natural_term;
      dist_morph := @dist_morph_term;
      dist_linear := @dist_linear_term;
@@ -425,7 +427,7 @@ Decorated-Traversable Functor instance
 =======================================
 |*)
 
-Lemma dtfun_compat_term1 : forall `{Applicative G} (X : typ) {A},
+Lemma dtfun_compat_term1: forall `{Applicative G} (X: typ) {A},
     map (dec term ∘ Lam X) ∘ δ term G (A := A) =
     map (F := G) (curry (shift term) 1 ∘ Lam X) ∘ map (dec term) ∘ δ term G.
 Proof.
@@ -433,7 +435,7 @@ Proof.
 Qed.
 
 Theorem dtfun_compat_term :
-        `(forall `{Applicative G} {A : Type},
+        `(forall `{Applicative G} {A: Type},
              dist term G ∘ map (strength) ∘ dec term (A := G A) =
              map (F := G) (dec term) ∘ dist term G).
 Proof.
@@ -443,7 +445,7 @@ Proof.
                rewrite (fun_map_map)).
     reassociate <-.
     rewrite incr_spec.
-    rewrite (strength_shift1 (W := nat) G).
+    rewrite (Writer.strength_shift1 (W := nat) G).
     rewrite <- (fun_map_map); unfold compose.
     change (map (map ?f)) with (map (F := term ∘ G) f).
     compose near ((map (σ (F := G)) (dec term t))).
@@ -465,7 +467,7 @@ Proof.
     reflexivity.
 Qed.
 
-#[export] Instance : DecoratedTraversableFunctor nat term :=
+#[export] Instance: DecoratedTraversableFunctor nat term :=
   {| dtfun_compat := @dtfun_compat_term |}.
 
 
@@ -478,24 +480,24 @@ Plain Monad instance
 =====================
 |*)
 
-Fixpoint join_term {A : Type} (t : term (term A)) : term A :=
+Fixpoint join_term {A: Type} (t: term (term A)): term A :=
   match t with
   | Var t' => t'
   | Lam X t => Lam X (join_term t)
   | Ap t1 t2 => Ap (join_term t1) (join_term t2)
   end.
 
-#[export] Instance Ret_term : Return term := @Var.
+#[export] Instance Ret_term: Return term := @Var.
 
-#[export] Instance Join_term : Join term := @join_term.
+#[export] Instance Join_term: Join term := @join_term.
 
-Theorem ret_natural : forall A B (f : A -> B),
+Theorem ret_natural: forall A B (f: A -> B),
     map f ∘ ret (T := term)  = ret ∘ f.
 Proof.
   reflexivity.
 Qed.
 
-Theorem join_natural : forall A B (f : A -> B),
+Theorem join_natural: forall A B (f: A -> B),
     map f ∘ join = join (T := term) ∘ map (map f).
 Proof.
   intros. ext t. unfold transparent tcs.
@@ -516,13 +518,13 @@ Proof.
   - apply join_natural.
 Qed.
 
-Theorem join_ret : forall A,
+Theorem join_ret: forall A,
     join ∘ ret (T := term) = @id (term A).
 Proof.
   reflexivity.
 Qed.
 
-Theorem join_map_ret : forall A,
+Theorem join_map_ret: forall A,
     join (T := term) ∘ map (F := term) (ret (T := term)) = @id (term A).
 Proof.
   intros. unfold compose.
@@ -530,14 +532,14 @@ Proof.
   ext t. basic t.
 Qed.
 
-Theorem join_join : forall A,
+Theorem join_join: forall A,
     join (T := term) ∘ join (T := term) = join (A := A) ∘ map (join (T := term)).
 Proof.
   intros. unfold compose. unfold transparent tcs.
   ext t. basic t.
 Qed.
 
-#[export] Instance Monad_term : Monad term :=
+#[export] Instance Monad_term: Monad term :=
   {| mon_join_ret := join_ret;
      mon_join_map_ret := join_map_ret;
      mon_join_join := join_join |}.
@@ -547,13 +549,13 @@ Decorated Monad instance
 ===========================
 |*)
 
-Theorem dec_ret : forall A,
+Theorem dec_ret: forall A,
     dec term ∘ ret (A := A) = ret (T := term) ∘ pair Ƶ.
 Proof.
   reflexivity.
 Qed.
 
-Theorem dec_join : forall A,
+Theorem dec_join: forall A,
     dec term ∘ join (T := term) (A := A) =
     join (T := term) ∘ map (F := term) (shift term) ∘ dec term ∘ map (F := term) (dec term).
 Proof.
@@ -563,7 +565,7 @@ Proof.
   - cbn. fequal; auto.
 Qed.
 
-#[export] Instance DecoratedMonad_term : DecoratedMonad nat term.
+#[export] Instance DecoratedMonad_term: DecoratedMonad nat term.
 Proof.
   constructor.
   - typeclasses eauto.
@@ -615,7 +617,7 @@ Proof.
 Qed.
 #[local] Set Keyed Unification.
 
-#[export] Instance TraversableMonad_term : TraversableMonad term :=
+#[export] Instance TraversableMonad_term: TraversableMonad term :=
   {| trvmon_ret := @trvmon_ret_term;
      trvmon_join := @trvmon_join_term;
   |}.
@@ -628,4 +630,4 @@ Our hard work has paid off---a DTM is defined as the combination of the typeclas
 given so far, so we can let Coq infer the DTM instance for us.
 |*)
 
-#[export] Instance : DecoratedTraversableMonad nat term := {}.
+#[export] Instance DTM_STLC: DecoratedTraversableMonad nat term := {}.

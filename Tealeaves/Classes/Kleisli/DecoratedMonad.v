@@ -732,7 +732,8 @@ End decorated_monad_derived_composition_laws.
 
 (** ** Derived Typeclass Instances *)
 (******************************************************************************)
-Section decorated_monad_derivedinstances.
+Module DerivedInstances.
+  Section decorated_monad_derivedinstances.
 
   Context
     W T U
@@ -781,7 +782,8 @@ Section decorated_monad_derivedinstances.
        kdf_mapd2 := mapd_mapd;
     |}.
 
-End decorated_monad_derivedinstances.
+  End decorated_monad_derivedinstances.
+End DerivedInstances.
 
 (** * Instance for Writer *)
 (******************************************************************************)

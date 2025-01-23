@@ -1660,6 +1660,7 @@ Qed.
 Proof.
   hnf. ext A v.
   unfold_ops @ToSubset_Traverse.
+  change_left (tosubset v).
   induction v using Vector_induction.
   - reflexivity.
   - rewrite foldMap_Vector_vcons;

@@ -135,28 +135,23 @@ Instantiation of derived functions
 ========================================
 |*)
 #[export] Instance Map_STLC: Map Lam
-  := Map_Binddt nat Lam Lam.
+  := DerivedOperations.Map_Binddt nat Lam Lam.
 #[export] Instance Mapd_STLC: Mapd nat Lam
-  := Mapd_Binddt nat Lam Lam.
+  := DerivedOperations.Mapd_Binddt nat Lam Lam.
 #[export] Instance Traverse_STLC: Traverse Lam
-  := Traverse_Binddt nat Lam Lam.
+  := DerivedOperations.Traverse_Binddt nat Lam Lam.
 #[export] Instance Mapdt_STLC: Mapdt nat Lam
-  := Mapdt_Binddt nat Lam Lam.
+  := DerivedOperations.Mapdt_Binddt nat Lam Lam.
 #[export] Instance Bind_STLC: Bind Lam Lam
-  := Bind_Binddt nat Lam Lam.
+  := DerivedOperations.Bind_Binddt nat Lam Lam.
 #[export] Instance Bindd_STLC: Bindd nat Lam Lam
-  := Bindd_Binddt nat Lam Lam.
+  := DerivedOperations.Bindd_Binddt nat Lam Lam.
 #[export] Instance Bindt_STLC: Bindt Lam Lam
-  := Bindt_Binddt nat Lam Lam.
+  := DerivedOperations.Bindt_Binddt nat Lam Lam.
 #[export] Instance ToSubset_STLC: ToSubset Lam
   := ToSubset_Traverse.
 #[export] Instance ToBatch_STLC: ToBatch Lam
-  := ToBatch_Traverse.
-
-#[export] Instance DTMFull_STLC:
-  DecoratedTraversableMonadFull nat Lam
-  := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat Lam.
-
+  := DerivedOperations.ToBatch_Traverse.
 
 Module LNNotations.
   Notation "t '{ x ~> u }" :=
@@ -208,12 +203,8 @@ Section test_operations.
   Check (1: LN).
   Check (1: Lam LN).
   Compute (λ τ (tvar (Bd 0))) '(x: Lam LN).
-  (*
-    This will fail if LN.v's polymorphic notations are used
-    due to typeclass resolution
-  Set Typeclasses Debug.
-  Fail Timeout 1 Compute (λ τ (tvar (Bd 0))) '(x: LN).
-  *)
+
+  Compute (λ τ (tvar (Bd 0))) '(x: LN).
   Compute (λ τ (tvar (Bd 1))) '(tvar (Fr x)).
   Compute (λ τ (tvar (Bd 0))) '(Bd 0: Lam LN).
   Compute (λ τ (tvar (Bd 0))) '(Bd 1: Lam LN).

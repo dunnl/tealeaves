@@ -301,10 +301,14 @@ If we find some <<binddt f t>>, simplify it with cbn.
 Ltac cbn_binddt :=
   match goal with
   | |- context[binddt (W := ?W) (T := ?T)
-                (H := ?H) (H0 := ?H0) (H1 := ?H1)
-                (U := ?U) (G := ?G) ?f ?t] =>
+                (U := ?U) (G := ?G)
+                (Map_G := ?Map_G)
+                (Pure_G := ?Pure_G)
+                (Mult_G := ?Mult_G)
+                ?f ?t] =>
       let e := constr:(binddt (W := W) (T := T) (U := U) (G := G)
-                         (H := H) (H0 := H0) (H1 := H1)
+                         (Map_G := Map_G) (Pure_G := Pure_G)
+                         (Mult_G := Mult_G)
                          f t) in
       cbn_subterm e
       (*
@@ -315,11 +319,16 @@ Ltac cbn_binddt :=
 
 Ltac cbn_binddt_in :=
   match goal with
-  | H: context[binddt (W := ?W) (T := ?T)
-                 (H := ?H) (H0 := ?H0) (H1 := ?H1)
-                 (U := ?U) (G := ?G) ?f ?t] |- _ =>
+  | H: context[binddt (W := ?W) (T := ?T) (U := ?U)
+                 (G := ?G)
+                 (Map_G := ?Map_G)
+                 (Pure_G := ?Pure_G)
+                 (Mult_G := ?Mult_G)
+                 ?f ?t] |- _ =>
       let e := constr:(binddt (W := W) (T := T) (U := U) (G := G)
-                         (H := H) (H0 := H0) (H1 := H1)
+                         (Map_G := Map_G)
+                         (Pure_G := Pure_G)
+                         (Mult_G := Mult_G)
                          f t) in
       let e' := eval cbn in e in
         progress (change e with e' in H)

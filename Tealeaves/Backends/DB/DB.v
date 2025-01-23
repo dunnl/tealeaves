@@ -4,6 +4,9 @@ From Tealeaves.Misc Require Export
 From Tealeaves.Theory Require Export
   DecoratedTraversableMonad.
 
+Import DecoratedTraversableMonad.UsefulInstances.
+
+
 Import PeanoNat.Nat.
 Import Coq.Init.Nat. (* Nat notations *)
 Open Scope nat_scope.
@@ -23,10 +26,10 @@ Section section.
 
   Context
     `{ret_inst : Return T}
-      `{Mapd_T_inst : Mapd nat T}
-      `{Mapd_U_inst : Mapd nat U}
-      `{Bindd_U_inst : Bindd nat T U}
-      `{ToCtxset_U_inst : ToCtxset nat U}.
+    `{Mapd_T_inst : Mapd nat T}
+    `{Mapd_U_inst : Mapd nat U}
+    `{Bindd_U_inst : Bindd nat T U}
+    `{ToCtxset_U_inst : ToCtxset nat U}.
 
   Definition bound_within (gap: nat) : nat -> nat -> bool :=
     fun ix depth => ix <? depth + gap.
@@ -364,7 +367,7 @@ Section renaming_theory.
   Proof.
     unfold rename.
     rewrite local__ren_id.
-    apply dfun_mapd1.
+    apply kdf_mapd1.
   Qed.
 
   (** ** Composition of renaming *)
@@ -399,7 +402,7 @@ Section renaming_theory.
   Qed.
 
   Lemma rename_rename_loc: forall ρ2 ρ1,
-      local__ren ρ2 ⋆4 local__ren ρ1 = local__ren (ρ2 ∘ ρ1).
+      local__ren ρ2 ⋆1 local__ren ρ1 = local__ren (ρ2 ∘ ρ1).
   Proof.
     intros.
     ext [depth ix]. cbn.
@@ -413,7 +416,7 @@ Section renaming_theory.
   Proof.
     intros.
     unfold rename.
-    rewrite dfun_mapd2.
+    rewrite kdf_mapd2.
     rewrite rename_rename_loc.
     reflexivity.
   Qed.
@@ -538,7 +541,7 @@ Section renaming_theory.
 
   Context
     `{Mapdt_inst: Mapdt nat T}
-      `{! Compat_Mapd_Mapdt}
+      `{! Compat_Mapd_Mapdt nat T}
       `{DTF_inst : ! DecoratedTraversableFunctor nat T}.
 
   Lemma ind_rename_iff : forall l n (t:T nat) ρ,

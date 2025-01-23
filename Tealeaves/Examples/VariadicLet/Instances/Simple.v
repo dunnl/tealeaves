@@ -42,32 +42,35 @@ Fixpoint binddt_term
   := @binddt_term.
 
 #[export] Instance Map_term: Map term
-  := Map_Binddt nat term term.
+  := DerivedOperations.Map_Binddt nat term term.
 #[export] Instance Mapd_term: Mapd nat term
-  := Mapd_Binddt nat term term.
+  := DerivedOperations.Mapd_Binddt nat term term.
 #[export] Instance Traverse_term: Traverse term
-  := Traverse_Binddt nat term term.
+  := DerivedOperations.Traverse_Binddt nat term term.
 #[export] Instance Mapdt_term: Mapdt nat term
-  := Mapdt_Binddt nat term term.
+  := DerivedOperations.Mapdt_Binddt nat term term.
 #[export] Instance Bind_term: Bind term term
-  := Bind_Binddt nat term term.
+  := DerivedOperations.Bind_Binddt nat term term.
 #[export] Instance Bindd_term: Bindd nat term term
-  := Bindd_Binddt nat term term.
+  := DerivedOperations.Bindd_Binddt nat term term.
 #[export] Instance Bindt_term: Bindt term term
-  := Bindt_Binddt nat term term.
+  := DerivedOperations.Bindt_Binddt nat term term.
 #[export] Instance ToSubset_term: ToSubset term
   := ToSubset_Traverse.
 #[export] Instance ToBatch_term: ToBatch term
-  := ToBatch_Traverse.
+  := DerivedOperations.ToBatch_Traverse.
 
 Section rewriting.
 
   Section pointful.
 
     Context
-      `{Applicative G} (v1 v2 : Type)
-        (f : nat * v1 -> G (term v2)).
+      `{Applicative G}
+      (v1 v2 : Type)
+      (f : nat * v1 -> G (term v2)).
 
+    (** ** Rewriting Laws *)
+    (******************************************************************************)
     Lemma binddt_term_rw1: forall (v: v1),
         binddt f (tvar v) = f (0, v).
     Proof.
@@ -101,41 +104,43 @@ Section rewriting.
 
   End pointful.
 
-    Section pointfree.
+  (** ** Point-free Rewriting Laws *)
+  (******************************************************************************)
+  Section pointfree.
 
-      Context
-        `{Applicative G2}
-          {B C: Type}
-          (g : nat * B -> G2 (term C)).
+    Context
+      `{Applicative G2}
+      {B C: Type}
+      (g : nat * B -> G2 (term C)).
 
-      Lemma binddt_pointfree_letin_defs: forall l,
-          binddt g ∘ letin (v:=B) l =
-            (precompose (binddt (g ⦿ length l)) ∘ ap G2)
-              (pure (letin (v:=C)) <⋆> (traverse (binddt g) l)).
-      Proof.
-        intros l.
-        ext body.
-        unfold precompose, compose.
-        rewrite binddt_term_rw2.
-        reflexivity.
-      Qed.
+    Lemma binddt_pointfree_letin_defs: forall l,
+        binddt g ∘ letin (v:=B) l =
+          (precompose (binddt (g ⦿ length l)) ∘ ap G2)
+            (pure (letin (v:=C)) <⋆> (traverse (binddt g) l)).
+    Proof.
+      intros l.
+      ext body.
+      unfold precompose, compose.
+      rewrite binddt_term_rw2.
+      reflexivity.
+    Qed.
 
-      Lemma binddt_pointfree_letin: forall `(l:list A),
-          compose (binddt g) ∘ letin (v:=B) ∘ trav_make l (B := term B) =
-            ((compose (precompose (binddt (g ⦿ length l)) ∘ ap G2) ∘
-                precompose (traverse (T := list) (binddt g)) ∘
-                ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ trav_make l (B := term B).
-      Proof.
-        intros A l.
-        ext l' body.
-        unfold precompose, compose.
-        rewrite binddt_term_rw2.
-        do 2 rewrite <- list_plength_length.
-        rewrite <- plength_trav_make.
-        reflexivity.
-      Qed.
+    Lemma binddt_pointfree_letin: forall `(l:list A),
+        compose (binddt g) ∘ letin (v := B) ∘ trav_make (T := list) l (B := term B) =
+          ((compose (precompose (binddt (g ⦿ length l)) ∘ ap G2) ∘
+              precompose (traverse (T := list) (binddt g)) ∘
+              ap G2 ∘ pure (F := G2)) (letin (v:=C))) ∘ trav_make l (B := term B).
+    Proof.
+      intros A l.
+      ext l' body.
+      unfold precompose, compose.
+      rewrite binddt_term_rw2.
+      do 2 rewrite <- list_plength_length.
+      rewrite <- plength_trav_make.
+      reflexivity.
+    Qed.
 
-    End pointfree.
+  End pointfree.
 
 End rewriting.
 

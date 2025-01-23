@@ -15,6 +15,8 @@ Import LN.AtomSet.Notations.
 Open Scope tealeaves_scope.
 Open Scope set_scope.
 
+Import DecoratedTraversableMonad.UsefulInstances.
+
 (** * Locally nameless leaves *)
 (******************************************************************************)
 Inductive leaf :=
@@ -124,8 +126,8 @@ Section LocallyNamelessOperations.
 
   Context
     (T : Type -> Type)
-    `{DecoratedTraversableMonadFull (list nat)
-                                 (op := @List.app nat) (unit := nil) T}.
+    `{DecoratedTraversableMonad (list nat)
+        (op := @List.app nat) (unit := nil) T}.
 
   Definition open (binders : list (T leaf)) : T leaf -> option (T leaf)  :=
     binddt (T := T) (open_loc binders).

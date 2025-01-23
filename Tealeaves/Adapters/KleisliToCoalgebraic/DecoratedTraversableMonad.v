@@ -29,60 +29,49 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
-(** ** Specification for <<binddt>> via <<toBatch7>> *)
-(******************************************************************************)
-Section binddt_spec.
+Class Compat_ToBatch7_Binddt
+  (W: Type)
+  (T: Type -> Type)
+  (U: Type -> Type)
+  `{Binddt_inst: Binddt W T U}
+  `{ToBatch7_inst: ToBatch7 W T U} :=
+  compat_toBatch7_binddt:
+    ToBatch7_inst = DerivedOperations.ToBatch7_Binddt.
 
-  Import DerivedOperations.
+Lemma toBatch7_to_binddt
+  `{Compat_ToBatch7_Binddt W T U} :
+  forall A B, toBatch7 (W := W) (T := T) (U := U) =
+           binddt (G := Batch (W * A) (T B)) (batch (T B)).
+Proof.
+  intros.
+  rewrite compat_toBatch7_binddt.
+  reflexivity.
+Qed.
+
+#[export] Instance Compat_ToBatch7_Binddt_Self
+  `{Binddt W T U}:
+  Compat_ToBatch7_Binddt W T U
+    (ToBatch7_inst := DerivedOperations.ToBatch7_Binddt)
+  := ltac:(hnf; reflexivity).
+
+Section dtm_coalgebraic_laws.
 
   Context
     `{Binddt W T T}
     `{Binddt W T U}
     `{Monoid W}
     `{Return T}
+    `{! Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}
     `{! DecoratedTraversableRightPreModule W T U}.
 
-  Lemma binddt_toBatch7_spec:
-    forall (G: Type -> Type) `{Applicative G}
-      (A B: Type) (f: W * A -> G (T B)),
-      binddt (T := T) (U := U) f =
-        map (F := G) (extract_Batch) ∘
-          traverse (T := BATCH1 (T B) (U B)) f ∘ toBatch7.
-  Proof.
-    intros.
-    unfold_ops @ToBatch7_Binddt.
-    rewrite <- runBatch_via_traverse.
-    rewrite (kdtm_morph (Batch (W * A) (T B)) G
-               (morph := ApplicativeMorphism_runBatch)).
-    rewrite (runBatch_batch G).
-    reflexivity.
-  Qed.
-
-  Corollary bindd_toBatch7_spec:
-    forall (A B: Type) (f: W * A -> T B),
-      binddt (G := fun A => A) (T := T) (U := U) f =
-        extract_Batch ∘ mapfst_Batch f ∘ toBatch7.
-  Proof.
-    intros.
-    rewrite (binddt_toBatch7_spec (fun A => A)).
-    unfold_ops @Map_I.
-    fequal.
-    fequal.
-    rewrite <- TraversableFunctor.map_to_traverse.
-    reflexivity.
-  Qed.
-
-End binddt_spec.
-
-(** ** Coalgebra laws *)
-(******************************************************************************)
-Section to_coalgebraic.
-
-  Import DerivedOperations.
-
   Context
-    `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
+    `{ToBatch7_WTT: ToBatch7 W T T}
+    `{ToBatch7_WTU: ToBatch7 W T U}
+    `{! Compat_ToBatch7_Binddt W T T}
+    `{! Compat_ToBatch7_Binddt W T U}.
 
+  (** ** Coalgebra laws *)
+  (******************************************************************************)
   Lemma double_Batch7_spec: forall (A B C: Type),
       double_batch7 (A := A) (A' := B) =
         batch (T C) ⋆7 (batch (T B)).
@@ -92,7 +81,7 @@ Section to_coalgebraic.
     ext [w a].
     cbn.
     change (?f ∘ id) with f.
-    unfold_ops @ToBatch7_Binddt.
+    rewrite toBatch7_to_binddt.
     rewrite (kdtm_morph
                (Batch (W * B) (T C))
                (Batch (W * B) (T C))
@@ -105,7 +94,7 @@ Section to_coalgebraic.
       toBatch7 ∘ ret (T := T) (A := A) = batch (T B) ∘ ret (T := (W ×)).
   Proof.
     intros.
-    unfold_ops @ToBatch7_Binddt.
+    rewrite toBatch7_to_binddt.
     rewrite kdtm_binddt0.
     reflexivity.
   Qed.
@@ -115,8 +104,20 @@ Section to_coalgebraic.
         ∘ toBatch7 = @id (T A).
   Proof.
     intros.
-
-    rewrite <- bindd_toBatch7_spec.
+    rewrite toBatch7_to_binddt.
+    reassociate -> on left.
+    rewrite (kdtm_morph (U := T) (B := A)
+               (Batch (W * A) (T A))
+               (Batch (T A) (T A))
+               (ϕ := fun C => mapfst_Batch (ret ∘ extract))).
+    rewrite (kdtm_morph (U := T) (B := A)
+               (Batch (T A) (T A))
+               (fun A => A)
+               (ϕ := fun C => extract_Batch)).
+    rewrite ret_natural.
+    reassociate <- on left.
+    rewrite extract_Batch_batch.
+    change (id ∘ ?f) with f.
     rewrite kdtm_binddt1.
     reflexivity.
   Qed.
@@ -127,24 +128,54 @@ Section to_coalgebraic.
   Proof.
     intros.
     rewrite cojoin_Batch7_to_runBatch.
-    unfold toBatch7 at 1.
-    unfold ToBatch7_Binddt.
-    rewrite (kdtm_morph (U := T) (T := T) (W := W) (A := A) (B := C)
+    rewrite toBatch7_to_binddt.
+    rewrite toBatch7_to_binddt.
+    rewrite toBatch7_to_binddt.
+    rewrite double_Batch7_spec.
+    rewrite (kdtm_morph (U := U) (T := T) (W := W) (A := A) (B := C)
                (Batch (W * A) (T C))
                (Batch (W * A) (T B) ∘ Batch (W * B) (T C))
                (morph := ApplicativeMorphism_runBatch)).
     rewrite (runBatch_batch _).
-    rewrite double_Batch7_spec.
-    unfold toBatch7 at 1 2.
     rewrite (kdtm_binddt2 _ _).
     reflexivity.
   Qed.
 
+End dtm_coalgebraic_laws.
+
+Module DerivedInstances.
+  Section instances.
+
+    Context
+      `{Binddt W T T}
+      `{Binddt W T U}
+      `{Monoid W}
+      `{Return T}
+      `{! Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}
+      `{! DecoratedTraversableRightPreModule W T U}.
+
+    Context
+      `{ToBatch7_WTT: ToBatch7 W T T}
+      `{ToBatch7_WTU: ToBatch7 W T U}
+      `{! Compat_ToBatch7_Binddt W T T}
+      `{! Compat_ToBatch7_Binddt W T U}.
+
+    #[export] Instance Coalgebraic_DecoratedTraversableMonad_of_Kleisli :
+      Coalgebraic.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
+      {| dtm_ret := toBatch7_ret_Kleisli;
+         dtm_extract := toBatch7_extract_Kleisli;
+         dtm_duplicate := toBatch7_duplicate_Kleisli;
+      |}.
+
+
+  (*
   #[export] Instance Coalgebraic_DecoratedTraversableMonad_of_Kleisli :
-    Coalgebraic.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
+    Coalgebraic.DecoratedTraversableMonad.DecoratedTraversableRightModule W T U :=
     {| dtm_ret := toBatch7_ret_Kleisli;
        dtm_extract := toBatch7_extract_Kleisli;
        dtm_duplicate := toBatch7_duplicate_Kleisli;
     |}.
+   *)
 
-End to_coalgebraic.
+  End instances.
+End DerivedInstances.

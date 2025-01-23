@@ -18,9 +18,9 @@ Module Notations.
   (* Export Kleisli.DecoratedContainerMonad.Notations. *)
   Export Categorical.ContainerFunctor.Notations. (* ∈ *)
 
-  Export Misc.Product.Notations. (* × *)
+  Export Product.Notations. (* × *)
   Export Monoid.Notations. (* Ƶ and ● *)
-  Export Misc.Subset.Notations. (* ∪ *)
+  Export Subset.Notations. (* ∪ *)
   Export List.ListNotations. (* [] :: *)
 
   (* Export LN.OpNotations. (* operations *) *)
@@ -74,6 +74,8 @@ Module MakeTheory_Hetero
   Definition iterm := Syntax.iterm.
   Definition oterm := Syntax.oterm.
 
+  Import DecoratedTraversableMonad.UsefulInstances.
+
   #[local] Existing Instance Syntax.ret_inst.
   #[local] Existing Instance Syntax.binddt_T_inst.
   #[local] Existing Instance Syntax.binddt_U_inst.
@@ -97,16 +99,16 @@ Module MakeTheory_Hetero
     fun t u => to_U_inv (open (T := T) (U := U) t u).
 
   Definition close : atom -> oterm -> oterm :=
-    fun x u => to_U_inv (close (T := U) x u).
+    fun x u => to_U_inv (close (U := U) x u).
 
   Definition subst : atom -> iterm -> oterm -> oterm :=
     fun x t u => to_U_inv (subst (T := T) (U := U) x t u).
 
   Definition free : oterm -> list atom :=
-    fun u => free (T := U) u.
+    fun u => free (U := U) u.
 
   Definition FV : oterm -> AtomSet.t :=
-    fun u => FV (T := U) u.
+    fun u => FV (U := U) u.
 
   Definition LC : oterm -> Prop :=
     fun u => LC (U := U) u.
@@ -121,7 +123,7 @@ Module MakeTheory_Hetero
     fun x t u => to_T_inv (LN.subst (T := T) (U := T) x t u).
 
   Definition FV_i : iterm -> AtomSet.t :=
-    fun t => LN.FV (T := T) t.
+    fun t => LN.FV (U := T) t.
 
   Definition LC_i : iterm -> Prop :=
     fun u => LN.LC (U := T) u.
@@ -330,7 +332,7 @@ Module Adapter (M1: SyntaxSIG) <: SyntaxSIGHetero.
   Definition binddt_T_inst := M1.binddt_inst.
   Definition binddt_U_inst := M1.binddt_inst.
   Definition module_inst :=
-    @DecoratedTraversableRightModule_DecoratedTraversableMonad
+    @DerivedInstances.DecoratedTraversableRightModule_DecoratedTraversableMonad
       nat T _ _ M1.ret_inst M1.binddt_inst M1.monad_inst.
   Definition to_T := M1.to_T.
   Definition to_T_inv := M1.to_T_inv.

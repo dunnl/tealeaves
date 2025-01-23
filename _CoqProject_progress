@@ -1,36 +1,4 @@
-# Adapters
 
-
-
-Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
-Tealeaves/Adapters/MonadToApplicative.v
-
-
-# Functors
-
-
-
-
-
-# CONTAINER/COALGEBRAIC STUFF
-# END CONTAINER STUFF
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-####### Core theory
 
 #Tealeaves/Classes/Kleisli/Theory/TraversableCommutativeIdempotent.v
 Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
@@ -42,46 +10,12 @@ Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
 #Tealeaves/Classes/Kleisli/Theory/DecoratedContainerFunctor.v
 #Tealeaves/Classes/Kleisli/Theory/DecoratedContainerMonad.v
 
-
 # HIGH-LEVEL THEORY
 Tealeaves/Theory/Batch.v
 Tealeaves/Theory/TraversableFunctor.v
 Tealeaves/Theory/TraversableMonad.v
 Tealeaves/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Theory/DecoratedTraversableMonad.v
-
-# LIST TYPES WITH DECORATIONS
-Tealeaves/Functors/ListHistory.v
-Tealeaves/Functors/List_Telescoping.v
-
-
-
-# SIMPLIFICATION
-Tealeaves/Simplification/Support.v
-Tealeaves/Simplification/Binddt.v
-Tealeaves/Simplification/DeriveDTM.v
-Tealeaves/Simplification/Simplification.v
-
-# BACKENDS
-
-## LN
-Tealeaves/Backends/LN/Atom.v
-Tealeaves/Backends/LN/AtomSet.v
-Tealeaves/Backends/LN/AssocList.v
-Tealeaves/Backends/LN/LN.v
-Tealeaves/Backends/LN/Simplification.v
-Tealeaves/Backends/LN/Parallel.v
-Tealeaves/Backends/LN.v
-
-## DB
-Tealeaves/Backends/DB/DB.v
-Tealeaves/Backends/DB/Simplification.v
-Tealeaves/Backends/DB/AutosubstShim.v
-Tealeaves/Backends/DB.v
-
-## LN TO DB
-Tealeaves/Backends/Adapters/Key.v
-Tealeaves/Backends/Adapters/LNtoDB.v
 
 ## Named
 Tealeaves/Backends/Named/Names.v
@@ -99,20 +33,6 @@ Tealeaves/Backends/Multisorted/LN/LN.v
 Tealeaves/Backends/Multisorted/LN.v
 Tealeaves/Simplification/MBinddt.v
 
-# EXAMPLES
-
-## FIRST ORDER LOGIC
-#Tealeaves/Examples/FOL/Syntax.v
-
-## UNTYPED LAMBDA CALCULUS
-Tealeaves/Examples/Lambda/Confluence.v
-
-## SIMPLY TYPED LAMBDA CALCULUS
-Tealeaves/Examples/STLC/Syntax.v
-Tealeaves/Examples/STLC/CompatTest.v
-Tealeaves/Examples/STLC/SyntaxCategorical.v
-Tealeaves/Examples/STLC/TypeSoundness.v
-
 # SYSTEM F
 Tealeaves/Classes/Multisorted/Theory/Foldmap.v
 Tealeaves/Examples/SystemF/Syntax.v
@@ -122,18 +42,12 @@ Tealeaves/Simplification/Tests/SystemF_LN.v
 Tealeaves/Examples/SystemF/Contexts.v
 Tealeaves/Examples/SystemF/TypeSoundness.v
 
-# VARIADIC BINDERS
-Tealeaves/Examples/VariadicLet/Terms.v
-Tealeaves/Examples/VariadicLet/Instances/Simple.v
-Tealeaves/Examples/VariadicLet/Instances/LetIn.v
-Tealeaves/Examples/VariadicLet/Instances/LetRec.v
+# NOMINAL
+Tealeaves/Examples/LambdaNominal/Syntax.v
 
 # SIMPLIFICATION TESTS
-Tealeaves/Simplification/Tests/Support.v
 Tealeaves/Simplification/Tests/STLC_Binddt.v
 Tealeaves/Simplification/Tests/STLC_Container.v
 Tealeaves/Simplification/Tests/STLC_LN.v
 Tealeaves/Simplification/Tests/STLC_DB.v
 
-# NOMINAL
-Tealeaves/Examples/LambdaNominal/Syntax.v
