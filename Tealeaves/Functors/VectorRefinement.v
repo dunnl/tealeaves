@@ -1824,7 +1824,7 @@ Proof.
   now apply Vector_zip_eq_sim_both.
 Qed.
 
-(** ** <<_sim>> Properties for <<n <> m *)
+(** ** <<_sim>> Properties for <<n <> m>> *)
 (******************************************************************************)
 Lemma Vector_zip_eq_sim_poly_both:
   forall (A B: Type) (n m: nat)
