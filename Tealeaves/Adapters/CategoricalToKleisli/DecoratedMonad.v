@@ -121,8 +121,10 @@ Module DerivedInstances.
          kdmod_bindd2 := @bindd_bindd;
       |}.
 
-    #[export] Instance: Kleisli.DecoratedMonad.DecoratedMonad W T :=
+    #[export] Instance: Kleisli.DecoratedMonad.DecoratedMonad W T
+      :=
       {| kdm_bindd0 := @bindd_comp_ret;
+         kdm_monoid := dmon_monoid;
       |}.
 
   End with_monad.

@@ -184,7 +184,8 @@ Module DerivedInstances.
         rewrite dfun_dec_dec.
         reassociate <- on left.
         (* Now move <<μ B>> towards <<μ C>> *)
-        unfold shift; rewrite incr_spec.
+        unfold shift.
+        rewrite incr_spec.
         change (μ (W * B) ∘ map T (map T (μ B) ∘ σ) ∘ map (T ○ prod W) (dec T B)) with
           (μ (W * B) ∘ (map T (map T (μ B) ∘ σ) ∘ map (T ○ prod W) (dec T B))).
         rewrite <- (fun_map_map (F := G1) (Functor := app_functor) _ _ _ _ (μ (W * B))).
@@ -278,6 +279,7 @@ Module DerivedInstances.
 
     #[export] Instance: Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
       {| kdtm_binddt0 := @kdtm_binddt0_T;
+         kdtm_monoid := dmon_monoid;
       |}.
 
   End with_monad.

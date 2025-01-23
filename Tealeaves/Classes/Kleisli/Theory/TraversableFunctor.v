@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.TraversableFunctor
   Classes.Categorical.ContainerFunctor
-  Classes.Categorical.ShapelyFunctor (Tolist, tolist)
+  Classes.Categorical.ShapelyFunctor
   Classes.Categorical.Monad (Return, ret)
   Functors.Backwards
   Functors.Constant
@@ -584,6 +584,26 @@ Class Compat_ToSubset_Traverse
   @Compat_ToSubset_Traverse T ToSubset_Traverse Traverse_T
   := ltac:(reflexivity).
 
+(** ** The <<tosubset>> Operation *)
+(******************************************************************************)
+(* TODO Move this somewhere else *)
+#[export] Instance Compat_ToSubset_Traverse_list:
+  Compat_ToSubset_Traverse (ToSubset_inst := ToSubset_list) list.
+Proof.
+  unfold Compat_ToSubset_Traverse.
+  unfold_ops @ToSubset_list.
+  unfold_ops @ToSubset_Traverse.
+  ext A l.
+  rewrite foldMap_eq_foldMap_list.
+  induction l.
+  - simpl_list.
+    reflexivity.
+  - simpl_list.
+    cbn.
+    rewrite <- IHl.
+    reflexivity.
+Qed.
+
 Section elements.
 
   Context
@@ -628,7 +648,11 @@ Section elements.
     intros.
     rewrite tosubset_to_foldMap.
     rewrite foldMap_through_tolist.
-    reflexivity.
+    ext t. unfold compose; induction (tolist t).
+    - reflexivity.
+    - cbn. rewrite IHl.
+      unfold transparent tcs.
+      now simpl_subset.
   Qed.
 
   (** ** Rewriting <<a ∈ t>> to <<foldMap>> *)
@@ -668,13 +692,13 @@ Section elements.
 
   (** ** Factoring <<tosubset>> through <<runBatch>> *)
   (*******************************************************************************)
-   Import Coalgebraic.TraversableFunctor.
-   Import KleisliToCoalgebraic.TraversableFunctor.
+  Import Coalgebraic.TraversableFunctor.
+  Import KleisliToCoalgebraic.TraversableFunctor.
 
-   Lemma tosubset_through_runBatch1
-     `{ToBatch T}
-     `{! Compat_ToBatch_Traverse T}
-     : forall (A: Type),
+  Lemma tosubset_through_runBatch1
+    `{ToBatch T}
+    `{! Compat_ToBatch_Traverse T}
+    : forall (A: Type),
       tosubset =
         runBatch (G := const (A -> Prop))
           (ret (T := subset) (A := A)) (B := False) ∘
@@ -687,8 +711,8 @@ Section elements.
   Qed.
 
   Lemma tosubset_through_runBatch2
-     `{ToBatch T}
-     `{! Compat_ToBatch_Traverse T}
+    `{ToBatch T}
+    `{! Compat_ToBatch_Traverse T}
     : forall (A tag: Type),
       tosubset =
         runBatch (G := const (A -> Prop))
@@ -701,7 +725,8 @@ Section elements.
     reflexivity.
   Qed.
 
-(*
+End elements.
+
 #[export] Instance Compat_ToSubset_Tolist_Traverse
   `{TraversableFunctor T} :
   @Compat_ToSubset_Tolist T
@@ -718,26 +743,6 @@ Proof.
   rewrite tosubset_list_hom1.
   reflexivity.
 Qed.
-
-#[export] Instance Compat_ToSubset_Traverse_List :
-  @Compat_ToSubset_Traverse list ToSubset_list Traverse_list.
-Proof.
-  unfold Compat_ToSubset_Traverse.
-  ext A l a.
-  induction l.
-  - cbn. reflexivity.
-  - apply propositional_extensionality.
-    autorewrite with tea_list tea_set.
-    cbn.
-    unfold_ops @Pure_const.
-    unfold_ops @Monoid_op_subset.
-    autorewrite with tea_set.
-    rewrite IHl.
-    firstorder.
-Qed.
- *)
-
-End elements.
 
 (** * <<foldmap>> Corollary: <<Forall, Forany>> *)
 (******************************************************************************)
@@ -801,7 +806,8 @@ Section quantification.
     rewrite foldMap_eq_foldMap_list.
     rewrite foldMap_eq_foldMap_list.
     induction (tolist t).
-    - simpl_list.
+    - rewrite foldMap_list_nil.
+      rewrite foldMap_list_nil.
       unfold_ops @Monoid_unit_false.
       unfold_ops @Monoid_unit_subset.
       setoid_rewrite subset_in_empty.

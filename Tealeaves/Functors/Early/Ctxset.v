@@ -1,7 +1,7 @@
 From Tealeaves Require Import
   Functors.Early.Subset
   Functors.Early.Reader (map_strength_cobind_spec)
-  Classes.Kleisli.DecoratedFunctor
+  Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedMonad
   Classes.Categorical.DecoratedMonad (shift).
 
@@ -17,7 +17,7 @@ Import DecoratedMonad.Notations.
 
 #[local] Generalizable Variables W A B.
 
-(** * The <<ctxset>> functor *)
+(** * The <<ctxset>> Decorated Functor *)
 (******************************************************************************)
 Definition ctxset (E: Type) := fun A => subset (E * A).
 
@@ -90,25 +90,23 @@ Section ctxset.
 
   (** ** Decorated functor typeclass instance *)
   (******************************************************************************)
-  #[export] Instance DTF_ctxset: DecoratedFunctor E (ctxset E) :=
+  #[export] Instance DecoratedTraversableFunctor_ctxset:
+    DecoratedFunctor E (ctxset E) :=
     {| kdf_mapd1 := kdf_subset_mapd1;
        kdf_mapd2 := kdf_subset_mapd2;
     |}.
 
-  (*
   #[export] Instance Compat_Map_Mapd_ctxset :
-    `{Compat_Map_Mapd}.
+    `{Compat_Map_Mapd E (ctxset E)}.
   Proof.
-    hnf.
-    ext A B f.
-    now rewrite ctxset_map_to_mapd.
+    hnf. ext A B f.
+    rewrite ctxset_map_to_mapd.
+    reflexivity.
   Qed.
-   *)
 
   #[export] Instance Functor_ctxset:
-    Functor (ctxset E).
-  Proof.
-  Admitted.
+    Functor (ctxset E) :=
+    DerivedInstances.Functor_DecoratedFunctor E (ctxset E).
 
   (** ** Monoid instances *)
   (******************************************************************************)
@@ -196,7 +194,6 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  (*
   Lemma ctxset_mapd_to_bindd: forall (A B: Type) (f: W * A -> B),
       mapd (T := ctxset W) f =
         bindd (T := ctxset W) (ret ∘ f).
@@ -248,6 +245,7 @@ Section ctxset.
     Compat_Map_Bindd W (ctxset W) (ctxset W).
   Proof.
     hnf. ext A B f.
+    change_left (map f).
     rewrite ctxset_map_to_bindd.
     reflexivity.
   Qed.
@@ -256,10 +254,10 @@ Section ctxset.
     Compat_Mapd_Bindd W (ctxset W) (ctxset W).
   Proof.
     hnf. ext A B f.
+    change_left (mapd f).
     rewrite ctxset_mapd_to_bindd.
     reflexivity.
   Qed.
-  *)
 
   (** ** Rewriting laws *)
   (******************************************************************************)
@@ -307,8 +305,6 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  (* TODO
-
   Lemma ctxset_bindd1: forall A: Type,
       bindd (T := ctxset W) (ret (T := ctxset W) ∘ extract) = @id (ctxset W A).
   Proof.
@@ -324,30 +320,28 @@ Section ctxset.
     rewrite ctxset_ret_spec.
     change ((η ∘ η) a) with ({{ (Ƶ, a) }}).
     unfold ctxset. (* hidden *)
-    rewrite (DecoratedFunctor.shift_spec subset).
+    rewrite (DecoratedMonad.shift_spec subset).
     autorewrite with tea_set.
     cbn. simpl_monoid.
     reflexivity.
   Qed.
-   *)
 
-  (*
   Lemma ctxset_bindd2_lemma :
     forall (A B C :Type) (g: W * B -> ctxset W C)
       (f: W * A -> ctxset W B),
-      kc1 (T := subset) (shift subset ∘ cobind g)
+      kc (T := subset) (shift subset ∘ cobind g)
         (shift subset ∘ cobind f) =
         shift subset ∘ cobind (g ⋆5 f).
   Proof.
-    intros. unfold kc1, kc5.
+    intros. unfold kc, kc5.
     ext [w a].
     unfold compose at 1 3. (* LHS *)
     unfold compose at 2. (* RHS *)
     cbn.
     rewrite ctxset_bindd_spec.
     unfold ctxset.
-    rewrite (DecoratedFunctor.shift_spec subset).
-    rewrite (DecoratedFunctor.shift_spec subset).
+    rewrite (DecoratedMonad.shift_spec subset).
+    rewrite (DecoratedMonad.shift_spec subset).
     compose near (f (w, a)).
     rewrite (bind_map (U := subset)).
     rewrite (map_bind (U := subset)).
@@ -355,8 +349,8 @@ Section ctxset.
     unfold shift.
     do 2 reassociate <- on right.
     rewrite (fun_map_map (F:= subset)).
-    rewrite (map_strength_cobind_spec (G := subset) (E := W)).
-    rewrite (map_strength_cobind_spec (G := subset) (E := W)).
+    rewrite (map_strength_cobind_spec W B (G := subset)).
+    rewrite (map_strength_cobind_spec W B (G := subset)).
     unfold preincr, compose. cbn.
     fequal. ext [w'' c].
     cbn. simpl_monoid.
@@ -390,7 +384,7 @@ Section ctxset.
     DecoratedRightModule W (ctxset W) (ctxset W) :=
     {| kdmod_monad := _ |}.
 
-  (** * <<bindd>> is a monoid homomorphism *)
+  (** ** <<bindd>> is a monoid homomorphism *)
   (******************************************************************************)
   #[export] Instance Monmor_ctxset_bindd {A B f} :
     Monoid_Morphism (ctxset W A) (ctxset W B) (bindd f).
@@ -402,7 +396,7 @@ Section ctxset.
     - intros. apply bindd_ctxset_add.
   Qed.
 
-  (** * Querying for an element is a monoid homomorphism *)
+  (** ** Querying for an element is a monoid homomorphism *)
   (******************************************************************************)
   #[export] Instance Monmor_ctxset_evalAt {A: Type} (w: W) (a: A) :
     @Monoid_Morphism (ctxset W A) Prop
@@ -417,5 +411,5 @@ Section ctxset.
     - reflexivity.
     - reflexivity.
   Qed.
- *)
+
 End ctxset.

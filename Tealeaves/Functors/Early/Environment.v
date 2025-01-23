@@ -1,5 +1,6 @@
 From Tealeaves Require Import
   Classes.Categorical.Monad
+  Classes.Categorical.DecoratedMonad (shift)
   Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedTraversableMonad
   Functors.Early.Subset
@@ -17,49 +18,49 @@ Import Monoid.Notations.
 
 #[local] Generalizable Variables W M A B G ϕ.
 
-Definition env (E : Type) (A : Type) := list (E * A).
+Definition env (E: Type) (A: Type) := list (E * A).
 
-(** * The [env] decorated traversable functor, Kleisli-style *)
+(** * The [env] Decorated Traversable Functor (Kleisli)] *)
 (******************************************************************************)
 Section env.
 
   Context
-    (E : Type).
+    (E: Type).
 
-  Fixpoint mapdt_env (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    `(f : E * A -> G B) (Γ : env E A) : G (env E B) :=
+  Fixpoint mapdt_env (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    `(f: E * A -> G B) (Γ: env E A): G (env E B) :=
     match Γ with
     | nil => pure (@nil (E * B))
     | (e, a) :: rest =>
         pure (@List.cons (E * B)) <⋆> σ (e, f (e, a)) <⋆> mapdt_env G f rest
     end.
 
-  Fixpoint traverse_env (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    `(f : A -> G B) (l : env E A) : G (env E B) :=
+  Fixpoint traverse_env (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    `(f: A -> G B) (l: env E A): G (env E B) :=
     match l with
     | nil => pure (@nil (E * B))
     | (e, a) :: xs =>
         pure (@List.cons (E * B)) <⋆> σ (e, f a) <⋆> traverse_env G f xs
     end.
 
-  Fixpoint mapd_env `(f : E * A -> B) (Γ : env E A) : env E B :=
+  Fixpoint mapd_env `(f: E * A -> B) (Γ: env E A): env E B :=
     match Γ with
     | nil => @nil (E * B)
     | (e, a) :: rest =>
         (e, f (e, a)) :: mapd_env f rest
     end.
 
-  Fixpoint map_env `(f : A -> B) (Γ : env E A) : env E B :=
+  Fixpoint map_env `(f: A -> B) (Γ: env E A): env E B :=
     match Γ with
     | nil => @nil (E * B)
     | (e, a) :: rest =>
         (e, f a) :: map_env f rest
     end.
 
-  #[export] Instance Mapdt_env : Mapdt E (env E) := @mapdt_env.
-  #[export] Instance Traverse_env : Traverse (env E) := @traverse_env.
-  #[export] Instance Mapd_env : Mapd E (env E) := @mapd_env.
-  #[export] Instance Map_env : Map (env E) := @map_env.
+  #[export] Instance Mapdt_env: Mapdt E (env E) := @mapdt_env.
+  #[export] Instance Traverse_env: Traverse (env E) := @traverse_env.
+  #[export] Instance Mapd_env: Mapd E (env E) := @mapd_env.
+  #[export] Instance Map_env: Map (env E) := @map_env.
 
 End env.
 
@@ -76,88 +77,21 @@ Ltac simple_env_tactic :=
   [ reflexivity |
     try (cbn; now rewrite IHrest)].
 
-(** ** Specifications for operations *)
-(******************************************************************************)
-Lemma env_mapd_spec : forall (E A B : Type) (f : E * A -> B),
-    mapd (T := env E) f = map (F := list) (cobind (W := (E ×)) f).
-Proof.
-  simple_env_tactic.
-Qed.
-
-Lemma env_map_spec :
-  forall (E A B : Type) (f : A -> B),
-    map (F := env E) f = map (F := list) (map (F := (E ×)) f).
-Proof.
-  simple_env_tactic.
-Qed.
-
-Lemma env_map_spec2 : forall (E A B : Type) (f : A -> B),
-    map (F := env E) f = map (Map := Map_compose list (E ×)) f.
-Proof.
-  intros. now rewrite env_map_spec.
-Qed.
-
-(** ** Compatibility for operations *)
-(******************************************************************************)
-Lemma env_traverse_compat :
-  forall (E : Type) `{Applicative G} (A B : Type) (f : A -> G B),
-    traverse f = mapdt (E := E) (f ∘ extract).
-Proof.
-  simple_env_tactic.
-Qed.
-
-Lemma env_mapd_compat : forall (E A B : Type) (f : E * A -> B),
-    mapd (T := env E) f = mapdt (E := E) f.
-Proof.
-  simple_env_tactic.
-Qed.
-
-Lemma env_map_compat : forall (E A B : Type) (f : A -> B),
-    map (F := env E) f = mapdt (E := E) (f ∘ extract (W := (E ×))).
-Proof.
-  simple_env_tactic.
-Qed.
-
-(*
-#[export] Instance Compat_Traverse_Mapdt_env {E: Type}:
-  Compat_Traverse_Mapdt (E := E).
-Proof.
-  hnf. intros. ext A B f.
-  rewrite (env_traverse_compat E).
-  reflexivity.
-Qed.
-
-#[export] Instance Compat_Map_Mapdt_env {E: Type}:
-  Compat_Map_Mapdt (E := E).
-Proof.
-  hnf. ext A B f.
-  rewrite env_map_compat.
-  reflexivity.
-Qed.
-
-#[export] Instance Compat_Mapd_Mapdt_env {E: Type}:
-  Compat_Mapd_Mapdt (E := E).
-Proof.
-  hnf. ext A B f.
-  rewrite env_mapd_compat.
-  reflexivity.
-Qed.
-
-(** ** Rewriting lemmas for <<bindt>> *)
+(** ** Rewriting  for <<mapdt>> *)
 (******************************************************************************)
 Section mapdt_rewriting_lemmas.
 
   Context
     `{Applicative G}
-    (E A B : Type).
+    (E A B: Type).
 
-  Lemma mapdt_env_nil : forall `(f : E * A -> G B),
+  Lemma mapdt_env_nil: forall `(f: E * A -> G B),
       mapdt f (@nil (E * A)) = pure nil.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma mapdt_env_one : forall (f : E * A -> G B) (e : E) (a : A),
+  Lemma mapdt_env_one: forall (f: E * A -> G B) (e: E) (a: A),
       mapdt f (ret (T := list) (e, a)) = map (ret (T := list) ∘ pair e) (f (e, a)).
   Proof.
     intros.
@@ -174,14 +108,14 @@ Section mapdt_rewriting_lemmas.
     reflexivity.
   Qed.
 
-  Lemma mapdt_env_cons : forall (f : E * A -> G B) (e : E) (a : A) (l : env E A),
+  Lemma mapdt_env_cons: forall (f: E * A -> G B) (e: E) (a: A) (l: env E A),
       mapdt f ((e, a) :: l) =
         pure cons <⋆> σ (e, f (e, a)) <⋆> mapdt f l.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma mapdt_env_app : forall (f : E * A -> G B) (l1 l2 : env E A),
+  Lemma mapdt_env_app: forall (f: E * A -> G B) (l1 l2: env E A),
       mapdt f (l1 ++ l2) =
         pure (@app (E * B)) <⋆> mapdt f l1 <⋆> mapdt f l2.
   Proof.
@@ -208,14 +142,70 @@ End mapdt_rewriting_lemmas.
   mapdt_env_nil @mapdt_env_cons mapdt_env_one mapdt_env_app :
   tea_env.
 
-(** ** Decorated traversable functor instance *)
+(** ** Compatibility Typeclass Instances *)
+(******************************************************************************)
+Lemma env_traverse_compat :
+  forall (E: Type) `{Applicative G} (A B: Type) (f: A -> G B),
+    traverse f = mapdt (E := E) (f ∘ extract).
+Proof.
+  simple_env_tactic.
+Qed.
+
+Lemma env_mapd_compat: forall (E A B: Type) (f: E * A -> B),
+    mapd (T := env E) f = mapdt (E := E) f.
+Proof.
+  simple_env_tactic.
+Qed.
+
+Lemma env_map_compat: forall (E A B: Type) (f: A -> B),
+    map (F := env E) f = mapdt (E := E) (f ∘ extract (W := (E ×))).
+Proof.
+  simple_env_tactic.
+Qed.
+
+#[export] Instance Compat_Traverse_Mapdt_env {E: Type}:
+  Compat_Traverse_Mapdt E (env E).
+Proof.
+  hnf. intros.
+  ext G MapG PureG MultG.
+  ext A B f l.
+  unfold Traverse_env.
+  change_left (traverse f l).
+  change_right (mapdt (T := env E) (f ∘ extract (W := (E ×))) l).
+  induction l.
+  - reflexivity.
+  - cbn.
+    destruct a as [e a].
+    rewrite IHl.
+    reflexivity.
+Qed.
+
+#[export] Instance Compat_Map_Mapdt_env {E: Type}:
+  Compat_Map_Mapdt E (env E).
+Proof.
+  hnf. ext A B f l.
+  change_left (map f l).
+  rewrite env_map_compat.
+  reflexivity.
+Qed.
+
+#[export] Instance Compat_Mapd_Mapdt_env {E: Type}:
+  Compat_Mapd_Mapdt E (env E).
+Proof.
+  hnf. ext A B f l.
+  change_left (mapd f l).
+  rewrite env_mapd_compat.
+  reflexivity.
+Qed.
+
+(** ** Decorated Traversable Functor Instance *)
 (******************************************************************************)
 Section env_laws.
 
   Context
-    (E : Type).
+    (E: Type).
 
-  Lemma env_mapdt1 : forall A : Type, mapdt (extract (W := (E ×))) = @id (env E A).
+  Lemma env_mapdt1: forall A: Type, mapdt (extract (W := (E ×))) = @id (env E A).
   Proof.
     intros. ext l. induction l.
     - reflexivity.
@@ -228,11 +218,11 @@ Section env_laws.
   Lemma env_mapdt2
     `{Applicative G1}
     `{Applicative G2} :
-    forall (A B C : Type)
-      (g : E * B -> G2 C)
-      (f : E * A -> G1 B),
+    forall (A B C: Type)
+      (g: E * B -> G2 C)
+      (f: E * A -> G1 B),
       map (mapdt g) ∘ mapdt f =
-        mapdt (G := G1 ∘ G2) (g ⋆6 f).
+        mapdt (G := G1 ∘ G2) (g ⋆3 f).
   Proof.
     intros. ext l. induction l.
     - unfold compose.
@@ -261,7 +251,7 @@ Section env_laws.
       rewrite <- ap4.
       rewrite <- ap4; do 3 rewrite ap2.
       rewrite <- ap4; do 2 rewrite ap2.
-      unfold kc6, compose, strength.
+      unfold kc3, compose, strength.
       change (cobind f (e, a)) with (e, f (e, a)).
       do 2 rewrite map_to_ap.
       rewrite <- ap4; repeat rewrite ap2.
@@ -279,18 +269,18 @@ Section env_laws.
 
   Lemma env_mapdt_morph
     `{ApplicativeMorphism G1 G2 ϕ} :
-      forall (A B : Type) (f : E * A -> G1 B),
-        mapdt (T := env E) (ϕ B ∘ f) =
-          ϕ (env E B) ∘ mapdt (T := env E) f.
+      forall (A B: Type) (f: E * A -> G1 B),
+          ϕ (env E B) ∘ mapdt (T := env E) f =
+            mapdt (T := env E) (ϕ B ∘ f).
   Proof.
     intros. ext l. induction l.
     - unfold compose. cbn.
       rewrite appmor_pure.
       reflexivity.
     - destruct a as (e, a).
-      unfold compose at 2.
+      unfold compose at 1.
       autorewrite with tea_env.
-      rewrite IHl.
+      rewrite <- IHl.
       unfold compose at 2.
       rewrite ap_morphism_1.
       rewrite ap_morphism_1.
@@ -302,48 +292,77 @@ Section env_laws.
 
 End env_laws.
 
-#[export] Instance DTF_env (E : Type) :
+#[export] Instance DecoratedTraversableFunctor_env (E: Type):
   DecoratedTraversableFunctor E (env E) :=
-  {| kdtfun_mapdt1 := env_mapdt1 E;
-     kdtfun_mapdt2 := @env_mapdt2 E;
-     kdtfun_morph := @env_mapdt_morph E;
+  {| kdtf_mapdt1 := env_mapdt1 E;
+     kdtf_mapdt2 := @env_mapdt2 E;
+     kdtf_morph := @env_mapdt_morph E;
   |}.
 
-(** * The [env] DTM, Kleisli-style *)
+#[export] Instance Functor_env (E: Type): Functor (env E) :=
+  DerivedInstances.Functor_DecoratedTraversableFunctor.
+
+#[export] Instance DecoratedFunctor_env (E: Type): DecoratedFunctor E (env E) :=
+  DerivedInstances.DecoratedFunctor_DecoratedTraversableFunctor.
+
+#[export] Instance TraversableFunctor_env (E: Type): TraversableFunctor (env E) :=
+  DerivedInstances.TraversableFunctor_DecoratedTraversableFunctor.
+
+(** ** Alternative Specifications for <<mapd>> *)
+(******************************************************************************)
+Lemma env_mapd_spec: forall (E A B: Type) (f: E * A -> B),
+    mapd (T := env E) f = map (F := list) (cobind (W := (E ×)) f).
+Proof.
+  simple_env_tactic.
+Qed.
+
+Lemma env_map_spec :
+  forall (E A B: Type) (f: A -> B),
+    map (F := env E) f = map (F := list) (map (F := (E ×)) f).
+Proof.
+  simple_env_tactic.
+Qed.
+
+Lemma env_map_spec2: forall (E A B: Type) (f: A -> B),
+    map (F := env E) f = map (Map := Map_compose list (E ×)) f.
+Proof.
+  intros. now rewrite env_map_spec.
+Qed.
+
+(** * The [env] Decorated Traversable Functor (Kleisli)] *)
 (******************************************************************************)
 Section env.
 
   Context
     `{Monoid W}.
 
-  #[export] Instance Return_env : Return (env W) :=
+  #[export] Instance Return_env: Return (env W) :=
     fun A => ret (T := list) ∘ ret (T := (W ×)) (A := A).
 
-  Fixpoint binddt_env (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    `(f : W * A -> G (env W B)) (Γ : env W A) : G (env W B) :=
+  Fixpoint binddt_env (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    `(f: W * A -> G (env W B)) (Γ: env W A): G (env W B) :=
     match Γ with
     | nil => pure (@nil (W * B))
     | (w, a) :: rest =>
         pure (@List.app (W * B)) <⋆> map (F := G) (fun x => shift list (w, x)) (f (w, a)) <⋆> binddt_env G f rest
     end.
 
-  Fixpoint bindd_env `(f : W * A -> env W B) (Γ : env W A) : env W B :=
+  Fixpoint bindd_env `(f: W * A -> env W B) (Γ: env W A): env W B :=
     match Γ with
     | nil => @nil (W * B)
     | (w, a) :: rest =>
         shift list (w, f (w, a)) ++ bindd_env f rest
     end.
 
-  Fixpoint bind_env `(f : A -> env W B) (l : env W A) : env W B :=
+  Fixpoint bind_env `(f: A -> env W B) (l: env W A): env W B :=
     match l with
     | nil => pure (@nil (W * B))
     | (w, a) :: xs =>
         pure (@List.app (W * B)) <⋆> shift list (w, f a) <⋆> bind_env f xs
     end.
 
-  #[export] Instance Binddt_env : Binddt W (env W) (env W) := @binddt_env.
-  #[export] Instance Bindd_env : Bindd W (env W) (env W) := @bindd_env.
-  #[export] Instance Bind_env : Bind (env W) (env W) := @bind_env.
+  #[export] Instance Binddt_env: Binddt W (env W) (env W) := @binddt_env.
+  #[export] Instance Bindd_env: Bindd W (env W) (env W) := @bindd_env.
+  #[export] Instance Bind_env: Bind (env W) (env W) := @bind_env.
 
 End env.
-*)

@@ -4,6 +4,9 @@ From Tealeaves Require Export
   Classes.Kleisli.Comonad
   Functors.Early.Writer.
 
+From Tealeaves Require Import
+  Classes.Categorical.Monad (join).
+
 Import Monoid.Notations.
 
 #[local] Generalizable Variables W T U.
@@ -729,7 +732,7 @@ End decorated_monad_derived_composition_laws.
 
 (** ** Derived Typeclass Instances *)
 (******************************************************************************)
-Section decorated_monad_derivedances.
+Section decorated_monad_derivedinstances.
 
   Context
     W T U
@@ -778,7 +781,59 @@ Section decorated_monad_derivedances.
        kdf_mapd2 := mapd_mapd;
     |}.
 
-End decorated_monad_derivedances.
+End decorated_monad_derivedinstances.
+
+(** * Instance for Writer *)
+(******************************************************************************)
+Import Product.Notations.
+
+Section decorated_functor_reader.
+
+  Context {W: Type} `{Monoid W}.
+
+  #[export] Instance Bindd_Writer: Bindd W (W ×) (W ×) :=
+    fun A B f => join (T := (W ×)) ∘ cobind f.
+
+  (* This is local because exporting it leads to frequent
+     typeclass resolution divergence for Monoid instances
+     due to the circularity Monoid<-DecoratedMonad_Writer<-Monoid.
+   *)
+
+  #[local] Instance DecoratedMonad_Writer:
+    DecoratedMonad W (W ×).
+  Proof.
+    constructor.
+    - assumption.
+    - constructor;
+        unfold_ops @Bindd_Writer; intros.
+      + rewrite <- map_to_cobind.
+        rewrite Monad.mon_join_map_ret.
+        reflexivity.
+      + ext [w a].
+        unfold kc5.
+        unfold transparent tcs.
+        unfold bindd.
+        unfold compose, preincr, incr.
+        unfold map_fst, map_tensor.
+        unfold uncurry, associator, associator_inv.
+        unfold compose, id.
+        destruct (f (w, a)).
+        destruct (g (w ● w0, b)).
+        rewrite monoid_assoc.
+        reflexivity.
+    - intros. ext a.
+      unfold ret, Return_Writer.
+      unfold bindd, Bindd_Writer.
+      unfold join, Join_writer.
+      unfold compose.
+      cbn.
+      destruct (f (Ƶ, a)).
+      cbn.
+      rewrite monoid_id_r.
+      reflexivity.
+  Qed.
+
+End decorated_functor_reader.
 
 (** * Notations *)
 (******************************************************************************)

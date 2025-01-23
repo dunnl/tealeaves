@@ -151,3 +151,25 @@ Module DerivedInstances.
   Include DerivedOperations.
 
 End DerivedInstances.
+
+(** * Instance for Reader *)
+(******************************************************************************)
+Import Product.Notations.
+
+Section decorated_functor_reader.
+
+  Context {E: Type}.
+
+  #[export] Instance Mapd_Reader: Mapd E (E ×) :=
+    @cobind (E ×) (Cobind_reader E).
+
+  #[export] Instance DecoratedFunctor_Reader:
+    DecoratedFunctor E (E ×).
+  Proof.
+    constructor;
+      unfold_ops @Mapd_Reader; intros.
+    - apply kcom_cobind1.
+    - apply kcom_cobind2.
+  Qed.
+
+End decorated_functor_reader.

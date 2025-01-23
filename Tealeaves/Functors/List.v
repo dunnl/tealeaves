@@ -315,192 +315,6 @@ Section listable_shape_lemmas.
 
 End listable_shape_lemmas.
 
-(** * Container-like functor instance *)
-(******************************************************************************)
-#[export] Instance ToSubset_list: ToSubset list :=
-  fun (A: Type) (l: list A) => (fun a: A => @List.In A a l).
-
-(** ** <<tosubset>> and rewriting principles *)
-(******************************************************************************)
-Lemma tosubset_list_nil: forall (A: Type),
-    tosubset (@nil A) = ∅.
-Proof.
-  intros. extensionality a. reflexivity.
-Qed.
-
-Lemma tosubset_list_one: forall (A: Type) (a: A),
-    tosubset [a] = {{ a }}.
-Proof.
-  intros. solve_basic_subset.
-Qed.
-
-Lemma tosubset_list_ret: forall (A: Type) (a: A),
-    tosubset (ret a) = {{ a }}.
-Proof.
-  intros. solve_basic_subset.
-Qed.
-
-Lemma tosubset_list_cons :
-  forall (A: Type) (a: A) (l: list A),
-    tosubset (a :: l) = {{ a }} ∪ tosubset l.
-Proof.
-  intros. extensionality a'. reflexivity.
-Qed.
-
-Lemma tosubset_list_app: forall (A: Type) (l1 l2: list A),
-    tosubset (l1 ++ l2) = tosubset l1 ∪ tosubset l2.
-Proof.
-  intros. induction l1.
-  - cbn. rewrite tosubset_list_nil.
-    solve_basic_subset.
-  - cbn.
-    do 2 rewrite tosubset_list_cons.
-    rewrite IHl1. solve_basic_subset.
-Qed.
-
-#[export] Hint Rewrite
-  tosubset_list_nil tosubset_list_one tosubset_list_ret
-  tosubset_list_cons tosubset_list_app: tea_list.
-
-(** ** Naturality of <<tosubset>> *)
-(******************************************************************************)
-#[export] Instance Natural_ToSubset_list: Natural (@tosubset list _).
-Proof.
-  constructor; try typeclasses eauto.
-  intros A B f. ext l.
-  unfold compose at 1 2.
-  induction l.
-  - solve_basic_subset.
-  - rewrite tosubset_list_cons.
-    autorewrite with tea_set tea_list.
-    rewrite IHl.
-    solve_basic_subset.
-Qed.
-
-(** ** [tosubset] is a monoid homomorphism *)
-(******************************************************************************)
-#[export] Instance Monoid_Morphism_tosubset_list (A: Type) :
-  Monoid_Morphism (list A) (subset A) (tosubset (A := A)) :=
-  {| monmor_unit := @tosubset_list_nil A;
-    monmor_op := @tosubset_list_app A;
-  |}.
-
-(** ** <<∈>> for lists *)
-(******************************************************************************)
-Lemma element_of_list_nil {A}: forall (p: A), p ∈ @nil A <-> False.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma element_of_list_one {A} (a1 a2: A): a1 ∈ [ a2 ] <-> a1 = a2.
-Proof.
-  intros. unfold element_of.
-  simpl_list; simpl_subset.
-  intuition congruence.
-Qed.
-
-Lemma element_of_list_cons {A}: forall (a1 a2: A) (xs: list A),
-    a1 ∈ (a2 :: xs) <-> a1 = a2 \/ a1 ∈ xs.
-Proof.
-  intros; unfold element_of.
-  simpl_list; simpl_subset.
-  intuition congruence.
-Qed.
-
-Lemma element_of_list_ret {A} (a1 a2: A): a1 ∈ ret a2 <-> a1 = a2.
-Proof.
-  intros. unfold element_of.
-  simpl_list; simpl_subset.
-  easy.
-Qed.
-
-Lemma element_of_list_app {A}: forall (a: A) (xs ys: list A),
-    a ∈ (xs ++ ys) <-> a ∈ xs \/ a ∈ ys.
-Proof.
-  intros. unfold element_of.
-  simpl_list; simpl_subset.
-  easy.
-Qed.
-
-#[export] Hint Rewrite @element_of_list_nil
-  @element_of_list_cons @element_of_list_one
-  @element_of_list_ret @element_of_list_app: tea_list.
-
-(** *** [x ∈] is a monoid homomorphism *)
-(******************************************************************************)
-#[export] Instance Monoid_Morphism_element_list (A: Type) (a: A) :
-  Monoid_Morphism (list A) Prop
-    (tgt_op := Monoid_op_or)
-    (tgt_unit := Monoid_unit_false)
-    (element_of a).
-Proof.
-  rewrite element_of_tosubset.
-  eapply Monoid_Morphism_compose;
-    typeclasses eauto.
-Qed.
-
-(** ** Respectfulness conditions *)
-(******************************************************************************)
-Theorem map_rigidly_respectful_list: forall A B (f g: A -> B) (l: list A),
-    (forall (a: A), a ∈ l -> f a = g a) <-> map f l = map g l.
-Proof.
-  intros. induction l.
-  - simpl_list.
-    setoid_rewrite element_of_list_nil.
-    tauto.
-  - simpl_list.
-    setoid_rewrite element_of_list_cons.
-    destruct IHl. split.
-    + intro; fequal; auto.
-    + injection 1; intuition (subst; auto).
-Qed.
-
-Corollary map_respectful_list: forall A B (l: list A) (f g: A -> B),
-    (forall (a: A), a ∈ l -> f a = g a) -> map f l = map g l.
-Proof.
-  intros. now rewrite <- map_rigidly_respectful_list.
-Qed.
-
-#[export] Instance ContainerFunctor_list: ContainerFunctor list :=
-  {| cont_pointwise := map_respectful_list;
-  |}.
-
-(** ** <<tosubset>> as a monad homomorphism *)
-(******************************************************************************)
-Lemma tosubset_list_hom1: forall (A: Type),
-    tosubset ∘ ret (A := A) = ret (T := subset).
-Proof.
-  intros.
-  ext a b. propext;
-  cbv; intuition.
-Qed.
-
-Lemma tosubset_list_hom2: forall (A B: Type) (f: A -> list B),
-    tosubset ∘ bind f = bind (T := subset) (tosubset ∘ f) ∘ tosubset.
-Proof.
-  intros. unfold compose. ext l b.
-  induction l.
-  - propext; cbv.
-    + intuition.
-    + intros [a [absurd]]; contradiction.
-  - autorewrite with tea_list tea_set.
-    rewrite IHl.
-    reflexivity.
-Qed.
-
-Lemma tosubset_list_map: forall (A B: Type) (f: A -> B),
-    tosubset ∘ map f = map f ∘ tosubset.
-Proof.
-  intros.
-  now rewrite <- (natural (ϕ := @tosubset list _)).
-Qed.
-
-#[export] Instance Monad_Hom_list_tosubset :
-  MonadHom list subset (@tosubset list _) :=
-  {| kmon_hom_ret := tosubset_list_hom1;
-    kmon_hom_bind := tosubset_list_hom2;
-  |}.
-
 (** * Quantification over elements *)
 (* TODO: There is no real purpose for this at this point is there? *)
 (******************************************************************************)
@@ -653,6 +467,7 @@ Proof.
   - eapply sset_trans; eauto.
 Qed.
 
+(*
 Lemma sameset_spec_one: forall (A: Type) `{EqDec_eq A} (l: list A) (a: A),
   (forall (a0: A), a0 ∈ l <-> a0 = a) -> SameSet [a] l.
 Proof.
@@ -688,6 +503,9 @@ Proof.
   - destruct l1.
     + clear IHl1.
 Abort.
+
+TODO Cleanup
+ *)
 
 (** * Misc *)
 (******************************************************************************)

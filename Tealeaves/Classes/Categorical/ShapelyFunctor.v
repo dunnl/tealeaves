@@ -3,8 +3,10 @@ From Tealeaves Require Export
   Functors.Early.List.
 
 Import Monoid.
+Import Subset.Notations.
 Import Functor.Notations.
 Import List.ListNotations.
+Import ContainerFunctor.Notations.
 
 #[local] Generalizable Variables G F A B.
 
@@ -158,6 +160,7 @@ Section tolist_respectfulness_characterizations.
 
 End tolist_respectfulness_characterizations.
 
+(*
 (** ** [fold] and [foldMap] operations *)
 (******************************************************************************)
 Section fold.
@@ -206,6 +209,7 @@ Section fold.
   Qed.
 
 End fold.
+*)
 
 (*
 (** ** Folding over identity and composition functors *)
@@ -220,9 +224,6 @@ Section fold_monoidal_structure.
 
 End fold_monoidal_structure.
 *)
-
-(*
-TODO
 
 (** * Enumerating elements of listable functors *)
 (******************************************************************************)
@@ -260,8 +261,9 @@ Qed.
   forall `{ShapelyFunctor F}, Natural (@tosubset F ToSubset_Tolist).
 Proof.
   constructor; try typeclasses eauto.
-  intros A B f. unfold tosubset, ToSubset_Tolist. ext t.
-  reassociate <- on left. rewrite (natural (G := subset)).
+  intros A B f. unfold tosubset, ToSubset_Tolist.
+  reassociate <- on left.
+  rewrite (natural (G := subset)).
   reassociate -> on left. now rewrite natural.
 Qed.
 
@@ -296,7 +298,7 @@ Section ShapelyFunctor_setlike.
 
   Context
     `{ToSubset F}
-      `{! Compat_ToSubset_Tolist F}.
+    `{! Compat_ToSubset_Tolist F}.
 
   Lemma compat_element_tolist_natural :
     `{Natural (@tosubset F _)}.
@@ -326,10 +328,9 @@ Section ShapelyFunctor_setlike.
    introv. rewrite shapely_pointwise_iff. auto.
   Qed.
 
-  #[export] Instance ContainerFunctor_Shapely :
+  #[export] Instance ContainerFunctor_ShapelyFunctor :
     ContainerFunctor F :=
     {| cont_natural := compat_element_tolist_natural;
        cont_pointwise := shapely_pointwise; |}.
 
 End ShapelyFunctor_setlike.
-*)
