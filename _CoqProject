@@ -139,7 +139,7 @@ Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
-#Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
+Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
 
 ##########################################################
 # FUNCTORS                                               #
@@ -168,6 +168,8 @@ Tealeaves/Functors/Batch.v
 Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
 Tealeaves/Functors/Environment.v
 Tealeaves/Theory/TraversableFunctor.v
+Tealeaves/Theory/TraversableMonad.v
+Tealeaves/Theory/DecoratedTraversableFunctor.v
 
 
 

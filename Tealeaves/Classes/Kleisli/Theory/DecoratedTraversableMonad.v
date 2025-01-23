@@ -10,256 +10,71 @@ Import DecoratedContainerFunctor.Notations.
 
 #[local] Generalizable Variable W M T U G A B C.
 
-Class DecoratedTraversableMonadFull
-  (W : Type)
-  (T : Type -> Type)
-  `{op : Monoid_op W}
-  `{unit : Monoid_unit W}
-  `{ret_inst : Return T}
-  `{Map_inst : Map T}
-  `{Mapd_inst : Mapd W T}
-  `{Traverse_inst : Traverse T}
-  `{Bind_inst : Bind T T}
-  `{Mapdt_inst : Mapdt W T}
-  `{Bindd_inst : Bindd W T T}
-  `{Bindt_inst : Bindt T T}
-  `{Binddt_inst : Binddt W T T}
-  :=
-  { kdtmf_kmond :> DecoratedTraversableMonad W T;
-    kdtmf_map_compat :> Compat_Map_Binddt W T T;
-    kdtmf_mapd_compat :> Compat_Mapd_Binddt W T T;
-    kdtmf_traverse_compat :> Compat_Traverse_Binddt W T T;
-    kdtmf_bind_compat :> Compat_Bind_Binddt W T T;
-    kdtmf_mapdt_compat :> Compat_Mapdt_Binddt W T T;
-    kdtmf_bindd_compat :> Compat_Bindd_Binddt W T T;
-    kdtmf_bindt_compat :> Compat_Bindt_Binddt W T T;
-  }.
 
-Class DecoratedTraversableRightModuleFull
-  (W : Type)
-  (T : Type -> Type)
-  (U : Type -> Type)
-  `{op : Monoid_op W}
-  `{unit : Monoid_unit W}
-  `{ret_inst : Return T}
-  `{Map_T_inst : Map T}
-  `{Mapd_T_inst : Mapd W T}
-  `{Traverse_T_inst : Traverse T}
-  `{Bind_T_inst : Bind T T}
-  `{Mapdt_T_inst : Mapdt W T}
-  `{Bindd_T_inst : Bindd W T T}
-  `{Bindt_T_inst : Bindt T T}
-  `{Binddt_T_inst : Binddt W T T}
-  `{Map_U_inst : Map U}
-  `{Mapd_U_inst : Mapd W U}
-  `{Traverse_U_inst : Traverse U}
-  `{Bind_U_inst : Bind T U}
-  `{Mapdt_U_inst : Mapdt W U}
-  `{Bindd_U_inst : Bindd W T U}
-  `{Bindt_U_inst : Bindt T U}
-  `{Binddt_U_inst : Binddt W T U}
-  :=
-  { kdtmodf_kmond :> DecoratedTraversableMonadFull W T;
-    kdtmodf_mod :> DecoratedTraversableRightModule W T U;
-    kdtmodf_map_compat :> Compat_Map_Binddt W T U;
-    kdtmodf_mapd_compat :> Compat_Mapd_Binddt W T U;
-    kdtmodf_traverse_compat :> Compat_Traverse_Binddt W T U;
-    kdtmodf_bind_compat :> Compat_Bind_Binddt W T U;
-    kdtmodf_mapdt_compat :> Compat_Mapdt_Binddt W T U;
-    kdtmodf_bindd_compat :> Compat_Bindd_Binddt W T U;
-    kdtmodf_bindt_compat :> Compat_Bindt_Binddt W T U;
-  }.
-
-Section MonadFull.
-
-  #[local] Instance
-    DecoratedTraversableMonadFull_DecoratedTraversableMonad
-    (W : Type) (T : Type -> Type)
-    `{Monad_inst : DecoratedTraversableMonad W T} :
-  DecoratedTraversableMonadFull W T
-    (Map_inst := Map_Binddt W T T)
-    (Mapd_inst := Mapd_Binddt W T T)
-    (Traverse_inst := Traverse_Binddt W T T)
-    (Bind_inst := Bind_Binddt W T T)
-    (Mapdt_inst := Mapdt_Binddt W T T)
-    (Bindd_inst := Bindd_Binddt W T T)
-    (Bindt_inst := Bindt_Binddt W T T)
-  :=
-  {| kdtmf_kmond := _
-  |}.
-
-  #[local] Instance DecoratedTraversableRightModuleFull_DecoratedTraversableRightModule
-    (W : Type) (T : Type -> Type) (U : Type -> Type)
-    `{Module_inst : DecoratedTraversableRightModule W T U} :
-    DecoratedTraversableRightModuleFull W T U
-    (Map_T_inst := Map_Binddt W T T)
-    (Mapd_T_inst := Mapd_Binddt W T T)
-    (Traverse_T_inst := Traverse_Binddt W T T)
-    (Bind_T_inst := Bind_Binddt W T T)
-    (Mapdt_T_inst := Mapdt_Binddt W T T)
-    (Bindd_T_inst := Bindd_Binddt W T T)
-    (Bindt_T_inst := Bindt_Binddt W T T)
-    (Map_U_inst := Map_Binddt W T U)
-    (Mapd_U_inst := Mapd_Binddt W T U)
-    (Traverse_U_inst := Traverse_Binddt W T U)
-    (Bind_U_inst := Bind_Binddt W T U)
-    (Mapdt_U_inst := Mapdt_Binddt W T U)
-    (Bindd_U_inst := Bindd_Binddt W T U)
-    (Bindt_U_inst := Bindt_Binddt W T U) :=
-    {| kdtmodf_kmond := _
-    |}.
-
-  #[local] Instance DecoratedTraversableRightModuleFull_DecoratedTraversableMonadFull
-    (W : Type) (T : Type -> Type)
-    `{Monad_inst : DecoratedTraversableMonadFull W T} :
-    DecoratedTraversableRightModuleFull W T T.
-  Proof.
-    constructor.
-    - typeclasses eauto.
-    - apply DecoratedTraversableRightModule_DecoratedTraversableMonad.
-      apply kdtmf_kmond.
-    - typeclasses eauto.
-    - typeclasses eauto.
-    - typeclasses eauto.
-    - typeclasses eauto.
-    - typeclasses eauto.
-    - typeclasses eauto.
-    - typeclasses eauto.
-  Qed.
-
-End MonadFull.
-
-
-
-End other_composition_laws.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(** * Theory of DTMs *)
+(** * Theory of Decorated Traversable Monads *)
 (******************************************************************************)
-Section lemmas.
+Section composition.
 
   Context
     `{op : Monoid_op W}
-      `{unit : Monoid_unit W}
-      `{Monoid_inst: ! Monoid W}.
+    `{unit : Monoid_unit W}
+    `{Monoid_inst: ! Monoid W}.
 
   Context
     `{ret_inst : Return T}
-      `{Map_T_inst : Map T}
-      `{Mapd_T_inst : Mapd W T}
-      `{Traverse_T_inst : Traverse T}
-      `{Bind_T_inst : Bind T T}
-      `{Mapdt_T_inst : Mapdt W T}
-      `{Bindd_T_inst : Bindd W T T}
-      `{Bindt_T_inst : Bindt T T}
-      `{Binddt_T_inst : Binddt W T T}
-      `{ToSubset_T_inst: ToSubset T}
-      `{! Compat_Map_Binddt W T T}
-      `{! Compat_Mapd_Binddt W T T}
-      `{! Compat_Traverse_Binddt W T T}
-      `{! Compat_Bind_Binddt W T T}
-      `{! Compat_Mapdt_Binddt W T T}
-      `{! Compat_Bindd_Binddt W T T}
-      `{! Compat_Bindt_Binddt W T T}.
+    `{Map_T_inst : Map T}
+    `{Mapd_T_inst : Mapd W T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Mapdt_T_inst : Mapdt W T}
+    `{Bindd_T_inst : Bindd W T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{Binddt_T_inst : Binddt W T T}
+    `{! Compat_Map_Binddt W T T}
+    `{! Compat_Mapd_Binddt W T T}
+    `{! Compat_Traverse_Binddt W T T}
+    `{! Compat_Bind_Binddt W T T}
+    `{! Compat_Mapdt_Binddt W T T}
+    `{! Compat_Bindd_Binddt W T T}
+    `{! Compat_Bindt_Binddt W T T}.
 
 
   Context
     `{Map_U_inst : Map U}
-      `{Mapd_U_inst : Mapd W U}
-      `{Traverse_U_inst : Traverse U}
-      `{Bind_U_inst : Bind T U}
-      `{Mapdt_U_inst : Mapdt W U}
-      `{Bindd_U_inst : Bindd W T U}
-      `{Bindt_U_inst : Bindt T U}
-      `{Binddt_U_inst : Binddt W T U}
-      `{ToSubset_U_inst: ToSubset U}
-      `{! Compat_Map_Binddt W T U}
-      `{! Compat_Mapd_Binddt W T U}
-      `{! Compat_Traverse_Binddt W T U}
-      `{! Compat_Bind_Binddt W T U}
-      `{! Compat_Mapdt_Binddt W T U}
-      `{! Compat_Bindd_Binddt W T U}
-      `{! Compat_Bindt_Binddt W T U}
-      `{! Compat_ToSubset_Traverse T}
-      `{! Compat_ToSubset_Traverse U}.
+    `{Mapd_U_inst : Mapd W U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Mapdt_U_inst : Mapdt W U}
+    `{Bindd_U_inst : Bindd W T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{Binddt_U_inst : Binddt W T U}
+    `{! Compat_Map_Binddt W T U}
+    `{! Compat_Mapd_Binddt W T U}
+    `{! Compat_Traverse_Binddt W T U}
+    `{! Compat_Bind_Binddt W T U}
+    `{! Compat_Mapdt_Binddt W T U}
+    `{! Compat_Bindd_Binddt W T U}
+    `{! Compat_Bindt_Binddt W T U}.
+
+  Context
+    `{ToSubset_T_inst: ToSubset T}
+    `{ToSubset_U_inst: ToSubset U}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToSubset_Traverse U}.
 
   Context
     `{Monad_inst : ! DecoratedTraversableMonad W T}
-      `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
+    `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
 
-  (** ** Composition in the applicative functor *)
+  (** ** Composition in the Applicative Functor *)
+  (******************************************************************************)
+
+  (** *** Composition with a Monoid *)
   (******************************************************************************)
   Lemma binddt_app_const_r:
     forall {G : Type -> Type}
-      `{Monoid M} {A B : Type} `{Applicative G} (f : W * A -> G M),
+      `{Monoid M} {A B : Type}
+      `{Applicative G} (f : W * A -> G M),
       @binddt W T U _ (G ∘ const M)
         (Map_compose G (const M))
         (Pure_compose G (const M))
@@ -276,7 +91,7 @@ Section lemmas.
       reflexivity.
   Qed.
 
-  (** ** Lemmas for particular applicative functors *)
+  (** ** Rewriting Lemmas for Particular Applicative Functors *)
   (******************************************************************************)
 
   (** *** <<binddt>> with constant applicative functors *)
@@ -310,11 +125,10 @@ Section lemmas.
 
   End constant_applicative.
 
-
   (** ** Properties of <<foldMapd>> *)
   (******************************************************************************)
 
-  (** *** Composition with monad operattions *)
+  (** *** Composition with monad operations *)
   (******************************************************************************)
   Theorem foldMapd_ret `{Monoid M} : forall `(f : W * A -> M),
       foldMapd (T := T) f ∘ ret = f ∘ ret.
@@ -346,20 +160,6 @@ Section lemmas.
     reflexivity.
   Qed.
 
-  Corollary foldMap_binddt `{Applicative G} `{Monoid M} :
-    forall `(g : B -> M) `(f : W * A -> G (T B)),
-      map (foldMap g) ∘ binddt f =
-        foldMapd (fun '(w, a) => map (foldMap g) (f (w, a))).
-  Proof.
-    intros.
-    rewrite foldMap_to_foldMapd.
-    rewrite foldMap_to_foldMapd.
-    rewrite foldMapd_binddt.
-    fequal; ext [w a].
-    rewrite extract_preincr2.
-    reflexivity.
-  Qed.
-
   Corollary foldMapd_binddt_I `{Monoid M} : forall `(g : W * B -> M) `(f : W * A -> T B),
       foldMapd g ∘ binddt (U := U) (G := fun A => A) f =
         foldMapd (T := U) (fun '(w, a) => foldMapd (g ⦿ w) (f (w, a))).
@@ -380,6 +180,22 @@ Section lemmas.
     reflexivity.
   Qed.
 
+  (** ** Properties of <<foldMap>> *)
+  (******************************************************************************)
+  Corollary foldMap_binddt `{Applicative G} `{Monoid M} :
+    forall `(g : B -> M) `(f : W * A -> G (T B)),
+      map (foldMap g) ∘ binddt f =
+        foldMapd (fun '(w, a) => map (foldMap g) (f (w, a))).
+  Proof.
+    intros.
+    rewrite foldMap_to_foldMapd.
+    rewrite foldMap_to_foldMapd.
+    rewrite foldMapd_binddt.
+    fequal; ext [w a].
+    rewrite extract_preincr2.
+    reflexivity.
+  Qed.
+
   Corollary foldMap_bindd `{Monoid M} : forall `(g : B -> M) `(f : W * A -> T B),
       foldMap g ∘ bindd f =
         foldMapd (fun '(w, a) => foldMap g (f (w, a))).
@@ -394,10 +210,10 @@ Section lemmas.
     reflexivity.
   Qed.
 
-  (** ** <<tolistd>> *)
+  (** ** Properties of <<tolistd>> *)
   (******************************************************************************)
 
-  (** *** Relating <<tolistd>> and <<binddt>> / <<ret>> *)
+  (** *** Composition with <<binddt>> / <<ret>> *)
   (******************************************************************************)
   Lemma toctxlist_ret : forall (A : Type) (a : A),
       toctxlist (ret (T := T) a) = [ (Ƶ, a) ].
@@ -420,7 +236,9 @@ Section lemmas.
     reflexivity.
   Qed.
 
-  Lemma toctxlist_bindd : forall `(f : W * A -> T B),
+  (** *** Composition with <<bindd>> *)
+  (******************************************************************************)
+  Corollary toctxlist_bindd : forall `(f : W * A -> T B),
       toctxlist ∘ bindd f =
         foldMapd (T := U) (fun '(w, a) => (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
   Proof.
@@ -430,7 +248,10 @@ Section lemmas.
     reflexivity.
   Qed.
 
-  (** *** Corollaries for the rest *)
+  (** ** Properties of <<tolist>> *)
+  (******************************************************************************)
+
+  (** *** Composition with <<binddt>> *)
   (******************************************************************************)
   Corollary tolist_binddt : forall `{Applicative G} `(f : W * A -> G (T B)),
       map tolist ∘ binddt f = foldMapd (T := U) (map tolist ∘ f).
@@ -443,6 +264,8 @@ Section lemmas.
     reflexivity.
   Qed.
 
+  (** *** Composition with <<bindd>> *)
+  (******************************************************************************)
   Corollary tolist_bindd : forall `(f : W * A -> T B),
       tolist ∘ bindd f =
         foldMapd (fun '(w, a) => foldMap (ret (T := list)) (f (w, a))).
@@ -463,7 +286,7 @@ Section lemmas.
     reflexivity.
   Qed.
 
-  (** ** Relating <<toctxset>>  *)
+  (** ** Properties of <<toctxset>>  *)
   (******************************************************************************)
   Corollary toctxset_ret : forall (A : Type) (a : A),
       toctxset (ret (T := T) a) = {{ (Ƶ, a) }}.
@@ -474,6 +297,8 @@ Section lemmas.
     rewrite foldMapd_ret.
     reflexivity.
   Qed.
+
+  Import DecoratedTraversableMonad.DerivedInstances.
 
   Lemma toctxset_bindd:
     forall `(f : W * A -> T B),
@@ -492,7 +317,7 @@ Section lemmas.
       (bindd (T := ctxset W) (foldMapd (ret (T := subset)) ∘ f) {{(w, a)}}).
     rewrite bindd_ctxset_one.
     unfold compose.
-    rewrite (DecoratedFunctor.shift_spec subset
+    rewrite (DecoratedMonad.shift_spec subset
                (W := W) (op := op) (A := B)).
     compose near (f (w, a)) on right.
     rewrite foldMapd_morphism.
@@ -500,6 +325,19 @@ Section lemmas.
     reflexivity.
   Qed.
 
+  Corollary toctxset_to_binddt : forall (A: Type),
+      toctxset (F := U) = binddt (G := const (subset (W * A)))
+                            (B := False) (ret (T := subset)).
+  Proof.
+    intros.
+    rewrite toctxset_to_foldMapd.
+    rewrite foldMapd_to_mapdt1.
+    rewrite mapdt_to_binddt.
+    reflexivity.
+  Qed.
+
+  (** ** Properties of <<tosubset>>  *)
+  (******************************************************************************)
   Lemma tosubset_bindd : forall `(f : W * A -> T B),
       tosubset ∘ bindd f =
         foldMapd (fun '(w, a) => foldMap (ret (T := subset)) (f (w, a))).
@@ -507,19 +345,6 @@ Section lemmas.
     intros.
     rewrite tosubset_to_foldMap.
     rewrite foldMap_bindd.
-    reflexivity.
-  Qed.
-
-  (** ** Set operations to binddt *)
-  (******************************************************************************)
-  Corollary toctxset_to_binddt : forall (A: Type),
-      toctxset (F := U) = binddt (G := const (subset (W * A)))
-                     (B := False) (ret (T := subset)).
-  Proof.
-    intros.
-    rewrite toctxset_to_foldMapd.
-    rewrite foldMapd_to_mapdt1.
-    rewrite mapdt_to_binddt.
     reflexivity.
   Qed.
 
@@ -534,7 +359,7 @@ Section lemmas.
     reflexivity.
   Qed.
 
-  (** ** Characterizing <<∈d>> *)
+  (** ** Properties of <<∈d>> *)
   (******************************************************************************)
   Lemma element_ctx_of_ret: forall {A : Type} (w : W) (a1 a2 : A),
       (w, a1) ∈d ret (T := T) a2 <-> w = Ƶ /\ a1 = a2.
@@ -547,23 +372,10 @@ Section lemmas.
     easy.
   Qed.
 
-  Corollary element_of_to_binddt: forall (A: Type) (t: U A) (a: A),
-      a ∈ t = binddt (G := const Prop)
-                (H0 := @Pure_const Prop Monoid_unit_false)
-                (H1 := @Mult_const Prop Monoid_op_or)
-                (B := False) (eq a ∘ extract) t.
-  Proof.
-    intros.
-    rewrite element_of_to_foldMap.
-    rewrite foldMap_to_traverse1.
-    rewrite traverse_to_binddt.
-    reflexivity.
-  Qed.
-
   Corollary element_ctx_of_to_binddt: forall (A: Type) (t: U A) (w: W) (a: A),
       (w, a) ∈d t = binddt (G := const Prop)
-                      (H0 := @Pure_const Prop Monoid_unit_false)
-                      (H1 := @Mult_const Prop Monoid_op_or)
+                      (Pure_G := @Pure_const Prop Monoid_unit_false)
+                      (Mult_G := @Mult_const Prop Monoid_op_or)
                       (B := False) (eq (w, a)) t.
   Proof.
     intros.
@@ -573,58 +385,77 @@ Section lemmas.
     reflexivity.
   Qed.
 
-End lemmas.
+  (** ** Properties of <<∈>> *)
+  (******************************************************************************)
+  Import TraversableMonad.DerivedInstances.
 
+  Corollary element_of_to_binddt: forall (A: Type) (t: U A) (a: A),
+      a ∈ t = binddt (G := const Prop)
+                (Pure_G := @Pure_const Prop Monoid_unit_false)
+                (Mult_G := @Mult_const Prop Monoid_op_or)
+                (B := False) (eq a ∘ extract) t.
+  Proof.
+    intros.
+    rewrite element_of_to_foldMap.
+    rewrite foldMap_to_traverse1.
+    rewrite traverse_to_binddt.
+    reflexivity.
+  Qed.
+
+End composition.
+
+(** * Monad Homomorphism Instances *)
+(******************************************************************************)
 Section instances.
 
   Context
     `{op : Monoid_op W}
-      `{unit : Monoid_unit W}
-      `{Monoid_inst: ! Monoid W}.
+    `{unit : Monoid_unit W}
+    `{Monoid_inst: ! Monoid W}.
 
   Context
     `{ret_inst : Return T}
-      `{Map_T_inst : Map T}
-      `{Mapd_T_inst : Mapd W T}
-      `{Traverse_T_inst : Traverse T}
-      `{Bind_T_inst : Bind T T}
-      `{Mapdt_T_inst : Mapdt W T}
-      `{Bindd_T_inst : Bindd W T T}
-      `{Bindt_T_inst : Bindt T T}
-      `{Binddt_T_inst : Binddt W T T}
-      `{ToSubset_T_inst: ToSubset T}
-      `{! Compat_Map_Binddt W T T}
-      `{! Compat_Mapd_Binddt W T T}
-      `{! Compat_Traverse_Binddt W T T}
-      `{! Compat_Bind_Binddt W T T}
-      `{! Compat_Mapdt_Binddt W T T}
-      `{! Compat_Bindd_Binddt W T T}
-      `{! Compat_Bindt_Binddt W T T}.
+    `{Map_T_inst : Map T}
+    `{Mapd_T_inst : Mapd W T}
+    `{Traverse_T_inst : Traverse T}
+    `{Bind_T_inst : Bind T T}
+    `{Mapdt_T_inst : Mapdt W T}
+    `{Bindd_T_inst : Bindd W T T}
+    `{Bindt_T_inst : Bindt T T}
+    `{Binddt_T_inst : Binddt W T T}
+    `{ToSubset_T_inst: ToSubset T}
+    `{! Compat_Map_Binddt W T T}
+    `{! Compat_Mapd_Binddt W T T}
+    `{! Compat_Traverse_Binddt W T T}
+    `{! Compat_Bind_Binddt W T T}
+    `{! Compat_Mapdt_Binddt W T T}
+    `{! Compat_Bindd_Binddt W T T}
+    `{! Compat_Bindt_Binddt W T T}.
 
 
   Context
     `{Map_U_inst : Map U}
-      `{Mapd_U_inst : Mapd W U}
-      `{Traverse_U_inst : Traverse U}
-      `{Bind_U_inst : Bind T U}
-      `{Mapdt_U_inst : Mapdt W U}
-      `{Bindd_U_inst : Bindd W T U}
-      `{Bindt_U_inst : Bindt T U}
-      `{Binddt_U_inst : Binddt W T U}
-      `{ToSubset_U_inst: ToSubset U}
-      `{! Compat_Map_Binddt W T U}
-      `{! Compat_Mapd_Binddt W T U}
-      `{! Compat_Traverse_Binddt W T U}
-      `{! Compat_Bind_Binddt W T U}
-      `{! Compat_Mapdt_Binddt W T U}
-      `{! Compat_Bindd_Binddt W T U}
-      `{! Compat_Bindt_Binddt W T U}
-      `{! Compat_ToSubset_Traverse T}
-      `{! Compat_ToSubset_Traverse U}.
+    `{Mapd_U_inst : Mapd W U}
+    `{Traverse_U_inst : Traverse U}
+    `{Bind_U_inst : Bind T U}
+    `{Mapdt_U_inst : Mapdt W U}
+    `{Bindd_U_inst : Bindd W T U}
+    `{Bindt_U_inst : Bindt T U}
+    `{Binddt_U_inst : Binddt W T U}
+    `{ToSubset_U_inst: ToSubset U}
+    `{! Compat_Map_Binddt W T U}
+    `{! Compat_Mapd_Binddt W T U}
+    `{! Compat_Traverse_Binddt W T U}
+    `{! Compat_Bind_Binddt W T U}
+    `{! Compat_Mapdt_Binddt W T U}
+    `{! Compat_Bindd_Binddt W T U}
+    `{! Compat_Bindt_Binddt W T U}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToSubset_Traverse U}.
 
   Context
     `{Monad_inst : ! DecoratedTraversableMonad W T}
-      `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
+    `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
 
   #[export] Instance:
     DecoratedMonadHom W T (ctxset W) (@toctxset W T _).

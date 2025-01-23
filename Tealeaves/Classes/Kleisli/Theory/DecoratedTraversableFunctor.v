@@ -523,6 +523,27 @@ Section mapdt_toctxset.
     reflexivity.
   Qed.
 
+  (*
+  Theorem ind_mapd_iff_core:
+    forall `(f : E * A -> B),
+      mapd f ∘ toctxset = toctxset ∘ mapd (T := T) f.
+  Proof.
+    intros.
+    rewrite toctxset_through_toctxlist.
+    rewrite toctxset_through_toctxlist.
+    reassociate -> on right.
+    change (list (prod ?E ?X)) with (env E X). (* hidden *)
+    rewrite <- (mapd_toctxlist f).
+    rewrite env_mapd_spec.
+    reassociate <- on right.
+    rewrite ctxset_mapd_spec.
+    change (env ?E ?X) with (list (prod E X)). (* hidden *)
+    unfold ctxset.
+    rewrite <- (natural (ϕ := @tosubset list _)).
+    reflexivity.
+  Qed.
+   *)
+
   #[export] Instance Natural_Elementd_Mapdt: Natural (@toctxset E T _).
   Proof.
     constructor;

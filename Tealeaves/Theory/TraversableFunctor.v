@@ -2,10 +2,8 @@ From Tealeaves Require Export
   Classes.Kleisli.TraversableFunctor
   Classes.Kleisli.Theory.TraversableFunctor
   Classes.Categorical.ContainerFunctor
-  Adapters.KleisliToCoalgebraic.TraversableFunctor.
-
-From Tealeaves Require Export
   Classes.Categorical.ShapelyFunctor
+  Adapters.KleisliToCoalgebraic.TraversableFunctor
   Functors.Batch
   Functors.List
   Functors.VectorRefinement.

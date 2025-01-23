@@ -49,7 +49,7 @@ Qed.
   Natural (@toctxset E (env E) _).
 Proof.
   constructor.
-  - try typeclasses eauto. admit.
+  - try typeclasses eauto.
   - typeclasses eauto.
   - unfold_ops @ToCtxset_env.
     intros.
@@ -59,9 +59,6 @@ Proof.
                      (ϕ := @tosubset list _)).
     rewrite env_map_spec.
     reflexivity.
-Admitted.
+Qed.
 
 End env_instance.
-
-
-

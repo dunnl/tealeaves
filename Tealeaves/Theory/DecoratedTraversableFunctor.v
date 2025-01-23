@@ -1,8 +1,12 @@
 From Tealeaves Require Export
   Functors.Batch
   Classes.Kleisli.DecoratedTraversableFunctor
+  Classes.Kleisli.Theory.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedContainerFunctor
   Classes.Kleisli.DecoratedShapelyFunctor
+  Classes.Coalgebraic.TraversableFunctor
+  Classes.Coalgebraic.DecoratedTraversableFunctor
+  Adapters.KleisliToCategorical.DecoratedTraversableFunctor
   Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
   Functors.Environment
   Theory.TraversableFunctor.
@@ -14,46 +18,252 @@ Import List.ListNotations.
 Import Subset.Notations.
 Import ContainerFunctor.Notations.
 Import DecoratedContainerFunctor.Notations.
+Import VectorRefinement.Notations.
 
 #[local] Generalizable Variables F M E T G A B C ϕ.
+#[local] Arguments mapfst_Batch {B C}%type_scope
+  {A1 A2}%type_scope f%function_scope b.
 
-#[local] Arguments runBatch {A B}%type_scope {F}%function_scope
-  {H H0 H1} ϕ%function_scope {C}%type_scope b.
-
-
-Section decorated_traversable_functor_theory.
+(** * Properties of <<toBatch3>> *)
+(******************************************************************************)
+Section theory.
 
   Context
-    `{DecoratedTraversableFunctor E T}
-      `{Map T}
-      `{Mapd E T}
-      `{! Compat_Map_Mapdt}
-      `{! Compat_Mapd_Mapdt}.
+    `{Mapdt_inst: Mapdt E T}
+    `{Traverse_inst: Traverse T}
+    `{Mapd_inst: Mapd E T}
+    `{Map_inst: Map T}
+    `{ToBatch_inst: ToBatch T}
+    `{ToBatch3_inst: ToBatch3 E T}
+    `{! Compat_Traverse_Mapdt E T}
+    `{! Compat_Mapd_Mapdt E T}
+    `{! Compat_Map_Mapdt E T}
+    `{! Compat_ToBatch_Traverse T}
+    `{! Compat_ToBatch3_Mapdt E T}
+    `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
-  (** ** Characterizing <<∈d>> and <<mapd>> *)
+  (** ** Relating <<toBatch3>> with <<toBatch>> *)
   (******************************************************************************)
-  Theorem ind_mapd_iff_core:
-    forall `(f : E * A -> B),
-      mapd f ∘ toctxset = toctxset ∘ mapd (T := T) f.
+  Lemma toBatch_to_toBatch3 {A B: Type}:
+    toBatch (A := A) (A' := B) = mapfst_Batch extract ∘ toBatch3.
   Proof.
     intros.
-    rewrite toctxset_through_toctxlist.
-    rewrite toctxset_through_toctxlist.
-    reassociate -> on right.
-    change (list (prod ?E ?X)) with (env E X). (* hidden *)
-    rewrite <- (mapd_toctxlist f).
-    rewrite env_mapd_spec.
-    reassociate <- on right.
-    rewrite ctxset_mapd_spec.
-    change (env ?E ?X) with (list (prod E X)). (* hidden *)
-    unfold ctxset.
-    rewrite <- (natural (ϕ := @tosubset list _)).
+    rewrite toBatch_to_traverse.
+    rewrite traverse_to_mapdt.
+    rewrite toBatch3_to_mapdt.
+    rewrite (kdtf_morph
+               (G1 := Batch (E * A) B)
+               (G2 := Batch A B)
+               (ϕ := fun C => mapfst_Batch extract)).
+    rewrite ret_natural.
     reflexivity.
   Qed.
 
+  (** ** Factoring <<mapdt>> via <<toBatch3>>  *)
+  (******************************************************************************)
+  Lemma mapdt_through_toBatch3
+    `{Applicative G} `(f: E * A -> G B) :
+    mapdt (E := E) (T := T) f = runBatch f ∘ toBatch3.
+  Proof.
+    intros.
+    rewrite toBatch3_to_mapdt.
+    rewrite kdtf_morph.
+    rewrite (runBatch_batch G).
+    reflexivity.
+  Qed.
+
+  (** ** Naturality of <<toBatch3>> *)
+  (******************************************************************************)
+  Lemma toBatch3_mapdt
+    `{Applicative G}
+    {A A' B: Type} (f: E * A -> G A') :
+    map (F := G) (toBatch3 (A := A') (B := B)) ∘ mapdt (T := T) f =
+      traverse (T := BATCH1 B (T B)) (strength ∘ cobind f) ∘ toBatch3.
+  Proof.
+    rewrite toBatch3_to_mapdt.
+    rewrite kdtf_mapdt2.
+    rewrite (traverse_via_runBatch G).
+    rewrite <- (mapdt_through_toBatch3
+                 (A := A) (B := B)
+                 (G := G ∘ Batch (E * A') B)).
+  reflexivity.
+Qed.
+
+  Lemma toBatch3_mapd
+    {A A' B: Type} (f: E * A -> A') :
+    toBatch3 ∘ mapd (T := T) f =
+      mapfst_Batch (cobind f) ∘ toBatch3 (A := A) (B := B).
+  Proof.
+    rewrite toBatch3_to_mapdt.
+    rewrite mapdt_mapd.
+    rewrite toBatch3_to_mapdt.
+    rewrite (kdtf_morph
+               (G1 := Batch (E * A) B)
+               (G2 := Batch (E * A') B)
+               (ϕ := fun C => mapfst_Batch (cobind f))).
+    reflexivity.
+  Qed.
+
+  Lemma toBatch3_map
+    {A A' B: Type} (f: A -> A') {C: Type} :
+    toBatch3 ∘ map (F := T) f =
+      mapfst_Batch (map f) ∘ toBatch3 (A := A) (B := B).
+  Proof.
+    rewrite toBatch3_to_mapdt.
+    rewrite mapdt_map.
+    rewrite toBatch3_to_mapdt.
+    rewrite (kdtf_morph
+               (morphism := ApplicativeMorphism_mapfst_Batch (map f))
+
+               (ϕ := fun C => mapfst_Batch (map f))).
+    rewrite ret_natural.
+    reflexivity.
+  Qed.
+
+  Lemma toBatch_mapd
+    {A A' B: Type} (f: E * A -> A'):
+    toBatch (A := A') (A' := B) ∘ mapd (T := T) f =
+      mapfst_Batch f ∘ toBatch3 (T := T) (A := A) (B := B).
+  Proof.
+    rewrite toBatch_to_toBatch3.
+    reassociate -> on left.
+    rewrite toBatch3_mapd.
+    reassociate <-.
+    rewrite (mapfst_mapfst_Batch).
+    rewrite (kcom_cobind0).
+    reflexivity.
+  Qed.
+
+  (** * Factoring Operations Through <<toBatch3>> *)
+  (******************************************************************************)
+  Section runBatch.
+
+  (** ** Core Operations *)
+  (******************************************************************************)
+  Theorem mapdt_through_runBatch `{Applicative G} `(f: E * A -> G B) :
+    mapdt f = runBatch f ∘ toBatch3.
+  Proof.
+    intros.
+    rewrite toBatch3_to_mapdt.
+    rewrite kdtf_morph.
+    rewrite (runBatch_batch G).
+    reflexivity.
+  Qed.
+
+  Corollary traverse_through_runBatch `{Applicative G} `(f: A -> G B) :
+    traverse f = runBatch (f ∘ extract (W := (E ×))) ∘ toBatch3.
+  Proof.
+    rewrite traverse_to_mapdt.
+    rewrite mapdt_through_runBatch.
+    reflexivity.
+  Qed.
+
+  Corollary mapd_through_runBatch `(f: E * A -> B) :
+      mapd f = runBatch (G := fun A => A) f ∘ toBatch3.
+  Proof.
+    intros.
+    rewrite mapd_to_mapdt.
+    rewrite mapdt_through_runBatch.
+    reflexivity.
+  Qed.
+
+  Corollary map_through_runBatch `(f: A -> B) :
+      map f = runBatch (G := fun A => A) (f ∘ extract) ∘ toBatch3.
+  Proof.
+    intros.
+    rewrite map_to_mapdt.
+    rewrite mapdt_through_runBatch.
+    reflexivity.
+  Qed.
+
+  (** ** <<foldMapd>> Through <<toBatch3>> *)
+  (******************************************************************************)
+  Lemma foldMapd_through_runBatch1 {A} `{Monoid M}: forall `(f: E * A -> M),
+      foldMapd f = runBatch (G := const M) f (C := T False) ∘ toBatch3 (B := False).
+  Proof.
+    intros.
+    rewrite foldMapd_to_mapdt1.
+    rewrite (mapdt_through_runBatch (G := const M)).
+    reflexivity.
+  Qed.
+
+  Lemma foldMapd_through_runBatch2 `{Monoid M}: forall (A fake: Type) `(f: E * A -> M),
+      foldMapd f = runBatch (G := const M) f (C := T fake) ∘ toBatch3 (B := fake).
+  Proof.
+    intros.
+    rewrite foldMapd_to_mapdt1.
+    rewrite (mapdt_constant_applicative2 False False fake).
+    rewrite mapdt_through_runBatch.
+    reflexivity.
+  Qed.
+
+  (** ** <<toctxlist>> Through <<toBatch3>> *)
+  (******************************************************************************)
+  Corollary toctxlist_through_runBatch3 {A: Type} (tag: Type):
+    toctxlist = runBatch (B := tag)
+                  (G := const (list (E * A)))
+                  (ret (T := list))
+                  ∘ toBatch3.
+  Proof.
+    rewrite (toctxlist_to_mapdt2 A tag).
+    now rewrite mapdt_through_runBatch.
+  Qed.
+
+
+  Corollary toctxset_through_runBatch1 {A: Type}:
+    toctxset (F := T) = runBatch (B := False)
+                          (G := const (subset (E * A)))
+                          (ret (T := subset)) ∘ toBatch3.
+  Proof.
+    rewrite (toctxset_to_mapdt1 A).
+    now rewrite (mapdt_through_runBatch).
+  Qed.
+
+  Corollary toctxset_through_runBatch2 {A tag: Type}:
+    toctxset (F := T) = runBatch (B := tag)
+                          (G := const (subset (E * A)))
+                          (ret (T := subset)) ∘ toBatch3.
+  Proof.
+    rewrite (toctxset_to_mapdt2 A tag).
+    now rewrite (mapdt_through_runBatch).
+  Qed.
+
+  Corollary element_ctx_of_through_runBatch1
+    `{ToSubset T}
+    `{! Compat_ToSubset_Traverse T}
+    {A: Type} {p: E * A}:
+    element_ctx_of (T := T) p =
+      runBatch (B := False) (G := const Prop)
+        (H0 := @Mult_const _ Monoid_op_or)
+        (H1 := @Pure_const _ Monoid_unit_false)
+        {{p}} ∘ toBatch3.
+  Proof.
+    rewrite element_ctx_of_to_foldMapd.
+    rewrite foldMapd_through_runBatch1.
+    reflexivity.
+  Qed.
+
+(** * Respectfulness Properties *)
+(******************************************************************************)
+Section decorated_traversable_functor_theory.
+
+  (** ** Purity *)
+  (******************************************************************************)
+  Theorem mapdt_purity1 :
+    forall `{Applicative G},
+      `(mapdt (G := G) (pure ∘ extract) = @pure G _ (T A)).
+  Proof.
+    intros.
+    rewrite <- (kdtf_morph (G1 := fun A => A) (G2 := G)).
+    rewrite kdtf_mapdt1.
+    reflexivity.
+  Qed.
+
+  (** ** Characterizing <<∈d>> and <<mapd>> *)
+  (******************************************************************************)
   Lemma mapdt_respectful:
-    forall A B `{Applicative G} (t : T A) (f g : E * A -> G B),
-      (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))
+    forall A B `{Applicative G} (t: T A) (f g: E * A -> G B),
+      (forall (e: E) (a: A), (e, a) ∈d t -> f (e, a) = g (e, a))
       -> mapdt f t = mapdt g t.
   Proof.
     introv Happl hyp.
@@ -61,7 +271,7 @@ Section decorated_traversable_functor_theory.
     unfold element_ctx_of in hyp.
     rewrite (toctxset_through_runBatch2 (tag := B)) in hyp.
     unfold compose in *.
-    induction (toBatch6 (B := B) t).
+    induction (toBatch3 (B := B) t).
     - reflexivity.
     - destruct a as [e a]. cbn.
       rewrite IHb.
@@ -73,19 +283,10 @@ Section decorated_traversable_functor_theory.
         now left.
   Qed.
 
-  Theorem mapdt_purity1 :
-    forall `{Applicative G},
-      `(mapdt (G := G) (pure ∘ extract) = @pure G _ (T A)).
-  Proof.
-    intros.
-    rewrite (kdtfun_morph (G1 := fun A => A) (G2 := G)).
-    rewrite kdtfun_mapdt1.
-    reflexivity.
-  Qed.
 
   Corollary mapdt_respectful_pure:
-    forall A `{Applicative G} (t : T A) (f : E * A -> G A),
-      (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = pure (F := G) a)
+    forall A `{Applicative G} (t: T A) (f: E * A -> G A),
+      (forall (e: E) (a: A), (e, a) ∈d t -> f (e, a) = pure (F := G) a)
       -> mapdt f t = pure t.
   Proof.
     intros.
@@ -94,39 +295,41 @@ Section decorated_traversable_functor_theory.
   Qed.
 
   Corollary mapdt_respectful_id:
-    forall A (t : T A) (f : E * A -> A),
-      (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = a)
+    forall A (t: T A) (f: E * A -> A),
+      (forall (e: E) (a: A), (e, a) ∈d t -> f (e, a) = a)
       -> mapdt (G := fun A => A) f t = t.
   Proof.
     intros.
     change t with (id t) at 2.
-    rewrite <- kdtfun_mapdt1.
+    rewrite <- kdtf_mapdt1.
     apply (mapdt_respectful A A (G := fun A => A)).
     assumption.
   Qed.
 
-    Lemma mapd_respectful :
-      forall A B (t : T A) (f g : E * A -> B),
-        (forall (e : E) (a : A), (e, a) ∈d t -> f (e, a) = g (e, a))
-        -> mapd f t = mapd g t.
-    Proof.
-      introv hyp.
-      do 2 rewrite mapd_through_runBatch.
-      unfold element_ctx_of in hyp.
-      rewrite (toctxset_through_runBatch2 (tag := B)) in hyp.
-      unfold compose in *.
-      induction (toBatch6 (B := B) t).
-      - reflexivity.
-      - destruct a as [e a]. cbn.
-        rewrite IHb.
-        rewrite hyp.
-        reflexivity.
-        + cbn. now right.
-        + introv hyp2.
-          apply hyp.
-          now left.
-    Qed.
+  Lemma mapd_respectful :
+    forall A B (t: T A) (f g: E * A -> B),
+      (forall (e: E) (a: A), (e, a) ∈d t -> f (e, a) = g (e, a))
+      -> mapd f t = mapd g t.
+  Proof.
+    introv hyp.
+    rewrite mapd_through_runBatch.
+    rewrite mapd_through_runBatch.
+    unfold element_ctx_of in hyp.
+    rewrite (toctxset_through_runBatch2 (tag := B)) in hyp.
+    unfold compose in *.
+    induction (toBatch3 (B := B) t).
+    - reflexivity.
+    - destruct a as [e a]. cbn.
+      rewrite IHb.
+      rewrite hyp.
+      reflexivity.
+      + cbn. now right.
+      + introv hyp2.
+        apply hyp.
+        now left.
+  Qed.
 
+  Import Kleisli.DecoratedTraversableFunctor.DerivedInstances.
 
   #[export] Instance: DecoratedContainerFunctor E T.
   Proof.
@@ -134,7 +337,8 @@ Section decorated_traversable_functor_theory.
     - typeclasses eauto.
     - constructor.
       intros.
-      apply ind_mapd_iff_core.
+      rewrite toctxset_mapd.
+      reflexivity.
     - intros.
       apply mapd_respectful.
       assumption.
@@ -142,22 +346,11 @@ Section decorated_traversable_functor_theory.
 
 End decorated_traversable_functor_theory.
 
-
 (** * Shapeliness *)
 (******************************************************************************)
 Section shapeliness.
 
-  Context
-    `{DecoratedTraversableFunctor E T}
-      `{Map T}
-      `{Mapd E T}
-      `{Traverse T}
-      `{ToBatch T}
-      `{! Compat_Map_Mapd}
-      `{! Compat_Map_Traverse T}
-      `{! Compat_Mapd_Mapdt}
-      `{! Compat_ToBatch_Traverse T}
-      `{! Compat_Traverse_Mapdt}.
+  Import Kleisli.DecoratedTraversableFunctor.DerivedInstances.
 
   Lemma mapd_shape {A B}: forall (f: E * A -> B) t,
       shape (mapd f t) = shape t.
@@ -166,11 +359,104 @@ Section shapeliness.
     unfold shape.
     compose near t on left.
     rewrite map_mapd.
-    rewrite DecoratedFunctor.map_to_mapd.
-    fequal.
+    rewrite map_to_mapd.
+    reflexivity.
   Qed.
 
-  Theorem mapd_injective1 {A B}: forall (f: E * A -> B) (t1 t2 : T A),
+  Lemma mapd_ctxlist_injective {A B}:
+    forall (f: E * A -> B) (t1 t2: T A),
+      (forall p q: E * A, f p = f q -> p = q) ->
+      mapd f (toctxlist t1) = mapd f (toctxlist t2) ->
+      tolist t1 = tolist t2.
+  Proof.
+    introv Hinj.
+    rewrite tolist_to_toctxlist.
+    unfold compose.
+    generalize dependent (toctxlist t2).
+    induction (toctxlist t1) as [| [e a] rest IHrest];
+      intros toctxlist_t2 premise.
+    - destruct (toctxlist_t2) as [| [e' a'] rest'].
+      + reflexivity.
+      + exfalso. inversion premise.
+    - destruct (toctxlist_t2) as [| [e' a'] rest'].
+      + exfalso. inversion premise.
+      + cbn in *.
+        fequal.
+        * assert (Heq: f (e, a) = f (e', a')) by
+            now inversion premise.
+          specialize (Hinj (e, a) (e', a') Heq).
+          now inversion Hinj.
+        * apply IHrest.
+          now inversion premise.
+  Qed.
+
+  Lemma mapd_ctxlist_injective_restricted1 {A B}:
+    forall (f: E * A -> B) (t1 t2: T A),
+      (forall p q: E * A,
+          p ∈d (toctxlist t1) ->
+          q ∈d (toctxlist t2) ->
+          f p = f q -> p = q) ->
+      mapd f (toctxlist t1) = mapd f (toctxlist t2) ->
+      tolist t1 = tolist t2.
+  Proof.
+    introv Hinj.
+    rewrite tolist_to_toctxlist.
+    unfold compose.
+    generalize dependent (toctxlist t2).
+    induction (toctxlist t1) as [| [e a] rest IHrest];
+      intros toctxlist_t2 Hinj premise.
+    - destruct (toctxlist_t2) as [| [e' a'] rest'].
+      + reflexivity.
+      + exfalso. inversion premise.
+    - destruct (toctxlist_t2) as [| [e' a'] rest'].
+      + exfalso. inversion premise.
+      + cbn in *.
+        fequal.
+        * assert (Heq: f (e, a) = f (e', a')) by
+            now inversion premise.
+          enough (X: (e, a) = (e', a'))
+            by now inversion X.
+          apply Hinj; auto.
+        * apply IHrest.
+          { intros p q Hinp Hinq Heq.
+            apply Hinj; eauto. }
+          { now inversion premise. }
+  Qed.
+
+  Lemma mapd_ctxlist_injective_restricted2 {A B}:
+    forall (f: E * A -> B) (t1 t2: T A),
+      (forall (e: E) (a1: A) (a2: A),
+          (e, a1) ∈d (toctxlist t1) ->
+          (e, a2) ∈d (toctxlist t2) ->
+          f (e, a1) = f (e, a2) -> a1 = a2) ->
+      mapd f (toctxlist t1) = mapd f (toctxlist t2) ->
+      tolist t1 = tolist t2.
+  Proof.
+    introv Hinj.
+    rewrite tolist_to_toctxlist.
+    unfold compose.
+    generalize dependent (toctxlist t2).
+    induction (toctxlist t1) as [| [e a] rest IHrest];
+      intros toctxlist_t2 Hinj premise.
+    - destruct (toctxlist_t2) as [| [e' a'] rest'].
+      + reflexivity.
+      + exfalso. inversion premise.
+    - destruct (toctxlist_t2) as [| [e' a'] rest'].
+      + exfalso. inversion premise.
+      + cbn in *.
+        fequal.
+        * assert (e = e') by now inversion premise; subst.
+          assert (Heq: f (e, a) = f (e, a')) by
+            now inversion premise.
+          eapply Hinj; auto.
+          subst; now left.
+        * apply IHrest.
+          { intros e'' a1 a2 Hinp Hinq Heq.
+            eapply Hinj; eauto. }
+          { now inversion premise. }
+  Qed.
+
+  Theorem mapd_injective1 {A B}: forall (f: E * A -> B) (t1 t2: T A),
       (forall p q, f p = f q -> p = q) ->
       mapd f t1 = mapd f t2 ->
       t1 = t2.
@@ -180,32 +466,18 @@ Section shapeliness.
     { unfold compose. fequal. auto. }
     rewrite <- mapd_toctxlist in cut.
     unfold compose in cut.
-    apply shapeliness.
+    apply Traversable_shapeliness.
     split.
-    - enough (cut2: shape (mapd f t1) = shape (mapd f t2)).
+    - (* Same shape *)
+      enough (cut2: shape (mapd f t1) = shape (mapd f t2)).
       do 2 rewrite mapd_shape in cut2; auto.
       now rewrite Heq.
-    - rewrite tolist_to_toctxlist.
-      unfold compose.
-      generalize dependent (toctxlist t2).
-      induction (toctxlist t1); intros otherlist premise.
-      + induction (otherlist).
-        * reflexivity.
-        * destruct a as [e' a].
-          inversion premise.
-      + destruct a as [e' a].
-        destruct otherlist.
-        * inversion premise.
-        * destruct p as [e'' a'].
-          cbn in *.
-          inversion premise.
-          fequal.
-          { specialize (Hinj (e'', a) (e'', a') H10).
-            now inversion Hinj. }
-          { apply IHe. auto. }
+    - (* Same contents *)
+      eapply mapd_ctxlist_injective; eassumption.
   Qed.
 
-  Theorem mapd_injective2 {A B}: forall (f: E * A -> B) (t1 t2 : T A),
+  Theorem mapd_injective2 {A B}:
+    forall (f: E * A -> B) (t1 t2: T A),
       (forall e a1 a2,
           (e, a1) ∈d t1 ->
           (e, a2) ∈d t2 ->
@@ -219,36 +491,13 @@ Section shapeliness.
     { unfold compose. fequal. auto. }
     rewrite <- mapd_toctxlist in Heq2.
     unfold compose in Heq2.
-    apply shapeliness.
+    apply Traversable_shapeliness.
     split.
-    - enough (cut2: shape (mapd f t1) = shape (mapd f t2)).
+    - (* Same shape *)
+      enough (cut2: shape (mapd f t1) = shape (mapd f t2)).
       do 2 rewrite mapd_shape in cut2; auto.
       now rewrite Heq.
-    - rewrite tolist_to_toctxlist.
-      unfold compose.
-      generalize dependent (toctxlist t2).
-      induction (toctxlist t1);
-        intros otherlist Hinj Heq_list.
-      + induction (otherlist).
-        * reflexivity.
-        * destruct a as [e' a].
-          inversion Heq_list.
-      + destruct a as [e' a].
-        destruct otherlist.
-        * inversion Heq_list.
-        * destruct p as [e'' a'].
-          inversion Heq_list; subst.
-          cbn. fequal.
-          { eapply Hinj.
-            now left. now left. auto. }
-          { apply IHe; auto.
-            intros. eapply Hinj.
-            rewrite element_of_list_cons.
-            right. eassumption.
-            rewrite element_of_list_cons.
-            right. assumption.
-            auto.
-          }
+    - eapply mapd_ctxlist_injective_restricted2; eauto.
   Qed.
 
 End shapeliness.
@@ -257,30 +506,22 @@ End shapeliness.
 (******************************************************************************)
 Section deconstruction.
 
-  Context
-    `{DecoratedTraversableFunctor E T}
-      `{Traverse T}
-      `{Map T}
-      `{toBatch_inst: ToBatch T}
-      `{ToSubset T}
-      `{! TraversableFunctor T}
-      `{! Compat_Map_Mapdt}
-      `{! Compat_ToBatch_Traverse T}
-      `{! Compat_ToSubset_Traverse T}
-      `{! Compat_Traverse_Mapdt}.
+  Import Kleisli.DecoratedTraversableFunctor.DerivedInstances.
 
   #[local] Generalizable Variables v.
 
-  Lemma plength_toBatch6:
+  (** ** Relating <<plength>> and <<toBatch3>> *)
+  (******************************************************************************)
+  Lemma plength_toBatch3:
     forall {A} {B} (t: T A),
-      plength t = length_Batch (toBatch6 (A := A) (B := B) t).
+      plength t = length_Batch (toBatch3 (A := A) (B := B) t).
   Proof.
     intros.
     unfold plength.
     rewrite (foldMap_through_runBatch2 A B).
-    rewrite toBatch6_toBatch.
+    rewrite toBatch_to_toBatch3.
     unfold compose.
-    induction (toBatch6 t).
+    induction (toBatch3 t).
     - reflexivity.
     - cbn.
       rewrite IHb.
@@ -288,46 +529,36 @@ Section deconstruction.
       lia.
   Qed.
 
-  Lemma plength_toBatch6':
+  Lemma length_toBatch3_toBatch:
     forall {A B} (t: T A),
-      length_Batch (toBatch6 (A := A) (B := B) t) = plength t.
-  Proof.
-    symmetry.
-    apply plength_toBatch6.
-  Qed.
-
-  Lemma length_toBatch6_toBatch:
-    forall {A B} (t: T A),
-      length_Batch (toBatch6 (A := A) (B := B) t) =
+      length_Batch (toBatch3 (A := A) (B := B) t) =
         length_Batch (toBatch (A := A) (A' := B) t).
   Proof.
     intros.
-    rewrite toBatch6_toBatch.
-    unfold compose. induction (toBatch6 t).
+    rewrite toBatch_to_toBatch3.
+    unfold compose. induction (toBatch3 t).
     - reflexivity.
     - cbn. now rewrite IHb.
   Qed.
 
+  (** ** <<mapdt_contents>> and <<mapdt_make>> *)
+  (******************************************************************************)
   Definition mapdt_contents {A} (t: T A):
     Vector (plength t) (E * A) :=
-    let v : Vector
-              (length_Batch (toBatch6 (B := False) (A := A) t))
-              (E * A)
-      := Batch_contents (toBatch6 t)
-    in coerce_Vector_length (plength_toBatch6' t) v.
+    let v: Vector
+             (length_Batch (toBatch3 (B := False) (A := A) t))
+             (E * A)
+      := Batch_contents (toBatch3 t)
+    in coerce_Vector_length (eq_sym (plength_toBatch3 t)) v.
 
   Definition mapdt_make {A B} (t: T A):
     Vector (plength t) B -> T B := trav_make t.
-  (*
-    (fun v =>
-       let v' := coerce_Vector_length (eq_sym (plength_eq_length t)) v
-       in Batch_make (toBatch t) v').
-   *)
 
-
-  Lemma Batch_contents_toctxlist:
+  (** ** Relation <<toctxlist>> and <<mapdt_contents>> *)
+  (******************************************************************************)
+  Lemma Batch3_contents_toctxlist:
     forall {A B} (t: T A),
-      Vector_to_list (E*A) (Batch_contents (toBatch6 (B := B) t)) =
+      Vector_to_list (E * A) (Batch_contents (toBatch3 (B := B) t)) =
         List.rev (toctxlist t).
   Proof.
     intros.
@@ -335,7 +566,7 @@ Section deconstruction.
     unfold ToCtxlist_Mapdt.
     rewrite (foldMapd_through_runBatch2 A B).
     unfold compose.
-    induction (toBatch6 t).
+    induction (toBatch3 t).
     - cbn. reflexivity.
     - cbn.
       rewrite Vector_to_list_vcons.
@@ -345,34 +576,47 @@ Section deconstruction.
       reflexivity.
   Qed.
 
-  Lemma Batch_contents_toBatch6_sim:
+  Corollary mapdt_contents_toctxlist:
+    forall {A} (t: T A),
+      Vector_to_list (E * A) (mapdt_contents t) =
+        List.rev (toctxlist t).
+  Proof.
+    intros.
+    unfold mapdt_contents.
+    unfold Vector_to_list.
+    rewrite <- coerce_Vector_contents.
+    apply Batch3_contents_toctxlist.
+  Qed.
+
+  (** ** <<_sim>> Properties *)
+  (******************************************************************************)
+  Lemma Batch_contents_toBatch3_sim:
     forall {A B B'} (t: T A),
-      Batch_contents
-        (toBatch6 (B := B) t) ~~
-        Batch_contents (toBatch6 (B := B') t).
+      Batch_contents (toBatch3 (B := B) t) ~~
+        Batch_contents (toBatch3 (B := B') t).
   Proof.
     intros.
     unfold Vector_sim.
     change (proj1_sig ?v) with (Vector_to_list _ v).
-    rewrite Batch_contents_toctxlist.
-    rewrite Batch_contents_toctxlist.
+    rewrite Batch3_contents_toctxlist.
+    rewrite Batch3_contents_toctxlist.
     reflexivity.
   Qed.
 
-  Lemma Batch_make6 {A B} (t: T A):
-    Batch_make (toBatch6 t) =
+  Lemma Batch_make_toBatch3 {A B} (t: T A):
+    Batch_make (toBatch3 t) =
       (fun v => Batch_make (B := B)
-               (toBatch t) (coerce (length_toBatch6_toBatch t) in v)).
+               (toBatch t) (coerce (length_toBatch3_toBatch t) in v)).
   Proof.
     ext v.
-    generalize dependent (length_toBatch6_toBatch (B:=B) t).
+    generalize dependent (length_toBatch3_toBatch (B := B) t).
     intro e.
     apply Batch_make_sim3.
     2: { vector_sim. }
-    { rewrite toBatch6_toBatch.
+    { rewrite toBatch_to_toBatch3.
       unfold compose.
       clear e v.
-      induction (toBatch6 t).
+      induction (toBatch3 t).
       + reflexivity.
       + unfold shape in *. cbn.
         fequal. apply IHb.
@@ -385,10 +629,10 @@ Section deconstruction.
   Section trav_make_lemmas.
 
     Context
-      {A B : Type}.
+      {A B: Type}.
 
     Lemma trav_make_sim1:
-      forall (t : T A) `{v1 ~~ v2},
+      forall (t: T A) `{v1 ~~ v2},
         trav_make (B := B) t v1 = trav_make t v2.
     Proof.
       intros.
@@ -398,7 +642,7 @@ Section deconstruction.
     Qed.
 
     Lemma trav_make_sim2:
-      forall `(t1 : T A) (t2: T A)
+      forall `(t1: T A) (t2: T A)
         `(v1: Vector (plength t1) B)
         `(v2: Vector (plength t2) B),
         t1 = t2 ->
@@ -413,65 +657,68 @@ Section deconstruction.
   End trav_make_lemmas.
    *)
 
-  (** ** Miscellaneous *)
+  (** * Miscellaneous *)
   (******************************************************************************)
-  Section ctxlist.
+  Lemma toBatch_mapdt_make {A A' B} {t: T A} {v: Vector (plength t) B}:
+    toBatch (A' := A') (mapdt_make t v) =
+      Batch_replace_contents
+        (toBatch (A' := A') t)
+        (coerce eq_sym (plength_eq_length t) in v).
+  Proof.
+    apply toBatch_trav_make.
+  Qed.
 
-    Lemma tolist_trav_contents `{t: T A}:
-      Vector_to_list (E * A) (mapdt_contents t) =
-        List.rev (toctxlist t).
-    Proof.
-      intros.
-      unfold mapdt_contents.
-    Abort.
+  Lemma mapdt_same_shape
+    `(t1: T A) `(t2: T A'):
+    shape t1 = shape t2 ->
+    forall B, mapdt_make (B := B) t1 ~!~ mapdt_make t2.
+  Proof.
+    intros.
+    now apply trav_same_shape.
+  Qed.
 
-  End ctxlist.
+  Lemma plength_mapdt_make: forall `(t: T A) `(v: Vector _ B),
+      plength (mapdt_make t v) = plength t.
+  Proof.
+    intros.
+    unfold mapdt_make.
+    symmetry. apply plength_trav_make.
+  Qed.
 
-  (** ** Lens-like laws *)
+  (** * Lens Laws *)
   (******************************************************************************)
   Section lens_laws.
 
-    (** *** get-put *)
+    Import KleisliToCoalgebraic.DecoratedTraversableFunctor.DerivedInstances.
+    Import KleisliToCoalgebraic.TraversableFunctor.DerivedInstances.
+
+    (** ** get-put *)
     (******************************************************************************)
     Lemma mapdt_get_put `{t: T A}:
       mapdt_make t (map extract (mapdt_contents t)) = t.
     Proof.
       unfold mapdt_make, trav_make, mapdt_contents.
-      change t with (id t) at 13.
+      hide_lhs;
+        change t with (id t);
+        rewrite Heqlhs; clear Heqlhs lhs.
       rewrite <- trf_extract.
       unfold compose.
       rewrite <- Batch_make_contents.
       apply Batch_make_sim1.
-      apply Vector_coerce_sim_l'.
-      rewrite toBatch6_toBatch.
-      unfold compose.
-      apply (transitive_Vector_sim
-               (v2 := map extract (Batch_contents (B := False) (toBatch6 t)))).
-      { vec_symmetry.
-        unfold Vector_sim.
-        rewrite Batch_contents_natural.
-        rewrite <- map_coerce_Vector.
-        compose near t on left.
-        rewrite <- toBatch6_toBatch.
-        admit.
-      }
-      try apply Batch_contents_toBatch_sim.
-      admit.
-    Admitted.
-
-    Lemma toBatch_mapdt_make {A A' B} {t: T A} {v: Vector (plength t) B}:
-      toBatch (A' := A') (mapdt_make t v) =
-        Batch_replace_contents
-          (toBatch (A' := A') t)
-          (coerce eq_sym (plength_eq_length t) in v).
-    Proof.
-      apply toBatch_trav_make.
+      vector_sim.
+      unfold Vector_sim.
+      rewrite Batch_contents_natural.
+      compose near t on left.
+      rewrite <- toBatch_to_toBatch3.
+      apply Batch_contents_toBatch_sim.
     Qed.
 
-    (** *** put-get *)
+    (** ** put-get *)
     (******************************************************************************)
+    (* Ill-typed, needs clarification of statement *)
     (*
-    Lemma mapdt_contents_make {A} {t: T A} {v: Vector (plength t) A}:
+    Lemma mapdt_contents_make {A} {t: T A}
+      {v: Vector (plength t) A}:
       mapdt_contents (trav_make t v) ~~ v.
     Proof.
       unfold trav_contents.
@@ -480,9 +727,9 @@ Section deconstruction.
       rewrite Batch_put_get.
       vector_sim.
     Qed.
-     *)
+    *)
 
-    (** *** put-put *)
+    (** ** put-put *)
     (******************************************************************************)
     Lemma mapdt_make_make
       `(t: T A) `(v: Vector (plength t) B)
@@ -497,22 +744,9 @@ Section deconstruction.
       assumption.
     Qed.
 
-    Notation "'precoerce' Hlen 'in' F" :=
-      (F ○ coerce_Vector_length Hlen)
-        (at level 10, F at level 20).
-
-    Lemma mapdt_same_shape
-      `(t1: T A) `(t2: T A'):
-      shape t1 = shape t2 ->
-      forall B, mapdt_make (B := B) t1 ~!~ mapdt_make t2.
-    Proof.
-      intros.
-      now apply trav_same_shape.
-    Qed.
-
   End lens_laws.
 
-  (** ** Representation theorems *)
+  (** * Representation theorems *)
   (******************************************************************************)
   Lemma mapdt_repr:
     forall `{Applicative G} (A B: Type) (t: T A) (f: E * A -> G B),
@@ -525,7 +759,6 @@ Section deconstruction.
     unfold mapdt_contents.
     unfold trav_make.
     change  (map (?f ○ ?g)) with (map (f ∘ g)).
-    assert (Functor G) by now inversion H9.
     rewrite <- (fun_map_map (F := G)).
     unfold compose at 1.
     do 2 change (map ?f (forwards ?x)) with (forwards (map f x)).
@@ -536,54 +769,38 @@ Section deconstruction.
     rewrite runBatch_repr2.
     change (map ?f (forwards ?x)) with (forwards (map f x)).
     fequal.
-    rewrite Batch_make6.
+    rewrite Batch_make_toBatch3.
     change  (map (?f ○ ?g) ?t) with (map (f ∘ g) t).
     rewrite <- (fun_map_map (F := Backwards G)).
     unfold compose at 1.
-    rewrite traverse_Vector_coerce_natural;[|typeclasses eauto].
+    rewrite traverse_Vector_coerce_natural;
+      [| typeclasses eauto ].
     fequal.
     fequal.
-    apply Vector_eq.
-    apply Vector_coerce_sim_l'.
-    apply Vector_coerce_sim_r'.
-    apply Vector_coerce_sim_r'.
-    eapply Batch_contents_toBatch6_sim.
-  Qed.
-
-  (** ** Lemmas regarding <<plength>> *)
-  (******************************************************************************)
-  Lemma plength_trav_make: forall `(t: T A) `(v: Vector _ B),
-      plength t = plength (mapdt_make t v).
-  Proof.
-    intros.
-    unfold mapdt_make.
-    apply plength_trav_make.
+    apply Vector_sim_eq.
+    vector_sim.
+    apply Batch_contents_toBatch3_sim.
   Qed.
 
 End deconstruction.
 
 (** * Lifting context-sensitive relations over Decorated-Traversable functors *)
 (******************************************************************************)
-
-From Tealeaves Require
-  Adapters.KleisliToCategorical.DecoratedTraversableFunctor.
-
 Section lifting_relations.
 
   Context
     `{DecoratedTraversableFunctor E T}
-      `{Map T}
-      `{Mapd E T}
-      `{Traverse T}
-      `{ToBatch T}
-      `{! Compat_Map_Mapdt}
-      `{! Compat_Mapd_Mapdt}
-      `{! Compat_ToBatch_Traverse T}
-      `{! Compat_Traverse_Mapdt}.
+    `{Map T}
+    `{Mapd E T}
+    `{Traverse T}
+    `{ToBatch T}
+    `{! Compat_Map_Mapdt E T}
+    `{! Compat_Mapd_Mapdt E T}
+    `{! Compat_ToBatch_Traverse T}
+    `{! Compat_Traverse_Mapdt E T}.
 
-  Import Adapters.KleisliToCategorical.DecoratedTraversableFunctor.
-  Import ToCategorical.
-
+  Import Categorical.DecoratedFunctor.
+  Import KleisliToCategorical.DecoratedTraversableFunctor.DerivedOperations.
 
   Lemma shape_decorate1
     (A: Type) (t: T A):
@@ -592,10 +809,11 @@ Section lifting_relations.
     unfold dec.
     unfold_ops @Decorate_Mapdt.
     unfold shape.
+    compose near t on left.
   Abort.
 
   Lemma Hshape_decorate
-    (A B: Type) (t : T A) (u: T B)
+    (A B: Type) (t: T A) (u: T B)
     (Hshape: shape t = shape u):
     shape (dec T t) = shape (dec T u).
   Proof.
@@ -606,13 +824,16 @@ Section lifting_relations.
     unfold_ops @Map_compose.
   Abort.
 
-  (*
   Definition zip_decorate
-    (A B: Type) (t : T A) (u: T B)
+    (A B: Type) (t: T A) (u: T B)
     (Hshape: shape t = shape u):
-    map (cojoin (E ×)) (dec T (same_shape_zip A B t u Hshape)) =
-      dec T (same_shape_zip (E * A) (E * B) (dec T t) (dec T u) _).
-   *)
+    False.
+  Proof.
+    (*
+    Check map (cojoin (W := (E ×))) (dec T (same_shape_zip t u Hshape)).
+    Check same_shape_zip (A := E * A) (B := E * B) (dec T t) (dec T u) _.
+     *)
+  Abort.
 
 
   Definition lift_relation_ctx {A B:Type}
@@ -622,7 +843,7 @@ Section lifting_relations.
   Lemma relation_ctx_spec1:
     forall (A B: Type) (R: E * A -> E * B -> Prop) (t: T A) (u: T B),
       lift_relation_ctx R t u <->
-        (exists a : Vector (plength t) (E * B),
+        (exists a: @Vector (plength t) (E * B),
             traverse (G := subset) R (mapdt_contents t) a /\
               mapdt_make t a = dec T u).
   Proof.
@@ -630,14 +851,15 @@ Section lifting_relations.
     unfold lift_relation_ctx.
     unfold compose at 1.
     unfold precompose.
-    rewrite (mapdt_repr (E := E) (T := T)).
+    rewrite mapdt_repr.
     unfold_ops @Map_subset.
     compose near (mapdt_contents t).
-    rewrite (traverse_commutative_idem
-               (T' := Vector (plength t)) (E * A) (E * B) R).
+    rewrite traverse_by_subset.
     reflexivity.
   Qed.
 
-
-
 End lifting_relations.
+
+  End runBatch.
+
+End theory.

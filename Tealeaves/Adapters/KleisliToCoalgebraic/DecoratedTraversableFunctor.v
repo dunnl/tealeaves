@@ -26,6 +26,29 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
+Class Compat_ToBatch3_Mapdt
+  (E: Type)
+  (T: Type -> Type)
+  `{Mapdt_inst: Mapdt E T}
+  `{ToBatch3_inst: ToBatch3 E T} :=
+  compat_toBatch3_mapdt:
+    ToBatch3_inst = DerivedOperations.ToBatch3_Mapdt.
+
+Lemma toBatch3_to_mapdt
+  `{Compat_ToBatch3_Mapdt E T} :
+  forall A B, toBatch3 (E := E) (T := T) =
+           mapdt (G := Batch (E * A) B) (batch B).
+Proof.
+  intros.
+  rewrite compat_toBatch3_mapdt.
+  reflexivity.
+Qed.
+
+#[export] Instance Compat_ToBatch3_Mapdt_Self
+  `{Mapdt E T}: Compat_ToBatch3_Mapdt E T
+                   (ToBatch3_inst := DerivedOperations.ToBatch3_Mapdt)
+  := ltac:(hnf; reflexivity).
+
 (** ** Coalgebra laws *)
 (******************************************************************************)
 Module DerivedInstances.
@@ -35,7 +58,9 @@ Module DerivedInstances.
   Section to_coalgebraic.
 
     Context
-      `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
+      `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}
+      `{ToBatch3 E T}
+      `{! Compat_ToBatch3_Mapdt E T}.
 
     Lemma double_Batch3_spec: forall A B C,
         double_batch3 (E := E) (A := A) (B := B) C = batch C ⋆3 batch B.
@@ -44,12 +69,12 @@ Module DerivedInstances.
     Qed.
 
     Lemma toBatch3_extract_Kleisli: forall (A: Type),
-        extract_Batch ∘ mapfst_Batch _ _ (extract (W := (E ×))) ∘ toBatch3 = @id (T A).
+        extract_Batch ∘ mapfst_Batch _ _ (extract (W := (E ×))) ∘ toBatch3 =
+          @id (T A).
     Proof.
       intros.
       reassociate -> on left.
-      unfold toBatch3.
-      unfold ToBatch3_Mapdt.
+      rewrite toBatch3_to_mapdt.
       rewrite (kdtf_morph (T := T)
                  (morphism := ApplicativeMorphism_mapfst_Batch
                                 (extract (W := prod E) (A := A)))
@@ -71,12 +96,14 @@ Module DerivedInstances.
         cojoin_Batch3 ∘ toBatch3 (A := A) (B := C) =
           map (F := Batch (E * A) B) (toBatch3) ∘ toBatch3.
       intros.
-      unfold_ops @ToBatch3_Mapdt.
+      rewrite toBatch3_to_mapdt.
       rewrite (kdtf_morph (T := T) (E := E) (B := C)
                  (G1 := Batch (E * A) C)
                  (G2 := Batch (E * A) B ∘ Batch (E * B) C)
                  (morphism := ApplicativeMorphism_cojoin_Batch3 _ _ _)
                  (ϕ := @cojoin_Batch3 E _ _ A C B)).
+      rewrite toBatch3_to_mapdt.
+      rewrite toBatch3_to_mapdt.
       rewrite (kdtf_mapdt2 _ _).
       rewrite <- double_Batch3_spec.
       rewrite <- (cojoin_Batch3_batch (E := E) (T := T)).
