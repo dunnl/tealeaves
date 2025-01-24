@@ -121,7 +121,7 @@ Section named_local_operations.
 
   Context
     {T : Type -> Type -> Type}
-      `{forall W, Return (T W)}.
+    `{forall W, Return (T W)}.
 
   (*
   Definition deconflict_binder_local
@@ -174,7 +174,7 @@ Section named_local_operations.
     `{forall W, Return (T W)}
     `{Substitute T T}.
 
-  Definition FV : T name name -> list name :=
+  Definition FV: T name name -> list name :=
     substitute
       (A1 := name) (B1 := name)
       (A2 := False) (B2 := False)

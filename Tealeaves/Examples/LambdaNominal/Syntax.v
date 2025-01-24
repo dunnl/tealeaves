@@ -1,5 +1,4 @@
 (*|
-
 ############################################################
 Formalizing STLC with Named Variables
 ############################################################
@@ -9,16 +8,18 @@ Imports and setup
 ============================
 |*)
 
-From Tealeaves Require Export
-  Classes.Categorical.ApplicativeCommutativeIdempotent
-  Classes.Categorical.TraversableFunctor
-  Classes.Kleisli.DecoratedTraversableCommIdemFunctor
-  Classes.Kleisli.DecoratedTraversableMonadPoly
-  Classes.Functor2
-  Functors.Categorical.List
-  Backends.LN.Atom
-  Functors.List
-  Functors.Z2.
+From Tealeaves.Classes Require Export
+  Functor2
+  Categorical.ApplicativeCommutativeIdempotent
+  Categorical.TraversableFunctor
+  Kleisli.DecoratedTraversableCommIdemFunctor
+  Kleisli.DecoratedTraversableMonadPoly.
+
+From Tealeaves.Functors Require Export
+  List Z2.
+
+From Tealeaves.Backends Require Export
+  LN.Atom.
 
 Import Product.Notations.
 Import Monoid.Notations.

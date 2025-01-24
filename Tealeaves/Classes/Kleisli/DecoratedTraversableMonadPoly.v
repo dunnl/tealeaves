@@ -3,6 +3,7 @@ From Tealeaves Require Export
   Classes.Categorical.Applicative
   Classes.Categorical.ApplicativeCommutativeIdempotent
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
+  Classes.Kleisli.DecoratedTraversableFunctorPoly
   Classes.Monoid
   Functors.List
   Functors.Writer
@@ -102,33 +103,34 @@ Class DecoratedTraversableMonadPoly
     (T: Type -> Type -> Type)
     `{forall W, Return (T W)}
     `{Substitute T T} :=
-  { kdtmp_substitute1:
-    forall (B1 B2 A1 A2: Type)
+  { kdtmp_substitute0:
+    forall {B1 B2 A1 A2: Type}
       `{Applicative G}
       (ρ: list B1 * B1 -> G B2)
       (σ: list B1 * A1 -> G (T B2 A2)),
       substitute ρ σ ∘ ret (T B1) A1 = σ ∘ ret (list B1 ×) A1;
-    kdtmp_substitute2:
-    forall (B A: Type),
+    kdtmp_substitute1:
+    forall {B A: Type},
       substitute (G := fun A => A)
         (extract (W := (list B ×)))
         (ret (T B) A ∘ extract (W := (list B ×)))
       = @id (T B A);
-    kdtmp_substitute3:
-    forall (B1 B2 B3: Type)
-      (A1 A2 A3: Type)
-      `{ApplicativeCommutativeIdempotent G1}
-      `{ApplicativeCommutativeIdempotent G2}
+    kdtmp_substitute2:
+    forall {B1 B2 B3: Type}
+      {A1 A2 A3: Type}
+      `{Applicative G1}
+      `{Applicative G2}
       (ρ1: list B1 * B1 -> G1 B2)
       (ρ2: list B2 * B2 -> G2 B3)
       (σ1: list B1 * A1 -> G1 (T B2 A2))
       (σ2: list B2 * A2 -> G2 (T B3 A3)),
+      (forall p: list B1 * B1, IdempotentCenter G1 B2 (ρ1 p)) ->
       map (F := G1) (substitute (G := G2) ρ2 σ2) ∘
         substitute (G := G1) (T := T) (U := T) ρ1 σ1 =
         substitute (T := T) (U := T) (G := G1 ∘ G2)
           (ρ2 ⋆3_ci ρ1) (kc_dtmp ρ2 σ2 ρ1 σ1);
-    kdtmp_morph :
-    forall (B1 A1 B2 A2: Type) (G1 G2: Type -> Type)
+    kdtmp_morphism:
+    forall {B1 A1 B2 A2: Type} {G1 G2: Type -> Type}
       `{morph: ApplicativeMorphism G1 G2 ϕ}
       (ρ: list B1 * B1 -> G1 B2)
       (σ: list B1 * A1 -> G1 (T B2 A2)),
@@ -146,11 +148,10 @@ From  Tealeaves Require
 
 (** ** Derived Operations *)
 (******************************************************************************)
+Import TraversableFunctorPoly.
+Import DecoratedTraversableFunctorPoly.
+
 Module DerivedOperations.
-
-  Import TraversableFunctorPoly.
-  Import DecoratedTraversableFunctorPoly.
-
   Section decorated_traversable_monad_poly_derived_operations.
 
   Context
@@ -168,8 +169,66 @@ Module DerivedOperations.
         (map (ret (T B2) A2) ∘ σ ∘ extract (W := prod (list B1))).
 
   End decorated_traversable_monad_poly_derived_operations.
-
 End DerivedOperations.
+
+
+Module DerivedInstances.
+  Section decorated_traversable_monad_poly_derived_instances.
+
+    Import DerivedOperations.
+
+  Context
+    `{T: Type -> Type -> Type}
+    `{DecoratedTraversableMonadPoly T}.
+
+  #[export] Instance DTFP: DecoratedTraversableFunctorPoly T.
+  Proof.
+    constructor; intros.
+    - unfold_ops @MapdtPoly_Substitute.
+      unfold_ops @Map_I.
+      apply kdtmp_substitute1.
+    - unfold_ops @MapdtPoly_Substitute.
+      rewrite kdtmp_substitute2.
+      2: { now inversion H2. }
+      fequal.
+      unfold kc_dtmp, kc_dtfp.
+      ext [ctx a]. unfold compose.
+      cbn.
+      (* LHS *)
+      rewrite map_ap.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      rewrite <- ap_map.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      rewrite map_ap.
+      (* RHS *)
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      unfold_ops @Map_compose.
+      rewrite map_ap.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      fequal.
+      fequal.
+      fequal.
+      ext ctx2 a2.
+      unfold compose, precompose, preincr.
+      compose near a2.
+      rewrite kdtmp_substitute0.
+      unfold compose, incr.
+      unfold_ops @Return_Writer.
+      rewrite monoid_id_l.
+      reflexivity.
+    - unfold_ops @MapdtPoly_Substitute.
+      rewrite kdtmp_morphism.
+      reassociate <- on left.
+      rewrite <- natural.
+      reflexivity.
+  Qed.
+
+  End decorated_traversable_monad_poly_derived_instances.
+End DerivedInstances.
 
 
 (*
@@ -203,7 +262,7 @@ Section compose_laws.
       (wa : list WA),
       (kcompose_dtmp ρg g ρf f) ⦿ wa =
         kcompose_dtmp (ρg ⦿ hmap ρf wa) (g  ⦿ hmap ρf wa) (ρf ⦿ wa) (f ⦿ wa).
-  Proof.
+kdtmp_substitute1  Proof.
 
     intros.
     ext [wa' a]. cbn.

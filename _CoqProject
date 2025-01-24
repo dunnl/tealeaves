@@ -205,10 +205,8 @@ Tealeaves/Functors/Z2.v
 ##########################################################
 # POLYMORPHICALLY DECORATED DTFs AND DTMs                #
 ##########################################################
-
 Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableCommIdemFunctor.v
-
 Tealeaves/Classes/Kleisli/DecoratedFunctorPoly.v
 Tealeaves/Classes/Kleisli/TraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctorPoly.v
@@ -220,7 +218,7 @@ Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 ##########################################################
 #Tealeaves/Classes/Kleisli/Theory/DecoratedFunctorPoly.v
 #Tealeaves/Classes/Kleisli/Theory/TraversableFunctorPoly.v
-#Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
+Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
 Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
 Tealeaves/Theory/DecoratedTraversableMonadPoly.v
@@ -265,6 +263,12 @@ Tealeaves/Backends/DB.v
 ##########################################################
 Tealeaves/Backends/Adapters/Key.v
 Tealeaves/Backends/Adapters/LNtoDB.v
+
+##########################################################
+# FULLY NOMINAL BACKEND                                  #
+##########################################################
+Tealeaves/Backends/Named/Named.v
+Tealeaves/Backends/Named/Names.v
 
 ##########################################################
 # EX: CONFLUENCE OF LAMBDA CALCULUS                      #

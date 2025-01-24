@@ -1,24 +1,22 @@
-
-
-#Tealeaves/Classes/Kleisli/Theory/TraversableCommutativeIdempotent.v
-Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
-#Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
-
-#Tealeaves/Classes/Kleisli/Theory/ContainerMonad.v
-#Tealeaves/Classes/Kleisli/Theory/DecoratedContainerFunctor.v
-#Tealeaves/Classes/Kleisli/Theory/DecoratedContainerMonad.v
-
 # HIGH-LEVEL THEORY
-Tealeaves/Theory/Batch.v
-Tealeaves/Theory/TraversableFunctor.v
-Tealeaves/Theory/TraversableMonad.v
-Tealeaves/Theory/DecoratedTraversableFunctor.v
-Tealeaves/Theory/DecoratedTraversableMonad.v
+
+# FULLY NOMINAL DTMS
+
+Tealeaves/Classes/Kleisli/DecoratedFunctorPoly.v
+Tealeaves/Classes/Kleisli/TraversableFunctorPoly.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableFunctorPoly.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
+#Tealeaves/Classes/Kleisli/Theory/DecoratedFunctorPoly.v
+#Tealeaves/Classes/Kleisli/Theory/TraversableFunctorPoly.v
+Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
+#Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
+Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
+Tealeaves/Theory/DecoratedTraversableMonadPoly.v
+#Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
+
 
 ## Named
-Tealeaves/Backends/Named/Names.v
+
 Tealeaves/Backends/Named/Named.v
 
 # MULTISORTED
@@ -45,9 +43,4 @@ Tealeaves/Examples/SystemF/TypeSoundness.v
 # NOMINAL
 Tealeaves/Examples/LambdaNominal/Syntax.v
 
-# SIMPLIFICATION TESTS
-Tealeaves/Simplification/Tests/STLC_Binddt.v
-Tealeaves/Simplification/Tests/STLC_Container.v
-Tealeaves/Simplification/Tests/STLC_LN.v
-Tealeaves/Simplification/Tests/STLC_DB.v
 

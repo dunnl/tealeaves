@@ -69,7 +69,7 @@ Section pointfree.
     intros. ext x. apply appmor_natural.
   Qed.
 
-  Lemma appmor_pure_pf: forall (A : Type) (a : A),
+  Lemma appmor_pure_pf: forall (A : Type),
       ϕ A ∘ pure = pure.
   Proof.
     intros. ext x. apply appmor_pure.
