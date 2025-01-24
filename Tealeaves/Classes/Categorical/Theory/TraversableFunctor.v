@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Classes.Categorical.TraversableFunctor
-  Functors.Categorical.Reader.
+  Functors.Early.Reader.
 
 Import Functor.Notations.
 

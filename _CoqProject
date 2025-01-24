@@ -148,12 +148,15 @@ Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Functors/ProductFunctor.v
 Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
+Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
+Tealeaves/Classes/Kleisli/Theory/TraversableCommutativeIdempotent.v
 Tealeaves/Classes/Kleisli/Theory/ContainerMonad.v
 Tealeaves/Classes/Kleisli/Theory/TraversableMonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedContainerFunctor.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedContainerMonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
+
 
 ##########################################################
 # FUNCTORS                                               #
@@ -193,6 +196,13 @@ Tealeaves/Theory/TraversableFunctor.v
 Tealeaves/Theory/TraversableMonad.v
 Tealeaves/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Theory/DecoratedTraversableMonad.v
+
+##########################################################
+# NOMINAL AND POLYMORPHIC CLASSES                        #
+##########################################################
+Tealeaves/Classes/Functor2.v
+Tealeaves/Functors/Batch2.v
+Tealeaves/Functors/Z2.v
 
 ##########################################################
 # POLYMORPHICALLY DECORATED DTFs AND DTMs                #

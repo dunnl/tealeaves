@@ -1,4 +1,6 @@
 From Tealeaves Require Import
+  Classes.Functor2
+  Functors.List
   Functors.List_Telescoping_General.
 
 (** * Bi-Z comonad *)
