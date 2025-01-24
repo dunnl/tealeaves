@@ -29,8 +29,11 @@ End DerivedOperations.
 (******************************************************************************)
 Module DerivedInstances.
 
-  Import CategoricalToKleisli.Comonad.DerivedOperations.
+  (* Alectryon doesn't like this
   Import CategoricalToKleisli.DecoratedFunctor.DerivedOperations.
+   *)
+  Import DerivedOperations.
+  Import CategoricalToKleisli.Comonad.DerivedOperations.
 
   Section with_functor.
 

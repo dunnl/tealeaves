@@ -26,7 +26,10 @@ End DerivedOperations.
 (******************************************************************************)
 Module DerivedInstances.
 
+  (* Alectryon doesn't like this
   Import CategoricalToKleisli.Monad.DerivedOperations.
+   *)
+  Import DerivedOperations.
 
   Section with_monad.
 

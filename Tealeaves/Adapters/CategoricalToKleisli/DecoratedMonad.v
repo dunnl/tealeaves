@@ -30,7 +30,10 @@ End DerivedOperations.
 (******************************************************************************)
 Module DerivedInstances.
 
+  (* Alectryon doesn't like this
   Import CategoricalToKleisli.DecoratedMonad.DerivedOperations.
+   *)
+  Import DerivedOperations.
 
   #[local] Generalizable Variables A B C.
 

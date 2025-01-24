@@ -18,10 +18,13 @@ End DerivedOperations.
 (** ** Derived co-Kleisli Laws *)
 (******************************************************************************)
 Module DerivedInstances.
+  (* Alectryon doesn't like this
+  Import CategoricalToKleisli.Comonad.DerivedOperations.
+   *)
+  Import DerivedOperations.
 
   Import Tealeaves.Classes.Kleisli.Comonad.
   Import Kleisli.Comonad.Notations.
-  Import CategoricalToKleisli.Comonad.DerivedOperations.
 
   #[local] Generalizable All Variables.
 

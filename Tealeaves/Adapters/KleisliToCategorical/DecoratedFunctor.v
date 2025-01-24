@@ -32,7 +32,10 @@ Module DerivedInstances.
       (T: Type -> Type)
       `{Kleisli.DecoratedFunctor.DecoratedFunctor E T}.
 
+    (* Alectryon doesn't like this
     Import KleisliToCategorical.DecoratedFunctor.DerivedOperations.
+     *)
+    Import DerivedOperations.
     Import Kleisli.DecoratedFunctor.DerivedOperations.
     Import Kleisli.DecoratedFunctor.DerivedInstances.
 

@@ -61,7 +61,10 @@ Module DerivedInstances.
       (T: Type -> Type)
       `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
+    (* Alectryon doesn't like this
     Import KleisliToCategorical.DecoratedTraversableMonad.DerivedOperations.
+     *)
+    Import DerivedOperations.
     Import Kleisli.DecoratedTraversableMonad.DerivedOperations.
     Import Kleisli.DecoratedTraversableMonad.DerivedInstances.
 

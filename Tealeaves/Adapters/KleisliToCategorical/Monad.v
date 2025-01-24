@@ -27,7 +27,10 @@ Module ToCategorical.
       (T : Type -> Type)
       `{Classes.Kleisli.Monad.Monad T}.
 
+    (* Alectyron doesn't like this
     Import KleisliToCategorical.Monad.DerivedOperations.
+     *)
+    Import DerivedOperations.
     Existing Instance Kleisli.Monad.DerivedOperations.Map_Bind.
     Existing Instance Kleisli.Monad.DerivedInstances.Functor_Monad.
 

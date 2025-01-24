@@ -25,7 +25,10 @@ End DerivedOperations.
 (******************************************************************************)
 Module DerivedInstances.
 
+  (* Alectryon doesn't like this
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
+   *)
+  Import DerivedOperations.
 
   Section with_functor.
 

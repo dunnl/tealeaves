@@ -25,8 +25,10 @@ Module DerivedInstances.
     Context
       (T : Type -> Type)
       `{Kleisli.TraversableFunctor.TraversableFunctor T}.
-
+    (* Alectryon doesn't like this
     Import KleisliToCategorical.TraversableFunctor.DerivedOperations.
+     *)
+    Import DerivedOperations.
     Import Kleisli.TraversableFunctor.DerivedOperations.
     Import Kleisli.TraversableFunctor.DerivedInstances.
 

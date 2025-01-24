@@ -32,7 +32,10 @@ End DerivedOperations.
 (******************************************************************************)
 Module DerivedInstances.
 
+  (* Alectryon doesn't like this
   Import KleisliToCategorical.DecoratedTraversableFunctor.DerivedOperations.
+   *)
+  Import DerivedOperations.
   Import Kleisli.DecoratedTraversableFunctor.DerivedOperations.
   Import Kleisli.DecoratedTraversableFunctor.DerivedInstances.
 

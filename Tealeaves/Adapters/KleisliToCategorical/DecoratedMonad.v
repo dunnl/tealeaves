@@ -51,7 +51,10 @@ Module DerivedInstances.
       `{Kleisli.DecoratedMonad.DecoratedMonad W T}.
 
     Import Kleisli.DecoratedMonad.DerivedOperations.
+    (* Alectryon doesn't like this
     Import KleisliToCategorical.DecoratedMonad.DerivedOperations.
+     *)
+    Import DerivedOperations.
 
     (** *** Functor laws *)
     (******************************************************************************)
