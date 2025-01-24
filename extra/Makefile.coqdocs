@@ -9,7 +9,7 @@ COQDOCEXTRAFLAGS := \
 
 export COQDOCEXTRAFLAGS
 
-htmlpretty: $(VFILES)
+coqdocs: $(VFILES)
 	$(MAKE) -f $(COQ_MAKEFILE) html
 	cp $(COQDOC_EXTRA_DIR)/resources/* html
 

@@ -5,7 +5,7 @@ COQ_VS       := $(shell find Tealeaves/ -name "*.v")
 RM_ARTIFACTS := extra/remove_artifacts.sh
 export COQ_MAKEFILE
 
-all: htmlpretty
+all: coqdocs
 
 # Generate Makefile.coq from _CoqProject and .v files
 # $(COQ_VS) forces regeneration whenever a .v has a more recent timestamp
@@ -19,9 +19,9 @@ $(COQ_VS):
 
 # html: Generate Coqdocs
 # gallinahtml: Generate Coqdocs without proofs
-# html-pretty: Generate Coqdocs with CoqdocJS
+# coqdocs: Generate HTML Coqdocs with CoqdocJS
 # alectryon: Generate HTML with Alectryon
-html gallinahtml htmlpretty alectryon: $(COQ_MAKEFILE)
+html gallinahtml coqdocs alectryon alectryon-toc alectryon-clean: $(COQ_MAKEFILE)
 	$(MAKE) -f $(COQ_MAKEFILE) $@
 
 # Any target not matched above will be passed to Makefile.coq

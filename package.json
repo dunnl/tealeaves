@@ -1,0 +1,17 @@
+{
+  "name": "tealeaves-alectryon",
+  "version": "1.0.0",
+  "description": "Alectryon documentation for the Tealeaves Coq library",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mustache": "^4.2.0"
+  }
+}

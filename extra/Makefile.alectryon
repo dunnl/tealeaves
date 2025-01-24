@@ -1,19 +1,34 @@
 CLEANUP_CSS  := ./extra/format_css.sh
 ALECTRYON    := alectryon -R Tealeaves/ Tealeaves
-ALECTRYONFILES = $(patsubst %,html-alectryon/%,$(subst /,.,$(subst ./,,$(VFILES:.v=.html))))
+ALECTRYONDOTTEDFILES := $(subst /,.,$(subst ./,,$(VFILES:.v=.html)))
+ALECTRYONFILES = $(patsubst %,html-alectryon/%,$(ALECTRYONDOTTEDFILES))
 
-#6.3.1 Substitution References
+alectryon-showvars:
+	echo $(VFILES)
+	echo $(VOFILES)
+	echo $(ALECTRYONDOTTEDFILES)
+	echo $(ALECTRYONFILES)
 
 html-alectryon/%.html: $(VOFILES)
 	$(ALECTRYON) $(patsubst %,%.v,$(subst html-alectryon/,,$(subst .,/,$(@:.html=)))) -o $@
-	echo "$(subst html-alectryon/,,$@)" >> html-alectryon/files.txt
 
-alectryon: $(ALECTRYONFILES)
+alectryon-files: $(ALECTRYONFILES)
 
-# Used by (nix build) only
-# Copy html-alectryon to output dir $(alectryon) defined by Nix
-install-alectryon: alectryon
-	mkdir -p $(alectryon)
-	cp -r html-alectryon $(alectryon)
+alectryon-toc-list: $(VFILES)
+	rm -f html-alectryon/files.txt
+	@echo "$(ALECTRYONDOTTEDFILES)" | tr ' ' '\n' > html-alectryon/files.txt
 
-.PHONY: alectryon install-alectryon
+alectryon-toc: alectryon-toc-list
+	cp $(COQDOC_EXTRA_DIR)/resources/*.css html-alectryon
+	node extra/toc-alectryon-generate.js
+
+alectryon: alectryon-files alectryon-toc
+
+alectryon-clean:
+	rm -f html-alectryon/*.html
+	rm -f html-alectryon/*.css
+	rm -f html-alectryon/*.js
+	rm -f html-alectryon/*.txt
+
+.PHONY: alectryon alectryon-files alectryon-showvars
+.PHONY: alectryon-toc-list alectryon-toc install-alectryon

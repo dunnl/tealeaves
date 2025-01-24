@@ -1,2 +1,2 @@
 include extra/Makefile.alectryon
-include extra/Makefile.htmlpretty
+include extra/Makefile.coqdocs

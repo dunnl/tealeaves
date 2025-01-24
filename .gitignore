@@ -15,6 +15,7 @@ Makefile.coq.conf
 /html-alectryon
 # Emacs lock files
 .#*
+node_modules/
 # Nix files
 result
 result-alectryon
