@@ -6,9 +6,15 @@ Import Monad.Notations.
 Import Comonad.Notations.
 Import DecoratedTraversableMonad.Notations.
 
-(** * Polymorphically decorated traversable monads *)
+(** * Polymorphically Decorated Monads *)
 (******************************************************************************)
-Section DecoratedFunctorPoly.
+Section DecoratedMonadPoly.
+
+  (** ** Operations <<retp>> and <<binddp>> *)
+  (******************************************************************************)
+  Class RetP
+    (T : Type -> Type -> Type) :=
+    retp : forall WA A, A -> T WA A.
 
   Class BinddP
     (T : Type -> Type -> Type) :=
@@ -18,10 +24,8 @@ Section DecoratedFunctorPoly.
         (list WA * A -> T WB B) ->
         T WA A -> T WB B.
 
-  Class RetP
-    (T : Type -> Type -> Type) :=
-    retp : forall WA A, A -> T WA A.
-
+  (** ** Axioms *)
+  (******************************************************************************)
   Section axioms.
 
     Context (T: Type -> Type -> Type).
@@ -33,8 +37,10 @@ Section DecoratedFunctorPoly.
 
     Definition binddP_axiom1 :=
       @binddp T _ WA WA A A
-        (extract (W := ((list WA) ×))) (* discard context on binders *)
-        (@retp T _ WA A ∘ extract (W := ((list WA) ×))) (* discard context on leaves and coerce to subterms *)
+        (extract (W := ((list WA) ×)))
+        (* discard context on binders *)
+        (@retp T _ WA A ∘ extract (W := ((list WA) ×)))
+      (* discard context on leaves and coerce to subterms *)
       = @id (T WA A).
 
     Definition binddP_axiom2 := forall (a: A),
@@ -45,14 +51,6 @@ Section DecoratedFunctorPoly.
     Context (ρ2 : list WB * WB -> WC).
     Context (σ3 : list WB * B -> T WC C).
 
-    Definition
+  End axioms.
 
-End DecoratedFunctorPoly.
-
-
-
-      { kmodd_bindd1 : forall (A : Type),
-      @bindd W T U _ A A (ret ∘ extract) = @id (U A);
-    kmodd_bindd2 : forall (A B C : Type) (g : W * B -> T C) (f : W * A -> T B),
-      @bindd W T U _ B C g ∘ @bindd W T U _ A B f = @bindd W T U _ A C (g ⋆5 f);
-  }.
+End DecoratedMonadPoly.

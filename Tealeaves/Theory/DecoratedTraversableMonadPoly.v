@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Functors.Batch
   Classes.Kleisli.DecoratedTraversableFunctorPoly
-  Classes.Kleisli.Theory.DecoratedTraversableFunctorPoly
+  Classes.Kleisli.Theory.DecoratedTraversableMonadPoly
   Classes.Kleisli.DecoratedTraversableMonadPoly
   Classes.Kleisli.DecoratedContainerFunctor
   Classes.Kleisli.DecoratedShapelyFunctor
@@ -10,7 +10,7 @@ From Tealeaves Require Export
   Functors.Batch2
   Functors.List_Telescoping_General
   Functors.Z2
-  Classes.Kleisli.Theory.DecoratedTraversableFunctor
+  Classes.Kleisli.Theory.DecoratedTraversableMonad
   Theory.TraversableFunctor.
 
 Import Product.Notations.
@@ -32,7 +32,7 @@ Section decorated_traversable_monad_poly_toBatch.
     `{T: Type -> Type -> Type}
       `{DecoratedTraversableMonadPoly T}.
 
-  Import DecoratedTraversableMonadPoly.DerivedInstances.
+  Import DecoratedTraversableMonadPoly.DerivedOperations.
 
   Definition toBatchA {A1 A2 B1 B2: Type}:
       A1 -> Batch2 A1 A2 B1 B2 A2 :=

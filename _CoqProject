@@ -58,7 +58,6 @@ Tealeaves/Adapters/Roundtrips/DecoratedMonad.v
 ##########################################################
 Tealeaves/Classes/Categorical/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableFunctor.v
-Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
 Tealeaves/Functors/Early/Batch.v
 Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/TraversableFunctor.v
@@ -84,7 +83,6 @@ Tealeaves/Adapters/Roundtrips/TraversableMonad.v
 ##########################################################
 Tealeaves/Classes/Categorical/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
-Tealeaves/Classes/Kleisli/DecoratedTraversableCommIdemFunctor.v
 Tealeaves/Classes/Coalgebraic/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableFunctor.v
@@ -207,8 +205,25 @@ Tealeaves/Functors/Z2.v
 ##########################################################
 # POLYMORPHICALLY DECORATED DTFs AND DTMs                #
 ##########################################################
-#Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
+
+Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableCommIdemFunctor.v
+
+Tealeaves/Classes/Kleisli/DecoratedFunctorPoly.v
+Tealeaves/Classes/Kleisli/TraversableFunctorPoly.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableFunctorPoly.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
+
+##########################################################
+# THEORY FOR POLYMORPHICALLY DECORATED DTFs AND DTMs     #
+##########################################################
+#Tealeaves/Classes/Kleisli/Theory/DecoratedFunctorPoly.v
+#Tealeaves/Classes/Kleisli/Theory/TraversableFunctorPoly.v
+#Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
+Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
+Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
+Tealeaves/Theory/DecoratedTraversableMonadPoly.v
 
 ##########################################################
 # "FULL" TYPECLASSES                                     #
@@ -263,6 +278,14 @@ Tealeaves/Examples/STLC/Syntax.v
 Tealeaves/Examples/STLC/CompatTest.v
 Tealeaves/Examples/STLC/SyntaxCategorical.v
 Tealeaves/Examples/STLC/TypeSoundness.v
+
+##########################################################
+# TESTS FOR SIMPLIFICATION TACTICS                       #
+##########################################################
+Tealeaves/Simplification/Tests/STLC_Binddt.v
+Tealeaves/Simplification/Tests/STLC_Container.v
+Tealeaves/Simplification/Tests/STLC_LN.v
+Tealeaves/Simplification/Tests/STLC_DB.v
 
 ##########################################################
 # EX: FIRST ORDER LOGIC                                  #

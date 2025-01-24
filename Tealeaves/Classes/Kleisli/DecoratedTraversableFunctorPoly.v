@@ -8,10 +8,10 @@ Import Monad.Notations.
 Import Comonad.Notations.
 Import DecoratedTraversableMonad.Notations.
 
-(** * Polymorphically decorated traversable functors *)
+(** * Polymorphically Decorated Traversable Functors *)
 (******************************************************************************)
 
-(** ** Mapdt Poly operation *)
+(** ** Operation <<mapdtp>> *)
 (******************************************************************************)
 Class MapdtPoly (T: Type -> Type -> Type) :=
     mapdtp:

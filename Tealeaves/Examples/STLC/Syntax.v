@@ -25,6 +25,7 @@ From Tealeaves Require Export
 
 Export LN.Simplification.
 Export LN.Notations.
+Export DecoratedTraversableMonad.UsefulInstances.
 
 #[local] Set Implicit Arguments.
 

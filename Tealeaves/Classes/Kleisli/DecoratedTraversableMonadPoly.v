@@ -1,6 +1,11 @@
 From Tealeaves Require Export
+  Classes.Categorical.Monad (Return, ret)
   Classes.Categorical.Applicative
   Classes.Categorical.ApplicativeCommutativeIdempotent
+  Classes.Kleisli.DecoratedTraversableCommIdemFunctor
+  Classes.Monoid
+  Functors.List
+  Functors.Writer
   Functors.List_Telescoping_General.
 
 Import Applicative.Notations.
@@ -12,27 +17,33 @@ Import DecoratedTraversableCommIdemFunctor.Notations.
 
 #[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
 
-(** U = type of newly inserted syntax
-    T = type of syntax substituted into
+
+(** * Polymorphically Decorated Traversable Monads *)
+(******************************************************************************)
+(** T = type of newly inserted syntax
+    U = type of syntax substituted into
     B1 = type of binders before substitution
     B2 = new type of binders after substitution
     A1 = type of variables before substitution
     A2 = new type of variables after substitution *)
 
+(** ** Operation <<substitute>> *)
+(******************************************************************************)
 Class Substitute
-  (U : Type -> Type -> Type)
-  (T : Type -> Type -> Type) :=
+  (T : Type -> Type -> Type)
+  (U : Type -> Type -> Type) :=
   substitute:
     forall (B1 A1 B2 A2: Type)
-      (G : Type -> Type) `{Map G} `{Pure G} `{Mult G},
+      (G : Type -> Type)
+      `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G},
       (list B1 * B1 -> G B2) -> (* rename binders *)
-      (list B1 * A1 -> G (U B2 A2)) -> (* insert subtrees *)
-      T B1 A1 -> (* press button *)
-      G (T B2 A2). (* receive bacon *)
+      (list B1 * A1 -> G (T B2 A2)) -> (* insert subtrees *)
+      U B1 A1 -> (* press button *)
+      G (U B2 A2). (* receive bacon *)
 
-#[global] Arguments substitute {U T}%function_scope {Substitute}
+#[global] Arguments substitute {T U}%function_scope {Substitute}
   {B1 A1 B2 A2}%type_scope
-  {G}%function_scope {H H0 H1}
+  {G}%function_scope {Map_G Pure_G Mult_G}
   (_ _)%function_scope _.
 
 (*
@@ -45,22 +56,24 @@ Definition kcompose_rename
  *)
 
 
-Definition kc_subvar {U}
-  `{Substitute U U}
+(** ** Kleisli Composition *)
+(******************************************************************************)
+Definition kc_dtmp {T}
+  `{Substitute T T}
   {G1 : Type -> Type}
   `{map_G1: Map G1} `{pure_G1: Pure G1} `{mult_G1: Mult G1}
   {G2 : Type -> Type}
   `{map_G2: Map G2} `{pure_G2: Pure G2} `{mult_G2: Mult G2}
   {B1 A1 B2 A2 B3 A3: Type}
   (ρ2: list B2 * B2 -> G2 B3) (* second op to rename binders *)
-  (σ2: list B2 * A2 -> G2 (U B3 A3)) (* second op to insert terms *)
+  (σ2: list B2 * A2 -> G2 (T B3 A3)) (* second op to insert terms *)
   (ρ1: list B1 * B1 -> G1 B2) (* first op to rename binders *)
-  (σ1: list B1 * A1 -> G1 (U B2 A2)) (* first op to insert terms *)
-  : list B1 * A1 -> (G1 ∘ G2) (U B3 A3) :=
+  (σ1: list B1 * A1 -> G1 (T B2 A2)) (* first op to insert terms *)
+  : list B1 * A1 -> (G1 ∘ G2) (T B3 A3) :=
   fun '(ctx, a) =>
     map (fun '(ctx2, u) => substitute (ρ2 ⦿ ctx2) (σ2 ⦿ ctx2) u)
         (pure pair
-           <⋆> mapdt_ci (Z := Z) ρ1 ctx
+           <⋆> mapdt_ci (W := Z) ρ1 ctx
            <⋆> σ1 (ctx, a)).
 
 (*
@@ -83,6 +96,8 @@ Definition kcompose_dtmp
 #[local] Notation "| r1 || s1 | '⋆sub' | r2 || s2 |" := (kcompose_dtmp r1 s1 r2 s2) (r1 at level 0, s1 at level 0, r2 at level 0, s2 at level 0, at level 60) : tealeaves_scope.
  *)
 
+(** ** Typeclass *)
+(******************************************************************************)
 Class DecoratedTraversableMonadPoly
     (T: Type -> Type -> Type)
     `{forall W, Return (T W)}
@@ -111,7 +126,7 @@ Class DecoratedTraversableMonadPoly
       map (F := G1) (substitute (G := G2) ρ2 σ2) ∘
         substitute (G := G1) (T := T) (U := T) ρ1 σ1 =
         substitute (T := T) (U := T) (G := G1 ∘ G2)
-          (ρ2 ⋆6_ci ρ1) (kc_subvar ρ2 σ2 ρ1 σ1);
+          (ρ2 ⋆3_ci ρ1) (kc_dtmp ρ2 σ2 ρ1 σ1);
     kdtmp_morph :
     forall (B1 A1 B2 A2: Type) (G1 G2: Type -> Type)
       `{morph: ApplicativeMorphism G1 G2 ϕ}
@@ -126,12 +141,17 @@ From  Tealeaves Require
   Classes.Kleisli.TraversableFunctorPoly
   Classes.Kleisli.DecoratedTraversableFunctorPoly.
 
-Module DerivedInstances.
+(** * Derived Instances *)
+(******************************************************************************)
+
+(** ** Derived Operations *)
+(******************************************************************************)
+Module DerivedOperations.
 
   Import TraversableFunctorPoly.
   Import DecoratedTraversableFunctorPoly.
 
-  Section decorated_traversable_monad_poly_derived_instances.
+  Section decorated_traversable_monad_poly_derived_operations.
 
   Context
     `{T: Type -> Type -> Type}
@@ -147,9 +167,9 @@ Module DerivedInstances.
         (ρ ∘ extract (W := prod (list B1)))
         (map (ret (T B2) A2) ∘ σ ∘ extract (W := prod (list B1))).
 
-  End decorated_traversable_monad_poly_derived_instances.
+  End decorated_traversable_monad_poly_derived_operations.
 
-End DerivedInstances.
+End DerivedOperations.
 
 
 (*
