@@ -1,14 +1,20 @@
-(** This file implements bimonads. A [Bimonad] is a functor equipped
-    with a monad/comonad structure and a distributive law over itself,
-    which ensures the composition (W ∘ W) is also a monad and a
-    comonad. Additionally there are some coherence laws, below, which
-    may be read into several equivalent ways: *)
-(**
-    - The cojoin is a monad homomorphism (W → W ∘ W) and the counit a homomorphism (W → 1)
-    - The join is a comonad homomorphism (W ∘ W → W) and the unit a homomorphism (1 → W)
-    - W is a monoid in the category of comonoids (in the category of endofunctors)
-    - W is a comonoid in the category of monoids (in the category of endofunctors)
- *)
+(*|
+ This file implements bimonads. A [Bimonad] is a functor equipped
+ with a monad/comonad structure and a distributive law over itself,
+ which ensures the composition (W ∘ W) is also a monad and a
+ comonad. Additionally there are some coherence laws, below, which
+ may be read into several equivalent ways:
+
+* The cojoin is a monad homomorphism (W → W ∘ W) and the counit is a
+  homomorphism (W → 1)
+* The join is a comonad homomorphism (W ∘ W → W) and the unit is a
+  homomorphism (1 → W)
+* W is a monoid in the category of comonoids (in the category of
+  endofunctors)
+* W is a comonoid in the category of monoids (in the category of
+  endofunctors)
+
+|*)
 
 From Tealeaves Require Export
   Classes.Categorical.Monad
@@ -28,11 +34,11 @@ Import Comonad.Notations.
 #[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
 
 (** * Bimonad typeclass *)
-(******************************************************************************)
+(**********************************************************************)
 Section Bimonad.
 
   Context
-    (W : Type -> Type)
+    (W: Type -> Type)
     `{Map W}
     `{Return W}
     `{Join W}
@@ -44,39 +50,40 @@ Section Bimonad.
     { bimonad_monad :> Monad W;
       bimonad_comonad :> Comonad W;
       bimonad_distributive_law :> BeckDistributiveLaw W W;
-      bimonad_dist_counit_r :
+      bimonad_dist_counit_r:
       `(map W (extract W A) ∘ bdist W W = extract W (W A));
-      bimonad_dist_counit_l :
+      bimonad_dist_counit_l:
       `(extract W (W A) ∘ bdist W W = map W (extract W A));
-      bimonad_cap :
+      bimonad_cap:
       `(extract W A ∘ join W = extract W A ∘ extract W (W A));
-      bimonad_baton :
+      bimonad_baton:
       `(extract W A ∘ ret W = @id A);
-      bimonad_cup :
+      bimonad_cup:
       `(cojoin W ∘ ret W = ret W ∘ ret W (A := A));
-      bimonad_butterfly :
-        `(cojoin W ∘ join W (A := A) =
-          map W (join W) ∘ join W ∘ map W (bdist W W) ∘ cojoin W ∘ map W (cojoin W));
+      bimonad_butterfly:
+      `(cojoin W ∘ join W (A := A) =
+          map W (join W) ∘ join W ∘ map W (bdist W W)
+            ∘ cojoin W ∘ map W (cojoin W));
     }.
 
 End Bimonad.
 
 (** * Kleisli lifting operation <<bibind>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section Bimonad_kleisli_operations.
 
   Context
-    (W : Type -> Type)
+    (W: Type -> Type)
     `{Map W} `{Join W} `{Cojoin W}
     `{BeckDistribution W W}.
 
-  Definition bibind {A B} : (W A -> W B) -> (W A -> W B) :=
+  Definition bibind {A B}: (W A -> W B) -> (W A -> W B) :=
     fun f => join W ∘ map W f ∘ cojoin W.
 
-  Definition twist : W ∘ W ⇒ W ∘ W
+  Definition twist: W ∘ W ⇒ W ∘ W
     := fun A => map W (join W) ∘ bdist W W ∘ map W (cojoin W).
 
-  Definition kcomposebi {A B C} :
+  Definition kcomposebi {A B C}:
     (W B -> W C) ->
     (W A -> W B) ->
     (W A -> W C) :=
@@ -85,20 +92,20 @@ Section Bimonad_kleisli_operations.
 End Bimonad_kleisli_operations.
 
 Module Notations.
-  Notation "g ⋆bi f" := (kcomposebi _ g f) (at level 70) : tealeaves_scope.
+  Notation "g ⋆bi f" := (kcomposebi _ g f) (at level 70): tealeaves_scope.
 End Notations.
 
 Import Notations.
 
 (*
 (** ** Specifications for suboperations *)
-(******************************************************************************)
+(**********************************************************************)
 Section Bimonad_suboperations.
 
   Context
     `{Bimonad W}.
 
-  Lemma cobind_to_bibind : forall `(f : W A -> B),
+  Lemma cobind_to_bibind: forall `(f: W A -> B),
       cobind W f = bibind W (ret W ∘ f).
   Proof.
     intros. unfold bibind. unfold_ops @Cobind_Cojoin.
@@ -106,7 +113,7 @@ Section Bimonad_suboperations.
     now rewrite (mon_join_map_ret W).
   Qed.
 
-  Lemma bind_to_bibind : forall `(f : A -> W B),
+  Lemma bind_to_bibind: forall `(f: A -> W B),
       bind W f = bibind W (f ∘ extract W).
   Proof.
     intros. unfold bibind. unfold_ops @Bind_Join.
@@ -115,7 +122,7 @@ Section Bimonad_suboperations.
     now rewrite (com_map_extr_cojoin W).
   Qed.
 
-  Lemma map_to_bibind : forall `(f : A -> B),
+  Lemma map_to_bibind: forall `(f: A -> B),
       map W f = bibind W (ret W ∘ f ∘ extract W).
   Proof.
     intros. unfold bibind.
@@ -129,7 +136,7 @@ Section Bimonad_suboperations.
 End Bimonad_suboperations.
 
 (** ** Bimonadic Kleisli composition laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section Bimonad_kleisli_composition.
 
   Context
@@ -137,7 +144,7 @@ Section Bimonad_kleisli_composition.
 
   (** Composition where <<g>> is a co-Kleisli arrow reduces to usual
       Kleisli composition. *)
-  Lemma bi_kcompose1 {A B C} : forall (g : B -> W C) (f : W A -> W B),
+  Lemma bi_kcompose1 {A B C}: forall (g: B -> W C) (f: W A -> W B),
       (g ∘ extract W) ⋆bi f = g ⋆ f.
   Proof.
     intros. unfold kcomposebi, kcompose.
@@ -162,7 +169,7 @@ Section Bimonad_kleisli_composition.
 
   (** Composition where <<f>> is a Kleisli arrow reduces to usual
       co-Kleisli composition. *)
-  Lemma bi_kcompose2 {A B C} : forall (g : W B -> W C) (f : W A -> B),
+  Lemma bi_kcompose2 {A B C}: forall (g: W B -> W C) (f: W A -> B),
       g ⋆bi (ret W ∘ f) = g co⋆ f.
   Proof.
     intros. unfold kcomposebi, kcompose.
@@ -188,13 +195,13 @@ Section Bimonad_kleisli_composition.
 End Bimonad_kleisli_composition.
 
 (** ** Functoriality of [bibind] *)
-(******************************************************************************)
+(**********************************************************************)
 Section Bimonad_bibind.
 
   Context
     `{Bimonad W}.
 
-  Definition bind_id {A} :
+  Definition bind_id {A}:
     bibind W (ret W ∘ extract W) = @id (W A).
   Proof.
     intros. unfold bibind.
@@ -205,7 +212,7 @@ Section Bimonad_bibind.
     now rewrite (mon_join_map_ret W).
   Qed.
 
-  Definition bind_functorial {A B C} : forall (g : W B -> W C) (f : W A -> W B),
+  Definition bind_functorial {A B C}: forall (g: W B -> W C) (f: W A -> W B),
       bibind W (g ⋆bi f) = bibind W g ∘ bibind W f.
   Proof.
     intros. unfold bibind. unfold kcomposebi.

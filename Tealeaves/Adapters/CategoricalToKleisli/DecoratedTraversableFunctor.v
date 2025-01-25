@@ -8,10 +8,10 @@ Import Product.Notations.
 #[local] Generalizable Variables G ϕ.
 
 (** * Kleisli Decorated Traversable Functors from Categorical Decorated Traversable Functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Mapdt_Categorical
@@ -28,7 +28,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -86,7 +86,7 @@ Module DerivedInstances.
 
     Theorem mapdt_mapdt_morphism:
       forall `{ApplicativeMorphism G1 G2 ϕ}
-        (A B: Type) (f: E * A -> G1 B),
+             (A B: Type) (f: E * A -> G1 B),
         ϕ (T B) ∘ mapdt f = mapdt (ϕ B ∘ f).
     Proof.
       intros. unfold transparent tcs.
@@ -97,7 +97,7 @@ Module DerivedInstances.
     Qed.
 
     (** ** Typeclass Instance *)
-    (******************************************************************************)
+    (******************************************************************)
     #[local] Instance:
       Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
       {| kdtf_mapdt1 := @mapdt_id;

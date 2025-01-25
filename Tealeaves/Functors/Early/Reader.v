@@ -12,10 +12,10 @@ Export Classes.Comonoid.
 Import Product.Notations.
 
 (** * Environment/Reader Comonad *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Functor Instances *)
-(******************************************************************************)
+(**********************************************************************)
 #[export] Instance Map_reader (E: Type):
   Map (E ×) := (fun A B => map_snd).
 
@@ -25,7 +25,7 @@ Import Product.Notations.
 Solve All Obligations with (introv; now ext [? ?]).
 
 (** ** Categorical Comonad Instance *)
-(******************************************************************************)
+(**********************************************************************)
 Section with_E.
 
   Context
@@ -56,14 +56,14 @@ Section with_E.
 End with_E.
 
 (** ** Kleisli Comonad Instance *)
-(******************************************************************************)
+(**********************************************************************)
 Section with_E.
 
   Context
     (E: Type).
 
   (*
-  #[export] Instance Extract_reader: Extract (E ×) :=
+    #[export] Instance Extract_reader: Extract (E ×) :=
     fun A '(e, a) => a.
    *)
 
@@ -76,10 +76,10 @@ Section with_E.
   Solve All Obligations with (introv; now ext [? ?]).
 
   (*
-  #[export] Instance Map_reader: Map (E ×) :=
+    #[export] Instance Map_reader: Map (E ×) :=
     Comonad.Map_Cobind (E ×).
 
-  #[export] Instance Functor_reader: Functor (E ×) :=
+    #[export] Instance Functor_reader: Functor (E ×) :=
     Comonad.Functor_Comonad (E ×).
    *)
 
@@ -91,13 +91,13 @@ Section with_E.
 End with_E.
 
 (** * Properties of <<strength>>  *)
-(******************************************************************************)
+(**********************************************************************)
 From Tealeaves Require Import
   Classes.Categorical.Monad
   Classes.Categorical.RightModule.
 
 (** ** Interaction with Categorical Monad Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Section Monad_strength_laws.
 
   Context
@@ -108,7 +108,7 @@ Section Monad_strength_laws.
   Import Strength.Notations.
   Import Monad.Notations.
 
-  Lemma strength_ret :
+  Lemma strength_ret:
     σ ∘ map (F := (A ×)) ret = ret (T := T) (A := A * B).
   Proof.
     intros. ext [a b]. cbn.
@@ -117,9 +117,11 @@ Section Monad_strength_laws.
     now rewrite (natural (G := T) (F := fun A => A)).
   Qed.
 
-  Lemma strength_join :
-      σ ∘ map (F := (A ×)) (μ (A := B)) =
-      μ (A := A * B) ∘ map (F := T) (strength (F := T)) ∘ strength (F := T).
+  Lemma strength_join:
+    σ ∘ map (F := (A ×)) (μ (A := B)) =
+      μ (A := A * B) ∘
+        map (F := T) (strength (F := T)) ∘
+        strength (F := T).
   Proof.
     intros. ext [a t].
     unfold compose at 1.
@@ -138,8 +140,8 @@ Section Monad_strength_laws.
     (F : Type -> Type)
     `{Categorical.RightModule.RightModule F T}.
 
-  Lemma strength_right_action :
-      σ ∘ map (F := (A ×)) (right_action F) =
+  Lemma strength_right_action:
+    σ ∘ map (F := (A ×)) (right_action F) =
       right_action F (A := A * B) ∘ map σ ∘ σ.
   Proof.
     intros. ext [a t]. change_left (σ (a, right_action F t)).
@@ -163,21 +165,21 @@ End Monad_strength_laws.
 
 
 (** ** Interaction with Reader Comonad Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Section Comonad_strength_laws.
 
   Context
     (E: Type)
     (F: Type -> Type).
 
-  Theorem strength_extract `{Functor F} {A: Type} :
+  Theorem strength_extract `{Functor F} {A: Type}:
     map extract ∘ strength = extract (W := (E ×)) (A := F A).
   Proof.
     intros. unfold strength, compose. ext [w a].
     reflexivity.
   Qed.
 
-  Theorem strength_cojoin `{Functor F} {A: Type} :
+  Theorem strength_cojoin `{Functor F} {A: Type}:
     `(map (F := F) (cojoin (W := (E ×)) (A := A)) ∘ strength =
         strength ∘ map (F := (E ×)) strength ∘ cojoin (W := (E ×))).
   Proof.
@@ -200,7 +202,7 @@ Section Comonad_strength_laws.
 End Comonad_strength_laws.
 
 (** ** Miscellaneous Properties *)
-(******************************************************************************)
+(**********************************************************************)
 Section with_E.
 
   Context
@@ -218,13 +220,13 @@ Section with_E.
     now rewrite 2(fun_map_map).
   Qed.
 
-  Theorem product_map_commute {E1 E2 A B: Type} (g: E1 -> E2) (f: A -> B) :
+  Theorem product_map_commute {E1 E2 A B: Type} (g: E1 -> E2) (f: A -> B):
     map (F := (E2 ×)) f ∘ map_fst g = map_fst g ∘ map (F := (E1 ×)) f.
   Proof.
     now ext [w a].
   Qed.
 
-  Lemma dup_left_spec {A B} :
+  Lemma dup_left_spec {A B}:
     @dup_left A B  = α ∘ map_fst comonoid_comult.
   Proof.
     now ext [? ?].

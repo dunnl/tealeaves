@@ -16,26 +16,32 @@ Import DecoratedTraversableMonad.Notations.
 #[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
 
-(** * Coalgebraic DTMs to Kleisli DTM *)
-(******************************************************************************)
+(** * Coalgebraic DTMsto Kleisli DTM *)
+(**********************************************************************)
+
+(** ** Derived Operation *)
+(**********************************************************************)
 #[export] Instance Binddt_ToBatch7
-  (W : Type) (T : Type -> Type) `{ToBatch7 W T U} : Binddt W T U :=
+  (W: Type) (T: Type -> Type) `{ToBatch7 W T U}: Binddt W T U :=
   fun F _ _ _ A B f => runBatch f (C := U B) ∘ toBatch7.
 
+(** ** Derived Laws *)
+(**********************************************************************)
 Section with_algebra.
 
   Context
     `{Coalgebraic.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
-  Lemma kc7_spec :
-    forall (G1 G2 : Type -> Type)
+  Lemma kc7_spec:
+    forall (G1 G2: Type -> Type)
       `{Applicative G1}
       `{Applicative G2},
-    forall (A B C : Type)
-      (g : W * B -> G2 (T C)) (f : W * A -> G1 (T B)),
+    forall (A B C: Type)
+      (g: W * B -> G2 (T C)) (f: W * A -> G1 (T B)),
       g ⋆7 f =
         runBatch (G := G1) f (C := G2 (T C)) ∘
-          map (F := Batch (W * A) (T B)) (runBatch (G := G2) g (C := T C)) ∘
+          map (F := Batch (W * A) (T B))
+          (runBatch (G := G2) g (C := T C)) ∘
           double_batch7.
   Proof.
     intros. ext [w a].
@@ -51,10 +57,10 @@ Section with_algebra.
     reflexivity.
   Qed.
 
-  Lemma kdtm_binddt0_T :
-    forall (F : Type -> Type) `{Applicative F}
-      (A B : Type)
-      (f : W * A -> F (T B)),
+  Lemma kdtm_binddt0_T:
+    forall (F: Type -> Type) `{Applicative F}
+      (A B: Type)
+      (f: W * A -> F (T B)),
       binddt f ∘ ret = f ∘ pair Ƶ.
   Proof.
     intros.
@@ -68,8 +74,8 @@ Section with_algebra.
     reflexivity.
   Qed.
 
-  Lemma kdtm_binddt1_T : forall (A : Type),
-      binddt (G := fun A : Type => A)
+  Lemma kdtm_binddt1_T: forall (A: Type),
+      binddt (G := fun A: Type => A)
         (ret (T := T) ∘ extract (W := (W ×))) = @id (T A).
   Proof.
     intros.
@@ -79,12 +85,12 @@ Section with_algebra.
     apply dtm_extract.
   Qed.
 
-  Lemma kdtm_binddt2_T :
-    forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Pure G1) (H5 : Mult G1),
+  Lemma kdtm_binddt2_T:
+    forall (G1 G2: Type -> Type) (H1: Map G1) (H2: Pure G1) (H5: Mult G1),
       Applicative G1 ->
-      forall (H7 : Map G2) (H8 : Pure G2) (H9 : Mult G2),
+      forall (H7: Map G2) (H8: Pure G2) (H9: Mult G2),
         Applicative G2 ->
-        forall (A B C : Type) (g : W * B -> G2 (T C)) (f : W * A -> G1 (T B)),
+        forall (A B C: Type) (g: W * B -> G2 (T C)) (f: W * A -> G1 (T B)),
           map (F := G1) (binddt g) ∘ binddt f =
             binddt (G := G1 ∘ G2) (g ⋆7 f).
   Proof.
@@ -101,16 +107,17 @@ Section with_algebra.
     reassociate <- on left.
     rewrite natural.
     rewrite (runBatch_morphism'
-               (homomorphism := ApplicativeMorphism_parallel
-                        (Batch (W * A) (T B)) (Batch (W * B) (T C)) G1 G2)).
+               (homomorphism :=
+                  ApplicativeMorphism_parallel
+                    (Batch (W * A) (T B)) (Batch (W * B) (T C)) G1 G2)).
     rewrite (kc7_spec G1 G2).
     reflexivity.
   Qed.
 
-  Lemma kdtm_morph_T :
-    forall (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ},
-      forall (A B : Type) (f : W * A -> G1 (T B)),
-        ϕ (T B) ∘ binddt f = binddt (ϕ (T B) ∘ f).
+  Lemma kdtm_morph_T:
+    forall (G1 G2: Type -> Type) `{morph: ApplicativeMorphism G1 G2 ϕ},
+    forall (A B: Type) (f: W * A -> G1 (T B)),
+      ϕ (T B) ∘ binddt f = binddt (ϕ (T B) ∘ f).
   Proof.
     intros. ext t.
     unfold_ops @Binddt_ToBatch7.
@@ -119,7 +126,9 @@ Section with_algebra.
     reflexivity.
   Qed.
 
-  #[export] Instance DecoratedTraversableRightPreModule_Kleisli_Coalgebra :
+  (** ** Typeclass Instances *)
+  (**********************************************************************)
+  #[export] Instance DecoratedTraversableRightPreModule_Kleisli_Coalgebra:
     Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T.
   Proof.
     constructor.
@@ -131,7 +140,7 @@ Section with_algebra.
       + apply kdtm_morph_T; auto.
   Qed.
 
-  #[export] Instance DecoratedTraversableMonad_Kleisli_Coalgebra :
+  #[export] Instance DecoratedTraversableMonad_Kleisli_Coalgebra:
     Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
     {|
       kdtm_binddt0 := kdtm_binddt0_T;

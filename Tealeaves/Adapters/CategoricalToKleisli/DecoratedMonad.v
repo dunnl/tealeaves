@@ -10,28 +10,28 @@ Import Product.Notations.
 Import Kleisli.DecoratedMonad.Notations.
 
 (** * Categorical Decorated Monad to Kleisli Decorated Monad *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived <<bindd>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Bindd_Categorical
-  (W : Type)
-  (T : Type -> Type)
-  `{Map_T: Map T}
-  `{Join_T: Join T}
-  `{Decorate_WT: Decorate W T}: Bindd W T T :=
+    (W: Type)
+    (T: Type -> Type)
+    `{Map_T: Map T}
+    `{Join_T: Join T}
+    `{Decorate_WT: Decorate W T}: Bindd W T T :=
   fun A B f => join (T := T) ∘ map (F := T) f ∘ dec T.
 
 End DerivedOperations.
 
-(** ** Derived Kleisli Laws *)
-(******************************************************************************)
+(** ** Derived Laws *)
+(**********************************************************************)
 Module DerivedInstances.
 
   (* Alectryon doesn't like this
-  Import CategoricalToKleisli.DecoratedMonad.DerivedOperations.
+     Import CategoricalToKleisli.DecoratedMonad.DerivedOperations.
    *)
   Import DerivedOperations.
 
@@ -40,11 +40,11 @@ Module DerivedInstances.
   Section with_monad.
 
     Context
-      (T : Type -> Type)
+      (T: Type -> Type)
       `{Categorical.DecoratedMonad.DecoratedMonad W T}.
 
     (** *** Identity law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma bindd_id: forall (A: Type),
         bindd (ret (T := T) ∘ extract) = @id (T A).
     Proof.
@@ -58,8 +58,9 @@ Module DerivedInstances.
     Qed.
 
     (** *** Composition law *)
-    (******************************************************************************)
-    Lemma bindd_bindd : forall (A B C : Type) (g : W * B -> T C) (f : W * A -> T B),
+    (******************************************************************)
+    Lemma bindd_bindd:
+      forall (A B C: Type) (g: W * B -> T C) (f: W * A -> T B),
         bindd g ∘ bindd f = bindd (g ⋆5 f).
     Proof.
       intros. unfold bindd at 1 2, Bindd_Categorical.
@@ -105,8 +106,8 @@ Module DerivedInstances.
     Qed.
 
     (** *** Unit law *)
-    (******************************************************************************)
-    Lemma bindd_comp_ret `(f : W * A -> T B) :
+    (******************************************************************)
+    Lemma bindd_comp_ret `(f: W * A -> T B):
       bindd f ∘ ret = f ∘ pair Ƶ.
     Proof.
       intros. unfold_ops Bindd_Categorical.
@@ -119,12 +120,16 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[export] Instance: Kleisli.DecoratedMonad.DecoratedRightPreModule W T T :=
+    (** ** Typeclass Instances *)
+    (******************************************************************)
+    #[export] Instance:
+      Kleisli.DecoratedMonad.DecoratedRightPreModule W T T :=
       {| kdmod_bindd1 := @bindd_id;
          kdmod_bindd2 := @bindd_bindd;
       |}.
 
-    #[export] Instance: Kleisli.DecoratedMonad.DecoratedMonad W T
+    #[export] Instance:
+      Kleisli.DecoratedMonad.DecoratedMonad W T
       :=
       {| kdm_bindd0 := @bindd_comp_ret;
          kdm_monoid := dmon_monoid;

@@ -8,10 +8,10 @@ Import Kleisli.Comonad.Notations.
 #[local] Generalizable Variables E T.
 
 (** * Decorated Functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** <<mapd>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Class Mapd (E: Type) (T: Type -> Type) :=
   mapd: forall (A B: Type), (E * A -> B) -> T A -> T B.
 
@@ -20,10 +20,10 @@ Class Mapd (E: Type) (T: Type -> Type) :=
 
 (** ** Kleisli Composition *)
 (** Kleisli composition is [kc1] *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Typeclasses *)
-(******************************************************************************)
+(**********************************************************************)
 Class DecoratedFunctor (E: Type) (T: Type -> Type) `{Mapd E T} :=
   { kdf_mapd1: forall (A: Type),
       mapd (extract (A := A)) = @id (T A);
@@ -32,7 +32,7 @@ Class DecoratedFunctor (E: Type) (T: Type -> Type) `{Mapd E T} :=
   }.
 
 (** ** Homomorphisms between Decorated Functors *)
-(******************************************************************************)
+(**********************************************************************)
 Class DecoratedHom
   (E: Type) (T1 T2: Type -> Type)
   (ϕ: forall A: Type, T1 A -> T2 A)
@@ -42,10 +42,10 @@ Class DecoratedHom
   }.
 
 (** * Derived Structures *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Map_Mapd
@@ -78,7 +78,7 @@ Proof.
 Qed.
 
 (** ** Derived Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section derived_instances.
 
   Context
@@ -135,7 +135,7 @@ Section derived_instances.
 End derived_instances.
 
 (** ** Derived Typeclass Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   #[export] Instance Functor_DecoratedFunctor
@@ -144,16 +144,16 @@ Module DerivedInstances.
     `{Map_T: Map T}
     `{! Compat_Map_Mapd E T}:
   Classes.Functor.Functor T :=
-    {| fun_map_id := map_id;
-       fun_map_map := map_map;
-    |}.
+  {| fun_map_id := map_id;
+     fun_map_map := map_map;
+  |}.
 
   Include DerivedOperations.
 
 End DerivedInstances.
 
 (** * Instance for Reader *)
-(******************************************************************************)
+(**********************************************************************)
 Import Product.Notations.
 
 Section decorated_functor_reader.

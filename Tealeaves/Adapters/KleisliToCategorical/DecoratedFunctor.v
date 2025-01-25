@@ -9,10 +9,10 @@ Import Product.Notations.
 #[local] Generalizable Variables T E A B C.
 
 (** * Categorical Decorated Functors to Kleisli Decorated Functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived <<mapd>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Decorate_Mapd
@@ -22,7 +22,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived Decorated Functor Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   Section properties.
@@ -33,7 +33,7 @@ Module DerivedInstances.
       `{Kleisli.DecoratedFunctor.DecoratedFunctor E T}.
 
     (* Alectryon doesn't like this
-    Import KleisliToCategorical.DecoratedFunctor.DerivedOperations.
+       Import KleisliToCategorical.DecoratedFunctor.DerivedOperations.
      *)
     Import DerivedOperations.
     Import Kleisli.DecoratedFunctor.DerivedOperations.

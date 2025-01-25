@@ -8,10 +8,10 @@ Import Kleisli.TraversableMonad.Notations.
 #[local] Generalizable Variables T G ϕ.
 
 (** * Kleisli Traversable Monads from Categorical Traversable Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Bindt_Categorical
@@ -26,7 +26,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -37,8 +37,8 @@ Module DerivedInstances.
       `{Categorical.TraversableMonad.TraversableMonad T}.
 
     (** *** Identity law *)
-    (******************************************************************************)
-    Lemma ktm_bindt1_T :
+    (******************************************************************)
+    Lemma ktm_bindt1_T:
       forall (A: Type), bindt (G := fun A => A) (ret (T := T)) = @id (T A).
     Proof.
       intros. unfold bindt. unfold_ops @Bindt_Categorical.
@@ -48,7 +48,7 @@ Module DerivedInstances.
     Qed.
 
     (** *** Composition law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma ktm_bindt2_T: forall
         `{Applicative G1} `{Applicative G2}
         (A B C: Type)
@@ -109,9 +109,10 @@ Module DerivedInstances.
     Qed.
 
     (** *** Unit law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma ktm_bindt0_T: forall
-        (G1: Type -> Type) `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
+        (G1: Type -> Type) `{Map G1} `{Pure G1} `{Mult G1}
+        `{! Applicative G1}
         (A B: Type) (f: A -> G1 (T B)),
         bindt f ∘ ret = f.
     Proof.
@@ -128,9 +129,10 @@ Module DerivedInstances.
     Qed.
 
     (** *** Morphism law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma ktm_morph_T: forall `{ApplicativeMorphism G1 G2 ϕ},
-        forall (A B: Type) (f: A -> G1 (T B)), ϕ (T B) ∘ bindt f = bindt (ϕ (T B) ∘ f).
+      forall (A B: Type) (f: A -> G1 (T B)),
+        ϕ (T B) ∘ bindt f = bindt (ϕ (T B) ∘ f).
     Proof.
       introv morph. intros.
       unfold_ops @Bindt_Categorical.
@@ -145,10 +147,12 @@ Module DerivedInstances.
     Qed.
 
     (** *** Purity law *)
-    (******************************************************************************)
+    (******************************************************************)
     Theorem bindt_purity_T
-      `{Applicative G1} `{Applicative G2}: forall (A B: Type) (f: A -> G1 (T B)),
-        bindt (G := G2 ∘ G1) (pure (F := G2) ∘ f) = pure (F := G2) ∘ bindt f.
+      `{Applicative G1} `{Applicative G2}:
+      forall (A B: Type) (f: A -> G1 (T B)),
+        bindt (G := G2 ∘ G1) (pure (F := G2) ∘ f) =
+          pure (F := G2) ∘ bindt f.
     Proof.
       intros. unfold_ops @Bindt_Categorical.
       reassociate -> on left.
@@ -161,6 +165,8 @@ Module DerivedInstances.
       now rewrite app_pure_natural.
     Qed.
 
+    (** ** Typeclass Instances *)
+    (******************************************************************)
     #[export] Instance TravMon_ToKleisli:
       Kleisli.TraversableMonad.TraversableRightPreModule T T :=
       {|ktm_bindt1 := @ktm_bindt1_T;

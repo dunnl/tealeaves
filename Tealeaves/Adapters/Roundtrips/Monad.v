@@ -9,7 +9,7 @@ Import Kleisli.Monad.Notations.
 #[local] Generalizable Variable T.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
-(******************************************************************************)
+(**********************************************************************)
 Section categorical_to_kleisli_to_categorical.
 
   Context
@@ -60,7 +60,7 @@ Section categorical_to_kleisli_to_categorical.
 End categorical_to_kleisli_to_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
-(******************************************************************************)
+(**********************************************************************)
 Section kleisli_to_categorical_to_kleisli.
 
   Context
@@ -72,7 +72,8 @@ Section kleisli_to_categorical_to_kleisli.
   Definition join': Join T := DerivedOperations.Join_Bind T.
 
   Definition bind2: Bind T T :=
-    DerivedOperations.Bind_Categorical T (map_T := map') (join_T := join').
+    DerivedOperations.Bind_Categorical T
+      (map_T := map') (join_T := join').
 
   Goal Bind_TT = bind2.
   Proof.

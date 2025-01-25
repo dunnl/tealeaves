@@ -8,17 +8,17 @@ Import Functor.Notations.
 #[local] Generalizable Variable T.
 
 (** * Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Class Bind (T U: Type -> Type) :=
   bind: forall (A B: Type), (A -> T B) -> U A -> U B.
 
 #[global] Arguments bind {T} {U}%function_scope {Bind} {A B}%type_scope _%function_scope _.
 
 (** ** Kleisli Composition *)
-(******************************************************************************)
+(**********************************************************************)
 Definition kc {T: Type -> Type} `{Return T} `{Bind T T}
   {A B C: Type} (g: B -> T C) (f: A -> T B): (A -> T C) :=
   @bind T T _ B C g ∘ f.
@@ -26,7 +26,7 @@ Definition kc {T: Type -> Type} `{Return T} `{Bind T T}
 #[local] Infix "⋆" := (kc) (at level 60): tealeaves_scope.
 
 (** ** Typeclasses *)
-(******************************************************************************)
+(**********************************************************************)
 Class RightPreModule
   (T U: Type -> Type)
   `{Return T} `{Bind T T} `{Bind T U} :=
@@ -66,14 +66,15 @@ Proof.
 Qed.
 
 (* associativity of the monoid *)
-Lemma kmon_bind2 `{Monad T}: forall (A B C: Type) (g: B -> T C) (f: A -> T B),
+Lemma kmon_bind2 `{Monad T}:
+  forall (A B C: Type) (g: B -> T C) (f: A -> T B),
     @bind T T _ B C g ∘ @bind T T _ A B f = @bind T T _ A C (g ⋆ f).
 Proof.
   apply kmod_bind2.
 Qed.
 
 (** ** Kleisli Category Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section Monad_Kleisli_category.
 
   Context
@@ -100,7 +101,8 @@ Section Monad_Kleisli_category.
   Qed.
 
   (** *** Associativity law *)
-  Theorem kleisli_assoc: forall `(h: C -> T D) `(g: B -> T C) `(f: A -> T B),
+  Theorem kleisli_assoc:
+    forall `(h: C -> T D) `(g: B -> T C) `(f: A -> T B),
       h ⋆ (g ⋆ f) = (h ⋆ g) ⋆ f.
   Proof.
     intros. unfold kc at 3.
@@ -111,7 +113,7 @@ Section Monad_Kleisli_category.
 End Monad_Kleisli_category.
 
 (** ** Monad Homomorphisms *)
-(******************************************************************************)
+(**********************************************************************)
 Class MonadHom (T U: Type -> Type)
   `{Return T} `{Bind T T}
   `{Return U} `{Bind U U}
@@ -139,10 +141,10 @@ Class ParallelRightModuleHom (T T' U U': Type -> Type)
 
 
 (** * Derived Structures *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Map_Bind (T U: Type -> Type)
@@ -180,7 +182,7 @@ Proof.
 Qed.
 
 (** ** Derived Kleisli Composition laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section derived_kleisli_composition_laws.
 
   Context
@@ -189,7 +191,7 @@ Section derived_kleisli_composition_laws.
   #[local] Generalizable Variables A B C D.
 
   (** *** Special cases for Kleisli composition *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc_00: forall `(g: B -> C) `(f: A -> B),
       (ret ∘ g) ⋆ (ret ∘ f) = ret ∘ (g ∘ f).
   Proof.
@@ -217,7 +219,7 @@ Section derived_kleisli_composition_laws.
   Qed.
 
   (** *** Other rules for Kleisli composition *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc_asc1: forall `(g: B -> C) `(h: C -> T D) `(f: A -> T B),
       (h ∘ g) ⋆ f = h ⋆ (map g ∘ f).
   Proof.
@@ -239,7 +241,7 @@ Section derived_kleisli_composition_laws.
 End derived_kleisli_composition_laws.
 
 (** ** Derived Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section derived_instances.
 
   #[local] Generalizable Variables U A B C.
@@ -253,7 +255,7 @@ Section derived_instances.
     `{Monad_T: ! Monad T}.
 
   (** *** Composition between [bind] and [map] *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma bind_map: forall `(g: B -> T C) `(f: A -> B),
       bind (U:= U) g ∘ map f = bind (g ∘ f).
   Proof.
@@ -275,7 +277,7 @@ Section derived_instances.
   Qed.
 
   (** *** Functor laws *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma map_id: forall (A: Type),
       map (F := U) (@id A) = id.
   Proof.
@@ -301,7 +303,7 @@ Section derived_instances.
 End derived_instances.
 
 (** ** Derived Typeclass Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
   #[local] Generalizable Variables U.
 
@@ -325,7 +327,7 @@ Module DerivedInstances.
 End DerivedInstances.
 
 (** ** Naturality Properties *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** *** Return *)
 #[export] Instance Natural_Return
@@ -342,6 +344,7 @@ Proof.
     unfold_ops @Map_I.
     reflexivity.
 Qed.
+
 
 (** *** Monad Homomorphisms *)
 #[export] Instance Natural_MonadHom
@@ -364,7 +367,7 @@ Proof.
 Qed.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Infix "⋆" := (kc) (at level 60): tealeaves_scope.
 End Notations.

@@ -11,10 +11,10 @@ Import Kleisli.TraversableMonad.Notations.
 #[local] Arguments toBatch6 {T U}%function_scope {ToBatch6} {A} (B)%type_scope _.
 
 (** * Coalgebraic Traversable Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance ToBatch6_Bindt `{Bindt T U}
@@ -32,7 +32,7 @@ Class Compat_ToBatch6_Bindt
     ToBatch6_TU = DerivedOperations.ToBatch6_Bindt.
 
 Lemma toBatch6_to_bindt
-  `{Compat_ToBatch6_Bindt T U} :
+  `{Compat_ToBatch6_Bindt T U}:
   forall A B, toBatch6 (T := T) (U := U) (A := A) B =
            bindt (G := Batch A (T B)) (batch (T B)).
 Proof.
@@ -47,7 +47,7 @@ Qed.
   := ltac:(hnf; reflexivity).
 
 (** ** Derived Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
   Section to_coalgebraic.
 
@@ -101,7 +101,7 @@ Module DerivedInstances.
                  (morphism := ApplicativeMorphism_extract_Batch (T A))).
       reassociate <- on left.
       assert (cut: extract_Batch ∘ mapfst_Batch A (T A) ret ∘ batch (T A)
-              = ret).
+                   = ret).
       { ext a. unfold compose. reflexivity. }
       rewrite cut.
       rewrite ktm_bindt1.
@@ -133,49 +133,49 @@ Module DerivedInstances.
   End to_coalgebraic.
 
   (** ** Typeclass Instances *)
-  (******************************************************************************)
-    Section instances.
+  (********************************************************************)
+  Section instances.
 
-      Context
-        `{Return T}
-        `{Map T}
-        `{Bindt T T}
-        `{! Compat_Map_Bindt T T}
-        `{! Kleisli.TraversableMonad.TraversableMonad T}
-        `{Map U}
-        `{Bindt T U}
-        `{! Compat_Map_Bindt T U}
-        `{! Kleisli.TraversableMonad.TraversableRightPreModule T U}.
-      
+    Context
+      `{Return T}
+      `{Map T}
+      `{Bindt T T}
+      `{! Compat_Map_Bindt T T}
+      `{! Kleisli.TraversableMonad.TraversableMonad T}
+      `{Map U}
+      `{Bindt T U}
+      `{! Compat_Map_Bindt T U}
+      `{! Kleisli.TraversableMonad.TraversableRightPreModule T U}.
+
     Context
       `{ToBatch6 T T}
       `{ToBatch6 T U}
       `{! Compat_ToBatch6_Bindt T U}
       `{! Compat_ToBatch6_Bindt T T}.
 
-      #[export] Instance:
-        Coalgebraic.TraversableMonad.TraversableRightPreModule T T :=
-        {| trfm_extract := toBatch6_extract_Kleisli;
-          trfm_duplicate := toBatch6_duplicate_Kleisli;
-        |}.
+    #[export] Instance:
+      Coalgebraic.TraversableMonad.TraversableRightPreModule T T :=
+      {| trfm_extract := toBatch6_extract_Kleisli;
+         trfm_duplicate := toBatch6_duplicate_Kleisli;
+      |}.
 
-      #[export] Instance Coalgebraic_TraversableRightPreModule_of_Kleisli :
-        Coalgebraic.TraversableMonad.TraversableRightPreModule T U :=
-        {| trfm_extract := toBatch6_extract_Kleisli;
-          trfm_duplicate := toBatch6_duplicate_Kleisli;
-        |}.
+    #[export] Instance Coalgebraic_TraversableRightPreModule_of_Kleisli:
+      Coalgebraic.TraversableMonad.TraversableRightPreModule T U :=
+      {| trfm_extract := toBatch6_extract_Kleisli;
+         trfm_duplicate := toBatch6_duplicate_Kleisli;
+      |}.
 
-      #[export] Instance Coalgebraic_TraversableMonad_of_Kleisli :
-        Coalgebraic.TraversableMonad.TraversableMonad T :=
-        {| trfm_ret := toBatch6_ret_Kleisli;
-        |}.
+    #[export] Instance Coalgebraic_TraversableMonad_of_Kleisli:
+      Coalgebraic.TraversableMonad.TraversableMonad T :=
+      {| trfm_ret := toBatch6_ret_Kleisli;
+      |}.
 
-      #[export] Instance Coalgebraic_TraversableRightModule_of_Kleisli :
-        Coalgebraic.TraversableMonad.TraversableRightModule T U :=
-        {| trfmod_monad := _
-        |}.
+    #[export] Instance Coalgebraic_TraversableRightModule_of_Kleisli:
+      Coalgebraic.TraversableMonad.TraversableRightModule T U :=
+      {| trfmod_monad := _
+      |}.
 
-    End instances.
+  End instances.
 
 End DerivedInstances.
 

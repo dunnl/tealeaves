@@ -10,20 +10,20 @@ Import TraversableMonad.Notations.
 #[local] Generalizable Variables T G ϕ.
 
 (** * Kleisli Traversable Monad from Kleisli Traversable Monad *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operation <<toBatch6>> *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Bindt_ToBatch6
-    (T U : Type -> Type) `{ToBatch6 T U} : Bindt T U :=
+    (T U: Type -> Type) `{ToBatch6 T U}: Bindt T U :=
   fun G _ _ _ A B f => runBatch (G := G) f (C := U B) ∘ toBatch6.
 
 End DerivedOperations.
 
-(** ** Derived Operation <<toBatch6>> *)
-(******************************************************************************)
+(** ** Derived Laws *)
+(**********************************************************************)
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -34,12 +34,12 @@ Module DerivedInstances.
       `{Coalgebraic.TraversableMonad.TraversableMonad T}.
 
     Lemma kc6_spec
-      {A B C : Type}
-      (G1 G2 : Type -> Type)
+      {A B C: Type}
+      (G1 G2: Type -> Type)
       `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
       `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}
-      (g : B -> G2 (T C))
-      (f : A -> G1 (T B)) :
+      (g: B -> G2 (T C))
+      (f: A -> G1 (T B)):
       kc6 (G1 := G1) (G2 := G2) g f =
         runBatch f (C := G2 (T C)) ∘ map (F := Batch A (T B)) (runBatch g)
           ∘ double_batch6.
@@ -55,8 +55,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma ktm_bindt0_T :
-      forall `{Applicative G} (A B : Type) (f : A -> G (T B)),
+    Lemma ktm_bindt0_T:
+      forall `{Applicative G} (A B: Type) (f: A -> G (T B)),
         bindt (T := T) (G := G) f ∘ ret = f.
     Proof.
       intros.
@@ -67,8 +67,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma ktm_bindt1_T : forall (A : Type),
-        bindt (G := fun A : Type => A) (ret (T := T)) = (@id (T A)).
+    Lemma ktm_bindt1_T: forall (A: Type),
+        bindt (G := fun A: Type => A) (ret (T := T)) = (@id (T A)).
     Proof.
       intros.
       unfold_ops Bindt_ToBatch6.
@@ -83,9 +83,9 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma ktm_bindt2_T :
+    Lemma ktm_bindt2_T:
       forall `{Applicative G1} `{Applicative G2},
-      forall (A B C : Type) (g : B -> G2 (T C)) (f : A -> G1 (T B)),
+      forall (A B C: Type) (g: B -> G2 (T C)) (f: A -> G1 (T B)),
         map (F := G1) (bindt (G := G2) g) ∘ bindt (G := G1) f =
           bindt (G := G1 ∘ G2) (kc6 (G1 := G1) (G2 := G2) g f).
     Proof.
@@ -108,9 +108,9 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma ktm_morph_T :
+    Lemma ktm_morph_T:
       forall `{ApplicativeMorphism G1 G2 ϕ},
-      forall (A B : Type) (f : A -> G1 (T B)),
+      forall (A B: Type) (f: A -> G1 (T B)),
         ϕ (T B) ∘ bindt (G := G1) f = bindt (G := G2) (ϕ (T B) ∘ f).
     Proof.
       intros.
@@ -119,14 +119,17 @@ Module DerivedInstances.
       now rewrite runBatch_morphism'.
     Qed.
 
+
+    (** ** Typeclass Instances *)
+    (******************************************************************)
     #[export] Instance:
       Kleisli.TraversableMonad.TraversableRightPreModule T T :=
       {| ktm_bindt1 := ktm_bindt1_T;
-        ktm_bindt2 := @ktm_bindt2_T;
-        ktm_morph := @ktm_morph_T;
+         ktm_bindt2 := @ktm_bindt2_T;
+         ktm_morph := @ktm_morph_T;
       |}.
 
-    #[export] Instance TraversableMonad_Kleisli_Coalgebraic :
+    #[export] Instance TraversableMonad_Kleisli_Coalgebraic:
       Kleisli.TraversableMonad.TraversableMonad T :=
       {| ktm_bindt0 := @ktm_bindt0_T;
       |}.

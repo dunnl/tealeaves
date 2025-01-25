@@ -18,12 +18,12 @@ Import Product.Notations.
 
 (** * The [shift] operation *)
 (* uncurry (incr W) = join (W ×) *)
-(******************************************************************************)
-Definition shift (F: Type -> Type) `{Map F} `{Monoid_op W} {A} :
+(**********************************************************************)
+Definition shift (F: Type -> Type) `{Map F} `{Monoid_op W} {A}:
   W * F (W * A) -> F (W * A) := map F (uncurry incr) ∘ strength.
 
-(** ** Basic properties of <<shift>> *)
-(******************************************************************************)
+(** ** Basic Properties of [shift] *)
+(**********************************************************************)
 Section shift_functor_lemmas.
 
   Context
@@ -31,9 +31,9 @@ Section shift_functor_lemmas.
     `{Monoid W}
     `{Functor F}.
 
-  (** The definition of [shift] is convenient for theorizing, but [shift_spec]
-      offers an intuitive characterization that is more convenient for
-      practical reasoning. *)
+  (** The definition of [shift] is convenient for theorizing, but
+      [shift_spec] offers an intuitive characterization that is more
+      convenient for practical reasoning. *)
   Corollary shift_spec {A}: forall (w: W) (x: F (W * A)),
       shift F (w, x) = map F (map_fst (fun m => w ● m)) x.
   Proof.
@@ -43,7 +43,7 @@ Section shift_functor_lemmas.
     reflexivity.
   Qed.
 
-  Corollary shift_spec2 {A: Type} :
+  Corollary shift_spec2 {A: Type}:
     shift F (A := A) = map F (join (W ×) A) ∘ strength.
   Proof.
     intros.
@@ -70,10 +70,10 @@ Section shift_functor_lemmas.
   Qed.
 
   (** We can also say <<shift>> is a natural transformation
-   of type <<(W ×) ∘ F ∘ (W ×) \to F ∘ (W ×)>>. *)
+      of type <<(W ×) ∘ F ∘ (W ×) \to F ∘ (W ×)>>. *)
   Lemma shift_map2 {A B}: forall (f: A -> B),
       map (F ∘ prod W) f ∘ shift F =
-      shift F ∘ map (prod W ∘ F ∘ prod W) f.
+        shift F ∘ map (prod W ∘ F ∘ prod W) f.
   Proof.
     intros. ext [w t]. unfold compose at 2.
     now rewrite <- shift_map1.
@@ -90,7 +90,7 @@ Section shift_functor_lemmas.
       e.g. in the binding case of the decorate-join law. *)
   Lemma shift_increment {A}: forall (w: W),
       shift F (A := A) ∘ map_fst (fun m: W => w ● m) =
-      map F (map_fst (fun m: W => w ● m)) ∘ shift F.
+        map F (map_fst (fun m: W => w ● m)) ∘ shift F.
   Proof.
     intros. ext [w' a]. unfold compose. cbn. rewrite 2(shift_spec).
     compose near a on right. rewrite fun_map_map.
@@ -100,9 +100,9 @@ Section shift_functor_lemmas.
   (** Applying <<shift>>, followed by discarding annotations at the
       leaves, is equivalent to simply discarding the original
       annotations and the argument to <<shift>>. *)
-  Lemma shift_extract {A} :
+  Lemma shift_extract {A}:
     map F (extract (prod W) A) ∘ shift F =
-    map F (extract (prod W) A) ∘ extract (prod W) (F (W * A)).
+      map F (extract (prod W) A) ∘ extract (prod W) (F (W * A)).
   Proof.
     unfold shift. reassociate <- on left.
     ext [w t]. unfold compose; cbn.
@@ -112,7 +112,7 @@ Section shift_functor_lemmas.
   Qed.
 
   Lemma shift_zero {A}: forall (t: F (W * A)),
-    shift F (Ƶ, t) = t.
+      shift F (Ƶ, t) = t.
   Proof.
     intros. rewrite shift_spec.
     cut (map_fst (Y := A) (fun w => Ƶ ● w) = id).
@@ -125,11 +125,81 @@ End shift_functor_lemmas.
 From Tealeaves Require Import
   Classes.Categorical.RightComodule.
 
-(** ** Helper lemmas for proving typeclass instances *)
+(** * Decorated Monads *)
+(**********************************************************************)
+Class DecoratedMonad
+  (W: Type)
+  (T: Type -> Type)
+  `{Map T} `{Return T} `{Join T} `{Decorate W T}
+  `{Monoid_op W} `{Monoid_unit W} :=
+  { dmon_functor :> DecoratedFunctor W T;
+    dmon_monad :> Monad T;
+    dmon_monoid :> Monoid W;
+    dmon_ret: forall (A: Type),
+      dec T ∘ ret T A = ret T (W * A) ∘ pair Ƶ;
+    dmon_join: forall (A: Type),
+      dec T ∘ join T A =
+        join T (W * A) ∘ map T (shift T) ∘ dec T ∘ map T (dec T);
+  }.
+
+(** * Decorated Right Modules *)
+(**********************************************************************)
+Section DecoratedModule.
+
+  Context
+    (W: Type)
+    (F T: Type -> Type)
+    `{Map T} `{Return T} `{Join T} `{Decorate W T}
+    `{Map F} `{RightAction F T} `{Decorate W F}
+    `{Monoid_op W} `{Monoid_unit W}.
+
+  Class DecoratedRightModule :=
+    { dmod_monad :> DecoratedMonad W T;
+      dmod_functor :> DecoratedFunctor W T;
+      dmon_module :> Categorical.RightModule.RightModule F T;
+      dmod_action: forall (A: Type),
+        dec F ∘ right_action F (A := A) =
+          right_action F ∘ map F (shift T) ∘ dec F ∘ map F (dec T);
+    }.
+
+End DecoratedModule.
+
+(** * Basic Properties of [shift] on Monads *)
+(**********************************************************************)
+Section shift_monad_lemmas.
+
+  #[local] Generalizable Variables A.
+
+  Context
+    `{Monad T}
+    `{Monoid W}.
+
+  (** [shift] applied to a singleton simplifies to a singleton. *)
+  Lemma shift_return `(a: A) (w1 w2: W):
+    shift T (w2, ret T _ (w1, a)) = ret T _ (w2 ● w1, a).
+  Proof.
+    unfold shift, compose. rewrite strength_return.
+    compose near (w2, (w1, a)) on left.
+    now rewrite (natural (F := fun A => A)).
+  Qed.
+
+  Lemma shift_join `(t: T (T (W * A))) (w: W):
+    shift T (w, join T (W * A) t) =
+      join T (W * A) (map T (fun t => shift T (w, t)) t).
+  Proof.
+    rewrite (shift_spec T). compose near t on left.
+    rewrite natural. unfold compose; cbn.
+    fequal. unfold_ops @Map_compose.
+    fequal. ext x. now rewrite (shift_spec T).
+  Qed.
+
+End shift_monad_lemmas.
+
+(** ** Helper Lemmas for Proving Typeclass Instances *)
 (** Each of the following lemmas is useful for proving one of the laws
     of decorated functors in the binder case(s) of proofs that proceed
     by induction on terms. *)
-(******************************************************************************)
+(**********************************************************************)
 Section helper_lemmas.
 
   Context
@@ -151,6 +221,10 @@ Section helper_lemmas.
     compose near (dec F t) on right. rewrite (fun_map_map).
     fequal. now ext [w' a].
   Qed.
+
+  Context
+    `{Monad T}
+    `{Decorate W T}.
 
   (** Now we can assume that <<dec>> is a natural transformation,
       which is needed for the following. *)
@@ -187,92 +261,13 @@ Section helper_lemmas.
     now ext [w' a].
   Qed.
 
-End helper_lemmas.
-
-(** * Decorated monads *)
-(******************************************************************************)
-Class DecoratedMonad
-  (W : Type)
-  (T : Type -> Type)
-  `{Map T} `{Return T} `{Join T} `{Decorate W T}
-  `{Monoid_op W} `{Monoid_unit W} :=
-  { dmon_functor :> DecoratedFunctor W T;
-    dmon_monad :> Monad T;
-    dmon_monoid :> Monoid W;
-    dmon_ret : forall (A : Type),
-      dec T ∘ ret T A = ret T (W * A) ∘ pair Ƶ;
-    dmon_join : forall (A : Type),
-      dec T ∘ join T A =
-        join T (W * A) ∘ map T (shift T) ∘ dec T ∘ map T (dec T);
-  }.
-
-(** * Decorated right modules *)
-(******************************************************************************)
-Section DecoratedModule.
-
-  Context
-    (W : Type)
-    (F T : Type -> Type)
-    `{Map T} `{Return T} `{Join T} `{Decorate W T}
-    `{Map F} `{RightAction F T} `{Decorate W F}
-    `{Monoid_op W} `{Monoid_unit W}.
-
-  Class DecoratedRightModule :=
-    { dmod_monad :> DecoratedMonad W T;
-      dmod_functor :> DecoratedFunctor W T;
-      dmon_module :> Categorical.RightModule.RightModule F T;
-      dmod_action : forall (A : Type),
-        dec F ∘ right_action F (A := A) =
-          right_action F ∘ map F (shift T) ∘ dec F ∘ map F (dec T);
-    }.
-
-End DecoratedModule.
-
-(** * Basic properties of [shift] on monads *)
-(******************************************************************************)
-Section shift_monad_lemmas.
-
-  #[local] Generalizable Variables A.
-
-  Context
-    `{Monad T}
-    `{Monoid W}.
-
-  (** [shift] applied to a singleton simplifies to a singleton. *)
-  Lemma shift_return `(a : A) (w1 w2 : W) :
-    shift T (w2, ret T _ (w1, a)) = ret T _ (w2 ● w1, a).
-  Proof.
-    unfold shift, compose. rewrite strength_return.
-    compose near (w2, (w1, a)) on left.
-    now rewrite (natural (F := fun A => A)).
-  Qed.
-
-  Lemma shift_join `(t : T (T (W * A))) (w : W) :
-    shift T (w, join T (W * A) t) = join T (W * A) (map T (fun t => shift T (w, t)) t).
-  Proof.
-    rewrite (shift_spec T). compose near t on left.
-    rewrite natural. unfold compose; cbn.
-    fequal. unfold_ops @Map_compose.
-    fequal. ext x. now rewrite (shift_spec T).
-  Qed.
-
-End shift_monad_lemmas.
-
-(** * Helper lemmas for proving instances *)
-(******************************************************************************)
-Section helper_lemmas.
-
-  Context
-    `{Monad T}
-    `{Decorate W T}
-    `{Monoid W}.
-
   (** This lemmas is useful for proving the decoration-join law. *)
-  Lemma dec_helper_4 {A} : forall (t : T (T A)) (w : W),
+  Lemma dec_helper_4 {A}: forall (t: T (T A)) (w: W),
       dec T (join T A t) =
         join T (W * A) (map T (shift T) (dec T (map T (dec T) t))) ->
       shift T (w, dec T (join T A t)) =
-        join T (W * A) (map T (shift T) (shift T (w, dec T (map T (dec T) t)))).
+        join T (W * A)
+          (map T (shift T) (shift T (w, dec T (map T (dec T) t)))).
   Proof.
     introv IH. rewrite !(shift_spec T) in *. rewrite IH.
     compose near (dec T (map T (dec T) t)) on right.
@@ -290,30 +285,32 @@ End helper_lemmas.
 
 #[local] Generalizable Variables ϕ A B.
 
-(** * Pushing decorations through a monoid homomorphism *)
+(** * Pushing Decorations through a Monoid Homomorphism *)
 (** If a functor is readable by a monoid, it is readable by any target
     of a homomorphism from that monoid too. *)
-(******************************************************************************)
+(**********************************************************************)
 Section DecoratedFunctor_monoid_homomorphism.
 
   Import Product.Notations.
 
   Context
-    (Wsrc Wtgt : Type)
+    (Wsrc Wtgt: Type)
     `{Monoid_Morphism Wsrc Wtgt ϕ}
     `{Decorate Wsrc F} `{Map F} `{Return F} `{Join F}
     `{! DecoratedMonad Wsrc F}.
 
-  Instance Decorate_homomorphism :
+  Instance Decorate_homomorphism:
     Decorate Wtgt F := fun A => map F (map_fst ϕ) ∘ dec F.
 
-  Instance Natural_read_morphism : Natural (@dec Wtgt F Decorate_homomorphism).
+  Instance Natural_read_morphism:
+    Natural (@dec Wtgt F Decorate_homomorphism).
   Proof.
     constructor.
     - typeclasses eauto.
     - typeclasses eauto.
     - intros. unfold_ops @Decorate_homomorphism.
       unfold_ops @Map_compose.
+
       reassociate <- on left.
       rewrite (fun_map_map (F := F)).
       rewrite (product_map_commute).
@@ -326,26 +323,39 @@ Section DecoratedFunctor_monoid_homomorphism.
       reflexivity.
   Qed.
 
-  Instance DecoratedFunctor_morphism : Categorical.DecoratedFunctor.DecoratedFunctor Wtgt F.
+  Lemma map_hom_cojoin: forall (A: Type),
+      map_fst ϕ ∘ map (prod Wsrc) (map_fst ϕ) ∘
+        cojoin (prod Wsrc) (A := A) =
+        cojoin (prod Wtgt) ∘ map_fst ϕ.
+  Proof.
+    intros. now ext [w a].
+  Qed.
+
+  Instance DecoratedFunctor_morphism:
+    Categorical.DecoratedFunctor.DecoratedFunctor Wtgt F.
   Proof.
     constructor; try typeclasses eauto.
     - intros. unfold dec, Decorate_homomorphism.
       reassociate <-. reassociate -> near (map F (map_fst ϕ)).
       rewrite <- (natural (ϕ := @dec Wsrc F _) (map_fst ϕ)).
-      reassociate <-. unfold_ops @Map_compose. rewrite (fun_map_map (F := F)).
+      reassociate <-.
+      unfold_ops @Map_compose. rewrite (fun_map_map (F := F)).
       reassociate -> near (@dec Wsrc F _ A).
       rewrite (dfun_dec_dec (E := Wsrc) (F := F)).
       reassociate <-. rewrite (fun_map_map (F := F)).
       reassociate <-. rewrite (fun_map_map (F := F)).
-      fequal. fequal. ext [w a]. reflexivity.
+      rewrite map_hom_cojoin.
+      reflexivity.
     - intros. unfold dec, Decorate_homomorphism.
       reassociate <-. rewrite (fun_map_map (F := F)).
       replace (extract (Wtgt ×) A ∘ map_fst ϕ)
         with (extract (Wsrc ×) A) by now ext [w a].
-      now rewrite (dfun_dec_extract (E := Wsrc) (F := F)).
+      rewrite (dfun_dec_extract (E := Wsrc) (F := F)).
+      reflexivity.
   Qed.
 
-  Instance DecoratedMonad_morphism : DecoratedMonad.DecoratedMonad Wtgt F.
+  Instance DecoratedMonad_morphism:
+    DecoratedMonad.DecoratedMonad Wtgt F.
   Proof.
     inversion H.
     constructor; try typeclasses eauto.
@@ -361,10 +371,14 @@ Section DecoratedFunctor_monoid_homomorphism.
       reassociate -> near (map F (shift F)).
       unfold_ops @Map_compose.
       unfold_compose_in_compose.
-      rewrite (fun_map_map (F := F) _ _ _ (shift F) (map F (map_fst ϕ))).
-      reassociate -> near (map F (map_fst ϕ)). rewrite (fun_map_map (F := F)).
-      rewrite <- (fun_map_map (F := F) _ _ _ (dec F) (map F (map_fst ϕ))).
-      reassociate <-. reassociate -> near (map F (map F (map_fst ϕ))).
+      rewrite (fun_map_map (F := F) _ _ _
+                 (shift F) (map F (map_fst ϕ))).
+      reassociate -> near (map F (map_fst ϕ)).
+      rewrite (fun_map_map (F := F)).
+      rewrite <- (fun_map_map (F := F) _ _ _
+                   (dec F) (map F (map_fst ϕ))).
+      reassociate <-.
+      reassociate -> near (map F (map F (map_fst ϕ))).
       rewrite <- (natural (ϕ := @dec Wsrc F _)).
       reassociate <-. unfold_ops @Map_compose.
       reassociate -> near (map F (map (prod Wsrc) (map F (map_fst ϕ)))).

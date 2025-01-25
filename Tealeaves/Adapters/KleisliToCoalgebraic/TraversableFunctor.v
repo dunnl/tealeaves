@@ -11,15 +11,15 @@ Import Kleisli.TraversableFunctor.Notations.
 #[local] Arguments batch {A} (B)%type_scope _.
 
 (** * Coalgebraic Traversable Functors From Kleisli Traversable Functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived <<ToBatch>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance ToBatch_Traverse `{Traverse T}:
-    Coalgebraic.TraversableFunctor.ToBatch T :=
-  (fun A B => traverse (G := Batch A B) (batch B) :
+  Coalgebraic.TraversableFunctor.ToBatch T :=
+  (fun A B => traverse (G := Batch A B) (batch B):
      T A -> Batch A B (T B)).
 
 End DerivedOperations.
@@ -32,7 +32,7 @@ Class Compat_ToBatch_Traverse
     ToBatch_inst = DerivedOperations.ToBatch_Traverse.
 
 Lemma toBatch_to_traverse
-  `{Compat_ToBatch_Traverse T} :
+  `{Compat_ToBatch_Traverse T}:
   forall A B, toBatch (T := T) =
            traverse (G := Batch A B) (batch B).
 Proof.
@@ -47,7 +47,7 @@ Qed.
   := ltac:(hnf; reflexivity).
 
 (** ** Derived Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
   Section instances.
 
@@ -59,7 +59,7 @@ Module DerivedInstances.
       `{! Compat_ToBatch_Traverse T}.
 
     (** *** Coalgebra laws *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma toBatch_extract_Kleisli: forall (A: Type),
         extract_Batch ∘ toBatch = @id (T A).
     Proof.
@@ -81,11 +81,12 @@ Module DerivedInstances.
       rewrite cojoin_Batch_batch.
       rewrite toBatch_to_traverse.
       rewrite toBatch_to_traverse.
-      rewrite (trf_traverse_traverse (G1 := Batch A B) (G2 := Batch B C)).
+      rewrite (trf_traverse_traverse
+                 (G1 := Batch A B) (G2 := Batch B C)).
       reflexivity.
     Qed.
 
-    #[export] Instance Coalgebraic_Traversable_of_Kleisli :
+    #[export] Instance Coalgebraic_Traversable_of_Kleisli:
       Coalgebraic.TraversableFunctor.TraversableFunctor T :=
       {| trf_extract := toBatch_extract_Kleisli;
          trf_duplicate := toBatch_duplicate_Kleisli;

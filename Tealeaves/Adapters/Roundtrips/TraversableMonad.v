@@ -13,7 +13,7 @@ Import Functors.Early.Batch.
 #[local] Generalizable Variables T.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
-(******************************************************************************)
+(**********************************************************************)
 Module Categorical_Kleisli_Categorical.
 
   Context
@@ -68,7 +68,7 @@ Module Categorical_Kleisli_Categorical.
     reassociate -> on right.
     unfold_compose_in_compose.
     rewrite <- (natural (Natural := dist_natural (F := T))
-                 (ϕ := @dist T _ G _ _ _)).
+                  (ϕ := @dist T _ G _ _ _)).
     reassociate <- on right.
     unfold_ops @Map_compose.
     rewrite (fun_map_map (F := G)).
@@ -94,7 +94,7 @@ Module Categorical_Kleisli_Categorical.
 End Categorical_Kleisli_Categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
-(******************************************************************************)
+(**********************************************************************)
 Module Kleisli_Categorical_Kleisli.
 
   Context
@@ -132,7 +132,7 @@ Module Kleisli_Categorical_Kleisli.
     change (bindt (A := G (T B)) (B := T B)
               (map (F := G) (ret (A := T B)))) with
       (map (F := fun A => A) (bindt (A := G (T B)) (B := T B)
-                             (map (F := G) ret))).
+                                (map (F := G) ret))).
     unfold_compose_in_compose.
     rewrite (ktm_bindt2 (G1 := fun A => A)).
     unfold kc6.
@@ -156,7 +156,7 @@ End Kleisli_Categorical_Kleisli.
 
 
 (** * Coalgebraic ~> Kleisli ~> Coalgebraic *)
-(******************************************************************************)
+(**********************************************************************)
 Module Coalgebraic_Kleisli_Coalgebraic.
 
   Context
@@ -186,7 +186,7 @@ End Coalgebraic_Kleisli_Coalgebraic.
 
 
 (** * Kleisli ~> Coalgebraic ~> Kleisli *)
-(******************************************************************************)
+(**********************************************************************)
 Module Kleisli_Coalgebraic_Kleisli.
 
   Context

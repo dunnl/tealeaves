@@ -5,7 +5,7 @@ From Tealeaves Require Export
   Adapters.KleisliToCategorical.TraversableFunctor.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
-(******************************************************************************)
+(**********************************************************************)
 Module traversable_functor_categorical_kleisli_categorical.
 
   Context
@@ -49,7 +49,7 @@ Module traversable_functor_categorical_kleisli_categorical.
 End traversable_functor_categorical_kleisli_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
-(******************************************************************************)
+(**********************************************************************)
 Module traversable_functor_kleisli_categorical_kleisli.
 
   Context
@@ -89,7 +89,7 @@ Module traversable_functor_kleisli_categorical_kleisli.
 End traversable_functor_kleisli_categorical_kleisli.
 
 (** * Coalgebraic ~> Kleisli ~> Coalgebraic (TODO) *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** * Kleisli ~> Coalgebraic ~> Kleisli (TODO) *)
-(******************************************************************************)
+(**********************************************************************)

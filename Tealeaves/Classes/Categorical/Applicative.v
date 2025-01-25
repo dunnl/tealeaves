@@ -834,17 +834,6 @@ Section ap_compose.
 
 End ap_compose.
 
-(** * Notations *)
-(**********************************************************************)
-Module Notations.
-  Notation "x ⊗ y" :=
-    (mult (x, y)) (at level 50, left associativity): tealeaves_scope.
-  Notation "Gf <⋆> Ga" :=
-    (ap _ Gf Ga) (at level 50, left associativity): tealeaves_scope.
-End Notations.
-
-Import Notations.
-
 (** * Monoids as Constant Applicative Functors *)
 (**********************************************************************)
 From Tealeaves Require Import
@@ -934,3 +923,12 @@ Section with_hom.
   Qed.
 
 End with_hom.
+
+(** * Notations *)
+(**********************************************************************)
+Module Notations.
+  Notation "x ⊗ y" :=
+    (mult (x, y)) (at level 50, left associativity): tealeaves_scope.
+  Notation "Gf <⋆> Ga" :=
+    (ap _ Gf Ga) (at level 50, left associativity): tealeaves_scope.
+End Notations.

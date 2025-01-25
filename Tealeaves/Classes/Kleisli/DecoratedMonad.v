@@ -12,18 +12,18 @@ Import Monoid.Notations.
 #[local] Generalizable Variables W T U.
 
 (** * Decorated Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
-(** ** The [bindd] operation *)
-(******************************************************************************)
+(** ** Operation <<bindd>> *)
+(**********************************************************************)
 Class Bindd (W: Type) (T U: Type -> Type):=
   bindd: forall (A B: Type), (W * A -> T B) -> U A -> U B.
 
 #[global] Arguments bindd {W}%type_scope {T U}%function_scope
   {Bindd} {A B}%type_scope.
 
-(** ** Kleisli composition *)
-(******************************************************************************)
+(** ** Kleisli Composition *)
+(**********************************************************************)
 Definition kc5
   {W: Type}
   {T: Type -> Type}
@@ -39,7 +39,7 @@ Definition kc5
 #[local] Infix "⋆5" := (kc5) (at level 60): tealeaves_scope.
 
 (** ** Typeclass *)
-(******************************************************************************)
+(**********************************************************************)
 Class DecoratedRightPreModule (W: Type) (T U: Type -> Type)
   `{Monoid_op_W: Monoid_op W}
   `{Return_T: Return T}
@@ -83,7 +83,8 @@ Class DecoratedRightModule
   (T: Type -> Type)
   `{DecoratedMonad_WT: DecoratedMonad W T}:
   DecoratedRightModule W T T :=
-  {| kdmod_premod := kdm_premod; |}.
+  {| kdmod_premod := kdm_premod;
+  |}.
 
 Lemma kdm_bindd1 `{DecoratedMonad W T}:
   forall (A: Type), bindd (ret ∘ extract) = @id (T A).
@@ -98,8 +99,8 @@ Proof.
   apply kdmod_bindd2.
 Qed.
 
-(** ** Kleisli category *)
-(******************************************************************************)
+(** ** Kleisli Category Laws *)
+(**********************************************************************)
 Section decorated_monad_kleisli_category.
 
   Context
@@ -109,7 +110,7 @@ Section decorated_monad_kleisli_category.
   #[local] Generalizable Variables A B C D.
 
   (** *** Interaction with [incr], [preincr] *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc5_incr: forall `(g: W * B -> T C) `(f: W * A -> T B) (w: W),
       (g ∘ incr w) ⋆5 (f ∘ incr w) = (g ⋆5 f) ∘ incr w.
   Proof.
@@ -132,7 +133,7 @@ Section decorated_monad_kleisli_category.
   Qed.
 
   (** *** Right identity law *)
-  (******************************************************************************)
+  (********************************************************************)
   Theorem kc5_id_r {B C}: forall (g: W * B -> T C),
       g ⋆5 (ret ∘ extract) = g.
   Proof.
@@ -147,7 +148,7 @@ Section decorated_monad_kleisli_category.
   Qed.
 
   (** *** Left identity law *)
-  (******************************************************************************)
+  (********************************************************************)
   Theorem kc5_id_l {A B}: forall (f: W * A -> T B),
       (ret ∘ extract) ⋆5 f = f.
   Proof.
@@ -161,9 +162,10 @@ Section decorated_monad_kleisli_category.
   Qed.
 
   (** *** Associativity law *)
-  (******************************************************************************)
-  Theorem kc5_assoc {A B C D}: forall (h: W * C -> T D)
-                                  (g: W * B -> T C) (f: W * A -> T B),
+  (********************************************************************)
+  Theorem kc5_assoc {A B C D}:
+    forall (h: W * C -> T D)
+      (g: W * B -> T C) (f: W * A -> T B),
       h ⋆5 (g ⋆5 f) = (h ⋆5 g) ⋆5 f.
   Proof.
     intros. unfold kc5.
@@ -177,7 +179,7 @@ Section decorated_monad_kleisli_category.
 End decorated_monad_kleisli_category.
 
 (** ** Decorated Monad Homomorphisms *)
-(******************************************************************************)
+(**********************************************************************)
 Class DecoratedMonadHom
   (W: Type)
   (T: Type -> Type)
@@ -218,10 +220,10 @@ Class ParallelDecoratedRightModuleHom
   }.
 
 (** * Derived Structures *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
   Section operations.
 
@@ -244,27 +246,27 @@ End DerivedOperations.
 
 Section compatibility.
 
-    Context
-      (W: Type)
-      (T: Type -> Type)
-      (U: Type -> Type)
-      `{Map_U: Map U}
-      `{Bind_TU: Bind T U}
-      `{Mapd_WU: Mapd W U}
-      `{Return_T: Return T}
-      `{Bindd_WTU: Bindd W T U}.
+  Context
+    (W: Type)
+    (T: Type -> Type)
+    (U: Type -> Type)
+    `{Map_U: Map U}
+    `{Bind_TU: Bind T U}
+    `{Mapd_WU: Mapd W U}
+    `{Return_T: Return T}
+    `{Bindd_WTU: Bindd W T U}.
 
-    Class Compat_Map_Bindd: Prop :=
-      compat_map_bindd:
-        Map_U = @DerivedOperations.Map_Bindd W T U Return_T Bindd_WTU.
+  Class Compat_Map_Bindd: Prop :=
+    compat_map_bindd:
+      Map_U = @DerivedOperations.Map_Bindd W T U Return_T Bindd_WTU.
 
-    Class Compat_Mapd_Bindd: Prop :=
-      compat_mapd_bindd:
-        Mapd_WU = @DerivedOperations.Mapd_Bindd W T U Return_T Bindd_WTU.
+  Class Compat_Mapd_Bindd: Prop :=
+    compat_mapd_bindd:
+      Mapd_WU = @DerivedOperations.Mapd_Bindd W T U Return_T Bindd_WTU.
 
-    Class Compat_Bind_Bindd: Prop :=
-      compat_bind_bindd:
-        Bind_TU = @DerivedOperations.Bind_Bindd W T U Bindd_WTU.
+  Class Compat_Bind_Bindd: Prop :=
+    compat_bind_bindd:
+      Bind_TU = @DerivedOperations.Bind_Bindd W T U Bindd_WTU.
 
 End compatibility.
 
@@ -274,49 +276,49 @@ Section self.
     `{Return_T: Return T}
     `{Bindd_WTU: Bindd W T U}.
 
-    #[export] Instance Compat_Map_Bindd_Self:
-      Compat_Map_Bindd W T U (Map_U := DerivedOperations.Map_Bindd W T U).
-    Proof.
-      reflexivity.
-    Qed.
+  #[export] Instance Compat_Map_Bindd_Self:
+    Compat_Map_Bindd W T U (Map_U := DerivedOperations.Map_Bindd W T U).
+  Proof.
+    reflexivity.
+  Qed.
 
-    #[export] Instance Compat_Mapd_Bindd_Self:
-      Compat_Mapd_Bindd W T U (Mapd_WU := DerivedOperations.Mapd_Bindd W T U).
-    Proof.
-      reflexivity.
-    Qed.
+  #[export] Instance Compat_Mapd_Bindd_Self:
+    Compat_Mapd_Bindd W T U (Mapd_WU := DerivedOperations.Mapd_Bindd W T U).
+  Proof.
+    reflexivity.
+  Qed.
 
-    #[export] Instance Compat_Bind_Bindd_Self:
-      Compat_Bind_Bindd W T U (Bind_TU := DerivedOperations.Bind_Bindd W T U).
-    Proof.
-      reflexivity.
-    Qed.
+  #[export] Instance Compat_Bind_Bindd_Self:
+    Compat_Bind_Bindd W T U (Bind_TU := DerivedOperations.Bind_Bindd W T U).
+  Proof.
+    reflexivity.
+  Qed.
 
-    #[export] Instance Compat_Map_Bind_Bindd
-      `{Map_U: Map U}
-      `{Bind_TU: Bind T U}
-      `{! Compat_Bind_Bindd W T U}
-      `{! Compat_Map_Bindd W T U} :
-      Compat_Map_Bind T U.
-    Proof.
-      hnf.
-      rewrite (compat_map_bindd W T U).
-      rewrite (compat_bind_bindd W T U).
-      reflexivity.
-    Qed.
+  #[export] Instance Compat_Map_Bind_Bindd
+    `{Map_U: Map U}
+    `{Bind_TU: Bind T U}
+    `{! Compat_Bind_Bindd W T U}
+    `{! Compat_Map_Bindd W T U}:
+    Compat_Map_Bind T U.
+  Proof.
+    hnf.
+    rewrite (compat_map_bindd W T U).
+    rewrite (compat_bind_bindd W T U).
+    reflexivity.
+  Qed.
 
-    #[export] Instance Compat_Map_Mapd_Bindd
-      `{Map_U: Map U}
-      `{Mapd_WU: Mapd W U}
-      `{! Compat_Mapd_Bindd W T U}
-      `{! Compat_Map_Bindd W T U} :
-      Compat_Map_Mapd W U.
-    Proof.
-      hnf.
-      rewrite (compat_map_bindd W T U).
-      rewrite (compat_mapd_bindd W T U).
-      reflexivity.
-    Qed.
+  #[export] Instance Compat_Map_Mapd_Bindd
+    `{Map_U: Map U}
+    `{Mapd_WU: Mapd W U}
+    `{! Compat_Mapd_Bindd W T U}
+    `{! Compat_Map_Bindd W T U}:
+    Compat_Map_Mapd W U.
+  Proof.
+    hnf.
+    rewrite (compat_map_bindd W T U).
+    rewrite (compat_mapd_bindd W T U).
+    reflexivity.
+  Qed.
 
 End self.
 
@@ -355,7 +357,7 @@ Section compat_laws.
   Lemma map_to_bind
     `{! Compat_Map_Bindd W T U}
     `{! Compat_Bind_Bindd W T U}
-    : forall (A B: Type) (f: A -> B),
+   : forall (A B: Type) (f: A -> B),
       map f = bind (ret ∘ f).
   Proof.
     intros.
@@ -367,7 +369,7 @@ Section compat_laws.
   Lemma map_to_mapd
     `{! Compat_Map_Bindd W T U}
     `{! Compat_Mapd_Bindd W T U}
-    : forall (A B: Type) (f: A -> B),
+   : forall (A B: Type) (f: A -> B),
       map f = mapd (f ∘ extract).
   Proof.
     intros.
@@ -379,7 +381,7 @@ Section compat_laws.
 End compat_laws.
 
 (** ** Derived Kleisli Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section decorated_monad_derived_kleisli_laws.
 
   Import Kleisli.Monad.Notations.
@@ -403,7 +405,7 @@ Section decorated_monad_derived_kleisli_laws.
   Context {A B C: Type}.
 
   (** *** Homogeneous cases *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc5_11: forall (g: W * B -> C) (f: W * A -> B),
       (ret ∘ g) ⋆5 (ret ∘ f) = ret ∘ (g ⋆1 f).
   Proof.
@@ -437,7 +439,7 @@ Section decorated_monad_derived_kleisli_laws.
   Qed.
 
   (** *** Heterogeneous cases *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc5_51: forall (g: W * B -> T C) (f: W * A -> B),
       g ⋆5 (ret ∘ f) = g ⋆1 f.
   Proof.
@@ -539,7 +541,7 @@ Section decorated_monad_derived_kleisli_laws.
 End decorated_monad_derived_kleisli_laws.
 
 (** ** Derived Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section decorated_monad_derived_composition_laws.
 
   Import Kleisli.Monad.Notations.
@@ -572,7 +574,7 @@ Section decorated_monad_derived_composition_laws.
   Context (A B C: Type).
 
   (** *** Homogeneous cases *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma mapd_mapd: forall (g: W * B -> C) (f: W * A -> B),
       mapd (T := U) g ∘ mapd f = mapd (g ⋆1 f).
   Proof.
@@ -598,7 +600,7 @@ Section decorated_monad_derived_composition_laws.
   Qed.
 
   (** *** Composition with <<bindd>> and <<bind>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Corollary bind_bindd: forall (g: B -> T C) (f: W * A -> T B),
       bind g ∘ bindd f = bindd (U := U) (g ⋆ f).
   Proof.
@@ -621,7 +623,7 @@ Section decorated_monad_derived_composition_laws.
   Qed.
 
   (** *** Composition with <<bindd>> and <<mapd>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma bindd_mapd: forall (g: W * B -> T C) (f: W * A -> B),
       bindd g ∘ mapd f = bindd (U := U) (g ⋆1 f).
   Proof.
@@ -643,7 +645,7 @@ Section decorated_monad_derived_composition_laws.
   Qed.
 
   (** *** Composition with <<map>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma bindd_map: forall (g: W * B -> T C) (f: A -> B),
       bindd g ∘ map f = bindd (U := U) (g ∘ map f).
   Proof.
@@ -665,7 +667,7 @@ Section decorated_monad_derived_composition_laws.
   Qed.
 
   (** *** Composition between <<mapd>> and <<bind>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma mapd_bind: forall (g: W * B -> C) (f: A -> T B),
       mapd g ∘ bind f = bindd (U := U) (fun '(w, a) => mapd (g ⦿ w) (f a)).
   Proof.
@@ -689,7 +691,7 @@ Section decorated_monad_derived_composition_laws.
   Qed.
 
   (** *** Composition with <<ret>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma bind_ret: forall (f: A -> T B),
       bind (U := T) f ∘ ret = f.
   Proof.
@@ -709,9 +711,9 @@ Section decorated_monad_derived_composition_laws.
   Qed.
 
   (** *** Identity laws *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma bind_id:
-      bind (U := U) ret = @id (U A).
+    bind (U := U) ret = @id (U A).
   Proof.
     intros.
     rewrite bind_to_bindd.
@@ -720,7 +722,7 @@ Section decorated_monad_derived_composition_laws.
   Qed.
 
   Lemma mapd_id:
-      mapd (T := U) extract = @id (U A).
+    mapd (T := U) extract = @id (U A).
   Proof.
     intros.
     rewrite mapd_to_bindd.
@@ -731,62 +733,64 @@ Section decorated_monad_derived_composition_laws.
 End decorated_monad_derived_composition_laws.
 
 (** ** Derived Typeclass Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
   Section decorated_monad_derivedinstances.
 
-  Context
-    W T U
-    `{Return_T: Return T}
-    `{Bindd_WTT: Bindd W T T}
-    `{Bindd_WTU: Bindd W T U}
-    `{Mapd_WT: Mapd W T}
-    `{Mapd_WU: Mapd W U}
-    `{Bind_TT: Bind T T}
-    `{Bind_TU: Bind T U}
-    `{Map_T: Map T}
-    `{Map_U: Map U}
-    `{op: Monoid_op W}
-    `{unit: Monoid_unit W}
-    `{! Compat_Map_Bindd W T T}
-    `{! Compat_Bind_Bindd W T T}
-    `{! Compat_Mapd_Bindd W T T}
-    `{! Compat_Map_Bindd W T U}
-    `{! Compat_Bind_Bindd W T U}
-    `{! Compat_Mapd_Bindd W T U}
-    `{! DecoratedRightPreModule W T U}
-    `{! DecoratedMonad W T}.
+    Context
+      (W: Type)
+      (T: Type -> Type)
+      (U: Type -> Type)
+      `{Return_T: Return T}
+      `{Bindd_WTT: Bindd W T T}
+      `{Bindd_WTU: Bindd W T U}
+      `{Mapd_WT: Mapd W T}
+      `{Mapd_WU: Mapd W U}
+      `{Bind_TT: Bind T T}
+      `{Bind_TU: Bind T U}
+      `{Map_T: Map T}
+      `{Map_U: Map U}
+      `{op: Monoid_op W}
+      `{unit: Monoid_unit W}
+      `{! Compat_Map_Bindd W T T}
+      `{! Compat_Bind_Bindd W T T}
+      `{! Compat_Mapd_Bindd W T T}
+      `{! Compat_Map_Bindd W T U}
+      `{! Compat_Bind_Bindd W T U}
+      `{! Compat_Mapd_Bindd W T U}
+      `{! DecoratedRightPreModule W T U}
+      `{! DecoratedMonad W T}.
 
-  #[local] Existing Instance DecoratedRightModule_DecoratedMonad.
+    #[local] Existing Instance DecoratedRightModule_DecoratedMonad.
 
-  #[export] Instance RightPreModule_DecoratedRightPreModule :
-    RightPreModule T U :=
-    {| kmod_bind1 := bind_id;
-       kmod_bind2 := bind_bind;
-    |}.
+    #[export] Instance RightPreModule_DecoratedRightPreModule:
+      RightPreModule T U :=
+      {| kmod_bind1 := bind_id;
+         kmod_bind2 := bind_bind;
+      |}.
 
-  #[export] Instance RightPreModule_DecoratedRightPreModule_Monad :
-    RightPreModule T T :=
-    {| kmod_bind1 := bind_id;
-       kmod_bind2 := bind_bind;
-    |}.
+    #[export] Instance RightPreModule_DecoratedRightPreModule_Monad:
+      RightPreModule T T :=
+      {| kmod_bind1 := bind_id;
+         kmod_bind2 := bind_bind;
+      |}.
 
-  #[export] Instance Monad_DecoratedMonad :
-    Kleisli.Monad.Monad T :=
-    {| kmon_bind0 := bind_ret;
-    |}.
+    #[export] Instance Monad_DecoratedMonad:
+      Kleisli.Monad.Monad T :=
+      {| kmon_bind0 := bind_ret;
+      |}.
 
-  #[export] Instance DecoratedFunctor_DecoratedRightModule:
-    Kleisli.DecoratedFunctor.DecoratedFunctor W U :=
-    {| kdf_mapd1 := mapd_id;
-       kdf_mapd2 := mapd_mapd;
-    |}.
+    #[export] Instance DecoratedFunctor_DecoratedRightModule:
+      Kleisli.DecoratedFunctor.DecoratedFunctor W U :=
+      {| kdf_mapd1 := mapd_id;
+         kdf_mapd2 := mapd_mapd;
+      |}.
 
   End decorated_monad_derivedinstances.
 End DerivedInstances.
 
 (** * Instance for Writer *)
-(******************************************************************************)
+(**********************************************************************)
 Import Product.Notations.
 
 Section decorated_functor_reader.
@@ -838,7 +842,7 @@ Section decorated_functor_reader.
 End decorated_functor_reader.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Infix "⋆5" := (kc5) (at level 60): tealeaves_scope.
   Include Monoid.Notations.

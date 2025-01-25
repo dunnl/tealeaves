@@ -5,10 +5,10 @@ From Tealeaves Require Import
 #[local] Generalizable Variables T G ϕ.
 
 (** * Kleisli Traversable Functors from Categorical Traversable Functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Traverse_Categorical
@@ -22,11 +22,11 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   (* Alectryon doesn't like this
-  Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
+     Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
    *)
   Import DerivedOperations.
 
@@ -87,8 +87,8 @@ Module DerivedInstances.
 
     #[export] Instance: Classes.Kleisli.TraversableFunctor.TraversableFunctor T :=
       {| trf_traverse_id := @traverse_id;
-        trf_traverse_traverse := @traverse_traverse;
-        trf_traverse_morphism := @traverse_morphism;
+         trf_traverse_traverse := @traverse_traverse;
+         trf_traverse_morphism := @traverse_morphism;
       |}.
 
   End with_functor.

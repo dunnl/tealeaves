@@ -9,25 +9,25 @@ Import Monoid.Notations.
 Import Functor.Notations.
 Import Comonad.Notations.
 
-#[local] Notation "( X  × )" := (prod X) : function_scope.
+#[local] Notation "( X  × )" := (prod X): function_scope.
 #[local] Generalizable Variables T A B C.
 
 (** * Categorical Decorated monads from Kleisli Decorated Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
   Section operations.
 
     Context
-      (W : Type)
-      (T : Type -> Type)
+      (W: Type)
+      (T: Type -> Type)
       `{Return_T: Return T}
       `{Bindd_WTT: Bindd W T T}.
 
     (*
-    #[export] Instance Map_Bindd: Map T :=
+      #[export] Instance Map_Bindd: Map T :=
       fun A B f => bindd (ret ∘ f ∘ extract).
      *)
 
@@ -39,26 +39,27 @@ Module DerivedOperations.
 
   End operations.
 End DerivedOperations.
+
 (** ** Derived Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   Section with_monad.
 
     Context
-      (W : Type)
-      (T : Type -> Type)
+      (W: Type)
+      (T: Type -> Type)
       `{Kleisli.DecoratedMonad.DecoratedMonad W T}.
 
     Import Kleisli.DecoratedMonad.DerivedOperations.
     (* Alectryon doesn't like this
-    Import KleisliToCategorical.DecoratedMonad.DerivedOperations.
+       Import KleisliToCategorical.DecoratedMonad.DerivedOperations.
      *)
     Import DerivedOperations.
 
-    (** *** Functor laws *)
-    (******************************************************************************)
-    Lemma map_id : forall (A : Type),
+    (** *** Functor Laws *)
+    (******************************************************************)
+    Lemma map_id: forall (A: Type),
         map (@id A) = @id (T A).
     Proof.
       intros. unfold_ops @Map_Bindd.
@@ -66,7 +67,7 @@ Module DerivedInstances.
       now rewrite (kdmod_bindd1 (T := T)).
     Qed.
 
-    Lemma map_map : forall (A B C : Type) (f : A -> B) (g : B -> C),
+    Lemma map_map: forall (A B C: Type) (f: A -> B) (g: B -> C),
         map g ∘ map f = map (F := T) (g ∘ f).
     Proof.
       intros. unfold_ops @Map_Bindd.
@@ -77,12 +78,12 @@ Module DerivedInstances.
 
     #[local] Instance: Classes.Functor.Functor T :=
       {| fun_map_id := map_id;
-        fun_map_map := map_map;
+         fun_map_map := map_map;
       |}.
 
-    (** *** Monad laws *)
-    (******************************************************************************)
-    Lemma ret_natural : Natural (@ret T _).
+    (** *** Monad Laws *)
+    (******************************************************************)
+    Lemma ret_natural: Natural (@ret T _).
     Proof.
       constructor.
       - typeclasses eauto.
@@ -92,7 +93,7 @@ Module DerivedInstances.
         reflexivity.
     Qed.
 
-    Lemma join_natural : Natural (@join T _).
+    Lemma join_natural: Natural (@join T _).
     Proof.
       constructor.
       - typeclasses eauto.
@@ -111,7 +112,8 @@ Module DerivedInstances.
         reflexivity.
     Qed.
 
-    Lemma join_ret : `(join (T := T) ∘ ret (T := T) = @id (T A)).
+    Lemma join_ret:
+      `(join (T := T) ∘ ret (T := T) = @id (T A)).
     Proof.
       intros.
       unfold_ops @Join_Bindd.
@@ -120,7 +122,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma join_map_ret : `(join (T := T) ∘ map (F := T) ret = @id (T A)).
+    Lemma join_map_ret:
+      `(join (T := T) ∘ map (F := T) ret = @id (T A)).
     Proof.
       intros.
       unfold_ops @Map_Bindd.
@@ -134,7 +137,7 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma join_join :
+    Lemma join_join:
       `(join ∘ join (T := T) (A := T A) =
           join ∘ map (F := T) join).
     Proof.
@@ -159,16 +162,17 @@ Module DerivedInstances.
 
     #[local] Instance: Categorical.Monad.Monad T :=
       {| Monad.mon_ret_natural := ret_natural;
-        mon_join_natural := join_natural;
-        mon_join_ret := join_ret;
-        mon_join_map_ret := join_map_ret;
-        mon_join_join := join_join;
+         mon_join_natural := join_natural;
+         mon_join_ret := join_ret;
+         mon_join_map_ret := join_map_ret;
+         mon_join_join := join_join;
       |}.
 
-    (** *** Decorated functor laws *)
-    (******************************************************************************)
-    Lemma dec_dec : forall (A : Type),
-        dec T ∘ dec T = map (F := T) (cojoin (W := (W ×))) ∘ dec T (A := A).
+    (** *** Decorated Functor Laws *)
+    (******************************************************************)
+    Lemma dec_dec: forall (A: Type),
+        dec T ∘ dec T =
+          map (F := T) (cojoin (W := (W ×))) ∘ dec T (A := A).
     Proof.
       intros.
       (* Merge LHS *)
@@ -187,7 +191,7 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma dec_extract : forall (A : Type),
+    Lemma dec_extract: forall (A: Type),
         map (F := T) (extract (W := (W ×))) ∘ dec T = @id (T A).
     Proof.
       intros.
@@ -201,7 +205,7 @@ Module DerivedInstances.
       apply (kdmod_bindd1 (T := T)).
     Qed.
 
-    Lemma dec_natural : Natural (@dec W T _).
+    Lemma dec_natural: Natural (@dec W T _).
     Proof.
       constructor.
       - typeclasses eauto.
@@ -218,15 +222,16 @@ Module DerivedInstances.
         reflexivity.
     Qed.
 
-    #[local] Instance: Categorical.DecoratedFunctor.DecoratedFunctor W T :=
+    #[local] Instance:
+      Categorical.DecoratedFunctor.DecoratedFunctor W T :=
       {| dfun_dec_natural := dec_natural;
-        dfun_dec_dec := dec_dec;
-        dfun_dec_extract := dec_extract;
+         dfun_dec_dec := dec_dec;
+         dfun_dec_extract := dec_extract;
       |}.
 
-    (** *** Decorated monad laws *)
-    (******************************************************************************)
-    Lemma dmon_ret_ : forall (A : Type),
+    (** *** Decorated Monad Laws *)
+    (******************************************************************)
+    Lemma dmon_ret_: forall (A: Type),
         dec T ∘ ret (T := T) = ret ∘ pair Ƶ (B := A).
     Proof.
       intros.
@@ -234,9 +239,10 @@ Module DerivedInstances.
       now rewrite (kdm_bindd0 (T := T)).
     Qed.
 
-    Lemma dmon_join_ : forall (A : Type),
+    Lemma dmon_join_: forall (A: Type),
         dec T ∘ join (T := T) (A:=A) =
-          join (T := T) ∘ map (F := T) (shift T) ∘ dec T ∘ map (F := T) (dec T).
+          join (T := T) ∘ map (F := T)
+            (shift T) ∘ dec T ∘ map (F := T) (dec T).
     Proof.
       intros.
       unfold shift, strength.
@@ -287,7 +293,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[local] Instance: Categorical.DecoratedMonad.DecoratedMonad W T :=
+    #[local] Instance:
+      Categorical.DecoratedMonad.DecoratedMonad W T :=
       {| dmon_ret := dmon_ret_;
          dmon_join := dmon_join_;
       |}.

@@ -69,6 +69,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
+    (** ** Typeclass Instance *)
+    (******************************************************************)
     #[export] Instance DecoratedFunctor: Kleisli.DecoratedFunctor.DecoratedFunctor E F :=
       {| kdf_mapd1 := @mapd_id;
         kdf_mapd2 := @mapd_mapd

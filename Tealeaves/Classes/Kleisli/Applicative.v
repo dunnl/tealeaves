@@ -9,26 +9,30 @@ From Tealeaves Require Export
 
 #[local] Generalizable Variables G A B C.
 
-(** * Applicative functors *)
-(******************************************************************************)
-Class Ap (F : Type -> Type) :=
-  ap : forall {A B : Type}, F (A -> B) -> F A -> F B.
+(** * Applicative Functors *)
+(**********************************************************************)
+Class Ap (F: Type -> Type) :=
+  ap: forall {A B: Type}, F (A -> B) -> F A -> F B.
 
-Notation "Gf <⋆> Ga" := (ap Gf Ga) (at level 50, left associativity).
+Notation "Gf <⋆> Ga" :=
+  (ap Gf Ga) (at level 50, left associativity).
 
 Class Applicative
-        (G : Type -> Type)
-        `{Pure G} `{Ap G} :=
+  (G: Type -> Type)
+  `{Pure G} `{Ap G} :=
   { ap1: forall `(t: G A), pure id <⋆> t = t;
-    ap2: forall `(f : A -> B) (a : A),
+    ap2: forall `(f: A -> B) (a: A),
       pure f <⋆> pure a = pure (f a);
-    ap3: forall `(f : G (A -> B)) (a : A),
+    ap3: forall `(f: G (A -> B)) (a: A),
       f <⋆> pure a = pure (fun f => f a) <⋆> f;
-    ap4: forall {A B C : Type} (f : G (B -> C)) (g : G (A -> B)) (a : G A),
+    ap4: forall {A B C: Type}
+           (f: G (B -> C)) (g: G (A -> B)) (a: G A),
       (pure compose) <⋆> f <⋆> g <⋆> a =
         f <⋆> (g <⋆> a)
   }.
 
+(** ** Derived Categorical Applicative Functor *)
+(**********************************************************************)
 Section Derived.
 
   Context
@@ -38,7 +42,7 @@ Section Derived.
     fun A B (f: A -> B) (a: G A) => pure f <⋆> a.
 
   #[export] Instance Functor_Applicative
-   `{! Applicative G}: Functor G.
+    `{! Applicative G}: Functor G.
   Proof.
     constructor.
     - intros. unfold_ops @Map_PureAp.
@@ -56,7 +60,7 @@ Section Derived.
   #[local] Instance Mult_PureAp: Mult G :=
     fun A B (p: G A * G B) =>
       match p with
-      | (a, b) => pure pair <⋆> a <⋆> b : G (A * B)
+      | (a, b) => pure pair <⋆> a <⋆> b: G (A * B)
       end.
 
   #[local] Instance CatApp_App

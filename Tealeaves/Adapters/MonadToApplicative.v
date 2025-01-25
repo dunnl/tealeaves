@@ -6,8 +6,8 @@ From Tealeaves Require Import
 
 Import Misc.Product.Notations.
 
-(** * Monadic applicative functors *)
-(******************************************************************************)
+(** * Monadic Applicative Functors *)
+(**********************************************************************)
 Section Applicative_Monad.
 
   #[local] Generalizable Variable T.
@@ -21,22 +21,28 @@ Section Applicative_Monad.
   Import CategoricalToKleisli.Monad.DerivedOperations.
   Import CategoricalToKleisli.Monad.DerivedInstances.
 
-  #[global] Instance Pure_Monad : Pure T := @ret T _.
+  (** ** Derived Operations *)
+  (********************************************************************)
+  #[global] Instance Pure_Monad: Pure T := @ret T _.
 
-  #[global] Instance Mult_Monad : Mult T :=
-    fun A B (p : T A * T B) =>
+  #[global] Instance Mult_Monad: Mult T :=
+    fun A B (p: T A * T B) =>
       match p with (ta, tb) =>
-                   bind (fun a => strength (a, tb)) ta
+                     bind (fun a => strength (a, tb)) ta
       end.
 
-  Theorem app_pure_natural_Monad : forall (A B : Type) (f : A -> B) (x : A),
+  (** ** Derived Laws *)
+  (********************************************************************)
+  Theorem app_pure_natural_Monad:
+    forall (A B: Type) (f: A -> B) (x: A),
       map f (pure x) = pure (f x).
   Proof.
     intros. unfold_ops @Pure_Monad.
     compose near x. now rewrite (natural (ϕ := @ret T _)).
   Qed.
 
-  Theorem app_mult_natural_Monad : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : T A) (y : T B),
+  Theorem app_mult_natural_Monad:
+    forall (A B C D: Type) (f: A -> C) (g: B -> D) (x: T A) (y: T B),
       map f x ⊗ map g y = map (map_tensor f g) (x ⊗ y).
   Proof.
     intros. unfold_ops @Mult_Monad.
@@ -47,7 +53,8 @@ Section Applicative_Monad.
     now rewrite 2(fun_map_map (F := T)).
   Qed.
 
-  Theorem app_assoc_Monad : forall (A B C : Type) (x : T A) (y : T B) (z : T C),
+  Theorem app_assoc_Monad:
+    forall (A B C: Type) (x: T A) (y: T B) (z: T C),
       map α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z).
   Proof.
     intros. unfold_ops @Mult_Monad.
@@ -66,7 +73,7 @@ Section Applicative_Monad.
     now do 2 (rewrite (fun_map_map (F := T))).
   Qed.
 
-  Theorem app_unital_l_Monad : forall (A : Type) (x : T A),
+  Theorem app_unital_l_Monad: forall (A: Type) (x: T A),
       map left_unitor (pure tt ⊗ x) = x.
   Proof.
     intros. unfold_ops @Mult_Monad @Pure_Monad.
@@ -76,12 +83,12 @@ Section Applicative_Monad.
     now rewrite (fun_map_id (F := T)).
   Qed.
 
-  Theorem app_unital_r_Monad : forall (A : Type) (x : T A),
+  Theorem app_unital_r_Monad: forall (A: Type) (x: T A),
       map right_unitor (x ⊗ pure tt) = x.
   Proof.
     intros. unfold_ops @Mult_Monad @Pure_Monad.
     compose near x. rewrite (map_bind).
-    replace (map right_unitor ∘ (fun a : A => strength (a, ret tt)))
+    replace (map right_unitor ∘ (fun a: A => strength (a, ret tt)))
       with (ret (T := T) (A := A)).
     now rewrite mon_bind_id.
     ext a; unfold compose; cbn. compose near (ret tt).
@@ -89,7 +96,7 @@ Section Applicative_Monad.
     rewrite (natural (ϕ := @ret T _ )). now unfold compose; cbn.
   Qed.
 
-  Theorem app_mult_pure_Monad : forall (A B : Type) (a : A) (b : B),
+  Theorem app_mult_pure_Monad: forall (A B: Type) (a: A) (b: B),
       pure a ⊗ pure b = pure (a, b).
   Proof.
     intros. intros. unfold_ops @Mult_Monad @Pure_Monad.
@@ -97,13 +104,15 @@ Section Applicative_Monad.
     now rewrite strength_return.
   Qed.
 
-  #[global] Instance Applicative_Monad : Applicative T :=
-  { app_mult_pure := app_mult_pure_Monad;
-    app_pure_natural := app_pure_natural_Monad;
-    app_mult_natural := app_mult_natural_Monad;
-    app_assoc := app_assoc_Monad;
-    app_unital_l := app_unital_l_Monad;
-    app_unital_r := app_unital_r_Monad;
-  }.
+  (** ** Typeclass Instance *)
+  (********************************************************************)
+  #[global] Instance Applicative_Monad: Applicative T :=
+    { app_mult_pure := app_mult_pure_Monad;
+      app_pure_natural := app_pure_natural_Monad;
+      app_mult_natural := app_mult_natural_Monad;
+      app_assoc := app_assoc_Monad;
+      app_unital_l := app_unital_l_Monad;
+      app_unital_r := app_unital_r_Monad;
+    }.
 
 End Applicative_Monad.

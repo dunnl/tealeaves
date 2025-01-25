@@ -5,51 +5,58 @@ From Tealeaves Require Export
 Import Functor.Notations.
 
 #[local] Generalizable Variables T U A.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments join T%function_scope {Join} {A}%type_scope _.
-#[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments join T%function_scope {Join}
+  {A}%type_scope _.
+#[local] Arguments ret T%function_scope {Return}
+  (A)%type_scope _.
 
 (** * Right modules *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Operation *)
-(******************************************************************************)
-Class RightAction (T U : Type -> Type) :=
-  right_action : T ∘ U ⇒ T.
+(**********************************************************************)
+Class RightAction (T U: Type -> Type) :=
+  right_action: T ∘ U ⇒ T.
 
-#[global] Arguments right_action (T)%function_scope {U} {RightAction} {A}%type_scope _.
-#[local] Arguments right_action (T U)%function_scope {RightAction} A%type_scope _.
+#[global] Arguments right_action (T)%function_scope {U}
+  {RightAction} {A}%type_scope _.
+#[local] Arguments right_action (T U)%function_scope
+  {RightAction} A%type_scope _.
 
 (** ** Typeclass *)
-(******************************************************************************)
+(**********************************************************************)
 Class RightModule
-  (T U : Type -> Type)
+  (T U: Type -> Type)
   `{Map U} `{Return U} `{Join U}
   `{Map T} `{RightAction T U} :=
   { mod_object :> Functor T;
     mon_monoid :> Monad U;
     mod_natural :> Natural (right_action T U);
-    mod_action_map_ret :
+    mod_action_map_ret:
     `(right_action T U A ∘ map T (ret U A) = @id (T A));
-    mod_action_action :
+    mod_action_action:
     `(right_action T U A ∘ right_action T U (U A) =
         right_action T U A ∘ map T (join U));
   }.
 
-(** * Coerceing monads into modules *)
-(******************************************************************************)
+(** * Coercing Monads into Right Modules *)
+(**********************************************************************)
 Module MonadToModule.
 
-  #[export] Instance RightAction_Join `{Join T} : RightAction T T := @join T _.
+  #[export] Instance RightAction_Join `{Join T}:
+  RightAction T T := @join T _.
 
-  #[export] Instance RightModule_Monad `{Monad T} : RightModule T T :=
+  #[export] Instance RightModule_Monad `{Monad T}: RightModule T T :=
     {| mod_action_map_ret := mon_join_map_ret (T := T);
-      mod_action_action := mon_join_join (T := T); |}.
+       mod_action_action := mon_join_join (T := T);
+    |}.
 
 End MonadToModule.
 
-(** ** Right modules compose with functors *)
-(******************************************************************************)
+(** ** Right Modules Compose with Functors *)
+(**********************************************************************)
 Section functor_module_composition.
 
   #[local] Generalizable Variables F G.
@@ -58,14 +65,14 @@ Section functor_module_composition.
     `{Functor T1}
     `{RightModule T2 U}.
 
-  #[global] Instance RightAction_compose : RightAction (T1 ∘ T2) U :=
+  #[global] Instance RightAction_compose: RightAction (T1 ∘ T2) U :=
     fun A => @map T1 _ (T2 (U A)) (T2 A) (right_action T2 U A).
 
   #[local] Set Keyed Unification.
 
   (** It does not seem to be a good idea to add this globally. It is
       better to use it explicitly. *)
-  Instance RightModule_compose : RightModule (T1 ∘ T2) U.
+  Instance RightModule_compose: RightModule (T1 ∘ T2) U.
   Proof.
     constructor; try typeclasses eauto.
     - constructor; try typeclasses eauto.

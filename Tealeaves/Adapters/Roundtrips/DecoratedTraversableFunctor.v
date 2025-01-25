@@ -9,7 +9,7 @@ Import Kleisli.DecoratedTraversableFunctor.Notations.
 #[local] Generalizable Variable T.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
-(******************************************************************************)
+(**********************************************************************)
 Module Roundtrip1.
 
   Context
@@ -75,7 +75,7 @@ Module Roundtrip1.
 End Roundtrip1.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
-(******************************************************************************)
+(**********************************************************************)
 Module Roundtrip2.
 
   Context

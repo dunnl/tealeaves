@@ -8,7 +8,7 @@ Import Kleisli.Monad.Notations.
 #[local] Generalizable Variable T W.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
-(******************************************************************************)
+(**********************************************************************)
 Module Roundtrip1.
 
   Context
@@ -98,7 +98,7 @@ Module Roundtrip1.
 End Roundtrip1.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
-(******************************************************************************)
+(**********************************************************************)
 Module Roundtrip2.
 
   Section section.

@@ -9,7 +9,7 @@ Import Comonad.Notations.
 #[local] Generalizable Variable T.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
-(******************************************************************************)
+(**********************************************************************)
 Section decorated_functor_categorical_kleisli_categorical.
 
   Context
@@ -57,7 +57,7 @@ Section decorated_functor_categorical_kleisli_categorical.
 End decorated_functor_categorical_kleisli_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
-(******************************************************************************)
+(**********************************************************************)
 Section decorated_functor_kleisli_categorical_kleisli.
 
   Context

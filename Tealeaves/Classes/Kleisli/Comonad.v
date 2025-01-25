@@ -7,17 +7,18 @@ Import Functor.Notations.
 #[local] Generalizable Variables W A B C D.
 
 (** * Comonads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Class Cobind (W : Type -> Type) :=
   cobind : forall (A B : Type), (W A -> B) -> W A -> W B.
 
-#[global] Arguments cobind {W}%function_scope {Cobind} {A B}%type_scope _%function_scope _.
+#[global] Arguments cobind {W}%function_scope {Cobind}
+  {A B}%type_scope _%function_scope _.
 
 (** ** Co-Kleisli Composition *)
-(******************************************************************************)
+(**********************************************************************)
 Definition kc1 {W : Type -> Type} `{Cobind W}
   {A B C : Type} `(g : W B -> C) `(f : W A -> B) : (W A -> C) :=
   g ∘ @cobind W _ A B f.
@@ -25,19 +26,19 @@ Definition kc1 {W : Type -> Type} `{Cobind W}
 #[local] Infix "⋆1" := (kc1) (at level 60) : tealeaves_scope.
 
 (** ** Typeclasses *)
-(******************************************************************************)
+(**********************************************************************)
 Class Comonad `(W : Type -> Type) `{Cobind W} `{Extract W} :=
-    { kcom_cobind0 : forall `(f : W A -> B),
-        @extract W _ B ∘ @cobind W _ A B f = f;
-      kcom_cobind1 : forall (A : Type),
-        @cobind W _ A A (@extract W _ A) = @id (W A);
-      kcom_cobind2 : forall (A B C : Type) (g : W B -> C) (f : W A -> B),
-        @cobind W _ B C g ∘ @cobind W _ A B f = @cobind W _ A C (g ⋆1 f)
-    }.
+  { kcom_cobind0 : forall `(f : W A -> B),
+      @extract W _ B ∘ @cobind W _ A B f = f;
+    kcom_cobind1 : forall (A : Type),
+      @cobind W _ A A (@extract W _ A) = @id (W A);
+    kcom_cobind2 : forall (A B C : Type) (g : W B -> C) (f : W A -> B),
+      @cobind W _ B C g ∘ @cobind W _ A B f = @cobind W _ A C (g ⋆1 f)
+  }.
 
 
 (** ** Kleisli Category Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section Kleisli_category_laws.
 
   Context
@@ -61,7 +62,8 @@ Section Kleisli_category_laws.
     reflexivity.
   Qed.
 
-  Lemma kc1_assoc {A B C D} : forall (h : W C -> D) (g : W B -> C) (f : W A -> B),
+  Lemma kc1_assoc {A B C D}:
+    forall (h : W C -> D) (g : W B -> C) (f : W A -> B),
       h ⋆1 g ⋆1 f = h ⋆1 (g ⋆1 f).
   Proof.
     intros.
@@ -75,18 +77,19 @@ End Kleisli_category_laws.
 
 (** ** Comonad Homomorphisms *)
 (** TODO *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** * Derived Structures *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Map_Cobind (W: Type -> Type)
     `{Extract_W: Extract W} `{Cobind_W: Cobind W}: Map W :=
-  fun A B (f : A -> B) => @cobind W Cobind_W A B (f ∘ @extract W Extract_W A).
+  fun A B (f : A -> B) =>
+    @cobind W Cobind_W A B (f ∘ @extract W Extract_W A).
 
 End DerivedOperations.
 
@@ -119,13 +122,13 @@ Proof.
 Qed.
 
 (** ** Derived Kleisli Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section derived_instances.
 
   Context `{Comonad W} `{Map W} `{! Compat_Map_Cobind W}.
 
   (** *** Special cases for Kleisli composition *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc1_10 {A B C} : forall (g : W B -> C) (f : A -> B),
       g ⋆1 (f ∘ extract) = g ∘ map f.
   Proof.
@@ -156,7 +159,7 @@ Section derived_instances.
   Qed.
 
   (** *** Other rules for Kleisli composition *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc1_asc1: forall `(h: W C -> D) `(g: B -> C) `(f: W A -> B),
       h ⋆1 (g ∘ f) = (h ∘ map g) ⋆1 f.
   Proof.
@@ -179,7 +182,7 @@ Section derived_instances.
 End derived_instances.
 
 (** ** Derived Typeclass Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   #[export] Instance Functor_Comonad
@@ -208,7 +211,7 @@ Module DerivedInstances.
 End DerivedInstances.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Infix "⋆1" := (kc1) (at level 60) : tealeaves_scope.
 End Notations.

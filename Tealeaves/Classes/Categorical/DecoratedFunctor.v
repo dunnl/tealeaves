@@ -11,10 +11,10 @@ Import Functor.Notations.
 #[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
 
 (** * Decorated functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Class Decorate
   (E: Type)
   (F: Type -> Type) :=
@@ -24,7 +24,7 @@ Class Decorate
 #[local] Arguments dec {E}%type_scope _%function_scope {Decorate} (A)%type_scope _.
 
 (** ** Typeclass *)
-(******************************************************************************)
+(**********************************************************************)
 Class DecoratedFunctor
   (E: Type)
   (F: Type -> Type)
@@ -39,7 +39,7 @@ Class DecoratedFunctor
   }.
 
 (** ** Decoration-preserving natural transformations *)
-(******************************************************************************)
+(**********************************************************************)
 Class DecoratePreservingTransformation
   (F G: Type -> Type)
   `{! Map F} `{Decorate E F}
@@ -50,7 +50,7 @@ Class DecoratePreservingTransformation
   }.
 
 (** * Decorated functor instance for [Reader] *)
-(******************************************************************************)
+(**********************************************************************)
 Section DecoratedFunctor_reader.
 
   Context

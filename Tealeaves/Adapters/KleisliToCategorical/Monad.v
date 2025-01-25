@@ -5,10 +5,10 @@ From Tealeaves Require Export
 Import Kleisli.Monad.Notations.
 
 (** * Kleisli Monads to Categorical Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived <<join>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
   #[export] Instance Join_Bind
     (T : Type -> Type)
@@ -18,7 +18,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived Categorical Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module ToCategorical.
 
   Section proofs.
@@ -28,7 +28,7 @@ Module ToCategorical.
       `{Classes.Kleisli.Monad.Monad T}.
 
     (* Alectyron doesn't like this
-    Import KleisliToCategorical.Monad.DerivedOperations.
+       Import KleisliToCategorical.Monad.DerivedOperations.
      *)
     Import DerivedOperations.
     Existing Instance Kleisli.Monad.DerivedOperations.Map_Bind.

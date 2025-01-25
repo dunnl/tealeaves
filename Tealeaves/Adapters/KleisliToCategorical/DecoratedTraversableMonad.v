@@ -27,10 +27,10 @@ Import Functor.Notations.
   {Map_G Pure_G Mult_G} {A B}%type_scope _%function_scope _.
 
 (** * DTMs from Kleisli DTMs *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
   Section operations.
 
@@ -51,7 +51,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   Section with_monad.
@@ -62,7 +62,7 @@ Module DerivedInstances.
       `{Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
     (* Alectryon doesn't like this
-    Import KleisliToCategorical.DecoratedTraversableMonad.DerivedOperations.
+       Import KleisliToCategorical.DecoratedTraversableMonad.DerivedOperations.
      *)
     Import DerivedOperations.
     Import Kleisli.DecoratedTraversableMonad.DerivedOperations.
@@ -85,7 +85,7 @@ Module DerivedInstances.
       rewrite <- map_to_mapd.
 
     (** ** Monad Instance *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma ret_natural: Natural (@ret T _).
     Proof.
       constructor.
@@ -113,7 +113,7 @@ Module DerivedInstances.
         change (map (T ∘ T) f) with (map T (map T f)).
         rewrite (binddt_map (G2 := fun A => A) (T := T) (U := T)).
         rewrite <- (natural (Natural := Natural_extract_reader W)
-                           (ϕ := @extract (W ×) _) (map T f)).
+                      (ϕ := @extract (W ×) _) (map T f)).
         reflexivity.
     Qed.
 
@@ -136,13 +136,13 @@ Module DerivedInstances.
       unfold_compose_in_compose.
       rewrite bindd_map.
       rewrite <- (natural (Natural := Natural_extract_reader W)
-                         (ϕ := @extract (W ×) _)).
+                    (ϕ := @extract (W ×) _)).
       unfold_ops @Map_I.
       rewrite kdm_bindd1.
       reflexivity.
     Qed.
 
-    Lemma join_join :
+    Lemma join_join:
       `(join T ∘ join T (A := T A) = join T ∘ map T (join T)).
     Proof.
       intros.
@@ -155,7 +155,7 @@ Module DerivedInstances.
       (* Merge RHS *)
       rewrite (bindd_map).
       rewrite <- (natural (Natural := Natural_extract_reader W)
-                         (ϕ := @extract (W ×) _)).
+                    (ϕ := @extract (W ×) _)).
       unfold_ops @Map_I.
       change (extract ?W ?A) with (id ∘ extract W A) at 1.
       change (extract ?W ?A) with (id ∘ extract W A) at 2.
@@ -172,7 +172,7 @@ Module DerivedInstances.
       |}.
 
     (** ** Decorated Functor Instance *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma dec_dec: forall (A: Type),
         dec T ∘ dec T = map T (cojoin (W ×)) ∘ dec T (A := A).
     Proof.
@@ -232,7 +232,7 @@ Module DerivedInstances.
       |}.
 
     (** ** Decorated Monad Instance *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma dmon_ret_: forall (A: Type),
         dec T ∘ ret T A = ret T (W * A) ∘ pair Ƶ (B:=A).
     Proof.
@@ -291,10 +291,10 @@ Module DerivedInstances.
       |}.
 
     (** ** Traversable Functor instance *)
-    (******************************************************************************)
-    Lemma dist_natural_T :
+    (******************************************************************)
+    Lemma dist_natural_T:
       forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G)
-        (Happ: Applicative G),
+             (Happ: Applicative G),
         Natural (@dist T _ G H2 H3 H4).
     Proof.
       intros. inversion Happ. constructor.
@@ -312,7 +312,7 @@ Module DerivedInstances.
         rewrite binddt_map.
         reassociate -> on right.
         rewrite <- (natural (Natural := Natural_extract_reader W)
-                           (ϕ := @extract (W ×) _)).
+                      (ϕ := @extract (W ×) _)).
         unfold_ops Map_I.
         reassociate <- on right.
         rewrite (fun_map_map (F := G)).
@@ -322,8 +322,8 @@ Module DerivedInstances.
 
     Lemma dist_morph_T:
       forall (G1 G2: Type -> Type)
-        (H2: Map G1) (H4: Mult G1) (H3: Pure G1) (H5: Map G2)
-        (H7: Mult G2) (H6: Pure G2) (ϕ: forall A: Type, G1 A -> G2 A),
+             (H2: Map G1) (H4: Mult G1) (H3: Pure G1) (H5: Map G2)
+             (H7: Mult G2) (H6: Pure G2) (ϕ: forall A: Type, G1 A -> G2 A),
         ApplicativeMorphism G1 G2 ϕ ->
         forall A: Type, dist T G2 ∘ map T (ϕ A) = ϕ (T A) ∘ dist T G1.
     Proof.
@@ -333,7 +333,7 @@ Module DerivedInstances.
       rewrite (kdtm_morph G1 G2 (ϕ := ϕ)).
       reassociate -> on left.
       rewrite <- (natural (Natural := Natural_extract_reader W)
-                         (ϕ := @extract (W ×) _)).
+                    (ϕ := @extract (W ×) _)).
       unfold_ops Map_I.
       reassociate <- on left.
       rewrite (natural (ϕ := ϕ)).
@@ -348,10 +348,10 @@ Module DerivedInstances.
     Qed.
 
     (*
-    #[export] Instance TraversableMonadFull_Categorical_of_Kleisli: TraversableMonadFull T.
-    Proof.
+      #[export] Instance TraversableMonadFull_Categorical_of_Kleisli: TraversableMonadFull T.
+      Proof.
       constructor; typeclasses eauto.
-    Qed.
+      Qed.
      *)
 
     Lemma dist_linear_T: forall (G1: Type -> Type) (H2: Map G1) (H3: Pure G1) (H4: Mult G1),
@@ -377,7 +377,7 @@ Module DerivedInstances.
       |}.
 
     (** ** Traversable Monad Instance *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma trvmon_ret_T: forall (G: Type -> Type) (H3: Map G) (H4: Pure G) (H5: Mult G),
         Applicative G -> forall A: Type, dist T G ∘ ret T (G A) = map G (ret T A).
     Proof.
@@ -386,10 +386,10 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma trvmon_join_T :
+    Lemma trvmon_join_T:
       forall (G: Type -> Type) (H3: Map G)
-        (H4: Pure G) (H5: Mult G)
-        (Happ: Applicative G),
+             (H4: Pure G) (H5: Mult G)
+             (Happ: Applicative G),
       forall A: Type, dist T G ∘ join T = map G (join T) ∘ dist T G ∘ map T (dist T G (A := A)).
     Proof.
       intros.
@@ -414,16 +414,17 @@ Module DerivedInstances.
 
     #[export] Instance: Categorical.TraversableMonad.TraversableMonad T :=
       {| trvmon_ret := trvmon_ret_T;
-        trvmon_join := trvmon_join_T;
+         trvmon_join := trvmon_join_T;
       |}.
 
     (** ** Decorated Traversable Functor instance *)
-    (******************************************************************************)
-    Lemma dtfun_compat_T :
+    (******************************************************************)
+    Lemma dtfun_compat_T:
       forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G)
-        (Happ: Applicative G),
+             (Happ: Applicative G),
       forall A: Type,
-          dist T G ∘ map T (strength) ∘ dec (A := G A) T = map G (dec T) ∘ dist T G.
+        dist T G ∘ map T (strength) ∘ dec (A := G A) T =
+          map G (dec T) ∘ dist T G.
     Proof.
       intros. unfold_ops @Dist_Binddt @Decorate_Binddt.
       change (ret T (W * G A)) with (ret T (W * G A) ∘ id).
@@ -451,7 +452,7 @@ Module DerivedInstances.
       |}.
 
     (** *** Decorated Traversable monad instance *)
-    (******************************************************************************)
+    (******************************************************************)
     #[export] Instance: Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
       ltac:(constructor; typeclasses eauto).
 

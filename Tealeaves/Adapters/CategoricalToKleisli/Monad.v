@@ -8,26 +8,26 @@ Import Kleisli.Monad.Notations.
 #[local] Generalizable Variables T A B C.
 
 (** * Categorical Monad to Kleisli Monad *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived <<bind>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Bind_Categorical (T: Type -> Type)
     `{map_T: Map T}
     `{join_T: Join T}
-    : Bind T T :=
+ : Bind T T :=
   fun {A B} (f: A -> T B) => join ∘ map (F := T) f.
 
 End DerivedOperations.
 
 (** ** Derived Kleisli Monad Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   (* Alectryon doesn't like this
-  Import CategoricalToKleisli.Monad.DerivedOperations.
+     Import CategoricalToKleisli.Monad.DerivedOperations.
    *)
   Import DerivedOperations.
 
@@ -37,7 +37,7 @@ Module DerivedInstances.
       `{Categorical.Monad.Monad T}.
 
     (** ** Derived <<bind>> is Compatible with Original <map>> *)
-    (******************************************************************************)
+    (******************************************************************)
     #[export] Instance Compat_Map_Bind_Derived:
       Compat_Map_Bind T T.
     Proof.
@@ -52,7 +52,7 @@ Module DerivedInstances.
     Qed.
 
     (** *** Identity law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma mon_bind_id:
       forall (A: Type),
         bind (ret (T := T) (A := A)) = @id (T A).
@@ -64,7 +64,7 @@ Module DerivedInstances.
     Qed.
 
     (** *** Composition law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma mon_bind_bind:
       forall (A B C: Type) (g: B -> T C) (f: A -> T B),
         bind g ∘ bind f = bind (g ⋆ f).
@@ -84,7 +84,7 @@ Module DerivedInstances.
     Qed.
 
     (** *** Unit law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma mon_bind_comp_ret: forall (A B: Type) (f: A -> T B),
         bind f ∘ ret = f.
     Proof.
@@ -112,71 +112,71 @@ Module DerivedInstances.
 End DerivedInstances.
 
 (*
-(** ** Derived laws *)
-(******************************************************************************)
-Section ToKleisli_laws.
+  (** ** Derived laws *)
+  (********************************************************************)
+  Section ToKleisli_laws.
 
   Context
-    (T: Type -> Type)
-   `{Categorical.Monad.Monad T}.
+  (T: Type -> Type)
+  `{Categorical.Monad.Monad T}.
 
   Generalizable All Variables.
   Import Kleisli.Monad.Notations.
   Import ToKleisli.
 
   Lemma map_to_bind: forall `(f: A -> B),
-      map T f = bind (ret T B ∘ f).
+  map T f = bind (ret T B ∘ f).
   Proof.
-    intros. unfold_ops @Bind_Categorical.
-    rewrite <- (fun_map_map (F := T)).
-    reassociate <-.
-    rewrite (mon_join_map_ret (T := T)).
-    reflexivity.
+  intros. unfold_ops @Bind_Categorical.
+  rewrite <- (fun_map_map (F := T)).
+  reassociate <-.
+  rewrite (mon_join_map_ret (T := T)).
+  reflexivity.
   Qed.
 
   Corollary bind_map: forall `(g: B -> T C) `(f: A -> B),
-      bind g ∘ map T f = bind (g ∘ f).
+  bind g ∘ map T f = bind (g ∘ f).
   Proof.
-    intros. unfold transparent tcs.
-    now rewrite <- (fun_map_map (F := T)).
+  intros. unfold transparent tcs.
+  now rewrite <- (fun_map_map (F := T)).
   Qed.
 
   Corollary map_bind: forall `(g: B -> C) `(f: A -> T B),
-      map T g ∘ bind f = bind (map T g ∘ f).
+  map T g ∘ bind f = bind (map T g ∘ f).
   Proof.
-    intros. unfold transparent tcs.
-    reassociate <- on left.
-    rewrite (natural). unfold_ops @Map_compose.
-    now rewrite <- (fun_map_map (F := T)).
+  intros. unfold transparent tcs.
+  reassociate <- on left.
+  rewrite (natural). unfold_ops @Map_compose.
+  now rewrite <- (fun_map_map (F := T)).
   Qed.
 
   (** ** Left identity law *)
   Theorem kleisli_id_l: forall `(f: A -> T B),
-      (@ret T _ B) ⋆1 f = f.
+  (@ret T _ B) ⋆1 f = f.
   Proof.
-    intros. unfold kc1. now rewrite (kmon_bind1 (T := T)).
+  intros. unfold kc1. now rewrite (kmon_bind1 (T := T)).
   Qed.
 
   (** ** Right identity law *)
   Theorem kleisli_id_r: forall `(g: B -> T C),
-      g ⋆1 (@ret T _ B) = g.
+  g ⋆1 (@ret T _ B) = g.
   Proof.
-    intros. unfold kc1. now rewrite (kmon_bind0 (T := T)).
+  intros. unfold kc1. now rewrite (kmon_bind0 (T := T)).
   Qed.
 
   (** ** Associativity law *)
   Theorem kleisli_assoc: forall `(h: C -> T D) `(g: B -> T C) `(f: A -> T B),
-      h ⋆1 (g ⋆1 f) = (h ⋆1 g) ⋆1 f.
+  h ⋆1 (g ⋆1 f) = (h ⋆1 g) ⋆1 f.
   Proof.
-    intros. unfold kc1 at 3. now rewrite <- (kmon_bind2 (T := T)).
+  intros. unfold kc1 at 3. now rewrite <- (kmon_bind2 (T := T)).
   Qed.
 
-End ToKleisli_laws.
-*)
+  End ToKleisli_laws.
+ *)
 
 
 (** * Right modules *)
-(******************************************************************************)
+(**********************************************************************)
 Module ToKleisliRightModule.
 
   Import DerivedOperations.
@@ -196,7 +196,7 @@ Module ToKleisliRightModule.
       `{Categorical.RightModule.RightModule F T}.
 
     (** *** Identity law *)
-    Lemma bind_id :
+    Lemma bind_id:
       `(bind (ret (T := T) (A := A)) = @id (F A)).
     Proof.
       intros. unfold transparent tcs.
@@ -225,16 +225,16 @@ Module ToKleisliRightModule.
     `{Categorical.RightModule.RightModule F T}
    : Kleisli.Monad.RightPreModule T F :=
     {| kmod_bind1 := @bind_id T F _ _ _ _ _ _;
-      kmod_bind2 := @bind_bind T F _ _ _ _ _ _;
+       kmod_bind2 := @bind_bind T F _ _ _ _ _ _;
     |}.
 
   (** ** Specification for <<map>>  *)
-  (******************************************************************************)
+  (********************************************************************)
   Section Monad_suboperations.
 
     Context
       (T: Type -> Type)
-     `{Categorical.Monad.Monad T}.
+      `{Categorical.Monad.Monad T}.
 
     (** *** [map] as a special case of [bind]. *)
     Lemma map_to_bind {A B}: forall `(f: A -> B),

@@ -3,10 +3,10 @@ From Tealeaves Require Import
   Classes.Kleisli.Comonad.
 
 (** * Comonad to Kleisli comonad *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived <<cobind>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Cobind_Cojoin (W: Type -> Type)
@@ -16,10 +16,10 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived co-Kleisli Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
   (* Alectryon doesn't like this
-  Import CategoricalToKleisli.Comonad.DerivedOperations.
+     Import CategoricalToKleisli.Comonad.DerivedOperations.
    *)
   Import DerivedOperations.
 
@@ -37,7 +37,7 @@ Module DerivedInstances.
       (A B)%type_scope _%function_scope _.
 
     (** *** Identity law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma kcom_bind_id:
       `(@cobind W _ A A (@extract W _ A) = @id (W A)).
     Proof.
@@ -47,7 +47,7 @@ Module DerivedInstances.
     Qed.
 
     (** *** Composition law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma kcom_bind_bind: forall (A B C: Type) (g: W B -> C) (f: W A -> B),
         cobind W B C g ∘ cobind W A B f = cobind W A C (g ⋆1 f).
     Proof.
@@ -68,7 +68,7 @@ Module DerivedInstances.
     Qed.
 
     (** *** Unit law *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma kcom_bind_comp_ret: forall (A B: Type) (f: W A -> B),
         extract ∘ cobind W A B f = f.
     Proof.
@@ -81,12 +81,12 @@ Module DerivedInstances.
     Qed.
 
     (** ** Typeclass Instance *)
-    (******************************************************************************)
+    (******************************************************************)
     #[export] Instance KleisliComonad_CategoricalComonad:
       Kleisli.Comonad.Comonad W :=
       {| kcom_cobind0 := @kcom_bind_comp_ret;
-        kcom_cobind1 := @kcom_bind_id;
-        kcom_cobind2 := @kcom_bind_bind;
+         kcom_cobind1 := @kcom_bind_id;
+         kcom_cobind2 := @kcom_bind_bind;
       |}.
 
   End with_monad.

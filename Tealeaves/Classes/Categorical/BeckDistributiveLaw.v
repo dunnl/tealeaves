@@ -1,19 +1,21 @@
-(** This file contains a formalization of distributive laws in the
-    sense of Beck, i.e.  a distribution of one monad over another with
-    compatibility properties such that the composition of the two also
-    forms a monad. *)
-(** # <a href="https://ncatlab.org/nlab/show/distributive+law">https://ncatlab.org/nlab/show/distributive+law</a># *)
+(*|
+This file contains a formalization of `distributive laws <https://ncatlab.org/nlab/show/distributive+law>`_
+in the sense of Beck, i.e.  a distribution of one monad over another
+with compatibility properties such that the composition of the two
+also forms a monad.
+|*)
 
 From Tealeaves Require Export
   Classes.Categorical.Monad
   Functors.Compose.
 
 #[local] Generalizable Variables T U A B.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
 #[local] Arguments join T%function_scope {Join} {A}%type_scope _.
 #[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
 
-(** * Beck distribution laws *)
+(** * Beck Distribution Laws *)
 (**********************************************************************)
 Class BeckDistribution (U T: Type -> Type)
   := bdist: forall {A: Type}, U (T A) -> T (U A).
@@ -46,7 +48,7 @@ Section BeckDistributiveLaw.
 
 End BeckDistributiveLaw.
 
-(** * Beck distributive laws induce a composite monad *)
+(** * Beck Distributive Laws Induce a Composite Monad *)
 (**********************************************************************)
 Section BeckDistributivelaw_composite_monad.
 
@@ -85,8 +87,10 @@ Section BeckDistributivelaw_composite_monad.
   Lemma Natural_join_Beck: Natural (@join (T ∘ U) _).
   Proof.
     constructor; try typeclasses eauto.
-    intros A B f. unfold_ops @Map_compose @Join_Beck.
-    change_left (map T (map U f) ∘ map T (join U) ∘ join T ∘ map T (bdist U T)).
+    intros A B f.
+    unfold_ops @Map_compose @Join_Beck.
+    change_left
+      (map T (map U f) ∘ map T (join U) ∘ join T ∘ map T (bdist U T)).
     rewrite (fun_map_map (F := T)).
     rewrite (natural (G := T) (F := T ∘ T)).
     rewrite (natural (G := U) (F := U ∘ U)).
@@ -94,10 +98,12 @@ Section BeckDistributivelaw_composite_monad.
     unfold_ops @Map_compose.
     change_left ((join T ∘ map T (map T (join U))) ∘
                    (map T (map T (map U (map U f))) ∘ map T (bdist U T))).
-    rewrite (natural (G := T)).
     rewrite (fun_map_map (F := T)).
     rewrite (natural (G := T ∘ U) (Natural := bdist_natural U T)).
-    now rewrite <- (fun_map_map (F := T)).
+    rewrite <- (fun_map_map (F := T)).
+    (* RHS *)
+    rewrite (natural (G := T)).
+    reflexivity.
   Qed.
   #[local] Unset Keyed Unification.
 
@@ -119,7 +125,8 @@ Section BeckDistributivelaw_composite_monad.
     join (T ∘ U) ∘ map (T ∘ U) (ret (T ∘ U)) = @id (T (U A)).
   Proof.
     intros. unfold_ops @Join_Beck @Ret_Beck.
-    rewrite (natural (G := T) (Natural := mon_join_natural (T := T))).
+    rewrite (natural (G := T)
+               (Natural := mon_join_natural (T := T))).
     unfold_ops @Map_compose.
     do 2 reassociate ->.
     #[local] Set Keyed Unification.
@@ -163,8 +170,10 @@ Section BeckDistributivelaw_composite_monad.
     rewrite (natural (ϕ := @join T _ )).
     repeat reassociate <- on left.
     (* Pull one <<join T>> to next to the other (past distributions) *)
-    change (?x ∘ map (T ∘ T) (map U (join U)) ∘ map T (bdist U T) ∘ ?y)
-      with (x ∘ (map T (map (T ∘ U) (join U)) ∘ map T (bdist U T)) ∘ y).
+    change
+      (?x ∘ map (T ∘ T) (map U (join U)) ∘ map T (bdist U T) ∘ ?y)
+      with
+      (x ∘ (map T (map (T ∘ U) (join U)) ∘ map T (bdist U T)) ∘ y).
     rewrite (fun_map_map (F := T)).
     reassociate -> near (map T (map U (bdist U T))).
     rewrite (fun_map_map (F := T)).
@@ -223,6 +232,7 @@ Section BeckDistributivelaw_composite_monad.
        mon_join_natural := Natural_join_Beck;
        mon_join_ret := fun A => join_ret_Beck;
        mon_join_map_ret := fun A => join_map_ret_Beck;
-       mon_join_join := fun A => join_join_Beck; |}.
+       mon_join_join := fun A => join_join_Beck;
+    |}.
 
-       End BeckDistributivelaw_composite_monad.
+End BeckDistributivelaw_composite_monad.

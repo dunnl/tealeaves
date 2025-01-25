@@ -9,10 +9,10 @@ Import Kleisli.TraversableMonad.Notations.
 #[local] Generalizable Variables T G ϕ.
 
 (** * Categorical Traversable Monads from Kleisli Traversable Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
   Section operations.
 
@@ -29,7 +29,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   Section with_monad.
@@ -42,8 +42,8 @@ Module DerivedInstances.
     Import Kleisli.TraversableMonad.DerivedInstances.
     Import Kleisli.TraversableFunctor.DerivedInstances.
 
-    (** *** Monad instance *)
-    (******************************************************************************)
+    (** *** Monad Instance *)
+    (******************************************************************)
     #[export] Instance Natural_Return: Natural (@ret T _).
     Proof.
       constructor.
@@ -111,13 +111,13 @@ Module DerivedInstances.
     #[export] Instance CategoricalMonad_KleisliTraversableMonad:
       Categorical.Monad.Monad T :=
       {| mon_join_ret := mon_join_ret_T;
-        mon_join_map_ret := mon_join_map_ret_T;
-        mon_join_join := mon_join_join_T;
+         mon_join_map_ret := mon_join_map_ret_T;
+         mon_join_join := mon_join_join_T;
       |}.
 
-    (** *** Traversable functor instance *)
-    (******************************************************************************)
-    Lemma dist_natural_T :
+    (** *** Traversable Functor Instance *)
+    (******************************************************************)
+    Lemma dist_natural_T:
       forall (G: Type -> Type) (mapG: Map G) (pureG: Pure G) (multG: Mult G),
         Applicative G -> Natural (@dist T _ G mapG pureG multG).
     Proof.
@@ -173,17 +173,17 @@ Module DerivedInstances.
     #[export] Instance CategoricalTraversableFunctor_KleisliTraversableMonad:
       Categorical.TraversableFunctor.TraversableFunctor T :=
       {| dist_natural := dist_natural_T;
-        dist_morph := @dist_morph_T;
-        dist_unit := dist_unit_T;
-        dist_linear := @dist_linear_T;
+         dist_morph := @dist_morph_T;
+         dist_unit := dist_unit_T;
+         dist_linear := @dist_linear_T;
       |}.
 
-    (** *** Traversable monad instance *)
-    (******************************************************************************)
+    (** *** Traversable Monad Instance *)
+    (******************************************************************)
     Lemma trvmon_ret_T: forall (G: Type -> Type) (H3: Map G) (H4: Pure G) (H5: Mult G),
         Applicative G ->
         forall A: Type, dist T G ∘ ret (T := T) (A := G A) =
-                     map (F := G) (ret (T := T)).
+                          map (F := G) (ret (T := T)).
     Proof.
       intros. unfold_ops @Dist_Bindt.
       rewrite (ktm_bindt0 (T := T)); auto.
@@ -208,9 +208,9 @@ Module DerivedInstances.
     Qed.
 
     #[export] Instance CategoricalTraversableMonad_KleisliTraversableMonad
-      : Categorical.TraversableMonad.TraversableMonad T :=
+     : Categorical.TraversableMonad.TraversableMonad T :=
       {| trvmon_ret := trvmon_ret_T;
-        trvmon_join := trvmon_join_T;
+         trvmon_join := trvmon_join_T;
       |}.
 
   End with_monad.

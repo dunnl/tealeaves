@@ -17,10 +17,10 @@ Import Strength.Notations.
   change (?f ∘ x ∘ y ∘ ?g) with (f ∘ (x ∘ y) ∘ g).
 
 (** * Kleisli DTMs from Categorical DTMs *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Binddt_Categorical
@@ -37,7 +37,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 (** ** Derived Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -48,21 +48,23 @@ Module DerivedInstances.
       `{Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
     Context
-      (G1: Type -> Type) `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
-      (G2: Type -> Type) `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}.
+      (G1: Type -> Type)
+      `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
+      (G2: Type -> Type)
+      `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}.
 
     Definition kcompose_dtm_alt {A B C} :=
       fun `(g: W * B -> G2 (T C))
         `(f: W * A -> G1 (T B))
       => (map (F := G1) ((map (F := G2) (μ))
-                    ∘ δ T G2
-                    ∘ map (F := T) (g ∘ μ (T := (W ×)))
-                    ∘ σ
-                    ∘ map (F := (W ×)) (dec T)))
+                          ∘ δ T G2
+                          ∘ map (F := T) (g ∘ μ (T := (W ×)))
+                          ∘ σ
+                          ∘ map (F := (W ×)) (dec T)))
           ∘ σ
           ∘ cobind (W := (W ×)) f.
 
-    Lemma equiv' {A B C} :
+    Lemma equiv' {A B C}:
       forall  `(g: W * B -> G2 (T C))
          `(f: W * A -> G1 (T B)),
         g ⋆7 f =
@@ -95,7 +97,7 @@ Module DerivedInstances.
     Context
       `{Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
-    Theorem kdtm_binddt1_T {A} :
+    Theorem kdtm_binddt1_T {A}:
       binddt (G := fun A => A) (η (T := T) ∘ extract) = @id (T A).
     Proof.
       unfold_ops @Binddt_Categorical.
@@ -137,18 +139,23 @@ Module DerivedInstances.
 
       Context
         (G1: Type -> Type)
-          `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
-          (G2: Type -> Type)
-          `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}
-          `(g: W * B -> G2 (T C)) `(f: W * A -> G1 (T B)).
+        `{Map G1} `{Pure G1} `{Mult G1} `{! Applicative G1}
+        (G2: Type -> Type)
+        `{Map G2} `{Pure G2} `{Mult G2} `{! Applicative G2}
+        `(g: W * B -> G2 (T C)) `(f: W * A -> G1 (T B)).
 
-      #[local] Arguments map (F)%function_scope {Map} {A B}%type_scope f%function_scope _.
-      #[local] Arguments dist F%function_scope {ApplicativeDist} G%function_scope {H H0 H1} (A)%type_scope _.
-      #[local] Arguments dec {E}%type_scope F%function_scope {Decorate} (A)%type_scope _.
-      #[local] Arguments join {T}%function_scope {Join} (A)%type_scope _.
+      #[local] Arguments map (F)%function_scope {Map}
+        {A B}%type_scope f%function_scope _.
+      #[local] Arguments dist F%function_scope {ApplicativeDist}
+        G%function_scope {H H0 H1} (A)%type_scope _.
+      #[local] Arguments dec {E}%type_scope F%function_scope
+        {Decorate} (A)%type_scope _.
+      #[local] Arguments join {T}%function_scope
+        {Join} (A)%type_scope _.
 
-      Theorem kdtm_binddt2_T :
-        map G1 (binddt (G := G2) g) ∘ binddt (G := G1) f = binddt (G := G1 ∘ G2) (g ⋆7 f).
+      Theorem kdtm_binddt2_T:
+        map G1 (binddt (G := G2) g) ∘ binddt (G := G1) f =
+          binddt (G := G1 ∘ G2) (g ⋆7 f).
       Proof.
         rewrite (equiv' _ _ g f).
         unfold kcompose_dtm_alt.
@@ -168,9 +175,9 @@ Module DerivedInstances.
         rewrite <- (natural (ϕ := @dec W T _)).
         reassociate <- on left.
         rewrite <- (fun_map_map
-                     (F := G1)
-                     _ _ _
-                     (dec T (T B))).
+                      (F := G1)
+                      _ _ _
+                      (dec T (T B))).
         reassociate <- on left.
         bring (map G1 (dec T (T B))) and (δ T G1 (T B)) together.
         rewrite <- (dtfun_compat (F := T) (G := G1)).
@@ -250,7 +257,7 @@ Module DerivedInstances.
 
     End binddt_binddt.
 
-    Lemma kdtm_morph_T :
+    Lemma kdtm_morph_T:
       forall `{ApplicativeMorphism G1 G2 ϕ},
       forall (A B: Type) (f: W * A -> G1 (T B)),
         ϕ (T B) ∘ binddt (G := G1) f = binddt (G := G2) (ϕ (T B) ∘ f).
@@ -269,7 +276,7 @@ Module DerivedInstances.
     Qed.
 
     (** ** Typeclass Instances *)
-    (******************************************************************************)
+    (******************************************************************)
     #[export] Instance: Kleisli.DecoratedTraversableMonad.DecoratedTraversableRightPreModule W T T :=
       {|
         kdtm_binddt1 := @kdtm_binddt1_T;

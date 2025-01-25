@@ -3,13 +3,14 @@ From Tealeaves Require Export
   Adapters.KleisliToCategorical.DecoratedMonad.
 
 Import Product.Notations.
-Import Monad.Notations.
+Import Kleisli.Monad.Notations.
+Import Kleisli.Comonad.Notations.
 Import Kleisli.DecoratedMonad.Notations.
 
 #[local] Generalizable Variable T W.
 
 (** * Categorical ~> Kleisli ~> Categorical *)
-(******************************************************************************)
+(**********************************************************************)
 Module decorated_monad_categorical_kleisli_categorical.
 
   Context
@@ -76,7 +77,7 @@ Module decorated_monad_categorical_kleisli_categorical.
 End decorated_monad_categorical_kleisli_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
-(******************************************************************************)
+(**********************************************************************)
 Module decorated_monad_kleisli_categorical_kleisli.
 
   Context
