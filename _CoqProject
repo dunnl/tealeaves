@@ -298,6 +298,8 @@ Tealeaves/Backends/Adapters/LNtoDB.v
 ##########################################################
 Tealeaves/Backends/Named/Named.v
 Tealeaves/Backends/Named/Names.v
+Tealeaves/Backends/Adapters/KeyName.v
+
 
 ##########################################################
 # EX: CONFLUENCE OF LAMBDA CALCULUS                      #

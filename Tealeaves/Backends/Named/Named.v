@@ -80,11 +80,11 @@ End examples.
 (******************************************************************************)
 Inductive Binding : Type :=
   Bound : list name -> name -> list name -> Binding
-| Unbound : Binding.
+| Unbound: list name -> Binding.
 
 Fixpoint get_binding_rec (discarded : list name)  (l : list name) (looking_for : name) : Binding :=
   match l with
-  | nil => Unbound
+  | nil => Unbound discarded
   | cons y ys =>
       if looking_for == y
       then Bound discarded y ys
@@ -144,7 +144,7 @@ Section named_local_operations.
     list name * name -> T name name :=
     fun '(context, var) =>
       match (get_binding context var) with
-      | Unbound =>
+      | Unbound _ =>
           if var == looking_for
           then u
           else ret (T := T name) var
