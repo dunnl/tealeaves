@@ -6,6 +6,11 @@ Import Product.Notations.
 
 #[local] Generalizable Variables ϕ F G A B C.
 
+(** * Commutative and Idempotent Elements and Functors *)
+(**********************************************************************)
+
+(** ** The Center of an Applicative Functor *)
+(**********************************************************************)
 Class Center (G : Type -> Type)
   `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
   (A: Type) (a: G A): Prop :=
@@ -15,6 +20,8 @@ Class Center (G : Type -> Type)
         a ⊗ x = map (fun '(x, y) => (y, x)) (x ⊗ a);
     }.
 
+(** ** The Idempotent Elements of an Applicative Functor *)
+(**********************************************************************)
 Class Idempotent (G : Type -> Type)
   `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
   (A: Type) (a: G A): Prop :=
@@ -28,6 +35,8 @@ Class IdempotentCenter (G : Type -> Type)
     appic_center :> Center G A a;
   }.
 
+(** ** Commutative Idempotent Applicative Functors *)
+(**********************************************************************)
 Class ApplicativeCommutativeIdempotent (G : Type -> Type)
   `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G} :=
   { appci_applicative :> Applicative G;
@@ -42,7 +51,11 @@ Class ApplicativeCommutativeIdempotent (G : Type -> Type)
 #[global] Arguments appidem {G}%function_scope {mapG pureG multG}
   {A}%type_scope (a) {Idempotent}.
 
-Lemma ap_ci: forall `{ApplicativeCommutativeIdempotent G} {A B: Type} (f: G (A -> B)) (a: G A),
+(** ** Rewriting Laws for C-I Applicative Funtors *)
+(**********************************************************************)
+Lemma ap_ci:
+  forall `{ApplicativeCommutativeIdempotent G} {A B: Type}
+    (f: G (A -> B)) (a: G A),
     f <⋆> a = (map evalAt a) <⋆> f.
 Proof.
   intros.
@@ -59,7 +72,9 @@ Proof.
   cbn. reflexivity.
 Qed.
 
-Lemma ap_ci2: forall `{ApplicativeCommutativeIdempotent G} {A B C: Type} (f: G (A -> B -> C)) (a: G A) (b: G B),
+Lemma ap_ci2:
+  forall `{ApplicativeCommutativeIdempotent G}
+    {A B C: Type} (f: G (A -> B -> C)) (a: G A) (b: G B),
     f <⋆> a <⋆> b = (map flip f) <⋆> b <⋆> a.
 Proof.
   intros.
@@ -98,7 +113,9 @@ Definition dup {A:Type} := fun (a: A) => (a, a).
 Definition double_input {A B: Type} (f: A -> A -> B): A -> B :=
   uncurry f ∘ dup.
 
-Lemma ap_cidup: forall `{ApplicativeCommutativeIdempotent G} {A B: Type} (f: G (A -> A -> B)) (a: G A),
+Lemma ap_cidup:
+  forall `{ApplicativeCommutativeIdempotent G}
+    {A B: Type} (f: G (A -> A -> B)) (a: G A),
     f <⋆> a <⋆> a = (map double_input f) <⋆> a.
 Proof.
   intros.
@@ -129,6 +146,8 @@ Definition penguin {A B: Type}
 
 Infix "|⋆>" := penguin (at level 50).
 
+(** ** Rewriting Laws for C-I Elements *)
+(**********************************************************************)
 Lemma ap_swap {A B: Type} {G: Type -> Type}
   `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
   `{appG: ! Applicative G}

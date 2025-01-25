@@ -12,24 +12,25 @@ Ltac unfold_compose_in_compose :=
         let A' := eval unfold compose in A in
           let B' := eval unfold compose in B in
             let C' := eval unfold compose in C in
-              progress (change (@compose A B C) with (@compose A' B' C'))
+              progress (change (@compose A B C) with
+                  (@compose A' B' C'))
     end.
 
-(** * The composition of two functors *)
-(******************************************************************************)
+(** * The Composition of Two Functors *)
+(**********************************************************************)
 Section Functor_composition.
 
   Context
-    (G F : Type -> Type)
+    (G F: Type -> Type)
     `{Functor F}
     `{Functor G}.
 
   (* bump up the weight from 2~>3 to encourage using <Map_compose>
      only as a last resort during typeclass resolution *)
-  #[export] Instance Map_compose : Map (G ∘ F) | 3 :=
+  #[export] Instance Map_compose: Map (G ∘ F) | 3 :=
     fun A B f => map (F := G) (map (F := F) f).
 
-  #[export, program] Instance Functor_compose : Functor (G ∘ F).
+  #[export, program] Instance Functor_compose: Functor (G ∘ F).
 
   Solve Obligations with
     (intros; unfold transparent tcs;
@@ -40,6 +41,8 @@ Section Functor_composition.
 
 End Functor_composition.
 
+(** ** Composition with the Identity Functor *)
+(**********************************************************************)
 Require Import Tealeaves.Functors.Identity.
 
 Section lemmas.
@@ -47,28 +50,30 @@ Section lemmas.
   Context
     `{Functor F}.
 
-  Lemma Map_compose_id1 :
+  Lemma Map_compose_id1:
     Map_compose (fun A => A) F = @map F _.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma Map_compose_id2 :
+  Lemma Map_compose_id2:
     Map_compose F (fun A => A) = @map F _.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma map_compose_id1 :
-    forall {A B : Type} (f : A -> B),
-      @map ((fun A => A) ∘ F) (Map_compose (fun A => A) F) A B f = @map F _ A B f.
+  Lemma map_compose_id1:
+    forall {A B: Type} (f: A -> B),
+      @map ((fun A => A) ∘ F)
+        (Map_compose (fun A => A) F) A B f = @map F _ A B f.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma map_compose_id2 :
-    forall {A B : Type} (f : A -> B),
-      @map (F ∘ (fun A => A)) (Map_compose F (fun A => A)) A B f = @map F _ A B f.
+  Lemma map_compose_id2:
+    forall {A B: Type} (f: A -> B),
+      @map (F ∘ (fun A => A))
+        (Map_compose F (fun A => A)) A B f = @map F _ A B f.
   Proof.
     reflexivity.
   Qed.
@@ -77,6 +82,8 @@ End lemmas.
 
 Import Functor.Notations.
 
+(** ** Composition of Natural Transformations *)
+(**********************************************************************)
 (* Do not export this instance or typeclass resolution goes hog wild *)
 #[local] Instance Natural_compose_Natural
   `{Map F1} `{Map F2} `{Map F3}

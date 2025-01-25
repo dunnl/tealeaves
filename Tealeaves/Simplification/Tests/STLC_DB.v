@@ -6,8 +6,11 @@ Import STLC.Syntax.TermNotations.
 Import DB.Simplification.
 Import DB.AutosubstShim.Notations.
 
-(** ** Rewriting lemmas for rename *)
-(******************************************************************************)
+(** * Simplification Tests for the De Bruijn Backend *)
+(**********************************************************************)
+
+(** ** Rewriting Lemmas for <<rename>> *)
+(**********************************************************************)
 Section rename.
 
   Context (ρ: nat -> nat).
@@ -68,8 +71,8 @@ Section subst.
 
 End subst.
 
-(** ** Rewriting lemmas for rename *)
-(******************************************************************************)
+(** ** Rewriting Lemmas for <<subst>> *)
+(**********************************************************************)
 Section subst.
 
   Context (σ: nat -> Lam nat).

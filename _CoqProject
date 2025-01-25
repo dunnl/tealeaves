@@ -5,3 +5,18 @@ Tealeaves/Tactics/Debug.v
 Tealeaves/Tactics/LibTactics.v
 Tealeaves/Tactics/Prelude.v
 Tealeaves/Misc/Product.v #Required by comonoid.v
+Tealeaves/Classes/EqDec_eq.v
+Tealeaves/Classes/Category.v
+Tealeaves/Classes/Monoid.v
+Tealeaves/Classes/Comonoid.v
+Tealeaves/Misc/Iterate.v
+Tealeaves/Misc/NaturalNumbers.v
+Tealeaves/Misc/Prop.v
+Tealeaves/Classes/Functor.v
+Tealeaves/Functors/Identity.v
+Tealeaves/Functors/Compose.v
+Tealeaves/Misc/Strength.v
+Tealeaves/Classes/Categorical/Applicative.v
+Tealeaves/Classes/Categorical/ApplicativeCommutativeIdempotent.v
+Tealeaves/Classes/Categorical/Monad.v
+Tealeaves/Classes/Categorical/Comonad.v

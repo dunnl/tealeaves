@@ -10,52 +10,54 @@ Import Product.Notations.
 
 #[local] Generalizable Variables ϕ F G A B C.
 
-(** * Applicative functors *)
-(******************************************************************************)
-Class Pure (F : Type -> Type) :=
-  pure : forall {A}, A -> F A.
-Class Mult (F : Type -> Type) :=
-  mult : forall {A B : Type}, F A * F B -> F (A * B).
+(** * Applicative Functors *)
+(**********************************************************************)
+Class Pure (F: Type -> Type) :=
+  pure: forall {A}, A -> F A.
+Class Mult (F: Type -> Type) :=
+  mult: forall {A B: Type}, F A * F B -> F (A * B).
 
-#[local] Notation "x ⊗ y" := (mult (x, y)) (at level 50, left associativity).
+#[local] Notation "x ⊗ y" :=
+  (mult (x, y)) (at level 50, left associativity).
 
-Class Applicative (G : Type -> Type)
+Class Applicative (G: Type -> Type)
   `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G} :=
   { app_functor :> Functor G;
-    app_pure_natural : forall (A B : Type) (f : A -> B) (x : A),
+    app_pure_natural: forall (A B: Type) (f: A -> B) (x: A),
       map f (pure x) = pure (f x);
-    app_mult_natural : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : G A) (y : G B),
+    app_mult_natural:
+    forall (A B C D: Type) (f: A -> C) (g: B -> D) (x: G A) (y: G B),
       map f x ⊗ map g y = map (map_tensor f g) (x ⊗ y);
-    app_assoc : forall (A B C : Type) (x : G A) (y : G B) (z : G C),
+    app_assoc: forall (A B C: Type) (x: G A) (y: G B) (z: G C),
       map α ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z);
-    app_unital_l : forall (A : Type) (x : G A),
+    app_unital_l: forall (A: Type) (x: G A),
       map left_unitor (pure tt ⊗ x) = x;
-    app_unital_r : forall (A : Type) (x : G A),
+    app_unital_r: forall (A: Type) (x: G A),
       map right_unitor (x ⊗ pure tt) = x;
-    app_mult_pure : forall (A B : Type) (a : A) (b : B),
+    app_mult_pure: forall (A B: Type) (a: A) (b: B),
       pure a ⊗ pure b = pure (a, b);
   }.
 
-#[global] Instance Pure_Natural `{Applicative G} : Natural (@pure G _).
+#[global] Instance Pure_Natural `{Applicative G}: Natural (@pure G _).
 Proof.
   constructor; try typeclasses eauto.
   - intros. unfold compose. ext a.
     now rewrite app_pure_natural.
 Qed.
 
-(** ** Homomorphisms between applicative functors *)
-(******************************************************************************)
-Class ApplicativeMorphism (F G : Type -> Type)
+(** ** Homomorphisms Between Applicative Functors *)
+(**********************************************************************)
+Class ApplicativeMorphism (F G: Type -> Type)
   `{Map F} `{Mult F} `{Pure F}
   `{Map G} `{Mult G} `{Pure G}
-  (ϕ : forall {A}, F A -> G A) :=
-  { appmor_app_F : Applicative F;
-    appmor_app_G : Applicative G;
-    appmor_natural : forall (A B : Type) (f : A -> B) (x : F A),
+  (ϕ: forall {A}, F A -> G A) :=
+  { appmor_app_F: Applicative F;
+    appmor_app_G: Applicative G;
+    appmor_natural: forall (A B: Type) (f: A -> B) (x: F A),
       ϕ (map f x) = map f (ϕ x);
-    appmor_pure : forall (A : Type) (a : A),
+    appmor_pure: forall (A: Type) (a: A),
       ϕ (pure a) = pure a;
-    appmor_mult : forall (A B : Type) (x : F A) (y : F B),
+    appmor_mult: forall (A B: Type) (x: F A) (y: F B),
       ϕ (x ⊗ y) = ϕ x ⊗ ϕ y;
   }.
 
@@ -63,13 +65,13 @@ Section pointfree.
 
   Context `{ApplicativeMorphism F G ϕ}.
 
-  Lemma appmor_natural_pf: forall (A B : Type) (f : A -> B),
+  Lemma appmor_natural_pf: forall (A B: Type) (f: A -> B),
       ϕ B ∘ map f = map f ∘ ϕ A.
   Proof.
     intros. ext x. apply appmor_natural.
   Qed.
 
-  Lemma appmor_pure_pf: forall (A : Type),
+  Lemma appmor_pure_pf: forall (A: Type),
       ϕ A ∘ pure = pure.
   Proof.
     intros. ext x. apply appmor_pure.
@@ -78,7 +80,7 @@ Section pointfree.
 End pointfree.
 
 #[export] Instance Natural_ApplicativeMorphism
-  `{morphism : ApplicativeMorphism F G ϕ} : Natural ϕ.
+  `{morphism: ApplicativeMorphism F G ϕ}: Natural ϕ.
 Proof.
   inversion morphism.
   constructor.
@@ -91,33 +93,31 @@ Qed.
 
 Ltac infer_applicative_instances :=
   match goal with
-  | H : ApplicativeMorphism ?G1 ?G2 ?ϕ |- _ =>
+  | H: ApplicativeMorphism ?G1 ?G2 ?ϕ |- _ =>
       let app1 := fresh "app1"
       in assert (app1: Applicative G1) by now inversion H
   end; match goal with
-       | H : ApplicativeMorphism ?G1 ?G2 ?ϕ |- _ =>
+       | H: ApplicativeMorphism ?G1 ?G2 ?ϕ |- _ =>
            let app2 := fresh "app2"
-           in assert (app2 : Applicative G2) by now inversion H
+           in assert (app2: Applicative G2) by now inversion H
        end.
 
 (** *** The identity transformation on any <<F>> is a homomorphism *)
-(******************************************************************************)
-#[export] Instance ApplicativeMorphism_id `{Applicative F} :
+(**********************************************************************)
+#[export] Instance ApplicativeMorphism_id `{Applicative F}:
   ApplicativeMorphism F F (fun A => @id (F A)).
 Proof.
   constructor; now try typeclasses eauto.
 Qed.
 
-(** ** Basic lemmas *)
-(** TODO: Find a better name. I don't remember why these are
-named @triangle_x@. *)
-(******************************************************************************)
+(** ** Basic Lemmas *)
+(**********************************************************************)
 Section basics.
 
   Context
     `{Applicative F}.
 
-  Lemma triangle_1 : forall (A : Type) (t : F A),
+  Lemma triangle_1: forall (A: Type) (t: F A),
       pure tt ⊗ t = map left_unitor_inv t.
   Proof.
     intros.
@@ -129,7 +129,7 @@ Section basics.
     reflexivity.
   Qed.
 
-  Lemma triangle_2 : forall (A : Type) (t : F A),
+  Lemma triangle_2: forall (A: Type) (t: F A),
       t ⊗ pure tt = map right_unitor_inv t.
   Proof.
     intros.
@@ -141,7 +141,7 @@ Section basics.
     reflexivity.
   Qed.
 
-  Lemma triangle_3 : forall (A B : Type) (a : A) (t : F B),
+  Lemma triangle_3: forall (A B: Type) (a: A) (t: F B),
       pure a ⊗ t = strength (a, t).
   Proof.
     intros.
@@ -159,7 +159,7 @@ Section basics.
     reflexivity.
   Qed.
 
-  Lemma triangle_4 : forall (A B : Type) (a : A) (t : F B),
+  Lemma triangle_4: forall (A B: Type) (a: A) (t: F B),
       t ⊗ pure a = map (fun b => (b, a)) t.
   Proof.
     intros.
@@ -176,7 +176,7 @@ Section basics.
     reflexivity.
   Qed.
 
-  Lemma weird_1 : forall (A : Type),
+  Lemma weird_1: forall (A: Type),
       map left_unitor ∘ mult ∘ pair (pure tt) = @id (F A).
   Proof.
     intros. ext t.
@@ -189,8 +189,9 @@ Section basics.
     reflexivity.
   Qed.
 
-  Lemma weird_2 : forall A,
-      map right_unitor ∘ mult ∘ (fun b : F A => (b, pure tt)) = @id (F A).
+  Lemma weird_2: forall A,
+      map right_unitor ∘ mult ∘
+        (fun b: F A => (b, pure tt)) = @id (F A).
   Proof.
     intros. ext t.
     unfold compose.
@@ -204,16 +205,16 @@ Section basics.
 
 End basics.
 
-(** ** Mapping and reassociating <<⊗>> *)
-(******************************************************************************)
+(** ** Mapping and Reassociating <<⊗>> *)
+(**********************************************************************)
 Section Applicative_corollaries.
 
   Context
-    (F : Type -> Type)
+    (F: Type -> Type)
     `{Applicative F}.
 
-  Lemma app_mult_natural_l :
-    forall {A B C : Type} (f : A -> C) (x : F A) (y : F B),
+  Lemma app_mult_natural_l:
+    forall {A B C: Type} (f: A -> C) (x: F A) (y: F B),
       map f x ⊗ y = map (map_fst f) (x ⊗ y).
   Proof.
     intros.
@@ -223,8 +224,8 @@ Section Applicative_corollaries.
     reflexivity.
   Qed.
 
-  Lemma app_mult_natural_r :
-    forall {A B D : Type} (g : B -> D) (x : F A) (y : F B),
+  Lemma app_mult_natural_r:
+    forall {A B D: Type} (g: B -> D) (x: F A) (y: F B),
       x ⊗ map g y = map (map_snd g) (x ⊗ y).
   Proof.
     intros.
@@ -234,8 +235,9 @@ Section Applicative_corollaries.
     reflexivity.
   Qed.
 
-  Corollary app_mult_natural_1 :
-    forall {A B C E : Type} (f : A -> C) (h : C * B -> E) (x : F A) (y : F B),
+  Corollary app_mult_natural_1:
+    forall {A B C E: Type}
+      (f: A -> C) (h: C * B -> E) (x: F A) (y: F B),
       map h (map f x ⊗ y) = map (h ∘ map_fst f) (x ⊗ y).
   Proof.
     intros.
@@ -245,8 +247,9 @@ Section Applicative_corollaries.
     reflexivity.
   Qed.
 
-  Corollary app_mult_natural_2 :
-    forall {A B D E : Type} (g : B -> D) (h : A * D -> E) (x : F A) (y : F B),
+  Corollary app_mult_natural_2:
+    forall {A B D E: Type}
+      (g: B -> D) (h: A * D -> E) (x: F A) (y: F B),
       map h (x ⊗ map g y) = map (h ∘ map_snd g) (x ⊗ y).
   Proof.
     intros.
@@ -256,8 +259,8 @@ Section Applicative_corollaries.
     reflexivity.
   Qed.
 
-  Lemma app_assoc_inv :
-    forall (A B C : Type) (x : F A) (y : F B) (z : F C),
+  Lemma app_assoc_inv:
+    forall (A B C: Type) (x: F A) (y: F B) (z: F C),
       map α^-1 (x ⊗ (y ⊗ z)) = (x ⊗ y ⊗ z).
   Proof.
     intros.
@@ -271,25 +274,25 @@ Section Applicative_corollaries.
 
 End Applicative_corollaries.
 
-(** * The category of applicative functors *)
-(******************************************************************************)
+(** * The Category of Applicative Functors *)
+(**********************************************************************)
 
-(** ** The identity applicative functor *)
-(******************************************************************************)
-#[export] Instance Pure_I : Pure (fun A => A) := @id.
+(** ** The Identity Applicative Functor *)
+(**********************************************************************)
+#[export] Instance Pure_I: Pure (fun A => A) := @id.
 
-#[export] Instance Mult_I : Mult (fun A => A) := fun A B (p : A * B) => p.
+#[export] Instance Mult_I: Mult (fun A => A) := fun A B (p: A * B) => p.
 
-#[export, program] Instance Applicative_I : Applicative (fun A => A).
+#[export, program] Instance Applicative_I: Applicative (fun A => A).
 
-(** *** <<pure F>> is a homomorphism from the identity functor *)
-(******************************************************************************)
+(** *** <<pure F>> is a Homomorphism from <<I>> to <<F>> *)
+(**********************************************************************)
 Section pure_as_applicative_transformation.
 
   Context
     `{Applicative G}.
 
-  Lemma pure_appmor_1 : forall (A B : Type) (f : A -> B) (t : A),
+  Lemma pure_appmor_1: forall (A B: Type) (f: A -> B) (t: A),
       pure (map (F := fun A => A) f t) = map f (pure t).
   Proof.
     intros.
@@ -297,13 +300,13 @@ Section pure_as_applicative_transformation.
     reflexivity.
   Qed.
 
-  Lemma pure_appmor_2 : forall (A : Type) (a : A),
+  Lemma pure_appmor_2: forall (A: Type) (a: A),
       pure (F := G) (pure (F := fun A => A) a) = pure a.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma pure_appmor_3 : forall (A B : Type) (a : A) (b : B),
+  Lemma pure_appmor_3: forall (A B: Type) (a: A) (b: B),
       pure (mult (F := fun A => A) (a, b)) = pure a ⊗ pure b.
   Proof.
     intros.
@@ -312,7 +315,7 @@ Section pure_as_applicative_transformation.
     reflexivity.
   Qed.
 
-  #[export] Instance ApplicativeMorphism_pure :
+  #[export] Instance ApplicativeMorphism_pure:
     ApplicativeMorphism (fun A => A) G (@pure G _) :=
     {| appmor_natural := pure_appmor_1;
        appmor_pure := pure_appmor_2;
@@ -321,24 +324,24 @@ Section pure_as_applicative_transformation.
 
 End pure_as_applicative_transformation.
 
-(** ** Composition of applicative functors *)
-(******************************************************************************)
+(** ** Composition of Applicative Functors *)
+(**********************************************************************)
 Section applicative_compose.
 
   Context
-    (G2 G1 : Type -> Type)
+    (G2 G1: Type -> Type)
     `{Applicative G1}
     `{Applicative G2}.
 
-  #[export] Instance Pure_compose : Pure (G2 ∘ G1) :=
-    fun (A : Type) (a : A) => pure (F := G2) (pure (F := G1) a).
+  #[export] Instance Pure_compose: Pure (G2 ∘ G1) :=
+    fun (A: Type) (a: A) => pure (F := G2) (pure (F := G1) a).
 
-  #[export] Instance Mult_compose : Mult (G2 ∘ G1) :=
-    fun (A B : Type) (p : G2 (G1 A) * G2 (G1 B)) =>
+  #[export] Instance Mult_compose: Mult (G2 ∘ G1) :=
+    fun (A B: Type) (p: G2 (G1 A) * G2 (G1 B)) =>
       map (F := G2) (mult (F := G1))
-        (mult (F := G2) (fst p, snd p)) : G2 (G1 (A * B)).
+        (mult (F := G2) (fst p, snd p)): G2 (G1 (A * B)).
 
-  Lemma app_pure_nat_compose : forall (A B : Type) (f : A -> B) (x : A),
+  Lemma app_pure_nat_compose: forall (A B: Type) (f: A -> B) (x: A),
       map (F := G2 ∘ G1) f (pure (F := G2 ∘ G1) x) = pure (f x).
   Proof.
     intros.
@@ -347,7 +350,9 @@ Section applicative_compose.
     reflexivity.
   Qed.
 
-  Lemma app_mult_nat_compose : forall (A B C D : Type) (f : A -> C) (g : B -> D) (x : G2 (G1 A)) (y : G2 (G1 B)),
+  Lemma app_mult_nat_compose:
+    forall (A B C D: Type) (f: A -> C) (g: B -> D)
+           (x: G2 (G1 A)) (y: G2 (G1 B)),
       map f x ⊗ map g y = map (map_tensor f g) (x ⊗ y).
   Proof.
     intros. unfold transparent tcs. cbn [fst snd].
@@ -362,13 +367,15 @@ Section applicative_compose.
     reflexivity.
   Qed.
 
-  Theorem app_asc_compose : forall A B C (x : G2 (G1 A)) (y : G2 (G1 B)) (z : G2 (G1 C)),
+  Theorem app_asc_compose:
+    forall (A B C: Type) (x: G2 (G1 A)) (y: G2 (G1 B)) (z: G2 (G1 C)),
       map (F := G2 ∘ G1) α (x ⊗ y ⊗ z) = x ⊗ (y ⊗ z).
   Proof.
     intros.
     unfold transparent tcs. cbn.
     replace (map (F := G2) (mult (F := G1)) (x ⊗ y) ⊗ z) with
-        (map (F := G2) (map_tensor (mult (F := G1)) id) ((x ⊗ y) ⊗ z)).
+      (map (F := G2)
+         (map_tensor (mult (F := G1)) id) ((x ⊗ y) ⊗ z)).
     2: { rewrite <- (app_mult_natural (G := G2)).
          now rewrite fun_map_id. }
     compose near (x ⊗ y ⊗ z) on left.
@@ -376,7 +383,7 @@ Section applicative_compose.
     compose near (x ⊗ y ⊗ z) on left.
     rewrite fun_map_map.
     replace (x ⊗ map mult (y ⊗ z)) with
-        (map (map_tensor id mult) (x ⊗ (y ⊗ z))).
+      (map (map_tensor id mult) (x ⊗ (y ⊗ z))).
     2: { rewrite <- app_mult_natural.
          rewrite fun_map_id.
          reflexivity. }
@@ -391,8 +398,9 @@ Section applicative_compose.
       reflexivity.
   Qed.
 
-  Theorem app_unital_l_compose : forall A (x : G2 (G1 A)),
-      map (F := G2 ∘ G1) left_unitor (pure (F := G2 ∘ G1) tt ⊗ x) = x.
+  Theorem app_unital_l_compose: forall A (x: G2 (G1 A)),
+      map (F := G2 ∘ G1) left_unitor
+        (pure (F := G2 ∘ G1) tt ⊗ x) = x.
   Proof.
     intros. unfold transparent tcs. cbn.
     compose near (pure (F := G2) (pure (F := G1) tt) ⊗ x).
@@ -406,8 +414,9 @@ Section applicative_compose.
     reflexivity.
   Qed.
 
-  Theorem app_unital_r_compose : forall (A : Type) (x : (G2 ∘ G1) A),
-      map (F := G2 ∘ G1) right_unitor (x ⊗ pure (F := G2 ∘ G1) tt) = x.
+  Theorem app_unital_r_compose: forall (A: Type) (x: (G2 ∘ G1) A),
+      map (F := G2 ∘ G1) right_unitor
+        (x ⊗ pure (F := G2 ∘ G1) tt) = x.
   Proof.
     intros. unfold compose in *.
     unfold transparent tcs. cbn.
@@ -421,13 +430,13 @@ Section applicative_compose.
     reflexivity.
   Qed.
 
-  Lemma app_mult_pure_compose : forall (A B : Type) (a : A) (b : B),
+  Lemma app_mult_pure_compose: forall (A B: Type) (a: A) (b: B),
       pure (F := G2 ∘ G1) a ⊗ pure (F := G2 ∘ G1) b =
         pure (F := G2 ∘ G1) (a, b).
   Proof.
     intros.
     unfold transparent tcs. cbn.
-    assert (square: forall (p : G1 A * G1 B),
+    assert (square: forall (p: G1 A * G1 B),
                map mult (pure (F := G2) p) = pure (F := G2) (mult p)).
     { intros.
       rewrite app_pure_natural.
@@ -438,7 +447,8 @@ Section applicative_compose.
     reflexivity.
   Qed.
 
-  #[export, program] Instance Applicative_compose : Applicative (G2 ∘ G1) :=
+  #[export, program] Instance Applicative_compose:
+    Applicative (G2 ∘ G1) :=
     {| app_pure_natural := app_pure_nat_compose;
        app_mult_natural := app_mult_nat_compose;
        app_assoc := app_asc_compose;
@@ -449,34 +459,34 @@ Section applicative_compose.
 
 End applicative_compose.
 
-(** *** Composing applicative functors with the identity *)
-(******************************************************************************)
+(** ** Composition with the Identity Functor *)
+(**********************************************************************)
 Section applicative_compose_laws.
 
   Context
-    (G : Type -> Type)
+    (G: Type -> Type)
     `{Applicative G}.
 
-  Theorem Pure_compose_identity1 :
+  Theorem Pure_compose_identity1:
     Pure_compose G (fun A => A) = @pure G _.
   Proof.
     easy.
   Qed.
 
-  Theorem Pure_compose_identity2 :
+  Theorem Pure_compose_identity2:
     Pure_compose (fun A => A) G = @pure G _.
   Proof.
     easy.
   Qed.
 
-  Theorem Mult_compose_identity1 :
+  Theorem Mult_compose_identity1:
     Mult_compose G (fun A => A) = @mult G _.
   Proof.
     ext A B [x y]. cbv in x, y. unfold Mult_compose.
     rewrite (fun_map_id). reflexivity.
   Qed.
 
-  Theorem Mult_compose_identity2 :
+  Theorem Mult_compose_identity2:
     Mult_compose (fun A => A) G = @mult G _.
   Proof.
     ext A B [x y]. cbv in x, y. unfold Mult_compose.
@@ -485,20 +495,21 @@ Section applicative_compose_laws.
 
 End applicative_compose_laws.
 
-(** *** Parallel composition of applicative morphisms *)
-(******************************************************************************)
+(** ** Parallel Composition of Applicative Homomorphisms *)
+(**********************************************************************)
 
 Section applicative_compose_laws.
 
   #[export] Instance ApplicativeMorphism_parallel
-    (F1 F2 G1 G2 : Type -> Type)
+    (F1 F2 G1 G2: Type -> Type)
     `{Applicative G1}
     `{Applicative G2}
     `{Applicative F1}
     `{Applicative F2}
     `{! ApplicativeMorphism F1 G1 ϕ1}
-    `{! ApplicativeMorphism F2 G2 ϕ2} :
-  ApplicativeMorphism (F1 ∘ F2) (G1 ∘ G2) (fun A => ϕ1 (G2 A) ∘ map (F := F1) (ϕ2 A)).
+    `{! ApplicativeMorphism F2 G2 ϕ2}:
+  ApplicativeMorphism (F1 ∘ F2) (G1 ∘ G2)
+    (fun A => ϕ1 (G2 A) ∘ map (F := F1) (ϕ2 A)).
   Proof.
     inversion ApplicativeMorphism0.
     inversion ApplicativeMorphism1.
@@ -507,8 +518,8 @@ Section applicative_compose_laws.
       unfold_ops @Map_compose. unfold compose.
       compose near x.
       rewrite (fun_map_map (F := F1)).
-      assert (appmor_natural1' :
-               forall (A B : Type) (f : A -> B),
+      assert (appmor_natural1':
+               forall (A B: Type) (f: A -> B),
                  ϕ2 B ∘ map (F := F2) f = map (F := G2) f ∘ ϕ2 A).
       { intros. ext f2a. apply appmor_natural1. }
       rewrite appmor_natural1'.
@@ -528,8 +539,8 @@ Section applicative_compose_laws.
       cbn.
       compose near (x ⊗ y).
       rewrite (fun_map_map (F := F1)).
-      assert (appmor_mult1' :
-               forall (A B : Type),
+      assert (appmor_mult1':
+               forall (A B: Type),
                  ϕ2 (A * B) ∘ mult (F := F2) =
                    mult (F := G2) ∘ map_tensor (ϕ2 A) (ϕ2 B)).
       { intros. ext [x' y'].
@@ -547,36 +558,38 @@ Section applicative_compose_laws.
   Qed.
 
   #[export] Instance ApplicativeMorphism_parallel_left
-    (F1 F2 G1 : Type -> Type)
+    (F1 F2 G1: Type -> Type)
     `{Applicative G1}
     `{Applicative F1}
     `{Applicative F2}
-    `{! ApplicativeMorphism F1 G1 ϕ1} :
+    `{! ApplicativeMorphism F1 G1 ϕ1}:
     ApplicativeMorphism (F1 ∘ F2) (G1 ∘ F2) (fun A => ϕ1 (F2 A)).
   Proof.
-    replace (ϕ1 ○ F2) with (fun A => ϕ1 (F2 A) ∘ map (F := F1) (@id (F2 A))).
+    replace (ϕ1 ○ F2) with
+      (fun A => ϕ1 (F2 A) ∘ map (F := F1) (@id (F2 A))).
     - apply (ApplicativeMorphism_parallel F1 F2 G1 F2).
     - ext A. now rewrite (fun_map_id (F := F1)).
   Qed.
 
   #[export] Instance ApplicativeMorphism_parallel_right
-    (F1 F2 G2 : Type -> Type)
+    (F1 F2 G2: Type -> Type)
     `{Applicative G2}
     `{Applicative F1}
     `{Applicative F2}
-    `{! ApplicativeMorphism F2 G2 ϕ2} :
-    ApplicativeMorphism (F1 ∘ F2) (F1 ∘ G2) (fun A => map (F := F1) (ϕ2 A)).
+    `{! ApplicativeMorphism F2 G2 ϕ2}:
+    ApplicativeMorphism (F1 ∘ F2) (F1 ∘ G2)
+      (fun A => map (F := F1) (ϕ2 A)).
   Proof.
     change (fun A => map (ϕ2 A)) with
-      ((fun A : Type => (fun X => @id (F1 X)) (G2 A) ∘ map (ϕ2 A))).
+      ((fun A: Type => (fun X => @id (F1 X)) (G2 A) ∘ map (ϕ2 A))).
     apply (ApplicativeMorphism_parallel F1 F2 F1 G2).
   Qed.
 
   #[export] Instance ApplicativeMorphism_parallel_left_id
-    (F2 G1 : Type -> Type)
+    (F2 G1: Type -> Type)
     `{Applicative G1}
     `{Applicative F2}
-    `{! ApplicativeMorphism (fun A => A) G1 ϕ1} :
+    `{! ApplicativeMorphism (fun A => A) G1 ϕ1}:
     ApplicativeMorphism F2 (G1 ∘ F2) (fun A => ϕ1 (F2 A)).
   Proof.
     change F2 with ((fun A => A) ∘ F2) at 1.
@@ -590,10 +603,10 @@ Section applicative_compose_laws.
   Qed.
 
   #[export] Instance ApplicativeMorphism_parallel_right_id
-    (F1 G2 : Type -> Type)
+    (F1 G2: Type -> Type)
     `{Applicative G2}
     `{Applicative F1}
-    `{! ApplicativeMorphism (fun A => A) G2 ϕ2} :
+    `{! ApplicativeMorphism (fun A => A) G2 ϕ2}:
     ApplicativeMorphism F1 (F1 ∘ G2) (fun A => map (F := F1) (ϕ2 A)).
   Proof.
     Set Printing Implicit.
@@ -610,19 +623,20 @@ Section applicative_compose_laws.
 End applicative_compose_laws.
 
 (** * The "ap" combinator << <⋆> >> *)
-(******************************************************************************)
-Definition ap (G : Type -> Type) `{Map G} `{Mult G} {A B : Type} :
+(**********************************************************************)
+Definition ap (G: Type -> Type) `{Map G} `{Mult G} {A B: Type}:
   G (A -> B) -> G A -> G B
   := fun Gf Ga => map (fun '(f, a) => f a) (Gf ⊗ Ga).
 
-#[local] Notation "Gf <⋆> Ga" := (ap _ Gf Ga) (at level 50, left associativity).
+#[local] Notation "Gf <⋆> Ga" :=
+  (ap _ Gf Ga) (at level 50, left associativity).
 
 Section ApplicativeFunctor_ap.
 
   Context
     `{Applicative G}.
 
-  Theorem map_to_ap : forall `(f : A -> B) (t : G A),
+  Theorem map_to_ap: forall `(f: A -> B) (t: G A),
       map f t = pure f <⋆> t.
   Proof.
     intros. unfold ap; cbn.
@@ -631,9 +645,9 @@ Section ApplicativeFunctor_ap.
     reflexivity.
   Qed.
 
-  Theorem ap_morphism_1 :
+  Theorem ap_morphism_1:
     forall `{ApplicativeMorphism G G2} {A B}
-      (x : G (A -> B)) (y : G A),
+           (x: G (A -> B)) (y: G A),
       ϕ B (x <⋆> y) = (ϕ (A -> B) x) <⋆> ϕ A y.
   Proof.
     intros. unfold ap.
@@ -642,14 +656,16 @@ Section ApplicativeFunctor_ap.
     reflexivity.
   Qed.
 
-  Theorem ap1 : forall `(t : G A),
+  Theorem ap1:
+    forall `(t: G A),
       pure id <⋆> t = t.
   Proof.
     intros. rewrite <- map_to_ap.
     now rewrite (fun_map_id).
   Qed.
 
-  Theorem ap2 : forall `(f : A -> B) (a : A),
+  Theorem ap2:
+    forall `(f: A -> B) (a: A),
       pure f <⋆> pure a = pure (f a).
   Proof.
     intros. unfold ap.
@@ -657,7 +673,8 @@ Section ApplicativeFunctor_ap.
     now rewrite app_pure_natural.
   Qed.
 
-  Theorem ap3 : forall `(f : G (A -> B)) (a : A),
+  Theorem ap3:
+    forall `(f: G (A -> B)) (a: A),
       f <⋆> pure a = pure (evalAt a) <⋆> f.
   Proof.
     intros. unfold ap. rewrite triangle_3, triangle_4.
@@ -665,9 +682,10 @@ Section ApplicativeFunctor_ap.
     now do 2 rewrite (fun_map_map).
   Qed.
 
-  Theorem ap4 : forall {A B C : Type} (f : G (B -> C)) (g : G (A -> B)) (a : G A),
+  Theorem ap4:
+    forall {A B C: Type} (f: G (B -> C)) (g: G (A -> B)) (a: G A),
       (pure compose) <⋆> f <⋆> g <⋆> a =
-      f <⋆> (g <⋆> a).
+        f <⋆> (g <⋆> a).
   Proof.
     intros. unfold ap; cbn.
     rewrite (app_mult_natural_1 G).
@@ -689,16 +707,16 @@ Section ApplicativeFunctor_ap.
 
 End ApplicativeFunctor_ap.
 
-(** ** Convenience laws for <<ap>> *)
-(******************************************************************************)
+(** ** Convenience Laws for <<ap>> *)
+(**********************************************************************)
 Section ApplicativeFunctor_ap_utility.
 
   Context
     `{Applicative G}
-     {A B C D : Type}.
+    {A B C D: Type}.
 
   (** Fuse <<pure>> into <<map>> *) (*ap5*)
-  Corollary pure_ap_map : forall (f : A -> B) (g : B -> C) (a : G A),
+  Corollary pure_ap_map: forall (f: A -> B) (g: B -> C) (a: G A),
       pure g <⋆> map f a = map (g ∘ f) a.
   Proof.
     intros.
@@ -709,7 +727,7 @@ Section ApplicativeFunctor_ap_utility.
   Qed.
 
   (** Push an <<map>> under an <<ap>> *)
-  Corollary map_ap : forall (f : G (A -> B)) (g : B -> C) (a : G A),
+  Corollary map_ap: forall (f: G (A -> B)) (g: B -> C) (a: G A),
       map g (f <⋆> a) = map (compose g) f <⋆> a.
   Proof.
     intros.
@@ -719,15 +737,15 @@ Section ApplicativeFunctor_ap_utility.
     reflexivity.
   Qed.
 
-  Theorem map_ap2 : forall (g : B -> C),
-    compose (map g) ∘ ap G (A := A) = ap G ∘ map (compose g).
+  Theorem map_ap2: forall (g: B -> C),
+      compose (map g) ∘ ap G (A := A) = ap G ∘ map (compose g).
   Proof.
     intros. ext f a. unfold compose.
     rewrite map_ap. reflexivity.
   Qed.
 
   (** Bring an <<map>> from right of an <<ap>> to left *)
-  Corollary ap_map : forall {A B C} (x : G (A -> B)) (y : G C) (f : C -> A),
+  Corollary ap_map: forall {A B C} (x: G (A -> B)) (y: G C) (f: C -> A),
       (map (precompose f) x <⋆> y) = x <⋆> map f y.
   Proof.
     intros. do 2 rewrite map_to_ap.
@@ -738,7 +756,7 @@ Section ApplicativeFunctor_ap_utility.
     reflexivity.
   Qed.
 
-  Corollary ap_curry : forall (a : G A) (b: G B) (f : A -> B -> C),
+  Corollary ap_curry: forall (a: G A) (b: G B) (f: A -> B -> C),
       map (uncurry f) (a ⊗ b) = pure f <⋆> a <⋆> b.
   Proof.
     intros. unfold ap.
@@ -756,19 +774,19 @@ Section ApplicativeFunctor_ap_utility.
 
 End ApplicativeFunctor_ap_utility.
 
-(** ** Composition of functors and <<ap>> / << <⋆> >> *)
-(******************************************************************************)
+(** ** Composition of Functors and <<ap>> / << <⋆> >> *)
+(**********************************************************************)
 Section ap_compose.
 
   Context
-    (G1 G2 : Type -> Type)
+    (G1 G2: Type -> Type)
     `{Applicative G1}
     `{Applicative G2}
-    {A B : Type}.
+    {A B: Type}.
 
-  Theorem ap_compose1 : forall (f : G2 (G1 (A -> B))) (a : G2 (G1 A)),
+  Theorem ap_compose1: forall (f: G2 (G1 (A -> B))) (a: G2 (G1 A)),
       ap (G2 ∘ G1) f a =
-      pure (ap G1) <⋆> f <⋆> a.
+        pure (ap G1) <⋆> f <⋆> a.
   Proof.
     intros. unfold ap at 1.
     unfold_ops @Map_compose.
@@ -783,9 +801,9 @@ Section ap_compose.
     fequal. now ext [G1f G1a].
   Qed.
 
-  Theorem ap_compose2 : forall (f: G2 (G1 (A -> B))) (a : G2 (G1 A)),
+  Theorem ap_compose2: forall (f: G2 (G1 (A -> B))) (a: G2 (G1 A)),
       ap (G2 ∘ G1) f a =
-      map (ap G1) f <⋆> a.
+        map (ap G1) f <⋆> a.
   Proof.
     intros. rewrite ap_compose1.
     now rewrite map_to_ap.
@@ -793,40 +811,42 @@ Section ap_compose.
 
 
 (*
-  Theorem ap_compose3 :
-    ap (G2 ∘ G1) (A := A) (B := B) =
-      ap G2 ∘ map G2 (ap G1).
+  Theorem ap_compose3:
+  ap (G2 ∘ G1) (A := A) (B := B) =
+  ap G2 ∘ map G2 (ap G1).
   Proof.
-    intros. ext f a.
-    rewrite (ap_compose1).
-    now rewrite <- map_to_ap.
+  intros. ext f a.
+  rewrite (ap_compose1).
+  now rewrite <- map_to_ap.
   Qed.
 
-  Theorem ap_compose_new : forall `{Applicative G1} `{Applicative G2},
-    forall (A B : Type) (x : G1 (G2 A))(f : A -> B),
-      P (G1 ∘ G2) f <⋆> x =
-        P G1 (ap G2 (P G2 f)) <⋆> x.
+  Theorem ap_compose_new: forall `{Applicative G1} `{Applicative G2},
+  forall (A B: Type) (x: G1 (G2 A))(f: A -> B),
+  P (G1 ∘ G2) f <⋆> x =
+  P G1 (ap G2 (P G2 f)) <⋆> x.
   Proof.
-    intros. rewrite (ap_compose1 G2 G1).
-    unfold_ops @Pure_compose.
-    rewrite ap2.
-    reflexivity.
+  intros. rewrite (ap_compose1 G2 G1).
+  unfold_ops @Pure_compose.
+  rewrite ap2.
+  reflexivity.
   Qed.
  *)
 
 End ap_compose.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
-  Notation "x ⊗ y" := (mult (x, y)) (at level 50, left associativity) : tealeaves_scope.
-  Notation "Gf <⋆> Ga" := (ap _ Gf Ga) (at level 50, left associativity).
+  Notation "x ⊗ y" :=
+    (mult (x, y)) (at level 50, left associativity): tealeaves_scope.
+  Notation "Gf <⋆> Ga" :=
+    (ap _ Gf Ga) (at level 50, left associativity): tealeaves_scope.
 End Notations.
 
 Import Notations.
 
-(** * Notations *)
-(******************************************************************************)
+(** * Monoids as Constant Applicative Functors *)
+(**********************************************************************)
 From Tealeaves Require Import
   Classes.Monoid.
 
@@ -835,18 +855,18 @@ Import Monoid.Notations.
 Section with_monoid.
 
   Context
-    (G : Type -> Type)
-    (M : Type)
+    (G: Type -> Type)
+    (M: Type)
     `{Applicative G}
     `{Monoid M}.
 
-  #[export] Instance Monoid_op_applicative : Monoid_op (G M) :=
+  #[export] Instance Monoid_op_applicative: Monoid_op (G M) :=
     fun m1 m2 => map (F := G) (uncurry monoid_op) (m1 ⊗ m2).
 
-  #[export] Instance Monoid_unit_applicative : Monoid_unit (G M) :=
+  #[export] Instance Monoid_unit_applicative: Monoid_unit (G M) :=
     pure (F := G) Ƶ.
 
-  #[export] Instance Monoid_applicative : Monoid (G M).
+  #[export] Instance Monoid_applicative: Monoid (G M).
   Proof.
     constructor.
     - intros. cbn. unfold_ops @Monoid_op_applicative.
@@ -883,14 +903,16 @@ Section with_monoid.
 
 End with_monoid.
 
+(** ** Monoids Homomorphisms as Applicative Homomorphisms *)
+(**********************************************************************)
 Section with_hom.
 
   Context
     `{Applicative G}
-    (M1 M2 : Type)
+    (M1 M2: Type)
     `{morphism: Monoid_Morphism M1 M2 ϕ}.
 
-  #[export] Instance Monoid_hom_applicative :
+  #[export] Instance Monoid_hom_applicative:
     Monoid_Morphism (G M1) (G M2) (map (F := G) ϕ).
   Proof.
     inversion morphism.

@@ -14,40 +14,40 @@ From Tealeaves Require Export
 #[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
 
 (** * Beck distribution laws *)
-(******************************************************************************)
-Class BeckDistribution (U T : Type -> Type)
-  := bdist : forall {A : Type}, U (T A) -> T (U A).
+(**********************************************************************)
+Class BeckDistribution (U T: Type -> Type)
+  := bdist: forall {A: Type}, U (T A) -> T (U A).
 
 Arguments bdist U T%function_scope {BeckDistribution} {A}%type_scope _.
 
-#[local] Notation "'δ'" := (bdist) : tealeaves_scope.
+#[local] Notation "'δ'" := (bdist): tealeaves_scope.
 
 Section BeckDistributiveLaw.
 
   Context
-    (U T : Type -> Type)
+    (U T: Type -> Type)
     `{Monad U}
     `{Monad T}
     `{BeckDistribution U T}.
 
   Class BeckDistributiveLaw :=
-    { bdist_monad_l : Monad T;
-      bdist_monad_r : Monad U;
+    { bdist_monad_l: Monad T;
+      bdist_monad_r: Monad U;
       bdist_natural :> Natural (@bdist U T _);
-      bdist_join_l :
-        `(bdist U T ∘ join U = map T (join U) ∘ bdist U T ∘ map U (bdist U T (A := A)));
-      bdist_join_r :
-        `(bdist U T ∘ map U (join T) = join T ∘ map T (bdist U T) ∘ bdist U T (A := T A));
-      bdist_unit_l :
-        `(bdist U T ∘ ret U (A := T A) = map T (ret U));
-      bdist_unit_r :
-        `(bdist U T ∘ map U (ret T) = ret T (A := U A));
+      bdist_join_l:
+      `(bdist U T ∘ join U = map T (join U) ∘ bdist U T ∘ map U (bdist U T (A := A)));
+      bdist_join_r:
+      `(bdist U T ∘ map U (join T) = join T ∘ map T (bdist U T) ∘ bdist U T (A := T A));
+      bdist_unit_l:
+      `(bdist U T ∘ ret U (A := T A) = map T (ret U));
+      bdist_unit_r:
+      `(bdist U T ∘ map U (ret T) = ret T (A := U A));
     }.
 
 End BeckDistributiveLaw.
 
 (** * Beck distributive laws induce a composite monad *)
-(******************************************************************************)
+(**********************************************************************)
 Section BeckDistributivelaw_composite_monad.
 
   Context
@@ -56,21 +56,21 @@ Section BeckDistributivelaw_composite_monad.
   Existing Instance bdist_monad_l.
   Existing Instance bdist_monad_r.
 
-  #[export] Instance Ret_Beck : Return (T ∘ U) :=
+  #[export] Instance Ret_Beck: Return (T ∘ U) :=
     fun A => ret T ∘ ret U.
 
   (* we join <<T>> before <<U>> *)
-  #[export] Instance Join_Beck : Join (T ∘ U) :=
+  #[export] Instance Join_Beck: Join (T ∘ U) :=
     fun A => map T (join U) ∘ join T ∘ map T (bdist U T).
 
-  Lemma slide_joins :
+  Lemma slide_joins:
     `(map T (join U) ∘ join T (A := U (U A))
       = join T ∘ map (T ∘ T) (join U)).
   Proof.
     intros; now rewrite (natural (ϕ := @join T _)).
   Qed.
 
-  Lemma Natural_ret_Beck : Natural (@ret (T ∘ U) _).
+  Lemma Natural_ret_Beck: Natural (@ret (T ∘ U) _).
   Proof.
     constructor; try typeclasses eauto.
     intros A B f. unfold_ops @Map_compose @Ret_Beck.
@@ -82,7 +82,7 @@ Section BeckDistributivelaw_composite_monad.
   Qed.
 
   #[local] Set Keyed Unification.
-  Lemma Natural_join_Beck : Natural (@join (T ∘ U) _).
+  Lemma Natural_join_Beck: Natural (@join (T ∘ U) _).
   Proof.
     constructor; try typeclasses eauto.
     intros A B f. unfold_ops @Map_compose @Join_Beck.
@@ -93,7 +93,7 @@ Section BeckDistributivelaw_composite_monad.
     rewrite <- (fun_map_map (F := (T ∘ T))).
     unfold_ops @Map_compose.
     change_left ((join T ∘ map T (map T (join U))) ∘
-    (map T (map T (map U (map U f))) ∘ map T (bdist U T))).
+                   (map T (map T (map U (map U f))) ∘ map T (bdist U T))).
     rewrite (natural (G := T)).
     rewrite (fun_map_map (F := T)).
     rewrite (natural (G := T ∘ U) (Natural := bdist_natural U T)).
@@ -101,8 +101,8 @@ Section BeckDistributivelaw_composite_monad.
   Qed.
   #[local] Unset Keyed Unification.
 
-  Lemma join_ret_Beck {A} :
-      join (T ∘ U) ∘ ret (T ∘ U) = @id ((T ∘ U) A).
+  Lemma join_ret_Beck {A}:
+    join (T ∘ U) ∘ ret (T ∘ U) = @id ((T ∘ U) A).
   Proof.
     intros. unfold_ops @Join_Beck @Ret_Beck.
     reassociate ->. reassociate <- near (map T (bdist U T)).
@@ -115,7 +115,7 @@ Section BeckDistributivelaw_composite_monad.
     now rewrite (fun_map_id (F := T)).
   Qed.
 
-  Lemma join_map_ret_Beck {A} :
+  Lemma join_map_ret_Beck {A}:
     join (T ∘ U) ∘ map (T ∘ U) (ret (T ∘ U)) = @id (T (U A)).
   Proof.
     intros. unfold_ops @Join_Beck @Ret_Beck.
@@ -136,9 +136,9 @@ Section BeckDistributivelaw_composite_monad.
     now rewrite (fun_map_id (F := T)).
   Qed.
 
-  Lemma join_join_Beck {A} :
+  Lemma join_join_Beck {A}:
     join (T ∘ U) ∘ join (T ∘ U) =
-    join (T ∘ U) ∘ map (T ∘ U) (join (T ∘ U) (A:=A)).
+      join (T ∘ U) ∘ map (T ∘ U) (join (T ∘ U) (A:=A)).
   Proof.
     intros. unfold_ops @Join_Beck @Ret_Beck.
     (* Pull one <<join U>> to the same side as the other *)
@@ -218,11 +218,11 @@ Section BeckDistributivelaw_composite_monad.
     now rewrite (fun_map_map (F := U)).
   Qed.
 
-  #[export, program] Instance Monad_Beck : Monad (T ∘ U) :=
+  #[export, program] Instance Monad_Beck: Monad (T ∘ U) :=
     {| mon_ret_natural := Natural_ret_Beck;
        mon_join_natural := Natural_join_Beck;
        mon_join_ret := fun A => join_ret_Beck;
        mon_join_map_ret := fun A => join_map_ret_Beck;
        mon_join_join := fun A => join_join_Beck; |}.
 
-End BeckDistributivelaw_composite_monad.
+       End BeckDistributivelaw_composite_monad.

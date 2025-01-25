@@ -3,27 +3,29 @@ Require Export Coq.Structures.Equalities.
 
 #[local] Set Implicit Arguments.
 
-(** * Types with decidable equality *)
-(******************************************************************************)
-Class EqDec_eq (A : Type) :=
-  eq_dec : forall (x y : A), {x = y} + {x <> y}.
+(** * Types with Decidable Equality *)
+(**********************************************************************)
+Class EqDec_eq (A: Type) :=
+  eq_dec: forall (x y: A), {x = y} + {x <> y}.
 
-#[export] Instance EqDec_eq_of_EqDec (A : Type) `(@EqDec A eq eq_equivalence) : EqDec_eq A.
+#[export] Instance EqDec_eq_of_EqDec (A: Type)
+  `(@EqDec A eq eq_equivalence): EqDec_eq A.
 Proof. trivial. Defined.
 
 Declare Scope coqeqdec_scope.
 Open Scope coqeqdec_scope.
 
-Notation "x == y" := (eq_dec x y) (at level 70) : coqeqdec_scope.
+Notation "x == y" := (eq_dec x y) (at level 70): coqeqdec_scope.
 
-Theorem eq_dec_refl {A : Type} `{EqDec_eq A} (x : A) : eq_dec x x = left eq_refl.
+Theorem eq_dec_refl {A: Type} `{EqDec_eq A} (x: A):
+  eq_dec x x = left eq_refl.
 Proof.
   destruct (eq_dec x x); [|contradiction].
   f_equal; apply (Eqdep_dec.UIP_dec eq_dec).
 Qed.
 
-(** ** Support for decidable equalities *)
-(******************************************************************************)
+(** ** Tactics for Comparing Elements *)
+(**********************************************************************)
 Ltac destruct_eq_args x y :=
   let DESTR_EQ := fresh "DESTR_EQ" in
   let DESTR_NEQ := fresh "DESTR_NEQ" in
@@ -36,5 +38,8 @@ Ltac destruct_eq_args x y :=
 Tactic Notation "compare" "values" constr(x) "and" constr(y) :=
   destruct_eq_args x y.
 
-Tactic Notation "compare" constr(x) "to" "both" "of " "{" constr(y) constr(z) "}" :=
-  compare values x and y; try compare values x and z; try compare values y and z.
+Tactic Notation "compare" constr(x)
+  "to" "both" "of " "{" constr(y) constr(z) "}" :=
+  compare values x and y;
+  try compare values x and z;
+  try compare values y and z.

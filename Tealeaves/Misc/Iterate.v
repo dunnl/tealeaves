@@ -1,12 +1,17 @@
 From Tealeaves Require Import Tactics.Prelude.
 
 (* Iterate an endofunction <<n>> times *)
+
+(** * Iterating Functions *)
+(**********************************************************************)
 Fixpoint iterate (n : nat) {A : Type} (f : A -> A) :=
   match n with
   | 0 => @id A
   | S n' => iterate n' f ∘ f
   end.
 
+(** ** Rewriting Rules *)
+(**********************************************************************)
 Lemma iterate_rw0 : forall {A : Type} (f : A -> A),
     iterate 0 f = id.
 Proof.

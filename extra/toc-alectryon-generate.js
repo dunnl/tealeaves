@@ -17,7 +17,7 @@ const files = fs.readFileSync(filePath, 'utf8').trim().split('\n');
 const data = {
   files: files.map(file => ({
       name: `${file.replace(/\.html$/, '')}`,
-      url: `/${file.replace(/\.v$/, '.html')}`
+      url: `./${file.replace(/\.v$/, '.html')}`
   }))
 };
 

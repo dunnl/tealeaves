@@ -29,6 +29,7 @@ alectryon-clean:
 	rm -f html-alectryon/*.css
 	rm -f html-alectryon/*.js
 	rm -f html-alectryon/*.txt
+	touch html-alectryon/Tealeaves.Tactics.LibTactics.html
 
 .PHONY: alectryon alectryon-files alectryon-showvars
 .PHONY: alectryon-toc-list alectryon-toc install-alectryon
