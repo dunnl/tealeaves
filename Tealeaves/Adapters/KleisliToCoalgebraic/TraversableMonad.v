@@ -7,8 +7,11 @@ Import Functors.Early.Batch.Notations.
 Import Kleisli.TraversableMonad.Notations.
 
 #[local] Generalizable Variables G U T M A B.
+
 #[local] Arguments batch {A} (B)%type_scope _.
-#[local] Arguments toBatch6 {T U}%function_scope {ToBatch6} {A} (B)%type_scope _.
+#[local] Arguments toBatch6 {T U}%function_scope {ToBatch6}
+  {A} (B)%type_scope _.
+
 
 (** * Coalgebraic Traversable Monads *)
 (**********************************************************************)
@@ -18,8 +21,9 @@ Import Kleisli.TraversableMonad.Notations.
 Module DerivedOperations.
 
   #[export] Instance ToBatch6_Bindt `{Bindt T U}
- : Coalgebraic.TraversableMonad.ToBatch6 T U :=
-  (fun A B => bindt (G := Batch A (T B)) (batch (T B)): U A -> Batch A (T B) (U B)).
+: Coalgebraic.TraversableMonad.ToBatch6 T U :=
+  (fun A B => bindt (G := Batch A (T B)) (batch (T B)):
+     U A -> Batch A (T B) (U B)).
 
 End DerivedOperations.
 
@@ -46,8 +50,6 @@ Qed.
                   (ToBatch6_TU := DerivedOperations.ToBatch6_Bindt)
   := ltac:(hnf; reflexivity).
 
-(** ** Derived Laws *)
-(**********************************************************************)
 Module DerivedInstances.
   Section to_coalgebraic.
 
@@ -64,6 +66,8 @@ Module DerivedInstances.
       `{! Compat_ToBatch6_Bindt T U}
       `{! Compat_ToBatch6_Bindt T T}.
 
+    (** ** <<double_batch6>> as <<batch ⋆6 batch>> *)
+    (******************************************************************)
     Lemma double_batch6_spec: forall (A B C: Type),
         double_batch6 (T := T) (A := A) =
           batch (T C) ⋆6 batch (T B).
@@ -73,6 +77,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
+    (** ** Derived Laws *)
+    (******************************************************************)
     Lemma toBatch6_ret_Kleisli: forall A B: Type,
         toBatch6 B ∘ ret (T := T) (A := A) = batch (T B).
     Proof.
@@ -83,7 +89,7 @@ Module DerivedInstances.
     Qed.
 
     Lemma toBatch6_extract_Kleisli: forall (A: Type),
-        extract_Batch ∘ mapfst_Batch _ _ ret ∘ toBatch6 A = @id (U A).
+        extract_Batch ∘ mapfst_Batch ret ∘ toBatch6 A = @id (U A).
     Proof.
       intros.
       reassociate -> on left.
@@ -100,7 +106,7 @@ Module DerivedInstances.
                  (G2 := fun A => A)
                  (morphism := ApplicativeMorphism_extract_Batch (T A))).
       reassociate <- on left.
-      assert (cut: extract_Batch ∘ mapfst_Batch A (T A) ret ∘ batch (T A)
+      assert (cut: extract_Batch ∘ mapfst_Batch ret ∘ batch (T A)
                    = ret).
       { ext a. unfold compose. reflexivity. }
       rewrite cut.

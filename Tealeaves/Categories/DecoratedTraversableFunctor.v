@@ -14,11 +14,13 @@ Import Strength.Notations.
 Import Product.Notations.
 Import Monoid.Notations.
 
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments join T%function_scope {Join} {A}%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments join T%function_scope {Join}
+  {A}%type_scope _.
 
-(** * Monoid structure of D-T functors *)
-(******************************************************************************)
+(** * Monoid Structure of Decorated Traversable Functors *)
+(**********************************************************************)
 Section DecoratedTraversableFunctor_monoid.
 
   Context
@@ -29,28 +31,29 @@ Section DecoratedTraversableFunctor_monoid.
     Existing Instance DecoratedFunctor_zero.
     Existing Instance Traversable_I.
 
-    (** ** The identity functor is D-T *)
-    (******************************************************************************)
-    #[program] Instance DecoratedTraversable_I : DecoratedTraversableFunctor W (fun A => A).
+    (** ** The Identity Functor is Decorated Traversable *)
+    (******************************************************************)
+    #[program] Instance DecoratedTraversable_I:
+      DecoratedTraversableFunctor W (fun A => A).
 
-    Remove Hints DecoratedFunctor_zero : typeclass_instances.
+    Remove Hints DecoratedFunctor_zero: typeclass_instances.
 
   End identity.
 
-  (** ** D-T functors are closed under composition *)
-  (******************************************************************************)
+  (** ** Decorated Traversable Functors are Closed under Composition *)
+  (********************************************************************)
   Section compose.
 
     #[local] Set Keyed Unification.
 
     Context
       `{Monoid W}
-      (U T : Type -> Type)
+      (U T: Type -> Type)
       `{DecoratedTraversableFunctor W T}
       `{DecoratedTraversableFunctor W U}.
 
     (** Push the applicative wire underneath a <<shift>> operation *)
-    Lemma strength_shift : forall (A : Type) `{Applicative G},
+    Lemma strength_shift: forall (A: Type) `{Applicative G},
         δ T G ∘ map T σ ∘ shift T (A := G A) =
           map G (shift T) ∘ σ ∘ map (W ×) (δ T G ∘ map T σ).
     Proof.
@@ -84,14 +87,15 @@ Section DecoratedTraversableFunctor_monoid.
       now rewrite (fun_map_map (F := T)).
     Qed.
 
-    (** Push the applicative wire underneath a <<dec (U ∘ T)>> operation *)
-    Lemma strength_shift2 : forall (A : Type) `{Applicative G},
+    (** Push the applicative wire underneath a <<dec (U∘T)>> operation *)
+    Lemma strength_shift2: forall (A: Type) `{Applicative G},
         δ U G ∘ map U (σ ∘ map (prod W) (δ T G ∘ map T σ))
           ∘ (dec U ∘ map U (dec T (A := G A))) =
           map G (dec U ∘ map U (dec T)) ∘ δ (U ∘ T) G.
     Proof.
       intros. rewrite <- (natural (ϕ := @dec W U _)).
-      reassociate <- on left; reassociate -> near (map (U ○ prod W) (dec T)).
+      reassociate <- on left;
+        reassociate -> near (map (U ○ prod W) (dec T)).
       rewrite (fun_map_map (F := U)). do 2 reassociate -> on left.
       rewrite (fun_map_map (F := prod W)).
       rewrite (dtfun_compat A); auto.
@@ -108,16 +112,16 @@ Section DecoratedTraversableFunctor_monoid.
       rewrite (fun_map_map (F := G)). reflexivity.
     Qed.
 
-    Theorem dtfun_compat_compose : forall `{Applicative G} {A : Type},
+    Theorem dtfun_compat_compose: forall `{Applicative G} {A: Type},
         δ (U ∘ T) G ∘ map (U ∘ T) σ ∘ dec (U ∘ T) (A := G A) =
-        map G (dec (U ∘ T)) ∘ dist (U ∘ T) G.
+          map G (dec (U ∘ T)) ∘ dist (U ∘ T) G.
     Proof.
       intros. reassociate -> on left.
       unfold dec at 1, Decorate_compose.
       unfold dist at 1, Dist_compose.
       (* bring <<strength G >> and <<shift T>> together*)
       do 3 reassociate <- on left;
-        reassociate -> near (map U (shift T));
+      reassociate -> near (map U (shift T));
       rewrite (fun_map_map (F := U)).
       reassociate -> near (map U (map T σ ∘ shift T)).
       rewrite (fun_map_map (F := U)).
@@ -136,41 +140,42 @@ Section DecoratedTraversableFunctor_monoid.
       now rewrite (fun_map_map (F := G)).
     Qed.
 
-    (* TODO Investigate why DecoratedFunctor_compose solve the next instance automatically.
-       It seems like <<dtfun_decorated>> needs extra help here.
-       It seems like it doesn't want to pick up on the Dist instance or something.
-     *)
-    Lemma composition_is_decorated : DecoratedFunctor W (U ∘ T).
+    (* TODO Investigate why DecoratedFunctor_compose solve the next
+       instance automatically It seems like <<dtfun_decorated>> needs
+       extra help here.  It seems like it doesn't want to pick up on
+       the Dist instance or something.  *)
+    Lemma composition_is_decorated: DecoratedFunctor W (U ∘ T).
     Proof.
       inversion H4.
       inversion H8.
       apply DecoratedFunctor_compose.
     Qed.
 
-    #[program, global] Instance DecoratedTraversableFunctor_compose :
+    #[program, global] Instance DecoratedTraversableFunctor_compose:
       DecoratedTraversableFunctor W (U ∘ T) :=
       {| dtfun_decorated := composition_is_decorated;
-        dtfun_compat := @dtfun_compat_compose; |}.
+         dtfun_compat := @dtfun_compat_compose;
+      |}.
 
   End compose.
 
 End DecoratedTraversableFunctor_monoid.
 
-(** ** Zero-decorated traversable functors are decorated-traversable *)
-(******************************************************************************)
+(** ** Null-Decorated Traversable Functors are Decorated Traversable *)
+(**********************************************************************)
 Section TraversableFunctor_zero_DT.
 
   Context
-    (T : Type -> Type)
+    (T: Type -> Type)
     `{TraversableFunctor T}
     `{Monoid W}.
 
   Existing Instance Decorate_zero.
   Existing Instance DecoratedFunctor_zero.
 
-  Theorem dtfun_compat_zero : forall `{Applicative G} {A : Type},
+  Theorem dtfun_compat_zero: forall `{Applicative G} {A: Type},
       dist T G ∘ map T σ ∘ dec T =
-      map G (dec T) ∘ dist T G (A := A).
+        map G (dec T) ∘ dist T G (A := A).
   Proof.
     intros. unfold_ops @Decorate_zero.
     reassociate -> on left. rewrite (fun_map_map (F := T)).
@@ -179,8 +184,13 @@ Section TraversableFunctor_zero_DT.
     now unfold_ops @Map_compose.
   Qed.
 
-  Instance DecoratedTraversableFunctor_zero :
+  Instance DecoratedTraversableFunctor_zero:
     DecoratedTraversableFunctor W T :=
-    {| dtfun_compat := @dtfun_compat_zero |}.
+    {| dtfun_compat := @dtfun_compat_zero
+    |}.
 
 End TraversableFunctor_zero_DT.
+
+(** ** Identity and Associativity Laws *)
+(* TODO *)
+(**********************************************************************)

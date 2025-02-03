@@ -18,7 +18,7 @@ Import DecoratedMonad.Notations.
 #[local] Generalizable Variables W A B.
 
 (** * The <<ctxset>> Decorated Functor *)
-(******************************************************************************)
+(**********************************************************************)
 Definition ctxset (E: Type) := fun A => subset (E * A).
 
 Section ctxset.
@@ -26,8 +26,8 @@ Section ctxset.
   Context
     (E: Type).
 
-  (** ** Operations and specifications *)
-  (******************************************************************************)
+  (** ** Operations and Specifications *)
+  (********************************************************************)
   #[export] Instance Mapd_ctxset: Mapd E (ctxset E) :=
     fun `(f: E * A -> B) (s: ctxset E A) =>
     fun '(e, b) => exists (a: A), s (e, a) /\ f (e, a) = b.
@@ -58,8 +58,6 @@ Section ctxset.
       exists a. inversion Heq. now subst.
   Qed.
 
-  (** ** Operations and specifications *)
-  (******************************************************************************)
   Lemma ctxset_map_to_mapd: forall (A B: Type) (f: A -> B),
       map f = mapd (T := ctxset E) (f ∘ extract).
   Proof.
@@ -69,15 +67,18 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  Lemma kdf_subset_mapd1 :
-    forall A: Type, mapd (T := ctxset E) extract = @id (ctxset E A).
+  (** ** Decorated Functor Laws *)
+  (********************************************************************)
+  Lemma kdf_subset_mapd1:
+    forall A: Type,
+      mapd (T := ctxset E) extract = @id (ctxset E A).
   Proof.
     intros. cbv. ext f [e a]. propext.
     - intros [a' Heq]. now preprocess.
     - intros H. exists a. intuition.
   Qed.
 
-  Lemma kdf_subset_mapd2 :
+  Lemma kdf_subset_mapd2:
     forall (A B C: Type) (g: E * B -> C) (f: E * A -> B),
       mapd g ∘ mapd f = mapd (g ⋆1 f).
   Proof.
@@ -88,15 +89,15 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  (** ** Decorated functor typeclass instance *)
-  (******************************************************************************)
+  (** ** Typeclass Instance *)
+  (********************************************************************)
   #[export] Instance DecoratedTraversableFunctor_ctxset:
     DecoratedFunctor E (ctxset E) :=
     {| kdf_mapd1 := kdf_subset_mapd1;
        kdf_mapd2 := kdf_subset_mapd2;
     |}.
 
-  #[export] Instance Compat_Map_Mapd_ctxset :
+  #[export] Instance Compat_Map_Mapd_ctxset:
     `{Compat_Map_Mapd E (ctxset E)}.
   Proof.
     hnf. ext A B f.
@@ -108,16 +109,19 @@ Section ctxset.
     Functor (ctxset E) :=
     DerivedInstances.Functor_DecoratedFunctor E (ctxset E).
 
-  (** ** Monoid instances *)
-  (******************************************************************************)
+  (** * Monoid Instance *)
+  (********************************************************************)
   Instance Monoid_op_ctxset {A: Type}: Monoid_op (ctxset E A) :=
     @Monoid_op_subset (E * A).
 
   Instance Monoid_unit_ctxset {A: Type}: Monoid_unit (ctxset E A) :=
     @Monoid_unit_subset (E * A).
 
-  Instance Monoid_ctxset {A: Type}: Monoid (ctxset E A) := @Monoid_subset (E * A).
+  Instance Monoid_ctxset {A: Type}: Monoid (ctxset E A) :=
+    @Monoid_subset (E * A).
 
+  (** ** <<map>> and <<mapd>> are Homomorphisms *)
+  (********************************************************************)
   #[export] Instance Monmor_ctxset_mapd: forall `(f: E * A -> B),
       Monoid_Morphism (ctxset E A) (ctxset E B) (mapd f).
   Proof.
@@ -136,14 +140,14 @@ Section ctxset.
 
 End ctxset.
 
-(** * The <<ctxset>> monad *)
-(******************************************************************************)
+(** * The <<ctxset>> Monad (Kleisli) *)
+(**********************************************************************)
 Section ctxset.
 
   Context `{Monoid W}.
 
-  (** ** Monad instance *)
-  (******************************************************************************)
+  (** ** Operations and Specifications *)
+  (********************************************************************)
   #[export] Instance Return_ctxset: Return (ctxset W) :=
     fun A a '(w, b) => a = b /\ w = Ƶ.
 
@@ -235,13 +239,15 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  #[export] Instance Compat_Bind_Bindd_ctxset :
+  (** ** Compatibility Instances *)
+  (********************************************************************)
+  #[export] Instance Compat_Bind_Bindd_ctxset:
     Compat_Bind_Bindd W (ctxset W) (ctxset W).
   Proof.
     reflexivity.
   Qed.
 
-  #[export] Instance Compat_Map_Bindd_ctxset :
+  #[export] Instance Compat_Map_Bindd_ctxset:
     Compat_Map_Bindd W (ctxset W) (ctxset W).
   Proof.
     hnf. ext A B f.
@@ -250,7 +256,7 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  #[export] Instance Compat_Mapd_Bindd_ctxset :
+  #[export] Instance Compat_Mapd_Bindd_ctxset:
     Compat_Mapd_Bindd W (ctxset W) (ctxset W).
   Proof.
     hnf. ext A B f.
@@ -259,9 +265,9 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  (** ** Rewriting laws *)
-  (******************************************************************************)
-  Lemma bindd_ctxset_nil `{f: W * A -> ctxset W B} :
+  (** ** Rewriting Laws *)
+  (********************************************************************)
+  Lemma bindd_ctxset_nil `{f: W * A -> ctxset W B}:
     bindd f (@subset_empty (W * A)) = @subset_empty (W * B).
   Proof.
     ext [w b]. cbn. propext.
@@ -270,7 +276,7 @@ Section ctxset.
     - inversion 1.
   Qed.
 
-  Lemma bindd_ctxset_one `{f: W * A -> ctxset W B} {w: W} {a: A} :
+  Lemma bindd_ctxset_one `{f: W * A -> ctxset W B} {w: W} {a: A}:
     bindd f {{ (w, a) }} = shift subset (w, f (w, a)).
   Proof.
     rewrite ctxset_bindd_spec.
@@ -278,7 +284,7 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  Lemma bindd_ctxset_add `{f: W * A -> ctxset W B} {x y} :
+  Lemma bindd_ctxset_add `{f: W * A -> ctxset W B} {x y}:
       bindd f (x ∪ y: ctxset W A) = bindd f x ∪ bindd f y.
   Proof.
     rewrite ctxset_bindd_spec.
@@ -287,10 +293,10 @@ Section ctxset.
 
   #[local] Hint Rewrite
     @bindd_ctxset_nil @bindd_ctxset_one @bindd_ctxset_add
-   : tea_set.
+ : tea_set.
 
-  (** ** Decorated monad laws *)
-  (******************************************************************************)
+  (** ** Decorated Monad Laws *)
+  (********************************************************************)
   Lemma ctxset_bindd0: forall (A B: Type) (f: W * A -> ctxset W B),
       bindd f ∘ ret = f ∘ pair Ƶ.
   Proof.
@@ -306,7 +312,8 @@ Section ctxset.
   Qed.
 
   Lemma ctxset_bindd1: forall A: Type,
-      bindd (T := ctxset W) (ret (T := ctxset W) ∘ extract) = @id (ctxset W A).
+      bindd (T := ctxset W) (ret (T := ctxset W) ∘ extract) =
+        @id (ctxset W A).
   Proof.
     intros.
     rewrite ctxset_bindd_spec.
@@ -326,7 +333,7 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  Lemma ctxset_bindd2_lemma :
+  Lemma ctxset_bindd2_lemma:
     forall (A B C :Type) (g: W * B -> ctxset W C)
       (f: W * A -> ctxset W B),
       kc (T := subset) (shift subset ∘ cobind g)
@@ -357,8 +364,9 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  Lemma ctxset_bindd2 :
-    forall (A B C: Type) (g: W * B -> ctxset W C) (f: W * A -> ctxset W B),
+  Lemma ctxset_bindd2:
+    forall (A B C: Type)
+      (g: W * B -> ctxset W C) (f: W * A -> ctxset W B),
       bindd g ∘ bindd f = bindd (g ⋆5 f).
   Proof.
     intros.
@@ -369,24 +377,27 @@ Section ctxset.
     reflexivity.
   Qed.
 
-  #[export] Instance DecoratedRightPreModule_ctxset :
+  (** ** Typeclass Instances *)
+  (********************************************************************)
+  #[export] Instance DecoratedRightPreModule_ctxset:
     DecoratedRightPreModule W (ctxset W) (ctxset W) :=
     {| kdmod_bindd1 := ctxset_bindd1;
        kdmod_bindd2 := ctxset_bindd2;
     |}.
 
-  #[export] Instance DecoratedMonad_ctxset :
+  #[export] Instance DecoratedMonad_ctxset:
     DecoratedMonad W (ctxset W) :=
     {| kdm_bindd0 := ctxset_bindd0;
     |}.
 
-  #[export] Instance DecoratedRightModule_ctxset :
+  #[export] Instance DecoratedRightModule_ctxset:
     DecoratedRightModule W (ctxset W) (ctxset W) :=
-    {| kdmod_monad := _ |}.
+    {| kdmod_monad := _
+    |}.
 
-  (** ** <<bindd>> is a monoid homomorphism *)
-  (******************************************************************************)
-  #[export] Instance Monmor_ctxset_bindd {A B f} :
+  (** ** <<bind>> is a Monoid Homomorphism *)
+  (********************************************************************)
+  #[export] Instance Monmor_ctxset_bindd {A B f}:
     Monoid_Morphism (ctxset W A) (ctxset W B) (bindd f).
   Proof.
     constructor.
@@ -396,9 +407,9 @@ Section ctxset.
     - intros. apply bindd_ctxset_add.
   Qed.
 
-  (** ** Querying for an element is a monoid homomorphism *)
-  (******************************************************************************)
-  #[export] Instance Monmor_ctxset_evalAt {A: Type} (w: W) (a: A) :
+  (** ** Querying for an Element is a Monoid Homomorphism *)
+  (********************************************************************)
+  #[export] Instance Monmor_ctxset_evalAt {A: Type} (w: W) (a: A):
     @Monoid_Morphism (ctxset W A) Prop
       (@Monoid_op_subset (W * A))
       (@Monoid_unit_subset (W * A))

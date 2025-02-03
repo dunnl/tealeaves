@@ -18,42 +18,42 @@ Import Categorical.Monad.Notations.
 #[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
 #[local] Arguments join T%function_scope {Join} {A}%type_scope _.
 
-(** * A decorated functor is precisely a right comodule of <<prod E>> *)
-(******************************************************************************)
+(** * A Decorated Functor is Precisely a Right comodule of <<(E ×)>> *)
+(**********************************************************************)
 Definition RightComodule_DecoratedFunctor
   `{DecoratedFunctor E F}
-  : RightComodule F (prod E) :=
+ : RightComodule F (prod E) :=
   {| rcom_coaction_coaction := dfun_dec_dec;
-    rcom_map_extr_coaction := dfun_dec_extract;
+     rcom_map_extr_coaction := dfun_dec_extract;
   |}.
 
 Definition DecoratedFunctor_RightComodule
   `{Map F} `{RightCoaction F (prod E)}
   `{! RightComodule F (prod E)} `{Monoid E}
-  : DecoratedFunctor E F :=
+ : DecoratedFunctor E F :=
   {| dfun_dec_dec := rcom_coaction_coaction;
-    dfun_dec_extract := rcom_map_extr_coaction;
+     dfun_dec_extract := rcom_map_extr_coaction;
   |}.
 
-(** * Decorated functors form a monoidal category *)
-(******************************************************************************)
+(** * Decorated Functors Form a Monoidal Category *)
+(**********************************************************************)
 
-(** ** Null-decorated functors *)
+(** ** Null-Decorated Functors *)
 (** Every functor is trivially decorated using the operation that
     pairs each leaf with the unit of the monoid. We call such functors
     null-decorated. This allows us to see _all_ functors as (maybe
     trivially) decorated. *)
-(******************************************************************************)
+(**********************************************************************)
 Section DecoratedFunctor_Zero.
 
   Context
     `{Monoid W}
     `{Functor F}.
 
-  Instance Decorate_zero : Decorate W F :=
+  Instance Decorate_zero: Decorate W F :=
     fun A => @map F _ A (W * A) (pair Ƶ).
 
-  Instance Natural_dec_zero :
+  Instance Natural_dec_zero:
     Natural (@dec W F _).
   Proof.
     constructor; try typeclasses eauto.
@@ -61,7 +61,7 @@ Section DecoratedFunctor_Zero.
     now do 2 rewrite fun_map_map.
   Qed.
 
-  Lemma dec_dec_zero {A} :
+  Lemma dec_dec_zero {A}:
     dec F ∘ dec F (A:=A) =
     map F (cojoin (W :=(W ×))) ∘ dec F.
   Proof.
@@ -69,7 +69,7 @@ Section DecoratedFunctor_Zero.
     now do 2 rewrite fun_map_map.
   Qed.
 
-  Lemma dec_extract_zero {A} :
+  Lemma dec_extract_zero {A}:
     map F (extract (W := (W ×))) ∘ dec F = @id (F A).
   Proof.
     intros. unfold_ops @Decorate_zero.
@@ -78,7 +78,7 @@ Section DecoratedFunctor_Zero.
     now rewrite fun_map_id.
   Qed.
 
-  Instance DecoratedFunctor_zero : DecoratedFunctor W F :=
+  Instance DecoratedFunctor_zero: DecoratedFunctor W F :=
     {| dfun_dec_natural := Natural_dec_zero;
        dfun_dec_dec := @dec_dec_zero;
        dfun_dec_extract := @dec_extract_zero;
@@ -86,26 +86,26 @@ Section DecoratedFunctor_Zero.
 
 End DecoratedFunctor_Zero.
 
-(** ** The identity (zero-)decorated functor *)
-(******************************************************************************)
+(** ** The Identity Null-Decorated functor *)
+(**********************************************************************)
 Section DecoratedFunctor_I.
 
   Context
     `{Monoid W}.
 
-  Definition dec_I : forall A, A -> prod W A :=
+  Definition dec_I: forall A, A -> prod W A :=
     fun A => @pair W A Ƶ.
 
-  #[global] Instance Decorate_I : Decorate W (fun A => A) := dec_I.
+  #[global] Instance Decorate_I: Decorate W (fun A => A) := dec_I.
 
-  #[global] Instance Natural_dec_I :
+  #[global] Instance Natural_dec_I:
     Natural (G:=prod W) (fun _ => dec (fun A => A)).
   Proof.
     constructor; try typeclasses eauto.
     reflexivity.
   Qed.
 
-  Lemma dec_dec_I {A} :
+  Lemma dec_dec_I {A}:
     dec (fun A => A) ∘ dec (A:=A) (fun A => A) =
     map (fun A => A) (fun '(n, a) => (n, (n, a))) ∘ dec (fun A => A).
   Proof.
@@ -113,13 +113,14 @@ Section DecoratedFunctor_I.
     reflexivity.
   Qed.
 
-  Lemma dec_extract_I {A} :
+  Lemma dec_extract_I {A}:
     map (fun A => A) (extract (W := (W ×))) ∘ dec (fun A => A) = (@id A).
   Proof.
     intros. reflexivity.
   Qed.
 
-  #[global] Instance DecoratedFunctor_I : DecoratedFunctor W (fun A => A) :=
+  #[global] Instance DecoratedFunctor_I:
+    DecoratedFunctor W (fun A => A) :=
     {| dfun_dec_natural := Natural_dec_I;
        dfun_dec_dec := @dec_dec_I;
        dfun_dec_extract := @dec_extract_I;
@@ -127,8 +128,8 @@ Section DecoratedFunctor_I.
 
 End DecoratedFunctor_I.
 
-(** ** Decorated functors are closed under composition *)
-(******************************************************************************)
+(** ** Decorated Functors are Closed under Composition *)
+(**********************************************************************)
 Section Decoratedfunctor_composition.
 
   Context
@@ -138,10 +139,10 @@ Section Decoratedfunctor_composition.
     `{! DecoratedFunctor W F}
     `{! DecoratedFunctor W G}.
 
-  #[global] Instance Decorate_compose : Decorate W (F ∘ G) :=
+  #[global] Instance Decorate_compose: Decorate W (F ∘ G) :=
     fun A => map F (shift G) ∘ dec F ∘ map F (dec G).
 
-  Instance Natural_dec_compose :
+  Instance Natural_dec_compose:
     Natural (fun A => dec (A:=A) (E:=W) (F ∘ G)).
   Proof.
     constructor; try typeclasses eauto. introv.
@@ -159,7 +160,7 @@ Section Decoratedfunctor_composition.
     change (map F (map (prod W ∘ G ∘ prod W) f))
       with (map (F ∘ prod W) (map (G ∘ prod W) f)).
     repeat reassociate ->;
-           reassociate <- near (map (F ∘ prod W) (map (G ∘ prod W) f)).
+      reassociate <- near (map (F ∘ prod W) (map (G ∘ prod W) f)).
     rewrite (natural (G := F ∘ prod W) (ϕ := @dec W F _)).
     (* move <<F (dec G)>> past <<F ((G ∘ W) f)>> *)
     reassociate -> on left.
@@ -175,7 +176,7 @@ Section Decoratedfunctor_composition.
 
   (** Split the decoration wire on <<G>> into two wires with
       <<dfun_dec_dec G>> law. *)
-  Lemma dec_dec_compose_1 {A} :
+  Lemma dec_dec_compose_1 {A}:
     (map F (map (G ∘ prod W) (cojoin (W := prod W)) ∘ strength (F := G)))
       ∘ dec F
       ∘ map F (dec G)
@@ -196,7 +197,7 @@ Section Decoratedfunctor_composition.
     now rewrite <- (dfun_dec_dec (E := W) (F := G)).
   Qed.
 
-  Lemma strength_cojoin_r {A} :
+  Lemma strength_cojoin_r {A}:
     (map G (cojoin (W := (W ×))))
       ∘ strength (F := G)
     = strength (F := G)
@@ -209,7 +210,7 @@ Section Decoratedfunctor_composition.
 
   (** Split the decoration wire on <<F>> into two wires with
      <<dfun_dec_dec F>>. *)
-  Lemma dec_dec_compose_2 {A} :
+  Lemma dec_dec_compose_2 {A}:
     (map F (map G (cojoin (W := prod W)) ∘ strength))
       ∘ dec F
     = (map F strength)
@@ -230,7 +231,7 @@ Section Decoratedfunctor_composition.
 
   (** Slide the upper decoration wire on <<G>> past the lower
   decoration wire on <<F>>, which requires crossing them. *)
-  Lemma dec_dec_compose_3 {A} :
+  Lemma dec_dec_compose_3 {A}:
     (map F strength)
       ∘ dec F
       ∘ map F (dec G) =
@@ -256,12 +257,16 @@ Section Decoratedfunctor_composition.
   Qed.
 
   (** Re-arrange using naturality *)
-  Lemma dec_dec_compose_5 : forall (A : Type),
-      map F (map G (join (prod W))) ∘ map F σ ∘ dec F ∘ map F (dec G)
-           ∘ (map F (map G (join (prod W))) ∘ map F strength) ∘ dec F ∘ map F (dec G)
-      =
-      map F (map G (join (prod W)) ∘ map G (map (prod W ∘ prod W) (join (prod W))) ∘ strength) ∘ dec F
-           ∘ map F (dec G) ∘ map F σ ∘ dec F ∘ map F (dec G (A := A)).
+  Lemma dec_dec_compose_5: forall (A: Type),
+      map F (map G (join (prod W))) ∘
+        map F σ ∘ dec F ∘ map F (dec G) ∘
+        (map F (map G (join (prod W))) ∘ map F strength) ∘
+        dec F ∘ map F (dec G) =
+        map F
+          (map G (join (prod W)) ∘
+             map G (map (prod W ∘ prod W) (join (prod W))) ∘ strength)
+          ∘ dec F ∘ map F (dec G) ∘
+          map F σ ∘ dec F ∘ map F (dec G (A := A)).
   Proof.
     intros. fequal. fequal. reassociate <-.
     unfold_ops @Map_compose.
@@ -287,7 +292,7 @@ Section Decoratedfunctor_composition.
   Qed.
 
   #[local] Set Keyed Unification.
-  Theorem dec_dec_compose {A} :
+  Theorem dec_dec_compose {A}:
     dec (F ∘ G) ∘ dec (F ∘ G) =
     map (F ∘ G) (cojoin (W := prod W)) ∘ dec (F ∘ G) (A:=A).
   Proof.
@@ -324,8 +329,8 @@ Section Decoratedfunctor_composition.
                    ∘ map F (dec G))
            ∘ g).
     rewrite dec_dec_compose_3.
-    (* Flatten out a distribution bubble. Move the second decoration on <<F>>
-     out of the way to juxtapose the two distributions. *)
+    (* Flatten out a distribution bubble.  Move the second decoration
+       on <<F>> out of the way to juxtapose the two distributions. *)
     rewrite (fun_map_map (F := F ∘ G)). unfold shift.
     rewrite (fun_map_map (F := F) _ _ _(@strength G _ W (W * (W * (W * A))))).
     rewrite <- (fun_map_map (F := G)).
@@ -357,7 +362,7 @@ Section Decoratedfunctor_composition.
   Qed.
   #[local] Unset Keyed Unification.
 
-  Theorem dec_extract_compose {A} :
+  Theorem dec_extract_compose {A}:
     map (F ∘ G) (extract (W := (W ×))) ∘ dec (F ∘ G) = @id (F (G A)).
   Proof.
     intros. unfold_ops @Map_compose @Decorate_compose.
@@ -374,7 +379,7 @@ Section Decoratedfunctor_composition.
     now rewrite (fun_map_id (F := F)).
   Qed.
 
-  #[global] Instance DecoratedFunctor_compose : DecoratedFunctor W (F ∘ G) :=
+  #[global] Instance DecoratedFunctor_compose: DecoratedFunctor W (F ∘ G) :=
     {| dfun_dec_natural := Natural_dec_compose;
        dfun_dec_dec := @dec_dec_compose;
        dfun_dec_extract := @dec_extract_compose;
@@ -382,14 +387,14 @@ Section Decoratedfunctor_composition.
 
 End Decoratedfunctor_composition.
 
-(** ** Category laws for composition of decorated functors *)
+(** ** Category Laws for Composition of Decorated Functors *)
 (** Next we prove that composition of decorated functors satisfies the
     laws of a category, i.e. that composition with the identity
     decorated functor on the left or is the identity, and that
     composition is associative. This is not immediately obvious
     because in each case we must verify that the <<dec>> operation is
     the same for both sides. *)
-(******************************************************************************)
+(**********************************************************************)
 Section DecoratedFunctor_composition_laws.
 
   Section identity_laws.
@@ -397,25 +402,25 @@ Section DecoratedFunctor_composition_laws.
     (** Let <<T>> be a decorated functor. *)
     Context
       `{Functor T}
-      `{dec_T : Decorate W T}
-      `{op : Monoid_op W}
-      `{unit : Monoid_unit W}
+      `{dec_T: Decorate W T}
+      `{op: Monoid_op W}
+      `{unit: Monoid_unit W}
       `{! DecoratedFunctor W T}
       `{! Monoid W}.
 
     (** *** Composition with a zero-decorated functor *)
     (** When <<F>> has a trivial decoration,
         <<dec (F ∘T)>> and <<dec (T ∘ F)>> have a special form. *)
-    (******************************************************************************)
+    (******************************************************************)
     Section zero_decorated_composition.
 
       (** Let <<F>> be a functor, which we will treat as zero-decorated. *)
       Context
-        (F : Type -> Type)
+        (F: Type -> Type)
         `{Functor F}.
 
       (** Composition with a zero-decorated functor on the left returns <<T>>. *)
-      Theorem decorate_zero_compose_l : forall (A : Type),
+      Theorem decorate_zero_compose_l: forall (A: Type),
           @dec W (F ∘ T) (@Decorate_compose W op F _ T _ Decorate_zero dec_T) A =
           map F (dec T).
       Proof.
@@ -431,7 +436,7 @@ Section DecoratedFunctor_composition_laws.
       Qed.
 
       (** Composition with the identity functor on the left returns <<T>>. *)
-      Theorem decorate_zero_compose_r : forall (A : Type),
+      Theorem decorate_zero_compose_r: forall (A: Type),
           @dec W (T ∘ F) (@Decorate_compose W op T _ F _ dec_T Decorate_zero) A =
           map T σ ∘ dec T.
       Proof.
@@ -449,15 +454,15 @@ Section DecoratedFunctor_composition_laws.
     End zero_decorated_composition.
 
     (** *** Composition with the identity decorated functor *)
-    (******************************************************************************)
-    Theorem decorate_identity_compose_l : forall (A : Type),
+    (******************************************************************)
+    Theorem decorate_identity_compose_l: forall (A: Type),
         @dec W ((fun A => A) ∘ T) (@Decorate_compose W op (fun A => A) _ T _ Decorate_zero dec_T) A =
         dec T.
     Proof.
       intros. now rewrite (decorate_zero_compose_l (fun A => A)).
     Qed.
 
-    Theorem decorate_identity_compose_r : forall (A : Type),
+    Theorem decorate_identity_compose_r: forall (A: Type),
         @dec W (T ∘ (fun A => A)) (@Decorate_compose W op T _ (fun A => A) _ dec_T Decorate_zero) A =
         dec T.
     Proof.
@@ -470,18 +475,18 @@ Section DecoratedFunctor_composition_laws.
   Section associativity_law.
 
     Context
-      `{op : Monoid_op W}
-      `{unit : Monoid_unit W}
+      `{op: Monoid_op W}
+      `{unit: Monoid_unit W}
       `{! Monoid W}
       `{Map T1} `{Map T2} `{Map T3}
-      `{dec_T1 : Decorate W T1}
-      `{dec_T2 : Decorate W T2}
-      `{dec_T3 : Decorate W T3}
+      `{dec_T1: Decorate W T1}
+      `{dec_T2: Decorate W T2}
+      `{dec_T3: Decorate W T3}
       `{! DecoratedFunctor W T1}
       `{! DecoratedFunctor W T2}
       `{! DecoratedFunctor W T3}.
 
-    Lemma decorate_compose_assoc1 : forall (A : Type),
+    Lemma decorate_compose_assoc1: forall (A: Type),
         (map T2 (map T1 (μ (A:=A) (prod W)) ∘ σ ∘ μ (prod W)) ∘ σ) =
         (map T2 (map T1 (μ (W ×)) ∘ σ) ∘ σ) ∘ map ((W ×) ∘ T2) (map T1 (μ (W ×)) ∘ σ).
     Proof.
@@ -497,7 +502,7 @@ Section DecoratedFunctor_composition_laws.
     Qed.
 
     Set Keyed Unification.
-    Theorem decorate_compose_assoc : forall (A : Type),
+    Theorem decorate_compose_assoc: forall (A: Type),
         @dec W (T3 ∘ T2 ∘ T1)
              (@Decorate_compose W op (T3 ∘ T2) _ T1 _ _ dec_T1) A =
         @dec W (T3 ∘ T2 ∘ T1)
@@ -535,19 +540,19 @@ Section DecoratedFunctor_composition_laws.
 
 End DecoratedFunctor_composition_laws.
 
-(** ** Composition with zero-decorated functors *)
-(******************************************************************************)
+(** ** Composition with Null-Decorated Functors *)
+(**********************************************************************)
 Section DecoratedFunctor_zero_composition.
 
   Context
-    (F G : Type -> Type)
+    (F G: Type -> Type)
     `{Monoid W}
     `{Functor F}
     `{DecoratedFunctor W G}.
 
   Instance: Decorate W F := Decorate_zero.
 
-  Theorem decorate_zero_compose {A} :
+  Theorem decorate_zero_compose {A}:
     `(dec (F ∘ G) (A := A) = map F (dec G)).
   Proof.
     intros. unfold_ops @Decorate_compose.
@@ -555,7 +560,7 @@ Section DecoratedFunctor_zero_composition.
     reassociate -> near (map F (dec G)).
     do 2 rewrite (fun_map_map (F := F)).
     reassociate <-.
-    replace (shift G ∘ (fun a : G (W * A) => (Ƶ, a))) with (@id (G (W * A))).
+    replace (shift G ∘ (fun a: G (W * A) => (Ƶ, a))) with (@id (G (W * A))).
     now reflexivity.
     ext g. unfold compose; cbn.
     now rewrite (shift_zero G).
@@ -563,8 +568,8 @@ Section DecoratedFunctor_zero_composition.
 
 End DecoratedFunctor_zero_composition.
 
-(** * Decorated monads in terms of monad homomorphisms *)
-(******************************************************************************)
+(** * Monad Operations in As Homomorphisms of Decorated Functors *)
+(**********************************************************************)
 Section DecoratedMonad_characterization.
 
   Context
@@ -573,7 +578,7 @@ Section DecoratedMonad_characterization.
 
   (** <<ret T>> commutes with decoration if and only if <<dec T>> maps
      <<ret T>> to <<ret (T ∘ W)>> *)
-  Lemma dec_ret_iff {A} :
+  Lemma dec_ret_iff {A}:
     (dec T ∘ ret T A = ret T (W * A) ∘ dec (fun x => x) (A:=A)) <->
     (dec T ∘ ret T A = ret (T ∘ prod W) A).
   Proof with auto.
@@ -583,11 +588,11 @@ Section DecoratedMonad_characterization.
   (** <<join T>> commutes with decoration if and only if <<dec T>>
      maps <<join T>> to <<join (T ∘ prod W)>> of <<dec T ∘ map T (dec T)>>
      (in other words iff <<dec T>> commutes with <<join>>). *)
-  Lemma dec_join_iff {A} :
+  Lemma dec_join_iff {A}:
     `(dec T ∘ join T = join T ∘ dec (T ∘ T) (A := A)) <->
     `(dec T ∘ join T = join (T ∘ prod W) ∘ dec T ∘ map T (dec T (A:=A))).
   Proof.
-    enough (Heq : join T ∘ dec (A := A) (T ∘ T)
+    enough (Heq: join T ∘ dec (A := A) (T ∘ T)
                   = join (T ∘ prod W) ∘ dec T ∘ map T (dec T))
       by (split; intro hyp; now rewrite hyp).
     unfold_ops @Join_Beck @Decorate_compose @BeckDistribution_strength.
@@ -603,7 +608,7 @@ Section DecoratedMonad_characterization.
 
   (* TODO Prove (T ∘ prod W) is a monad *)
   (*
-  Theorem decorated_monad_compatibility_spec :
+  Theorem decorated_monad_compatibility_spec:
     Monad_Hom T (T ∘ prod W) (@dec W T _) <->
     DecoratePreservingTransformation (fun A => A) T (ret T) /\
     DecoratePreservingTransformation (T ∘ T) T (@join T _).
@@ -622,7 +627,7 @@ Section DecoratedMonad_characterization.
       + introv. rewrite <- dec_join_iff...
   Qed.
 
-  Theorem decorated_monad_spec :
+  Theorem decorated_monad_spec:
     Categorical.DecoratedMonad.DecoratedMonad W T <->
       Monad_Hom T (T ∘ prod W) (@dec W T _).
   Proof with try typeclasses eauto.

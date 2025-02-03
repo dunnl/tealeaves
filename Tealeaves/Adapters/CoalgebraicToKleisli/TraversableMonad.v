@@ -22,8 +22,6 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
-(** ** Derived Laws *)
-(**********************************************************************)
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -33,6 +31,8 @@ Module DerivedInstances.
     Context
       `{Coalgebraic.TraversableMonad.TraversableMonad T}.
 
+    (** ** <<⋆6>> as <<runBatch ∘ map runBatch ∘ double_batch6>> *)
+    (******************************************************************)
     Lemma kc6_spec
       {A B C: Type}
       (G1 G2: Type -> Type)
@@ -41,7 +41,8 @@ Module DerivedInstances.
       (g: B -> G2 (T C))
       (f: A -> G1 (T B)):
       kc6 (G1 := G1) (G2 := G2) g f =
-        runBatch f (C := G2 (T C)) ∘ map (F := Batch A (T B)) (runBatch g)
+        runBatch f (C := G2 (T C)) ∘
+          map (F := Batch A (T B)) (runBatch g)
           ∘ double_batch6.
     Proof.
       ext a.
@@ -55,6 +56,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
+    (** ** Derived Laws *)
+    (******************************************************************)
     Lemma ktm_bindt0_T:
       forall `{Applicative G} (A B: Type) (f: A -> G (T B)),
         bindt (T := T) (G := G) f ∘ ret = f.
@@ -72,8 +75,10 @@ Module DerivedInstances.
     Proof.
       intros.
       unfold_ops Bindt_ToBatch6.
-      assert (cut: runBatch (G := fun A => A) (ret (T := T) (A := A)) (C := T A) =
-                     extract_Batch ∘ mapfst_Batch _ _ ret).
+      assert
+        (cut:
+          runBatch (G := fun A => A) (ret (T := T) (A := A)) (C := T A) =
+            extract_Batch ∘ mapfst_Batch ret).
       { unfold compose. ext b. induction b.
         - reflexivity.
         - cbn. rewrite IHb.
@@ -102,8 +107,9 @@ Module DerivedInstances.
       reassociate <- on left.
       rewrite natural.
       rewrite (runBatch_morphism'
-                 (homomorphism := ApplicativeMorphism_parallel
-                                    (Batch A (T B)) (Batch B (T C)) G1 G2)).
+                 (homomorphism :=
+                    ApplicativeMorphism_parallel
+                      (Batch A (T B)) (Batch B (T C)) G1 G2)).
       rewrite (kc6_spec G1 G2).
       reflexivity.
     Qed.

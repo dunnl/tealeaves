@@ -27,11 +27,16 @@ Import Monad.Notations.
 Import Comonad.Notations.
 
 #[local] Generalizable Variables W A B.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments join T%function_scope {Join} {A}%type_scope _.
-#[local] Arguments ret T%function_scope {Return} {A}%type_scope _.
-#[local] Arguments extract W%function_scope {Extract} (A)%type_scope _.
-#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments join T%function_scope {Join}
+  {A}%type_scope _.
+#[local] Arguments ret T%function_scope {Return}
+  {A}%type_scope _.
+#[local] Arguments extract W%function_scope {Extract}
+  (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin}
+  {A}%type_scope _.
 
 (** * Bimonad typeclass *)
 (**********************************************************************)
@@ -92,7 +97,8 @@ Section Bimonad_kleisli_operations.
 End Bimonad_kleisli_operations.
 
 Module Notations.
-  Notation "g ⋆bi f" := (kcomposebi _ g f) (at level 70): tealeaves_scope.
+  Notation "g ⋆bi f" :=
+    (kcomposebi _ g f) (at level 70): tealeaves_scope.
 End Notations.
 
 Import Notations.
@@ -212,7 +218,8 @@ Section Bimonad_bibind.
     now rewrite (mon_join_map_ret W).
   Qed.
 
-  Definition bind_functorial {A B C}: forall (g: W B -> W C) (f: W A -> W B),
+  Definition bind_functorial {A B C}:
+ forall (g: W B -> W C) (f: W A -> W B),
       bibind W (g ⋆bi f) = bibind W g ∘ bibind W f.
   Proof.
     intros. unfold bibind. unfold kcomposebi.

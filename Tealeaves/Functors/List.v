@@ -2,15 +2,14 @@ From Tealeaves Require Import
   Classes.Categorical.Monad
   Classes.Coalgebraic.TraversableFunctor
   Adapters.KleisliToCoalgebraic.TraversableFunctor
-  Classes.Kleisli.Monad
-  Classes.Kleisli.TraversableFunctor
-  Classes.Kleisli.TraversableMonad
+  Classes.Kleisli.Theory.TraversableFunctor
+  Classes.Kleisli.Theory.TraversableMonad
   Classes.Categorical.ContainerFunctor
   Classes.Categorical.ShapelyFunctor.
 
 From Tealeaves Require Export
   Functors.Early.List
-  Functors.Subset.
+  Functors.Early.Subset.
 
 Import ContainerFunctor.Notations.
 Import TraversableMonad.Notations.
@@ -22,22 +21,34 @@ Export EqNotations.
 
 #[local] Generalizable Variables M A B G ϕ.
 
+(** *** List <<traverse>> is compatible with its <<tosubset_list>> *)
+(**********************************************************************)
+#[export] Instance Compat_ToSubset_Traverse_list:
+  Compat_ToSubset_Traverse (ToSubset_inst := ToSubset_list) list.
+Proof.
+  unfold Compat_ToSubset_Traverse.
+  unfold_ops @ToSubset_list.
+  unfold_ops @ToSubset_Traverse.
+  ext A l.
+  rewrite foldMap_eq_foldMap_list.
+  induction l.
+  - simpl_list.
+    reflexivity.
+  - simpl_list.
+    cbn.
+    rewrite <- IHl.
+    reflexivity.
+Qed.
+
 (** * <<toBatch>> Instance *)
-(******************************************************************************)
+(**********************************************************************)
 #[export] Instance ToBatch_list: ToBatch list :=
   DerivedOperations.ToBatch_Traverse.
-
-(** * List algebras and folds *)
-(******************************************************************************)
-
-(** ** Some homomorphisms *)
-(******************************************************************************)
-
 
 (** * <<map>> equality inversion lemmas *)
 (** Some lemmas for reasoning backwards from equality between two
     similarly-concatenated lists.  *)
-(******************************************************************************)
+(**********************************************************************)
 Lemma map_app_inv_l: forall {A B} {f g: A -> B} (l1 l2: list A),
     map f (l1 ++ l2) = map g (l1 ++ l2) ->
     map f l1 = map g l1.
@@ -70,9 +81,9 @@ Qed.
 
 #[local] Generalizable Variable F.
 
-(** * Shapely instance for [list] *)
+(** * Shapely Functor Instance for [list] *)
 (** As a reasonability check, we prove that [list] is a listable functor. *)
-(******************************************************************************)
+(**********************************************************************)
 Section ShapelyFunctor_list.
 
   Instance Tolist_list: Tolist list := fun A l => l.
@@ -89,12 +100,13 @@ Section ShapelyFunctor_list.
   Qed.
 
   Instance: ShapelyFunctor list :=
-    {| shp_shapeliness := shapeliness_list; |}.
+    {| shp_shapeliness := shapeliness_list;
+    |}.
 
 End ShapelyFunctor_list.
 
-(** ** Rewriting [shape] on lists *)
-(******************************************************************************)
+(** ** Rewriting [shape] on Lists *)
+(**********************************************************************)
 Section list_shape_rewrite.
 
   Lemma shape_nil: forall A,
@@ -130,10 +142,11 @@ Section list_shape_rewrite.
 
 End list_shape_rewrite.
 
-#[export] Hint Rewrite @shape_nil @shape_cons @shape_one @shape_app: tea_list.
+#[export] Hint Rewrite
+  @shape_nil @shape_cons @shape_one @shape_app: tea_list.
 
-(** ** Reasoning princples for <<shape>> on lists *)
-(******************************************************************************)
+(** ** Reasoning Princples for <<shape>> on Lists *)
+(**********************************************************************)
 Section list_shape_lemmas.
 
   Theorem list_shape_equal_iff: forall (A: Type) (l1 l2: list A),
@@ -152,42 +165,42 @@ Section list_shape_lemmas.
         * fequal. apply IHl1. auto.
   Qed.
 
-  Theorem shape_eq_app_r: forall A (l1 l2 r1 r2: list A),
+  Theorem shape_eq_app_r: forall (A: Type) (l1 l2 r1 r2: list A),
       shape r1 = shape r2 ->
       (shape (l1 ++ r1) = shape (l2 ++ r2) <->
-       shape l1 = shape l2).
+         shape l1 = shape l2).
   Proof.
     introv heq. rewrite 2(shape_app). rewrite heq.
     split. intros; eauto using List.app_inv_tail.
     intros hyp; now rewrite hyp.
   Qed.
 
-  Theorem shape_eq_app_l: forall A (l1 l2 r1 r2: list A),
+  Theorem shape_eq_app_l: forall (A: Type) (l1 l2 r1 r2: list A),
       shape l1 = shape l2 ->
       (shape (l1 ++ r1) = shape (l2 ++ r2) <->
-       shape r1 = shape r2).
+         shape r1 = shape r2).
   Proof.
     introv heq. rewrite 2(shape_app). rewrite heq.
     split. intros; eauto using List.app_inv_head.
     intros hyp; now rewrite hyp.
   Qed.
 
-  Theorem shape_eq_cons_iff: forall A (l1 l2: list A) (x y: A),
+  Theorem shape_eq_cons_iff: forall (A: Type) (l1 l2: list A) (x y: A),
       shape (x :: l1) = shape (y :: l2) <->
-      shape l1 = shape l2.
+        shape l1 = shape l2.
   Proof.
     intros. rewrite 2(shape_cons).
     split; intros hyp. now inverts hyp.
     now rewrite hyp.
   Qed.
 
-  Theorem inv_app_eq_ll: forall A (l1 l2 r1 r2: list A),
+  Theorem inv_app_eq_ll: forall (A: Type) (l1 l2 r1 r2: list A),
       shape l1 = shape l2 ->
       (l1 ++ r1 = l2 ++ r2) ->
       l1 = l2.
   Proof.
     intros A. induction l1 as [| ? ? IHl1 ];
-                induction l2 as [| ? ? IHl2 ].
+      induction l2 as [| ? ? IHl2 ].
     - reflexivity.
     - introv shape_eq. now inverts shape_eq.
     - introv shape_eq. now inverts shape_eq.
@@ -197,13 +210,13 @@ Section list_shape_lemmas.
       inverts heq. fequal. eauto.
   Qed.
 
-  Theorem inv_app_eq_rl: forall A (l1 l2 r1 r2: list A),
+  Theorem inv_app_eq_rl: forall (A: Type) (l1 l2 r1 r2: list A),
       shape r1 = shape r2 ->
       (l1 ++ r1 = l2 ++ r2) ->
       l1 = l2.
   Proof.
     intros A. induction l1 as [| ? ? IHl1 ];
-                induction l2 as [| ? ? IHl2 ].
+      induction l2 as [| ? ? IHl2 ].
     - reflexivity.
     - introv shape_eq heq. apply inv_app_eq_ll with (r1 := r1) (r2 := r2).
       + rewrite <- shape_eq_app_r. now rewrite heq. auto.
@@ -216,7 +229,7 @@ Section list_shape_lemmas.
       inverts heq. fequal. eauto.
   Qed.
 
-  Theorem inv_app_eq_lr: forall A (l1 l2 r1 r2: list A),
+  Theorem inv_app_eq_lr: forall (A: Type) (l1 l2 r1 r2: list A),
       shape l1 = shape l2 ->
       (l1 ++ r1 = l2 ++ r2) ->
       r1 = r2.
@@ -226,7 +239,7 @@ Section list_shape_lemmas.
     { eauto using inv_app_eq_ll. }
   Qed.
 
-  Theorem inv_app_eq_rr: forall A (l1 l2 r1 r2: list A),
+  Theorem inv_app_eq_rr: forall (A: Type) (l1 l2 r1 r2: list A),
       shape r1 = shape r2 ->
       (l1 ++ r1 = l2 ++ r2) ->
       r1 = r2.
@@ -236,7 +249,7 @@ Section list_shape_lemmas.
     { eauto using inv_app_eq_rl. }
   Qed.
 
-  Theorem inv_app_eq: forall A (l1 l2 r1 r2: list A),
+  Theorem inv_app_eq: forall (A: Type) (l1 l2 r1 r2: list A),
       shape l1 = shape l2 \/ shape r1 = shape r2 ->
       (l1 ++ r1 = l2 ++ r2) <-> (l1 = l2 /\ r1 = r2).
   Proof.
@@ -249,7 +262,7 @@ Section list_shape_lemmas.
     - introv [? ?]. now subst.
   Qed.
 
-  Lemma list_app_inv_r: forall A (l l1 l2: list A),
+  Lemma list_app_inv_r: forall (A: Type) (l l1 l2: list A),
       l ++ l1 = l ++ l2 -> l1 = l2.
   Proof.
     introv hyp. induction l.
@@ -257,21 +270,21 @@ Section list_shape_lemmas.
     - inversion hyp. auto.
   Qed.
 
-  Lemma list_app_inv_l: forall A (l l1 l2: list A),
+  Lemma list_app_inv_l: forall (A: Type) (l l1 l2: list A),
       l1 ++ l = l2 ++ l -> l1 = l2.
   Proof.
     introv hyp. eapply inv_app_eq_rl.
     2: eauto. reflexivity.
   Qed.
 
-  Lemma list_app_inv_l2: forall A (l1 l2: list A) (a1 a2: A),
+  Lemma list_app_inv_l2: forall (A: Type) (l1 l2: list A) (a1 a2: A),
       l1 ++ ret a1 = l2 ++ ret a2 ->
       l1 = l2.
   Proof.
     intros. eapply inv_app_eq_rl; [|eauto]; auto.
   Qed.
 
-  Lemma list_app_inv_r2: forall A (l1 l2: list A) (a1 a2: A),
+  Lemma list_app_inv_r2: forall (A: Type) (l1 l2: list A) (a1 a2: A),
       l1 ++ [a1] = l2 ++ [a2] ->
       a1 = a2.
   Proof.
@@ -283,7 +296,7 @@ Section list_shape_lemmas.
 End list_shape_lemmas.
 
 (** * Reasoning principles for <<shape>> on listable functors *)
-(******************************************************************************)
+(**********************************************************************)
 Section listable_shape_lemmas.
 
   Context
@@ -302,7 +315,7 @@ Section listable_shape_lemmas.
     fequal. apply heq.
   Qed.
 
-  Corollary shape_l: forall A (l1 l2: F A) (x y: list A),
+  Corollary shape_l: forall (A: Type) (l1 l2: F A) (x y: list A),
       shape l1 = shape l2 ->
       (tolist l1 ++ x = tolist l2 ++ y) ->
       tolist l1 = tolist l2.
@@ -311,7 +324,7 @@ Section listable_shape_lemmas.
     eauto using inv_app_eq_ll, shape_tolist.
   Qed.
 
-  Corollary shape_r: forall A (l1 l2: F A) (x y: list A),
+  Corollary shape_r: forall (A: Type) (l1 l2: F A) (x y: list A),
       shape l1 = shape l2 ->
       (x ++ tolist l1 = y ++ tolist l2) ->
       tolist l1 = tolist l2.
@@ -322,9 +335,9 @@ Section listable_shape_lemmas.
 
 End listable_shape_lemmas.
 
-(** * Quantification over elements *)
+(** * Quantification Over Elements *)
 (* TODO: There is no real purpose for this at this point is there? *)
-(******************************************************************************)
+(**********************************************************************)
 Section quantification.
 
   Definition Forall_List `(P: A -> Prop): list A -> Prop :=
@@ -333,7 +346,7 @@ Section quantification.
   Definition Forany_List `(P: A -> Prop): list A -> Prop :=
     foldMap_list (op := Monoid_op_or) (unit := Monoid_unit_false) P.
 
-  Lemma forall_iff `(P: A -> Prop) (l: list A) :
+  Lemma forall_iff `(P: A -> Prop) (l: list A):
     Forall_List P l <-> forall (a: A), a ∈ l -> P a.
   Proof.
     unfold Forall_List.
@@ -349,7 +362,7 @@ Section quantification.
       + intros H. split; auto.
   Qed.
 
-  Lemma forany_iff `(P: A -> Prop) (l: list A) :
+  Lemma forany_iff `(P: A -> Prop) (l: list A):
     Forany_List P l <-> exists (a: A), a ∈ l /\ P a.
   Proof.
     unfold Forany_List.
@@ -372,8 +385,8 @@ Section quantification.
 
 End quantification.
 
-(** ** <<Element>> in terms of <<foldMap_list>> *)
-(******************************************************************************)
+(** ** <<a ∈ ->> in terms of <<foldMap_list>> *)
+(**********************************************************************)
 Lemma element_to_foldMap_list1: forall (A: Type),
     tosubset = foldMap_list (ret (T := subset) (A := A)).
 Proof.
@@ -401,7 +414,7 @@ Proof.
 Qed.
 
 (** * Specification of <<Permutation>> *)
-(******************************************************************************)
+(**********************************************************************)
 From Coq Require Import Sorting.Permutation.
 
 Theorem permutation_spec: forall {A} {l1 l2: list A},
@@ -410,24 +423,15 @@ Proof.
   introv perm. induction perm; firstorder.
 Qed.
 
-
+(*
 (** * SameSet *)
-
+(**********************************************************************)
 Inductive SameSetRight {A: Type}: list A -> list A -> Prop :=
 | ssetr_nil: SameSetRight [] []
 | ssetr_skip: forall (x: A) (l l': list A), SameSetRight l l' -> SameSetRight (x :: l) (x :: l')
 | ssetr_swap: forall (x y: A) (l: list A), SameSetRight (y :: x :: l) (x :: y :: l)
 | ssetr_dup_r: forall (x: A) (l: list A), SameSetRight (x :: l) (x :: x :: l)
 | ssetr_trans: forall l l' l'': list A, SameSetRight l l' -> SameSetRight l' l'' -> SameSetRight l l''.
-
-
-Inductive SameSet {A: Type}: list A -> list A -> Prop :=
-| sset_nil: SameSet [] []
-| sset_skip: forall (x: A) (l l': list A), SameSet l l' -> SameSet (x :: l) (x :: l')
-| sset_swap: forall (x y: A) (l: list A), SameSet (y :: x :: l) (x :: y :: l)
-| sset_dup_r: forall (x: A) (l: list A), SameSet (x :: l) (x :: x :: l)
-| sset_dup_l: forall (x: A) (l: list A), SameSet (x :: x :: l) (x :: l)
-| sset_trans: forall l l' l'': list A, SameSet l l' -> SameSet l' l'' -> SameSet l l''.
 
 From Tealeaves Require Import Classes.EqDec_eq.
 
@@ -475,25 +479,25 @@ Proof.
 Qed.
 
 (*
-Lemma sameset_spec_one: forall (A: Type) `{EqDec_eq A} (l: list A) (a: A),
+  Lemma sameset_spec_one: forall (A: Type) `{EqDec_eq A} (l: list A) (a: A),
   (forall (a0: A), a0 ∈ l <-> a0 = a) -> SameSet [a] l.
-Proof.
+  Proof.
   introv Heq Hsame. induction l.
   - specialize (Hsame a).
-    autorewrite with tea_list in Hsame. tauto.
+  autorewrite with tea_list in Hsame. tauto.
   - assert (a0 = a).
-    { apply (Hsame a0). now left. }
-    subst; clear Hsame.
-    destruct l.
-    + apply sameset_refl.
-    + destruct_eq_args a a0.
-      * admit.
-      * admit.
-Abort.
+  { apply (Hsame a0). now left. }
+  subst; clear Hsame.
+  destruct l.
+  + apply sameset_refl.
+  + destruct_eq_args a a0.
+  * admit.
+  * admit.
+  Abort.
 
-Theorem sameset_spec: forall {A} `{EqDec_eq A} {l1 l2: list A},
-    (forall a, a ∈ l1 <-> a ∈ l2) -> SameSet l1 l2.
-Proof.
+  Theorem sameset_spec: forall {A} `{EqDec_eq A} {l1 l2: list A},
+  (forall a, a ∈ l1 <-> a ∈ l2) -> SameSet l1 l2.
+  Proof.
   introv Heqdec Hsame.
   assert (Hsame1: forall a: A, a ∈ l1 -> a ∈ l2).
   { intro a. apply Hsame. }
@@ -503,19 +507,20 @@ Proof.
   generalize dependent l2.
   induction l1; intros l2 Hsame1 Hsame2.
   - induction l2.
-    + apply sset_nil.
-    + false.
-      apply (Hsame2 a).
-      now left.
+  + apply sset_nil.
+  + false.
+  apply (Hsame2 a).
+  now left.
   - destruct l1.
-    + clear IHl1.
-Abort.
+  + clear IHl1.
+  Abort.
 
-TODO Cleanup
+  TODO Cleanup
+ *)
  *)
 
-(** * Misc *)
-(******************************************************************************)
+(** * Miscellaneous *)
+(**********************************************************************)
 Lemma map_preserve_length:
   forall (A B: Type) (f: A -> B) (l: list A),
     length (map f l) = length l.
@@ -543,8 +548,8 @@ Proof.
     assumption.
 Defined.
 
-(** * Un-con-sing non-empty lists *)
-(******************************************************************************)
+(** * Un-con-sing Nonempty Lists *)
+(**********************************************************************)
 Lemma S_uncons {n m}: S n = S m -> n = m.
 Proof.
   now inversion 1.
@@ -555,7 +560,8 @@ Definition zero_not_S {n} {anything}:
   fun pf => match pf with
          | eq_refl =>
              let false: False :=
-               eq_ind 0 (fun e: nat => match e with
+               eq_ind 0
+                 (fun e: nat => match e with
                            | 0 => True
                            | S _ => False
                            end) I (S n) pf
@@ -564,8 +570,8 @@ Definition zero_not_S {n} {anything}:
 
 Lemma list_uncons_exists:
   forall (A: Type) (n: nat)
-    (v: list A) (vlen: length v = S n),
-    exists (a: A) (v': list A),
+         (v: list A) (vlen: length v = S n),
+  exists (a: A) (v': list A),
     v = cons a v'.
 Proof.
   intros.
@@ -583,35 +589,39 @@ Definition list_uncons {n A} (l: list A) (vlen: length l = S n):
 
 Definition list_uncons_sigma {n A} (l: list A) (vlen: length l = S n):
   A * {l: list A | length l = n} :=
-  match l return (length l = S n -> A * {l: list A | length l = n}) with
+  match l return
+        (length l = S n -> A * {l: list A | length l = n})
+  with
   | nil => zero_not_S
   | cons hd tl => fun vlen => (hd, exist _ tl (S_uncons vlen))
   end vlen.
 
 Definition list_uncons_sigma2 {n A} (l: list A) (vlen: length l = S n):
   {p: A * list A | l = uncurry cons p} :=
-  match l return (length l = S n -> {p: A * list A | l = uncurry cons p}) with
+  match l return
+        (length l = S n -> {p: A * list A | l = uncurry cons p})
+  with
   | nil => zero_not_S
   | cons hd tl => fun vlen => exist _ (hd, tl) eq_refl
   end vlen.
 
-(** ** Total list head and tail functions for non-empty lists *)
-(******************************************************************************)
+(** ** Total Head and Tail Functions for Nonempty Lists *)
+(**********************************************************************)
 Definition list_hd {n A} :=
   fun (l: list A) (vlen: length l = S n) =>
-  fst (list_uncons l vlen).
+    fst (list_uncons l vlen).
 
 Definition list_tl {n A} :=
   fun (l: list A) (vlen: length l = S n) =>
     snd (list_uncons l vlen).
 
-(** *** Proof independence and rewriting laws *)
-(******************************************************************************)
+(** *** Proof irrelevance and rewriting laws *)
+(**********************************************************************)
 Lemma list_hd_proof_irrelevance
-        {n m A}
-        (l: list A)
-        (vlen1: length l = S n)
-        (vlen2: length l = S m):
+  {n m A}
+  (l: list A)
+  (vlen1: length l = S n)
+  (vlen2: length l = S m):
   list_hd l vlen1 = list_hd l vlen2.
 Proof.
   induction l.
@@ -620,10 +630,10 @@ Proof.
 Qed.
 
 Lemma list_tl_proof_irrelevance
-        {n m A}
-        (l: list A)
-        (vlen1: length l = S n)
-        (vlen2: length l = S m):
+  {n m A}
+  (l: list A)
+  (vlen1: length l = S n)
+  (vlen2: length l = S m):
   list_tl l vlen1 = list_tl l vlen2.
 Proof.
   induction l.
@@ -634,11 +644,12 @@ Qed.
 (** Rewrite a [list_hd] subterm by pushing a type coercion into the
     length proof *)
 Lemma list_hd_rw
-        {n A}
-        {l1 l2: list A}
-        (Heq: l1 = l2)
-        {vlen: length l1 = S n}:
-  list_hd l1 vlen = list_hd l2 (rew [fun l1 => length l1 = S n] Heq in vlen).
+  {n A}
+  {l1 l2: list A}
+  (Heq: l1 = l2)
+  {vlen: length l1 = S n}:
+  list_hd l1 vlen =
+    list_hd l2 (rew [fun l1 => length l1 = S n] Heq in vlen).
 Proof.
   subst.
   apply list_hd_proof_irrelevance.
@@ -647,11 +658,12 @@ Qed.
 (** Rewrite a [list_tl] subterm by pushing a type coercion into the
     length proof *)
 Lemma list_tl_rw
-        {n A}
-        {l1 l2: list A}
-        (Heq: l1 = l2)
-        {vlen: length l1 = S n}:
-  list_tl l1 vlen = list_tl l2 (rew [fun l1 => length l1 = S n] Heq in vlen).
+  {n A}
+  {l1 l2: list A}
+  (Heq: l1 = l2)
+  {vlen: length l1 = S n}:
+  list_tl l1 vlen =
+    list_tl l2 (rew [fun l1 => length l1 = S n] Heq in vlen).
 Proof.
   subst.
   apply list_tl_proof_irrelevance.
@@ -666,7 +678,7 @@ Proof.
 Qed.
 
 (** *** Surjective pairing properties *)
-(******************************************************************************)
+(**********************************************************************)
 Lemma list_surjective_pairing {n} `(l: list A) `(vlen: length l = S n):
   list_uncons l vlen = (list_hd l vlen, list_tl l vlen).
 Proof.
@@ -683,23 +695,23 @@ Proof.
   - reflexivity.
 Qed.
 
-(** * Filtering lists *)
-(******************************************************************************)
+(** * Filtering Lists *)
+(**********************************************************************)
 Fixpoint filter `(P: A -> bool) (l: list A): list A :=
   match l with
   | nil => nil
   | cons a rest =>
-    if P a then a :: filter P rest else filter P rest
+      if P a then a :: filter P rest else filter P rest
   end.
 
-(** ** Rewriting lemmas for [filter] *)
-(******************************************************************************)
+(** ** Rewriting Laws for [filter] *)
+(**********************************************************************)
 Section filter_lemmas.
 
   Context
     `(P: A -> bool).
 
-  Lemma filter_nil :
+  Lemma filter_nil:
     filter P nil = nil.
   Proof.
     reflexivity.
@@ -727,4 +739,5 @@ Section filter_lemmas.
 
 End filter_lemmas.
 
-#[export] Hint Rewrite @filter_nil @filter_cons @filter_app @filter_one: tea_list.
+#[export] Hint Rewrite
+  @filter_nil @filter_cons @filter_app @filter_one: tea_list.

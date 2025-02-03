@@ -3,8 +3,8 @@ From Tealeaves Require Import
   Functors.List
   Functors.List_Telescoping_General.
 
-(** * Bi-Z comonad *)
-(******************************************************************************)
+(** * <<Z>> Comonad of Two Arguments *)
+(**********************************************************************)
 Definition Z2: Type -> Type -> Type :=
   fun B A => list B * A.
 

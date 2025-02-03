@@ -121,7 +121,7 @@ Module DerivedInstances.
     Qed.
 
     (** ** Typeclass Instances *)
-    (******************************************************************)
+    (**************************************************************** **)
     #[export] Instance:
       Kleisli.DecoratedMonad.DecoratedRightPreModule W T T :=
       {| kdmod_bindd1 := @bindd_id;

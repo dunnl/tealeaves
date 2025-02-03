@@ -85,7 +85,8 @@ Module DerivedInstances.
       now rewrite (fun_map_map (F := T)).
     Qed.
 
-    #[export] Instance: Classes.Kleisli.TraversableFunctor.TraversableFunctor T :=
+    #[export] Instance TraversableFunctor_Kleisli_Coalgebraic:
+      Classes.Kleisli.TraversableFunctor.TraversableFunctor T :=
       {| trf_traverse_id := @traverse_id;
          trf_traverse_traverse := @traverse_traverse;
          trf_traverse_morphism := @traverse_morphism;

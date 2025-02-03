@@ -1,4 +1,4 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Categorical.TraversableFunctor
   Classes.Kleisli.TraversableFunctor.
 
@@ -42,10 +42,12 @@ Module DerivedInstances.
       - typeclasses eauto.
       - intros. unfold_ops @Map_compose @Dist_Traverse @Map_Traverse.
         rewrite (trf_traverse_traverse (G1 := G) (G2 := fun A => A)).
-        change (traverse (@id (G B))) with (map (F := fun A => A) (traverse (@id (G B)))).
+        change (traverse (@id (G B))) with
+          (map (F := fun A => A) (traverse (@id (G B)))).
         rewrite (trf_traverse_traverse (G1 := fun A => A) (G2 := G)).
-        (* TODO Cleanup this part *)
-        fequal. rewrite (Mult_compose_identity1 G), (Mult_compose_identity2 G).
+        (* (These rewrites are hidden) *)
+        rewrite (Mult_compose_identity1 G).
+        rewrite (Mult_compose_identity2 G).
         reflexivity.
     Qed.
 
@@ -53,7 +55,8 @@ Module DerivedInstances.
       forall A: Type, dist T G2 ∘ map (ϕ A) = ϕ (T A) ∘ dist T G1.
     Proof.
       intros. unfold_ops @Dist_Traverse @Map_Traverse.
-      change (traverse (@id (G2 A))) with (map (F := fun A => A) (traverse (@id (G2 A)))).
+      change (traverse (@id (G2 A))) with
+        (map (F := fun A => A) (traverse (@id (G2 A)))).
       infer_applicative_instances.
       rewrite (trf_traverse_traverse (G1 := fun A => A)).
       change (map (fun A => A) id ∘ ?f) with f.
@@ -68,10 +71,16 @@ Module DerivedInstances.
       apply (trf_traverse_id (T := T)).
     Qed.
 
-    Lemma dist_linear_T: forall (G1: Type -> Type) (H2: Map G1) (H3: Pure G1) (H4: Mult G1),
+    Lemma dist_linear_T:
+      forall (G1: Type -> Type)
+        (H2: Map G1) (H3: Pure G1) (H4: Mult G1),
         Applicative G1 ->
-        forall (G2: Type -> Type) (H6: Map G2) (H7: Pure G2) (H8: Mult G2),
-          Applicative G2 -> forall A: Type, dist T (G1 ∘ G2) (A := A) = map (F := G1) (dist T G2) ∘ dist T G1.
+      forall (G2: Type -> Type)
+        (H6: Map G2) (H7: Pure G2) (H8: Mult G2),
+        Applicative G2 ->
+      forall A: Type,
+        dist T (G1 ∘ G2) (A := A) =
+          map (F := G1) (dist T G2) ∘ dist T G1.
     Proof.
       intros. unfold_ops @Dist_Traverse.
       rewrite (trf_traverse_traverse).
@@ -80,7 +89,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[export] Instance: Categorical.TraversableFunctor.TraversableFunctor T :=
+    #[export] Instance TraversableFunctor_Categorical_Kleisli:
+      Categorical.TraversableFunctor.TraversableFunctor T :=
       {| dist_natural := dist_natural_T;
          dist_morph := dist_morph_T;
          dist_unit := dist_unit_T;

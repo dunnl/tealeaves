@@ -10,11 +10,16 @@ Import Product.Notations.
 
 #[local] Generalizable Variables W T F.
 
-#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
-#[local] Arguments join T%function_scope {Join} (A)%type_scope _.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
-#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
+#[local] Arguments ret (T)%function_scope {Return}
+  (A)%type_scope _.
+#[local] Arguments join T%function_scope {Join}
+  (A)%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments extract (W)%function_scope {Extract}
+  (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin}
+  {A}%type_scope _.
 
 (** * The [shift] operation *)
 (* uncurry (incr W) = join (W ×) *)

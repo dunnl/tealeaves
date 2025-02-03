@@ -29,8 +29,8 @@ Arguments comonoid_comult {A}%type_scope {Comonoid_Comult}.
 
 Arguments comonoid_counit A%type_scope {Comonoid_Counit}.
 
-(** ** Comonoid typeclass *)
-
+(** ** Typeclass *)
+(**********************************************************************)
 Class Comonoid (A: Type)
   `{Comonoid_Comult A}
   `{Comonoid_Counit A} :=
@@ -43,19 +43,19 @@ Class Comonoid (A: Type)
     `(snd (comonoid_comult a) = a);
   }.
 
-(** * The "copy" Comonoid *)
+(** * The "Duplicate" Comonoid *)
 (**********************************************************************)
 
 (** Everything is a [Comonoid]. In fact, the copy comonoid is the only
     one, and the comonoid laws are proved by reflexivity. *)
-Definition diagonal {A: Type} := fun a: A => (a, a).
+Definition dup {A: Type} := fun a: A => (a, a).
 
-#[export] Instance Comonoid_Counit_diagonal A:
+#[export] Instance Comonoid_Counit_dup A:
   Comonoid_Counit A := fun _ => tt.
 
-#[export] Instance Comonoid_Comult_diagonal A:
-  Comonoid_Comult A := @diagonal A.
+#[export] Instance Comonoid_Comult_dup A:
+  Comonoid_Comult A := @dup A.
 
-#[export, program] Instance Comonoid_diagonal {A}:
-  @Comonoid A (Comonoid_Comult_diagonal A)
-    (Comonoid_Counit_diagonal A).
+#[export, program] Instance Comonoid_dup {A}:
+  @Comonoid A (Comonoid_Comult_dup A)
+    (Comonoid_Counit_dup A).

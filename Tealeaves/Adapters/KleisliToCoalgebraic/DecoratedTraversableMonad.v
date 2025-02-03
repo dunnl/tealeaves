@@ -1,4 +1,4 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableMonad
   Classes.Coalgebraic.DecoratedTraversableMonad
   Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
@@ -13,19 +13,17 @@ Import Monoid.Notations.
 #[local] Generalizable Variables U W G T M A B.
 
 #[local] Arguments batch {A} (B)%type_scope _.
-#[local] Arguments toBatch7 {W}%type_scope {T U}%function_scope {ToBatch7} {A B}%type_scope _.
-#[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
-#[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
+
 
 (** * DecoratedTraversableMonads as <<Batch7>> coalgebras *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance ToBatch7_Binddt
     `{Binddt_WTU: Binddt W T U}:
   Coalgebraic.DecoratedTraversableMonad.ToBatch7 W T U :=
   (fun A B => binddt (G := Batch (W * A) (T B))
-             (batch (T B)): U A -> Batch (W * A) (T B) (U B)).
+                (batch (T B)): U A -> Batch (W * A) (T B) (U B)).
 
 End DerivedOperations.
 
@@ -39,9 +37,9 @@ Class Compat_ToBatch7_Binddt
     ToBatch7_inst = DerivedOperations.ToBatch7_Binddt.
 
 Lemma toBatch7_to_binddt
-  `{Compat_ToBatch7_Binddt W T U} :
+  `{Compat_ToBatch7_Binddt W T U}:
   forall A B, toBatch7 (W := W) (T := T) (U := U) =
-           binddt (G := Batch (W * A) (T B)) (batch (T B)).
+                binddt (G := Batch (W * A) (T B)) (batch (T B)).
 Proof.
   intros.
   rewrite compat_toBatch7_binddt.
@@ -70,8 +68,8 @@ Section dtm_coalgebraic_laws.
     `{! Compat_ToBatch7_Binddt W T T}
     `{! Compat_ToBatch7_Binddt W T U}.
 
-  (** ** Coalgebra laws *)
-  (******************************************************************************)
+  (** ** <<double_batch7>> as <<batch ⋆7 batch>> *)
+  (********************************************************************)
   Lemma double_Batch7_spec: forall (A B C: Type),
       double_batch7 (A := A) (A' := B) =
         batch (T C) ⋆7 (batch (T B)).
@@ -90,6 +88,8 @@ Section dtm_coalgebraic_laws.
     reflexivity.
   Qed.
 
+  (** ** Derived Laws *)
+  (********************************************************************)
   Lemma toBatch7_ret_Kleisli: forall A B: Type,
       toBatch7 ∘ ret (T := T) (A := A) = batch (T B) ∘ ret (T := (W ×)).
   Proof.
@@ -160,7 +160,7 @@ Module DerivedInstances.
       `{! Compat_ToBatch7_Binddt W T T}
       `{! Compat_ToBatch7_Binddt W T U}.
 
-    #[export] Instance Coalgebraic_DecoratedTraversableMonad_of_Kleisli :
+    #[export] Instance DecoratedTraversableMonad_Coalgebraic_Kleisli:
       Coalgebraic.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
       {| dtm_ret := toBatch7_ret_Kleisli;
          dtm_extract := toBatch7_extract_Kleisli;
@@ -169,7 +169,7 @@ Module DerivedInstances.
 
 
   (*
-  #[export] Instance Coalgebraic_DecoratedTraversableMonad_of_Kleisli :
+    #[export] Instance Coalgebraic_DecoratedTraversableMonad_of_Kleisli:
     Coalgebraic.DecoratedTraversableMonad.DecoratedTraversableRightModule W T U :=
     {| dtm_ret := toBatch7_ret_Kleisli;
        dtm_extract := toBatch7_extract_Kleisli;

@@ -11,11 +11,13 @@ From Tealeaves Require Export
 Class Traverse (T: Type -> Type) :=
   traverse:
     forall (G: Type -> Type)
-           `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G}
-           (A B: Type), (A -> G B) -> T A -> G (T B).
+      `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G}
+      (A B: Type), (A -> G B) -> T A -> G (T B).
 
-#[global] Arguments traverse {T}%function_scope {Traverse} {G}%function_scope
-  {Map_G Pure_G Mult_G} {A B}%type_scope _%function_scope _.
+#[global] Arguments traverse {T}%function_scope {Traverse}
+  {G}%function_scope
+  {Map_G Pure_G Mult_G}
+  {A B}%type_scope _%function_scope _.
 
 (** ** Kleisli Composition *)
 (**********************************************************************)
@@ -38,11 +40,12 @@ Class TraversableFunctor (T: Type -> Type)
       traverse (G := fun A => A) id = @id (T A);
     trf_traverse_traverse:
     forall `{Applicative G1} `{Applicative G2}
-           (A B C: Type) (g: B -> G2 C) (f: A -> G1 B),
+      (A B C: Type) (g: B -> G2 C) (f: A -> G1 B),
       map (traverse g) ∘ traverse f =
         traverse (T := T) (G := G1 ∘ G2) (g ⋆2 f);
     trf_traverse_morphism:
-    forall `{morphism: ApplicativeMorphism G1 G2 ϕ} (A B: Type) (f: A -> G1 B),
+    forall `{morphism: ApplicativeMorphism G1 G2 ϕ}
+      (A B: Type) (f: A -> G1 B),
       ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f);
   }.
 
@@ -57,8 +60,8 @@ Class TraversableMorphism
   `{Traverse_T: Traverse T}
   `{Traverse_U: Traverse U}
   (ϕ: forall (A: Type), T A -> U A) :=
-  { trvmon_hom: forall `{Applicative G}
-                       `(f: A -> G B),
+  { trvmon_hom:
+    forall `{Applicative G} `(f: A -> G B),
       map (F := G) (ϕ B) ∘ traverse (T := T) (G := G) f =
         traverse (T := U) (G := G) f ∘ ϕ A;
   }.
@@ -84,7 +87,8 @@ Class Compat_Map_Traverse T
 
 #[export] Instance Compat_Map_Traverse_TraversableFunctor
   `{Traverse_T: Traverse T}:
-  Compat_Map_Traverse T (Map_T := DerivedOperations.Map_Traverse T).
+  Compat_Map_Traverse T
+    (Map_T := DerivedOperations.Map_Traverse T).
 Proof.
   reflexivity.
 Qed.
@@ -180,7 +184,8 @@ Section traversable_functor_derived_composition_laws.
     rewrite (map_to_traverse (T := T)).
     change (traverse (G := fun A => A) g)
       with (map (F := fun A => A) (traverse (G := fun A => A) g)).
-    rewrite (trf_traverse_traverse (G1 := fun A => A) (G2 := fun A => A)).
+    rewrite (trf_traverse_traverse
+               (G1 := fun A => A) (G2 := fun A => A)).
     rewrite traverse_app_id_l.
     reflexivity.
   Qed.

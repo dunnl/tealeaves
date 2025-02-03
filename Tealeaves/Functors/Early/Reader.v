@@ -220,7 +220,8 @@ Section with_E.
     now rewrite 2(fun_map_map).
   Qed.
 
-  Theorem product_map_commute {E1 E2 A B: Type} (g: E1 -> E2) (f: A -> B):
+  Theorem product_map_commute
+    {E1 E2 A B: Type} (g: E1 -> E2) (f: A -> B):
     map (F := (E2 ×)) f ∘ map_fst g = map_fst g ∘ map (F := (E1 ×)) f.
   Proof.
     now ext [w a].

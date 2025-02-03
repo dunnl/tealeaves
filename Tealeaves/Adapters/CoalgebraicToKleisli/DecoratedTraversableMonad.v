@@ -12,8 +12,6 @@ Import DecoratedTraversableMonad.Notations.
 #[local] Generalizable Variables U W T G ϕ.
 
 #[local] Arguments batch {A} (B)%type_scope _.
-#[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
-#[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
 
 
 (** * Coalgebraic DTMsto Kleisli DTM *)
@@ -25,13 +23,13 @@ Import DecoratedTraversableMonad.Notations.
   (W: Type) (T: Type -> Type) `{ToBatch7 W T U}: Binddt W T U :=
   fun F _ _ _ A B f => runBatch f (C := U B) ∘ toBatch7.
 
-(** ** Derived Laws *)
-(**********************************************************************)
 Section with_algebra.
 
   Context
     `{Coalgebraic.DecoratedTraversableMonad.DecoratedTraversableMonad W T}.
 
+  (** ** <<⋆7>> as <<runBatch ∘ map runBatch ∘ double_batch7>> *)
+  (********************************************************************)
   Lemma kc7_spec:
     forall (G1 G2: Type -> Type)
       `{Applicative G1}
@@ -57,6 +55,8 @@ Section with_algebra.
     reflexivity.
   Qed.
 
+  (** ** Derived Laws *)
+  (********************************************************************)
   Lemma kdtm_binddt0_T:
     forall (F: Type -> Type) `{Applicative F}
       (A B: Type)
@@ -127,7 +127,7 @@ Section with_algebra.
   Qed.
 
   (** ** Typeclass Instances *)
-  (**********************************************************************)
+  (********************************************************************)
   #[export] Instance DecoratedTraversableRightPreModule_Kleisli_Coalgebra:
     Classes.Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad W T.
   Proof.

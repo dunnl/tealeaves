@@ -4,9 +4,12 @@ From Tealeaves Require Export
 Import Functor.Notations.
 
 #[local] Generalizable Variable X Y T U G ϕ A B.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments pure F%function_scope {Pure} {A}%type_scope _.
-#[local] Arguments mult F%function_scope {Mult} {A B}%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments pure F%function_scope {Pure}
+  {A}%type_scope _.
+#[local] Arguments mult F%function_scope {Mult}
+  {A B}%type_scope _.
 
 (** * Traversable functors *)
 (**********************************************************************)
@@ -17,7 +20,8 @@ Class ApplicativeDist (F: Type -> Type) :=
   dist: forall (G: Type -> Type) `{Map G} `{Pure G} `{Mult G},
       F ○ G ⇒ G ○ F.
 
-#[global] Arguments dist (F)%function_scope {ApplicativeDist} G%function_scope  {H H0 H1} {A}%type_scope _.
+#[global] Arguments dist (F)%function_scope {ApplicativeDist}
+  (G)%function_scope  {H H0 H1} {A}%type_scope _.
 
 (** ** Typeclass *)
 (**********************************************************************)
@@ -64,7 +68,8 @@ Section purity_law.
 
   Corollary map_purity_2:
     forall `{Applicative G1} `{Applicative G2} `(f: A -> G1 B),
-      dist T (G2 ∘ G1) ∘ map T (pure G2 ∘ f) = pure G2 ∘ dist T G1 ∘ map T f.
+      dist T (G2 ∘ G1) ∘ map T (pure G2 ∘ f) =
+        pure G2 ∘ dist T G1 ∘ map T f.
   Proof.
     intros. rewrite <- (fun_map_map).
     reassociate <-. rewrite dist_linear.

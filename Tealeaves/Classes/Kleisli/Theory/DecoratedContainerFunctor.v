@@ -10,10 +10,10 @@ Import ContainerFunctor.Notations.
 Import Subset.Notations.
 
 (** * Derived Properties of <<DecoratedContainerFunctor>> *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Relating <<a ∈ t>> to <<(e, a) ∈d t>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section relating_element_to_element_ctx.
 
   Context
@@ -48,8 +48,8 @@ Section relating_element_to_element_ctx.
 
 End relating_element_to_element_ctx.
 
-(** * Basic properties of decorated containers *)
-(******************************************************************************)
+(** * Basic Properties of Decorated Containers *)
+(**********************************************************************)
 Section decorated_container_functor_theory.
 
   Context
@@ -64,8 +64,8 @@ Section decorated_container_functor_theory.
 
   Implicit Types (t: T A) (b: B) (e: E) (a: A).
 
-  (** ** Interaction between (∈d) and <<mapd>> *)
-  (******************************************************************************)
+  (** ** Respectful Properties between (∈d) and <<mapd>> *)
+  (********************************************************************)
   Theorem ind_mapd_iff: forall e t f b,
       (e, b) ∈d mapd f t <-> exists a: A, (e, a) ∈d t /\ f (e, a) = b.
   Proof.
@@ -108,7 +108,8 @@ Section decorated_container_functor_theory.
   Qed.
 
   Corollary mapd_respectful: forall t (f g: E * A -> A),
-      (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) -> mapd f t = mapd g t.
+      (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) ->
+      mapd f t = mapd g t.
   Proof.
     apply dcont_pointwise.
   Qed.

@@ -45,9 +45,11 @@ Class DecoratedRightPreModule (W: Type) (T U: Type -> Type)
   `{Return_T: Return T}
   `{Bindd_WTT: Bindd W T T}
   `{Bindd_WTU: Bindd W T U} :=
-  { kdmod_bindd1: forall (A: Type),
+  { kdmod_bindd1:
+    forall (A: Type),
       bindd (U := U) (ret ∘ extract (A := A)) = id;
-    kdmod_bindd2: forall (A B C: Type) (g: W * B -> T C) (f: W * A -> T B),
+    kdmod_bindd2:
+    forall (A B C: Type) (g: W * B -> T C) (f: W * A -> T B),
       bindd (U := U) g ∘ bindd f = bindd (g ⋆5 f);
   }.
 
@@ -277,19 +279,22 @@ Section self.
     `{Bindd_WTU: Bindd W T U}.
 
   #[export] Instance Compat_Map_Bindd_Self:
-    Compat_Map_Bindd W T U (Map_U := DerivedOperations.Map_Bindd W T U).
+    Compat_Map_Bindd W T U
+      (Map_U := DerivedOperations.Map_Bindd W T U).
   Proof.
     reflexivity.
   Qed.
 
   #[export] Instance Compat_Mapd_Bindd_Self:
-    Compat_Mapd_Bindd W T U (Mapd_WU := DerivedOperations.Mapd_Bindd W T U).
+    Compat_Mapd_Bindd W T U
+      (Mapd_WU := DerivedOperations.Mapd_Bindd W T U).
   Proof.
     reflexivity.
   Qed.
 
   #[export] Instance Compat_Bind_Bindd_Self:
-    Compat_Bind_Bindd W T U (Bind_TU := DerivedOperations.Bind_Bindd W T U).
+    Compat_Bind_Bindd W T U
+      (Bind_TU := DerivedOperations.Bind_Bindd W T U).
   Proof.
     reflexivity.
   Qed.
@@ -635,7 +640,8 @@ Section decorated_monad_derived_composition_laws.
   Qed.
 
   Corollary mapd_bindd: forall (g: W * B -> C) (f: W * A -> T B),
-      mapd g ∘ bindd f = bindd (U := U) (fun '(w, t) => mapd (g ⦿ w) (f (w, t))).
+      mapd g ∘ bindd f =
+        bindd (U := U) (fun '(w, t) => mapd (g ⦿ w) (f (w, t))).
   Proof.
     intros.
     rewrite mapd_to_bindd.
@@ -669,7 +675,8 @@ Section decorated_monad_derived_composition_laws.
   (** *** Composition between <<mapd>> and <<bind>> *)
   (********************************************************************)
   Lemma mapd_bind: forall (g: W * B -> C) (f: A -> T B),
-      mapd g ∘ bind f = bindd (U := U) (fun '(w, a) => mapd (g ⦿ w) (f a)).
+      mapd g ∘ bind f =
+        bindd (U := U) (fun '(w, a) => mapd (g ⦿ w) (f a)).
   Proof.
     intros.
     rewrite mapd_to_bindd.

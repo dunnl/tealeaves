@@ -20,19 +20,23 @@ Import Monoid.Notations.
 
 Definition env (E: Type) (A: Type) := list (E * A).
 
-(** * The [env] Decorated Traversable Functor (Kleisli)] *)
-(******************************************************************************)
+(** * Decorated Traversable Functor Instance (Kleisli)] *)
+(**********************************************************************)
 Section env.
 
   Context
     (E: Type).
 
+  (** ** Operation <<mapdt>> and Derived Operations *)
+  (********************************************************************)
   Fixpoint mapdt_env (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
     `(f: E * A -> G B) (Γ: env E A): G (env E B) :=
     match Γ with
     | nil => pure (@nil (E * B))
     | (e, a) :: rest =>
-        pure (@List.cons (E * B)) <⋆> σ (e, f (e, a)) <⋆> mapdt_env G f rest
+        pure (@List.cons (E * B))
+          <⋆> σ (e, f (e, a))
+          <⋆> mapdt_env G f rest
     end.
 
   Fixpoint traverse_env (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
@@ -40,7 +44,9 @@ Section env.
     match l with
     | nil => pure (@nil (E * B))
     | (e, a) :: xs =>
-        pure (@List.cons (E * B)) <⋆> σ (e, f a) <⋆> traverse_env G f xs
+        pure (@List.cons (E * B))
+          <⋆> σ (e, f a)
+          <⋆> traverse_env G f xs
     end.
 
   Fixpoint mapd_env `(f: E * A -> B) (Γ: env E A): env E B :=
@@ -77,8 +83,8 @@ Ltac simple_env_tactic :=
   [ reflexivity |
     try (cbn; now rewrite IHrest)].
 
-(** ** Rewriting  for <<mapdt>> *)
-(******************************************************************************)
+(** ** Rewriting Laws for <<mapdt>> *)
+(**********************************************************************)
 Section mapdt_rewriting_lemmas.
 
   Context
@@ -91,8 +97,10 @@ Section mapdt_rewriting_lemmas.
     reflexivity.
   Qed.
 
-  Lemma mapdt_env_one: forall (f: E * A -> G B) (e: E) (a: A),
-      mapdt f (ret (T := list) (e, a)) = map (ret (T := list) ∘ pair e) (f (e, a)).
+  Lemma mapdt_env_one:
+    forall (f: E * A -> G B) (e: E) (a: A),
+      mapdt f (ret (T := list) (e, a)) =
+        map (ret (T := list) ∘ pair e) (f (e, a)).
   Proof.
     intros.
     cbn.
@@ -108,14 +116,16 @@ Section mapdt_rewriting_lemmas.
     reflexivity.
   Qed.
 
-  Lemma mapdt_env_cons: forall (f: E * A -> G B) (e: E) (a: A) (l: env E A),
+  Lemma mapdt_env_cons:
+    forall (f: E * A -> G B) (e: E) (a: A) (l: env E A),
       mapdt f ((e, a) :: l) =
         pure cons <⋆> σ (e, f (e, a)) <⋆> mapdt f l.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma mapdt_env_app: forall (f: E * A -> G B) (l1 l2: env E A),
+  Lemma mapdt_env_app:
+    forall (f: E * A -> G B) (l1 l2: env E A),
       mapdt f (l1 ++ l2) =
         pure (@app (E * B)) <⋆> mapdt f l1 <⋆> mapdt f l2.
   Proof.
@@ -139,12 +149,12 @@ Section mapdt_rewriting_lemmas.
 End mapdt_rewriting_lemmas.
 
 #[export] Hint Rewrite
-  mapdt_env_nil @mapdt_env_cons mapdt_env_one mapdt_env_app :
+  mapdt_env_nil @mapdt_env_cons mapdt_env_one mapdt_env_app:
   tea_env.
 
 (** ** Compatibility Typeclass Instances *)
-(******************************************************************************)
-Lemma env_traverse_compat :
+(**********************************************************************)
+Lemma env_traverse_compat:
   forall (E: Type) `{Applicative G} (A B: Type) (f: A -> G B),
     traverse f = mapdt (E := E) (f ∘ extract).
 Proof.
@@ -198,14 +208,16 @@ Proof.
   reflexivity.
 Qed.
 
-(** ** Decorated Traversable Functor Instance *)
-(******************************************************************************)
+(** ** Decorated Traversable Functor Laws *)
+(**********************************************************************)
 Section env_laws.
 
   Context
     (E: Type).
 
-  Lemma env_mapdt1: forall A: Type, mapdt (extract (W := (E ×))) = @id (env E A).
+  Lemma env_mapdt1:
+    forall (A: Type),
+      mapdt (extract (W := (E ×))) = @id (env E A).
   Proof.
     intros. ext l. induction l.
     - reflexivity.
@@ -217,7 +229,7 @@ Section env_laws.
 
   Lemma env_mapdt2
     `{Applicative G1}
-    `{Applicative G2} :
+    `{Applicative G2}:
     forall (A B C: Type)
       (g: E * B -> G2 C)
       (f: E * A -> G1 B),
@@ -268,7 +280,7 @@ Section env_laws.
   Qed.
 
   Lemma env_mapdt_morph
-    `{ApplicativeMorphism G1 G2 ϕ} :
+    `{ApplicativeMorphism G1 G2 ϕ}:
       forall (A B: Type) (f: E * A -> G1 B),
           ϕ (env E B) ∘ mapdt (T := env E) f =
             mapdt (T := env E) (ϕ B ∘ f).
@@ -292,6 +304,8 @@ Section env_laws.
 
 End env_laws.
 
+(** ** Typeclass Instance *)
+(**********************************************************************)
 #[export] Instance DecoratedTraversableFunctor_env (E: Type):
   DecoratedTraversableFunctor E (env E) :=
   {| kdtf_mapdt1 := env_mapdt1 E;
@@ -302,21 +316,23 @@ End env_laws.
 #[export] Instance Functor_env (E: Type): Functor (env E) :=
   DerivedInstances.Functor_DecoratedTraversableFunctor.
 
-#[export] Instance DecoratedFunctor_env (E: Type): DecoratedFunctor E (env E) :=
+#[export] Instance DecoratedFunctor_env (E: Type):
+  DecoratedFunctor E (env E) :=
   DerivedInstances.DecoratedFunctor_DecoratedTraversableFunctor.
 
-#[export] Instance TraversableFunctor_env (E: Type): TraversableFunctor (env E) :=
+#[export] Instance TraversableFunctor_env (E: Type):
+  TraversableFunctor (env E) :=
   DerivedInstances.TraversableFunctor_DecoratedTraversableFunctor.
 
 (** ** Alternative Specifications for <<mapd>> *)
-(******************************************************************************)
+(**********************************************************************)
 Lemma env_mapd_spec: forall (E A B: Type) (f: E * A -> B),
     mapd (T := env E) f = map (F := list) (cobind (W := (E ×)) f).
 Proof.
   simple_env_tactic.
 Qed.
 
-Lemma env_map_spec :
+Lemma env_map_spec:
   forall (E A B: Type) (f: A -> B),
     map (F := env E) f = map (F := list) (map (F := (E ×)) f).
 Proof.
@@ -329,8 +345,8 @@ Proof.
   intros. now rewrite env_map_spec.
 Qed.
 
-(** * The [env] Decorated Traversable Functor (Kleisli)] *)
-(******************************************************************************)
+(** * Decorated Traversable Monad Instance (Kleisli) *)
+(**********************************************************************)
 Section env.
 
   Context
@@ -344,7 +360,9 @@ Section env.
     match Γ with
     | nil => pure (@nil (W * B))
     | (w, a) :: rest =>
-        pure (@List.app (W * B)) <⋆> map (F := G) (fun x => shift list (w, x)) (f (w, a)) <⋆> binddt_env G f rest
+        pure (@List.app (W * B))
+          <⋆> map (F := G) (fun x => shift list (w, x)) (f (w, a))
+          <⋆> binddt_env G f rest
     end.
 
   Fixpoint bindd_env `(f: W * A -> env W B) (Γ: env W A): env W B :=
@@ -358,7 +376,9 @@ Section env.
     match l with
     | nil => pure (@nil (W * B))
     | (w, a) :: xs =>
-        pure (@List.app (W * B)) <⋆> shift list (w, f a) <⋆> bind_env f xs
+        pure (@List.app (W * B))
+          <⋆> shift list (w, f a)
+          <⋆> bind_env f xs
     end.
 
   #[export] Instance Binddt_env: Binddt W (env W) (env W) := @binddt_env.

@@ -8,7 +8,7 @@ From Tealeaves Require Export
 Import ContainerFunctor.Notations.
 
 (** * Derived Properties of <<ContainerMonad>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section corollaries.
 
   Context
@@ -16,8 +16,8 @@ Section corollaries.
     `{Map_inst: Map T}
     `{! Compat_Map_Bind T T}.
 
-  (** ** <<ret>> is injective *)
-  (******************************************************************************)
+  (** ** <<ret>> is Injective *)
+  (********************************************************************)
   Lemma ret_injective: forall (A: Type) (a a': A),
       ret a = ret a' -> a = a'.
   Proof.
@@ -30,9 +30,9 @@ Section corollaries.
     now rewrite hyp.
   Qed.
 
-  (** ** Specification of <<a ∈ ret a'>> *)
-  (******************************************************************************)
-  Theorem in_ret_iff :
+  (** ** Specification of <<a ∈ ret ->> *)
+  (********************************************************************)
+  Theorem in_ret_iff:
     forall (A: Type) (a1 a2: A), a1 ∈ ret a2 <-> a1 = a2.
   Proof.
     intros.
@@ -44,8 +44,8 @@ Section corollaries.
   Qed.
 
   (** ** Specification of <<b ∈ bind f t>> *)
-  (******************************************************************************)
-  Theorem in_bind_iff :
+  (********************************************************************)
+  Theorem in_bind_iff:
     forall `(f: A -> T B) (t: T A) (b: B),
       b ∈ bind f t <-> exists a, a ∈ t /\ b ∈ f a.
   Proof.
@@ -57,7 +57,7 @@ Section corollaries.
   Qed.
 
   (** ** Respectfulness Properties for <<bind>> *)
-  (******************************************************************************)
+  (********************************************************************)
   (** This is just a more convenient name for consistency *)
   Corollary bind_respectful: forall (A B: Type) (t: T A) (f g: A -> T B),
       (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t.
@@ -65,16 +65,17 @@ Section corollaries.
     exact contm_pointwise.
   Qed.
 
-  Corollary bind_respectful_map :
+  Corollary bind_respectful_map:
     forall `(f1: A -> T B) `(f2: A -> B) (t: T A),
-      (forall (a: A), a ∈ t -> f1 a = ret (f2 a)) -> bind f1 t = map f2 t.
+      (forall (a: A), a ∈ t -> f1 a = ret (f2 a)) ->
+      bind f1 t = map f2 t.
   Proof.
     introv hyp.
     rewrite compat_map_bind.
     now eapply bind_respectful.
   Qed.
 
-  Corollary bind_respectful_id :
+  Corollary bind_respectful_id:
     forall `(f1: A -> T A) (t: T A),
       (forall (a: A), a ∈ t -> f1 a = ret a) -> bind f1 t = t.
   Proof.
@@ -87,7 +88,7 @@ Section corollaries.
 End corollaries.
 
 (** * Derived Properties of <<ContainerRightModule>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section corollaries.
 
   Context
@@ -97,8 +98,8 @@ Section corollaries.
     `{! Compat_Map_Bind T U}.
 
   (** ** Specification of <<b ∈ bind f t>> *)
-  (******************************************************************************)
-  Theorem mod_in_bind_iff :
+  (********************************************************************)
+  Theorem mod_in_bind_iff:
     forall `(f: A -> T B) (t: U A) (b: B),
       b ∈ bind f t <-> exists a, a ∈ t /\ b ∈ f a.
   Proof.
@@ -111,23 +112,25 @@ Section corollaries.
   Qed.
 
   (** ** Respectfulness Properties for <<bind>> *)
-  (******************************************************************************)
-  Corollary mod_bind_respectful: forall (A B: Type) (t: U A) (f g: A -> T B),
+  (********************************************************************)
+  Corollary mod_bind_respectful:
+    forall (A B: Type) (t: U A) (f g: A -> T B),
       (forall a, a ∈ t -> f a = g a) -> bind f t = bind g t.
   Proof.
     apply contmod_pointwise.
   Qed.
 
-  Corollary mod_bind_respectful_map :
+  Corollary mod_bind_respectful_map:
     forall `(f1: A -> T B) `(f2: A -> B) (t: U A),
-      (forall (a: A), a ∈ t -> f1 a = ret (f2 a)) -> bind f1 t = map f2 t.
+      (forall (a: A), a ∈ t -> f1 a = ret (f2 a)) ->
+      bind f1 t = map f2 t.
   Proof.
     introv hyp.
     rewrite compat_map_bind.
     now eapply mod_bind_respectful.
   Qed.
 
-  Corollary mod_bind_respectful_id :
+  Corollary mod_bind_respectful_id:
     forall `(f1: A -> T A) (t: U A),
       (forall (a: A), a ∈ t -> f1 a = ret a) ->
       bind f1 t = t.

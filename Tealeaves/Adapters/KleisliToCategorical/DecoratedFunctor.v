@@ -1,4 +1,4 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Kleisli.DecoratedFunctor
   Classes.Categorical.DecoratedFunctor
   Classes.Kleisli.Comonad.

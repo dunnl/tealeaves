@@ -7,7 +7,7 @@ Import Product.Notations.
 
 #[local] Generalizable Variables G ϕ.
 
-(** * Kleisli Decorated Traversable Functors from Categorical Decorated Traversable Functors *)
+(** * Kleisli DTFs from Categorical DTFs *)
 (**********************************************************************)
 
 (** ** Derived Operations *)
@@ -22,7 +22,7 @@ Module DerivedOperations.
     `{ApplicativeDist T}:
   Mapdt E T :=
   fun (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    (A B: Type) (f: E * A -> G B) =>
+      (A B: Type) (f: E * A -> G B) =>
     (dist T G ∘ map f ∘ dec T: T A -> G (T B)).
 
 End DerivedOperations.
@@ -52,7 +52,7 @@ Module DerivedInstances.
 
     Theorem mapdt_mapdt:
       forall `{Applicative G1} `{Applicative G2}
-        (A B C: Type) (g: E * B -> G2 C) (f: E * A -> G1 B),
+             (A B C: Type) (g: E * B -> G2 C) (f: E * A -> G1 B),
         map (mapdt g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (g ⋆3 f).
     Proof.
       intros. unfold transparent tcs. unfold kc3.
@@ -86,7 +86,7 @@ Module DerivedInstances.
 
     Theorem mapdt_mapdt_morphism:
       forall `{ApplicativeMorphism G1 G2 ϕ}
-             (A B: Type) (f: E * A -> G1 B),
+        (A B: Type) (f: E * A -> G1 B),
         ϕ (T B) ∘ mapdt f = mapdt (ϕ B ∘ f).
     Proof.
       intros. unfold transparent tcs.

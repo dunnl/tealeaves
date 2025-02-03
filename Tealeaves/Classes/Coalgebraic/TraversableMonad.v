@@ -11,44 +11,47 @@ Import TraversableMonad.Notations.
 #[local] Generalizable Variables T U.
 
 (** * Coalgebraic Traversable Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
-(** ** <<toBatch6>> Operation *)
-(******************************************************************************)
+(** ** Operation <<toBatch6>> *)
+(**********************************************************************)
 Class ToBatch6 (T U: Type -> Type) :=
   toBatch6: forall A B, U A -> Batch A (T B) (U B).
 
-#[global] Arguments toBatch6 {T U}%function_scope {ToBatch6} {A B}%type_scope _.
+#[global] Arguments toBatch6 {T U}%function_scope {ToBatch6}
+  {A B}%type_scope _.
 
-(** ** <<cojoin_Batch6>> Operation *)
-(******************************************************************************)
+(** ** Operation <<cojoin_Batch6>> *)
+(**********************************************************************)
 Section cojoin6.
 
   Context
     `{ToBatch6 T T}
-      (A A' A'': Type).
+    (A A' A'': Type).
 
   Section auxiliary.
 
     Variable (R: Type).
 
-    Definition key_function :
+    Definition key_function:
       Batch A' (T A'') (T A'' -> R) ->
       T A' ->
       Batch A' (T A'') R :=
       fun next_batch t =>
         next_batch <⋆> toBatch6 t.
 
-    Definition cojoin_Batch6_leaf_case :
-      Batch A (T A') (Batch A' (T A'') (T A'' -> R)) -> (* recursive call on cojoin of continuation *)
-      Batch A (T A') (T A' -> Batch A' (T A'') R) := (* new continuation *)
+    Definition cojoin_Batch6_leaf_case:
+      Batch A (T A') (Batch A' (T A'') (T A'' -> R)) ->
+      (* ^ recursive call on cojoin of continuation *)
+      Batch A (T A') (T A' -> Batch A' (T A'') R) :=
+      (* new continuation *)
       fun rec_continue =>
         map (F := Batch A (T A')) key_function rec_continue.
 
   End auxiliary.
 
   Fixpoint cojoin_Batch6 {R: Type}
-    (b: Batch A (T A'') R) :
+    (b: Batch A (T A'') R):
     Batch A (T A') (Batch A' (T A'') R) :=
     match b with
     | Done r => Done (Done r)
@@ -61,23 +64,25 @@ Section cojoin6.
 End cojoin6.
 
 (** ** <<cojoin_Batch6>> Alternate Definition *)
-(******************************************************************************)
+(**********************************************************************)
 Section cojoin6_alt.
 
   Context
     `{ToBatch6 T T}.
 
-  Definition double_batch6 {A B C: Type} :
-      A -> Batch A (T B) (Batch B (T C) (T C)) :=
+  Definition double_batch6 {A B C: Type}:
+    A -> Batch A (T B) (Batch B (T C) (T C)) :=
     map (F := Batch A (T B)) toBatch6 ∘ batch A (T B).
 
-  Lemma double_batch6_rw {A B C: Type} (a: A) :
+  Lemma double_batch6_rw {A B C: Type} (a: A):
     double_batch6 (B := B) (C := C) a =
       Done toBatch6 ⧆ a.
   Proof.
     reflexivity.
   Qed.
 
+  (** ** <<cojoin_Batch6>> as <<runBatch double_batch6>> *)
+  (********************************************************************)
   Lemma cojoin_Batch6_to_runBatch: forall (A B B': Type),
       @cojoin_Batch6 _ _ A B B' =
         @runBatch A (T B') (Batch A (T B) ∘ Batch B (T B')) _ _ _
@@ -92,7 +97,7 @@ Section cojoin6_alt.
       do 3
         (compose near
            (@runBatch A (T B') (Batch A (T B) ∘ Batch B (T B'))
-                      _ _ _
+              _ _ _
               (double_batch6) (T B' -> R) rest) on right;
          rewrite (fun_map_map (F := Batch A (T B)))).
       reflexivity.
@@ -108,9 +113,9 @@ Section cojoin6_alt.
     reflexivity.
   Qed.
 
-  #[export] Instance ApplicativeMorphism_cojoin_Batch6: forall (A B C: Type),
-      ApplicativeMorphism
-        (Batch A (T C))
+  #[export] Instance ApplicativeMorphism_cojoin_Batch6:
+    forall (A B C: Type),
+      ApplicativeMorphism (Batch A (T C))
         (Batch A (T B) ∘ Batch B (T C))
         (@cojoin_Batch6 T _ A B C).
   Proof.
@@ -122,7 +127,7 @@ Section cojoin6_alt.
 End cojoin6_alt.
 
 (*
-Section experiment.
+  Section experiment.
 
   Context (A B B' C: Type) T `{ToBatch6 T}.
   Check toBatch6 T A B.
@@ -140,19 +145,19 @@ Section experiment.
   Check cojoin_Batch (B := B) ∘ toBatch6 T A C.
   Check cojoin_Batch (B := B) ∘ toBatch6 T A C.
 
-End experiment.
-*)
+  End experiment.
+ *)
 
 (** ** Typeclasses *)
-(******************************************************************************)
+(**********************************************************************)
 Class TraversableRightPreModule
   (T U: Type -> Type) `{Return T}
-   `{ToBatch6 T T} `{ToBatch6 T U} :=
+  `{ToBatch6 T T} `{ToBatch6 T U} :=
   { trfm_extract: forall (A: Type),
-      extract_Batch ∘ mapfst_Batch A (T A) ret ∘ toBatch6 = @id (U A);
+      extract_Batch ∘ mapfst_Batch ret ∘ toBatch6 = @id (U A);
     trfm_duplicate: forall (A A' A'': Type),
       cojoin_Batch6 A A' A'' ∘ toBatch6 (U := U) =
-        map (F := Batch A (T A')) (toBatch6 (U := U)) ∘ toBatch6 (U := U);
+        map (F := Batch A (T A')) (toBatch6) ∘ toBatch6;
   }.
 
 Class TraversableMonad
@@ -164,7 +169,7 @@ Class TraversableMonad
 
 Class TraversableRightModule
   (T U: Type -> Type) `{Return T}
-   `{ToBatch6 T T} `{ToBatch6 T U} :=
+  `{ToBatch6 T T} `{ToBatch6 T U} :=
   { trfmod_monad :> TraversableMonad T;
     trfmod_premod :> TraversableRightPreModule T U;
   }.

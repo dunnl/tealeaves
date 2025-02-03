@@ -10,8 +10,11 @@ Import ContainerFunctor.Notations.
 
 #[local] Generalizable Variables G F A B.
 
-(** * The <<Tolist>> Operation *)
-(******************************************************************************)
+(** * Shapely functors *)
+(**********************************************************************)
+
+(** * Operation <<tolist>> *)
+(**********************************************************************)
 Import Classes.Functor.Notations.
 
 Class Tolist (F: Type -> Type) :=
@@ -19,16 +22,13 @@ Class Tolist (F: Type -> Type) :=
 
 #[global] Arguments tolist {F}%function_scope {Tolist} {A}%type_scope _.
 
-(** * Shapely functors *)
-(******************************************************************************)
-
-(** ** The [shape] operation *)
-(******************************************************************************)
+(** ** Operation [shape] *)
+(**********************************************************************)
 Definition shape `{Map F} {A: Type}: F A -> F unit :=
   map (const tt).
 
 (** *** Basic reasoning principles for <<shape>> *)
-(******************************************************************************)
+(**********************************************************************)
 Theorem shape_map `{Functor F}: forall (A B: Type) (f: A -> B) (t: F A),
     shape (F := F) (map f t) =
       shape (F := F) t.
@@ -45,7 +45,8 @@ Proof.
 Qed.
 
 
-Lemma shape_map_eq `{Functor F}: forall (A1 A2 B: Type) (f: A1 -> B) (g: A2 -> B) t u,
+Lemma shape_map_eq `{Functor F}:
+  forall (A1 A2 B: Type) (f: A1 -> B) (g: A2 -> B) t u,
     map f t = map g u -> shape t = shape u.
 Proof.
 
@@ -54,14 +55,14 @@ Proof.
   - now rewrite hyp.
 Qed.
 
-(** ** Shapeliness *)
-(******************************************************************************)
+(** ** Shapeliness Condition *)
+(**********************************************************************)
 Definition shapeliness (F: Type -> Type)
   `{Map F} `{Tolist F} := forall A (t1 t2: F A),
     shape t1 = shape t2 /\ tolist t1 = tolist t2 -> t1 = t2.
 
-(** ** Typeclass for shapely functors *)
-(******************************************************************************)
+(** ** Typeclass *)
+(**********************************************************************)
 Class ShapelyFunctor
   (F: Type -> Type) `{Map F} `{Tolist F} :=
   { shp_natural :> Natural (@tolist F _);
@@ -69,8 +70,8 @@ Class ShapelyFunctor
     shp_shapeliness: shapeliness F;
   }.
 
-(** ** Shapely natural transformations *)
-(******************************************************************************)
+(** ** Homomorphisms of Shapely Functors *)
+(**********************************************************************)
 Class ShapelyTransformation
       {F G: Type -> Type}
       `{! Map F} `{Tolist F}
@@ -80,25 +81,28 @@ Class ShapelyTransformation
     ltrans_natural: Natural ϕ;
   }.
 
-(** * Various characterizations of shapeliness *)
-(******************************************************************************)
+(** ** Various Characterizations of Shapeliness *)
+(**********************************************************************)
 Section listable_functor_respectful_definitions.
 
   Context
     (F: Type -> Type)
     `{Map F} `{Tolist F}.
 
-  Definition tolist_map_injective := forall A B (t1 t2: F A) (f g: A -> B),
+  Definition tolist_map_injective :=
+    forall A B (t1 t2: F A) (f g: A -> B),
       map f t1 = map g t2 ->
       shape t1 = shape t2 /\
       map f (tolist t1) = map g (tolist t2).
 
-  Definition tolist_map_respectful := forall A B (t1 t2: F A) (f g: A -> B),
+  Definition tolist_map_respectful :=
+    forall A B (t1 t2: F A) (f g: A -> B),
       shape t1 = shape t2 ->
       map f (tolist t1) = map g (tolist t2) ->
       map f t1 = map g t2.
 
-  Definition tolist_map_respectful_iff := forall A B (t1 t2: F A) (f g: A -> B),
+  Definition tolist_map_respectful_iff :=
+    forall A B (t1 t2: F A) (f g: A -> B),
       shape t1 = shape t2 /\
       map f (tolist t1) = map g (tolist t2) <->
       map f t1 = map g t2.
@@ -111,7 +115,7 @@ Ltac unfold_list_properness :=
     tolist_map_respectful_iff in *.
 
 (** ** Equivalences *)
-(******************************************************************************)
+(**********************************************************************)
 Section tolist_respectfulness_characterizations.
 
   Context
@@ -131,7 +135,8 @@ Section tolist_respectfulness_characterizations.
       now rewrite heq.
   Qed.
 
-  Lemma shapeliness_equiv_1: shapeliness F -> tolist_map_respectful F.
+  Lemma shapeliness_equiv_1:
+    shapeliness F -> tolist_map_respectful F.
   Proof.
     unfold tolist_map_respectful.
     introv hyp hshape hcontents.
@@ -141,7 +146,8 @@ Section tolist_respectfulness_characterizations.
       now rewrite <- 2(natural).
   Qed.
 
-  Lemma shapeliness_equiv_2: tolist_map_respectful F -> tolist_map_respectful_iff F.
+  Lemma shapeliness_equiv_2:
+    tolist_map_respectful F -> tolist_map_respectful_iff F.
   Proof.
     unfold tolist_map_respectful, tolist_map_respectful_iff.
     intros. split.
@@ -149,7 +155,8 @@ Section tolist_respectfulness_characterizations.
     - apply tolist_map_injective_proof.
   Qed.
 
-  Lemma shapeliness_equiv_3: tolist_map_respectful_iff F -> shapeliness F.
+  Lemma shapeliness_equiv_3:
+    tolist_map_respectful_iff F -> shapeliness F.
   Proof.
     unfold shapeliness, tolist_map_respectful_iff.
     introv hyp1 hyp2.
@@ -162,7 +169,7 @@ End tolist_respectfulness_characterizations.
 
 (*
 (** ** [fold] and [foldMap] operations *)
-(******************************************************************************)
+(**********************************************************************)
 Section fold.
 
   Generalizable Variable M ϕ.
@@ -181,7 +188,8 @@ Section fold.
     (f: A -> M): F A -> M :=
     crush ∘ map f.
 
-  Lemma crush_mon_hom: forall `(ϕ: M1 -> M2) `{Hϕ: Monoid_Morphism M1 M2 ϕ},
+  Lemma crush_mon_hom:
+  forall `(ϕ: M1 -> M2) `{Hϕ: Monoid_Morphism M1 M2 ϕ},
       ϕ ∘ crush = crush ∘ map ϕ.
   Proof.
     intros ? ? ϕ; intros.
@@ -192,14 +200,14 @@ Section fold.
     reflexivity.
   Qed.
 
-  Lemma foldMap_map {A B} `{Monoid M} {f: A -> B} {g: B -> M} :
+  Lemma foldMap_map {A B} `{Monoid M} {f: A -> B} {g: B -> M}:
     foldMap g ∘ map f = foldMap (g ∘ f).
   Proof.
     intros. unfold foldMap.
     now rewrite <- (fun_map_map (F := F)).
   Qed.
 
-  Theorem foldMap_hom {A} `{Monoid_Morphism M1 M2 ϕ} {f: A -> M1} :
+  Theorem foldMap_hom {A} `{Monoid_Morphism M1 M2 ϕ} {f: A -> M1}:
     ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
   Proof.
     intros. unfold foldMap.
@@ -213,7 +221,7 @@ End fold.
 
 (*
 (** ** Folding over identity and composition functors *)
-(******************************************************************************)
+(**********************************************************************)
 Section fold_monoidal_structure.
 
   Theorem fold_I (A: Type) `(Monoid A): forall (a: A),
@@ -225,8 +233,11 @@ Section fold_monoidal_structure.
 End fold_monoidal_structure.
 *)
 
-(** * Enumerating elements of listable functors *)
-(******************************************************************************)
+(** * Derived <<Container>> Instance *)
+(**********************************************************************)
+
+(** ** Enumerating Elements of Shapely Functors *)
+(**********************************************************************)
 Section ToSubset_Tolist.
 
   #[local] Instance ToSubset_Tolist `{Tolist F}: ToSubset F :=
@@ -238,18 +249,18 @@ Class Compat_ToSubset_Tolist
   (F: Type -> Type)
   `{H_tosubset: ToSubset F}
   `{H_tolist: Tolist F}: Prop :=
-  compat_element_tolist :
+  compat_element_tolist:
     @tosubset F H_tosubset =
       @tosubset F (@ToSubset_Tolist F H_tolist).
 
-Lemma tosubset_to_tolist `{Compat_ToSubset_Tolist F} :
+Lemma tosubset_to_tolist `{Compat_ToSubset_Tolist F}:
   forall (A: Type),
     tosubset (F := F) (A := A) = tosubset (F := list) ∘ tolist.
 Proof.
   now rewrite compat_element_tolist.
 Qed.
 
-Theorem in_iff_in_tolist `{Compat_ToSubset_Tolist F} :
+Theorem in_iff_in_tolist `{Compat_ToSubset_Tolist F}:
   forall (A: Type) (t: F A) (a: A),
     a ∈ t <-> a ∈ tolist t.
 Proof.
@@ -257,7 +268,7 @@ Proof.
   now rewrite compat_element_tolist.
 Qed.
 
-#[export] Instance Natural_Element_Tolist :
+#[export] Instance Natural_Element_Tolist:
   forall `{ShapelyFunctor F}, Natural (@tosubset F ToSubset_Tolist).
 Proof.
   constructor; try typeclasses eauto.
@@ -267,14 +278,14 @@ Proof.
   reassociate -> on left. now rewrite natural.
 Qed.
 
-(** * Shapely functors are container-like *)
-(******************************************************************************)
+(** ** Container Laws *)
+(**********************************************************************)
 Section ShapelyFunctor_setlike.
 
   Context
     `{ShapelyFunctor F}.
 
-  Lemma shapeliness_iff :
+  Lemma shapeliness_iff:
     forall (A: Type) (t u: F A),
       t = u <-> shape t = shape u /\ tolist t = tolist u.
   Proof.
@@ -283,7 +294,7 @@ Section ShapelyFunctor_setlike.
     + apply (shp_shapeliness).
   Qed.
 
-  Lemma shapely_map_eq_iff :
+  Lemma shapely_map_eq_iff:
     forall (A B: Type) (t: F A) (f g: A -> B),
       map f t = map g t <->
       map f (tolist t) = map g (tolist t).
@@ -300,7 +311,7 @@ Section ShapelyFunctor_setlike.
     `{ToSubset F}
     `{! Compat_ToSubset_Tolist F}.
 
-  Lemma compat_element_tolist_natural :
+  Lemma compat_element_tolist_natural:
     `{Natural (@tosubset F _)}.
   Proof.
     constructor; try typeclasses eauto.
@@ -310,7 +321,7 @@ Section ShapelyFunctor_setlike.
     reflexivity.
   Qed.
 
-  Theorem shapely_pointwise_iff :
+  Theorem shapely_pointwise_iff:
     forall (A B: Type) (t: F A) (f g: A -> B),
       (forall (a: A), a ∈ t -> f a = g a) <-> map f t = map g t.
   Proof.
@@ -321,16 +332,19 @@ Section ShapelyFunctor_setlike.
     reflexivity.
   Qed.
 
-  Corollary shapely_pointwise :
+  Corollary shapely_pointwise:
     forall (A B: Type) (t: F A) (f g: A -> B),
       (forall (a: A), a ∈ t -> f a = g a) -> map f t = map g t.
   Proof.
    introv. rewrite shapely_pointwise_iff. auto.
   Qed.
 
-  #[export] Instance ContainerFunctor_ShapelyFunctor :
+  (** ** Typeclass Instance *)
+  (********************************************************************)
+  #[export] Instance ContainerFunctor_ShapelyFunctor:
     ContainerFunctor F :=
     {| cont_natural := compat_element_tolist_natural;
-       cont_pointwise := shapely_pointwise; |}.
+       cont_pointwise := shapely_pointwise;
+    |}.
 
 End ShapelyFunctor_setlike.

@@ -15,7 +15,8 @@ Import Functor.Notations.
 Class Bind (T U: Type -> Type) :=
   bind: forall (A B: Type), (A -> T B) -> U A -> U B.
 
-#[global] Arguments bind {T} {U}%function_scope {Bind} {A B}%type_scope _%function_scope _.
+#[global] Arguments bind {T} {U}%function_scope {Bind}
+  {A B}%type_scope _%function_scope _.
 
 (** ** Kleisli Composition *)
 (**********************************************************************)
@@ -160,7 +161,8 @@ Class Compat_Map_Bind
   `{Return_T: Return T}
   `{Map_U: Map U}
   `{Bind_TU: Bind T U}: Prop :=
-  compat_map_bind: @Map_U = @DerivedOperations.Map_Bind T U Return_T Bind_TU.
+  compat_map_bind:
+    @Map_U = @DerivedOperations.Map_Bind T U Return_T Bind_TU.
 
 #[export] Instance Compat_Map_Bind_Monad (T U: Type -> Type)
   `{Return_T: Return T} `{Bind_TU: Bind T U}:

@@ -1,4 +1,7 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
+  Functor
+  Classes.Categorical.DecoratedFunctor
+  Classes.Kleisli.DecoratedFunctor
   Adapters.CategoricalToKleisli.DecoratedFunctor
   Adapters.KleisliToCategorical.DecoratedFunctor.
 
@@ -86,7 +89,7 @@ Section decorated_functor_kleisli_categorical_kleisli.
     ext A B f.
     unfold_compose_in_compose.
     rewrite (kdf_mapd2 (E := E) (T := T)).
-    rewrite kc1_01.
+    rewrite Comonad.kc1_01.
     reflexivity.
   Qed.
 

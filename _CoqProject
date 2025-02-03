@@ -58,6 +58,7 @@ Tealeaves/Adapters/Roundtrips/DecoratedMonad.v
 ##########################################################
 Tealeaves/Classes/Categorical/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/TraversableFunctor.v
+Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
 Tealeaves/Functors/Early/Batch.v
 Tealeaves/Classes/Coalgebraic/TraversableFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/TraversableFunctor.v
@@ -65,6 +66,7 @@ Tealeaves/Adapters/KleisliToCategorical/TraversableFunctor.v
 Tealeaves/Adapters/CoalgebraicToKleisli/TraversableFunctor.v
 Tealeaves/Adapters/KleisliToCoalgebraic/TraversableFunctor.v
 Tealeaves/Adapters/Roundtrips/TraversableFunctor.v
+
 ##########################################################
 # TRAVERSABLE MONADS                                     #
 ##########################################################
@@ -82,6 +84,7 @@ Tealeaves/Adapters/Roundtrips/TraversableMonad.v
 ##########################################################
 Tealeaves/Classes/Categorical/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctor.v
+Tealeaves/Classes/Kleisli/DecoratedTraversableCommIdemFunctor.v
 Tealeaves/Classes/Coalgebraic/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableFunctor.v
@@ -100,6 +103,12 @@ Tealeaves/Adapters/KleisliToCategorical/DecoratedTraversableMonad.v
 Tealeaves/Adapters/KleisliToCoalgebraic/DecoratedTraversableMonad.v
 Tealeaves/Adapters/CoalgebraicToKleisli/DecoratedTraversableMonad.v
 Tealeaves/Adapters/Roundtrips/DecoratedTraversableMonad.v
+
+##########################################################
+# MISCELLANEOUS ADAPTERS                                 #
+##########################################################
+Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
+Tealeaves/Adapters/MonadToApplicative.v
 
 ##########################################################
 # CATEGORIES                                             #
@@ -144,6 +153,7 @@ Tealeaves/Classes/Kleisli/DecoratedShapelyFunctor.v
 Tealeaves/Functors/Backwards.v
 Tealeaves/Functors/Constant.v
 Tealeaves/Functors/ProductFunctor.v
+Tealeaves/Functors/Diagonal.v
 Tealeaves/Classes/Kleisli/Theory/TraversableFunctor.v
 Tealeaves/Classes/Categorical/Theory/TraversableFunctor.v
 Tealeaves/Classes/Kleisli/Theory/TraversableCommutativeIdempotent.v
@@ -154,14 +164,13 @@ Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedContainerMonad.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonad.v
 
+# Compiled after Keisli/Theory to invoke derived operations
 ##########################################################
 # FUNCTORS                                               #
 ##########################################################
 Tealeaves/Functors/Ctxset.v
-Tealeaves/Functors/Diagonal.v
-Tealeaves/Functors/Environment.v
 Tealeaves/Functors/List.v
-#Tealeaves/Functors/Categorical/List.v
+Tealeaves/Functors/Environment.v
 Tealeaves/Functors/Option.v
 Tealeaves/Functors/Pathspace.v
 Tealeaves/Functors/Pair.v
@@ -171,21 +180,16 @@ Tealeaves/Functors/Store.v
 Tealeaves/Functors/Subset.v
 Tealeaves/Functors/Writer.v
 Tealeaves/Functors/ListHistory.v
-Tealeaves/Functors/List_Telescoping.v
 Tealeaves/Functors/List_Telescoping_General.v
 Tealeaves/Functors/Vector.v
-Tealeaves/Functors/VectorRefinement.v
 Tealeaves/Functors/KStore.v
 
+# Compiled after Functors to make use of Vector.v etc.
+# Requires equivalence of Categorical/Kleisli/Coalgebraic
 ##########################################################
-# MISCELLANEOUS ADAPTERS                                 #
+# MIXED TYPECLASS THEORY                                 #
 ##########################################################
-Tealeaves/Adapters/Compositions/DecoratedTraversableModule.v
-Tealeaves/Adapters/MonadToApplicative.v
-
-##########################################################
-# TRAVERSAL THEORY                                       #
-##########################################################
+Tealeaves/Functors/VectorRefinement.v
 Tealeaves/Functors/Batch.v
 Tealeaves/Adapters/Isomorphisms/BatchtoKStore.v
 Tealeaves/Theory/TraversableFunctor.v
@@ -193,8 +197,14 @@ Tealeaves/Theory/TraversableMonad.v
 Tealeaves/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Theory/DecoratedTraversableMonad.v
 
+# Require representation theorems to prove instances
 ##########################################################
-# NOMINAL AND POLYMORPHIC CLASSES                        #
+# OTHER FUNCTOR INSTANCES                                #
+##########################################################
+Tealeaves/Functors/List_Telescoping.v
+
+##########################################################
+# TWO PARAMETER FUNCTORS                                 #
 ##########################################################
 Tealeaves/Classes/Functor2.v
 Tealeaves/Functors/Batch2.v
@@ -203,8 +213,6 @@ Tealeaves/Functors/Z2.v
 ##########################################################
 # POLYMORPHICALLY DECORATED DTFs AND DTMs                #
 ##########################################################
-Tealeaves/Classes/Kleisli/TraversableCommIdemFunctor.v
-Tealeaves/Classes/Kleisli/DecoratedTraversableCommIdemFunctor.v
 Tealeaves/Classes/Kleisli/DecoratedFunctorPoly.v
 Tealeaves/Classes/Kleisli/TraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctorPoly.v
@@ -222,6 +230,22 @@ Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
 Tealeaves/Theory/DecoratedTraversableMonadPoly.v
 
 ##########################################################
+# MULTISORTED TYPECLASSES                                #
+##########################################################
+Tealeaves/Classes/Multisorted/Multifunctor.v
+Tealeaves/Classes/Multisorted/DecoratedTraversableMonad.v
+Tealeaves/Functors/Multisorted/Batch.v
+Tealeaves/Adapters/KleisliToCoalgebraic/Multisorted/DTM.v
+
+##########################################################
+# MULTISORTED THEORY                                     #
+##########################################################
+Tealeaves/Classes/Multisorted/Theory/Container.v
+Tealeaves/Classes/Multisorted/Theory/Targeted.v
+Tealeaves/Classes/Multisorted/Theory/Foldmap.v
+Tealeaves/Theory/Multisorted/DecoratedTraversableMonad.v
+
+##########################################################
 # "FULL" TYPECLASSES                                     #
 ##########################################################
 Tealeaves/Classes/Full/Monad.v
@@ -235,6 +259,7 @@ Tealeaves/Simplification/Support.v
 Tealeaves/Simplification/Binddt.v
 Tealeaves/Simplification/DeriveDTM.v
 Tealeaves/Simplification/Simplification.v
+Tealeaves/Simplification/MBinddt.v
 Tealeaves/Simplification/Tests/Support.v
 
 ##########################################################
@@ -247,6 +272,12 @@ Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN/Simplification.v
 Tealeaves/Backends/LN/Parallel.v
 Tealeaves/Backends/LN.v
+
+##########################################################
+# MULTISORTED LOCALLY NAMELESS BACKEND                   #
+##########################################################
+Tealeaves/Backends/Multisorted/LN/LN.v
+Tealeaves/Backends/Multisorted/LN.v
 
 ##########################################################
 # DEBRUIJN INDICES BACKEND                               #
@@ -301,3 +332,22 @@ Tealeaves/Examples/VariadicLet/Terms.v
 Tealeaves/Examples/VariadicLet/Instances/Simple.v
 Tealeaves/Examples/VariadicLet/Instances/LetIn.v
 Tealeaves/Examples/VariadicLet/Instances/LetRec.v
+
+##########################################################
+# EX: SYSTEM F (MULTISORTED)                             #
+##########################################################
+Tealeaves/Examples/SystemF/Syntax.v
+Tealeaves/Examples/SystemF/Contexts.v
+Tealeaves/Examples/SystemF/TypeSoundness.v
+
+##########################################################
+# TESTS FOR MULTISORTED SIMPLIFICATION TACTICS           #
+##########################################################
+Tealeaves/Simplification/Tests/SystemF_Binddt.v
+Tealeaves/Simplification/Tests/SystemF_Targeted.v
+Tealeaves/Simplification/Tests/SystemF_LN.v
+
+##########################################################
+# EX: NOMINAL SYNTAX BINDERS                             #
+##########################################################
+Tealeaves/Examples/LambdaNominal/Syntax.v

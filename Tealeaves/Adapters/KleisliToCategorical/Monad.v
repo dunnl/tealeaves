@@ -1,4 +1,4 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Categorical.Monad
   Classes.Kleisli.Monad.
 

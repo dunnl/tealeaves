@@ -15,29 +15,34 @@ Import Monad.Notations.
 Import Monoid.Notations.
 Import Product.Notations.
 
-#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
-#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
+#[local] Arguments ret (T)%function_scope {Return}
+  (A)%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments extract (W)%function_scope {Extract}
+  (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin}
+  {A}%type_scope _.
 
 
-(** ** <<T ∘ (W ×)>> is a monad *)
-(******************************************************************************)
+(** * <<T ∘ (W ×)>> is a monad *)
+(* TODO: This can get moved to Categories/DecoratedFunctor.v *)
+(**********************************************************************)
 Section strength_as_writer_distributive_law.
 
   Context
     `{Monoid W}.
 
-  Lemma strength_ret_l `{Functor F} : forall A : Type,
+  Lemma strength_ret_l `{Functor F}: forall A: Type,
       σ ∘ ret (W ×) (F A) =
-      map F (ret (W ×) A).
+        map F (ret (W ×) A).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma strength_join_l `{Functor F} : forall A : Type,
+  Lemma strength_join_l `{Functor F}: forall A: Type,
       σ ∘ join (T := (W ×)) (A := F A) =
-      map F (join (T := (W ×)) (A := A)) ∘ σ ∘ map (W ×) σ.
+        map F (join (T := (W ×)) (A := A)) ∘ σ ∘ map (W ×) σ.
   Proof.
     intros. ext [w1 [w2 t]]. unfold compose; cbn.
     compose near t. rewrite fun_map_map.
@@ -48,7 +53,7 @@ Section strength_as_writer_distributive_law.
   Context
     `{Monad T}.
 
-  #[export, program] Instance BeckDistributiveLaw_strength :
+  #[export, program] Instance BeckDistributiveLaw_strength:
     BeckDistributiveLaw (W ×) T :=
     {| bdist_join_r := strength_join T W;
        bdist_unit_r := strength_ret T W;
@@ -60,9 +65,8 @@ Section strength_as_writer_distributive_law.
 
 End strength_as_writer_distributive_law.
 
-
-(** ** Miscellaneous properties *)
-(******************************************************************************)
+(** * Miscellaneous Properties *)
+(**********************************************************************)
 Section Writer_miscellaneous.
 
   Context
@@ -70,15 +74,25 @@ Section Writer_miscellaneous.
 
   Import Categorical.Monad.Notations.
 
-  (* This rewrite is useful when proving decoration-traversal compatibility
-     in the binder case. *)
-  Theorem strength_shift1 : forall (F : Type -> Type) `{Functor F} (w : W) (A : Type),
-      σ ∘ μ (T := (W ×)) ∘ pair w = map F (μ (T := (W ×)) ∘ pair w) ∘ strength (F := F) (B := A).
+  (* This rewrite is useful when proving decoration-traversal
+     compatibility in the binder case. *)
+  Theorem strength_shift1:
+    forall (F: Type -> Type) `{Functor F} (w: W) (A: Type),
+      σ ∘ μ (T := (W ×)) ∘ pair w =
+        map F (μ (T := (W ×)) ∘ pair w) ∘ strength (F := F) (B := A).
   Proof.
     intros. ext [w' x]. unfold compose; cbn.
     compose near x. now rewrite fun_map_map.
   Qed.
 
+  Lemma pair_incr_zero: forall (w: W) (A: Type),
+      incr (A := A) w ∘ pair Ƶ = pair w.
+  Proof.
+    intros.
+    ext p. cbn.
+    rewrite monoid_id_l.
+    reflexivity.
+  Qed.
 
 End Writer_miscellaneous.
 

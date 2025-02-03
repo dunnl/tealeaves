@@ -5,20 +5,21 @@ From Tealeaves Require Export
 #[local] Generalizable Variables U T G A B C D ϕ M f.
 
 (** * Traversable Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** The [bindt] operation *)
-(******************************************************************************)
+(**********************************************************************)
 Class Bindt (T: Type -> Type) (U: Type -> Type) :=
-  bindt: forall (G: Type -> Type)
-           `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G}
-           (A B: Type), (A -> G (T B)) -> U A -> G (U B).
+  bindt:
+    forall (G: Type -> Type)
+      `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G}
+      (A B: Type), (A -> G (T B)) -> U A -> G (U B).
 
 #[global] Arguments bindt {T U}%function_scope {Bindt} {G}%function_scope
   {Map_G Pure_G Mult_G} {A B}%type_scope _%function_scope _.
 
 (** ** Kleisli Composition *)
-(******************************************************************************)
+(**********************************************************************)
 Definition kc6
   `{Bindt T T}
   {A B C: Type}
@@ -33,7 +34,7 @@ Definition kc6
 #[local] Infix "⋆6" := (kc6) (at level 60): tealeaves_scope.
 
 (** ** Typeclass *)
-(******************************************************************************)
+(**********************************************************************)
 Class TraversableRightPreModule (T: Type -> Type) (U: Type -> Type)
   `{Return_T: Return T}
   `{Bindt_TT: Bindt T T}
@@ -54,7 +55,8 @@ Class TraversableRightPreModule (T: Type -> Type) (U: Type -> Type)
 Class TraversableMonad (T: Type -> Type)
   `{Return_T: Return T}
   `{Bindt_TT: Bindt T T} :=
-  { ktm_bindt0: forall `{Applicative G} (A B: Type) (f: A -> G (T B)),
+  { ktm_bindt0:
+    forall `{Applicative G} (A B: Type) (f: A -> G (T B)),
       bindt f ∘ ret = f;
     ktm_premod :> TraversableRightPreModule T T;
   }.
@@ -69,13 +71,13 @@ Class TraversableRightModule (T U: Type -> Type)
 
 #[local] Instance TraversableRightModule_TraversableMonad
   (T: Type -> Type)
-  `{TraversableMonad_T: TraversableMonad T} :
+  `{TraversableMonad_T: TraversableMonad T}:
   TraversableRightModule T T :=
   {| ktmod_premod := ktm_premod;
   |}.
 
 (** ** Kleisli Category laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section Kleisli_composition.
 
   Context
@@ -137,13 +139,13 @@ Section Kleisli_composition.
 End Kleisli_composition.
 
 (** * Derived Structures *)
-(******************************************************************************)
+(**********************************************************************)
 From Tealeaves.Classes.Kleisli Require Import
   TraversableFunctor Monad.
 
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
   Section operations.
 
@@ -153,13 +155,16 @@ Module DerivedOperations.
       `{Bindt_TU: Bindt T U}.
 
     #[export] Instance Map_Bindt: Map U :=
-      fun (A B: Type) (f: A -> B) => bindt (G := fun A => A) (ret (T := T) ∘ f).
+      fun (A B: Type) (f: A -> B) =>
+        bindt (G := fun A => A) (ret (T := T) ∘ f).
 
     #[export] Instance Bind_Bindt: Bind T U
-      := fun A B f => bindt (T := T) (G := fun A => A) f.
+      := fun A B f =>
+           bindt (T := T) (G := fun A => A) f.
 
     #[export] Instance Traverse_Bindt: Traverse U
-      := fun G _ _ _ A B f => bindt (map (F := G) (ret (T := T)) ∘ f).
+      := fun G _ _ _ A B f =>
+           bindt (map (F := G) (ret (T := T)) ∘ f).
 
   End operations.
 End DerivedOperations.
@@ -202,19 +207,22 @@ Section compat_instances.
     `{Bindt_TU: Bindt T U}.
 
   #[export] Instance Compat_Map_Bindt_Self:
-    Compat_Map_Bindt T U (Map_U := DerivedOperations.Map_Bindt T U).
+    Compat_Map_Bindt T U
+      (Map_U := DerivedOperations.Map_Bindt T U).
   Proof.
     reflexivity.
   Qed.
 
   #[export] Instance Compat_Bind_Bindt_Self:
-    Compat_Bind_Bindt T U (Bind_TU := DerivedOperations.Bind_Bindt T U).
+    Compat_Bind_Bindt T U
+      (Bind_TU := DerivedOperations.Bind_Bindt T U).
   Proof.
     reflexivity.
   Qed.
 
   #[export] Instance Compat_Traverse_Bindt_Self:
-    Compat_Traverse_Bindt T U (Traverse_U := DerivedOperations.Traverse_Bindt T U).
+    Compat_Traverse_Bindt T U
+      (Traverse_U := DerivedOperations.Traverse_Bindt T U).
   Proof.
     hnf. intros.
     reflexivity.
@@ -257,8 +265,9 @@ Section rewriting_laws.
     `{Bind_TU: Bind T U}
     `{Bindt_TU: Bindt T U}.
 
-  Lemma map_to_bindt `{! Compat_Map_Bindt T U} :
-    forall `(f: A -> B), map (F := U) f = bindt (G := fun A => A) (ret (T := T) ∘ f).
+  Lemma map_to_bindt `{! Compat_Map_Bindt T U} `(f: A -> B):
+      map (F := U) f =
+        bindt (G := fun A => A) (ret (T := T) ∘ f).
   Proof.
     rewrite (compat_map_bindt T U).
     reflexivity.
@@ -273,7 +282,8 @@ Section rewriting_laws.
 
   Lemma traverse_to_bindt `{! Compat_Traverse_Bindt T U}
     `{Applicative G} `(f: A -> G B):
-    traverse (G := G) (T := U) f = bindt (U := U) (map (F := G) (ret (T := T)) ∘ f).
+    traverse (G := G) (T := U) f =
+      bindt (U := U) (map (F := G) (ret (T := T)) ∘ f).
   Proof.
     rewrite (compat_traverse_bindt T U G).
     reflexivity.
@@ -282,25 +292,29 @@ Section rewriting_laws.
 End rewriting_laws.
 
 (** ** Composition with the Identity Applicative *)
-(******************************************************************************)
+(**********************************************************************)
 Section traversable_monad_identity_applicative.
 
   Context
     `{TraversableRightModule T U}.
 
-  Lemma bindt_app_id_l :
+  Lemma bindt_app_id_l:
     forall {A B: Type} `{Applicative G} (f: A -> G (T B)),
-      @bindt T U _ ((fun A => A) ∘ G) (Map_compose (fun A => A) G)
-        (Pure_compose (fun A => A) G) (Mult_compose (fun A => A) G) A B f =
+      @bindt T U _ ((fun A => A) ∘ G)
+        (Map_compose (fun A => A) G)
+        (Pure_compose (fun A => A) G)
+        (Mult_compose (fun A => A) G) A B f =
         bindt (G := G) f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity2 G).
   Qed.
 
-  Lemma bindt_app_id_r :
+  Lemma bindt_app_id_r:
     forall {A B: Type} `{Applicative G} (f: A -> G (T B)),
-      @bindt T U _ (G ∘ (fun A => A)) (Map_compose G (fun A => A))
-        (Pure_compose G (fun A => A)) (Mult_compose G (fun A => A)) A B f =
+      @bindt T U _ (G ∘ (fun A => A))
+        (Map_compose G (fun A => A))
+        (Pure_compose G (fun A => A))
+        (Mult_compose G (fun A => A)) A B f =
         bindt (G := G) f.
   Proof.
     intros. fequal. now rewrite (Mult_compose_identity1 G).
@@ -309,7 +323,7 @@ Section traversable_monad_identity_applicative.
 End traversable_monad_identity_applicative.
 
 (** ** Derived Kleisli Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section traversable_monad_derived_kleisli_composition_laws.
 
   Context
@@ -334,7 +348,7 @@ Section traversable_monad_derived_kleisli_composition_laws.
   Context (A B C: Type).
 
   (** *** Homogeneous cases *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc6_22: forall (g: B -> G2 C) (f: A -> G1 B),
       (map ret ∘ g) ⋆6 (map ret ∘ f) =
         map (F := G1 ∘ G2) ret ∘ map (F := G1) g ∘ f.
@@ -369,7 +383,7 @@ Section traversable_monad_derived_kleisli_composition_laws.
   Qed.
 
   (** *** Heterogeneous cases *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc6_64: forall (g: B -> G2 (T C)) (f: A -> T B),
       kc6 (G1 := fun A => A) (G2 := G2) g f = bindt (G := G2) g ∘ f.
   Proof.
@@ -396,7 +410,8 @@ Section traversable_monad_derived_kleisli_composition_laws.
   Qed.
 
   Lemma kc6_46: forall (g: B -> T C) (f: A -> G1 (T B)),
-      kc6 (G2 := fun A => A) g f = map (F := G1) (bind (T := T) g) ∘ f.
+      kc6 (G2 := fun A => A) g f =
+        map (F := G1) (bind (T := T) g) ∘ f.
   Proof.
     intros.
     rewrite (bind_to_bindt (T := T)).
@@ -440,7 +455,8 @@ Section traversable_monad_derived_kleisli_composition_laws.
   Qed.
 
   Lemma kc6_20: forall (g: B -> G2 C) (f: A -> B),
-      kc6 (T := T) (G1 := fun A => A) (map ret ∘ g) (ret ∘ f) = map ret ∘ g ∘ f.
+      kc6 (T := T) (G1 := fun A => A) (map ret ∘ g) (ret ∘ f) =
+        map ret ∘ g ∘ f.
   Proof.
     intros.
     unfold kc6.
@@ -474,7 +490,8 @@ Section traversable_monad_derived_kleisli_composition_laws.
   Qed.
 
   Lemma kc6_40: forall (g: B -> T C) (f: A -> B),
-      kc6 (T := T) (G1 := fun A => A) (G2 := fun A => A) g (ret ∘ f) = g ∘ f.
+      kc6 (T := T) (G1 := fun A => A) (G2 := fun A => A) g (ret ∘ f) =
+        g ∘ f.
   Proof.
     intros.
     unfold kc6.
@@ -487,7 +504,7 @@ Section traversable_monad_derived_kleisli_composition_laws.
 End traversable_monad_derived_kleisli_composition_laws.
 
 (** ** Derived Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section traversable_monad_derived_composition_laws.
 
   Import Kleisli.Monad.Notations.
@@ -520,7 +537,7 @@ Section traversable_monad_derived_composition_laws.
     (A B C: Type).
 
   (** *** Composition with <<traverse>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma traverse_bindt: forall (g: B -> G2 C) (f: A -> G1 (T B)),
       map (traverse g) ∘ bindt f =
         bindt (U := U) (G := G1 ∘ G2) (map (traverse g) ∘ f).
@@ -533,7 +550,8 @@ Section traversable_monad_derived_composition_laws.
   Qed.
 
   Lemma bindt_traverse: forall (g: B -> G2 (T C)) (f: A -> G1 B),
-      map (bindt g) ∘ traverse f = bindt (U := U) (G := G1 ∘ G2) (map g ∘ f).
+      map (bindt g) ∘ traverse f =
+        bindt (U := U) (G := G1 ∘ G2) (map g ∘ f).
   Proof.
     intros.
     rewrite traverse_to_bindt.
@@ -543,7 +561,7 @@ Section traversable_monad_derived_composition_laws.
   Qed.
 
   (** *** Composition with <<bind>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma bind_bindt: forall (g: B -> T C) (f: A -> G1 (T B)),
       map (bind g) ∘ bindt f = bindt (U := U) (map (bind g) ∘ f).
   Proof.
@@ -568,7 +586,7 @@ Section traversable_monad_derived_composition_laws.
   Qed.
 
   (** *** Composition with <<map>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma map_bindt: forall (g: B -> C) (f: A -> G1 (T B)),
       map (map g) ∘ bindt f = bindt (map (map g) ∘ f).
   Proof.
@@ -593,7 +611,7 @@ Section traversable_monad_derived_composition_laws.
   Qed.
 
   (** *** Composition between <<traverse>> and <<bind>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma traverse_bind: forall (g: B -> G2 C) (f: A -> T B),
       traverse g ∘ bind f = bindt (traverse g ∘ f).
   Proof.
@@ -621,7 +639,7 @@ Section traversable_monad_derived_composition_laws.
   Qed.
 
   (** ** Monad Laws *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma bind_ret: forall (A B: Type) (f: A -> T B),
       bind f ∘ ret = f.
   Proof.
@@ -655,7 +673,7 @@ Section traversable_monad_derived_composition_laws.
   Qed.
 
   (** ** Traversable Laws *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma traverse_id: forall (A: Type),
       traverse (G := fun A => A) (@id A) = @id (U A).
   Proof.
@@ -686,19 +704,19 @@ Section traversable_monad_derived_composition_laws.
       ϕ (U B) ∘ traverse f = traverse (ϕ B ∘ f).
   Proof.
     intros.
-      infer_applicative_instances.
-      rewrite traverse_to_bindt.
-      rewrite traverse_to_bindt.
-      rewrite ktm_morph.
-      reassociate <-.
-      rewrite appmor_natural_pf.
-      reflexivity.
-    Qed.
+    infer_applicative_instances.
+    rewrite traverse_to_bindt.
+    rewrite traverse_to_bindt.
+    rewrite ktm_morph.
+    reassociate <-.
+    rewrite appmor_natural_pf.
+    reflexivity.
+  Qed.
 
 End traversable_monad_derived_composition_laws.
 
 (** ** Derived Typeclass Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   Section instances.
@@ -726,7 +744,7 @@ Module DerivedInstances.
     #[export] Instance RightPreModule_TraversableMonad:
       RightPreModule T T :=
       {| kmod_bind1 := bind_id;
-        kmod_bind2 := bind_bind;
+         kmod_bind2 := bind_bind;
       |}.
 
     #[export] Instance Monad_TraversableMonad: Monad T :=
@@ -735,13 +753,14 @@ Module DerivedInstances.
 
     #[local] Instance TraversableRightModule_TraversableMonad:
       TraversableRightModule T T :=
-      {| ktmod_monad := _; |}.
+      {| ktmod_monad := _;
+      |}.
 
     (*
-    #[export] Instance Functor_TraversableMonad: Functor T
+      #[export] Instance Functor_TraversableMonad: Functor T
       := DerivedInstances.Functor_TraversableFunctor.
-    (* or DerivedInstances.Functor_Monad. *)
-    *)
+     (* or DerivedInstances.Functor_Monad. *)
+     *)
 
     Context
       `{Map_U_inst: Map U}
@@ -778,7 +797,7 @@ Module DerivedInstances.
 End DerivedInstances.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Infix "⋆6" := (kc6) (at level 60): tealeaves_scope.
 End Notations.

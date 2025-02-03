@@ -11,17 +11,19 @@ Import Functor.Notations.
 Import Subset.Notations.
 
 #[local] Generalizable Variables F T A.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
 
-(** * Container-like functors *)
-(******************************************************************************)
+(** * Container-Like Functors *)
+(**********************************************************************)
 
-(** ** <<tosubset>> operation *)
-(******************************************************************************)
-Class ToSubset (F : Type -> Type) :=
-  tosubset : F ⇒ subset.
+(** ** Operation <<tosubset>> and <<x ∈ ->>*)
+(**********************************************************************)
+Class ToSubset (F: Type -> Type) :=
+  tosubset: F ⇒ subset.
 
-#[global] Arguments tosubset {F}%function_scope {ToSubset} {A}%type_scope.
+#[global] Arguments tosubset {F}%function_scope
+  {ToSubset} {A}%type_scope.
 
 Definition element_of `{ToSubset F} {A: Type}:
   A -> F A -> Prop := fun a t => tosubset t a.
@@ -32,73 +34,77 @@ Proof.
   reflexivity.
 Qed.
 #[local] Notation "x ∈ t" :=
-  (element_of x t) (at level 50) : tealeaves_scope.
+  (element_of x t) (at level 50): tealeaves_scope.
 
-(** ** Functor typeclass *)
-(******************************************************************************)
+(** ** Typeclass *)
+(**********************************************************************)
 Class ContainerFunctor
-  (F : Type -> Type)
+  (F: Type -> Type)
   `{Map F} `{ToSubset F} :=
   { cont_natural :> Natural (@tosubset F _);
     cont_functor :> Functor F;
-    cont_pointwise : forall (A B : Type) (t : F A) (f g : A -> B),
+    cont_pointwise: forall (A B: Type) (t: F A) (f g: A -> B),
       (forall a, a ∈ t -> f a = g a) -> map F f t = map F g t;
   }.
 
-(** ** [ToSubset]-preserving natural transformations *)
-(******************************************************************************)
+(** ** Homomorphisms of Container-Like Functors *)
+(**********************************************************************)
 Class ContainerTransformation
-  {F G : Type -> Type}
+  {F G: Type -> Type}
   `{Map F} `{ToSubset F}
   `{Map G} `{ToSubset G}
-  (η : F ⇒ G) :=
-  { cont_trans_natural : Natural η;
-    cont_trans_commute : forall A, tosubset (F := F) = tosubset (F := G) ∘ η A;
+  (η: F ⇒ G) :=
+  { cont_trans_natural: Natural η;
+    cont_trans_commute:
+    forall A, tosubset (F := F) = tosubset (F := G) ∘ η A;
   }.
 
-(** * Container instance for <<subset>> *)
-(******************************************************************************)
+(** * Container Instance for <<subset>> *)
+(**********************************************************************)
 Section Container_subset.
 
-  Instance ToSubset_set : ToSubset subset :=
-    fun (A : Type) (s : subset A) => s.
+  Instance ToSubset_set: ToSubset subset :=
+    fun (A: Type) (s: subset A) => s.
 
-  Instance Natural_elements_set : Natural (@tosubset subset _).
+  Instance Natural_elements_set: Natural (@tosubset subset _).
   Proof.
     constructor; try typeclasses eauto.
     intros. ext S b. reflexivity.
   Qed.
 
-  Lemma subset_pointwise : forall (A B : Type) (t : A -> Prop) (f g : A -> B),
-      (forall a : A, a ∈ t -> f a = g a) -> map subset f t = map subset g t.
+  Lemma subset_pointwise:
+    forall (A B: Type) (t: A -> Prop) (f g: A -> B),
+      (forall a: A, a ∈ t -> f a = g a) ->
+      map subset f t = map subset g t.
   Proof.
     intros. ext b. cbv. propext.
     intros. preprocess. setoid_rewrite H. firstorder. auto.
     intros. preprocess. setoid_rewrite <- H. firstorder. auto.
   Qed.
 
-  Instance ContainerFunctor_subset : ContainerFunctor subset :=
+  Instance ContainerFunctor_subset: ContainerFunctor subset :=
     {| cont_pointwise := subset_pointwise;
     |}.
 
 End Container_subset.
 
-(** * Basic properties of containers *)
-(******************************************************************************)
+(** * Basic Properties of Containers *)
+(**********************************************************************)
 Section setlike_functor_theory.
 
   Context
-    (F : Type -> Type)
+    (F: Type -> Type)
     `{ContainerFunctor F}
-    {A B : Type}.
+    {A B: Type}.
 
-  Implicit Types (t : F A) (b : B) (a : A) (f g : A -> B).
+  Implicit Types (t: F A) (b: B) (a: A) (f g: A -> B).
 
   (** ** Interaction between (∈) and <<map>> *)
-  (******************************************************************************)
+  (********************************************************************)
+
   (** Naturality relates elements before and after a map. *)
-  Theorem in_map_iff : forall t f b,
-      b ∈ map F f t <-> exists a : A, a ∈ t /\ f a = b.
+  Theorem in_map_iff: forall t f b,
+      b ∈ map F f t <-> exists a: A, a ∈ t /\ f a = b.
   Proof.
     introv. compose near t on left.
     rewrite element_of_tosubset.
@@ -111,22 +117,22 @@ Section setlike_functor_theory.
   (** This next property says that applying <<f>> (or on the
       right-hand side, appling <<map f>>) is monotone with respect to
       the <<∈>> relation. *)
-  Corollary in_map_mono : forall t f a,
+  Corollary in_map_mono: forall t f a,
       a ∈ t -> f a ∈ map F f t.
   Proof.
     introv. rewrite in_map_iff. now exists a.
   Qed.
 
-  (** ** Respectfulness conditions *)
-  (******************************************************************************)
+  (** ** Respectfulness Conditions *)
+  (********************************************************************)
   (** Renaming to keep consistent name scheme *)
-  Corollary map_respectful : forall t (f g : A -> B),
+  Corollary map_respectful: forall t (f g: A -> B),
       (forall a, a ∈ t -> f a = g a) -> map F f t = map F g t.
   Proof.
     apply (cont_pointwise (F := F)).
   Qed.
 
-  Corollary map_respectful_id : forall t (f : A -> A),
+  Corollary map_respectful_id: forall t (f: A -> A),
       (forall a, a ∈ t -> f a = a) -> map F f t = t.
   Proof.
     intros. replace t with (map F id t) at 2
@@ -136,32 +142,35 @@ Section setlike_functor_theory.
 
 End setlike_functor_theory.
 
-(** * Properness conditions *)
-(******************************************************************************)
+(** ** Properness Conditions *)
+(**********************************************************************)
 Definition pointwise_equal_on
-  (F : Type -> Type) {A B} `{ToSubset F} :
+  (F: Type -> Type) {A B} `{ToSubset F}:
   F A -> relation (A -> B) :=
-  fun t f g => (forall a : A, a ∈ t -> f a = g a).
+  fun t f g => (forall a: A, a ∈ t -> f a = g a).
 
-Definition respectively_equal_at {A B} : A -> A -> relation (A -> B) :=
-  fun (a1 a2 : A) (f g : A -> B) => f a1 = g a2.
+Definition respectively_equal_at {A B}:
+  A -> A -> relation (A -> B) :=
+  fun (a1 a2: A) (f g: A -> B) => f a1 = g a2.
 
-Definition equal_at {A B} : A -> relation (A -> B) :=
-  fun (a : A) (f g : A -> B) => f a = g a.
+Definition equal_at {A B}: A -> relation (A -> B) :=
+  fun (a: A) (f g: A -> B) => f a = g a.
 
-Definition injective_relation {A B} (R : relation A) (R' : relation B) : relation (A -> B) :=
-  fun f g => forall a1 a2 : A, R' (f a1) (g a2) -> R a1 a2.
+Definition injective_relation {A B}
+  (R: relation A) (R': relation B): relation (A -> B) :=
+  fun f g => forall a1 a2: A, R' (f a1) (g a2) -> R a1 a2.
 
 Infix "<++" := injective_relation (at level 55).
 
-Definition rigid_relation {A B} (R : relation A) (R' : relation B) : relation (A -> B) :=
-  fun f g => forall a1 a2 : A, R' (f a1) (g a2) <-> R a1 a2.
+Definition rigid_relation {A B}
+  (R: relation A) (R': relation B): relation (A -> B) :=
+  fun f g => forall a1 a2: A, R' (f a1) (g a2) <-> R a1 a2.
 
 Infix "<++>" := rigid_relation (at level 55).
 
 #[export] Instance Proper_Container_Map
-  (F : Type -> Type) `{ContainerFunctor F} :
-  (forall (A B : Type) (t : F A),
+  (F: Type -> Type) `{ContainerFunctor F}:
+  (forall (A B: Type) (t: F A),
       Proper (pointwise_equal_on F t (B := B) ++> equal_at t) (map F)).
 Proof.
   intros.
@@ -171,23 +180,23 @@ Proof.
   now apply cont_pointwise.
 Qed.
 
-(** * Quantification over elements *)
-(******************************************************************************)
+(** * Quantification over Elements (<<Forall>>, <<Forany>>) *)
+(**********************************************************************)
 Section quantification.
 
   Context `{ContainerFunctor T}.
 
-  Definition Forall `(P : A -> Prop) (t : T A) : Prop :=
-    forall (a : A), a ∈ t -> P a.
+  Definition Forall `(P: A -> Prop) (t: T A): Prop :=
+    forall (a: A), a ∈ t -> P a.
 
-  Definition Forany `(P : A -> Prop) (t :T A): Prop :=
-    exists (a : A), a ∈ t /\ P a.
+  Definition Forany `(P: A -> Prop) (t :T A): Prop :=
+    exists (a: A), a ∈ t /\ P a.
 
 End quantification.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Notation "x ∈ t" :=
-    (element_of x t) (at level 50) : tealeaves_scope.
+    (element_of x t) (at level 50): tealeaves_scope.
 End Notations.

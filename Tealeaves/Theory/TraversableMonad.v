@@ -111,7 +111,7 @@ Section traversable_monad_theory.
     (******************************************************************************)
     Lemma toBatch6_toBatch
       {A B: Type} (t: U A):
-      toBatch (A' := B) t = mapsnd_Batch _ _ (ret (T := T)) (toBatch6 t).
+      toBatch (A' := B) t = mapsnd_Batch (ret (T := T)) (toBatch6 t).
       Proof.
         intros.
         rewrite toBatch_to_traverse.
@@ -119,7 +119,7 @@ Section traversable_monad_theory.
         rewrite toBatch6_to_bindt.
         compose near t on right.
         rewrite (ktm_morph (G1 := Batch A (T B)) (G2 := Batch A B)
-                   (ϕ := fun C => mapsnd_Batch _ _ (ret (T := T)))).
+                   (ϕ := fun C => mapsnd_Batch (ret (T := T)))).
         rewrite ret_dinatural.
         reflexivity.
       Qed.
@@ -131,7 +131,7 @@ Section traversable_monad_theory.
   Lemma toBatch6_mapfst
     {A B: Type} (f: A -> B) {C: Type}:
     toBatch6 (B := C) ∘ map (F := U) f =
-      mapfst_Batch _ _ f ∘ toBatch6.
+      mapfst_Batch f ∘ toBatch6.
   Proof.
     intros.
     rewrite toBatch6_to_bindt.

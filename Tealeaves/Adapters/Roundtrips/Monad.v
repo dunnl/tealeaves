@@ -1,6 +1,10 @@
 From Tealeaves Require Import
-  Adapters.CategoricalToKleisli.Monad
-  Adapters.KleisliToCategorical.Monad.
+  Classes.Categorical.Monad
+  Classes.Kleisli.Monad
+  Adapters.KleisliToCategorical.Monad
+  Adapters.CategoricalToKleisli.Monad.
+
+Export Categorical.Monad (Return, ret).
 
 Import Product.Notations.
 Import Functor.Notations.

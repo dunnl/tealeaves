@@ -1,4 +1,6 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
+  Classes.Categorical.DecoratedTraversableFunctor
+  Classes.Kleisli.DecoratedTraversableFunctor
   Adapters.CategoricalToKleisli.DecoratedTraversableFunctor
   Adapters.KleisliToCategorical.DecoratedTraversableFunctor.
 

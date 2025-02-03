@@ -1,4 +1,4 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Categorical.DecoratedTraversableMonad
   Classes.Kleisli.DecoratedTraversableMonad
   Classes.Categorical.Bimonad (bimonad_baton).
@@ -13,20 +13,27 @@ Import Functor.Notations.
 
 #[local] Generalizable Variables T A B C.
 
-#[local] Arguments ret (T)%function_scope {Return} (A)%type_scope _.
-#[local] Arguments join T%function_scope {Join} {A}%type_scope _.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
-#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
+#[local] Arguments ret (T)%function_scope {Return}
+  (A)%type_scope _.
+#[local] Arguments join T%function_scope {Join}
+  {A}%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments extract (W)%function_scope {Extract}
+  (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin}
+  {A}%type_scope _.
 #[local] Arguments mapd {E}%type_scope T%function_scope {Mapd}
   {A B}%type_scope _%function_scope _.
 #[local] Arguments mapdt {E}%type_scope T%function_scope {Mapdt}
   G%function_scope {H H0 H1} {A B}%type_scope _%function_scope.
-#[local] Arguments bindd {W}%type_scope {T} (U)%function_scope {Bindd} {A B}%type_scope _ _.
-#[local] Arguments traverse T%function_scope {Traverse} G%function_scope
-  {Map_G Pure_G Mult_G} {A B}%type_scope _%function_scope _.
+#[local] Arguments bindd {W}%type_scope {T} (U)%function_scope {Bindd}
+  {A B}%type_scope _ _.
+#[local] Arguments traverse T%function_scope {Traverse}
+  G%function_scope {Map_G Pure_G Mult_G}
+  {A B}%type_scope _%function_scope _.
 
-(** * DTMs from Kleisli DTMs *)
+(** * Categorical DTMs from Kleisli DTMs *)
 (**********************************************************************)
 
 (** ** Derived Operations *)
@@ -41,17 +48,16 @@ Module DerivedOperations.
       `{Return T}.
 
     #[export] Instance Join_Binddt: Join T :=
-      fun A => binddt (G := fun A => A) (B := A) (A := T A) (extract (W ×) (T A)).
+      fun A => binddt (G := fun A => A) (A := T A) (extract (W ×) (T A)).
     #[export] Instance Decorate_Binddt: Decorate W T :=
       fun A => binddt (G := fun A => A) (ret T (W * A)).
     #[export] Instance Dist_Binddt: ApplicativeDist T :=
-      fun G _ _ _ A => binddt (T := T) (map G (ret T A) ∘ extract (W ×) (G A)).
+      fun G _ _ _ A =>
+        binddt (T := T) (map G (ret T A) ∘ extract (W ×) (G A)).
 
   End operations.
 End DerivedOperations.
 
-(** ** Derived Instances *)
-(**********************************************************************)
 Module DerivedInstances.
 
   Section with_monad.
@@ -113,7 +119,7 @@ Module DerivedInstances.
         change (map (T ∘ T) f) with (map T (map T f)).
         rewrite (binddt_map (G2 := fun A => A) (T := T) (U := T)).
         rewrite <- (natural (Natural := Natural_extract_reader W)
-                      (ϕ := @extract (W ×) _) (map T f)).
+                     (ϕ := @extract (W ×) _) (map T f)).
         reflexivity.
     Qed.
 
@@ -136,7 +142,7 @@ Module DerivedInstances.
       unfold_compose_in_compose.
       rewrite bindd_map.
       rewrite <- (natural (Natural := Natural_extract_reader W)
-                    (ϕ := @extract (W ×) _)).
+                   (ϕ := @extract (W ×) _)).
       unfold_ops @Map_I.
       rewrite kdm_bindd1.
       reflexivity.
@@ -155,7 +161,7 @@ Module DerivedInstances.
       (* Merge RHS *)
       rewrite (bindd_map).
       rewrite <- (natural (Natural := Natural_extract_reader W)
-                    (ϕ := @extract (W ×) _)).
+                   (ϕ := @extract (W ×) _)).
       unfold_ops @Map_I.
       change (extract ?W ?A) with (id ∘ extract W A) at 1.
       change (extract ?W ?A) with (id ∘ extract W A) at 2.
@@ -225,7 +231,8 @@ Module DerivedInstances.
         reflexivity.
     Qed.
 
-    #[export] Instance: Categorical.DecoratedFunctor.DecoratedFunctor W T :=
+    #[export] Instance:
+      Categorical.DecoratedFunctor.DecoratedFunctor W T :=
       {| dfun_dec_natural := dec_natural;
          dfun_dec_dec := dec_dec;
          dfun_dec_extract := dec_extract;
@@ -243,7 +250,8 @@ Module DerivedInstances.
     Qed.
 
     Lemma dmon_join_: forall (A: Type),
-        dec T ∘ join T (A:=A) = join T ∘ map T (shift T) ∘ dec T ∘ map T (dec T).
+        dec T ∘ join T (A:=A) =
+          join T ∘ map T (shift T) ∘ dec T ∘ map T (dec T).
     Proof.
       intros.
       unfold shift.
@@ -285,7 +293,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[export] Instance: Categorical.DecoratedMonad.DecoratedMonad W T :=
+    #[export] Instance:
+      Categorical.DecoratedMonad.DecoratedMonad W T :=
       {| dmon_ret := dmon_ret_;
          dmon_join := dmon_join_;
       |}.
@@ -294,7 +303,7 @@ Module DerivedInstances.
     (******************************************************************)
     Lemma dist_natural_T:
       forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G)
-             (Happ: Applicative G),
+        (Happ: Applicative G),
         Natural (@dist T _ G H2 H3 H4).
     Proof.
       intros. inversion Happ. constructor.
@@ -312,7 +321,7 @@ Module DerivedInstances.
         rewrite binddt_map.
         reassociate -> on right.
         rewrite <- (natural (Natural := Natural_extract_reader W)
-                      (ϕ := @extract (W ×) _)).
+                     (ϕ := @extract (W ×) _)).
         unfold_ops Map_I.
         reassociate <- on right.
         rewrite (fun_map_map (F := G)).
@@ -322,8 +331,8 @@ Module DerivedInstances.
 
     Lemma dist_morph_T:
       forall (G1 G2: Type -> Type)
-             (H2: Map G1) (H4: Mult G1) (H3: Pure G1) (H5: Map G2)
-             (H7: Mult G2) (H6: Pure G2) (ϕ: forall A: Type, G1 A -> G2 A),
+        (H2: Map G1) (H4: Mult G1) (H3: Pure G1) (H5: Map G2)
+        (H7: Mult G2) (H6: Pure G2) (ϕ: forall A: Type, G1 A -> G2 A),
         ApplicativeMorphism G1 G2 ϕ ->
         forall A: Type, dist T G2 ∘ map T (ϕ A) = ϕ (T A) ∘ dist T G1.
     Proof.
@@ -333,7 +342,7 @@ Module DerivedInstances.
       rewrite (kdtm_morph G1 G2 (ϕ := ϕ)).
       reassociate -> on left.
       rewrite <- (natural (Natural := Natural_extract_reader W)
-                    (ϕ := @extract (W ×) _)).
+                   (ϕ := @extract (W ×) _)).
       unfold_ops Map_I.
       reassociate <- on left.
       rewrite (natural (ϕ := ϕ)).
@@ -347,17 +356,15 @@ Module DerivedInstances.
       apply (kdtm_binddt1).
     Qed.
 
-    (*
-      #[export] Instance TraversableMonadFull_Categorical_of_Kleisli: TraversableMonadFull T.
-      Proof.
-      constructor; typeclasses eauto.
-      Qed.
-     *)
-
-    Lemma dist_linear_T: forall (G1: Type -> Type) (H2: Map G1) (H3: Pure G1) (H4: Mult G1),
+    Lemma dist_linear_T:
+      forall (G1: Type -> Type)
+        (H2: Map G1) (H3: Pure G1) (H4: Mult G1),
         Applicative G1 ->
-        forall (G2: Type -> Type) (H6: Map G2) (H7: Pure G2) (H8: Mult G2),
-          Applicative G2 -> forall A: Type, dist T (G1 ∘ G2) (A := A) = map G1 (dist T G2) ∘ dist T G1.
+        forall (G2: Type -> Type)
+          (H6: Map G2) (H7: Pure G2) (H8: Mult G2),
+          Applicative G2 ->
+          forall (A: Type),
+            dist T (G1 ∘ G2) (A := A) = map G1 (dist T G2) ∘ dist T G1.
     Proof.
       intros. unfold_ops @Dist_Binddt.
       rewrite (kdtm_binddt2); try typeclasses eauto.
@@ -369,7 +376,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[export] Instance: Categorical.TraversableFunctor.TraversableFunctor T :=
+    #[export] Instance:
+      Categorical.TraversableFunctor.TraversableFunctor T :=
       {| dist_natural := dist_natural_T;
          dist_morph := dist_morph_T;
          dist_unit := dist_unit_T;
@@ -378,8 +386,10 @@ Module DerivedInstances.
 
     (** ** Traversable Monad Instance *)
     (******************************************************************)
-    Lemma trvmon_ret_T: forall (G: Type -> Type) (H3: Map G) (H4: Pure G) (H5: Mult G),
-        Applicative G -> forall A: Type, dist T G ∘ ret T (G A) = map G (ret T A).
+    Lemma trvmon_ret_T:
+      forall (G: Type -> Type) (H3: Map G) (H4: Pure G) (H5: Mult G),
+        Applicative G -> forall (A: Type),
+          dist T G ∘ ret T (G A) = map G (ret T A).
     Proof.
       intros. unfold_ops @Dist_Binddt @Map_Binddt.
       rewrite (kdtm_binddt0).
@@ -388,9 +398,11 @@ Module DerivedInstances.
 
     Lemma trvmon_join_T:
       forall (G: Type -> Type) (H3: Map G)
-             (H4: Pure G) (H5: Mult G)
-             (Happ: Applicative G),
-      forall A: Type, dist T G ∘ join T = map G (join T) ∘ dist T G ∘ map T (dist T G (A := A)).
+        (H4: Pure G) (H5: Mult G)
+        (Happ: Applicative G),
+      forall (A: Type),
+        dist T G ∘ join T =
+          map G (join T) ∘ dist T G ∘ map T (dist T G (A := A)).
     Proof.
       intros.
       unfold_ops @Dist_Binddt @Join_Binddt.
@@ -412,7 +424,8 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[export] Instance: Categorical.TraversableMonad.TraversableMonad T :=
+    #[export] Instance:
+      Categorical.TraversableMonad.TraversableMonad T :=
       {| trvmon_ret := trvmon_ret_T;
          trvmon_join := trvmon_join_T;
       |}.
@@ -422,7 +435,7 @@ Module DerivedInstances.
     Lemma dtfun_compat_T:
       forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G)
              (Happ: Applicative G),
-      forall A: Type,
+      forall (A: Type),
         dist T G ∘ map T (strength) ∘ dec (A := G A) T =
           map G (dec T) ∘ dist T G.
     Proof.
@@ -447,13 +460,15 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[export] Instance: Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor W T :=
+    #[export] Instance:
+      Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor W T :=
       {| dtfun_compat := dtfun_compat_T;
       |}.
 
     (** *** Decorated Traversable monad instance *)
     (******************************************************************)
-    #[export] Instance: Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
+    #[export] Instance:
+      Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad W T :=
       ltac:(constructor; typeclasses eauto).
 
   End with_monad.

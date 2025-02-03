@@ -17,7 +17,7 @@ From Tealeaves Require
   Classes.Coalgebraic.TraversableFunctor
   Adapters.KleisliToCoalgebraic.TraversableFunctor.
 
-
+Import Kleisli.TraversableFunctor.Notations.
 Import ContainerFunctor.Notations.
 Import Monoid.Notations.
 Import Subset.Notations.
@@ -27,16 +27,16 @@ Import ProductFunctor.Notations. (* ◻ *)
 #[local] Generalizable Variable T G M ϕ A B C.
 
 (** * Miscellaneous Properties of Traversable Functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Interaction between <<traverse>> and <<pure>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section traversable_purity.
 
   Context
     `{TraversableFunctor T}.
 
-  Theorem traverse_purity1 :
+  Theorem traverse_purity1:
     forall `{Applicative G},
       `(traverse (G := G) pure = @pure G _ (T A)).
   Proof.
@@ -47,7 +47,7 @@ Section traversable_purity.
     reflexivity.
   Qed.
 
-  Lemma traverse_purity2 :
+  Lemma traverse_purity2:
     forall `{Applicative G2}
       `{Applicative G1}
       `(f: A -> G1 B),
@@ -63,7 +63,7 @@ Section traversable_purity.
 End traversable_purity.
 
 (** * Factorizing Operations through <<runBatch>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section factorize_operations.
 
   Import Coalgebraic.TraversableFunctor.
@@ -78,9 +78,9 @@ Section factorize_operations.
     `{! Compat_ToBatch_Traverse T}.
 
   (** ** Factoring operations through <<toBatch>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma traverse_through_runBatch
-    `{Applicative G} `(f: A -> G B) :
+    `{Applicative G} `(f: A -> G B):
     traverse f = runBatch f ∘ toBatch.
   Proof.
     rewrite toBatch_to_traverse.
@@ -89,7 +89,7 @@ Section factorize_operations.
     reflexivity.
   Qed.
 
-  Corollary map_through_runBatch {A B: Type} (f: A -> B) :
+  Corollary map_through_runBatch {A B: Type} (f: A -> B):
     map f = runBatch (G := fun A => A) f ∘ toBatch.
   Proof.
     rewrite map_to_traverse.
@@ -107,10 +107,10 @@ Section factorize_operations.
   Qed.
 
   (** ** Naturality of <<toBatch>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma toBatch_mapfst: forall (A B A': Type) (f: A -> B),
       toBatch (A := B) (A' := A') ∘ map f =
-        mapfst_Batch _ _ f ∘ toBatch (A := A) (A' := A').
+        mapfst_Batch f ∘ toBatch (A := A) (A' := A').
   Proof.
     intros.
     rewrite toBatch_to_traverse.
@@ -123,7 +123,7 @@ Section factorize_operations.
   Qed.
 
   Lemma toBatch_mapsnd: forall (X A A': Type) (f: A -> A'),
-      mapsnd_Batch _ _ f ∘ toBatch =
+      mapsnd_Batch f ∘ toBatch =
         map (map f) ∘ toBatch (A := X) (A' := A).
   Proof.
     intros.
@@ -139,10 +139,10 @@ Section factorize_operations.
 End factorize_operations.
 
 (** * Traversals by Particular Applicative Functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Product of Two Applicative Functors *)
-(******************************************************************************)
+(**********************************************************************)
 Section traverse_applicative_product.
 
   Definition applicative_arrow_combine {F G A B}
@@ -184,7 +184,7 @@ Section traverse_applicative_product.
     reflexivity.
   Qed.
 
-  Theorem traverse_product_spec :
+  Theorem traverse_product_spec:
     traverse (f <◻> g) = traverse f <◻> traverse g.
   Proof.
     intros.
@@ -199,7 +199,7 @@ Section traverse_applicative_product.
 End traverse_applicative_product.
 
 (** ** Constant Applicative Functors *)
-(******************************************************************************)
+(**********************************************************************)
 Section constant_applicatives.
 
   Context
@@ -208,20 +208,23 @@ Section constant_applicatives.
     `{! Compat_Map_Traverse T}
     `{Monoid M}.
 
-  Lemma traverse_const1: forall {A: Type} (B: Type) `(f: A -> M),
+  Lemma traverse_const1:
+    forall {A: Type} (B: Type) `(f: A -> M),
       traverse (G := const M) (B := False) f =
         traverse (G := const M) (B := B) f.
   Proof.
     intros.
-    change_left (map (F := const M) (A := T False)
-                   (B := T B) (map (F := T) (A := False) (B := B) exfalso)
-                   ∘ traverse (T := T) (G := const M)
-                   (B := False) (f: A -> const M False)).
+    change_left
+      (map (F := const M) (A := T False)
+         (B := T B) (map (F := T) (A := False) (B := B) exfalso)
+         ∘ traverse (T := T) (G := const M)
+         (B := False) (f: A -> const M False)).
     rewrite (map_traverse (G1 := const M)).
     reflexivity.
   Qed.
 
-  Lemma traverse_const2: forall {A: Type} (f: A -> M) (fake1 fake2: Type),
+  Lemma traverse_const2:
+    forall {A: Type} (f: A -> M) (fake1 fake2: Type),
       traverse (G := const M) (B := fake1) f =
         traverse (G := const M) (B := fake2) f.
   Proof.
@@ -234,7 +237,7 @@ Section constant_applicatives.
 End constant_applicatives.
 
 (** ** Traversals by Commutative Idempotent Applicatives *)
-(******************************************************************************)
+(**********************************************************************)
 Section traversals_commutative_idem.
 
   Import Coalgebraic.TraversableFunctor.
@@ -261,14 +264,14 @@ Section traversals_commutative_idem.
       rewrite IHb.
       (* RHS *)
       rewrite runBatch_rw2.
-      rewrite <- (ap_swap _ (f a)).
+      rewrite <- (ap_swap (a := f a)).
       reflexivity.
   Qed.
 
 End traversals_commutative_idem.
 
 (** ** Traversals by Subset *)
-(******************************************************************************)
+(**********************************************************************)
 Section traversals_by_subset.
 
   Import Coalgebraic.TraversableFunctor.
@@ -279,7 +282,8 @@ Section traversals_by_subset.
       `{ToBatch T}
       `{! Compat_ToBatch_Traverse T}
       (A B: Type) (f: A -> subset B),
-      forwards ∘ traverse (T := T) (G := Backwards subset) (mkBackwards ∘ f) =
+      forwards ∘ traverse (T := T)
+        (G := Backwards subset) (mkBackwards ∘ f) =
         traverse (T := T) f.
   Proof.
     intros. ext t. unfold compose.
@@ -305,10 +309,10 @@ Section traversals_by_subset.
 End traversals_by_subset.
 
 (** * Derived Operation: <<foldmap>> *)
-(******************************************************************************)
+(**********************************************************************)
 
-(** ** The <<foldmap>> Operation *)
-(******************************************************************************)
+(** ** Operation <<foldMap>> *)
+(**********************************************************************)
 Definition foldMap
   {T: Type -> Type}
   `{Traverse T}
@@ -318,8 +322,8 @@ Definition foldMap
 
 Section foldMap.
 
-  (** ** As a special case of <<traverse>> *)
-  (******************************************************************************)
+  (** ** As a Special Case of <<traverse>> *)
+  (********************************************************************)
   Lemma foldMap_to_traverse1
     `{Traverse T}
     `{Monoid M}: forall `(f: A -> M),
@@ -349,15 +353,16 @@ Section foldMap.
     `{! Compat_Map_Traverse T}.
 
   (** ** Composition with <<map>> and <<traverse>> *)
-  (******************************************************************************)
-  Lemma foldMap_traverse `{Monoid M} (G: Type -> Type) {B: Type} `{Applicative G} :
+  (********************************************************************)
+  Lemma foldMap_traverse
+    `{Monoid M} (G: Type -> Type) {B: Type} `{Applicative G}:
     forall `(g: B -> M) `(f: A -> G B),
       map (A := T B) (B := M) (foldMap g) ∘ traverse f =
         foldMap (map g ∘ f).
   Proof.
     intros.
     rewrite foldMap_to_traverse1.
-    rewrite (trf_traverse_traverse (T := T) (G1 := G) (G2 := const M) A B False).
+    rewrite (trf_traverse_traverse (G1 := G) (G2 := const M) A B False).
     rewrite foldMap_to_traverse1.
     rewrite map_compose_const.
     rewrite mult_compose_const.
@@ -369,13 +374,15 @@ Section foldMap.
   Proof.
     intros.
     rewrite map_to_traverse.
-    change (foldMap g) with (map (F := fun A => A) (A := T B) (B := M) (foldMap g)).
+    change (foldMap g) with
+      (map (F := fun A => A) (A := T B) (B := M) (foldMap g)).
     now rewrite (foldMap_traverse (fun X => X)).
   Qed.
 
   (** ** Composition with Homomorphisms *)
-  (******************************************************************************)
-  Lemma foldMap_morphism (M1 M2: Type) `{morphism: Monoid_Morphism M1 M2 ϕ} :
+  (********************************************************************)
+  Lemma foldMap_morphism (M1 M2: Type)
+    `{morphism: Monoid_Morphism M1 M2 ϕ}:
     forall `(f: A -> M1), ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
   Proof.
     intros.
@@ -388,7 +395,7 @@ Section foldMap.
   Qed.
 
   (** ** Factorizing through <<runBatch>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Import Coalgebraic.TraversableFunctor.
   Import KleisliToCoalgebraic.TraversableFunctor.
 
@@ -421,7 +428,7 @@ Section foldMap.
   Qed.
 
   (** ** Factorizing through <<toBatch>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma foldMap_through_toBatch
       `{ToBatch T}
       `{! Compat_ToBatch_Traverse T}
@@ -440,16 +447,39 @@ Section foldMap.
 End foldMap.
 
 (** * <<foldmap>> Corollary: <<tolist>> *)
-(******************************************************************************)
+(**********************************************************************)
 
-(** ** The <<tolist>> Operation *)
-(******************************************************************************)
-(* TODO Generalize this with a compatibility class or something *)
+(** ** Operation <<tolist>> *)
+(**********************************************************************)
 #[export] Instance Tolist_Traverse `{Traverse T}: Tolist T :=
   fun A => foldMap (ret (T := list)).
 
+Class Compat_Tolist_Traverse
+  (T: Type -> Type)
+  `{Tolist_inst: Tolist T}
+  `{Traverse_inst: Traverse T}: Prop :=
+  compat_tolist_traverse:
+    Tolist_inst = @Tolist_Traverse T Traverse_inst.
+
+#[export] Instance Compat_Tolist_Traverse_Self
+  `{Traverse_T: Traverse T}:
+  @Compat_Tolist_Traverse T Tolist_Traverse Traverse_T
+  := ltac:(reflexivity).
+
+Lemma tolist_to_traverse
+  `{Tolist_inst: Tolist T}
+  `{Traverse_T: Traverse T}
+  `{! Compat_Tolist_Traverse T}:
+  forall (A: Type),
+    tolist = foldMap (ret (T := list) (A := A)).
+Proof.
+  intros.
+  rewrite compat_tolist_traverse.
+  reflexivity.
+Qed.
+
 (** ** Relating <<foldMap (T := list)>> to <<foldMap_list>> *)
-(******************************************************************************)
+(**********************************************************************)
 Lemma foldMap_eq_foldMap_list `{Monoid M}: forall (A: Type) (f: A -> M),
     foldMap (T := list) f = foldMap_list f.
 Proof.
@@ -462,7 +492,8 @@ Proof.
     reflexivity.
 Qed.
 
-(** The <<tolist>> operation provided by the traversability of <<list>> is the identity. *)
+(** The <<tolist>> operation provided by the traversability of
+    <<list>> is the identity. *)
 Lemma Tolist_list_id: forall (A: Type),
     @tolist list (@Tolist_Traverse list Traverse_list) A = @id (list A).
 Proof.
@@ -481,7 +512,7 @@ Section tolist.
     `{! Compat_Map_Traverse T}.
 
   (** ** Naturality *)
-  (******************************************************************************)
+  (********************************************************************)
   #[export] Instance Natural_Tolist_Traverse: Natural (@tolist T _).
   Proof.
     constructor; try typeclasses eauto.
@@ -495,7 +526,7 @@ Section tolist.
   Qed.
 
   (** ** Rewriting <<tolist>> to <<traverse>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Corollary tolist_to_foldMap: forall (A: Type),
       tolist (F := T) = foldMap (ret (T := list) (A := A)).
   Proof.
@@ -503,13 +534,15 @@ Section tolist.
   Qed.
 
   Corollary tolist_to_traverse1: forall (A: Type),
-      tolist = traverse (G := const (list A)) (B := False) (ret (T := list)).
+      tolist =
+        traverse (G := const (list A)) (B := False) (ret (T := list)).
   Proof.
     reflexivity.
   Qed.
 
   Corollary tolist_to_traverse2: forall (A fake: Type),
-      tolist = traverse (G := const (list A)) (B := fake) (ret (T := list)).
+      tolist =
+        traverse (G := const (list A)) (B := fake) (ret (T := list)).
   Proof.
     intros.
     rewrite tolist_to_traverse1.
@@ -518,14 +551,14 @@ Section tolist.
   Qed.
 
   (** ** Factoring <<tolist>> through <<runBatch>> and <<toBatch>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Import Coalgebraic.TraversableFunctor.
   Import KleisliToCoalgebraic.TraversableFunctor.
 
   Corollary tolist_through_toBatch
   `{ToBatch T}
   `{! Compat_ToBatch_Traverse T}
-    {A: Type} (tag: Type) `(t: T A) :
+    {A: Type} (tag: Type) `(t: T A):
     tolist t = tolist (toBatch (A' := tag) t).
   Proof.
     rewrite (tolist_to_foldMap).
@@ -536,7 +569,7 @@ Section tolist.
   Corollary tolist_through_runBatch
   `{ToBatch T}
   `{! Compat_ToBatch_Traverse T}
-    {A: Type} (tag: Type) `(t: T A) :
+    {A: Type} (tag: Type) `(t: T A):
     tolist t =
       runBatch (G := const (list A))
         (ret (T := list): A -> const (list A) tag)
@@ -548,8 +581,9 @@ Section tolist.
   Qed.
 
   (** ** Factoring any <<foldMap>> through <<tolist>> *)
-  (******************************************************************************)
-  Corollary foldMap_through_tolist `{Monoid M}: forall (A: Type) (f: A -> M),
+  (********************************************************************)
+  Corollary foldMap_through_tolist
+    `{Monoid M}: forall (A: Type) (f: A -> M),
     foldMap (T := T) f = foldMap (T := list) f ∘ tolist.
   Proof.
     intros.
@@ -563,14 +597,16 @@ Section tolist.
 End tolist.
 
 (** * <<foldmap>> Corollary: <<tosubset>> *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** The <<tosubset>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 #[local] Instance ToSubset_Traverse `{Traverse T}:
   ToSubset T :=
   fun A => foldMap (ret (T := subset)).
 
+(** ** Compatibility *)
+(**********************************************************************)
 Class Compat_ToSubset_Traverse
   (T: Type -> Type)
   `{ToSubset_inst: ToSubset T}
@@ -583,24 +619,15 @@ Class Compat_ToSubset_Traverse
   @Compat_ToSubset_Traverse T ToSubset_Traverse Traverse_T
   := ltac:(reflexivity).
 
-(** ** The <<tosubset>> Operation *)
-(******************************************************************************)
-(* TODO Move this somewhere else *)
-#[export] Instance Compat_ToSubset_Traverse_list:
-  Compat_ToSubset_Traverse (ToSubset_inst := ToSubset_list) list.
+Lemma tosubset_to_traverse
+  `{ToSubset_inst: ToSubset T}
+  `{Traverse_inst: Traverse T}
+  `{! Compat_ToSubset_Traverse T}:
+  forall (A: Type), tosubset (A := A) = foldMap (ret (T := subset)).
 Proof.
-  unfold Compat_ToSubset_Traverse.
-  unfold_ops @ToSubset_list.
-  unfold_ops @ToSubset_Traverse.
-  ext A l.
-  rewrite foldMap_eq_foldMap_list.
-  induction l.
-  - simpl_list.
-    reflexivity.
-  - simpl_list.
-    cbn.
-    rewrite <- IHl.
-    reflexivity.
+  intros.
+  rewrite compat_tosubset_traverse.
+  reflexivity.
 Qed.
 
 Section elements.
@@ -613,8 +640,8 @@ Section elements.
     `{! Compat_ToSubset_Traverse T}.
 
   (** ** Naturality *)
-  (******************************************************************************)
-  #[export] Instance Natural_Element_Traverse :
+  (********************************************************************)
+  #[export] Instance Natural_Element_Traverse:
     Natural (@tosubset T ToSubset_Traverse).
   Proof.
     constructor; try typeclasses eauto.
@@ -628,7 +655,7 @@ Section elements.
   Qed.
 
   (** ** Rewriting <<tosubset>> to <<foldMap>> *)
-  (*******************************************************************************)
+  (********************************************************************)
   Lemma tosubset_to_foldMap `{Compat_ToSubset_Traverse T}:
     forall (A: Type),
       @tosubset T _ A =
@@ -639,7 +666,7 @@ Section elements.
   Qed.
 
   (** ** Factoring <<tosubset>> through <<tolist>> *)
-  (*******************************************************************************)
+  (********************************************************************)
   Corollary tosubset_through_tolist: forall A:Type,
       tosubset (F := T) (A := A) =
         tosubset (F := list) ∘ tolist (A := A).
@@ -655,7 +682,7 @@ Section elements.
   Qed.
 
   (** ** Rewriting <<a ∈ t>> to <<foldMap>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma element_of_to_foldMap:
     forall (A: Type) (a: A),
       element_of a =
@@ -675,7 +702,7 @@ Section elements.
   Qed.
 
   (** ** Factoring <<a ∈ t>> through <<tolist>> *)
-  (*******************************************************************************)
+  (********************************************************************)
   Corollary element_of_through_tolist:
     forall (A: Type) (a: A),
       element_of (F := T) a =
@@ -689,15 +716,23 @@ Section elements.
     reflexivity.
   Qed.
 
+  Corollary in_iff_in_tolist:
+    forall (A: Type) (a: A) (t: T A),
+      a ∈ t <-> a ∈ tolist t.
+  Proof.
+    intros.
+    now rewrite element_of_through_tolist.
+  Qed.
+
   (** ** Factoring <<tosubset>> through <<runBatch>> *)
-  (*******************************************************************************)
+  (********************************************************************)
   Import Coalgebraic.TraversableFunctor.
   Import KleisliToCoalgebraic.TraversableFunctor.
 
   Lemma tosubset_through_runBatch1
     `{ToBatch T}
     `{! Compat_ToBatch_Traverse T}
-    : forall (A: Type),
+   : forall (A: Type),
       tosubset =
         runBatch (G := const (A -> Prop))
           (ret (T := subset) (A := A)) (B := False) ∘
@@ -712,7 +747,7 @@ Section elements.
   Lemma tosubset_through_runBatch2
     `{ToBatch T}
     `{! Compat_ToBatch_Traverse T}
-    : forall (A tag: Type),
+   : forall (A tag: Type),
       tosubset =
         runBatch (G := const (A -> Prop))
           (ret (T := subset)) (B := tag) ∘
@@ -727,7 +762,7 @@ Section elements.
 End elements.
 
 #[export] Instance Compat_ToSubset_Tolist_Traverse
-  `{TraversableFunctor T} :
+  `{TraversableFunctor T}:
   @Compat_ToSubset_Tolist T
     (@ToSubset_Traverse T _)
     (@Tolist_Traverse T _).
@@ -744,16 +779,16 @@ Proof.
 Qed.
 
 (** * <<foldmap>> Corollary: <<Forall, Forany>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section quantification.
 
   Context
     `{TraversableFunctor T}
     `{! ToSubset T}
-     `{! Compat_ToSubset_Traverse T}.
+    `{! Compat_ToSubset_Traverse T}.
 
   (** ** Operations <<Forall>> and <<Forany>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Definition Forall `(P: A -> Prop): T A -> Prop :=
     @foldMap T _ Prop Monoid_op_and Monoid_unit_true A P.
 
@@ -761,62 +796,49 @@ Section quantification.
     @foldMap T _ Prop Monoid_op_or Monoid_unit_false A P.
 
   (** ** Specification via <<element_of>> *)
-  (******************************************************************************)
-  Lemma forall_iff `(P: A -> Prop) (t: T A) :
+  (********************************************************************)
+  Lemma forall_iff `(P: A -> Prop) (t: T A):
     Forall P t <-> forall (a: A), a ∈ t -> P a.
   Proof.
     unfold Forall.
     rewrite foldMap_through_tolist.
     unfold compose at 1.
-    unfold element_of at 1.
-    rewrite tosubset_through_tolist.
-    unfold compose at 1.
-    (*
-       change_right (forall a: A, a ∈ (tolist t) -> P a).
-     *)
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_eq_foldMap_list.
+    setoid_rewrite in_iff_in_tolist.
     rewrite foldMap_eq_foldMap_list.
     induction (tolist t).
     - simpl_list.
       unfold_ops @Monoid_unit_true.
       unfold_ops @Monoid_unit_subset.
-      setoid_rewrite subset_in_empty.
+      setoid_rewrite element_of_list_nil.
       intuition.
     - simpl_list.
       unfold_ops @Monoid_op_and.
       unfold_ops @Monoid_op_subset.
       unfold_ops @Return_subset.
       rewrite IHl.
-      setoid_rewrite subset_in_add.
+      setoid_rewrite element_of_list_cons.
       firstorder. now subst.
   Qed.
 
-  Lemma forany_iff `(P: A -> Prop) (t: T A) :
+  Lemma forany_iff `(P: A -> Prop) (t: T A):
     Forany P t <-> exists (a: A), a ∈ t /\ P a.
   Proof.
     unfold Forany.
     rewrite foldMap_through_tolist.
-    unfold compose at 1.
-    unfold element_of at 1.
-    rewrite tosubset_through_tolist.
-    unfold compose at 1.
-    rewrite tosubset_to_foldMap.
     rewrite foldMap_eq_foldMap_list.
-    rewrite foldMap_eq_foldMap_list.
+    unfold compose at 1.
+    setoid_rewrite in_iff_in_tolist.
     induction (tolist t).
     - rewrite foldMap_list_nil.
-      rewrite foldMap_list_nil.
       unfold_ops @Monoid_unit_false.
-      unfold_ops @Monoid_unit_subset.
-      setoid_rewrite subset_in_empty.
+      setoid_rewrite element_of_list_nil.
       firstorder.
     - simpl_list.
       unfold_ops @Monoid_op_or.
       unfold_ops @Monoid_op_subset.
       unfold_ops @Return_subset.
       rewrite IHl.
-      setoid_rewrite subset_in_add.
+      setoid_rewrite element_of_list_cons.
       split.
       + intros [hyp|hyp].
         * eauto.
@@ -829,14 +851,14 @@ Section quantification.
 End quantification.
 
 (** * <<foldmap>> Corollary: <<plength>> *)
-(******************************************************************************)
+(**********************************************************************)
 From Tealeaves Require Import Misc.NaturalNumbers.
 
 Definition plength `{Traverse T}: forall {A}, T A -> nat :=
   fun A => foldMap (fun _ => 1).
 
 (** ** <<plength>> of a <<list>> *)
-(******************************************************************************)
+(**********************************************************************)
 Lemma list_plength_length: forall (A: Type) (l: list A),
     plength l = length l.
 Proof.
@@ -847,7 +869,7 @@ Proof.
 Qed.
 
 (** ** Factoring <<plength>> through <<list>> *)
-(******************************************************************************)
+(**********************************************************************)
 Lemma plength_through_tolist `{TraversableFunctor T}:
   forall (A: Type) (t: T A),
     plength t = length (tolist t).
@@ -861,7 +883,7 @@ Proof.
 Qed.
 
 (** ** Naturality of <<plength>> *)
-(******************************************************************************)
+(**********************************************************************)
 From Tealeaves Require Import
   Classes.Categorical.ShapelyFunctor (shape, shape_map).
 
@@ -911,7 +933,7 @@ Section naturality_plength.
 End naturality_plength.
 
 (** * <<foldMap>> by a Commutative Monoid *)
-(******************************************************************************)
+(**********************************************************************)
 Section foldMap_commutative_monoid.
 
   Import List.ListNotations.
@@ -944,7 +966,7 @@ Section foldMap_commutative_monoid.
     `{! Monoid M}
     {A: Type}
     `{comm: ! CommutativeMonoidOp op}
-    : forall (f: A -> M) (l: list A),
+   : forall (f: A -> M) (l: list A),
       foldMap op f l = foldMap op f (List.rev l).
   Proof.
     intros.
@@ -983,7 +1005,7 @@ Section foldMap_commutative_monoid.
 End foldMap_commutative_monoid.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Notation "f <◻> g" := (applicative_arrow_combine f g)
                           (at level 60): tealeaves_scope.

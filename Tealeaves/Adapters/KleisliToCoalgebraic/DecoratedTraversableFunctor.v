@@ -13,14 +13,14 @@ Import Monoid.Notations.
 
 
 (** * Coalgebraic DTFs from Kleisli DTFs *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance ToBatch3_Mapdt `{Mapdt E T}
- : Coalgebraic.DecoratedTraversableFunctor.ToBatch3 E T :=
+: Coalgebraic.DecoratedTraversableFunctor.ToBatch3 E T :=
   (fun A B => mapdt (G := Batch (E * A) B) (batch B):
      T A -> Batch (E * A) B (T B)).
 
@@ -35,9 +35,10 @@ Class Compat_ToBatch3_Mapdt
     ToBatch3_inst = DerivedOperations.ToBatch3_Mapdt.
 
 Lemma toBatch3_to_mapdt
-  `{Compat_ToBatch3_Mapdt E T} :
-  forall A B, toBatch3 (E := E) (T := T) =
-           mapdt (G := Batch (E * A) B) (batch B).
+  `{Compat_ToBatch3_Mapdt E T}:
+  forall (A B: Type),
+    toBatch3 (E := E) (T := T) =
+      mapdt (G := Batch (E * A) B) (batch B).
 Proof.
   intros.
   rewrite compat_toBatch3_mapdt.
@@ -45,12 +46,11 @@ Proof.
 Qed.
 
 #[export] Instance Compat_ToBatch3_Mapdt_Self
-  `{Mapdt E T}: Compat_ToBatch3_Mapdt E T
-                   (ToBatch3_inst := DerivedOperations.ToBatch3_Mapdt)
+  `{Mapdt E T}:
+  Compat_ToBatch3_Mapdt E T
+    (ToBatch3_inst := DerivedOperations.ToBatch3_Mapdt)
   := ltac:(hnf; reflexivity).
 
-(** ** Coalgebra laws *)
-(******************************************************************************)
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -62,14 +62,19 @@ Module DerivedInstances.
       `{ToBatch3 E T}
       `{! Compat_ToBatch3_Mapdt E T}.
 
+    (** ** <<double_batch3>> as <<batch ⋆3 batch>> *)
+    (******************************************************************)
     Lemma double_Batch3_spec: forall A B C,
-        double_batch3 (E := E) (A := A) (B := B) C = batch C ⋆3 batch B.
+        double_batch3 (E := E) (A := A) (B := B) C =
+          batch C ⋆3 batch B.
     Proof.
       intros. unfold double_batch3. now ext [e a].
     Qed.
 
+    (** ** Derived Laws *)
+    (******************************************************************)
     Lemma toBatch3_extract_Kleisli: forall (A: Type),
-        extract_Batch ∘ mapfst_Batch _ _ (extract (W := (E ×))) ∘ toBatch3 =
+        extract_Batch ∘ mapfst_Batch (extract (W := (E ×))) ∘ toBatch3 =
           @id (T A).
     Proof.
       intros.
@@ -84,8 +89,8 @@ Module DerivedInstances.
                  (G2 := fun A => A)
                  (morphism := ApplicativeMorphism_extract_Batch _)).
       reassociate <- on left.
-      assert (cut: extract_Batch ∘ mapfst_Batch (E * A) A extract ∘ batch A
-              = extract).
+      assert (cut: extract_Batch ∘ mapfst_Batch extract ∘ batch A
+                   =  extract (W := (E ×))).
       { ext [e a]. reflexivity. }
       rewrite cut.
       rewrite kdtf_mapdt1.
@@ -110,7 +115,7 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[export] Instance Coalgebraic_DecoratedTraversableFunctor_of_Kleisli :
+    #[export] Instance Coalgebraic_DecoratedTraversableFunctor_of_Kleisli:
       Coalgebraic.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
       {| dtf_extract := toBatch3_extract_Kleisli;
          dtf_duplicate := toBatch3_duplicate_Kleisli;

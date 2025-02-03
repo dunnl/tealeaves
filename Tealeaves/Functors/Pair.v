@@ -3,38 +3,76 @@ From Tealeaves Require Import
 
 Import Applicative.Notations.
 
-(** * Cartesian product bifunctor *)
-(******************************************************************************)
+(** * Cartesian Product Bifunctor *)
+(**********************************************************************)
 
-(** ** Bi-map operation *)
-(******************************************************************************)
-Definition map_pair {A B C D: Type} (f : A -> B) (g: C -> D) : A * C -> B * D :=
-  map_snd g ∘ map_fst f.
+(** ** Bi-map Operation *)
+(**********************************************************************)
+Section map_pair.
 
-Lemma map_fst_to_pair {A1 A2 B}:
-  forall (f: A1 -> A2),
-    map_fst (Y := B) f = map_pair f id.
-Proof.
-  intros.
-  ext [a b].
-  reflexivity.
-Qed.
+  Definition map_pair
+    {A B C D: Type}
+    (f: A -> B)
+    (g: C -> D):
+    A * C -> B * D :=
+    map_snd g ∘ map_fst f.
 
-Lemma map_snd_to_pair {A B1 B2}:
-  forall (g: B1 -> B2),
+  (** *** Rewriting Laws *)
+  (**********************************************************************)
+  Lemma map_pair_rw
+    {A B C D: Type}
+    {f: A -> B}
+    {g: C -> D}:
+    forall (a: A) (c: C),
+      map_pair f g (a, c) = (f a, g c).
+  Proof.
+    reflexivity.
+  Qed.
+
+  (** *** Lifting <<map>> to <<map_pair>> *)
+  (**********************************************************************)
+  Lemma map_fst_to_pair
+    {A B C: Type} {f: A -> B}:
+    map_fst (Y := C) f = map_pair f id.
+  Proof.
+    intros.
+    ext [a c].
+    reflexivity.
+  Qed.
+
+  Lemma map_snd_to_pair
+    {A C D: Type} {g: C -> D}:
     map_snd (X := A) g = map_pair id g.
-Proof.
-  intros.
-  ext [a b].
-  reflexivity.
-Qed.
+  Proof.
+    intros.
+    ext [a c].
+    reflexivity.
+  Qed.
 
+End map_pair.
 
-(** ** Bi-traverse operation *)
-(******************************************************************************)
-Definition traverse_both
-  {A B C D: Type}
-  {G: Type -> Type}
-  `{Map G} `{Mult G} `{Pure G}
-  (f : A -> G B) (g: C -> G D) : A * C -> G (B * D) :=
-  fun '(a, c) => pure pair <⋆> f a <⋆> g c.
+(** ** Bi-traverse Operation *)
+(**********************************************************************)
+Section traverse_pair.
+
+  Context
+    {G: Type -> Type}
+    `{Map G} `{Mult G} `{Pure G}.
+
+  Context
+    {A B C D: Type}
+
+    (f: A -> G B) (g: C -> G D).
+
+  Definition traverse_pair: A * C -> G (B * D) :=
+    fun '(a, c) => pure pair <⋆> f a <⋆> g c.
+
+  Lemma traverse_pair_rw:
+    forall (a: A) (c: C),
+      traverse_pair (a, c) =
+        pure pair <⋆> f a <⋆> g c.
+  Proof.
+    reflexivity.
+  Qed.
+
+End traverse_pair.

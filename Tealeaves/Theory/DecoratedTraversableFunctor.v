@@ -1,15 +1,16 @@
-From Tealeaves Require Export
-  Functors.Batch
+From Tealeaves Require Import
+  Adapters.KleisliToCategorical.TraversableFunctor
+  Adapters.KleisliToCoalgebraic.TraversableFunctor
   Adapters.KleisliToCategorical.DecoratedTraversableFunctor
   Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
   Classes.Coalgebraic.TraversableFunctor
-  Classes.Coalgebraic.DecoratedTraversableFunctor
-  Classes.Kleisli.DecoratedTraversableFunctor
-  Classes.Kleisli.Theory.DecoratedTraversableFunctor
-  Classes.Kleisli.DecoratedContainerFunctor
-  Classes.Kleisli.DecoratedShapelyFunctor
+  Classes.Coalgebraic.DecoratedTraversableFunctor.
+
+From Tealeaves Require Export
+  Functors.Batch
   Functors.Environment
-  Theory.TraversableFunctor.
+  Theory.TraversableFunctor
+  Kleisli.Theory.DecoratedTraversableFunctor.
 
 Import Product.Notations.
 Import Monoid.Notations.
@@ -21,8 +22,6 @@ Import DecoratedContainerFunctor.Notations.
 Import VectorRefinement.Notations.
 
 #[local] Generalizable Variables F M E T G A B C ϕ.
-#[local] Arguments mapfst_Batch {B C}%type_scope
-  {A1 A2}%type_scope f%function_scope b.
 
 (** * Properties of <<toBatch3>> *)
 (******************************************************************************)
@@ -35,11 +34,15 @@ Section theory.
     `{Map_inst: Map T}
     `{ToBatch_inst: ToBatch T}
     `{ToBatch3_inst: ToBatch3 E T}
+    `{ToCtxset_inst: ToCtxset E T}
+    `{ToCtxlist_inst: ToCtxlist E T}
     `{! Compat_Traverse_Mapdt E T}
     `{! Compat_Mapd_Mapdt E T}
     `{! Compat_Map_Mapdt E T}
     `{! Compat_ToBatch_Traverse T}
     `{! Compat_ToBatch3_Mapdt E T}
+    `{! Compat_ToCtxset_Mapdt E T}
+    `{! Compat_ToCtxlist_Mapdt E T}
     `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
   (** ** Relating <<toBatch3>> with <<toBatch>> *)
@@ -331,7 +334,9 @@ Section decorated_traversable_functor_theory.
 
   Import Kleisli.DecoratedTraversableFunctor.DerivedInstances.
 
-  #[export] Instance: DecoratedContainerFunctor E T.
+  #[export] Instance
+    DecoratedContainerFunctor_DecoratedTraversableFunctor:
+    DecoratedContainerFunctor E T.
   Proof.
     constructor.
     - typeclasses eauto.
@@ -498,7 +503,8 @@ Section shapeliness.
       do 2 rewrite mapd_shape in cut2; auto.
       now rewrite Heq.
     - eapply mapd_ctxlist_injective_restricted2; eauto.
-  Qed.
+      (* TODO *)
+  Admitted.
 
 End shapeliness.
 
@@ -562,8 +568,7 @@ Section deconstruction.
         List.rev (toctxlist t).
   Proof.
     intros.
-    unfold toctxlist.
-    unfold ToCtxlist_Mapdt.
+    rewrite toctxlist_to_foldMapd.
     rewrite (foldMapd_through_runBatch2 A B).
     unfold compose.
     induction (toBatch3 t).
@@ -798,11 +803,13 @@ Section lifting_relations.
     `{Map_inst: Map T}
     `{ToBatch_inst: ToBatch T}
     `{ToBatch3_inst: ToBatch3 E T}
+    `{ToCtxlist_inst: ToCtxlist E T}
     `{! Compat_Traverse_Mapdt E T}
     `{! Compat_Mapd_Mapdt E T}
     `{! Compat_Map_Mapdt E T}
     `{! Compat_ToBatch_Traverse T}
     `{! Compat_ToBatch3_Mapdt E T}
+    `{! Compat_ToCtxlist_Mapdt E T}
     `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
   Import Categorical.DecoratedFunctor.

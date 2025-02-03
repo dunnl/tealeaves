@@ -6,7 +6,7 @@ From Tealeaves Require Export
 Import DecoratedContainerFunctor.Notations.
 
 (** * <<DecoratedContainerFunctor>> Instance for <<ctxset>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section Container_ctxset.
 
   Context {E: Type}.
@@ -14,7 +14,7 @@ Section Container_ctxset.
   #[local] Instance ToCtxset_ctxset: ToCtxset E (ctxset E) :=
     fun (A: Type) (s: ctxset E A) => s.
 
-  Instance Natural_elements_ctx_ctxset :
+  Instance Natural_elements_ctx_ctxset:
     DecoratedHom E (ctxset E) (ctxset E)
       (@toctxset E (ctxset E) _).
   Proof.

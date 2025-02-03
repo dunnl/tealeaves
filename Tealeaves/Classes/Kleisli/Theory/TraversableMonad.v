@@ -17,7 +17,7 @@ Import Subset.Notations.
 Import Kleisli.TraversableMonad.DerivedInstances.
 
 (** * Theory of Traversable Monads *)
-(******************************************************************************)
+(**********************************************************************)
 Section traversable_monad_theory.
 
   Context
@@ -48,8 +48,8 @@ Section traversable_monad_theory.
     `{Module_inst: ! TraversableRightPreModule T U}.
 
   (** ** <<foldMap>> on Traversble Monads *)
-  (******************************************************************************)
-  Lemma foldMap_bindt `{Applicative G} `{Monoid M} :
+  (********************************************************************)
+  Lemma foldMap_bindt `{Applicative G} `{Monoid M}:
     forall `(g: B -> M) `(f: A -> G (T B)),
       map (foldMap g) ∘ bindt (U := U) f =
         foldMap (T := U) (map (foldMap g) ∘ f).
@@ -95,7 +95,7 @@ Section traversable_monad_theory.
   Qed.
 
   (** ** <<tolist>> on Traversable Monads *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma tolist_ret: forall (A: Type),
       tolist ∘ ret T = ret list (A := A).
   Proof.
@@ -116,7 +116,7 @@ Section traversable_monad_theory.
   Qed.
 
   (** ** <<tosubset>> on Traversable Monads *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma tosubset_hom1: forall (A: Type),
       tosubset ∘ ret T = ret subset (A := A).
   Proof.
@@ -140,7 +140,7 @@ Section traversable_monad_theory.
   Qed.
 
   (** ** <<element_of>> on Traversable Monads *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma element_of_hom1: forall (A: Type) (a: A),
       element_of a ∘ ret T = {{a}}.
   Proof.

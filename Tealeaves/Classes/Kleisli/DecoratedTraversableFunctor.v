@@ -14,65 +14,69 @@ Import Product.Notations.
 #[local] Generalizable Variables E T ϕ G A B C M.
 
 (** * Decorated Traversable Functor *)
-(******************************************************************************)
+(**********************************************************************)
 
-(** ** The <<mapdt>> Operation *)
-(******************************************************************************)
+(** ** Operation <<mapdt>> *)
+(**********************************************************************)
 Class Mapdt (E: Type) (T: Type -> Type) :=
   mapdt: forall (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
-            (A B: Type), (E * A -> G B) -> T A -> G (T B).
+           (A B: Type), (E * A -> G B) -> T A -> G (T B).
 
 #[global] Arguments mapdt {E}%type_scope {T}%function_scope {Mapdt}
   {G}%function_scope {H H0 H1} {A B}%type_scope _%function_scope _.
 
 (** ** Kleisli Composition *)
-(******************************************************************************)
+(**********************************************************************)
 Definition kc3
   {E A B C: Type}
   {G1 G2: Type -> Type}
   `{Map G1} `{Pure G1} `{Mult G1}
   `{Map G2} `{Pure G2} `{Mult G2}
   (g: E * B -> G2 C)
-  (f: E * A -> G1 B) :
+  (f: E * A -> G1 B):
   (E * A -> G1 (G2 C)) :=
   map (F := G1) (A := E * B) (B := G2 C) g ∘ strength ∘ cobind f.
 
 #[local] Infix "⋆3" := kc3 (at level 60): tealeaves_scope.
 
 (** ** Typeclass *)
-(******************************************************************************)
+(**********************************************************************)
 Class DecoratedTraversableFunctor
   (E: Type) (T: Type -> Type) `{Mapdt E T} :=
   { kdtf_mapdt1: forall (A: Type),
       mapdt (G := fun A => A) extract = @id (T A);
-    kdtf_mapdt2 :
+    kdtf_mapdt2:
     forall `{Applicative G1} `{Applicative G2}
       {A B C: Type} (g: E * B -> G2 C) (f: E * A -> G1 B),
       map (mapdt g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (g ⋆3 f);
     kdtf_morph: forall `{morphism: ApplicativeMorphism G1 G2 ϕ}
-                    {A B: Type} (f: E * A -> G1 B),
+                  {A B: Type} (f: E * A -> G1 B),
       ϕ (T B) ∘ mapdt f = mapdt (ϕ B ∘ f);
   }.
 
 (** ** Kleisli Category Laws *)
-(** TODO: The left and right unit are simply <<extract>> with <<G>> = <<fun A => A>> *)
-(******************************************************************************)
+(** TODO: The left and right unit are simply <<extract>> with <<G>> =
+    <<fun A => A>> *)
+(**********************************************************************)
 
 
 (** * Derived Structures *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
   Section operations.
 
     Context
       `{Mapdt_ET: Mapdt E T}.
 
-    #[export] Instance Mapd_Mapdt: Mapd E T := fun A B f => mapdt (G := fun A => A) f.
-    #[export] Instance Traverse_Mapdt: Traverse T := fun G _ _ _ A B f => mapdt (f ∘ extract).
-    #[export] Instance Map_Mapdt: Map T := fun A B f => mapdt (G := fun A => A) (f ∘ extract).
+    #[export] Instance Mapd_Mapdt: Mapd E T :=
+      fun A B f => mapdt (G := fun A => A) f.
+    #[export] Instance Traverse_Mapdt: Traverse T :=
+      fun G _ _ _ A B f => mapdt (f ∘ extract).
+    #[export] Instance Map_Mapdt: Map T :=
+      fun A B f => mapdt (G := fun A => A) (f ∘ extract).
 
   End operations.
 End DerivedOperations.
@@ -99,15 +103,15 @@ Section compat.
     compat_traverse_mapdt:
       @Traverse_T =
         @DerivedOperations.Traverse_Mapdt E T Mapdt_ET.
-      (*
-      forall {G: Type -> Type}
-        `{Map_G: Map G}
-        `{Mult_G: Mult G}
-        `{Pure_G: Pure G}
-        `{! Applicative G},
-        @Traverse_T G Map_G Pure_G Mult_G =
-          @DerivedOperations.Traverse_Mapdt E T Mapdt_ET G Map_G Pure_G Mult_G.
-       *)
+(*
+  forall {G: Type -> Type}
+  `{Map_G: Map G}
+  `{Mult_G: Mult G}
+  `{Pure_G: Pure G}
+  `{! Applicative G},
+  @Traverse_T G Map_G Pure_G Mult_G =
+  @DerivedOperations.Traverse_Mapdt E T Mapdt_ET G Map_G Pure_G Mult_G.
+ *)
 
 End compat.
 
@@ -159,15 +163,18 @@ Section rewriting.
 End rewriting.
 
 #[export] Instance Compat_Map_Mapdt_Self `{Mapdt_ET: Mapdt E T}:
-  Compat_Map_Mapdt E T (Map_T := DerivedOperations.Map_Mapdt)
+  Compat_Map_Mapdt E T
+    (Map_T := DerivedOperations.Map_Mapdt)
   := ltac:(reflexivity).
 
 #[export] Instance Compat_Mapd_Mapdt_Self `{Mapdt_inst: Mapdt E T}:
-  Compat_Mapd_Mapdt E T (Mapd_ET := DerivedOperations.Mapd_Mapdt)
+  Compat_Mapd_Mapdt E T
+    (Mapd_ET := DerivedOperations.Mapd_Mapdt)
   := ltac:(reflexivity).
 
-#[export] Instance Compat_Traverse_Mapdt_Self `{Mapdt_inst: Mapdt E T} :
-  Compat_Traverse_Mapdt E T (Traverse_T := DerivedOperations.Traverse_Mapdt) :=
+#[export] Instance Compat_Traverse_Mapdt_Self `{Mapdt_inst: Mapdt E T}:
+  Compat_Traverse_Mapdt E T
+    (Traverse_T := DerivedOperations.Traverse_Mapdt) :=
   ltac:(hnf; reflexivity).
 
 #[export] Instance Compat_Map_Mapd_Mapdt
@@ -199,7 +206,7 @@ Proof.
 Qed.
 
 (** ** Composition with the Identity Applicative Functor *)
-(******************************************************************************)
+(**********************************************************************)
 Section mapdt_identity_applicative.
 
   #[local] Arguments mapdt E%type_scope T%function_scope {Mapdt}
@@ -211,7 +218,7 @@ Section mapdt_identity_applicative.
   Context
     {G: Type -> Type}
     {A B: Type}
-    {mapG : Map G}
+    {mapG: Map G}
     {pureG: Pure G}
     {multG: Mult G}
     `{! Applicative G}.
@@ -244,7 +251,7 @@ Section mapdt_identity_applicative.
 End mapdt_identity_applicative.
 
 (** ** Derived Kleisli Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section decorated_traversable_functor_derived_kleisli_laws.
 
   Context
@@ -258,7 +265,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
     `{! Compat_Traverse_Mapdt E T}
     `{! DecoratedTraversableFunctor E T}.
 
-  Lemma kc3_spec `{Applicative G2} `{Applicative G1} :
+  Lemma kc3_spec `{Applicative G2} `{Applicative G1}:
     forall (A B C: Type) (f: E * A -> G1 B) (g: E * B -> G2 C),
       g ⋆3 f =
         (fun '(w, a) => map (g ∘ pair w) (f (w, a))).
@@ -270,7 +277,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
 
   Import Monoid.
 
-  Lemma kc3_preincr `{Monoid_op E} `{Applicative G2} `{Applicative G1} :
+  Lemma kc3_preincr `{Monoid_op E} `{Applicative G2} `{Applicative G1}:
     forall (A B C: Type) (f: E * A -> G1 B) (g: E * B -> G2 C) (e: E),
       (g ⋆3 f) ⦿ e =
         (g  ⦿ e ⋆3 f ⦿ e).
@@ -291,7 +298,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
     (A B C: Type).
 
   (** *** Homogeneous cases *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc3_11:
     forall (g: E * B -> C) (f: E * A -> B),
       kc3 (G1 := fun A => A) (G2 := fun A => A) g f = g ⋆1 f.
@@ -317,7 +324,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
     reflexivity.
   Qed.
 
-  Lemma kc3_00 :
+  Lemma kc3_00:
     forall (f: A -> B) (g: B -> C),
       kc3 (G1 := fun A => A) (G2 := fun A => A)
         (g ∘ extract) (f ∘ extract) =
@@ -333,13 +340,13 @@ Section decorated_traversable_functor_derived_kleisli_laws.
   Qed.
 
   (** *** Heterogeneous cases *)
-  (******************************************************************************)
+  (********************************************************************)
 
   (** **** [3x] *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc3_31:
     forall (g: E * B -> G2 C)
-      (f: E * A -> B),
+           (f: E * A -> B),
       g ⋆3 f = g ⋆1 f.
   Proof.
     intros. unfold kc3.
@@ -359,7 +366,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
     reflexivity.
   Qed.
 
-  Lemma kc3_30 :
+  Lemma kc3_30:
     forall (g: E * B -> G2 C) (f: A -> B),
       g ⋆3 (f ∘ extract) = g ∘ map f.
   Proof.
@@ -371,7 +378,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
   Qed.
 
   (** **** [x3] *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc3_13:
     forall (g: E * B -> C) (f: E * A -> G1 B),
       kc3 (G2 := fun A => A) g f = map g ∘ σ ∘ cobind f.
@@ -404,10 +411,10 @@ Section decorated_traversable_functor_derived_kleisli_laws.
   Qed.
 
   (** **** [xy] *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma kc3_21:
     forall (g: B -> G2 C)
-      (f: E * A -> B),
+           (f: E * A -> B),
       kc3 (G1 := fun A => A) (g ∘ extract) f = g ∘ f.
   Proof.
     intros. unfold kc3.
@@ -431,7 +438,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
 
   Lemma kc3_01:
     forall (g: B -> C)
-      (f: E * A -> B),
+           (f: E * A -> B),
       kc3 (G1 := fun A => A) (G2 := fun A => A) (g ∘ extract) f = g ∘ f.
   Proof.
     intros. unfold kc3.
@@ -442,7 +449,8 @@ Section decorated_traversable_functor_derived_kleisli_laws.
 
   Lemma kc3_10:
     forall (g: E * B -> C) (f: A -> B),
-      kc3 (G1 := fun A => A) (G2 := fun A => A) g (f ∘ extract) = g ∘ map f.
+      kc3 (G1 := fun A => A) (G2 := fun A => A) g (f ∘ extract) =
+        g ∘ map f.
   Proof.
     intros. unfold kc3.
     ext [e a].
@@ -474,7 +482,7 @@ Section decorated_traversable_functor_derived_kleisli_laws.
 End decorated_traversable_functor_derived_kleisli_laws.
 
 (** ** Derived Composition Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Section composition.
 
   Context
@@ -494,7 +502,7 @@ Section composition.
     {A B C: Type}.
 
   (** *** <<mapdt>> on the right *)
-  (******************************************************************************)
+  (********************************************************************)
   Corollary traverse_mapdt: forall (g: B -> G2 C) (f: E * A -> G1 B),
       map (traverse g) ∘ mapdt f = mapdt (G := G1 ∘ G2) (map g ∘ f).
   Proof.
@@ -527,7 +535,7 @@ Section composition.
   Qed.
 
   (** *** <<mapdt>> on the left *)
-  (******************************************************************************)
+  (********************************************************************)
   Corollary mapdt_traverse: forall (g: E * B -> G2 C) (f: A -> G1 B),
       map (mapdt g) ∘ traverse (T := T) f =
         mapdt (E := E) (G := G1 ∘ G2)
@@ -567,7 +575,7 @@ Section composition.
   Qed.
 
   (** *** Other cases *)
-  (******************************************************************************)
+  (********************************************************************)
   Corollary map_mapd: forall (g: B -> C) (f: E * A -> B),
       map g ∘ mapd f = mapd (g ∘ f).
   Proof.
@@ -611,7 +619,8 @@ Section composition.
   Qed.
 
   Corollary traverse_traverse: forall (g: B -> G2 C) (f: A -> G1 B),
-      map (F := G1) (traverse g) ∘ traverse f = traverse (G := G1 ∘ G2) (g ⋆2 f).
+      map (F := G1) (traverse g) ∘ traverse f =
+        traverse (G := G1 ∘ G2) (g ⋆2 f).
   Proof.
     intros.
     do 3 rewrite traverse_to_mapdt.
@@ -625,8 +634,9 @@ Section composition.
   Proof.
     intros.
     do 3 rewrite map_to_mapdt.
-    change_left (map (F := fun A => A)
-                   (mapdt (T := T) (g ∘ extract)) ∘ mapdt (T := T) (f ∘ extract)).
+    change_left
+      (map (F := fun A => A)
+         (mapdt (T := T) (g ∘ extract)) ∘ mapdt (T := T) (f ∘ extract)).
     rewrite (kdtf_mapdt2 (G1 := fun A => A) (G2 := fun A => A)).
     rewrite mapdt_app_id_l.
     rewrite kc3_00.
@@ -634,7 +644,7 @@ Section composition.
   Qed.
 
   (** *** Identity laws *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma traverse_id: forall A: Type,
       traverse (G := fun A => A) id = @id (T A).
   Proof.
@@ -664,8 +674,8 @@ Section composition.
   Qed.
 
   (** *** Naturality in applicative morphisms *)
-  (******************************************************************************)
-  Lemma traverse_morphism :
+  (********************************************************************)
+  Lemma traverse_morphism:
     forall `{ApplicativeMorphism G1 G2 ϕ},
     forall (A B: Type) (f: A -> G1 B),
       ϕ (T B) ∘ traverse f = traverse (ϕ B ∘ f).
@@ -681,7 +691,7 @@ Section composition.
 End composition.
 
 (** ** Derived Typeclass Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
   Section instances.
 
@@ -721,7 +731,7 @@ Module DerivedInstances.
 End DerivedInstances.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Infix "⋆3" := kc3 (at level 60): tealeaves_scope.
 End Notations.

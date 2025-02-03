@@ -5,17 +5,25 @@ Import Functor.Notations.
 Import Comonad.Notations.
 
 #[local] Generalizable Variables W A.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments extract W%function_scope {Extract} (A)%type_scope _.
-#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments extract W%function_scope {Extract}
+  (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin}
+  {A}%type_scope _.
 
 (** * Right Comodules *)
+(**********************************************************************)
+
+(** ** Operation <<right_coaction>> *)
 (**********************************************************************)
 Class RightCoaction (F W: Type -> Type) := right_coaction: F ⇒ F ∘ W.
 
 #[local] Arguments right_coaction (F W)%function_scope {RightCoaction}
   A%type_scope _.
 
+(** ** Typeclass *)
+(**********************************************************************)
 Class RightComodule
   (F W: Type -> Type)
   `{Map W} `{Cojoin W} `{Extract W}
@@ -51,14 +59,14 @@ Class RightComoduleHom
       ϕ (right_coaction F x) = right_coaction G (ϕ x);
   }.
 
-(** ** Comonads Form Right Comodules *)
+(** ** Coercing a Comonads to a Right Comodule *)
 (**********************************************************************)
 Section RightComodule_Comonad.
 
-  Instance RightCoaction_Cojoin `{Cojoin W}:
+  #[local] Instance RightCoaction_Cojoin `{Cojoin W}:
     RightCoaction W W := @cojoin W _.
 
-  #[program] Instance RightComodule_Comonad `{Comonad W}:
+  #[local] Instance RightComodule_Comonad `{Comonad W}:
     RightComodule W W :=
   {| rcom_map_extr_coaction := com_map_extr_cojoin;
      rcom_coaction_coaction := com_cojoin_cojoin;

@@ -13,7 +13,7 @@ Import DecoratedContainerFunctor.Notations.
 
 
 (** * Basic properties of containers *)
-(******************************************************************************)
+(**********************************************************************)
 Section decorated_container_monad_theory.
 
   Context
@@ -96,7 +96,7 @@ Section decorated_container_monad_theory.
     reflexivity.
   Qed.
 
-  Theorem ind_bindd_iff' :
+  Theorem ind_bindd_iff':
     forall `(f: W * A -> T B) (t: U A) (wtotal: W) (b: B),
       (wtotal, b) ∈d bindd f t <->
         exists (w1 w2: W) (a: A),
@@ -150,8 +150,8 @@ Section decorated_container_monad_theory.
       exists (wa ● w) wa a. eauto.
   Qed.
 
-  (******************************************************************************)
-  Corollary bindd_respectful :
+  (*******************************************************************)
+  Corollary bindd_respectful:
     forall A B (t: U A) (f: W * A -> T B) (g: W * A -> T B),
       (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = g (w, a))
       -> bindd f t = bindd g t.
@@ -161,7 +161,7 @@ Section decorated_container_monad_theory.
     assumption.
   Qed.
 
-  Corollary bindd_respectful_bind :
+  Corollary bindd_respectful_bind:
     forall A B (t: U A) (f: W * A -> T B) (g: A -> T B),
       (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = g a)
       -> bindd f t = bind g t.
@@ -173,7 +173,7 @@ Section decorated_container_monad_theory.
     eauto.
   Qed.
 
-  Corollary bindd_respectful_mapd :
+  Corollary bindd_respectful_mapd:
     forall A B (t: U A) (f: W * A -> T B) (g: W * A -> B),
       (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = ret (g (w, a)))
       -> bindd f t = mapd g t.
@@ -184,7 +184,7 @@ Section decorated_container_monad_theory.
     assumption.
   Qed.
 
-  Corollary bindd_respectful_map :
+  Corollary bindd_respectful_map:
     forall A B (t: U A) (f: W * A -> T B) (g: A -> B),
       (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = ret (g a))
       -> bindd f t = map g t.
@@ -195,7 +195,7 @@ Section decorated_container_monad_theory.
     assumption.
   Qed.
 
-  Corollary bindd_respectful_id :
+  Corollary bindd_respectful_id:
     forall A (t: U A) (f: W * A -> T A),
       (forall (w: W) (a: A), (w, a) ∈d t -> f (w, a) = ret a)
       -> bindd f t = t.
@@ -210,9 +210,9 @@ End decorated_container_monad_theory.
 
 
 (** ** Instance for <<env>> *) (* TODO *)
-(******************************************************************************)
+(**********************************************************************)
 (*
-#[export] Instance DecoratedContainerMonad_env `{Monoid W} :
+#[export] Instance DecoratedContainerMonad_env `{Monoid W}:
   DecoratedContainerMonad W (env W).
 Proof.
   constructor.

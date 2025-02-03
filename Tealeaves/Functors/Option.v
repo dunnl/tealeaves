@@ -2,38 +2,39 @@ From Tealeaves Require Export
   Classes.Kleisli.Monad
   Classes.Categorical.Applicative.
 
-(** * [option] monad *)
-(******************************************************************************)
+(** * The [option] Monad *)
+(**********************************************************************)
 (*
-Inductive Maybe (A : Type) :=
-| Just : A -> Maybe A
-| None : Maybe A.
+  Inductive Maybe (A: Type) :=
+  | Just: A -> Maybe A
+  | None: Maybe A.
 
-Arguments Just {A}%type_scope _.
-Arguments None {A}%type_scope.
-*)
+  Arguments Just {A}%type_scope _.
+  Arguments None {A}%type_scope.
+ *)
 
-#[export] Instance Map_option : Map option :=
-  fun A B (f : A -> B) (m : option A) =>
+(** ** Functor Instance *)
+(**********************************************************************)
+#[export] Instance Map_option: Map option :=
+  fun A B (f: A -> B) (m: option A) =>
     match m with
     | Some a => Some (f a)
     | None => None
     end.
 
-#[export] Instance Functor_option : Functor option.
+#[export] Instance Functor_option: Functor option.
 Proof.
   constructor.
   - intros. now ext [|].
   - intros. now ext [|].
 Qed.
 
-#[export] Instance Return_option : Return option :=
+(** ** Applicative Instance *)
+(**********************************************************************)
+#[export] Instance Pure_option: Pure option :=
   @Some.
 
-#[export] Instance Pure_option : Pure option :=
-  @Some.
-
-#[export] Instance Mult_option : Mult option.
+#[export] Instance Mult_option: Mult option.
 Proof.
   hnf.
   intros A B [[a|] [b|]].
@@ -43,7 +44,7 @@ Proof.
   - exact None.
 Defined.
 
-#[export] Instance Applicative_option : Applicative option.
+#[export] Instance Applicative_option: Applicative option.
 Proof.
   constructor; try typeclasses eauto.
   - reflexivity.
@@ -59,31 +60,37 @@ Proof.
   - reflexivity.
 Qed.
 
-(*
-#[export] Instance Join_option : Join option :=
-  fun A (m : option (option A)) =>
-    match m with
-    | Some m' => m'
-    | None => None
-    end.
 
-#[export] Instance: Natural (@ret option _).
-Proof.
+(** ** Monad Instance *)
+(**********************************************************************)
+(*
+  #[export] Instance Return_option: Return option :=
+  @Some.
+
+  #[export] Instance Join_option: Join option :=
+  fun A (m: option (option A)) =>
+  match m with
+  | Some m' => m'
+  | None => None
+  end.
+
+  #[export] Instance: Natural (@ret option _).
+  Proof.
   constructor; try typeclasses eauto.
   reflexivity.
-Qed.
+  Qed.
 
-#[export] Instance: Natural (@join option _).
-Proof.
+  #[export] Instance: Natural (@join option _).
+  Proof.
   constructor; try typeclasses eauto.
   intros. now ext [[|]|].
-Qed.
+  Qed.
 
-#[export] Instance Monad_option : Monad option.
-Proof.
+  #[export] Instance Monad_option: Monad option.
+  Proof.
   constructor; try typeclasses eauto.
   - intros. now ext [|].
   - intros. now ext [|].
   - intros. now ext [|].
-Qed.
-*)
+  Qed.
+ *)

@@ -6,16 +6,16 @@ From Tealeaves Require Import
 Import List.ListNotations.
 Import Applicative.Notations.
 
-(** * Examples of CI-Traversable Homomorphisms *)
-(******************************************************************************)
+(** * Examples of Commutative-Idempotent-Traversable Homomorphisms *)
+(**********************************************************************)
 Section ci_traversable_hom_examples.
 
   Context
     `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G}
-      `{! ApplicativeCommutativeIdempotent G}.
+    `{! ApplicativeCommutativeIdempotent G}.
 
-  (** ** List reversal *)
-  (******************************************************************************)
+  (** ** Traverse Commutes with List Reversal *)
+  (********************************************************************)
   Lemma rev_traverse_ci_hom {A B: Type}
     (f: A  -> G B) (l: list A):
     map (F := G) (List.rev (A := B))
@@ -38,13 +38,13 @@ Section ci_traversable_hom_examples.
       rewrite <- ap_map.
       rewrite map_ap.
       rewrite app_pure_natural.
-      rewrite (ap_ci2 _ (traverse f l) (f a)).
+      rewrite (ap_ci_flip _ (traverse f l) (f a)).
       rewrite app_pure_natural.
       fequal.
   Qed.
 
-  (** ** "Duplicate first element" *)
-  (******************************************************************************)
+  (** ** "Duplicate First Element" *)
+  (********************************************************************)
   Definition dupfst {A:Type} (l: list A): list A :=
     match l with
     | nil => nil
@@ -54,7 +54,7 @@ Section ci_traversable_hom_examples.
   Lemma dupfst_pointfree: forall (A: Type) (a: A) (l: list A),
       (* (compose dec ∘ cons) a l = dec (cons a l).*)
       (*
-    (compose dupfst ∘ cons) a l = (precompose dup ∘ cons) a l.
+        (compose dupfst ∘ cons) a l = (precompose dup ∘ cons) a l.
        *)
       1 = 1.
   Proof.
@@ -74,7 +74,7 @@ Section ci_traversable_hom_examples.
       rewrite map_ap.
       rewrite app_pure_natural.
       rewrite <- ap4.
-      rewrite (ap_ci (pure (@cons B)) (f a)) at 2.
+      rewrite (ap_ci_swap (f := pure (@cons B)) (a := f a)) at 2.
       rewrite <- ap4.
       rewrite <- ap4.
       rewrite <- ap4.
@@ -85,17 +85,17 @@ Section ci_traversable_hom_examples.
       rewrite <- ap_map.
       rewrite map_ap.
       rewrite app_pure_natural.
-      rewrite ap_cidup.
+      rewrite ap_ci_contract.
       rewrite app_pure_natural.
       rewrite ap3.
       rewrite <- ap4.
       rewrite ap2.
       rewrite ap2.
-      fequal.
+      reflexivity.
   Qed.
 
-  (** ** "Pair all with first element" *)
-  (******************************************************************************)
+  (** ** "Pair All with First Element" *)
+  (********************************************************************)
   Definition pairall {A:Type} (l: list A): list (A * A) :=
     match l with
     | nil => nil
@@ -108,23 +108,23 @@ Section ci_traversable_hom_examples.
     cbn. reflexivity.
   Qed.
 
-  Definition apply {A B}: (A -> B) * A -> B :=
-    fun '(f, a) => f a.
-
   Lemma pairall_cons_pf {A:Type}:
     (compose pairall ∘ (@cons A)) =
-      (uncurry compose ∘ map_snd cons ∘ map_fst (fun a => map (F := list) (pair a)) ∘ (@dup A)).
+      (uncurry compose ∘ map_snd cons ∘
+         map_fst (fun a => map (F := list) (pair a)) ∘ (@dup A)).
   Proof.
     reflexivity.
   Qed.
 
   (*
 
-  Lemma pairall_commute_cons_simpler {A B: Type}
+    Lemma pairall_commute_cons_simpler {A B: Type}
     (f: A -> G B) (a: A) (x: A) (l: list A):
-    map (map ∘ pair) (f a) <⋆> traverse f l = traverse (traverse f) (map (pair a) l) ->
-    map (map ∘ pair) (f a) <⋆> traverse f (x :: l) = traverse (traverse f) (map (pair a) (x :: l)).
-  Proof.
+    map (map ∘ pair) (f a) <⋆>
+traverse f l = traverse (traverse f) (map (pair a) l) ->
+    map (map ∘ pair) (f a) <⋆>
+ traverse f (x :: l) = traverse (traverse f) (map (pair a) (x :: l)).
+    Proof.
     introv IH.
     (* RHS *)
     rewrite map_list_cons.
@@ -170,61 +170,64 @@ Section ci_traversable_hom_examples.
     rewrite app_pure_natural.
     rewrite <- map_to_ap.
     fequal.
-  Qed.
+    Qed.
 
-  Lemma pairall_commute_cons {A B: Type}
+    Lemma pairall_commute_cons {A B: Type}
     (f: A -> G B) (a: A) (l: list A):
     l <> nil ->
-    map (F := G) (map (F := list) ∘ pair) (f a) <⋆> (traverse (T := list) f l) =
-      traverse (traverse (T := fun A => A * A) f) (map (pair a) l).
-  Proof.
+    map (F := G) (map (F := list) ∘ pair) (f a)
+    <⋆> (traverse (T := list) f l) =
+    traverse (traverse (T := fun A => A * A) f) (map (pair a) l).
+    Proof.
     introv Hnotnil.
     induction l as [| x xs IHxs ].
     - contradiction.
     - destruct xs.
-      + cbn.
-        rewrite map_to_ap.
-        rewrite <- ap4.
-        rewrite <- ap4.
-        rewrite <- ap4.
-        rewrite <- ap4.
-        rewrite ap2.
-        rewrite ap2.
-        rewrite ap2.
-        rewrite ap2.
-        rewrite ap3.
-        rewrite <- ap4.
-        rewrite ap2.
-        rewrite <- ap4.
-        rewrite ap2.
-        rewrite <- ap4.
-        rewrite ap2.
-        rewrite ap2.
-        rewrite ap3.
-        rewrite <- ap4.
-        rewrite ap2.
-        rewrite ap2.
-        rewrite ap3.
-        rewrite <- ap4.
-        rewrite ap2.
-        rewrite ap2.
-        rewrite <- ap4.
-        rewrite ap2.
-        rewrite <- ap4.
-        rewrite ap2.
-        rewrite ap2.
-        fequal.
-      + specialize (IHxs ltac:(easy)).
-        remember (a0 :: xs).
-        apply pairall_commute_cons_simpler.
-        assumption.
-  Qed.
-  *)
+    + cbn.
+    rewrite map_to_ap.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite ap3.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite ap3.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite ap3.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite <- ap4.
+    rewrite ap2.
+    rewrite ap2.
+    fequal.
+    + specialize (IHxs ltac:(easy)).
+    remember (a0 :: xs).
+    apply pairall_commute_cons_simpler.
+    assumption.
+    Qed.
+   *)
 
   Lemma pairall_commute_cons_Inductive_Step {A B: Type}
     (f: A -> G B) (a: A) (x: A) (l: list A):
-    traverse (traverse f) (map (pair a) l) = map (map ∘ pair) (f a) <⋆> traverse f l ->
-    traverse (traverse f) (map (pair a) (x :: l)) = map (map ∘ pair) (f a) <⋆> traverse f (x :: l).
+    traverse (traverse f) (map (pair a) l) =
+      map (map ∘ pair) (f a) <⋆> traverse f l ->
+    traverse (traverse f) (map (pair a) (x :: l)) =
+      map (map ∘ pair) (f a) <⋆> traverse f (x :: l).
   Proof.
     introv IH.
     (* LHS *)
@@ -251,14 +254,14 @@ Section ci_traversable_hom_examples.
     rewrite compose_compose.
     reassociate <- near (precompose (map ∘ pair)).
 
-    rewrite (ap_ci2 _ (f a) (f x)).
+    rewrite (ap_ci_flip _ (f a) (f x)).
     rewrite app_pure_natural.
 
-    rewrite ap_cidup.
+    rewrite ap_ci_contract.
     rewrite map_ap.
     rewrite app_pure_natural.
 
-    rewrite (ap_ci2 _ (f x) (f a)).
+    rewrite (ap_ci_flip _ (f x) (f a)).
     rewrite app_pure_natural.
 
     (* RHS *)
@@ -279,7 +282,8 @@ Section ci_traversable_hom_examples.
     (f: A -> G B) (a: A) (l: list A):
     l <> nil ->
     traverse (traverse (T := fun A => A * A) f) (map (pair a) l) =
-    map (F := G) (map (F := list) ∘ pair) (f a) <⋆> (traverse (T := list) f l).
+      map (F := G) (map (F := list) ∘ pair) (f a) <⋆>
+        (traverse (T := list) f l).
   Proof.
     introv Hnotnil.
     induction l as [| x xs IHxs ].
@@ -325,7 +329,7 @@ Section ci_traversable_hom_examples.
   Lemma pairall_commute {A B: Type}
     (f: A  -> G B) (l: list A):
     map (F := G) pairall (traverse f l) =
-      traverse (T := list) (traverse (T := fun A => A * A) f) (pairall l).
+      traverse (traverse (T := fun A => A * A) f) (pairall l).
   Proof.
     destruct l as [| a as'].
     - cbn.
@@ -356,7 +360,7 @@ Section ci_traversable_hom_examples.
       rewrite <- (ap4 (pure (evalAt cons)) _ (f a)).
       rewrite ap2.
       rewrite ap2.
-      rewrite ap_cidup.
+      rewrite ap_ci_contract.
       rewrite app_pure_natural.
       reflexivity.
   Qed.

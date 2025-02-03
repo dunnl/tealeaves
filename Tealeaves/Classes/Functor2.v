@@ -4,10 +4,10 @@ From Tealeaves Require Export
 #[local] Generalizable Variables F G A B.
 
 (** * Endofunctors of Two Arguments *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Operation <<map2>> *)
-(******************************************************************************)
+(**********************************************************************)
 Class Map2 (F: Type -> Type -> Type): Type :=
   map2: forall (B1 A1 B2 A2: Type) (g: B1 -> B2) (f: A1 -> A2),
       F B1 A1 -> F B2 A2.
@@ -16,7 +16,7 @@ Class Map2 (F: Type -> Type -> Type): Type :=
   {B1 A1 B2 A2}%type_scope (g f)%function_scope.
 
 (** ** Typeclass *)
-(******************************************************************************)
+(**********************************************************************)
 Class Functor2 (F: Type -> Type -> Type) `{map2_F: Map2 F}: Type :=
   { fun2_map_id: forall (A1 A2: Type),
       map2 (@id A1) (@id A2) = @id (F A1 A2);
@@ -26,54 +26,21 @@ Class Functor2 (F: Type -> Type -> Type) `{map2_F: Map2 F}: Type :=
       map2 g2 f2 ∘ map2 g1 f1 = map2 (g2 ∘ g1) (f2 ∘ f1);
   }.
 
-(** ** Composition with Functors *)
-(******************************************************************************)
-#[local] Notation "G ○12 F" := (compose G ○ F) (at level 50):
+
+(** ** Natural Transformations *)
+(**********************************************************************)
+#[local] Notation "F ⇒2 G" :=
+  (forall B A: Type, F B A -> G B A) (at level 60):
     tealeaves_scope.
-#[local] Notation "F ○21 G" := (fun B A => F (G B) (G A)) (at level 50):
-    tealeaves_scope.
 
-Section composition_with_functor.
-
-  Context
-    `{Functor G}
-    `{Functor2 F}.
-
-  #[export] Instance Map21_compose: Map2 (F ○21 G) :=
-    fun A1 B1 A2 B2 f1 f2 => map2 (F := F) (map f1) (map f2).
-
-  #[export] Instance Functor21_compose: Functor2 (F ○21 G).
-  Proof.
-    constructor; intros; unfold_ops @Map21_compose.
-    - rewrite fun_map_id.
-      rewrite fun_map_id.
-      rewrite fun2_map_id.
-      reflexivity.
-    - rewrite fun2_map_map.
-      rewrite fun_map_map.
-      rewrite fun_map_map.
-      reflexivity.
-  Qed.
-
-  #[export] Instance Map12_compose: Map2 (G ○12 F) :=
-    fun A1 B1 A2 B2 f1 f2 => map (F := G) (map2 f1 f2).
-
-  #[export] Instance Functor12_compose: Functor2 (G ○12 F).
-  Proof.
-    constructor; intros; unfold_ops @Map12_compose.
-    - rewrite fun2_map_id.
-      rewrite fun_map_id.
-      reflexivity.
-    - rewrite (fun_map_map (F := G)
-                 (F B1 A1) (F B2 A2) (F B3 A3)).
-      rewrite fun2_map_map.
-      reflexivity.
-  Qed.
-
-End composition_with_functor.
-
+Class Natural2 `{Map2 F} `{Map2 G} (ϕ: F ⇒2 G) :=
+  { natural2_src: Functor2 F;
+    natural2_tgt: Functor2 G;
+    natural2: forall `(g: B1 -> B2) `(f: A1 -> A2),
+      map2 (F := G) g f ∘ ϕ B1 A1 = ϕ B2 A2 ∘ map2 (F := F) g f
+  }.
 (** ** Single-Argument Functor Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Section composition_with_functor.
 
   Context
@@ -158,28 +125,66 @@ Section composition_with_functor.
 
 End composition_with_functor.
 
-(** ** Natural Transformations *)
-(******************************************************************************)
-#[local] Notation "F ⇒2 G" := (forall B A: Type, F B A -> G B A) (at level 60):
-    tealeaves_scope.
+(** ** Composition with Single-Argument Functors *)
+(**********************************************************************)
+#[local] Notation "G ○12 F" :=
+  (compose G ○ F) (at level 50):tealeaves_scope.
+#[local] Notation "F ○21 G" :=
+  (fun B A => F (G B) (G A)) (at level 50): tealeaves_scope.
 
-Class Natural2 `{Map2 F} `{Map2 G} (ϕ: F ⇒2 G) :=
-  { natural2_src: Functor2 F;
-    natural2_tgt: Functor2 G;
-    natural2: forall `(g: B1 -> B2) `(f: A1 -> A2),
-      map2 (F := G) g f ∘ ϕ B1 A1 = ϕ B2 A2 ∘ map2 (F := F) g f
-  }.
+Section composition_with_functor.
+
+  Context
+    `{Functor G}
+    `{Functor2 F}.
+
+  #[export] Instance Map21_compose: Map2 (F ○21 G) :=
+    fun A1 B1 A2 B2 f1 f2 => map2 (F := F) (map f1) (map f2).
+
+  #[export] Instance Functor21_compose: Functor2 (F ○21 G).
+  Proof.
+    constructor; intros; unfold_ops @Map21_compose.
+    - rewrite fun_map_id.
+      rewrite fun_map_id.
+      rewrite fun2_map_id.
+      reflexivity.
+    - rewrite fun2_map_map.
+      rewrite fun_map_map.
+      rewrite fun_map_map.
+      reflexivity.
+  Qed.
+
+  #[export] Instance Map12_compose: Map2 (G ○12 F) :=
+    fun A1 B1 A2 B2 f1 f2 => map (F := G) (map2 f1 f2).
+
+  #[export] Instance Functor12_compose: Functor2 (G ○12 F).
+  Proof.
+    constructor; intros; unfold_ops @Map12_compose.
+    - rewrite fun2_map_id.
+      rewrite fun_map_id.
+      reflexivity.
+    - rewrite (fun_map_map (F := G)
+                 (F B1 A1) (F B2 A2) (F B3 A3)).
+      rewrite fun2_map_map.
+      reflexivity.
+  Qed.
+
+End composition_with_functor.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
 
-  #[global] Notation "G ○12 F" := (compose G ○ F) (at level 50):
+  #[global] Notation "G ○12 F" :=
+  (compose G ○ F) (at level 50):
     tealeaves_scope.
-  #[global] Notation "F ○21 G" := (fun B A => F (G B) (G A)) (at level 50):
+
+  #[global] Notation "F ○21 G" :=
+    (fun B A => F (G B) (G A)) (at level 50):
       tealeaves_scope.
 
-  #[global] Notation "F ⇒2 G" := (forall B A: Type, F B A -> G B A) (at level 60):
+  #[global] Notation "F ⇒2 G" :=
+    (forall B A: Type, F B A -> G B A) (at level 60):
       tealeaves_scope.
 
 End Notations.

@@ -7,23 +7,24 @@ Import Applicative.Notations.
 #[local] Generalizable Variables A B C D W S G T.
 #[local] Set Implicit Arguments.
 
-(** * The <<BatchM>> idiom *)
-(******************************************************************************)
+(** * Multisorted <<Batch>> Functor (<<BatchM>>) *)
+(**********************************************************************)
 Section BatchM.
 
   Context
     `{ix: Index}
-     {T: K -> Type -> Type}
-     {W A B: Type}.
+    {T: K -> Type -> Type}
+    {W A B: Type}.
 
   Inductive BatchM C: Type:=
   | Go: C -> BatchM C
   | Ap: forall (k: K), BatchM (T k B -> C) -> W * A -> BatchM C.
 
-  #[local] Infix "⧆":= Ap (at level 51, left associativity): tealeaves_scope.
+  #[local] Infix "⧆":=
+    Ap (at level 51, left associativity): tealeaves_multi_scope.
 
-  (** ** Functor instance *)
-  (******************************************************************************)
+  (** ** Functor Instance *)
+  (********************************************************************)
   Fixpoint map_BatchM `{f: C -> D} `(c: BatchM C): BatchM D:=
     match c with
     | Go c => Go (f c)
@@ -58,33 +59,37 @@ Section BatchM.
     |}.
 
   (** ** Applicative Instance *)
-  (******************************************************************************)
+  (********************************************************************)
   #[global] Instance Pure_BatchM: Pure BatchM:=
     fun (C: Type) (c: C) => Go c.
 
-  Fixpoint mult_BatchM `(jc: BatchM C) `(jd: BatchM D): BatchM (C * D):=
+  Fixpoint mult_BatchM `(jc: BatchM C) `(jd: BatchM D): BatchM (C * D) :=
     match jd with
     | Go d => map (F:= BatchM) (fun (c: C) => (c, d)) jc
     | Ap rest (pair w a) =>
-      Ap (map (F:= BatchM) strength_arrow (mult_BatchM jc rest)) (pair w a)
+        Ap (map (F:= BatchM)
+              strength_arrow (mult_BatchM jc rest)) (pair w a)
     end.
 
   #[global] Instance Mult_BatchM: Mult BatchM:=
     fun C D '(c, d) => mult_BatchM c d.
 
-  Lemma mult_BatchM_rw1: forall `(a: A) `(b: B),
+  Lemma mult_BatchM_rw1:
+    forall `(a: A) `(b: B),
       Go a ⊗ Go b = Go (a, b).
   Proof.
     easy.
   Qed.
 
-  Lemma mult_BatchM_rw2: forall `(d: D) `(jc: BatchM C),
+  Lemma mult_BatchM_rw2:
+    forall `(d: D) `(jc: BatchM C),
       jc ⊗ Go d = map (F:= BatchM) (pair_right d) jc.
   Proof.
     intros. induction jc; easy.
   Qed.
 
-  Lemma mult_BatchM_rw3: forall `(d: D) `(jc: BatchM C),
+  Lemma mult_BatchM_rw3:
+    forall `(d: D) `(jc: BatchM C),
       Go d ⊗ jc =
         map (F:= BatchM) (pair d) jc.
   Proof.
@@ -95,14 +100,16 @@ Section BatchM.
       now rewrite (fun_map_map (F:= BatchM)).
   Qed.
 
-  Lemma mult_BatchM_rw4: forall (w: W) (a: A) (k: K) `(jc: @BatchM (T k B -> C)) `(d: D),
+  Lemma mult_BatchM_rw4:
+    forall (w: W) (a: A) (k: K) `(jc: @BatchM (T k B -> C)) `(d: D),
       (jc ⧆ (w, a)) ⊗ Go d =
         map (F:= BatchM) (costrength_arrow ∘ pair_right d) jc ⧆ (w, a).
   Proof.
     easy.
   Qed.
 
-  Lemma mult_BatchM_rw5: forall (w: W) (a: A) (k: K) `(jc: @BatchM (T k B -> C)) `(d: D),
+  Lemma mult_BatchM_rw5:
+    forall (w: W) (a: A) (k: K) `(jc: @BatchM (T k B -> C)) `(d: D),
       Go d ⊗ (jc ⧆ (w, a)) =
         map (F:= BatchM) (strength_arrow ∘ pair d) jc ⧆ (w, a).
   Proof.
@@ -118,7 +125,7 @@ Section BatchM.
     forall (w1 w2: W) (a1 a2: A) (k: K)
       `(jc: BatchM (T k B -> C)) `(jd: BatchM (T k B -> D)),
       (jc ⧆ (w1, a1)) ⊗ (jd ⧆ (w2, a2)) =
-      map (F:= BatchM) strength_arrow ((jc ⧆ (w1, a1)) ⊗ jd) ⧆ (w2, a2).
+        map (F:= BatchM) strength_arrow ((jc ⧆ (w1, a1)) ⊗ jd) ⧆ (w2, a2).
   Proof.
     reflexivity.
   Qed.
@@ -131,7 +138,8 @@ Section BatchM.
     easy.
   Qed.
 
-  Lemma app_mult_natural_BatchM1: forall (C D E: Type) (f: C -> D) (x: BatchM C) (y: BatchM E),
+  Lemma app_mult_natural_BatchM1:
+    forall (C D E: Type) (f: C -> D) (x: BatchM C) (y: BatchM E),
       map (F:= BatchM) f x ⊗ y = map (F:= BatchM) (map_fst f) (x ⊗ y).
   Proof.
     intros. generalize dependent E. induction y.
@@ -143,7 +151,8 @@ Section BatchM.
       now ext [? ?].
   Qed.
 
-  Lemma app_mult_natural_BatchM2: forall (A B D: Type) (g: B -> D) (x: BatchM A) (y: BatchM B),
+  Lemma app_mult_natural_BatchM2:
+    forall (A B D: Type) (g: B -> D) (x: BatchM A) (y: BatchM B),
       x ⊗ map (F:= BatchM) g y = map (F:= BatchM) (map_snd g) (x ⊗ y).
   Proof.
     intros. generalize dependent D. induction y as [ANY any | ANY k rest IH [w a]].
@@ -155,7 +164,8 @@ Section BatchM.
       now ext [a' mk].
   Qed.
 
-  Lemma app_mult_natural_BatchM: forall (A B C D: Type) (f: A -> C) (g: B -> D) (x: BatchM A) (y: BatchM B),
+  Lemma app_mult_natural_BatchM:
+    forall (A B C D: Type) (f: A -> C) (g: B -> D) (x: BatchM A) (y: BatchM B),
       map (F:= BatchM) f x ⊗ map (F:= BatchM) g y = map (F:= BatchM) (map_tensor f g) (x ⊗ y).
   Proof.
     intros. rewrite app_mult_natural_BatchM1, app_mult_natural_BatchM2.
@@ -163,7 +173,8 @@ Section BatchM.
     now ext [a b].
   Qed.
 
-  Lemma app_assoc_BatchM: forall (A B C: Type) (x: BatchM A) (y: BatchM B) (z: BatchM C),
+  Lemma app_assoc_BatchM:
+    forall (A B C: Type) (x: BatchM A) (y: BatchM B) (z: BatchM C),
       map (F:= BatchM) associator ((x ⊗ y) ⊗ z) = x ⊗ (y ⊗ z).
   Proof.
     intros. induction z as [ANY any | ANY k rest IH [w a]].
@@ -179,7 +190,8 @@ Section BatchM.
       fequal. now ext [[? ?] ?].
   Qed.
 
-  Lemma app_unital_l_BatchM: forall (A: Type) (x: BatchM A),
+  Lemma app_unital_l_BatchM:
+    forall (A: Type) (x: BatchM A),
       map (F:= BatchM) left_unitor (pure (F:= BatchM) tt ⊗ x) = x.
   Proof.
     intros. induction x as [ANY any | ANY k rest IH [w a]].
@@ -190,7 +202,8 @@ Section BatchM.
       rewrite <- IH. repeat fequal. auto.
   Qed.
 
-  Lemma app_unital_r_BatchM: forall (A: Type) (x: BatchM A),
+  Lemma app_unital_r_BatchM:
+    forall (A: Type) (x: BatchM A),
       map (F:= BatchM) right_unitor (x ⊗ pure (F:= BatchM) tt) = x.
   Proof.
     intros. induction x as [ANY any | ANY k rest IH [w a]].
@@ -199,7 +212,8 @@ Section BatchM.
       compose near rest. now do 2 rewrite (fun_map_map (F:= BatchM)).
   Qed.
 
-  Lemma app_mult_pure_BatchM: forall (A B: Type) (a: A) (b: B),
+  Lemma app_mult_pure_BatchM:
+    forall (A B: Type) (a: A) (b: B),
       pure (F:= BatchM) a ⊗ pure (F:= BatchM) b = pure (F:= BatchM) (a, b).
   Proof.
     intros. easy.
@@ -214,11 +228,12 @@ Section BatchM.
 
 End BatchM.
 
-Arguments Ap {ix} {T}%function_scope {W A B}%type_scope [C]%type_scope {k} _ _.
+#[global] Arguments Ap {ix} {T}%function_scope
+  {W A B}%type_scope {C}%type_scope {k} _ _.
 #[local] Infix "⧆":= Ap (at level 51, left associativity): tealeaves_scope.
 
 (** *** Examples of operations *)
-(******************************************************************************)
+(**********************************************************************)
 Section demo.
 
   Context
@@ -232,18 +247,18 @@ Section demo.
     (c1 c2 c3 c4: C)
     (mk1: C -> X) (mk2: C -> C -> X) (mk0: X).
 
-  (*
+(*
   Check Go a1 ⊗ Go a2: @BatchM _ T W False False (A * A).
   Compute Go a1 ⊗ Go a2.
   Compute Go a1 ⊗ (Go mk1 ⧆ (w1, c1)).
   Compute (Go mk1 ⧆ (w1, c1)) ⊗ (Go mk1 ⧆ (w2, c2)).
   Compute (Go mk2 ⧆ (w1, c1) ⧆ (w2, c2)) ⊗ (Go mk1 ⧆ (w3, c3)).
-   *)
+ *)
 
 End demo.
 
 (** ** Functoriality of [BatchM] *)
-(******************************************************************************)
+(**********************************************************************)
 Fixpoint mapfst_BatchM
   `{ix: Index}
   {W: Type}
@@ -256,8 +271,8 @@ Fixpoint mapfst_BatchM
   | Ap rest p => Ap (mapfst_BatchM f rest) (map_snd f p)
   end.
 
-(** * The <<runBatchM>> operation *)
-(******************************************************************************)
+(** * Operation <<runBatchM>> *)
+(**********************************************************************)
 Fixpoint runBatchM
   {ix: Index}
   {T: K -> Type -> Type}
@@ -293,8 +308,8 @@ Section runBatchM_rw.
 
 End runBatchM_rw.
 
-(** ** Naturality of of <<runBatchM>> *)
-(******************************************************************************)
+(** ** Naturality of <<runBatchM>> *)
+(**********************************************************************)
 Section runBatchM_naturality.
 
   Context
@@ -307,7 +322,8 @@ Section runBatchM_naturality.
     (ϕ: forall k, W * A -> G (T k B)).
 
   Lemma natural_runBatchM (f: C -> D) (j: @BatchM _ T W A B C):
-    map (F := G) f (runBatchM ϕ j) = runBatchM ϕ (map (F := BatchM) f j).
+    map (F := G) f (runBatchM ϕ j) =
+      runBatchM ϕ (map (F := BatchM) f j).
   Proof.
     generalize dependent D. induction j; intros.
     - cbn. now rewrite (app_pure_natural).
@@ -317,8 +333,8 @@ Section runBatchM_naturality.
 
 End runBatchM_naturality.
 
-(** ** <<runBatchM>> is an applicative morphism **)
-(******************************************************************************)
+(** ** <<runBatchM>> as an Applicative Homomorphism *)
+(**********************************************************************)
 Section runBatchM_morphism.
 
   Context
@@ -330,13 +346,15 @@ Section runBatchM_morphism.
     `{Applicative G}
     (f: forall k, W * A -> G (T k B)).
 
-  Lemma appmor_pure_runBatchM: forall (C: Type) (c: C),
+  Lemma appmor_pure_runBatchM:
+    forall (C: Type) (c: C),
       runBatchM f (pure (F := BatchM) c) = pure c.
   Proof.
     easy.
   Qed.
 
-  Lemma appmor_mult_runBatchM: forall (C D: Type) (x: BatchM C) (y: BatchM D),
+  Lemma appmor_mult_runBatchM:
+    forall (C D: Type) (x: BatchM C) (y: BatchM D),
       runBatchM f (x ⊗ y) = runBatchM f x ⊗ runBatchM f y.
   Proof.
     intros. generalize dependent x. induction y.
@@ -368,8 +386,8 @@ Section runBatchM_morphism.
 
 End runBatchM_morphism.
 
-(** ** <<runBatchM>> commutes with applicative morphisms **)
-(******************************************************************************)
+(** ** <<runBatchM>> commutes with Applicative Homomorphisms **)
+(**********************************************************************)
 Section runBatchM_morphism.
 
 
@@ -399,7 +417,7 @@ Section runBatchM_morphism.
 End runBatchM_morphism.
 
 (** ** Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Infix "⧆" := Ap (at level 51, left associativity): tealeaves_scope.
 End Notations.

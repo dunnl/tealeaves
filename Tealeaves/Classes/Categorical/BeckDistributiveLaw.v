@@ -37,9 +37,11 @@ Section BeckDistributiveLaw.
       bdist_monad_r: Monad U;
       bdist_natural :> Natural (@bdist U T _);
       bdist_join_l:
-      `(bdist U T ∘ join U = map T (join U) ∘ bdist U T ∘ map U (bdist U T (A := A)));
+      `(bdist U T ∘ join U =
+          map T (join U) ∘ bdist U T ∘ map U (bdist U T (A := A)));
       bdist_join_r:
-      `(bdist U T ∘ map U (join T) = join T ∘ map T (bdist U T) ∘ bdist U T (A := T A));
+      `(bdist U T ∘ map U (join T) =
+          join T ∘ map T (bdist U T) ∘ bdist U T (A := T A));
       bdist_unit_l:
       `(bdist U T ∘ ret U (A := T A) = map T (ret U));
       bdist_unit_r:
@@ -96,8 +98,9 @@ Section BeckDistributivelaw_composite_monad.
     rewrite (natural (G := U) (F := U ∘ U)).
     rewrite <- (fun_map_map (F := (T ∘ T))).
     unfold_ops @Map_compose.
-    change_left ((join T ∘ map T (map T (join U))) ∘
-                   (map T (map T (map U (map U f))) ∘ map T (bdist U T))).
+    change_left
+      ((join T ∘ map T (map T (join U))) ∘
+         (map T (map T (map U (map U f))) ∘ map T (bdist U T))).
     rewrite (fun_map_map (F := T)).
     rewrite (natural (G := T ∘ U) (Natural := bdist_natural U T)).
     rewrite <- (fun_map_map (F := T)).

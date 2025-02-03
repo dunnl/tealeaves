@@ -7,7 +7,7 @@ From Tealeaves Require Export
   Functors.Early.Batch.
 
 From Tealeaves.Functors Require Import
-  List
+  Early.List
   Constant
   VectorRefinement.
 
@@ -294,9 +294,9 @@ Section runBatch_monoid.
   Qed.
 
   Lemma runBatch_monoid_mapsnd
-          {A B B'}: forall (ϕ: A -> M) `(f: B' -> B) `(b: Batch A B C),
+    {A B B'}: forall (ϕ: A -> M) `(f: B' -> B) `(b: Batch A B C),
       runBatch_monoid ϕ b =
-        runBatch_monoid ϕ (mapsnd_Batch B' B f b).
+        runBatch_monoid ϕ (mapsnd_Batch f b).
   Proof.
     intros.
     rewrite runBatch_monoid2.
@@ -397,7 +397,7 @@ Section length.
     forall {A A' B C: Type}
       (f: A -> A') (b: Batch A B C),
       length_Batch b =
-        length_Batch (mapfst_Batch A A' f b).
+        length_Batch (mapfst_Batch f b).
   Proof.
     intros.
     induction b as [C c | C b IHb a].
@@ -410,7 +410,7 @@ Section length.
     forall {A B B' C: Type}
       (f: B' -> B) (b: Batch A B C),
       length_Batch b =
-        length_Batch (mapsnd_Batch B' B f b).
+        length_Batch (mapsnd_Batch f b).
   Proof.
     intros.
     induction b as [C c | C b IHb a]; intros.
@@ -1040,7 +1040,7 @@ Section deconstruction.
   (******************************************************************************)
   Lemma Batch_contents_natural: forall `(b: Batch A B C) `(f: A -> A'),
       map (Vector (length_Batch b)) f (Batch_contents b)
-        ~~ Batch_contents (mapfst_Batch _ _ f b).
+        ~~ Batch_contents (mapfst_Batch f b).
   Proof.
     intros.
     induction b.
@@ -1274,10 +1274,10 @@ Section Batch_theory.
   Lemma Batch_make_natural1:
     forall {A B B' C: Type} (b: Batch A B' C) (f: B -> B')
       (v: Vector (length_Batch b) B)
-      (v': Vector (length_Batch (mapsnd_Batch B B' f b)) B),
+      (v': Vector (length_Batch (mapsnd_Batch f b)) B),
       v ~~ v' ->
       Batch_make b (map _ f v) =
-        Batch_make (mapsnd_Batch _ _ f b) v'.
+        Batch_make (mapsnd_Batch f b) v'.
   Proof.
     introv Hsim.
     induction b.
@@ -1296,7 +1296,7 @@ Section Batch_theory.
       try rewrite (mapsnd_Batch_rw2 (B := B) f a b).
       (* ^^^ fails for some reason *)
       cbn.
-      rewrite (Batch_make_precompose2 (mapsnd_Batch B B' f b) _).
+      rewrite (Batch_make_precompose2 (mapsnd_Batch f b) _).
       assert (cut: f (Vector_hd v) = f (Vector_hd v')).
       { inversion Hsim.
         fequal.
@@ -1305,7 +1305,7 @@ Section Batch_theory.
       specialize (IHb (Vector_tl v)).
       specialize (IHb
                     (coerce eq_sym (batch_length_map (precompose f)
-                                      (mapsnd_Batch B B' f b))
+                                      (mapsnd_Batch f b))
                       in Vector_tl v')).
       rewrite IHb.
       + reflexivity.
@@ -1329,8 +1329,8 @@ Section Batch_theory.
 
   Lemma Batch_make_natural2:
     forall {A B B' C: Type} (b: Batch A B' C) (f: B -> B')
-      (v: Vector (length_Batch (mapsnd_Batch B B' f b)) B),
-      Batch_make (mapsnd_Batch _ _ f b) v =
+      (v: Vector (length_Batch (mapsnd_Batch f b)) B),
+      Batch_make (mapsnd_Batch f b) v =
         Batch_make b (coerce (eq_sym (batch_length_mapsnd f b)) in (map _ f v)).
   Proof.
     intros.
@@ -1454,7 +1454,7 @@ Require Import ContainerFunctor.
 
 Import ContainerFunctor.Notations.
 Import Applicative.Notations.
-Import Functors.Subset.
+Import Functors.Early.Subset.
 Import Subset.Notations.
 
 Section annotate_Batch_elements.

@@ -1,4 +1,6 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
+  Classes.Categorical.DecoratedTraversableMonad
+  Classes.Kleisli.DecoratedTraversableMonad
   Adapters.CategoricalToKleisli.DecoratedTraversableMonad
   Adapters.KleisliToCategorical.DecoratedTraversableMonad.
 
@@ -23,10 +25,14 @@ Module Roundtrip1.
   #[local] Instance binddt': Binddt W T T :=
     DerivedOperations.Binddt_Categorical W T.
 
-  Definition map': Map T := DerivedOperations.Map_Binddt W T T.
-  Definition join': Join T := DerivedOperations.Join_Binddt W T.
-  Definition decorate': Decorate W T := DerivedOperations.Decorate_Binddt W T.
-  Definition dist': ApplicativeDist T := DerivedOperations.Dist_Binddt W T.
+  Definition map': Map T :=
+    DerivedOperations.Map_Binddt W T T.
+  Definition join': Join T :=
+    DerivedOperations.Join_Binddt W T.
+  Definition decorate': Decorate W T :=
+    DerivedOperations.Decorate_Binddt W T.
+  Definition dist': ApplicativeDist T :=
+    DerivedOperations.Dist_Binddt W T.
 
   Goal mapT = map'.
   Proof.

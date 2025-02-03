@@ -1,35 +1,31 @@
 CLEANUP_CSS  := ./extra/format_css.sh
-ALECTRYON    := alectryon -R Tealeaves/ Tealeaves
-ALECTRYONDOTTEDFILES := $(subst /,.,$(subst ./,,$(VFILES:.v=.html)))
-ALECTRYONFILES = $(patsubst %,html-alectryon/%,$(ALECTRYONDOTTEDFILES))
+ALECTRYON    := alectryon -R Tealeaves/ Tealeaves --long-line-threshold=73
+ALECTRYONFILES = $(VFILES:.v=.html)
+ALECTRYONTARGETS = $(patsubst %,html-alectryon/%,$(ALECTRYONFILES))
 
 alectryon-showvars:
-	echo $(VFILES)
-	echo $(VOFILES)
-	echo $(ALECTRYONDOTTEDFILES)
-	echo $(ALECTRYONFILES)
+	@echo $(ALECTRYONFILES)
+	@echo $(ALECTRYONTARGETS)
 
-html-alectryon/%.html: $(VOFILES)
-	$(ALECTRYON) $(patsubst %,%.v,$(subst html-alectryon/,,$(subst .,/,$(@:.html=)))) -o $@
+alectryon-files: $(ALECTRYONTARGETS)
 
-alectryon-files: $(ALECTRYONFILES)
+html-alectryon/%.html: %.v
+	$(ALECTRYON) $*.v -o $@
 
 alectryon-toc-list: $(VFILES)
 	rm -f html-alectryon/files.txt
-	@echo "$(ALECTRYONDOTTEDFILES)" | tr ' ' '\n' > html-alectryon/files.txt
+	@echo "$(ALECTRYONFILES)" | tr ' ' '\n' > html-alectryon/files.txt
 
 alectryon-toc: alectryon-toc-list
 	cp $(COQDOC_EXTRA_DIR)/resources/*.css html-alectryon
 	node extra/toc-alectryon-generate.js
 
-alectryon: alectryon-files alectryon-toc
+alectryon: alectryon-toc alectryon-files
 
 alectryon-clean:
-	rm -f html-alectryon/*.html
-	rm -f html-alectryon/*.css
-	rm -f html-alectryon/*.js
-	rm -f html-alectryon/*.txt
-	touch html-alectryon/Tealeaves.Tactics.LibTactics.html
+	rm -Rf html-alectryon/*
+	mkdir -p html-alectryon/Tealeaves/Tactics/
+	touch html-alectryon/Tealeaves/Tactics/LibTactics.html
 
 .PHONY: alectryon alectryon-files alectryon-showvars
 .PHONY: alectryon-toc-list alectryon-toc install-alectryon

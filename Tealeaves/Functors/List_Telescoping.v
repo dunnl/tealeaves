@@ -1,9 +1,11 @@
 From Tealeaves Require Import
+  Classes.Coalgebraic.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedTraversableFunctor
+  Adapters.KleisliToCoalgebraic.DecoratedTraversableFunctor
   Classes.Kleisli.Theory.DecoratedTraversableFunctor
+  Theory.TraversableFunctor
   Functors.List
-  Misc.NaturalNumbers
-  Theory.DecoratedTraversableFunctor.
+  Misc.NaturalNumbers.
 
 Import Applicative.Notations.
 Import Monoid.Notations.
@@ -12,10 +14,10 @@ Import Kleisli.TraversableFunctor.Notations.
 Import Subset.Notations.
 
 (** * Telescoping Decoration for the List Functor *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** The <<decorate_telescoping_list>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Fixpoint decorate_telescoping_list_rec (n: nat) {A: Type} (l: list A):
   list (nat * A) :=
   match l with
@@ -28,7 +30,7 @@ Definition decorate_telescoping_list {A: Type} (l: list A):
   list (nat * A) := decorate_telescoping_list_rec 0 l.
 
 (** ** Alternative Characterization of <<decorate_telescoping_list>> *)
-(******************************************************************************)
+(**********************************************************************)
 Fixpoint decorate_telescoping_list_alt {A: Type} (l: list A):
   list (nat * A) :=
   match l with
@@ -38,7 +40,7 @@ Fixpoint decorate_telescoping_list_alt {A: Type} (l: list A):
   end.
 
 (** ** Rewriting Rules for <<decorate_telescoping_list>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section decorate_telescoping_list_rw.
 
   Context {A: Type}.
@@ -83,7 +85,7 @@ Section decorate_telescoping_list_rw.
 End decorate_telescoping_list_rw.
 
 (** ** Equivalence *)
-(******************************************************************************)
+(**********************************************************************)
 Lemma decorate_telescoping_list_equiv: forall (A: Type) (l: list A),
     decorate_telescoping_list l = decorate_telescoping_list_alt l.
 Proof.
@@ -112,11 +114,11 @@ Proof.
 Qed.
 
 (** ** Associated <<mapdt>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Fixpoint mapdt_telescoping_list
-           {G : Type -> Type} `{Map G} `{Pure G} `{Mult G}
-           {A B : Type} (f : nat * A -> G B) (l : list A)
-  : G (list B) :=
+  {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  {A B: Type} (f: nat * A -> G B) (l: list A)
+ : G (list B) :=
   match l with
   | nil => pure (@nil B)
   | x :: xs =>
@@ -128,7 +130,7 @@ Fixpoint mapdt_telescoping_list
   Mapdt nat list := @mapdt_telescoping_list.
 
 Lemma mapdt_telescoping_list_spec:
-  forall {G} `{Applicative G} {A B : Type} (f : nat * A -> G B) (l : list A),
+  forall {G} `{Applicative G} {A B: Type} (f: nat * A -> G B) (l: list A),
     mapdt f l = traverse f (decorate_telescoping_list_alt l).
 Proof.
   intros.
@@ -143,7 +145,7 @@ Proof.
 Qed.
 
 (** ** Rewriting Rules for <<decorate_telescoping_list>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section mapdt_telescoping_list_rw.
 
   Context {A B: Type}.
@@ -155,7 +157,7 @@ Section mapdt_telescoping_list_rw.
   Implicit Type (f: nat * A -> G B).
 
   Lemma mapdt_telescoping_list_rw_nil: forall f,
-    mapdt_telescoping_list f (@nil A) = pure (@nil B).
+      mapdt_telescoping_list f (@nil A) = pure (@nil B).
   Proof.
     reflexivity.
   Qed.
@@ -189,7 +191,7 @@ Section mapdt_telescoping_list_rw.
 End mapdt_telescoping_list_rw.
 
 (** ** Typeclass Instance *)
-(******************************************************************************)
+(**********************************************************************)
 #[export] Instance DecoratedTraversableFunctor_List_Telescope:
   @DecoratedTraversableFunctor
     nat list Mapdt_Telescoping_List.
@@ -253,9 +255,9 @@ Proof.
 Qed.
 
 (** ** Derived Operation Compatibility *)
-(******************************************************************************)
+(**********************************************************************)
 #[export] Instance ToBatch3_Telescoping_List: ToBatch3 nat list
-    := DerivedOperations.ToBatch3_Mapdt (H := Mapdt_Telescoping_List).
+  := DerivedOperations.ToBatch3_Mapdt (H := Mapdt_Telescoping_List).
 
 #[export] Instance Mapd_List_Telescope: Mapd nat list :=
   DerivedOperations.Mapd_Mapdt.
@@ -292,7 +294,7 @@ Proof.
 Qed.
 
 (** ** Associated <<toctxlist>> and <<toctxset>> Operations *)
-(******************************************************************************)
+(**********************************************************************)
 #[export] Instance ToCtxlist_List_Telescoping:
   ToCtxlist nat list := ToCtxlist_Mapdt.
 
@@ -318,26 +320,26 @@ Qed.
 
 
 (** * Fully Recursive Decoration for the List Functor *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** The <<decorate_list_full>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Definition decorate_list_full {A: Type} (l: list A):
   list (nat * A) :=
   map (pair (length l)) l.
 
 (** ** The Associated <<mapdt_list_full>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Definition mapdt_list_full
-           {G : Type -> Type} `{Map G} `{Pure G} `{Mult G}
-           {A B : Type} (f : nat * A -> G B) (l : list A)
-  : G (list B) :=
+  {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  {A B: Type} (f: nat * A -> G B) (l: list A)
+ : G (list B) :=
   traverse (T := list) (G := G) (f ∘ pair (length l)) l.
 
 #[export] Instance Mapdt_List_Full: Mapdt nat list := @mapdt_list_full.
 
 (** ** <<DecoratedTraversableFunctor>> Typeclass Instance *)
-(******************************************************************************)
+(**********************************************************************)
 #[export] Instance DecoratedTraversableFunctor_List_Full:
   @DecoratedTraversableFunctor
     nat list Mapdt_List_Full.
@@ -348,8 +350,9 @@ Proof.
   - rewrite Writer.extract_pair.
     now rewrite trf_traverse_id.
   - unfold compose at 1.
-    assert (kc_spec: kc3 (G1 := G1)(G2 := G2) g f ∘ pair (length l) =
-                       kc2 (g ∘ pair (length l)) (f ∘ pair (length l))).
+    assert (kc_spec:
+             kc3 (G1 := G1)(G2 := G2) g f ∘ pair (length l) =
+               kc2 (g ∘ pair (length l)) (f ∘ pair (length l))).
     { ext a. unfold kc3, kc2, compose; cbn.
       compose near (f (length l, a)) on left.
       now rewrite (fun_map_map (F := G1)). }
@@ -362,11 +365,13 @@ Proof.
     rewrite (fun_map_map).
     cbn beta.
     unfold compose at 1.
-    assert (cut: (fun (a: Vector (plength l) B) =>
-                traverse (g ∘ pair (length (trav_make l a))) (trav_make l a))
-             =
-               (fun (a: Vector (plength l) B) =>
-                  traverse (g ∘ pair (length l)) (trav_make l a))).
+    assert
+      (cut:
+        (fun (a: Vector (plength l) B) =>
+           traverse (g ∘ pair (length (trav_make l a))) (trav_make l a))
+        =
+          (fun (a: Vector (plength l) B) =>
+             traverse (g ∘ pair (length l)) (trav_make l a))).
     { ext a.
       rewrite <- list_plength_length.
       rewrite <- list_plength_length.
@@ -383,14 +388,16 @@ Proof.
     reflexivity.
 Qed.
 
-(** ** Compatibility Instances *)
-(******************************************************************************)
+(** ** Derived <<toBatch3>> and <<mapd>> *)
+(**********************************************************************)
 #[export] Instance ToBatch3_List_Full: ToBatch3 nat list
   := DerivedOperations.ToBatch3_Mapdt (H := Mapdt_List_Full).
 
 #[export] Instance Mapd_List_Full: Mapd nat list :=
   @DerivedOperations.Mapd_Mapdt nat list Mapdt_List_Full.
 
+(** ** Compatibility Instances *)
+(**********************************************************************)
 #[export] Instance Compat_Traverse_Mapdt_List_Full:
   @Compat_Traverse_Mapdt nat list Traverse_list Mapdt_List_Full.
 Proof.

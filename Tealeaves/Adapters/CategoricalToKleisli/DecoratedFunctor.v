@@ -10,27 +10,27 @@ Import Product.Notations.
 Import Kleisli.Comonad.Notations.
 
 (** * Categorical Decorated Functors to Kleisli Decorated Functors *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Derived <<mapd>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedOperations.
 
   #[export] Instance Mapd_Categorical
-      (E: Type)
-      (F: Type -> Type)
-      `{Map_F: Map F}
-      `{Decorate_EF: Decorate E F}: Mapd E F :=
+    (E: Type)
+    (F: Type -> Type)
+    `{Map_F: Map F}
+    `{Decorate_EF: Decorate E F}: Mapd E F :=
   fun A B (f: E * A -> B) => map (F := F) f ∘ dec F.
 
 End DerivedOperations.
 
 (** ** Derived co-Kleisli Laws *)
-(******************************************************************************)
+(**********************************************************************)
 Module DerivedInstances.
 
   (* Alectryon doesn't like this
-  Import CategoricalToKleisli.DecoratedFunctor.DerivedOperations.
+     Import CategoricalToKleisli.DecoratedFunctor.DerivedOperations.
    *)
   Import DerivedOperations.
   Import CategoricalToKleisli.Comonad.DerivedOperations.
@@ -41,7 +41,8 @@ Module DerivedInstances.
       (F: Type -> Type)
       `{Classes.Categorical.DecoratedFunctor.DecoratedFunctor E F}.
 
-    Theorem mapd_id {A}: @mapd E F _ A A (extract (W := (E ×))) = @id (F A).
+    Theorem mapd_id {A}:
+      @mapd E F _ A A (extract (W := (E ×))) = @id (F A).
     Proof.
       introv.
       unfold mapd.
@@ -50,7 +51,7 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Theorem mapd_mapd (A B C: Type) (g: E * B -> C) (f: E * A -> B) :
+    Theorem mapd_mapd (A B C: Type) (g: E * B -> C) (f: E * A -> B):
       @mapd E F _ B C g ∘ @mapd E F _ A B f = @mapd E F _ A C (kc1 g f).
     Proof.
       unfold_ops @Mapd_Categorical.
@@ -71,9 +72,10 @@ Module DerivedInstances.
 
     (** ** Typeclass Instance *)
     (******************************************************************)
-    #[export] Instance DecoratedFunctor: Kleisli.DecoratedFunctor.DecoratedFunctor E F :=
+    #[export] Instance DecoratedFunctor:
+      Kleisli.DecoratedFunctor.DecoratedFunctor E F :=
       {| kdf_mapd1 := @mapd_id;
-        kdf_mapd2 := @mapd_mapd
+         kdf_mapd2 := @mapd_mapd
       |}.
 
   End with_functor.
@@ -81,7 +83,7 @@ Module DerivedInstances.
 End DerivedInstances.
 
 (** ** Miscellaneous Properties *)
-(******************************************************************************)
+(**********************************************************************)
 Section DecoratedFunctor_misc.
 
   Context

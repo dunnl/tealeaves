@@ -19,14 +19,12 @@ Module DerivedOperations.
 
   #[export] Instance Mapdt_ToBatch3
     (E: Type) (T: Type -> Type)
-    `{ToBatch3 E T}: Mapdt E T :=
-  fun G _ _ _ A B f =>
-    (runBatch f ∘ toBatch3: T A -> G (T B)).
+    `{ToBatch3_ET: ToBatch3 E T}:
+  Mapdt E T := fun G _ _ _ A B f =>
+                 (runBatch f ∘ toBatch3: T A -> G (T B)).
 
 End DerivedOperations.
 
-(** ** Derived Laws *)
-(**********************************************************************)
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -36,15 +34,17 @@ Module DerivedInstances.
     Context
       `{Coalgebraic.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
+    (** ** <<⋆3>> as <<runBatch ∘ map runBatch ∘ double_batch3>> *)
+    (******************************************************************)
     Lemma kc3_spec:
       forall `{Applicative G1}
-             `{Applicative G2},
+        `{Applicative G2},
       forall (A B C: Type)
-             (g: E * B -> G2 C) (f: E * A -> G1 B),
+        (g: E * B -> G2 C) (f: E * A -> G1 B),
         g ⋆3 f =
           runBatch (G := G1) f (C := G2 C) ∘
-            map (F := Batch (E * A) B) (runBatch (G := G2) g (C := C)) ∘
-            double_batch3 C.
+            map (F := Batch (E * A) B)
+            (runBatch (G := G2) g (C := C)) ∘ double_batch3 C.
     Proof.
       intros. ext [e a].
       unfold compose.
@@ -60,8 +60,10 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
+    (** ** Derived Laws *)
+    (******************************************************************)
     Lemma kdtf_mapdt1_T: forall (A: Type),
-        mapdt (G := fun A: Type => A) (extract (W := (E ×))) = @id (T A).
+        mapdt (G := fun A => A) (extract (W := (E ×))) = @id (T A).
     Proof.
       intros.
       unfold_ops @Mapdt_ToBatch3.
@@ -91,8 +93,9 @@ Module DerivedInstances.
       reassociate <- on left.
       rewrite natural.
       rewrite (runBatch_morphism'
-                 (homomorphism := ApplicativeMorphism_parallel
-                                    (Batch (E * A) B) (Batch (E * B) C) G1 G2)).
+                 (homomorphism :=
+                    ApplicativeMorphism_parallel
+                      (Batch (E * A) B) (Batch (E * B) C) G1 G2)).
       rewrite kc3_spec.
       reflexivity.
     Qed.

@@ -4,6 +4,8 @@ From Tealeaves.Backends.LN Require Export
   Atom AtomSet.
 From Tealeaves.Misc Require Export
   NaturalNumbers.
+From Tealeaves.Classes Require Import
+  Kleisli.Theory.DecoratedTraversableMonad.
 From Tealeaves.Theory Require Import
   DecoratedTraversableMonad.
 
@@ -25,7 +27,9 @@ Import
 
 #[local] Generalizable Variables T U.
 
-Import Theory.DecoratedTraversableMonad.UsefulInstances.
+(** * Deriving All Other Typeclass Instances from a DTM *)
+(******************************************************************************)
+Import UsefulInstances.
 
 (** * Locally nameless variables *)
 (******************************************************************************)

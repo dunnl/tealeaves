@@ -1,6 +1,10 @@
 From Tealeaves Require Export
   Theory.DecoratedTraversableMonad
+  Misc.Prop
   Tactics.Debug.
+
+Export DecoratedTraversableMonad.UsefulInstances.
+Export Classes.Kleisli.Theory.DecoratedTraversableMonad.
 
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
@@ -14,12 +18,13 @@ Extra lemmas for simplification support
 |*)
 Import Monoid.Notations.
 
-Lemma pure_const_rw: forall {A} {a:A} {M} {unit:Monoid_unit M},
+Lemma pure_const_rw: forall {A} {a:A} {M} {unit: Monoid_unit M},
     pure (F := const M) (Pure := @Pure_const _ unit) a = Ƶ.
   reflexivity.
 Qed.
 
-Lemma ap_const_rw: forall {M} `{Monoid_op M} {A B} (x: const M (A -> B)) (y: const M A),
+Lemma ap_const_rw:
+  forall {M} `{Monoid_op M} {A B} (x: const M (A -> B)) (y: const M A),
     ap (const M) x y = (x ● y).
   reflexivity.
 Qed.

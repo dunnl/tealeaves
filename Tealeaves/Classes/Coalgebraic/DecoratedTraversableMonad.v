@@ -13,88 +13,89 @@ Import Applicative.Notations.
 
 #[local] Generalizable Variables W T A B.
 
-#[local] Arguments mapfst_Batch {B C}%type_scope {A1 A2}%type_scope f%function_scope b.
-#[local] Arguments mapsnd_Batch {A}%type_scope {B1 B2}%type_scope {C}%type_scope f%function_scope b.
-
 (** * Coalgebraic Decorated Traversable Monads *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** The <<toBatch7>> Operation *)
-(******************************************************************************)
-Class ToBatch7 (W : Type) (T U : Type -> Type) :=
-  toBatch7 : forall A B, U A -> Batch (W * A) (T B) (U B).
+(**********************************************************************)
+Class ToBatch7 (W: Type) (T U: Type -> Type) :=
+  toBatch7: forall A B, U A -> Batch (W * A) (T B) (U B).
 
-#[global] Arguments toBatch7 {W}%type_scope {T U}%function_scope {ToBatch7} {A B}%type_scope _.
+#[global] Arguments toBatch7 {W}%type_scope {T U}%function_scope
+  {ToBatch7} {A B}%type_scope _.
 
 (** ** The <<cojoin_Batch7>> Operation *)
-(******************************************************************************)
+(**********************************************************************)
 Section cojoin.
 
   Context
-    {W : Type}
-    {T : Type -> Type}
+    {W: Type}
+    {T: Type -> Type}
     `{Monoid_op W}
     `{ToBatch7 W T T}.
 
   Context
-    {A : Type} (* original leaves *)
-    {A' : Type} (* new leaves *)
-    {A'' : Type}. (* new type of new leaves *)
+    {A: Type} (* original leaves *)
+    {A': Type} (* new leaves *)
+    {A'': Type}. (* new type of new leaves *)
 
   Section auxiliary.
 
-    Context {R : Type}.
+    Context {R: Type}.
 
     Definition cojoin_Type :=
       Batch (W * A) (T A') R ->
       Batch (W * A) (T A'') (Batch (W * A'') (T A') R).
 
-    (* Batch (W * A) (T A') (T A' -> R) -> (* continuation *) *)
-    (* Batch (W * A) (T A'') (Batch (W * A'') (T A'') (T A' -> Batch (W * A'') (T A') R)) (* return of cojoin *)
-     *)
 
-    Definition key_function (w : W) :
+    Definition key_function (w: W):
       Batch (W * A'') (T A') (T A' -> R) ->
       T A'' ->
       Batch (W * A'') (T A') R :=
       fun next_batch t =>
         next_batch <⋆> mapfst_Batch (incr w) (toBatch7 (B := A') t).
 
-    Definition cojoin_Batch7_leaf_case :
-      Batch (W * A) (T A'') (Batch (W * A'') (T A') (T A' -> R)) -> (* recursive call on cojoin of continuation *)
-      W * A -> (* leaf in context *)
-      Batch (W * A) (T A'') (T A'' -> Batch (W * A'') (T A') R) := (* new continuation *)
+    Definition cojoin_Batch7_leaf_case:
+      Batch (W * A) (T A'') (Batch (W * A'') (T A') (T A' -> R)) ->
+      (* ^recursive call on cojoin of continuation *)
+      W * A ->
+      (* ^leaf in context *)
+      Batch (W * A) (T A'') (T A'' -> Batch (W * A'') (T A') R) :=
       fun rec_continue '(w, a) =>
         map (F := Batch (W * A) (T A'')) (key_function w) rec_continue.
 
   End auxiliary.
 
-  Fixpoint cojoin_Batch7 {R : Type}
-    (b : Batch (W * A) (T A') R) : Batch (W * A) (T A'') (Batch (W * A'') (T A') R) :=
+  Fixpoint cojoin_Batch7 {R: Type}
+    (b: Batch (W * A) (T A') R):
+    Batch (W * A) (T A'') (Batch (W * A'') (T A') R) :=
     match b with
     | Done c => Done (Done c)
     | Step continuation (w, a) =>
-        let new_continuation := cojoin_Batch7_leaf_case (cojoin_Batch7 (R := T A' -> R) continuation) (w, a)
+        let new_continuation :=
+          cojoin_Batch7_leaf_case
+            (cojoin_Batch7 (R := T A' -> R) continuation) (w, a)
         in Step new_continuation (w, a)
     end.
 
 End cojoin.
 
-(** ** Characterizing <<cojoin_Batch7>> via <<runBatch>> *)
-(******************************************************************************)
+(** ** <<cojoin_Batch7>> as <<double_batch7>> *)
+(**********************************************************************)
 Section section.
 
   Context
     `{Monoid W}
     `{ToBatch7 W T T}.
 
-  Definition double_batch7 {A A' : Type} {R : Type} :
+  Definition double_batch7 {A A': Type} {R: Type}:
     W * A -> Batch (W * A) (T A') (Batch (W * A') (T R) (T R)) :=
     fun '(w, a) =>
       (map (F := Batch (W * A) (T A'))
-         (mapfst_Batch (incr w) ∘ toBatch7) ∘ batch (W * A) (T A')) (w, a).
+         (mapfst_Batch (incr w) ∘ toBatch7) ∘
+         batch (W * A) (T A')) (w, a).
 
-  Lemma double_batch7_rw {A A' : Type} {R : Type} :
+  Lemma double_batch7_rw {A A': Type} {R: Type}:
     forall '(w, a),
       double_batch7 (A := A) (A' := A') (R := R) (w, a) =
         Done (mapfst_Batch (incr w) ∘ toBatch7) ⧆ (w, a).
@@ -103,7 +104,7 @@ Section section.
     reflexivity.
   Qed.
 
-  Lemma cojoin_Batch7_to_runBatch : forall (A A' A'' : Type) (R : Type),
+  Lemma cojoin_Batch7_to_runBatch: forall (A A' A'': Type) (R: Type),
       cojoin_Batch7 (A := A) (A' := A') (A'' := A'') (R := R) =
         runBatch (G := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A'))
           double_batch7.
@@ -122,25 +123,28 @@ Section section.
       reflexivity.
   Qed.
 
-  Lemma cojoin_Batch7_batch : forall (A A' R : Type),
+  Lemma cojoin_Batch7_batch: forall (A A' R: Type),
       cojoin_Batch7 (A'' := A') ∘ batch (W * A) (T R) = double_batch7.
   Proof.
     intros.
     rewrite cojoin_Batch7_to_runBatch.
-    rewrite (runBatch_batch (Batch (prod W A) (T A') ∘ Batch (prod W A') (T R))).
+    rewrite (runBatch_batch
+               (Batch (prod W A) (T A') ∘ Batch (prod W A') (T R))).
     reflexivity.
   Qed.
 
-  #[export] Instance AppMor_cojoin_Batch7 : forall (A A' A'' : Type),
+  #[export] Instance AppMor_cojoin_Batch7: forall (A A' A'': Type),
       ApplicativeMorphism
         (Batch (W * A) (T A'))
         (Batch (W * A) (T A'') ∘ Batch (W * A'') (T A'))
         (@cojoin_Batch7 W T _ _ A A' A'').
   Proof.
     intros.
-    assert (lemma :
+    assert (lemma:
              @cojoin_Batch7 W T op H0 A A' A'' =
-               fun R => runBatch (G := Batch (W * A) (T A'') ∘ Batch (W * A'') (T A')) double_batch7).
+               fun R => runBatch (G := Batch (W * A) (T A'') ∘
+                                      Batch (W * A'') (T A'))
+                       double_batch7).
     { ext R. now rewrite cojoin_Batch7_to_runBatch. }
     rewrite lemma.
     apply ApplicativeMorphism_runBatch.
@@ -149,15 +153,17 @@ Section section.
 End section.
 
 (** ** Typeclass *)
-(******************************************************************************)
-Class DecoratedTraversableMonad (W : Type) (T : Type -> Type)
+(**********************************************************************)
+Class DecoratedTraversableMonad (W: Type) (T: Type -> Type)
   `{Monoid_op W} `{Monoid_unit W} `{Return T} `{ToBatch7 W T T} :=
   { dtm_monoid :> Monoid W;
-    dtm_ret : forall (A B : Type),
-      toBatch7 ∘ ret (T := T) (A := A) = Step (Done (@id (T B))) ∘ ret (T := (W ×));
-    dtm_extract : forall (A : Type),
-      extract_Batch ∘ mapfst_Batch (ret ∘ extract (W := (W ×))) ∘ toBatch7 = @id (T A);
-    dtm_duplicate : forall (A B C : Type),
+    dtm_ret: forall (A B: Type),
+      toBatch7 ∘ ret (T := T) (A := A) =
+        Step (Done (@id (T B))) ∘ ret (T := (W ×));
+    dtm_extract: forall (A: Type),
+      extract_Batch ∘ mapfst_Batch (ret ∘ extract (W := (W ×))) ∘
+        toBatch7 = @id (T A);
+    dtm_duplicate: forall (A B C: Type),
       cojoin_Batch7 ∘ toBatch7 (A := A) (B := C) =
         map (F := Batch (W * A) (T B)) (toBatch7) ∘ toBatch7;
   }.

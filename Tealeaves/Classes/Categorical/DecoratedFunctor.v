@@ -6,9 +6,12 @@ Import Product.Notations.
 Import Functor.Notations.
 
 #[local] Generalizable Variables W T F E A.
-#[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
-#[local] Arguments extract (W)%function_scope {Extract} (A)%type_scope _.
-#[local] Arguments cojoin W%function_scope {Cojoin} {A}%type_scope _.
+#[local] Arguments map F%function_scope {Map}
+  {A B}%type_scope f%function_scope _.
+#[local] Arguments extract (W)%function_scope {Extract}
+  (A)%type_scope _.
+#[local] Arguments cojoin W%function_scope {Cojoin}
+  {A}%type_scope _.
 
 (** * Decorated functors *)
 (**********************************************************************)
@@ -20,8 +23,10 @@ Class Decorate
   (F: Type -> Type) :=
   dec: F ⇒ F ○ (E ×).
 
-#[global] Arguments dec {E}%type_scope _%function_scope {Decorate} {A}%type_scope _.
-#[local] Arguments dec {E}%type_scope _%function_scope {Decorate} (A)%type_scope _.
+#[global] Arguments dec {E}%type_scope _%function_scope {Decorate}
+  {A}%type_scope _.
+#[local] Arguments dec {E}%type_scope _%function_scope {Decorate}
+  (A)%type_scope _.
 
 (** ** Typeclass *)
 (**********************************************************************)
@@ -56,9 +61,11 @@ Section DecoratedFunctor_reader.
   Context
     (E: Type).
 
-  #[global] Instance Decorate_prod: Decorate E (prod E) := @cojoin (prod E) _.
+  #[global] Instance Decorate_prod: Decorate E (prod E)
+    := @cojoin (prod E) _.
 
-  #[global, program] Instance DecoratedFunctor_prod: DecoratedFunctor E (prod E).
+  #[global, program] Instance DecoratedFunctor_prod:
+    DecoratedFunctor E (prod E).
 
   Solve Obligations with (intros; now ext [? ?]).
 

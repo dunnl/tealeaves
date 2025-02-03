@@ -111,3 +111,14 @@ Section Derived.
   Qed.
 
 End Derived.
+
+(*
+(** ** Penguin Operation *)
+(**********************************************************************)
+Definition penguin {A B: Type}
+  `{G: Type -> Type} `{Map G} `{Mult G} `{Pure G}:
+  forall (a: G A) (b: G B), G B :=
+  fun a b => (map (F := G) (const (@id B)) a) <⋆> b.
+
+Infix "|⋆>" := penguin (at level 50).
+*)

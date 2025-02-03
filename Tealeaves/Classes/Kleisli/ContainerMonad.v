@@ -7,6 +7,9 @@ From Tealeaves Require Export
 Import Subset.Notations.
 Import ContainerFunctor.Notations.
 
+
+(** * Typeclasses *)
+(********************************************************************)
 Class ContainerMonad
   (T : Type -> Type)
   `{Bind T T} `{Return T} `{ToSubset T} :=

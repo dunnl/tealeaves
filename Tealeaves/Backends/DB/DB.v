@@ -4,8 +4,9 @@ From Tealeaves.Misc Require Export
 From Tealeaves.Theory Require Export
   DecoratedTraversableMonad.
 
+Import DecoratedContainerMonad.
+Import Kleisli.DecoratedTraversableMonad.
 Import DecoratedTraversableMonad.UsefulInstances.
-
 
 Import PeanoNat.Nat.
 Import Coq.Init.Nat. (* Nat notations *)
@@ -816,7 +817,7 @@ Section theory.
            replace (depth + (ix' - depth') + depth') with (ix' + depth) by lia.
            unfold rename.
            compose near (σ2 (ix' - depth')).
-           rewrite mapd_mapd.
+           rewrite kdf_mapd2.
            rewrite rename_rename_loc.
            unfold lift__sub.
            bound_induction.

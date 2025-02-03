@@ -39,7 +39,8 @@ Module DerivedInstances.
     (** *** Identity law *)
     (******************************************************************)
     Lemma ktm_bindt1_T:
-      forall (A: Type), bindt (G := fun A => A) (ret (T := T)) = @id (T A).
+      forall (A: Type),
+        bindt (G := fun A => A) (ret (T := T)) = @id (T A).
     Proof.
       intros. unfold bindt. unfold_ops @Bindt_Categorical.
       unfold_ops @Map_I. rewrite (dist_unit (F := T)).
@@ -86,10 +87,12 @@ Module DerivedInstances.
       #[local] Unset Keyed Unification.
       repeat reassociate <-. reassociate -> near (dist T G1).
       rewrite <- (dist_linear (F := T)).
-      change (map (F := G1) (map (F := G2) ?f)) with (map (F := G1 ∘ G2) f).
+      change (map (F := G1) (map (F := G2) ?f)) with
+        (map (F := G1 ∘ G2) f).
       rewrite <- (fun_map_map (F := G1 ∘ G2)).
       reassociate -> near (dist T (G1 ∘ G2)).
-      change (map (F := G1 ∘ G2) (map (F := T) ?f)) with (map (F :=(G1 ∘ G2) ∘ T) f).
+      change (map (F := G1 ∘ G2) (map (F := T) ?f)) with
+        (map (F :=(G1 ∘ G2) ∘ T) f).
       #[local] Set Keyed Unification.
       rewrite (natural (ϕ := @dist T _ (G1 ∘ G2) _ _ _)).
       reassociate <-. reassociate -> near (map f).

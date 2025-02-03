@@ -16,14 +16,30 @@ Module DerivedOperations.
 
   #[export] Instance Bind_Categorical (T: Type -> Type)
     `{map_T: Map T}
-    `{join_T: Join T}
- : Bind T T :=
+    `{join_T: Join T}: Bind T T :=
   fun {A B} (f: A -> T B) => join ∘ map (F := T) f.
 
 End DerivedOperations.
 
-(** ** Derived Kleisli Monad Laws *)
+(** ** Derived <<bind>> is Compatible with Original <map>> *)
 (**********************************************************************)
+#[export] Instance Compat_Map_Bind_Derived
+  `{Categorical.Monad.Monad T}:
+  Compat_Map_Bind T T
+    (Bind_TU := DerivedOperations.Bind_Categorical T).
+Proof.
+  hnf. ext A B f.
+  change_left (map f).
+  unfold DerivedOperations.Map_Bind.
+  unfold bind, DerivedOperations.Bind_Categorical.
+  rewrite <- fun_map_map.
+  reassociate <- on right.
+  rewrite mon_join_map_ret.
+  reflexivity.
+Qed.
+
+
+
 Module DerivedInstances.
 
   (* Alectryon doesn't like this
@@ -36,20 +52,18 @@ Module DerivedInstances.
     Context
       `{Categorical.Monad.Monad T}.
 
-    (** ** Derived <<bind>> is Compatible with Original <map>> *)
+    (** ** <<join>> as <<id ⋆ id>> *)
     (******************************************************************)
-    #[export] Instance Compat_Map_Bind_Derived:
-      Compat_Map_Bind T T.
+    Lemma join_to_kc `{Categorical.Monad.Monad T}: forall (A: Type),
+        join (T := T) (A := A) = id ⋆ id.
     Proof.
-      hnf. ext A B f.
-      change_left (map f).
-      unfold DerivedOperations.Map_Bind.
-      unfold bind, Bind_Categorical.
-      rewrite <- fun_map_map.
-      reassociate <- on right.
-      rewrite mon_join_map_ret.
+      intros. unfold kc, bind, Bind_Categorical.
+      rewrite fun_map_id.
       reflexivity.
     Qed.
+
+    (** ** Derived Kleisli Monad Laws *)
+    (******************************************************************)
 
     (** *** Identity law *)
     (******************************************************************)
@@ -165,7 +179,8 @@ End DerivedInstances.
   Qed.
 
   (** ** Associativity law *)
-  Theorem kleisli_assoc: forall `(h: C -> T D) `(g: B -> T C) `(f: A -> T B),
+  Theorem kleisli_assoc:
+  forall `(h: C -> T D) `(g: B -> T C) `(f: A -> T B),
   h ⋆1 (g ⋆1 f) = (h ⋆1 g) ⋆1 f.
   Proof.
   intros. unfold kc1 at 3. now rewrite <- (kmon_bind2 (T := T)).
@@ -223,7 +238,7 @@ Module ToKleisliRightModule.
 
   #[local] Instance Kleisli_RightModule {F T}
     `{Categorical.RightModule.RightModule F T}
-   : Kleisli.Monad.RightPreModule T F :=
+: Kleisli.Monad.RightPreModule T F :=
     {| kmod_bind1 := @bind_id T F _ _ _ _ _ _;
        kmod_bind2 := @bind_bind T F _ _ _ _ _ _;
     |}.

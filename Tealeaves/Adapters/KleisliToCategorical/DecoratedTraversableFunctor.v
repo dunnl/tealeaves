@@ -1,4 +1,4 @@
-From Tealeaves Require Export
+From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableFunctor
   Classes.Categorical.DecoratedTraversableFunctor.
 
@@ -7,7 +7,7 @@ Import Product.Notations.
 
 #[local] Generalizable Variables G ϕ.
 
-(** * Categorical Decorated Traversable Functors from Kleisli Decorated Traversable Functors *)
+(** * Categorical DTFs from Kleisli DTFs *)
 (**********************************************************************)
 
 (** ** Derived Operations *)
@@ -21,7 +21,9 @@ Module DerivedOperations.
       `{Mapdt E T}.
 
     #[export] Instance Dist_Mapdt: ApplicativeDist T :=
-      fun G _ _ _ A => mapdt (T := T) (G := G) (extract (W := (E ×)) (A := G A)).
+      fun G _ _ _ A =>
+        mapdt (T := T) (G := G) (extract (W := (E ×)) (A := G A)).
+
     #[export] Instance Decorate_Mapdt: Decorate E T :=
       fun A => mapdt (G := fun A => A) (@id (E * A)).
 
@@ -47,7 +49,8 @@ Module DerivedInstances.
       `{Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
 
     Lemma dec_dec: forall (A: Type),
-        dec T ∘ dec T = map (F := T) (cojoin (W := (E ×))) ∘ dec T (A := A).
+        dec T ∘ dec T =
+          map (F := T) (cojoin (W := (E ×))) ∘ dec T (A := A).
     Proof.
       intros.
       unfold_ops @Decorate_Mapdt.
@@ -85,7 +88,8 @@ Module DerivedInstances.
         reflexivity.
     Qed.
 
-    #[export] Instance: Categorical.DecoratedFunctor.DecoratedFunctor E T :=
+    #[export] Instance DecoratedFunctor_Categorical_Kleisli:
+      Categorical.DecoratedFunctor.DecoratedFunctor E T :=
       {| dfun_dec_natural := dec_natural;
          dfun_dec_dec := dec_dec;
          dfun_dec_extract := dec_extract;
@@ -93,7 +97,8 @@ Module DerivedInstances.
 
     (** *** Traversable functor instance *)
     (******************************************************************)
-    Lemma dist_natural_T: forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G),
+    Lemma dist_natural_T:
+      forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G),
         Applicative G -> Natural (@dist T _ G H2 H3 H4).
     Proof.
       intros. constructor.
@@ -104,12 +109,13 @@ Module DerivedInstances.
         unfold_ops @Dist_Mapdt.
         rewrite map_mapdt.
         rewrite mapdt_map.
-        rewrite <- (natural (ϕ := fun A => extract (W := (E ×)) (A := A))).
+        rewrite <- (natural (ϕ := fun A => extract (A := A))).
         reflexivity.
     Qed.
 
     Lemma dist_morph_T: forall `{ApplicativeMorphism G1 G2 ϕ},
-      forall A: Type, dist T G2 ∘ map (F := T) (ϕ A) = ϕ (T A) ∘ dist T G1.
+      forall (A: Type),
+        dist T G2 ∘ map (F := T) (ϕ A) = ϕ (T A) ∘ dist T G1.
     Proof.
       intros.
       unfold_ops @Map_compose.
@@ -121,7 +127,7 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    Lemma dist_unit_T: forall A: Type,
+    Lemma dist_unit_T: forall (A: Type),
         dist T (fun A0: Type => A0) = @id (T A).
     Proof.
       intros.
@@ -129,11 +135,16 @@ Module DerivedInstances.
       now rewrite (kdtf_mapdt1 (E := E) (T := T)).
     Qed.
 
-    Lemma dist_linear_T: forall (G1: Type -> Type) (H2: Map G1) (H3: Pure G1) (H4: Mult G1),
+    (* TODO Typeset this better *)
+    Lemma dist_linear_T:
+      forall (G1: Type -> Type)
+        (H2: Map G1) (H3: Pure G1) (H4: Mult G1),
         Applicative G1 ->
-        forall (G2: Type -> Type) (H6: Map G2) (H7: Pure G2) (H8: Mult G2),
-          Applicative G2 -> forall A: Type,
-            dist T (G1 ∘ G2) (A := A) = map (F := G1) (dist T G2) ∘ dist T G1.
+        forall (G2: Type -> Type)
+          (H6: Map G2) (H7: Pure G2) (H8: Mult G2),
+          Applicative G2 -> forall (A: Type),
+            dist T (G1 ∘ G2) (A := A) =
+              map (F := G1) (dist T G2) ∘ dist T G1.
     Proof.
       intros.
       unfold_ops @Dist_Mapdt.
@@ -145,7 +156,7 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
-    #[export] Instance CategoricalTraversableFunctor_KleisliDecoratedTraversableFunctor
+    #[export] Instance TraversableFunctor_Categorical_DecoratedTraversableFunctor_Kleisli
      : Categorical.TraversableFunctor.TraversableFunctor T :=
       {| dist_natural := dist_natural_T;
          dist_morph := @dist_morph_T;
@@ -155,7 +166,7 @@ Module DerivedInstances.
 
     Lemma dtfun_compat_T:
       forall (G: Type -> Type) (H2: Map G) (H3: Pure G) (H4: Mult G),
-        Applicative G -> forall A: Type,
+        Applicative G -> forall (A: Type),
           dist T G ∘ map (F := T) strength ∘ dec (A := G A) T =
             map (F := G) (dec T) ∘ dist T G.
     Proof.
@@ -176,10 +187,11 @@ Module DerivedInstances.
       reflexivity.
     Qed.
 
+
     (** ** Typeclass Instance *)
     (******************************************************************)
     #[export] Instance
-      CategoricalDecoratedTraversableFunctor_KleisliDecoratedTraversableFunctor:
+      DecoratedTraversableFunctor_Categorical_Kleisli:
       Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
       {| dtfun_compat := dtfun_compat_T;
       |}.

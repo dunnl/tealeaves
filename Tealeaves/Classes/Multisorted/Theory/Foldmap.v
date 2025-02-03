@@ -9,7 +9,7 @@
 Import TypeFamily.Notations.
 Import Monoid.Notations.
 Import List.ListNotations.
-Import Misc.Subset.Notations.
+Import Subset.Notations.
 Import Multisorted.Theory.Container.Notations.
 Import ContainerFunctor.Notations.
 #[local] Open Scope list_scope.

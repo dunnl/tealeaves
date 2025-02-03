@@ -23,8 +23,6 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
-(** ** Derived Laws *)
-(**********************************************************************)
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -32,6 +30,8 @@ Module DerivedInstances.
   Context
     `{Coalgebraic.TraversableFunctor.TraversableFunctor T}.
 
+  (** ** <<⋆2>> as <<runBatch ∘ map runBatch ∘ double_batch>> *)
+  (********************************************************************)
   Lemma kc2_spec:
     forall `{Applicative G1}
            `{Applicative G2}
@@ -53,6 +53,8 @@ Module DerivedInstances.
     reflexivity.
   Qed.
 
+  (** ** Derived Laws *)
+(**********************************************************************)
   Lemma traverse_id: forall (A: Type),
       traverse (G := fun A => A) id = @id (T A).
   Proof.
@@ -67,7 +69,7 @@ Module DerivedInstances.
     forall `{Applicative G1} `{Applicative G2},
     forall (A B C: Type)
            (g: B -> G2 C) (f: A -> G1 B),
-      map (F := G1) (traverse (T := T) (G := G2) g) ∘ traverse (G := G1) f =
+      map (F := G1) (traverse (T := T) g) ∘ traverse (G := G1) f =
         traverse (G := G1 ∘ G2) (kc2 (G1 := G1) (G2 := G2) g f).
   Proof.
     intros.
