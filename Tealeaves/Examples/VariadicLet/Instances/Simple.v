@@ -12,9 +12,11 @@ consider an example where the syntax has no mutual binding structure.
 |*)
 From Tealeaves Require Export
   Examples.VariadicLet.Terms
-  Functors.List_Telescoping
-  Adapters.Compositions.DecoratedTraversableModule.
+  Functors.List_Telescoping.
 
+(*
+  Adapters.Compositions.DecoratedTraversableModule.
+*)
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.
 #[local] Open Scope nat_scope.

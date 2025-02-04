@@ -16,7 +16,7 @@ From Tealeaves.Classes Require Export
   Kleisli.DecoratedTraversableMonadPoly.
 
 From Tealeaves.Functors Require Export
-  List Z2.
+  List Z2 Pair.
 
 From Tealeaves.Backends Require Export
   LN.Atom.
@@ -92,16 +92,16 @@ Proof.
     reflexivity.
 Qed.
 
-Instance Map_term_r: forall B, Map (term B).
+#[export] Instance Map_term_r: forall B, Map (term B).
 Proof.
   intros B V1 V2 f.
   exact (map_term id f).
 Defined.
 
-Instance Functor_term_r: forall B, Functor (term B).
+#[export] Instance Functor_term_r: forall B, Functor (term B).
 Admitted.
 
-Instance Map2_term: Map2 term.
+#[export] Instance Map2_term: Map2 term.
 Proof.
   intros A1 B1 A2 B2 f1 f2.
   apply (map_term f1 f2).
@@ -606,19 +606,13 @@ Proof.
     rewrite map_ap.
     rewrite map_ap.
     rewrite app_pure_natural.
-    rewrite (ap_ci2 (A := list B) (B := B) _ (dist list G ctx) b).
+    rewrite (ap_flip_x3 (lhs := b) (rhs := dist list G ctx)).
+    rewrite app_pure_natural.
+    rewrite ap_contract.
     rewrite map_ap.
     rewrite map_ap.
     rewrite app_pure_natural.
-    rewrite ap_cidup.
-    rewrite map_ap.
-    rewrite app_pure_natural.
-    rewrite (ap_ci2 (A := list B) (B := B) _ (dist list G ctx) b).
-    rewrite app_pure_natural.
-    rewrite ap_cidup.
-    rewrite map_ap.
-    rewrite app_pure_natural.
-    rewrite (ap_ci2 (B := list B) (A := B) _ b (dist list G ctx)).
+    rewrite ap_contract.
     rewrite app_pure_natural.
     (* RHS *)
     rewrite <- ap4.
@@ -651,12 +645,9 @@ Proof.
     rewrite ap3.
     rewrite <- ap4; repeat rewrite ap2.
     rewrite <- ap4; repeat rewrite ap2.
-    rewrite (ap_ci2 (A := list B) _ (dist list G ctx) (dist_term t1)).
+    rewrite (ap_flip_x3 (lhs := dist_term t1) (rhs := dist list G ctx)).
     rewrite app_pure_natural.
-    rewrite ap_cidup.
-    rewrite map_ap.
-    rewrite app_pure_natural.
-    rewrite (ap_ci2 _ (dist_term t1) (dist list G ctx)).
+    rewrite ap_contract.
     rewrite app_pure_natural.
     rewrite ap3.
     rewrite <- ap4; repeat rewrite ap2.
@@ -702,9 +693,6 @@ Lemma dist_dec_rec_commute_map:
     True.
 Proof.
   intros.
-  Check dec_term_rec ctx t.
-  Check dist_term.
-  Check dist_term.
   (*
   Check
     (map_term dist_pair dist_pair
@@ -714,7 +702,6 @@ Proof.
       pure (dec_term_rec (B := B1) (V := V1)) <⋆> (dist list G ctx)
         <⋆> (dist_term t).
    *)
-Proof.
 Abort.
 
 (*|
@@ -983,7 +970,7 @@ Qed.
 Composition law
 ========================================
 |*)
-
+(*
 Lemma composition_lambda_case:
    forall {B1 B2 B3: Type}
      {A1 A2 A3: Type}
@@ -996,12 +983,12 @@ Lemma composition_lambda_case:
         (σ1 : list B1 * A1 -> G1 (term B2 A2)),
          (map (F := G1) (substitute ρ2 σ2) (substitute ρ1 σ1 t) =
             substitute (G := G1 ∘ G2)
-              (ρ2 ⋆6_ci ρ1)
+              (ρ2 ⋆3_ci ρ1)
               (kc_subvar ρ2 σ2 ρ1 σ1) t)) ->
      forall (ρ1 : list B1 * B1 -> G1 B2) (σ1 : list B1 * A1 -> G1 (term B2 A2)),
        (map (F := G1) (substitute ρ2 σ2) (substitute ρ1 σ1 ((λ) b t)) =
           substitute (G := G1 ∘ G2)
-            (ρ2 ⋆6_ci ρ1)
+            (ρ2 ⋆3_ci ρ1)
             (kc_subvar ρ2 σ2 ρ1 σ1) ((λ) b t)).
 Proof.
   intros.
@@ -1358,3 +1345,4 @@ Proof.
     rewrite binddt_decomposed; auto.
     admit.
 Abort.
+*)

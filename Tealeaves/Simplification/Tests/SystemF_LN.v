@@ -184,8 +184,9 @@ Section rw_open.
 
   Lemma open_type_rw4 : forall (body : typ LN),
       open typ k u (ty_univ body) =
-        ty_univ (kbindd typ k (open_loc k u ⦿ [ktyp]) body).
+        ty_univ (kbindd typ k (preincr (W := list K) (open_loc k u) [ktyp]) body).
   Proof.
+    intros.
     test_simplification.
   Qed.
 
@@ -201,7 +202,8 @@ Section rw_open.
 
   Lemma open_term_rw2 : forall (τ : typ LN) (t : term LN),
       open term k u (tm_abs τ t) =
-        tm_abs (open typ k u τ) (kbindd term k (open_loc k u ⦿ [ktrm]) t).
+        tm_abs (open typ k u τ)
+          (kbindd term k (preincr (W := list K) (open_loc k u) [ktrm]) t).
   Proof.
     test_simplification.
   Qed.
@@ -215,7 +217,7 @@ Section rw_open.
 
   Lemma open_term_rw4 : forall (t : term LN),
       open term k u (tm_tab t) =
-        tm_tab (kbindd term k (open_loc k u ⦿ [ktyp]) t).
+        tm_tab (kbindd term k (preincr (W := list K) (open_loc k u) [ktyp]) t).
   Proof.
     test_simplification.
   Qed.

@@ -448,7 +448,18 @@ Section instances.
     KleisliToCoalgebraic.DecoratedTraversableFunctor.DerivedOperations
     KleisliToCoalgebraic.DecoratedTraversableMonad.DerivedOperations.
 
-  #[export] Instance DTM_ContainerMonad:
+  #[export] Instance DecoratedContainerFunctor_DTM:
+    DecoratedContainerFunctor W U.
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - typeclasses eauto.
+    - intros.
+      apply mapd_respectful.
+      auto.
+  Qed.
+
+  #[export] Instance DecoratedContainerMonad_DTM:
     DecoratedContainerMonad W T.
   Proof.
     constructor.
@@ -459,7 +470,7 @@ Section instances.
       auto.
   Qed.
 
-  #[export] Instance DTM_ContainerModule:
+  #[export] Instance DecoratedContainerModule_DTM:
     DecoratedContainerRightModule W T U.
   Proof.
     constructor.
@@ -474,15 +485,20 @@ End instances.
 (**********************************************************************)
 Module UsefulInstances.
 
-  Export Kleisli.DecoratedTraversableMonad.DerivedOperations.
-  Export Kleisli.DecoratedTraversableMonad.DerivedInstances.
+  Export Classes.Coalgebraic.TraversableFunctor.
+  Export Classes.Coalgebraic.TraversableMonad.
+  Export Classes.Coalgebraic.DecoratedTraversableFunctor.
+  Export Classes.Coalgebraic.DecoratedTraversableMonad.
 
-  Export Kleisli.DecoratedTraversableFunctor.DerivedOperations.
-  Export Kleisli.DecoratedTraversableFunctor.DerivedInstances.
+  Export Classes.Kleisli.TraversableFunctor.
+  Export Classes.Kleisli.TraversableMonad.
+  Export Classes.Kleisli.DecoratedTraversableFunctor.
+  Export Classes.Kleisli.DecoratedTraversableMonad.
 
-  Export KleisliToCoalgebraic.DecoratedTraversableMonad.
-  Export KleisliToCoalgebraic.DecoratedTraversableMonad.DerivedOperations.
-  Export KleisliToCoalgebraic.DecoratedTraversableMonad.DerivedInstances.
+
+  Export KleisliToCoalgebraic.TraversableFunctor.
+  Export KleisliToCoalgebraic.TraversableFunctor.DerivedOperations.
+  Export KleisliToCoalgebraic.TraversableFunctor.DerivedInstances.
 
   Export KleisliToCoalgebraic.TraversableMonad.
   Export KleisliToCoalgebraic.TraversableMonad.DerivedOperations.
@@ -492,9 +508,17 @@ Module UsefulInstances.
   Export KleisliToCoalgebraic.DecoratedTraversableFunctor.DerivedOperations.
   Export KleisliToCoalgebraic.DecoratedTraversableFunctor.DerivedInstances.
 
-  Export KleisliToCoalgebraic.TraversableFunctor.
-  Export KleisliToCoalgebraic.TraversableFunctor.DerivedOperations.
-  Export KleisliToCoalgebraic.TraversableFunctor.DerivedInstances.
+  Export KleisliToCoalgebraic.DecoratedTraversableMonad.
+  Export KleisliToCoalgebraic.DecoratedTraversableMonad.DerivedOperations.
+  Export KleisliToCoalgebraic.DecoratedTraversableMonad.DerivedInstances.
+
+  (*
+  Export Kleisli.DecoratedTraversableFunctor.DerivedOperations.
+  Export Kleisli.DecoratedTraversableFunctor.DerivedInstances.
+   *)
+
+  Export Kleisli.DecoratedTraversableMonad.DerivedOperations.
+  Export Kleisli.DecoratedTraversableMonad.DerivedInstances.
 
   #[export] Existing Instance Tolist_Traverse.
   #[export] Existing Instance ToSubset_Traverse.

@@ -1841,8 +1841,8 @@ Section derived_instances.
 
     Lemma traverse_morph:
       forall (A B: Type) (f: A -> G1 B),
-        ϕ (T B) ∘ traverse (T := T) (G := G1) f =
-          traverse (T := T) (G := G2) (ϕ B ∘ f).
+        ϕ (U B) ∘ traverse (T := U) (G := G1) f =
+          traverse (T := U) (G := G2) (ϕ B ∘ f).
     Proof.
       intros.
       inversion morph.
@@ -1885,17 +1885,64 @@ Module DerivedInstances.
       `{! Compat_Mapdt_Binddt W T T}
       `{! Compat_Bindd_Binddt W T T}
       `{! Compat_Bindt_Binddt W T T}
-      `{Monad_inst: ! DecoratedTraversableMonad W T}.
+      `{dtm_T: ! DecoratedTraversableMonad W T}.
 
-    #[export] Instance
-      DecoratedRightPreModule_DecoratedTraversableMonad:
-      DecoratedRightPreModule W T T :=
-      {| kdmod_bindd1 := bindd_id;
-         kdmod_bindd2 := bindd_bindd;
-      |}.
-
+    (** *** Exported instances *)
+    (******************************************************************)
     #[export] Instance
       DecoratedMonad_DecoratedTraversableMonad:
+      DecoratedMonad W T.
+    Proof.
+      constructor.
+      - typeclasses eauto.
+      - constructor; intros.
+        apply bindd_id.
+        apply bindd_bindd.
+      - intros.
+        apply bindd_ret.
+    Qed.
+
+    #[export] Instance
+      TraversableMonad_DecoratedTraversableMonad:
+      TraversableMonad T.
+    Proof.
+      constructor.
+      - intros. now apply bindt_ret.
+      - constructor; intros.
+        apply bindt_id.
+        apply bindt_bindt.
+        apply (bindt_morph G1 G2 ϕ).
+    Qed.
+
+    #[export] Instance
+      Monad_DecoratedTraversableMonad:
+      Monad T :=
+      DecoratedMonad.DerivedInstances.Monad_DecoratedMonad W T.
+
+    #[export] Instance
+      Functor_DecoratedTraversableMonad:
+      Functor T.
+    Proof.
+      constructor; intros.
+      - apply map_id.
+      - apply map_map.
+    Qed.
+
+    (** *** Local instances *)
+    (******************************************************************)
+    (*
+    #[export] Instance
+      DecoratedRightPreModule_DecoratedTraversableMonad:
+      DecoratedRightPreModule W T T.
+    Proof.
+      constructor; intros.
+      apply bindd_id.
+      apply bindd_bindd.
+    Qed.
+
+    #[export] Instance
+      DecoratedMonad_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
       DecoratedMonad W T :=
       {| kdm_bindd0 := bindd_ret;
       |}.
@@ -1912,12 +1959,14 @@ Module DerivedInstances.
 
     #[export] Instance
       TraversableMonad_DecoratedTraversableMonad
-     : TraversableMonad T :=
+      `{! DecoratedTraversableMonad W T}:
+      TraversableMonad T :=
       {| ktm_bindt0 := bindt_ret;
       |}.
 
     #[export] Instance
-      DecoratedTraversableFunctor_DecoratedTraversableMonad:
+      DecoratedTraversableFunctor_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
       DecoratedTraversableFunctor W T.
     Proof.
       constructor; intros.
@@ -1927,46 +1976,71 @@ Module DerivedInstances.
     Qed.
 
     #[export] Instance
-      Monad_DecoratedTraversableMonad:
-      Monad T :=
-      DerivedInstances.Monad_DecoratedMonad W T.
+      TraversableFunctor_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
+      TraversableFunctor T.
+    Proof.
+      constructor.
+      - apply traverse_id.
+      - intros. apply traverse_traverse.
+      - intros. apply traverse_morph. auto.
+    Qed.
+
 
     #[export] Instance
-      Functor_DecoratedTraversableMonad:
+      DecoratedFunctor_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
+      DecoratedFunctor W T.
+    Proof.
+      constructor.
+      - apply mapd_id.
+      - intros. apply mapd_mapd.
+    Qed.
+
+    #[export] Instance
+      Functor_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
       Functor T.
     Proof.
       constructor; intros.
       - apply map_id.
       - apply map_map.
     Qed.
+*)
 
     #[local] Instance
-      DecoratedTraversableRightModule_DecoratedTraversableMonad:
+      DecoratedTraversableRightModule_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
       DecoratedTraversableRightModule W T T.
     Proof.
       constructor; typeclasses eauto.
     Qed.
 
+    (*
     #[local] Instance
-      TraversableRightModule_DecoratedTraversableMonad:
+      TraversableRightModule_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
       TraversableRightModule T T.
     Proof.
       constructor; typeclasses eauto.
     Qed.
 
     #[local] Instance
-      DecoratedRightModule_DecoratedTraversableMonad:
+      DecoratedRightModule_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
       DecoratedRightModule W T T.
     Proof.
       constructor; typeclasses eauto.
     Qed.
 
     #[local] Instance
-      RightModule_DecoratedTraversableMonad:
+      RightModule_DecoratedTraversableMonad
+      `{! DecoratedTraversableMonad W T}:
       RightModule T T.
     Proof.
       constructor; typeclasses eauto.
     Qed.
+    *)
 
     Context
       (U: Type -> Type)
@@ -1987,6 +2061,8 @@ Module DerivedInstances.
       `{! Compat_Bindt_Binddt W T U}
       `{Module_inst: ! DecoratedTraversableRightPreModule W T U}.
 
+    (** *** Exported instances *)
+    (******************************************************************)
     #[export] Instance
       TraversableRightPreModule_DecoratedTraversableRightPreModule:
       TraversableRightPreModule T U.
@@ -2014,8 +2090,39 @@ Module DerivedInstances.
       - apply (mapdt_morph G1 G2 ϕ).
     Qed.
 
+    #[export] Instance
+      DecoratedFunctor_DecoratedTraversableRightPreModule:
+      DecoratedFunctor W U.
+    Proof.
+      constructor; intros.
+      - apply mapd_id.
+      - apply mapd_mapd.
+    Qed.
+
+    #[export] Instance
+      TraversableFunctor_DecoratedTraversableRightPreModule:
+      TraversableFunctor U.
+    Proof.
+      constructor; intros.
+      - apply traverse_id.
+      - apply traverse_traverse.
+      - apply traverse_morph. auto.
+    Qed.
+
+    #[export] Instance
+      Functor_DecoratedTraversableRightPreModule:
+      Functor U.
+    Proof.
+      constructor; intros.
+      - apply map_id.
+      - apply map_map.
+    Qed.
+
+    (** *** Local instances *)
+    (******************************************************************)
     #[local] Instance
-      DecoratedTraversableRightModule_DecoratedTraversableRightPreModule:
+      DecoratedTraversableRightModule_DecoratedTraversableRightPreModule
+      `{! DecoratedTraversableMonad W T}:
       DecoratedTraversableRightModule W T U.
     Proof.
       constructor; typeclasses eauto.
@@ -2028,13 +2135,15 @@ Module DerivedInstances.
       |}.
 
     #[local] Instance
-      DecoratedRightModule_DecoratedTraversableRightPreModule:
+      DecoratedRightModule_DecoratedTraversableRightPreModule
+      `{! DecoratedTraversableMonad W T}:
       DecoratedRightModule W T U :=
       {| kdmod_monad := _
       |}.
 
     #[local] Instance
-      RightModule_DecoratedTraversableRightPreModule:
+      RightModule_DecoratedTraversableRightPreModule
+      `{! DecoratedTraversableMonad W T}:
       RightModule T T.
     Proof.
       constructor; typeclasses eauto.

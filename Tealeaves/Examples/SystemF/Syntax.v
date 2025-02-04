@@ -372,24 +372,12 @@ Section DTM_instance_lemmas.
     intros.
     repeat fequal.
     ext k' [w b].
-    rewrite vec_compose_lemma2.
+    rewrite vec_compose_allK2.
     unfold compose. cbn.
     now simpl_monoid.
   Qed.
 
-  Lemma compose_dtm_incr : forall (w : W),
-      ((compose_dtm (F := F) (G := G) g f) ◻ (allK (incr w))) =
-      (g ◻ allK (incr w)) ⋆dtm (f ◻ allK (incr w)).
-  Proof.
-    intros.
-    apply (compose_dtm_incr_alt W); typeclasses eauto.
-  Qed.
-
 End DTM_instance_lemmas.
-
-Arguments compose_dtm_incr {W}%type_scope {T}%function_scope {H}%function_scope {mn_op mn_unit}
-  {G}%function_scope {H0 H1 H2} {F}%function_scope {H4 H5 H6 Monoid0} {A B C}%type_scope (_
-  _)%function_scope _.
 
 (** ** <<mbinddt_mret>> *)
 (******************************************************************************)
@@ -457,7 +445,8 @@ Proof.
     rewrite (app_pure_natural).
     reflexivity.
   - cbn.
-    change (MBind_type ?G H3 H4 H5 ?A ?B) with (mbinddt typ G (A := A) (B := B)).
+    change (MBind_type ?G ?Map ?Pure ?Mult ?A ?B) with
+      (mbinddt typ G (A := A) (B := B)).
     change [] with (Ƶ : list K2).
     change typ with (SystemF ktyp).
     unfold vec_compose.
@@ -481,7 +470,8 @@ Proof.
     rewrite (app_pure_natural).
     rewrite (app_pure_natural).
     reflexivity.
-  - cbn. setoid_rewrite compose_dtm_incr.
+  - cbn.
+    setoid_rewrite compose_dtm_incr_alt.
     rewrite <- IHt.
     rewrite (ap_compose2 G F).
     rewrite <- (ap_map (G := F)).
@@ -509,11 +499,12 @@ Proof.
   unfold compose at 1. induction t; intros g f;
     assert (Functor F) by apply app_functor.
   - cbn.
-    change (MBind_term ?G H3 H4 H5 ?A ?B) with (mbinddt term G (A := A) (B := B)).
+    change (MBind_term ?G ?map ?pure ?mult ?A ?B) with
+      (mbinddt term G (A := A) (B := B)).
     fequal. fequal. now ext k [w a].
   - cbn.
     change (bind_type ?F ?f) with (mbinddt typ F f).
-    setoid_rewrite compose_dtm_incr.
+    setoid_rewrite compose_dtm_incr_alt.
     rewrite <- IHt.
     rewrite <- (mbinddt_mbinddt_typ F G).
     unfold compose at 2.
@@ -543,7 +534,7 @@ Proof.
     do 2 rewrite (app_pure_natural).
     reflexivity.
   - cbn.
-    setoid_rewrite compose_dtm_incr.
+    setoid_rewrite (compose_dtm_incr_alt).
     rewrite <- IHt.
     rewrite (ap_compose2 G F).
     rewrite <- (ap_map (G := F)).

@@ -235,7 +235,8 @@ Proof.
   }
   unfold subst_in_defs at 1.
   unfold_ops @Mapdt_Binddt_compose.
-  rewrite mapdt_repr at 1.
+  rewrite (mapdt_repr (E := nat) (T := list) _ _ defs
+             (fun '(w1, t0) => BD (f ⦿ w1) t0)).
   dtm3_push_map_right_to_left.
   repeat change (precompose ?f ?g) with (g ∘ f).
   rewrite binddt_pointfree_letin.
