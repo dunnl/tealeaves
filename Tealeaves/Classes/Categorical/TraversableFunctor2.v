@@ -19,8 +19,13 @@ Class ApplicativeDist2 (T: Type -> Type -> Type) :=
           `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G},
       T ○21 G ⇒2 G ○12 T.
 
-#[global] Arguments dist2 T%function_scope {ApplicativeDist2}
+#[global] Arguments dist2 {T}%function_scope {ApplicativeDist2}
+  {G}%function_scope {Map_G Pure_G Mult_G} {B A}%type_scope.
+
+
+#[local] Arguments dist2 T%function_scope {ApplicativeDist2}
   G%function_scope {Map_G Pure_G Mult_G} {B A}%type_scope.
+
 
 (** ** Typeclass *)
 (******************************************************************************)

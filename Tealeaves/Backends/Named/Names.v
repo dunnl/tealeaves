@@ -12,7 +12,7 @@ Import ContainerFunctor.Notations.
 
 Module Type AtomModule  <: UsualDecidableType.
 
-  Parameter name : Set.
+  Parameter name : Type.
 
   Definition t := name.
 
@@ -34,7 +34,7 @@ End AtomModule.
 (******************************************************************************)
 Module Atom <: AtomModule.
 
-  Definition name := nat.
+  Definition name: Type := nat.
 
   Definition t := name.
 
@@ -88,7 +88,7 @@ End Atom.
 (******************************************************************************)
 Module SmartAtom <: AtomModule.
 
-  Definition name := nat.
+  Definition name: Type := nat.
   Definition t := name.
 
   Definition eq_dec := PeanoNat.Nat.eq_dec.
@@ -116,8 +116,31 @@ Module SmartAtom <: AtomModule.
   Fixpoint name_inb (x : name) (l : list name) : bool :=
     match l with
     | nil => false
-    | y :: rest => (x ==b y) || name_inb x rest
+    | y :: rest => (if x == y then true else false) || name_inb x rest
     end.
+
+  Lemma name_inb_iff: forall x l,
+      name_inb x l = true <-> x ∈ l.
+  Proof.
+    intros. induction l.
+    - cbn. intuition.
+    - cbn.
+      rewrite <- IHl.
+      clear IHl.
+      destruct (name_inb x l).
+      + rewrite Bool.orb_true_r. intuition.
+      +  rewrite Bool.orb_false_r.
+         destruct_eq_args x a; intuition.
+  Qed.
+
+  Lemma name_inb_iff_false: forall x l,
+      name_inb x l = false <-> ~ (x ∈ l).
+  Proof.
+    intros.
+    rewrite <- name_inb_iff.
+    destruct (name_inb x l);
+      intuition.
+  Qed.
 
   Fixpoint max_not_in_list_rec
     (gas: name) (current_min: name)

@@ -1837,3 +1837,20 @@ Qed.
   right.
   Abort.
  *)
+
+
+(** * <<Dist>> instance on <<Z>> *)
+(**********************************************************************)
+From Tealeaves Require Import Classes.Categorical.TraversableFunctor.
+
+Definition dist_Z
+  {B1 V1: Type} {G}
+  `{Map G} `{Mult G} `{Pure G}:
+  list (G B1) * G V1 -> G (list B1 * V1) :=
+  fun '(x, y) => pure (@pair (list B1) V1) <⋆> dist list G x <⋆> y.
+
+Instance Dist_Z: ApplicativeDist Z.
+Proof.
+  intro G. intros.
+  exact (dist_Z X).
+Defined.

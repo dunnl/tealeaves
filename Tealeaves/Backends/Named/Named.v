@@ -19,6 +19,7 @@ Import ContainerFunctor.Notations.
 (** ** General operations on lists *)
 (**********************************************************************)
 
+(* Fold over a list of A's where each A has the prefix of the list so far *)
 Fixpoint fold_with_history {A B: Type}
   (f: list B * A -> B)
   (l: list A): list B :=
@@ -30,6 +31,7 @@ Fixpoint fold_with_history {A B: Type}
 
 (** ** Variable freshness *)
 (**********************************************************************)
+(* Given the history of output names so far, decide the name of this binder *)
 Definition hf_loc: list name * name -> name :=
   fun '(history, current) =>
     if SmartAtom.name_inb current history
@@ -58,7 +60,7 @@ Section examples.
   Compute hf [0; 1; 0; 1; 0; 1].
   Compute hf [0; 1; 3; 1; 0; 1].
 
-  (*
+(*
   Goal hf nil = nil. reflexivity. Qed.
   Goal hf [1] = [1]. cbv. reflexivity. Qed.
   Goal hf [1 ; 2] = [1 ; 2]. reflexivity. Qed.
@@ -72,7 +74,7 @@ Section examples.
   Goal hf [1 ; 4 ; 6 ; 4] = [1 ; 2 ; 3 ; 4]. reflexivity. Qed.
   Goal hf [1 ; 4 ; 6 ; 4 ; 9 ; 10] = [1 ; 2 ; 3 ; 4; 5; 6]. reflexivity. Qed.
   Goal hf [1 ; 4 ; 8 ; 8 ] = [1 ; 2 ; 3 ; 4 ]. reflexivity. Qed.
-   *)
+ *)
 
 End examples.
 
@@ -118,20 +120,10 @@ End examples.
 (**********************************************************************)
 Section named_local_operations.
 
-
   Context
     {T: Type -> Type -> Type}
     `{forall W, Return (T W)}.
 
-  (*
-  Definition deconflict_binder_local
-    (ctx: list name):
-    list name * name -> name :=
-    fun '(history, current) => fresh (ctx ++ history).
-
-  Definition deconflict_binder
-    (conflicts: list name)
-*)
 
   Definition deconflict_binder_local (conflicts: list name):
     list name * name -> name :=
@@ -186,32 +178,21 @@ Section named_local_operations.
     T name name -> T name name -> Prop.
   Admitted.
 
-End named_local_operations.
-
-Section named_local_operations.
-
   Import DecoratedTraversableMonadPoly.DerivedOperations.
 
   Context
-    (T: Type -> Type -> Type)
     `{forall W, Return (T W)}
     `{Substitute T T}.
 
-  Definition subst_naive_local (x: name) (u: T name name):
-    list name * name -> T name name :=
-    fun '(l, y) => if x == y then u else ret (T := T name) y.
-
-  Definition subst (x: name) (u: T name name):
+  Definition subst_conflicts (top_conflicts: list name)
+    (x: name) (u: T name name):
     T name name -> T name name :=
     substitute (G := fun A => A) (U := T)
-      (deconflict_binder_local (FV T u))
-      (subst_local (FV T u) x u).
+      (deconflict_binder_local top_conflicts)
+      (subst_local top_conflicts x u).
 
-  (*
-  Definition alpha_equiv: T name name -> T name name -> Prop :=
-    substitute (G := subset) (U := T)
-      (const (const True))
-      (alpha_equiv_local).
-*)
+  Definition subst (x: name) (u: T name name)
+    (t: T name name): T name name :=
+    subst_conflicts (FV t ++ FV u) x u t.
 
 End named_local_operations.

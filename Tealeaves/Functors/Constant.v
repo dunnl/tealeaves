@@ -118,7 +118,7 @@ Section constant_functor.
     #[global] Instance Map_const: Map (const M) :=
       fun X Y f t => t.
 
-    Theorem map_const_spec: forall (X Y: Type) (f: X -> Y),
+    Theorem map_const_spec: forall {X Y: Type} (f: X -> Y),
         map (const M) f = id.
     Proof.
       reflexivity.

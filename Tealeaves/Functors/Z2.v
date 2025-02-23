@@ -1,5 +1,7 @@
 From Tealeaves Require Import
   Classes.Functor2
+  Classes.Categorical.Comonad
+  Functors.Reader
   Functors.List
   Functors.List_Telescoping_General.
 
@@ -23,3 +25,41 @@ Definition map_Z2: forall (B1 A1 B2 A2: Type) (g: B1 -> B2) (f: A1 -> A2),
 #[global] Arguments extract_Z2 {B A}%type_scope _.
 #[global] Arguments cojoin_Z2 {B A}%type_scope _.
 #[global] Arguments map_Z2 {B1 A1 B2 A2}%type_scope g f.
+
+
+#[export] Instance Extract_Z2: forall B, Extract (Z2 B) :=
+  fun B V => extract (W := prod (list B)).
+
+#[export] Instance Map2_Z2: Map2 Z2 := @map_Z2.
+
+Instance Functor2_Z2: Functor2 Z2.
+Proof.
+  constructor; intros; ext t.
+  - induction t; try auto.
+    cbn. now rewrite fun_map_id.
+  - induction t; try auto.
+    cbn.
+    compose near a on left.
+    rewrite fun_map_map.
+    reflexivity.
+Qed.
+
+(** * <<Dist>> instance on <<Z2>> *)
+(**********************************************************************)
+From Tealeaves Require Import
+  Classes.Categorical.TraversableFunctor2.
+
+Import Applicative.Notations.
+
+Definition dist2_Z2
+  {B V: Type} {G}
+  `{Map G} `{Mult G} `{Pure G}:
+  Z2 (G B) (G V) -> G (Z2 B V) :=
+  fun '(x, y) => pure (@pair (list B) V) <⋆> dist list G x <⋆> y.
+
+Instance Dist2_Z2: ApplicativeDist2 Z2.
+Proof.
+  intro G. intros.
+  exact (dist2_Z2 X).
+Defined.
+

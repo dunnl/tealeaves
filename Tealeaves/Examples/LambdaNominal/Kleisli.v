@@ -1,4 +1,18 @@
-KLeisl
+From Tealeaves Require Export
+  Examples.LambdaNominal.Syntax
+  Examples.LambdaNominal.Categorical
+  Examples.LambdaNominal.Raw
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
+  Classes.Categorical.DecoratedTraversableMonadPoly
+  Functors.Subset
+  Backends.LN.AtomSet
+  Backends.Named.Named.
+
+Import DecoratedTraversableMonadPoly.DerivedOperations.
+Import Kleisli.DecoratedTraversableMonadPoly.DerivedOperations.
+Import Kleisli.DecoratedTraversableMonadPoly.
+
+#[local] Generalizable Variables G ϕ.
 
 (*|
 ========================================
@@ -24,18 +38,50 @@ Fixpoint binddt_term {B1 V1 B2 V2: Type}
 #[export] Instance Substitute_lambda_term: Substitute term term :=
   @binddt_term.
 
+Section rw.
+
+  Context
+    {B1 V1 B2 V2: Type}
+  {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  (ρ: list B1 * B1 -> G B2)
+  (f: list B1 * V1 -> G (term B2 V2)).
+
+  Lemma sub_term_rw1: forall v,
+      substitute ρ f (tvar v) = f ([], v).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma sub_term_rw2: forall b t,
+      substitute ρ f (lam b t) =
+        pure ((λ) (V:=V2)) <⋆> ρ ([], b) <⋆> substitute (ρ ⦿ [b]) (f ⦿ [b]) t.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma sub_term_rw3: forall t1 t2,
+      substitute ρ f (tap t1 t2) =
+        pure (@tap B2 V2) <⋆> (substitute ρ f t1)
+          <⋆> (substitute ρ f t2).
+
+  Proof.
+    reflexivity.
+  Qed.
+End rw.
+
 (*|
 ===========================================
 Decomposition of the <<binddt>> operation
 ===========================================
 |*)
+
 Lemma binddt_decomposed:
   forall (B1 B2 V1 V2: Type)
     `{ApplicativeCommutativeIdempotent G}
     (ρ: list B1 * B1 -> G B2)
     (σ: list B1 * V1 -> G (term B2 V2)),
     substitute ρ σ =
-      map (F := G) join_term ∘ dist_term ∘ map_term ρ σ ∘ dec_term.
+      map (F := G) join_term ∘ dist_term ∘ map2_term ρ σ ∘ dec_term.
 Proof.
   intros.
   unfold compose.

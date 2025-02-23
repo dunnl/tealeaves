@@ -191,6 +191,14 @@ Section composition_with_functor.
 
 End composition_with_functor.
 
+
+(** ** Strength *)
+(**********************************************************************)
+Definition strength2 {F: Type -> Type -> Type}
+  `{Map2 F} {A B C}:
+  forall (p : A * F B C), F (A * B) (A * C) :=
+    fun '(a, t) => map2 (pair a) (pair a) t.
+
 (** * Notations *)
 (**********************************************************************)
 Module Notations.
