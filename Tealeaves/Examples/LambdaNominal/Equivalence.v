@@ -47,46 +47,62 @@ Section rw.
 End rw.
 
 
-Lemma test: forall (bs: list name) (t: term name name),
+Lemma FV_loc_preincr: forall (bs: list name) (t: term name name),
     substitute (B2 := False) (A2 := False)
       (G := const (list name)) (T := term) (const [])
-      ((map ret ∘ (fun '(ctx, x) => if get_binding ctx x then [] else [x])) ⦿ bs)
+      (FV_loc ⦿ bs)
       t =
       remove_all bs (fvL t).
 Proof.
   intros.
   generalize dependent bs.
   induction t; intros.
-  - cbn. change (bs ● []) with (bs ● Ƶ).
+  - rewrite sub_term_rw1.
+    rewrite fvL_rw1.
+    cbn.
+    change (bs ● []) with (bs ● Ƶ).
     simpl_monoid.
     remember (get_binding bs v) as R.
     destruct R.
-    + induction l.
+    + destruct bs.
+      * inversion HeqR.
+      * cbn in *.
+        destruct_eq_args v n0.
+        { admit. }
+        { admit. }
+    + admit.
+  - rewrite sub_term_rw2.
+    rewrite preincr_preincr.
+    rewrite IHt.
+    repeat simplify_applicative_const.
+    simpl_monoid.
+    unfold const.
+    change (@nil name) with (Ƶ: list name).
+    simpl_monoid.
+    rewrite fvL_rw2.
+    admit.
+  - rewrite sub_term_rw3.
+    rewrite IHt1.
+    rewrite IHt2.
+    repeat simplify_applicative_const.
+    simpl_monoid.
+    rewrite fvL_rw3.
+    admit.
 Admitted.
 
 Lemma FV_fvL : forall (t: term name name),
     FV term t = fvL t.
 Proof.
   intros t.
-  induction t.
-  - reflexivity.
-  - unfold FV.
-    unfold mapdtp.
-    unfold MapdtPoly_Substitute.
-    rewrite sub_term_rw2.
-    assert (@const (list name * name) (list name) [] ⦿ [b] =
-              (const (A := list name * name) (@nil name))).
-    { ext x. reflexivity.}
-    setoid_rewrite H.
-    rewrite test.
-    repeat simplify_applicative_const.
-    simplify_monoid_units.
-    cbn.
-    reflexivity.
-  - cbn. rewrite IHt1.
-    rewrite IHt2.
-    reflexivity.
-Qed.
+  unfold FV.
+  unfold mapdtp.
+  unfold MapdtPoly_Substitute.
+  replace ((map (F := const (list name)) ret ∘ FV_loc))
+    with ((map (F := const (list name)) ret (A := False) ∘ FV_loc) ⦿ Ƶ).
+  2:{ now rewrite preincr_zero. }
+  rewrite FV_loc_preincr.
+  admit.
+Admitted.
 
 (*
 Section rw.
@@ -139,6 +155,7 @@ Section rw.
   Proof.
     reflexivity.
   Qed.
+
 
   Lemma subst_top_rw2: forall (b: name) (t: term name name),
       subst_top top x (fv_u) u (lam b t) =
@@ -228,57 +245,393 @@ Proof.
     now apply subst_local_kill.
 Qed.
 
+Lemma inb_iff: forall (l: list name) (x: name),
+    SmartAtom.name_inb x l = false <-> (~ x ∈ l).
+Proof.
+  induction l.
+  - cbv. intuition.
+  - intros. cbn.
+    destruct_eq_args x a.
+    + cbn. firstorder. inversion H.
+    + cbn. rewrite IHl. firstorder.
+Qed.
+
+Lemma inb_iff2: forall (l: list name) (x: name),
+    SmartAtom.name_inb x l = true <-> (x ∈ l).
+Proof.
+  induction l.
+  - cbv. intuition.
+  - intros. cbn.
+    destruct_eq_args x a.
+    + cbn. firstorder.
+    + cbn. rewrite IHl. firstorder.
+Qed.
+
+Lemma x1: forall top x l ctx b,
+    ~ (b ∈ l) ->
+    (rename_binder_local top x l (ctx, b)) = b.
+Proof.
+  intros. cbn.
+  destruct (SmartAtom.name_inb x ctx).
+  - reflexivity.
+  - destruct_eq_args b x.
+    rewrite <- inb_iff in H.
+    rewrite H.
+    reflexivity.
+Qed.
+
+Lemma rename_binder_preincr1: forall top x l b,
+    b = x ->
+    ~ (b ∈ l) ->
+    rename_binder_local top x l ⦿ [b] =
+      extract.
+Proof.
+  intros.
+  ext (ctx, v).
+  unfold preincr, compose, incr.
+  unfold_ops @Monoid_op_list.
+  unfold rename_binder_local.
+  subst.
+  assert (SmartAtom.name_inb x ([x] ++ ctx) = true).
+  { rewrite SmartAtom.name_inb_iff.
+    firstorder. }
+  rewrite H.
+  reflexivity.
+Qed.
+
+Lemma destruct_in: forall (a: name) (l: list name),
+    a ∈ l \/ ~ (a ∈ l).
+Proof.
+  Search "_inb".
+  intros.
+  rewrite <- SmartAtom.name_inb_iff.
+  destruct (SmartAtom.name_inb a l); auto.
+Qed.
+
+
+Lemma needed_easier:forall (top:list name) (x:name) (l:list name) (b:name) (ctx:list name) v,
+    b <> x ->
+    ~ (b ∈ l) ->
+    v ∈ l ->
+  (rename_binder_local_history top x l ⦿ [b]) (ctx, v) =
+    (rename_binder_local_history (top ++ [b]) x l) (ctx, v).
+Proof.
+  intros.
+  unfold preincr, compose, incr.
+  change (?a ● ?g) with (a ++ g).
+  destruct ctx.
+  - rewrite List.app_nil_r.
+    unfold rename_binder_local_history.
+    destruct_eq_args x v.
+    rewrite <- SmartAtom.name_inb_iff in H1.
+    rewrite H1.
+    rewrite List.app_nil_l.
+    rewrite List.app_assoc.
+    reflexivity.
+  - unfold rename_binder_local_history.
+    destruct_eq_args x v.
+    rewrite <- SmartAtom.name_inb_iff in H1.
+    rewrite H1.
+    change (?x :: ctx) with ([x] ++ ctx).
+    repeat rewrite List.app_assoc.
+    reflexivity.
+Qed.
+
+Lemma needed_harded:forall (top:list name) (x:name) (l:list name) (b:name) (ctx:list name) v,
+    b <> x ->
+    ~ (b ∈ l) ->
+    ~ v ∈ l ->
+  (rename_binder_local_history top x l ⦿ [b]) (ctx, v) =
+    (rename_binder_local_history (top ++ [b]) x l) (ctx, v).
+Proof.
+  intros.
+  unfold preincr, compose, incr.
+  change (?a ● ?g) with (a ++ g).
+  destruct ctx.
+  - rewrite List.app_nil_r.
+    unfold rename_binder_local_history.
+    destruct_eq_args x v.
+    rewrite <- SmartAtom.name_inb_iff_false in H1.
+    rewrite H1.
+    reflexivity.
+  - unfold rename_binder_local_history.
+    destruct_eq_args x v.
+    destruct (SmartAtom.name_inb v l); auto.
+    repeat rewrite List.app_assoc.
+    reflexivity.
+Qed.
+
+Lemma needed_yay:forall (top:list name) (x:name) (l:list name) (b:name) (ctx:list name) v,
+    b <> x ->
+    ~ (b ∈ l) ->
+  (rename_binder_local_history top x l ⦿ [b]) (ctx, v) =
+    (rename_binder_local_history (top ++ [b]) x l) (ctx, v).
+Proof.
+  intros.
+  destruct (destruct_in v l).
+  - apply needed_easier; auto.
+  -  apply needed_harded; auto.
+Qed.
+
+Lemma needed_yayy:forall (top:list name) (x:name) (l:list name) (b:name),
+    b <> x ->
+    ~ (b ∈ l) ->
+  (rename_binder_local_history top x l ⦿ [b]) =
+    (rename_binder_local_history (top ++ [b]) x l).
+Proof.
+  intros.
+  ext (ctx, v).
+  now apply needed_yay.
+Qed.
+
+Lemma needed_intermediate: forall  top x l b ctx,
+
+    b <> x ->
+    ~ b ∈ l ->
+    fold_with_history (rename_binder_local_history top x l ⦿ [b]) ctx =
+      fold_with_history (rename_binder_local_history (top ++ [b]) x l) ctx.
+Proof.
+  intros.
+    induction ctx.
+  - reflexivity.
+  - rewrite fold_with_history_cons.
+    rewrite fold_with_history_cons.
+    fequal.
+    { unfold preincr, compose, incr.
+      change ([b] ● []) with [b].
+      unfold rename_binder_local_history.
+      destruct_eq_args x a.
+      destruct (destruct_in a l).
+      { rewrite <- SmartAtom.name_inb_iff in H1.
+        rewrite H1.
+        rewrite List.app_nil_l.
+        rewrite List.app_assoc.
+        reflexivity.
+      }
+      {rewrite <- SmartAtom.name_inb_iff_false in H1.
+       rewrite H1.
+       reflexivity.
+      }
+    }
+    { fequal.
+      rewrite needed_yayy; auto.
+    }
+Qed.
+
+
+Lemma needed: forall top x l b ctx v,
+    b <> x ->
+    ~ (b ∈ l) ->
+    v ∈ l ->
+    v <> x ->
+    ~ (x ∈ ctx) ->
+    rename_binder_local_history top x l (ctx_to_history top x l ([b] ++ ctx), v) =
+      (if SmartAtom.name_inb x ctx
+       then v
+       else rename_binder_local_history (top ++ [b]) x l (ctx_to_history (top ++ [b]) x l ctx, v)).
+Proof.
+  intros.
+  change ([b] ++ ctx) with (b :: ctx).
+  rewrite ctx_to_history_cons1; auto.
+  rewrite rename_binder_local_history_rw3; auto.
+  rewrite <- SmartAtom.name_inb_iff_false in H3.
+  rewrite H3.
+  rewrite rename_binder_local_history_rw3; auto.
+  change (?a :: ?b) with ([a] ++ b) at 1.
+  repeat rewrite <- List.app_assoc.
+  fequal.
+  fequal.
+  fequal.
+  fequal.
+  unfold ctx_to_history.
+  eapply needed_intermediate; auto.
+Qed.
+
+Lemma rename_binder_preincr: forall top x l b,
+    b <> x ->
+    ~ (b ∈ l) ->
+    rename_binder_local top x l ⦿ [b] =
+      rename_binder_local (top ++ [b]) x l.
+Proof.
+  intros.
+  ext (ctx, v).
+  unfold preincr, compose, incr.
+  unfold_ops @Monoid_op_list.
+  unfold rename_binder_local.
+  (* LHS: Is x anywhere in the context? If  so, leave everything alone *)
+  remember (SmartAtom.name_inb x ([b] ++ ctx)) as R.
+  destruct R.
+  - (* This binder is in the context. Leave it alone on the LHS. *)
+    symmetry in HeqR.
+    rewrite inb_iff2 in HeqR.
+    rewrite element_of_list_app in HeqR.
+    rewrite element_of_list_one in HeqR.
+    pose HeqR as HeqRcopy.
+    destruct HeqRcopy.
+    + (* b is equal to x, the var being substituted *)
+      (* it is not renamed. actually, nothing underneath it is renamed *)
+      subst.
+      remember (SmartAtom.name_inb b ctx).
+      destruct b0.
+      reflexivity.
+      destruct_eq_args b v.
+    + rewrite <- SmartAtom.name_inb_iff in H1.
+      rewrite H1.
+      reflexivity.
+  - (* This binder didnt't appear in the context earlier. It's a free variable *)
+    (* is it the one substituted? *)
+    destruct_eq_args x v.
+    + (* Yes. We aren't substituting but renaming binders. We leave this one alone. *)
+      destruct (SmartAtom.name_inb v ctx); reflexivity.
+    + (* No, this is a free variable and we need to rename it. *)
+      assert (SmartAtom.name_inb x ctx = false).
+      { rewrite inb_iff.
+        symmetry in HeqR.
+        rewrite inb_iff in HeqR.
+        firstorder. }
+      (* Is v in the avoid set *)
+      remember (SmartAtom.name_inb v l) as R.
+      destruct R.
+      { apply needed; auto.
+        rewrite <- SmartAtom.name_inb_iff.
+        auto.
+        rewrite <- SmartAtom.name_inb_iff_false.
+        assumption.
+      }
+      { now destruct (SmartAtom.name_inb x ctx). }
+Qed.
+
+(*
+ Heqrem : false = SmartAtom.name_inb b (fvL u)
+  ============================
+  (λ) (rename_binder_local top x (fvL u) ([], b))
+    (substitute (rename_binder_local top x (fvL u) ⦿ [b]) (subst_local top x (fvL u) u ⦿ [b]) t) =
+  (λ) b (substF (top ++ [b]) x u t)
+
+ Heqrem : false = SmartAtom.name_inb b (fvL u)
+  ============================
+  (λ) b (substitute (rename_binder_local top x (fvL u) ⦿ [b]) (subst_local top x (fvL u) u ⦿ [b]) t) =
+  (λ) b (substitute (rename_binder_local (top ++ [b]) x (FV term u)) (subst_local (top ++ [b]) x (FV term u) u) t)
+
+
+ *)
+
+
+
+
+
+Lemma subst_binder_preincr: forall (top:list name) (x: name) (b: name) u,
+    b <> x ->
+    subst_local (T := term) top x (fvL u) u ⦿ [b] =
+      subst_local (T := term) (top ++ [b]) x (FV term u) u.
+Proof.
+  intros. ext (ctx, v).
+
+  unfold preincr, compose, incr.
+  unfold_ops @Monoid_op_list.
+  unfold subst_local.
+  (* LHS: Is x anywhere in the context? If  so, leave everything alone *)
+  remember (SmartAtom.name_inb x ([b] ++ ctx)) as R.
+  destruct R.
+  - symmetry in HeqR.
+    rewrite inb_iff2 in HeqR.
+    rewrite element_of_list_app in HeqR.
+    rewrite element_of_list_one in HeqR.
+    pose HeqR as HeqRcopy.
+    destruct HeqRcopy.
+    + subst.
+      remember (SmartAtom.name_inb b ctx).
+      destruct b0.
+      reflexivity.
+      destruct_eq_args b v.
+    + rewrite <- SmartAtom.name_inb_iff in H0.
+      rewrite H0.
+      reflexivity.
+  - (* This binder didnt't appear in the context earlier. It's a free variable *)
+    (* is it the one substituted? *)
+    destruct_eq_args x v.
+    { symmetry in HeqR.
+      rewrite SmartAtom.name_inb_iff_false in HeqR.
+      assert (~ v ∈ ctx) by firstorder.
+      rewrite <- (SmartAtom.name_inb_iff_false) in H0.
+      rewrite H0.
+      (* need to show v is unbound because not in contxt *)
+      admit. }
+    {
+      assert (SmartAtom.name_inb x ctx = false).
+      admit.
+      rewrite H0.
+      admit.
+    }
+Admitted.
+
+
 Lemma substSmart_equiv:
   forall (top: list name) (x: name) (u: term name name),
     subst_top top x (FV term u) u =
       substF top x u.
 Proof.
-  intros. ext t. induction t.
+  intros.
+  (* unfold subst_top. ext t. *)
+  intros. ext t. generalize dependent top. induction t; intros top.
   - rewrite subst_top_rw1.
     rewrite substF_rw1.
     reflexivity.
   - rewrite subst_top_rw2.
     rewrite substF_rw2.
+    (* Is the binder the variable being substituted? *)
     destruct_eq_args b x.
-    + fequal.
-      apply rename_binder_kill2.
-      apply kill.
-      now simpl_list.
-    +
+    + (* Yes, it is. The RHS cuts off immediately. *)
+      (* We must show the LHS localized fns. are effectively the identity *)
+         fequal.
+      { apply rename_binder_kill2. }
+      { apply kill.
+        now simpl_list. }
+    + (* No, it's not *)
       rewrite FV_fvL.
+      (* Is b of of the variables in fvL u and therefore needs to be renamed? *)
       remember ((SmartAtom.name_inb b (fvL u))) as rem.
       destruct rem.
-      * fequal.
-        { cbn.
+      * (* Yes, it is. Rename it. *)
+        fequal.
+        { unfold rename_binder_local.
+          assert (~ x ∈ nil) by easy.
+          rewrite <- inb_iff in H.
+          rewrite H.
           destruct_eq_args x b.
           rewrite <- Heqrem.
-          reflexivity.
-        }
-
-
-
-
-      unfold rename_binder_local.
-      assert (SmartAtom.name_inb x [] = false).
-      { reflexivity. }
-      rewrite H. destruct_eq_args x b.
-      rewrite FV_fvL.
-      remember ((SmartAtom.name_inb b (fvL u))) as rem.
-      destruct rem.
-      * fequal.
-        {
-        }
+          rewrite ctx_to_history_nil.
+          unfold rename_binder_local_history.
+          destruct_eq_args x b.
+          rewrite <- Heqrem.
+          rewrite List.app_nil_l.
+          reflexivity. }
         {
           admit.
         }
-      * cbn.
-        admit.
+      * (* No, it's not. Don't rename it. *)
+        rewrite x1.
+        2:{ rewrite <- inb_iff. easy. }
+        rewrite <- IHt.
+        unfold subst_top.
+        fequal.
+        fequal.
+        { rewrite FV_fvL.
+          rewrite rename_binder_preincr.
+          reflexivity. auto.
+          rewrite <- SmartAtom.name_inb_iff_false. easy.
+        }
+        {
+          rewrite subst_binder_preincr; auto.
+        }
   - rewrite subst_top_rw3.
     rewrite substF_rw3.
     rewrite IHt1.
     rewrite IHt2.
     reflexivity.
 Admitted.
+
+
 
 Corollary substSmart_equiv_truly:
   forall (x: name) (u: term name name) t,

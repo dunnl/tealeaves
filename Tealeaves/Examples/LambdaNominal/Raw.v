@@ -37,6 +37,33 @@ Fixpoint fvL (t: term name name): list name :=
   | lam b t => remove b (fvL t)
   end.
 
+Section rw.
+
+  Context {l: list name} {x: name} {u: term name name}.
+
+  Lemma fvL_rw1: forall v,
+      fvL (tvar v) = [v].
+  Proof.
+    intros.
+    reflexivity.
+  Qed.
+
+  Lemma fvL_rw2: forall b t,
+      fvL (lam b t) =
+        remove b (fvL t).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma fvL_rw3: forall t1 t2,
+      fvL (tap t1 t2) = (fvL t1) ++ (fvL t2).
+  Proof.
+    intros.
+    reflexivity.
+  Qed.
+
+End rw.
+
 Fixpoint rename (x: name) (y: name) (t: term name name): term name name :=
   match t with
   | tvar v => if x == v then tvar y else tvar v
@@ -72,7 +99,7 @@ Proof.
 Qed.
 
 (* Capture-avoiding substitution with well-founded recursion *)
-Function substF (l: list name)
+Function substF (l: list name) (* l is the avoid set *)
   (x : name) (u : term name name)
   (t : term name name)
   {measure term_measure t}

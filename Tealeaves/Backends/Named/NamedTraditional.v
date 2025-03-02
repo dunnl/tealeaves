@@ -25,9 +25,11 @@ Section alt.
 
   Section rename_local.
 
-    Context (conflicts: list name).
+    Context (conflicts: list name). (* Top level conflicts *)
+
     (* X is the var being substituted, fv_u is FV u *)
     Context (x: name) (fv_u: list name) (u: T name name).
+
 
     (* Given a substitution of x by u, encode the logic of what happens at <<current>> if <<history>> is the set of names
      given to the binders so far *)
@@ -40,18 +42,114 @@ Section alt.
              then fresh (conflicts ++ history ++ [b])
              else b.
 
+    Lemma rename_binder_local_history_rw1 {hist b}:
+      b = x ->
+      rename_binder_local_history (hist, b) = b.
+    Proof.
+      intros.
+      unfold rename_binder_local_history.
+      destruct_eq_args x b.
+    Qed.
+
+    Lemma rename_binder_local_history_rw2 {b}:
+      b <> x ->
+      b ∈ fv_u ->
+      rename_binder_local_history (nil, b) = fresh (conflicts ++ [b]).
+    Proof.
+      intros.
+      unfold rename_binder_local_history.
+      destruct_eq_args x b.
+      rewrite <- SmartAtom.name_inb_iff in H2.
+      rewrite H2.
+      rewrite List.app_nil_l.
+      reflexivity.
+    Qed.
+
+    Lemma rename_binder_local_history_rw3 {hist b}:
+      b <> x ->
+      (b ∈ fv_u) ->
+      rename_binder_local_history (hist, b) = fresh (conflicts ++ hist ++ [b]).
+    Proof.
+      intros.
+      unfold rename_binder_local_history.
+      destruct_eq_args x b.
+      rewrite <- SmartAtom.name_inb_iff in H2.
+      rewrite H2.
+      reflexivity.
+    Qed.
+
+    Lemma rename_binder_local_history_rw4 {hist b}:
+      b <> x ->
+      ~ (b ∈ fv_u) ->
+      rename_binder_local_history (hist, b) = b.
+    Proof.
+      intros.
+      unfold rename_binder_local_history.
+      destruct_eq_args x b.
+      rewrite <- SmartAtom.name_inb_iff_false in H2.
+      rewrite H2.
+      reflexivity.
+    Qed.
+
     Definition ctx_to_history: list name -> list name :=
       fold_with_history rename_binder_local_history.
+
+
+    Lemma ctx_to_history_nil: ctx_to_history [] = [].
+    Proof.
+      intros.
+      reflexivity.
+    Qed.
+
+    Lemma ctx_to_history_cons1 {nm l}:
+      x <> nm ->
+      ~ (nm ∈ fv_u) ->
+      ctx_to_history (nm :: l) =
+        nm :: fold_with_history (rename_binder_local_history ⦿ [nm]) l.
+    Proof.
+      intros.
+      unfold ctx_to_history.
+      rewrite fold_with_history_cons.
+      rewrite rename_binder_local_history_rw2; auto.
+    Qed.
+
+
+    Lemma ctx_to_history_cons2 {nm l}:
+      x <> nm ->
+      (nm ∈ fv_u) ->
+      ctx_to_history (nm :: l) =
+        fresh (conflicts ++ [nm]) :: fold_with_history (rename_binder_local_history ⦿ [fresh (conflicts ++ [nm])]) l.
+    Proof.
+      intros.
+      unfold ctx_to_history.
+      rewrite fold_with_history_cons.
+      rewrite rename_binder_local_history_rw3; auto.
+    Qed.
+
+    Lemma ctx_to_history_dist: forall l1 l2,
+      ctx_to_history (l1 ++ l2) = ctx_to_history l1 ++ ctx_to_history l2.
+    Proof.
+      intros.
+      unfold ctx_to_history.
+      induction l1.
+      reflexivity.
+      rewrite <- List.app_comm_cons.
+      unfold ctx_to_history.
+      rewrite fold_with_history_cons.
+      rewrite fold_with_history_cons.
+      rewrite <- List.app_comm_cons.
+      fequal.
+    Abort.
 
 
     (* Name a binder to something else during substitution *)
     Definition rename_binder_local:
       list name * name -> name :=
       fun '(ctx, b) =>
-        if SmartAtom.name_inb x ctx (* Halt substitution early *)
+        if SmartAtom.name_inb x ctx (* Halt substitution early, we didnt' past where x appears in ctx *)
         then b
         else if x == b (* Else check if halt now *)
-             then b
+             then b (* This binder is the name of the free variable we're substituting, halt and leave binder alone *)
              else if SmartAtom.name_inb b fv_u (* Else check if need to rename *)
              then (rename_binder_local_history (ctx_to_history ctx, b))
              else b.

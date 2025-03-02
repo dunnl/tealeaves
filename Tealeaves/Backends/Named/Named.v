@@ -29,6 +29,28 @@ Fixpoint fold_with_history {A B: Type}
       f ([], a) :: fold_with_history (f ⦿ [f ([], a)]) rest
   end.
 
+Section rw.
+
+  Context {A B: Type}
+    (f: list B * A -> B).
+
+  Lemma fold_with_history_nil:
+    fold_with_history f nil = nil.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma fold_with_history_cons {a l}:
+    fold_with_history f (a :: l) =
+      f ([], a) :: fold_with_history (f ⦿ [f ([], a)]) l.
+  Proof.
+    cbn.
+    reflexivity.
+  Qed.
+
+End rw.
+
+
 (** ** Variable freshness *)
 (**********************************************************************)
 (* Given the history of output names so far, decide the name of this binder *)
@@ -124,6 +146,8 @@ Section named_local_operations.
     {T: Type -> Type -> Type}
     `{forall W, Return (T W)}.
 
+  Definition FV_loc: list name * name -> list name :=
+    fun '(ctx, x) => if get_binding ctx x then @nil name else [x].
 
   Definition deconflict_binder_local (conflicts: list name):
     list name * name -> name :=
@@ -172,7 +196,7 @@ Section named_local_operations.
       (A2 := False) (B2 := False)
       (G := const (list name))
       (const (@nil name))
-      (fun '(ctx, x) => if get_binding ctx x then @nil name else [x]).
+      FV_loc.
 
   Definition alpha:
     T name name -> T name name -> Prop.
