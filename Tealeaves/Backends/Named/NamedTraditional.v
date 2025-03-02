@@ -14,6 +14,14 @@ Import List.ListNotations.
 Import Product.Notations.
 Import ContainerFunctor.Notations.
 
+Lemma destruct_in: forall (a: name) (l: list name),
+    a ∈ l \/ ~ (a ∈ l).
+Proof.
+  intros.
+  rewrite <- SmartAtom.name_inb_iff.
+  destruct (SmartAtom.name_inb a l); auto.
+Qed.
+
 Ltac step_set_test :=
   match goal with
   | H: ~ ?x ∈ ?t |- _ =>
@@ -39,7 +47,7 @@ Section alt.
 
   Section rename_local.
 
-    Context (conflicts: list name). (* Top level conflicts *)
+    Context (conflicts: list name). (* Top level conflicts, intuitively FV t \cup FV u *)
 
     (* X is the var being substituted, fv_u is FV u *)
     Context (x: name) (fv_u: list name) (u: T name name).
@@ -54,7 +62,12 @@ Section alt.
         then b
         else if SmartAtom.name_inb b (fv_u)
              then fresh (conflicts ++ history ++ [b])
-             else b.
+             else if SmartAtom.name_inb b (conflicts ++ history)
+                  then fresh (conflicts ++ history ++ [b])
+                  else b.
+
+    Definition ctx_to_history: list name -> list name :=
+      fold_with_history rename_binder_local_history.
 
     Lemma rename_binder_local_history_rw1 {hist b}:
       b = x ->
@@ -87,21 +100,37 @@ Section alt.
       rewrite rename_binder_local_history_rw2; auto.
     Qed.
 
+
     Lemma rename_binder_local_history_rw3 {hist b}:
       b <> x ->
       ~ (b ∈ fv_u) ->
-      rename_binder_local_history (hist, b) = b.
+      (b ∈ (conflicts ++ hist)) ->
+      rename_binder_local_history (hist, b) = fresh (conflicts ++ hist ++ [b]).
     Proof.
-      introv BneqX BinFVu.
+      introv BneqX BinFVu BninHist.
       unfold rename_binder_local_history.
       destruct_eq_args x b.
       rewrite <- SmartAtom.name_inb_iff_false in BinFVu.
       rewrite BinFVu.
+      step_set_test.
       reflexivity.
     Qed.
 
-    Definition ctx_to_history: list name -> list name :=
-      fold_with_history rename_binder_local_history.
+
+    Lemma rename_binder_local_history_rw4 {hist b}:
+      b <> x ->
+      ~ (b ∈ fv_u) ->
+      ~ (b ∈ (conflicts ++ hist)) ->
+      rename_binder_local_history (hist, b) = b.
+    Proof.
+      introv BneqX BinFVu BninHist.
+      unfold rename_binder_local_history.
+      destruct_eq_args x b.
+      rewrite <- SmartAtom.name_inb_iff_false in BinFVu.
+      rewrite BinFVu.
+      step_set_test.
+      reflexivity.
+    Qed.
 
 
     Lemma ctx_to_history_nil: ctx_to_history [] = [].
@@ -137,15 +166,32 @@ Section alt.
     Lemma ctx_to_history_cons_rw3 {nm l}:
       x <> nm ->
       ~ (nm ∈ fv_u) ->
+      nm ∈ (conflicts) ->
+      ctx_to_history (nm :: l) =
+        fresh (conflicts ++ [nm]) :: fold_with_history (rename_binder_local_history ⦿ [fresh (conflicts ++ [nm])]) l.
+    Proof.
+      intros.
+      unfold ctx_to_history.
+      rewrite fold_with_history_cons.
+      rewrite rename_binder_local_history_rw3; auto.
+      rewrite List.app_nil_r.
+      assumption.
+    Qed.
+
+    Lemma ctx_to_history_cons_rw4 {nm l}:
+      x <> nm ->
+      ~ (nm ∈ fv_u) ->
+      ~ nm ∈ (conflicts) ->
       ctx_to_history (nm :: l) =
         nm :: fold_with_history (rename_binder_local_history ⦿ [nm]) l.
     Proof.
       intros.
       unfold ctx_to_history.
       rewrite fold_with_history_cons.
-      rewrite rename_binder_local_history_rw3; auto.
+      rewrite rename_binder_local_history_rw4; auto.
+      rewrite List.app_nil_r.
+      assumption.
     Qed.
-
 
     Lemma ctx_to_history_app: forall l1 l2,
         ctx_to_history (l1 ++ l2) =
@@ -158,6 +204,8 @@ Section alt.
       reflexivity.
     Qed.
 
+
+    (*
 
     (* Name a binder to something else during substitution *)
     Definition rename_binder_local:
@@ -238,108 +286,94 @@ Section alt.
         reflexivity.
     Qed.
 
-    Definition subst_local:
-      list name * name -> T name name :=
-      fun '(ctx, v) =>
-        if SmartAtom.name_inb x ctx (* Halt substitution early *)
-        then ret (T := T name) v
-        else
-          match (get_binding ctx v) with
-          | Unbound _ =>
-              if v == x
-              then u
-              else ret (T := T name) v
-          | Bound prefix _ _ =>
-              if v == x
-              then ret (T := T name) v
-              else if SmartAtom.name_inb v (fv_u)
-                   then ret (T := T name) (rename_binder_local_history (prefix, v))
-                   else ret (T := T name) (rename_binder_local_history (prefix, v))
-                            (*
-                   else ret (T := T name) v
-                             *)
-          end.
-
-
-    (* This variable is under an abstraction of the substituted variable, do nothing (subst halted earlier) *)
-    Lemma subst_local_rw1: forall ctx v,
-        x ∈ ctx ->
-        subst_local (ctx, v) = ret v.
+    Lemma rename_binder_local_spec:
+      forall '(ctx, b),
+        rename_binder_local (ctx, b) = rename_binder_local_history (ctx_to_history ctx, b).
     Proof.
-      intros.
-      unfold subst_local.
+      intros [ctx b].
+      destruct (destruct_in x ctx).
+      rewrite rename_binder_local_rw1.
+      rewrite rename_binder_local_history_rw1.
+
       step_set_test.
-      reflexivity.
-    Qed.
+      rewrite rename_binder_local_history_rw2.
 
-    (* This variable is equal to the variable begin substituted, replace it *)
-    Lemma subst_local_rw2: forall ctx v,
-        ~ (x ∈ ctx) ->
-        x = v ->
-        subst_local (ctx, v) = u.
-    Proof.
-      intros.
-      unfold subst_local.
-      destruct_eq_args x v.
-      step_set_test.
-      rewrite get_binding1; auto.
-    Qed.
+     *)
 
-    Lemma hmmm:forall ctx v,
-        ~ v ∈ ctx ->
-        v = (rename_binder_local_history (ctx_to_history ctx, v)).
-    Proof.
-      intros.
-    Abort.
+ Definition rename_binder_local:
+      list name * name -> name :=
+   fun '(ctx, b) =>
+     rename_binder_local_history (ctx_to_history ctx, b).
+
+ Definition subst_local:
+   list name * name -> T name name :=
+   fun '(ctx, v) =>
+     if SmartAtom.name_inb x ctx (* Halt substitution early *)
+     then ret (T := T name) v
+     else
+       match (get_binding ctx v) with
+       | Unbound _ =>
+           if v == x
+           then u
+           else ret (T := T name) v
+       | Bound prefix _ _ =>
+           ret (T := T name) (rename_binder_local (prefix, v))
+       end.
 
 
-    (* This is a bound variable that  conflicts with the free variables of u,
+ (* This variable is under an abstraction of the substituted variable, do nothing (subst halted earlier) *)
+ Lemma subst_local_rw1: forall ctx v,
+     x ∈ ctx ->
+     subst_local (ctx, v) = ret v.
+ Proof.
+   intros.
+   unfold subst_local.
+   step_set_test.
+   reflexivity.
+ Qed.
+
+ (* This variable is equal to the variable begin substituted, replace it *)
+ Lemma subst_local_rw2: forall ctx v,
+     ~ (x ∈ ctx) ->
+     x = v ->
+     subst_local (ctx, v) = u.
+ Proof.
+   intros.
+   unfold subst_local.
+   destruct_eq_args x v.
+   step_set_test.
+   rewrite get_binding1; auto.
+ Qed.
+
+ Lemma hmmm:forall ctx v,
+     ~ v ∈ ctx ->
+     v = (rename_binder_local_history (ctx_to_history ctx, v)).
+ Proof.
+   intros.
+ Abort.
+
+
+ (* This is a bound variable that  conflicts with the free variables of u,
        rename it to match its binder *)
-    Lemma subst_local_rw3: forall ctx v,
-        ~ (x ∈ ctx) ->
-        x <> v ->
-        v ∈ fv_u ->
-        subst_local (ctx, v) = ret (rename_binder_local_history (ctx_to_history ctx, v)).
-    Proof.
-      intros.
-      unfold subst_local.
-      step_set_test.
-      destruct (get_binding_spec ctx v) as [Case1 | Case2].
-      { destruct Case1 as [hyp1 hyp2].
-        rewrite hyp1.
-        destruct_eq_args v x.
-        destruct_eq_args v x.
-        step_set_test.
-        fequal.
+ Lemma subst_local_rw3: forall pre post ctx v,
+     ~ (x ∈ ctx) ->
+     x <> v ->
+     get_binding ctx v = Bound pre v post ->
+     subst_local (ctx, v) = ret (rename_binder_local_history (ctx_to_history pre, v)).
+ Proof.
+   intros.
+   unfold subst_local.
+   step_set_test.
+   rewrite H3.
+   unfold rename_binder_local.
+   reflexivity.
+ Qed.
 
-      rewrite get_binding1.
-      destruct_eq_args x v.
-      step_set_test.
-      reflexivity.
-    Qed.
-
-    (* This is a bound variable that doesn't cause any conflicts, do nothing *)
-    Lemma subst_local_rw4: forall ctx v,
-        ~ (x ∈ ctx) ->
-        x <> v ->
-        ~ (v ∈ fv_u) ->
-        suvst_local (ctx, v) = v.
-    Proof.
-      intros.
-      subst.
-      unfold subst_local.
-      destruct (SmartAtom.name_inb x ctx); auto.
-      destruct_eq_args x b.
-      step_set_test.
-      reflexivity.
-    Qed.
-
-
-    Definition subst_top
-      (t: T name name): T name name :=
-      substitute (G := fun A => A) (U := T)
-        rename_binder_local
-        subst_local t.
+ Definition subst_top
+   (t: T name name): T name name :=
+   substitute (G := fun A => A) (U := T)
+     rename_binder_local
+     subst_local t.
 
   End rename_local.
 

@@ -98,6 +98,7 @@ Proof.
   - cbn. lia.
 Qed.
 
+
 (* Capture-avoiding substitution with well-founded recursion *)
 Function substF (l: list name) (* l is the avoid set *)
   (x : name) (u : term name name)
@@ -112,7 +113,7 @@ Function substF (l: list name) (* l is the avoid set *)
       if b == x then lam b t
       else if SmartAtom.name_inb b (fvL u)
            then let z := (fresh (l ++ [b]): name) in
-                lam z (substF (l ++ [z]) x u (rename x z t))
+                lam z (substF (l ++ [z]) x u (rename b z t))
            else lam b (substF (l ++ [b]) x u t)
   end.
 Proof.
@@ -151,7 +152,7 @@ Section rw.
     if SmartAtom.name_inb b (fvL u)
     then
      (λ) (fresh (l ++ [b]))
-       (substF (l ++ [fresh (l ++ [b])]) x u (rename x (fresh (l ++ [b])) t))
+       (substF (l ++ [fresh (l ++ [b])]) x u (rename b (fresh (l ++ [b])) t))
     else (λ) b (substF (l ++ [b]) x u t)).
   Proof.
     intros.
