@@ -72,6 +72,47 @@ Fixpoint rename (x: name) (y: name) (t: term name name): term name name :=
               else lam b (rename x y t)
   end.
 
+Section rw.
+
+  Context {l: list name} {x: name} {y: name}.
+
+  Lemma rename_rw1: forall v,
+      rename x y (tvar v) = tvar (if v == x then y else v).
+  Proof.
+    intros.
+    cbn.
+    destruct_eq_args x v.
+  Qed.
+
+  Lemma rename_rw2_eq: forall b t,
+      b = x ->
+      rename x y (lam b t) =
+        lam b t.
+  Proof.
+    intros.
+    cbn.
+    destruct_eq_args b x.
+  Qed.
+
+  Lemma rename_rw2_neq: forall b t,
+      b <> x ->
+      rename x y (lam b t) =
+        (λ) b (rename x y t).
+  Proof.
+    intros.
+    cbn.
+    destruct_eq_args b x.
+  Qed.
+
+  Lemma rename_rw3: forall t1 t2,
+      rename x y (tap t1 t2) = tap (rename x y t1) (rename x y t2).
+  Proof.
+    intros.
+    reflexivity.
+  Qed.
+
+End rw.
+
 
 (* Depth function for well-founded recursion *)
 Fixpoint depth (t : term name name) : nat :=
@@ -100,6 +141,40 @@ Qed.
 
 
 (* Capture-avoiding substitution with well-founded recursion *)
+Function substRaw (l: list name) (* l is the avoid set *)
+  (x : name) (u : term name name)
+  (t : term name name)
+  {measure term_measure t}
+  : term name name :=
+  match t with
+  | tvar y => if y == x then u else tvar y
+  | tap t1 t2 =>
+      tap (substRaw l x u t1) (substRaw l x u t2)
+  | lam b t =>
+      if b == x then lam b t
+      else if SmartAtom.name_inb b (fvL u)
+           then let z := (fresh ([x] ++ l ++ [b]): name) in
+                lam z (substRaw (l ++ [z]) x u (substRaw l b (tvar z) t))
+           else lam b (substRaw (l ++ [b]) x u t)
+  end.
+Proof.
+  all: unfold term_measure.
+  - intros.
+    rewrite depth_rename_eq.
+    cbn. lia.
+  - intros.
+    cbn.
+    lia.
+  - intros.
+    cbn.
+    lia.
+  - intros.
+    cbn.
+    lia.
+Qed.
+
+
+(* Capture-avoiding substitution with well-founded recursion *)
 Function substF (l: list name) (* l is the avoid set *)
   (x : name) (u : term name name)
   (t : term name name)
@@ -112,7 +187,7 @@ Function substF (l: list name) (* l is the avoid set *)
   | lam b t =>
       if b == x then lam b t
       else if SmartAtom.name_inb b (fvL u)
-           then let z := (fresh (l ++ [b]): name) in
+           then let z := (fresh ([x] ++ l ++ [b]): name) in
                 lam z (substF (l ++ [z]) x u (rename b z t))
            else lam b (substF (l ++ [b]) x u t)
   end.
@@ -151,8 +226,8 @@ Section rw.
    else
     if SmartAtom.name_inb b (fvL u)
     then
-     (λ) (fresh (l ++ [b]))
-       (substF (l ++ [fresh (l ++ [b])]) x u (rename b (fresh (l ++ [b])) t))
+     (λ) (fresh ([x] ++ l ++ [b]))
+       (substF (l ++ [fresh ([x] ++ l ++ [b])]) x u (rename b (fresh ([x] ++ l ++ [b])) t))
     else (λ) b (substF (l ++ [b]) x u t)).
   Proof.
     intros.

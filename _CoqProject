@@ -301,6 +301,8 @@ Tealeaves/Backends/Adapters/LNtoDB.v
 ##########################################################
 Tealeaves/Backends/Named/Named.v
 Tealeaves/Backends/Named/Names.v
+Tealeaves/Backends/Named/Common.v
+Tealeaves/Backends/Named/NamedTraditional.v
 Tealeaves/Backends/Adapters/KeyName.v
 
 
@@ -360,5 +362,4 @@ Tealeaves/Examples/LambdaNominal/Syntax.v
 Tealeaves/Examples/LambdaNominal/Categorical.v
 Tealeaves/Examples/LambdaNominal/Kleisli.v
 Tealeaves/Examples/LambdaNominal/Raw.v
-Tealeaves/Backends/Named/NamedTraditional.v
 Tealeaves/Examples/LambdaNominal/Equivalence.v
