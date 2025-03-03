@@ -222,7 +222,7 @@ Defined.
 
 Lemma wf: forall (t: term name name), Acc term_lt t.
 Admitted.
-
+(*
 Definition rename :
   forall (l: list name) (x y: name) (t: term name name), term name name.
 Proof.
@@ -231,7 +231,16 @@ Proof.
   destruct s as [me you].
   exact me.
 Defined.
+*)
 
+Definition rename l x y t := proj1_sig (rename' l x y t (wf t)).
+
+
+Section rw.
+
+  Context (l: list name) (x y: name) (t: term name name).
+
+End rw.
 
 Definition rename_iter:
   forall (l: list name) (x y: name) (t: term name name), term name name :=
@@ -247,7 +256,7 @@ Definition rename_iter:
         if b == x then lam b t'
         else if b == y
              then let z := fresh ([x] ++ l ++ [b])
-                  in lam z (rename l x y (rename (l ++ [b]) b z t'))
+                  in lam z (rename (l ++ [z]) x y (rename (l ++ [z]) b z t'))
              else lam b (rename l x y t')
     end.
 
@@ -304,44 +313,116 @@ Abort.
 
 Section rw.
 
-  Context {l: list name} {x: name} {y: name}.
+  Section ctx.
 
-  Lemma test: forall (A: Type) (P: A -> Prop) (x: {a: A | P a}) (y: {a: A | P a}),
-      proj1_sig x = proj1_sig y ->
-      x = y.
+    Context {l: list name} {x: name} {y: name}.
+
+    Lemma test: forall (A: Type) (P: A -> Prop) (x: {a: A | P a}) (y: {a: A | P a}),
+        proj1_sig x = proj1_sig y ->
+        x = y.
+    Proof.
+      intros.
+      destruct x0.
+      destruct y0.
+      cbn in *.
+      subst.
+      fequal.
+      apply proof_irrelevance.
+    Qed.
+
+    Corollary rename_pf_irrel: forall l x y t HAcc1 HAcc2,
+        rename' l x y t HAcc1 =
+          rename' l x y t HAcc2.
+    Proof.
+      intros.
+      assert (HAcc1 = HAcc2).
+      apply proof_irrelevance.
+      rewrite H.
+      reflexivity.
+    Qed.
+
+    Lemma normalize_rename': forall l x y t Hacc,
+        rename' l x y t Hacc = rename' l x y t (wf t).
+    Proof.
+      intros.
+      erewrite rename_pf_irrel.
+      reflexivity.
+    Qed.
+
+    Lemma normalize_rename1: forall l x y t Hacc,
+        proj1_sig (rename' l x y t Hacc) = (rename l x y t).
+    Proof.
+      intros.
+      unfold rename.
+      erewrite rename_pf_irrel.
+      reflexivity.
+    Qed.
+
+  End ctx.
+
+  Lemma rename_eq_iter: forall l x y t,
+      rename l x y t = (rename_iter l x y t).
   Proof.
     intros.
-    destruct x0.
-    destruct y0.
-    cbn in *.
-    subst.
-    fequal.
-    apply proof_irrelevance.
-  Qed.
-
-  Lemma rename_eq_iter': forall t Hacc,
-      proj1_sig (rename' l x y t Hacc) = (rename_iter l x y t).
-  Proof.
-    intro t.
-    induction t; intro HAcc.
+    generalize dependent l.
+    generalize dependent x.
+    generalize dependent y.
+    induction t; intros y x l;
+      unfold rename.
     - cbn.
-      destruct HAcc.
+      destruct (wf (tvar v)).
       destruct_eq_args x v.
       + cbn.
         destruct_eq_args v v.
       + cbn.
         destruct_eq_args v v.
         destruct_eq_args x v.
-    - destruct HAcc.
-      cbn.
+    - simpl.
       destruct_eq_args b x.
-      destruct_eq_args b y.
-      Search sig "eta".
-      rewrite sig_eta.
-      + eauto.
-      + destruct_eq_args b y.
+      { destruct (wf (lam x t)).
+        unfold rename'. fold rename'.
+        destruct_eq_args x x. }
+      { destruct (wf (lam b t)).
+        unfold rename'; fold rename'.
+        destruct_eq_args b y.
+        destruct_eq_args y x.
+        { rewrite normalize_rename'.
+          pose (sig_eta (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (wf t))).
+          rewrite e.
+          rewrite normalize_rename'.
+          pose (sig_eta
+                  (rename' (l ++ [fresh ([x] ++ l ++ [y])]) x y
+                     (proj1_sig (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (wf t)))
+                     (wf (proj1_sig (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (wf t)))))).
+          rewrite e0.
+          clear e0.
+          clear e.
+          unfold proj1_sig.
+          reflexivity.
+        }
+        { destruct_eq_args b x.
+          rewrite normalize_rename'.
+          rewrite (sig_eta (rename' l x y t (wf t) )).
+          cbn.
+          fequal.
+        }
+      }
+    - simpl.
+      destruct (wf (tap t1 t2)).
+      unfold rename'; fold rename'.
+      pose (sig_eta (rename' l x y t1 (Acc_inv (Acc_intro (tap t1 t2) a) (tap_depth1 t1 t2)))).
+      pose (sig_eta (rename' l x y t2 (Acc_inv (Acc_intro (tap t1 t2) a) (tap_depth2 t1 t2)))).
+      rewrite e.
+      rewrite e0.
+      clear e.
+      clear e0.
+      cbn.
+      rewrite normalize_rename1.
+      rewrite normalize_rename1.
+      reflexivity.
+  Qed.
 
-
+  (*
   Lemma rename_eq_iter': forall t Hacc,
       exists pf, rename' l x y t Hacc = @exist _ _ (rename_iter l x y t) pf.
   Proof.
@@ -358,11 +439,15 @@ Section rw.
         destruct_eq_args x v.
         eauto.
     - destruct HAcc.
-      cbn.
+      eexists.
+      unfold rename'.
       destruct_eq_args b x.
-      + eauto.
+      + apply test; auto.
+        cbn. destruct_eq_args x x.
       + destruct_eq_args b y.
-
+        apply test.
+        admit.
+        admit.
     - destruct (HAcc).
       cbn.
       destruct (IHt1 (a t1 (tap_depth1 t1 t2))) as [Step1Depth Step1Eq].
@@ -378,53 +463,40 @@ Section rw.
       rewrite Step2Eq'.
       reflexivity.
       Unshelve.
-
-      destruct (IHt1 (wf t1)) as [Step1Depth' Step1Eq'].
-      destruct (IHt2 (wf t2)) as [Step2Depth' Step2Eq'].
-      rewrite Step1
-      reflexivity.
-  Qed.
-
-      exists (ltac:(reflexivity)).
-      destruct (rename' l v
-      fequal.
-
+  Abort.
+   *)
+  (*
   Lemma rename_eq_iter: forall t,
-      rename l x y t = rename_iter l x y t.
+      rename l x y t = rename_iter l x y t /\
+        rename l x y t = proj1_sig (rename'
   Proof.
     intros.
-    unfold rename.
-    generalize dependent (wf t).
-    induction t; intro HAcc.
-    - destruct HAcc.
-      cbn.
-      destruct_eq_args x v.
-    - destruct HAcc.
-      cbn.
-      destruct_eq_args x b.
-      destruct_eq_args b y.
-      + admit.
-      + admit.
-    - destruct HAcc.
+    induction t.
+    - admit.
+    - admit.
+    - cbn.
+      unfold rename.
+      destruct (wf (tap t1 t2)).
+      change_left (proj1_sig (rename' l x y (tap t1 t2) (Acc_intro (tap t1 t2) a))).
+      rewrite (sig_eta (rename' l x y (tap t1 t2) (Acc_intro (tap t1 t2) a))).
+      match goal with
+      | |- context[proj1_sig (rename' l x y (tap t1 t2) ?Hacc)] =>
+           assert (proj1_sig (rename' l x y (tap t1 t2) Hacc) =
+               rename l x y (tap t1 t2))
+      end.
+
+      admit.
+      setoid_rewrite H.
+      setoid_rewrite H.
+      rewrite IHt1.
       cbn.
       assert (
-      assert (t1' = rename l x y t1).
-      unfold rename at 1.
-      unfold rename at 1.
-      rewrite IHt1.
-      rewrite IHt2.
 
-      rewrite
-      destruct (rename' l x y t1 (a t1 (tap_depth1 t1 t2))).
-      destruct (rename' l x y t2 (a t2 (tap_depth2 t1 t2))).
-      fequal.
-
-        .
-    i
+      unfold r
+   *)
 
 
-
-  Lemma rename_rw1: forall v,
+  Lemma rename_rw1: forall l x y v,
       rename l x y (tvar v) = tvar (if v == x then y else v).
   Proof.
     intros.
@@ -434,53 +506,76 @@ Section rw.
     destruct_eq_args x v.
   Qed.
 
-  Lemma rename_rw2_eq: forall b t,
+  Lemma rename_rw2_eq: forall l x y b t,
       b = x ->
       rename l x y (lam b t) =
         lam b t.
   Proof.
     intros.
-    unfold rename.
-    destruct (wf (λ b t)).
-    unfold rename'.
+    rewrite rename_eq_iter.
+    unfold rename_iter.
     destruct_eq_args b x.
   Qed.
 
-  Lemma rename_rw2_neq: forall b t,
+  Lemma rename_rw2_neq: forall l x y b t,
       b <> x ->
       b = y ->
       rename l x y (lam b t) =
-        (λ) (fresh ([x] ++ l ++ [b])) (rename l x y
-                                         (rename (l ++ [fresh ([x] ++ l ++ [b])]) b (fresh ([x] ++ l ++ [b])) t)).
+        ((λ) (fresh ([x] ++ l ++ [y]))
+           (rename (l ++ [fresh ([x] ++ l ++ [y])]) x y
+              (rename (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t))).
   Proof.
     intros.
-    unfold rename.
-    destruct (wf (λ b t)).
-    remember (rename' ([x] ++ l ++ [fresh ([x] ++ l ++ [b])]) b (fresh ([x] ++ l ++ [b])) t (wf t)) as Rem.
-    remember (let (x0, _) := Rem in x0) as Rem'.
-    destruct (wf Rem').
-    unfold rename'.
-    subst.
-    destruct_eq_args x y.
+    rewrite rename_eq_iter.
+    unfold rename_iter.
+    destruct_eq_args x b.
     destruct_eq_args y y.
-    reflexivity.
-    intros.
-    cbn.
-    destruct_eq_args b x.
   Qed.
 
-  Lemma rename_rw3: forall t1 t2,
-      rename x y (tap t1 t2) = tap (rename x y t1) (rename x y t2).
+  Lemma rename_rw3: forall l x y t1 t2,
+      rename l x y (tap t1 t2) = tap (rename l x y t1) (rename l x y t2).
   Proof.
     intros.
+    rewrite rename_eq_iter.
+    unfold rename_iter.
     reflexivity.
   Qed.
 
 End rw.
-*)
 
+Lemma depth_rename_eq: forall l x y t,
+    (forall u, depth u <= depth t ->
+    depth (rename l x y u) = depth u).
+Proof.
+  intros.
+  generalize dependent l.
+  generalize dependent x.
+  generalize dependent y.
+  generalize dependent u.
+  induction t; intros; rewrite rename_eq_iter.
+  - cbn.
+    destruct_eq_args x v.
+    admit.
+    admit.
+  - unfold rename_iter.
+    destruct_eq_args b x.
+    destruct_eq_args b y.
+    + unfold depth.
+      fequal.
+      fold depth.
+      admit.
+    + cbn. rewrite IHt.
+      reflexivity.
+  - unfold rename_iter.
+    cbn.
+    rewrite IHt1.
+    rewrite IHt2.
+    reflexivity.
+Qed.
+        .
+        .
 
-
+(*
 (* Capture-avoiding substitution with well-founded recursion *)
 Function substRaw (l: list name) (* l is the avoid set *)
   (x : name) (u : term name name)
@@ -514,12 +609,13 @@ Proof.
     lia.
 Qed.
 
+*)
 
 (* Capture-avoiding substitution with well-founded recursion *)
 Function substF (l: list name) (* l is the avoid set *)
   (x : name) (u : term name name)
   (t : term name name)
-  {measure term_measure t}
+  {measure depth t}
   : term name name :=
   match t with
   | tvar y => if y == x then u else tvar y
@@ -529,11 +625,10 @@ Function substF (l: list name) (* l is the avoid set *)
       if b == x then lam b t
       else if SmartAtom.name_inb b (fvL u)
            then let z := (fresh ([x] ++ l ++ [b]): name) in
-                lam z (substF (l ++ [z]) x u (rename b z t))
+                lam z (substF (l ++ [z]) x u (rename (l ++ [z]) b z t))
            else lam b (substF (l ++ [b]) x u t)
   end.
 Proof.
-  all: unfold term_measure.
   - intros.
     rewrite depth_rename_eq.
     cbn. lia.
