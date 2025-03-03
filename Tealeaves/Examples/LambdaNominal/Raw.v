@@ -177,21 +177,21 @@ Proof.
         end
     | lam b t' =>
         fun phi =>
-        if b == x then (@exist _ _ (lam b t') _)
-        else if b == y then
-               let z := fresh ([x] ++ l ++ [b]) in
-               match (rename l b z t' (Acc_inv Ht t' _)) with
-               | exist _ tm pf =>
-                   match (rename l x y tm (Acc_inv Ht _)) with
-                   | exist _ tm' pf' =>
-                       @exist _ _ (lam z tm') _
-                   end
-               end
-        else  match (rename l x y t' ((Acc_inv Ht t' _))) with
-                   | exist _ tm pf =>
-                       (@exist _ _ (lam b tm) _)
-              end
-    end) (fun x y => y) ).
+          if b == x then (@exist _ _ (lam b t') _)
+          else if b == y then
+                 let z := fresh ([x] ++ l ++ [b]) in
+                 match (rename (l ++ [z]) b z t' (Acc_inv Ht t' _)) with
+                 | exist _ tm pf =>
+                     match (rename (l ++ [z]) x y tm (Acc_inv Ht _)) with
+                     | exist _ tm' pf' =>
+                         @exist _ _ (lam z tm') _
+                     end
+                 end
+               else  match (rename l x y t' ((Acc_inv Ht t' _))) with
+                     | exist _ tm pf =>
+                         (@exist _ _ (lam b tm) _)
+                     end
+     end) (fun x y => y) ).
   - reflexivity.
   - reflexivity.
   - reflexivity.
