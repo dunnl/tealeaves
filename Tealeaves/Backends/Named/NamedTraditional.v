@@ -61,6 +61,8 @@ Section ops.
       (conflicts: list name)  (* Top level conflicts, intuitively FV t \cup FV u *)
       (fv_u: list name).  (* Intuitively FV u *)
 
+    (* Given the history of renames, and knowing conflicts and fv_u,
+       decide the name of THIS binder *)
     Definition rename_binder_one (hist: list name) (b: name) :=
       if b == x
       then b

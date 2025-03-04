@@ -72,8 +72,6 @@ Fixpoint depth (t : term name name) : nat :=
   | tap t1 t2 => S (max (depth t1) (depth t2))
   end.
 
-About Acc_inv.
-
 (* Well-founded measure for lexicographic ordering *)
 
 Definition term_lt (t1 t2: term name name) : Prop := depth t1 < depth t2.
@@ -215,22 +213,7 @@ Proof.
     reflexivity.
 Defined.
 
-
-Lemma wf: forall (t: term name name), Acc term_lt t.
-Admitted.
-(*
-Definition rename :
-  forall (l: list name) (x y: name) (t: term name name), term name name.
-Proof.
-  intros.
-  pose (rename' l x y t (wf t)).
-  destruct s as [me you].
-  exact me.
-Defined.
-*)
-
-Definition rename l x y t := proj1_sig (rename' l x y t (wf t)).
-
+Definition rename l x y t := proj1_sig (rename' l x y t (term_lt_wf t)).
 
 Section rw.
 
@@ -255,57 +238,6 @@ Definition rename_iter:
                   in lam z (rename (l ++ [z]) x y (rename (l ++ [z]) b z t'))
              else lam b (rename l x y t')
     end.
-
-(*
-Program Fixpoint rename (l: list name) (x: name) (y: name) (t: term name name)
-  {wf term_lt t}
-  : term name name :=
-  match t with
-  | tvar v => if x == v then tvar y else tvar v
-  | tap t1 t2 => tap (rename l x y t1) (rename l x y t2)
-  | lam b t =>
-      if b == x then lam b t
-      else if b == y
-           then let z := (fresh ([x] ++ l ++ [b]): name) in
-                lam z (rename l x y (rename l b y t))
-      else lam b (rename l x y t)
-  end.
-Next Obligation.
-  unfold term_lt.
-  cbn.
-  lia.
-Qed.
-
-Next Obligation.
-  unfold term_lt, term_measure.
-  cbn.
-  lia.
-Qed.
-
-Next Obligation.
-  unfold term_lt, term_measure.
-  cbn.
-  lia.
-Defined.
-
-Next Obligation.
-  unfold term_lt.
-  unfold term_measure.
-
-  cbn.
-Admitted.
-
-Next Obligation.
-  unfold term_lt, term_measure.
-  cbn.
-  lia.
-Qed.
-
-Next Obligation.
-  unfold term_lt, term_measure.
-Abort.
-*)
-
 
 Section rw.
 
@@ -338,7 +270,7 @@ Section rw.
     Qed.
 
     Lemma normalize_rename': forall l x y t Hacc,
-        rename' l x y t Hacc = rename' l x y t (wf t).
+        rename' l x y t Hacc = rename' l x y t (term_lt_wf t).
     Proof.
       intros.
       erewrite rename_pf_irrel.
@@ -366,7 +298,7 @@ Section rw.
     induction t; intros y x l;
       unfold rename.
     - cbn.
-      destruct (wf (tvar v)).
+      destruct (term_lt_wf (tvar v)).
       destruct_eq_args x v.
       + cbn.
         destruct_eq_args v v.
@@ -375,21 +307,21 @@ Section rw.
         destruct_eq_args x v.
     - simpl.
       destruct_eq_args b x.
-      { destruct (wf (lam x t)).
+      { destruct (term_lt_wf (lam x t)).
         unfold rename'. fold rename'.
         destruct_eq_args x x. }
-      { destruct (wf (lam b t)).
+      { destruct (term_lt_wf (lam b t)).
         unfold rename'; fold rename'.
         destruct_eq_args b y.
         destruct_eq_args y x.
         { rewrite normalize_rename'.
-          pose (sig_eta (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (wf t))).
+          pose (sig_eta (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (term_lt_wf t))).
           rewrite e.
           rewrite normalize_rename'.
           pose (sig_eta
                   (rename' (l ++ [fresh ([x] ++ l ++ [y])]) x y
-                     (proj1_sig (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (wf t)))
-                     (wf (proj1_sig (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (wf t)))))).
+                     (proj1_sig (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (term_lt_wf t)))
+                     (term_lt_wf (proj1_sig (rename' (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t (term_lt_wf t)))))).
           rewrite e0.
           clear e0.
           clear e.
@@ -398,13 +330,13 @@ Section rw.
         }
         { destruct_eq_args b x.
           rewrite normalize_rename'.
-          rewrite (sig_eta (rename' l x y t (wf t) )).
+          rewrite (sig_eta (rename' l x y t (term_lt_wf t) )).
           cbn.
           fequal.
         }
       }
     - simpl.
-      destruct (wf (tap t1 t2)).
+      destruct (term_lt_wf (tap t1 t2)).
       unfold rename'; fold rename'.
       pose (sig_eta (rename' l x y t1 (Acc_inv (Acc_intro (tap t1 t2) a) (tap_depth1 t1 t2)))).
       pose (sig_eta (rename' l x y t2 (Acc_inv (Acc_intro (tap t1 t2) a) (tap_depth2 t1 t2)))).
@@ -418,86 +350,12 @@ Section rw.
       reflexivity.
   Qed.
 
-  (*
-  Lemma rename_eq_iter': forall t Hacc,
-      exists pf, rename' l x y t Hacc = @exist _ _ (rename_iter l x y t) pf.
-  Proof.
-    intro t.
-    induction t; intro HAcc.
-    - cbn.
-      destruct HAcc.
-      destruct_eq_args x v.
-      + cbn.
-        destruct_eq_args v v.
-        eauto.
-      + cbn.
-        destruct_eq_args v v.
-        destruct_eq_args x v.
-        eauto.
-    - destruct HAcc.
-      eexists.
-      unfold rename'.
-      destruct_eq_args b x.
-      + apply test; auto.
-        cbn. destruct_eq_args x x.
-      + destruct_eq_args b y.
-        apply test.
-        admit.
-        admit.
-    - destruct (HAcc).
-      cbn.
-      destruct (IHt1 (a t1 (tap_depth1 t1 t2))) as [Step1Depth Step1Eq].
-      rewrite Step1Eq.
-      destruct (IHt2 (a t2 (tap_depth2 t1 t2))) as [Step2Depth Step2Eq].
-      rewrite Step2Eq.
-      eexists.
-      unfold rename.
-      destruct (IHt1 (wf t1)) as [Step1Depth' Step1Eq'].
-      destruct (IHt2 (wf t2)) as [Step2Depth' Step2Eq'].
-      apply test. cbn.
-      rewrite Step1Eq'.
-      rewrite Step2Eq'.
-      reflexivity.
-      Unshelve.
-  Abort.
-   *)
-  (*
-  Lemma rename_eq_iter: forall t,
-      rename l x y t = rename_iter l x y t /\
-        rename l x y t = proj1_sig (rename'
-  Proof.
-    intros.
-    induction t.
-    - admit.
-    - admit.
-    - cbn.
-      unfold rename.
-      destruct (wf (tap t1 t2)).
-      change_left (proj1_sig (rename' l x y (tap t1 t2) (Acc_intro (tap t1 t2) a))).
-      rewrite (sig_eta (rename' l x y (tap t1 t2) (Acc_intro (tap t1 t2) a))).
-      match goal with
-      | |- context[proj1_sig (rename' l x y (tap t1 t2) ?Hacc)] =>
-           assert (proj1_sig (rename' l x y (tap t1 t2) Hacc) =
-               rename l x y (tap t1 t2))
-      end.
-
-      admit.
-      setoid_rewrite H.
-      setoid_rewrite H.
-      rewrite IHt1.
-      cbn.
-      assert (
-
-      unfold r
-   *)
-
-
   Lemma rename_rw1: forall l x y v,
       rename l x y (tvar v) = tvar (if v == x then y else v).
   Proof.
     intros.
     unfold rename.
-    destruct (wf (tvar v)).
+    destruct (term_lt_wf (tvar v)).
     unfold rename'.
     destruct_eq_args x v.
   Qed.
@@ -565,42 +423,6 @@ Lemma depth_rename_eq: forall l x y t,
     depth (rename l x y t) = depth t.
 Proof.
 Admitted.
-
-(*
-(* Capture-avoiding substitution with well-founded recursion *)
-Function substRaw (l: list name) (* l is the avoid set *)
-  (x : name) (u : term name name)
-  (t : term name name)
-  {measure term_measure t}
-  : term name name :=
-  match t with
-  | tvar y => if y == x then u else tvar y
-  | tap t1 t2 =>
-      tap (substRaw l x u t1) (substRaw l x u t2)
-  | lam b t =>
-      if b == x then lam b t
-      else if SmartAtom.name_inb b (fvL u)
-           then let z := (fresh ([x] ++ l ++ [b]): name) in
-                lam z (substRaw (l ++ [z]) x u (substRaw l b (tvar z) t))
-           else lam b (substRaw (l ++ [b]) x u t)
-  end.
-Proof.
-  all: unfold term_measure.
-  - intros.
-    rewrite depth_rename_eq.
-    cbn. lia.
-  - intros.
-    cbn.
-    lia.
-  - intros.
-    cbn.
-    lia.
-  - intros.
-    cbn.
-    lia.
-Qed.
-
-*)
 
 (* Capture-avoiding substitution with well-founded recursion *)
 Function substF (l: list name) (* l is the avoid set *)
