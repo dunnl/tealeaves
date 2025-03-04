@@ -13,6 +13,7 @@ Export LN.Simplification.
 Export LN.Notations.
 
 #[local] Set Implicit Arguments.
+#[local] Set Maximal Implicit Insertion.
 
 (*|
 ========================================
@@ -99,7 +100,7 @@ Fixpoint binddt_Lam (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
   | app t1 t2 => pure (@app v2) <⋆> binddt_Lam f t1 <⋆> binddt_Lam f t2
   end.
 
-#[export] Instance Return_STLC: Return Lam := tvar.
+#[export] Instance Return_STLC: Return Lam := @tvar.
 #[export] Instance Binddt_STLC: Binddt nat Lam Lam := @binddt_Lam.
 #[export] Instance DTM_STLC: DecoratedTraversableMonad nat Lam.
 Proof.
@@ -119,7 +120,8 @@ Qed.
 
 Module intrinsic.
 
-  Inductive Lam (V : nat -> Type) :=
+
+  Inductive Lam (V : nat -> Type): Type :=
   | tvar : V 0 -> Lam V
   | lam  : typ -> Lam (V ⦿ 1) -> Lam V
   | app  : Lam V -> Lam V -> Lam V.
@@ -145,6 +147,37 @@ Module intrinsic.
   Qed.
 
 End intrinsic.
+
+(* exampls *)
+
+Module test.
+
+  Import Coq.Vectors.Fin.
+  Import intrinsic.
+
+  Context (τ: typ).
+
+  Definition V : nat -> Type := Fin.t.
+  Definition term := Lam V.
+
+  Definition one: (V ⦿ 1) 0.
+    cbv.
+    apply Fin.F1.
+  Defined.
+
+  Example tm1: Lam V :=
+    lam V τ (tvar _ Fin.F1).
+
+  Example tm2: Lam V :=
+    lam _ τ (lam _ τ (tvar _ Fin.F1)).
+
+  Example tm3: Lam V :=
+    lam _ τ (lam _ τ (tvar _ (FS Fin.F1))).
+
+  Print tm2.
+
+
+End test.
 
 Module nested.
 
@@ -176,199 +209,82 @@ Module nested.
     | app t1 t2 => @app v2 (bind_Lam f t1) (bind_Lam f t2)
     end.
 
-  Fixpoint binddt_Lam (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    {v1 v2 : nat -> Type} (f : forall (n: nat), v1 n -> G (Lam v2) (t : Lam v1) : G (Lam v2) :=
-    match t with
-    | tvar _ v => f 0 v
-    | lam _ τ body => pure (lam _ τ) <⋆> binddt_Lam (f ⦿ 1) body
-    | app t1 t2 => pure (@app v2) <⋆> binddt_Lam f t1 <⋆> binddt_Lam f t2
-    end.
-
-  Lemma dtm1:
-    forall (G : Type -> Type) (H : Map G)
-      (H0 : Pure G) (H1 : Mult G),
-      Applicative G ->
-      forall (A B : nat -> Type) (f : forall n, A n -> G (Lam (B ⦿ n))),
-        binddt_Lam f ∘ tvar A = f 0.
-  Proof.
-    intros.
-    unfold ret.
-    reflexivity.
-  Qed.
-
 End nested.
 
-Print DecoratedTraversableMonad.
-Print DecoratedTraversableRightPreModule.
-
-About binddt_Lam_i.
-About itvar.
-Axiom coerce_dtm2: forall (A: nat -> Type) (n: nat), A n -> (A ⦿ n) 0.
-
-Lemma dtm2: forall A : nat -> Type,
-    @binddt_Lam_i (fun X => X) _ _ _ A A
-      (fun (n:nat)(x: (A n)) => @itvar _ (*(A ⦿ n)*) (@coerce_dtm2 A n x)) = @id (Lam_i A).
-Proof.
-  intros.
-  ext t.
-  induction t.
-  - cbn. admit.
-  - cbn in *.
-    unfold id.
-    simplify_applicative_I.
-    fequal.
-    admit.
-  -
-    apply IHt.
 
 
 
 
-  (fun n => @itvar (A ⦿ n)) = id.
-
-Fixpoint binddt_Lam_i (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-  {v1 v2 : nat -> Type} (f : forall (n: nat), v1 n -> G (Lam_i (v2 ⦿ n))) (t : Lam_i v1) : G (Lam_i v2) :=
-  match t with
-  | itvar _ v => f 0 v
-  | ilam _ τ body => pure (ilam _ τ) <⋆> binddt_Lam_i (f ⦿ 1) body
-  | iapp t1 t2 => pure (@iapp v2) <⋆> binddt_Lam_i f t1 <⋆> binddt_Lam_i f t2
-  end.
 
 
-(*|
-========================================
-Instantiation of derived functions
-========================================
-|*)
-#[export] Instance Map_STLC: Map Lam
-  := Map_Binddt nat Lam Lam.
-#[export] Instance Mapd_STLC: Mapd nat Lam
-  := Mapd_Binddt nat Lam Lam.
-#[export] Instance Traverse_STLC: Traverse Lam
-  := Traverse_Binddt nat Lam Lam.
-#[export] Instance Mapdt_STLC: Mapdt nat Lam
-  := Mapdt_Binddt nat Lam Lam.
-#[export] Instance Bind_STLC: Bind Lam Lam
-  := Bind_Binddt nat Lam Lam.
-#[export] Instance Bindd_STLC: Bindd nat Lam Lam
-  := Bindd_Binddt nat Lam Lam.
-#[export] Instance Bindt_STLC: Bindt Lam Lam
-  := Bindt_Binddt nat Lam Lam.
-#[export] Instance ToSubset_STLC: ToSubset Lam
-  := ToSubset_Traverse.
-#[export] Instance ToBatch_STLC: ToBatch Lam
-  := ToBatch_Traverse.
-
-#[export] Instance DTMFull_STLC:
-  DecoratedTraversableMonadFull nat Lam
-  := DecoratedTraversableMonadFull_DecoratedTraversableMonad nat Lam.
 
 
-Module LNNotations.
-  Notation "t '{ x ~> u }" :=
-    (subst x (u: Lam LN) (t: Lam LN)) (at level 35).
-  Notation "t ' ( u )" :=
-    (open (u: Lam LN) (t : Lam LN)) (at level 35, format "t  ' ( u )" ).
-  Notation "' [ x ] t" :=
-    (close x (t: Lam LN)) (at level 35, format "' [ x ]  t" ).
-End LNNotations.
 
-Export LNNotations.
 
-Section test_operations.
 
-  Context
-    (β : Type)
-    (x y z : atom)
-    (b : β) (τ : typ).
 
-  Compute (λ τ (tvar (Bd 0))) '(Bd 0: Lam LN).
-  Compute (λ τ (tvar (Bd 0))) '(Bd 1).
-  Compute (λ τ (tvar (Bd 1))) '(0).
-  Compute (λ τ (Bd 1)) '(0).
-  Compute (λ τ 1) '(0).
-  Compute (λ τ 1) '(0).
-  Compute (λ τ x) '{x ~> y}.
-  Compute (λ τ y) '{x ~> y}.
-  Compute (λ τ x) '{x ~> 0}.
-  Compute (λ τ 0) '{x ~> y}.
 
-  (* test something *)
-  Eval cbn in LC (λ τ 0).
-  Context (body: Lam LN).
-  Eval cbn in FV (λ τ body).
-  Eval cbn in LCn 3 (λ τ body).
-  Goal LC (λ τ body).
-    simplify.
-  Abort.
-  Goal FV (λ τ body) = FV (λ τ body).
-    simplify.
-  Abort.
-  Goal  (λ τ body) '{x ~> y} = (λ τ body).
-    cbn.
-  Abort.
-  Goal (λ τ (body '{x ~> y}) = λ τ body).
-    simplify.
-  Abort.
 
-  Check (1: LN).
-  Check (1: Lam LN).
-  Compute (λ τ (tvar (Bd 0))) '(x: Lam LN).
-  (*
-    This will fail if LN.v's polymorphic notations are used
-    due to typeclass resolution
-  Set Typeclasses Debug.
-  Fail Timeout 1 Compute (λ τ (tvar (Bd 0))) '(x: LN).
-  *)
-  Compute (λ τ (tvar (Bd 1))) '(tvar (Fr x)).
-  Compute (λ τ (tvar (Bd 0))) '(Bd 0: Lam LN).
-  Compute (λ τ (tvar (Bd 0))) '(Bd 1: Lam LN).
-  Compute (λ τ (tvar (Bd 1))) '(Bd 0: Lam LN).
-  Compute (λ τ (tvar (Bd 1))) '(Bd 1: Lam LN).
-  Compute (λ τ x) '{x ~> (y: Lam LN)}.
-  Compute (λ τ y) '{x ~> (y: Lam LN)}.
 
-End test_operations.
 
-Definition ctx := list (atom * typ).
 
-Reserved Notation "Γ ⊢ t : τ" (at level 90, t at level 99).
 
-Implicit Types (t: term) (Γ: ctx) (x: atom) (τ: typ)
-  (L: AtomSet.t).
 
-Inductive Judgment: ctx -> term -> typ -> Prop :=
-| j_var:
-    forall Γ x τ
-      (Huniq: uniq Γ)
-      (Hin: (x, τ) ∈ Γ),
-      Γ ⊢ x: τ
-| j_abs:
-    forall L Γ τ1 τ2 t,
-      (forall x,
-          x `notin` L ->
-          Γ ++ x ~ τ1 ⊢ t '(x): τ2) ->
-      Γ ⊢ λ τ1 t: τ1 ⟹ τ2
-| j_app:
-    forall Γ (t1 t2: Lam LN) (τ1 τ2: typ),
-      Γ ⊢ t1: τ1 ⟹ τ2 ->
-      Γ ⊢ t2: τ1 ->
-      Γ ⊢ ⟨t1⟩ (t2): τ2
-where "Γ ⊢ t : τ" := (Judgment Γ t τ).
 
-Ltac typing_induction_on J :=
-  let  x := fresh "x" in
-  let τ := fresh "τ" in
-  let τ1 := fresh "τ1" in
-  let τ2 := fresh "τ2" in
-  let body := fresh "body" in
-  induction J as
-    [ Γ x τ Huniq Hin
-    | L Γ τ1 τ2 body Jbody IHbody
-    | Γ t1 t2 τ1 τ2 J1 IHJ1 J2 IHJ2 ].
 
-Ltac typing_induction :=
-  match goal with
-  | J: context[Judgment ?Γ ?t ?τ] |- _ =>
-      typing_induction_on J
-  end.
+
+Inductive typ :=
+| base : base_typ -> typ
+| arr : typ -> typ -> typ.
+
+Module term1.
+
+  (* Track the variable scope in the type of terms, but track free and
+     bound variables separately. *)
+  Inductive t_ (Γ : list atom) (bs : nat) : Type :=
+  | fvar : forall (a : atom), a ∈ Γ -> t_ Γ bs
+  | bvar : Fin.t bs -> t_ Γ bs
+  | lam : typ -> t_ Γ (bs + 1) -> t_ Γ bs
+  | app : t_ Γ bs -> t_ Γ bs -> t_ Γ bs.
+
+  (* Top-level terms have some free variables but we have not gone
+  under any binders yet. *)
+  Definition t (Γ : list atom) : Type := t_ Γ 0.
+
+End term1.
+
+Module term2.
+
+  (* Track the free variable scope in the type of terms. The second
+  argument is the type of bound variables, which is parameterized by
+  the binding depth. *)
+  Inductive t_ (Γ : list atom) (bs : nat -> Type) :=
+  | fvar : forall (a : atom), a ∈ Γ -> t_ Γ bs
+  | bvar : bs 0 -> t_ Γ bs
+  | lam : typ -> t_ Γ (precompose (plus 1) bs) -> t_ Γ bs
+  | app : t_ Γ bs -> t_ Γ bs -> t_ Γ bs.
+
+  (* Top-level terms have some free variables and bound variables are
+  the finite set with cardinality equal to the binding depth. *)
+  Definition t (Γ : list atom) : Type := t_ Γ Fin.t.
+
+End term2.
+
+Module term3.
+
+  (* Tealeaves style, where there is a single variable constructor and
+  a single type of variables. *)
+  Inductive t_ (vars : nat -> Type) :=
+  | var : vars 0 -> t_ vars
+  | lam : typ -> t_ (precompose (plus 1) vars) -> t_ vars
+  | app : t_ vars -> t_ vars -> t_ vars.
+
+  (* A locally nameless variable is a free variable or a de Bruijn
+  index in the proper range. *)
+  Inductive LN (Γ : list atom) (n : nat) : Type :=
+  | fvar : forall (a : atom), a ∈ Γ -> LN Γ n
+  | bvar : Fin.t n -> LN Γ n.
+
+  Definition t (Γ : list atom) := t_ (LN Γ).
+
+End term3.
