@@ -1,4 +1,3 @@
-(*
 From Tealeaves.Classes Require Export
   Monoid
   Categorical.Applicative
@@ -19,35 +18,35 @@ Import Product.Notations.
 
 #[local] Arguments ret T%function_scope {Return} (A)%type_scope _.
 
-(** * The [DFS] idiom *)
+(** * The [Batch2] idiom *)
 (******************************************************************************)
-Section DFS.
+Section Batch2.
 
   Variables (B B' A A' : Type).
 
-  Inductive DFS (R : Type) : Type :=
-  | Done : R -> DFS R
-  | Bin  : DFS (B' -> R) -> B -> DFS R
-  | Leaf : DFS (A' -> R) -> A -> DFS R.
+  Inductive Batch2 (R : Type) : Type :=
+  | Done : R -> Batch2 R
+  | Bin  : Batch2 (B' -> R) -> B -> Batch2 R
+  | Leaf : Batch2 (A' -> R) -> A -> Batch2 R.
 
   Context
     (F : Type -> Type) `{Map F} `{Mult F} `{Pure F}.
 
-  Program Fixpoint runDFS
+  Program Fixpoint runBatch2
     (ϕB : B  -> F B')
     (ϕA : A  -> F A')
     (R : Type)
-    (d : DFS R) :
+    (d : Batch2 R) :
     F R :=
   match d with
   | Done _ r => pure r
   | Bin _ k b =>
-      runDFS ϕB ϕA (B' -> R) k <⋆> ϕB b
+      runBatch2 ϕB ϕA (B' -> R) k <⋆> ϕB b
   | Leaf _ k a =>
-      runDFS ϕB ϕA (A' -> R) k <⋆> ϕA a
+      runBatch2 ϕB ϕA (A' -> R) k <⋆> ϕA a
   end.
 
-End DFS.
+End Batch2.
 
 #[global] Arguments Done {B B' A A' R}%type_scope _.
 #[global] Arguments Bin  {B B' A A' R}%type_scope _.
@@ -58,31 +57,31 @@ End DFS.
 
 (** *** Map operations *)
 (******************************************************************************)
-Fixpoint map_DFS {WA WB A B C1 C2 : Type} (f : C1 -> C2)
-  (d : DFS WA WB A B C1) : DFS WA WB A B C2 :=
+Fixpoint map_Batch2 {WA WB A B C1 C2 : Type} (f : C1 -> C2)
+  (d : Batch2 WA WB A B C1) : Batch2 WA WB A B C2 :=
   match d with
   | Done c => Done (f c)
-  | Bin rest wa => Bin (map_DFS (compose f) rest) wa
-  | Leaf rest a => Leaf (map_DFS (compose f) rest) a
+  | Bin rest wa => Bin (map_Batch2 (compose f) rest) wa
+  | Leaf rest a => Leaf (map_Batch2 (compose f) rest) a
   end.
 
 #[export] Instance Map_Batch {WA WB A B : Type} :
-  Map (DFS WA WB A B) := @map_DFS WA WB A B.
+  Map (Batch2 WA WB A B) := @map_Batch2 WA WB A B.
 
-Fixpoint mapfst_DFS {WA1 WA2 WB A1 A2 B C : Type} (r : WA1 -> WA2) (f : A1 -> A2)
-  (d : DFS WA1 WB A1 B C) : DFS WA2 WB A2 B C :=
+Fixpoint mapfst_Batch2 {WA1 WA2 WB A1 A2 B C : Type} (r : WA1 -> WA2) (f : A1 -> A2)
+  (d : Batch2 WA1 WB A1 B C) : Batch2 WA2 WB A2 B C :=
   match d with
   | Done c => Done c
-  | Bin rest wa => Bin (mapfst_DFS r f rest) (r wa)
-  | Leaf rest a => Leaf (mapfst_DFS r f rest) (f a)
+  | Bin rest wa => Bin (mapfst_Batch2 r f rest) (r wa)
+  | Leaf rest a => Leaf (mapfst_Batch2 r f rest) (f a)
   end.
 
-Fixpoint mapsnd_DFS {WA WB1 WB2 A B1 B2 C : Type} (r : WB1 -> WB2) (f : B1 -> B2)
-  (d : DFS WA WB2 A B2 C) : DFS WA WB1 A B1 C :=
+Fixpoint mapsnd_Batch2 {WA WB1 WB2 A B1 B2 C : Type} (r : WB1 -> WB2) (f : B1 -> B2)
+  (d : Batch2 WA WB2 A B2 C) : Batch2 WA WB1 A B1 C :=
   match d with
   | Done c => Done c
-  | Bin rest wa => Bin (map_DFS (precompose r) (mapsnd_DFS r f rest)) wa
-  | Leaf rest a => Leaf (map_DFS (precompose f) (mapsnd_DFS r f rest)) a
+  | Bin rest wa => Bin (map_Batch2 (precompose r) (mapsnd_Batch2 r f rest)) wa
+  | Leaf rest a => Leaf (map_Batch2 (precompose f) (mapsnd_Batch2 r f rest)) a
   end.
 
 
@@ -132,12 +131,12 @@ Class ToBatchDMP
       A  (* type of old leaves *)
       A' (* type of new leaves *)
     , F B A -> (* input: the abstract syntax tree *)
-      DFS (* output: a DFS of the tree *)
+      Batch2 (* output: a Batch2 of the tree *)
         (list B * B) (* binders in context *)
         B' (* newly inserted binders *)
         (list B * A) (* leaves in context *)
         (T B' A') (* newly inserted subtrees *)
-        (F B' A'). (* return type of the DFS, the new syntax tree *)
+        (F B' A'). (* return type of the Batch2, the new syntax tree *)
 
 #[local] Arguments toBatchDMP {F T}%function_scope {ToBatchDMP} {B B' A A'}%type_scope _.
 
@@ -150,12 +149,12 @@ Section cojoin.
 
   Definition double_batchDMP :
     list B * A ->
-    DFS
+    Batch2
       (list B * B)
       B''
       (list B * A)
       (T B'' A'')
-      (DFS
+      (Batch2
          (list B'' * B'')
          B'
          (list B'' * A'')
@@ -183,19 +182,19 @@ Section cojoin.
   Proof.
 
   #[program] Definition cojoin_BatchDMP :
-    DFS (* input: a DFS of a tree *)
+    Batch2 (* input: a Batch2 of a tree *)
       (list B * B) (* binders in context *)
       B' (* newly inserted binders *)
       (list B * A) (* leaves in context *)
       (T B' A') (* newly inserted subtrees *)
-      R (* return type of the DFS, the new syntax tree *)
+      R (* return type of the Batch2, the new syntax tree *)
     ->
-      DFS
+      Batch2
         (list B * B)
         B''
         (list B * A)
         (T B'' A'')
-        (DFS
+        (Batch2
            (list B'' * B'')
            B'
            (list B'' * A'')
@@ -207,10 +206,10 @@ Section cojoin.
     - apply (Done (Done r)).
     - apply Bin.
       2: {exact (w, b).}.
-      Check map (F := DFS (list B * B) B'' (list B * A) (T B'' A'')).
-      assert (DFS (list B'' * B'') B' (list B'' * A'') (T B' A') (B' -> R) ->
+      Check map (F := Batch2 (list B * B) B'' (list B * A) (T B'' A'')).
+      assert (Batch2 (list B'' * B'') B' (list B'' * A'') (T B' A') (B' -> R) ->
               B'' ->
-              DFS (list B'' * B'') B' (list B'' * A'') (T B' A') R).
+              Batch2 (list B'' * B'') B' (list B'' * A'') (T B' A') R).
       { intros next b''.
         apply Bin.
         apply next.
@@ -219,14 +218,14 @@ Section cojoin.
   #[program] Fixpoint cojoin_BatchDMP {T : Type -> Type -> Type}
   `{Monoid_op W}
   {WA WB WB' A B B' C : Type}
-  (d : DFS (list WA  * WA ) WB  (list WA  * A) (T WB  B ) C):
-  DFS (list WA  * WA ) WB' (list WA  * A) (T WB' B')
-    (DFS (list WB' * WB') WB  (list WB' * B) (T WB  B ) C) := _.
+  (d : Batch2 (list WA  * WA ) WB  (list WA  * A) (T WB  B ) C):
+  Batch2 (list WA  * WA ) WB' (list WA  * A) (T WB' B')
+    (Batch2 (list WB' * WB') WB  (list WB' * B) (T WB  B ) C) := _.
 
 Next Obligation.
 Qed.
 
-Context (T : Type -> Type -> Type) `(d : DFS (list WA  * WA ) WB  (list WA  * A) (T WB  B ) C) (WB' B' : Type).
+Context (T : Type -> Type -> Type) `(d : Batch2 (list WA  * WA ) WB  (list WA  * A) (T WB  B ) C) (WB' B' : Type).
 
 Goal False.
   destruct d.
@@ -235,7 +234,7 @@ Goal False.
   - rename d0 into rest.
     Set Printing Implicit.
     Check
-      map_DFS (fun continue => fun (t : T WB' B') => _ )
+      map_Batch2 (fun continue => fun (t : T WB' B') => _ )
         (cojoin_BatchDMP rest).
 Abort.
 
@@ -243,14 +242,14 @@ Abort.
 #[program] Fixpoint cojoin_BatchDMP1 {T : Type -> Type -> Type}
   `{Monoid_op W} `{ToBatchDMP T T}
   {WA WB WB' A B B' C : Type}
-  (d : DFS (list WA  * WA ) WB  (list WA  * A) (T WB  B ) C):
-       DFS (list WA  * WA ) WB' (list WA  * A) (T WB' B')
-      (DFS (list WB' * WB') WB  (list WB' * B) (T WB  B ) C) :=
+  (d : Batch2 (list WA  * WA ) WB  (list WA  * A) (T WB  B ) C):
+       Batch2 (list WA  * WA ) WB' (list WA  * A) (T WB' B')
+      (Batch2 (list WB' * WB') WB  (list WB' * B) (T WB  B ) C) :=
   match d with
   | Done c => Done (Done c)
   | Leaf rest (w, a) =>
       Leaf
-        (map_DFS (fun continue => fun (t : T WB' B') => _ )
+        (map_Batch2 (fun continue => fun (t : T WB' B') => _ )
            (cojoin_BatchDMP1 rest))
         (w, a)
   | Bin rest _ => _
