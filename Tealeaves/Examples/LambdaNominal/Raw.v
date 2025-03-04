@@ -150,11 +150,7 @@ Proof.
   cbn. lia.
 Defined.
 
-Check ex.
-Print ex.
-Search sig.
-Search sig.
-Print sig.
+
 Definition rename':
   forall (l: list name) (x y: name) (t: term name name),
     Acc term_lt t -> {u : term name name | depth u = depth t}.
@@ -543,7 +539,7 @@ Section rw.
 
 End rw.
 
-Lemma depth_rename_eq: forall l x y t,
+Lemma depth_rename_eq_strong: forall l x y t,
     (forall u, depth u <= depth t ->
     depth (rename l x y u) = depth u).
 Proof.
@@ -559,21 +555,16 @@ Proof.
     admit.
   - unfold rename_iter.
     destruct_eq_args b x.
-    destruct_eq_args b y.
-    + unfold depth.
-      fequal.
-      fold depth.
-      admit.
-    + cbn. rewrite IHt.
-      reflexivity.
+    admit.
+    admit.
   - unfold rename_iter.
-    cbn.
-    rewrite IHt1.
-    rewrite IHt2.
-    reflexivity.
-Qed.
-        .
-        .
+Admitted.
+
+
+Lemma depth_rename_eq: forall l x y t,
+    depth (rename l x y t) = depth t.
+Proof.
+Admitted.
 
 (*
 (* Capture-avoiding substitution with well-founded recursion *)
@@ -658,13 +649,14 @@ Section rw.
   Lemma substF_rw2: forall b t,
       substF l x u (lam b t) =
         (if b == x
-   then (λ) b t
-   else
-    if SmartAtom.name_inb b (fvL u)
-    then
-     (λ) (fresh ([x] ++ l ++ [b]))
-       (substF (l ++ [fresh ([x] ++ l ++ [b])]) x u (rename b (fresh ([x] ++ l ++ [b])) t))
-    else (λ) b (substF (l ++ [b]) x u t)).
+         then (λ) b t
+         else
+           if SmartAtom.name_inb b (fvL u)
+           then
+             (λ) (fresh ([x] ++ l ++ [b]))
+               (substF (l ++ [fresh ([x] ++ l ++ [b])]) x u
+                  (rename (l ++ [fresh ([x] ++ l ++ [b])]) b (fresh ([x] ++ l ++ [b])) t))
+           else (λ) b (substF (l ++ [b]) x u t)).
   Proof.
     intros.
     rewrite substF_equation.

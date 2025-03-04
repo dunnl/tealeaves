@@ -195,6 +195,7 @@ Section interpret.
     (conflicts: list name)
   (fv_u: list name) (x: name) (u: term name name).
 
+  (*
   Definition interpret_context_to_renamings  (context: list name):
     term name name -> term name name :=
     match context with
@@ -205,20 +206,19 @@ Section interpret.
         else if SmartAtom.name_inb x fv_u
              then let z := (fresh ([x] ++ l ++ [b]): name) in
                   interpret_context_to_renamings rest ∘ rename b z
-                  else substF conflicts x u
-                  end.
+             else id.
 
-Definition interpret_context (conflicts: list name) (fv_u: list name) (x: name) (u: term name name) (context: list name):
-  term name name -> term name name :=
-  match context with
-  | nil => substF conflicts x u
-  | cons b rest =>
-      if b == x
-      then substF conflicts x u
-      else if SmartAtom.name_inb x fv_u
-           then substF (conflicts ++ context_to_renamed context) x u
-           else substF conflicts x u
-  end.
+    Definition interpret_context (conflicts: list name) (fv_u: list name) (x: name) (u: term name name) (context: list name):
+      term name name -> term name name :=
+      match context with
+      | nil => substF conflicts x u
+      | cons b rest =>
+          if b == x
+          then substF conflicts x u
+          else if SmartAtom.name_inb x fv_u
+               then substF (conflicts ++ context_to_renamed context) x u
+               else substF conflicts x u
+      end.
 
 Lemma equiv_key:
   forall (conflicts: list name) (x: name) (u: term name name) (context: list name) (t: term name name),
@@ -235,6 +235,7 @@ Proof.
     rewrite monoid_id_l.
     induction context.
 
+   *)
 
 Theorem woah:
   forall (conflicts: list name) (x: name) (u: term name name) (b: name) (t: term name name),
@@ -249,7 +250,8 @@ Theorem woah:
        substitute (T := term) (G := fun A => A)
          (rename_binder_from_ctx x conflicts (FV term u) ⦿ [b])
          (subst_from_ctx x u conflicts (FV term u) ⦿ [b]) t =
-         substF (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) x u (rename b (fresh ([x] ++ conflicts ++ [b])) t)).
+         substF (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) x u
+           (rename (conflicts ++ [fresh ([x] ++ conflicts ++ [b])])  b (fresh ([x] ++ conflicts ++ [b])) t)).
 Proof.
   intros.
   generalize dependent conflicts.
@@ -257,16 +259,6 @@ Proof.
   induction t.
   - admit.
   - (* λ b t *)
-    intros c conflicts.
-    rewrite sub_term_rw2.
-    simplify_applicative_I.
-    unfold ap, mult, Mult_I; unfold_ops @Map_I.
-    split.
-    { introv Hnin Hneq.
-      rewrite substF_rw2.
-      assert (b <> x). admit.
-      destruct_eq_args b x.
-      { rewrite preincr_preincr.
 Abort.
 
 
@@ -277,7 +269,8 @@ Theorem subst_preincr_inFV_spec:
       substitute (T := term) (G := fun A => A)
         (rename_binder_from_ctx x conflicts (FV term u) ⦿ [b])
         (subst_from_ctx x u conflicts (FV term u) ⦿ [b]) t =
-  substF (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) x u (rename b (fresh ([x] ++ conflicts ++ [b])) t).
+        substF (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) x u
+          (rename (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) b (fresh ([x] ++ conflicts ++ [b])) t).
 Proof.
   introv Hin Hneq.
   generalize dependent conflicts.
@@ -313,7 +306,8 @@ Proof.
         rewrite FV_fvL.
         step_set_test.
         rewrite List.app_nil_l.
-        reflexivity.
+        admit.
+        admit.
       }
     +
       unfold preincr, incr, compose.
@@ -335,6 +329,7 @@ Proof.
     rewrite rename_rw2_neq.
 
     rewrite substF_rw2.
+    admit.
     admit.
     admit.
   - rewrite rename_rw3.
