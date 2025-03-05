@@ -121,11 +121,20 @@ Section composition_with_functor.
       reassociate <- on right.
       unfold_ops @Pure_compose.
       change (?f ○ ?g) with (f ∘ g).
-      rewrite <- (fun2_map2_map22 (F := T)).
-      unfold_ops @Map2_2.
-      admit.
-  Admitted.
-
+      rewrite <- (fun_map_map (F := G1)).
+      reassociate -> near (dist2 T G1).
+      change (map G1 (map2 T ?f ?g)) with (map2 (G1 ○12 T) f g).
+      setoid_rewrite (natural2 (Natural2 := dist2_natural) (G := G1 ○12 T)).
+      reassociate -> on left.
+      unfold_ops @Map21_compose.
+      reassociate -> on right.
+      reassociate -> on right.
+      rewrite (fun2_map_map (F := T)).
+      rewrite fun_map_id.
+      Search pure "Nat".
+      rewrite (natural (ϕ := @pure G1 _)).
+      reflexivity.
+  Qed.
 
 End composition_with_functor.
 

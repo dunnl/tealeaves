@@ -48,7 +48,7 @@ Section ops.
     `{forall W, Return (T W)}
     `{Substitute T T}.
 
-  Import DecoratedTraversableMonadPoly.DerivedOperations.
+  Import Kleisli.DecoratedTraversableMonadPoly.DerivedOperations.
 
   Section rename_local.
 
@@ -72,7 +72,7 @@ Section ops.
       list name * name -> T name name :=
       fun '(ctx, v) =>
         match get_binding ctx v with
-        | Unbound _ =>
+        | Unbound _ _ =>
             (* v is a free variable *)
             if v == x
             then u

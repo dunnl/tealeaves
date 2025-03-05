@@ -1854,3 +1854,13 @@ Proof.
   intro G. intros.
   exact (dist_Z X).
 Defined.
+
+Lemma traverse_dist_Z `{Applicative G}:
+  forall (A B: Type) (f: A -> G B),
+    traverse (T := Z) f = dist Z G ∘ map f.
+Proof.
+  intros.
+  unfold compose. ext [l a].
+  cbn.
+  (* Need list dist traverse relation *)
+Admitted.

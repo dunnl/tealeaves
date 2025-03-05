@@ -159,7 +159,7 @@ Module DerivedOperations.
     `{DecoratedTraversableMonadPoly T}.
 
   #[export] Instance MapdtPoly_Substitute: MapdtPoly T :=
-    fun A1 A2 B1 B2 G Gmap Gpure Gmult ρ σ =>
+    fun B1 B2 A1 A2 G Gmap Gpure Gmult ρ σ =>
       substitute ρ (map (ret (T B2) A2) ∘ σ).
 
   #[export] Instance TraversePoly_Substitute: TraversePoly T :=

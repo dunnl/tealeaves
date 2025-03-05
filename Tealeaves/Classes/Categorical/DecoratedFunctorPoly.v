@@ -50,8 +50,8 @@ Class DecoratePoly
 #[local] Arguments decp {F}%function_scope {DecoratePoly}
   {B V}%type_scope _.
 
-Definition PolyDecorateNatural F `{Map2 F} `{DecoratePoly F}: Prop :=
-  forall (B V B' V': Type) (g: B -> B') (f: V -> V'),
+Class PolyDecorateNatural F `{Map2 F} `{DecoratePoly F}: Type :=
+  polydecnat: forall (B V B' V': Type) (g: B -> B') (f: V -> V'),
     decp (B := B') (V := V') ∘ map2 g f =
       map2 (map (F := Z) g) (map2 (F := Z2) g f) ∘ decp (B := B) (V := V).
 
@@ -63,7 +63,7 @@ Class DecoratedFunctorPoly
   `{Map2 F}
   `{DecoratePoly F} :=
   { dfunp_functor :> Functor2 F;
-    dfunp_natural: PolyDecorateNatural F;
+    dfunp_natural :> PolyDecorateNatural F;
     dfunp_dec_dec: forall (B V: Type),
       decp ∘ decp (B := B) (V := V) = map2 (cojoin (W := Z)) cojoin_Z2 ∘ decp;
     dfunp_dec_extract: forall (B V: Type),

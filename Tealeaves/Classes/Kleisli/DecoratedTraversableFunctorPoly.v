@@ -20,7 +20,7 @@ Import DecoratedTraversableCommIdemFunctor.Notations.
 (******************************************************************************)
 Class MapdtPoly (T: Type -> Type -> Type) :=
     mapdtp:
-      forall (A1 A2 B1 B2: Type)
+      forall (B1 B2 A1 A2: Type)
         (G : Type -> Type)
         `{Gmap: Map G} `{Gpure: Pure G} `{Gmult: Mult G},
         (list B1 * B1 -> G B2) ->
@@ -28,7 +28,7 @@ Class MapdtPoly (T: Type -> Type -> Type) :=
         T B1 A1 ->
         G (T B2 A2).
 
-Arguments mapdtp {T}%function_scope {MapdtPoly} {A1 A2 B1 B2}%type_scope
+Arguments mapdtp {T}%function_scope {MapdtPoly} {B1 B2 A1 A2}%type_scope
   {G}%function_scope {Gmap Gpure Gmult} (_ _)%function_scope _.
 
 (** ** Kleisli Composition *)

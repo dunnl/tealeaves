@@ -18,7 +18,7 @@ Import ContainerFunctor.Notations.
 
 #[local] Generalizable Variables G.
 
-Instance: Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly term.
+#[local] Instance: Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly term.
 Admitted.
 
 Section rw.
@@ -108,22 +108,21 @@ Section rw.
 
   Context
     (conflicts: list name)
-    (fv_u: list name)
     (x: name) (u: term name name).
 
   Lemma subst_top_rw1: forall (v: name),
-      subst_top x u conflicts fv_u (tvar v) =
+      subst_top x u conflicts (tvar v) =
         if (v == x) then u else (tvar v).
   Proof.
     reflexivity.
   Qed.
 
   Lemma subst_top_rw2: forall (b: name) (t: term name name),
-      subst_top x u  conflicts (fv_u) (lam b t) =
-        lam (rename_binder_from_ctx x conflicts fv_u ([], b))
+      subst_top x u  conflicts (lam b t) =
+        lam (rename_binder_from_context conflicts ([], b))
           (substitute (G := fun A => A)
-             (rename_binder_from_ctx x conflicts fv_u ⦿ [b])
-             (subst_from_ctx x u conflicts fv_u ⦿ [b]) t).
+             (rename_binder_from_context conflicts ⦿ [b])
+             (subst_from_ctx x u conflicts ⦿ [b]) t).
   Proof.
     intros.
     unfold subst_top.
@@ -133,8 +132,8 @@ Section rw.
   Qed.
 
   Lemma subst_top_rw3: forall (top: list name) (t1 t2: term name name),
-      subst_top x u conflicts fv_u (tap t1 t2) =
-        tap (subst_top x u conflicts fv_u t1) (subst_top x u conflicts fv_u t2).
+      subst_top x u conflicts (tap t1 t2) =
+        tap (subst_top x u conflicts t1) (subst_top x u conflicts t2).
   Proof.
     reflexivity.
   Qed.
@@ -143,27 +142,28 @@ End rw.
 
 Lemma lemma1: forall
     (conflicts: list name) (fv_u: list name) (x:name),
-    (rename_binder_from_ctx x conflicts fv_u) ⦿ [x] =
+    (rename_binder_from_context conflicts) ⦿ [x] =
       extract.
 Proof.
   intros.
   ext (ctx, b).
   unfold preincr, incr, compose.
   change ([x] ● ctx) with (x::ctx).
-  unfold rename_binder_from_ctx.
-  rewrite rename_binder_from_ctx_rec_rw_cons_eq; auto.
-Qed.
+  unfold rename_binder_from_context.
+  unfold rename_binder_from_history.
+Abort.
 
+(*
 Lemma lemma2: forall
     (conflicts: list name) (fv_u: list name) (x:name) (u: term name name),
-    (subst_from_ctx x u conflicts fv_u) ⦿ [x] =
+    (subst_from_context x u conflicts) ⦿ [x] =
       ret ∘ extract.
 Proof.
   intros.
   ext (ctx, v).
   unfold preincr, incr, compose.
   change ([x] ● ctx) with (x::ctx).
-  unfold subst_from_ctx.
+  unfold subst_from_context.
   destruct (get_binding_spec (x :: ctx) v) as [[Heq Hnin]| H2].
   - rewrite Heq.
     assert (v <> x).
@@ -183,7 +183,7 @@ Proof.
       assert (x = n).
       { now inversion rest2. }
       subst.
-      change_left (ret ((rename_binder_from_ctx n conflicts fv_u ⦿ [n]) (pre, v))).
+      change_left (ret ((rename_binder_from_context n conflicts ⦿ [n]) (pre, v))).
       rewrite lemma1.
       reflexivity.
 Qed.
@@ -203,7 +203,7 @@ Section interpret.
     | cons b rest =>
         if b == x
         then id
-        else if SmartAtom.name_inb x fv_u
+        else if SmartAtom.name_inb x
              then let z := (fresh ([x] ++ l ++ [b]): name) in
                   interpret_context_to_renamings rest ∘ rename b z
              else id.
@@ -215,7 +215,7 @@ Section interpret.
       | cons b rest =>
           if b == x
           then substF conflicts x u
-          else if SmartAtom.name_inb x fv_u
+          else if SmartAtom.name_inb x
                then substF (conflicts ++ context_to_renamed context) x u
                else substF conflicts x u
       end.
@@ -223,8 +223,8 @@ Section interpret.
 Lemma equiv_key:
   forall (conflicts: list name) (x: name) (u: term name name) (context: list name) (t: term name name),
      substitute (T := term) (G := fun A => A)
-       (rename_binder_from_ctx x conflicts (FV term u) ⦿ context)
-       (subst_from_ctx x u conflicts (FV term u) ⦿ context) t =
+       (rename_binder_from_context x conflicts (FV term u) ⦿ context)
+       (subst_from_context x u conflicts (FV term u) ⦿ context) t =
        interpret_context conflicts (FV term u) x u context t.
 Proof.
   intros.
@@ -242,14 +242,14 @@ Theorem woah:
     (~ b ∈ fvL u ->
      b <> x ->
      substitute (T := term) (G := fun A => A)
-       (rename_binder_from_ctx x conflicts (FV term u) ⦿ [b])
-       (subst_from_ctx x u conflicts (FV term u) ⦿ [b]) t =
+       (rename_binder_from_context x conflicts (FV term u) ⦿ [b])
+       (subst_from_context x u conflicts (FV term u) ⦿ [b]) t =
        substF (conflicts ++ [b]) x u t) /\
       (b ∈ fvL u ->
        b <> x ->
        substitute (T := term) (G := fun A => A)
-         (rename_binder_from_ctx x conflicts (FV term u) ⦿ [b])
-         (subst_from_ctx x u conflicts (FV term u) ⦿ [b]) t =
+         (rename_binder_from_context x conflicts (FV term u) ⦿ [b])
+         (subst_from_context x u conflicts (FV term u) ⦿ [b]) t =
          substF (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) x u
            (rename (conflicts ++ [fresh ([x] ++ conflicts ++ [b])])  b (fresh ([x] ++ conflicts ++ [b])) t)).
 Proof.
@@ -267,8 +267,8 @@ Theorem subst_preincr_inFV_spec:
       b ∈ fvL u ->
       b <> x ->
       substitute (T := term) (G := fun A => A)
-        (rename_binder_from_ctx x conflicts (FV term u) ⦿ [b])
-        (subst_from_ctx x u conflicts (FV term u) ⦿ [b]) t =
+        (rename_binder_from_context x conflicts (FV term u) ⦿ [b])
+        (subst_from_context x u conflicts (FV term u) ⦿ [b]) t =
         substF (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) x u
           (rename (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) b (fresh ([x] ++ conflicts ++ [b])) t).
 Proof.
@@ -282,7 +282,7 @@ Proof.
     + rewrite substF_rw1.
       unfold preincr, incr, compose.
       change ([b] ● []) with ([b]).
-      unfold subst_from_ctx.
+      unfold subst_from_context.
       assert (get_binding [b] b = Bound [] b []).
       { cbn. destruct_eq_args b b. }
       rewrite H.
@@ -299,8 +299,8 @@ Proof.
       destruct_eq_args (fresh ([x] ++ conflicts ++ [b])) x.
       { intuition. }
       { fequal.
-        unfold rename_binder_from_ctx.
-        unfold rename_binder_from_ctx_rec.
+        unfold rename_binder_from_context.
+        unfold rename_binder_from_context_rec.
         unfold rename_binder_one.
         destruct_eq_args b x.
         rewrite FV_fvL.
@@ -312,7 +312,7 @@ Proof.
     +
       unfold preincr, incr, compose.
       change ([b] ● []) with ([b]).
-      unfold subst_from_ctx.
+      unfold subst_from_context.
       assert (get_binding [b] v = Unbound [b]).
       { cbn. destruct_eq_args b v. }
       rewrite H.
@@ -342,7 +342,7 @@ Lemma tvar_helper:
   forall (conflicts: list name) (x: name) (u: term name name) (b: name) (t: term name name) v,
     ~ b ∈ fvL u ->
      b <> x ->
-     subst_from_ctx x u conflicts (FV term u) ([b], v) = (if v == x then u else tvar v).
+     subst_from_context x u conflicts (FV term u) ([b], v) = (if v == x then u else tvar v).
 Proof.
   intros.
   cbn.
@@ -364,8 +364,8 @@ Theorem subst_preincr_ninFV_spec:
       ~ b ∈ fvL u ->
       b <> x ->
     substitute (T := term) (G := fun A => A)
-      (rename_binder_from_ctx x conflicts (FV term u) ⦿ [b])
-      (subst_from_ctx x u conflicts (FV term u) ⦿ [b]) t =
+      (rename_binder_from_context x conflicts (FV term u) ⦿ [b])
+      (subst_from_context x u conflicts (FV term u) ⦿ [b]) t =
       substF (conflicts ++ [b]) x u t.
 Proof.
   introv Hnin Nneq.
@@ -384,7 +384,7 @@ Proof.
 
     destruct_eq_args b x.
     { fequal.
-      { unfold rename_binder_from_ctx.
+      { unfold rename_binder_from_context.
         unfold preincr, incr, compose.
         change ([b0] ● []) with ([b0]).
         cbn.
@@ -437,8 +437,8 @@ Proof.
     { destruct (destruct_in b (fvL u)).
       { step_set_test.
         fequal.
-        { unfold rename_binder_from_ctx.
-          rewrite rename_binder_from_ctx_rec_rw_nil.
+        { unfold rename_binder_from_context.
+          rewrite rename_binder_from_context_rec_rw_nil.
           unfold rename_binder_one.
           destruct_eq_args b x.
           rewrite FV_fvL.
@@ -477,9 +477,9 @@ Qed.
 Lemma rename_binder_local_history_preincr_spec:
   forall (conflicts: list name) (x:name) (fv_u: list name) (b:name),
     b <> x ->
-    ~ (b ∈ fv_u) ->
-  (rename_binder_local_history conflicts x fv_u ⦿ [b]) =
-    (rename_binder_local_history (conflicts ++ [b]) x fv_u).
+    ~ (b ∈) ->
+  (rename_binder_local_history conflicts x ⦿ [b]) =
+    (rename_binder_local_history (conflicts ++ [b]) x).
 Proof.
   introv BneqX BnotinFVu.
   ext (ctx, v).
@@ -487,10 +487,11 @@ Proof.
   change (?a ● ?g) with (a ++ g).
   unfold rename_binder_local_history.
   destruct_eq_args x v.
-  destruct (SmartAtom.name_inb v fv_u).
+  destruct (SmartAtom.name_inb v).
   - repeat rewrite List.app_assoc.
     reflexivity.
   - repeat rewrite List.app_assoc.
     reflexivity.
 Qed.
 
+*)

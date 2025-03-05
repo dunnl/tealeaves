@@ -30,10 +30,12 @@ Module DerivedInstances.
 
   Import DerivedOperations.
 
+  Section section.
+
   Context
     `{Categorical.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly T}.
 
-  Instance: Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly T.
+  #[export] Instance: Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly T.
   Proof.
     constructor; intros.
     - unfold substitute, Binddt_Categorical.
@@ -47,7 +49,7 @@ Module DerivedInstances.
       change σ with (id ∘ σ) at 2.
       fequal.
       reassociate -> on left.
-      rewrite (xxx_dist2_ret (G := G) (T := T) (B := B2) (V := T B2 A2)).
+      rewrite (xxx_dist2_ret (G := G) (T := T) (B2) (T B2 A2)).
       rewrite fun_map_map.
       setoid_rewrite mon_join_ret.
       rewrite fun_map_id.
@@ -68,6 +70,7 @@ Module DerivedInstances.
       repeat reassociate <- on left.
       rewrite fun_map_map.
       fequal.
+      unfold kc_dtmp.
       admit.
     - unfold substitute.
       unfold Binddt_Categorical.
@@ -82,5 +85,6 @@ Module DerivedInstances.
       reflexivity.
   Admitted.
 
-End DerivedInstances.
+  End section.
 
+End DerivedInstances.

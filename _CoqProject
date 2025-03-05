@@ -211,13 +211,14 @@ Tealeaves/Functors/Batch2.v
 Tealeaves/Functors/Z2.v
 Tealeaves/Classes/Categorical/TraversableFunctor2.v
 Tealeaves/Classes/Categorical/DecoratedFunctorPoly.v
+Tealeaves/Classes/Categorical/DecoratedTraversableFunctorPoly.v
 Tealeaves/Classes/Categorical/DecoratedTraversableMonadPoly.v
+Tealeaves/Classes/Kleisli/TraversableFunctor2.v
 
 ##########################################################
 # POLYMORPHICALLY DECORATED DTFs AND DTMs                #
 ##########################################################
 Tealeaves/Classes/Kleisli/DecoratedFunctorPoly.v
-Tealeaves/Classes/Kleisli/TraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Coalgebraic/DecoratedTraversableMonadPoly.v
@@ -229,6 +230,8 @@ Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Kleisli/Theory/TraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctorPoly.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonadPoly.v
 Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
 Tealeaves/Theory/DecoratedTraversableMonadPoly.v
 
@@ -357,7 +360,6 @@ Tealeaves/Simplification/Tests/SystemF_LN.v
 ##########################################################
 # EX: NOMINAL SYNTAX BINDERS                             #
 ##########################################################
-Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonadPoly.v
 Tealeaves/Examples/LambdaNominal/Syntax.v
 Tealeaves/Examples/LambdaNominal/Categorical.v
 Tealeaves/Examples/LambdaNominal/Kleisli.v

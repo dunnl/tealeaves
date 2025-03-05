@@ -1,11 +1,8 @@
 From Tealeaves Require Import
-  Backends.DB.DB
-  Backends.LN.Atom
+  Backends.LN
   Backends.Named.Common
   Backends.Named.Names
   Backends.Named.Named
-  Backends.Adapters.KeyName
-  Functors.Option
   Theory.DecoratedTraversableFunctorPoly
   CategoricalToKleisli.DecoratedTraversableFunctorPoly.
 
@@ -17,6 +14,7 @@ Import DecoratedTraversableMonad.UsefulInstances.
 
 Import Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.
 Import Kleisli.DecoratedTraversableMonadPoly.DerivedOperations.
+
 (*
 Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
 Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.
@@ -37,10 +35,12 @@ Section with_DTM.
     (T: Type -> Type -> Type)
       `{Categorical.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly T}.
 
-  Print Instances Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly.
-
-  Definition binding_to_ix (k: key): name -> Binding -> option nat.
+  Definition binding_to_ln: Binding -> LN.
   Proof.
+    intros [prefix var postfix| ub_context ].
+    exact (Bd (length prefix)).
+    exact (Fr n).
+    exact
     intros x b.
     destruct b.
     - exact (Some (length l)).

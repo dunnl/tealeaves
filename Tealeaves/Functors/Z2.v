@@ -32,7 +32,7 @@ Definition map_Z2: forall (B1 A1 B2 A2: Type) (g: B1 -> B2) (f: A1 -> A2),
 
 #[export] Instance Map2_Z2: Map2 Z2 := @map_Z2.
 
-Instance Functor2_Z2: Functor2 Z2.
+#[export] Instance Functor2_Z2: Functor2 Z2.
 Proof.
   constructor; intros; ext t.
   - induction t; try auto.
@@ -57,7 +57,7 @@ Definition dist2_Z2
   Z2 (G B) (G V) -> G (Z2 B V) :=
   fun '(x, y) => pure (@pair (list B) V) <⋆> dist list G x <⋆> y.
 
-Instance Dist2_Z2: ApplicativeDist2 Z2.
+#[export] Instance Dist2_Z2: ApplicativeDist2 Z2.
 Proof.
   intro G. intros.
   exact (dist2_Z2 X).

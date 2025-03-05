@@ -196,7 +196,7 @@ End rw.
 (**********************************************************************)
 Inductive Binding: Type :=
   Bound: list name -> name -> list name -> Binding
-| Unbound: list name -> Binding.
+| Unbound: list name -> name -> Binding.
 
 Fixpoint get_binding_rec_bound (looking_for: name) (prefix: list name) (postfix: list name) (l: list name):
   Binding :=
@@ -210,7 +210,7 @@ Fixpoint get_binding_rec_bound (looking_for: name) (prefix: list name) (postfix:
 
 Fixpoint get_binding_rec_unbound (looking_for: name) (prefix: list name) (l: list name): Binding :=
   match l with
-  | nil => Unbound prefix
+  | nil => Unbound prefix looking_for
   | cons y ys =>
       if looking_for == y
       then get_binding_rec_bound looking_for prefix [] ys
@@ -366,7 +366,7 @@ Section rw.
 
   Lemma get_binding_spec_gen: forall l v pre',
       ~ v ∈ pre' ->
-      {get_binding_rec_unbound v pre' l = Unbound (pre' ++ l) /\ ~ v ∈ (pre' ++ l)} +
+      {get_binding_rec_unbound v pre' l = Unbound (pre' ++ l) v /\ ~ v ∈ (pre' ++ l)} +
         {exists pre post: list name, get_binding_rec_unbound v pre' l =
                                   Bound pre v post /\ (pre' ++ l = pre ++ [v] ++ post) /\ ~ v ∈ post}.
   Proof.
@@ -396,7 +396,7 @@ Section rw.
   Qed.
 
   Lemma get_binding_spec: forall (l: list name) (v: name),
-      {get_binding l v = Unbound l /\ ~ v ∈ l} +
+      {get_binding l v = Unbound l v /\ ~ v ∈ l} +
         {exists pre post, get_binding l v = Bound pre v post  /\ l = pre ++ [v] ++ post /\ ~ v ∈ post}.
   Proof.
     intros.
@@ -409,7 +409,7 @@ Section rw.
 
 
   Lemma get_binding1: forall ctx v,
-      ~ (v ∈ ctx) -> get_binding ctx v = Unbound ctx.
+      ~ (v ∈ ctx) -> get_binding ctx v = Unbound ctx v.
   Proof.
     intros. destruct (get_binding_spec ctx v).
     - tauto.

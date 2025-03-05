@@ -2,6 +2,8 @@ From Tealeaves Require Export
   Examples.LambdaNominal.Syntax
   Classes.Categorical.DecoratedMonad (shift).
 
+Import List.ListNotations.
+
 #[local] Generalizable Variables G.
 
 (*|
@@ -109,7 +111,6 @@ Defined.
 Decoration
 +++++++++++++++++++++++++++++++++++++++++++++++
 |*)
-
 Fixpoint dec_term_rec {B V: Type} (ctx: list B)
   (t: term B V): term (list B * B) (list B * V) :=
   match t with
@@ -947,8 +948,11 @@ Proof.
   - typeclasses eauto.
   - typeclasses eauto.
   - typeclasses eauto.
+  - constructor; try typeclasses eauto.
+    intros.
+    now rewrite dist_dec_commute2.
   - typeclasses eauto.
-  - reflexivity.
+  - cbv. reflexivity.
   - unfold decpoly_ret.
     intros.
     ext v.
@@ -956,15 +960,10 @@ Proof.
   - unfold decpoly_join.
     intros.
     apply decorate_join_term.
-  - (* dist ret *)
-    admit.
+  - reflexivity.
   - unfold dist2_join.
     intros.
     setoid_rewrite dist_join_term.
     reflexivity.
-  - unfold dist2_decpoly_ci.
-    intros.
-    ext t.
-    now rewrite dist_dec_commute2.
-Abort.
+Qed.
 

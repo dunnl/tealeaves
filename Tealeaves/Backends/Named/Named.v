@@ -89,7 +89,7 @@ Section named_local_operations.
     list name * name -> T name name :=
     fun '(context, var) =>
       match (get_binding context var) with
-      | Unbound _ =>
+      | Unbound _ _ =>
           if var == looking_for
           then u
           else ret (T := T name) var
@@ -112,6 +112,28 @@ End named_local_operations.
 
 (** ** Localized operations *)
 (**********************************************************************)
+From Tealeaves Require Import
+  Classes.Categorical.DecoratedTraversableMonadPoly
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.
+
+Section named_local_operations.
+
+  Context
+    (T: Type -> Type -> Type)
+    `{Categorical.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly T}.
+
+  Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
+  Import Kleisli.DecoratedTraversableMonadPoly.DerivedOperations.
+
+  Definition alpha:
+    T name name -> T name name -> Prop :=
+    fun t1 t2 =>
+      traversep (G := subset) (T := T)
+        (fun _ _ => True) (alpha_equiv_local) (decp t1) (decp t2).
+
+End named_local_operations.
+
+
 Section named_local_operations.
 
   Context
@@ -126,12 +148,6 @@ Section named_local_operations.
       (G := const (list name))
       (const (@nil name))
       FV_loc.
-
-  Definition alpha:
-    T name name -> T name name -> Prop.
-  Admitted.
-
-  Import DecoratedTraversableMonadPoly.DerivedOperations.
 
   Context
     `{forall W, Return (T W)}
