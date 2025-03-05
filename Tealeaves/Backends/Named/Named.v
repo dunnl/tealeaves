@@ -2,7 +2,7 @@ From Tealeaves Require Import
   Classes.EqDec_eq
   Classes.Kleisli.DecoratedTraversableMonadPoly
   Functors.List_Telescoping_General
-  Backends.Named.Names
+  Backends.Common.Names
   Backends.Named.Common
   Functors.Constant
   Functors.Subset.
@@ -23,7 +23,7 @@ Import ContainerFunctor.Notations.
 (* Given the history of output names so far, decide the name of this binder *)
 Definition hf_loc: list name * name -> name :=
   fun '(history, current) =>
-    if SmartAtom.name_inb current history
+    if Name.name_inb current history
     then fresh history
     else current.
 

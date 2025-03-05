@@ -1,5 +1,5 @@
 From Tealeaves.Backends Require Export
-  LN.Atom LN.AtomSet LN.AssocList
+  Common.Names Common.AtomSet Common.AssocList
   Multisorted.LN.LN.
 From Tealeaves.Backends Require Import LN.
 

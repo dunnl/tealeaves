@@ -1,7 +1,7 @@
 (** This files contains metatheorems for the locally nameless variables
  that closely parallel those of LNgen. *)
-From Tealeaves.Backends.LN Require Export
-  Atom AtomSet.
+From Tealeaves.Backends.Common Require Export
+  Names AtomSet.
 From Tealeaves.Misc Require Export
   NaturalNumbers.
 From Tealeaves.Classes Require Import
@@ -23,7 +23,7 @@ Import
   DecoratedMonad.Notations
   DecoratedContainerFunctor.Notations
   DecoratedTraversableMonad.Notations
-  LN.AtomSet.Notations.
+  AtomSet.Notations.
 
 #[local] Generalizable Variables T U.
 
@@ -40,7 +40,7 @@ Inductive LN :=
 Theorem eq_dec_LN: forall l1 l2: LN, {l1 = l2} + {l1 <> l2}.
 Proof.
   decide equality.
-  - compare values a and a0; auto.
+  - compare values n and n0; auto.
   - compare values n and n0; auto.
 Qed.
 
@@ -56,7 +56,7 @@ Lemma compare_to_atom: forall x l (P: LN -> Prop),
     P l.
 Proof.
   introv case1 case2 case3. destruct l.
-  - destruct_eq_args x a. auto.
+  - destruct_eq_args x n. auto.
   - auto.
 Qed.
 
@@ -200,7 +200,7 @@ Section locally_nameless_operations.
     foldMap free_loc.
 
   Definition FV: U LN -> AtomSet.t :=
-    LN.AtomSet.atoms ○ free.
+    AtomSet.atoms ○ free.
 
   Definition LCnb (gap: nat): U LN -> bool :=
     foldMapd (lcb_loc gap).
@@ -1367,7 +1367,7 @@ Section locally_nameless_metatheory.
     apply mod_bind_respectful_map.
     intros l' l'in.
     destruct l'.
-    - cbn. compare values x and a.
+    - cbn. compare values x and n.
     - reflexivity.
   Qed.
 
@@ -1612,8 +1612,9 @@ Section locally_nameless_metatheory.
       rewrite <- free_iff_FV in Hnin.
       rewrite in_free_iff in Hnin.
       easy.
-    - cbn. compare values a and a.
-      destruct (@eq_dec Atom.atom _ y a). false.
+    - cbn.
+      compare values y and a.
+      destruct (@eq_dec Names.atom _ y a). false.
       easy.
     - cbn. unfold transparent tcs.
       unfold LC in HLC.
@@ -1948,8 +1949,10 @@ Section locally_nameless_metatheory.
       cbn in Heq_loc.
       destruct a1.
       { destruct a2.
-        { now inversion Heq_loc. }
-        { compare naturals n and e; false. }
+        { assumption. }
+        { false.
+          destruct (compare n0 e); easy.
+        }
       }
       { destruct a2.
         { compare naturals n and e; false. }
@@ -1995,10 +1998,8 @@ Section locally_nameless_metatheory.
       compare a2 to atom x.
       + reflexivity.
       + compare values x and a.
-      + compare naturals n and e.
-        { inversion Heq_loc. lia. }
-        { inversion Heq_loc. lia. }
-        { inversion Heq_loc. lia. }
+      + compare naturals n and e;
+          inversion Heq_loc; lia.
     - compare values x and a.
       compare a2 to atom x.
       compare values x and x.
@@ -2008,22 +2009,12 @@ Section locally_nameless_metatheory.
       { false. }
       { false. }
     - compare a2 to atom x.
-      { compare naturals n and e.
-        compare values x and x.
-        { inversion Heq_loc. lia. }
-        { compare values x and x.
-          inversion Heq_loc. lia. }
-        { compare values x and x.
-          inversion Heq_loc. lia. }
+      { compare naturals n and e;
+          compare values x and x;
+          inversion Heq_loc; try lia.
       }
-      { compare naturals n and e.
-        destruct (@eq_dec Atom.atom _ x a).
-        { inversion Heq_loc. lia. }
-        { inversion Heq_loc. }
-        { compare values x and a. }
-        destruct (@eq_dec Atom.atom _ x a).
-        { inversion Heq_loc. lia. }
-        { inversion Heq_loc. }
+      { compare naturals n and e;
+          compare values x and a.
       }
       { compare naturals n and e;
           compare naturals n0 and e;

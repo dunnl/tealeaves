@@ -1,6 +1,6 @@
 From Tealeaves Require Import
   Backends.LN.LN
-  Backends.LN.Atom
+  Backends.Common.Names
   Backends.DB.DB
   Functors.List
   Functors.Option

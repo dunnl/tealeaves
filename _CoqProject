@@ -271,9 +271,10 @@ Tealeaves/Simplification/Tests/Support.v
 ##########################################################
 # LOCALLY NAMELESS BACKEND                               #
 ##########################################################
-Tealeaves/Backends/LN/Atom.v
-Tealeaves/Backends/LN/AtomSet.v
-Tealeaves/Backends/LN/AssocList.v
+Tealeaves/Backends/Common/Names.v
+#Tealeaves/Backends/Common/Atom.v
+Tealeaves/Backends/Common/AtomSet.v
+Tealeaves/Backends/Common/AssocList.v
 Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN/Simplification.v
 Tealeaves/Backends/LN/Parallel.v
@@ -303,9 +304,10 @@ Tealeaves/Backends/Adapters/LNtoDB.v
 # FULLY NOMINAL BACKEND                                  #
 ##########################################################
 Tealeaves/Backends/Named/Named.v
-Tealeaves/Backends/Named/Names.v
 Tealeaves/Backends/Named/Common.v
-Tealeaves/Backends/Named/NamedTraditional.v
+Tealeaves/Backends/Named/Barendregt.v
+Tealeaves/Adapters/MonoidHom/DecoratedTraversableMonad.v
+Tealeaves/Adapters/PolyToMono/DecoratedTraversableMonad.v
 Tealeaves/Backends/Adapters/KeyName.v
 
 

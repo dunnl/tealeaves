@@ -169,8 +169,11 @@ Section test_operations.
 
   Context
     (β : Type)
-    (x y z : atom)
-    (b : β) (τ : typ).
+      (b : β) (τ : typ).
+
+  Definition x: atom := 0.
+  Definition y: atom := 1.
+  Definition z: atom := 2.
 
   Compute (λ τ (tvar (Bd 0))) '(Bd 0: Lam LN).
   Compute (λ τ (tvar (Bd 0))) '(Bd 1).

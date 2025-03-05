@@ -11,7 +11,7 @@ Implicit Types (x : atom).
 
 Import AtomSet.Notations.
 Import ContainerFunctor.Notations.
-Import LN.AssocList.Notations.
+Import AssocList.Notations.
 Import List.ListNotations.
 
 Create HintDb sysf_ctx.

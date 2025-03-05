@@ -1,5 +1,6 @@
 From Tealeaves Require Import
-  LN.Atom LN.AtomSet
+  Common.Names
+  Common.AtomSet
   Classes.Categorical.Monad (Return, ret)
   Classes.Categorical.Comonad (Extract, extract)
   Classes.Categorical.ShapelyFunctor
@@ -12,7 +13,7 @@ From Coq Require Import
 
 Import Product.Notations.
 Import List.ListNotations.
-Import LN.AtomSet.Notations.
+Import AtomSet.Notations.
 Import ContainerFunctor.Notations.
 
 Create HintDb tea_alist.
@@ -1486,7 +1487,7 @@ Section permute_lemmas.
       x ∈ dom l1 <-> x ∈ dom l2.
   Proof.
     setoid_rewrite in_dom_iff.
-    setoid_rewrite (permutation_spec Hperm).
+    setoid_rewrite (List.permutation_spec Hperm).
     reflexivity.
   Qed.
 
@@ -1502,7 +1503,7 @@ Section permute_lemmas.
       a ∈ range l1 <-> a ∈ range l2.
   Proof.
     setoid_rewrite in_range_iff.
-    setoid_rewrite (permutation_spec Hperm).
+    setoid_rewrite (List.permutation_spec Hperm).
     reflexivity.
   Qed.
 
@@ -1536,7 +1537,7 @@ Qed.
 Lemma binds_perm : forall (A : Type) (l1 l2 : list (atom * A)) (x : atom) (a : A),
     Permutation l1 l2 -> (x, a) ∈ l1 <-> (x, a) ∈ l2.
 Proof.
-  intros. now erewrite permutation_spec; eauto.
+  intros. now erewrite List.permutation_spec; eauto.
 Qed.
 
 Create HintDb tea_rw_perm.
@@ -1547,9 +1548,10 @@ Create HintDb tea_rw_perm.
     for it. *)
 Lemma atom_fresh : forall L : AtomSet.t, { x : atom | ~ x `in` L }.
 Proof.
-  intros L. destruct (atom_fresh_for_list (AtomSet.elements L)) as [a H].
-  rewrite <- in_elements_iff in H.
-  now exists a.
+  intros L.
+  exists (fresh (AtomSet.elements L)).
+  rewrite in_elements_iff.
+  apply (Name.fresh_not_in (AtomSet.elements L)).
 Qed.
 
 (** * Tactic support for picking fresh atoms *)

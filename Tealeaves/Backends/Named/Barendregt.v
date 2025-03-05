@@ -2,7 +2,7 @@ From Tealeaves Require Import
   Classes.EqDec_eq
   Classes.Kleisli.DecoratedTraversableMonadPoly
   Functors.List_Telescoping_General
-  Backends.Named.Names
+  Backends.Common.Names
   Backends.Named.Common
   Backends.Named.Named (FV)
   Functors.Constant
@@ -59,13 +59,13 @@ Section ops.
     Context
       (conflicts: list name)  (* Top level conflicts, intuitively {{x}} \cup FV t \cup FV u *).
 
-    Definition rename_binder_from_history: list name * name -> name :=
-      fun '(history, b) => fresh (conflicts ++ history).
+    Definition rename_binder_from_history {A}: list name * A -> name :=
+      fun '(history, _) => fresh (conflicts ++ history).
 
-    Definition context_to_history (ctx : list name): list name :=
+    Definition context_to_history {A} (ctx : list A): list name :=
       fold_with_history rename_binder_from_history ctx.
 
-    Definition rename_binder_from_context: list name * name -> name :=
+    Definition rename_binder_from_context {B C}: list B * C -> name :=
       fun '(ctx, v) => rename_binder_from_history (context_to_history ctx, v).
 
     Definition subst_from_ctx:

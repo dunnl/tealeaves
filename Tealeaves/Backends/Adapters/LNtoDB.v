@@ -216,8 +216,8 @@ Section translate.
       destruct a as [depth l].
       destruct l.
       + pose toDB_Fr.
-        specialize (e depth a k).
-        enough (H_a_in_k: a ∈ k).
+        specialize (e depth n k).
+        enough (H_a_in_k: n ∈ k).
         { specialize (e H_a_in_k).
           destruct e as [ix Hixeq].
           rewrite Hixeq.

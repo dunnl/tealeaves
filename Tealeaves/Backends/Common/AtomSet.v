@@ -1,6 +1,7 @@
 From Tealeaves Require Import
   Classes.Categorical.ContainerFunctor
-  LN.Atom.
+  Backends.Common.Names
+  Functors.List.
 
 From Coq Require
   MSets.MSets.
@@ -8,13 +9,16 @@ From Coq Require
 Import List.ListNotations.
 Import ContainerFunctor.Notations.
 
+#[local] Open Scope list_scope.
+
+
 (** * Definition of <<AtomSet>> type *)
 (******************************************************************************)
 Module AtomSet <: Coq.MSets.MSetInterface.WSets :=
-  Coq.MSets.MSetWeakList.Make Atom.
+  Coq.MSets.MSetWeakList.Make Name.
 
 Module AtomSetProperties :=
-  Coq.MSets.MSetProperties.WPropertiesOn Atom AtomSet.
+  Coq.MSets.MSetProperties.WPropertiesOn Name AtomSet.
 
 (** ** Notations for operations on <<AtomSet>> *)
 (******************************************************************************)

@@ -1,5 +1,5 @@
-From Tealeaves.Backends.LN Require Import
-  Atom AtomSet.
+From Tealeaves.Backends.Common Require Import
+  Names AtomSet.
 From Tealeaves.Misc Require Import
   NaturalNumbers.
 From Tealeaves.Theory Require Import
@@ -17,7 +17,7 @@ Import
   DecoratedMonad.Notations
   DecoratedContainerFunctor.Notations
   DecoratedTraversableMonad.Notations
-  LN.AtomSet.Notations
+  AtomSet.Notations
   DecoratedTraversableMonad.Notations
   Functors.Multisorted.Batch.Notations
   Theory.Container.Notations
@@ -87,7 +87,7 @@ Inductive LN :=
 Theorem eq_dec_LN : forall l1 l2 : LN, {l1 = l2} + {l1 <> l2}.
 Proof.
   decide equality.
-  - compare values a and a0; auto.
+  - compare values n and n0; auto.
   - compare values n and n0; auto.
 Qed.
 
@@ -100,7 +100,7 @@ Lemma compare_to_atom : forall x l (P : LN -> Prop),
     P l.
 Proof.
   introv case1 case2 case3. destruct l.
-  - destruct_eq_args x a. auto.
+  - destruct_eq_args x n. auto.
   - auto.
 Qed.
 
@@ -209,7 +209,7 @@ Section LocallyNamelessOperations.
     LCn k 0.
 
   Definition FV : K -> U LN -> AtomSet.t :=
-    fun k t => LN.AtomSet.atoms (free k t).
+    fun k t => AtomSet.atoms (free k t).
 
   Definition scoped : K -> U LN -> AtomSet.t -> Prop :=
     fun k t γ => FV k t ⊆ γ.
@@ -1377,7 +1377,7 @@ Section subst_metatheory.
       intros. unfold subst. ext t.
       apply kbind_respectful_kmap.
       intros l' Hin. destruct l'.
-      - cbn. compare values x and a.
+      - cbn. compare values x and n.
       - reflexivity.
     Qed.
 
@@ -1700,7 +1700,7 @@ Section open_metatheory.
       replace (incr w (ret l)) with (w, l).
       2:{ cbn; now simpl_monoid. }
       cbn. destruct l.
-      - compose near (Fr a) on left;
+      - compose near (Fr n) on left;
            rewrite mbindd_comp_mret;
            unfold compose; cbn;
           compare values k1 and k2.

@@ -1,7 +1,9 @@
 From Tealeaves.Theory Require Export
   DecoratedTraversableMonad.
+From Tealeaves.Backends.Common Require Export
+  Names AtomSet AssocList.
 From Tealeaves.Backends.LN Require Export
-  Atom AtomSet AssocList LN Simplification.
+  LN Simplification.
 From Tealeaves.Simplification Require Export
   Simplification.
 
@@ -24,8 +26,8 @@ Module Notations.
   Export List.ListNotations. (* [] :: *)
 
   (* Export LN.OpNotations. (* operations *) *)
-  Export LN.AtomSet.Notations.
-  Export LN.AssocList.Notations. (* one, ~ *)
+  Export Common.AtomSet.Notations.
+  Export Common.AssocList.Notations. (* one, ~ *)
 End Notations.
 
 
