@@ -230,6 +230,7 @@ Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Kleisli/Theory/TraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctorPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctorPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonadPoly.v
 Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
@@ -271,10 +272,6 @@ Tealeaves/Simplification/Tests/Support.v
 ##########################################################
 # LOCALLY NAMELESS BACKEND                               #
 ##########################################################
-Tealeaves/Backends/Common/Names.v
-#Tealeaves/Backends/Common/Atom.v
-Tealeaves/Backends/Common/AtomSet.v
-Tealeaves/Backends/Common/AssocList.v
 Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN/Simplification.v
 Tealeaves/Backends/LN/Parallel.v
@@ -301,12 +298,23 @@ Tealeaves/Backends/Adapters/Key.v
 Tealeaves/Backends/Adapters/LNtoDB.v
 
 ##########################################################
+# BACKEND COMMON MODULES                                 #
+##########################################################
+Tealeaves/Backends/Common/Names.v
+#Tealeaves/Backends/Common/Atom.v
+Tealeaves/Backends/Common/AtomSet.v
+Tealeaves/Backends/Common/AssocList.v
+
+##########################################################
 # FULLY NOMINAL BACKEND                                  #
 ##########################################################
 Tealeaves/Backends/Named/Named.v
 Tealeaves/Backends/Named/Common.v
+Tealeaves/Backends/Named/Alpha.v
 Tealeaves/Backends/Named/Barendregt.v
 Tealeaves/Adapters/MonoidHom/DecoratedTraversableMonad.v
+Tealeaves/Adapters/PolyToMono/DecoratedFunctor.v
+Tealeaves/Adapters/PolyToMono/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/PolyToMono/DecoratedTraversableMonad.v
 Tealeaves/Backends/Adapters/KeyName.v
 

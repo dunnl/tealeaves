@@ -7,8 +7,8 @@ From Tealeaves Require Export
   Classes.Categorical.DecoratedTraversableMonadPoly
   Functors.Subset
   Functors.Constant
-  Backends.LN.AtomSet
-  Backends.Named.NamedTraditional
+  Backends.Common.AtomSet
+  Backends.Named.Barendregt
   Simplification.Binddt.
 
 Import DecoratedTraversableMonadPoly.DerivedOperations.

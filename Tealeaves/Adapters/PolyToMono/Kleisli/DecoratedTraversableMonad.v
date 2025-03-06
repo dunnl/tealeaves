@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableMonad
   Classes.Kleisli.DecoratedTraversableMonadPoly
+  Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Monoid
   Functors.List
   Functors.Writer
@@ -50,8 +51,7 @@ Section dtmp_to_dtm.
         }
         { intros [ctx b].
           cbv.
-          Search IdempotentCenter pure.
-          admit.
+          typeclasses eauto.
         }
       + intros.
         unfold_ops @Binddt_of_Binddtp.
@@ -62,3 +62,38 @@ Section dtmp_to_dtm.
   Admitted.
 
 End dtmp_to_dtm.
+
+
+Section dtmp_to_dtf_bin.
+  Context
+    {T: Type -> Type -> Type}
+      `{DecoratedTraversableMonadPoly T}.
+
+  #[export] Instance MapdtB_of_Binddtp {V}: Mapdt_CommIdem Z (fun B => T B V) :=
+    fun G Gmap Gpure Gmult B1 B2 ρ =>
+      substitute (G := G) (U := T) (T := T) ρ (pure (F := G) ∘ ret (T := T B2) ∘ extract).
+
+  #[export] Instance DTFCI_of_DTMP {V}: DecoratedTraversableCommIdemFunctor Z (fun B => T B V).
+  Proof.
+    constructor.
+    - unfold_ops @MapdtB_of_Binddtp.
+      intros.
+      apply kdtmp_substitute1.
+    - intros.
+      unfold_ops @MapdtB_of_Binddtp.
+      rewrite kdtmp_substitute2.
+      fequal.
+      { (* kc_dtmp lemma *)
+        admit. }
+      { (* idempotentcenter lemma *)
+        admit. }
+    - intros.
+      unfold_ops @MapdtB_of_Binddtp.
+      rewrite kdtmp_morphism.
+      reassociate <- on right.
+      reassociate <- on right.
+      rewrite appmor_pure_pf.
+      reflexivity.
+  Admitted.
+
+End dtmp_to_dtf_bin.

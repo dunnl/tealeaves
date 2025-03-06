@@ -2,6 +2,8 @@ From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableMonad
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Kleisli.TraversableFunctorPoly
+  Classes.Kleisli.Theory.TraversableFunctor
+  Functors.List
   Functors.List_Telescoping_General
   Functors.Z2.
 
@@ -134,19 +136,60 @@ Module DerivedInstances.
       - intros.
         unfold_ops @Mapdt_Mapdtp.
         rewrite kdtfp_mapdtp2.
-        2:{ admit. }
+        2:{
+          typeclasses eauto.
+        }
         fequal.
         { unfold kc3_ci.
-          admit. }
+          ext [w b].
+          unfold compose.
+          unfold mapdt_ci.
+          unfold Mapdt_CommIdem_Z.
+          cbn.
+          rewrite map_ap.
+          rewrite map_ap.
+          rewrite app_pure_natural.
+          change (pure (F := G1) ○ extract)
+            with (pure (F := G1) ∘ extract (W := prod (list B)) (A := B)).
+          rewrite <- traverse_map.
+          rewrite (traverse_purity1 (T := list)).
+          unfold compose.
+          rewrite ap2.
+          rewrite ap2.
+          reflexivity.
+        }
         { unfold kc_dtfp, kc3.
-          ext [ctx a]. admit. }
+          ext [ctx a].
+          unfold mapdt_ci.
+          unfold Mapdt_CommIdem_list_prefix.
+          rewrite map_ap.
+          rewrite map_ap.
+          rewrite app_pure_natural.
+          unfold mapdt_list_prefix.
+          unfold compose at 4.
+          rewrite <- traverse_map.
+          rewrite (traverse_purity1 (T := list)).
+          unfold compose at 4.
+          rewrite ap2.
+          rewrite <- map_to_ap.
+          unfold compose.
+          cbn.
+          compose near (f (ctx, a)) on right.
+          rewrite (fun_map_map (F := G1)).
+          fequal.
+          ext b.
+          unfold compose.
+          compose near ctx.
+          rewrite decorate_prefix_list_extract.
+          reflexivity.
+        }
       - intros.
         unfold_ops @Mapdt_Mapdtp.
         rewrite kdtfp_morphism.
         reassociate <- on left.
         rewrite appmor_pure_pf.
         reflexivity.
-    Admitted.
+    Qed.
 
   End decorated_traversable_functor_derived_instances.
 
@@ -204,9 +247,23 @@ Section decorated_traversable_functor_polymorphic_monomorphic.
       2:{ intros [ctx b].
           constructor; constructor; reflexivity. }
       fequal.
-      unfold kc3_ci.
-      admit.
-    Admitted.
+      {
+        unfold kc3_ci.
+        ext [w b].
+        unfold_ops @Map_I.
+        unfold_ops @Mapdt_CommIdem_Z.
+        repeat reassociate <-.
+        rewrite <- (traverse_map (G2 := fun A => A) (T := Z)).
+        rewrite traverse_purity1.
+        rewrite <- map_to_traverse.
+        unfold_ops @Pure_I.
+        unfold compose, id; cbn.
+        unfold id.
+        compose near w.
+        rewrite decorate_prefix_list_extract.
+        reflexivity.
+      }
+    Qed.
 
   End monomorphic_binders.
 End decorated_traversable_functor_polymorphic_monomorphic.

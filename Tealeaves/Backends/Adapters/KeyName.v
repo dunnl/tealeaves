@@ -1,5 +1,5 @@
 From Tealeaves Require Import
-  Backends.Named.Names
+  Backends.Common.Names
   Functors.List
   Functors.Option
   Classes.EqDec_eq

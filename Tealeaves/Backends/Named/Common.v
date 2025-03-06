@@ -1,7 +1,7 @@
 From Tealeaves Require Import
   Classes.EqDec_eq
   Functors.List_Telescoping_General
-  Backends.Named.Names
+  Backends.Common.Names
   Functors.List
   Functors.Constant
   Functors.Subset.

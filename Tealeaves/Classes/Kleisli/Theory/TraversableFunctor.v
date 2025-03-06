@@ -60,6 +60,23 @@ Section traversable_purity.
     reflexivity.
   Qed.
 
+  Context
+    `{Map T}
+    `{! Compat_Map_Traverse T}.
+
+  Lemma traverse_purity3:
+    forall `{Applicative G2}
+      `(f: A -> B),
+      traverse (T := T) (G := G2) (pure (F := G2) ∘ f) =
+        pure (F := G2) ∘ map f.
+  Proof.
+    intros.
+    rewrite <- (trf_traverse_morphism (G1 := fun A => A) (G2 := G2)
+                 (ϕ := fun A => @pure G2 _ (A))).
+    rewrite map_to_traverse.
+    reflexivity.
+  Qed.
+
 End traversable_purity.
 
 (** * Factorizing Operations through <<runBatch>> *)
@@ -736,7 +753,7 @@ Section elements.
   Lemma tosubset_through_runBatch1
     `{ToBatch T}
     `{! Compat_ToBatch_Traverse T}
-   : forall (A: Type),
+  : forall (A: Type),
       tosubset =
         runBatch (G := const (A -> Prop))
           (ret (T := subset) (A := A)) (B := False) ∘
@@ -751,7 +768,7 @@ Section elements.
   Lemma tosubset_through_runBatch2
     `{ToBatch T}
     `{! Compat_ToBatch_Traverse T}
-   : forall (A tag: Type),
+  : forall (A tag: Type),
       tosubset =
         runBatch (G := const (A -> Prop))
           (ret (T := subset)) (B := tag) ∘
@@ -970,7 +987,7 @@ Section foldMap_commutative_monoid.
     `{! Monoid M}
     {A: Type}
     `{comm: ! CommutativeMonoidOp op}
-   : forall (f: A -> M) (l: list A),
+  : forall (f: A -> M) (l: list A),
       foldMap op f l = foldMap op f (List.rev l).
   Proof.
     intros.

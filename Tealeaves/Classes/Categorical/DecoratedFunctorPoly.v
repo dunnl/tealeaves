@@ -55,7 +55,6 @@ Class PolyDecorateNatural F `{Map2 F} `{DecoratePoly F}: Type :=
     decp (B := B') (V := V') ∘ map2 g f =
       map2 (map (F := Z) g) (map2 (F := Z2) g f) ∘ decp (B := B) (V := V).
 
-
 (** ** Typeclass *)
 (**********************************************************************)
 Class DecoratedFunctorPoly

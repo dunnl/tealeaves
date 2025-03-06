@@ -22,7 +22,7 @@ Class Center (G: Type -> Type)
         a ⊗ x = map (fun '(x, y) => (y, x)) (x ⊗ a);
     }.
 
-(** ** The Idempotent Elements of an Applicative Functor *)
+(** ** The Idempotent and Central Elements of an Applicative Functor *)
 (**********************************************************************)
 Class Idempotent (G: Type -> Type)
   `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
@@ -43,6 +43,82 @@ Class IdempotentCenter (G: Type -> Type)
   {A}%type_scope (a) {Center} {B}%type_scope x.
 #[global] Arguments appidem {G}%function_scope {mapG pureG multG}
   {A}%type_scope (a) {Idempotent}.
+
+
+(** ** <<pure>> is always CI *)
+(**********************************************************************)
+Section purity.
+
+  Context `{Applicative G}.
+
+  #[export] Instance Idempotent_Pure: forall (A: Type) (a: A),
+      Idempotent G A (pure a).
+  Proof.
+    intros.
+    constructor.
+    rewrite app_mult_pure.
+    rewrite app_pure_natural.
+    reflexivity.
+  Qed.
+
+  #[export] Instance Center_Pure: forall (A: Type) (a: A),
+      Center G A (pure a).
+  Proof.
+    intros.
+    constructor; intros.
+    - rewrite triangle_3.
+      rewrite triangle_4.
+      unfold strength.
+      compose near x on right.
+      rewrite (fun_map_map).
+      reflexivity.
+    - rewrite triangle_3.
+      rewrite triangle_4.
+      unfold strength.
+      compose near x on right.
+      rewrite (fun_map_map).
+      reflexivity.
+  Qed.
+
+
+  #[export] Instance IdempotentCenter_Pure: forall (A: Type) (a: A),
+      IdempotentCenter G A (pure a).
+  Proof.
+    constructor;
+      typeclasses eauto.
+  Qed.
+
+End purity.
+
+(** ** Everything is always CI for <<(fun A => A)>> *)
+(**********************************************************************)
+Section purity.
+
+  #[export] Instance Idempotent_I: forall (A: Type) (a: A),
+      Idempotent (fun A => A) A (pure a).
+  Proof.
+    intros.
+    constructor.
+    reflexivity.
+  Qed.
+
+  #[export] Instance Center_I: forall (A: Type) (a: A),
+      Center (fun A => A) A (pure a).
+  Proof.
+    intros.
+    constructor.
+    reflexivity.
+    reflexivity.
+  Qed.
+
+  #[export] Instance IdempotentCenter_I: forall (A: Type) (a: A),
+      IdempotentCenter (fun A => A) A (pure a).
+  Proof.
+    constructor;
+      typeclasses eauto.
+  Qed.
+
+End purity.
 
 (** ** Rewriting Laws for C-I Elements *)
 (**********************************************************************)

@@ -17,7 +17,6 @@ Import ContainerFunctor.Notations.
 (** * Fully named syntax *)
 (**********************************************************************)
 
-
 (** ** Variable freshness *)
 (**********************************************************************)
 (* Given the history of output names so far, decide the name of this binder *)
@@ -48,22 +47,6 @@ Section examples.
   Compute hf [0; 1; 0; 1].
   Compute hf [0; 1; 0; 1; 0; 1].
   Compute hf [0; 1; 3; 1; 0; 1].
-
-(*
-  Goal hf nil = nil. reflexivity. Qed.
-  Goal hf [1] = [1]. cbv. reflexivity. Qed.
-  Goal hf [1 ; 2] = [1 ; 2]. reflexivity. Qed.
-  Goal hf [1 ; 2 ; 3] = [1 ; 2 ; 3]. reflexivity. Qed.
-
-  Goal hf [1 ; 1 ] = [1 ; 2 ]. reflexivity. Qed.
-  Goal hf [1 ; 1 ; 1 ] = [1 ; 2 ; 3 ]. reflexivity. Qed.
-  Goal hf [1 ; 2 ; 1] = [1 ; 2 ; 3]. reflexivity. Qed.
-  Goal hf [1 ; 3 ; 8] = [1 ; 2 ; 3]. reflexivity. Qed.
-  Goal hf [1 ; 4 ; 6] = [1 ; 2 ; 3]. reflexivity. Qed.
-  Goal hf [1 ; 4 ; 6 ; 4] = [1 ; 2 ; 3 ; 4]. reflexivity. Qed.
-  Goal hf [1 ; 4 ; 6 ; 4 ; 9 ; 10] = [1 ; 2 ; 3 ; 4; 5; 6]. reflexivity. Qed.
-  Goal hf [1 ; 4 ; 8 ; 8 ] = [1 ; 2 ; 3 ; 4 ]. reflexivity. Qed.
- *)
 
 End examples.
 
@@ -97,42 +80,13 @@ Section named_local_operations.
           ret (T := T name) (hf_loc (conflicts ++ prefix, var))
       end.
 
-  Definition alpha_equiv_local:
-    list name * name -> list name * name -> Prop :=
-    fun '(ctx0, nm0) '(ctx1, nm1) =>
-      match (get_binding ctx0 nm0, get_binding ctx1 nm1) with
-      | (Bound prefix0 _ _, Bound prefix1 _ _) =>
-          if length prefix0 == length prefix1
-          then True
-          else False
-      | _ => False
-      end.
-
 End named_local_operations.
 
 (** ** Localized operations *)
 (**********************************************************************)
 From Tealeaves Require Import
   Classes.Categorical.DecoratedTraversableMonadPoly
-  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.
-
-Section named_local_operations.
-
-  Context
-    (T: Type -> Type -> Type)
-    `{Categorical.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly T}.
-
-  Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
-  Import Kleisli.DecoratedTraversableMonadPoly.DerivedOperations.
-
-  Definition alpha:
-    T name name -> T name name -> Prop :=
-    fun t1 t2 =>
-      traversep (G := subset) (T := T)
-        (fun _ _ => True) (alpha_equiv_local) (decp t1) (decp t2).
-
-End named_local_operations.
-
+  Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.
 
 Section named_local_operations.
 

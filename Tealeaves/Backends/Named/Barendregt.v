@@ -8,7 +8,7 @@ From Tealeaves Require Import
   Functors.Constant
   Functors.Subset.
 
-Export Backends.Named.Names.
+Export Backends.Common.Names.
 Export Backends.Named.Common.
 Export Backends.Named.Named (FV).
 
@@ -23,8 +23,8 @@ Lemma destruct_in: forall (a: name) (l: list name),
     a ∈ l \/ ~ (a ∈ l).
 Proof.
   intros.
-  rewrite <- SmartAtom.name_inb_iff.
-  destruct (SmartAtom.name_inb a l); auto.
+  rewrite <- Name.name_inb_iff.
+  destruct (Name.name_inb a l); auto.
 Qed.
 
 Ltac step_set_test :=
@@ -32,12 +32,12 @@ Ltac step_set_test :=
   | H: ~ ?x ∈ ?t |- _ =>
       let Hf := fresh "H" in
       pose H as Hf;
-      rewrite <- SmartAtom.name_inb_iff_false in Hf;
+      rewrite <- Name.name_inb_iff_false in Hf;
       progress (repeat rewrite Hf)
   | H: ?x ∈ ?t |- _ =>
       let Hf := fresh "H" in
       pose H as Hf;
-      rewrite <- SmartAtom.name_inb_iff in Hf;
+      rewrite <- Name.name_inb_iff in Hf;
       progress (repeat rewrite Hf)
   end.
 

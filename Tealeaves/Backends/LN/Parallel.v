@@ -1,5 +1,5 @@
-From Tealeaves.Backends.LN Require Import
-  Atom AtomSet.
+From Tealeaves.Backends.Common Require Import
+  Names AtomSet.
 From Tealeaves Require Import
   Misc.NaturalNumbers
   Functors.Option
@@ -12,7 +12,7 @@ From Tealeaves.Theory Require Import
 
 Import DecoratedTraversableMonad.Notations.
 Import DecoratedContainerFunctor.Notations.
-Import LN.AtomSet.Notations.
+Import AtomSet.Notations.
 Open Scope tealeaves_scope.
 Open Scope set_scope.
 
@@ -21,14 +21,14 @@ Import DecoratedTraversableMonad.UsefulInstances.
 (** * Locally nameless leaves *)
 (**********************************************************************)
 Inductive leaf :=
-| Fr: Atom.atom -> leaf
+| Fr: atom -> leaf
 | Bd: nat -> nat -> leaf.
 (* Bd group index, individual index *)
 
 Theorem eq_dec_leaf: forall l1 l2: leaf, {l1 = l2} + {l1 <> l2}.
 Proof.
   decide equality.
-  - compare values a and a0; auto.
+  - compare values n and n0; auto.
   - compare values n and n0; auto.
     compare values n0 and n2; auto.
     compare values n0 and n2; auto.

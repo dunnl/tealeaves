@@ -1,8 +1,8 @@
 From Tealeaves Require Export
   Examples.LambdaNominal.Syntax
   Functors.Subset
-  Backends.LN.AtomSet
-  Backends.Named.Names.
+  Backends.Common.AtomSet
+  Backends.Common.Names.
 
 Require Coq.funind.Recdef.  (* Needed for Function *)
 
@@ -436,7 +436,7 @@ Function substF (l: list name) (* l is the avoid set *)
       tap (substF l x u t1) (substF l x u t2)
   | lam b t =>
       if b == x then lam b t
-      else if SmartAtom.name_inb b (fvL u)
+      else if Name.name_inb b (fvL u)
            then let z := (fresh ([x] ++ l ++ [b]): name) in
                 lam z (substF (l ++ [z]) x u (rename (l ++ [z]) b z t))
            else lam b (substF (l ++ [b]) x u t)
@@ -473,7 +473,7 @@ Section rw.
         (if b == x
          then (λ) b t
          else
-           if SmartAtom.name_inb b (fvL u)
+           if Name.name_inb b (fvL u)
            then
              (λ) (fresh ([x] ++ l ++ [b]))
                (substF (l ++ [fresh ([x] ++ l ++ [b])]) x u

@@ -22,7 +22,7 @@ From Tealeaves.Functors Require Export
   List Z2 Pair.
 
 From Tealeaves.Backends Require Export
-  LN.Atom.
+  Common.Names.
 
 Export Product.Notations.
 Export Monoid.Notations.

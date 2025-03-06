@@ -5,7 +5,7 @@ From Tealeaves Require Export
   Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
   Classes.Categorical.DecoratedTraversableMonadPoly
   Functors.Subset
-  Backends.LN.AtomSet
+  Backends.Common.AtomSet
   Backends.Named.Named.
 
 Import DecoratedTraversableMonadPoly.DerivedOperations.
