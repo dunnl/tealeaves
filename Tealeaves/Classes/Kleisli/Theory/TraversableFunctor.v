@@ -236,18 +236,18 @@ Section constant_applicatives.
 
 End constant_applicatives.
 
-(** ** Traversals by Commutative Idempotent Applicatives *)
+(** ** Traversals by Commutative Applicatives *)
 (**********************************************************************)
-Section traversals_commutative_idem.
+Section traversals_commutative.
 
   Import Coalgebraic.TraversableFunctor.
   Import KleisliToCoalgebraic.TraversableFunctor.
 
-  Lemma traverse_commutative_idem:
+  Lemma traverse_commutative:
     forall `{Kleisli.TraversableFunctor.TraversableFunctor T}
       `{ToBatch T}
       `{! Compat_ToBatch_Traverse T}
-      `{ApplicativeCommutativeIdempotent G}
+      `{ApplicativeCommutative G}
       (A B: Type) (f: A -> G B),
       forwards ∘ traverse (T := T)
         (G := Backwards G) (mkBackwards ∘ f) =
@@ -268,8 +268,9 @@ Section traversals_commutative_idem.
       reflexivity.
   Qed.
 
-End traversals_commutative_idem.
+End traversals_commutative.
 
+(*
 (** ** Traversals by Subset *)
 (**********************************************************************)
 Section traversals_by_subset.
@@ -286,6 +287,8 @@ Section traversals_by_subset.
         (G := Backwards subset) (mkBackwards ∘ f) =
         traverse (T := T) f.
   Proof.
+    intros.
+    rewrite traverse_commutative.
     intros. ext t. unfold compose.
     do 2 rewrite traverse_through_runBatch.
     unfold compose.
@@ -307,6 +310,7 @@ Section traversals_by_subset.
   Qed.
 
 End traversals_by_subset.
+*)
 
 (** * Derived Operation: <<foldmap>> *)
 (**********************************************************************)

@@ -330,6 +330,12 @@ Class ApplicativeCommutativeIdempotent (G: Type -> Type)
     appci_appic :> forall (A: Type) (a: G A),
         IdempotentCenter G A a;
   }.
+Class ApplicativeCommutative (G: Type -> Type)
+  `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G} :=
+  { appc_applicative :> Applicative G;
+    appc_appc :> forall (A: Type) (a: G A),
+        Center G A a;
+  }.
 
 (** ** Rewriting Laws for C-I Applicative Funtors *)
 (**********************************************************************)

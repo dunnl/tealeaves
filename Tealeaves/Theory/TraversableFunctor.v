@@ -3,6 +3,7 @@ From Tealeaves Require Export
   Classes.Kleisli.Theory.TraversableFunctor
   Classes.Categorical.ContainerFunctor
   Classes.Categorical.ShapelyFunctor
+  Classes.Categorical.ApplicativeCommutativeIdempotent
   Adapters.KleisliToCoalgebraic.TraversableFunctor
   Functors.Batch
   Functors.List
@@ -29,7 +30,7 @@ Import VectorRefinement.Notations.
 
 
 (** * Miscellaneous Properties Concerning <<toBatch>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section stuff.
 
   Import Adapters.KleisliToCoalgebraic.TraversableFunctor.
@@ -42,7 +43,7 @@ Section stuff.
     `{! Compat_ToBatch_Traverse T}.
 
   (** ** Relating <<tolist>> and <<Batch_contents ∘ toBatch>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma Batch_contents_tolist:
     forall {A B} (t: T A),
       proj1_sig (Batch_contents (toBatch (A' := B) t)) =
@@ -54,8 +55,8 @@ Section stuff.
     reflexivity.
   Qed.
 
-  (** ** Naturality of  <<toBatch>> *)
-  (******************************************************************************)
+  (** ** Naturality of <<toBatch>> *)
+  (********************************************************************)
   Corollary shape_natural_toBatch {A A'}: forall (t: T A),
       toBatch (A' := A') (shape t) =
         shape (F := BATCH1 A' (T A')) (toBatch (A' := A') t).
@@ -90,7 +91,7 @@ Section stuff.
   Qed.
 
   (** ** <<Batch_contents ∘ toBatch>> is Independent of <<B>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma Batch_contents_toBatch_sim:
     forall {A B B': Type} (t: T A),
       Batch_contents (toBatch (A' := B) t)
@@ -104,7 +105,7 @@ Section stuff.
   Qed.
 
   (** *** Terms with the same <<shape>> have <<toBatch>> of the same shape *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma same_shape_toBatch:
     forall {A' B} `(t1: T A) (t2: T A'),
       shape t1 = shape t2 ->
@@ -121,7 +122,7 @@ Section stuff.
   Qed.
 
   (** *** Terms with the same <<tolist>> terms have <<toBatch>> of the same <<tolist>>s*)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma same_tolist_toBatch:
     forall {B1 B2: Type} `(t1: T A) (t2: T A),
       tolist t1 = tolist t2 ->
@@ -136,7 +137,7 @@ Section stuff.
 
 
   (** ** Equal <<toBatch>> Implies Equal <<tolist>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma toBatch_injective_tolist:
     forall {A B} `(t1: T A) (t2: T A),
       (toBatch (A' := B) t1) =
@@ -151,7 +152,7 @@ Section stuff.
   Qed.
 
   (** ** Similar <<shape>>d <<toBatch>> implies similar <<shape>>s*)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma toBatch_shape_inv:
     forall {A' B} `(t1: T A) (t2: T A'),
       shape (F := BATCH1 B (T B))
@@ -162,10 +163,9 @@ Section stuff.
   Proof.
     introv.
     intro HBatch.
+    rewrite <- shape_natural_toBatch in HBatch.
+    rewrite <- shape_natural_toBatch in HBatch.
     unfold shape.
-    rewrite map_through_runBatch.
-    unfold compose.
-    apply toBatch_injective_univ.
   Abort.
 
   Lemma toBatch_injective_shape:
@@ -206,24 +206,24 @@ Section stuff.
 End stuff.
 
 (** * Length of <<toBatch>> is polymorphic *)
-(******************************************************************************)
+(**********************************************************************)
 Lemma length_Batch_independent
   `{TraversableFunctor T}
   `{ToBatch T}
   `{Map T}
   `{! Compat_Map_Traverse T}
   `{! Compat_ToBatch_Traverse T}
-  : forall `(t: T A) B C,
+ : forall `(t: T A) B C,
     length_Batch (toBatch (A' := B) t) =
       length_Batch (toBatch (A' := C) t).
 Proof.
 Abort.
 
 (** * Traversable Functors are Containers *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Traversable Functors are Shapely *)
-(******************************************************************************)
+(**********************************************************************)
 Section shapeliness.
 
   Context
@@ -251,7 +251,7 @@ Section shapeliness.
 End shapeliness.
 
 (** ** Pointwise Reasoning *)
-(******************************************************************************)
+(**********************************************************************)
 Section pointwise.
 
   Context
@@ -263,7 +263,7 @@ Section pointwise.
     `{! Compat_ToSubset_Traverse T}
     `{! Compat_ToBatch_Traverse T}.
 
-  Lemma traverse_respectful :
+  Lemma traverse_respectful:
     forall `{Applicative G} `(f1: A -> G B) `(f2: A -> G B) (t: T A),
       (forall (a: A), a ∈ t -> f1 a = f2 a) -> traverse f1 t = traverse f2 t.
   Proof.
@@ -282,8 +282,8 @@ Section pointwise.
   Qed.
 
   (** *** Corollaries *)
-  (******************************************************************************)
-  Corollary traverse_respectful_pure :
+  (********************************************************************)
+  Corollary traverse_respectful_pure:
     forall `{Applicative G} `(f1: A -> G A) (t: T A),
       (forall (a: A), a ∈ t -> f1 a = pure a) -> traverse f1 t = pure t.
   Proof.
@@ -292,7 +292,7 @@ Section pointwise.
     now apply traverse_respectful.
   Qed.
 
-  Corollary traverse_respectful_map {A B} :
+  Corollary traverse_respectful_map {A B}:
     forall `{Applicative G} (t: T A) (f: A -> G B) (g: A -> B),
       (forall a, a ∈ t -> f a = pure (g a)) -> traverse f t = pure (map g t).
   Proof.
@@ -303,7 +303,7 @@ Section pointwise.
     assumption.
   Qed.
 
-  Corollary traverse_respectful_id {A} :
+  Corollary traverse_respectful_id {A}:
     forall (t: T A) (f: A -> A),
       (forall a, a ∈ t -> f a = id a) -> traverse (G := fun A => A) f t = t.
   Proof.
@@ -324,7 +324,7 @@ Section pointwise.
   Qed.
 
   (** ** Typeclass Instances *)
-  (******************************************************************************)
+  (********************************************************************)
   #[export] Instance ContainerFunctor_Traverse:
     ContainerFunctor T.
   Proof.
@@ -348,18 +348,18 @@ Section pointwise.
 End pointwise.
 
 (** * <<plength>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section length.
 
   Context
     `{Map T}
-      `{ToBatch T}
-      `{Traverse T}
-      `{! TraversableFunctor T}
-      `{! Compat_Map_Traverse T}
-      `{! Compat_ToBatch_Traverse T}.
+    `{ToBatch T}
+    `{Traverse T}
+    `{! TraversableFunctor T}
+    `{! Compat_Map_Traverse T}
+    `{! Compat_ToBatch_Traverse T}.
 
-  Lemma plength_eq_length :
+  Lemma plength_eq_length:
     forall {A} {B} (t: T A),
       length_Batch (toBatch (A' := B) t) = plength t.
   Proof.
@@ -386,7 +386,7 @@ Section length.
 End length.
 
 (** * Factorizing Terms into <<shape>> and <<contents>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section deconstruction.
 
   Definition trav_contents
@@ -416,26 +416,18 @@ Section deconstruction.
 
   Context
     `{Traverse T}
-      `{Map T}
-      `{ToBatch T}
-      `{ToSubset T}
-      `{! TraversableFunctor T}
-      `{! Compat_Map_Traverse T}
-      `{! Compat_ToBatch_Traverse T}
-      `{! Compat_ToSubset_Traverse T}.
+    `{Map T}
+    `{ToBatch T}
+    `{! TraversableFunctor T}
+    `{! Compat_Map_Traverse T}
+    `{! Compat_ToBatch_Traverse T}.
 
   #[local] Generalizable Variables v.
 
 
   (** ** Operations on Vectors *)
-  (******************************************************************************)
+  (********************************************************************)
   Section traverse_vector.
-
-    (*
-    Lemma trav_contents_Vector_list {n: nat} {A: Type}:
-      forall (l: list A) (Heq: length l = n)
-        trav_contents {exists l | Heq} = v.
-        *)
 
     Lemma trav_contents_Vector {n: nat} {A: Type}:
       forall (v: Vector n A),
@@ -480,13 +472,13 @@ Section deconstruction.
   End traverse_vector.
 
   (** ** Lemmas regarding <<trav_make>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Section trav_make_lemmas.
 
     Context
       {A B: Type}.
 
-    Lemma trav_make_sim:
+    Lemma trav_make_sim_refl:
       forall (t: T A), trav_make (B := B) t ~!~ trav_make t.
     Proof.
       intros.
@@ -500,7 +492,8 @@ Section deconstruction.
         assumption.
     Qed.
 
-    Lemma toBatch_trav_make {A'} {t: T A} {v: Vector (plength t) B}:
+    Lemma toBatch_trav_make_to_replace_contents
+      {A'} {t: T A} {v: Vector (plength t) B}:
       toBatch (A' := A') (trav_make t v) =
         Batch_replace_contents (toBatch (A' := A') t)
           (coerce eq_sym (plength_eq_length t) in v).
@@ -516,93 +509,52 @@ Section deconstruction.
       - vector_sim.
     Qed.
 
-  (** ** Naturality of <<trav_contents>> and <<trav_make>> *)
-  (******************************************************************************)
-  Lemma trav_contents_natural:
-    forall (A B: Type) (t: T A) (f: A -> B),
-      trav_contents (map f t) ~~ map f (trav_contents t).
-  Proof.
-    intros.
-    unfold Vector_sim.
-    unfold trav_contents.
-    rewrite <- coerce_Vector_contents.
-    rewrite <- map_coerce_Vector.
-    compose near t on left.
-    rewrite toBatch_mapfst.
-    unfold compose at 2.
-    rewrite Batch_contents_natural.
-    reflexivity.
-  Qed.
-
-  Lemma trav_make_natural:
-    forall (A B C: Type) (t: T A) (f: B -> C) (v: Vector (plength t) B),
-      trav_make t (map f v) = map f (trav_make t v).
-  Proof.
-    intros.
-    unfold trav_make.
-    rewrite (Batch_make_natural_rw1 (toBatch t) (map f)).
-    assert (cut: map (map f) (toBatch t) =
-                   mapsnd_Batch f (toBatch t)).
-    { compose near t.
-      now rewrite (toBatch_mapsnd). }
-    rewrite (Batch_make_rw
-               (map (map f) (toBatch t))
-               (mapsnd_Batch f (toBatch t))
-               cut).
-    rewrite coerce_Vector_compose.
-    rewrite coerce_Vector_compose.
-    rewrite Batch_make_natural2.
-    apply Batch_make_sim1.
-    apply Vector_coerce_sim_r'.
-    apply Vector_coerce_sim_l'.
-    apply map_coerce_Vector.
-  Qed.
-
-    (*
-    Lemma toBatch_trav_make {A A' B} {t: T A} {v: Vector (plength t) B}:
-      toBatch (A' := A') (trav_make t v) =
-        Batch_replace_contents
-          (toBatch (A' := A') t)
-          (coerce eq_sym (plength_eq_length t) in v).
+    (** ** Naturality of <<trav_contents>> and <<trav_make>> *)
+    (******************************************************************)
+    Lemma trav_contents_natural:
+      forall (A B: Type) (t: T A) (f: A -> B),
+        trav_contents (map f t) ~~ map f (trav_contents t).
     Proof.
-      unfold trav_make.
-      rewrite Batch_make_natural_rw1.
-      rewrite Batch_replace_contents_spec.
-      apply Batch_make_sim2; vector_sim.
-      compose near t.
-      now rewrite <- trf_duplicate.
+      intros.
+      unfold Vector_sim.
+      unfold trav_contents.
+      rewrite <- coerce_Vector_contents.
+      rewrite <- map_coerce_Vector.
+      compose near t on left.
+      rewrite toBatch_mapfst.
+      unfold compose at 2.
+      rewrite Batch_contents_natural.
+      reflexivity.
     Qed.
-    *)
 
-    (*
-    Lemma trav_make_sim1:
-      forall (t: T A) `{v1 ~~ v2},
-        trav_make (B := B) t v1 = trav_make t v2.
+    Lemma trav_make_natural:
+      forall (A B C: Type) (t: T A) (f: B -> C) (v: Vector (plength t) B),
+        trav_make t (map f v) = map f (trav_make t v).
     Proof.
       intros.
       unfold trav_make.
+      rewrite (Batch_make_natural_rw1 (toBatch t) (map f)).
+      assert (cut: map (map f) (toBatch t) =
+                     mapsnd_Batch f (toBatch t)).
+      { compose near t.
+        now rewrite (toBatch_mapsnd). }
+      rewrite (Batch_make_rw
+                 (map (map f) (toBatch t))
+                 (mapsnd_Batch f (toBatch t))
+                 cut).
+      rewrite coerce_Vector_compose.
+      rewrite coerce_Vector_compose.
+      rewrite Batch_make_natural2.
       apply Batch_make_sim1.
-      vector_sim.
+      apply Vector_coerce_sim_r'.
+      apply Vector_coerce_sim_l'.
+      apply map_coerce_Vector.
     Qed.
-
-    Lemma trav_make_sim2:
-      forall `(t1: T A) (t2: T A)
-        `(v1: Vector (plength t1) B)
-        `(v2: Vector (plength t2) B),
-        t1 = t2 ->
-        v1 ~~ v2 ->
-        trav_make t1 v1 = trav_make t2 v2.
-    Proof.
-      intros.
-      subst.
-      now apply trav_make_sim1.
-    Qed.
-    *)
 
   End trav_make_lemmas.
 
   (** ** Relating <<tolist>> and <<trav_contents>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma tolist_trav_contents `{t: T A}:
     Vector_to_list A (trav_contents t) = List.rev (tolist t).
   Proof.
@@ -616,11 +568,11 @@ Section deconstruction.
   Qed.
 
   (** ** Lens-like laws *)
-  (******************************************************************************)
+  (********************************************************************)
   Section lens_laws.
 
     (** *** get-put *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma trav_get_put `{t: T A}:
       trav_make t (trav_contents t) = t.
     Proof.
@@ -638,19 +590,19 @@ Section deconstruction.
     Qed.
 
     (** *** put-get *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma trav_contents_make {A B} {t: T A} {v: Vector (plength t) B}:
       trav_contents (trav_make t v) ~~ v.
     Proof.
       unfold trav_contents.
       vector_sim.
-      rewrite toBatch_trav_make.
+      rewrite toBatch_trav_make_to_replace_contents.
       rewrite Batch_put_get.
       vector_sim.
     Qed.
 
     (** *** put-put *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma trav_make_make_
             `(t: T A) `(v: Vector (plength t) B)
             `(v1: Vector (plength (trav_make t v)) B')
@@ -663,7 +615,7 @@ Section deconstruction.
       unfold trav_make at 7.
       apply Batch_make_sim3.
       - symmetry.
-        rewrite toBatch_trav_make.
+        rewrite toBatch_trav_make_to_replace_contents.
         apply Batch_shape_replace_contents.
       - vector_sim.
     Qed.
@@ -676,7 +628,7 @@ Section deconstruction.
       do 2 change (fun (x:?X) => 1) with (const (A := X) 1).
       do 2 rewrite (foldMap_through_runBatch2 _ B).
       unfold compose.
-      rewrite (@toBatch_trav_make A B B t v).
+      rewrite (@toBatch_trav_make_to_replace_contents A B B t v).
       rewrite <- (runBatch_const_contents (G := @const Type Type nat)).
       reflexivity.
     Qed.
@@ -695,7 +647,7 @@ Section deconstruction.
     Qed.
 
     (** ** Lemmas regarding <<shape>> and <<trav_make>> *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma trav_same_shape {A1 A2: Type}
       {t1: T A1} {t2: T A2}:
       shape t1 = shape t2 ->
@@ -713,7 +665,7 @@ Section deconstruction.
   End lens_laws.
 
   (** ** Representation theorems *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma traverse_repr:
     forall `{Applicative G} (A B: Type) (t: T A) (f: A -> G B),
       traverse f t =
@@ -749,7 +701,7 @@ Section deconstruction.
   Qed.
 
   (** ** Corollary: Spec for <<traverse>> After Applying <<trav_make>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Corollary traverse_trav_make:
     forall `{Applicative G} (X A B: Type)
       (t: T X) (f: A -> G B) (v: Vector (plength t) A),
@@ -775,15 +727,24 @@ Section deconstruction.
     apply trav_contents_make.
   Qed.
 
-  Lemma foldMap_opposite_traverse
-    `{TraversableFunctor T'} {A}:
-    forall `{Monoid M} (t: T' A) (f: A -> M),
+  Lemma foldMap_opposite_traverse {A}:
+    forall `{Monoid M} `{TraversableFunctor T'}
+      `{ToBatch T'} `{! Compat_ToBatch_Traverse T'} (t: T' A) (f: A -> M),
       foldMap (op := Monoid_op_Opposite op) f t =
         forwards (traverse (B := False) (T := T') (G := Backwards (const M)) (mkBackwards ∘ f) t).
   Proof.
     intros.
-    unfold foldMap.
-  Admitted.
+    rewrite foldMap_to_traverse1.
+    rewrite traverse_through_runBatch.
+    rewrite traverse_through_runBatch.
+    unfold compose.
+    induction (@toBatch T' _ A False t).
+    - reflexivity.
+    - rewrite runBatch_rw2.
+      rewrite IHb.
+      rewrite runBatch_rw2.
+      reflexivity.
+  Qed.
 
   Corollary foldMap_trav_make:
     forall `{Monoid M} (X A: Type)
@@ -795,14 +756,12 @@ Section deconstruction.
     unfold foldMap.
     rewrite traverse_trav_make.
     unfold_ops @Map_const.
-    Set Keyed Unification.
-    rewrite <- (foldMap_opposite_traverse (T' := Vector (plength t))).
-    Unset Keyed Unification.
+    setoid_rewrite <- (foldMap_opposite_traverse (T' := Vector (plength t))).
     reflexivity.
   Qed.
 
   (** ** Corollary: Specs for Functor Operations in Terms of Lens Operations *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma id_spec:
     forall (A: Type) (t: T A),
       id t = trav_make t (trav_contents t).
@@ -826,7 +785,7 @@ Section deconstruction.
   Qed.
 
   (** ** Corollary: Specification for <<shape>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma trav_contents_shape:
     forall (A: Type) (t: T A),
       trav_contents (shape t) ~~ Vector_tt (plength t).
@@ -885,8 +844,30 @@ Section deconstruction.
     - now inversion Hlen.
   Qed.
 
+  Lemma trav_same_shape_iff {A1 A2: Type}
+    {t1: T A1} {t2: T A2}:
+    shape t1 = shape t2 <->
+      (forall B, trav_make (B := B) t1 ~!~ trav_make t2).
+  Proof.
+    split.
+    - apply trav_same_shape.
+    - apply trav_same_shape_rev.
+  Qed.
+
+  Corollary trav_make_sim_map:
+    forall `(t: T A)
+      `(f: A -> B) (C: Type),
+      trav_make (B := C) t ~!~
+        (trav_make (B := C) (map (F := T) f t)).
+  Proof.
+    intros.
+    apply trav_same_shape_iff.
+    rewrite shape_map.
+    reflexivity.
+  Qed.
+
   (** ** <<trav_make>> is Preserved by <<shape>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma trav_make_shape_spec {A B: Type}: forall (t: T A),
       trav_make (B := B) t ~!~ trav_make (B := B) (shape t).
   Proof.
@@ -897,8 +878,8 @@ Section deconstruction.
   Qed.
 
   (** ** <<tosubset>> is Preserved by <<trav_contents>> *)
-  (******************************************************************************)
-  Lemma tosubset_spec:
+  (********************************************************************)
+  Lemma tosubset_spec `{ToSubset T} `{! Compat_ToSubset_Traverse T}:
     forall (A: Type) (t: T A),
       tosubset t = tosubset (trav_contents t).
   Proof.
@@ -916,7 +897,7 @@ Section deconstruction.
 End deconstruction.
 
 (** * Lemmas about <<shape>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section misc.
 
   Context
@@ -930,7 +911,7 @@ Section misc.
 
     (*
   (** ** Same <<shape>> Implies Same <<trav_make>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma same_shape_implies_make_sim:
     forall (A B C: Type) (t: T A) (u: T B),
       shape t = shape u ->
@@ -948,7 +929,7 @@ Section misc.
    *)
 
   (** ** Specification for <<id>> given two terms with the same <<shape>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma same_shape_implies_other_make:
     forall (A B: Type) (t: T A) (u: T B)
       (Hshape: shape t = shape u),
@@ -968,7 +949,7 @@ Section misc.
 End misc.
 
 (** * Zipping Terms *)
-(******************************************************************************)
+(**********************************************************************)
 From Tealeaves Require Import Functors.Pair.
 
 Section traversable_functors_zipping.
@@ -983,7 +964,7 @@ Section traversable_functors_zipping.
     `{! Compat_ToBatch_Traverse T}.
 
   (** ** Operation to Zip Contents of Same-<<shape>> Terms *)
-  (******************************************************************************)
+  (********************************************************************)
   Definition same_shape_zip_contents
     (A B: Type) (t: T A) (u: T B)
       (Hshape: shape t = shape u):
@@ -994,7 +975,7 @@ Section traversable_functors_zipping.
   #[global] Arguments same_shape_zip_contents {A B}%type_scope t u Hshape.
 
   (** ** Proof Irrelevance *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma same_shape_zip_contents_proof_irrelevance:
     forall (A B: Type) (t: T A) (u: T B)
       (Hshape1: shape t = shape u)
@@ -1041,7 +1022,7 @@ Section traversable_functors_zipping.
   Qed.
 
   (** ** Roundtrip Properties *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma same_shape_zip_contents_fst
     (A B: Type) (t: T A) (u: T B)
     (Hshape: shape t = shape u):
@@ -1065,7 +1046,7 @@ Section traversable_functors_zipping.
   Qed.
 
   (** ** Naturality Properties *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma same_shape_map {A1 A2 B1 B2}:
     forall (t: T A1) (u: T B1) (Hshape: shape t = shape u)
       (f: A1 -> A2) (g: B1 -> B2),
@@ -1097,6 +1078,40 @@ Section traversable_functors_zipping.
     assumption.
   Qed.
 
+  Lemma same_shape_map_rev {A1 A2 B1 B2}:
+    forall (t: T A1) (u: T B1)
+      (f: A1 -> A2) (g: B1 -> B2)
+      (Hshape: shape (map f t) = shape (map g u)),
+      shape t = shape u.
+  Proof.
+    introv.
+    rewrite (shape_map).
+    rewrite (shape_map).
+    easy.
+  Qed.
+
+  Lemma same_shape_map_rev_l {A1 A2 B}:
+    forall (t: T A1) (u: T B)
+      (f: A1 -> A2)
+      (Hshape: shape (map f t) = shape u),
+      shape t = shape u.
+  Proof.
+    introv.
+    rewrite (shape_map).
+    easy.
+  Qed.
+
+  Lemma same_shape_map_rev_r {A B1 B2}:
+    forall (t: T A) (u: T B1)
+      (g: B1 -> B2)
+      (Hshape: shape t = shape (map g u)),
+      shape t = shape u.
+  Proof.
+    introv.
+    rewrite (shape_map).
+    easy.
+  Qed.
+
   Lemma natural_same_shape_zip_contents
     {A1 A2 B1 B2: Type}:
     forall (t: T A1) (u: T B1) (Hshape: shape t = shape u)
@@ -1119,6 +1134,25 @@ Section traversable_functors_zipping.
       apply trav_contents_natural.
   Qed.
 
+  Lemma natural_same_shape_zip_contents_op
+    {A1 A2 B1 B2: Type}:
+    forall (t: T A1) (u: T B1)
+      (f: A1 -> A2) (g: B1 -> B2)
+      (Hshape: shape (map f t) = shape (map g u)),
+      same_shape_zip_contents (map f t) (map g u) Hshape =
+        coerce (eq_sym (natural_plength f t)) in
+      map (map_pair f g) (same_shape_zip_contents t u (same_shape_map_rev t u _ _ Hshape)).
+  Proof.
+    intros.
+    rewrite natural_same_shape_zip_contents.
+    apply Vector_sim_eq.
+    vector_sim.
+    vector_sim.
+    fequal.
+    fequal.
+    apply proof_irrelevance.
+  Qed.
+
   Corollary natural_fst_same_shape_zip_contents
     {A1 A2 B: Type}:
     forall (t: T A1) (u: T B) (Hshape: shape t = shape u)
@@ -1132,18 +1166,36 @@ Section traversable_functors_zipping.
     rewrite natural_same_shape_zip_contents.
     apply Vector_sim_eq.
     vector_sim.
-    match goal with
-    | |- ?lhs ~~ ?rhs =>
-        enough (Hequal: lhs = rhs)
-          by now rewrite Hequal
-    end.
+    fequal.
     apply same_shape_zip_contents_proof_irrelevance2.
     rewrite fun_map_id.
     reflexivity.
   Qed.
 
+  Corollary natural_fst_same_shape_zip_contents_rev
+    {A1 A2 B: Type}:
+    forall (t: T A1) (u: T B)
+      (f: A1 -> A2)
+      (Hshape: shape (map f t) = shape u),
+      same_shape_zip_contents (map f t) u Hshape =
+        coerce (eq_sym (natural_plength f t)) in
+        map (map_fst f) (same_shape_zip_contents t u (same_shape_map_rev_l _ _ _ Hshape)).
+
+  Proof.
+    intros.
+    rewrite map_fst_to_pair.
+    rewrite natural_same_shape_zip_contents.
+    apply Vector_sim_eq.
+    vector_sim.
+    fequal.
+    apply same_shape_zip_contents_proof_irrelevance2.
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+
   Corollary natural_snd_same_shape_zip_contents
-    {A B1 B2: Type} {n: nat}:
+    {A B1 B2: Type}:
     forall (t: T A) (u: T B1) (Hshape: shape t = shape u)
       (g: B1 -> B2),
       map (map_snd g) (same_shape_zip_contents t u Hshape) =
@@ -1160,8 +1212,27 @@ Section traversable_functors_zipping.
     reflexivity.
   Qed.
 
+  Corollary natural_snd_same_shape_zip_contents_rev
+    {A B1 B2: Type}:
+    forall (t: T A) (u: T B1)
+      (g: B1 -> B2)
+      (Hshape: shape t = shape (map g u)),
+      same_shape_zip_contents t (map g u) Hshape =
+        map (map_snd g) (same_shape_zip_contents t u (same_shape_map_rev_r _ _ _ Hshape)).
+  Proof.
+    intros.
+    rewrite map_snd_to_pair.
+    rewrite natural_same_shape_zip_contents.
+    apply Vector_sim_eq.
+    vector_sim.
+    apply same_shape_zip_contents_proof_irrelevance3.
+    rewrite fun_map_id.
+    reflexivity.
+    reflexivity.
+  Qed.
+
   (** ** Operation to Zip Same-<<shape>> Terms *)
-  (******************************************************************************)
+  (********************************************************************)
   Definition same_shape_zip
     (A B: Type) (t: T A) (u: T B)
       (Hshape: shape t = shape u):
@@ -1200,7 +1271,7 @@ Section traversable_functors_zipping.
   Qed.
 
   (** ** Proof Irrelevance *)
-  (******************************************************************************)
+  (********************************************************************)
   (* useful when <<u>> can't be rewritten due to Hshape proofs *)
   Lemma same_shape_zip_proof_irrelevance:
     forall (A B: Type)
@@ -1219,7 +1290,7 @@ Section traversable_functors_zipping.
   Qed.
 
   (** ** Naturality Properties *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma natural_same_shape_zip
     {A1 A2 B1 B2: Type}:
     forall (t: T A1) (u: T B1) (Hshape: shape t = shape u)
@@ -1232,9 +1303,11 @@ Section traversable_functors_zipping.
     rewrite <- trav_make_natural.
     rewrite natural_same_shape_zip_contents.
     apply Vector_fun_sim_eq.
-    - admit.
+    - apply trav_same_shape.
+      rewrite shape_map.
+      reflexivity.
     - vector_sim.
-  Admitted.
+  Qed.
 
   Corollary natural_fst_same_shape_zip
     {A1 A2 B: Type}:
@@ -1267,10 +1340,283 @@ Section traversable_functors_zipping.
     - reflexivity.
   Qed.
 
+  Lemma same_shape_zip_same_shape {A B}:
+    forall (t: T A) (u: T B)
+    (Hshape: shape t = shape u),
+      shape (same_shape_zip t u Hshape) = shape t.
+  Proof.
+    intros.
+    apply (same_shape_map_rev _ _ fst id).
+    rewrite fun_map_id.
+    rewrite same_shape_zip_fst.
+    reflexivity.
+  Qed.
+
+  (** ** Traversals over the zip *)
+  (**********************************************************************)
+  Lemma map_sim_fns:
+    forall (n m: nat) (A B C: Type) `{Applicative G}
+      (mk1: Vector n B -> C) (v1: Vector n A)
+      (mk2: Vector m B -> C) (v2: Vector m A)
+      (f: A -> G B),
+      mk1 ~!~ mk2 ->
+      v1 ~~ v2 ->
+      map (F := G) mk1 (traverse (G := G) (T := Vector n) f v1) = map (F := G) mk2 (traverse (T := Vector m) f v2).
+  Proof.
+    intros.
+    assert (Heq: n = m) by (now apply Vector_sim_length in H2).
+    generalize dependent v2.
+    generalize dependent m.
+    induction n; intros; subst.
+    - rewrite (Vector_nil_eq v1).
+      rewrite (Vector_nil_eq v2).
+      rewrite traverse_Vector_vnil.
+      fequal. ext v.
+      apply Vector_fun_sim_eq.
+      assumption. reflexivity.
+    - rewrite (Vector_surjective_pairing2 (v := v2)) in *.
+      rewrite (Vector_surjective_pairing2 (v := v1)) in *.
+      rewrite traverse_Vector_vcons.
+      rewrite traverse_Vector_vcons.
+      inversion H2.
+      do 2 rewrite proj_vcons in H4.
+      inversion H4.
+      fequal.
+      { ext v. apply Vector_fun_sim_eq.
+        assumption. reflexivity. }
+      fequal.
+      fequal.
+      apply Vector_sim_eq.
+      apply H6.
+  Qed.
+
+  Definition traverse_same_shape_zip
+    `{Applicative G}
+    (A B C: Type) (t: T A) (u: T B)
+    (f: A * B -> G C)
+    (Hshape: shape t = shape u)
+    :
+    traverse (T := T) f (same_shape_zip t u Hshape) =
+      map (F := G) (trav_make t)
+        (forwards (traverse (T := Vector (plength t)) (mkBackwards ∘ f) (same_shape_zip_contents t u Hshape))).
+  Proof.
+    assert (trav_make (B := C) (same_shape_zip t u Hshape) ~!~ trav_make t).
+    { apply trav_same_shape.
+      apply same_shape_zip_same_shape.
+    }
+    rewrite traverse_repr.
+    assert (trav_contents (same_shape_zip t u Hshape) ~~
+              (same_shape_zip_contents t u Hshape)).
+    {  unfold same_shape_zip.
+       unfold Vector_sim.
+       rewrite trav_contents_make.
+       reflexivity. }
+    { compose near (traverse (mkBackwards ∘ f) (trav_contents (same_shape_zip t u Hshape))).
+      compose near (traverse (mkBackwards ∘ f) (same_shape_zip_contents t u Hshape)).
+      rewrite natural.
+      rewrite natural.
+      unfold compose.
+      fequal.
+      apply map_sim_fns; auto.
+      typeclasses eauto.
+    }
+  Qed.
+
+  Instance ApplicativeMorphism_const_op `{op: Monoid_op M} `{unit: Monoid_unit M} `{! Monoid M}:
+    @ApplicativeMorphism (@const Type Type M) (Backwards (@const Type Type M))
+      (@Map_const M) (@Mult_const M (@Monoid_op_Opposite M op)) (@Pure_const M unit)
+      (@Map_Backwards (const M) _) (@Mult_Backwards (const M) (@Map_const M) (@Mult_const M op))
+      (@Pure_Backwards (const M) (@Pure_const M unit)) (@mkBackwards (const M)).
+  Proof.
+    constructor; try typeclasses eauto.
+    - reflexivity.
+    - reflexivity.
+    - reflexivity.
+  Qed.
+
+  Instance ApplicativeMorphism_const_op_inv `{op: Monoid_op M} `{unit: Monoid_unit M} `{! Monoid M}:
+    @ApplicativeMorphism (Backwards (@const Type Type M))(@const Type Type M)
+      (@Map_Backwards (const M) _) (@Mult_Backwards (const M) (@Map_const M) (@Mult_const M op))
+      (@Pure_Backwards (const M) (@Pure_const M unit))
+      (@Map_const M) (@Mult_const M (@Monoid_op_Opposite M op)) (@Pure_const M unit)
+      (@forwards (const M)).
+  Proof.
+    constructor; try typeclasses eauto.
+    - reflexivity.
+    - reflexivity.
+    - reflexivity.
+  Qed.
+
+  Definition foldmap_same_shape_zip
+    `{Monoid M}
+    (A B C: Type) (t: T A) (u: T B)
+    (f: A * B -> M)
+    (Hshape: shape t = shape u)
+    :
+    foldMap f (same_shape_zip t u Hshape) =
+      foldMap (op := Monoid_op_Opposite op) f (same_shape_zip_contents t u Hshape).
+  Proof.
+    intros.
+    rewrite foldMap_to_traverse1.
+    rewrite traverse_same_shape_zip.
+    rewrite foldMap_to_traverse1.
+    unfold_ops @Map_const.
+    compose near (same_shape_zip_contents t u Hshape) on left.
+    change ((fun (X Y : Type) (_ : X -> Y) (t0 : @const Type Type M X) => t0))
+             with (@Map_const M).
+    rewrite (trf_traverse_morphism (T := Vector (@plength T Traverse_T A t))
+               (morphism := ApplicativeMorphism_const_op_inv (M := M))).
+    reflexivity.
+  Qed.
+
+  Lemma traverse_const_opposite `{Monoid M} {A B: Type} (f: A -> M):
+    traverse (T := T) (G := const M)
+      (@Mult_const M (@Monoid_op_Opposite M op))
+
+    Search traverse same_shape_zip_contents.
+    rewrite t
+              .
+    unfold foldMap.
+    rewrite traverse_same_shape_zip.
+    rewrite <- traverse_repr.
+    rewrite traverse_same_shape_zip.
+
+    reflexivity.
+  Qed.
+
 End traversable_functors_zipping.
 
+
+(** ** Folding over a Vector of pairs *)
+(**********************************************************************)
+Section fold_over_vector_pairs.
+
+  Context {A B A0 B0: Type} `{Monoid M} `(f: A * B -> M).
+
+  Lemma foldMap_vector_pair_natural:
+    forall (fl: A0 -> A) (fr: B0 -> B),
+    forall (n: nat) (v: Vector n (A0 * B0)),
+      foldMap (T := Vector n) f (map (F := Vector n) (map_tensor fl fr) v) =
+        foldMap (T := Vector n) (f ∘ map_tensor fl fr) v.
+  Proof.
+    intros.
+    compose near v on left.
+    rewrite foldMap_map.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_vector_pair_natural_l:
+    forall (fl: A0 -> A) (n: nat) (v: Vector n (A0 * B)),
+      foldMap (T := Vector n) f (map (F := Vector n) (map_fst fl) v) =
+        foldMap (T := Vector n) (f ∘ map_fst fl) v.
+  Proof.
+    intros.
+    compose near v on left.
+    rewrite foldMap_map.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_vector_pair_natural_r:
+    forall (fr: B0 -> B) (n: nat) (v: Vector n (A * B0)),
+      foldMap (T := Vector n) f (map (F := Vector n) (map_snd fr) v) =
+        foldMap (T := Vector n) (f ∘ map_snd fr) v.
+  Proof.
+    intros.
+    compose near v on left.
+    rewrite foldMap_map.
+    reflexivity.
+  Qed.
+
+End fold_over_vector_pairs.
+
+(** * Uniqueness *)
+(**********************************************************************)
+
+Section uniqueness_lemmas.
+
+  Context {A B: Type}.
+
+  Context
+    `{Classes.Kleisli.TraversableFunctor.TraversableFunctor T}
+    `{ToMap_inst: Map T}
+    `{ToBatch_inst: ToBatch T}
+    `{! Compat_Map_Traverse T}
+    `{! Compat_ToBatch_Traverse T}.
+
+  Lemma trav_contents_unique:
+    forall (t: T A) (u: T B) (v: Vector (plength t) B),
+      trav_make t v = u -> v ~~ trav_contents u.
+  Proof.
+    introv Hmake.
+    rewrite <- Hmake.
+    unfold Vector_sim.
+    rewrite trav_contents_make.
+    reflexivity.
+  Qed.
+
+  Lemma trav_make_unique:
+    forall (t: T A) (u: T B) (v: Vector (plength t) B),
+      trav_make t v = u ->
+      forall (C: Type), trav_make (B := C) t ~!~ trav_make u.
+  Proof.
+    introv Hmake. intro C.
+    rewrite <- Hmake.
+    rewrite symmetric_Vector_fun_sim.
+    apply trav_make_make.
+  Qed.
+
+  Corollary trav_decomposition_unique:
+    forall (t: T A) (u: T B) (v: Vector (plength t) B),
+      trav_make t v = u ->
+      (forall C, trav_make (B := C) t ~!~ trav_make u) /\
+        v ~~ trav_contents u.
+  Proof.
+    introv Hmake; split.
+    eauto using trav_make_unique.
+    auto using trav_contents_unique.
+  Qed.
+
+
+  Corollary trav_decomposition_unique_iff:
+    forall (t: T A) (u: T B) (v: Vector (plength t) B),
+      trav_make t v = u <->
+        (forall C, trav_make (B := C) t ~!~ trav_make u) /\
+          v ~~ trav_contents u.
+  Proof.
+    intros. split.
+    - apply trav_decomposition_unique.
+    - intros [Hmake Hcontents].
+      rewrite <- (trav_get_put (t := u)).
+      apply Vector_fun_sim_eq; auto.
+  Qed.
+
+  Corollary trav_decomposition_same_shape:
+    forall (t: T A) (u: T B) (v: Vector (plength t) B),
+      trav_make t v = u ->
+      shape t = shape u.
+  Proof.
+    introv Hmake.
+    apply trav_same_shape_rev.
+    eapply trav_make_unique.
+    eassumption.
+  Qed.
+
+  Corollary trav_decomposition_same_length:
+    forall (t: T A) (u: T B) (v: Vector (plength t) B),
+      trav_make t v = u ->
+      plength t = plength u.
+  Proof.
+    introv Hmake.
+    apply same_shape_implies_plength.
+    eapply trav_decomposition_same_shape.
+    eassumption.
+  Qed.
+
+End uniqueness_lemmas.
+
+
 (** * Lifting relations over Traversable functors *)
-(******************************************************************************)
+(**********************************************************************)
 Definition lift_relation {X} {A B:Type} `{Traverse X}
   (R: A -> B -> Prop): X A -> X B -> Prop :=
   traverse (G := subset) R.
@@ -1286,81 +1632,6 @@ Section lifting_relations.
     `{! Compat_ToSubset_Traverse T}
     `{! Compat_ToBatch_Traverse T}.
 
-  Section uniqueness_lemmas.
-
-    Context {A B: Type}.
-
-    Lemma trav_contents_unique:
-      forall (t: T A) (u : T B) (v: Vector (plength t) B),
-        trav_make t v = u -> v ~~ trav_contents u.
-    Proof.
-      introv Hmake.
-      rewrite <- Hmake.
-      unfold Vector_sim.
-      rewrite trav_contents_make.
-      reflexivity.
-    Qed.
-
-    Lemma trav_make_unique:
-      forall (t: T A) (u : T B) (v: Vector (plength t) B),
-        trav_make t v = u ->
-        forall (C: Type), trav_make (B := C) t ~!~ trav_make u.
-    Proof.
-      introv Hmake. intro C.
-      rewrite <- Hmake.
-      rewrite symmetric_Vector_fun_sim.
-      apply trav_make_make.
-    Qed.
-
-    Corollary trav_decomposition_unique:
-      forall (t: T A) (u : T B) (v: Vector (plength t) B),
-        trav_make t v = u ->
-          (forall C, trav_make (B := C) t ~!~ trav_make u) /\
-            v ~~ trav_contents u.
-    Proof.
-      introv Hmake; split.
-      eauto using trav_make_unique.
-      auto using trav_contents_unique.
-    Qed.
-
-
-    Corollary trav_decomposition_unique_iff:
-      forall (t: T A) (u : T B) (v: Vector (plength t) B),
-        trav_make t v = u <->
-          (forall C, trav_make (B := C) t ~!~ trav_make u) /\
-            v ~~ trav_contents u.
-    Proof.
-      intros. split.
-      - apply trav_decomposition_unique.
-      - intros [Hmake Hcontents].
-        rewrite <- (trav_get_put (t := u)).
-        apply Vector_fun_sim_eq; auto.
-    Qed.
-
-    Corollary trav_decomposition_same_shape:
-      forall (t: T A) (u : T B) (v: Vector (plength t) B),
-        trav_make t v = u ->
-        shape t = shape u.
-    Proof.
-      introv Hmake.
-      apply trav_same_shape_rev.
-      eapply trav_make_unique.
-      eassumption.
-    Qed.
-
-    Corollary trav_decomposition_same_length:
-      forall (t: T A) (u : T B) (v: Vector (plength t) B),
-        trav_make t v = u ->
-        plength t = plength u.
-    Proof.
-      introv Hmake.
-      apply same_shape_implies_plength.
-      eapply trav_decomposition_same_shape.
-      eassumption.
-    Qed.
-
-  End uniqueness_lemmas.
-
   Lemma relation_spec:
     forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B),
       lift_relation R t u <->
@@ -1372,10 +1643,11 @@ Section lifting_relations.
     unfold lift_relation.
     rewrite traverse_repr.
     compose near (trav_contents t).
-    rewrite traverse_by_subset.
+    rewrite (traverse_commutative (G := subset) (T := Vector (plength t))).
     reflexivity.
   Qed.
 
+  (* Minor, not helpful  *)
   Lemma relation1:
     forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B)
       (Plen: plength u = plength t),
@@ -1390,25 +1662,9 @@ Section lifting_relations.
       symmetry. assumption. }
     rewrite <- Hmake.
     apply Vector_fun_sim_eq.
-    reflexivity.
-    vector_sim.
+    - reflexivity.
+    - vector_sim.
   Qed.
-
-  (*
-  Lemma relation_spec1_1:
-    forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B),
-      lift_relation R t u <->
-        (exists b: Vector (plength t) B,
-            traverse (G := subset) R (trav_contents t) b /\
-              (b ~~ trav_contents u)).
-  Proof.
-    intros.
-    rewrite relation_spec.
-    compose near (trav_contents t).
-    rewrite traverse_by_subset.
-    reflexivity.
-  Qed.
-   *)
 
   Lemma relation2:
     forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B)
@@ -1465,7 +1721,7 @@ Section lifting_relations.
   Qed.
 
   (** ** Related terms have the same shape *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma relation_implies_shape:
     forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B),
       lift_relation R t u -> shape t = shape u.
@@ -1477,7 +1733,7 @@ Section lifting_relations.
   Qed.
 
   (** ** Related terms have a related zip *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma Monoid_op_Opposite_and:
     Monoid_op_Opposite Monoid_op_and = and.
   Proof.
@@ -1506,32 +1762,18 @@ Section lifting_relations.
     assumption.
   Qed.
 
-  (*
-  Lemma relation_to_zipped:
-    forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B)
-      (Hrel: lift_relation R t u),
-      Forall (uncurry R)
-        (same_shape_zip A B t u
-           (relation_implies_shape A B R t u Hrel)).
+  Lemma foldMap_same_shape_zip `{Monoid M}:
+    forall (A B: Type) (f: A * B -> M) (t: T A) (u: T B)
+      (Hshape: shape t = shape u),
+      foldMap (T := T) f (same_shape_zip t u Hshape) =
+        foldMap (op := Monoid_op_Opposite op) (T := Vector (plength t))
+          f (same_shape_zip_contents t u Hshape).
   Proof.
     intros.
-    unfold Forall.
     unfold same_shape_zip.
     rewrite foldMap_trav_make.
-    rewrite Monoid_op_Opposite_and.
-    unfold same_shape_zip_contents.
-    unfold Vector_zip.
-    rewrite <- (traverse_zipped_vector
-                 (R := R) (plength t) (trav_contents t) (coerce eq_sym
-                 (same_shape_implies_plength t u
-                    (relation_implies_shape A B R t u Hrel)) in
-                   trav_contents u)).
-    (* Make a copy because Hrel used in Goal *)
-    pose (Hrel' := Hrel).
-    apply relation2.
-    assumption.
+    reflexivity.
   Qed.
-  *)
 
   Lemma relation_to_zipped_iff:
     forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B)
@@ -1579,97 +1821,6 @@ Section lifting_relations.
         * vector_sim.
   Qed.
 
-  (*
-  Lemma relation_to_zipped:
-    forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B),
-      lift_relation R t u ->
-        (exists zipped: T (A * B),
-            map fst zipped = t /\
-              map snd zipped = u /\
-              Forall (uncurry R) zipped).
-  Proof.
-    introv Hrel.
-    rewrite relation_spec1 in Hrel.
-    destruct Hrel as [trav_contents_u [Hrel Hmake]].
-    pose (zipped_contents:=
-            Vector_zip_eq A B (plength t)
-              (trav_contents t)
-              (trav_contents_u)).
-    exists (trav_make t zipped_contents).
-    rewrite <- trav_make_natural.
-    rewrite <- trav_make_natural.
-    split.
-    - unfold zipped_contents.
-      rewrite Vector_zip_eq_fst.
-      symmetry. apply id_spec.
-    - split.
-      + unfold zipped_contents.
-        rewrite Vector_zip_eq_snd.
-        assumption.
-      + unfold zipped_contents.
-        clear zipped_contents.
-        unfold Forall.
-        rewrite foldMap_trav_make.
-        rewrite Monoid_op_Opposite_and.
-        rewrite <- (traverse_zipped_vector
-                     (R := R) (plength t) (trav_contents t) (trav_contents_u)).
-        assumption.
-  Qed.
-   *)
-
-  (*
-  Lemma relation_from_zipped:
-    forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B),
-        (exists zipped: T (A * B),
-            map fst zipped = t /\
-              map snd zipped = u /\
-              Forall (uncurry R) zipped) ->
-        lift_relation R t u.
-  Proof.
-    introv [Z [H1 [H2 HR]]].
-    rewrite <- H1.
-    rewrite <- H2.
-    rewrite relation_spec1.
-
-  Admitted.
-*)
-
-  (*
-  Lemma relation_spec_alt:
-    forall (A B: Type) (R: A -> B -> Prop) (t: T A) (u: T B)
-      (Heq: plength u = plength t),
-      lift_relation R t u =
-        (shape t = shape u /\
-           lift_relation R (trav_contents t) (coerce Heq in trav_contents u)).
-  Proof.
-    introv. propext.
-    - introv Hrel.
-       specialize (relation_implies_shape _ _ _ _ _ Hrel); intro.
-       rewrite relation_spec1 in Hrel.
-       destruct Hrel as [trav_contents_u [Htrav Hmake]].
-       split.
-       { auto. }
-       { assert (cut: (coerce Heq in trav_contents u) = trav_contents_u).
-         { apply Vector_sim_eq. subst.
-           apply Vector_coerce_sim_l'.
-           apply (trav_contents_make (t := t)).
-         }
-         rewrite cut.
-         apply Htrav.
-       }
-    - intros [Hshape Hrel].
-      rewrite relation_spec1.
-      exists (coerce Heq in trav_contents u). split.
-      + apply Hrel.
-      + assert (H_make_eq: forall B, trav_make (B := B) t ~!~ trav_make u).
-        { apply trav_same_shape; assumption. }
-        change u with (id u) at 3.
-        rewrite id_spec.
-        apply H_make_eq.
-        apply Vector_coerce_sim_l.
-  Qed.
-  *)
-
   Lemma relation_natural1:
     forall (A B1 B2: Type) (R: B1 -> B2 -> Prop) (t: T A) (f: A -> B1),
       lift_relation R (map f t) = lift_relation (R ∘ map f) t.
@@ -1683,25 +1834,22 @@ Section lifting_relations.
 
   Lemma relation_natural2_lemma:
     forall (B1 A B2: Type) (R: B1 -> B2 -> Prop) (t: T B1) (u: T A) (f: A -> B2)
-      (Hshape : shape t = shape (map f u))
-      (Hshape' : shape t = shape u),
+      (Hshape: shape t = shape (map f u))
+      (Hshape': shape t = shape u),
       Forall (uncurry R) (same_shape_zip t (map f u) Hshape) =
         Forall (uncurry (precompose f ∘ R)) (same_shape_zip t u Hshape').
   Proof.
     intros.
     unfold Forall.
-    assert (
-        map (uncurry R) (same_shape_zip t (map f u) Hshape) =
-          map (uncurry (precompose f ∘ R)) (same_shape_zip t u Hshape')).
-    { replace (uncurry (precompose f ∘ R)) with
-        (uncurry R ∘ map_snd f).
-      rewrite <- fun_map_map.
-      unfold compose at 1.
-      rewrite natural_snd_same_shape_zip.
-      fequal.
-      apply same_shape_zip_proof_irrelevance; auto.
-      ext [b a]. reflexivity. }
-  Admitted.
+    rewrite foldMap_same_shape_zip.
+    rewrite foldMap_same_shape_zip.
+    rewrite natural_snd_same_shape_zip_contents_rev.
+    compose near (same_shape_zip_contents t u (same_shape_map_rev_r t u f Hshape)).
+    rewrite (foldMap_map).
+    fequal.
+    - ext [x y]. reflexivity.
+    - apply same_shape_zip_contents_proof_irrelevance.
+  Qed.
 
   Lemma relation_natural2_core:
     forall (B1 A B2: Type) (R: B1 -> B2 -> Prop) (t: T B1) (u: T A) (f: A -> B2),
@@ -1717,12 +1865,15 @@ Section lifting_relations.
     erewrite relation_natural2_lemma.
     split.
     - intros [X1 X2]. split.
-      + admit.
+      + intros.
+        apply trav_same_shape.
+        assumption.
       + eassumption.
     - intros [X1 X2]. split.
-      + admit.
+      + apply trav_same_shape.
+        assumption.
       + assumption.
-  Admitted.
+  Qed.
 
   Lemma relation_natural2:
     forall (B1 A B2: Type) (R: B1 -> B2 -> Prop) (t: T B1) (u: T A) (f: A -> B2),
@@ -1731,29 +1882,18 @@ Section lifting_relations.
     intros.
     apply propositional_extensionality.
     split.
-    - intro Hrel.
-      assert (Hshape: shape t = shape (map f u)).
-      { apply relation_implies_shape in Hrel.
-        assumption. }
-      rewrite (relation_to_zipped_iff B1 B2 R t (map f u) Hshape) in Hrel.
-      destruct Hrel as [Hmake Hzip].
-      assert (Hshape': shape t = shape u).
-      { pose (Hshape' := Hshape).
-        rewrite shape_map in Hshape'.
-        assumption. }
-      rewrite (relation_to_zipped_iff B1 A (precompose f ∘ R) t u Hshape').
-      split.
-      { intro C.
-        specialize (Hmake C).
-        destruct Hmake as [Hlen Hmake].
-        split.
-        + admit. (* TODO *)
-        + admit. (* TODO *)
-      }
-      erewrite relation_natural2_lemma in Hzip.
-      eassumption.
-  Admitted.
+    - introv hyp.
+      rewrite <- relation_natural2_core; try assumption.
+      apply relation_implies_shape in hyp.
+      rewrite shape_map in hyp.
+      assumption.
+    - introv hyp.
+      rewrite relation_natural2_core; try assumption.
+      apply relation_implies_shape in hyp.
+      assumption.
+  Qed.
 
+  (* This can actually be strengthed into an IFF *)
   Lemma relation_respectful:
     forall (A B1 B2: Type) (R: B1 -> B2 -> Prop) (t: T A) (f: A -> B1) (g: A -> B2),
     (forall (a: A), a ∈ t -> R (f a) (g a)) -> lift_relation R (map f t) (map g t).
@@ -1761,6 +1901,45 @@ Section lifting_relations.
     introv hyp.
     rewrite relation_natural1.
     rewrite relation_natural2.
-  Admitted.
+    unfold lift_relation.
+    rewrite traverse_through_runBatch.
+    unfold compose.
+    unfold element_of in hyp.
+    rewrite tosubset_to_foldMap in hyp.
+    change t with (id t) at 2.
+    rewrite id_through_runBatch.
+    unfold compose.
+    rewrite (foldMap_through_toBatch A A) in hyp.
+    (* induction (@toBatch T ToBatch_inst A A t). *) (* Generates a weird hypothesis *)
+    apply (Batch_ind A A
+      (fun (C: Type) (b: Batch A A C) =>
+           (forall a : A, foldMap (T := BATCH1 A C) (ret (T := subset)) b a -> R (f a) (g a)) ->
+           runBatch (G := subset) (fun a : A => precompose g (R (map f a))) b (runBatch id b))).
+    - intros C c hyp'.
+      reflexivity.
+    - introv IH.
+      introv hyp'.
+      rewrite runBatch_rw2.
+      rewrite runBatch_rw2.
+      rewrite subset_ap_spec.
+      unfold ap.
+      unfold_ops @Map_I.
+      unfold_ops @Mult_I.
+      exists (runBatch id b) a.
+      splits.
+      { unfold precompose, compose.
+        unfold_ops @Map_I.
+        apply hyp'.
+        now right. }
+      { apply IH.
+        intros.
+        apply hyp'.
+        rewrite foldMap_Batch_rw2.
+        now left.
+      }
+      { reflexivity. }
+    - assumption.
+  Qed.
 
 End lifting_relations.
+

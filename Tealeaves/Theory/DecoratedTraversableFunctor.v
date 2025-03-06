@@ -670,7 +670,7 @@ Section deconstruction.
         (toBatch (A' := A') t)
         (coerce eq_sym (plength_eq_length t) in v).
   Proof.
-    apply toBatch_trav_make.
+    apply toBatch_trav_make_to_replace_contents.
   Qed.
 
   Lemma mapdt_same_shape
@@ -867,9 +867,17 @@ Section lifting_relations.
     rewrite mapdt_repr.
     unfold_ops @Map_subset.
     compose near (mapdt_contents t).
-    rewrite traverse_by_subset.
+    rewrite (traverse_commutative (G := subset) (T := Vector (plength t))).
     reflexivity.
   Qed.
+
+
+  (* This can actually be strengthed into an IFF *)
+  Lemma relation_respectful_ctx:
+    forall (A B1 B2: Type) (R: B1 -> B2 -> Prop) (t: T A) (f: E * A -> B1) (g: E * A -> B2),
+    (forall (e: E) (a: A), (e, a) ∈d t -> R (f (e, a)) (g (e, a))) -> lift_relation R (mapd f t) (mapd g t).
+  Proof.
+    introv hyp.
 
 End lifting_relations.
 

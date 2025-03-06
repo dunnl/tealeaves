@@ -429,4 +429,11 @@ Section subset_applicative_instance.
          inversion H2. subst. tauto.
   Qed.
 
+  #[export] Instance ApplicativeCommutative_subset: ApplicativeCommutative subset.
+  Proof.
+    constructor.
+    typeclasses eauto.
+    apply subset_commutative.
+  Qed.
+
 End subset_applicative_instance.
