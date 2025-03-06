@@ -1,4 +1,4 @@
-From Tealeaves Require Import
+From Tealeaves Require Export
   Classes.EqDec_eq
   Functors.List_Telescoping_General
   Backends.Common.Names

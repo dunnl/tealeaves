@@ -2,47 +2,34 @@ From Tealeaves Require Import
   Backends.LN
   Backends.Named.Common
   Backends.Common.Names
-  Backends.Named.Named
+  Backends.Named.FV
   Backends.Named.Alpha
   Functors.Option
   Theory.DecoratedTraversableFunctorPoly
   CategoricalToKleisli.DecoratedFunctorPoly
-  CategoricalToKleisli.DecoratedTraversableFunctorPoly.
-
+  CategoricalToKleisli.TraversableFunctor
+  CategoricalToKleisli.DecoratedTraversableFunctorPoly
+  Adapters.PolyToMono.Kleisli.DecoratedFunctor.
 
 Import Subset.Notations.
 Import Classes.Categorical.DecoratedFunctorPoly.
 Import DecoratedTraversableMonad.UsefulInstances.
 Import List.ListNotations.
 
-#[local] Open Scope list_scope.
-
-Require Import Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.
-
-(*
-Import Kleisli.DecoratedTraversableMonadPoly.DerivedOperations.
-*)
-
-Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
-Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
-Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
-Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.
-Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations.
-Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
-
-Print Instances DecoratedTraversableFunctorPoly.
-
 #[local] Generalizable Variables W T U.
-
-#[local] Open Scope nat_scope.
+#[local] Open Scope list_scope.
 
 From Tealeaves Require
   Adapters.MonoidHom.DecoratedTraversableMonad
-  Adapters.PolyToMono.DecoratedFunctor
-  Adapters.PolyToMono.DecoratedTraversableFunctor
-  Adapters.PolyToMono.DecoratedTraversableMonad.
+  Adapters.PolyToMono.Kleisli.DecoratedFunctor
+  Adapters.PolyToMono.Kleisli.DecoratedTraversableFunctor
+  Adapters.PolyToMono.Kleisli.DecoratedTraversableMonad
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.
 
 Section DTM.
+
+  Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
+  Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.
 
   Context
     (T: Type -> Type -> Type)
@@ -50,23 +37,26 @@ Section DTM.
 
   #[export] Instance Binddt_MONO_NAME:
     Binddt (list name) (T name) (T name).
-  apply PolyToMono.DecoratedTraversableMonad.Binddt_of_Binddtp.
+  Proof.
+    apply PolyToMono.Kleisli.DecoratedTraversableMonad.Binddt_of_Binddtp.
   Defined.
 
   #[export] Instance Binddt_MONO:
     Binddt nat (T unit) (T unit).
   assert (Binddt (list unit) (T unit) (T unit)).
-  apply PolyToMono.DecoratedTraversableMonad.Binddt_of_Binddtp.
+  apply PolyToMono.Kleisli.DecoratedTraversableMonad.Binddt_of_Binddtp.
   apply (MonoidHom.DecoratedTraversableMonad.Binddt_Morphism (@length unit)).
   Defined.
 
-  Import PolyToMono.DecoratedTraversableMonad.
+  Import PolyToMono.Kleisli.DecoratedTraversableMonad.
 
   #[export] Instance DTM_MONO:
     DecoratedTraversableMonad nat (T unit).
   Proof.
     assert (DecoratedTraversableMonad (list unit) (T unit)).
-    { apply PolyToMono.DecoratedTraversableMonad.DTM_of_DTMP. }
+    { apply
+        PolyToMono.Kleisli.DecoratedTraversableMonad.DTM_of_DTMP.
+    }
     apply MonoidHom.DecoratedTraversableMonad.DTM_of_DTM.
     { constructor; try typeclasses eauto.
       reflexivity. intros.
@@ -89,27 +79,23 @@ Section with_DTM.
 
   Context
     (T: Type -> Type -> Type)
-      `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
+    `{Categorical.DecoratedFunctorPoly.DecoratedFunctorPoly T}.
 
-
-  Import Categorical.DecoratedFunctorPoly.
+  Import Kleisli.DecoratedFunctorPoly.
   Import CategoricalToKleisli.DecoratedFunctorPoly.
   Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
   Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
-  Import Adapters.PolyToMono.DecoratedFunctor.
-
-  Import Adapters.PolyToMono.DecoratedTraversableFunctor.
-  Import Kleisli.DecoratedTraversableFunctor.DerivedOperations.
-
 
   (** ** Named to Locally Nameless *)
-  (**********************************************************************)
-  Definition binding_to_ln: Binding -> LN.
-  Proof.
-    intros [prefix var postfix| ub_context ].
-    exact (Bd (length prefix)).
-    exact (Fr n).
-  Defined.
+  (********************************************************************)
+  Definition binding_to_ln: Binding -> LN :=
+    fun b =>
+      match b with
+      | Bound prefix var postfix =>
+          Bd (length prefix)
+      | Unbound context var =>
+          Fr var
+      end.
 
   Definition name_to_ln:
     list name * name -> LN.
@@ -119,7 +105,7 @@ Section with_DTM.
   Defined.
 
   (** ** Locally Nameless to Named *)
-  (**********************************************************************)
+  (********************************************************************)
   Definition INDEX_EXCEEDS_CONTEXT: nat := 1337.
 
   Fixpoint ix_new_name_core (avoid: list name) (n: nat): name :=
@@ -141,30 +127,29 @@ Section with_DTM.
       | Bd n => ix_new_name (top_conflicts) depth n
       end.
 
-
   Definition ln_to_binder (top_conflicts: list name):
     list unit * unit -> name :=
     (fun '(ctx, _) => ix_new_name top_conflicts ctx (length ctx)).
 
   (** ** Lifted Operations *)
-  (**********************************************************************)
+  (********************************************************************)
   Definition term_ln_to_nominal (conflicts: list name):
     T unit LN -> T name name :=
     mapdp (T := T)
       (ln_to_binder conflicts)
       (ln_to_name conflicts).
 
-
   Definition term_nominal_to_ln:
     T name name -> T unit LN :=
     mapdp (T := T) (const tt) name_to_ln.
 
-  Definition roundtrip_Named:
+  Definition roundtrip_Named `{Traverse (T unit)}:
     T name name -> T name name :=
     fun t => let t_ln := term_nominal_to_ln t
           in term_ln_to_nominal (LN.free t_ln) t_ln.
 
-  Lemma roundtrip_Named_spec: forall (t: T name name),
+  Lemma roundtrip_Named_spec1 `{Traverse (T unit)}:
+    forall (t: T name name),
       roundtrip_Named t =
         mapdp
           (kc_dz (ln_to_binder (free (mapdp (const tt) name_to_ln t))) (const tt))
@@ -179,35 +164,136 @@ Section with_DTM.
     reflexivity.
   Qed.
 
-  Lemma alpha_principle:
-    forall (f: list name * name -> name)
-      (t: T name name),
-      (forall (ctx: list name) (v: name),
-          element_ctx_of (T := T name) (ctx, v) t ->
-          alpha_equiv_local (ctx, v) (ctx, f (ctx, v)))
-      -> False.
+  Lemma roundtrip_Named_spec2 `{Traverse (T unit)}:
+    forall (t: T name name),
+      roundtrip_Named t =
+        rename_binders
+          (kc_dz
+             (ln_to_binder (free (mapdp (const tt) name_to_ln t)))
+             (const tt))
+          (mapd (T := T name)
+             (kc_dfunp
+                (ln_to_name (free (mapdp (const tt) name_to_ln t)))
+                (const tt)
+                name_to_ln)
+             t).
   Proof.
     intros.
-    Print Instances MapdPoly.
-    Check alpha (T name) (mapdp (T := T) extract f t) t.
-  Proof.
-    intros.
-    unfold alpha.
-    replace ((traversep (T := T) (G := fun A => A -> Prop)
-                (fun _ _: Z name => True) alpha_equiv_local) (decp t))
-      with (mapdtp (G := fun A => A -> Prop)
-              (B2 := Z name) (A2 := Z name) (fun _ _: Z name => True) alpha_equiv_local t).
-    2:{  admit. }
-
-    change (
-    rewrite kdtfp_mapdtp2.
-              with
+    rewrite roundtrip_Named_spec1.
+    rewrite mapd_decompose.
+    reflexivity.
   Qed.
 
-  Axiom (allthings: forall P, P).
+  Lemma term_nominal_to_ln_spec (conflicts: list name):
+    mapdp (T := T)
+      (ln_to_binder conflicts)
+      (ln_to_name conflicts) =
+      rename_binders (ln_to_binder conflicts) ∘ mapd (ln_to_name conflicts).
+  Proof.
+    rewrite mapd_decompose.
+    reflexivity.
+  Qed.
 
+  Lemma locally_correct (fv: list name):
+    forall (t: T name name),
+      (kc_dz (B1 := name) (ln_to_binder fv) (const tt)) =
+        (kc_dz (ln_to_binder fv) (const tt)).
+  Proof.
+    intros.
+    ext [w v].
+    unfold kc_dz, const.
+  Abort.
+
+End with_DTM.
+
+
+
+(** * Relating Operations *)
+(**********************************************************************)
+Section with_DTM.
+
+  Context
+    (T: Type -> Type -> Type)
+      `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
+
+  Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
+  Import Categorical.DecoratedFunctorPoly.ToMono.
+  Import Categorical.TraversableFunctor2.ToMono.
+  Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
+
+  Lemma FV_same_converson: forall (t: T name name),
+      FV (T name) t =
+        LN.free (term_nominal_to_ln T t).
+  Proof.
+    intros.
+    unfold FV.
+    unfold term_nominal_to_ln.
+    unfold free.
+    rewrite (foldMap_to_traverse1).
+    unfold_ops @Traverse_Categorical.
+    unfold_ops @Dist2_1.
+    unfold_ops @Map2_1.
+    reassociate -> on right.
+    rewrite (fun2_map_map).
+    unfold mapdp.
+    unfold DerivedOperations.Mapdp_Categorical.
+    change (?x ∘ id) with x; change (id ∘ ?x) with x.
+    unfold compose.
+    compose near (decp t).
+    rewrite (fun2_map_map).
+    unfold foldMapd.
+    unfold mapdt.
+    unfold Mapdt_Categorical.
+    unfold TraversableFunctor.dist.
+    change (?f ○ ?g) with (f ∘ g).
+    unfold map.
+    reassociate -> near (map2 id FV_loc).
+    rewrite fun2_map_map.
+    unfold_ops @Decorate_PolyVar.
+    reassociate <- on left.
+    reassociate -> near
+                    (@map2 T H (Z atom) (Z2 atom atom) atom (Z2 atom atom)
+                       (@extract Z Extract_Z atom) (@id (Z2 atom atom))).
+    rewrite fun2_map_map.
+    change (?x ∘ id) with x; change (id ∘ ?x) with x.
+    unfold compose.
+    change (?f ○ ?g) with (f ∘ g).
+    unfold compose.
+    assert
+      (InnerEq: @map2 T H (Z atom) (Z2 atom atom) (@const Type Type (list atom) atom) (@const Type Type (list atom) False)
+   (@pure (@const Type Type (list atom)) (@Pure_const (list atom) (@Monoid_unit_list atom)) atom ○ @extract Z Extract_Z atom)
+   FV_loc (@decp T H0 atom atom t) =
+                  @map2 T H (list atom * atom) (list atom * atom) (@const Type Type (list atom) unit) (@const Type Type (list atom) False)
+                    (@pure (@const Type Type (list atom)) (@Pure_const (list atom) (@Monoid_unit_list atom)) unit
+                       ○ @const (list atom * atom) unit tt) (free_loc ○ name_to_ln) (@decp T H0 atom atom t)).
+    { fequal.
+      { ext [l v].
+        unfold compose.
+        unfold name_to_ln.
+        destruct (get_binding_spec l v) as [[Hbinding Hspec] | [pre [post [Hbinding [Hspec1 Hspec2]]]]].
+        - cbn.
+          rewrite Hbinding.
+          reflexivity.
+        - cbn.
+          rewrite Hbinding.
+          reflexivity.
+      }
+    }
+    rewrite InnerEq.
+    fequal.
+  Admitted.
+
+End with_DTM.
+
+Section alpha_reasoning.
+
+  Context
+    (T: Type -> Type -> Type)
+    `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
+
+  (*
   Lemma correctness: forall (t: T name name),
-        (alpha T t (roundtrip_Named t)).
+        (alpha (T name) t (roundtrip_Named T t)).
   Proof.
     intros.
     rewrite roundtrip_Named_spec.
@@ -215,63 +301,6 @@ Section with_DTM.
     unfold alpha.
     compose near t on right.
     replace ((traversep (T := T) (G := fun A => A -> Prop)
-                (fun _ _: Z name => True) alpha_equiv_local) (decp t))
-      with (mapdtp (G := fun A => A -> Prop)
-              (B2 := Z name) (A2 := Z name) (fun _ _: Z name => True) alpha_equiv_local t).
-    2:{ unfold mapdtp.
-        unfold traversep.
-        admit.
-    }
-    rewrite mapdtp_through_toBatchp.
-    2:{ admit. }
-    unfold compose at 1.
-    unfold mapdtp, Mapdt_Categorical.
-    do 2 reassociate <- on right.
-    change (decp ∘ ?f) with (map (F := fun A => A) (decp) ∘ f).
-    assert (ApplicativeCommutativeIdempotent (fun A: Type => A)).
-    { admit. }
-    rewrite <- (DecoratedTraversableFunctorPoly.dtfp_dist2_decpoly _ _ (G := fun A => A)).
-    repeat reassociate -> on right.
-    reassociate <- near decp.
-    rewrite polydecnat.
-    reassociate -> on right.
-    Search decp.
-    rewrite dfunp_dec_dec.
-    reassociate <- near (map2 (TraversableFunctor.dist Z (fun A: Type => A)) TraversableFunctor2.dist2).
-    rewrite fun2_map_map.
-    do 2 reassociate <- on right.
-    reassociate -> near (map2 cojoin cojoin_Z2).
-    rewrite fun2_map_map.
-    change ((TraversableFunctor2.dist2 (G := fun A => A)
-               ∘ map2 ?g ?f
-               ∘ decp)) with
-      (mapdtp (G := fun A => A) (T := T) g f).
-    rewrite mapdtp_through_toBatchp.
-    2:{ typeclasses eauto. }
-    unfold compose at 5.
-    repeat change ((fun x => x) ∘ ?f) with f.
-    repeat change ((fun x => x) ?x) with x.
-    assert
-      (HAHA: (@toBatchp T
-       (fun (B1 B2 V1 V2: Type) (G: Type -> Type) (Map_G: Map G) (Pure_G: Pure G) (Mult_G: Mult G)
-          (ρ: list B1 * B1 -> G B2) (σ: list B1 * V1 -> G V2) =>
-        @TraversableFunctor2.dist2 T H1 G Map_G Pure_G Mult_G B2 V2
-        ∘ @map2 T H (list B1 * B1) (list B1 * V1) (G B2) (G V2) ρ σ ∘ @decp T H0 B1 V1) name (Z name) atom
-       (Z name) t)
-       =
-         (@toBatchp T (@Mapdt_Categorical T H H0 H1) name (Z name) name (Z2 name name) t)).
-    reflexivity.
-    rewrite HAHA.
-    unfold compose.
-    cbn.
-    induction ((@toBatchp T (@Mapdt_Categorical T H H0 H1) name (Z name) name (Z2 name name) t)).
-    - cbn. reflexivity.
-    - cbn.
-      Import Applicative.Notations.
-      destruct p as [ctx nm].
-      cbn.
-      admit.
-    - admit.
-  Abort.
+   *)
 
-End with_DTM.
+End alpha_reasoning.

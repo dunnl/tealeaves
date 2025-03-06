@@ -92,17 +92,15 @@ Section relating.
   Context
     {B1 V1 B2 V2: Type}
     {ρ: list B1 * B1 -> B2}
-    {σ: list B1 * V1 -> V2}
-    (t: T B1 V1).
+    {σ: list B1 * V1 -> V2}.
 
-  Lemma mapdt_decompose:
-    mapdp ρ σ t =
-      rename_binders ρ (mapd σ t).
+  Lemma mapd_decompose:
+    mapdp ρ σ =
+      rename_binders ρ ∘ mapd σ.
   Proof.
     unfold rename_binders.
     unfold_ops @MapdB_of_Mapdp.
     unfold_ops @Mapd_of_Mapdp.
-    compose near t on right.
     rewrite (kdfunp_mapdp2).
     fequal.
     - ext [w b].

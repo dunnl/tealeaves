@@ -29,15 +29,15 @@ Section laws.
         join (T := T (Z B)) ∘ map2 id (shift2 ∘ map_snd decp)
           ∘ decp (B := B) (V := T B V).
 
-  Definition dist2_join: Prop :=
-    forall (B V: Type) `{Applicative G},
+  Definition dist2_join `{Applicative G}: Prop :=
+    forall (B V: Type),
       dist2 ∘ join (T := T (G B)) (A := (G V)) =
         map (F := G) (join (T := T B)) ∘
           dist2 (T := T) (G := G) ∘
           map2 (F := T) id (dist2).
 
-  Definition dist2_ret: Prop :=
-    forall (B V: Type) `{Applicative G},
+  Definition dist2_ret `{Applicative G}: Prop :=
+    forall (B V: Type),
       dist2 ∘ ret (T := T (G B)) (A := G V) =
         map (F := G) (ret (T := T B) (A := V)).
 

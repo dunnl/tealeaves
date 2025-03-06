@@ -86,7 +86,6 @@ Module DerivedInstances.
                ∘ (@dist2 Z2 Dist2_Z2 G1 Map_G Pure_G Mult_G B2 A2
                     ∘ @map2 Z2 Map2_Z2 (list B1 * B1) (list B1 * A1) (G1 B2) (G1 A2) ρ1 σ1))
             ∘ @decp T H0 (list B1 * B1) (list B1 * A1)) ∘ @decp T H0 B1 A1).
-      Search decp.
       repeat reassociate -> on left.
       rewrite dfunp_dec_dec.
       repeat reassociate <- on left.

@@ -4,13 +4,12 @@ From Tealeaves Require Import
   Functors.List_Telescoping_General
   Backends.Common.Names
   Backends.Named.Common
-  Backends.Named.Named (FV)
+  Backends.Named.FV
   Functors.Constant
   Functors.Subset.
 
 Export Backends.Common.Names.
 Export Backends.Named.Common.
-Export Backends.Named.Named (FV).
 
 Import Subset.Notations.
 Import Monoid.Notations.
@@ -46,9 +45,8 @@ Section ops.
   Context
     {T: Type -> Type -> Type}
     `{forall W, Return (T W)}
+    `{Mapdt (list name) (T name)}
     `{Substitute T T}.
-
-  Import Kleisli.DecoratedTraversableMonadPoly.DerivedOperations.
 
   Section rename_local.
 
@@ -96,6 +94,6 @@ Section ops.
     (x: name) (u: T name name)
     (t: T name name): T name name :=
 
-    subst_top x u ([x] ++ FV T t ++ FV T u) t.
+    subst_top x u ([x] ++ FV (T name) t ++ FV (T name) u) t.
 
 End ops.

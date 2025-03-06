@@ -51,41 +51,31 @@ End named_local_operations.
 
 Section alpha_properties.
 
+  Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
+
   Context
     (T: Type -> Type)
-    `{Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list name) T}.
+      `{Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list name) T}
+      `{ToCtxset_inst: ToCtxset (list name) T}
+      `{! Compat_ToCtxset_Mapdt (list name) T}.
 
-  Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
   Import Classes.Kleisli.DecoratedTraversableFunctor.DerivedOperations.
   Import Theory.DecoratedTraversableFunctor.
+  Import Theory.DecoratedTraversableFunctor.
 
-  Print Instances ToCtxset.
-
-  (*
   Lemma alpha_principle:
     forall (f: list name * name -> name)
       (t: T name),
       (forall (ctx: list name) (v: name),
           element_ctx_of (T := T) (ctx, v) t ->
           alpha_equiv_local (ctx, v) (ctx, f (ctx, v)))
-      -> False.
+      -> alpha T t (mapd (T := T) f t).
   Proof.
-    intros.
-    Print Instances MapdPoly.
-    Check alpha (T name) (mapdp (T := T) extract f t) t.
-  Proof.
-    intros.
+    introv Hrel.
     unfold alpha.
-    replace ((traversep (T := T) (G := fun A => A -> Prop)
-                (fun _ _: Z name => True) alpha_equiv_local) (decp t))
-      with (mapdtp (G := fun A => A -> Prop)
-              (B2 := Z name) (A2 := Z name) (fun _ _: Z name => True) alpha_equiv_local t).
-    2:{  admit. }
-
-    change (
-    rewrite kdtfp_mapdtp2.
-              with
-  Qed.
-  *)
+    unfold lift_relation_ctx.
+    unfold mapd.
+    unfold Mapd_Mapdt.
+  Abort.
 
 End alpha_properties.

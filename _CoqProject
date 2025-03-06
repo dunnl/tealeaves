@@ -311,11 +311,13 @@ Tealeaves/Backends/Common/AssocList.v
 Tealeaves/Backends/Named/Named.v
 Tealeaves/Backends/Named/Common.v
 Tealeaves/Backends/Named/Alpha.v
+Tealeaves/Backends/Named/FV.v
 Tealeaves/Backends/Named/Barendregt.v
 Tealeaves/Adapters/MonoidHom/DecoratedTraversableMonad.v
-Tealeaves/Adapters/PolyToMono/DecoratedFunctor.v
-Tealeaves/Adapters/PolyToMono/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/PolyToMono/DecoratedTraversableMonad.v
+#Tealeaves/Adapters/PolyToMono/Categorical/DecoratedFunctor.v
+Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedFunctor.v
+Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableFunctor.v
+Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v
 Tealeaves/Backends/Adapters/KeyName.v
 
 

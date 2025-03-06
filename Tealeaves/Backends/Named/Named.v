@@ -4,6 +4,7 @@ From Tealeaves Require Import
   Functors.List_Telescoping_General
   Backends.Common.Names
   Backends.Named.Common
+  Backends.Named.FV
   Functors.Constant
   Functors.Subset.
 
@@ -13,6 +14,8 @@ Import Applicative.Notations.
 Import List.ListNotations.
 Import Product.Notations.
 Import ContainerFunctor.Notations.
+
+#[local] Generalizable Variable T.
 
 (** * Fully named syntax *)
 (**********************************************************************)
@@ -58,9 +61,6 @@ Section named_local_operations.
     {T: Type -> Type -> Type}
     `{forall W, Return (T W)}.
 
-  Definition FV_loc: list name * name -> list name :=
-    fun '(ctx, x) => if get_binding ctx x then @nil name else [x].
-
   Definition deconflict_binder_local (conflicts: list name):
     list name * name -> name :=
     hf_loc ⦿ conflicts.
@@ -91,20 +91,8 @@ From Tealeaves Require Import
 Section named_local_operations.
 
   Context
-    (T: Type -> Type -> Type)
-    `{MapdtPoly T}.
-
-  Definition FV: T name name -> list name :=
-    mapdtp
-      (T := T)
-      (A1 := name) (B1 := name)
-      (A2 := False) (B2 := False)
-      (G := const (list name))
-      (const (@nil name))
-      FV_loc.
-
-  Context
     `{forall W, Return (T W)}
+    `{Mapdt (list name) (T name)}
     `{Substitute T T}.
 
   Definition subst_conflicts (top_conflicts: list name)
@@ -116,6 +104,6 @@ Section named_local_operations.
 
   Definition subst (x: name) (u: T name name)
     (t: T name name): T name name :=
-    subst_conflicts (FV t ++ FV u) x u t.
+    subst_conflicts (FV (T name) t ++ FV (T name) u) x u t.
 
 End named_local_operations.
