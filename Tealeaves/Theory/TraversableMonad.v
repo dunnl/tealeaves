@@ -18,8 +18,107 @@ Import Subset.Notations.
 
 Import Kleisli.TraversableMonad.DerivedInstances.
 
-(** * Theory of Traversable Monads *)
+
+
+(** * Simultaneous Induction on Two <<Batch>>es of the Same Length *)
 (******************************************************************************)
+Section shape_induction.
+
+  Context
+    {A1 A2 B1 B2 C D: Type}
+      {b1: Batch A1 B1 C}
+      {b2: Batch A2 B2 D}
+      (Hshape: length_Batch b1 = length_Batch b2)
+      (P : forall C D : Type,
+          Batch A1 B1 C ->
+          Batch A2 B2 D ->
+          Prop)
+      (IHdone:
+        forall (C D : Type) (c : C) (d: D), P C D (Done c) (Done d))
+      (IHstep:
+        forall (C D : Type)
+          (b1 : Batch A1 B1 (B1 -> C))
+          (b2 : Batch A2 B2 (B2 -> D)),
+          P (B1 -> C) (B2 -> D) b1 b2 ->
+          forall (a1 : A1) (a2: A2)
+            (Hshape: length_Batch (Step b1 a1) =
+                       length_Batch (Step b2 a2)),
+            P C D (Step b1 a1) (Step b2 a2)).
+
+  Lemma Batch_length_ind: P C D b1 b2.
+  Proof.
+    generalize dependent Hshape.
+    generalize dependent b2.
+    clear Hshape.
+    clear b2.
+    generalize dependent D.
+    induction b1 as [C c | C rest IHrest a];
+      intros D0 b2 Hshape ?.
+    - destruct b2.
+      + now inversion Hshape.
+      + false.
+    - destruct b2 as [c' | rest' a'].
+      + false.
+      + apply IHstep.
+        * specialize (IHrest rest).
+          inversion Hshape.
+          apply IHrest; auto.
+        * assumption.
+  Qed.
+
+End shape_induction.
+
+(*
+(** ** Simultaneous Induction but now D is monomorphic *)
+(******************************************************************************)
+Section shape_induction.
+
+  Context
+    {A1 A2 B1 B2 C D: Type}
+      {b1: Batch A1 B1 C}
+      {b2: Batch A2 B2 D}
+      (Hshape: length_Batch b1 = length_Batch b2)
+      (P :Batch A1 B1 C ->
+          Batch A2 B2 D ->
+          Prop)
+      (IHdone:
+        forall (c : C) (d: D), P (Done c) (Done d))
+      (IHstep:
+        forall (b1 : Batch A1 B1 (B1 -> C))
+          (b2 : Batch A2 B2 (B2 -> D)),
+          P (B1 -> C) (B2 -> D) b1 b2 ->
+          forall (a1 : A1) (a2: A2)
+            (Hshape: length_Batch (Step b1 a1) =
+                       length_Batch (Step b2 a2)),
+            P C D (Step b1 a1) (Step b2 a2)).
+
+  Lemma Batch_length_ind: P C D b1 b2.
+  Proof.
+    generalize dependent Hshape.
+    generalize dependent b2.
+    clear Hshape.
+    clear b2.
+    generalize dependent D.
+    induction b1 as [C c | C rest IHrest a];
+      intros D0 b2 Hshape ?.
+    - destruct b2.
+      + now inversion Hshape.
+      + false.
+    - destruct b2 as [c' | rest' a'].
+      + false.
+      + apply IHstep.
+        * specialize (IHrest rest).
+          inversion Hshape.
+          apply IHrest; auto.
+        * assumption.
+  Qed.
+
+End shape_induction.
+*)
+
+
+(** * Theory of Traversable Monads *)
+(**********************************************************************)
 Section traversable_monad_theory.
 
   Context
@@ -59,10 +158,10 @@ Section traversable_monad_theory.
     `{Module_inst: ! TraversableRightPreModule T U}.
 
   (** ** Factoring operations through <<toBatch>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Section runBatch.
 
-    Lemma bindt_through_runBatch `{Applicative G} `(f : A -> G (T B)):
+    Lemma bindt_through_runBatch6 `{Applicative G} `(f: A -> G (T B)):
       bindt (U := U) f = runBatch f ∘ toBatch6 (B := B).
     Proof.
       intros.
@@ -72,43 +171,43 @@ Section traversable_monad_theory.
       reflexivity.
     Qed.
 
-    Corollary bind_through_runBatch `{Applicative G} `(f : A -> T B):
+    Corollary bind_through_runBatch6 `{Applicative G} `(f: A -> T B):
       bind (U := U) f = runBatch (G := fun A => A) f ∘ toBatch6.
     Proof.
       rewrite toBatch6_to_bindt.
       rewrite bind_to_bindt.
-      rewrite bindt_through_runBatch.
+      rewrite bindt_through_runBatch6.
       rewrite toBatch6_to_bindt.
       reflexivity.
     Qed.
 
-    Corollary traverse_through_runBatch `{Applicative G} `(f : A -> G B) :
+    Corollary traverse_through_runBatch6 `{Applicative G} `(f: A -> G B):
       traverse (T := U) f = runBatch (map ret ∘ f) ∘ toBatch6.
     Proof.
       rewrite traverse_to_bindt.
-      rewrite bindt_through_runBatch.
+      rewrite bindt_through_runBatch6.
       reflexivity.
     Qed.
 
-    Corollary map_through_runBatch `(f : A -> B) :
+    Corollary map_through_runBatch6 `(f: A -> B):
       map (F := U) f = runBatch (G := fun A => A) (ret (T := T) ∘ f) ∘ toBatch6.
     Proof.
       rewrite map_to_traverse.
-      rewrite traverse_through_runBatch.
+      rewrite traverse_through_runBatch6.
       reflexivity.
     Qed.
 
-    Corollary id_through_runBatch : forall (A : Type),
+    Corollary id_through_runBatch6: forall (A: Type),
         id (A := U A) = runBatch (G := fun A => A) (ret (T := T)) ∘ toBatch6.
     Proof.
       intros.
       rewrite <- (fun_map_id (F := U)).
-      rewrite map_through_runBatch.
+      rewrite map_through_runBatch6.
       reflexivity.
     Qed.
 
     (** ** Relating <<toBatch6>> with <<toBatch>> *)
-    (******************************************************************************)
+    (******************************************************************)
     Lemma toBatch6_toBatch
       {A B: Type} (t: U A):
       toBatch (A' := B) t = mapsnd_Batch (ret (T := T)) (toBatch6 t).
@@ -127,7 +226,7 @@ Section traversable_monad_theory.
   End runBatch.
 
   (** ** Naturality of <<toBatch6>> *)
-  (******************************************************************************)
+  (********************************************************************)
   Lemma toBatch6_mapfst
     {A B: Type} (f: A -> B) {C: Type}:
     toBatch6 (B := C) ∘ map (F := U) f =
@@ -136,9 +235,9 @@ Section traversable_monad_theory.
     intros.
     rewrite toBatch6_to_bindt.
     rewrite (bindt_map (G2 := Batch B (T C))).
-    rewrite (bindt_through_runBatch (G := Batch B (T C))).
+    rewrite (bindt_through_runBatch6 (G := Batch B (T C))).
     rewrite toBatch6_to_bindt.
-    rewrite (bindt_through_runBatch (G := Batch A (T C))).
+    rewrite (bindt_through_runBatch6 (G := Batch A (T C))).
     ext t.
     unfold compose.
     induction (toBatch6 t).
@@ -151,16 +250,16 @@ Section traversable_monad_theory.
   Abort. (* TODO *)
 
   (** ** Respectfulness properties *)
-  (******************************************************************************)
-  Lemma bindt_respectful :
+  (********************************************************************)
+  Lemma bindt_respectful:
     forall (G: Type -> Type)
       `{Applicative G} `(f1: A -> G (T B)) `(f2: A -> G (T B)) (t: U A),
       (forall (a: A), a ∈ t -> f1 a = f2 a) ->
       bindt (U := U) f1 t = bindt f2 t.
   Proof.
     introv ? hyp.
-    rewrite bindt_through_runBatch.
-    rewrite bindt_through_runBatch.
+    rewrite bindt_through_runBatch6.
+    rewrite bindt_through_runBatch6.
     unfold element_of in hyp.
     rewrite (tosubset_through_runBatch2 A B) in hyp.
     unfold compose at 1 2.
@@ -187,7 +286,7 @@ Section traversable_monad_theory.
         now left.
   Qed.
 
-  Corollary bind_respectful :
+  Corollary bind_respectful:
     forall (A B: Type) (t: U A) (f1: A -> T B) `(f2: A -> T B),
       (forall (a: A), a ∈ t -> f1 a = f2 a) ->
       bind (U := U) f1 t = bind (U := U) f2 t.
@@ -199,7 +298,7 @@ Section traversable_monad_theory.
   Qed.
 
   (** ** <<tosubset>> is a Homomorphism *)
-  (******************************************************************************)
+  (********************************************************************)
   #[export] Instance tosubset_hom2_Module:
     ParallelRightModuleHom T subset U subset
       (@tosubset T _)
@@ -220,8 +319,94 @@ Section traversable_monad_theory.
 
 End traversable_monad_theory.
 
+
+(** ** Lifting Relations *)
+(**********************************************************************)
+Section lift_relation.
+
+
+  Context
+    `{ret_inst: Return T}
+    `{Map_T_inst: Map T}
+    `{Traverse_T_inst: Traverse T}
+    `{Bind_T_inst: Bind T T}
+    `{Bindt_T_inst: Bindt T T}
+    `{ToSubset_T_inst: ToSubset T}
+    `{ToBatch_T_inst: ToBatch T}
+    `{ToBatch6_T_inst: ToBatch6 T T}
+    `{! Compat_Map_Bindt T T}
+    `{! Compat_Traverse_Bindt T T}
+    `{! Compat_Bind_Bindt T T}
+    `{! Compat_ToSubset_Traverse T}
+    `{! Compat_ToBatch_Traverse T}
+    `{! Compat_ToBatch6_Bindt T T}.
+
+  Context
+    `{Monad_inst: ! TraversableMonad T}.
+
+  Context
+    {A B: Type}
+      (R: A -> B -> Prop).
+
+  Context (t: T (T A)) (u: (T (T B))).
+
+  Instance Traverse_compose_T: Traverse (T ∘ T) :=
+    fun G Gpure Gmap Gmult A B f t =>
+      (traverse (T := T) (traverse (T := T) f) t).
+
+  Lemma lift_relation_join1:
+    lift_relation (X := T ∘ T) R =
+      lift_relation (X := T) (lift_relation R (X := T)).
+  Proof.
+    unfold lift_relation.
+    unfold_ops @Traverse_compose_T.
+    reflexivity.
+  Qed.
+
+  Require Import KleisliToCategorical.Monad.
+  Import KleisliToCategorical.Monad.DerivedOperations.
+
+  (* Not equivalent  in general, only an implication *)
+  Lemma lift_relation_join2:
+    lift_relation (X := T ∘ T) R t u ->
+      lift_relation (X := T) R (join t) (join u).
+  Proof.
+    unfold lift_relation.
+    unfold_ops @Traverse_compose_T.
+    unfold join, Join_Bind.
+    pose (traverse_bind (G2 := subset) (U := T) (T := T) (T A) A B R id).
+    compose near t.
+    rewrite e.
+    rewrite traverse_through_runBatch6.
+    rewrite (bindt_through_runBatch6 (T := T)).
+    unfold compose.
+    (*
+    enough (cut:
+        @runBatch (T A) (T (T B)) subset Map_subset Mult_subset Pure_subset
+    (@map subset Map_subset (T B) (T (T B)) (@ret T ret_inst (T B))
+     ○ @traverse T Traverse_T_inst subset Map_subset Pure_subset Mult_subset A B R) (T (T B))
+    (@toBatch6 T T ToBatch6_T_inst (T A) (T B) t) =
+  @precompose (T (T B)) (T B) Prop (@bind T T Bind_T_inst (T B) B (@id (T B)))
+    (@runBatch (T A) (T B) subset Map_subset Mult_subset Pure_subset
+       (@traverse T Traverse_T_inst subset Map_subset Pure_subset Mult_subset A B R) (T B)
+       (@toBatch6 T T ToBatch6_T_inst (T A) B t))).
+    now rewrite cut.
+    *)
+    assert (tolist (@toBatch6 T T ToBatch6_T_inst (T A) (T B) t) =
+              tolist (@toBatch6 T T ToBatch6_T_inst (T A) B t)).
+  Abort.
+
+  Corollary relation_respectful:
+    forall (A B1 B2: Type) (R: B1 -> B2 -> Prop) (t: T A) (f: A -> T B1) (g: A -> T B2),
+      (forall (a: A), a ∈ t -> lift_relation R (f a) (g a)) -> lift_relation R (bind f t) (bind g t).
+  Proof.
+    intros.
+  Abort.
+
+End lift_relation.
+
 (** ** Monad Homomorphisms *)
-(******************************************************************************)
+(**********************************************************************)
 Section homomorphisms.
 
   Context
@@ -261,15 +446,15 @@ Section homomorphisms.
     `{Module_inst: ! TraversableRightPreModule T U}.
 
   #[export] Instance Monad_Hom_Tolist
-    : MonadHom T list (@tolist T _) :=
+   : MonadHom T list (@tolist T _) :=
     {| kmon_hom_ret := tolist_ret;
-      kmon_hom_bind := tolist_bind;
+       kmon_hom_bind := tolist_bind;
     |}.
 
   #[export] Instance Monad_Hom_Toset
-    : MonadHom T subset (@tosubset T _) :=
+   : MonadHom T subset (@tosubset T _) :=
     {| kmon_hom_ret := tosubset_hom1;
-      kmon_hom_bind := tosubset_hom2;
+       kmon_hom_bind := tosubset_hom2;
     |}.
 
   #[export] Instance ContainerMonad_Traversable:

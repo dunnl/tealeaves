@@ -504,7 +504,7 @@ Section shapeliness.
       now rewrite Heq.
     - eapply mapd_ctxlist_injective_restricted2; eauto.
       (* TODO *)
-  Admitted.
+  Abort.
 
 End shapeliness.
 
@@ -870,14 +870,6 @@ Section lifting_relations.
     rewrite (traverse_commutative (G := subset) (T := Vector (plength t))).
     reflexivity.
   Qed.
-
-
-  (* This can actually be strengthed into an IFF *)
-  Lemma relation_respectful_ctx:
-    forall (A B1 B2: Type) (R: B1 -> B2 -> Prop) (t: T A) (f: E * A -> B1) (g: E * A -> B2),
-    (forall (e: E) (a: A), (e, a) ∈d t -> R (f (e, a)) (g (e, a))) -> lift_relation R (mapd f t) (mapd g t).
-  Proof.
-    introv hyp.
 
 End lifting_relations.
 

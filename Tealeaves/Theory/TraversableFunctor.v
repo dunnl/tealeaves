@@ -1469,6 +1469,7 @@ Section traversable_functors_zipping.
     reflexivity.
   Qed.
 
+  (*
   Lemma traverse_const_opposite `{Monoid M} {A B: Type} (f: A -> M):
     traverse (T := T) (G := const M)
       (@Mult_const M (@Monoid_op_Opposite M op))
@@ -1484,6 +1485,7 @@ Section traversable_functors_zipping.
     reflexivity.
   Qed.
 
+   *)
 End traversable_functors_zipping.
 
 
