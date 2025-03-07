@@ -42,6 +42,7 @@ Section DTM.
 
   #[export] Instance Binddt_MONO:
     Binddt nat (T unit) (T unit).
+  Proof.
   assert (Binddt (list unit) (T unit) (T unit)).
   apply PolyToMono.Kleisli.DecoratedTraversableMonad.Binddt_of_Binddtp.
   apply (MonoidHom.DecoratedTraversableMonad.Binddt_Morphism (@length unit)).
@@ -203,7 +204,6 @@ Section with_DTM.
     unfold kc_dz, const.
   Abort.
 
-
   Import DecoratedFunctorPoly.ToMono.
   Import TraversableFunctor2.ToMono.
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
@@ -281,11 +281,9 @@ Section with_DTM.
     intros.
     unfold delete_binders.
     rewrite roundtrip_Named_spec2.
-    Check .
+  Abort.
 
 End with_DTM.
-
-
 
 (** * Relating Operations *)
 (**********************************************************************)

@@ -2,6 +2,8 @@ From Tealeaves Require Export
   Backends.LN
   Simplification.Simplification.
 
+Export DecoratedTraversableMonad.UsefulInstances.
+
 Import LN.Simplification.
 Export LN.Notations.
 

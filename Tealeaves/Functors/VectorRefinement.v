@@ -1943,13 +1943,30 @@ Section zipped_vector_naturality.
 
 End zipped_vector_naturality.
 
+(** ** Diagonal *)
+(******************************************************************************)
+Lemma Vector_zip_diagonal:
+  forall (A: Type) (n: nat)
+    (v: Vector n A),
+    Vector_zip_eq v v = map (fun a => (a, a)) v.
+Proof.
+  intros.
+  induction v using Vector_induction.
+  - rewrite Vector_zip_eq_vnil.
+    rewrite map_Vector_vnil.
+    reflexivity.
+  - rewrite Vector_zip_eq_vcons.
+    rewrite map_Vector_vcons.
+    rewrite IHv.
+    reflexivity.
+Qed.
+
 (** ** Traversing a Zip by A Relation *)
 (******************************************************************************)
 Section traverse_zipped_vector.
 
-  Context {A B: Type} {R: A -> B -> Prop}.
-
-  Lemma traverse_zipped_vector:
+  Lemma traverse_zipped_vector
+    {A B: Type} {R: A -> B -> Prop}:
     forall (n: nat) (v1: Vector n A) (v2: Vector n B),
       traverse R v1 v2 =
         foldMap (uncurry R)
@@ -1996,6 +2013,19 @@ Section traverse_zipped_vector.
             split.
             assumption. easy. }
           { reflexivity. }
+  Qed.
+
+  Corollary traverse_zipped_diagonal {A R}:
+    forall (n: nat) (v: Vector n A),
+      traverse R v v =
+        foldMap (fun a => R a a) v.
+  Proof.
+    intros.
+    rewrite traverse_zipped_vector.
+    rewrite Vector_zip_diagonal.
+    compose near v on left.
+    rewrite (foldMap_map).
+    reflexivity.
   Qed.
 
 End traverse_zipped_vector.

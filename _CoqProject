@@ -196,6 +196,9 @@ Tealeaves/Theory/TraversableFunctor.v
 Tealeaves/Theory/TraversableMonad.v
 Tealeaves/Theory/DecoratedTraversableFunctor.v
 Tealeaves/Theory/DecoratedTraversableMonad.v
+Tealeaves/Theory/LiftRel/TraversableFunctor.v
+Tealeaves/Theory/LiftRel/DecoratedTraversableFunctor.v
+#Tealeaves/Theory/LiftRel/TraversableMonad.v
 
 # Require representation theorems to prove instances
 ##########################################################

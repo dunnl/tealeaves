@@ -10,7 +10,8 @@ From Tealeaves Require Import
   Functors.Constant
   Functors.Subset
   Kleisli.Theory.DecoratedTraversableFunctor
-  Theory.DecoratedTraversableFunctor.
+  Theory.DecoratedTraversableFunctor
+  Theory.LiftRel.DecoratedTraversableFunctor.
 
 Import Subset.Notations.
 Import Monoid.Notations.
@@ -48,27 +49,33 @@ Section named_local_operations.
     T name -> T name -> Prop :=
     lift_relation_ctx alpha_equiv_local.
 
+  Lemma alpha_to_lift:
+    alpha = lift_relation_ctx alpha_equiv_local.
+  Proof.
+    reflexivity.
+  Qed.
+
 End named_local_operations.
 
 (** Alpha on polymorphic terms *)
 From Tealeaves Require Import
-  Classes.Categorical.DecoratedTraversableFunctorPoly.
+  Classes.Categorical.DecoratedTraversableFunctorPoly
+  Classes.Categorical.TraversableFunctor2
+  CategoricalToKleisli.TraversableFunctor
+  CategoricalToKleisli.TraversableFunctor.
 
 Section named_local_operations.
 
   Context
     (T: Type -> Type -> Type)
-    `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
+      `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
 
   Import Theory.TraversableFunctor.
 
   Definition delete_binders {B V}:
     T B V -> T unit V :=
     map (F := fun B => T B V) (Map := Map2_2) (const tt).
-
-  Require Import CategoricalToKleisli.TraversableFunctor.
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
-  Require Import Classes.Categorical.TraversableFunctor2.
   Import TraversableFunctor2.ToMono.
 
   Definition related_except_binders {B1 B2 X Y: Type}
@@ -80,14 +87,19 @@ End named_local_operations.
 Section alpha_properties.
 
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
+  Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
 
   Context
     (T: Type -> Type)
       `{Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list name) T}
       `{ToCtxset_inst: ToCtxset (list name) T}
-      `{! Compat_ToCtxset_Mapdt (list name) T}.
+      `{! Compat_ToCtxset_Mapdt (list name) T}
+      `{ToSubset T}
+      `{! Compat_ToSubset_Traverse T}.
 
   Import CategoricalToKleisli.DecoratedFunctor.DerivedOperations.
+  Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
+  Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.
   Import Theory.DecoratedTraversableFunctor.
 
   Lemma alpha_principle:
@@ -104,27 +116,32 @@ Section alpha_properties.
     unfold compose.
     unfold precompose.
     assert (cut: dec T (mapd f t) = (map (cobind (W := prod (list name)) f) (dec T t))).
-    { (* categorical identity. *)
-      admit.
-    }
-    assert (cut2:
-        (@dec (list atom) T
-       (@DecoratedTraversableFunctor.DerivedOperations.Decorate_Mapdt (list atom) T
-          (@Mapdt_Categorical (list atom) T H H0 H1)) atom
-       (@mapd (list atom) T (@Mapd_Categorical (list atom) T H H0) atom atom f t)) =
-          (map (cobind (W := prod (list name)) f) (dec T t))).
-    { unfold lift_relation_ctx.
-      unfold mapd, Mapd_Categorical.
+    { unfold mapd, Mapd_Categorical.
       unfold compose.
-      compose near t on right.
-      Search cobind dec.
-      rewrite cobind_dec.
+      compose near (dec T t) on left.
+      rewrite <- (natural (ϕ := @dec (list atom) T _ )).
       unfold compose.
+      unfold_ops @Map_compose.
+      compose near t.
+      rewrite dfun_dec_dec.
+      unfold compose.
+      compose near (dec T t) on left.
+      rewrite (fun_map_map).
+      unfold cobind, Cobind_reader.
       fequal.
-      admit.
-      typeclasses eauto.
+      now ext [e a].
     }
-    rewrite cut2.
-  Abort.
+    rewrite cut.
+    change (mapdt alpha_equiv_local t) with (traverse (T := T) (G := subset) alpha_equiv_local (dec T t)).
+    rewrite <- lift_relation_rw.
+    rewrite relation_natural2.
+    rewrite <- lift_relation_ctx_spec.
+    rewrite lift_relation_ctx_diagonal.
+    rewrite forall_ctx_iff.
+    unfold compose in *.
+    intros.
+    apply Hrel.
+    assumption.
+  Qed.
 
 End alpha_properties.

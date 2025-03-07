@@ -504,7 +504,7 @@ Section shapeliness.
       now rewrite Heq.
     - eapply mapd_ctxlist_injective_restricted2; eauto.
       (* TODO *)
-  Abort.
+  Admitted.
 
 End shapeliness.
 
@@ -790,87 +790,4 @@ Section deconstruction.
 End deconstruction.
 
   End runBatch.
-  End theory.
-
-(** * Lifting context-sensitive relations over Decorated-Traversable functors *)
-(******************************************************************************)
-Section lifting_relations.
-
-  Context
-    `{Mapdt_inst: Mapdt E T}
-    `{Traverse_inst: Traverse T}
-    `{Mapd_inst: Mapd E T}
-    `{Map_inst: Map T}
-    `{ToBatch_inst: ToBatch T}
-    `{ToBatch3_inst: ToBatch3 E T}
-    `{ToCtxlist_inst: ToCtxlist E T}
-    `{! Compat_Traverse_Mapdt E T}
-    `{! Compat_Mapd_Mapdt E T}
-    `{! Compat_Map_Mapdt E T}
-    `{! Compat_ToBatch_Traverse T}
-    `{! Compat_ToBatch3_Mapdt E T}
-    `{! Compat_ToCtxlist_Mapdt E T}
-    `{! Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T}.
-
-  Import Categorical.DecoratedFunctor.
-  Import KleisliToCategorical.DecoratedTraversableFunctor.DerivedOperations.
-
-  Lemma shape_decorate1
-    (A: Type) (t: T A):
-    shape (F := T) (dec T t) = shape t.
-  Proof.
-    unfold dec.
-    unfold_ops @Decorate_Mapdt.
-    unfold shape.
-    compose near t on left.
-  Abort.
-
-  Lemma Hshape_decorate
-    (A B: Type) (t: T A) (u: T B)
-    (Hshape: shape t = shape u):
-    shape (dec T t) = shape (dec T u).
-  Proof.
-    unfold dec.
-    unfold Decorate_Mapdt.
-    unfold shape.
-    compose near t.
-    unfold_ops @Map_compose.
-  Abort.
-
-  Definition zip_decorate
-    (A B: Type) (t: T A) (u: T B)
-    (Hshape: shape t = shape u):
-    False.
-  Proof.
-    (*
-    Check map (cojoin (W := (E ×))) (dec T (same_shape_zip t u Hshape)).
-    Check same_shape_zip (A := E * A) (B := E * B) (dec T t) (dec T u) _.
-     *)
-  Abort.
-
-
-  Definition lift_relation_ctx {A B:Type}
-    (R: E * A -> E * B -> Prop): T A -> T B -> Prop :=
-    precompose (dec T) ∘ mapdt (T := T) (G := subset) R.
-
-  Lemma relation_ctx_spec1:
-    forall (A B: Type) (R: E * A -> E * B -> Prop) (t: T A) (u: T B),
-      lift_relation_ctx R t u <->
-        (exists a: @Vector (plength t) (E * B),
-            traverse (G := subset) R (mapdt_contents t) a /\
-              mapdt_make t a = dec T u).
-  Proof.
-    intros.
-    unfold lift_relation_ctx.
-    unfold compose at 1.
-    unfold precompose.
-    rewrite mapdt_repr.
-    unfold_ops @Map_subset.
-    compose near (mapdt_contents t).
-    rewrite (traverse_commutative (G := subset) (T := Vector (plength t))).
-    reflexivity.
-  Qed.
-
-End lifting_relations.
-
-
+End theory.

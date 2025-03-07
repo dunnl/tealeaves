@@ -19,6 +19,23 @@ Module DerivedOperations.
   fun (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
     (A B: Type) (f: A -> G B) => dist T G ∘ map f.
 
+  #[export] Instance Compat_Map_Traverse_Categorical
+    (T: Type -> Type)
+    `{Map_T: Map T}
+    `{Dist_T: ApplicativeDist T}
+    `{Categorical.TraversableFunctor.TraversableFunctor T}
+    :
+    Compat_Map_Traverse T.
+  Proof.
+    unfold Compat_Map_Traverse.
+    unfold DerivedOperations.Map_Traverse.
+    ext A B f.
+    unfold traverse.
+    unfold Traverse_Categorical.
+    rewrite dist_unit.
+    reflexivity.
+  Qed.
+
 End DerivedOperations.
 
 (** ** Derived Laws *)
@@ -85,7 +102,7 @@ Module DerivedInstances.
       now rewrite (fun_map_map (F := T)).
     Qed.
 
-    #[export] Instance TraversableFunctor_Kleisli_Coalgebraic:
+    #[export] Instance TraversableFunctor_Kleisli_Categorical:
       Classes.Kleisli.TraversableFunctor.TraversableFunctor T :=
       {| trf_traverse_id := @traverse_id;
          trf_traverse_traverse := @traverse_traverse;

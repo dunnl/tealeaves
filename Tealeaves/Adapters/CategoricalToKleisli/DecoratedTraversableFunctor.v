@@ -98,7 +98,7 @@ Module DerivedInstances.
 
     (** ** Typeclass Instance *)
     (******************************************************************)
-    #[local] Instance:
+    #[export] Instance:
       Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor E T :=
       {| kdtf_mapdt1 := @mapdt_id;
          kdtf_mapdt2 := @mapdt_mapdt;
