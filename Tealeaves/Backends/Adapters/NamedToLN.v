@@ -14,6 +14,7 @@ From Tealeaves Require Import
 Import Subset.Notations.
 Import Classes.Categorical.DecoratedFunctorPoly.
 Import List.ListNotations.
+Import DecoratedContainerFunctor.Notations.
 
 #[local] Generalizable Variables W T U.
 #[local] Open Scope list_scope.
@@ -194,6 +195,7 @@ Section with_DTM.
     reflexivity.
   Qed.
 
+
   Lemma locally_correct (fv: list name):
     forall (t: T name name),
       (kc_dz (B1 := name) (ln_to_binder fv) (const tt)) =
@@ -207,6 +209,30 @@ Section with_DTM.
   Import DecoratedFunctorPoly.ToMono.
   Import TraversableFunctor2.ToMono.
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
+
+
+  Context
+    `{ToCtxset (list atom) (T atom)}
+     `{Traverse (T unit)}.
+
+  Lemma local_alpha_equivalent (f: list name * name -> name) (t: T name name)
+    (ctx: list name) (v: name):
+          element_ctx_of (T := T name) (ctx, v) t ->
+          alpha_equiv_local (ctx, v)
+            (ctx, (kc_dfunp (ln_to_name (free (mapdp (const tt) name_to_ln t)))
+                      (const tt)
+                      name_to_ln) (ctx, v)).
+  Proof.
+    intros.
+    unfold alpha_equiv_local.
+    destruct (get_binding_spec ctx v) as [[Case1 rest] | [Case2 [rest1 rest2]]].
+    { rewrite Case1.
+      admit.
+    }
+    { admit.
+    }
+  Abort.
+
 
   Definition cobind_binders {B1 B2}:
     forall (ρ: list B1 * B1 -> B2) (p: list B1 * B1), list B2 * B2 :=
@@ -294,9 +320,15 @@ Section with_DTM.
       `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
 
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
+  Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations.
   Import Categorical.DecoratedFunctorPoly.ToMono.
   Import Categorical.TraversableFunctor2.ToMono.
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
+
+  Lemma normalize_foldMap {M} `{Monoid M} `(f: list name * name -> M): forall (t: T name name),
+      foldMapd f t = mapdtp (A2 := False) (G := const M) (T := T) (pure (F := const M) ∘ (const tt)) f t.
+  Proof.
+  Admitted.
 
   Lemma FV_same_converson: forall (t: T name name),
       FV (T name) t =
@@ -318,33 +350,15 @@ Section with_DTM.
     unfold compose.
     compose near (decp t).
     rewrite (fun2_map_map).
-    unfold foldMapd.
-    unfold mapdt.
+    rewrite normalize_foldMap.
+    unfold mapdtp.
     unfold Mapdt_Categorical.
     unfold TraversableFunctor.dist.
     change (?f ○ ?g) with (f ∘ g).
-    unfold map.
-    reassociate -> near (map2 id FV_loc).
-    rewrite fun2_map_map.
-    unfold_ops @Decorate_PolyVar.
-    reassociate <- on left.
-    reassociate -> near
-                    (@map2 T H (Z atom) (Z2 atom atom) atom (Z2 atom atom)
-                       (@extract Z Extract_Z atom) (@id (Z2 atom atom))).
-    rewrite fun2_map_map.
-    change (?x ∘ id) with x; change (id ∘ ?x) with x.
     unfold compose.
-    change (?f ○ ?g) with (f ∘ g).
-    unfold compose.
-    assert
-      (InnerEq: @map2 T H (Z atom) (Z2 atom atom) (@const Type Type (list atom) atom) (@const Type Type (list atom) False)
-   (@pure (@const Type Type (list atom)) (@Pure_const (list atom) (@Monoid_unit_list atom)) atom ○ @extract Z Extract_Z atom)
-   FV_loc (@decp T H0 atom atom t) =
-                  @map2 T H (list atom * atom) (list atom * atom) (@const Type Type (list atom) unit) (@const Type Type (list atom) False)
-                    (@pure (@const Type Type (list atom)) (@Pure_const (list atom) (@Monoid_unit_list atom)) unit
-                       ○ @const (list atom * atom) unit tt) (free_loc ○ name_to_ln) (@decp T H0 atom atom t)).
-    { fequal.
-      { ext [l v].
+    fequal.
+    fequal.
+    { ext [l v].
         unfold compose.
         unfold name_to_ln.
         destruct (get_binding_spec l v) as [[Hbinding Hspec] | [pre [post [Hbinding [Hspec1 Hspec2]]]]].
@@ -354,11 +368,8 @@ Section with_DTM.
         - cbn.
           rewrite Hbinding.
           reflexivity.
-      }
     }
-    rewrite InnerEq.
-    fequal.
-  Admitted.
+  Qed.
 
 End with_DTM.
 

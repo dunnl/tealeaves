@@ -31,7 +31,11 @@ Section alpha_equiv_local.
           if length prefix0 == length prefix1
           then True
           else False
-      | _ => False
+      | (Unbound ctx0' nm0', Unbound ctx1' nm1') =>
+          if nm0' == nm1'
+          then True
+          else False
+      | (_, _) => False
       end.
 
 End alpha_equiv_local.
