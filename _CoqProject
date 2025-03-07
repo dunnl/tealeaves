@@ -209,6 +209,7 @@ Tealeaves/Functors/List_Telescoping.v
 Tealeaves/Classes/Functor2.v
 Tealeaves/Functors/Batch2.v
 Tealeaves/Functors/Z2.v
+Tealeaves/Classes/Categorical/TraversableFunctor2.v
 
 ##########################################################
 # POLYMORPHICALLY DECORATED DTFs AND DTMs                #

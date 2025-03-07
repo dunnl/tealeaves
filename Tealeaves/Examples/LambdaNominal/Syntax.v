@@ -11,7 +11,7 @@ Imports and setup
 From Tealeaves.Classes Require Export
   Functor2
   Categorical.ApplicativeCommutativeIdempotent
-  Categorical.TraversableFunctor
+  Categorical.TraversableFunctor2
   Kleisli.DecoratedTraversableCommIdemFunctor
   Kleisli.DecoratedTraversableMonadPoly.
 
@@ -62,16 +62,16 @@ Decomposition into categorical components
 Map
 +++++++++++++++++++++++++++++++++++++++++++++++
 |*)
-Fixpoint map_term {B1 V1 B2 V2: Type} (ρ: B1 -> B2) (σ: V1 -> V2)
+Fixpoint map2_term {B1 V1 B2 V2: Type} (ρ: B1 -> B2) (σ: V1 -> V2)
   (t: term B1 V1): term B2 V2 :=
   match t with
   | tvar v => (@tvar B2 V2) (σ v)
-  | lam v body => lam (ρ v) (map_term ρ σ body)
-  | tap t1 t2 => tap (map_term ρ σ t1) (map_term ρ σ t2)
+  | lam v body => lam (ρ v) (map2_term ρ σ body)
+  | tap t1 t2 => tap (map2_term ρ σ t1) (map2_term ρ σ t2)
   end.
 
-Lemma map_id_term: forall (B1 V1: Type),
-    map_term (@id B1) (@id V1) = @id (term B1 V1).
+Lemma map2_id_term: forall (B1 V1: Type),
+    map2_term (@id B1) (@id V1) = @id (term B1 V1).
 Proof.
   intros. ext t. induction t.
   - reflexivity.
@@ -79,9 +79,9 @@ Proof.
   - cbn. now rewrite IHt1, IHt2.
 Qed.
 
-Lemma map_map_term: forall (B1 V1 B2 V2 b3 v3: Type)
+Lemma map2_map2_term: forall (B1 V1 B2 V2 b3 v3: Type)
                       (ρ1: B1 -> B2) (σ1: V1 -> V2) (ρ2: B2 -> b3) (σ2: V2 -> v3),
-    map_term ρ2 σ2 ∘ map_term ρ1 σ1 = map_term (ρ2 ∘ ρ1) (σ2 ∘ σ1).
+    map2_term ρ2 σ2 ∘ map2_term ρ1 σ1 = map2_term (ρ2 ∘ ρ1) (σ2 ∘ σ1).
 Proof.
   intros. ext t. induction t.
   - reflexivity.
@@ -92,19 +92,10 @@ Proof.
     reflexivity.
 Qed.
 
-#[export] Instance Map_term_r: forall B, Map (term B).
-Proof.
-  intros B V1 V2 f.
-  exact (map_term id f).
-Defined.
-
-#[export] Instance Functor_term_r: forall B, Functor (term B).
-Admitted.
-
-#[export] Instance Map2_term: Map2 term.
+Instance Map2_term: Map2 term.
 Proof.
   intros A1 B1 A2 B2 f1 f2.
-  apply (map_term f1 f2).
+  apply (map2_term f1 f2).
 Defined.
 
 Section map_term_rewriting.
@@ -114,25 +105,51 @@ Section map_term_rewriting.
       (ρ: B1 -> B2)
       (σ: V1 -> V2).
 
-  Lemma map_term_rw1: forall (v: V1),
-      map_term ρ σ (tvar (B := B1) v) = tvar (σ v).
+  Lemma map2_term_rw1: forall (v: V1),
+      map2 ρ σ (tvar (B := B1) v) = tvar (σ v).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma map_term_rw2: forall (b: B1) (body: term B1 V1),
-      map_term ρ σ (lam b body) = lam (ρ b) (map_term ρ σ body).
+  Lemma map2_term_rw2: forall (b: B1) (body: term B1 V1),
+      map2 ρ σ (lam b body) = lam (ρ b) (map2 ρ σ body).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma map_term_rw3: forall (t1 t2: term B1 V1),
-      map_term ρ σ (tap t1 t2) = tap (map_term ρ σ t1) (map_term ρ σ t2).
+  Lemma map2_term_rw3: forall (t1 t2: term B1 V1),
+      map2 ρ σ (tap t1 t2) = tap (map2 ρ σ t1) (map2 ρ σ t2).
   Proof.
     reflexivity.
   Qed.
 
 End map_term_rewriting.
+
+
+Instance Functor2_term: Functor2 term.
+Proof.
+  constructor.
+  - intros. ext t. induction t.
+    + reflexivity.
+    + rewrite map2_term_rw2.
+      now rewrite IHt.
+    + rewrite map2_term_rw3.
+      rewrite IHt1.
+      rewrite IHt2.
+      reflexivity.
+  - intros. unfold compose. ext t.
+    induction t.
+    + reflexivity.
+    + rewrite map2_term_rw2.
+      rewrite map2_term_rw2.
+      rewrite IHt.
+      reflexivity.
+    + rewrite map2_term_rw3.
+      rewrite map2_term_rw3.
+      rewrite IHt1.
+      rewrite IHt2.
+      reflexivity.
+Defined.
 
 (*|
 +++++++++++++++++++++++++++++++++++++++++++++++
@@ -199,11 +216,12 @@ Section dec_term_rewriting.
 
 End dec_term_rewriting.
 
+(* Naturality, rec case *)
 Lemma map_dec_rec:
   forall (B1 V1 B2 V2: Type)
     (ρ: list B1 * B1 -> B2) (σ: list B1 * V1 -> V2) (ctx: list B1),
-    map_term ρ σ ∘ dec_term_rec ctx =
-      map_term (ρ ⦿ ctx) (σ ⦿ ctx) ∘ dec_term.
+    map2 ρ σ ∘ dec_term_rec ctx =
+      map2 (ρ ⦿ ctx) (σ ⦿ ctx) ∘ dec_term.
 Proof.
   intros. ext t. unfold compose.
   generalize dependent ctx.
@@ -233,17 +251,18 @@ Qed.
 Lemma dec_rec_spec:
   forall (B V: Type) (ctx: list B),
     dec_term_rec ctx =
-      map_term (incr ctx) (incr ctx) ∘ dec_term (V := V).
+      map2 (incr ctx) (incr ctx) ∘ dec_term (V := V).
 Proof.
   intros.
   change_left (id ∘ dec_term_rec ctx (V := V)).
-  rewrite <- map_id_term.
+  rewrite <- fun2_map_id.
   rewrite map_dec_rec.
   reflexivity.
 Qed.
 
+(* Counit law *)
 Lemma dec_rec_extract_term: forall (B V: Type) (ctx: list B),
-    map_term (extract_Z2) (extract_Z2) ∘ dec_term_rec ctx = @id (term B V).
+    map2 (extract_Z2) (extract_Z2) ∘ dec_term_rec ctx = @id (term B V).
 Proof.
   intros. ext t. unfold compose.
   generalize dependent ctx. induction t; intro ctx.
@@ -253,14 +272,15 @@ Proof.
 Qed.
 
 Lemma dec_extract_term: forall (B V: Type),
-    map_term (extract_Z2) (extract_Z2) ∘ dec_term = @id (term B V).
+    map2 (extract_Z2) (extract_Z2) ∘ dec_term = @id (term B V).
 Proof.
   intros. unfold dec_term. apply dec_rec_extract_term.
 Qed.
 
+(* cojoin law *)
 Lemma dec_rec_dec_rec_term: forall (B V: Type) (ctx: list B),
     dec_term_rec (decorate_prefix_list ctx) ∘ dec_term_rec ctx =
-      map_term (cojoin_Z2) (cojoin_Z2) ∘ dec_term_rec ctx (B := B) (V := V).
+      map2 (cojoin_Z2) (cojoin_Z2) ∘ dec_term_rec ctx (B := B) (V := V).
 Proof.
   intros. ext t. unfold compose.
   generalize dependent ctx.
@@ -277,12 +297,54 @@ Qed.
 
 Lemma dec_dec_term: forall (B V: Type),
     dec_term ∘ dec_term (B := B) (V := V) =
-      map_term (cojoin_Z2) (cojoin_Z2) ∘ dec_term.
+      map2 (cojoin_Z2) (cojoin_Z2) ∘ dec_term.
 Proof.
   intros. unfold dec_term.
   change (@nil (list B * B)) with (decorate_prefix_list (@nil B)).
   apply dec_rec_dec_rec_term.
 Qed.
+
+Section naturality.
+
+  Context {B1 V1 B2 V2: Type}
+    (ρ: B1 -> B2) (σ: V1 -> V2).
+
+  Lemma dec_rec_map: forall (ctx: list B1),
+      dec_term_rec (map ρ ctx) ∘ map2 ρ σ =
+        map2 (map_both (map (F := list) ρ) ρ)
+          (map_both (map (F := list) ρ) σ) ∘ dec_term_rec ctx.
+  Proof.
+    intros. ext t. unfold compose.
+    generalize dependent ρ; clear ρ.
+    generalize dependent σ; clear σ.
+    generalize dependent ctx.
+    induction t as [v | b body IHbody | t1 IHt1 t2 IHt2];
+      intros.
+    - reflexivity.
+    - cbn.
+      fequal.
+      replace (map ρ ctx ++ [ρ b])
+        with (map ρ (ctx ++ [b])) by now rewrite map_list_app.
+      rewrite IHbody.
+      reflexivity.
+    - cbn.
+      rewrite IHt1.
+      rewrite IHt2.
+      reflexivity.
+  Qed.
+
+  Lemma dec_map:
+    dec_term ∘ map2 ρ σ =
+      map2 (map_both (map (F := list) ρ) ρ)
+        (map_both (map (F := list) ρ) σ) ∘ dec_term.
+  Proof.
+    unfold dec_term.
+    change (@nil B2) with (map ρ nil).
+    rewrite dec_rec_map.
+    reflexivity.
+  Qed.
+
+End naturality.
 
 (*|
 +++++++++++++++++++++++++++++++++++++++++++++++
@@ -290,8 +352,9 @@ Applicative distribution
 +++++++++++++++++++++++++++++++++++++++++++++++
 |*)
 
-Fixpoint dist_term {B V: Type}
+Fixpoint dist_term
   {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
+   {B V: Type}
   (t: term (G B) (G V)): G (term B V) :=
   match t with
   | tvar vr => map (@tvar B V) vr
@@ -303,19 +366,22 @@ Fixpoint dist_term {B V: Type}
                   <⋆> dist_term t2
   end.
 
+#[export] Instance term_dist2: ApplicativeDist2 term := @dist_term.
+
 (*
 Require Import Categorical.TraversableFunctor.
 Print TraversableFunctor.
  *)
 
+About dist2.
 Lemma dist_term_morph:
   forall (G1 G2 : Type -> Type)
     `{Map G1} `{Mult G1} `{Pure G1}
     `{Map G2} `{Mult G2} `{Pure G2}
     (ϕ: forall (A: Type), G1 A -> G2 A),
     ApplicativeMorphism G1 G2 ϕ ->
-    forall (B V: Type), dist_term ∘ map_term (ϕ B) (ϕ V) =
-                     ϕ (term B V) ∘ dist_term (B := B) (V := V).
+    forall (B V: Type), dist2 term G2 ∘ map2 (ϕ B) (ϕ V) =
+                     ϕ (term B V) ∘ dist2 term G1 (B := B) (A := V).
 Proof.
   intros. ext t. unfold compose.
   induction t.
@@ -342,10 +408,77 @@ Lemma dist_term_linear:
     `{Map G1} `{Mult G1} `{Pure G1} `{! Applicative G1}
     `{Map G2} `{Mult G2} `{Pure G2} `{! Applicative G2},
   forall (B V: Type),
-    dist_term (G := G1 ∘ G2) =
-    map (F := G1) (dist_term (G := G2)) ∘
-      dist_term (G := G1) (B := G2 B) (V := G2 V).
+    dist2 term (G1 ∘ G2) =
+    map (F := G1) (dist2 term G2) ∘
+      dist2 term G1 (B := G2 B) (A := G2 V).
 Proof.
+Admitted.
+Section naturality.
+
+  Context {B1 V1 B2 V2: Type}
+    (ρ: B1 -> B2) (σ: V1 -> V2).
+
+  Lemma dist_map `{Applicative G}:
+    map (map2 ρ σ) ∘ dist_term (G := G) =
+      dist_term ∘ map2 (map ρ) (map σ).
+  Proof.
+    intros. ext t. unfold compose.
+    induction t as [v | b body IHbody | t1 IHt1 t2 IHt2];
+      change (@nil B2) with (map ρ nil).
+    - cbn.
+      compose near v on left.
+      rewrite fun_map_map.
+      compose near v on right.
+      rewrite fun_map_map.
+      reflexivity.
+    - cbn.
+      rewrite map_ap.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      rewrite <- ap_map.
+      rewrite app_pure_natural.
+      rewrite <- IHbody.
+      rewrite <- ap_map.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      reflexivity.
+    - cbn.
+      rewrite map_ap.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      rewrite <- IHt1.
+      rewrite <- ap_map.
+      rewrite app_pure_natural.
+      rewrite <- IHt2.
+      rewrite <- ap_map.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      reflexivity.
+  Qed.
+
+
+End naturality.
+
+#[export] Instance Natural_dist2_term:
+  forall (G : Type -> Type) (Map_G : Map G) (Pure_G : Pure G) (Mult_G : Mult G),
+    Applicative G -> Natural2 (@dist2 term term_dist2 G Map_G Pure_G Mult_G).
+Proof.
+  intros.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - intros. apply dist_map.
+    auto.
+Qed.
+
+#[export] Instance TraversableFunctor2_term: TraversableFunctor2 term.
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - apply dist_term_morph.
+  - intros. admit.
+  - intros. admit.
 Admitted.
 
 (*|
@@ -371,7 +504,7 @@ Proof.
 Qed.
 
 Lemma join_map_ret_term {B V: Type}:
-  join_term ∘ map_term (@id B) (ret (A := V)) = @id (term B V).
+  join_term ∘ map2 (@id B) (ret (A := V)) = @id (term B V).
 Proof.
   ext t. unfold compose. induction t.
   - reflexivity.
@@ -381,7 +514,7 @@ Qed.
 
 Lemma join_join_term {B V: Type}:
   join_term ∘ join_term (B := B) (V := term B V) =
-    join_term ∘ map_term id (join_term).
+    join_term ∘ map2 id (join_term).
 Proof.
   intros. ext t.
   unfold compose.
@@ -420,19 +553,14 @@ Section join_term_rewriting.
 
 End join_term_rewriting.
 
-(*|
-+++++++++++++++++++++++++++++++++++++++++++++++
-Naturality
-+++++++++++++++++++++++++++++++++++++++++++++++
-|*)
 Section naturality.
 
   Context {B1 V1 B2 V2: Type}
     (ρ: B1 -> B2) (σ: V1 -> V2).
 
   Lemma join_map:
-    join_term ∘ map_term ρ (map_term ρ σ) =
-      map_term ρ σ ∘ join_term.
+    join_term ∘ map2 ρ (map2 ρ σ) =
+      map2 ρ σ ∘ join_term.
   Proof.
     ext t. unfold compose.
     induction t as [v | b body IHbody | t1 IHt1 t2 IHt2].
@@ -446,78 +574,8 @@ Section naturality.
       reflexivity.
   Qed.
 
-  Lemma dec_rec_map: forall (ctx: list B1),
-    dec_term_rec (map ρ ctx) ∘ map_term ρ σ =
-      map_term (map_pair (map ρ) ρ) (map_pair (map ρ) σ) ∘ dec_term_rec ctx.
-  Proof.
-    intros. ext t. unfold compose.
-    generalize dependent ρ; clear ρ.
-    generalize dependent σ; clear σ.
-    generalize dependent ctx.
-    induction t as [v | b body IHbody | t1 IHt1 t2 IHt2];
-      intros.
-    - reflexivity.
-    - cbn.
-      fequal.
-      replace (map ρ ctx ++ [ρ b])
-        with (map ρ (ctx ++ [b])) by now rewrite map_list_app.
-      rewrite IHbody.
-      reflexivity.
-    - cbn.
-      rewrite IHt1.
-      rewrite IHt2.
-      reflexivity.
-  Qed.
-
-  Lemma dec_map:
-    dec_term ∘ map_term ρ σ =
-      map_term (map_pair (map ρ) ρ) (map_pair (map ρ) σ) ∘ dec_term.
-  Proof.
-    unfold dec_term.
-    change (@nil B2) with (map ρ nil).
-    rewrite dec_rec_map.
-    reflexivity.
-  Qed.
-
-  Lemma dist_map `{ApplicativeCommutativeIdempotent G}:
-    map (map_term ρ σ) ∘ dist_term (G := G) =
-      dist_term ∘ map_term (map ρ) (map σ).
-  Proof.
-    intros. ext t. unfold compose.
-    induction t as [v | b body IHbody | t1 IHt1 t2 IHt2];
-      change (@nil B2) with (map ρ nil).
-    - cbn.
-      compose near v on left.
-      rewrite fun_map_map.
-      compose near v on right.
-      rewrite fun_map_map.
-      reflexivity.
-    - cbn.
-      rewrite map_ap.
-      rewrite map_ap.
-      rewrite app_pure_natural.
-      rewrite <- ap_map.
-      rewrite app_pure_natural.
-      rewrite <- IHbody.
-      rewrite <- ap_map.
-      rewrite map_ap.
-      rewrite app_pure_natural.
-      reflexivity.
-    - cbn.
-      rewrite map_ap.
-      rewrite map_ap.
-      rewrite app_pure_natural.
-      rewrite <- IHt1.
-      rewrite <- ap_map.
-      rewrite app_pure_natural.
-      rewrite <- IHt2.
-      rewrite <- ap_map.
-      rewrite map_ap.
-      rewrite app_pure_natural.
-      reflexivity.
-  Qed.
-
 End naturality.
+
 
 (*|
 +++++++++++++++++++++++++++++++++++++++++++++++
@@ -525,6 +583,10 @@ Distribution and Decoration
 +++++++++++++++++++++++++++++++++++++++++++++++
 |*)
 
+From Tealeaves.Functors.Categorical Require Import List.
+
+Print Instances ApplicativeDist.
+(* Probably move this somewhere else *)
 Definition dist_pair
   {B1 V1: Type} {G}
   `{Map G} `{Mult G} `{Pure G}:

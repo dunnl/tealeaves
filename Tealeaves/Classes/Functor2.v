@@ -78,11 +78,31 @@ Section composition_with_functor.
     {h: A0 -> A1} {j: B0 -> B1}
     {k: B2 -> B3} {l: A2 -> A3}.
 
-  Lemma fun2_map22_map21:
+  (*
+  Lemma fun2_map22_map21_commute:
     map2 (F := F) g id ∘ map2 id f =
       map2 (F := F) id f ∘ map2 (F := F) g id.
   Proof.
     rewrite fun2_map_map.
+    rewrite fun2_map_map.
+    reflexivity.
+  Qed.
+
+  Lemma fun2_map22_map21':
+    map2 (F := F) g id ∘ map2 id f =
+      map2 (F := F) g f.
+  Proof.
+    rewrite fun2_map_map.
+    reflexivity.
+  Qed.
+  *)
+
+
+  Lemma fun2_map22_map21:
+    map (Map := Map2_2) g ∘ map (Map := Map2_1) f =
+      map2 (F := F) g f.
+  Proof.
+    unfold_ops @Map2_2 @Map2_1.
     rewrite fun2_map_map.
     reflexivity.
   Qed.

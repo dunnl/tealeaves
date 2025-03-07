@@ -18,8 +18,6 @@ Section with_DTM.
     (T: Type -> Type -> Type)
     `{DecoratedTraversableFunctorPoly T}.
 
-  Print Binding.
-
   Definition binding_to_ix (k: key): name -> Binding -> option nat.
   Proof.
     intros x b.
@@ -126,10 +124,14 @@ Section with_DTM.
   Qed.
 
   Lemma correctness: forall (k: key) (t: T name name),
-      roundtrip_Named k t = roundtrip_Named k t.
+    exists (u: T name name),
+      roundtrip_Named k t = Some (Some u) /\
+        (alpha T t u).
   Proof.
     intros.
+    rewrite roundtrip_Named_spec.
     unfold roundtrip_Named.
+
     unfold toNominal_from_key.
     unfold toDB_from_key.
     compose near t on left.

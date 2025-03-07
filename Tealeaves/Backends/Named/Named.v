@@ -14,10 +14,10 @@ Import Product.Notations.
 Import ContainerFunctor.Notations.
 
 (** * Fully named syntax *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** General operations on lists *)
-(******************************************************************************)
+(**********************************************************************)
 
 Fixpoint fold_with_history {A B: Type}
   (f: list B * A -> B)
@@ -29,7 +29,7 @@ Fixpoint fold_with_history {A B: Type}
   end.
 
 (** ** Variable freshness *)
-(******************************************************************************)
+(**********************************************************************)
 Definition hf_loc: list name * name -> name :=
   fun '(history, current) =>
     if SmartAtom.name_inb current history
@@ -77,12 +77,12 @@ Section examples.
 End examples.
 
 (** ** The logic of binding *)
-(******************************************************************************)
-Inductive Binding : Type :=
-  Bound : list name -> name -> list name -> Binding
+(**********************************************************************)
+Inductive Binding: Type :=
+  Bound: list name -> name -> list name -> Binding
 | Unbound: list name -> Binding.
 
-Fixpoint get_binding_rec (discarded : list name)  (l : list name) (looking_for : name) : Binding :=
+Fixpoint get_binding_rec (discarded: list name)  (l: list name) (looking_for: name): Binding :=
   match l with
   | nil => Unbound discarded
   | cons y ys =>
@@ -115,12 +115,12 @@ Section examples.
 End examples.
 
 (** ** Localized operations *)
-(******************************************************************************)
+(**********************************************************************)
 Section named_local_operations.
 
 
   Context
-    {T : Type -> Type -> Type}
+    {T: Type -> Type -> Type}
     `{forall W, Return (T W)}.
 
   (*
@@ -166,33 +166,46 @@ Section named_local_operations.
 End named_local_operations.
 
 (** ** Localized operations *)
-(******************************************************************************)
+(**********************************************************************)
 Section named_local_operations.
 
   Context
-    (T : Type -> Type -> Type)
-    `{forall W, Return (T W)}
-    `{Substitute T T}.
+    (T: Type -> Type -> Type)
+    `{MapdtPoly T}.
 
   Definition FV: T name name -> list name :=
-    substitute
+    mapdtp
+      (T := T)
       (A1 := name) (B1 := name)
       (A2 := False) (B2 := False)
-      (T := T) (U := T)
       (G := const (list name))
       (const (@nil name))
       (fun '(ctx, x) => if get_binding ctx x then @nil name else [x]).
 
-  Definition subst_naive_local (x : name) (u : T name name):
+  Definition alpha:
+    T name name -> T name name -> Prop.
+  Admitted.
+
+End named_local_operations.
+
+Section named_local_operations.
+
+  Import DecoratedTraversableMonadPoly.DerivedOperations.
+
+  Context
+    (T: Type -> Type -> Type)
+    `{forall W, Return (T W)}
+    `{Substitute T T}.
+
+  Definition subst_naive_local (x: name) (u: T name name):
     list name * name -> T name name :=
     fun '(l, y) => if x == y then u else ret (T := T name) y.
 
   Definition subst (x: name) (u: T name name):
     T name name -> T name name :=
     substitute (G := fun A => A) (U := T)
-      (deconflict_binder_local  (FV u))
-      (subst_local (FV u) x u).
-
+      (deconflict_binder_local (FV T u))
+      (subst_local (FV T u) x u).
 
   (*
   Definition alpha_equiv: T name name -> T name name -> Prop :=

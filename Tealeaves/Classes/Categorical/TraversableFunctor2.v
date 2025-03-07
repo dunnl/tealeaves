@@ -31,11 +31,11 @@ Class TraversableFunctor2
   { trav2_functor :> Functor2 T;
     dist2_natural :> forall `{Applicative G},
         @Natural2 (T ○21 G) _ (G ○12 T) _ (@dist2 T dist2_F G _ _ _);
-    dist_morph: forall `{ApplicativeMorphism G1 G2 ϕ},
+    dist2_morph: forall `{ApplicativeMorphism G1 G2 ϕ},
       `(dist2 T G2 ∘ map2 (ϕ B) (ϕ A) = ϕ (T B A) ∘ dist2 T G1);
-    dist_unit2:
+    dist2_unit:
     `(dist2 T (fun A => A) = id (A := T B A));
-    dist_linear: forall `{Applicative G1} `{Applicative G2},
+    dist2_linear: forall `{Applicative G1} `{Applicative G2},
       `(dist2 T (G1 ∘ G2) = map G1 (dist2 T G2) ∘
                               dist2 T G1 (B := G2 B) (A := G2 A));
   }.
@@ -53,6 +53,11 @@ Section composition_with_functor.
   #[export] Instance Dist2_2 {A}: ApplicativeDist (fun B => T B A) :=
     fun G _ _ _ A => dist2 T G ∘ map2 id pure.
 
+  #[local] Arguments map2 (F)%function_scope {Map2} {B1 A1 B2 A2}%type_scope
+  (g f)%function_scope _.
+
+  #[local] Arguments pure F%function_scope {Pure} {A}%type_scope _.
+
   #[export] Instance TraversableFunctor_Dist2_1 {B}:
     TraversableFunctor (T B)
       (H := Map2_1) (H0 := Dist2_1).
@@ -62,37 +67,60 @@ Section composition_with_functor.
     - constructor.
       + apply Functor_compose; typeclasses eauto.
       + apply Functor_compose; typeclasses eauto.
-      + intros.
+      + (* dist_natural *)
+        intros.
         unfold_ops @Map_compose.
-        unfold_ops @Map2_1.
         reassociate -> on right.
-        rewrite (fun2_map22_map21 (F := T)
-                   (B1 := B)
-                   (g := pure (F := G)) (f := map G f)).
+        unfold_compose_in_compose.
+        rewrite (fun2_map2_map21 (F := T)).
+        change (id ∘ ?f) with f.
+        change (pure G (A := ?A)) with (id ∘ pure G (A := A)) at 2.
+        rewrite <- (fun2_map2_map22 (F := T)).
         reassociate <- on right.
-        replace (map2 (F := T) (@id (G B)) (map G f))
-          with (map2 (F := T ○21 G) (@id B) f).
+        replace (map2 T (@id (G B)) (map G f))
+          with (map2 (T ○21 G) (@id B) f).
+        2:{ unfold_ops @Map21_compose.
+            rewrite fun_map_id.
+            reflexivity. }
         rewrite <- (natural2 (F := T ○21 G) (@id B) f
                      (Natural2 := dist2_natural)
                      (ϕ := fun B A => dist2 T G)).
         reflexivity.
-        unfold_ops @Map21_compose.
-        rewrite fun_map_id.
-        reflexivity.
-    - admit.
-    - admit.
-    - admit.
+    - (* dist_morph *)
+      reassociate -> on left.
+      rewrite (fun2_map2_map21 (F := T)).
+      change (id ∘ ?f) with f.
+      change (pure G2 (A := ?A)) with (id ∘ pure G2 (A := A)) at 1.
+      rewrite <- (fun2_map2_map22 (F := T)).
+      reassociate <- on left.
+
+      reassociate <- on right.
+      rewrite <- dist2_morph.
+      reassociate -> on left.
+      reassociate -> on right.
+      fequal.
+      rewrite fun2_map2_map22.
+      rewrite fun2_map_map.
+      change (?f ∘ id) with f.
+      change (id ∘ ?f) with f.
+      fequal.
+      rewrite appmor_pure_pf.
+      reflexivity.
+    - (* dist unit *)
+      rewrite dist2_unit.
+      unfold_ops @Pure_I.
+      rewrite fun2_map_id.
+      reflexivity.
+    - (* dist linear *)
+      rewrite dist2_linear.
+      reassociate <- on right.
+      unfold_ops @Pure_compose.
+      change (?f ○ ?g) with (f ∘ g).
+      rewrite <- (fun2_map2_map22 (F := T)).
+      unfold_ops @Map2_2.
+      admit.
   Admitted.
 
-  #[export] Instance Functor_Map2_2 {A}:
-    Functor (fun B => F B A) (Map_F := Map2_2).
-  Proof.
-    constructor; intros; unfold_ops @Map2_2.
-    - rewrite fun2_map_id.
-      reflexivity.
-    - rewrite fun2_map_map.
-      reflexivity.
-  Qed.
 
 End composition_with_functor.
 
@@ -101,10 +129,11 @@ End composition_with_functor.
 Section purity_law.
 
   Context
-    `{TraversableFunctor T}.
+    `{TraversableFunctor2 T}.
 
+  (*
   Corollary map_purity_1: forall `{Applicative G},
-      `(dist T G ∘ map T (pure G) = pure G (A := T A)).
+      `(dist2 T G ∘ map2 T ((pure G) = pure G (A := T A)).
   Proof.
     intros. rewrite (dist_morph (ϕ := @pure G _)).
     now rewrite (dist_unit).
@@ -121,11 +150,12 @@ Section purity_law.
     fequal. ext t. unfold compose.
     now rewrite app_pure_natural.
   Qed.
+   *)
 
 End purity_law.
 
 (** * Notations *)
 (******************************************************************************)
 Module Notations.
-  Notation "'δ'" := dist: tealeaves_scope.
+  Notation "'δ2'" := dist2: tealeaves_scope.
 End Notations.
