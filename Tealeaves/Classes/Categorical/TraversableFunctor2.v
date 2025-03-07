@@ -10,13 +10,13 @@ Import Functor2.Notations.
 #[local] Arguments map F%function_scope {Map} {A B}%type_scope f%function_scope _.
 
 (** * Traversable Functors of Two Arguments *)
-(******************************************************************************)
+(**********************************************************************)
 
 (** ** Operations *)
-(******************************************************************************)
+(**********************************************************************)
 Class ApplicativeDist2 (T: Type -> Type -> Type) :=
   dist2: forall (G: Type -> Type)
-          `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G},
+           `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G},
       T ○21 G ⇒2 G ○12 T.
 
 #[global] Arguments dist2 {T}%function_scope {ApplicativeDist2}
@@ -28,7 +28,7 @@ Class ApplicativeDist2 (T: Type -> Type -> Type) :=
 
 
 (** ** Typeclass *)
-(******************************************************************************)
+(**********************************************************************)
 Class TraversableFunctor2
   (T: Type -> Type -> Type)
   `{Map2_F: Map2 T}
@@ -46,7 +46,7 @@ Class TraversableFunctor2
   }.
 
 (** ** Single-Argument Traversable Functor Instances *)
-(******************************************************************************)
+(**********************************************************************)
 Module ToMono.
 
   Section mono.
@@ -137,42 +137,83 @@ Module ToMono.
         reflexivity.
     Qed.
 
+
+    Section commute.
+
+      Context `{Applicative G}
+        {B1 B2: Type}
+        `{ρ: B1 -> B2}
+        {A: Type}.
+
+      Context
+        `{! TraversableFunctor2 T}.
+
+      Lemma dist2_natural_rw `{f: A1 -> A2} (t: T (G B1) (G A1)):
+        dist2 T G (map2 T (map G ρ) (map G f) t) =
+          map G (map2 T ρ f) (dist2 T G t).
+      Proof.
+        compose near t.
+        rewrite <- map2_comp12_rw.
+        rewrite (natural2 (ϕ := @dist2 T _ G _ _ _) ρ f).
+        reflexivity.
+      Qed.
+
+      Lemma Dist2_1_natural2: forall (t: T B1 (G A)),
+          dist (T B2) G (map (fun B => T B (G A)) ρ t) =
+            map G (map (fun B => T B A) ρ) (dist (T B1) G t).
+      Proof.
+        intros.
+        unfold_ops @Map2_2.
+        unfold_ops @Dist2_1.
+        unfold compose.
+        rewrite <- (dist2_natural_rw (f := (@id A))).
+        compose near t.
+        rewrite fun2_map_map.
+        rewrite fun2_map_map.
+        Search pure map.
+        rewrite (natural (ϕ := @pure G _)).
+        unfold_ops @Map_I.
+        rewrite fun_map_id.
+        reflexivity.
+      Qed.
+
+    End commute.
+
   End mono.
 
 End ToMono.
-
 (** ** Other rules for <<pure>> *)
-(******************************************************************************)
+(**********************************************************************)
 Section purity_law.
 
   Context
     `{TraversableFunctor2 T}.
 
-  (*
+(*
   Corollary map_purity_1: forall `{Applicative G},
-      `(dist2 T G ∘ map2 T ((pure G) = pure G (A := T A)).
+  `(dist2 T G ∘ map2 T ((pure G) = pure G (A := T A)).
   Proof.
-    intros. rewrite (dist_morph (ϕ := @pure G _)).
-    now rewrite (dist_unit).
+  intros. rewrite (dist_morph (ϕ := @pure G _)).
+  now rewrite (dist_unit).
   Qed.
 
-  Corollary map_purity_2 :
-    forall `{Applicative G1} `{Applicative G2} `(f: A -> G1 B),
-      dist T (G2 ∘ G1) ∘ map T (pure G2 ∘ f) = pure G2 ∘ dist T G1 ∘ map T f.
+  Corollary map_purity_2:
+  forall `{Applicative G1} `{Applicative G2} `(f: A -> G1 B),
+  dist T (G2 ∘ G1) ∘ map T (pure G2 ∘ f) = pure G2 ∘ dist T G1 ∘ map T f.
   Proof.
-    intros. rewrite <- (fun_map_map).
-    reassociate <-. rewrite dist_linear.
-    reassociate -> near (map T (pure G2)).
-    rewrite map_purity_1.
-    fequal. ext t. unfold compose.
-    now rewrite app_pure_natural.
+  intros. rewrite <- (fun_map_map).
+  reassociate <-. rewrite dist_linear.
+  reassociate -> near (map T (pure G2)).
+  rewrite map_purity_1.
+  fequal. ext t. unfold compose.
+  now rewrite app_pure_natural.
   Qed.
-   *)
+ *)
 
 End purity_law.
 
 (** * Notations *)
-(******************************************************************************)
+(**********************************************************************)
 Module Notations.
   Notation "'δ2'" := dist2: tealeaves_scope.
 End Notations.

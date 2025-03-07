@@ -3,104 +3,109 @@ From Tealeaves Require Export
   Classes.Kleisli.DecoratedFunctor
   Classes.Kleisli.DecoratedFunctorPoly
   CategoricalToKleisli.DecoratedFunctorPoly
-  (* CategoricalToKleisli.DecoratedFunctorPoly*)
   Classes.Monoid
   Functors.List
-  Functors.Writer
-  Functors.List_Telescoping_General.
+  Functors.Writer.
 
 Import Monoid.Notations.
 Import Product.Notations.
 
 #[local] Generalizable Variables ϕ T W G A B C D F M.
 
-Section dfunp_to_dfun.
+Module ToMono1.
 
-  Context
-    {T: Type -> Type -> Type}
-    `{DecoratedFunctorPoly T}.
+  Section dfunp_to_dfun.
 
-  #[export] Instance Mapd_of_Mapdp {B}: Mapd (list B) (T B) :=
-    fun V1 V2 ρ => mapdp  (T := T) (extract (W := prod (list B)) (A := B)) ρ.
+    Context
+      {T: Type -> Type -> Type}
+        `{Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly T}.
 
-  #[export] Instance DFUN_of_DFUNP {B}: DecoratedFunctor (list B) (T B).
-  Proof.
-    constructor.
-    - intros.
-      unfold_ops @Mapd_of_Mapdp.
-      rewrite kdfunp_mapdp1.
-      reflexivity.
-    - intros.
-      unfold_ops @Mapd_of_Mapdp.
-      rewrite kdfunp_mapdp2.
-      fequal.
-      { unfold kc_dz.
-        ext [w b].
-        cbn.
+    #[export] Instance Mapd_of_Mapdp1 {B}: Mapd (list B) (T B) :=
+      fun V1 V2 ρ => mapdp  (T := T) (extract (W := prod (list B)) (A := B)) ρ.
+
+    #[export] Instance DecoratedFunctor_of_DecoratedFunctorPoly1 {B}:
+      DecoratedFunctor (list B) (T B).
+    Proof.
+      constructor.
+      - intros.
+        unfold_ops @Mapd_of_Mapdp1.
+        rewrite kdfunp_mapdp1.
         reflexivity.
-      }
-      { unfold kc_dfunp.
-        ext [w b].
-        unfold mapdt_ci.
-        unfold Mapdt_CommIdem_list_prefix.
-        rewrite kdtfci_mapdt1_list_prefix.
-        reflexivity.
-      }
-  Qed.
+      - intros.
+        unfold_ops @Mapd_of_Mapdp1.
+        rewrite kdfunp_mapdp2.
+        fequal.
+        { unfold kc_dz.
+          ext [w b].
+          cbn.
+          reflexivity.
+        }
+        { unfold kc_dfunp.
+          ext [w b].
+          unfold mapdt_ci.
+          unfold Mapdt_CommIdem_list_prefix.
+          rewrite kdtfci_mapdt1_list_prefix.
+          reflexivity.
+        }
+    Qed.
 
-End dfunp_to_dfun.
+  End dfunp_to_dfun.
 
+End ToMono1.
 
-Section dfunp_to_dfun_bin.
+Module ToMono2.
 
-  Context
-    {T: Type -> Type -> Type}
-    `{DecoratedFunctorPoly T}.
+  Section dfunp_to_dfun_bin.
 
-  #[export] Instance MapdB_of_Mapdp {V}: MapdZ (fun B => T B V) :=
-    fun A B ρ => mapdp (T := T) ρ (extract).
+    Context
+      {T: Type -> Type -> Type}
+        `{DecoratedFunctorPoly T}.
 
-  #[export] Instance DFUNCI_of_DFUNP {V}: DecoratedFunctorZ (fun B => T B V).
-  Proof.
-    constructor.
-    - unfold_ops @MapdB_of_Mapdp.
-      intros.
-      apply kdfunp_mapdp1.
-    - intros.
-      unfold_ops @MapdB_of_Mapdp.
-      rewrite kdfunp_mapdp2.
-      fequal.
-  Qed.
+    #[export] Instance MapdZ_of_Mapdp2 {V}: MapdZ (fun B => T B V) :=
+      fun A B ρ => mapdp (T := T) ρ (extract).
 
-End dfunp_to_dfun_bin.
+    #[export] Instance DecoratedFunctorZ_of_DecoratedFunctorPoly2 {V}: DecoratedFunctorZ (fun B => T B V).
+    Proof.
+      constructor.
+      - unfold_ops @MapdZ_of_Mapdp2.
+        intros.
+        apply kdfunp_mapdp1.
+      - intros.
+        unfold_ops @MapdZ_of_Mapdp2.
+        rewrite kdfunp_mapdp2.
+        fequal.
+    Qed.
+
+  End dfunp_to_dfun_bin.
+
+End ToMono2.
 
 (* Relating Mono to Poly *)
 Section relating.
 
   Context
-    `{Categorical.DecoratedFunctorPoly.DecoratedFunctorPoly T}.
+    `{Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly T}.
 
-
-  Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
-  Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
+  Import ToMono1.
+  Import ToMono2.
 
   Definition rename_binders
     {B1 V1 B2: Type}
-      (ρ: list B1 * B1 -> B2)
+    (ρ: list B1 * B1 -> B2)
     := mapdz (T := fun B => T B V1) ρ.
 
   Context
     {B1 V1 B2 V2: Type}
-    {ρ: list B1 * B1 -> B2}
-    {σ: list B1 * V1 -> V2}.
+      {ρ: list B1 * B1 -> B2}
+      {σ: list B1 * V1 -> V2}.
 
   Lemma mapd_decompose:
     mapdp ρ σ =
       rename_binders ρ ∘ mapd σ.
   Proof.
     unfold rename_binders.
-    unfold_ops @MapdB_of_Mapdp.
-    unfold_ops @Mapd_of_Mapdp.
+    unfold_ops @MapdZ_of_Mapdp2.
+    unfold_ops @Mapd_of_Mapdp1.
     rewrite (kdfunp_mapdp2).
     fequal.
     - ext [w b].
@@ -119,3 +124,37 @@ Section relating.
 
 End relating.
 
+(* Relating Categorical Mono to Kleisli Mono *)
+From Tealeaves Require
+  Import CategoricalToKleisli.DecoratedFunctor.
+
+Section relating.
+
+  Context
+    `{Map_T: Map2 T}
+      `{Decorate_T: DecoratePoly T}
+      `{MapdPoly_T: MapdPoly T}
+      `{Compat1: ! Compat_Mapdp_Categorical T}
+      `{! Categorical.DecoratedFunctorPoly.DecoratedFunctorPoly T}
+      `{! Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly T}.
+
+  Import Categorical.DecoratedFunctorPoly.ToMono.
+  Import ToMono1.
+
+  #[export] Instance Compat_Mapd_Categorical_Poly1 {B}:
+    Compat_Mapd_Categorical (list B) (T B).
+  Proof.
+    unfold Compat_Mapd_Categorical.
+    ext X Y f t.
+    unfold Mapd_of_Mapdp1.
+    unfold DerivedOperations.Mapd_Categorical.
+    unfold_ops @Map2_1.
+    unfold dec.
+    unfold_ops @Decorate_PolyVar.
+    rewrite mapdp_to_categorical.
+    reassociate <- on right.
+    rewrite fun2_map_map.
+    reflexivity.
+  Qed.
+
+End relating.

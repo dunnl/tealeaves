@@ -25,6 +25,37 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
+Class Compat_Mapdp_Categorical
+    (T: Type -> Type -> Type)
+    `{Map_T: Map2 T}
+    `{Decorate_T: DecoratePoly T}
+    `{Mapdp_T: MapdPoly T} :=
+  compat_mapdp_categorical:
+    Mapdp_T = @DerivedOperations.Mapdp_Categorical T Map_T Decorate_T.
+
+#[export] Instance Mapdp_Categorical_Self
+  (T: Type -> Type -> Type)
+  `{Map2 T}
+  `{DecoratePoly T}:
+  @Compat_Mapdp_Categorical T _ _ (@DerivedOperations.Mapdp_Categorical T _ _).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma mapdp_to_categorical {T}
+    `{Map_T: Map2 T}
+    `{Decorate_T: DecoratePoly T}
+    `{Mapdp_T: MapdPoly T}
+    `{Compat: Compat_Mapdp_Categorical T}:
+  forall (B1 B2 V1 V2: Type)
+      (ρ: list B1 * B1 -> B2)
+      (σ: list B1 * V1 -> V2)
+      (t: T B1 V1),
+      mapdp ρ σ t = map2 ρ σ (decp t).
+Proof.
+  now rewrite compat_mapdp_categorical.
+Qed.
+
 Module DerivedInstances.
 
   Import DerivedOperations.
@@ -34,7 +65,6 @@ Module DerivedInstances.
     Context
       `{Categorical.DecoratedFunctorPoly.DecoratedFunctorPoly T}.
 
-    Print Instances Traverse.
     #[export] Instance: Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly T.
     Proof.
       constructor; intros.

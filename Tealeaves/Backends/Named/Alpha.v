@@ -16,6 +16,8 @@ From Tealeaves Require Import
 Import Subset.Notations.
 Import Monoid.Notations.
 
+#[local] Generalizable Variables T.
+
 Section alpha_equiv_local.
 
   Context
@@ -68,6 +70,27 @@ From Tealeaves Require Import
   CategoricalToKleisli.TraversableFunctor
   CategoricalToKleisli.TraversableFunctor.
 
+Section delete_binders.
+
+  Context
+      `{Functor2.Functor2 T}.
+
+  Definition delete_binders {B V}:
+    T B V -> T unit V :=
+    map (F := fun B => T B V) (Map := Map2_2) (const tt).
+
+  Lemma delete_binders_map {B V1 V2} {f: V1 -> V2} (t: T B V1):
+    delete_binders (map (Map := Map2_1) f t) =
+      map f (delete_binders t).
+  Proof.
+    unfold delete_binders.
+    compose near t.
+    rewrite <- fun2_map22_map21_commute.
+    reflexivity.
+  Qed.
+
+End delete_binders.
+
 Section named_local_operations.
 
   Context
@@ -76,15 +99,24 @@ Section named_local_operations.
 
   Import Theory.TraversableFunctor.
 
-  Definition delete_binders {B V}:
-    T B V -> T unit V :=
-    map (F := fun B => T B V) (Map := Map2_2) (const tt).
+  Import DecoratedFunctorPoly.ToMono.
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
   Import TraversableFunctor2.ToMono.
 
-  Definition related_except_binders {B1 B2 X Y: Type}
+  Definition lift_relation_poly {B1 B2 X Y: Type}
     (R: X -> Y -> Prop): T B1 X -> T B2 Y -> Prop :=
     fun t1 t2 => lift_relation R (delete_binders t1) (delete_binders t2).
+
+  Definition lift_relation_ctx_poly {B1 B2 X Y: Type}
+    (R: list B1 * X -> list B2 * Y -> Prop): T B1 X -> T B2 Y -> Prop :=
+    fun t1 t2 => lift_relation R
+                (delete_binders (dec (T B1) t1))
+                (delete_binders (dec (T B2) t2)).
+
+
+  Definition polymorphic_alpha:
+    T name name -> T name name -> Prop :=
+    lift_relation_ctx_poly (alpha_equiv_local).
 
 End named_local_operations.
 

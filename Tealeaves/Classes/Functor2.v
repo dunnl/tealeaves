@@ -39,6 +39,7 @@ Class Natural2 `{Map2 F} `{Map2 G} (ϕ: F ⇒2 G) :=
     natural2: forall `(g: B1 -> B2) `(f: A1 -> A2),
       map2 (F := G) g f ∘ ϕ B1 A1 = ϕ B2 A2 ∘ map2 (F := F) g f
   }.
+
 (** ** Single-Argument Functor Instances *)
 (**********************************************************************)
 Section composition_with_functor.
@@ -78,6 +79,18 @@ Section composition_with_functor.
     {h: A0 -> A1} {j: B0 -> B1}
     {k: B2 -> B3} {l: A2 -> A3}.
 
+  Lemma map2_to_21:
+    map2 g (@id A1) = map (F := fun B => F B A1) g.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma map2_to_22:
+    map2 (@id B1) f = map (F := F B1) f.
+  Proof.
+    reflexivity.
+  Qed.
+
   (*
   Lemma fun2_map22_map21_commute:
     map2 (F := F) g id ∘ map2 id f =
@@ -103,6 +116,16 @@ Section composition_with_functor.
       map2 (F := F) g f.
   Proof.
     unfold_ops @Map2_2 @Map2_1.
+    rewrite fun2_map_map.
+    reflexivity.
+  Qed.
+
+  Lemma fun2_map22_map21_commute:
+    map (Map := Map2_2) g ∘ map (Map := Map2_1) f =
+      map (Map := Map2_1) f ∘ map (Map := Map2_2) g.
+  Proof.
+    unfold_ops @Map2_2 @Map2_1.
+    rewrite fun2_map_map.
     rewrite fun2_map_map.
     reflexivity.
   Qed.
@@ -216,3 +239,30 @@ Module Notations.
       tealeaves_scope.
 
 End Notations.
+
+
+Section rewriting_maps.
+
+  Import Notations.
+  Context `{Functor2 F} `{Functor G}.
+
+  Context {B1 B2 A1 A2: Type} (f: A1 -> A2) (g: B1 -> B2).
+
+  Check G ○12 F.
+  Check map2 (F := (G ○12 F)) g f.
+
+  Lemma map2_comp12_rw:
+    map2 (F := (G ○12 F)) g f =
+      map (map2 g f).
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma map2_comp21_rw:
+    map2 (F := (F ○21 G)) g f =
+      map2 (map (F := G) g) (map f).
+  Proof.
+    reflexivity.
+  Qed.
+
+End rewriting_maps.
