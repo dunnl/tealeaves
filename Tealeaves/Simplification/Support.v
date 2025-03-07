@@ -3,8 +3,8 @@ From Tealeaves Require Export
   Misc.Prop
   Tactics.Debug.
 
-Export DecoratedTraversableMonad.UsefulInstances.
-Export Classes.Kleisli.Theory.DecoratedTraversableMonad.
+Import DecoratedTraversableMonad.UsefulInstances.
+Import Classes.Kleisli.Theory.DecoratedTraversableMonad.
 
 #[local] Generalizable Variables G A B C.
 #[local] Set Implicit Arguments.

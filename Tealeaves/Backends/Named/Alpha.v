@@ -2,6 +2,7 @@ From Tealeaves Require Import
   Classes.EqDec_eq
   Classes.Categorical.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedTraversableFunctor
+  CategoricalToKleisli.DecoratedFunctor
   CategoricalToKleisli.DecoratedTraversableFunctor
   Functors.List_Telescoping_General
   Backends.Common.Names
@@ -49,6 +50,33 @@ Section named_local_operations.
 
 End named_local_operations.
 
+(** Alpha on polymorphic terms *)
+From Tealeaves Require Import
+  Classes.Categorical.DecoratedTraversableFunctorPoly.
+
+Section named_local_operations.
+
+  Context
+    (T: Type -> Type -> Type)
+    `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
+
+  Import Theory.TraversableFunctor.
+
+  Definition delete_binders {B V}:
+    T B V -> T unit V :=
+    map (F := fun B => T B V) (Map := Map2_2) (const tt).
+
+  Require Import CategoricalToKleisli.TraversableFunctor.
+  Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
+  Require Import Classes.Categorical.TraversableFunctor2.
+  Import TraversableFunctor2.ToMono.
+
+  Definition related_except_binders {B1 B2 X Y: Type}
+    (R: X -> Y -> Prop): T B1 X -> T B2 Y -> Prop :=
+    fun t1 t2 => lift_relation R (delete_binders t1) (delete_binders t2).
+
+End named_local_operations.
+
 Section alpha_properties.
 
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
@@ -59,8 +87,7 @@ Section alpha_properties.
       `{ToCtxset_inst: ToCtxset (list name) T}
       `{! Compat_ToCtxset_Mapdt (list name) T}.
 
-  Import Classes.Kleisli.DecoratedTraversableFunctor.DerivedOperations.
-  Import Theory.DecoratedTraversableFunctor.
+  Import CategoricalToKleisli.DecoratedFunctor.DerivedOperations.
   Import Theory.DecoratedTraversableFunctor.
 
   Lemma alpha_principle:
@@ -74,8 +101,30 @@ Section alpha_properties.
     introv Hrel.
     unfold alpha.
     unfold lift_relation_ctx.
-    unfold mapd.
-    unfold Mapd_Mapdt.
+    unfold compose.
+    unfold precompose.
+    assert (cut: dec T (mapd f t) = (map (cobind (W := prod (list name)) f) (dec T t))).
+    { (* categorical identity. *)
+      admit.
+    }
+    assert (cut2:
+        (@dec (list atom) T
+       (@DecoratedTraversableFunctor.DerivedOperations.Decorate_Mapdt (list atom) T
+          (@Mapdt_Categorical (list atom) T H H0 H1)) atom
+       (@mapd (list atom) T (@Mapd_Categorical (list atom) T H H0) atom atom f t)) =
+          (map (cobind (W := prod (list name)) f) (dec T t))).
+    { unfold lift_relation_ctx.
+      unfold mapd, Mapd_Categorical.
+      unfold compose.
+      compose near t on right.
+      Search cobind dec.
+      rewrite cobind_dec.
+      unfold compose.
+      fequal.
+      admit.
+      typeclasses eauto.
+    }
+    rewrite cut2.
   Abort.
 
 End alpha_properties.

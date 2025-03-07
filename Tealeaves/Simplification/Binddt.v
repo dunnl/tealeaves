@@ -9,6 +9,9 @@ Import
   ContainerFunctor.Notations
   Subset.Notations.
 
+Import DecoratedTraversableMonad.UsefulInstances.
+Import Classes.Kleisli.Theory.DecoratedTraversableMonad.
+
 Ltac cbn_subterm e :=
   let e' := eval cbn in e in
     progress (change e with e').

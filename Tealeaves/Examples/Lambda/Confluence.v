@@ -4,6 +4,8 @@ From Coq Require Import
 From Tealeaves Require Import
   Backends.DB.
 
+Import DecoratedTraversableMonad.UsefulInstances.
+
 #[local] Set Implicit Arguments.
 
 Import DB.Notations.

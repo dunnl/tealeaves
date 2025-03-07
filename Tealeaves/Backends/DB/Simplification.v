@@ -8,6 +8,10 @@ From Tealeaves Require Export
 
 Import DB.Notations.
 
+Import DecoratedTraversableMonad.UsefulInstances.
+Import Classes.Kleisli.Theory.DecoratedTraversableMonad.
+
+
 (** * Extra lemmas *)
 (******************************************************************************)
 Section db_simplification_lemmas.

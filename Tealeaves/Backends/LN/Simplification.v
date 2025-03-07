@@ -3,6 +3,9 @@ From Tealeaves Require Export
   Simplification.Support
   Simplification.Binddt.
 
+Import DecoratedTraversableMonad.UsefulInstances.
+Import Classes.Kleisli.Theory.DecoratedTraversableMonad.
+
 Import Monoid.Notations List.ListNotations.
 
 #[local] Notation "'P'" := pure.

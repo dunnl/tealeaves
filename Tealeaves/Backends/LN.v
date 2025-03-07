@@ -4,8 +4,13 @@ From Tealeaves.Backends.Common Require Export
   Names AtomSet AssocList.
 From Tealeaves.Backends.LN Require Export
   LN Simplification.
+Print Instances Traverse.
+
 From Tealeaves.Simplification Require Export
   Simplification.
+
+Import DecoratedTraversableMonad.UsefulInstances.
+Import Classes.Kleisli.Theory.DecoratedTraversableMonad.
 
 Module Notations.
   Export Categorical.Applicative.Notations. (* <⋆> *)

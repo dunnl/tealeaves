@@ -3,6 +3,9 @@ From Tealeaves Require Export
   Simplification.Support
   Simplification.Binddt.
 
+Import DecoratedTraversableMonad.UsefulInstances.
+Import Classes.Kleisli.Theory.DecoratedTraversableMonad.
+
 Import DecoratedTraversableMonad.Notations.
 
 (** * Deriving DTM laws expressions *)

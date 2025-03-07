@@ -13,7 +13,6 @@ From Tealeaves Require Import
 
 Import Subset.Notations.
 Import Classes.Categorical.DecoratedFunctorPoly.
-Import DecoratedTraversableMonad.UsefulInstances.
 Import List.ListNotations.
 
 #[local] Generalizable Variables W T U.
@@ -203,6 +202,86 @@ Section with_DTM.
     ext [w v].
     unfold kc_dz, const.
   Abort.
+
+
+  Import DecoratedFunctorPoly.ToMono.
+  Import TraversableFunctor2.ToMono.
+  Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
+
+  Definition cobind_binders {B1 B2}:
+    forall (ρ: list B1 * B1 -> B2) (p: list B1 * B1), list B2 * B2 :=
+    fun ρ p => map (F := Z) ρ (cojoin (W := Z) p).
+
+  Definition cobind_vars {B1 B2 V}:
+    forall (ρ: list B1 * B1 -> B2) (p: list B1 * V), list B2 * V :=
+    fun ρ '(w, v) => (map (F := list) ρ (decorate_prefix_list w), v).
+
+  Lemma decorate_rename_binders {B1 B2 V}:
+    forall (ρ: list B1 * B1 -> B2) (t: T B1 V),
+      delete_binders T (dec (T B2) (rename_binders ρ t)) =
+        delete_binders T (map (F := T B1) (cobind_vars ρ) (dec (T B1) t)).
+  Proof.
+    intros.
+    unfold delete_binders.
+    unfold_ops @Map2_1.
+    unfold_ops @Map2_2.
+    unfold_ops @Decorate_PolyVar.
+    unfold compose.
+    compose near (decp (rename_binders ρ t)).
+    rewrite fun2_map_map.
+    change (id ∘ ?x) with x.
+    compose near (decp t).
+    rewrite (fun2_map_map).
+    change (id ∘ ?x) with x.
+    compose near (decp t).
+    rewrite (fun2_map_map).
+    change (id ∘ ?x) with x.
+    change (?x ∘ id) with x.
+    change ((@const B2 unit tt ∘ @extract Z Extract_Z B2)) with
+      (@const (Z B2) unit tt).
+    change ((@const B1 unit tt ∘ @extract Z Extract_Z B1)) with
+      (@const (Z B1) unit tt).
+    unfold rename_binders.
+    unfold mapdz.
+    unfold_ops @MapdB_of_Mapdp.
+    unfold mapdp.
+    unfold Mapdp_Categorical.
+    unfold compose.
+    compose near (decp t) on left.
+    rewrite (polydecnat).
+    unfold compose.
+    compose near t on left.
+    rewrite dfunp_dec_dec.
+    unfold compose.
+    compose near (decp t) on left.
+    rewrite (fun2_map_map).
+    compose near (decp t) on left.
+    rewrite (fun2_map_map).
+    fequal.
+    change (id ∘ ?x) with x.
+    unfold cobind_vars.
+    ext [w v].
+    unfold compose.
+    cbn.
+    reflexivity.
+  Qed.
+
+  Theorem roundtrip_Named_spec3
+    `{TraversableFunctor2.ApplicativeDist2 T}:
+    forall (t: T name name),
+      delete_binders T (dec (T name) (roundtrip_Named t)) =
+        delete_binders T (dec (T name)
+         (mapd (T := T name)
+            (kc_dfunp
+               (ln_to_name (free (mapdp (const tt) name_to_ln t)))
+               (const tt)
+               name_to_ln)
+            t)).
+  Proof.
+    intros.
+    unfold delete_binders.
+    rewrite roundtrip_Named_spec2.
+    Check .
 
 End with_DTM.
 

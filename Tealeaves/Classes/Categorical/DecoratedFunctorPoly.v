@@ -100,7 +100,7 @@ Module ToMono.
         reassociate <- on right.
         rewrite fun2_map_map.
         rewrite fun_map_id.
-        change (id ∘ ?f) with f.
+
         change (?f ∘ id) with f.
         unfold_ops @Map2_Z2.
         unfold map_Z2.
