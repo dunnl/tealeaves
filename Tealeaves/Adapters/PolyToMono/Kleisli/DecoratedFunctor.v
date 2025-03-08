@@ -42,9 +42,16 @@ Module ToMono1.
         }
         { unfold kc_dfunp.
           ext [w b].
-          unfold mapdt_ci.
-          unfold Mapdt_CommIdem_list_prefix.
-          rewrite kdtfci_mapdt1_list_prefix.
+          unfold compose.
+          unfold kc1.
+          unfold compose.
+          fequal.
+          unfold_ops @Cobind_reader.
+          unfold cobind_Z2.
+          unfold compose.
+          cbn.
+          compose near w on left.
+          rewrite decorate_prefix_list_extract.
           reflexivity.
         }
     Qed.
@@ -74,6 +81,10 @@ Module ToMono2.
         unfold_ops @MapdZ_of_Mapdp2.
         rewrite kdfunp_mapdp2.
         fequal.
+        { unfold kc_dfunp.
+          ext [w b].
+          reflexivity.
+        }
     Qed.
 
   End dfunp_to_dfun_bin.
@@ -110,11 +121,11 @@ Section relating.
     fequal.
     - ext [w b].
       unfold kc_dz.
-      compose near (w, b).
-      fold_Z.
-      change (@extract (prod (list B1)) (Extract_reader (list B1)) B1)
+      Set Printing Implicit.
+      change
+        (@extract (prod (list B1)) (Extract_reader (list B1)) B1)
         with (@extract Z _ B1).
-      rewrite (com_map_extr_cojoin (W := Z)).
+      rewrite (kcom_cobind1 (W := Z)).
       reflexivity.
     - unfold kc_dfunp.
       ext [w v].

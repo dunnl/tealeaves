@@ -43,6 +43,9 @@ End kleisli_composition.
 
 (** ** Typeclasses *)
 (******************************************************************************)
+
+(* Note that W should itself be DecoratedTraversableCommIdem, but
+   it's not a field in the typeclass because that may make the class difficult to instantiate for W itself due to the circularity. In fact W should be a Comonad *)
 Class DecoratedTraversableCommIdemFunctor
   (W: Type -> Type)
   (T: Type -> Type)
@@ -62,6 +65,58 @@ Class DecoratedTraversableCommIdemFunctor
       (A B: Type) (f: W A -> G1 B),
       mapdt_ci (ϕ B ∘ f) = ϕ (T B) ∘ mapdt_ci f;
   }.
+
+
+Class Compat_Map_Mapdtci W T
+  `{Extract W}
+  `{Map_T: Map T}
+  `{Mapdt_WT: Mapdt_CommIdem W T} :=
+  compat_map_mapdt_ci:
+    forall (A B: Type) (f: A -> B),
+      map (F := T) f = mapdt_ci (G := fun A => A) (f ∘ extract (W := W)).
+
+(** ** Basic Laws *)
+(******************************************************************************)
+Section basic_laws.
+
+
+  Context
+    {W F: Type -> Type}
+      `{DecoratedTraversableCommIdemFunctor W F}
+      `{! DecoratedTraversableCommIdemFunctor W W}
+      `{Map_W: Map W}
+      `{! Functor W}
+      `{! Compat_Map_Mapdtci W W}.
+
+
+
+  Context
+    `{Applicative G1}
+      `{Applicative G2}.
+
+  Lemma kc3_ci_pure_extract1:
+    forall  (B C: Type) (g: W B -> G2 C),
+      kc3_ci (W := W) (G1 := G1) g (pure (F := G1) ∘ extract (W := W)) = pure (F := G1) ∘ g.
+  Proof.
+    intros.
+    unfold kc3_ci.
+    rewrite (kdtfci_morph (ϕ := @pure G1 _)).
+    rewrite kdtfci_mapdt1.
+    reassociate <- on left.
+    rewrite (natural (ϕ := @pure G1 _)).
+    reflexivity.
+  Qed.
+
+  Lemma kc3_ci_pure_extract2:
+    forall  (A B: Type) (f: W A -> G1 B),
+      kc3_ci (G2 := fun A => A) (pure (F := G2) ∘ extract (W := W)) f = pure (F := G2) ∘ f.
+  Proof.
+    intros.
+    unfold kc3_ci.
+    unfold_ops @Map_I.
+  Abort.
+
+End basic_laws.
 
 (** * Notations *)
 (******************************************************************************)

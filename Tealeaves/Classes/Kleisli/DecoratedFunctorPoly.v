@@ -26,7 +26,7 @@ Definition kc_dz {B1 B2 B3: Type}
   (ρ2: list B2 * B2 -> B3) (* second op to rename binders *)
   (ρ1: list B1 * B1 -> B2) (* first op to rename binders *)
   : list B1 * B1 -> B3 :=
-  fun p => ρ2 (map ρ1 (Categorical.Comonad.cojoin (W := Z) p)).
+  ρ2 ∘ cobind (W := Z) ρ1.
 
 #[global] Arguments mapdz {T}%function_scope {MapdZ} {A B}%type_scope _%function_scope _.
 
@@ -71,8 +71,7 @@ Definition kc_dfunp {T}
   (ρ1: list B1 * B1 -> B2) (* first op to rename binders *)
   (σ1: list B1 * A1 -> A2) (* first op to rename variables *)
   : list B1 * A1 -> A3 :=
-  fun '(ctx, a) =>
-    σ2 (mapdt_ci (G := fun A => A) (W := Z) ρ1 ctx, σ1 (ctx, a)).
+  σ2 ∘ cobind_Z2 ρ1 σ1.
 
 (** ** Typeclass *)
 (**********************************************************************)

@@ -15,6 +15,32 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
+Class Compat_Cobind_Categorical
+    (W: Type -> Type)
+    `{Map_W: Map W}
+    `{Cojoin_W: Cojoin W}
+    `{Cobind_W: Cobind W} :=
+  compat_cobind_categorical:
+    Cobind_W = @DerivedOperations.Cobind_Categorical W Map_W Cojoin_W.
+
+#[export] Instance Cobind_Categorical_Self {W} `{Map W} `{Cojoin W}:
+  @Compat_Cobind_Categorical W _ _ (@DerivedOperations.Cobind_Categorical W _ _).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma cobind_to_categorical {W}
+    `{Map_W: Map W}
+    `{Cojoin_W: Cojoin W}
+    `{Cobind_W: Cobind W}
+    `{Compat: Compat_Cobind_Categorical W}:
+  forall (A B: Type)
+      (f: W A -> B),
+      cobind (W := W) f = map (F := W) f ∘ cojoin.
+Proof.
+  now rewrite compat_cobind_categorical.
+Qed.
+
 Module DerivedInstances.
   (* Alectryon doesn't like this
      Import CategoricalToKleisli.Comonad.DerivedOperations.

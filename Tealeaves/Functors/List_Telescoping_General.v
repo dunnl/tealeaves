@@ -1839,6 +1839,242 @@ Qed.
  *)
 
 
+
+
+(** * Mapd for <<list>>  *)
+(**********************************************************************)
+
+(** ** Recursive inlined version *)
+(**********************************************************************)
+Fixpoint mapd_list_prefix
+  {A B: Type} (f: list A * A -> B) (l: list A): list B :=
+  match l with
+  | nil => @nil B
+  | x :: xs => f (nil, x) :: mapd_list_prefix (f ⦿ [x]) xs
+  end.
+
+(** ** Decomposed Version *)
+(**********************************************************************)
+Definition mapd_list_prefix_spec
+  {A B: Type} (f: list A * A -> B):
+  mapd_list_prefix f = map f ∘ decorate_prefix_list.
+Proof.
+  intros.
+  ext l.
+  generalize dependent f.
+  induction l; intros.
+  - reflexivity.
+  - cbn.
+    fequal.
+    rewrite IHl.
+    unfold preincr.
+    rewrite <- fun_map_map.
+    reflexivity.
+Qed.
+
+From Tealeaves Require Import
+  CategoricalToKleisli.DecoratedFunctor
+  CategoricalToKleisli.Comonad.
+
+Definition mapd_list_prefix_spec_mapdt
+  {A B: Type} (f: list A * A -> B):
+  mapd_list_prefix f = mapdt_list_prefix (G := fun A => A) f.
+Proof.
+  ext l.
+  generalize dependent f.
+  induction l; intro f.
+  reflexivity.
+  rewrite mapdt_list_prefix_rw_cons.
+  rewrite <- IHl.
+  reflexivity.
+Qed.
+
+Lemma mapd_list_prefix_decorate:
+  forall {A B: Type} (f: Z (Z A) -> B),
+    mapd_list_prefix f ∘ decorate_prefix_list =
+      mapd_list_prefix (f ∘ cojoin (W := Z)).
+Proof.
+  intros.
+  rewrite mapd_list_prefix_spec_mapdt.
+  rewrite mapd_list_prefix_spec_mapdt.
+  rewrite (mapdt_list_prefix_decorate (G := fun A => A)).
+  reflexivity.
+Qed.
+
+(** ** Rewriting Laws *)
+(**********************************************************************)
+Section mapd_list_prefix_rw.
+
+  Context
+    {A B: Type}.
+
+  Lemma mapd_list_prefix_rw_nil:
+    forall (f: list A * A -> B),
+      mapd_list_prefix f nil = pure nil.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma mapd_list_prefix_rw_cons:
+    forall (f: list A * A -> B) (a: A) (l: list A),
+      mapd_list_prefix f (a :: l) =
+        f ([], a) :: mapd_list_prefix (f ⦿ [a]) l.
+  Proof.
+    intros. reflexivity.
+  Qed.
+
+  Lemma mapd_list_prefix_rw_app:
+    forall (g: list A * A -> B) (l l': list A),
+      mapd_list_prefix g (l ++ l') =
+        mapd_list_prefix g l ++ mapd_list_prefix (g ⦿ l) l'.
+  Proof.
+    intros g l l'.
+    rewrite mapd_list_prefix_spec_mapdt.
+    rewrite mapd_list_prefix_spec_mapdt.
+    rewrite mapdt_list_prefix_rw_app.
+    reflexivity.
+  Qed.
+
+End mapd_list_prefix_rw.
+
+
+
+(** * Mapd for <<Z>>  *)
+(**********************************************************************)
+
+(** ** Recursive inlined version *)
+(**********************************************************************)
+Definition mapd_Z
+  {A B: Type} (f: Z A -> B) (p: Z A): list B * B :=
+  match p with
+  | (l, a) => (mapd_list_prefix f l, f (l, a))
+  end.
+#[export] Instance Cobind_Z: Cobind Z := @mapd_Z.
+
+(** ** Decomposed Version *)
+(**********************************************************************)
+Definition cobind_Z_spec
+  {A B: Type} (f: Z A -> B):
+  cobind (W := Z) f = map (F := Z) f ∘ cojoin (W := Z).
+Proof.
+  ext l.
+  unfold compose.
+  generalize dependent f.
+  intros f. destruct l.
+  cbn.
+  rewrite mapd_list_prefix_spec.
+  reflexivity.
+Qed.
+
+Definition cobind_Z_spec_mapdt
+  {A B: Type} (f: Z A -> B):
+  cobind (W := Z) f = mapdt_ci (W := Z) (T := Z) (G := fun A => A) f.
+Proof.
+  ext [l a].
+  cbn.
+  rewrite mapd_list_prefix_spec.
+  rewrite map_to_traverse.
+  reflexivity.
+Qed.
+
+Lemma cobind_Z_cojoin:
+  forall {A B: Type} (f: Z (Z A) -> B),
+    cobind (W := Z) f ∘ cojoin (W := Z) =
+      cobind (W := Z) (f ∘ cojoin (W := Z)).
+Proof.
+  intros.
+  ext [l a].
+  cbn.
+  compose near l on left.
+  rewrite mapd_list_prefix_decorate.
+  unfold compose.
+  reflexivity.
+Qed.
+
+(** ** Rewriting Laws *)
+(**********************************************************************)
+Section cobind_Z_prefix_rw.
+
+  Context
+    {A B: Type}.
+
+  Lemma cobind_Z_rw:
+    forall (f: Z A -> B) (ctx: list A) (a: A),
+      cobind (W := Z) f (ctx, a) =
+        (mapd_list_prefix f ctx, f (ctx, a)).
+  Proof.
+    reflexivity.
+  Qed.
+
+End cobind_Z_prefix_rw.
+
+(** * Decorated Functor Instance for List *)
+(**********************************************************************)
+
+(** ** Unit law *)
+(**********************************************************************)
+Lemma kdfun_mapd1_list_prefix: forall (A: Type),
+    mapd_list_prefix extract = @id (list A).
+Proof.
+  intros. ext l. induction l.
+  - cbn. reflexivity.
+  - rewrite mapd_list_prefix_rw_cons.
+    rewrite extract_preincr.
+    rewrite IHl.
+    reflexivity.
+Qed.
+
+(** ** Composition law *)
+(**********************************************************************)
+Lemma kdfun_mapd2_list_prefix:
+  forall {A B C: Type} (g: Z B -> C) (f: Z A -> B),
+    mapd_list_prefix g ∘ mapd_list_prefix f =
+      mapd_list_prefix (g ∘ cobind (W := Z) f).
+Proof.
+  intros.
+  unfold compose.
+  ext l.
+  generalize dependent f.
+  generalize dependent g.
+  induction l; intros.
+  - reflexivity.
+  - rewrite mapd_list_prefix_rw_cons.
+    rewrite mapd_list_prefix_rw_cons.
+    rewrite IHl.
+    rewrite mapd_list_prefix_rw_cons.
+    fequal.
+    unfold preincr.
+    unfold compose.
+    fequal.
+    ext [l' a'].
+    cbn.
+    reflexivity.
+Qed.
+
+(** * Comonad instance on <<Z>> *)
+(**********************************************************************)
+#[export] Instance KleisliComonad_Z: Kleisli.Comonad.Comonad Z.
+Proof.
+  constructor.
+  - intros. ext [l a].
+    reflexivity.
+  - intros.
+    unfold cobind.
+    ext [l a].
+    cbn.
+    rewrite kdfun_mapd1_list_prefix.
+    reflexivity.
+  - intros.
+    unfold compose, kc1.
+    ext [l a].
+    cbn.
+    fequal.
+    { compose near l on left.
+      rewrite kdfun_mapd2_list_prefix.
+      reflexivity.
+    }
+Qed.
+
 (** * <<Dist>> instance on <<Z>> *)
 (**********************************************************************)
 From Tealeaves Require Import Classes.Categorical.TraversableFunctor.
@@ -1849,7 +2085,7 @@ Definition dist_Z
   list (G B1) * G V1 -> G (list B1 * V1) :=
   fun '(x, y) => pure (@pair (list B1) V1) <⋆> dist list G x <⋆> y.
 
-Instance Dist_Z: ApplicativeDist Z.
+#[export] Instance Dist_Z: ApplicativeDist Z.
 Proof.
   intro G. intros.
   exact (dist_Z X).

@@ -26,6 +26,9 @@ From Tealeaves Require
   Adapters.PolyToMono.Kleisli.DecoratedTraversableMonad
   Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.
 
+
+(** * Single-Argument DTM Instance *)
+(**********************************************************************)
 Section DTM.
 
   Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
@@ -70,10 +73,6 @@ Section DTM.
 
 End DTM.
 
-
-
-
-
 (** * Local Translations *)
 (**********************************************************************)
 Section with_DTM.
@@ -105,6 +104,10 @@ Section with_DTM.
     exact (binding_to_ln (get_binding ctx x)).
   Defined.
 
+  Definition term_nominal_to_ln:
+    T name name -> T unit LN :=
+    mapdp (T := T) (const tt) name_to_ln.
+
   (** ** Locally Nameless to Named *)
   (********************************************************************)
   Definition INDEX_EXCEEDS_CONTEXT: nat := 1337.
@@ -115,7 +118,8 @@ Section with_DTM.
     | S n' => fresh (avoid ++ [ix_new_name_core avoid n'])
     end.
 
-  Definition ix_new_name (top_conflicts: list name) (ctx: list unit) (n: nat) :=
+  (* Give a DB index (Bd N), define its new name *)
+  Definition ix_new_name (top_conflicts: list name) (ctx: list unit) (n: nat): nat :=
     if Nat.ltb n (length ctx)
     then ix_new_name_core top_conflicts (n - length ctx)
     else INDEX_EXCEEDS_CONTEXT.
@@ -130,19 +134,17 @@ Section with_DTM.
 
   Definition ln_to_binder (top_conflicts: list name):
     list unit * unit -> name :=
-    (fun '(ctx, _) => ix_new_name top_conflicts ctx (length ctx)).
+    (fun '(ctx, _) => ix_new_name_core top_conflicts (length ctx)).
 
-  (** ** Lifted Operations *)
-  (********************************************************************)
   Definition term_ln_to_nominal (conflicts: list name):
     T unit LN -> T name name :=
     mapdp (T := T)
       (ln_to_binder conflicts)
       (ln_to_name conflicts).
 
-  Definition term_nominal_to_ln:
-    T name name -> T unit LN :=
-    mapdp (T := T) (const tt) name_to_ln.
+
+  (** ** Roundtrip Specifications *)
+  (********************************************************************)
 
   Definition roundtrip_Named `{Traverse (T unit)}:
     T name name -> T name name :=
@@ -162,6 +164,9 @@ Section with_DTM.
     unfold term_nominal_to_ln.
     compose near t on left.
     rewrite kdfunp_mapdp2.
+    unfold kc_dfunp.
+    unfold kc_dz.
+    About kc_dz.
     reflexivity.
   Qed.
 
@@ -207,21 +212,20 @@ Section with_DTM.
     `{ToCtxset (list atom) (T atom)}
      `{Traverse (T unit)}.
 
+  (*
   Definition cobind_binders {B1 B2}:
     forall (ρ: list B1 * B1 -> B2) (p: list B1 * B1), list B2 * B2 :=
-    fun ρ p => map (F := Z) ρ (cojoin (W := Z) p).
+    fun ρ => cobind (W := Z) ρ.
+    *)
 
+  (*
   Definition cobind_vars {B1 B2 V}:
     forall (ρ: list B1 * B1 -> B2) (p: list B1 * V), list B2 * V :=
-    fun ρ '(w, v) => (map (F := list) ρ (decorate_prefix_list w), v).
+    fun ρ => map_fst (mapd_list_prefix ρ).
+    *)
 
   Definition rt_local_binders (avoid: list atom) (ctx: list atom): list atom :=
     map (kc_dz (ln_to_binder avoid) (const tt)) (decorate_prefix_list ctx).
-
-  (*
-  Lemma rt_local_binders_spec (avoid: list atom) (ctx:list atom):
-    rt_local_binders avoid ctx = cobind_vars (kc_dz (ln_to_binder ctx) (const tt)) ctx.
-   *)
 
   Definition rt_local_atom (avoid: list atom) (ctx: list atom) (a: atom): atom :=
     ln_to_name avoid (map (const tt) ctx, name_to_ln (ctx, a)).
@@ -229,7 +233,7 @@ Section with_DTM.
   Lemma decorate_rename_binders {B1 B2 V}:
     forall (ρ: list B1 * B1 -> B2) (t: T B1 V),
       delete_binders (dec (T B2) (rename_binders ρ t)) =
-        delete_binders (map (F := T B1) (cobind_vars ρ) (dec (T B1) t)).
+        delete_binders (map (F := T B1) (map_fst (mapd_list_prefix ρ)) (dec (T B1) t)).
   Proof.
     intros.
     unfold delete_binders.
@@ -269,17 +273,19 @@ Section with_DTM.
     rewrite (fun2_map_map).
     fequal.
     change (id ∘ ?x) with x.
-    unfold cobind_vars.
     ext [w v].
     unfold compose.
     cbn.
+    rewrite mapd_list_prefix_spec.
     reflexivity.
   Qed.
 
   Lemma decorate_rename_binders2 {B1 B2 V}:
     forall (ρ: list B1 * B1 -> B2) (t: T B1 V),
       delete_binders (dec (T B2) (rename_binders ρ t)) =
-        map (F := T unit) (cobind_vars ρ) (delete_binders (dec (T B1) t)).
+        map (F := T unit)
+          (map_fst (mapd_list_prefix ρ))
+          (delete_binders (dec (T B1) t)).
   Proof.
     intros.
     rewrite decorate_rename_binders.
@@ -375,6 +381,8 @@ Section alpha_reasoning.
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.
 
+  Fail Import Categorical.DecoratedTraversableFunctorPoly.ToMono.
+
   Existing Instance Theory.TraversableFunctor.ToSubset_Traverse.
 
   Lemma in_del_binders {B A}: forall (t: T B A) (a: A),
@@ -396,12 +404,11 @@ Section alpha_reasoning.
     reflexivity.
   Qed.
 
-
   Import ContainerFunctor.Notations.
 
   Definition rt_local (avoid: list atom): list atom * atom -> list atom * atom :=
     fun '(ctx, a) =>
-    (cobind_vars (kc_dz (ln_to_binder avoid) (const tt))
+    (map_fst (mapd_list_prefix (kc_dz (ln_to_binder avoid) (const tt)))
        (cobind (kc_dfunp (ln_to_name avoid) (const tt) name_to_ln) (ctx, a))).
 
   Lemma rt_local_spec (avoid: list atom): forall (p: list atom * atom),
@@ -410,18 +417,103 @@ Section alpha_reasoning.
                          end.
   Proof.
     intros [ctx a].
+    unfold rt_local.
+    unfold kc_dz.
     cbn.
     destruct (get_binding_spec ctx a) as [[Case1 rest] | [prefix [postfix [Case2 [ctxspec Hnin]]]]].
     { rewrite Case1.
+      unfold binding_to_ln.
+      fequal.
+      unfold rt_local_binders.
+      unfold kc_dz.
+      compose near ctx on right.
+      rewrite <- mapd_list_prefix_spec.
       reflexivity.
     }
     { rewrite Case2.
       repeat fequal.
-      rewrite map_to_traverse.
-      (* mapdt_ci lemma *)
-      admit.
-    }
-  Admitted.
+      - unfold rt_local_binders.
+        compose near ctx on right.
+        rewrite <- mapd_list_prefix_spec.
+        reflexivity.
+      - clear.
+        induction ctx.
+        + reflexivity.
+        + cbn.
+          fequal.
+          compose near (decorate_prefix_list ctx).
+          rewrite (fun_map_map).
+          assert (cut: const tt ∘ incr (A := atom) [a] = const tt).
+          { now ext [? ?].
+          }
+          rewrite cut.
+          apply IHctx.
+    }.
+  Qed.
+
+  Import Theory.DecoratedTraversableFunctor.
+  Existing Instance ToCtxset_Mapdt.
+
+  Lemma ln_to_binder_preincr: forall avoid a,
+      ln_to_binder avoid ∘ cobind (W := Z) (const tt) ∘ incr [a] =
+        ln_to_binder (avoid ++ [fresh avoid]) ∘ cobind (const tt).
+  Proof.
+    intros.
+    ext [ctx x].
+    unfold compose.
+    unfold ln_to_binder.
+  Abort.
+
+
+  Lemma rt_binders_rw: forall avoid l1 l2,
+      rt_local_binders avoid (l1 ++ l2) =
+        rt_local_binders avoid l1 ++ rt_local_binders (avoid ++ rt_local_binders avoid l1) (l1 ++ l2).
+  Proof.
+    intros.
+    unfold rt_local_binders.
+    unfold kc_dz.
+    rewrite decorate_prefix_list_rw_app.
+    rewrite map_list_app.
+    compose near (decorate_prefix_list l2) on left.
+    rewrite map_list_app.
+    rewrite (fun_map_map).
+    fequal.
+    unfold cobind, Cobind_Z.
+    unfold mapd_Z.
+    induction l1.
+    - cbn.
+    unfold compose.
+    cbn.
+
+  Proof.
+
+  Lemma rt_binders_rw: forall avoid a ctx,
+      rt_local_binders avoid (a :: ctx)  =
+        fresh avoid :: rt_local_binders (avoid ++ [fresh avoid]) ctx.
+  Proof.
+    intros.
+    unfold rt_local_binders.
+    rewrite decorate_prefix_list_rw_cons.
+    rewrite map_list_cons.
+    fequal.
+    compose near (decorate_prefix_list ctx) on left.
+    rewrite fun_map_map.
+    fequal.
+    unfold kc_dz.
+    ext [w x].
+    unfold compose.
+    unfold incr.
+    unfold kc_dz.
+    unfold compose.
+    unfold monoid_op.
+    unfold Monoid_op_list.
+    change ([a] ++ w) with (a :: w).
+    rewrite cobind_Z_rw.
+    rewrite cobind_Z_rw.
+    rewrite  mapd_list_prefix_rw_cons.
+
+    cbn.
+    fequal.
 
   Lemma rt_correct_local:
     forall (t: T name name) (avoid: list name)
@@ -437,24 +529,31 @@ Section alpha_reasoning.
     {
       unfold alpha_equiv_local.
       rewrite Case1.
-      assert (get_binding
-                (rt_local_binders avoid ctx)
-                (rt_local_atom avoid ctx a)
-              = Unbound (rt_local_binders avoid ctx) a).
-      { destruct (get_binding_spec  (rt_local_binders avoid ctx) (rt_local_atom avoid ctx a))
-          as [[Case1' rest'] | [prefix' [postfix' [Case2' [ctxspec' Hnin']]]]].
-        { rewrite Case1'.
-          admit.
-        }
-        get_binding (rt_local_binders avoid ctx) (rt_local_atom avoid ctx a) = Unbound ctx a).
-      {
-      assert (rt_local_binders avoid ctx = Unbound ctx a).
+      assert (HinFV: a ∈ FV (T name) t).
+      { assert (DecoratedTraversableFunctor (list atom) (T atom)).
+        { admit. }
+        apply (FV_lift_local (T atom) _ ctx); auto.
+      }
+      assert (HinAvoid: a ∈ avoid).
+      { apply HavoidInit; auto. }
+
+      Set Nested Proofs Allowed.
+  Lemma never_the_avoid_set: forall avoid ctx a,
+      a ∈ avoid ->
+      ~ rt_local_atom avoid ctx a ∈ (rt_local_binders avoid ctx).
+  Proof.
+    introv Hinavoid.
     induction ctx.
-    - cbn. destruct_eq_args a a.
-    - unfold rt_local_binders.
+    - cbn. easy.
+    - unfold rt_local_atom.
+      unfold rt_local_binders.
+      rewrite map_list_cons.
+      rewrite map_list_cons_rw.
 
-
-    destruct (get_binding_spec ctx a) as [[Case1 rest] | [Case2 [rest1 rest2]]]. *)
+      admit.
+    }
+    {
+    }
   Admitted.
 
   Lemma rt_correct_local1:  forall (t: T name name),

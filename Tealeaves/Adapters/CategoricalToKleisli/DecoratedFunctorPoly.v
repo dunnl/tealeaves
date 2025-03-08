@@ -81,16 +81,10 @@ Module DerivedInstances.
         rewrite dfunp_dec_dec.
         reassociate <- on left.
         rewrite fun2_map_map.
-        fequal.
-        fequal.
+        unfold kc_dz.
         unfold kc_dfunp.
-        ext [ctx a].
-        unfold mapdt_ci.
-        unfold Mapdt_CommIdem_list_prefix.
-        unfold compose.
-        cbn.
-        unfold mapdt_list_prefix.
-        rewrite map_to_traverse.
+        reassociate -> on left.
+        rewrite cobind_Z_spec.
         reflexivity.
     Qed.
   End context.
