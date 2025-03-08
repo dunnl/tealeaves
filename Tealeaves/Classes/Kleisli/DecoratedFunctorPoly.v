@@ -8,10 +8,10 @@ From Tealeaves Require Export
 Import Product.Notations.
 
 
-(** * Monomorphic Binder Instance *)
+(** * Functors Decorated by <<Z>> Comonad *)
 (******************************************************************************)
 
-(** ** Operation <<mapdp>> *)
+(** ** Operation <<mapdz>> *)
 (******************************************************************************)
 Class MapdZ
   (T: Type -> Type) :=
@@ -46,6 +46,72 @@ Class DecoratedFunctorZ
       (mapdz ρ2) ∘ mapdz (T := T) ρ1 =
         mapdz (T := T) (kc_dz ρ2 ρ1)
   }.
+
+(** ** Instance for List *)
+(******************************************************************************)
+#[export] Instance MapdZ_list: MapdZ list := @mapd_list_prefix.
+
+#[export] Instance DecoratedFunctorZ_list: DecoratedFunctorZ list.
+Proof.
+  constructor; intros; unfold_ops @MapdZ_list.
+  - rewrite kdfun_mapd1_list_prefix.
+    reflexivity.
+  - rewrite kdfun_mapd2_list_prefix.
+    reflexivity.
+Qed.
+
+Import Functors.List.
+(* TODO Relocate me *)
+Lemma mapdz_map_list {A A' B: Type}: forall (f: Z A -> B) (g: A' -> A),
+    mapdz (T := list) (f ∘ map (F := Z) g) =
+      mapdz (T := list) f ∘ map (F := list) g.
+Proof.
+  intros. ext l.
+  unfold compose.
+  generalize dependent f.
+  induction l.
+  - reflexivity.
+  - cbn. intros.
+    rewrite <- IHl.
+    fequal.
+    fequal.
+    ext [x y].
+    cbn.
+    unfold preincr, incr, compose.
+    fequal.
+Qed.
+
+
+(** ** Instance for Z *)
+(******************************************************************************)
+#[export] Instance MapdZ_Z: MapdZ Z := @mapd_Z.
+
+Lemma mapdz_rw_pair {A B: Type}: forall (f: Z A -> B) ctx a,
+    mapdz (T := Z) f (ctx, a) =
+      (mapdz (T := list) f ctx, f (ctx, a)).
+Proof.
+  reflexivity.
+Qed.
+
+#[export] Instance DecoratedFunctorZ_Z: DecoratedFunctorZ Z.
+Proof.
+  constructor; intros; ext [ctx a].
+  - rewrite mapdz_rw_pair.
+    rewrite kdz_mapdz1.
+    reflexivity.
+  - rewrite mapdz_rw_pair.
+    unfold compose at 1.
+    rewrite mapdz_rw_pair.
+    rewrite mapdz_rw_pair.
+    compose near ctx on left.
+    rewrite (kdz_mapdz2 (T := list)).
+    reflexivity.
+Qed.
+
+(*
+#[export] Instance DecoratedContainerFunctor_list_prefix:
+  DecoratedFunctorZ list.
+*)
 
 (** * Polymorphically Decorated Functors *)
 (******************************************************************************)
