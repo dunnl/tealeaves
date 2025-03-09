@@ -170,7 +170,6 @@ Module ToMono.
         compose near t.
         rewrite fun2_map_map.
         rewrite fun2_map_map.
-        Search pure map.
         rewrite (natural (ϕ := @pure G _)).
         unfold_ops @Map_I.
         rewrite fun_map_id.

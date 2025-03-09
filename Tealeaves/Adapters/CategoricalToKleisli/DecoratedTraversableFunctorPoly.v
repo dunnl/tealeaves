@@ -13,7 +13,7 @@ Import Functor2.Notations.
 (**********************************************************************)
 Module DerivedOperations.
 
-  #[export] Instance Mapdt_Categorical
+  #[export] Instance Mapdtp_Categorical
     (T: Type -> Type -> Type)
     `{Map2 T}
     `{DecoratePoly T}

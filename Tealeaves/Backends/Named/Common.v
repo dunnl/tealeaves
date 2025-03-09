@@ -98,7 +98,21 @@ Section rw.
     reflexivity.
   Qed.
 
+  (** *** Preservation of <<length>> *)
+  (**********************************************************************)
+  Lemma length_fold_with_history: forall (l: list A) (f: list B * A -> B),
+      length (fold_with_history f l) = length l.
+  Proof.
+    intros.
+    generalize dependent f.
+    induction l; intros.
+    - reflexivity.
+    - cbn. fequal.
+      apply IHl.
+  Qed.
+
 End rw.
+
 
 (** ** An Induction Rule for <<fold_with_history>> *)
 (**********************************************************************)
@@ -678,22 +692,24 @@ Section rw.
   Admitted.
 
 
-  Lemma get_binding2: forall prefix v postfix ctx,
-      ctx = prefix ++ [v] ++ postfix ->
-      ~ (v ∈ postfix) ->
-      get_binding ctx v = Bound prefix v postfix.
+  Lemma get_binding2: forall prefix v1 v2 postfix ctx,
+      v1 = v2 ->
+      ctx = prefix ++ [v1] ++ postfix ->
+      ~ (v1 ∈ postfix) ->
+      get_binding ctx v1 = Bound prefix v2 postfix.
   Proof.
-    introv Heq Hnin. subst.
-    destruct (get_binding_spec (prefix ++ [v] ++ postfix) v)
+    introv HVeq Heq Hnin.
+    destruct (get_binding_spec (prefix ++ [v2] ++ postfix) v2)
       as [[Case1 rest] | [prefix' [postfix' [Case2 [ctxspec Hnin']]]]].
     - false. apply rest.
       rewrite element_of_list_app.
       rewrite element_of_list_app.
       rewrite element_of_list_one.
       tauto.
-    - rewrite Case2.
+    - subst.
       apply list_binding_inversion in ctxspec; auto.
-      destruct ctxspec; subst. reflexivity.
+      destruct ctxspec; subst.
+      auto.
   Qed.
 
 End rw.

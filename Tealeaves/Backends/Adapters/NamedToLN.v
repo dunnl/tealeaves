@@ -5,6 +5,7 @@ From Tealeaves Require Import
   Backends.Named.FV
   Backends.Named.Alpha
   Functors.Option
+  LiftRel.TraversableFunctor
   Theory.DecoratedTraversableFunctorPoly
   CategoricalToKleisli.DecoratedFunctorPoly
   CategoricalToKleisli.TraversableFunctor
@@ -88,6 +89,7 @@ Section with_DTM.
   Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
   Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
   Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations.
+  Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
 
   Import DecoratedFunctorPoly.ToMono.
   Import TraversableFunctor2.ToMono.
@@ -229,8 +231,17 @@ Section with_DTM.
       }
   Qed.
 
+  Corollary length_to_history_from_prefix (top_conflicts: list name) (l: list unit):
+    length (to_history_from_prefix top_conflicts l) = length l.
+  Proof.
+    intros.
+    unfold to_history_from_prefix.
+    rewrite length_fold_with_history.
+    reflexivity.
+  Qed.
+
   (* Tailored for use when the list is a nominal binding context decomposition *)
-  Corollary to_history_from_prefix_decompose (top_conflicts: list name) {l1 l2: list unit} {u: unit}:
+  Corollary to_history_from_prefix_decompose1 (top_conflicts: list name) {l1 l2: list unit} {u: unit}:
 to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
         to_history_from_prefix top_conflicts l1 ++
           [to_name_from_history top_conflicts
@@ -246,6 +257,22 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     reflexivity.
   Qed.
 
+  Corollary to_history_from_prefix_decompose2 (top_conflicts: list name) {l1 l2: list unit} {u: unit}:
+    to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
+      to_history_from_prefix top_conflicts l1 ++
+        [to_name_from_history top_conflicts
+           (to_history_from_prefix top_conflicts l1, u)] ++
+        to_history_from_prefix
+        (top_conflicts ++
+           (to_history_from_prefix top_conflicts l1) ++
+           [to_name_from_history top_conflicts (to_history_from_prefix top_conflicts l1, u)]
+        ) l2.
+  Proof.
+    intros.
+    rewrite to_history_from_prefix_decompose1.
+    rewrite to_name_from_history_preincr.
+    reflexivity.
+  Qed.
 
   (** *** Rewriting rules *)
   (********************************************************************)
@@ -469,20 +496,20 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
   (* Given a binding occurrence (pre, b) in a nominal term t,
      return the new name of b after a Nominal~>LN~>Nominal roundtrip *)
-  Definition roundtrip_Binders (avoid: list atom): Z atom -> atom :=
+  Definition roundtrip_Binder_loc (avoid: list atom): Z atom -> atom :=
     to_name_from_prefix avoid ∘ map (const tt).
 
   (* Given a variable occurrence (pre, v) in a nominal term t,
      return the new name of v after a Nominal~>LN~>Nominal roundtrip *)
-  Definition roundtrip_Vars (avoid: list atom): Z2 atom atom -> atom :=
+  Definition roundtrip_Var_loc (avoid: list atom): Z2 atom atom -> atom :=
     kc_dfunp (ln_to_name avoid) (const tt) name_to_ln.
 
-  Lemma roundtrip_Binders_spec (avoid: list atom):
-    mapdz (T := list) (roundtrip_Binders avoid) =
+  Lemma roundtrip_Binder_loc_spec (avoid: list atom):
+    mapdz (T := list) (roundtrip_Binder_loc avoid) =
       to_history_from_prefix avoid ∘ map (const tt).
   Proof.
     intros.
-    unfold roundtrip_Binders.
+    unfold roundtrip_Binder_loc.
     rewrite to_history_from_prefix_spec.
     Set Keyed Unification.
     rewrite (mapdz_map_list (A' := atom) (B := atom) (A := unit)).
@@ -495,8 +522,8 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       roundtrip_Named t =
         let avoid := LN.free (term_nominal_to_ln t)
         in rename_binders
-             (roundtrip_Binders avoid)
-             (mapd (T := T name) (roundtrip_Vars avoid) t).
+             (roundtrip_Binder_loc avoid)
+             (mapd (T := T name) (roundtrip_Var_loc avoid) t).
   Proof.
     intros.
     rewrite roundtrip_Named_spec1.
@@ -511,8 +538,18 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
   (********************************************************************)
   Definition roundtrip_Occ (avoid: list atom): list atom * atom -> list atom * atom :=
     fun '(ctx, a) =>
-      (mapdz (roundtrip_Binders avoid) ctx, roundtrip_Vars avoid (ctx, a)).
+      (mapdz (roundtrip_Binder_loc avoid) ctx, roundtrip_Var_loc avoid (ctx, a)).
 
+  Lemma roundtrip_Occ_spec (avoid: list atom): forall ctx a,
+      roundtrip_Occ avoid (ctx, a) =
+        (map_fst (mapdz (T := list) (roundtrip_Binder_loc avoid))
+           (cobind (W := prod (list atom)) (roundtrip_Var_loc avoid) (ctx, a))).
+  Proof.
+    intros.
+    unfold roundtrip_Occ.
+    unfold cobind.
+    reflexivity.
+  Qed.
 
   Lemma roundtrip_Named_var_spec {avoid: list atom}:
     (kc_dfunp
@@ -625,12 +662,84 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     reflexivity.
   Qed.
 
+
+  (** ** Lemma About Mapdtp with Constant Applicatives *)
+  (**********************************************************************)
+  Section constant_applicatives.
+
+    Context
+      {M} `{Monoid M}.
+
+    Import Categorical.TraversableFunctor2.
+
+    Lemma mapdtp_const1:
+      forall {A1 B1: Type} (A2 B2: Type) `(g: list B1 * B1 -> M) `(f: list B1 * A1 -> M),
+        mapdtp (G := const M) (B2 := False) (A2 := False) g f =
+          mapdtp (G := const M) (B2 := B2) (A2 := A2) g f.
+    Proof.
+      intros.
+      change_left
+        (map (F := const M)
+           (A := T False False)
+           (B := T B2 A2)
+           (map2 (F := T) (B1 := False) (A1 := False) (B2 := B2) (A2 := A2) exfalso exfalso)
+           ∘ mapdtp (T := T) (G := const M) g f).
+
+
+      unfold mapdtp.
+      unfold DerivedOperations.Mapdt_Categorical.
+      reassociate <- on left.
+      reassociate <- on left.
+      unfold compose.
+      ext t.
+      rewrite <- dist2_natural_rw.
+      compose near (decp t).
+      rewrite fun2_map_map.
+      fequal.
+    Qed.
+
+
+    Lemma mapdtp_const_normalize:
+      forall {A1 B1: Type} (A2 B2: Type) `(g: list B1 * B1 -> M) `(f: list B1 * A1 -> M),
+        mapdtp (G := const M) (B2 := B2) (A2 := A2) g f =
+          mapdtp (G := const M) (B2 := False) (A2 := False) g f.
+    Proof.
+      intros.
+      symmetry.
+      apply mapdtp_const1.
+    Qed.
+
+  End constant_applicatives.
+
   (** ** Relating Free Variables During Translation *)
   (********************************************************************)
   Lemma normalize_foldMap {M} `{Monoid M} `(f: list name * name -> M): forall (t: T name name),
       foldMapd f t = mapdtp (A2 := False) (G := const M) (T := T) (pure (F := const M) ∘ (const tt)) f t.
   Proof.
-  Admitted.
+    intros.
+    rewrite foldMapd_to_mapdt1.
+    unfold mapdt.
+    unfold Mapdt_Categorical.
+    unfold_ops @Dist2_1.
+    unfold_ops @Decorate_PolyVar.
+    change_left ((TraversableFunctor2.dist2 (B := atom) (A := False) ∘ (map2 pure id ∘ map f ∘ map2 extract id) ∘ decp) t).
+    rewrite fun2_map2_map21.
+    rewrite fun2_map_map.
+    change (id ∘ ?f) with f.
+    change (f ∘ ?id) with f.
+    change_left ((mapdtp (B2 := atom) (A2 := False) (B1 := atom) (A1 := atom) (pure (F := const M)) f) t).
+    pose @mapdtp_const_normalize.
+    specialize (e M _ _ H3).
+    specialize (e atom atom False atom).
+    rewrite e.
+    clear e.
+    pose @mapdtp_const_normalize.
+    specialize (e M _ _ H3).
+    specialize (e atom atom False unit).
+    rewrite e.
+    clear e.
+    reflexivity.
+  Qed.
 
   Lemma FV_preserved: forall (t: T name name),
       FV (T name) t =
@@ -684,65 +793,42 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     unfold to_name_from_prefix.
   Abort.
 
-  Lemma roundtrip_Occ_Unbound_spec1: forall (avoid: list atom) (ctx: list atom) (a: atom),
-      get_binding ctx a = Unbound ctx a ->
-      roundtrip_Occ avoid (ctx, a) = (mapdz (roundtrip_Binders avoid) ctx, a).
-  Proof.
-    introv Hyp.
-    cbn.
-    fequal.
-    rewrite Hyp.
-    cbn.
-    reflexivity.
-  Qed.
-
-  Lemma roundtrip_Occ_Bound_spec1: forall (avoid: list atom) (ctx: list atom) (a: atom) prefix a' postfix,
-      get_binding ctx a = Bound prefix a' postfix ->
+  (** *** Specification of <<roundtrip_Occ>> *)
+  (********************************************************************)
+  Lemma roundtrip_Occ_spec_pw: forall (avoid: list atom) (ctx: list atom) (a: atom),
       roundtrip_Occ avoid (ctx, a) =
-        (mapdz (roundtrip_Binders avoid) ctx, roundtrip_Vars avoid (ctx, a)).
+        (mapdz (roundtrip_Binder_loc avoid) ctx, roundtrip_Var_loc avoid (ctx, a)).
   Proof.
-    introv Hyp.
-    clear Hyp.
     unfold roundtrip_Occ.
-    rewrite roundtrip_Binders_spec.
     reflexivity.
   Qed.
 
-  Lemma roundtrip_Occ_Unbound_spec2: forall (avoid: list atom) (ctx: list atom) (a: atom),
-      a ∈ avoid ->
+  (** *** Specification of <<roundtrip_Occ>> when a is unbound *)
+  (********************************************************************)
+  Lemma roundtrip_Occ_Unbound_spec: forall (avoid: list atom) (ctx: list atom) (a: atom),
       get_binding ctx a = Unbound ctx a ->
-      match roundtrip_Occ avoid (ctx, a) with
-      | (foo, x) =>
-          get_binding foo x = Unbound (mapdz (roundtrip_Binders avoid) ctx) a
-      end.
+      roundtrip_Occ avoid (ctx, a) = (mapdz (roundtrip_Binder_loc avoid) ctx, a).
   Proof.
-    introv Hnin Hyp.
-    rewrite roundtrip_Occ_Unbound_spec1; auto.
-    destruct (get_binding_spec (mapdz (roundtrip_Binders avoid) ctx) a)
-      as [[Case1 rest] | [prefix [postfix [Case2 [ctxspec Hnin']]]]].
-    { rewrite Case1.
-      reflexivity. }
-    { assert (Hfresh: ~ a ∈ mapdz (roundtrip_Binders avoid) ctx).
-      { rewrite roundtrip_Binders_spec.
-        unfold compose at 1.
-        apply to_history_from_prefix_fresh.
-        assumption.
-      }
-      apply get_binding1 in Hfresh.
-      assumption.
-    }
+    introv Hyp.
+    rewrite roundtrip_Occ_spec_pw.
+    fequal.
+    cbn.
+    rewrite Hyp.
+    reflexivity.
   Qed.
 
-  Lemma roundtrip_Vars_Bound_spec: forall (avoid: list atom) (ctx: list atom) (a: atom) prefix a' postfix,
+  (** *** Specification of <<roundtrip_Var_loc>> when a is bound *)
+  (********************************************************************)
+  Lemma roundtrip_Var_loc_Bound_spec: forall (avoid: list atom) (ctx: list atom) (a: atom) prefix a' postfix,
       get_binding ctx a = Bound prefix a' postfix ->
       ctx = prefix ++ [a'] ++ postfix ->
       a = a' ->
-      roundtrip_Vars avoid (ctx, a) =
+      roundtrip_Var_loc avoid (ctx, a) =
         to_name_from_history avoid (to_history_from_prefix avoid (map (const tt) prefix), tt).
   Proof.
     introv Hbinding Hctx Haeq.
     unfold to_name_from_history.
-    unfold roundtrip_Vars.
+    unfold roundtrip_Var_loc.
     unfold kc_dfunp.
     rewrite cobind_Z2_const.
     unfold compose at 1.
@@ -782,53 +868,96 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       - cbn. now rewrite IHprefix. }
   Qed.
 
-  Lemma roundtrip_Occ_Bound_spec2: forall (avoid: list atom) (ctx: list atom) (a: atom) prefix a' postfix,
+  (** *** Specification of <<get_binding ∘ roundtrip_Occ>> when a is unbound *)
+  (********************************************************************)
+  Lemma roundtrip_Occ_get_binding_Unbound_spec:
+    forall (avoid: list atom) (ctx: list atom) (a: atom),
+      a ∈ avoid ->
+      get_binding ctx a = Unbound ctx a ->
+      match roundtrip_Occ avoid (ctx, a) with
+      | (foo, x) =>
+          get_binding foo x = Unbound (mapdz (roundtrip_Binder_loc avoid) ctx) a
+      end.
+  Proof.
+    introv Hnin Hyp.
+    rewrite roundtrip_Occ_Unbound_spec; auto.
+    destruct (get_binding_spec (mapdz (roundtrip_Binder_loc avoid) ctx) a)
+      as [[Case1 rest] | [prefix [postfix [Case2 [ctxspec Hnin']]]]].
+    { rewrite Case1.
+      reflexivity. }
+    { assert (Hfresh: ~ a ∈ mapdz (roundtrip_Binder_loc avoid) ctx).
+      { rewrite roundtrip_Binder_loc_spec.
+        unfold compose at 1.
+        apply to_history_from_prefix_fresh.
+        assumption.
+      }
+      apply get_binding1 in Hfresh.
+      assumption.
+    }
+  Qed.
+
+  (** *** Specification of <<get_binding ∘ roundtrip_Occ>> when a is bound *)
+  (********************************************************************)
+  Lemma roundtrip_Occ_get_binding_Bound_spec:
+    forall (avoid: list atom) (ctx: list atom) (a: atom) prefix a' postfix,
       get_binding ctx a = Bound prefix a' postfix ->
       a = a' ->
       ctx = prefix ++ [a'] ++ postfix ->
       ~ a ∈ postfix ->
       match roundtrip_Occ avoid (ctx, a) with
       | (foo, x) =>
-          get_binding foo x =
-            let NewPrefix := to_history_from_prefix avoid (map (const tt) prefix)
-            in let NewVar := to_name_from_history avoid (NewPrefix, tt)
-               in let NewPost := to_history_from_prefix (avoid ++ NewPrefix ++ [NewVar]) (map (const tt) postfix)
-                  in Bound NewPrefix NewVar NewPost
+          let NewPrefix := to_history_from_prefix avoid (map (const tt) prefix)
+          in let NewVar := to_name_from_history avoid (NewPrefix, tt)
+             in let NewPost := to_history_from_prefix (avoid ++ NewPrefix ++ [NewVar]) (map (const tt) postfix)
+                in get_binding foo x = Bound NewPrefix NewVar NewPost /\ length NewPrefix = length prefix
       end.
   Proof.
     introv Hyp Haeq Hctxeq Hnin.
-    unfold roundtrip_Occ.
-    rewrite roundtrip_Binders_spec.
-    unfold compose at 1.
-    remember (to_history_from_prefix avoid (map (const tt) ctx)) as NewContext.
-    remember (roundtrip_Vars avoid (ctx, a)) as NewVar'.
-    rewrite Hctxeq in HeqNewContext.
-    rewrite map_list_app in HeqNewContext.
-    rewrite map_list_app in HeqNewContext.
-    rewrite map_list_one in HeqNewContext.
-    change (const tt a') with tt in HeqNewContext.
-    rewrite (to_history_from_prefix_decompose avoid) in HeqNewContext.
-
-    remember (to_history_from_prefix avoid (map (const tt) prefix)) as NewPrefix.
-    remember (to_name_from_history avoid (NewPrefix, tt)) as NewVar.
-    rewrite (roundtrip_Vars_Bound_spec avoid ctx a prefix a' postfix Hyp Hctxeq Haeq) in HeqNewVar'.
-    assert (NewVar = NewVar').
-    { subst. reflexivity. }
-    rewrite <- H3 in *; clear H3.
-    rewrite to_name_from_history_preincr in HeqNewContext.
-    remember (fold_with_history (to_name_from_history avoid ⦿ (NewPrefix ++ [NewVar]))
-                (map (const tt) postfix)) as NewPostFix.
-    rewrite to_name_from_history_preincr in HeqNewPostFix.
-    unfold to_history_from_prefix.
-    rewrite <- HeqNewPostFix.
-    assert (Hnin': ~ NewVar ∈ NewPostFix).
-    { rewrite HeqNewPostFix.
-      admit.
+    remember (roundtrip_Occ avoid (ctx, a)).
+    destruct p.
+    rewrite roundtrip_Occ_spec_pw in Heqp.
+    injection Heqp; introv Hctx' HVar'.
+    clear Heqp.
+    intros NewPrefix NewVar NewPost.
+    split.
+    { assert
+        (HRoundtripMapsToNewVar:
+          roundtrip_Var_loc avoid (prefix ++ [a'] ++ postfix, a') = NewVar).
+      { subst.
+        unfold NewVar.
+        unfold NewPrefix.
+        eapply roundtrip_Var_loc_Bound_spec;
+          eauto.
+      }
+      apply get_binding2.
+      - subst. apply HRoundtripMapsToNewVar.
+      - subst.
+        rewrite roundtrip_Binder_loc_spec.
+        unfold compose.
+        rewrite map_list_app.
+        rewrite map_list_app.
+        rewrite map_list_one.
+        change (const tt a') with tt.
+        rewrite to_history_from_prefix_decompose2.
+        fold NewPrefix.
+        fold NewVar.
+        fold NewPost.
+        rewrite HRoundtripMapsToNewVar.
+        reflexivity.
+      - apply to_history_from_prefix_fresh.
+        rewrite element_of_list_app.
+        rewrite element_of_list_app.
+        right; right.
+        rewrite element_of_list_one.
+        subst.
+        assumption.
     }
-    rewrite HeqNewContext.
-    rewrite <- HeqNewPostFix.
-    admit.
-  Admitted.
+    { unfold NewPrefix.
+      rewrite length_to_history_from_prefix.
+      rewrite map_preserve_length.
+      reflexivity.
+    }
+  Qed.
 
   Lemma rt_correct_local2:
     forall (t: T name name) (avoid: list name)
@@ -840,57 +969,56 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     introv HFV.
     introv Hin.
     unfold alpha_equiv_local.
-    destruct (get_binding_spec ctx a) as [[Case1 rest] | [prefix [postfix [Case2 [ctxspec Hnin]]]]].
+    destruct (get_binding_spec ctx a) as [[Case1 Hanin] | [prefix [postfix [Case2 [ctxspec Hnin]]]]].
     { rewrite Case1.
       assert (Havoid: a ∈ avoid).
       { apply HFV.
         apply (FV_lift_local (T atom) _ ctx); auto.
       }
-      specialize (roundtrip_Occ_Unbound_spec2 avoid ctx a Havoid Case1).
+      specialize (roundtrip_Occ_get_binding_Unbound_spec avoid ctx a Havoid Case1).
       intro X.
       destruct (roundtrip_Occ avoid (ctx, a)).
       rewrite X. destruct_eq_args a a.
     }
     {
       rewrite Case2.
-      apply (roundtrip_Occ_Bound_spec2 avoid) in Case2; auto.
+      apply (roundtrip_Occ_get_binding_Bound_spec avoid) in Case2; auto.
       destruct (roundtrip_Occ avoid (ctx, a)).
-      rewrite Case2.
-      cbn.
-      cbn.
-      admit.
-    }
-  Admitted.
+      destruct Case2 as [Case2RW Case2Len].
+      rewrite Case2RW.
+      rewrite Case2Len.
+      destruct_eq_args (length prefix) (length prefix).
+    }.
+  Qed.
 
   Lemma rt_correct_local1:  forall (t: T name name),
-    TraversableFunctor.Forall
-    (fun a: list atom * atom =>
-     (precompose (cobind (kc_dfunp (ln_to_name (free (term_nominal_to_ln t))) (const tt) name_to_ln))
-        ∘ (precompose (map_fst (mapd_list_prefix
-                                  (kc_dz (to_name_from_prefix (free (term_nominal_to_ln t))) (const tt))))
-           ∘ alpha_equiv_local)) a a) (delete_binders (dec (T atom) t)).
+      TraversableFunctor.Forall
+        (fun a: list atom * atom =>
+           (precompose (cobind (W := prod (list atom)) (roundtrip_Var_loc (free (term_nominal_to_ln t))))
+              ∘ (precompose (map_fst (mapdz (roundtrip_Binder_loc (free (term_nominal_to_ln t))))) ∘ alpha_equiv_local)) a a)
+        (delete_binders (dec (T atom) t)).
   Proof.
     intros t.
     rewrite TraversableFunctor.forall_iff.
     intros [ctx a].
     rewrite in_del_binders.
     unfold compose, precompose.
-    intro Hin.
-    apply (rt_correct_local2 t).
-    { rewrite (FV_preserved T t).
-      easy.
-    }
+    rewrite <- roundtrip_Occ_spec.
+    apply rt_correct_local2.
+    clear a.
+    introv HinFV.
+    rewrite (FV_preserved t) in HinFV.
     assumption.
   Qed.
 
   Theorem roundtrip_correct: forall (t: T name name),
-      polymorphic_alpha T t (roundtrip_Named T t).
+      polymorphic_alpha T t (roundtrip_Named t).
   Proof.
     intros.
-    rewrite (roundtrip_Named_spec_decomposed T).
+    rewrite (roundtrip_Named_spec_decomposed).
     unfold polymorphic_alpha.
     unfold lift_relation_ctx_poly.
-    rewrite (decorate_rename_binders2 T).
+    rewrite (decorate_rename_binders2).
     rewrite TraversableFunctor.relation_natural2.
     rewrite (CategoricalToKleisli.DecoratedFunctor.dec_mapd2 (list atom) (F := T atom)).
     rewrite delete_binders_map.
