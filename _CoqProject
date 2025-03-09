@@ -380,3 +380,8 @@ Tealeaves/Examples/LambdaNominal/Categorical.v
 Tealeaves/Examples/LambdaNominal/Kleisli.v
 Tealeaves/Examples/LambdaNominal/Raw.v
 #Tealeaves/Examples/LambdaNominal/Equivalence.v
+
+##########################################################
+# EX: NOMINAL RECURSIVE BINDERS
+##########################################################
+Tealeaves/Examples/RecBag/Syntax.v

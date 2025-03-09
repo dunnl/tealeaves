@@ -3,8 +3,8 @@ From Tealeaves Require Export
   Classes.Categorical.TraversableFunctor
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
   Classes.Kleisli.DecoratedTraversableMonadPoly
-  Functors.Categorical.List
-  Backends.LN.Atom
+  Functors.List
+  Backends.Common.Names
   Functors.List.
 
 Import Product.Notations.
@@ -32,15 +32,15 @@ Section lfg.
 
   Lemma map_dist_pair_nil: forall (ctx: list (G A)) (l: list (G A)),
       l = nil ->
-      dist list G (A := (list A) * A) (map dist_pair (map (F := list) (pair ctx) l))
-      = pure (A := list (list A * A)) (@nil (list A * A)).
+      dist list G (A := (list A) * A) (map (F := list) dist_pair (map (F := list) (pair ctx) l))
+      = pure (F := G) (A := list (list A * A)) (@nil (list A * A)).
   Proof.
     intros. subst. reflexivity.
   Qed.
 
   Lemma map_dist_pair: forall (ctx: list (G A)) (l: list (G A)),
       l <> nil ->
-      dist list G (A := (list A) * A) (map dist_pair (map (F := list) (pair ctx) l))
+      dist list G (A := (list A) * A) (map (F := list) dist_pair (map (F := list) (pair ctx) l))
       =
         pure (F := G) (fun ctx => map (F := list) (pair ctx))
           <⋆> (dist list G ctx)
@@ -48,7 +48,7 @@ Section lfg.
   Proof.
     intros. destruct l.
     - contradiction.
-    - clear H3.
+    - clear H0.
       generalize dependent g.
       induction l; intro g.
       + cbn.
@@ -129,12 +129,12 @@ Section lfg.
         rewrite <- ap4.
         rewrite ap2.
         rewrite ap2.
-        rewrite (ap_ci2 (A := list A) (B := A) _ (dist list G ctx) g).
+        rewrite (ap_flip1 (G := G) (lhs := dist list G ctx) (rhs := g)).
         rewrite app_pure_natural.
-        rewrite ap_cidup.
+        rewrite ap_contract.
         rewrite map_ap.
         rewrite app_pure_natural.
-        rewrite (ap_ci2 (B := list A) (A := A) _ g (dist list G ctx)).
+        rewrite (ap_flip1 (G := G) (B := list A) (A := A) (lhs := g) (rhs := dist list G ctx)).
         rewrite app_pure_natural.
         (* RHS *)
         rewrite <- ap4.
@@ -181,7 +181,7 @@ Section lfg.
 
   Lemma decorate_commute: forall (l: list (G A)),
       map (dec_bag (A := A)) (dist list G l) =
-        dist list G (map dist_pair (dec_bag l)).
+        dist list G (map (F := list) dist_pair (dec_bag l)).
   Proof.
     intros. induction l.
     - cbn.
@@ -221,14 +221,14 @@ Section lfg.
         rewrite <- ap4.
         rewrite ap2.
         rewrite ap2.
-        rewrite ap_cidup.
+        rewrite ap_contract.
         rewrite app_pure_natural.
         reflexivity.
       + rewrite map_dist_pair; auto.
-        rewrite (ap_ci2 (A := A) (B := list A) (pure (compose (compose cons ∘ pair) ∘ cons))
-                   a (dist list G l)).
+        rewrite (ap_flip1 (A := A) (B := list A) (f := pure (compose (compose cons ∘ pair) ∘ cons))
+                   (lhs := a) (rhs := dist list G l)).
         rewrite app_pure_natural.
-        rewrite ap_cidup.
+        rewrite ap_contract.
         rewrite map_ap.
         rewrite app_pure_natural.
         rewrite <- ap4.
@@ -264,25 +264,25 @@ Section lfg.
         rewrite <- ap4.
         rewrite ap2.
         rewrite ap2.
-        rewrite ap_cidup.
+        rewrite ap_contract.
         rewrite map_ap.
         rewrite map_ap.
         rewrite map_ap.
         rewrite app_pure_natural.
-        rewrite ap_cidup.
+        rewrite ap_contract.
         rewrite map_ap.
         rewrite app_pure_natural.
-        rewrite (ap_ci2 (A := list A) (B := A)
-                   (pure
+        rewrite (ap_flip1 (G := G) (A := list A) (B := A)
+                   (f := pure
                       (double_input
                          ∘ (compose (compose double_input)
                               ∘ (compose (evalAt cons)
                                    ∘ (compose (compose ∘ compose)
                                         ∘ (compose (evalAt (map ○ pair)) ∘ compose (compose ∘ compose)
                                              ∘ (double_input ∘ flip (compose (compose cons ∘ pair) ∘ cons))))))))
-                   (dist list G l) a).
+                   (lhs := dist list G l) (rhs := a)).
         rewrite app_pure_natural.
-        rewrite ap_cidup.
+        rewrite ap_contract.
         rewrite map_ap.
         rewrite app_pure_natural.
         reflexivity.
