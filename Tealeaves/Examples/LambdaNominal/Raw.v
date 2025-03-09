@@ -375,7 +375,7 @@ Section rw.
       b <> x ->
       b = y ->
       rename l x y (lam b t) =
-        ((λ) (fresh ([x] ++ l ++ [y]))
+        (lam (fresh ([x] ++ l ++ [y]))
            (rename (l ++ [fresh ([x] ++ l ++ [y])]) x y
               (rename (l ++ [fresh ([x] ++ l ++ [y])]) y (fresh ([x] ++ l ++ [y])) t))).
   Proof.
@@ -471,14 +471,14 @@ Section rw.
   Lemma substF_rw2: forall b t,
       substF l x u (lam b t) =
         (if b == x
-         then (λ) b t
+         then lam b t
          else
            if Name.name_inb b (fvL u)
            then
-             (λ) (fresh ([x] ++ l ++ [b]))
+             lam (fresh ([x] ++ l ++ [b]))
                (substF (l ++ [fresh ([x] ++ l ++ [b])]) x u
                   (rename (l ++ [fresh ([x] ++ l ++ [b])]) b (fresh ([x] ++ l ++ [b])) t))
-           else (λ) b (substF (l ++ [b]) x u t)).
+           else lam b (substF (l ++ [b]) x u t)).
   Proof.
     intros.
     rewrite substF_equation.

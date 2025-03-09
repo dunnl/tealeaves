@@ -39,12 +39,12 @@ Module DerivedInstances.
   #[export] Instance: Kleisli.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T.
   Proof.
     constructor; intros.
-    - unfold mapdtp, Mapdt_Categorical.
+    - unfold mapdtp, Mapdtp_Categorical.
       reassociate -> on left.
       rewrite dfunp_dec_extract.
       rewrite dist2_unit.
       reflexivity.
-    - unfold mapdtp, Mapdt_Categorical.
+    - unfold mapdtp, Mapdtp_Categorical.
       rewrite <- fun_map_map.
       reassociate <- on left.
       reassociate <- on left.
@@ -111,7 +111,7 @@ Module DerivedInstances.
       unfold mapdt_list_prefix.
       unfold compose.
       admit.
-    - unfold mapdtp, Mapdt_Categorical.
+    - unfold mapdtp, Mapdtp_Categorical.
       reassociate <- on left.
       reassociate <- on left.
       rewrite <- dist2_morph.

@@ -104,6 +104,6 @@ Section named_local_operations.
 
   Definition subst (x: name) (u: T name name)
     (t: T name name): T name name :=
-    subst_conflicts (FV (T name) t ++ FV (T name) u) x u t.
+    subst_conflicts (FV t ++ FV u) x u t.
 
 End named_local_operations.

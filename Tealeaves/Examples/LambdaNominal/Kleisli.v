@@ -54,7 +54,7 @@ Section rw.
 
   Lemma sub_term_rw2: forall b t,
       substitute ρ f (lam b t) =
-        pure ((λ) (V:=V2)) <⋆> ρ ([], b) <⋆> substitute (ρ ⦿ [b]) (f ⦿ [b]) t.
+        pure (lam (V:=V2)) <⋆> ρ ([], b) <⋆> substitute (ρ ⦿ [b]) (f ⦿ [b]) t.
   Proof.
     reflexivity.
   Qed.

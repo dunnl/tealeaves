@@ -50,12 +50,21 @@ Inductive term (B V: Type) :=
 (******************************************************************************)
 Module Notations.
   Notation "'λ'" := (lam) (at level 45).
+  Notation "⟨ t ⟩ ( u )" := (tap t u) (at level 80, t at level 40, u at level 40).
 End Notations.
 
-Export Notations.
+Declare Scope lambda_scope.
+Delimit Scope lambda_scope with lam.
 
-(*
-Parameters (x y z: atom).
+(* Notation for variables *)
+Notation "'`' x" := (@tvar atom atom x) (at level 1, format "'`' x") : lambda_scope.
 
-Example term1: term atom atom := lam x (tap (lam y (tvar z)) (tvar x)).
-*)
+(* Notation for lambda abstraction *)
+Notation "'λ' x , t" := (@lam atom atom x t)
+  (at level 100, right associativity, format "'λ' x ,  t") : lambda_scope.
+
+(* Notation for application *)
+Notation "t1 · t2" := (@tap atom atom t1 t2)
+  (at level 50, left associativity, format "t1 · t2") : lambda_scope.
+
+Open Scope lambda_scope.

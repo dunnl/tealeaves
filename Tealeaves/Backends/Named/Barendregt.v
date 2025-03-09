@@ -94,6 +94,6 @@ Section ops.
     (x: name) (u: T name name)
     (t: T name name): T name name :=
 
-    subst_top x u ([x] ++ FV (T name) t ++ FV (T name) u) t.
+    subst_top x u ([x] ++ FV t ++ FV u) t.
 
 End ops.

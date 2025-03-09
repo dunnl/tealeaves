@@ -611,7 +611,8 @@ Section rw.
   Lemma list_occ_spec {A}:
     forall (prefix prefix' postfix: list A) (a a': A),
       prefix ++ [a] = prefix' ++ [a'] ++ postfix ->
-        (prefix = prefix' /\ a = a' /\ postfix = []) \/ a ∈ postfix.
+      (prefix = prefix' /\ a = a' /\ postfix = []) \/
+        (exists (postfix': list A), postfix = postfix' ++ [a]).
   Proof.
     intros.
     { intros.
@@ -629,9 +630,7 @@ Section rw.
           tauto.
         }
         subst.
-        rewrite element_of_list_app.
-        rewrite element_of_list_one.
-        now right.
+        exists postfix. reflexivity.
     }
   Qed.
 
@@ -643,7 +642,29 @@ Section rw.
   Proof.
     intros.
     apply list_occ_spec in H.
-    tauto.
+    destruct H as [Case1 | Case2].
+    - now left.
+    - right.
+      destruct Case2; subst.
+      rewrite element_of_list_app.
+      right.
+      rewrite element_of_list_one.
+      reflexivity.
+  Qed.
+
+  Lemma list_occ_lemma4 {A} `{EqDec_eq A}:
+    forall (l l' postfix: list A) v x,
+      v <> x ->
+      l ++ [x] = (l' ++ [v]) ++ postfix ->
+      exists postfix', postfix = postfix' ++ [x].
+  Proof.
+    introv Hneq Hyp.
+    rewrite <- List.app_assoc in Hyp.
+    apply (list_occ_spec) in Hyp.
+    destruct Hyp as [Case1 | Case2].
+    - destruct Case1 as [? [Heq ?]].
+      subst. contradiction.
+    - assumption.
   Qed.
 
   Lemma list_occ_lemma2 {A}:
@@ -660,37 +681,91 @@ Section rw.
         intro.
   Abort.
 
-  Lemma list_binding_inversion_prefix {A}:
+  Lemma list_occ_lemma3 {A}:
+    forall (l: list A) (a: A),
+      a ∈ l <-> exists prefix postfix,
+        l = prefix ++ [a] ++ postfix.
+  Proof.
+    intros.
+    induction l.
+    - split; intros [].
+      destruct H as [postfix Heq].
+      destruct x.
+      + cbn in Heq. inversion Heq.
+      + cbn in Heq. inversion Heq.
+    - rewrite element_of_list_cons. split.
+      { intros [Case1 | Case2].
+        - subst.
+          exists (@nil A).
+          exists l.
+          rewrite List.app_nil_l.
+          reflexivity.
+        - apply IHl in Case2.
+          destruct Case2 as [pre [post Heq]].
+          subst.
+          exists (a0 :: pre). exists post.
+          reflexivity.
+      }
+      intros [prefix [postfix Heq]].
+      destruct prefix.
+      { left. now inversion Heq. }
+      { cbn in Heq.
+        inversion Heq; subst.
+        right.
+        rewrite element_of_list_app.
+        rewrite element_of_list_cons.
+        tauto.
+      }
+  Qed.
+
+  Lemma list_binding_inversion_prefix {A} `{EqDec_eq A}:
     forall (prefix postfix prefix' postfix': list A) (v: A)
       (Hnin : ~ v ∈ postfix)
       (Hnin': ~ v ∈ postfix'),
       prefix ++ [v] ++ postfix = prefix' ++ [v] ++ postfix' ->
       prefix = prefix' /\ postfix = postfix'.
   Proof.
-    intros.
-    generalize dependent prefix.
-    generalize dependent prefix'.
-    generalize dependent v.
-    induction postfix; intros.
-    - rewrite List.app_nil_r in H.
-      specialize (list_occ_lemma _ _ _ v H).
+    introv Hyp.
+    generalize dependent postfix'.
+    induction postfix using List.rev_ind; intros.
+    - rewrite List.app_nil_r in H0.
+      specialize (list_occ_lemma _ _ _ v H0).
       destruct 1 as [[Hyp1 Hyp2] | Hyp3].
       + subst. split; auto.
       + contradiction.
-  Abort.
-
-
-
-  Lemma list_binding_inversion {A}:
-    forall (prefix postfix prefix' postfix': list A) (v: A)
-      (Hnin : ~ v ∈ postfix)
-      (Hnin': ~ v ∈ postfix'),
-      prefix ++ [v] ++ postfix = prefix' ++ [v] ++ postfix' ->
-      prefix = prefix' /\ postfix = postfix'.
-  Proof.
-    intros.
-  Admitted.
-
+    - enough (cut: exists postfix'', postfix' = postfix'' ++ [x]).
+      { destruct cut as [postfix'' Heq].
+        subst.
+        repeat rewrite List.app_assoc in H0.
+        apply list_app_one_inv in H0.
+        destruct H0 as [H0 _].
+        assert (~ v ∈ postfix).
+        { intro contra.
+          apply Hyp.
+          rewrite element_of_list_app.
+          now left. }
+        assert (~ v ∈ postfix'').
+        { intro contra.
+          apply Hnin'.
+          rewrite element_of_list_app.
+          now left. }
+        specialize (IHpostfix H1).
+        specialize (IHpostfix postfix'' H2).
+        do 2 rewrite <- List.app_assoc in H0.
+        apply IHpostfix in H0.
+        inversion H0; subst.
+        auto.
+      }
+      clear Hnin'. clear IHpostfix.
+      rewrite List.app_assoc in H0.
+      rewrite List.app_assoc in H0.
+      rewrite List.app_assoc in H0.
+      apply list_occ_lemma4 in H0; auto.
+      intro contra; subst; apply Hyp.
+      rewrite element_of_list_app.
+      rewrite element_of_list_one.
+      now right.
+  Qed.
 
   Lemma get_binding2: forall prefix v1 v2 postfix ctx,
       v1 = v2 ->
@@ -707,7 +782,7 @@ Section rw.
       rewrite element_of_list_one.
       tauto.
     - subst.
-      apply list_binding_inversion in ctxspec; auto.
+      apply list_binding_inversion_prefix in ctxspec; auto.
       destruct ctxspec; subst.
       auto.
   Qed.

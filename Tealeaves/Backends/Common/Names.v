@@ -100,10 +100,68 @@ Module Name <: AtomModule.
             else max_not_in_list_rec next_candidate next_candidate l
     end.
 
+  Lemma max_not_in_list_rec_invariant: forall candidate current_min l,
+      ~ (current_min ∈ l) ->
+      ~ max_not_in_list_rec candidate current_min l ∈ l.
+  Proof.
+    intros.
+    generalize dependent current_min.
+    induction candidate; intros.
+    - cbn.
+      remember (name_inb 0 l).
+      symmetry in Heqb.
+      destruct b.
+      + apply name_inb_iff in Heqb.
+        auto.
+      + apply name_inb_iff_false in Heqb.
+        assumption.
+    - cbn.
+      remember (name_inb candidate l).
+      symmetry in Heqb.
+      destruct b.
+      + apply IHcandidate.
+        assumption.
+      + apply name_inb_iff_false in Heqb.
+        apply IHcandidate.
+        auto.
+  Qed.
+
+  Definition Smax (l: list name): name :=
+    S (foldMap (op := Monoid_op_max) (unit := Monoid_unit_max) id l).
+
+  Lemma Smax_gt: forall l,
+      forall (a: name), a ∈ l -> a < Smax l.
+  Proof.
+    intros.
+    induction l.
+    - inversion H.
+    - rewrite element_of_list_cons in H.
+      unfold Smax.
+      rewrite foldMap_eq_foldMap_list.
+      rewrite foldMap_list_cons.
+      unfold transparent tcs.
+      rewrite <- foldMap_eq_foldMap_list.
+      unfold id.
+      destruct H as [Case1 | Case2].
+      + subst.
+        lia.
+      + apply IHl in Case2.
+        rewrite PeanoNat.Nat.succ_max_distr.
+        change ((S (foldMap (fun x : nat => x) l))) with (Smax l).
+        lia.
+  Qed.
+
+  Lemma Smax_not_in: forall l,
+      ~ Smax l ∈ l.
+  Proof.
+    intros.
+    intro contra.
+    apply Smax_gt in contra.
+    lia.
+  Qed.
 
   Definition fresh (l : list name) : name :=
-    let max := foldMap (op := Monoid_op_max) (unit := Monoid_unit_max) id l
-    in max_not_in_list_rec (S max) (S max) l.
+    max_not_in_list_rec (Smax l) (Smax l) l.
 
   Compute max_not_in_list_rec 100 5 [0; 1; 2].
   Compute max_not_in_list_rec 100 5 [0; 1; 3; 4].
@@ -131,14 +189,9 @@ Module Name <: AtomModule.
   Proof.
     intro l.
     unfold fresh.
-    induction l.
-    - cbn.
-      tauto.
-    - rewrite foldMap_eq_foldMap_list.
-      rewrite foldMap_list_cons.
-      rewrite <- foldMap_eq_foldMap_list.
-      change (id ?a) with a.
-  Admitted.
+    apply max_not_in_list_rec_invariant.
+    apply Smax_not_in.
+  Qed.
 
   Definition nat_of := fun (x : name) => (x : nat).
 End Name.

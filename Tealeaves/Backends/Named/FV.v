@@ -10,7 +10,7 @@ Import List.ListNotations.
 Section FV.
 
   Context
-    (T: Type -> Type)
+    {T: Type -> Type}
       `{Mapdt (list name) T}
       `{! DecoratedTraversableFunctor (list name) T}.
 

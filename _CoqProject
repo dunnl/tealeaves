@@ -322,7 +322,7 @@ Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedFunctor.v
 Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v
 Tealeaves/Backends/Adapters/KeyName.v
-
+Tealeaves/Backends/Adapters/NamedToLN.v
 
 ##########################################################
 # EX: CONFLUENCE OF LAMBDA CALCULUS                      #
@@ -379,4 +379,4 @@ Tealeaves/Examples/LambdaNominal/Syntax.v
 Tealeaves/Examples/LambdaNominal/Categorical.v
 Tealeaves/Examples/LambdaNominal/Kleisli.v
 Tealeaves/Examples/LambdaNominal/Raw.v
-Tealeaves/Examples/LambdaNominal/Equivalence.v
+#Tealeaves/Examples/LambdaNominal/Equivalence.v

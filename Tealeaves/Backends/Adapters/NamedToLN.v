@@ -687,7 +687,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
 
       unfold mapdtp.
-      unfold DerivedOperations.Mapdt_Categorical.
+      unfold DerivedOperations.Mapdtp_Categorical.
       reassociate <- on left.
       reassociate <- on left.
       unfold compose.
@@ -742,7 +742,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
   Qed.
 
   Lemma FV_preserved: forall (t: T name name),
-      FV (T name) t =
+      FV t =
         LN.free (term_nominal_to_ln t).
   Proof.
     intros.
@@ -763,7 +763,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     rewrite (fun2_map_map).
     rewrite normalize_foldMap.
     unfold mapdtp.
-    unfold DerivedOperations.Mapdt_Categorical.
+    unfold DerivedOperations.Mapdtp_Categorical.
     unfold compose.
     assert (cut: FV_loc = free_loc ∘ name_to_ln).
     { ext [l v].
@@ -776,7 +776,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       - cbn.
         rewrite Hbinding.
         reflexivity.
-    }.
+    }
     rewrite cut.
     reflexivity.
   Qed.
@@ -961,7 +961,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
   Lemma rt_correct_local2:
     forall (t: T name name) (avoid: list name)
-      (Havoidinit: forall (a: name), (a ∈ FV (T name) t -> a ∈ avoid)),
+      (Havoidinit: forall (a: name), (a ∈ FV t -> a ∈ avoid)),
     forall (ctx: list name) (a: name),
       (ctx, a) ∈ (dec (T atom) t) ->
       alpha_equiv_local (ctx, a) (roundtrip_Occ avoid (ctx, a)).
@@ -973,7 +973,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     { rewrite Case1.
       assert (Havoid: a ∈ avoid).
       { apply HFV.
-        apply (FV_lift_local (T atom) _ ctx); auto.
+        apply (FV_lift_local _ ctx); auto.
       }
       specialize (roundtrip_Occ_get_binding_Unbound_spec avoid ctx a Havoid Case1).
       intro X.
@@ -988,7 +988,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       rewrite Case2RW.
       rewrite Case2Len.
       destruct_eq_args (length prefix) (length prefix).
-    }.
+    }
   Qed.
 
   Lemma rt_correct_local1:  forall (t: T name name),
