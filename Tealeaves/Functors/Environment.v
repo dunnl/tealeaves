@@ -6,6 +6,7 @@ From Tealeaves Require Export
 Import Subset.Notations.
 Import DecoratedContainerFunctor.Notations.
 Import List.ListNotations.
+Import Monoid.Notations.
 
 (** * Decorated Container Instance for <<env>> *)
 (**********************************************************************)
@@ -20,8 +21,25 @@ Section env_instance.
   #[export] Instance Compat_ToCtxset_Mapdt_env:
     Compat_ToCtxset_Mapdt E (env E).
   Proof.
-    (* TODO *)
-  Admitted.
+    unfold Compat_ToCtxset_Mapdt.
+    unfold ToCtxset_env.
+    unfold ToCtxset_Mapdt.
+    ext A l.
+    unfold foldMapd.
+    unfold mapdt.
+    unfold Mapdt_env.
+    induction l.
+    - reflexivity.
+    - destruct a as [e a].
+      rewrite tosubset_list_cons.
+      cbn.
+      unfold_ops @Pure_const @Map_const.
+      unfold_ops @Monoid_op_subset @Monoid_unit_subset.
+      rewrite IHl.
+      fequal.
+      simpl_subset.
+      reflexivity.
+  Qed.
 
   (** ** Rewriting Rules for <<toctxset>> *)
   (********************************************************************)
