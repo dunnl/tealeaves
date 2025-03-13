@@ -3,24 +3,23 @@ From Tealeaves Require Export
   Examples.LambdaNominal.Categorical
   Examples.LambdaNominal.Kleisli
   Examples.LambdaNominal.Raw
-  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
-  Classes.Categorical.DecoratedTraversableMonadPoly
   Functors.Subset
   Functors.Constant
   Backends.Common.AtomSet
   Backends.Named.Barendregt
-  Simplification.Binddt.
+  Backends.Named.FV.
 
-Import DecoratedTraversableMonadPoly.DerivedOperations.
-Import Kleisli.DecoratedTraversableMonadPoly.DerivedOperations.
-Import Kleisli.DecoratedTraversableMonadPoly.
+From Tealeaves Require Import Simplification.Support.
+
+Import Classes.Kleisli.DecoratedTraversableMonadPoly.
+Import CategoricalPDTMUsefulInstances.
+
 Import ContainerFunctor.Notations.
 
 #[local] Generalizable Variables G.
 
-#[local] Instance: Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly term.
-Admitted.
-
+(** * Equivalence of Direct and Categorical Definitions of <<substitute>> *)
+(**********************************************************************)
 Section rw.
 
   Context
@@ -28,13 +27,14 @@ Section rw.
     `{Applicative G}
     {g: list B1 * B1 -> G B2}
     {f: list B1 * V1 -> G (term B2 V2)}.
-    Lemma sub_term_spec: forall v,
-    substitute (Substitute := Binddt_Categorical term) g f (tvar v) =
-    substitute (Substitute := Substitute_lambda_term) g f (tvar v).
-    Proof.
+
+  Lemma sub_term_spec: forall v,
+      substitute (Substitute := Substitute_Categorical term) g f (tvar v) =
+        substitute (Substitute := Substitute_lambda_term) g f (tvar v).
+  Proof.
     intros.
     unfold substitute.
-    unfold Binddt_Categorical.
+    unfold Substitute_Categorical.
     unfold compose.
     cbn.
     compose near (f ([], v)).
@@ -43,10 +43,16 @@ Section rw.
     rewrite mon_join_ret.
     rewrite fun_map_id.
     reflexivity.
-    Qed.
+  Qed.
 
 End rw.
 
+(** * Required Lemmas *)
+(**********************************************************************)
+
+(** ** Pre-incrementing <<FV_loc>> *)
+(** This can and should be generalized to any PDTM *)
+(**********************************************************************)
 Lemma FV_loc_preincr: forall (bs: list name) (t: term name name),
     substitute (B2 := False) (A2 := False)
       (G := const (list name)) (T := term) (const [])
@@ -91,17 +97,24 @@ Proof.
 Admitted.
 
 Lemma FV_fvL: forall (t: term name name),
-    FV term t = fvL t.
+    FV t = fvL t.
 Proof.
   intros t.
   unfold FV.
-  unfold mapdtp.
-  unfold MapdtPoly_Substitute.
-  replace ((map (F := const (list name)) ret ∘ FV_loc))
-    with ((map (F := const (list name)) ret (A := False) ∘ FV_loc) ⦿ Ƶ).
-  2:{ now rewrite preincr_zero. }
-  rewrite FV_loc_preincr.
-  admit.
+  unfold foldMapd.
+  unfold mapdt.
+  unfold Mapdt_Categorical.
+  unfold dist.
+  unfold Dist2_1.
+  reassociate -> near (map FV_loc).
+  rewrite fun2_map2_map21.
+  change (id ∘ ?f) with f.
+  unfold dec.
+  unfold Decorate_PolyVar.
+  reassociate <- on left.
+  reassociate -> near (@map2 term Map2_term (Z atom) (Z2 atom atom) atom (Z2 atom atom) (@extract Z Extract_Z atom) (@id (Z2 atom atom))).
+  rewrite fun2_map_map.
+  change (?f ∘ id) with f.
 Admitted.
 
 Section rw.
@@ -118,8 +131,8 @@ Section rw.
   Qed.
 
   Lemma subst_top_rw2: forall (b: name) (t: term name name),
-      subst_top x u  conflicts (lam b t) =
-        lam (rename_binder_from_context conflicts ([], b))
+      subst_top x u conflicts (lam b t) =
+        lam (rename_binder_from_context conflicts (@nil atom, b))
           (substitute (G := fun A => A)
              (rename_binder_from_context conflicts ⦿ [b])
              (subst_from_ctx x u conflicts ⦿ [b]) t).
@@ -153,345 +166,48 @@ Proof.
   unfold rename_binder_from_history.
 Abort.
 
-(*
-Lemma lemma2: forall
-    (conflicts: list name) (fv_u: list name) (x:name) (u: term name name),
-    (subst_from_context x u conflicts) ⦿ [x] =
-      ret ∘ extract.
+About subst.
+About subst_top.
+
+Theorem subst_equiv: forall (x: name) (u: term name name) (t: term name name),
+    Barendregt.subst x u t = Raw.subst x u t.
 Proof.
   intros.
-  ext (ctx, v).
-  unfold preincr, incr, compose.
-  change ([x] ● ctx) with (x::ctx).
-  unfold subst_from_context.
-  destruct (get_binding_spec (x :: ctx) v) as [[Heq Hnin]| H2].
-  - rewrite Heq.
-    assert (v <> x).
-    rewrite element_of_list_cons in Hnin. tauto.
-    destruct_eq_args v x.
-  - destruct H2 as [pre [post [rest1 [rest2 rest3]]]].
-    rewrite rest1.
+  unfold Barendregt.subst.
+  unfold subst_top.
+  unfold Raw.subst.
+  assert (Hctx_eq: [x] ++ fvL t ++ fvL u = [x] ++ FV t ++ FV u).
+  { do 2 rewrite FV_fvL.
+    reflexivity.
+  }
+  rewrite Hctx_eq.
+  remember ([x] ++ FV t ++ FV u) as CtxInit.
+  generalize CtxInit.
+  clear Hctx_eq HeqCtxInit CtxInit.
+  induction t; intros.
+  - unfold Raw.subst.
     cbn.
-    destruct pre.
-    + cbn. fequal.
-      assert (x = v).
-      { now inversion rest2. }
-      subst.
-      unfold rename_binder_one.
-      destruct_eq_args v v.
-    +
-      assert (x = n).
-      { now inversion rest2. }
-      subst.
-      change_left (ret ((rename_binder_from_context n conflicts ⦿ [n]) (pre, v))).
-      rewrite lemma1.
-      reflexivity.
-Qed.
-
-
-Section interpret.
-
-  Context
-    (conflicts: list name)
-  (fv_u: list name) (x: name) (u: term name name).
-
-  (*
-  Definition interpret_context_to_renamings  (context: list name):
-    term name name -> term name name :=
-    match context with
-    | nil => id
-    | cons b rest =>
-        if b == x
-        then id
-        else if SmartAtom.name_inb x
-             then let z := (fresh ([x] ++ l ++ [b]): name) in
-                  interpret_context_to_renamings rest ∘ rename b z
-             else id.
-
-    Definition interpret_context (conflicts: list name) (fv_u: list name) (x: name) (u: term name name) (context: list name):
-      term name name -> term name name :=
-      match context with
-      | nil => substF conflicts x u
-      | cons b rest =>
-          if b == x
-          then substF conflicts x u
-          else if SmartAtom.name_inb x
-               then substF (conflicts ++ context_to_renamed context) x u
-               else substF conflicts x u
-      end.
-
-Lemma equiv_key:
-  forall (conflicts: list name) (x: name) (u: term name name) (context: list name) (t: term name name),
-     substitute (T := term) (G := fun A => A)
-       (rename_binder_from_context x conflicts (FV term u) ⦿ context)
-       (subst_from_context x u conflicts (FV term u) ⦿ context) t =
-       interpret_context conflicts (FV term u) x u context t.
-Proof.
-  intros.
-  induction t.
-  - rewrite sub_term_rw1.
-    unfold preincr, incr, compose.
-    change (@nil name) with (Ƶ:list name).
-    rewrite monoid_id_l.
-    induction context.
-
-   *)
-
-Theorem woah:
-  forall (conflicts: list name) (x: name) (u: term name name) (b: name) (t: term name name),
-    (~ b ∈ fvL u ->
-     b <> x ->
-     substitute (T := term) (G := fun A => A)
-       (rename_binder_from_context x conflicts (FV term u) ⦿ [b])
-       (subst_from_context x u conflicts (FV term u) ⦿ [b]) t =
-       substF (conflicts ++ [b]) x u t) /\
-      (b ∈ fvL u ->
-       b <> x ->
-       substitute (T := term) (G := fun A => A)
-         (rename_binder_from_context x conflicts (FV term u) ⦿ [b])
-         (subst_from_context x u conflicts (FV term u) ⦿ [b]) t =
-         substF (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) x u
-           (rename (conflicts ++ [fresh ([x] ++ conflicts ++ [b])])  b (fresh ([x] ++ conflicts ++ [b])) t)).
-Proof.
-  intros.
-  generalize dependent conflicts.
-  generalize dependent b.
-  induction t.
-  - admit.
-  - (* λ b t *)
-Abort.
-
-
-Theorem subst_preincr_inFV_spec:
-  forall (conflicts: list name) (x: name) (u: term name name) (b: name) (t: term name name),
-      b ∈ fvL u ->
-      b <> x ->
-      substitute (T := term) (G := fun A => A)
-        (rename_binder_from_context x conflicts (FV term u) ⦿ [b])
-        (subst_from_context x u conflicts (FV term u) ⦿ [b]) t =
-        substF (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) x u
-          (rename (conflicts ++ [fresh ([x] ++ conflicts ++ [b])]) b (fresh ([x] ++ conflicts ++ [b])) t).
-Proof.
-  introv Hin Hneq.
-  generalize dependent conflicts.
-  generalize dependent b.
-  induction t; intros.
-  - rewrite sub_term_rw1.
-    rewrite rename_rw1.
-    destruct_eq_args v b.
-    + rewrite substF_rw1.
-      unfold preincr, incr, compose.
-      change ([b] ● []) with ([b]).
-      unfold subst_from_context.
-      assert (get_binding [b] b = Bound [] b []).
-      { cbn. destruct_eq_args b b. }
-      rewrite H.
-      assert (fresh ([x] ++ conflicts ++ [b]) <> x).
-      { intro contra.
-        assert (~ x ∈ ([x] ++ conflicts ++ [b])).
-        symmetry in contra.
-        rewrite contra at 1.
-        apply SmartAtom.fresh_not_in.
-        rewrite element_of_list_app in H0.
-        rewrite element_of_list_one in H0.
-        tauto.
-      }
-      destruct_eq_args (fresh ([x] ++ conflicts ++ [b])) x.
-      { intuition. }
-      { fequal.
-        unfold rename_binder_from_context.
-        unfold rename_binder_from_context_rec.
-        unfold rename_binder_one.
-        destruct_eq_args b x.
-        rewrite FV_fvL.
-        step_set_test.
-        rewrite List.app_nil_l.
-        admit.
-        admit.
-      }
-    +
-      unfold preincr, incr, compose.
-      change ([b] ● []) with ([b]).
-      unfold subst_from_context.
-      assert (get_binding [b] v = Unbound [b]).
-      { cbn. destruct_eq_args b v. }
-      rewrite H.
-      destruct_eq_args v x.
-      { rewrite substF_rw1.
-        destruct_eq_args x x.
-      }
-      { rewrite substF_rw1.
-        destruct_eq_args v x.
-      }
-  - rewrite sub_term_rw2.
-    simplify_applicative_I.
-    unfold ap, mult, Mult_I; unfold_ops @Map_I.
-    rewrite rename_rw2_neq.
-
-    rewrite substF_rw2.
-    admit.
-    admit.
-    admit.
-  - rewrite rename_rw3.
-    rewrite substF_rw3.
-    rewrite <- IHt1; auto.
-    rewrite <- IHt2; auto.
-Admitted.
-
-Lemma tvar_helper:
-  forall (conflicts: list name) (x: name) (u: term name name) (b: name) (t: term name name) v,
-    ~ b ∈ fvL u ->
-     b <> x ->
-     subst_from_context x u conflicts (FV term u) ([b], v) = (if v == x then u else tvar v).
-Proof.
-  intros.
-  cbn.
-  destruct_eq_args v b.
-  destruct_eq_args b x.
-  cbn.
-  unfold rename_binder_one.
-  destruct_eq_args b x.
-  rewrite FV_fvL.
-  step_set_test.
-  destruct (destruct_in b []).
-  inversion H2.
-  now step_set_test.
-Qed.
-
-
-Theorem subst_preincr_ninFV_spec:
-  forall (conflicts: list name) (x: name) (u: term name name) (b: name) (t: term name name),
-      ~ b ∈ fvL u ->
-      b <> x ->
-    substitute (T := term) (G := fun A => A)
-      (rename_binder_from_context x conflicts (FV term u) ⦿ [b])
-      (subst_from_context x u conflicts (FV term u) ⦿ [b]) t =
-      substF (conflicts ++ [b]) x u t.
-Proof.
-  introv Hnin Nneq.
-  generalize dependent conflicts.
-  generalize dependent b.
-  induction t; intros.
-  - rewrite sub_term_rw1.
     rewrite substF_rw1.
-    unfold preincr, incr, compose.
-    change ([b] ● []) with ([b]).
-    rewrite tvar_helper; auto.
+    reflexivity.
   - rewrite sub_term_rw2.
-    simplify_applicative_I.
-    unfold ap, mult, Mult_I; unfold_ops @Map_I.
     rewrite substF_rw2.
-
+    unfold_ops @Pure_I.
+    unfold id.
     destruct_eq_args b x.
     { fequal.
-      { unfold rename_binder_from_context.
-        unfold preincr, incr, compose.
-        change ([b0] ● []) with ([b0]).
-        cbn.
-        destruct_eq_args b0 x.
+      - admit.
+      - unfold preincr.
+        (* Need to know preincr is same as adding to initial set *)
         admit.
-      }
-      {
-        specialize (IHt b0 Hnin Nneq).
-        admit.
-      }
     }
-    { destruct (SmartAtom.name_inb b (fvL u)).
+    { fequal.
       admit.
       admit.
     }
-  - cbn.
+  - unfold Raw.subst.
     rewrite substF_rw3.
-    rewrite <- IHt1.
-    rewrite <- IHt2.
+    rewrite sub_term_rw3.
+    rewrite IHt1.
+    rewrite IHt2.
     reflexivity.
-Admitted.
-
-Theorem equivalence:
-  forall (conflicts: list name) (x: name) (u: term name name),
-    subst_top x u conflicts (FV term u) =
-      substF conflicts x u.
-Proof.
-  intros. ext t.
-  induction t.
-  - rewrite subst_top_rw1.
-    rewrite substF_rw1.
-    reflexivity.
-  - rewrite subst_top_rw2.
-    rewrite substF_rw2.
-    destruct_eq_args b x.
-    {
-      fequal.
-      { cbn.
-        unfold rename_binder_one.
-        destruct_eq_args x x.
-      }
-      {
-        rewrite lemma1.
-        unfold rename_binder_one.
-        rewrite lemma2.
-        rewrite kdtmp_substitute1.
-        reflexivity.
-      }
-    }
-    { destruct (destruct_in b (fvL u)).
-      { step_set_test.
-        fequal.
-        { unfold rename_binder_from_context.
-          rewrite rename_binder_from_context_rec_rw_nil.
-          unfold rename_binder_one.
-          destruct_eq_args b x.
-          rewrite FV_fvL.
-          step_set_test.
-          rewrite List.app_nil_l.
-          reflexivity.
-        }
-        {
-          apply subst_preincr_inFV_spec; auto.
-        }
-      }
-      { step_set_test.
-        fequal.
-        { cbn.
-          unfold rename_binder_one.
-          destruct_eq_args b x.
-          rewrite FV_fvL.
-          step_set_test.
-          destruct (destruct_in b []).
-          inversion H2.
-          now step_set_test.
-        }
-        {
-          rewrite subst_preincr_ninFV_spec; auto.
-        }
-      }
-    }
-  - cbn.
-    rewrite substF_rw3.
-    rewrite <- IHt1.
-    rewrite <- IHt2.
-    reflexivity.
-Qed.
-
-
-Lemma rename_binder_local_history_preincr_spec:
-  forall (conflicts: list name) (x:name) (fv_u: list name) (b:name),
-    b <> x ->
-    ~ (b ∈) ->
-  (rename_binder_local_history conflicts x ⦿ [b]) =
-    (rename_binder_local_history (conflicts ++ [b]) x).
-Proof.
-  introv BneqX BnotinFVu.
-  ext (ctx, v).
-  unfold preincr, compose, incr.
-  change (?a ● ?g) with (a ++ g).
-  unfold rename_binder_local_history.
-  destruct_eq_args x v.
-  destruct (SmartAtom.name_inb v).
-  - repeat rewrite List.app_assoc.
-    reflexivity.
-  - repeat rewrite List.app_assoc.
-    reflexivity.
-Qed.
-
-*)
+Abort.

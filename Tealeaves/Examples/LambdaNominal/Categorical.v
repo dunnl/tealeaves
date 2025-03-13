@@ -2,6 +2,15 @@ From Tealeaves Require Export
   Examples.LambdaNominal.Syntax
   Classes.Categorical.DecoratedMonad (shift).
 
+From Tealeaves Require
+  Classes.Categorical.DecoratedTraversableMonadPoly
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
+  Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonad
+  Adapters.PolyToMono.Kleisli.DecoratedTraversableMonad
+  Adapters.PolyToMono.Kleisli.DecoratedTraversableFunctor
+  Adapters.PolyToMono.Kleisli.DecoratedFunctor.
+
 Import List.ListNotations.
 
 #[local] Generalizable Variables G.
@@ -641,7 +650,7 @@ Section naturality.
 
 End naturality.
 
-Instance Monad_term: forall B, Monad (term B).
+#[export] Instance Monad_term: forall B, Monad (term B).
 Proof.
   constructor.
   - typeclasses eauto.
@@ -941,7 +950,7 @@ Qed.
 
 
 
-Instance DecoratedTraversableMonadPoly_term:
+#[export] Instance DecoratedTraversableMonadPoly_term:
   DecoratedTraversableMonadPoly term.
 Proof.
   constructor.
@@ -967,3 +976,119 @@ Proof.
     reflexivity.
 Qed.
 
+
+
+From Tealeaves Require
+  Classes.Categorical.DecoratedTraversableMonadPoly
+  Classes.Categorical.TraversableFunctor
+  Adapters.CategoricalToKleisli.Monad
+  Adapters.CategoricalToKleisli.DecoratedFunctor
+  Adapters.CategoricalToKleisli.TraversableFunctor
+  Adapters.CategoricalToKleisli.DecoratedTraversableFunctor
+  Adapters.PolyToMono.Categorical.DecoratedFunctor
+  Adapters.PolyToMono.Categorical.TraversableFunctor.
+
+Module CategoricalPDTMUsefulInstances.
+
+  Export
+    Classes.Categorical.DecoratedTraversableMonadPoly.
+
+  Export
+    Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
+    Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations
+    Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.
+
+  Export
+    Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly
+    Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations
+    Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
+
+  Export
+    Adapters.CategoricalToKleisli.DecoratedFunctorPoly
+    Adapters.CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations
+    Adapters.CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
+
+  Export
+    Adapters.CategoricalToKleisli.DecoratedTraversableMonad
+    Adapters.CategoricalToKleisli.Monad.
+
+  Export
+    Adapters.PolyToMono.Categorical.DecoratedFunctor
+    Adapters.PolyToMono.Categorical.TraversableFunctor.
+
+
+  Export Adapters.CategoricalToKleisli.Monad.
+  Export CategoricalToKleisli.Monad.DerivedOperations.
+  Export CategoricalToKleisli.Monad.DerivedInstances.
+
+  Export Adapters.CategoricalToKleisli.DecoratedFunctor.
+  Export CategoricalToKleisli.DecoratedFunctor.DerivedOperations.
+  Export CategoricalToKleisli.DecoratedFunctor.DerivedInstances.
+
+  Export Adapters.CategoricalToKleisli.TraversableFunctor.
+  Export CategoricalToKleisli.TraversableFunctor.DerivedOperations.
+  Export CategoricalToKleisli.TraversableFunctor.DerivedInstances.
+
+  Export Adapters.CategoricalToKleisli.DecoratedTraversableFunctor.
+  Export CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
+  Export CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.
+
+  Export Adapters.CategoricalToKleisli.DecoratedTraversableMonad.
+  Export CategoricalToKleisli.DecoratedTraversableMonad.DerivedOperations.
+  Export CategoricalToKleisli.DecoratedTraversableMonad.DerivedInstances.
+
+  Export PolyToMono.Categorical.DecoratedFunctor.ToMono1.
+  Export PolyToMono.Categorical.TraversableFunctor.ToMono.
+
+  Context (B: Set) (V: Set).
+
+  Goal Functor (term B).
+    typeclasses eauto.
+  Qed.
+
+  Goal Categorical.Monad.Monad (term B).
+    typeclasses eauto.
+  Qed.
+
+  Goal Categorical.DecoratedFunctor.DecoratedFunctor (list B) (term B).
+    typeclasses eauto.
+  Qed.
+
+  Goal Categorical.TraversableFunctor.TraversableFunctor (term B).
+    typeclasses eauto.
+  Qed.
+
+  Goal Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list B) (term B).
+    Fail typeclasses eauto.
+  Abort.
+
+  Goal Kleisli.Monad.Monad (term B).
+    typeclasses eauto.
+  Qed.
+
+  Goal Kleisli.DecoratedFunctor.DecoratedFunctor (list B) (term B).
+    typeclasses eauto.
+  Qed.
+
+  Goal Kleisli.TraversableFunctor.TraversableFunctor (term B).
+    typeclasses eauto.
+  Qed.
+
+  Goal Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list B) (term B).
+    Fail typeclasses eauto.
+  Abort.
+
+
+  Goal Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly term.
+    typeclasses eauto.
+  Qed.
+
+  Goal Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly term.
+    typeclasses eauto.
+  Qed.
+
+  Goal Kleisli.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly term.
+    typeclasses eauto.
+  Qed.
+
+End CategoricalPDTMUsefulInstances.

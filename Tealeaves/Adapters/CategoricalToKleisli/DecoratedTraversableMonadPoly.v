@@ -11,7 +11,7 @@ From Tealeaves Require Import
 (**********************************************************************)
 Module DerivedOperations.
 
-  #[export] Instance Binddt_Categorical
+  #[export] Instance Substitute_Categorical
     (T: Type -> Type -> Type)
     `{Map2 T}
     `{DecoratePoly T}
@@ -38,7 +38,7 @@ Module DerivedInstances.
   #[export] Instance: Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly T.
   Proof.
     constructor; intros.
-    - unfold substitute, Binddt_Categorical.
+    - unfold substitute, Substitute_Categorical.
       reassociate -> on left.
       rewrite xxx_dec_ret.
       reassociate <- on left.
@@ -54,7 +54,7 @@ Module DerivedInstances.
       setoid_rewrite mon_join_ret.
       rewrite fun_map_id.
       reflexivity.
-    - unfold substitute, Binddt_Categorical.
+    - unfold substitute, Substitute_Categorical.
       rewrite <- fun2_map21_map2.
       (* unfold_ops @Map2_1. *)
       reassociate <-.
@@ -66,14 +66,14 @@ Module DerivedInstances.
       unfold_ops Map_I.
       apply mon_join_map_ret.
     - unfold substitute.
-      unfold Binddt_Categorical.
+      unfold Substitute_Categorical.
       repeat reassociate <- on left.
       rewrite fun_map_map.
       fequal.
       unfold kc_dtmp.
       admit.
     - unfold substitute.
-      unfold Binddt_Categorical.
+      unfold Substitute_Categorical.
       repeat reassociate <- on left.
       rewrite appmor_natural_pf.
       reassociate -> near dist2.

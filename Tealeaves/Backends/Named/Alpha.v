@@ -66,6 +66,8 @@ End named_local_operations.
 (** Alpha on polymorphic terms *)
 From Tealeaves Require Import
   Classes.Categorical.DecoratedTraversableFunctorPoly
+  Adapters.PolyToMono.Categorical.DecoratedFunctor
+  Adapters.PolyToMono.Categorical.TraversableFunctor
   Classes.Categorical.TraversableFunctor2
   CategoricalToKleisli.TraversableFunctor
   CategoricalToKleisli.TraversableFunctor.
@@ -99,9 +101,9 @@ Section named_local_operations.
 
   Import Theory.TraversableFunctor.
 
-  Import DecoratedFunctorPoly.ToMono.
+  Import DecoratedFunctor.ToMono1.
+  Import TraversableFunctor.ToMono.
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
-  Import TraversableFunctor2.ToMono.
 
   Definition lift_relation_poly {B1 B2 X Y: Type}
     (R: X -> Y -> Prop): T B1 X -> T B2 Y -> Prop :=

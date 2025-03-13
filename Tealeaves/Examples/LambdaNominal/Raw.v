@@ -436,18 +436,13 @@ Function substF (l: list name) (* l is the avoid set *)
       tap (substF l x u t1) (substF l x u t2)
   | lam b t =>
       if b == x then lam b t
-      else if Name.name_inb b (fvL u)
-           then let z := (fresh ([x] ++ l ++ [b]): name) in
-                lam z (substF (l ++ [z]) x u (rename (l ++ [z]) b z t))
-           else lam b (substF (l ++ [b]) x u t)
+      else let z := (fresh l: name) in
+           lam z (substF (l ++ [z]) x u (rename (l ++ [z]) b z t))
   end.
 Proof.
   - intros.
     rewrite depth_rename_eq.
     cbn. lia.
-  - intros.
-    cbn.
-    lia.
   - intros.
     cbn.
     lia.
@@ -473,12 +468,7 @@ Section rw.
         (if b == x
          then lam b t
          else
-           if Name.name_inb b (fvL u)
-           then
-             lam (fresh ([x] ++ l ++ [b]))
-               (substF (l ++ [fresh ([x] ++ l ++ [b])]) x u
-                  (rename (l ++ [fresh ([x] ++ l ++ [b])]) b (fresh ([x] ++ l ++ [b])) t))
-           else lam b (substF (l ++ [b]) x u t)).
+           lam (fresh l) (substF (l ++ [fresh l]) x u (rename (l ++ [fresh l]) b (fresh l) t))).
   Proof.
     intros.
     rewrite substF_equation.
@@ -496,4 +486,4 @@ Section rw.
 End rw.
 
 Definition subst (x : name) (u : term name name) (t : term name name) :=
-  substF (fvL t ++ fvL u) x u t.
+  substF ([x] ++ fvL t ++ fvL u) x u t.

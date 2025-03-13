@@ -309,6 +309,16 @@ Tealeaves/Backends/Common/AtomSet.v
 Tealeaves/Backends/Common/AssocList.v
 
 ##########################################################
+# POLY TO MONO ADAPTERS                                  #
+##########################################################
+Tealeaves/Adapters/MonoidHom/DecoratedTraversableMonad.v
+Tealeaves/Adapters/PolyToMono/Categorical/DecoratedFunctor.v
+Tealeaves/Adapters/PolyToMono/Categorical/TraversableFunctor.v
+Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedFunctor.v
+Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableFunctor.v
+Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v
+
+##########################################################
 # FULLY NOMINAL BACKEND                                  #
 ##########################################################
 Tealeaves/Backends/Named/Named.v
@@ -316,11 +326,6 @@ Tealeaves/Backends/Named/Common.v
 Tealeaves/Backends/Named/Alpha.v
 Tealeaves/Backends/Named/FV.v
 Tealeaves/Backends/Named/Barendregt.v
-Tealeaves/Adapters/MonoidHom/DecoratedTraversableMonad.v
-#Tealeaves/Adapters/PolyToMono/Categorical/DecoratedFunctor.v
-Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedFunctor.v
-Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v
 Tealeaves/Backends/Adapters/KeyName.v
 Tealeaves/Backends/Adapters/NamedToLN.v
 

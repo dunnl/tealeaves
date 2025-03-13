@@ -121,7 +121,6 @@ Section relating.
     fequal.
     - ext [w b].
       unfold kc_dz.
-      Set Printing Implicit.
       change
         (@extract (prod (list B1)) (Extract_reader (list B1)) B1)
         with (@extract Z _ B1).
@@ -137,7 +136,8 @@ End relating.
 
 (* Relating Categorical Mono to Kleisli Mono *)
 From Tealeaves Require
-  Import CategoricalToKleisli.DecoratedFunctor.
+  CategoricalToKleisli.DecoratedFunctor
+  Adapters.PolyToMono.Categorical.DecoratedFunctor.
 
 Section relating.
 
@@ -149,8 +149,11 @@ Section relating.
       `{! Categorical.DecoratedFunctorPoly.DecoratedFunctorPoly T}
       `{! Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly T}.
 
-  Import Categorical.DecoratedFunctorPoly.ToMono.
-  Import ToMono1.
+  About ToMono1.
+  Import ToMono1. (* from THIS file *)
+  Import CategoricalToKleisli.DecoratedFunctor.
+  Import Categorical.DecoratedFunctor.ToMono1.
+  Import Classes.Categorical.DecoratedFunctor.
 
   #[export] Instance Compat_Mapd_Categorical_Poly1 {B}:
     Compat_Mapd_Categorical (list B) (T B).

@@ -580,3 +580,6 @@ Proof.
 Abort.
 *)
 
+
+#[export] Instance: Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly term.
+Abort.

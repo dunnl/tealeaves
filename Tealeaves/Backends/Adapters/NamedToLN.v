@@ -85,14 +85,15 @@ Section with_DTM.
     `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
 
   Import Kleisli.DecoratedFunctorPoly.
+  Import Categorical.DecoratedFunctor.
   Import CategoricalToKleisli.DecoratedFunctorPoly.
   Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
   Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
   Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations.
   Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
 
-  Import DecoratedFunctorPoly.ToMono.
-  Import TraversableFunctor2.ToMono.
+  Import PolyToMono.Categorical.DecoratedFunctor.ToMono1.
+  Import PolyToMono.Categorical.TraversableFunctor.ToMono.
   Import PolyToMono.Kleisli.DecoratedFunctor.ToMono1.
   Import PolyToMono.Kleisli.DecoratedFunctor.ToMono2.
 
@@ -1136,8 +1137,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       + rewrite Case1.
         cbn.
         reflexivity.
-      + Check to_history_from_prefix_fresh.
-        specialize (to_history_from_prefix_fresh l) as lemma.
+      + specialize (to_history_from_prefix_fresh l) as lemma.
         false.
         assert (n ∈ l).
         { subst.
