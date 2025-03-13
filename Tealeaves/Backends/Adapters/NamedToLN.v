@@ -94,6 +94,7 @@ Section with_DTM.
   Import DecoratedFunctorPoly.ToMono.
   Import TraversableFunctor2.ToMono.
   Import PolyToMono.Kleisli.DecoratedFunctor.ToMono1.
+  Import PolyToMono.Kleisli.DecoratedFunctor.ToMono2.
 
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
   Import CategoricalToKleisli.TraversableFunctor.DerivedInstances.
@@ -429,12 +430,12 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
   (** ** Roundtrip Specifications *)
   (********************************************************************)
-  Definition roundtrip_Named `{Traverse (T unit)}:
+  Definition roundtrip_Named:
     T name name -> T name name :=
     fun t => let t_ln := term_nominal_to_ln t
           in term_ln_to_nominal (LN.free t_ln) t_ln.
 
-  Lemma roundtrip_Named_spec1 `{Traverse (T unit)}:
+  Lemma roundtrip_Named_spec1:
     forall (t: T name name),
       roundtrip_Named t =
         mapdp
@@ -1028,5 +1029,130 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
   Qed.
 
   Print Assumptions roundtrip_correct.
+
+  (** ** Roundtrip in the Other Direction *)
+  (********************************************************************)
+  Definition roundtrip_LN:
+    T unit LN -> T unit LN :=
+    fun t => let t_nom := term_ln_to_nominal (LN.free t) t
+          in term_nominal_to_ln t_nom.
+
+  Lemma roundtrip_LN_spec1:
+    forall (t: T unit LN),
+      roundtrip_LN t =
+        mapdp (kc_dz (const tt) (to_name_from_prefix (free t)))
+          (kc_dfunp name_to_ln (to_name_from_prefix (free t)) (ln_to_name (free t))) t.
+  Proof.
+    intros.
+    unfold roundtrip_LN.
+    compose near t on left.
+    unfold term_nominal_to_ln at 1.
+    unfold term_ln_to_nominal at 1.
+    rewrite kdfunp_mapdp2.
+    reflexivity.
+  Qed.
+
+  Lemma roundtrip_LN_spec_decomposed:
+    forall (t: T unit LN),
+      roundtrip_LN t =
+        let avoid := free t
+        in (rename_binders (const tt)
+           (mapd (T := T unit) (kc_dfunp (T := T)
+                                  name_to_ln
+                                  (to_name_from_prefix avoid)
+                                  (ln_to_name avoid)) t)).
+  Proof.
+    intros.
+    rewrite roundtrip_LN_spec1.
+    unfold kc_dz.
+    change (const tt ∘ cobind (to_name_from_prefix (free t)))
+      with (const (A := list unit * unit) tt).
+    rewrite mapd_decompose.
+    reflexivity.
+  Qed.
+
+  Lemma roundtrip_LN_spec_decomposed2:
+    forall (t: T unit LN),
+      roundtrip_LN t =
+        let avoid := free t
+        in (mapd (T := T unit)
+              (kc_dfunp (T := T)
+                 name_to_ln
+                 (to_name_from_prefix avoid)
+                 (ln_to_name avoid)) t).
+  Proof.
+    intros.
+    rewrite roundtrip_LN_spec_decomposed.
+    assert (Hren: rename_binders (V1 := LN) (T := T) (const tt (A := list unit * unit)) = id).
+    { unfold rename_binders.
+      assert (Hconst: const tt (A := list unit * unit) = extract).
+      { ext [? u]. cbv.
+        destruct u. reflexivity. }
+      rewrite Hconst.
+      rewrite kdz_mapdz1.
+      reflexivity.
+    }
+    rewrite Hren.
+    reflexivity.
+  Qed.
+
+  Context
+    `{! Compat_Map_Mapd (list unit) (T unit)}
+      `{! DecoratedContainerFunctor (list unit) (T unit)}.
+
+  Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
+
+  Instance Decorate_MONO:
+    Decorate nat (T unit).
+  Proof.
+    intros A t.
+    apply (dec (E := list unit)) in t; try typeclasses eauto.
+    exact (map (F := T unit) (map_fst (@length unit)) t).
+  Defined.
+
+  Lemma roundtrip_LN_id: forall (t: T unit LN),
+      LC t ->
+      roundtrip_LN t = t.
+  Proof.
+    intros.
+    rewrite roundtrip_LN_spec_decomposed2.
+    remember (free t).
+    cbn.
+    apply mapd_respectful_id.
+    introv Hin.
+    unfold kc_dfunp.
+    unfold compose.
+    cbn.
+    compose near e.
+    unfold_Z.
+    rewrite <- mapd_list_prefix_spec.
+    change (mapd_list_prefix (to_name_from_prefix l) e)
+      with (mapdz (to_name_from_prefix l) e).
+    rewrite <- to_history_from_prefix_spec.
+    destruct a.
+    - cbn.
+      destruct (get_binding_spec (to_history_from_prefix l e) n)
+        as [[Case1 rest] | [prefix [postfix [Case2 [ctxspec Hnin']]]]].
+      + rewrite Case1.
+        cbn.
+        reflexivity.
+      + Check to_history_from_prefix_fresh.
+        specialize (to_history_from_prefix_fresh l) as lemma.
+        false.
+        assert (n ∈ l).
+        { subst.
+          About in_free_iff.
+          admit.
+        }
+        specialize (lemma e n H4).
+        apply lemma.
+        rewrite ctxspec.
+        rewrite element_of_list_app.
+        rewrite element_of_list_app.
+        right.
+        rewrite element_of_list_one.
+        now left.
+    - unfold LN_BD_to_binder_name.
+  Abort.
 
 End with_DTM.
