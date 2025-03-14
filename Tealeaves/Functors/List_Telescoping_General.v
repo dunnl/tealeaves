@@ -971,6 +971,172 @@ Section commute_law.
       }
   Qed.
 
+  Lemma mult_to_ap: forall (A B: Type) (f: A -> B) (a: A),
+      map (fun '(f, a) => f a) (f ⊗ a) = f <⋆> a.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Notation "'ev'" := (fun '(f, a) => (f a)).
+  Notation "'pr'" := (fun '(x0, y) => (y, x0)).
+
+  Lemma map_map_ {F} `{Functor F} {X Y Z} {f': X  -> Y} {g': Y -> Z} {t: F X}:
+    map g' (map f' t) = map (g' ∘ f') t.
+  Proof.
+    compose near t on left.
+    now rewrite fun_map_map.
+  Qed.
+
+  Ltac normalize :=
+    repeat ( rewrite (app_mult_natural_l G) ||
+                rewrite (app_mult_natural_r G) ||
+                  rewrite <- (app_assoc) ||
+                    rewrite map_map_ ||
+                      (rewrite triangle_3; unfold strength) ||
+                        rewrite triangle_4
+      ).
+
+  Ltac assoc_right :=
+    repeat ( rewrite <- (app_assoc_inv _)).
+
+  Lemma traverse_center_list: forall (l: list A),
+      Center G (list B) (traverse f l).
+  Proof with normalize.
+    intros l. constructor.
+    - induction l.
+      + intros C x.
+        rewrite traverse_list_nil.
+        normalize.
+        reflexivity.
+      + intros C x.
+        rewrite traverse_list_cons.
+        unfold ap...
+        rewrite (appcenter_left (f a))...
+        rewrite <- (app_assoc_inv G).
+        rewrite IHl...
+        fequal.
+        ext [[b' l'] c'].
+        reflexivity.
+    - induction l.
+      + intros C x.
+        rewrite traverse_list_nil.
+        rewrite triangle_4.
+        rewrite triangle_3.
+        unfold strength.
+        compose near x on right.
+        rewrite (fun_map_map).
+        reflexivity.
+      + intros C x.
+        rewrite traverse_list_cons.
+        unfold ap.
+        normalize.
+        rewrite <- (app_assoc_inv G).
+        rewrite IHl.
+        normalize.
+        rewrite (appcenter_right (f a)).
+        normalize.
+        fequal.
+        ext [[c' b'] l'].
+        reflexivity.
+  Qed.
+
+  Lemma traverse_idem_list: forall (l: list A),
+      Idempotent G (list B) (traverse f l).
+  Proof.
+    intros l. constructor.
+    induction l.
+    - rewrite traverse_list_nil.
+      rewrite app_mult_pure.
+      rewrite app_pure_natural.
+      reflexivity.
+    - rewrite traverse_list_cons.
+      rewrite map_ap.
+      rewrite map_ap.
+      unfold ap.
+      normalize.
+      rewrite (appcenter_left (f a)); normalize.
+      rewrite (appidem (f a)).
+      normalize.
+      assoc_right.
+      rewrite IHl.
+      normalize.
+      fequal.
+      ext [b' l'].
+      reflexivity.
+  Qed.
+
+  Lemma traverse_idem_center_list: forall (l: list A),
+      IdempotentCenter G (list B) (traverse f l).
+  Proof.
+    intros l. constructor.
+    - apply traverse_idem_list.
+    - apply traverse_center_list.
+  Qed.
+
+  #[export] Instance IdempotentCenter_traverse_list: forall (l: list A),
+      IdempotentCenter G (list B) (traverse f l).
+  Proof.
+    apply traverse_idem_center_list.
+  Qed.
+
+  (*
+  #[export] Instance Idempotent_traverse_list: forall (l: list A),
+      Idempotent G (list B) (traverse f l).
+  Proof.
+    apply traverse_idem_center_list.
+  Qed.
+
+  #[export] Instance Center_traverse_list: forall (l: list A),
+      Center G (list B) (traverse f l).
+  Proof.
+    apply traverse_idem_center_list.
+  Qed.
+  *)
+
+  Lemma traverse_idem_center_Z: forall (z: Z A),
+      IdempotentCenter G (Z B) (traverse (T := Z) f z).
+  Proof.
+    intros [l a]. constructor.
+    - constructor.
+      rewrite traverse_Z_rw.
+      unfold ap.
+      normalize.
+      rewrite (appcenter_right (traverse f l)).
+      normalize.
+      rewrite <- (app_assoc_inv G _ _ _ (f a)).
+      rewrite (appidem); [|typeclasses eauto].
+      normalize.
+      rewrite (appcenter_right (f a)).
+      normalize.
+      assoc_right.
+      rewrite (appidem); [|typeclasses eauto].
+      normalize.
+      fequal.
+      now ext [l' b'].
+    - constructor; intros.
+      + rewrite traverse_Z_rw.
+        unfold ap.
+        normalize.
+        rewrite (appcenter_left (f a)).
+        normalize.
+        rewrite (appcenter_left (traverse f l)).
+        normalize.
+        fequal.
+        ext [[? ?] ?].
+        reflexivity.
+      + rewrite traverse_Z_rw.
+        unfold ap.
+        normalize.
+        rewrite (appcenter_left (traverse f l)).
+        normalize.
+        assoc_right.
+        rewrite (appcenter_left (f a)).
+        normalize.
+        fequal.
+        ext [[? ?] ?].
+        reflexivity.
+  Qed.
+
   Theorem cojoin_commute:
     map (cojoin (W := Z)) ∘ traverse (T := Z) f =
       traverse (T := Z) (traverse (T := Z) f) ∘ cojoin.
@@ -1000,13 +1166,10 @@ Section commute_law.
     rewrite ap3.
     rewrite <- ap4.
     do 2 rewrite ap2.
-    specialize (Hci a).
-    inversion Hci.
-    (* TODO: Show (traverse f l is idempotent central too) *)
-    Fail rewrite ap_contract.
-    Fail rewrite app_pure_natural.
-    Fail reflexivity.
-  Admitted.
+    rewrite ap_contract.
+    rewrite app_pure_natural.
+    reflexivity.
+  Qed.
 
 End commute_law.
 
@@ -2091,6 +2254,23 @@ Proof.
   exact (dist_Z X).
 Defined.
 
+
+Lemma traverse_dist_list `{Applicative G}:
+  forall (A B: Type) (f: A -> G B),
+    traverse (T := list) f = dist list G ∘ map f.
+Proof.
+  intros.
+  unfold compose.
+  ext l.
+  induction l.
+  - reflexivity.
+  - rewrite map_list_cons.
+    rewrite dist_list_cons_1.
+    rewrite traverse_list_cons.
+    rewrite IHl.
+    reflexivity.
+Qed.
+
 Lemma traverse_dist_Z `{Applicative G}:
   forall (A B: Type) (f: A -> G B),
     traverse (T := Z) f = dist Z G ∘ map f.
@@ -2098,5 +2278,6 @@ Proof.
   intros.
   unfold compose. ext [l a].
   cbn.
-  (* Need list dist traverse relation *)
-Admitted.
+  rewrite traverse_dist_list.
+  reflexivity.
+Qed.

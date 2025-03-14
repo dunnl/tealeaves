@@ -29,6 +29,26 @@ Import ProductFunctor.Notations. (* ◻ *)
 (** * Miscellaneous Properties of Traversable Functors *)
 (**********************************************************************)
 
+(** ** Traversing in the Idempotent Center stays in the Idempotent Center *)
+(**********************************************************************)
+Section traverse_comm_idem.
+
+  Context
+    `{TraversableFunctor T}
+    `{Applicative G}.
+
+
+  Context `{f: A -> G B}
+    (Hyp: forall a, IdempotentCenter G B (f a)).
+
+  Lemma traverse_idem_center: forall (t: T A),
+      IdempotentCenter G (T B) (traverse (G := G) f t).
+  Proof.
+    (* Actually, this requires the representation theorem *)
+  Abort.
+
+End traverse_comm_idem.
+
 (** ** Interaction between <<traverse>> and <<pure>> *)
 (**********************************************************************)
 Section traversable_purity.
