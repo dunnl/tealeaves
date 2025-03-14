@@ -503,8 +503,13 @@ Section shapeliness.
       do 2 rewrite mapd_shape in cut2; auto.
       now rewrite Heq.
     - eapply mapd_ctxlist_injective_restricted2; eauto.
-      (* TODO *)
-  Admitted.
+      intros.
+      eapply Hinj; eauto.
+      + repeat rewrite toctxlist_to_mapdt in *.
+        assumption.
+      + repeat rewrite toctxlist_to_mapdt in *.
+        assumption.
+  Qed.
 
 End shapeliness.
 
