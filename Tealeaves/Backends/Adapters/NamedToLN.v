@@ -340,6 +340,12 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     rewrite run_using_prefix_spec.
     reflexivity.
   Qed.
+  Lemma to_name_from_prefix_spec (top_conflicts: list name) (ctx: list unit) (a: unit):
+    to_name_from_prefix top_conflicts (ctx, a) =
+      to_name_from_history top_conflicts (to_history_from_prefix top_conflicts ctx, a).
+  Proof.
+    reflexivity.
+  Qed.
 
   (** *** Rewriting rules for <<to_name_from_prefix>> *)
   (********************************************************************)
@@ -1029,6 +1035,15 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     apply rt_correct_local1.
   Qed.
 
+
+  Theorem roundtrip_correct2: forall (t: T name name),
+      polymorphic_alpha T t (term_ln_to_nominal (free (term_nominal_to_ln t)) (term_nominal_to_ln t)).
+  Proof.
+    intros.
+    unfold roundtrip_Named.
+    apply roundtrip_correct.
+  Qed.
+
   Print Assumptions roundtrip_correct.
 
   (** ** Roundtrip in the Other Direction *)
@@ -1111,48 +1126,235 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     exact (map (F := T unit) (map_fst (@length unit)) t).
   Defined.
 
+  Lemma length_length_to_list_unit: forall n,
+      length (length_to_list_unit n) = n.
+  Proof.
+    intros. induction n.
+    - reflexivity.
+    - cbn. fequal; auto.
+  Qed.
+
+  Lemma get_binding_LN_rt2: forall (l: list atom) (ctx: list unit) (n: nat),
+      n < length ctx ->
+      (get_binding (to_history_from_prefix l ctx)
+         (to_name_from_prefix l (length_to_list_unit (length ctx - (n + 1)), tt))) =
+        Bound
+          (to_history_from_prefix l (length_to_list_unit (length ctx - (n + 1))))
+          (to_name_from_prefix l (length_to_list_unit (length ctx - (n + 1)), tt))
+          (to_history_from_prefix l (length_to_list_unit n)).
+  Proof.
+    introv Hlt.
+    induction ctx.
+    - false.
+      inversion Hlt.
+    - cbn in Hlt.
+      change (length (?x :: ?xs)) with (S (length xs)).
+      admit.
+  Admitted.
+
+  Lemma get_binding_LN_rt1: forall (l: list atom) (ctx: list unit) (n: nat),
+      n < length ctx ->
+      binding_to_ln
+      (get_binding (to_history_from_prefix l ctx)
+         (to_name_from_prefix l (length_to_list_unit (length ctx - (n + 1)), tt))) =
+        Bd n.
+  Proof.
+    intros.
+    rewrite get_binding_LN_rt2; auto.
+    unfold binding_to_ln.
+    rewrite length_to_history_from_prefix.
+    rewrite length_length_to_list_unit.
+    reflexivity.
+  Qed.
+
+  Lemma decompose_list_by_ix: forall (A: Type) (l: list A) (n: nat),
+      n < length l ->
+      exists pre a post, l = pre ++ [a] ++ post /\
+                      length post = n.
+  Proof.
+    introv Hlt.
+    induction l.
+    - false.
+      inversion Hlt.
+    - cbn in Hlt.
+      compare naturals n and (length l).
+      { apply IHl in ineqp.
+        destruct ineqp as [pre [a' [post [Heq Hrest]]]].
+        exists (a :: pre) a' post; split; auto.
+        rewrite Heq.
+        rewrite List.app_comm_cons.
+        reflexivity.
+      }
+      { exists (@nil A)  a l.
+        rewrite List.app_nil_l.
+        auto.
+      }
+  Qed.
+
+  Lemma get_binding_LN_new2: forall (l: list atom) (pre: list unit) (post: list unit),
+      (get_binding
+         (to_history_from_prefix l pre ++
+            [to_name_from_history l (to_history_from_prefix l pre, tt)] ++
+            to_history_from_prefix
+            (l ++ to_history_from_prefix l pre ++ [to_name_from_history l (to_history_from_prefix l pre, tt)]) post)
+         (to_name_from_history l (to_history_from_prefix l pre, tt)))
+      =  Bound
+           (to_history_from_prefix l pre)
+           (to_name_from_history l (to_history_from_prefix l pre, tt))
+           (to_history_from_prefix
+              (l ++ to_history_from_prefix l pre ++ [to_name_from_history l (to_history_from_prefix l pre, tt)]) post).
+  Proof.
+    intros.
+    apply get_binding2.
+    - reflexivity.
+    - reflexivity.
+    - apply  to_history_from_prefix_fresh.
+      rewrite element_of_list_app.
+      rewrite element_of_list_app.
+      rewrite element_of_list_one.
+      right. right. reflexivity.
+  Qed.
+
+  Lemma get_binding_LN_new: forall (l: list atom) (ctx: list unit) (n: nat),
+      n < length ctx ->
+      binding_to_ln
+      (get_binding (to_history_from_prefix l ctx)
+         (to_name_from_prefix l (length_to_list_unit (length ctx - (n + 1)), tt))) =
+        Bd n.
+  Proof.
+    introv Hin.
+    apply decompose_list_by_ix in Hin.
+    destruct Hin as [pre [a [post [Heq Hlen]]]].
+    About to_history_from_prefix_decompose2.
+    specialize (@to_history_from_prefix_decompose2 l pre post a).
+    intro cut.
+    rewrite Heq.
+    rewrite cut.
+    assert (Hlen_spec: length (pre ++ [a] ++ post) - (n + 1) = length pre).
+    { subst.
+      rewrite List.app_length.
+      rewrite List.app_length.
+      cbn.
+      lia.
+    }
+    rewrite Hlen_spec.
+    rewrite to_name_from_prefix_spec.
+
+    assert (Hpre: length_to_list_unit (length pre) = pre).
+    { admit. }
+    rewrite Hpre.
+    assert (Ha: a = tt).
+    { now destruct a. }
+    rewrite Ha.
+    rewrite get_binding_LN_new2.
+    unfold binding_to_ln.
+    rewrite length_to_history_from_prefix.
+    auto.
+  Admitted.
+
   Lemma roundtrip_LN_id: forall (t: T unit LN),
       LC t ->
       roundtrip_LN t = t.
   Proof.
-    intros.
+    introv HLC.
     rewrite roundtrip_LN_spec_decomposed2.
     remember (free t).
-    cbn.
+    cbn zeta.
     apply mapd_respectful_id.
-    introv Hin.
+    intros ctx v Hin.
     unfold kc_dfunp.
-    unfold compose.
-    cbn.
-    compose near e.
+    unfold compose at 1.
+    unfold cobind_Z2, cojoin_Z2, compose at 1.
+    unfold map_Z2.
+    compose near ctx on left.
     unfold_Z.
     rewrite <- mapd_list_prefix_spec.
-    change (mapd_list_prefix (to_name_from_prefix l) e)
-      with (mapdz (to_name_from_prefix l) e).
+    change (mapd_list_prefix (to_name_from_prefix l) ctx)
+      with (mapdz (to_name_from_prefix l) ctx).
     rewrite <- to_history_from_prefix_spec.
-    destruct a.
-    - cbn.
-      destruct (get_binding_spec (to_history_from_prefix l e) n)
+    unfold name_to_ln.
+    destruct v as [a | n].
+   - unfold ln_to_name.
+      destruct (get_binding_spec (to_history_from_prefix l ctx) a)
         as [[Case1 rest] | [prefix [postfix [Case2 [ctxspec Hnin']]]]].
       + rewrite Case1.
         cbn.
         reflexivity.
       + specialize (to_history_from_prefix_fresh l) as lemma.
         false.
-        assert (n ∈ l).
+        assert (a_in_list: a ∈ l).
         { subst.
-          About in_free_iff.
           admit.
         }
-        specialize (lemma e n H4).
+        specialize (lemma ctx a a_in_list).
+        subst.
+        rewrite ctxspec in lemma.
         apply lemma.
-        rewrite ctxspec.
         rewrite element_of_list_app.
         rewrite element_of_list_app.
         right.
+        left.
         rewrite element_of_list_one.
-        now left.
-    - unfold LN_BD_to_binder_name.
+        reflexivity.
+    - unfold ln_to_name.
+      unfold LN_BD_to_binder_name.
+      assert (H_n_lt: Nat.ltb n (length ctx) = true).
+      { rewrite OrdersEx.Nat_as_OT.ltb_lt.
+        unfold LC in HLC.
+        unfold LCn in HLC.
+        specialize (HLC (length ctx)).
+        specialize (HLC (Bd n)).
+        assert (cut: (length ctx, Bd n) ∈d t).
+        { admit. }
+        apply HLC in cut.
+        unfold lc_loc in cut.
+        lia.
+      }
+      rewrite H_n_lt.
+      rewrite get_binding_LN_rt1; auto.
+      rewrite <- OrdersEx.Nat_as_OT.ltb_lt.
+      assumption.
+  Admitted.
+
+
+  Lemma roundtrip_LN_correct: forall (t: T unit LN),
+      LC t ->
+      term_nominal_to_ln (term_ln_to_nominal (free t) t) = t.
+  Proof.
+    introv HLC.
+    unfold roundtrip_LN.
+    apply roundtrip_LN_id.
+    assumption.
+  Qed.
+
+  Theorem correctness1: forall (t u: T name name),
+      term_nominal_to_ln t = term_nominal_to_ln u -> polymorphic_alpha T t u.
+  Proof.
+    introv Heq.
+    assert (cut1: polymorphic_alpha T t (term_ln_to_nominal (FV t) (term_nominal_to_ln t))).
+    { pose roundtrip_correct2.
+      rewrite FV_preserved.
+      admit.
+    }
+    assert (cut2: polymorphic_alpha T u (term_ln_to_nominal (FV u) (term_nominal_to_ln u))).
+    { pose roundtrip_correct2.
+      rewrite FV_preserved.
+      admit.
+    }
+    rewrite Heq in *.
+    assert (HFV: FV t = FV u).
+    { rewrite  FV_preserved.
+      rewrite  FV_preserved.
+      rewrite Heq.
+      reflexivity.
+    }
+    rewrite HFV in cut1.
+  Admitted.
+
+  Theorem correctness2: forall (t u: T name name),
+      polymorphic_alpha T t u -> term_nominal_to_ln t = term_nominal_to_ln u.
+  Proof.
+    introv Halpha.
   Abort.
 
 End with_DTM.
