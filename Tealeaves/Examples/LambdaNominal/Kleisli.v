@@ -1,7 +1,6 @@
 From Tealeaves Require Export
   Examples.LambdaNominal.Syntax
   Examples.LambdaNominal.Categorical
-  Examples.LambdaNominal.Raw
   Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
   Classes.Categorical.DecoratedTraversableMonadPoly
   Functors.Subset
