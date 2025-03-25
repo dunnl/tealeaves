@@ -179,7 +179,7 @@ Proof.
   reflexivity.
 Qed.
 
-#[export] Instance: DecoratePoly term := @dec_term.
+#[export] Instance DecoratePoly_term: DecoratePoly term := @dec_term.
 
 Section dec_term_rewriting.
 
@@ -948,7 +948,17 @@ Proof.
     reflexivity.
 Qed.
 
-
+#[export] Instance DecoratedMonadPoly_term:
+  DecoratedMonadPoly term.
+Proof.
+  constructor; try typeclasses eauto.
+  - reflexivity.
+  - intros.
+    now rewrite join_map.
+  - reflexivity.
+  - intros.
+    apply decorate_join_term.
+Qed.
 
 #[export] Instance DecoratedTraversableMonadPoly_term:
   DecoratedTraversableMonadPoly term.
@@ -961,21 +971,12 @@ Proof.
     intros.
     now rewrite dist_dec_commute2.
   - typeclasses eauto.
-  - cbv. reflexivity.
-  - unfold decpoly_ret.
-    intros.
-    ext v.
-    apply decorate_ret_term.
-  - unfold decpoly_join.
-    intros.
-    apply decorate_join_term.
   - reflexivity.
   - unfold dist2_join.
     intros.
     setoid_rewrite dist_join_term.
     reflexivity.
 Qed.
-
 
 
 From Tealeaves Require
