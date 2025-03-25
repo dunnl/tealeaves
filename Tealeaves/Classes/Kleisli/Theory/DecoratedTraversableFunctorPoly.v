@@ -1,5 +1,5 @@
 From Tealeaves Require Export
-  Classes.Kleisli.TraversableFunctorPoly
+  Classes.Kleisli.TraversableFunctor2
   Classes.Kleisli.DecoratedTraversableFunctorPoly
   Functors.Constant
   Functors.Subset.

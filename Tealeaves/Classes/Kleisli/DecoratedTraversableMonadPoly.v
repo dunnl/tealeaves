@@ -140,7 +140,7 @@ Class DecoratedTraversableMonadPoly
 
 
 From  Tealeaves Require
-  Classes.Kleisli.TraversableFunctorPoly
+  Classes.Kleisli.TraversableFunctor2
   Classes.Kleisli.DecoratedTraversableFunctorPoly.
 
 (** * Derived Instances *)
@@ -148,7 +148,7 @@ From  Tealeaves Require
 
 (** ** Derived Operations *)
 (******************************************************************************)
-Import TraversableFunctorPoly.
+Import TraversableFunctor2.
 Import DecoratedTraversableFunctorPoly.
 
 Module DerivedOperations.

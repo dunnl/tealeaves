@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Kleisli.DecoratedTraversableMonad
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
-  Classes.Kleisli.TraversableFunctorPoly
+  Classes.Kleisli.TraversableFunctor2
   Classes.Kleisli.Theory.TraversableFunctor
   Functors.List
   Functors.List_Telescoping_General
