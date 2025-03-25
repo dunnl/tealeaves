@@ -103,12 +103,13 @@ Section decorated_traversable_monad_poly_toBatch.
         unfold leaf_of_ctx in Hpwv.
         rewrite mapdtp_through_toBatchp in Hpwv; try typeclasses eauto.
         unfold compose in Hpwv.
-        admit.
+        destruct b0 as [l b1].
+        admit. (* TODO *)
       - do 2 rewrite runBatch2_rw2.
         rewrite IHb.
         fequal.
-        admit.
-    Admitted.
+        admit. (* TODO *)
+    Abort.
 
   End pointwise_corollaries.
 
