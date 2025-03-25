@@ -38,6 +38,8 @@ Section dtfp_to_dtf.
       rewrite kdtfp_mapdtp2.
       fequal.
       { (* kc lemma *)
+        unfold kc3_ci.
+        unfold mapdt_ci.
         admit. }
       { (* kc lemma *)
         admit.
@@ -51,7 +53,7 @@ Section dtfp_to_dtf.
       reassociate <- on left.
       rewrite appmor_pure_pf.
       reflexivity.
-  Admitted.
+  Abort.
 
 End dtfp_to_dtf.
 
@@ -86,7 +88,7 @@ Section dtfp_to_dtf_bin.
       reassociate <- on right.
       rewrite appmor_pure_pf.
       reflexivity.
-  Admitted.
+  Abort.
 
 End dtfp_to_dtf_bin.
 
@@ -137,7 +139,7 @@ Section relating.
       admit.
       admit.
       admit.
-    Admitted.
+    Abort.
 
   End commute.
 
