@@ -61,8 +61,7 @@ Section DTM.
     DecoratedTraversableMonad nat (T unit).
   Proof.
     assert (DecoratedTraversableMonad (list unit) (T unit)).
-    { apply
-        PolyToMono.Kleisli.DecoratedTraversableMonad.DTM_of_DTMP.
+    { apply PolyToMono.Kleisli.DecoratedTraversableMonad.DTM_of_DTMP.
     }
     apply MonoidHom.DecoratedTraversableMonad.DTM_of_DTM.
     { constructor; try typeclasses eauto.

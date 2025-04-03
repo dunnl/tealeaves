@@ -299,6 +299,12 @@ Section Cojoin_Z_rw.
     intros. ext [l a]. reflexivity.
   Qed.
 
+  Lemma extract_Z_prod: forall (A: Type),
+      @extract Z Extract_Z A = @extract (prod (list A)) (@Extract_reader (list A)) A.
+  Proof.
+    reflexivity.
+  Qed.
+
 End Cojoin_Z_rw.
 
 (** ** Naturality *)
@@ -1308,6 +1314,28 @@ Section mapdt_list_prefix_rw.
 End mapdt_list_prefix_rw.
 
 
+(** ** Rewriting Laws for <<Z>> *)
+(**********************************************************************)
+Section mapdt_Z_Z_rw.
+  Context
+    {G: Type -> Type}
+    `{Map G} `{Pure G} `{Mult G}
+    `{! Applicative G}
+    {A B: Type}.
+
+  Lemma mapdt_Z_Z_rw:
+    forall (f: Z A -> G B) (l: list A) (a: A),
+      mapdt_ci (W := Z) (T := Z) f (l, a) =
+        pure (@pair (list B) B) <⋆> mapdt_ci (W := Z) (T := list) f l <⋆> (f (l, a)).
+  Proof.
+    intros.
+    reflexivity.
+  Qed.
+
+End mapdt_Z_Z_rw.
+
+
+
 
 (*
   Lemma mapdt_list_prefix_preincr
@@ -1959,6 +1987,68 @@ Qed.
     kdtfci_morph  := @kdtfci_morph_list_prefix
   }.
 
+#[export] Instance DecoratedTraversableCommIdemFunctor_Z_Z:
+  DecoratedTraversableCommIdemFunctor Z Z.
+Proof.
+  constructor.
+  - intros. ext [l a].
+    rewrite mapdt_Z_Z_rw.
+    unfold_ops @Pure_I.
+    unfold id.
+    rewrite kdtfci_mapdt1_list_prefix.
+    reflexivity.
+  - intros. ext [l a].
+    rewrite mapdt_Z_Z_rw.
+    unfold compose at 1.
+    rewrite mapdt_Z_Z_rw.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    unfold mapdt_ci at 3.
+    unfold Mapdt_CommIdem_list_prefix.
+    rewrite <- kdtfci_mapdt2_list_prefix.
+    unfold compose at 6.
+    unfold kc3_ci.
+    unfold compose at 6.
+    rewrite (ap_compose2 G2 G1).
+    rewrite (ap_compose2 G2 G1).
+    unfold_ops @Pure_compose.
+    rewrite app_pure_natural.
+    rewrite <- ap_map.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite app_pure_natural.
+    rewrite <- ap_map.
+    rewrite app_pure_natural.
+    rewrite mapdt_Z_Z_rw.
+    rewrite <- ap4.
+    rewrite <- ap4.
+    rewrite <- map_to_ap.
+    rewrite <- map_to_ap.
+    rewrite <- map_to_ap.
+    rewrite map_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite app_pure_natural.
+    change (mapdt_list_prefix f l) with (mapdt_ci f l).
+    rewrite ap3.
+    rewrite <- map_to_ap.
+    rewrite map_ap.
+    rewrite app_pure_natural.
+    rewrite ap_contract.
+    rewrite app_pure_natural.
+    rewrite <- map_to_ap.
+    reflexivity.
+  - intros.
+    ext [l a].
+    unfold compose at 2.
+    do 2 rewrite mapdt_Z_Z_rw.
+    rewrite kdtfci_morph.
+    do 2 rewrite ap_morphism_1.
+    rewrite appmor_pure.
+    reflexivity.
+Qed.
 
 (*
   (** * Proof that decoration is SSR *)

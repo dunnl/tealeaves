@@ -42,11 +42,17 @@ Section dtmp_to_dtm.
         rewrite kdtmp_substitute2.
         { fequal.
           - ext [ctx b].
-            unfold kc3_ci.
-            admit.
+            fequal.
+            fequal.
+            rewrite <- extract_Z_prod.
+            rewrite (kc3_ci_pure_extract1 (W := Z) (G1 := G1) (G2 := G2)).
+            reflexivity.
           - ext [ctx v].
             unfold kc_dtmp.
             unfold kc7.
+            rewrite map_ap.
+            rewrite map_ap.
+            rewrite app_pure_natural.
             admit.
         }
         { intros [ctx b].
@@ -59,7 +65,7 @@ Section dtmp_to_dtm.
         reassociate <- on left.
         rewrite appmor_pure_pf.
         reflexivity.
-  Admitted.
+  Abort.
 
 End dtmp_to_dtm.
 
@@ -94,6 +100,6 @@ Section dtmp_to_dtf_bin.
       reassociate <- on right.
       rewrite appmor_pure_pf.
       reflexivity.
-  Admitted.
+  Abort.
 
 End dtmp_to_dtf_bin.
