@@ -324,13 +324,13 @@ Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v
 ##########################################################
 # FULLY NOMINAL BACKEND                                  #
 ##########################################################
-Tealeaves/Backends/Named/Named.v
-Tealeaves/Backends/Named/Common.v
-Tealeaves/Backends/Named/Alpha.v
-Tealeaves/Backends/Named/FV.v
-Tealeaves/Backends/Named/Barendregt.v
+Tealeaves/Backends/Nominal/Nominal.v
+Tealeaves/Backends/Nominal/Common.v
+Tealeaves/Backends/Nominal/Alpha.v
+Tealeaves/Backends/Nominal/FV.v
+Tealeaves/Backends/Nominal/Barendregt.v
 Tealeaves/Backends/Adapters/KeyName.v
-Tealeaves/Backends/Adapters/NamedToLN.v
+Tealeaves/Backends/Adapters/NominalToLN.v
 
 ##########################################################
 # EX: CONFLUENCE OF LAMBDA CALCULUS                      #

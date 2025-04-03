@@ -6,7 +6,7 @@ From Tealeaves Require Import
   CategoricalToKleisli.DecoratedTraversableFunctor
   Functors.List_Telescoping_General
   Backends.Common.Names
-  Backends.Named.Common
+  Backends.Nominal.Common
   Functors.Constant
   Functors.Subset
   Kleisli.Theory.DecoratedTraversableFunctor

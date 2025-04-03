@@ -3,8 +3,8 @@ From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableMonadPoly
   Functors.List_Telescoping_General
   Backends.Common.Names
-  Backends.Named.Common
-  Backends.Named.FV
+  Backends.Nominal.Common
+  Backends.Nominal.FV
   Functors.Constant
   Functors.Subset.
 

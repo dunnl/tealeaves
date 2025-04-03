@@ -1,9 +1,9 @@
 From Tealeaves Require Import
   Backends.LN
-  Backends.Named.Common
+  Backends.Nominal.Common
   Backends.Common.Names
-  Backends.Named.FV
-  Backends.Named.Alpha
+  Backends.Nominal.FV
+  Backends.Nominal.Alpha
   Functors.Option
   LiftRel.TraversableFunctor
   Theory.DecoratedTraversableFunctorPoly
@@ -56,6 +56,14 @@ Section DTM.
   Defined.
 
   Import PolyToMono.Kleisli.DecoratedTraversableMonad.
+
+  Instance Decorate_MONO:
+    Decorate nat (T unit).
+  Proof.
+    intros A t.
+    apply (dec (E := list unit)) in t; try typeclasses eauto.
+    exact (map (F := T unit) (map_fst (@length unit)) t).
+  Defined.
 
   #[export] Instance DTM_MONO:
     DecoratedTraversableMonad nat (T unit).
@@ -110,7 +118,7 @@ Section with_DTM.
 
   Context `{! DecoratedTraversableFunctor (list atom) (T atom)}. (* TODO Infer this *)
 
-  (** ** Named to Locally Nameless *)
+  (** ** Nominal to Locally Nameless *)
   (********************************************************************)
   Definition binding_to_ln: Binding -> LN :=
     fun b =>
@@ -132,7 +140,7 @@ Section with_DTM.
     T name name -> T unit LN :=
     mapdp (T := T) (const tt) name_to_ln.
 
-  (** ** Locally Nameless to Named *)
+  (** ** Locally Nameless to Nominal *)
   (********************************************************************)
   (* crash hard, crash often *)
   Definition PANIC_INDEX_EXCEEDS_CONTEXT: nat := 1337.
@@ -436,20 +444,20 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
   (** ** Roundtrip Specifications *)
   (********************************************************************)
-  Definition roundtrip_Named:
+  Definition roundtrip_Nominal:
     T name name -> T name name :=
     fun t => let t_ln := term_nominal_to_ln t
           in term_ln_to_nominal (LN.free t_ln) t_ln.
 
-  Lemma roundtrip_Named_spec1:
+  Lemma roundtrip_Nominal_spec1:
     forall (t: T name name),
-      roundtrip_Named t =
+      roundtrip_Nominal t =
         mapdp
           (kc_dz (to_name_from_prefix (free (term_nominal_to_ln t))) (const tt))
           (kc_dfunp (ln_to_name (free (term_nominal_to_ln t))) (const tt) name_to_ln) t.
   Proof.
     intros.
-    unfold roundtrip_Named.
+    unfold roundtrip_Nominal.
     compose near t on left.
     unfold term_nominal_to_ln at 2.
     unfold term_ln_to_nominal at 1.
@@ -524,16 +532,16 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     reflexivity.
   Qed.
 
-  Lemma roundtrip_Named_spec_decomposed:
+  Lemma roundtrip_Nominal_spec_decomposed:
     forall (t: T name name),
-      roundtrip_Named t =
+      roundtrip_Nominal t =
         let avoid := LN.free (term_nominal_to_ln t)
         in rename_binders
              (roundtrip_Binder_loc avoid)
              (mapd (T := T name) (roundtrip_Var_loc avoid) t).
   Proof.
     intros.
-    rewrite roundtrip_Named_spec1.
+    rewrite roundtrip_Nominal_spec1.
     unfold kc_dz.
     rewrite cobind_Z_const.
     rewrite mapd_decompose.
@@ -558,7 +566,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     reflexivity.
   Qed.
 
-  Lemma roundtrip_Named_var_spec {avoid: list atom}:
+  Lemma roundtrip_Nominal_var_spec {avoid: list atom}:
     (kc_dfunp
        (ln_to_name (avoid))
        (const tt)
@@ -1019,10 +1027,10 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
   Qed.
 
   Theorem roundtrip_correct: forall (t: T name name),
-      polymorphic_alpha T t (roundtrip_Named t).
+      polymorphic_alpha T t (roundtrip_Nominal t).
   Proof.
     intros.
-    rewrite (roundtrip_Named_spec_decomposed).
+    rewrite (roundtrip_Nominal_spec_decomposed).
     unfold polymorphic_alpha.
     unfold lift_relation_ctx_poly.
     rewrite (decorate_rename_binders2).
@@ -1039,7 +1047,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       polymorphic_alpha T t (term_ln_to_nominal (free (term_nominal_to_ln t)) (term_nominal_to_ln t)).
   Proof.
     intros.
-    unfold roundtrip_Named.
+    unfold roundtrip_Nominal.
     apply roundtrip_correct.
   Qed.
 
@@ -1116,14 +1124,6 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       `{! DecoratedContainerFunctor (list unit) (T unit)}.
 
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
-
-  Instance Decorate_MONO:
-    Decorate nat (T unit).
-  Proof.
-    intros A t.
-    apply (dec (E := list unit)) in t; try typeclasses eauto.
-    exact (map (F := T unit) (map_fst (@length unit)) t).
-  Defined.
 
   Lemma length_length_to_list_unit: forall n,
       length (length_to_list_unit n) = n.

@@ -1,7 +1,7 @@
 From Tealeaves Require Import
   Classes.Kleisli.DecoratedTraversableFunctor
   Kleisli.Theory.DecoratedTraversableFunctor
-  Backends.Named.Common.
+  Backends.Nominal.Common.
 
 Import List.ListNotations.
 
