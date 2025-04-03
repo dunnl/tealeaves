@@ -54,6 +54,18 @@ Class DecoratePreservingTransformation
     dectrans_natural: Natural ϕ;
   }.
 
+(** ** Decoration-preserving natural transformation, generalized *)
+(**********************************************************************)
+Class DecoratePreservingTransformationHet
+  {E1 E2: Type}
+  (F G: Type -> Type)
+  `{! Map F} `{Decorate E1 F}
+  `{! Map G} `{Decorate E2 G}
+  (g: E1 -> E2) (ϕ: F ⇒ G) :=
+  { dectranshet_commute: `(ϕ (E2 * A) ∘ (map F (map_fst g)) ∘ dec F A = dec G A ∘ ϕ A);
+    dectranshet_natural: Natural ϕ;
+  }.
+
 (** * Decorated functor instance for [Reader] *)
 (**********************************************************************)
 Section DecoratedFunctor_reader.
