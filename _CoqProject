@@ -316,6 +316,7 @@ Tealeaves/Backends/Common/AssocList.v
 Tealeaves/Adapters/MonoidHom/DecoratedTraversableMonad.v
 Tealeaves/Adapters/PolyToMono/Categorical/DecoratedFunctor.v
 Tealeaves/Adapters/PolyToMono/Categorical/TraversableFunctor.v
+Tealeaves/Adapters/PolyToMono/Categorical/DecoratedMonad.v
 Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedFunctor.v
 Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableFunctor.v
 Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v

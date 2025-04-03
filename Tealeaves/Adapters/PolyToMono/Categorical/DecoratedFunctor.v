@@ -94,6 +94,32 @@ Module ToMono1.
         reflexivity.
     Qed.
 
+    #[export] Instance Bmap_Decorated_Hom:
+      forall (B1 B2: Type) (f: B1 -> B2),
+        DecoratePreservingTransformationHet
+          (F B1) (F B2) (map (F := list) f) (fun V => @bmap F _ V B1 B2 f).
+    Proof.
+      intros.
+      constructor.
+      - intros.
+        unfold bmap.
+        rewrite (fun2_map22_map21).
+        unfold dec.
+        unfold Decorate_PolyVar.
+        reassociate <- on left.
+        rewrite fun2_map_map.
+        reassociate -> on right.
+        unfold_ops @Map2_2.
+        rewrite polydecnat.
+        reassociate <- on right.
+        rewrite fun2_map_map.
+        fequal.
+        fequal.
+        rewrite <- (natural (ϕ := @extract _ _)).
+        reflexivity.
+      - typeclasses eauto.
+    Qed.
+
   End ctx.
 
 End ToMono1.

@@ -40,11 +40,11 @@ Module DerivedInstances.
     constructor; intros.
     - unfold substitute, Substitute_Categorical.
       reassociate -> on left.
-      rewrite xxx_dec_ret.
+      rewrite dmp_dec_ret.
       reassociate <- on left.
       fequal.
       reassociate ->.
-      rewrite xxx_map_ret.
+      rewrite dmp_map_ret.
       reassociate <- on left.
       change σ with (id ∘ σ) at 2.
       fequal.
