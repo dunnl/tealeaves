@@ -91,26 +91,6 @@ Section composition_with_functor.
     reflexivity.
   Qed.
 
-  (*
-  Lemma fun2_map22_map21_commute:
-    map2 (F := F) g id ∘ map2 id f =
-      map2 (F := F) id f ∘ map2 (F := F) g id.
-  Proof.
-    rewrite fun2_map_map.
-    rewrite fun2_map_map.
-    reflexivity.
-  Qed.
-
-  Lemma fun2_map22_map21':
-    map2 (F := F) g id ∘ map2 id f =
-      map2 (F := F) g f.
-  Proof.
-    rewrite fun2_map_map.
-    reflexivity.
-  Qed.
-  *)
-
-
   Lemma fun2_map22_map21:
     map (Map := Map2_2) g ∘ map (Map := Map2_1) f =
       map2 (F := F) g f.
@@ -166,7 +146,41 @@ Section composition_with_functor.
     reflexivity.
   Qed.
 
+  Definition vmap {B V1 V2:Type} `(f: V1 -> V2) := map (F := F B) (Map := Map2_1) f.
+
+  Definition bmap {V B1 B2:Type} `(f: B1 -> B2) := map (F := fun B => F B V) (Map := Map2_2) f.
+
 End composition_with_functor.
+
+Section naturality_bmap_vmap.
+
+  Context `{Functor2 F}
+    {B B1 B2: Type}
+    {V V1 V2: Type}.
+
+    #[export] Instance Natural_vmap: forall (f: V1 -> V2),
+        @Natural (fun B => F B V1) (@Map2_2 F _ V1) (fun B => F B V2) (@Map2_2 F _ V2) (fun B => vmap (F := F) f).
+    Proof.
+      intros. constructor.
+      - typeclasses eauto.
+      - typeclasses eauto.
+      - intros.
+        unfold vmap.
+        now rewrite fun2_map22_map21_commute.
+    Qed.
+
+    #[export] Instance Natural_bmap: forall (f: B1 -> B2),
+        @Natural (F B1) (@Map2_1 F _ B1) (F B2) (@Map2_1 F _ B2) (fun B => bmap (F := F) f).
+    Proof.
+      intros. constructor.
+      - typeclasses eauto.
+      - typeclasses eauto.
+      - intros.
+        unfold bmap.
+        now rewrite fun2_map22_map21_commute.
+    Qed.
+
+End naturality_bmap_vmap.
 
 (** ** Composition with Single-Argument Functors *)
 (**********************************************************************)
