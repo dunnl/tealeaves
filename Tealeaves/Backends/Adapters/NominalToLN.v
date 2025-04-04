@@ -30,6 +30,50 @@ From Tealeaves Require
   Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.
 
 
+
+(** * Properties about mapping over <<list>>/<<Z>> *)
+(**********************************************************************)
+Lemma mapd_list_prefix_const: forall (A: Type) (w: list A),
+    mapdz (T := list) (const tt) w = map (F := list) (const tt) w.
+Proof.
+  intros.
+  rewrite mapd_list_prefix_spec.
+  unfold compose.
+  induction w.
+  - reflexivity.
+  - cbn. fequal.
+    compose near (decorate_prefix_list w).
+    rewrite (fun_map_map).
+    rewrite <- IHw.
+    reflexivity.
+Qed.
+
+Lemma cobind_Z_const: forall (A: Type),
+    cobind (A := A) (W := Z) (const tt) = map (F := Z) (const tt).
+Proof.
+  introv.
+  ext [w a].
+  cbn.
+  rewrite mapd_list_prefix_const.
+  reflexivity.
+Qed.
+
+Lemma cobind_Z2_const: forall (A A' B: Type) (f: Z2 B A -> A'),
+    cobind_Z2 (B1 := B) (A1 := A) (const tt) f =
+      fun '(w, a) => (map (F := list) (const tt) w, f (w, a)).
+Proof.
+  introv.
+  ext [w a].
+  cbn.
+  compose near w on left.
+  unfold_Z.
+  rewrite <- mapd_list_prefix_spec.
+  rewrite mapd_list_prefix_const.
+  reflexivity.
+Qed.
+
+
+
 (** * Single-Argument DTM Instance *)
 (**********************************************************************)
 Section DTM.
@@ -57,19 +101,13 @@ Section DTM.
 
   Import PolyToMono.Kleisli.DecoratedTraversableMonad.
 
-  Instance Decorate_MONO:
-    Decorate nat (T unit).
-  Proof.
-    intros A t.
-    apply (dec (E := list unit)) in t; try typeclasses eauto.
-    exact (map (F := T unit) (map_fst (@length unit)) t).
-  Defined.
 
   #[export] Instance DTM_MONO:
     DecoratedTraversableMonad nat (T unit).
   Proof.
     assert (DecoratedTraversableMonad (list unit) (T unit)).
-    { apply PolyToMono.Kleisli.DecoratedTraversableMonad.DTM_of_DTMP.
+    { Fail apply PolyToMono.Kleisli.DecoratedTraversableMonad.DTM_of_DTMP.
+      admit.
     }
     apply MonoidHom.DecoratedTraversableMonad.DTM_of_DTM.
     { constructor; try typeclasses eauto.
@@ -79,9 +117,309 @@ Section DTM.
       reflexivity.
       cbn. now  rewrite IHa1.
     }
-  Qed.
+    Admitted.
 
 End DTM.
+
+(** * Histories and Contexts *)
+(********************************************************************)
+Section to_name_from_history.
+
+  (** ** <<to_name_from_history>> *)
+  (** Perform one local binder renaming on a locally nameless binder occurrence, given the history (the names assigned
+    to binders higher in the tree) and the initial avoid set.  *)
+  (********************************************************************)
+  Definition to_name_from_history
+    (top_avoid: list name)
+    (p: list name * unit): name :=
+    match p with
+    | (history, u) =>
+        fresh (top_avoid ++ history)
+    end.
+
+  (** *** Rewriting Principles for <<to_name_from_history>> *)
+  (********************************************************************)
+  Section to_name_from_history_rw.
+
+    Context (avoid: list name).
+
+    Lemma to_name_from_history_nil (u: unit):
+      to_name_from_history avoid (@nil atom, u) = fresh avoid.
+    Proof.
+      cbn -[fresh].
+      rewrite List.app_nil_r.
+      reflexivity.
+    Qed.
+
+    Lemma to_name_from_history_pair (history: list atom) (u: unit):
+      to_name_from_history avoid (history, u) = fresh (avoid ++ history).
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma to_name_from_history_preincr (history: list atom):
+      to_name_from_history avoid ⦿ history =
+        to_name_from_history (avoid ++ history).
+    Proof.
+      ext [w l].
+      unfold preincr, incr, compose.
+      rewrite to_name_from_history_pair.
+      unfold to_name_from_history.
+      unfold_ops @Monoid_op_list.
+      rewrite <- List.app_assoc.
+      reflexivity.
+    Qed.
+
+  End to_name_from_history_rw.
+
+  (** *** Freshness for <<to_name_from_history>> *)
+  (********************************************************************)
+  Lemma to_name_from_history_fresh (avoid: list name): forall p,
+      ~ (to_name_from_history avoid p ∈ avoid).
+  Proof.
+    intros.
+    unfold to_name_from_history.
+    destruct p.
+    specialize (fresh_not_in (avoid ++ l)).
+    intros hyp contra.
+    apply hyp.
+    rewrite element_of_list_app.
+    now left.
+  Qed.
+
+  (** ** <<to_history_from_ctx>> *)
+  (** Given a locally nameless binding context (a list of unit values, representing its length-many binders in scope),
+    convert the context into same-length list of names assigned to each binder, given a top-level avoid set. *)
+  (********************************************************************)
+  Definition to_history_from_ctx (avoid: list name):
+    list unit -> list name :=
+    fold_with_history (to_name_from_history avoid).
+
+  Ltac fold_folds :=
+    repeat change (fold_with_history (to_name_from_history ?avoid)) with
+      (to_history_from_ctx avoid) in *.
+
+  (** *** Basic Properties of <<to_history_from_ctx>> *)
+  (********************************************************************)
+  Corollary length_to_history_from_ctx (avoid: list name) (l: list unit):
+    length (to_history_from_ctx avoid l) = length l.
+  Proof.
+    intros.
+    unfold to_history_from_ctx.
+    rewrite length_fold_with_history.
+    reflexivity.
+  Qed.
+
+  (** *** Rewriting Principles for <<to_history_from_ctx>> *)
+  (********************************************************************)
+  Section to_name_from_history_rw.
+
+    Context (avoid: list name).
+
+    Lemma to_history_from_ctx_nil:
+      to_history_from_ctx avoid nil = nil.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma to_history_from_ctx_cons (u: unit) (pre: list unit):
+      to_history_from_ctx avoid (u :: pre) =
+        fresh avoid :: to_history_from_ctx (avoid ++ [fresh avoid]) pre.
+    Proof.
+      unfold to_history_from_ctx.
+      rewrite fold_with_history_cons.
+      fequal.
+      - rewrite to_name_from_history_nil.
+        reflexivity.
+      - rewrite to_name_from_history_nil.
+        fequal.
+        ext [x y].
+        unfold preincr, incr, compose.
+        unfold_ops @Monoid_op_list.
+        unfold to_name_from_history.
+        rewrite List.app_assoc.
+        reflexivity.
+    Qed.
+
+    Lemma to_history_from_ctx_preincr
+      (history: list atom):
+      fold_with_history (to_name_from_history avoid ⦿ history) =
+        to_history_from_ctx (avoid ++ history).
+    Proof.
+      ext l.
+      generalize dependent avoid.
+      generalize dependent history.
+      induction l; intros.
+      - cbn.
+        reflexivity.
+      - rewrite fold_with_history_cons.
+        unfold to_history_from_ctx.
+        rewrite fold_with_history_cons.
+        fequal.
+        { unfold preincr, incr, compose.
+          change (history ● []) with (history ++ []).
+          rewrite List.app_nil_r.
+          cbn.
+          rewrite List.app_nil_r.
+          reflexivity.
+        }
+        { rewrite preincr_preincr.
+          rewrite IHl.
+          unfold to_history_from_ctx.
+          rewrite IHl.
+          change (?l1 ● ?l2) with (l1 ++ l2).
+          unfold to_history_from_ctx.
+          rewrite to_name_from_history_preincr.
+          rewrite List.app_assoc.
+          reflexivity.
+        }
+    Qed.
+
+  End to_name_from_history_rw.
+
+  (** *** Distributing <<to_history_from_ctx>> over a context *)
+  (********************************************************************)
+  (* Tailored for use when the list is a nominal binding context decomposition *)
+  Section to_history_from_ctx_decompose.
+
+    Context (avoid: list name) {l1 l2: list unit} {u: unit}.
+
+    Corollary to_history_from_ctx_decompose:
+      to_history_from_ctx avoid (l1 ++ [u] ++ l2) =
+        let init := to_history_from_ctx avoid l1 in
+        let mid := [to_name_from_history avoid (init , u)] in
+        let tail := to_history_from_ctx (avoid ++ init ++ mid) l2
+        in init ++ mid ++ tail.
+    Proof.
+      intros.
+      unfold to_history_from_ctx.
+      rewrite fold_with_history_decompose.
+      rewrite to_history_from_ctx_preincr.
+      reflexivity.
+    Qed.
+
+  End to_history_from_ctx_decompose.
+
+  (** *** Freshness for <<to_history_from_ctx>> *)
+  (********************************************************************)
+  Lemma to_history_from_ctx_fresh (avoid: list name): forall (prefix: list unit),
+    forall (a: name),
+      a ∈ avoid ->
+      ~ a ∈ (to_history_from_ctx avoid prefix).
+  Proof.
+    introv Hin.
+    unfold to_name_from_history.
+    enough (cut: forall (x: atom), x ∈ to_history_from_ctx avoid prefix -> x <> a).
+    { intro contra.
+      specialize (cut a).
+      apply cut; auto.
+    }
+    apply fold_with_history_ind.
+    intros u h Hnotin.
+    specialize (to_name_from_history_fresh avoid (h, u)).
+    intro Hfresh.
+    intro contra.
+    subst. contradiction.
+  Qed.
+
+  (** ** <<to_name_from_ctx>> *)
+  (* give a name to a nameless binder in a context *)
+  (********************************************************************)
+  Definition to_name_from_ctx (avoid: list name):
+    list unit * unit -> name :=
+    run_using_prefix (to_name_from_history avoid).
+
+  (** *** Relation between <<to_history_from_ctx>> and <<to_name_from_ctx>> *)
+  (********************************************************************)
+  Lemma to_history_from_ctx_spec (avoid: list name):
+    to_history_from_ctx avoid =
+      mapdz (T := list) (to_name_from_ctx avoid).
+  Proof.
+    unfold to_name_from_ctx.
+    rewrite run_using_prefix_spec.
+    reflexivity.
+  Qed.
+
+  Lemma to_name_from_ctx_spec (avoid: list name) (ctx: list unit) (a: unit):
+    to_name_from_ctx avoid (ctx, a) =
+      to_name_from_history avoid (to_history_from_ctx avoid ctx, a).
+  Proof.
+    reflexivity.
+  Qed.
+
+  (** *** Rewriting rules for <<to_name_from_ctx>> *)
+  (********************************************************************)
+  Lemma to_name_from_ctx_rw_nil (avoid: list name): forall (u: unit),
+      to_name_from_ctx (avoid) (nil, u) =
+        fresh avoid.
+  Proof.
+    intros.
+    cbn.
+    rewrite List.app_nil_r.
+    reflexivity.
+  Qed.
+
+  (*
+  Lemma to_name_from_ctx_rw_cons_old (avoid: list name): forall (u: unit) (rest: list unit) (u': unit),
+    to_name_from_ctx (avoid) (u :: rest, u') =
+      fresh
+        (avoid ++
+           fresh avoid ::
+           fold_with_history (preincr (to_name_from_history avoid) [fresh avoid]) rest).
+  Proof.
+    intros.
+    unfold to_name_from_ctx.
+    unfold run_using_prefix.
+    rewrite fold_with_history_cons.
+    unfold to_name_from_history at 1.
+    unfold to_name_from_history at 1.
+    rewrite List.app_nil_r.
+    unfold to_name_from_history at 2.
+    rewrite List.app_nil_r.
+    reflexivity.
+  Qed.
+   *)
+
+  Lemma to_name_from_ctx_rw_cons (avoid: list name): forall (u: unit) (rest: list unit) (u': unit),
+      to_name_from_ctx avoid (u :: rest, u') =
+        fresh (avoid ++ fresh avoid :: to_history_from_ctx (avoid ++ [fresh avoid]) rest).
+  Proof.
+    intros.
+    unfold to_name_from_ctx.
+    unfold run_using_prefix.
+    rewrite fold_with_history_cons.
+    unfold to_name_from_history at 1.
+    unfold to_name_from_history at 1.
+    rewrite List.app_nil_r.
+    rewrite to_history_from_ctx_preincr.
+    rewrite to_name_from_history_nil.
+    reflexivity.
+  Qed.
+
+  (** *** Freshness for <<to_name_from_ctx>> *)
+  (********************************************************************)
+  Lemma to_name_from_ctx_fresh (avoid: list name) (prefix: list unit) (u: unit):
+    ~ to_name_from_ctx avoid (prefix, u) ∈ avoid.
+  Proof.
+    intros.
+    unfold to_name_from_ctx.
+    intro contra.
+    unfold run_using_prefix in contra.
+    specialize (to_name_from_history_fresh avoid
+                  (fold_with_history (to_name_from_history avoid) prefix, u)).
+    intro Hyp.
+    apply Hyp.
+    assumption.
+  Qed.
+
+End to_name_from_history.
+
+Fixpoint length_to_list_unit (length: nat): list unit :=
+  match length with
+  | 0 => nil
+  | S n => tt :: length_to_list_unit n
+  end.
+
 
 (** * Local Translations *)
 (**********************************************************************)
@@ -98,21 +436,25 @@ Section with_DTM.
   Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
   Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations.
   Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
-
   Import PolyToMono.Categorical.DecoratedFunctor.ToMono1.
   Import PolyToMono.Categorical.TraversableFunctor.ToMono.
   Import PolyToMono.Kleisli.DecoratedFunctor.ToMono1.
   Import PolyToMono.Kleisli.DecoratedFunctor.ToMono2.
-
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
   Import CategoricalToKleisli.TraversableFunctor.DerivedInstances.
-
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.
 
   Existing Instance Theory.DecoratedTraversableFunctor.ToCtxset_Mapdt.
   Existing Instance Theory.TraversableFunctor.ToSubset_Traverse.
 
+  Instance Decorate_MONO:
+    Decorate nat (T unit).
+  Proof.
+    intros A t.
+    apply (dec (E := list unit)) in t; try typeclasses eauto.
+    exact (map (F := T unit) (map_fst (@length unit)) t).
+  Defined.
 
   Fail Import Categorical.DecoratedTraversableFunctorPoly.ToMono.
 
@@ -145,272 +487,10 @@ Section with_DTM.
   (* crash hard, crash often *)
   Definition PANIC_INDEX_EXCEEDS_CONTEXT: nat := 1337.
 
-  (** ** <<to_name_from_history>> *)
-  (********************************************************************)
-  (** Perform one local binder renaming on a locally nameless binder occurrence, given
-      the history (the names assigned to binders higher in the tree) and the initial avoid set. *)
-  Definition to_name_from_history (top_conflicts: list name) (p: list name * unit): name :=
-    match p with
-    | (history, u) => fresh (top_conflicts ++ history)
-    end.
-
-
-  (** *** Rewriting Principles for <<to_name_from_history>> *)
-  (********************************************************************)
-  Lemma to_name_from_history_nil (top_conflicts: list name) (u: unit):
-    to_name_from_history top_conflicts (@nil atom, u) = fresh top_conflicts.
-  Proof.
-    cbn.
-    rewrite List.app_nil_r.
-    reflexivity.
-  Qed.
-
-  Lemma to_name_from_history_pair (top_conflicts: list name) (history: list atom) (u: unit):
-    to_name_from_history top_conflicts (history, u) = fresh (top_conflicts ++ history).
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma to_name_from_history_preincr (top_conflicts: list name) (ctx: list atom):
-    to_name_from_history top_conflicts ⦿ ctx = to_name_from_history (top_conflicts ++ ctx).
-  Proof.
-    ext [w l].
-    unfold preincr, incr, compose.
-    rewrite to_name_from_history_pair.
-    unfold to_name_from_history.
-    fequal.
-    rewrite <- List.app_assoc.
-    reflexivity.
-  Qed.
-
-  (** *** Freshness for <<to_name_from_history>> *)
-  (********************************************************************)
-  Lemma to_name_from_history_fresh (top_conflicts: list name): forall p,
-      ~ (to_name_from_history top_conflicts p ∈ top_conflicts).
-  Proof.
-    intros.
-    unfold to_name_from_history.
-    destruct p.
-    specialize (fresh_not_in (top_conflicts ++ l)).
-    intros hyp contra.
-    apply hyp.
-    rewrite element_of_list_app.
-    now left.
-  Qed.
-
-  (** ** <<to_history_from_prefix>> *)
-  (********************************************************************)
-
-  (** Given a locally nameless binding context (a list of unit values, representing its length-many binders opened in
-      scope), convert the context into same-length list of names assigned to each binder, given a top-level avoid
-      set. *)
-  Definition to_history_from_prefix (top_conflicts: list name): list unit -> list name :=
-    fold_with_history (to_name_from_history top_conflicts).
-
-  Lemma to_history_from_prefix_preincr (top_conflicts: list name) (ctx: list atom):
-    fold_with_history (to_name_from_history top_conflicts ⦿ ctx) =
-      to_history_from_prefix (top_conflicts ++ ctx).
-  Proof.
-    ext l.
-    generalize dependent top_conflicts.
-    generalize dependent ctx.
-    induction l; intros.
-    - cbn.
-      reflexivity.
-    - rewrite fold_with_history_cons.
-      unfold to_history_from_prefix.
-      rewrite fold_with_history_cons.
-      fequal.
-      { unfold preincr, incr, compose.
-        change (ctx ● []) with (ctx ++ []).
-        rewrite List.app_nil_r.
-        cbn.
-        rewrite List.app_nil_r.
-        reflexivity.
-      }
-      { rewrite preincr_preincr.
-        rewrite IHl.
-        unfold to_history_from_prefix.
-        rewrite IHl.
-        change (?l1 ● ?l2) with (l1 ++ l2).
-        unfold to_history_from_prefix.
-        rewrite to_name_from_history_preincr.
-        rewrite List.app_assoc.
-        reflexivity.
-      }
-  Qed.
-
-  Corollary length_to_history_from_prefix (top_conflicts: list name) (l: list unit):
-    length (to_history_from_prefix top_conflicts l) = length l.
-  Proof.
-    intros.
-    unfold to_history_from_prefix.
-    rewrite length_fold_with_history.
-    reflexivity.
-  Qed.
-
-  (* Tailored for use when the list is a nominal binding context decomposition *)
-  Corollary to_history_from_prefix_decompose1 (top_conflicts: list name) {l1 l2: list unit} {u: unit}:
-to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
-        to_history_from_prefix top_conflicts l1 ++
-          [to_name_from_history top_conflicts
-             (to_history_from_prefix top_conflicts l1, u)] ++
-          fold_with_history
-          (to_name_from_history top_conflicts ⦿
-             (to_history_from_prefix top_conflicts l1 ++
-                [to_name_from_history top_conflicts (to_history_from_prefix top_conflicts l1, u)])) l2.
-  Proof.
-    intros.
-    unfold to_history_from_prefix.
-    rewrite fold_with_history_decompose.
-    reflexivity.
-  Qed.
-
-  Corollary to_history_from_prefix_decompose2 (top_conflicts: list name) {l1 l2: list unit} {u: unit}:
-    to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
-      to_history_from_prefix top_conflicts l1 ++
-        [to_name_from_history top_conflicts
-           (to_history_from_prefix top_conflicts l1, u)] ++
-        to_history_from_prefix
-        (top_conflicts ++
-           (to_history_from_prefix top_conflicts l1) ++
-           [to_name_from_history top_conflicts (to_history_from_prefix top_conflicts l1, u)]
-        ) l2.
-  Proof.
-    intros.
-    rewrite to_history_from_prefix_decompose1.
-    rewrite to_name_from_history_preincr.
-    reflexivity.
-  Qed.
-
-  (** *** Rewriting rules *)
-  (********************************************************************)
-  Lemma to_history_from_prefix_nil (top_conflicts: list name):
-    to_history_from_prefix top_conflicts nil = nil.
-  Proof.
-    reflexivity.
-  Qed.
-
-  Lemma to_history_from_prefix_cons (top_conflicts: list name) (u: unit) (pre: list unit):
-    to_history_from_prefix top_conflicts (u :: pre) =
-      fresh top_conflicts :: to_history_from_prefix (top_conflicts ++ [fresh top_conflicts]) pre.
-  Proof.
-    unfold to_history_from_prefix.
-    rewrite fold_with_history_cons.
-    fequal.
-    - rewrite to_name_from_history_nil.
-      reflexivity.
-    - rewrite to_name_from_history_nil.
-      fequal.
-      ext [x y].
-      unfold preincr, incr, compose.
-      unfold_ops @Monoid_op_list.
-      unfold to_name_from_history.
-      rewrite List.app_assoc.
-      reflexivity.
-  Qed.
-
-  (** *** Freshness for <<to_history_from_prefix>> *)
-  (********************************************************************)
-  Lemma to_history_from_prefix_fresh (top_conflicts: list name): forall (prefix: list unit),
-    forall (a: name),
-      a ∈ top_conflicts ->
-      ~ a ∈ (to_history_from_prefix top_conflicts prefix).
-  Proof.
-    introv Hin.
-    unfold to_name_from_history.
-    enough (cut: forall (x: atom), x ∈ to_history_from_prefix top_conflicts prefix -> x <> a).
-    { intro contra.
-      specialize (cut a).
-      apply cut; auto.
-    }
-    apply fold_with_history_ind.
-    intros u h Hnotin.
-    specialize (to_name_from_history_fresh top_conflicts (h, u)).
-    intro Hfresh.
-    intro contra.
-    subst. contradiction.
-  Qed.
-
-  (** ** <<to_name_from_prefix>> *)
-  (********************************************************************)
-  Definition to_name_from_prefix (top_conflicts: list name): list unit * unit -> name :=
-    run_using_prefix (to_name_from_history top_conflicts).
-
-  (** *** Relation between <<to_history_from_prefix>> and <<to_name_from_prefix>> *)
-  (********************************************************************)
-  Lemma to_history_from_prefix_spec (top_conflicts: list name):
-    to_history_from_prefix top_conflicts =
-      mapdz (T := list) (to_name_from_prefix top_conflicts).
-  Proof.
-    unfold to_name_from_prefix.
-    rewrite run_using_prefix_spec.
-    reflexivity.
-  Qed.
-  Lemma to_name_from_prefix_spec (top_conflicts: list name) (ctx: list unit) (a: unit):
-    to_name_from_prefix top_conflicts (ctx, a) =
-      to_name_from_history top_conflicts (to_history_from_prefix top_conflicts ctx, a).
-  Proof.
-    reflexivity.
-  Qed.
-
-  (** *** Rewriting rules for <<to_name_from_prefix>> *)
-  (********************************************************************)
-  Lemma to_name_from_prefix_rw_nil (top_conflicts: list name): forall (u: unit),
-      to_name_from_prefix (top_conflicts) (nil, u) =
-        fresh top_conflicts.
-  Proof.
-    intros.
-    cbn.
-    rewrite List.app_nil_r.
-    reflexivity.
-  Qed.
-
-  Lemma to_name_from_prefix_rw_cons (top_conflicts: list name): forall (u: unit) (rest: list unit) (u': unit),
-      to_name_from_prefix (top_conflicts) (u :: rest, u') =
-        fresh
-    (top_conflicts ++
-       fresh top_conflicts ::
-       fold_with_history (preincr (to_name_from_history top_conflicts) [fresh top_conflicts]) rest).
-  Proof.
-    intros.
-    unfold to_name_from_prefix.
-    unfold run_using_prefix.
-    rewrite fold_with_history_cons.
-    unfold to_name_from_history at 1.
-    unfold to_name_from_history at 1.
-    rewrite List.app_nil_r.
-    unfold to_name_from_history at 2.
-    rewrite List.app_nil_r.
-    reflexivity.
-  Qed.
-
-  (** *** Freshness for <<to_name_from_prefix>> *)
-  (********************************************************************)
-  Lemma to_name_from_prefix_fresh (top_conflicts: list name) (prefix: list unit) (u: unit):
-    ~ to_name_from_prefix top_conflicts (prefix, u) ∈ top_conflicts.
-  Proof.
-    intros.
-    unfold to_name_from_prefix.
-    intro contra.
-    unfold run_using_prefix in contra.
-    specialize (to_name_from_history_fresh top_conflicts
-                  (fold_with_history (to_name_from_history top_conflicts) prefix, u)).
-    intro Hyp.
-    apply Hyp.
-    assumption.
-  Qed.
-
-  Fixpoint length_to_list_unit (length: nat): list unit :=
-    match length with
-    | 0 => nil
-    | S n => tt :: length_to_list_unit n
-    end.
-
   (* Give a DB index (Bd N), define its new name *)
-  Definition LN_BD_to_binder_name (top_conflicts: list name) (ctx: list unit) (n: nat): atom :=
+  Definition LN_BD_to_binder_name (avoid: list name) (ctx: list unit) (n: nat): atom :=
     if Nat.ltb n (length ctx)
-    then to_name_from_prefix top_conflicts (length_to_list_unit (length ctx - (n + 1)), tt)
+    then to_name_from_ctx avoid (length_to_list_unit (length ctx - (n + 1)), tt)
     else PANIC_INDEX_EXCEEDS_CONTEXT.
 
   Lemma LN_BD_to_binder_name_fresh: forall avoid a ctx n,
@@ -423,27 +503,28 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     rewrite Hlt.
     intro contra.
     subst.
-    apply to_name_from_prefix_fresh in Hin.
+    apply to_name_from_ctx_fresh in Hin.
     assumption.
   Qed.
 
-  Definition ln_to_name (top_conflicts: list name):
+  Definition ln_to_name (avoid: list name):
     list unit * LN -> name :=
     fun '(depth, v) =>
       match v with
       | Fr x => x
-      | Bd n => LN_BD_to_binder_name (top_conflicts) depth n
+      | Bd n => LN_BD_to_binder_name avoid depth n
       end.
 
   Definition term_ln_to_nominal (conflicts: list name):
     T unit LN -> T name name :=
     mapdp (T := T)
-      (to_name_from_prefix conflicts)
+      (to_name_from_ctx conflicts)
       (ln_to_name conflicts).
 
 
   (** ** Roundtrip Specifications *)
   (********************************************************************)
+  (* The operation mapping a nominal term to a locally nameless term, then back again into a nominal term *)
   Definition roundtrip_Nominal:
     T name name -> T name name :=
     fun t => let t_ln := term_nominal_to_ln t
@@ -453,7 +534,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     forall (t: T name name),
       roundtrip_Nominal t =
         mapdp
-          (kc_dz (to_name_from_prefix (free (term_nominal_to_ln t))) (const tt))
+          (kc_dz (to_name_from_ctx (free (term_nominal_to_ln t))) (const tt))
           (kc_dfunp (ln_to_name (free (term_nominal_to_ln t))) (const tt) name_to_ln) t.
   Proof.
     intros.
@@ -465,72 +546,36 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     reflexivity.
   Qed.
 
-  (** *** Lemmas about mapping (const tt) *)
+  (** ** Decomposed into a Variable Op and Binder Op *)
   (********************************************************************)
-  Lemma mapd_list_prefix_const: forall (A: Type) (w: list A),
-      mapdz (T := list) (const tt) w = map (F := list) (const tt) w.
-  Proof.
-    intros.
-    rewrite mapd_list_prefix_spec.
-    unfold compose.
-    induction w.
-    - reflexivity.
-    - cbn. fequal.
-      compose near (decorate_prefix_list w).
-      rewrite (fun_map_map).
-      rewrite <- IHw.
-      reflexivity.
-  Qed.
-
-  Lemma cobind_Z_const: forall (A: Type),
-      cobind (A := A) (W := Z) (const tt) = map (F := Z) (const tt).
-  Proof.
-    introv.
-    ext [w a].
-    cbn.
-    rewrite mapd_list_prefix_const.
-    reflexivity.
-  Qed.
-
-  Lemma cobind_Z2_const: forall (A A' B: Type) (f: Z2 B A -> A'),
-      cobind_Z2 (B1 := B) (A1 := A) (const tt) f =
-        fun '(w, a) => (map (F := list) (const tt) w, f (w, a)).
-  Proof.
-    introv.
-    ext [w a].
-    cbn.
-    compose near w on left.
-    unfold_Z.
-    rewrite <- mapd_list_prefix_spec.
-    rewrite mapd_list_prefix_const.
-    reflexivity.
-  Qed.
-
-  (** *** Presented in terms of <<mapd>> composed with <<rename_binders>> *)
-  (********************************************************************)
-
   (* Given a binding occurrence (pre, b) in a nominal term t,
      return the new name of b after a Nominal~>LN~>Nominal roundtrip *)
-  Definition roundtrip_Binder_loc (avoid: list atom): Z atom -> atom :=
-    to_name_from_prefix avoid ∘ map (const tt).
+  Section avoid.
 
-  (* Given a variable occurrence (pre, v) in a nominal term t,
+    Context (avoid: list atom).
+
+    Definition roundtrip_Binder_loc: Z atom -> atom :=
+      to_name_from_ctx avoid ∘ map (const tt).
+
+    (* Given a variable occurrence (pre, v) in a nominal term t,
      return the new name of v after a Nominal~>LN~>Nominal roundtrip *)
-  Definition roundtrip_Var_loc (avoid: list atom): Z2 atom atom -> atom :=
-    kc_dfunp (ln_to_name avoid) (const tt) name_to_ln.
+    Definition roundtrip_Var_loc: Z2 atom atom -> atom :=
+      kc_dfunp (ln_to_name avoid) (const tt) name_to_ln.
 
-  Lemma roundtrip_Binder_loc_spec (avoid: list atom):
-    mapdz (T := list) (roundtrip_Binder_loc avoid) =
-      to_history_from_prefix avoid ∘ map (const tt).
-  Proof.
-    intros.
-    unfold roundtrip_Binder_loc.
-    rewrite to_history_from_prefix_spec.
-    Set Keyed Unification.
-    rewrite (mapdz_map_list (A' := atom) (B := atom) (A := unit)).
-    Unset Keyed Unification.
-    reflexivity.
-  Qed.
+    Lemma roundtrip_Binder_loc_spec:
+      mapdz (T := list) roundtrip_Binder_loc =
+        to_history_from_ctx avoid ∘ map (const tt).
+    Proof.
+      intros.
+      unfold roundtrip_Binder_loc.
+      rewrite to_history_from_ctx_spec.
+      Set Keyed Unification.
+      rewrite (mapdz_map_list (A' := atom) (B := atom) (A := unit)).
+      Unset Keyed Unification.
+      reflexivity.
+    Qed.
+
+  End avoid.
 
   Lemma roundtrip_Nominal_spec_decomposed:
     forall (t: T name name),
@@ -568,7 +613,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
   Lemma roundtrip_Nominal_var_spec {avoid: list atom}:
     (kc_dfunp
-       (ln_to_name (avoid))
+       (ln_to_name avoid)
        (const tt)
        name_to_ln) =
       fun '(ctx, nm) =>
@@ -699,8 +744,6 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
            (B := T B2 A2)
            (map2 (F := T) (B1 := False) (A1 := False) (B2 := B2) (A2 := A2) exfalso exfalso)
            ∘ mapdtp (T := T) (G := const M) g f).
-
-
       unfold mapdtp.
       unfold DerivedOperations.Mapdtp_Categorical.
       reassociate <- on left.
@@ -798,14 +841,14 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
   (** ** Alpha Equivalence Local Reasoning *)
   (********************************************************************)
-  Lemma to_name_from_prefix_preincr: forall avoid a,
-      to_name_from_prefix avoid ∘ cobind (W := Z) (const tt) ∘ incr [a] =
-        to_name_from_prefix (avoid ++ [fresh avoid]) ∘ cobind (const tt).
+  Lemma to_name_from_ctx_preincr: forall avoid a,
+      to_name_from_ctx avoid ∘ cobind (W := Z) (const tt) ∘ incr [a] =
+        to_name_from_ctx (avoid ++ [fresh avoid]) ∘ cobind (const tt).
   Proof.
     intros.
     ext [ctx x].
     unfold compose.
-    unfold to_name_from_prefix.
+    unfold to_name_from_ctx.
   Abort.
 
   (** *** Specification of <<roundtrip_Occ>> *)
@@ -839,7 +882,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       ctx = prefix ++ [a'] ++ postfix ->
       a = a' ->
       roundtrip_Var_loc avoid (ctx, a) =
-        to_name_from_history avoid (to_history_from_prefix avoid (map (const tt) prefix), tt).
+        to_name_from_history avoid (to_history_from_ctx avoid (map (const tt) prefix), tt).
   Proof.
     introv Hbinding Hctx Haeq.
     unfold to_name_from_history.
@@ -863,12 +906,12 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     }
     rewrite <- PeanoNat.Nat.ltb_lt in HsafeIx.
     rewrite HsafeIx.
-    unfold to_name_from_prefix.
+    unfold to_name_from_ctx.
     unfold run_using_prefix.
     unfold to_name_from_history.
     fequal.
     fequal.
-    unfold to_history_from_prefix.
+    unfold to_history_from_ctx.
     fequal.
     assert (Hineq: length ctx - (length postfix + 1) = length prefix).
     { subst.
@@ -903,7 +946,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     { assert (Hfresh: ~ a ∈ mapdz (roundtrip_Binder_loc avoid) ctx).
       { rewrite roundtrip_Binder_loc_spec.
         unfold compose at 1.
-        apply to_history_from_prefix_fresh.
+        apply to_history_from_ctx_fresh.
         assumption.
       }
       apply get_binding1 in Hfresh.
@@ -921,9 +964,9 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       ~ a ∈ postfix ->
       match roundtrip_Occ avoid (ctx, a) with
       | (foo, x) =>
-          let NewPrefix := to_history_from_prefix avoid (map (const tt) prefix)
+          let NewPrefix := to_history_from_ctx avoid (map (const tt) prefix)
           in let NewVar := to_name_from_history avoid (NewPrefix, tt)
-             in let NewPost := to_history_from_prefix (avoid ++ NewPrefix ++ [NewVar]) (map (const tt) postfix)
+             in let NewPost := to_history_from_ctx (avoid ++ NewPrefix ++ [NewVar]) (map (const tt) postfix)
                 in get_binding foo x = Bound NewPrefix NewVar NewPost /\ length NewPrefix = length prefix
       end.
   Proof.
@@ -953,13 +996,13 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
         rewrite map_list_app.
         rewrite map_list_one.
         change (const tt a') with tt.
-        rewrite to_history_from_prefix_decompose2.
+        rewrite to_history_from_ctx_decompose2.
         fold NewPrefix.
         fold NewVar.
         fold NewPost.
         rewrite HRoundtripMapsToNewVar.
         reflexivity.
-      - apply to_history_from_prefix_fresh.
+      - apply to_history_from_ctx_fresh.
         rewrite element_of_list_app.
         rewrite element_of_list_app.
         right; right.
@@ -968,7 +1011,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
         assumption.
     }
     { unfold NewPrefix.
-      rewrite length_to_history_from_prefix.
+      rewrite length_to_history_from_ctx.
       rewrite map_preserve_length.
       reflexivity.
     }
@@ -1063,8 +1106,8 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
   Lemma roundtrip_LN_spec1:
     forall (t: T unit LN),
       roundtrip_LN t =
-        mapdp (kc_dz (const tt) (to_name_from_prefix (free t)))
-          (kc_dfunp name_to_ln (to_name_from_prefix (free t)) (ln_to_name (free t))) t.
+        mapdp (kc_dz (const tt) (to_name_from_ctx (free t)))
+          (kc_dfunp name_to_ln (to_name_from_ctx (free t)) (ln_to_name (free t))) t.
   Proof.
     intros.
     unfold roundtrip_LN.
@@ -1082,13 +1125,13 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
         in (rename_binders (const tt)
            (mapd (T := T unit) (kc_dfunp (T := T)
                                   name_to_ln
-                                  (to_name_from_prefix avoid)
+                                  (to_name_from_ctx avoid)
                                   (ln_to_name avoid)) t)).
   Proof.
     intros.
     rewrite roundtrip_LN_spec1.
     unfold kc_dz.
-    change (const tt ∘ cobind (to_name_from_prefix (free t)))
+    change (const tt ∘ cobind (to_name_from_ctx (free t)))
       with (const (A := list unit * unit) tt).
     rewrite mapd_decompose.
     reflexivity.
@@ -1101,7 +1144,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
         in (mapd (T := T unit)
               (kc_dfunp (T := T)
                  name_to_ln
-                 (to_name_from_prefix avoid)
+                 (to_name_from_ctx avoid)
                  (ln_to_name avoid)) t).
   Proof.
     intros.
@@ -1135,12 +1178,12 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
   Lemma get_binding_LN_rt2: forall (l: list atom) (ctx: list unit) (n: nat),
       n < length ctx ->
-      (get_binding (to_history_from_prefix l ctx)
-         (to_name_from_prefix l (length_to_list_unit (length ctx - (n + 1)), tt))) =
+      (get_binding (to_history_from_ctx l ctx)
+         (to_name_from_ctx l (length_to_list_unit (length ctx - (n + 1)), tt))) =
         Bound
-          (to_history_from_prefix l (length_to_list_unit (length ctx - (n + 1))))
-          (to_name_from_prefix l (length_to_list_unit (length ctx - (n + 1)), tt))
-          (to_history_from_prefix l (length_to_list_unit n)).
+          (to_history_from_ctx l (length_to_list_unit (length ctx - (n + 1))))
+          (to_name_from_ctx l (length_to_list_unit (length ctx - (n + 1)), tt))
+          (to_history_from_ctx l (length_to_list_unit n)).
   Proof.
     introv Hlt.
     induction ctx.
@@ -1148,20 +1191,21 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       inversion Hlt.
     - cbn in Hlt.
       change (length (?x :: ?xs)) with (S (length xs)).
+
       admit.
   Admitted.
 
   Lemma get_binding_LN_rt1: forall (l: list atom) (ctx: list unit) (n: nat),
       n < length ctx ->
       binding_to_ln
-      (get_binding (to_history_from_prefix l ctx)
-         (to_name_from_prefix l (length_to_list_unit (length ctx - (n + 1)), tt))) =
+      (get_binding (to_history_from_ctx l ctx)
+         (to_name_from_ctx l (length_to_list_unit (length ctx - (n + 1)), tt))) =
         Bd n.
   Proof.
     intros.
     rewrite get_binding_LN_rt2; auto.
     unfold binding_to_ln.
-    rewrite length_to_history_from_prefix.
+    rewrite length_to_history_from_ctx.
     rewrite length_length_to_list_unit.
     reflexivity.
   Qed.
@@ -1192,22 +1236,22 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
 
   Lemma get_binding_LN_new2: forall (l: list atom) (pre: list unit) (post: list unit),
       (get_binding
-         (to_history_from_prefix l pre ++
-            [to_name_from_history l (to_history_from_prefix l pre, tt)] ++
-            to_history_from_prefix
-            (l ++ to_history_from_prefix l pre ++ [to_name_from_history l (to_history_from_prefix l pre, tt)]) post)
-         (to_name_from_history l (to_history_from_prefix l pre, tt)))
+         (to_history_from_ctx l pre ++
+            [to_name_from_history l (to_history_from_ctx l pre, tt)] ++
+            to_history_from_ctx
+            (l ++ to_history_from_ctx l pre ++ [to_name_from_history l (to_history_from_ctx l pre, tt)]) post)
+         (to_name_from_history l (to_history_from_ctx l pre, tt)))
       =  Bound
-           (to_history_from_prefix l pre)
-           (to_name_from_history l (to_history_from_prefix l pre, tt))
-           (to_history_from_prefix
-              (l ++ to_history_from_prefix l pre ++ [to_name_from_history l (to_history_from_prefix l pre, tt)]) post).
+           (to_history_from_ctx l pre)
+           (to_name_from_history l (to_history_from_ctx l pre, tt))
+           (to_history_from_ctx
+              (l ++ to_history_from_ctx l pre ++ [to_name_from_history l (to_history_from_ctx l pre, tt)]) post).
   Proof.
     intros.
     apply get_binding2.
     - reflexivity.
     - reflexivity.
-    - apply  to_history_from_prefix_fresh.
+    - apply  to_history_from_ctx_fresh.
       rewrite element_of_list_app.
       rewrite element_of_list_app.
       rewrite element_of_list_one.
@@ -1217,15 +1261,15 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
   Lemma get_binding_LN_new: forall (l: list atom) (ctx: list unit) (n: nat),
       n < length ctx ->
       binding_to_ln
-      (get_binding (to_history_from_prefix l ctx)
-         (to_name_from_prefix l (length_to_list_unit (length ctx - (n + 1)), tt))) =
+      (get_binding (to_history_from_ctx l ctx)
+         (to_name_from_ctx l (length_to_list_unit (length ctx - (n + 1)), tt))) =
         Bd n.
   Proof.
     introv Hin.
     apply decompose_list_by_ix in Hin.
     destruct Hin as [pre [a [post [Heq Hlen]]]].
-    About to_history_from_prefix_decompose2.
-    specialize (@to_history_from_prefix_decompose2 l pre post a).
+    About to_history_from_ctx_decompose2.
+    specialize (@to_history_from_ctx_decompose2 l pre post a).
     intro cut.
     rewrite Heq.
     rewrite cut.
@@ -1237,7 +1281,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
       lia.
     }
     rewrite Hlen_spec.
-    rewrite to_name_from_prefix_spec.
+    rewrite to_name_from_ctx_spec.
 
     assert (Hpre: length_to_list_unit (length pre) = pre).
     { admit. }
@@ -1247,7 +1291,7 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     rewrite Ha.
     rewrite get_binding_LN_new2.
     unfold binding_to_ln.
-    rewrite length_to_history_from_prefix.
+    rewrite length_to_history_from_ctx.
     auto.
   Admitted.
 
@@ -1268,18 +1312,18 @@ to_history_from_prefix top_conflicts (l1 ++ [u] ++ l2) =
     compose near ctx on left.
     unfold_Z.
     rewrite <- mapd_list_prefix_spec.
-    change (mapd_list_prefix (to_name_from_prefix l) ctx)
-      with (mapdz (to_name_from_prefix l) ctx).
-    rewrite <- to_history_from_prefix_spec.
+    change (mapd_list_prefix (to_name_from_ctx l) ctx)
+      with (mapdz (to_name_from_ctx l) ctx).
+    rewrite <- to_history_from_ctx_spec.
     unfold name_to_ln.
     destruct v as [a | n].
    - unfold ln_to_name.
-      destruct (get_binding_spec (to_history_from_prefix l ctx) a)
+      destruct (get_binding_spec (to_history_from_ctx l ctx) a)
         as [[Case1 rest] | [prefix [postfix [Case2 [ctxspec Hnin']]]]].
       + rewrite Case1.
         cbn.
         reflexivity.
-      + specialize (to_history_from_prefix_fresh l) as lemma.
+      + specialize (to_history_from_ctx_fresh l) as lemma.
         false.
         assert (a_in_list: a ∈ l).
         { subst.
