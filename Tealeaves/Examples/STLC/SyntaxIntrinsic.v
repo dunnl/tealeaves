@@ -1,122 +1,193 @@
-Variable (n:nat).
-Compute 0 + n.
-Compute n + 0.
-
-Goal n = n + 0.
-Abort.
-
 From Tealeaves Require Export
-  Backends.LN
-  Functors.Option.
+  Backends.LN.
 
 Export LN.Simplification.
 Export LN.Notations.
 
 #[local] Set Implicit Arguments.
-#[local] Set Maximal Implicit Insertion.
 
-(*|
-========================================
-Using Tealeaves with STLC
-========================================
-|*)
-Parameter base_typ : Type.
+Definition go {v: nat -> Type} {n1 n2: nat}: n1 = n2 -> v n1 -> v n2 :=
+  fun p v1 => match p in (_ = n2') return (v n2') with
+           | eq_refl => v1
+           end.
 
-Inductive typ :=
-| base : base_typ -> typ
-| arr : typ -> typ -> typ.
 
-Coercion base : base_typ >-> typ.
+Definition go2 {v: nat -> Type} (x1 x2: nat -> nat) (p: forall n, x1 n = x2 n):
+  ((forall n, v (x1 n)) -> (forall n, v (x2 n))).
+Proof.
+  intros.
+  specialize (X n).
+  rewrite (p n) in X.
+  assumption.
+Defined.
 
-Inductive Lam (V : Type) :=
-| tvar : V -> Lam V
-| lam  : typ -> Lam V -> Lam V
-| app  : Lam V -> Lam V -> Lam V.
+Open Scope nat_scope.
 
-(*|
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Notations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-|*)
+Section preincr.
 
-Module TermNotations.
-  Notation "'term'" := (Lam LN).
-  Notation "'λ'" := (lam) (at level 45).
-  Notation "⟨ t ⟩ ( u )" := (app t u) (at level 80, t at level 40, u at level 40).
-  Notation "A ⟹ B" := (arr A B) (at level 40).
-End TermNotations.
+  Definition preincr {A : nat -> Type}
+    (f : forall (n: nat), A n) (w : nat) :=
+    fun n => f (w + n).
 
-Import TermNotations.
+  #[local] Infix "⦿" := preincr (at level 30) : tealeaves_scope.
 
-Definition lnvar := @tvar LN.
-Definition bvar := @tvar LN ○ Bd.
-Definition fvar := @tvar LN ○ Fr.
-Coercion lnvar: LN >-> Lam.
-Coercion bvar: nat >-> Lam.
-Coercion fvar: atom >-> Lam.
-Coercion Bd: nat >-> LN.
-Coercion Fr: atom >-> LN.
+  Lemma preincr_zero {A : Type} : forall (f : nat -> A),
+      f ⦿ Ƶ = f.
+  Proof.
+    intros.
+    unfold preincr.
+    unfold_ops @Monoid_unit_zero.
+    ext n.
+    fequal.
+  Qed.
 
-(* Help the simplification tactics unfold coercions to expose a
-   <<tvar>> constructor, which is needed to find a match for
-   <<bindd f (ret x)>> *)
-#[global] Hint Unfold fvar bvar: tea_ret_coercions.
+  Lemma assoc {n1 n2 n3: nat}:
+    ((n1 + n2) + n3) = n1 + (n2 + n3).
+  Proof.
+    lia.
+  Qed.
 
-Section test_notations.
+  Lemma rassoc {n1 n2 n3: nat}:
+    n1 + (n2 + n3) = ((n1 + n2) + n3).
+  Proof.
+    lia.
+  Qed.
 
-  Context
-    (β : Type)
-    (x y z : atom)
-    (b : β) (τ : typ).
+End preincr.
 
-  Check 1.
-  Check (1: LN).
-  Check (1: Lam LN).
-  Check λ τ (tvar (Bd 1)).
-  Check λ τ (Bd 1).
-  Check λ τ 1.
-  Check λ τ (tvar (Fr x)).
-  Check λ τ (Fr x).
-  Check λ τ x.
-  Check ⟨λ τ (tvar (Bd 1))⟩ (tvar (Fr x)).
-  Check ⟨λ τ (Bd 1)⟩ (Fr x).
-  Check ⟨λ τ (Bd 1)⟩ (x).
-  Check ⟨λ τ (tvar (Fr x))⟩ (tvar (Bd 0)).
-  Check ⟨λ τ (Fr x)⟩ (Bd 0).
-  Check ⟨λ τ x⟩ (0).
+Section coercions.
 
-End test_notations.
+  (*
+  Goal forall (A: nat -> Type) (f: forall n, A n) w1 w2,
+      f ⦿ w1 ⦿ w2 = f ⦿ w1 ⦿ w2 .
+  Proof.
+    intros.
+    unfold preincr.
+    ext n.
+      f ∘ (fun n => (w1 + w2 + n)).
+
+  Lemma preincr_preincr {A: nat -> Type} : forall (f : forall (n: nat), A n) (w1 : nat) (w2 : nat),
+       f ⦿ w1 ⦿ w2 = go2 (fun n => w1 + w2 + n) (fun n => w1 + (w2 + n)) _ (f ⦿ (w1 + w2)).
+  Proof.
+    intros. unfold preincr.
+    ext n.
+    reassociate ->.
+    fequal. unfold transparent tcs.
+    unfold compose. ext n.
+    lia.
+  Qed.
+   *)
+
+End coercions.
+
+(*
+Section preincr.
+
+  Definition preincr {A : Type} (f : nat -> A) (w : nat) :=
+    f ∘ (plus w).
+
+  #[local] Infix "⦿" := preincr (at level 30) : tealeaves_scope.
+
+  Lemma preincr_zero {A : Type} : forall (f : nat -> A),
+      f ⦿ Ƶ = f.
+  Proof.
+    intros.
+    unfold preincr.
+    unfold_ops @Monoid_unit_zero.
+    reflexivity.
+  Qed.
+
+  Lemma preincr_preincr {A : Type} : forall (f : nat -> A) (w1 : nat) (w2 : nat),
+       f ⦿ w1 ⦿ w2 = f ⦿ (w1 ● w2).
+  Proof.
+    intros. unfold preincr.
+    reassociate ->.
+    fequal. unfold transparent tcs.
+    unfold compose. ext n.
+    lia.
+  Qed.
+
+End preincr.
+*)
+
+#[local] Infix "⦿" := preincr (at level 30) : tealeaves_scope.
+
 
 (*|
 ========================================
 Definition of binddt
 ========================================
 |*)
-Fixpoint binddt_Lam (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    {v1 v2 : Type} (f : nat * v1 -> G (Lam v2)) (t : Lam v1) : G (Lam v2) :=
+
+Generalizable All Variables.
+
+Inductive Lam (V : nat -> Type) :=
+| tvar : V 0 -> Lam V
+| lam  : Lam (V ⦿ 1) -> Lam V
+| app  : Lam V -> Lam V -> Lam V.
+
+Fixpoint binddt_Lam {G : Type -> Type} `{Map G} `{Pure G} `{Mult G}
+  {v1 v2 : nat -> Type}
+  (f : forall (n: nat), v1 n -> G (Lam (v2 ⦿ n))) (t : Lam v1) : G (Lam v2) :=
   match t with
-  | tvar v => f (0, v)
-  | lam τ body => pure (lam τ) <⋆> binddt_Lam (f ⦿ 1) body
-  | app t1 t2 => pure (@app v2) <⋆> binddt_Lam f t1 <⋆> binddt_Lam f t2
+  | tvar _ v => f 0 v
+  | lam body => ap G (pure (F := G) (@lam v2)) (binddt_Lam (G := G) (v1 := v1 ⦿ 1) (v2 := v2 ⦿ 1) (f ⦿ 1) body)
+  | app t1 t2 => pure (F := G) (@app v2) <⋆> binddt_Lam (G := G) f t1 <⋆> binddt_Lam (G := G) f t2
   end.
 
-#[export] Instance Return_STLC: Return Lam := @tvar.
-#[export] Instance Binddt_STLC: Binddt nat Lam Lam := @binddt_Lam.
-#[export] Instance DTM_STLC: DecoratedTraversableMonad nat Lam.
-Proof.
-  (* We duplicate the goal just for the purpose of debugging the tactics *)
-  dup. {
-    constructor.
-    typeclasses eauto.
-    - derive_dtm1.
-    - constructor.
-      + derive_dtm2.
-      + derive_dtm3.
-      + derive_dtm4. }
-  derive_dtm.
-Qed.
 
-#[local] Notation "f ⦿ n" := (f ○ (fun m => n ● m)).
+  Lemma dtm1:
+    forall (G : Type -> Type)
+      (H : Map G)
+      (H0 : Pure G)
+      (H1 : Mult G),
+      Applicative G ->
+      forall (A B : nat -> Type) (f : forall n, A n -> G (Lam (B ⦿ n))),
+        binddt_Lam f ∘ tvar A = f 0.
+  Proof.
+    intros.
+    unfold ret.
+    reflexivity.
+  Qed.
+
+  Context {A: nat -> Type}.
+  Check binddt_Lam (v1 := A) (v2 := A) (G := fun A => A).
+  (fun n v => tvar _ v).
+
+  Lemma dtm2 {A: nat -> Type}:
+    binddt_Lam (G := fun A => A) (fun n v => tvar _ v)
+    = @id (Lam A).
+
+  Lemma dtm4 {A B: nat -> Type}:
+    forall (G1 G2 : Type -> Type) `{morph : ApplicativeMorphism G1 G2 ϕ}
+      `(f : forall (n: nat), A n -> G1 (Lam (B ⦿ n))),
+      ϕ (Lam B) ∘ binddt_Lam f = binddt_Lam (fun n => ϕ (Lam (B ⦿ n)) ∘ f n).
+  Proof.
+    intros. ext t.
+    unfold compose.
+    generalize dependent B.
+    induction t; intros.
+    - unfold preincr; cbn.
+      reflexivity.
+    - intros.
+      cbn.
+      rewrite ap_morphism_1.
+      rewrite appmor_pure.
+      fequal. apply IHt.
+    - cbn.
+      unfold preincr.
+      rewrite ap_morphism_1.
+      rewrite ap_morphism_1.
+      rewrite appmor_pure.
+      fequal; fequal.
+      + rewrite IHt1. reflexivity.
+      + rewrite IHt2. reflexivity.
+  Qed.
+
+
+
+
+
 
 Module intrinsic.
 
