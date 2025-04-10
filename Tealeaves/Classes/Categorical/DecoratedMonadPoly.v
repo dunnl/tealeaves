@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Classes.Categorical.DecoratedFunctorPoly
-  Classes.Categorical.Monad
+  Classes.Categorical.Monad2
   Functors.List
   Functors.Writer.
 
@@ -16,13 +16,7 @@ Class DecoratedMonadPoly
   {
     dmp_functor :> Functor2 T;
     dmp_decorated :> DecoratedFunctorPoly T;
-    dmp_monad :> forall B, Monad (T B);
-    dmp_map_ret: forall B B' V V' (g: B -> B') (f: V -> V'),
-      map2 g f ∘ ret (T := T B) (A := V) =
-        ret (T := T B') (A := V') ∘ f;
-    dmp_map_join: forall B B' V V' (g: B -> B') (f: V -> V'),
-      map2 g f ∘ join (T := T B) (A := V) =
-        join (T := T B') (A := V') ∘ map2 g (map2 g f);
+    dmp_monad :> Monad2 T;
     dmp_dec_ret: forall B V,
       decp ∘ ret (T := T B) (A := V) =
         ret (T := T (Z B)) (A := Z2 B V) ∘ ret (T := prod (list B));

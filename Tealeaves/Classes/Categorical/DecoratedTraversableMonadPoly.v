@@ -2,6 +2,7 @@ From Tealeaves Require Export
   Classes.Categorical.DecoratedFunctorPoly
   Classes.Categorical.TraversableFunctor2
   Classes.Categorical.DecoratedMonadPoly
+  Classes.Categorical.TraversableMonad2
   Classes.Categorical.ApplicativeCommutativeIdempotent
   Classes.Categorical.Monad
   Classes.Categorical.DecoratedTraversableFunctorPoly
@@ -64,15 +65,6 @@ Class DecoratedTraversableMonadPoly
     xxx_traversable :> TraversableFunctor2 T;
     xxx_decoratedtraversable :> DecoratedTraversableFunctorPoly T;
     xxx_decoratedmonad :> DecoratedMonadPoly T;
-    xxx_dist2_ret:
-    forall (B V: Type) `{Applicative G},
-      dist2 ∘ ret (T := T (G B)) (A := G V) =
-        map (F := G) (ret (T := T B) (A := V));
-    xxx_dist2_join:
-    forall (B V: Type) `{Applicative G},
-      dist2 ∘ join (T := T (G B)) (A := (G V)) =
-        map (F := G) (join (T := T B)) ∘
-          dist2 (T := T) (G := G) ∘
-          map2 (F := T) id (dist2);
+    xxx_traversablemonad :> TraversableMonad2 T;
   }.
 

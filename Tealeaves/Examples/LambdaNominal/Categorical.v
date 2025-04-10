@@ -1,3 +1,9 @@
+(*|
+#########################################
+Lambda Calculus With Nominal Variables
+#########################################
+|*)
+
 From Tealeaves Require Export
   Examples.LambdaNominal.Syntax
   Classes.Categorical.DecoratedMonad (shift).
@@ -16,17 +22,13 @@ Import List.ListNotations.
 #[local] Generalizable Variables G.
 
 (*|
-============================================
-Decomposition into categorical components
-============================================
+***********************************************
+Bifunctor Instance
+***********************************************
 |*)
 
-(*|
-+++++++++++++++++++++++++++++++++++++++++++++++
-Map
-+++++++++++++++++++++++++++++++++++++++++++++++
-|*)
-Fixpoint map2_term {B1 V1 B2 V2: Type} (ρ: B1 -> B2) (σ: V1 -> V2)
+Fixpoint map2_term {B1 V1 B2 V2: Type}
+  (ρ: B1 -> B2) (σ: V1 -> V2)
   (t: term B1 V1): term B2 V2 :=
   match t with
   | tvar v => (@tvar B2 V2) (σ v)
@@ -43,8 +45,9 @@ Proof.
   - cbn. now rewrite IHt1, IHt2.
 Qed.
 
-Lemma map2_map2_term: forall (B1 V1 B2 V2 b3 v3: Type)
-                      (ρ1: B1 -> B2) (σ1: V1 -> V2) (ρ2: B2 -> b3) (σ2: V2 -> v3),
+Lemma map2_map2_term:
+  forall (B1 V1 B2 V2 b3 v3: Type)
+    (ρ1: B1 -> B2) (σ1: V1 -> V2) (ρ2: B2 -> b3) (σ2: V2 -> v3),
     map2_term ρ2 σ2 ∘ map2_term ρ1 σ1 = map2_term (ρ2 ∘ ρ1) (σ2 ∘ σ1).
 Proof.
   intros. ext t. induction t.
@@ -62,12 +65,17 @@ Proof.
   apply (map2_term f1 f2).
 Defined.
 
+(*|
+Rewriting Principles
+========================
+|*)
+
 Section map_term_rewriting.
 
   Context
     {B1 V1 B2 V2: Type}
-      (ρ: B1 -> B2)
-      (σ: V1 -> V2).
+    (ρ: B1 -> B2)
+    (σ: V1 -> V2).
 
   Lemma map2_term_rw1: forall (v: V1),
       map2 ρ σ (tvar (B := B1) v) = tvar (σ v).
@@ -89,6 +97,10 @@ Section map_term_rewriting.
 
 End map_term_rewriting.
 
+(*|
+Functor Laws
+=====================
+|*)
 
 #[export] Instance Functor2_term: Functor2 term.
 Proof.
@@ -113,30 +125,38 @@ Proof.
       rewrite IHt1.
       rewrite IHt2.
       reflexivity.
-Defined.
+Qed.
 
 (*|
-+++++++++++++++++++++++++++++++++++++++++++++++
-Decoration
-+++++++++++++++++++++++++++++++++++++++++++++++
+***********************************************
+Polymorphic Decoration
+***********************************************
 |*)
-Fixpoint dec_term_rec {B V: Type} (ctx: list B)
+
+Fixpoint dec2_term_rec {B V: Type} (ctx: list B)
   (t: term B V): term (list B * B) (list B * V) :=
   match t with
   | tvar v => tvar (ctx, v)
-  | lam b body => lam (ctx, b) (dec_term_rec (ctx ++ [b]) body)
-  | tap t1 t2 => tap (dec_term_rec ctx t1) (dec_term_rec ctx t2)
+  | lam b body => lam (ctx, b) (dec2_term_rec (ctx ++ [b]) body)
+  | tap t1 t2 => tap (dec2_term_rec ctx t1) (dec2_term_rec ctx t2)
   end.
 
-Definition dec_term {B V: Type}:
+Definition dec2_term {B V: Type}:
   term B V ->
   term (list B * B) (list B * V) :=
-  dec_term_rec nil.
+  dec2_term_rec nil.
 
-Lemma dec_term_shift1 {B V: Type}:
+#[export] Instance DecoratePoly_term: DecoratePoly term := @dec2_term.
+
+(*|
+The ``shift2`` operation
+==========================
+|*)
+
+Lemma dec2_term_rec_app_shift {B V: Type}:
   forall (ctx1 ctx2: list B) (t: term B V),
-    dec_term_rec (ctx1 ++ ctx2) t =
-      shift2 (ctx1, dec_term_rec ctx2 t).
+    dec2_term_rec (ctx1 ++ ctx2) t =
+      shift2 (ctx1, dec2_term_rec ctx2 t).
 Proof.
   intros.
   generalize dependent ctx1.
@@ -145,100 +165,97 @@ Proof.
   - cbn.
     reflexivity.
   - cbn.
-    fequal.
     rewrite <- List.app_assoc.
     rewrite IHt.
-    compose near (dec_term_rec (ctx2 ++ [b]) t).
-    rewrite (fun2_map_map).
-    rewrite IHt.
-    unfold shift2.
-    unfold compose at 6.
-    compose near (strength2 (ctx2, dec_term_rec [b] t)).
-    rewrite fun2_map_map.
-    unfold compose at 3.
-    cbn.
-    compose near ((map2 (pair ctx2) (pair ctx2) (dec_term_rec [b] t))) on left.
-    rewrite fun2_map_map.
-    compose near ((map2 (pair ctx2) (pair ctx2) (dec_term_rec [b] t))) on left.
-    rewrite fun2_map_map.
-    fequal.
+    reflexivity.
   - cbn.
     rewrite IHt1.
     rewrite IHt2.
     reflexivity.
 Qed.
 
-Lemma dec_term_shift {B V: Type}:
+Lemma dec2_term_rec_shift {B V: Type}:
   forall (ctx: list B) (t: term B V),
-    dec_term_rec ctx t =
-      shift2 (ctx, dec_term t).
+    dec2_term_rec ctx t =
+      shift2 (ctx, dec2_term t).
 Proof.
   intros.
   rewrite <- (List.app_nil_r ctx) at 1.
-  rewrite dec_term_shift1.
+  rewrite dec2_term_rec_app_shift.
   reflexivity.
 Qed.
 
-#[export] Instance DecoratePoly_term: DecoratePoly term := @dec_term.
+(*|
+Rewriting Principles
+=======================
+|*)
 
-Section dec_term_rewriting.
+Section dec2_term_rewriting.
 
   Context (B V: Type) (ctx: list B).
 
-  Lemma dec_term_rec_rw1: forall (v: V),
-      dec_term_rec ctx (tvar v) = tvar (ctx, v).
+  Lemma dec2_term_rec_rw1: forall (v: V),
+      dec2_term_rec ctx (tvar v) = tvar (ctx, v).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dec_term_rec_rw2: forall (b: B) (body: term B V),
-      dec_term_rec ctx (lam b body) =
-        lam (ctx, b) (dec_term_rec (ctx ++ [b]) body).
+  Lemma dec2_term_rec_rw2: forall (b: B) (body: term B V),
+      dec2_term_rec ctx (lam b body) =
+        lam (ctx, b) (dec2_term_rec (ctx ++ [b]) body).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dec_term_rec_rw3: forall (t1 t2: term B V),
-      dec_term_rec ctx (tap t1 t2) = tap (dec_term_rec ctx t1) (dec_term_rec ctx t2).
+  Lemma dec2_term_rec_rw3: forall (t1 t2: term B V),
+      dec2_term_rec ctx (tap t1 t2) =
+        tap (dec2_term_rec ctx t1) (dec2_term_rec ctx t2).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dec_term_rw1: forall (v: V),
+  Lemma dec2_term_rw1: forall (v: V),
       decp (tvar (B := B) v) = tvar ([], v).
   Proof.
     cbn.
     reflexivity.
   Qed.
 
-  Lemma dec_term_rw2: forall (b: B) (body: term B V),
+  Lemma dec2_term_rw2: forall (b: B) (body: term B V),
       decp (lam b body) = lam ([], b) (shift2 ([b], decp body)).
   Proof.
     intros. cbn.
-    rewrite dec_term_shift.
+    rewrite dec2_term_rec_shift.
     reflexivity.
   Qed.
 
-  Lemma dec_term_rw2': forall (b: B) (body: term B V),
-      decp (lam b body) = lam ([], b) (dec_term_rec [b] body).
+  Lemma dec2_term_rw2': forall (b: B) (body: term B V),
+      decp (lam b body) = lam ([], b) (dec2_term_rec [b] body).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma dec_term_rw3: forall (t1 t2: term B V),
+  Lemma dec2_term_rw3: forall (t1 t2: term B V),
       decp (tap t1 t2) = tap (decp t1) (decp t2).
   Proof.
     reflexivity.
   Qed.
 
-End dec_term_rewriting.
+End dec2_term_rewriting.
 
-(* Naturality, rec case *)
-Lemma map_dec_rec:
+(*|
+Decoration Laws
+=======================
+
+Naturality
+-----------------------
+|*)
+
+Lemma map_dec2_rec_spec:
   forall (B1 V1 B2 V2: Type)
     (ρ: list B1 * B1 -> B2) (σ: list B1 * V1 -> V2) (ctx: list B1),
-    map2 ρ σ ∘ dec_term_rec ctx =
-      map2 (ρ ⦿ ctx) (σ ⦿ ctx) ∘ dec_term.
+    map2 ρ σ ∘ dec2_term_rec ctx =
+      map2 (ρ ⦿ ctx) (σ ⦿ ctx) ∘ dec2_term.
 Proof.
   intros. ext t. unfold compose.
   generalize dependent ctx.
@@ -265,60 +282,16 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma dec_rec_spec:
+Lemma dec2_rec_spec:
   forall (B V: Type) (ctx: list B),
-    dec_term_rec ctx =
-      map2 (incr ctx) (incr ctx) ∘ dec_term (V := V).
+    dec2_term_rec ctx =
+      map2 (incr ctx) (incr ctx) ∘ dec2_term (V := V).
 Proof.
   intros.
-  change_left (id ∘ dec_term_rec ctx (V := V)).
+  change_left (id ∘ dec2_term_rec ctx (V := V)).
   rewrite <- fun2_map_id.
-  rewrite map_dec_rec.
+  rewrite map_dec2_rec_spec.
   reflexivity.
-Qed.
-
-(* Counit law *)
-Lemma dec_rec_extract_term: forall (B V: Type) (ctx: list B),
-    map2 (extract_Z2) (extract_Z2) ∘ dec_term_rec ctx = @id (term B V).
-Proof.
-  intros. ext t. unfold compose.
-  generalize dependent ctx. induction t; intro ctx.
-  - reflexivity.
-  - cbn. now rewrite IHt.
-  - cbn. now rewrite IHt1, IHt2.
-Qed.
-
-Lemma dec_extract_term: forall (B V: Type),
-    map2 (extract_Z2) (extract_Z2) ∘ dec_term = @id (term B V).
-Proof.
-  intros. unfold dec_term. apply dec_rec_extract_term.
-Qed.
-
-(* cojoin law *)
-Lemma dec_rec_dec_rec_term: forall (B V: Type) (ctx: list B),
-    dec_term_rec (decorate_prefix_list ctx) ∘ dec_term_rec ctx =
-      map2 (cojoin_Z2) (cojoin_Z2) ∘ dec_term_rec ctx (B := B) (V := V).
-Proof.
-  intros. ext t. unfold compose.
-  generalize dependent ctx.
-  induction t; intro ctx.
-  - reflexivity.
-  - cbn.
-    rewrite <- IHt.
-    rewrite decorate_prefix_list_rw_app.
-    cbn. change (@nil B) with (Ƶ: list B).
-    rewrite monoid_id_l.
-    reflexivity.
-  - cbn. now rewrite IHt1, IHt2.
-Qed.
-
-Lemma dec_dec_term: forall (B V: Type),
-    dec_term ∘ dec_term (B := B) (V := V) =
-      map2 (cojoin_Z2) (cojoin_Z2) ∘ dec_term.
-Proof.
-  intros. unfold dec_term.
-  change (@nil (list B * B)) with (decorate_prefix_list (@nil B)).
-  apply dec_rec_dec_rec_term.
 Qed.
 
 Section naturality.
@@ -326,10 +299,10 @@ Section naturality.
   Context {B1 V1 B2 V2: Type}
     (ρ: B1 -> B2) (σ: V1 -> V2).
 
-  Lemma dec_rec_map: forall (ctx: list B1),
-      dec_term_rec (map ρ ctx) ∘ map2 ρ σ =
+  Lemma dec2_rec_map: forall (ctx: list B1),
+      dec2_term_rec (map ρ ctx) ∘ map2 ρ σ =
         map2 (map_pair (map (F := list) ρ) ρ)
-          (map_pair (map (F := list) ρ) σ) ∘ dec_term_rec ctx.
+          (map_pair (map (F := list) ρ) σ) ∘ dec2_term_rec ctx.
   Proof.
     intros. ext t. unfold compose.
     generalize dependent ρ; clear ρ.
@@ -351,17 +324,74 @@ Section naturality.
   Qed.
 
   Lemma dec_map:
-    dec_term ∘ map2 ρ σ =
+    dec2_term ∘ map2 ρ σ =
       map2 (map_pair (map (F := list) ρ) ρ)
-        (map_pair (map (F := list) ρ) σ) ∘ dec_term.
+        (map_pair (map (F := list) ρ) σ) ∘ dec2_term.
   Proof.
-    unfold dec_term.
+    unfold dec2_term.
     change (@nil B2) with (map ρ nil).
-    rewrite dec_rec_map.
+    rewrite dec2_rec_map.
     reflexivity.
   Qed.
 
 End naturality.
+
+(*|
+Counit Law
+-----------------------
+|*)
+
+Lemma dec2_rec_extract_term: forall (B V: Type) (ctx: list B),
+    map2 (extract_Z2) (extract_Z2) ∘ dec2_term_rec ctx = @id (term B V).
+Proof.
+  intros. ext t. unfold compose.
+  generalize dependent ctx. induction t; intro ctx.
+  - reflexivity.
+  - cbn. now rewrite IHt.
+  - cbn. now rewrite IHt1, IHt2.
+Qed.
+
+Lemma dec_extract_term: forall (B V: Type),
+    map2 (extract_Z2) (extract_Z2) ∘ dec2_term = @id (term B V).
+Proof.
+  intros. unfold dec2_term. apply dec2_rec_extract_term.
+Qed.
+
+(*|
+Cojoin Law
+-----------------------
+|*)
+
+Lemma dec2_rec_dec2_rec_term: forall (B V: Type) (ctx: list B),
+    dec2_term_rec (decorate_prefix_list ctx) ∘ dec2_term_rec ctx =
+      map2 (cojoin_Z2) (cojoin_Z2) ∘ dec2_term_rec ctx (B := B) (V := V).
+Proof.
+  intros. ext t. unfold compose.
+  generalize dependent ctx.
+  induction t; intro ctx.
+  - reflexivity.
+  - cbn.
+    rewrite <- IHt.
+    rewrite decorate_prefix_list_rw_app.
+    cbn. change (@nil B) with (Ƶ: list B).
+    rewrite monoid_id_l.
+    reflexivity.
+  - cbn. now rewrite IHt1, IHt2.
+Qed.
+
+Lemma dec_dec2_term: forall (B V: Type),
+    dec2_term ∘ dec2_term (B := B) (V := V) =
+      map2 (cojoin_Z2) (cojoin_Z2) ∘ dec2_term.
+Proof.
+  intros. unfold dec2_term.
+  change (@nil (list B * B)) with (decorate_prefix_list (@nil B)).
+  apply dec2_rec_dec2_rec_term.
+Qed.
+
+(*|
+Typeclass Instance
+====================
+|*)
 
 #[export] Instance: DecoratedFunctorPoly term.
 Proof.
@@ -374,38 +404,45 @@ Proof.
     fequal.
     now ext [ctx a].
   - intros.
-    rewrite dec_dec_term.
+    rewrite dec_dec2_term.
     reflexivity.
   - intros.
     rewrite dec_extract_term.
     reflexivity.
 Qed.
 
-
 (*|
-+++++++++++++++++++++++++++++++++++++++++++++++
+***********************************************
 Applicative distribution
-+++++++++++++++++++++++++++++++++++++++++++++++
+***********************************************
 |*)
 
-Fixpoint dist_term
+Fixpoint dist2_term
   {G: Type -> Type} `{Map G} `{Pure G} `{Mult G}
-   {B V: Type}
+  {B V: Type}
   (t: term (G B) (G V)): G (term B V) :=
   match t with
   | tvar vr => map (@tvar B V) vr
   | lam bin body => pure (@lam B V)
-                     <⋆> bin
-                     <⋆> dist_term body
+                   <⋆> bin
+                   <⋆> dist2_term body
   | tap t1 t2 => pure (@tap B V)
-                  <⋆> dist_term t1
-                  <⋆> dist_term t2
+                <⋆> dist2_term t1
+                <⋆> dist2_term t2
   end.
 
-#[export] Instance term_dist2: ApplicativeDist2 term := @dist_term.
+#[export] Instance term_dist2: ApplicativeDist2 term := @dist2_term.
 
-Lemma dist_term_morph:
-  forall (G1 G2 : Type -> Type)
+(*|
+Distribution Laws
+============================
+
+Applicative Homomorphisms
+----------------------------
+|*)
+
+Lemma dist2_term_morph:
+  forall (G1 G2: Type -> Type)
     `{Map G1} `{Mult G1} `{Pure G1}
     `{Map G2} `{Mult G2} `{Pure G2}
     (ϕ: forall (A: Type), G1 A -> G2 A),
@@ -435,8 +472,28 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma dist_term_linear:
-  forall (G1 G2 : Type -> Type)
+(*|
+Identity Applicative
+----------------------------
+|*)
+
+Lemma dist2_term_identity:
+  forall (B V: Type),
+    dist2_term (G := fun A => A) (B := B) (V := V) = @id (term B V).
+Proof.
+  intros. ext t. unfold id. induction t.
+  reflexivity.
+  cbn. rewrite IHt. reflexivity.
+  cbn. rewrite IHt1, IHt2. reflexivity.
+Qed.
+
+(*|
+Linearity
+----------------------------
+|*)
+
+Lemma dist2_term_linear:
+  forall (G1 G2: Type -> Type)
     `{Map G1} `{Mult G1} `{Pure G1} `{! Applicative G1}
     `{Map G2} `{Mult G2} `{Pure G2} `{! Applicative G2},
   forall (B V: Type),
@@ -484,14 +541,19 @@ Proof.
     reflexivity.
 Qed.
 
+(*|
+Naturality
+----------------------------
+|*)
+
 Section naturality.
 
   Context {B1 V1 B2 V2: Type}
     (ρ: B1 -> B2) (σ: V1 -> V2).
 
   Lemma dist_map `{Applicative G}:
-    map (map2 ρ σ) ∘ dist_term (G := G) =
-      dist_term ∘ map2 (map ρ) (map σ).
+    map (map2 ρ σ) ∘ dist2_term (G := G) =
+      dist2_term ∘ map2 (map ρ) (map σ).
   Proof.
     intros. ext t. unfold compose.
     induction t as [v | b body IHbody | t1 IHt1 t2 IHt2];
@@ -526,12 +588,10 @@ Section naturality.
       rewrite app_pure_natural.
       reflexivity.
   Qed.
-
-
 End naturality.
 
 #[export] Instance Natural_dist2_term:
-  forall (G : Type -> Type) (Map_G : Map G) (Pure_G : Pure G) (Mult_G : Mult G),
+  forall (G: Type -> Type) (Map_G: Map G) (Pure_G: Pure G) (Mult_G: Mult G),
     Applicative G -> Natural2 (@dist2 term term_dist2 G Map_G Pure_G Mult_G).
 Proof.
   intros.
@@ -542,23 +602,25 @@ Proof.
     auto.
 Qed.
 
+(*|
+Typeclass Instance
+============================
+|*)
+
 #[export] Instance TraversableFunctor2_term: TraversableFunctor2 term.
 Proof.
   constructor.
   - typeclasses eauto.
   - typeclasses eauto.
-  - apply dist_term_morph.
-  - intros. ext t. unfold id. induction t.
-    reflexivity.
-    cbn. rewrite IHt. reflexivity.
-    cbn. rewrite IHt1, IHt2. reflexivity.
-  - intros. apply dist_term_linear; auto.
+  - apply dist2_term_morph.
+  - apply dist2_term_identity.
+  - intros. apply dist2_term_linear; auto.
 Qed.
 
 (*|
-+++++++++++++++++++++++++++++++++++++++++++++++
-Join
-+++++++++++++++++++++++++++++++++++++++++++++++
+***********************************************
+Monad
+***********************************************
 |*)
 
 Fixpoint join_term {B V: Type} (t: term B (term B V)): term B V :=
@@ -568,40 +630,13 @@ Fixpoint join_term {B V: Type} (t: term B (term B V)): term B V :=
   | tap t1 t2 => tap (join_term t1) (join_term t2)
   end.
 
-Lemma join_ret_term {B V: Type}:
-  join_term ∘ ret (A := term B V) = @id (term B V).
-Proof.
-  reflexivity.
-Qed.
-
-Lemma join_map_ret_term {B V: Type}:
-  join_term ∘ map2 (@id B) (ret (A := V)) = @id (term B V).
-Proof.
-  ext t. unfold compose. induction t.
-  - reflexivity.
-  - cbn. rewrite IHt. reflexivity.
-  - cbn. rewrite IHt1, IHt2. reflexivity.
-Qed.
-
-Lemma join_join_term {B V: Type}:
-  join_term ∘ join_term (B := B) (V := term B V) =
-    join_term ∘ map2 id (join_term).
-Proof.
-  intros. ext t.
-  unfold compose.
-  induction t as [v | b body IHbody | t1 IHt1 t2 IHt2].
-  - reflexivity.
-  - cbn.
-    rewrite IHbody.
-    reflexivity.
-  - cbn.
-    rewrite IHt1.
-    rewrite IHt2.
-    reflexivity.
-Qed.
-
 #[export] Instance Join_lambda_term: forall B, Join (term B) :=
   @join_term.
+
+(*|
+Rewriting Principles
+============================
+|*)
 
 Section join_term_rewriting.
 
@@ -627,6 +662,64 @@ Section join_term_rewriting.
 
 End join_term_rewriting.
 
+(*|
+Monad Laws
+============================
+|*)
+
+(*|
+Left Unit Law
+--------------------
+|*)
+
+Lemma join_ret_term {B V: Type}:
+  join_term ∘ ret (A := term B V) = @id (term B V).
+Proof.
+  reflexivity.
+Qed.
+
+(*|
+Right Unit Law
+--------------------
+|*)
+
+Lemma join_map_ret_term {B V: Type}:
+  join_term ∘ map2 (@id B) (ret (A := V)) = @id (term B V).
+Proof.
+  ext t. unfold compose. induction t.
+  - reflexivity.
+  - cbn. rewrite IHt. reflexivity.
+  - cbn. rewrite IHt1, IHt2. reflexivity.
+Qed.
+
+(*|
+Associativity Law
+--------------------
+|*)
+
+Lemma join_join_term {B V: Type}:
+  join_term ∘ join_term (B := B) (V := term B V) =
+    join_term ∘ map2 id (join_term).
+Proof.
+  intros. ext t.
+  unfold compose.
+  induction t as [v | b body IHbody | t1 IHt1 t2 IHt2].
+  - reflexivity.
+  - cbn.
+    rewrite IHbody.
+    reflexivity.
+  - cbn.
+    rewrite IHt1.
+    rewrite IHt2.
+    reflexivity.
+Qed.
+
+
+(*|
+Naturality
+--------------------
+|*)
+
 Section naturality.
 
   Context {B1 V1 B2 V2: Type}
@@ -650,6 +743,11 @@ Section naturality.
 
 End naturality.
 
+(*|
+Typeclass Instance
+=====================
+|*)
+
 #[export] Instance Monad_term: forall B, Monad (term B).
 Proof.
   constructor.
@@ -667,18 +765,31 @@ Proof.
     apply join_join_term.
 Qed.
 
+#[export] Instance Monad2_term: Monad2 term.
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - reflexivity.
+  - intros.
+    intros. unfold map, Map2_1.
+    rewrite <- join_map.
+    reflexivity.
+Qed.
+
 (*|
-+++++++++++++++++++++++++++++++++++++++++++++++
-Distribution and Decoration
-+++++++++++++++++++++++++++++++++++++++++++++++
+***********************************************
+Relating Decoration and Traversal
+***********************************************
 |*)
-Lemma dist_dec_rec_commute:
+
+Lemma dist_dec2_rec_commute:
   forall (B V: Type)
     `{ApplicativeCommutativeIdempotent G}
     (ctx: list (G B))
     (t: term (G B) (G V)),
-    dist2 (T := term) (G := G) (map2 dist_Z dist2_Z2 (dec_term_rec ctx t)) =
-      pure (dec_term_rec (B := B) (V := V)) <⋆> (dist list G ctx)
+    dist2 (T := term) (G := G) (map2 dist_Z dist2_Z2 (dec2_term_rec ctx t)) =
+      pure (dec2_term_rec (B := B) (V := V)) <⋆> (dist list G ctx)
         <⋆> (dist2 (T := term) (G := G) t).
 Proof.
   intros.
@@ -801,12 +912,12 @@ Lemma dist_dec_commute:
   forall (B V: Type)
     `{ApplicativeCommutativeIdempotent G}
     (t: term (G B) (G V)),
-    dist2 (T := term) (G := G) (map2 dist_Z dist2_Z2 (dec_term t)) =
-      pure (dec_term (B := B) (V := V)) <⋆> (dist2 (T := term) (G := G) t).
+    dist2 (T := term) (G := G) (map2 dist_Z dist2_Z2 (dec2_term t)) =
+      pure (dec2_term (B := B) (V := V)) <⋆> (dist2 (T := term) (G := G) t).
 Proof.
   intros.
-  unfold dec_term.
-  rewrite dist_dec_rec_commute; auto.
+  unfold dec2_term.
+  rewrite dist_dec2_rec_commute; auto.
   rewrite dist_list_nil.
   rewrite ap2.
   reflexivity.
@@ -815,8 +926,8 @@ Qed.
 Lemma dist_dec_commute2:
   forall (B V: Type)
     `{ApplicativeCommutativeIdempotent G},
-    dist2 (T := term) (G := G) ∘ map2 (dist_Z (G := G)) (dist2_Z2 (G := G)) ∘ dec_term =
-      map (dec_term (B := B) (V := V)) ∘
+    dist2 (T := term) (G := G) ∘ map2 (dist_Z (G := G)) (dist2_Z2 (G := G)) ∘ dec2_term =
+      map (dec2_term (B := B) (V := V)) ∘
         (dist2 (T := term) (G := G) (B := B) (A := V)).
 Proof.
   intros.
@@ -827,7 +938,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma dist_dec_rec_commute_map:
+Lemma dist_dec2_rec_commute_map:
   forall (B1 V1 B2 V2: Type)
     `{Applicative G}
     (ctx: list (G B1))
@@ -837,48 +948,68 @@ Lemma dist_dec_rec_commute_map:
     True.
 Proof.
   intros.
-  (*
-  Check
-    (map_term dist_pair dist_pair
-       (dec_term_rec ctx
-          (map_term ρ σ t)).
-    dist2 (map_term dist_pair dist_pair (dec_term_rec ctx t)) =
-      pure (dec_term_rec (B := B1) (V := V1)) <⋆> (dist list G ctx)
-        <⋆> (dist2 t).
-   *)
 Abort.
 
 (*|
-+++++++++++++++++++++++++++++++++++++++++++++++
-Join and Decoration
-+++++++++++++++++++++++++++++++++++++++++++++++
+Typeclass Instance
+=======================
 |*)
+#[export] Instance: DecoratedTraversableFunctorPoly term.
+Proof.
+  constructor; try typeclasses eauto.
+  intros.
+  rewrite dist_dec_commute2.
+  - reflexivity.
+  - assumption.
+Qed.
+
+(*|
+***********************************************
+Relating Decoration and Monad
+***********************************************
+|*)
+
+(*|
+Decorated Monad Laws
+=======================
+|*)
+
+(*|
+Return Law
+-----------------------
+|*)
+
 Lemma decorate_ret_term: forall (B V: Type) (V: V),
-    dec_term (ret (T := term B) V) =
+    dec2_term (ret (T := term B) V) =
       ret ([], V).
 Proof.
   reflexivity.
 Qed.
 
+(*|
+Decorate Join Law
+-----------------------
+|*)
+
 Lemma decorate_rec_join_term: forall (B V: Type) (ctx: list B),
-    dec_term_rec ctx ∘ join (T := term B) (A := V) =
+    dec2_term_rec ctx ∘ join (T := term B) (A := V) =
       join (T := term (list B * B))
-        ∘ map2 id (shift2 ∘ map_snd dec_term)
-        ∘ dec_term_rec ctx.
+        ∘ map2 id (shift2 ∘ map_snd dec2_term)
+        ∘ dec2_term_rec ctx.
 Proof.
   intros. ext t. unfold compose at 1 2 3.
   generalize dependent ctx.
   induction t as [v | b body IHbody | t1 IHt1 t2 IHt2 ]; intro ctx.
   - (* LHS *)
     rewrite join_term_rw1.
-    rewrite dec_rec_spec.
+    rewrite dec2_rec_spec.
     (* RHS *)
-    rewrite dec_term_rec_rw1.
+    rewrite dec2_term_rec_rw1.
     unfold compose at 2.
     rewrite map2_term_rw1.
     rewrite join_term_rw1.
     cbn.
-    compose near (dec_term v) on right.
+    compose near (dec2_term v) on right.
     unfold map2, Map2_term.
     rewrite (map2_map2_term).
     reflexivity.
@@ -893,20 +1024,39 @@ Proof.
 Qed.
 
 Lemma decorate_join_term: forall (B V: Type),
-    dec_term ∘ join (T := term B) (A := V) =
-      join (T := term (list B * B)) ∘ map2 id (shift2 ∘ map_snd dec_term)
-        ∘ dec_term.
+    dec2_term ∘ join (T := term B) (A := V) =
+      join (T := term (list B * B)) ∘ map2 id (shift2 ∘ map_snd dec2_term)
+        ∘ dec2_term.
 Proof.
   intros.
-  unfold dec_term.
+  unfold dec2_term.
   rewrite decorate_rec_join_term.
   reflexivity.
 Qed.
 
 (*|
-+++++++++++++++++++++++++++++++++++++++++++++++
-Distribute and Join
-+++++++++++++++++++++++++++++++++++++++++++++++
+Typeclass Instance
+=======================
+|*)
+
+#[export] Instance DecoratedMonadPoly_term:
+  DecoratedMonadPoly term.
+Proof.
+  constructor; try typeclasses eauto.
+  - reflexivity.
+  - apply decorate_join_term.
+Qed.
+
+(*|
+***********************************************
+Relating Monad and Traversal
+***********************************************
+|*)
+
+
+(*|
+Distribute Join Law
+=======================
 |*)
 
 (* (t: term (G B) (term (G B) (G V))) *)
@@ -948,16 +1098,20 @@ Proof.
     reflexivity.
 Qed.
 
-#[export] Instance DecoratedMonadPoly_term:
-  DecoratedMonadPoly term.
+(*|
+Typeclass Instance
+=======================
+|*)
+
+#[export] Instance TraversableMonad2_term:
+  TraversableMonad2 term.
 Proof.
-  constructor; try typeclasses eauto.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - typeclasses eauto.
   - reflexivity.
-  - intros.
-    now rewrite join_map.
-  - reflexivity.
-  - intros.
-    apply decorate_join_term.
+  - intros. apply dist_join_term.
 Qed.
 
 #[export] Instance DecoratedTraversableMonadPoly_term:
@@ -967,24 +1121,23 @@ Proof.
   - typeclasses eauto.
   - typeclasses eauto.
   - typeclasses eauto.
-  - constructor; try typeclasses eauto.
-    intros.
-    now rewrite dist_dec_commute2.
   - typeclasses eauto.
-  - reflexivity.
-  - unfold dist2_join.
-    intros.
-    setoid_rewrite dist_join_term.
-    reflexivity.
+  - typeclasses eauto.
+  - typeclasses eauto.
 Qed.
 
+(*|
+***********************************************
+Testing Typeclass Machinery
+***********************************************
+|*)
 
 From Tealeaves Require
   Classes.Categorical.DecoratedTraversableMonadPoly
   Classes.Categorical.TraversableFunctor
   Adapters.CategoricalToKleisli.Monad
   Adapters.CategoricalToKleisli.DecoratedFunctor
-  Adapters.CategoricalToKleisli.TraversableFunctor
+  Adapters.CategoricalToKleisli.TraversableFunctorU
   Adapters.CategoricalToKleisli.DecoratedTraversableFunctor
   Adapters.PolyToMono.Categorical.DecoratedFunctor
   Adapters.PolyToMono.Categorical.TraversableFunctor.
@@ -1078,7 +1231,6 @@ Module CategoricalPDTMUsefulInstances.
   Goal Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list B) (term B).
     Fail typeclasses eauto.
   Abort.
-
 
   Goal Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly term.
     typeclasses eauto.
