@@ -55,7 +55,7 @@ Module DerivedInstances.
       rewrite fun_map_id.
       reflexivity.
     - unfold substitute, Substitute_Categorical.
-      Rewrite <- fun2_map21_map2.
+      rewrite <- fun2_map21_map2.
       (* unfold_ops @Map2_1. *)
       reassociate <-.
       reassociate -> on left.

@@ -292,6 +292,7 @@ Section to_name_from_history.
         in init ++ mid ++ tail.
     Proof.
       intros.
+      unfold to_name_from_history at 1.
       unfold to_history_from_ctx.
       rewrite fold_with_history_decompose.
       rewrite to_history_from_ctx_preincr.
@@ -359,27 +360,6 @@ Section to_name_from_history.
     reflexivity.
   Qed.
 
-  (*
-  Lemma to_name_from_ctx_rw_cons_old (avoid: list name): forall (u: unit) (rest: list unit) (u': unit),
-    to_name_from_ctx (avoid) (u :: rest, u') =
-      fresh
-        (avoid ++
-           fresh avoid ::
-           fold_with_history (preincr (to_name_from_history avoid) [fresh avoid]) rest).
-  Proof.
-    intros.
-    unfold to_name_from_ctx.
-    unfold run_using_prefix.
-    rewrite fold_with_history_cons.
-    unfold to_name_from_history at 1.
-    unfold to_name_from_history at 1.
-    rewrite List.app_nil_r.
-    unfold to_name_from_history at 2.
-    rewrite List.app_nil_r.
-    reflexivity.
-  Qed.
-   *)
-
   Lemma to_name_from_ctx_rw_cons (avoid: list name): forall (u: unit) (rest: list unit) (u': unit),
       to_name_from_ctx avoid (u :: rest, u') =
         fresh (avoid ++ fresh avoid :: to_history_from_ctx (avoid ++ [fresh avoid]) rest).
@@ -414,6 +394,9 @@ Section to_name_from_history.
 
 End to_name_from_history.
 
+
+(** * Converting a depth to (list unit) binding context *)
+(**********************************************************************)
 Fixpoint length_to_list_unit (length: nat): list unit :=
   match length with
   | 0 => nil
@@ -996,7 +979,7 @@ Section with_DTM.
         rewrite map_list_app.
         rewrite map_list_one.
         change (const tt a') with tt.
-        rewrite to_history_from_ctx_decompose2.
+        rewrite to_history_from_ctx_decompose.
         fold NewPrefix.
         fold NewVar.
         fold NewPost.
@@ -1268,8 +1251,7 @@ Section with_DTM.
     introv Hin.
     apply decompose_list_by_ix in Hin.
     destruct Hin as [pre [a [post [Heq Hlen]]]].
-    About to_history_from_ctx_decompose2.
-    specialize (@to_history_from_ctx_decompose2 l pre post a).
+    (*
     intro cut.
     rewrite Heq.
     rewrite cut.
@@ -1293,6 +1275,7 @@ Section with_DTM.
     unfold binding_to_ln.
     rewrite length_to_history_from_ctx.
     auto.
+   *)
   Admitted.
 
   Lemma roundtrip_LN_id: forall (t: T unit LN),
