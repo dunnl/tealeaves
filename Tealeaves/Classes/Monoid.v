@@ -301,14 +301,41 @@ Section lemmas.
 
 End lemmas.
 
+(** * Opposite Monoid *)
+(**********************************************************************)
+Section opposite_monoid.
+
+  #[local] Instance OppositeMonoidOp `{Monoid_op M}: Monoid_op M :=
+    fun m1 m2 => m2 ● m1.
+
+  Instance OppositeMonoid {M op unit} `{@Monoid M op unit}:
+    @Monoid M (@OppositeMonoidOp M op) unit.
+  Proof.
+    constructor; intros;
+      unfold OppositeMonoidOp.
+    - now rewrite monoid_assoc.
+    - now rewrite monoid_id_r.
+    - now rewrite monoid_id_l.
+  Qed.
+
+End opposite_monoid.
+
 (** * Commutative Monoids *)
 (**********************************************************************)
 Class CommutativeMonoidOp {M: Type}
   (op: Monoid_op M) :=
-  { comm_mon_swap: forall (m1 m2: M),
+  {comm_mon_swap: forall (m1 m2: M),
       m1 ● m2 = m2 ● m1;
   }.
 
+Class CommutativeMonoid {M: Type}
+  {op: Monoid_op M} {unit: Monoid_unit M} :=
+  { common_monoid: Monoid M;
+    common_comm: CommutativeMonoidOp op;
+  }.
+
+(** ** Opposite of a Commutative Monoid *)
+(**********************************************************************)
 #[export] Instance CommutativeMonoidOp_Opposite
   `{op: Monoid_op M}
   `{comm: ! CommutativeMonoidOp op}:
@@ -321,6 +348,15 @@ Proof.
   rewrite comm_mon_swap.
   reflexivity.
 Qed.
+
+(** * Idempotent Monoids *)
+(**********************************************************************)
+Class IdempotentMonoid {M: Type}
+  {op: Monoid_op M} {unit: Monoid_unit M} :=
+  { idemmon_monoid: Monoid M;
+    idemmon_idem: forall (m: M),
+      m ● m = m;
+  }.
 
 (** * Notations *)
 (**********************************************************************)
