@@ -1137,7 +1137,7 @@ From Tealeaves Require
   Classes.Categorical.TraversableFunctor
   Adapters.CategoricalToKleisli.Monad
   Adapters.CategoricalToKleisli.DecoratedFunctor
-  Adapters.CategoricalToKleisli.TraversableFunctorU
+  Adapters.CategoricalToKleisli.TraversableFunctor
   Adapters.CategoricalToKleisli.DecoratedTraversableFunctor
   Adapters.PolyToMono.Categorical.DecoratedFunctor
   Adapters.PolyToMono.Categorical.TraversableFunctor.

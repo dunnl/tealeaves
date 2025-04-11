@@ -158,6 +158,14 @@ Section naturality_bmap_vmap.
     {B B1 B2: Type}
     {V V1 V2: Type}.
 
+
+  Lemma bmap_vmap_commute: forall (g: B1 -> B2) (f: V1 -> V2),
+      bmap g ∘ vmap f = vmap f ∘ bmap g.
+    Proof.
+      intros.
+      apply fun2_map22_map21_commute.
+    Qed.
+
     #[export] Instance Natural_vmap: forall (f: V1 -> V2),
         @Natural (fun B => F B V1) (@Map2_2 F _ V1) (fun B => F B V2) (@Map2_2 F _ V2) (fun B => vmap (F := F) f).
     Proof.

@@ -1,29 +1,29 @@
 From Tealeaves Require Import
-  Classes.EqDec_eq
-  Classes.Categorical.DecoratedTraversableFunctor
   Classes.Kleisli.DecoratedTraversableFunctor
-  CategoricalToKleisli.DecoratedFunctor
-  CategoricalToKleisli.DecoratedTraversableFunctor
-  Functors.List_Telescoping_General
-  Backends.Common.Names
-  Backends.Nominal.Common
-  Functors.Constant
-  Functors.Subset
   Kleisli.Theory.DecoratedTraversableFunctor
   Theory.DecoratedTraversableFunctor
-  Theory.LiftRel.DecoratedTraversableFunctor.
+  Theory.LiftRel.DecoratedTraversableFunctor
+  Backends.Common.Names
+  Backends.Nominal.Common.Binding
+  Functors.Constant
+  Functors.Subset.
 
 Import Subset.Notations.
 Import Monoid.Notations.
 
 #[local] Generalizable Variables T.
 
+(** * Alpha Equivalence *)
+(********************************************************************)
+
+
+(** ** Local Definition of Alpha Equivalence *)
+(********************************************************************)
 Section alpha_equiv_local.
 
   Context
     `{T: Type -> Type}
     `{DecoratedTraversableFunctor (list name) T}.
-
 
   Definition alpha_equiv_local:
     list name * name -> list name * name -> Prop :=
@@ -42,6 +42,8 @@ Section alpha_equiv_local.
 
 End alpha_equiv_local.
 
+(** ** Alpha Equivalence *)
+(********************************************************************)
 Section named_local_operations.
 
   Context
@@ -63,7 +65,9 @@ Section named_local_operations.
 
 End named_local_operations.
 
-(** Alpha on polymorphic terms *)
+
+(** ** Alpha Equivalence *)
+(********************************************************************)
 From Tealeaves Require Import
   Classes.Categorical.DecoratedTraversableFunctorPoly
   Adapters.PolyToMono.Categorical.DecoratedFunctor
@@ -75,19 +79,19 @@ From Tealeaves Require Import
 Section delete_binders.
 
   Context
-      `{Functor2.Functor2 T}.
+    `{Functor2.Functor2 T}.
 
   Definition delete_binders {B V}:
     T B V -> T unit V :=
-    map (F := fun B => T B V) (Map := Map2_2) (const tt).
+    bmap (const tt).
 
-  Lemma delete_binders_map {B V1 V2} {f: V1 -> V2} (t: T B V1):
-    delete_binders (map (Map := Map2_1) f t) =
-      map f (delete_binders t).
+  Lemma delete_binders_vmap {B V1 V2} {f: V1 -> V2} (t: T B V1):
+    delete_binders (vmap f t) =
+      vmap f (delete_binders t).
   Proof.
     unfold delete_binders.
     compose near t.
-    rewrite <- fun2_map22_map21_commute.
+    rewrite bmap_vmap_commute.
     reflexivity.
   Qed.
 
@@ -97,7 +101,7 @@ Section named_local_operations.
 
   Context
     (T: Type -> Type -> Type)
-      `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
+    `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
 
   Import Theory.TraversableFunctor.
 
@@ -105,23 +109,25 @@ Section named_local_operations.
   Import TraversableFunctor.ToMono.
   Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
 
-  Definition lift_relation_poly {B1 B2 X Y: Type}
+  Definition lift_relation2 {B1 B2 X Y: Type}
     (R: X -> Y -> Prop): T B1 X -> T B2 Y -> Prop :=
     fun t1 t2 => lift_relation R (delete_binders t1) (delete_binders t2).
 
-  Definition lift_relation_ctx_poly {B1 B2 X Y: Type}
+  Definition lift_relation_ctx2 {B1 B2 X Y: Type}
     (R: list B1 * X -> list B2 * Y -> Prop): T B1 X -> T B2 Y -> Prop :=
     fun t1 t2 => lift_relation R
                 (delete_binders (dec (T B1) t1))
                 (delete_binders (dec (T B2) t2)).
 
-
   Definition polymorphic_alpha:
     T name name -> T name name -> Prop :=
-    lift_relation_ctx_poly (alpha_equiv_local).
+    lift_relation_ctx2 (alpha_equiv_local).
 
 End named_local_operations.
 
+
+(** ** Alpha Reasoning Principles *)
+(********************************************************************)
 Section alpha_properties.
 
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
@@ -129,18 +135,18 @@ Section alpha_properties.
 
   Context
     (T: Type -> Type)
-      `{Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list name) T}
-      `{ToCtxset_inst: ToCtxset (list name) T}
-      `{! Compat_ToCtxset_Mapdt (list name) T}
-      `{ToSubset T}
-      `{! Compat_ToSubset_Traverse T}.
+    `{Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list name) T}
+    `{ToCtxset_inst: ToCtxset (list name) T}
+    `{! Compat_ToCtxset_Mapdt (list name) T}
+    `{ToSubset T}
+    `{! Compat_ToSubset_Traverse T}.
 
   Import CategoricalToKleisli.DecoratedFunctor.DerivedOperations.
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
   Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.
   Import Theory.DecoratedTraversableFunctor.
 
-  Lemma alpha_principle:
+  Lemma alpha_natural_r:
     forall (f: list name * name -> name)
       (t: T name),
       (forall (ctx: list name) (v: name),

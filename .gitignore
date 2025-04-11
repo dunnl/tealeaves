@@ -19,3 +19,4 @@ node_modules/
 # Nix files
 result
 result-alectryon
+*_scraps.v*

@@ -119,8 +119,8 @@ Section proof_lemmas.
     change (rename_binder_local conflicts x fv_u ([x] ++ ctx, v) = v).
     unfold rename_binder_local.
     rewrite ctx_to_history_app.
-    generalize (fold_with_history
-                  (rename_binder_local_history conflicts x fv_u ⦿ fold_with_history
+    generalize (hmap
+                  (rename_binder_local_history conflicts x fv_u ⦿ hmap
                      (rename_binder_local_history conflicts x fv_u) [x])
                   ctx).
     intro l.
@@ -481,14 +481,14 @@ Lemma needed_intermediate: forall  top x l b ctx,
 
     b <> x ->
     ~ b ∈ l ->
-    fold_with_history (rename_binder_local_history top x l ⦿ [b]) ctx =
-      fold_with_history (rename_binder_local_history (top ++ [b]) x l) ctx.
+    hmap (rename_binder_local_history top x l ⦿ [b]) ctx =
+      hmap (rename_binder_local_history (top ++ [b]) x l) ctx.
 Proof.
   intros.
     induction ctx.
   - reflexivity.
-  - rewrite fold_with_history_cons.
-    rewrite fold_with_history_cons.
+  - rewrite hmap_cons.
+    rewrite hmap_cons.
     fequal.
     { unfold preincr, compose, incr.
       change ([b] ● []) with [b].

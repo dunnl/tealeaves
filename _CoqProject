@@ -326,12 +326,13 @@ Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v
 ##########################################################
 # FULLY NOMINAL BACKEND                                  #
 ##########################################################
-Tealeaves/Backends/Nominal/Nominal.v
-Tealeaves/Backends/Nominal/Common.v
-Tealeaves/Backends/Nominal/Alpha.v
+Tealeaves/Backends/Nominal/Common/Hmap.v
+Tealeaves/Backends/Nominal/Common/Binding.v
+Tealeaves/Backends/Nominal/Common/Freshening.v
 Tealeaves/Backends/Nominal/FV.v
 Tealeaves/Backends/Nominal/Barendregt.v
-Tealeaves/Backends/Adapters/KeyName.v
+Tealeaves/Backends/Nominal/Alpha.v
+#Tealeaves/Backends/Adapters/KeyName.v
 Tealeaves/Backends/Adapters/NominalToLN.v
 
 ##########################################################
