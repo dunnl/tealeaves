@@ -17,7 +17,7 @@ From Tealeaves Require Export
 
 #[export] Instance: Composition Type := fun A B C f g => compose f g.
 
-#[export] Instance: Category Type.
+#[export] Instance CategoryOfTypes: Category Type.
 Proof.
   intros. constructor.
   - reflexivity.
