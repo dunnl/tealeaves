@@ -264,7 +264,7 @@ Proof.
   induction t; intros ρ σ ctx.
   - cbn. unfold preincr, compose, incr.
     change (@nil B1) with (Ƶ: list B1).
-    rewrite monoid_id_l.
+    rewrite monoid_id_r.
     reflexivity.
   - cbn.
     rewrite IHt.
@@ -374,7 +374,7 @@ Proof.
     rewrite <- IHt.
     rewrite decorate_prefix_list_rw_app.
     cbn. change (@nil B) with (Ƶ: list B).
-    rewrite monoid_id_l.
+    rewrite monoid_id_r.
     reflexivity.
   - cbn. now rewrite IHt1, IHt2.
 Qed.

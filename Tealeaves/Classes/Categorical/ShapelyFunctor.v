@@ -227,7 +227,7 @@ Section fold_monoidal_structure.
   Theorem fold_I (A: Type) `(Monoid A): forall (a: A),
       foldMap a = a.
   Proof.
-    intros. cbn. now rewrite (monoid_id_l).
+    intros. cbn. now rewrite (monoid_id_r).
   Qed.
 
 End fold_monoidal_structure.

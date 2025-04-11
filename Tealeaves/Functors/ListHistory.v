@@ -37,7 +37,7 @@ Lemma hmap_app:
 Proof.
   intros. generalize dependent ρf. induction wa; intros ρf.
   - change (@nil WA) with (Ƶ: list WA) at 1 3.
-    rewrite monoid_id_r.
+    rewrite monoid_id_l.
     rewrite preincr_zero.
     reflexivity.
   - cbn. fequal. rewrite IHwa.
@@ -78,7 +78,7 @@ Module Hmap_alt.
       rewrite preincr_preincr.
       rewrite IHl.
       unfold preincr, compose, incr.
-      rewrite monoid_id_l.
+      rewrite monoid_id_r.
       reflexivity.
   Qed.
 

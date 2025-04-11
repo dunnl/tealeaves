@@ -528,7 +528,7 @@ Proof.
   - cbn. reflexivity.
   - cbn. change (monoid_op ?x ?y) with (x ● y).
     unfold_ops @Pure_const.
-    rewrite monoid_id_r.
+    rewrite monoid_id_l.
     rewrite IHl.
     reflexivity.
 Qed.

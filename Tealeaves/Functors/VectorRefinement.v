@@ -1269,7 +1269,7 @@ Proof.
   unfold_ops @Map_const.
   unfold ap.
   unfold_ops @Mult_const.
-  rewrite monoid_id_r.
+  rewrite monoid_id_l.
   reflexivity.
 Qed.
 

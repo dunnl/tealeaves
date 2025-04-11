@@ -842,7 +842,7 @@ Section decorated_functor_reader.
       cbn.
       destruct (f (Ƶ, a)).
       cbn.
-      rewrite monoid_id_r.
+      rewrite monoid_id_l.
       reflexivity.
   Qed.
 

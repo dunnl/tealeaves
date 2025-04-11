@@ -90,7 +90,7 @@ Section Writer_miscellaneous.
   Proof.
     intros.
     ext p. cbn.
-    rewrite monoid_id_l.
+    rewrite monoid_id_r.
     reflexivity.
   Qed.
 

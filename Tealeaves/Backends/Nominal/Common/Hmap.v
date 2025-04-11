@@ -142,7 +142,7 @@ Section induction.
           subst.
           apply Hstep.
           change (@nil B) with (Ƶ: list B).
-          rewrite monoid_id_l.
+          rewrite monoid_id_r.
           rewrite TraversableFunctor.forall_iff.
           assumption.
     Qed.
@@ -194,7 +194,7 @@ Section relate_history_prefix.
     rewrite hmap_one.
     unfold preincr, incr, compose.
     change (@nil B) with (Ƶ: list B) at 1.
-    rewrite monoid_id_l.
+    rewrite monoid_id_r.
     fequal.
   Qed.
 

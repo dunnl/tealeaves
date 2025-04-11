@@ -502,7 +502,7 @@ Section mapdt_toctxset.
       destruct a as [e a].
       cbn.
       unfold_ops @Pure_const.
-      rewrite monoid_id_r.
+      rewrite monoid_id_l.
       rewrite <- IHl.
       reflexivity.
   Qed.

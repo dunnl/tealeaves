@@ -879,7 +879,7 @@ Section with_monoid.
       rewrite pure_ap_map.
       change x with (id x) at 2. rewrite <- (fun_map_id).
       fequal. ext m.
-      unfold compose. now rewrite monoid_id_l.
+      unfold compose. now rewrite monoid_id_r.
     - intros. unfold_ops @Monoid_op_applicative.
       unfold_ops @Monoid_unit_applicative.
       rewrite ap_curry.
@@ -887,7 +887,7 @@ Section with_monoid.
       rewrite <- map_to_ap.
       change x with (id x) at 2. rewrite <- (fun_map_id).
       fequal. ext m.
-      unfold compose. now rewrite monoid_id_r.
+      unfold compose. now rewrite monoid_id_l.
   Qed.
 
 End with_monoid.

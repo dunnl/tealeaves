@@ -39,8 +39,8 @@ Class Monoid_unit (A: Type) := monoid_unit: A.
 (**********************************************************************)
 Class Monoid (M: Type) {op: Monoid_op M} {unit: Monoid_unit M} :=
   { monoid_assoc: `((x ● y) ● z = x ● (y ● z));
-    monoid_id_l: `(x ● Ƶ = x);
-    monoid_id_r: `(Ƶ ● x = x);
+    monoid_id_r: `(x ● Ƶ = x);
+    monoid_id_l: `(Ƶ ● x = x);
   }.
 
 (*|
@@ -107,18 +107,18 @@ End monoid_morphism_composition.
 (** ** Some Rudimentary Automation *)
 (**********************************************************************)
 Ltac simpl_monoid :=
-  repeat rewrite monoid_id_l;
   repeat rewrite monoid_id_r;
+  repeat rewrite monoid_id_l;
   repeat rewrite monoid_assoc.
 
 Tactic Notation "simpl_monoid" "in" ident(H) :=
-  repeat rewrite monoid_id_l in H;
   repeat rewrite monoid_id_r in H;
+  repeat rewrite monoid_id_l in H;
   repeat rewrite monoid_assoc in H.
 
 Tactic Notation "simpl_monoid" "in" "*" :=
-  repeat rewrite monoid_id_l in *;
   repeat rewrite monoid_id_r in *;
+  repeat rewrite monoid_id_l in *;
   repeat rewrite monoid_assoc in *.
 
 (** * Monoid Constructions *)
@@ -157,8 +157,8 @@ Proof.
   constructor; unfold_ops @Monoid_op_Opposite;
     intros.
   - now rewrite monoid_assoc.
-  - now rewrite monoid_id_r.
   - now rewrite monoid_id_l.
+  - now rewrite monoid_id_r.
 Qed.
 
 Lemma Monoid_op_Opposite_involutive `{op: Monoid_op M}:
@@ -285,7 +285,7 @@ Section lemmas.
       R m (m ● n).
   Proof.
     intros.
-    rewrite <- (monoid_id_l m) at 1.
+    rewrite <- (monoid_id_r m) at 1.
     apply pom_mono_l.
     apply pompos_pos.
   Qed.
@@ -294,7 +294,7 @@ Section lemmas.
       R m (n ● m).
   Proof.
     intros.
-    rewrite <- (monoid_id_r m) at 1.
+    rewrite <- (monoid_id_l m) at 1.
     apply pom_mono_r.
     apply pompos_pos.
   Qed.

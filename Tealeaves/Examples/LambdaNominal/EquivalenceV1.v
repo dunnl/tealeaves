@@ -638,7 +638,7 @@ Proof.
   - rewrite sub_term_rw1.
     unfold preincr, incr, compose.
     change (@nil name) with (Ƶ:list name).
-    rewrite monoid_id_l.
+    rewrite monoid_id_r.
     induction context.
 
    *)

@@ -1377,7 +1377,7 @@ End mapdt_Z_Z_rw.
   unfold compose at 1.
   unfold incr at 1.
   change (@nil A) with (Ƶ: list A) at 1.
-  rewrite monoid_id_l.
+  rewrite monoid_id_r.
   compose near (dec l) on left.
   rewrite traverse_map.
   replace (g ⦿ ctx ∘ incr [a]) with (g ⦿ (ctx ++ [a])).

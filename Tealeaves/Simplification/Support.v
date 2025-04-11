@@ -137,17 +137,17 @@ Module Basics.
     ltac_trace "simplify_monoid_units";
     match goal with
     | |- context[Ƶ ● ?m] =>
-        rewrite (monoid_id_r m)
-    | |- context[?m ● Ƶ] =>
         rewrite (monoid_id_l m)
+    | |- context[?m ● Ƶ] =>
+        rewrite (monoid_id_r m)
     end.
 
   Ltac simplify_monoid_units_in H :=
     match goal with
     | H: context[Ƶ ● ?m] |- _ =>
-        rewrite (monoid_id_r m) in H
-    | H: context[?m ● Ƶ] |- _ =>
         rewrite (monoid_id_l m) in H
+    | H: context[?m ● Ƶ] |- _ =>
+        rewrite (monoid_id_r m) in H
     end.
 
   Ltac simplify_preincr_zero :=

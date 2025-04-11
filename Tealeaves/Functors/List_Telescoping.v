@@ -99,7 +99,7 @@ Proof.
     - intros. cbn.
       rewrite IHl.
       change 0 with (Ƶ: nat) at 1.
-      rewrite monoid_id_l.
+      rewrite monoid_id_r.
       compose near (decorate_telescoping_list_alt l) on right.
       rewrite (fun_map_map).
       rewrite incr_incr.

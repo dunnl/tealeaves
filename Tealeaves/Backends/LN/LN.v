@@ -1084,10 +1084,10 @@ Section locally_nameless_metatheory.
     setoid_rewrite ind_subst_loc_iff. split.
     - intros [l' [n1 [n2 conditions]]].
       destruct conditions as [c1 [[c2|c2] c3]]; subst.
-      + left. destructs c2; subst. now rewrite monoid_id_l.
+      + left. destructs c2; subst. now rewrite monoid_id_r.
       + right. destructs c2; subst. eauto.
     - intros [[? ?] | [n1 [n2 [? [? ?]]]]].
-      + exists w (Ƶ: nat) l. rewrite monoid_id_l. splits; auto.
+      + exists w (Ƶ: nat) l. rewrite monoid_id_r. splits; auto.
       + exists n1 n2 (Fr x). splits; auto.
   Qed.
 
@@ -1564,14 +1564,14 @@ Section locally_nameless_metatheory.
     - compare naturals n and w; cbn.
       + rewrite subst_ret. compose near (Bd n) on right.
         rewrite (kdm_bindd0); unfold compose. cbn.
-        rewrite monoid_id_l. compare naturals n and w.
+        rewrite monoid_id_r. compare naturals n and w.
       + compose near (Bd w) on right.
         rewrite (kdm_bindd0). unfold compose. cbn.
-        rewrite monoid_id_l. compare naturals w and w.
+        rewrite monoid_id_r. compare naturals w and w.
       + rewrite subst_ret.
         compose near (Bd n) on right.
         rewrite (kdm_bindd0). unfold compose. cbn.
-        rewrite monoid_id_l. compare naturals n and w.
+        rewrite monoid_id_r. compare naturals n and w.
   Qed.
 
 

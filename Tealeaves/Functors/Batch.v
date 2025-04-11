@@ -78,7 +78,7 @@ Proof.
     rewrite <- IHb2.
     cbn.
     unfold_ops @Pure_const.
-    rewrite monoid_id_r.
+    rewrite monoid_id_l.
     change (Traverse_Batch1 B (B -> C * C0) (const M) Map_const
               (fun (X : Type) (_ : X) => Ƶ) Mult_const A False f)
       with (foldMap (T := BATCH1 B (B -> C * C0)) f).
@@ -98,7 +98,7 @@ Proof.
   - cbn.
     rewrite <- foldMap_Batch_map.
     unfold_ops @Pure_const.
-    rewrite monoid_id_l.
+    rewrite monoid_id_r.
     reflexivity.
   - rewrite foldMap_Batch_rw2.
     rewrite <- monoid_assoc.
@@ -110,7 +110,7 @@ Proof.
       reflexivity.
     + cbn.
       unfold_ops @Pure_const.
-      rewrite monoid_id_r.
+      rewrite monoid_id_l.
       change (Traverse_Batch1 B (B -> C * C0) (const M) Map_const
                 (fun (X : Type) (_ : X) => Ƶ) Mult_const A False f)
         with (foldMap (T := BATCH1 B (B -> C * C0)) f).

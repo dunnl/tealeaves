@@ -796,7 +796,7 @@ Section theory.
         unfold compose.
         unfold_ops @Return_Writer.
         unfold local__sub. cbn.
-        rewrite monoid_id_l.
+        rewrite monoid_id_r.
         unfold lift__sub.
         rewrite Hbound. reflexivity. }
     { unfold compose at 1.

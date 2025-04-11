@@ -960,12 +960,12 @@ Section foldMap_list_rw.
 
   Lemma foldMap_list_one (a: A): foldMap_list f [ a ] = f a.
   Proof.
-    cbv. apply monoid_id_l.
+    cbv. apply monoid_id_r.
   Qed.
 
   Lemma foldMap_list_ret: foldMap_list f ∘ ret = f.
   Proof.
-    ext a; cbn. apply monoid_id_l.
+    ext a; cbn. apply monoid_id_r.
   Qed.
 
   Lemma foldMap_list_app: forall (l1 l2: list A),
@@ -1004,7 +1004,7 @@ Section foldable_list.
   Lemma crush_list_ret: forall (x: M),
       crush_list (ret x: list M) = x.
   Proof.
-    apply monoid_id_l.
+    apply monoid_id_r.
   Qed.
 
   Lemma crush_list_join: forall (l: list (list M)),

@@ -311,7 +311,7 @@ Proof.
     unfold compose at 3.
     unfold incr at 1.
     change (@nil B1) with (Ƶ: list B1) at 3.
-    rewrite monoid_id_l.
+    rewrite monoid_id_r.
     (* RHS *)
     rewrite <- ap_map.
     rewrite map_ap.

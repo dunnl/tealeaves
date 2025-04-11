@@ -218,7 +218,7 @@ Module DerivedInstances.
       rewrite kdtmp_substitute0.
       unfold compose, incr.
       unfold_ops @Return_Writer.
-      rewrite monoid_id_l.
+      rewrite monoid_id_r.
       reflexivity.
     - unfold_ops @MapdtPoly_Substitute.
       rewrite kdtmp_morphism.

@@ -828,11 +828,11 @@ Section subst_metatheory.
         + intros [l' [n1 [n2 conditions]]].
           right. destruct conditions as [c1 [[c2|c2] c3]].
           { subst. left. destructs c2; subst.
-            rewrite monoid_id_l. auto. }
+            rewrite monoid_id_r. auto. }
           { subst. right. destructs c2; subst. eauto. }
         + intros [[contra ?] | [ [? [in_t neq]] | hyp ] ].
           { contradiction. }
-          { exists w (Ƶ : list K) l. rewrite monoid_id_l. split... }
+          { exists w (Ƶ : list K) l. rewrite monoid_id_r. split... }
           { destruct hyp as [w1 [w2 ?]]. exists w1 w2 (Fr x). intuition. }
       - rewrite (inmd_subst_neq_iff U)... split.
         + intros [? | [n1 [n2 [p [in_t in_local]]]]]...
@@ -1661,9 +1661,9 @@ Section open_metatheory.
     (* <<< TODO standardize this lemma *)
     - cbn. rewrite (kbindd_comp_mret_eq).
       compare naturals n and (countk k w); cbn; simpl_local.
-      + rewrite monoid_id_l. compare naturals n and (countk k w).
-      + rewrite monoid_id_l. cbn. compare naturals (countk k w) and (countk k w).
-      + rewrite monoid_id_l. cbn. compare naturals n and (countk k w).
+      + rewrite monoid_id_r. compare naturals n and (countk k w).
+      + rewrite monoid_id_r. cbn. compare naturals (countk k w) and (countk k w).
+      + rewrite monoid_id_r. cbn. compare naturals n and (countk k w).
   Qed.
 
   Theorem subst_open_eq :  forall k u1 u2 t x,
