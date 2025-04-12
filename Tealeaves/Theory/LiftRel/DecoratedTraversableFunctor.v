@@ -76,7 +76,6 @@ Section lifting_relations.
   *)
 
   Import Theory.TraversableFunctor.
-  Print Instances ToSubset.
 
   Definition lift_relation_ctx {A B:Type}
     (R: E * A -> E * B -> Prop): T A -> T B -> Prop :=
