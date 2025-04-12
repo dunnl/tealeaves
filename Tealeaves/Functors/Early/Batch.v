@@ -117,122 +117,154 @@ Qed.
 
 (** ** Functor Laws *)
 (**********************************************************************)
+Section functoriality.
 
-(** *** In the <<A>> Argument *)
-(**********************************************************************)
-Lemma mapfst_id_Batch: forall (B C A: Type),
-    mapfst_Batch A A (@id A) = @id (Batch A B C).
-Proof.
-  intros. ext b. induction b as [C c|C rest IHrest a].
-  - reflexivity.
-  - cbn. rewrite IHrest. reflexivity.
-Qed.
+  (** *** In the <<A>> Argument *)
+  (**********************************************************************)
+  Lemma mapfst_id_Batch: forall (B C A: Type),
+      mapfst_Batch A A (@id A) = @id (Batch A B C).
+  Proof.
+    intros. ext b. induction b as [C c|C rest IHrest a].
+    - reflexivity.
+    - cbn. rewrite IHrest. reflexivity.
+  Qed.
 
-Lemma mapfst_mapfst_Batch:
-  forall (B C A1 A2 A3: Type) (f: A1 -> A2) (g: A2 -> A3),
-    mapfst_Batch _ _ g ∘ mapfst_Batch _ _ f =
-      mapfst_Batch (B := B) (C := C) _ _ (g ∘ f).
-Proof.
-  intros.
-  ext b. unfold compose. induction b as [C c|C rest IHrest a].
-  - reflexivity.
-  - cbn. fequal.
-    apply IHrest.
-Qed.
+  Lemma mapfst_mapfst_Batch:
+    forall (B C A1 A2 A3: Type) (f: A1 -> A2) (g: A2 -> A3),
+      mapfst_Batch _ _ g ∘ mapfst_Batch _ _ f =
+        mapfst_Batch (B := B) (C := C) _ _ (g ∘ f).
+  Proof.
+    intros.
+    ext b. unfold compose. induction b as [C c|C rest IHrest a].
+    - reflexivity.
+    - cbn. fequal.
+      apply IHrest.
+  Qed.
 
-#[export, program] Instance Functor_Batch1 {B C: Type}:
-  Functor (BATCH1 B C) :=
-  {| fun_map_id := @mapfst_id_Batch B C;
-     fun_map_map := @mapfst_mapfst_Batch B C;
-  |}.
+  #[export, program] Instance Functor_Batch1 {B C: Type}:
+    Functor (BATCH1 B C) :=
+    {| fun_map_id := @mapfst_id_Batch B C;
+       fun_map_map := @mapfst_mapfst_Batch B C;
+    |}.
 
-(** *** In the <<B>> Argument *)
-(** TODO *)
-(**********************************************************************)
+  (** *** In the <<C>> Argument *)
+  (**********************************************************************)
+  Lemma map_id_Batch: forall (A B C: Type),
+      map (Batch A B) (@id C) = @id (Batch A B C).
+  Proof.
+    intros. ext b. induction b as [C c|C rest IHrest a].
+    - reflexivity.
+    - cbn.
+      assert (lemma: compose (@id C) = @id (B -> C)).
+      { reflexivity. } rewrite lemma.
+      now rewrite IHrest.
+  Qed.
 
-(** *** In the <<C>> Argument *)
-(**********************************************************************)
-Lemma map_id_Batch: forall (A B C: Type),
-    map (Batch A B) (@id C) = @id (Batch A B C).
-Proof.
-  intros. ext b. induction b as [C c|C rest IHrest a].
-  - reflexivity.
-  - cbn.
-    assert (lemma: compose (@id C) = @id (B -> C)).
-    { reflexivity. } rewrite lemma.
-    now rewrite IHrest.
-Qed.
+  Lemma map_map_Batch:
+    forall (A B C1 C2 C3: Type) (f: C1 -> C2) (g: C2 -> C3),
+      map (Batch A B) g ∘ map (Batch A B) f = map (Batch A B) (g ∘ f).
+  Proof.
+    intros.
+    ext b. unfold compose.
+    generalize dependent C3.
+    generalize dependent C2.
+    induction b; intros.
+    - reflexivity.
+    - cbn. fequal.
+      specialize (IHb (B -> C2) (compose f)
+                    (B -> C3) (compose g)).
+      rewrite IHb.
+      reflexivity.
+  Qed.
 
-Lemma map_map_Batch:
-  forall (A B C1 C2 C3: Type) (f: C1 -> C2) (g: C2 -> C3),
-    map (Batch A B) g ∘ map (Batch A B) f = map (Batch A B) (g ∘ f).
-Proof.
-  intros.
-  ext b. unfold compose.
-  generalize dependent C3.
-  generalize dependent C2.
-  induction b; intros.
-  - reflexivity.
-  - cbn. fequal.
-    specialize (IHb (B -> C2) (compose f)
-                  (B -> C3) (compose g)).
-    rewrite IHb.
-    reflexivity.
-Qed.
+  #[export, program] Instance Functor_Batch {A B: Type}:
+    Functor (Batch A B) :=
+    {| fun_map_id := @map_id_Batch A B;
+       fun_map_map := @map_map_Batch A B;
+    |}.
 
-#[export, program] Instance Functor_Batch {A B: Type}:
-  Functor (Batch A B) :=
-  {| fun_map_id := @map_id_Batch A B;
-     fun_map_map := @map_map_Batch A B;
-  |}.
+  (** ** Commuting Independent <<map>>s *)
+  (**********************************************************************)
+  Lemma mapfst_map_Batch
+    {B: Type} `(f: A1 -> A2) `(g: C1 -> C2) (b: Batch A1 B C1):
+    mapfst_Batch A1 A2 f (map (Batch A1 B) g b) =
+      map (Batch A2 B) g (mapfst_Batch A1 A2 f b).
+  Proof.
+    generalize dependent C2.
+    generalize dependent B.
+    induction b.
+    - reflexivity.
+    - intros.
+      cbn. fequal.
+      specialize (IHb (B -> C2) (compose g)).
+      rewrite IHb.
+      reflexivity.
+  Qed.
 
-(** ** Commuting Independent <<map>>s *)
-(**********************************************************************)
-Lemma mapfst_map_Batch
-  {B: Type} `(f: A1 -> A2) `(g: C1 -> C2) (b: Batch A1 B C1):
-  mapfst_Batch A1 A2 f (map (Batch A1 B) g b) =
-    map (Batch A2 B) g (mapfst_Batch A1 A2 f b).
-Proof.
-  generalize dependent C2.
-  generalize dependent B.
-  induction b.
-  - reflexivity.
-  - intros.
-    cbn. fequal.
-    specialize (IHb (B -> C2) (compose g)).
-    rewrite IHb.
-    reflexivity.
-Qed.
+  Lemma mapsnd_map_Batch
+    {A: Type} `(f: B1 -> B2) `(g: C1 -> C2) (b: Batch A B2 C1):
+    mapsnd_Batch B1 B2 f (map (Batch A B2) g b) =
+      map (Batch A B1) g (mapsnd_Batch B1 B2 f b).
+  Proof.
+    generalize dependent C2.
+    induction b.
+    - reflexivity.
+    - intros. cbn. fequal.
+      rewrite IHb.
+      compose near (mapsnd_Batch _ _ f b).
+      do 2 rewrite (fun_map_map (F := Batch A B1)).
+      do 2 rewrite <- IHb.
+      reflexivity.
+  Qed.
 
-Lemma mapsnd_map_Batch
-  {A: Type} `(f: B1 -> B2) `(g: C1 -> C2) (b: Batch A B2 C1):
-  mapsnd_Batch B1 B2 f (map (Batch A B2) g b) =
-    map (Batch A B1) g (mapsnd_Batch B1 B2 f b).
-Proof.
-  generalize dependent C2.
-  induction b.
-  - reflexivity.
-  - intros. cbn. fequal.
-    rewrite IHb.
-    compose near (mapsnd_Batch _ _ f b).
-    do 2 rewrite (fun_map_map (F := Batch A B1)).
-    do 2 rewrite <- IHb.
-    reflexivity.
-Qed.
+  Lemma mapfst_mapsnd_Batch:
+    forall {C: Type} `(f: A1 -> A2) `(g: B1 -> B2) (b: Batch A1 B2 C),
+      mapfst_Batch A1 A2 f (mapsnd_Batch B1 B2 g b) =
+        mapsnd_Batch B1 B2 g (mapfst_Batch A1 A2 f b).
+  Proof.
+    intros.
+    generalize dependent f.
+    generalize dependent g.
+    induction b.
+    - reflexivity.
+    - intros. cbn. fequal. rewrite mapfst_map_Batch.
+      now rewrite IHb.
+  Qed.
 
-Lemma mapfst_mapsnd_Batch:
-  forall {C: Type} `(f: A1 -> A2) `(g: B1 -> B2) (b: Batch A1 B2 C),
-    mapfst_Batch A1 A2 f (mapsnd_Batch B1 B2 g b) =
-      mapsnd_Batch B1 B2 g (mapfst_Batch A1 A2 f b).
-Proof.
-  intros.
-  generalize dependent f.
-  generalize dependent g.
-  induction b.
-  - reflexivity.
-  - intros. cbn. fequal. rewrite mapfst_map_Batch.
-    now rewrite IHb.
-Qed.
+  (** ** Functoriality In the <<B>> Argument *)
+  (**********************************************************************)
+  Lemma mapsnd_id_Batch: forall (A C B: Type),
+      mapsnd_Batch B B (@id B) = @id (Batch A B C).
+  Proof.
+    intros. ext b. induction b as [C c|C rest IHrest a].
+    - reflexivity.
+    - cbn. rewrite IHrest.
+      change (@precompose B B C (@id B)) with (@id (B -> C)).
+      unfold id.
+      rewrite fun_map_id.
+      reflexivity.
+  Qed.
+
+  Lemma mapsnd_mapsnd_Batch:
+    forall (A C B1 B2 B3: Type) (f: B1 -> B2) (g: B2 -> B3),
+      mapsnd_Batch _ _ f ∘ mapsnd_Batch _ _ g =
+        mapsnd_Batch (A := A) (C := C) _ _ (g ∘ f).
+  Proof.
+    intros.
+    ext b. unfold compose. induction b as [C c|C rest IHrest a].
+    - reflexivity.
+    - cbn. fequal.
+      rewrite mapsnd_map_Batch.
+      rewrite IHrest.
+      compose near (mapsnd_Batch B1 B3 (g ○ f) rest) on left.
+      rewrite map_map_Batch.
+      rewrite precompose_precompose.
+      reflexivity.
+  Qed.
+
+  (* There is no contravariant functor typeclass to instantiate *)
+
+End functoriality.
 
 (** * Applicative Functor Instance *)
 (**********************************************************************)
