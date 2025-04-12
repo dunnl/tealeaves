@@ -4,7 +4,6 @@ From Tealeaves.Backends.Common Require Export
   Names AtomSet AssocList.
 From Tealeaves.Backends.LN Require Export
   LN Simplification.
-Print Instances Traverse.
 
 From Tealeaves.Simplification Require Export
   Simplification.
