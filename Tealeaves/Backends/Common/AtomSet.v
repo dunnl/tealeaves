@@ -51,7 +51,7 @@ Import Notations.
 #[global] Instance Monoid_atoms: Monoid AtomSet.t.
 Proof.
   constructor; unfold transparent tcs; intros.
-  (* TODO: Can't use existing monoid typeclass because
+  (* Can't use existing monoid typeclass because
      the laws only hold up to AtomSet.Equal, not propositional equality. *)
 Abort.
 
