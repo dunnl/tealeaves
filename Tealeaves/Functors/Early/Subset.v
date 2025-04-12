@@ -43,7 +43,7 @@ Import Notations.
 Tactic Notation "simpl_subset" :=
   (autorewrite with tea_set).
 Tactic Notation "simpl_subset" "in" hyp(H) :=
-  (autorewrite with tea_set H).
+  (autorewrite with tea_set in H).
 Tactic Notation "simpl_subset" "in" "*" :=
   (autorewrite with tea_set in *).
 
@@ -77,10 +77,13 @@ Section subset_monoid.
   Definition subset_in_add: forall s t a, (s ∪ t) a = (s a \/ t a)
     := ltac:(solve_basic_subset).
 
+  Definition subset_in_one: forall a a', {{a}} a' = (a = a')
+    := ltac:(solve_basic_subset).
+
 End subset_monoid.
 
 #[export] Hint Rewrite @subset_add_nil_l @subset_add_nil_r
-     @subset_add_assoc @subset_in_empty @subset_in_add: tea_set.
+     @subset_add_assoc @subset_in_empty @subset_in_add @subset_in_one: tea_set.
 
 #[export] Instance Monoid_op_subset {A}:
   Monoid_op (subset A) := @subset_add A.
@@ -195,6 +198,8 @@ Qed.
 
 #[local] Notation "{{ x }}" := (@ret subset _ _ x).
 
+#[local] Instance Join_subset: Monad.Join subset := fun A P a => exists (Q: subset A), P Q /\ Q a.
+
 (** ** Monad Laws *)
 (**********************************************************************)
 #[export] Instance Natural_Return_subset: Natural (@ret subset _).
@@ -210,7 +215,109 @@ Proof.
     firstorder (now subst).
 Qed.
 
-(* TODO *)
+Lemma natural_join_subset:
+  forall (A B : Type) (f : A -> B), map f ∘ Monad.join = Monad.join ∘ map f.
+Proof.
+  intros.
+  unfold compose.
+  unfold_ops @Map_compose @Map_subset @Join_subset.
+  ext P b. propext.
+  + intros [a [[Q [PQ Qa]] Heq]].
+    subst.
+    exists (map f Q).
+    unfold_ops @Map_subset.
+    split.
+    * exists Q. split.
+      { assumption. }
+      { setext; firstorder. }
+    * firstorder.
+  + intros [Qb [[Qa [PQa rest]] Qbb]].
+    subst.
+    firstorder.
+Qed.
+
+#[export] Instance Natural_Join_subset: Natural (@Monad.join subset _).
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - apply natural_join_subset.
+Qed.
+
+Lemma join_ret_subset:
+  forall A: Type, Monad.join (T := subset) ∘ (ret (T := subset)) = (@id (subset A)).
+Proof.
+  intros. ext P. unfold id.
+  unfold compose.
+  unfold_ops @Join_subset.
+  ext a.
+  propext.
+  - simpl_subset.
+    intros [Q [Qin Qa]].
+    simpl_subset in Qin.
+    now subst.
+  - intros. exists P. now simpl_subset.
+Qed.
+
+Corollary join_one_subset: forall (A: Type) (P: A -> Prop),
+    Monad.join {{P}} = P.
+Proof.
+  intros.
+  change ((Monad.join ∘ ret (T := subset)) P = P).
+  rewrite join_ret_subset.
+  reflexivity.
+Qed.
+
+Lemma join_map_ret_subset:
+  forall A : Type, Monad.join (T := subset) (A := A) ∘
+                map (ret (A := A) (T := subset)) = id.
+Proof.
+  intros.
+  unfold id, compose.
+  ext P a.
+  unfold_ops @Join_subset @Map_compose @Map_subset.
+  propext.
+  - intros [P' [[a' [Pa' rest]] Ha']].
+    subst.
+    simpl_subset in Ha'. now subst.
+  - intros. exists {{a}}.
+    simpl_subset.
+    split; eauto.
+Qed.
+
+Lemma join_join_subset:
+  forall A : Type,
+    Monad.join (T := subset) (A := A) ∘
+      Monad.join (T := subset) (A := subset A)
+    = Monad.join (T := subset) (A := A) ∘ map (Monad.join (T := subset)).
+Proof.
+  intros.
+  unfold id, compose.
+  ext P a.
+  propext.
+  - intros [Q [[R [PR RQ]] Qa]].
+    unfold_ops @Map_subset.
+    unfold Monad.join at 1.
+    unfold Join_subset at 1.
+    exists (Monad.join R); split; auto.
+    exists R; auto. exists Q; auto.
+  - intros [R [[Q [PQ Rspec]] Ra]].
+    subst.
+    destruct Ra as [X [QX Xa]].
+    exists X; split; auto.
+    exists Q; auto.
+Qed.
+
+#[local] Instance Categorical_Monad_subset: Categorical.Monad.Monad subset.
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - apply join_ret_subset.
+  - apply join_map_ret_subset.
+  - apply join_join_subset.
+Qed.
 
 (** * Monad Instance (Kleisli) *)
 (**********************************************************************)
