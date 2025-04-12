@@ -270,9 +270,6 @@ Section rewriting_maps.
 
   Context {B1 B2 A1 A2: Type} (f: A1 -> A2) (g: B1 -> B2).
 
-  Check G ○12 F.
-  Check map2 (F := (G ○12 F)) g f.
-
   Lemma map2_comp12_rw:
     map2 (F := (G ○12 F)) g f =
       map (map2 g f).
