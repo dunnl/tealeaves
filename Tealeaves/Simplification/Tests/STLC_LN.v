@@ -80,7 +80,7 @@ Section term_free_rewrite.
   Definition term_in_free12 : forall (y : atom) (x : atom),
       x ∈ free (tvar (Fr y)) <-> x = y.
   Proof.
-    intros. simplify. reflexivity.
+    intros. simplify_LN. reflexivity.
   Qed.
 
   Definition term_free2 : forall (t : term) (X : typ),
@@ -92,19 +92,19 @@ Section term_free_rewrite.
   Definition term_in_free2 : forall (x : atom) (t : term) (X : typ),
       x ∈ free (lam X t) <-> x ∈ free t.
   Proof.
-    intros. simplify. reflexivity.
+    intros. simplify_LN. reflexivity.
   Qed.
 
   Definition term_free3 : forall (x : atom) (t1 t2 : term),
       free (app t1 t2) = free t1 ++ free t2.
   Proof.
-    intros. simplify. reflexivity.
+    intros. simplify_LN. reflexivity.
   Qed.
 
   Definition term_in_free3 : forall (x : atom) (t1 t2 : term),
       x ∈ free (app t1 t2) <-> x ∈ free t1 \/ x ∈ free t2.
   Proof.
-    intros. simplify. reflexivity.
+    intros. simplify_LN. reflexivity.
   Qed.
 
   Definition term_in_FV11 : forall (b : nat) (x : atom),

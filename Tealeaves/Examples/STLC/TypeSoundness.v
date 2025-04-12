@@ -77,11 +77,11 @@ Theorem j_wf : forall Γ (t : term) (τ: typ),
     Γ ⊢ t : τ -> FV t ⊆ domset Γ.
 Proof.
   introv J. typing_induction.
-  - simplify.
+  - simplify_LN.
     apply in_in_domset in Hin.
     fsetdec.
   - specialize_freshly IHbody.
-    simplify.
+    simplify_LN.
     assert (step1 : FV body ⊆ FV (body '(e: term)))
       by apply (FV_open_lower (Binddt_TU := Binddt_STLC)).
     assert (step2 : forall x, x `in` FV body -> x `in` (domset (Γ ++ e ~ τ1)))
@@ -92,7 +92,7 @@ Proof.
     rewrite domset_app in step2.
     rewrite domset_one in step2.
     fsetdec.
-  - simplify.
+  - simplify_LN.
     fsetdec.
 Qed.
 
@@ -179,7 +179,7 @@ Proof.
         intuition. }
       { autorewrite with tea_rw_uniq tea_rw_disj in *.
         intuition. }
-    + simplify. apply j_var.
+    + simplify_LN. apply j_var.
       { autorewrite with tea_rw_uniq tea_rw_disj in *.
         intuition. }
       { eauto using binds_remove_mid. }
@@ -194,7 +194,7 @@ Proof.
       * subst. now simpl_alist.
     + fsetdec.
     + auto.
-  - simplify. eauto using j_app.
+  - simplify_LN. eauto using j_app.
 Qed.
 
 Corollary substitution_r : forall Γ (x : atom) (t u : term) (A B : typ),

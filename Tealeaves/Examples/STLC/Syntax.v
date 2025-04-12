@@ -192,16 +192,16 @@ Section test_operations.
   Eval cbn in FV (λ τ body).
   Eval cbn in LCn 3 (λ τ body).
   Goal LC (λ τ body).
-    simplify.
+    simplify_LN.
   Abort.
   Goal FV (λ τ body) = FV (λ τ body).
-    simplify.
+    simplify_LN.
   Abort.
   Goal  (λ τ body) '{x ~> y} = (λ τ body).
     cbn.
   Abort.
   Goal (λ τ (body '{x ~> y}) = λ τ body).
-    simplify.
+    simplify_LN.
   Abort.
 
   Check (1: LN).

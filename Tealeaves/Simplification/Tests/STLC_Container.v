@@ -41,7 +41,7 @@ Section term_ind_rewrite.
       (n, l1) ∈d (tvar l2) <-> (n = Ƶ /\ l1 = l2).
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -49,7 +49,7 @@ Section term_ind_rewrite.
       (n, l) ∈d t = (S n, l) ∈d (λ X t).
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -58,10 +58,10 @@ Section term_ind_rewrite.
   Proof.
     introv.
     destruct n.
-    - simplify.
+    - simplify_LN.
       rewrite exists_false_false.
       easy.
-    - simplify.
+    - simplify_LN.
       easy.
   Qed.
 
@@ -70,7 +70,7 @@ Section term_ind_rewrite.
       (n, l) ∈d (⟨t1⟩ (t2)) <-> (n, l) ∈d t1 \/ (n, l) ∈d t2.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -86,7 +86,7 @@ Section term_foldMap_rewrite.
       foldMap f (tvar a) = f a.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -94,7 +94,7 @@ Section term_foldMap_rewrite.
       foldMap f (λ X t) = foldMap f t.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -102,7 +102,7 @@ Section term_foldMap_rewrite.
       foldMap f (⟨t1⟩ (t2)) = foldMap f t1 ● foldMap f t2.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -121,7 +121,7 @@ Section term_container_rewrite.
     intros.
     unfold tolist.
     unfold Tolist_Traverse.
-    simplify.
+    simplify_LN.
     reflexivity.
   Qed.
 
@@ -129,7 +129,7 @@ Section term_container_rewrite.
       tolist (lam X t) = tolist t.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -137,7 +137,7 @@ Section term_container_rewrite.
       tolist (app t1 t2) = tolist t1 ++ tolist t2.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -145,7 +145,7 @@ Section term_container_rewrite.
       tosubset (tvar x) = {{x}}.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     fixme.
   Qed.
 
@@ -153,7 +153,7 @@ Section term_container_rewrite.
       tosubset (lam X t) = tosubset t.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -161,7 +161,7 @@ Section term_container_rewrite.
       tosubset (app t1 t2) = tosubset t1 ∪ tosubset t2.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -169,7 +169,7 @@ Section term_container_rewrite.
       x ∈ tvar y = (x = y).
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     simpl_subset.
     conclude.
   Qed.
@@ -178,7 +178,7 @@ Section term_container_rewrite.
       y ∈ (lam X t) = y ∈ t.
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 
@@ -186,7 +186,7 @@ Section term_container_rewrite.
       y ∈ (app t1 t2) = (y ∈ t1 \/ y ∈ t2).
   Proof.
     intros.
-    simplify.
+    simplify_LN.
     conclude.
   Qed.
 

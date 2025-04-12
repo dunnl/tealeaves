@@ -197,7 +197,7 @@ Ltac simplify_subst :=
 
 (** * Simplifying everything *)
 (******************************************************************************)
-Ltac simplify_LN :=
+Ltac simplify_LN_one_step :=
   autounfold with tea_ret_coercions;
   ltac_trace "simplify_LN";
   match goal with
@@ -215,7 +215,7 @@ Ltac simplify_LN :=
       simplify_subst
   end.
 
-Ltac simplify :=
-  repeat simplify_LN;
+Ltac simplify_LN :=
+  repeat simplify_LN_one_step;
   repeat simplify_derived_operations;
   simpl_list.
