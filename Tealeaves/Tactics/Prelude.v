@@ -32,8 +32,7 @@ Polymorphic Definition compose {A B C} (g: B -> C)
 Notation "g ∘ f" := (compose g f) (at level 40, left associativity).
 
 (** Helpful to avoid inserting a hidden <<compose>> between two
-    functors that would later need to be unfolded. TODO Get rid of
-    this. *)
+    functors that would obstruct a rewrite *)
 Notation "F ○ G" :=
   (fun X => F (G X)) (at level 40, left associativity).
 
