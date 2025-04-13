@@ -51,6 +51,22 @@ Fixpoint toLNkey_list (l: list LN): key :=
   | (Fr x :: rest) => key_insert_atom (toLNkey_list rest) x
   end.
 
+Lemma toDB_loc_None_iff:
+  forall k d l, toDB_loc k (d, l) = None <-> exists x, l = Fr x /\ ~ x ∈ k.
+Proof.
+  intros.
+  unfold toDB_loc.
+  destruct l as [x | n].
+  - rewrite map_None_eq_iff.
+    setoid_rewrite key_lookup_atom_not_in_iff.
+    firstorder.
+    now inversion H.
+  - split; intro contra.
+    + false.
+    + destruct contra as [x [contra rest]].
+      false.
+Qed.
+
 (*|
 ============================
 Simplification support
@@ -109,3 +125,72 @@ Definition toDB
   `{Traverse_inst: Traverse T}
   `{Mapdt_inst: Mapdt nat T} (t: T LN): option (T nat) :=
   toDB_from_key (toLNkey t) t.
+
+(*|
+=================================
+Properties of <<toDB_from_key>>
+=================================
+|*)
+Section theory.
+
+  Context
+    `{Return_T: Return T}
+    `{Map_T: Map T}
+    `{Bind_TT: Bind T T}
+    `{Traverse_T: Traverse T}
+    `{Mapd_T: Mapd nat T}
+    `{Bindt_TT: Bindt T T}
+    `{Bindd_T: Bindd nat T}
+    `{Mapdt_T: Mapdt nat T}
+    `{Binddt_TT: Binddt nat T T}
+    `{! Compat_Map_Binddt nat T T}
+    `{! Compat_Bind_Binddt nat T T}
+    `{! Compat_Traverse_Binddt nat T T}
+    `{! Compat_Mapd_Binddt nat T T}
+    `{! Compat_Bindt_Binddt nat T T}
+    `{! Compat_Bindd_Binddt nat T T}
+    `{! Compat_Mapdt_Binddt nat T T}.
+
+  Context
+    `{Map_U: Map U}
+    `{Bind_TU: Bind T U}
+    `{Traverse_U: Traverse U}
+    `{Mapd_U: Mapd nat U}
+    `{Bindt_TU: Bindt T U}
+    `{Bindd_TU: Bindd nat T U}
+    `{Mapdt_U: Mapdt nat U}
+    `{Binddt_TU: Binddt nat T U}
+    `{! Compat_Map_Binddt nat T U}
+    `{! Compat_Bind_Binddt nat T U}
+    `{! Compat_Traverse_Binddt nat T U}
+    `{! Compat_Mapd_Binddt nat T U}
+    `{! Compat_Bindt_Binddt nat T U}
+    `{! Compat_Bindd_Binddt nat T U}
+    `{! Compat_Mapdt_Binddt nat T U}.
+
+  Context
+    `{Monad_inst: ! DecoratedTraversableMonad nat T}
+    `{Module_inst: ! DecoratedTraversableRightPreModule nat T U
+                        (unit := Monoid_unit_zero)
+                        (op := Monoid_op_plus)}.
+
+  Lemma toDB_from_key_None_iff: forall k,
+    forall (t: T LN), toDB_from_key k t = None <-> exists (a: atom), a ∈ free t /\ ~ a ∈ k.
+  Proof.
+    intros.
+    unfold toDB_from_key.
+    rewrite mapdt_option_None_spec.
+    setoid_rewrite in_free_iff.
+    setoid_rewrite toDB_loc_None_iff.
+    split.
+    - intros [e [a [Hint [x [HeqX xNotIn]]]]].
+      exists x. subst. split; auto.
+      apply ind_implies_in in Hint.
+      assumption.
+    - intros [e [Hin Hnotin]].
+      apply ind_iff_in in Hin.
+      destruct Hin as [d Hind].
+      exists d. exists (Fr e). split; eauto.
+  Qed.
+
+End theory.
