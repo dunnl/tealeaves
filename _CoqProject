@@ -341,6 +341,7 @@ Tealeaves/Backends/Adapters/NominalToLN.v
 # EX: CONFLUENCE OF LAMBDA CALCULUS                      #
 ##########################################################
 Tealeaves/Examples/Lambda/Confluence.v
+Tealeaves/Examples/Lambda/MapWithPolicyDemo.v
 
 ##########################################################
 # EX: SIMPLY TYPED LAMBDA CALCULUS                       #
