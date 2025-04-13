@@ -1,5 +1,7 @@
 From Tealeaves Require Export
-  Classes.Kleisli.Monad.
+  Classes.Kleisli.Monad
+  Functors.Compose.
+
 
 (** * State Monad *)
 (**********************************************************************)
@@ -73,38 +75,37 @@ Section state_monad.
   Qed.
 
   (** ** Monad Instance (Categorical) *)
-  (* TODO *)
   (********************************************************************)
-(*
-  #[export] Instance Join_State: Join (State S) :=
-  fun A (st: State S (State S A)) =>
-  match st with
-  | mkState r =>
-  mkState (fun s => match (r s) with (s', st') => runState st' s' end)
-  end.
+  #[local] Instance Join_State: Monad.Join (State S) :=
+    fun A (st: State S (State S A)) =>
+      match st with
+      | mkState r =>
+          mkState (fun s => match (r s) with (s', st') => runState st' s' end)
+      end.
 
   Instance Natural_ret: Natural (@ret (State S) _).
   Proof.
-  ltac:(constructor; try typeclasses eauto).
-  reflexivity.
+    ltac:(constructor; try typeclasses eauto).
+    reflexivity.
   Qed.
 
-  Instance Natural_join: Natural (@join (State S) _).
+  Instance Natural_join: Natural (@Monad.join (State S) _).
   Proof.
-  ltac:(constructor; try typeclasses eauto).
-  intros. ext [st]. cbn. fequal.
-  ext s. destruct (st s); cbn. now (destruct s1).
+    ltac:(constructor; try typeclasses eauto).
+    intros. ext [st]. cbn. fequal.
+    ext s. destruct (st s); cbn. now (destruct s1).
   Qed.
 
-  #[export] Instance Monad_State: Monad (State S).
+  #[export] Instance Categorical_Monad_State: Categorical.Monad.Monad (State S).
   Proof.
-  constructor; try typeclasses eauto.
-  - intros. now (ext [st]).
-  - intros. ext [st]. unfold id.
-  cbn. fequal. ext s. now destruct (st s).
-  - intros. ext [st]. unfold compose; cbn.
-  fequal. ext s. destruct (st s). now (destruct s1).
+    constructor; try typeclasses eauto; unfold compose.
+    - intros.
+      ext [st].
+      reflexivity.
+    - intros. ext [st]. unfold id.
+      cbn. fequal. ext s. now destruct (st s).
+    - intros. ext [st]. unfold compose; cbn.
+      fequal. ext s. destruct (st s). now (destruct s1).
   Qed.
- *)
 
 End state_monad.
