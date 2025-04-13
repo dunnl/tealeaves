@@ -5,7 +5,8 @@ From Tealeaves Require Export
 
 From Tealeaves Require Import
   Classes.Categorical.ApplicativeCommutativeIdempotent
-  Classes.Kleisli.Monad.
+  Classes.Kleisli.Monad
+  Tactics.Debug.
 
 Import Kleisli.Monad.Notations.
 
@@ -102,6 +103,30 @@ Solve Obligations with
 Proof.
   intros; constructor; solve_basic_subset.
 Qed.
+
+(** ** Simplification Support *)
+(**********************************************************************)
+Lemma monoid_subset_unit_rw {A}:
+  monoid_unit (subset A) (Monoid_unit := Monoid_unit_subset) = ∅.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma monoid_subset_rw:
+  forall {A} (l1 l2: subset A),
+    monoid_op (Monoid_op := Monoid_op_subset) l1 l2 = l1 ∪ l2.
+Proof.
+  reflexivity.
+Qed.
+
+Ltac simplify_monoid_subset :=
+  ltac_trace "simplify_monoid_subset";
+  match goal with
+  | |- context[monoid_op (Monoid_op := Monoid_op_subset) ?S1 ?S2] =>
+      rewrite monoid_subset_rw
+  | |- context[monoid_unit _ (Monoid_unit := Monoid_unit_subset)] =>
+      rewrite monoid_subset_unit_rw
+  end.
 
 (** ** Querying for an Element is a Monoid Homomorphism *)
 (**********************************************************************)

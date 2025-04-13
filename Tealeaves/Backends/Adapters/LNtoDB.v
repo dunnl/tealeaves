@@ -40,7 +40,7 @@ Translation operations
 |*)
 Definition toDB_loc (k: key) '(depth, l) : option nat :=
   match l with
-  | Bd n => Some n
+  | Bd n => if Nat.ltb n depth then Some n else None
   | Fr x => map (fun ix => ix + depth) (key_lookup_atom k x)
   end.
 
@@ -52,7 +52,8 @@ Fixpoint toLNkey_list (l: list LN): key :=
   end.
 
 Lemma toDB_loc_None_iff:
-  forall k d l, toDB_loc k (d, l) = None <-> exists x, l = Fr x /\ ~ x ∈ k.
+  forall k d l, toDB_loc k (d, l) = None <->
+             (exists x, l = Fr x /\ ~ x ∈ k) \/ (exists n, l = Bd n /\ n >= d).
 Proof.
   intros.
   unfold toDB_loc.
@@ -61,10 +62,19 @@ Proof.
     setoid_rewrite key_lookup_atom_not_in_iff.
     firstorder.
     now inversion H.
+    now inversion H.
   - split; intro contra.
-    + false.
-    + destruct contra as [x [contra rest]].
-      false.
+    + assert (Nat.ltb n d = false).
+      { now destruct (Nat.ltb n d). }
+      Search Nat.ltb false.
+      apply PeanoNat.Nat.ltb_ge in H.
+      right. exists n. auto.
+    + destruct contra as [[x [contra rest]] | [n' [Heq contra]]].
+      * false.
+      * inversion Heq; subst.
+        apply PeanoNat.Nat.ltb_ge in contra.
+        rewrite contra.
+        reflexivity.
 Qed.
 
 (*|
@@ -73,9 +83,15 @@ Simplification support
 ============================
 |*)
 Lemma toDB_loc_rw1 (k: key) (depth: nat) (n: nat):
-  toDB_loc k (depth, Bd n) = Some n.
+  n < depth -> toDB_loc k (depth, Bd n) = Some n.
 Proof.
-  reflexivity.
+  intros. cbn.
+  destruct depth.
+  - false. lia.
+  - apply PeanoNat.Nat.leb_le in H.
+    cbn in H.
+    rewrite H.
+    reflexivity.
 Qed.
 
 Lemma toDB_loc_rw2 (k: key) (depth: nat) (x: atom):
@@ -175,7 +191,8 @@ Section theory.
                         (op := Monoid_op_plus)}.
 
   Lemma toDB_from_key_None_iff: forall k,
-    forall (t: T LN), toDB_from_key k t = None <-> exists (a: atom), a ∈ free t /\ ~ a ∈ k.
+    forall (t: U LN), toDB_from_key k t = None <-> (exists (a: atom), a ∈ free t /\ ~ a ∈ k) \/
+                                              (exists (depth n: nat), (depth, Bd n) ∈d t /\ n >= depth).
   Proof.
     intros.
     unfold toDB_from_key.
@@ -183,14 +200,18 @@ Section theory.
     setoid_rewrite in_free_iff.
     setoid_rewrite toDB_loc_None_iff.
     split.
-    - intros [e [a [Hint [x [HeqX xNotIn]]]]].
-      exists x. subst. split; auto.
-      apply ind_implies_in in Hint.
-      assumption.
-    - intros [e [Hin Hnotin]].
-      apply ind_iff_in in Hin.
-      destruct Hin as [d Hind].
-      exists d. exists (Fr e). split; eauto.
+    - intros [e [a [Hint rest]]].
+      destruct rest as [ [x [HeqX xNotIn]] | [n [Heq Hgeq]]].
+      + left. exists x. subst. split; auto.
+        apply ind_implies_in in Hint.
+        assumption.
+      + right. exists e n. now subst.
+    - intros [ [e [Hin Hnotin]] | [depth [n [Hin Heq]]]].
+      + apply ind_iff_in in Hin.
+        destruct Hin as [d Hind].
+        exists d. exists (Fr e). split; eauto.
+      + exists depth (Bd n). split; auto.
+        right. exists n. auto.
   Qed.
 
 End theory.

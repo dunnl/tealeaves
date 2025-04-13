@@ -90,20 +90,25 @@ Section translate.
 
   (** ** Totality *)
   (********************************************************************)
-  (** Given a locally nameless term and a key with enough atoms,
+  (** Given a locally closed locally nameless term and a key with enough atoms,
       <<toDB>> is guaranteed to return something. *)
   Lemma to_DB_from_key_total:
     forall (t: U LN) (k: key),
+      LC t ->
       scoped_key t k ->
       exists (t': U nat), toDB_from_key k t = Some t'.
   Proof.
-    introv Hin.
+    introv HLC Hin.
     unfold toDB_from_key.
     rewrite DecoratedTraversableFunctor.mapdt_through_runBatch.
     unfold compose at 1.
     unfold scoped_key in Hin.
     unfold element_of in Hin.
+    unfold LC, LCn in HLC.
     rewrite (tosubset_through_runBatch2 _ nat) in Hin.
+    (* the proof breaks here because can't rewrite under the binders. *)
+    try setoid_rewrite (element_ctx_of_toctxset (E := nat) (T := U)) in HLC.
+    try rewrite (toctxset_through_runBatch2) in HLC.
     rewrite toBatch_to_toBatch3 in Hin.
     unfold compose in Hin.
     induction (toBatch3 t).
@@ -140,8 +145,8 @@ Section translate.
         apply Hin.
         cbn. right.
         reflexivity.
-      + cbn. eauto.
-  Qed.
+      + (* Proof missing due to technical difficulties above *)
+  Abort.
 
   Lemma mapdt_None:
     forall (A B: Type) (t: T A) (f: nat * A -> option B),
@@ -205,6 +210,9 @@ Section translate.
       unfold compose.
       unfold toLN_loc.
       now rewrite (lc_bound t depth n Hlc Hin).
+      specialize (Hlc depth (Bd n) Hin).
+      unfold lc_loc in Hlc.
+      lia.
   Qed.
 
   (** Starting with a locally closed term and a big enough key,
@@ -233,51 +241,45 @@ Section translate.
 
   (** A helper lemma used below *)
   Lemma DB_LN_roundtrip_loc_helper1:
-    forall (t:U nat) k gap depth (n:nat),
+    forall (t:U nat) k gap (GapNotZero: gap <> 0) depth (n:nat),
       unique k ->
-      cl_at gap t ->
-      contains_ix_upto gap k ->
+       n < depth + gap ->
+       resolves_gap gap k ->
       bound n depth = false ->
       (depth, n) ∈d t ->
       map (toDB_loc k ∘ pair depth) (map Fr (key_lookup_index k (n - depth))) = Some (Some n).
   Proof.
-    introv Huniq Hclosed Hcont Hbound Helt.
+    introv Hnz Huniq Hclosed Hcont Hbound Helt.
     unfold toLN_loc.
-    assert (Hcont_minus: contains_ix_upto (n - depth) k).
-    { clear Hbound.
-      unfold contains_ix_upto in *.
-      (* assert (n - depth <= gap).*)
-      unfold cl_at in Hclosed;
-        specialize (Hclosed depth n Helt);
-        clear Helt;
-        unfold cl_at_loc in Hclosed;
-        unfold bound_within in Hclosed;
-        rewrite PeanoNat.Nat.ltb_lt in Hclosed.
+    rewrite resolves_gap_spec in Hcont.
+    assert (n >= depth).
+    { unfold bound, bound_within in Hbound.
+      apply PeanoNat.Nat.ltb_ge in Hbound.
       lia.
     }
-    {
-      unfold bound, bound_within in Hbound;
-        rewrite PeanoNat.Nat.ltb_ge in Hbound;
-        replace (depth + 0) with depth in Hbound by lia.
-      destruct (key_lookup_ix_Some2 k (n-depth) Hcont_minus) as [a Halookup].
-      rewrite Halookup.
-      change (map ?f (Some ?n)) with (Some (f n)).
-      change (map ?f (Some ?n)) with (Some (f n)).
-      cbn.
-      apply (key_bijection2) in Halookup; auto.
-      rewrite Halookup; clear Halookup.
-      change (map ?f (Some ?n)) with (Some (f n)).
-      cbn.
-      replace (n - depth + depth) with n by lia.
-      reflexivity.
+    destruct Hcont as [Okay | GapZero].
+    { remember (key_lookup_index k (n - depth)).
+      symmetry in Heqo.
+      destruct o.
+      { cbn.
+        rewrite key_bijection in Heqo; auto.
+        rewrite Heqo.
+        cbn.
+        fequal. fequal. lia.
+      }
+      { cbn. false.
+        apply key_lookup_ix_None1 in Heqo.
+        unfold contains_ix_upto in *. lia.
+      }
     }
+    { subst. false. }
   Qed.
 
   (** A helper lemma used below *)
   Lemma DB_LN_roundtrip_loc: forall (t:U nat) k gap depth (n:nat),
       unique k ->
       cl_at gap t ->
-      contains_ix_upto gap k ->
+      resolves_gap gap k ->
       (depth, n) ∈d t ->
       (toDB_loc k ⋆3 toLN_loc k) (depth, n) =
         pure (F := option ∘ option) n.
@@ -287,8 +289,22 @@ Section translate.
     rewrite kc3_spec.
     unfold toLN_loc.
     bound_induction.
-    apply (DB_LN_roundtrip_loc_helper1 t k gap depth n
-             Huniq Hclosed Hcont Hbound Helt).
+    { specialize (Hclosed depth n Helt).
+      unfold cl_at_loc, bound_within in Hclosed.
+      rewrite PeanoNat.Nat.ltb_lt in Hclosed.
+      cbn.
+      assert (gap <> 0).
+      { lia. }
+      apply (DB_LN_roundtrip_loc_helper1 t k gap); eauto.
+    }
+    { cbn.
+      destruct depth.
+      - false.
+      - assert (Hle: n <= depth) by lia.
+        rewrite <- PeanoNat.Nat.leb_le in Hle.
+        rewrite Hle.
+        reflexivity.
+    }
   Qed.
 
   (** Starting with a term with no more than <<gap>>-level free variables, if the key has at least <<gap>> many unique
@@ -296,7 +312,7 @@ Section translate.
   Theorem DB_LN_roundtrip: forall k gap (t: U nat),
       unique k ->
       cl_at gap t ->
-      contains_ix_upto gap k ->
+      resolves_gap gap k ->
       map (F := option) (toDB_from_key k) (toLN_from_key k t) =
         Some (Some t).
   Proof.
@@ -311,6 +327,95 @@ Section translate.
     intros.
     now rewrite (DB_LN_roundtrip_loc t k gap).
   Qed.
+
+  (** ** Roundtrip from DB *)
+  (********************************************************************)
+
+
+  (*
+  (** A helper lemma used below *)
+  Lemma DB_LN_roundtrip_loc_helper1:
+    forall (t:U nat) k gap (GapNotZero: gap <> 0) depth (n:nat),
+      unique k ->
+      cl_at gap t ->
+      contains_ix_upto (gap - 1) k ->
+      bound n depth = false ->
+      (depth, n) ∈d t ->
+      map (toDB_loc k ∘ pair depth) (map Fr (key_lookup_index k (n - depth))) = Some (Some n).
+  Proof.
+    introv Hnz Huniq Hclosed Hcont Hbound Helt.
+    unfold toLN_loc.
+    assert (Hcont_minus: contains_ix_upto (n - depth) k).
+    { clear Hbound.
+      unfold contains_ix_upto in *.
+      (* assert (n - depth <= gap).*)
+      unfold cl_at in Hclosed;
+        specialize (Hclosed depth n Helt);
+        clear Helt;
+        unfold cl_at_loc in Hclosed;
+        unfold bound_within in Hclosed;
+        rewrite PeanoNat.Nat.ltb_lt in Hclosed.
+      destruct Hcont; lia.
+    }
+    {
+      destruct (key_lookup_ix_Some2 k (n-depth) Hcont_minus) as [a Halookup].
+      rewrite Halookup.
+      change (map ?f (Some ?n)) with (Some (f n)).
+      change (map ?f (Some ?n)) with (Some (f n)).
+      cbn.
+      apply (key_bijection2) in Halookup; auto.
+      rewrite Halookup; clear Halookup.
+      change (map ?f (Some ?n)) with (Some (f n)).
+      cbn.
+      replace (n - depth + depth) with n.
+      reflexivity.
+      unfold bound, bound_within in Hbound.
+      rewrite PeanoNat.Nat.ltb_nlt in Hbound.
+      lia.
+    }
+  Qed.
+
+  (** A helper lemma used below *)
+  Lemma DB_LN_roundtrip_loc: forall (t:U nat) k gap depth (n:nat),
+      unique k ->
+      cl_at gap t ->
+      contains_ix_upto (gap - 1) k ->
+      (depth, n) ∈d t ->
+      (toDB_loc k ⋆3 toLN_loc k) (depth, n) =
+        pure (F := option ∘ option) n.
+  Proof.
+    introv Huniq Hclosed Hcont Helt.
+    unfold_ops @Pure_compose @Pure_option.
+    rewrite kc3_spec.
+    unfold toLN_loc.
+    bound_induction.
+    cbn.
+    assert (gap <> 0). admit.
+    apply (DB_LN_roundtrip_loc_helper1 t k gap ltac:(assumption) depth n
+             Huniq Hclosed Hcont Hbound Helt).
+  Admitted.
+
+  (** Starting with a term with no more than <<gap>>-level free variables, if the key has at least <<gap>> many unique
+      names, the roundtrip of a de Bruijn index is locally the identity function. *)
+  Theorem DB_LN_roundtrip: forall k gap (t: U nat),
+      unique k ->
+      cl_at gap t ->
+      contains_ix_upto (gap - 1) k ->
+      map (F := option) (toDB_from_key k) (toLN_from_key k t) =
+        Some (Some t).
+  Proof.
+    intros.
+    unfold toLN_from_key.
+    unfold toDB_from_key.
+    compose near t on left.
+    rewrite mapdt_mapdt.
+    all: try typeclasses eauto.
+    change (Some (Some t)) with (pure (F := option ∘ option) t).
+    apply (mapdt_respectful_pure _ (G := option ∘ option)).
+    intros.
+    now rewrite (DB_LN_roundtrip_loc t k gap).
+  Qed.
+  *)
 
   (** ** Partial Bijections *)
   (********************************************************************)
@@ -391,11 +496,22 @@ Section translate.
   Qed.
 
   Theorem DB_LN_partial_bijection1: forall k,
-      (forall (t: T LN) (u: T nat),
+      unique k ->
+      (forall (t: U LN) (u: U nat),
           toDB_from_key k t = Some u <-> toLN_from_key k u = Some t).
   Proof.
     intros.
-    cbn.
+    apply partial_bijection_spec.
+    clear t u. split; intros t.
+    - rewrite toLN_None_iff.
+      destruct (cl_at_decidable (length k) t) as [Hclosedat | Not_Hclosedat].
+      right.
+      eapply (DB_LN_roundtrip k (length k)).
+      + assumption.
+      + assumption.
+      + unfold resolves_gap. lia.
+      + now left.
+    - rewrite toDB_from_key_None_iff.
   Abort.
 
 End translate.

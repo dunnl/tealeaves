@@ -100,11 +100,24 @@ Definition wf_LN
   `{ToSubset T} (t: T LN) (k: key): Prop :=
   unique k /\ forall (x: atom), Fr x ∈ t -> x ∈ k.
 
+Definition resolves_gap (gap: nat) (k: key): Prop :=
+  gap <= length k.
+
 Definition contains_ix_upto (n: nat) (k: key): Prop :=
   n < length k.
 
+Lemma resolves_gap_spec: forall (gap: nat) (k: key),
+    resolves_gap gap k <-> contains_ix_upto (gap - 1) k \/ gap = 0.
+Proof.
+  intros.
+  unfold resolves_gap, contains_ix_upto.
+  split.
+  - lia.
+  - lia.
+Qed.
+
 Definition wf_DB `{ToCtxset nat T} (t: T nat) (k: key): Prop :=
-  unique k /\ exists (gap: nat), cl_at gap t /\ contains_ix_upto gap k.
+  unique k /\ exists (gap: nat), cl_at gap t /\ resolves_gap gap k.
 
 (** * Misc *)
 (******************************************************************************)
@@ -461,6 +474,15 @@ Proof.
     + contradict Hin. lia.
     + specialize (IHk ix ltac:(lia)).
       assumption.
+Qed.
+
+Lemma key_lookup_ix_None_iff:
+  forall (k:  key) (ix: nat),
+    ~ (contains_ix_upto ix k) <->
+    key_lookup_index k ix = None.
+Proof.
+  intros; split;
+    auto using key_lookup_ix_None1, key_lookup_ix_None2.
 Qed.
 
 Theorem key_lookup_ix_decide:

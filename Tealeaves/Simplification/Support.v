@@ -18,23 +18,6 @@ Extra lemmas for simplification support
 |*)
 Import Monoid.Notations.
 
-Lemma pure_const_rw: forall {A} {a:A} {M} {unit: Monoid_unit M},
-    pure (F := const M) (Pure := @Pure_const _ unit) a = Ƶ.
-  reflexivity.
-Qed.
-
-Lemma ap_const_rw:
-  forall {M} `{Monoid_op M} {A B} (x: const M (A -> B)) (y: const M A),
-    ap (const M) x y = (x ● y).
-  reflexivity.
-Qed.
-
-Lemma map_const_rw: forall A B (f: A -> B) X,
-    map (F := const X) f = @id X.
-Proof.
-  reflexivity.
-Qed.
-
 Lemma eq_pair_preincr: forall (n: nat) {A} (a: A),
     eq (S n, a) ⦿ 1 = eq (n, a).
 Proof.
@@ -192,40 +175,6 @@ Module SimplApplicative.
           || (assert_fails (idtac; find_applicative_instance G2);
              assert (Applicative G2) by now inversion H)
       end.
-
-  (** ** Constant applicatives *)
-  (******************************************************************************)
-  Ltac simplify_applicative_const :=
-    ltac_trace "simplify_applicative_const";
-    match goal with
-    | |- context [pure (F := const ?W) ?x] =>
-        rewrite pure_const_rw
-    | |- context[(ap (const ?W) ?x ?y)] =>
-        rewrite ap_const_rw
-    end.
-
-  Ltac simplify_applicative_const_in :=
-    match goal with
-    | H: context [pure (F := const ?W) ?x] |- _ =>
-        rewrite pure_const_rw in H
-    | H: context[(ap (const ?W) ?x ?y)] |- _ =>
-        rewrite ap_const_rw in H
-    end.
-
-  (** ** Constant maps *)
-  (******************************************************************************)
-  Ltac simplify_map_const :=
-    ltac_trace "simplify_map_const";
-    match goal with
-    | |- context[map (F := const ?X) ?f] =>
-        rewrite map_const_rw
-    end.
-
-  Ltac simplify_map_const_in :=
-    match goal with
-    | H: context[map (F := const ?X) ?f] |- _ =>
-        rewrite map_const_rw in H
-    end.
 
   (** ** Identity applicative *)
   (******************************************************************************)

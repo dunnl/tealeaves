@@ -1,6 +1,7 @@
 From Tealeaves Require Export
   Classes.Monoid
-  Classes.Categorical.Applicative.
+  Classes.Categorical.Applicative
+  Tactics.Debug.
 
 Import Monoid.Notations.
 
@@ -180,3 +181,61 @@ Section constant_functor.
   Qed.
 
 End constant_functor.
+
+
+(** * Simplification Support *)
+(**********************************************************************)
+
+Lemma pure_const_rw: forall {A} {a:A} {M} {unit: Monoid_unit M},
+    pure (F := const M) (Pure := @Pure_const _ unit) a = @monoid_unit M unit.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma ap_const_rw:
+  forall {M} `{op: Monoid_op M} {A B} (x: const M (A -> B)) (y: const M A),
+    ap (const M) x y = (@monoid_op M op x y).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma map_const_rw: forall A B (f: A -> B) X,
+    map (const X) f = @id X.
+Proof.
+  reflexivity.
+Qed.
+
+
+(** ** Constant applicatives *)
+(**********************************************************************)
+Ltac simplify_applicative_const :=
+  ltac_trace "simplify_applicative_const";
+  match goal with
+  | |- context [pure (F := const ?W) ?x] =>
+      rewrite pure_const_rw
+  | |- context[(ap (const ?W) ?x ?y)] =>
+      rewrite ap_const_rw
+  end.
+
+Ltac simplify_applicative_const_in :=
+  match goal with
+  | H: context [pure (F := const ?W) ?x] |- _ =>
+      rewrite pure_const_rw in H
+  | H: context[(ap (const ?W) ?x ?y)] |- _ =>
+      rewrite ap_const_rw in H
+  end.
+
+(** ** Constant maps *)
+(**********************************************************************)
+Ltac simplify_map_const :=
+  ltac_trace "simplify_map_const";
+  match goal with
+  | |- context[map (const ?X) ?f] =>
+      rewrite map_const_rw
+  end.
+
+Ltac simplify_map_const_in :=
+  match goal with
+  | H: context[map (const ?X) ?f] |- _ =>
+      rewrite map_const_rw in H
+  end.

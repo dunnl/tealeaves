@@ -6,6 +6,7 @@ From Tealeaves.Theory Require Export
 
 Import DecoratedContainerMonad.
 Import Kleisli.DecoratedTraversableMonad.
+Import Kleisli.Theory.DecoratedTraversableFunctor.
 Import DecoratedTraversableMonad.UsefulInstances.
 
 Import PeanoNat.Nat.
@@ -29,8 +30,10 @@ Section section.
     `{ret_inst : Return T}
     `{Mapd_T_inst : Mapd nat T}
     `{Mapd_U_inst : Mapd nat U}
+    `{Mapdt_U_inst : Mapdt nat U}
     `{Bindd_U_inst : Bindd nat T U}
-    `{ToCtxset_U_inst : ToCtxset nat U}.
+    `{ToCtxset_U_inst : ToCtxset nat U}
+    `{! Compat_ToCtxset_Mapdt nat U}.
 
   Definition bound_within (gap: nat) : nat -> nat -> bool :=
     fun ix depth => ix <? depth + gap.
@@ -1101,6 +1104,47 @@ Section theory.
       `{Module_inst : ! DecoratedTraversableRightPreModule nat T U
                         (unit := Monoid_unit_zero)
                         (op := Monoid_op_plus)}.
+
+  Lemma cl_at_loc_decidable {gap}:
+    decidable (fun p : nat * nat => cl_at_loc gap p = true).
+  Proof.
+    unfold decidable.
+    intros [p n].
+    unfold cl_at_loc.
+    unfold bound_within.
+    destruct (n <? p + gap); auto.
+  Qed.
+
+  Lemma cl_at_spec (gap: nat) (t: U nat):
+    cl_at gap t = Forall_ctx (fun p => cl_at_loc gap p = true) t.
+  Proof.
+    intros; propext;
+      rewrite forall_ctx_iff; easy.
+  Qed.
+
+  Lemma cl_at_decidable (gap: nat) (t: U nat):
+    cl_at gap t \/ ~ cl_at gap t.
+  Proof.
+    rewrite cl_at_spec.
+    eapply Forall_ctx_decidable.
+    apply cl_at_loc_decidable.
+  Qed.
+
+  Lemma cl_at_spec_not (gap: nat) (t: U nat):
+    (~ cl_at gap t) = exists (d: nat) (n: nat), (d, n) ∈d t /\ (cl_at_loc gap (d, n) = false).
+  Proof.
+    rewrite cl_at_spec.
+    apply propositional_extensionality.
+    rewrite not_forall_ctx_iff.
+    2: { unfold decidable.
+         intros [p n].
+         unfold cl_at_loc.
+         unfold bound_within.
+         destruct (n <? p + gap); auto.
+    }
+    split; intros [e [a [Hin Hspec]]];
+      exists e a; destruct (cl_at_loc gap (e, a)); easy.
+  Qed.
 
   Lemma closed_at_sub1: forall (σ: nat -> T nat) (k d1 i1: nat),
       (forall (n: nat), cl_at k (σ n)) ->

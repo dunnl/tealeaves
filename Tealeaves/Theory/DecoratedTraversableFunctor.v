@@ -9,6 +9,7 @@ From Tealeaves Require Import
 From Tealeaves Require Export
   Functors.Batch
   Functors.Environment
+  Functors.Option
   Theory.TraversableFunctor
   Kleisli.Theory.DecoratedTraversableFunctor.
 
@@ -836,8 +837,6 @@ Section theory.
 
   (** ** Specialized to option *)
   (**********************************************************************)
-  Require Import Functors.Option.
-
   Lemma map_None_eq_iff: forall (A B: Type) (f: A -> B) (o: option A),
       map f o = None <-> o = None.
   Proof.

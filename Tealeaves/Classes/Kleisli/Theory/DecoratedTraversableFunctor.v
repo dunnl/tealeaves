@@ -157,6 +157,7 @@ End mapdt_foldMapd.
 #[local] Instance ToCtxlist_Mapdt
   `{Mapdt E T}: ToCtxlist E T :=
   fun A => foldMapd (ret (T := list)).
+
 Class Compat_ToCtxlist_Mapdt
   (E: Type)
   (T: Type -> Type)
@@ -804,6 +805,108 @@ Section quantification.
         - left. inversion hyp1; subst.
           assumption.
         - right. exists e' a'. easy.
+      }
+  Qed.
+
+  Definition decidable `(P: A -> Prop) :=
+    forall a, P a \/ ~ P a.
+
+  Lemma decidable_push_not `(P: A -> Prop) (X: decidable P) (a1 a2: A):
+    (~ (P a1 /\ P a2)) = ~ (P a1) \/ ~ P a2.
+  Proof.
+    apply propositional_extensionality.
+    destruct (X a1);
+      destruct (X a2); firstorder.
+  Qed.
+
+  Lemma decidable_foldable `(P: A -> Prop) `(Dec: decidable P): forall (l: list A),
+      foldMap (unit := Monoid_unit_true) (op := Monoid_op_and) P l \/
+        ~ foldMap P (unit := Monoid_unit_true) (op := Monoid_op_and) l.
+  Proof.
+    intros.
+    rewrite foldMap_eq_foldMap_list.
+    induction l.
+    - left. cbv. trivial.
+    - simpl_list.
+      simplify_monoid_conjunction.
+      destruct IHl as [Case1 | Case2].
+      + destruct (Dec a).
+        * now left.
+        * right. tauto.
+      + now right.
+  Qed.
+
+  Lemma decidable_push_not_foldMap_list `(P: A -> Prop) (X: decidable P) (a: A) (l: list A):
+    (~ (P a /\ foldMap_list P l)) = ~ P a \/ ~ foldMap_list P l.
+  Proof.
+    intros.
+    destruct (X a);
+      destruct (decidable_foldable P X l); propext; firstorder.
+  Qed.
+
+  Lemma element_ctx_of_env_cons {A}: forall e a e' a' (rest: env E A),
+      (e, a) ∈d ((e', a') :: rest) =
+        ((e = e' /\ a = a') \/ (e, a) ∈d rest).
+  Proof.
+    intros.
+    unfold element_ctx_of.
+    rewrite toctxset_to_mapdt.
+    rewrite foldMapd_to_mapdt1.
+    cbn.
+    unfold const at 1.
+    simplify_applicative_const.
+    repeat simplify_monoid_subset.
+    setoid_rewrite monoid_subset_rw.
+    simplify_map_const.
+    simpl_subset.
+    unfold_ops @Return_subset.
+    propext.
+    - setoid_rewrite pair_equal_spec. firstorder.
+    - setoid_rewrite pair_equal_spec. firstorder.
+  Qed.
+
+  Lemma Forall_ctx_decidable `(P: E * A -> Prop) (Dec: decidable P) (t: T A):
+    Forall_ctx P t \/ ~ Forall_ctx P t.
+  Proof.
+    intros.
+    unfold Forall_ctx.
+    unfold Forall_ctx.
+    rewrite foldMapd_through_toctxlist.
+    unfold compose.
+    destruct (decidable_foldable P Dec (toctxlist t)); auto.
+  Qed.
+
+  Lemma not_forall_ctx_iff `(P: E * A -> Prop) (Dec: decidable P) (t: T A):
+    ~ Forall_ctx P t <-> exists (e: E) (a: A), (e, a) ∈d t /\ ~ P (e, a).
+  Proof.
+    unfold Forall_ctx.
+    rewrite foldMapd_through_toctxlist.
+    setoid_rewrite ind_iff_in_toctxlist2.
+    unfold compose at 1.
+    induction (toctxlist t) as [|[e a] rest IHrest].
+    - cbn.
+      repeat simplify_applicative_const.
+      repeat simplify_monoid_conjunction.
+      repeat simplify_monoid_subset.
+      setoid_rewrite subset_in_empty.
+      split; firstorder.
+    - rewrite foldMap_eq_foldMap_list.
+      simpl_list.
+      repeat simplify_monoid_conjunction.
+      setoid_rewrite element_ctx_of_env_cons.
+      rewrite decidable_push_not_foldMap_list; auto.
+      rewrite <- foldMap_eq_foldMap_list.
+      setoid_rewrite IHrest; clear IHrest.
+      split.
+      { intros [Case1 | Case2].
+        - exists e. exists a. split; auto.
+        - destruct Case2 as [e' [a' [Hin Hnot]]].
+          exists e'. exists a'. split; auto.
+      }
+      { intros [e' [a' [Hin Hnot]]].
+        destruct Hin as [Case1 | Case2].
+        - inversion Case1; subst; now left.
+        - right. exists e'. exists a'. auto.
       }
   Qed.
 

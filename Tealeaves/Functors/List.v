@@ -413,6 +413,63 @@ Proof.
     reflexivity.
 Qed.
 
+(** ** Rewriting Laws for <<foldMap>> *)
+(**********************************************************************)
+Section foldMap_rw.
+
+  Context
+    {A M: Type}
+    `{Monoid M}
+    (f: A -> M).
+
+  Lemma foldMap_nil: foldMap f (@nil A) = Ƶ.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_cons: forall (x: A) (xs: list A),
+      foldMap f (x :: xs) = f x ● foldMap f xs.
+  Proof.
+    intros.
+    rewrite foldMap_eq_foldMap_list.
+    simpl_list.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_one (a: A): foldMap f [ a ] = f a.
+  Proof.
+    rewrite foldMap_eq_foldMap_list.
+    simpl_list; auto.
+  Qed.
+
+  Lemma foldMap_ret: foldMap f ∘ ret = f.
+  Proof.
+    rewrite foldMap_eq_foldMap_list.
+    rewrite foldMap_list_ret.
+    reflexivity.
+  Qed.
+
+  Lemma foldMap_app: forall (l1 l2: list A),
+      foldMap f (l1 ++ l2) = foldMap f l1 ● foldMap f l2.
+  Proof.
+    intros.
+    rewrite foldMap_eq_foldMap_list.
+    rewrite foldMap_list_app.
+    reflexivity.
+  Qed.
+
+End foldMap_rw.
+
+#[export] Hint Rewrite @foldMap_nil @foldMap_cons
+  @foldMap_one @foldMap_app: tea_list.
+
+Lemma foldMap_ret_id: forall A, foldMap (@ret list _ A) = id.
+Proof.
+  intros.
+  rewrite foldMap_eq_foldMap_list.
+  apply foldMap_list_ret_id.
+Qed.
+
 (** * Specification of <<Permutation>> *)
 (**********************************************************************)
 From Coq Require Import Sorting.Permutation.

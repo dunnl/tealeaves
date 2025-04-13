@@ -539,58 +539,6 @@ Ltac simplify_foldMap :=
       ltac_trace "simplify_foldMap_end"
   end.
 
-Lemma monoid_conjunction_rw:
-  forall (P1 P2: Prop),
-    monoid_op (Monoid_op := Monoid_op_and) P1 P2 = (P1 /\ P2).
-Proof.
-  reflexivity.
-Qed.
-
-Ltac simplify_monoid_conjunction :=
-  ltac_trace "simplify_monoid_conjunction";
-  match goal with
-  | |- context[monoid_op (Monoid_op := Monoid_op_and) ?P1 ?P2] =>
-      rewrite monoid_conjunction_rw
-  end.
-
-Ltac simplify_monoid_conjunction_in H :=
-  rewrite monoid_conjunction_rw in H.
-
-Lemma monoid_append_rw:
-  forall {A} (l1 l2: list A),
-    monoid_op (Monoid_op := Monoid_op_list) l1 l2 = l1 ++ l2.
-Proof.
-  reflexivity.
-Qed.
-
-Lemma monoid_disjunction_rw:
-  forall (P1 P2: Prop),
-    monoid_op (Monoid_op := Monoid_op_or) P1 P2 = (P1 \/ P2).
-Proof.
-  reflexivity.
-Qed.
-
-Ltac simplify_monoid_disjunction :=
-  ltac_trace "simplify_monoid_disjunction";
-  match goal with
-  | |- context[monoid_op (Monoid_op := Monoid_op_or) ?P1 ?P2] =>
-      rewrite monoid_disjunction_rw
-  end.
-
-Ltac simplify_monoid_append :=
-  rewrite monoid_append_rw.
-
-Lemma monoid_subset_rw:
-  forall {A} (l1 l2: subset A),
-    monoid_op (Monoid_op := Monoid_op_subset) l1 l2 = l1 ∪ l2.
-Proof.
-  reflexivity.
-Qed.
-
-Ltac simplify_monoid_subset :=
-  ltac_trace "simplify_monoid_subset";
-  rewrite monoid_subset_rw.
-
 Ltac simplify_tolist :=
   ltac_trace "simplify_tolist";
   match goal with
@@ -598,7 +546,7 @@ Ltac simplify_tolist :=
       rewrite (tolist_to_foldMap (T := T));
       simplify_foldMap;
       repeat rewrite <- (tolist_to_foldMap (T := T));
-      repeat simplify_monoid_append
+      simplify_monoid_list
   end.
 
 Ltac simplify_tosubset :=

@@ -1,5 +1,6 @@
 From Tealeaves Require Import
-  Classes.Monoid.
+  Classes.Monoid
+  Tactics.Debug.
 
 Import Monoid.Notations.
 
@@ -29,7 +30,57 @@ Solve All Obligations with intros; propext; firstorder.
 
 Solve Obligations with intros; propext; firstorder.
 
+(** ** Simplification Support *)
+(**********************************************************************)
+Lemma monoid_conjunction_rw:
+  forall (P1 P2: Prop),
+    monoid_op (Monoid_op := Monoid_op_and) P1 P2 = (P1 /\ P2).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma monoid_conjunction_unit_rw:
+  monoid_unit Prop (Monoid_unit := Monoid_unit_true) = True.
+Proof.
+  reflexivity.
+Qed.
+
+Ltac simplify_monoid_conjunction :=
+  ltac_trace "simplify_monoid_conjunction";
+  match goal with
+  | |- context[monoid_op (Monoid_op := Monoid_op_and) ?P1 ?P2] =>
+      rewrite monoid_conjunction_rw
+  | |- context[monoid_unit Prop (Monoid_unit := Monoid_unit_true)] =>
+      rewrite monoid_conjunction_unit_rw
+  end.
+
+Ltac simplify_monoid_conjunction_in H :=
+  rewrite monoid_conjunction_rw in H.
+
+Lemma monoid_disjunction_rw:
+  forall (P1 P2: Prop),
+    monoid_op (Monoid_op := Monoid_op_or) P1 P2 = (P1 \/ P2).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma monoid_disjunction_unit_rw:
+  monoid_unit Prop (Monoid_unit := Monoid_unit_false) = False.
+Proof.
+  reflexivity.
+Qed.
+
+Ltac simplify_monoid_disjunction :=
+  ltac_trace "simplify_monoid_disjunction";
+  match goal with
+  | |- context[monoid_op (Monoid_op := Monoid_op_or) ?P1 ?P2] =>
+      rewrite monoid_disjunction_rw
+  | |- context[monoid_unit Prop (Monoid_unit := Monoid_unit_false)] =>
+      rewrite monoid_disjunction_unit_rw
+  end.
+
 (** * Boolean monoids *)
+(**********************************************************************)
 
 (** ** Disjunction *)
 (**********************************************************************)

@@ -43,6 +43,26 @@ Tactic Notation "simpl_list" "in" "*" :=
 Solve Obligations with
   (intros; unfold transparent tcs; auto with datatypes).
 
+(** ** Simplification *)
+(**********************************************************************)
+Lemma monoid_append_rw:
+  forall {A} (l1 l2: list A),
+    monoid_op (Monoid_op := Monoid_op_list) l1 l2 = l1 ++ l2.
+Proof.
+  reflexivity.
+Qed.
+
+Lemma monoid_list_unit_rw:
+  forall {A}, (Ƶ: list A) = [].
+Proof.
+  reflexivity.
+Qed.
+
+Ltac simplify_monoid_list :=
+  repeat first [ rewrite monoid_list_unit_rw
+               | rewrite monoid_append_rw
+    ].
+
 (** * [Functor] Instance *)
 (**********************************************************************)
 #[export] Instance Map_list: Map list :=

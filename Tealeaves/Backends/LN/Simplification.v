@@ -104,14 +104,14 @@ Ltac simplify_free_loc :=
 
 Ltac simplify_free_post :=
   (* simplifying foldmap exposes ● with lists *)
-  repeat simplify_monoid_append.
+  simplify_monoid_list.
 
 Ltac simplify_free :=
   ltac_trace "simplify_free";
   unfold free;
   simplify_foldMap;
   (* ^^ this exposes ● with lists *)
-  repeat simplify_monoid_append;
+  simplify_monoid_list;
   (* IF bottomed out *)
   ltac_trace "simplify_free_loc";
   simplify_free_loc;
