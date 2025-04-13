@@ -16,6 +16,35 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
+(** ** Compatibility Classes *)
+(**********************************************************************)
+Class Compat_Dist_Traverse
+    (F: Type -> Type)
+    `{Traverse_F: Traverse F}
+    `{Dist_F: ApplicativeDist F} :=
+  compat_dist_traverse:
+    Dist_F = @DerivedOperations.Dist_Traverse F Traverse_F.
+
+#[export] Instance compat_dist_traverse_self
+    (F: Type -> Type)
+    `{Traverse_F: Traverse F}:
+  Compat_Dist_Traverse F (Dist_F := DerivedOperations.Dist_Traverse F).
+Proof.
+  reflexivity.
+Qed.
+
+
+Lemma dist_to_traverse {F}
+    `{Traverse_F: Traverse F}
+    `{Map_F: Map F}
+    `{Dist_F: ApplicativeDist F}
+    `{Compat: ! Compat_Dist_Traverse F}:
+  forall {G} `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G} (A: Type) (t: F (G A)),
+    @dist F Dist_F G Map_G Pure_G Mult_G A = traverse (G := G) id.
+Proof.
+  now rewrite compat_dist_traverse.
+Qed.
+
 (** ** Derived Instances *)
 (**********************************************************************)
 Module DerivedInstances.

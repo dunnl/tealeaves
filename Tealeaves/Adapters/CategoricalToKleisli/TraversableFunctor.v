@@ -38,6 +38,37 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
+(** ** Compatibility Classes *)
+(**********************************************************************)
+Class Compat_Traverse_Categorical
+    (F: Type -> Type)
+    `{Traverse_F: Traverse F}
+    `{Map_F: Map F}
+    `{Dist_F: ApplicativeDist F} :=
+  compat_traverse_categorical:
+    Traverse_F = @DerivedOperations.Traverse_Categorical F Map_F Dist_F.
+
+#[export] Instance compat_traverse_categorical_self
+    (F: Type -> Type)
+    `{Map_F: Map F}
+    `{Dist_F: ApplicativeDist F}:
+  Compat_Traverse_Categorical F (Traverse_F := DerivedOperations.Traverse_Categorical F).
+Proof.
+  reflexivity.
+Qed.
+
+
+Lemma traverse_to_categorical {F}
+    `{Traverse_F: Traverse F}
+    `{Map_F: Map F}
+    `{Dist_F: ApplicativeDist F}
+    `{Compat: ! Compat_Traverse_Categorical F}:
+  forall {G} `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G} (A B: Type) (t: F A) (f: A -> G B),
+    @traverse F Traverse_F G Map_G Pure_G Mult_G A B f =dist F G ∘ map f.
+Proof.
+  now rewrite compat_traverse_categorical.
+Qed.
+
 (** ** Derived Laws *)
 (**********************************************************************)
 Module DerivedInstances.

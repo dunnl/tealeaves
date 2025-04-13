@@ -21,6 +21,26 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
+(** ** Compatibility Classes *)
+(**********************************************************************)
+Class Compat_Decorate_Mapd
+    (E: Type)
+    (F: Type -> Type)
+    `{Decorate_EF: Decorate E F}
+    `{Mapd_F: Mapd E F} :=
+  compat_dec_kleisli:
+    Decorate_EF = @DerivedOperations.Decorate_Mapd E F Mapd_F.
+
+Lemma dec_to_mapd {E F}
+    `{Decorate_EF: Decorate E F}
+    `{Mapd_F: Mapd E F}
+    `{Compat: Compat_Decorate_Mapd E F}:
+  forall (A: Type) (t: F A),
+    dec F t = mapd id t.
+Proof.
+  now rewrite compat_dec_kleisli.
+Qed.
+
 (** ** Derived Decorated Functor Laws *)
 (**********************************************************************)
 Module DerivedInstances.

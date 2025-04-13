@@ -25,6 +25,8 @@ Module DerivedOperations.
 
 End DerivedOperations.
 
+(** ** Compatibility Classes *)
+(**********************************************************************)
 Class Compat_Mapd_Categorical
     (E: Type)
     (F: Type -> Type)
@@ -45,6 +47,8 @@ Proof.
   now rewrite compat_mapd_categorical.
 Qed.
 
+(** ** Interaction of <<dec>> with <<mapd>> *)
+(**********************************************************************)
 Section decorate_after_mapd_reasoning.
 
   Context
