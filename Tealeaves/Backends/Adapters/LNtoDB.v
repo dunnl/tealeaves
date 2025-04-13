@@ -20,7 +20,7 @@ Imports and setup
 Since we are using the Kleisli typeclass hierarchy, we import modules
 under the namespaces ``Classes.Kleisli`` and ``Theory.Kleisli.``
 |*)
-From Tealeaves Require Import
+From Tealeaves Require Export
   Backends.LN
   Backends.DB.DB
   Backends.Adapters.Key
@@ -66,7 +66,6 @@ Proof.
   - split; intro contra.
     + assert (Nat.ltb n d = false).
       { now destruct (Nat.ltb n d). }
-      Search Nat.ltb false.
       apply PeanoNat.Nat.ltb_ge in H.
       right. exists n. auto.
     + destruct contra as [[x [contra rest]] | [n' [Heq contra]]].
@@ -129,7 +128,7 @@ Qed.
 Global operations
 ============================
 |*)
-Definition toDB_from_key
+Definition toDB
   `{Mapdt_inst: Mapdt nat T} (k: key): T LN -> option (T nat) :=
   mapdt (G := option) (toDB_loc k).
 
@@ -137,14 +136,14 @@ Definition toLNkey
   `{Traverse_inst: Traverse T} (t: T LN): key :=
   toLNkey_list (tolist t).
 
-Definition toDB
+Definition toDB_default_key
   `{Traverse_inst: Traverse T}
   `{Mapdt_inst: Mapdt nat T} (t: T LN): option (T nat) :=
-  toDB_from_key (toLNkey t) t.
+  toDB (toLNkey t) t.
 
 (*|
 =================================
-Properties of <<toDB_from_key>>
+Properties of <<toDB>>
 =================================
 |*)
 Section theory.
@@ -190,12 +189,12 @@ Section theory.
                         (unit := Monoid_unit_zero)
                         (op := Monoid_op_plus)}.
 
-  Lemma toDB_from_key_None_iff: forall k,
-    forall (t: U LN), toDB_from_key k t = None <-> (exists (a: atom), a ∈ free t /\ ~ a ∈ k) \/
+  Lemma toDB_None_iff: forall k,
+    forall (t: U LN), toDB k t = None <-> (exists (a: atom), a ∈ free t /\ ~ a ∈ k) \/
                                               (exists (depth n: nat), (depth, Bd n) ∈d t /\ n >= depth).
   Proof.
     intros.
-    unfold toDB_from_key.
+    unfold toDB.
     rewrite mapdt_option_None_spec.
     setoid_rewrite in_free_iff.
     setoid_rewrite toDB_loc_None_iff.

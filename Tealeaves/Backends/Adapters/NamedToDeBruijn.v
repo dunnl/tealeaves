@@ -47,19 +47,19 @@ Section with_DTM.
     - exact (map (fun n => length l + n) (key_lookup_name k x)).
   Defined.
 
-  Definition toDB_from_key_loc (k: key):
+  Definition toDB_loc (k: key):
     list name * name -> option nat.
   Proof.
     intros [ctx x].
     exact (binding_to_ix k x (get_binding ctx x)).
   Defined.
 
-  Definition toDB_from_key (k: key):
+  Definition toDB (k: key):
     T name name -> option (T unit nat).
   Proof.
     apply mapdtp.
     - exact (const (Some tt)).
-    - apply (toDB_from_key_loc k).
+    - apply (toDB_loc k).
   Defined.
 
   Import List.ListNotations.
@@ -109,7 +109,7 @@ Section with_DTM.
   Proof.
     intro t.
     exact (map (F := option) (toNominal_from_key k)
-             (toDB_from_key k t)).
+             (toDB k t)).
   Defined.
 
   Lemma roundtrip_Named_spec: forall (k: key) (t: T name name),
@@ -120,12 +120,12 @@ Section with_DTM.
              (toBinder_from_key_loc k) (const (Some tt)))
           (kc_dtfp (T := T) (G1 := option) (G2 := option)
              (toVariable_from_key_loc k) (const (Some tt))
-             (toDB_from_key_loc k)) t.
+             (toDB_loc k)) t.
   Proof.
     intros.
     unfold roundtrip_Named.
     unfold toNominal_from_key.
-    unfold toDB_from_key.
+    unfold toDB.
     compose near t on left.
     rewrite kdtfp_mapdtp2.
     reflexivity.
@@ -167,7 +167,7 @@ Section with_DTM.
               (runBatch2
                  (option ∘ option)
                  (kc3_ci (W := Z) (toBinder_from_key_loc k) (const (Some tt)))
-                 (kc_dtfp (T := T) (toVariable_from_key_loc k) (const (Some tt)) (toDB_from_key_loc k))) b0 =
+                 (kc_dtfp (T := T) (toVariable_from_key_loc k) (const (Some tt)) (toDB_loc k))) b0 =
                 Some (Some u))).
     - intros.
       exists c. reflexivity.
@@ -230,7 +230,7 @@ Section with_DTM.
 
 
     unfold toNominal_from_key.
-    unfold toDB_from_key.
+    unfold toDB.
     compose near t on left.
     Search mapdtp.
     rewrite kdtfp_mapdtp2.
@@ -242,7 +242,7 @@ Section with_DTM.
     Timeout 1 Check
     Set Printing Implicit.
     Check mapdtp (kc3_ci (toBinder_from_key_loc k) (const (Some tt)))
-    (kc_dtfp (toVariable_from_key_loc k) (const (Some tt)) (toDB_from_key_loc k))
+    (kc_dtfp (toVariable_from_key_loc k) (const (Some tt)) (toDB_loc k))
     t.
     Set Printing Implicit.
     admit.

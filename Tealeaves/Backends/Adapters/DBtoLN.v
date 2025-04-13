@@ -20,7 +20,7 @@ Imports and setup
 Since we are using the Kleisli typeclass hierarchy, we import modules
 under the namespaces ``Classes.Kleisli`` and ``Theory.Kleisli.``
 |*)
-From Tealeaves Require Import
+From Tealeaves Require Export
   Backends.LN
   Backends.DB.DB
   Backends.Adapters.Key
@@ -44,7 +44,7 @@ Definition toLN_loc (k: key) '(depth, ix) : option LN :=
   else
     map (F := option) Fr (key_lookup_index k (ix - depth)).
 
-Definition toLN_from_key
+Definition toLN
   `{Mapdt_inst: Mapdt nat T} (k: key): T nat -> option (T LN) :=
   mapdt (G := option) (toLN_loc k).
 
@@ -122,11 +122,11 @@ Section theory.
   Qed.
 
   Lemma toLN_None_iff:
-    forall k (t: U nat), toLN_from_key k t = None <-> ~ cl_at (length k) t.
+    forall k (t: U nat), toLN k t = None <-> ~ cl_at (length k) t.
   Proof.
     intros.
     rewrite cl_at_spec_not.
-    unfold toLN_from_key.
+    unfold toLN.
     rewrite mapdt_option_None_spec.
     setoid_rewrite toLN_loc_None_iff.
     unfold cl_at_loc, bound_within.
