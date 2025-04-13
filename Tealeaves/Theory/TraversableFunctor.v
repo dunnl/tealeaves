@@ -231,7 +231,9 @@ Section shapeliness.
     `{Map T}
     `{ToBatch T}
     `{! Compat_Map_Traverse T}
-    `{! Compat_ToBatch_Traverse T}.
+    `{! Compat_ToBatch_Traverse T}
+    `{! ToSubset T} `{! Functor T}
+    `{! Compat_ToSubset_Traverse T}.
 
   Theorem Traversable_shapeliness: forall A (t1 t2: T A),
       shape t1 = shape t2 /\ tolist t1 = tolist t2 ->
@@ -246,6 +248,63 @@ Section shapeliness.
     specialize (same_shape_toBatch (B := A) t1 t2 hyp1).
     specialize (same_tolist_toBatch (B1 := A) (B2 := A) t1 t2 hyp2).
     intros. apply Batch_shapeliness; assumption.
+  Qed.
+
+
+  Lemma map_tolist_equal_iff: forall `(f1: A -> B) `(f2: A -> B) (t: T A),
+      map f1 (tolist t) = map f2 (tolist t) <->
+        (forall a: A, a ∈ t -> f1 a = f2 a).
+  Proof.
+    intros.
+    setoid_rewrite in_iff_in_tolist.
+    induction (tolist t).
+    - cbn. tauto.
+    - cbn. split.
+      + introv Hyp.
+        inversion Hyp.
+        intros a' [Case1 | Case2].
+        * subst. assumption.
+        * apply IHl.
+          assumption.
+          assumption.
+      + intros X.
+        assert (cut: f1 a = f2 a).
+        { apply X. now left. }
+        { rewrite cut.
+          fequal. apply IHl.
+          firstorder. }
+  Qed.
+
+  Lemma map_equal_iff `{! Functor T}: forall `(f1: A -> B) `(f2: A -> B) (t: T A),
+      map f1 t = map f2 t <-> map f1 (tolist t) = map f2 (tolist t).
+  Proof.
+    intros.
+    compose near t on right. split.
+    - introv Hmapeq.
+      rewrite (natural (ϕ := @tolist T _)).
+      rewrite (natural (ϕ := @tolist T _)).
+      unfold compose.
+      rewrite Hmapeq.
+      reflexivity.
+    - introv Hyp.
+      specialize (Traversable_shapeliness _ (map f1 t) (map f2 t)).
+      intros X. apply X. split.
+      + rewrite shape_map.
+        rewrite shape_map.
+        reflexivity.
+      + compose near t.
+        rewrite <- (natural (ϕ := @tolist T _)).
+        rewrite <- (natural (ϕ := @tolist T _)).
+        assumption.
+  Qed.
+
+  Lemma map_respectful_iff `{! Functor T}: forall `(f1: A -> B) `(f2: A -> B) (t: T A),
+        (forall a: A, a ∈ t -> f1 a = f2 a) <-> map f1 t = map f2 t.
+  Proof.
+    intros.
+    rewrite map_equal_iff.
+    rewrite map_tolist_equal_iff.
+    tauto.
   Qed.
 
 End shapeliness.
