@@ -241,9 +241,9 @@ Section constant_applicatives.
 
   Context
     `{Kleisli.TraversableFunctor.TraversableFunctor T}
-    `{Map T}
-    `{! Compat_Map_Traverse T}
     `{Monoid M}.
+
+  Import Kleisli.TraversableFunctor.DerivedOperations.
 
   Lemma traverse_const1:
     forall {A: Type} (B: Type) `(f: A -> M),
@@ -279,11 +279,10 @@ Section traversals_commutative.
 
   Import Coalgebraic.TraversableFunctor.
   Import KleisliToCoalgebraic.TraversableFunctor.
+  Import KleisliToCoalgebraic.TraversableFunctor.DerivedOperations.
 
   Lemma traverse_commutative:
     forall `{Kleisli.TraversableFunctor.TraversableFunctor T}
-      `{ToBatch T}
-      `{! Compat_ToBatch_Traverse T}
       `{ApplicativeCommutative G}
       (A B: Type) (f: A -> G B),
       forwards ∘ traverse (T := T)
@@ -365,125 +364,128 @@ Section foldMap.
 
   (** ** As a Special Case of <<traverse>> *)
   (********************************************************************)
-  Lemma foldMap_to_traverse1
-    `{Traverse T}
-    `{Monoid M}: forall `(f: A -> M),
-      foldMap (T := T) f =
-        traverse (G := const M) (B := False) f.
-  Proof.
-    reflexivity.
-  Qed.
+  Section to_traverse.
 
-  Lemma foldMap_to_traverse2
-    `{Traverse T}
-    `{! TraversableFunctor T}
-    `{Map T}
-    `{! Compat_Map_Traverse T}
-    `{Monoid M}: forall (fake: Type) `(f: A -> M),
-      foldMap (T := T) f = traverse (G := const M) (B := fake) f.
-  Proof.
-    intros.
-    rewrite foldMap_to_traverse1.
-    rewrite (traverse_const1 fake f).
-    reflexivity.
-  Qed.
+    Context
+      `{Traverse T}
+      `{! TraversableFunctor T}.
 
-  Context
-    `{TraversableFunctor T}
-    `{Map T}
-    `{! Compat_Map_Traverse T}.
+    Lemma foldMap_to_traverse1 `{Monoid M}:
+      forall `(f: A -> M),
+        foldMap (T := T) f =
+          traverse (G := const M) (B := False) f.
+    Proof.
+      reflexivity.
+    Qed.
 
-  (** ** Composition with <<map>> and <<traverse>> *)
-  (********************************************************************)
-  Lemma foldMap_traverse
-    `{Monoid M} (G: Type -> Type) {B: Type} `{Applicative G}:
-    forall `(g: B -> M) `(f: A -> G B),
-      map (A := T B) (B := M) (foldMap g) ∘ traverse f =
-        foldMap (map g ∘ f).
-  Proof.
-    intros.
-    rewrite foldMap_to_traverse1.
-    rewrite (trf_traverse_traverse (G1 := G) (G2 := const M) A B False).
-    rewrite foldMap_to_traverse1.
-    rewrite map_compose_const.
-    rewrite mult_compose_const.
-    reflexivity.
-  Qed.
+    Lemma foldMap_to_traverse2 `{Monoid M}:
+      forall (fake: Type) `(f: A -> M),
+        foldMap (T := T) f = traverse (G := const M) (B := fake) f.
+    Proof.
+      intros.
+      rewrite foldMap_to_traverse1.
+      rewrite (traverse_const1 fake f).
+      reflexivity.
+    Qed.
 
-  Corollary foldMap_map `{Monoid M}: forall `(g: B -> M) `(f: A -> B),
-      foldMap g ∘ map f = foldMap (g ∘ f).
-  Proof.
-    intros.
-    rewrite map_to_traverse.
-    change (foldMap g) with
-      (map (F := fun A => A) (A := T B) (B := M) (foldMap g)).
-    now rewrite (foldMap_traverse (fun X => X)).
-  Qed.
+    (** ** Composition with <<map>> and <<traverse>> *)
+    (******************************************************************)
+    Lemma foldMap_traverse
+      `{Monoid M} (G: Type -> Type) {B: Type} `{Applicative G}:
+      forall `(g: B -> M) `(f: A -> G B),
+        map (A := T B) (B := M) (foldMap g) ∘ traverse f =
+          foldMap (map g ∘ f).
+    Proof.
+      intros.
+      rewrite foldMap_to_traverse1.
+      rewrite (trf_traverse_traverse (G1 := G) (G2 := const M) A B False).
+      rewrite foldMap_to_traverse1.
+      rewrite map_compose_const.
+      rewrite mult_compose_const.
+      reflexivity.
+    Qed.
 
-  (** ** Composition with Homomorphisms *)
-  (********************************************************************)
-  Lemma foldMap_morphism (M1 M2: Type)
-    `{morphism: Monoid_Morphism M1 M2 ϕ}:
-    forall `(f: A -> M1), ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
-  Proof.
-    intros.
-    inversion morphism.
-    rewrite foldMap_to_traverse1.
-    change ϕ with (const ϕ (T False)).
-    rewrite (trf_traverse_morphism (T := T)
-               (G1 := const M1) (G2 := const M2) A False).
-    reflexivity.
-  Qed.
+    Corollary foldMap_map `{Map T} `{! Compat_Map_Traverse T}
+      `{Monoid M}: forall `(g: B -> M) `(f: A -> B),
+        foldMap (T := T) g ∘ map f = foldMap (g ∘ f).
+    Proof.
+      intros.
+      rewrite map_to_traverse.
+      change (foldMap g) with
+        (map (F := fun A => A) (A := T B) (B := M) (foldMap g)).
+      now rewrite (foldMap_traverse (fun X => X)).
+    Qed.
+
+    (** ** Composition with Homomorphisms *)
+    (******************************************************************)
+    Lemma foldMap_morphism (M1 M2: Type)
+      `{morphism: Monoid_Morphism M1 M2 ϕ}:
+      forall `(f: A -> M1), ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
+    Proof.
+      intros.
+      inversion morphism.
+      rewrite foldMap_to_traverse1.
+      change ϕ with (const ϕ (T False)).
+      rewrite (trf_traverse_morphism (T := T)
+                 (G1 := const M1) (G2 := const M2) A False).
+      reflexivity.
+    Qed.
+
+  End to_traverse.
 
   (** ** Factorizing through <<runBatch>> *)
   (********************************************************************)
-  Import Coalgebraic.TraversableFunctor.
-  Import KleisliToCoalgebraic.TraversableFunctor.
+  Section runBatch.
 
-  Lemma foldMap_through_runBatch1
+    Import Coalgebraic.TraversableFunctor.
+    Import KleisliToCoalgebraic.TraversableFunctor.
+
+    Context
+      `{Traverse T}
+      `{! Kleisli.TraversableFunctor.TraversableFunctor T}
       `{ToBatch T}
-      `{! Compat_ToBatch_Traverse T}
+      `{! Compat_ToBatch_Traverse T}.
+
+    Lemma foldMap_through_runBatch1
       {A: Type} `{Monoid M}: forall `(f: A -> M),
-      foldMap f = runBatch (G := const M) f (B := False) ∘
-                    toBatch (A := A) (A' := False).
-  Proof.
-    intros.
-    rewrite foldMap_to_traverse1.
-    rewrite traverse_through_runBatch.
-    reflexivity.
-  Qed.
+        foldMap f = runBatch (G := const M) f (B := False) ∘
+                      toBatch (A := A) (A' := False).
+    Proof.
+      intros.
+      rewrite foldMap_to_traverse1.
+      rewrite traverse_through_runBatch.
+      reflexivity.
+    Qed.
 
-  Lemma foldMap_through_runBatch2
-      `{ToBatch T}
-      `{! Compat_ToBatch_Traverse T}
+    Lemma foldMap_through_runBatch2
       `{Monoid M}: forall (A fake: Type) `(f: A -> M),
-      foldMap f = runBatch (G := const M) f (B := fake) ∘
-                    toBatch (A' := fake).
-  Proof.
-    intros.
-    rewrite foldMap_to_traverse1.
-    change (fun _: Type => M) with (const (A := Type) M).
-    rewrite (traverse_const1 fake).
-    rewrite (traverse_through_runBatch (G := const M)).
-    reflexivity.
-  Qed.
+        foldMap f = runBatch (G := const M) f (B := fake) ∘
+                      toBatch (A' := fake).
+    Proof.
+      intros.
+      rewrite foldMap_to_traverse1.
+      change (fun _: Type => M) with (const (A := Type) M).
+      rewrite (traverse_const1 fake).
+      rewrite (traverse_through_runBatch (G := const M)).
+      reflexivity.
+    Qed.
 
-  (** ** Factorizing through <<toBatch>> *)
-  (********************************************************************)
-  Lemma foldMap_through_toBatch
-      `{ToBatch T}
-      `{! Compat_ToBatch_Traverse T}
+    (** ** Factorizing through <<toBatch>> *)
+    (******************************************************************)
+    Lemma foldMap_through_toBatch
       `{Monoid M}: forall (A fake: Type) `(f: A -> M) (t: T A),
-      foldMap f t = foldMap f (toBatch (A' := fake) t).
-  Proof.
-    intros.
-    rewrite (foldMap_through_runBatch2 A fake).
-    rewrite runBatch_via_traverse.
-    unfold_ops @Map_const.
-    unfold compose.
-    rewrite (foldMap_to_traverse2 fake).
-    reflexivity.
-  Qed.
+        foldMap (T := T) f t = foldMap f (toBatch (A' := fake) t).
+    Proof.
+      intros.
+      rewrite (foldMap_through_runBatch2 A fake).
+      rewrite runBatch_via_traverse.
+      unfold_ops @Map_const.
+      unfold compose.
+      rewrite (foldMap_to_traverse2 fake).
+      reflexivity.
+    Qed.
+
+  End runBatch.
 
 End foldMap.
 
@@ -773,7 +775,7 @@ Section elements.
   Lemma tosubset_through_runBatch1
     `{ToBatch T}
     `{! Compat_ToBatch_Traverse T}
-  : forall (A: Type),
+: forall (A: Type),
       tosubset =
         runBatch (G := const (A -> Prop))
           (ret (T := subset) (A := A)) (B := False) ∘
@@ -788,7 +790,7 @@ Section elements.
   Lemma tosubset_through_runBatch2
     `{ToBatch T}
     `{! Compat_ToBatch_Traverse T}
-  : forall (A tag: Type),
+: forall (A tag: Type),
       tosubset =
         runBatch (G := const (A -> Prop))
           (ret (T := subset)) (B := tag) ∘
@@ -1007,7 +1009,7 @@ Section foldMap_commutative_monoid.
     `{! Monoid M}
     {A: Type}
     `{comm: ! CommutativeMonoidOp op}
-  : forall (f: A -> M) (l: list A),
+: forall (f: A -> M) (l: list A),
       foldMap op f l = foldMap op f (List.rev l).
   Proof.
     intros.
