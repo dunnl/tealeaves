@@ -332,6 +332,77 @@ Section decorated_traversable_functor_theory.
         now left.
   Qed.
 
+  Lemma mapd_eq_iff:
+    forall A B (t: T A) (f g: E * A -> B),
+      mapd f t = mapd g t ->
+      mapfst_Batch f (toBatch3 (B := B) t) = mapfst_Batch g (toBatch3 t).
+  Proof.
+    intros.
+    assert (cut: mapfst_Batch (cobind f) (toBatch3 (B := B) t) = mapfst_Batch (cobind g) (toBatch3 t)).
+    - compose near t.
+      rewrite <- toBatch3_mapd.
+      rewrite <- toBatch3_mapd.
+      unfold compose. rewrite H0.
+      reflexivity.
+    - induction (toBatch3 t).
+      + reflexivity.
+      + cbn. fequal.
+        { apply IHb.
+          assumption.
+          inversion cut.
+          eauto. }
+        { inversion cut.
+          destruct a as [e a].
+          cbn in H3.
+          inversion H3; auto.
+        }
+  Qed.
+
+  Lemma mapd_respectful_iff
+    `{! ToSubset T} `{! Compat_ToSubset_Traverse T}:
+    forall A B (t: T A) (f g: E * A -> B),
+      (forall (e: E) (a: A), (e, a) ∈d t -> f (e, a) = g (e, a))
+      <-> mapd f t = mapd g t.
+  Proof.
+    split.
+    - apply mapd_respectful.
+    - introv Heq Hf.
+      apply mapd_eq_iff in Heq.
+      rewrite element_ctx_of_to_foldMapd in Hf.
+      rewrite (foldMapd_through_runBatch2 A B) in Hf.
+      unfold compose in *.
+      pose (Batch_ind (E * A) B
+                (fun (C: Type) (b: Batch (E * A) B C) =>
+                   mapfst_Batch f b = mapfst_Batch g b ->
+                   runBatch
+                     (H := Map_const)
+                     (H0 := (@Mult_const Prop Monoid_op_or))
+                     (H1 := (@Pure_const Prop Monoid_unit_false))
+                     (C := C) (G := const Prop) {{(e, a)}} b
+                   -> f (e, a) = g (e, a))).
+      eapply e0.
+      + introv X Y.
+        inversion Y.
+      + intros C b Hb [e' a'].
+        rewrite mapfst_Batch_rw2.
+        rewrite mapfst_Batch_rw2.
+        rewrite runBatch_rw2.
+        unfold ap.
+        unfold_ops @Map_const.
+        unfold_ops @Mult_const.
+        unfold transparent tcs.
+        intros X [Case1 | Case2].
+        { apply Hb; inversion X; auto. }
+        { inversion X.
+          inversion Case2; subst.
+          assumption. }
+        Unshelve.
+        exact (T B).
+        exact (toBatch3 t).
+      + assumption.
+      + assumption.
+  Qed.
+
   Import Kleisli.DecoratedTraversableFunctor.DerivedInstances.
 
   #[export] Instance
