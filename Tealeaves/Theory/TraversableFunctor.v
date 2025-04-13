@@ -721,6 +721,38 @@ Section deconstruction.
       assumption.
     Qed.
 
+    (** ** Lemmas regarding <<trav_make>> *)
+    (****************************************************************)
+    Section trav_make_lemmas.
+
+      Context
+        {A B: Type}.
+
+      Lemma trav_make_sim1:
+        forall (t: T A) `{v1 ~~ v2},
+          trav_make (B := B) t v1 = trav_make t v2.
+      Proof.
+        intros.
+        unfold trav_make.
+        apply Batch_make_sim1.
+        vector_sim.
+      Qed.
+
+      Lemma trav_make_sim2:
+        forall `(t1: T A) (t2: T A)
+          `(v1: Vector (plength t1) B)
+          `(v2: Vector (plength t2) B),
+          t1 = t2 ->
+          Vector_sim v1 v2 ->
+          trav_make t1 v1 = trav_make t2 v2.
+      Proof.
+        intros.
+        subst.
+        now apply trav_make_sim1.
+      Qed.
+
+    End trav_make_lemmas.
+
   End lens_laws.
 
   (** ** Representation theorems *)
