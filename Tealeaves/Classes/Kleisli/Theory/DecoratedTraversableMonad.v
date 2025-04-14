@@ -382,30 +382,33 @@ Section composition.
 
   (** ** Properties of <<∈d>> *)
   (********************************************************************)
-  Lemma element_ctx_of_ret: forall {A: Type} (w: W) (a1 a2: A),
-      (w, a1) ∈d ret (T := T) a2 <-> w = Ƶ /\ a1 = a2.
-  Proof.
-    intros.
-    unfold element_ctx_of.
-    rewrite toctxset_ret.
-    unfold subset_one.
-    rewrite pair_equal_spec.
-    easy.
-  Qed.
+  Section properties_element_ctx_of.
 
-  Corollary element_ctx_of_to_binddt: forall (A: Type) (t: U A) (w: W) (a: A),
-      (w, a) ∈d t = binddt (G := const Prop)
-                      (Pure_G := @Pure_const Prop Monoid_unit_false)
-                      (Mult_G := @Mult_const Prop Monoid_op_or)
-                      (B := False) (eq (w, a)) t.
-  Proof.
-    intros.
-    rewrite element_ctx_of_to_foldMapd.
-    rewrite foldMapd_to_mapdt1.
-    rewrite mapdt_to_binddt.
-    reflexivity.
-  Qed.
+    Lemma element_ctx_of_ret: forall {A: Type} (w: W) (a1 a2: A),
+        (w, a1) ∈d ret (T := T) a2 <-> w = Ƶ /\ a1 = a2.
+    Proof.
+      intros.
+      unfold element_ctx_of.
+      rewrite toctxset_ret.
+      unfold subset_one.
+      rewrite pair_equal_spec.
+      easy.
+    Qed.
 
+    Corollary element_ctx_of_to_binddt: forall (A: Type) (t: U A) (w: W) (a: A),
+        (w, a) ∈d t = binddt (G := const Prop)
+                        (Pure_G := @Pure_const Prop Monoid_unit_false)
+                        (Mult_G := @Mult_const Prop Monoid_op_or)
+                        (B := False) (eq (w, a)) t.
+    Proof.
+      intros.
+      rewrite element_ctx_of_to_foldMapd.
+      rewrite foldMapd_to_mapdt1.
+      rewrite mapdt_to_binddt.
+      reflexivity.
+    Qed.
+
+  End properties_element_ctx_of.
   (** ** Properties of <<∈>> *)
   (********************************************************************)
   Import TraversableMonad.DerivedInstances.

@@ -44,11 +44,11 @@ Definition toDB_loc (k: key) '(depth, l) : option nat :=
   | Fr x => map (fun ix => ix + depth) (key_lookup_atom k x)
   end.
 
-Fixpoint toLNkey_list (l: list LN): key :=
+Fixpoint LNtokey_list (l: list LN): key :=
   match l with
   | [] => nil
-  | (Bd n :: rest) => toLNkey_list rest
-  | (Fr x :: rest) => key_insert_atom (toLNkey_list rest) x
+  | (Bd n :: rest) => LNtokey_list rest
+  | (Fr x :: rest) => key_insert_atom (LNtokey_list rest) x
   end.
 
 Lemma toDB_loc_None_iff:
@@ -102,11 +102,11 @@ Qed.
 
 (*|
 ============================
-Properties of toLNkey
+Properties of LNtokey
 ============================
 |*)
-Lemma toLNkey_unique: forall l,
-    unique (toLNkey_list l).
+Lemma LNtokey_unique: forall l,
+    unique (LNtokey_list l).
 Proof.
   intros l. induction l as [|[x|n] rest].
   - exact I.
@@ -114,13 +114,13 @@ Proof.
   - cbn. assumption.
 Qed.
 
-Lemma toLNkey_bijection: forall l ix a,
-    key_lookup_index (toLNkey_list l) ix = Some a <->
-      key_lookup_atom (toLNkey_list l) a = Some ix.
+Lemma LNtokey_bijection: forall l ix a,
+    key_lookup_index (LNtokey_list l) ix = Some a <->
+      key_lookup_atom (LNtokey_list l) a = Some ix.
 Proof.
   intros.
   apply key_bijection.
-  apply toLNkey_unique.
+  apply LNtokey_unique.
 Qed.
 
 (*|
@@ -132,14 +132,14 @@ Definition toDB
   `{Mapdt_inst: Mapdt nat T} (k: key): T LN -> option (T nat) :=
   mapdt (G := option) (toDB_loc k).
 
-Definition toLNkey
+Definition LNtokey
   `{Traverse_inst: Traverse T} (t: T LN): key :=
-  toLNkey_list (tolist t).
+  LNtokey_list (tolist t).
 
 Definition toDB_default_key
   `{Traverse_inst: Traverse T}
   `{Mapdt_inst: Mapdt nat T} (t: T LN): option (T nat) :=
-  toDB (toLNkey t) t.
+  toDB (LNtokey t) t.
 
 (*|
 =================================

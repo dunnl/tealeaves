@@ -344,6 +344,11 @@ Tealeaves/Examples/Lambda/Confluence.v
 Tealeaves/Examples/Lambda/MapWithPolicyDemo.v
 
 ##########################################################
+# EX: PAPER CODE EXAMPLES
+##########################################################
+Tealeaves/Examples/JAR/TranslateDemo.v
+
+##########################################################
 # EX: SIMPLY TYPED LAMBDA CALCULUS                       #
 ##########################################################
 Tealeaves/Examples/STLC/Syntax.v
