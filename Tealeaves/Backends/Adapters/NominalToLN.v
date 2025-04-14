@@ -530,10 +530,10 @@ Section with_DTM.
     unfold delete_binders.
     unfold bmap.
     unfold element_of.
-    rewrite tosubset_to_foldMap.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_to_traverse1.
-    rewrite foldMap_to_traverse1.
+    rewrite tosubset_to_mapReduce.
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_to_traverse1.
+    rewrite mapReduce_to_traverse1.
     unfold_ops @Traverse_Categorical.
     unfold compose.
     compose near t.
@@ -545,11 +545,11 @@ Section with_DTM.
 
   (** ** Relating Free Variables During Translation *)
   (********************************************************************)
-  Lemma normalize_foldMap {M} `{Monoid M} `(f: list name * name -> M): forall (t: T name name),
-      foldMapd f t = mapdtp (A2 := False) (G := const M) (T := T) (pure (F := const M) ∘ (const tt)) f t.
+  Lemma normalize_mapReduce {M} `{Monoid M} `(f: list name * name -> M): forall (t: T name name),
+      mapdReduce f t = mapdtp (A2 := False) (G := const M) (T := T) (pure (F := const M) ∘ (const tt)) f t.
   Proof.
     intros.
-    rewrite foldMapd_to_mapdt1.
+    rewrite mapdReduce_to_mapdt1.
     unfold mapdt.
     unfold Mapdt_Categorical.
     unfold_ops @Dist2_1.
@@ -577,7 +577,7 @@ Section with_DTM.
     unfold FV.
     unfold term_nominal_to_ln.
     unfold free.
-    rewrite (foldMap_to_traverse1).
+    rewrite (mapReduce_to_traverse1).
     unfold_ops @Traverse_Categorical.
     unfold_ops @Dist2_1.
     unfold_ops @Map2_1.
@@ -589,7 +589,7 @@ Section with_DTM.
     unfold compose.
     compose near (decp t).
     rewrite fun2_map_map.
-    rewrite normalize_foldMap.
+    rewrite normalize_mapReduce.
     unfold mapdtp.
     unfold DerivedOperations.Mapdtp_Categorical.
     unfold compose.

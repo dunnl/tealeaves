@@ -371,31 +371,31 @@ Section rw_kmapdt.
 
 End rw_kmapdt.
 
-Ltac simplify_foldMapkd_pre_refold_hook ix :=
+Ltac simplify_mapReducekd_pre_refold_hook ix :=
   idtac.
 
-Ltac simplify_foldMapkd_post_refold_hook M :=
+Ltac simplify_mapReducekd_post_refold_hook M :=
   repeat simplify_applicative_const;
   repeat simplify_monoid_units;
   change (@const Type Type M ?anything) with M.
 
-Ltac simplify_foldMapkd :=
+Ltac simplify_mapReducekd :=
   match goal with
-  | |- context[foldMapkd (W := ?W) (T := ?T) (ix := ?ix)
+  | |- context[mapReducekd (W := ?W) (T := ?T) (ix := ?ix)
                         (M := ?M)
                 ?U ?k ?f ?t] =>
-  rewrite ?(foldMapkd_to_kmapdt U (M := M));
+  rewrite ?(mapReducekd_to_kmapdt U (M := M));
   simplify_kmapdt;
-  simplify_foldMapkd_pre_refold_hook ix;
-  rewrite <- ?(foldMapkd_to_kmapdt U (M := M));
-  rewrite <- ?(foldMapkd_to_kmapdt _ (M := M));
+  simplify_mapReducekd_pre_refold_hook ix;
+  rewrite <- ?(mapReducekd_to_kmapdt U (M := M));
+  rewrite <- ?(mapReducekd_to_kmapdt _ (M := M));
   (* ^ This is used because "_" might not match the U *)
-  simplify_foldMapkd_post_refold_hook M
+  simplify_mapReducekd_post_refold_hook M
   end.
 
-(** ** <<foldMapkd>> *)
+(** ** <<mapReducekd>> *)
 (******************************************************************************)
-Section rw_foldMapkd.
+Section rw_mapReducekd.
 
   Context
     (A : Type)
@@ -403,87 +403,87 @@ Section rw_foldMapkd.
       (k : K2)
       (f : list K2 * A -> M).
 
-  Ltac tactic_being_tested ::= simplify_foldMapkd.
+  Ltac tactic_being_tested ::= simplify_mapReducekd.
 
-  Lemma foldMapkd_type_rw1 : forall c,
-      foldMapkd typ k f (ty_c c) = Ƶ.
+  Lemma mapReducekd_type_rw1 : forall c,
+      mapReducekd typ k f (ty_c c) = Ƶ.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapkd_type_rw2_neq : forall (a : A),
+  Lemma mapReducekd_type_rw2_neq : forall (a : A),
       k <> ktyp ->
-      foldMapkd typ k f (ty_v a) = pure (ty_v a).
+      mapReducekd typ k f (ty_v a) = pure (ty_v a).
   Proof.
     intros.
-    simplify_foldMapkd.
+    simplify_mapReducekd.
   Abort.
 
   (*
-    Lemma foldMapkd_type_neq_rw2_eq : forall (a : A) (Heq: k = ktyp),
-        foldMapkd typ k f (ty_v a) = rew Heq in (f ([], a)).
+    Lemma mapReducekd_type_neq_rw2_eq : forall (a : A) (Heq: k = ktyp),
+        mapReducekd typ k f (ty_v a) = rew Heq in (f ([], a)).
     Proof.
       intros.
-      simplify_foldMapkd.
+      simplify_mapReducekd.
       subst.
       rewrite btgd_eq. auto.
     Qed.
    *)
 
-  Lemma foldMapkd_type_rw3 : forall (t1 t2 : typ A),
-      foldMapkd typ k f (ty_ar t1 t2) =
-        foldMapkd typ k f t1 ● foldMapkd typ k f t2.
+  Lemma mapReducekd_type_rw3 : forall (t1 t2 : typ A),
+      mapReducekd typ k f (ty_ar t1 t2) =
+        mapReducekd typ k f t1 ● mapReducekd typ k f t2.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapkd_type_rw4 : forall (body : typ A),
-      foldMapkd typ k f (ty_univ body) =
-        foldMapkd typ k (f ⦿ [ktyp]) body.
+  Lemma mapReducekd_type_rw4 : forall (body : typ A),
+      mapReducekd typ k f (ty_univ body) =
+        mapReducekd typ k (f ⦿ [ktyp]) body.
   Proof.
     test_simplification.
   Qed.
 
   (*
-  Lemma foldMapkd_term_rw1_neq : forall (a : A),
+  Lemma mapReducekd_term_rw1_neq : forall (a : A),
       k <> ktrm ->
-      foldMapkd term k f (tm_var a) = tm_var a.
+      mapReducekd term k f (tm_var a) = tm_var a.
   Proof.
     intros.
-    simplify_foldMapkd.
+    simplify_mapReducekd.
     rewrite btgd_neq; auto.
   Qed.
   *)
 
-  Lemma foldMapkd_term_rw2 : forall (τ : typ A) (t : term A),
-      foldMapkd term k f (tm_abs τ t) =
-        foldMapkd typ k f τ ● foldMapkd term k (f ⦿ [ktrm]) t.
+  Lemma mapReducekd_term_rw2 : forall (τ : typ A) (t : term A),
+      mapReducekd term k f (tm_abs τ t) =
+        mapReducekd typ k f τ ● mapReducekd term k (f ⦿ [ktrm]) t.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapkd_term_rw3 : forall (t1 t2 : term A),
-      foldMapkd term k f (tm_app t1 t2) =
-        foldMapkd term k f t1 ● foldMapkd term k f t2.
+  Lemma mapReducekd_term_rw3 : forall (t1 t2 : term A),
+      mapReducekd term k f (tm_app t1 t2) =
+        mapReducekd term k f t1 ● mapReducekd term k f t2.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapkd_term_rw4 : forall (t : term A),
-      foldMapkd term k f (tm_tab t) =
-        foldMapkd term k (f ⦿ [ktyp]) t.
+  Lemma mapReducekd_term_rw4 : forall (t : term A),
+      mapReducekd term k f (tm_tab t) =
+        mapReducekd term k (f ⦿ [ktyp]) t.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapkd_term_rw5 : forall (t: term A) (τ : typ A),
-      foldMapkd term k f (tm_tap t τ) =
-        foldMapkd term k f t ● foldMapkd typ k f τ.
+  Lemma mapReducekd_term_rw5 : forall (t: term A) (τ : typ A),
+      mapReducekd term k f (tm_tap t τ) =
+        mapReducekd term k f t ● mapReducekd typ k f τ.
   Proof.
     test_simplification.
   Qed.
 
-End rw_foldMapkd.
+End rw_mapReducekd.
 
 Ltac simplify_Forallkd_pre_refold_hook :=
   idtac.
@@ -496,10 +496,10 @@ Ltac simplify_Forallkd :=
   match goal with
   | |- context[Forallkd (W := ?W) (T := ?T) (ix := ?ix)
                 ?U ?k ?f ?t] =>
-  rewrite ?Forallkd_to_foldMapkd;
-  simplify_foldMapkd;
+  rewrite ?Forallkd_to_mapReducekd;
+  simplify_mapReducekd;
   simplify_Forallkd_pre_refold_hook;
-  rewrite <- ?Forallkd_to_foldMapkd;
+  rewrite <- ?Forallkd_to_mapReducekd;
   simplify_Forallkd_post_refold_hook
   end.
 
@@ -596,27 +596,27 @@ Section rw_Forallkd.
 End rw_Forallkd.
 
 
-Ltac simplify_foldMapk_pre_refold_hook ix :=
+Ltac simplify_mapReducek_pre_refold_hook ix :=
   repeat push_preincr_into_fn.
 
-Ltac simplify_foldMapk_post_refold_hook M :=
+Ltac simplify_mapReducek_post_refold_hook M :=
   idtac.
 
-Ltac simplify_foldMapk :=
+Ltac simplify_mapReducek :=
   match goal with
-  | |- context[foldMapk (W := ?W) (T := ?T) (ix := ?ix)
+  | |- context[mapReducek (W := ?W) (T := ?T) (ix := ?ix)
                         (M := ?M)
                 ?U ?k ?f ?t] =>
-  rewrite ?(foldMapk_to_foldMapkd (ix := ix) U (M := M));
-  simplify_foldMapkd;
-  simplify_foldMapk_pre_refold_hook ix;
-  rewrite <- ?(foldMapk_to_foldMapkd _ (M := M));
-  simplify_foldMapk_post_refold_hook M
+  rewrite ?(mapReducek_to_mapReducekd (ix := ix) U (M := M));
+  simplify_mapReducekd;
+  simplify_mapReducek_pre_refold_hook ix;
+  rewrite <- ?(mapReducek_to_mapReducekd _ (M := M));
+  simplify_mapReducek_post_refold_hook M
   end.
 
-(** ** <<foldMapk>> *)
+(** ** <<mapReducek>> *)
 (******************************************************************************)
-Section rw_foldMapk.
+Section rw_mapReducek.
 
   Context
     (A : Type)
@@ -624,62 +624,62 @@ Section rw_foldMapk.
       (k : K2)
       (f : A -> M).
 
-  Ltac tactic_being_tested ::= simplify_foldMapk.
+  Ltac tactic_being_tested ::= simplify_mapReducek.
 
-  Lemma foldMapk_type_rw1 : forall c,
-      foldMapk typ k f (ty_c c) = Ƶ.
+  Lemma mapReducek_type_rw1 : forall c,
+      mapReducek typ k f (ty_c c) = Ƶ.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapk_type_rw2_neq : forall (a : A),
+  Lemma mapReducek_type_rw2_neq : forall (a : A),
       k <> ktyp ->
-      foldMapk typ k f (ty_v a) = Ƶ.
+      mapReducek typ k f (ty_v a) = Ƶ.
   Proof.
     intros.
-    simplify_foldMapk.
+    simplify_mapReducek.
   Abort.
 
-  Lemma foldMapk_type_rw3 : forall (t1 t2 : typ A),
-      foldMapk typ k f (ty_ar t1 t2) =
-        foldMapk typ k f t1 ● foldMapk typ k f t2.
+  Lemma mapReducek_type_rw3 : forall (t1 t2 : typ A),
+      mapReducek typ k f (ty_ar t1 t2) =
+        mapReducek typ k f t1 ● mapReducek typ k f t2.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapk_type_rw4 : forall (body : typ A),
-      foldMapk typ k f (ty_univ body) =
-        foldMapk typ k f body.
+  Lemma mapReducek_type_rw4 : forall (body : typ A),
+      mapReducek typ k f (ty_univ body) =
+        mapReducek typ k f body.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapk_term_rw2 : forall (τ : typ A) (t : term A),
-      foldMapk term k f (tm_abs τ t) =
-        foldMapk typ k f τ ● foldMapk term k f t.
+  Lemma mapReducek_term_rw2 : forall (τ : typ A) (t : term A),
+      mapReducek term k f (tm_abs τ t) =
+        mapReducek typ k f τ ● mapReducek term k f t.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapk_term_rw3 : forall (t1 t2 : term A),
-      foldMapk term k f (tm_app t1 t2) =
-        foldMapk term k f t1 ● foldMapk term k f t2.
+  Lemma mapReducek_term_rw3 : forall (t1 t2 : term A),
+      mapReducek term k f (tm_app t1 t2) =
+        mapReducek term k f t1 ● mapReducek term k f t2.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapk_term_rw4 : forall (t : term A),
-      foldMapk term k f (tm_tab t) =
-        foldMapk term k f t.
+  Lemma mapReducek_term_rw4 : forall (t : term A),
+      mapReducek term k f (tm_tab t) =
+        mapReducek term k f t.
   Proof.
     test_simplification.
   Qed.
 
-  Lemma foldMapk_term_rw5 : forall (t: term A) (τ : typ A),
-      foldMapk term k f (tm_tap t τ) =
-        foldMapk term k f t ● foldMapk typ k f τ.
+  Lemma mapReducek_term_rw5 : forall (t: term A) (τ : typ A),
+      mapReducek term k f (tm_tap t τ) =
+        mapReducek term k f t ● mapReducek typ k f τ.
   Proof.
     test_simplification.
   Qed.
 
-End rw_foldMapk.
+End rw_mapReducek.

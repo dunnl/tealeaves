@@ -7,31 +7,31 @@ Import STLC.Syntax.TermNotations.
 (** * Simplification tests for derived operations *)
 (******************************************************************************)
 
-(** ** Rewriting lemmas for <<foldMapd>> *)
+(** ** Rewriting lemmas for <<mapdReduce>> *)
 (******************************************************************************)
-Section term_foldMapd_rewrite.
+Section term_mapdReduce_rewrite.
 
   Context {A M : Type} (f : nat * A -> M) `{Monoid M}.
 
-  Lemma term_foldMapd1 : forall (a : A),
-      foldMapd f (tvar a) = f (Ƶ, a).
+  Lemma term_mapdReduce1 : forall (a : A),
+      mapdReduce f (tvar a) = f (Ƶ, a).
   Proof.
-    intros. simplify_foldMapd. reflexivity.
+    intros. simplify_mapdReduce. reflexivity.
   Qed.
 
-  Lemma term_foldMapd2 : forall X (t : Lam A),
-      foldMapd f (λ X t) = foldMapd (f ⦿ 1) t.
+  Lemma term_mapdReduce2 : forall X (t : Lam A),
+      mapdReduce f (λ X t) = mapdReduce (f ⦿ 1) t.
   Proof.
-    intros. simplify_foldMapd. reflexivity.
+    intros. simplify_mapdReduce. reflexivity.
   Qed.
 
-  Lemma term_foldMapd3 : forall (t1 t2 : Lam A),
-      foldMapd f (⟨t1⟩ (t2)) = foldMapd f t1 ● foldMapd f t2.
+  Lemma term_mapdReduce3 : forall (t1 t2 : Lam A),
+      mapdReduce f (⟨t1⟩ (t2)) = mapdReduce f t1 ● mapdReduce f t2.
   Proof.
-    intros. simplify_foldMapd. reflexivity.
+    intros. simplify_mapdReduce. reflexivity.
   Qed.
 
-End term_foldMapd_rewrite.
+End term_mapdReduce_rewrite.
 
 (** ** Rewriting lemmas for <<∈d>> *)
 (******************************************************************************)
@@ -76,37 +76,37 @@ Section term_ind_rewrite.
 
 End term_ind_rewrite.
 
-(** ** Rewriting lemmas for <<foldMap>> *)
+(** ** Rewriting lemmas for <<mapReduce>> *)
 (******************************************************************************)
-Section term_foldMap_rewrite.
+Section term_mapReduce_rewrite.
 
   Context {A M : Type} (f : A -> M) `{Monoid M}.
 
-  Lemma term_foldMap1 : forall (a : A),
-      foldMap f (tvar a) = f a.
+  Lemma term_mapReduce1 : forall (a : A),
+      mapReduce f (tvar a) = f a.
   Proof.
     intros.
     simplify_LN.
     conclude.
   Qed.
 
-  Lemma term_foldMap2 : forall X (t : Lam A),
-      foldMap f (λ X t) = foldMap f t.
+  Lemma term_mapReduce2 : forall X (t : Lam A),
+      mapReduce f (λ X t) = mapReduce f t.
   Proof.
     intros.
     simplify_LN.
     conclude.
   Qed.
 
-  Lemma term_foldMap3 : forall (t1 t2 : Lam A),
-      foldMap f (⟨t1⟩ (t2)) = foldMap f t1 ● foldMap f t2.
+  Lemma term_mapReduce3 : forall (t1 t2 : Lam A),
+      mapReduce f (⟨t1⟩ (t2)) = mapReduce f t1 ● mapReduce f t2.
   Proof.
     intros.
     simplify_LN.
     conclude.
   Qed.
 
-End term_foldMap_rewrite.
+End term_mapReduce_rewrite.
 
 (** ** Rewriting lemmas for <<tolist>>, <<toset>>, <<∈>> *)
 (******************************************************************************)

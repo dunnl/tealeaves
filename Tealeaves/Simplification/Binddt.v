@@ -122,17 +122,17 @@ Module ToBinddt.
     | |- context[toctxset (F := T) ?t] =>
         ltac_trace "toctxset_to_binddt";
         rewrite (toctxset_to_binddt (T := T))
-    (* foldMap *)
-    | |- context[foldMap (T := T) ?t] =>
-        ltac_trace "foldMap_to_binddt";
-        rewrite foldMap_to_traverse1, traverse_to_binddt
-    | |- context[foldMapd (T := T) ?t] =>
-        ltac_trace "foldMap_to_binddt";
-        rewrite (foldMapd_to_mapdt1 (T := T)),
+    (* mapReduce *)
+    | |- context[mapReduce (T := T) ?t] =>
+        ltac_trace "mapReduce_to_binddt";
+        rewrite mapReduce_to_traverse1, traverse_to_binddt
+    | |- context[mapdReduce (T := T) ?t] =>
+        ltac_trace "mapReduce_to_binddt";
+        rewrite (mapdReduce_to_mapdt1 (T := T)),
           (mapdt_to_binddt (T := T))
     (* quantifiers *)
     | |- context[Forall_ctx (T := T)  ?P] =>
-        ltac_trace "Forall_to_foldMapd";
+        ltac_trace "Forall_to_mapdReduce";
         unfold Forall_ctx
     end.
 
@@ -494,58 +494,58 @@ Ltac simplify_traverse :=
       ltac_trace "simplify_traverse_end"
   end.
 
-Ltac simplify_foldMapd_post :=
-  ltac_trace "simplify_foldMapd_post";
+Ltac simplify_mapdReduce_post :=
+  ltac_trace "simplify_mapdReduce_post";
   repeat simplify_applicative_const;
   (* ^ above step creates some ((Ƶ ● m) ● n) *)
   repeat simplify_monoid_units.
 
-Ltac simplify_foldMapd :=
+Ltac simplify_mapdReduce :=
   multimatch goal with
-  | |- context[foldMapd (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] =>
-      rewrite foldMapd_to_mapdt1;
+  | |- context[mapdReduce (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] =>
+      rewrite mapdReduce_to_mapdt1;
       simplify_mapdt;
-      repeat rewrite <- foldMapd_to_mapdt1;
-      simplify_foldMapd_post
+      repeat rewrite <- mapdReduce_to_mapdt1;
+      simplify_mapdReduce_post
   end.
 
-Ltac simplify_foldMapd_post_in H :=
+Ltac simplify_mapdReduce_post_in H :=
   repeat simplify_applicative_const_in H;
   repeat simplify_monoid_units_in H.
 
-Ltac simplify_foldMapd_in :=
+Ltac simplify_mapdReduce_in :=
   multimatch goal with
-  | H: context[foldMapd (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] |- _ =>
-      rewrite foldMapd_to_mapdt1 in H;
+  | H: context[mapdReduce (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] |- _ =>
+      rewrite mapdReduce_to_mapdt1 in H;
       simplify_mapdt_in H;
-      repeat rewrite <- foldMapd_to_mapdt1 in H;
-      simplify_foldMapd_post_in H
+      repeat rewrite <- mapdReduce_to_mapdt1 in H;
+      simplify_mapdReduce_post_in H
   end.
 
-Ltac simplify_foldMap_post :=
-  ltac_trace "simplify_foldMap_post";
+Ltac simplify_mapReduce_post :=
+  ltac_trace "simplify_mapReduce_post";
   repeat simplify_applicative_const;
   repeat simplify_monoid_units;
   repeat change (const ?x ?y) with x.
 
-Ltac simplify_foldMap :=
+Ltac simplify_mapReduce :=
   multimatch goal with
-  | |- context[foldMap (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] =>
-      ltac_trace "simplify_foldMap_start";
-      rewrite foldMap_to_traverse1;
+  | |- context[mapReduce (T := ?T) (M := ?M) (op := ?op) (unit := ?unit)] =>
+      ltac_trace "simplify_mapReduce_start";
+      rewrite mapReduce_to_traverse1;
       simplify_traverse;
-      repeat rewrite <- foldMap_to_traverse1;
-      simplify_foldMap_post;
-      ltac_trace "simplify_foldMap_end"
+      repeat rewrite <- mapReduce_to_traverse1;
+      simplify_mapReduce_post;
+      ltac_trace "simplify_mapReduce_end"
   end.
 
 Ltac simplify_tolist :=
   ltac_trace "simplify_tolist";
   match goal with
   | |- context[tolist (F := ?T) ?t] =>
-      rewrite (tolist_to_foldMap (T := T));
-      simplify_foldMap;
-      repeat rewrite <- (tolist_to_foldMap (T := T));
+      rewrite (tolist_to_mapReduce (T := T));
+      simplify_mapReduce;
+      repeat rewrite <- (tolist_to_mapReduce (T := T));
       simplify_monoid_list
   end.
 
@@ -553,9 +553,9 @@ Ltac simplify_tosubset :=
   ltac_trace "simplify_tosubset";
   match goal with
   | |- context[tosubset (F := ?T) (A := ?A) ?t] =>
-      rewrite (tosubset_to_foldMap (T := T) A);
-      simplify_foldMap;
-      repeat rewrite <- (tosubset_to_foldMap (T := T));
+      rewrite (tosubset_to_mapReduce (T := T) A);
+      simplify_mapReduce;
+      repeat rewrite <- (tosubset_to_mapReduce (T := T));
       repeat simplify_monoid_subset
   end;
   (* This should only be necessary after binddt (ret x)) *)
@@ -568,9 +568,9 @@ Ltac simplify_toctxset :=
   ltac_trace "simplify_toctxset";
   match goal with
   | |- context[toctxset (F := ?T) ?t] =>
-      rewrite (toctxset_to_foldMapd (T := T) t);
-      simplify_foldMapd;
-      repeat rewrite <- (toctxset_to_foldMapd (T := T));
+      rewrite (toctxset_to_mapdReduce (T := T) t);
+      simplify_mapdReduce;
+      repeat rewrite <- (toctxset_to_mapdReduce (T := T));
       repeat simplify_monoid_subset
   end;
   (* This should only be necessary after binddt (ret x)) *)
@@ -583,9 +583,9 @@ Ltac simplify_element_of :=
   ltac_trace "simplify_element_of";
   match goal with
   | |- context[element_of (F := ?T) (A := ?A) ?t] =>
-      rewrite (element_of_to_foldMap (T := T) A t);
-      simplify_foldMap;
-      repeat rewrite <- (element_of_to_foldMap (T := T));
+      rewrite (element_of_to_mapReduce (T := T) A t);
+      simplify_mapReduce;
+      repeat rewrite <- (element_of_to_mapReduce (T := T));
       repeat simplify_monoid_disjunction
   end.
 
@@ -633,10 +633,10 @@ Ltac simplify_element_ctx_of :=
   ltac_trace "simplify_element_ctx_of";
   match goal with
   | |- context[element_ctx_of (T := ?T) (A := ?A) ?p] =>
-      rewrite (element_ctx_of_to_foldMapd (T := T) A p);
-      simplify_foldMapd;
+      rewrite (element_ctx_of_to_mapdReduce (T := T) A p);
+      simplify_mapdReduce;
       try simplify_singleton_ctx_under_binder;
-      repeat rewrite <- (element_ctx_of_to_foldMapd (T := T));
+      repeat rewrite <- (element_ctx_of_to_mapdReduce (T := T));
       repeat simplify_monoid_disjunction
   end;
   (* This should only be necessary after binddt (ret x)) *)
@@ -645,30 +645,30 @@ Ltac simplify_element_ctx_of :=
 
 Ltac simplify_Forall_ctx :=
   ltac_trace "simplify_Forall_ctx";
-  rewrite Forall_ctx_to_foldMapd;
-  simplify_foldMapd;
-  repeat rewrite <- Forall_ctx_to_foldMapd;
+  rewrite Forall_ctx_to_mapdReduce;
+  simplify_mapdReduce;
+  repeat rewrite <- Forall_ctx_to_mapdReduce;
   repeat simplify_monoid_conjunction.
 
 Ltac simplify_Forall_ctx_in H :=
-  rewrite Forall_ctx_to_foldMapd in H;
-  simplify_foldMapd_in H;
-  repeat rewrite <- Forall_ctx_to_foldMapd in H;
+  rewrite Forall_ctx_to_mapdReduce in H;
+  simplify_mapdReduce_in H;
+  repeat rewrite <- Forall_ctx_to_mapdReduce in H;
   repeat simplify_monoid_conjunction_in H.
 
 Ltac simplify_derived_operations :=
   ltac_trace "simplify_derived_operations";
   match goal with
-  | |- context[foldMapd ?f ?t] =>
-      simplify_foldMap
+  | |- context[mapdReduce ?f ?t] =>
+      simplify_mapReduce
   | |- context[Forall_ctx ?P ?t] =>
       simplify_Forall_ctx
   | |- context[toctxset ?t] =>
       simplify_toctxset
   | |- context[element_ctx_of ?x ?t] =>
       simplify_element_ctx_of
-  | |- context[foldMap ?f ?t] =>
-      simplify_foldMap
+  | |- context[mapReduce ?f ?t] =>
+      simplify_mapReduce
         (*
   | |- context[Forall ?P ?t] =>
       simplify_Forall

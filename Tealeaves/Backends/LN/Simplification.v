@@ -88,8 +88,8 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma free_to_foldMap {T} `{Traverse T}: forall (t: T LN),
-    free t = foldMap free_loc t.
+Lemma free_to_mapReduce {T} `{Traverse T}: forall (t: T LN),
+    free t = mapReduce free_loc t.
 Proof.
   reflexivity.
 Qed.
@@ -109,7 +109,7 @@ Ltac simplify_free_post :=
 Ltac simplify_free :=
   ltac_trace "simplify_free";
   unfold free;
-  simplify_foldMap;
+  simplify_mapReduce;
   (* ^^ this exposes ● with lists *)
   simplify_monoid_list;
   (* IF bottomed out *)
@@ -117,7 +117,7 @@ Ltac simplify_free :=
   simplify_free_loc;
   ltac_trace "simplify_free";
   (* ELSE IF refolding *)
-  repeat change (foldMap free_loc ?t) with (free t).
+  repeat change (mapReduce free_loc ?t) with (free t).
 
 Ltac refold_FV :=
   repeat match goal with

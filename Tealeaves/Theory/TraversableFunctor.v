@@ -424,7 +424,7 @@ Section length.
   Proof.
     intros.
     unfold plength.
-    rewrite (foldMap_through_runBatch2 A B).
+    rewrite (mapReduce_through_runBatch2 A B).
     unfold compose.
     induction (toBatch t).
     - reflexivity.
@@ -685,7 +685,7 @@ Section deconstruction.
       intros.
       unfold plength at 1 2.
       do 2 change (fun (x:?X) => 1) with (const (A := X) 1).
-      do 2 rewrite (foldMap_through_runBatch2 _ B).
+      do 2 rewrite (mapReduce_through_runBatch2 _ B).
       unfold compose.
       rewrite (@toBatch_trav_make_to_replace_contents A B B t v).
       rewrite <- (runBatch_const_contents (G := @const Type Type nat)).
@@ -818,14 +818,14 @@ Section deconstruction.
     apply trav_contents_make.
   Qed.
 
-  Lemma foldMap_opposite_traverse {A}:
+  Lemma mapReduce_opposite_traverse {A}:
     forall `{Monoid M} `{TraversableFunctor T'}
       `{ToBatch T'} `{! Compat_ToBatch_Traverse T'} (t: T' A) (f: A -> M),
-      foldMap (op := Monoid_op_Opposite op) f t =
+      mapReduce (op := Monoid_op_Opposite op) f t =
         forwards (traverse (B := False) (T := T') (G := Backwards (const M)) (mkBackwards ∘ f) t).
   Proof.
     intros.
-    rewrite foldMap_to_traverse1.
+    rewrite mapReduce_to_traverse1.
     rewrite traverse_through_runBatch.
     rewrite traverse_through_runBatch.
     unfold compose.
@@ -837,17 +837,17 @@ Section deconstruction.
       reflexivity.
   Qed.
 
-  Corollary foldMap_trav_make:
+  Corollary mapReduce_trav_make:
     forall `{Monoid M} (X A: Type)
       (t: T X) (f: A -> M) (v: Vector (plength t) A),
-      foldMap (T := T) f (trav_make t v) =
-        foldMap (op := Monoid_op_Opposite op) f v.
+      mapReduce (T := T) f (trav_make t v) =
+        mapReduce (op := Monoid_op_Opposite op) f v.
   Proof.
     intros.
-    unfold foldMap.
+    unfold mapReduce.
     rewrite traverse_trav_make.
     unfold_ops @Map_const.
-    setoid_rewrite <- (foldMap_opposite_traverse (T' := Vector (plength t))).
+    setoid_rewrite <- (mapReduce_opposite_traverse (T' := Vector (plength t))).
     reflexivity.
   Qed.
 
@@ -892,7 +892,7 @@ Section deconstruction.
         now rewrite toBatch_mapfst. }
     unfold Vector_tt.
     unfold plength.
-    rewrite foldMap_through_runBatch1.
+    rewrite mapReduce_through_runBatch1.
     unfold compose.
     induction (toBatch t).
     - reflexivity.
@@ -981,8 +981,8 @@ Section deconstruction.
     unfold compose at 1.
     rewrite <- Vector_to_list_tolist.
     rewrite tolist_trav_contents.
-    rewrite tosubset_to_foldMap.
-    apply foldMap_comm_list.
+    rewrite tosubset_to_mapReduce.
+    apply mapReduce_comm_list.
   Qed.
 
 End deconstruction.
@@ -1544,13 +1544,13 @@ Section traversable_functors_zipping.
     (f: A * B -> M)
     (Hshape: shape t = shape u)
     :
-    foldMap f (same_shape_zip t u Hshape) =
-      foldMap (op := Monoid_op_Opposite op) f (same_shape_zip_contents t u Hshape).
+    mapReduce f (same_shape_zip t u Hshape) =
+      mapReduce (op := Monoid_op_Opposite op) f (same_shape_zip_contents t u Hshape).
   Proof.
     intros.
-    rewrite foldMap_to_traverse1.
+    rewrite mapReduce_to_traverse1.
     rewrite traverse_same_shape_zip.
-    rewrite foldMap_to_traverse1.
+    rewrite mapReduce_to_traverse1.
     unfold_ops @Map_const.
     compose near (same_shape_zip_contents t u Hshape) on left.
     change ((fun (X Y : Type) (_ : X -> Y) (t0 : @const Type Type M X) => t0))
@@ -1568,7 +1568,7 @@ Section traversable_functors_zipping.
     Search traverse same_shape_zip_contents.
     rewrite t
               .
-    unfold foldMap.
+    unfold mapReduce.
     rewrite traverse_same_shape_zip.
     rewrite <- traverse_repr.
     rewrite traverse_same_shape_zip.
@@ -1586,37 +1586,37 @@ Section fold_over_vector_pairs.
 
   Context {A B A0 B0: Type} `{Monoid M} `(f: A * B -> M).
 
-  Lemma foldMap_vector_pair_natural:
+  Lemma mapReduce_vector_pair_natural:
     forall (fl: A0 -> A) (fr: B0 -> B),
     forall (n: nat) (v: Vector n (A0 * B0)),
-      foldMap (T := Vector n) f (map (F := Vector n) (map_tensor fl fr) v) =
-        foldMap (T := Vector n) (f ∘ map_tensor fl fr) v.
+      mapReduce (T := Vector n) f (map (F := Vector n) (map_tensor fl fr) v) =
+        mapReduce (T := Vector n) (f ∘ map_tensor fl fr) v.
   Proof.
     intros.
     compose near v on left.
-    rewrite foldMap_map.
+    rewrite mapReduce_map.
     reflexivity.
   Qed.
 
-  Lemma foldMap_vector_pair_natural_l:
+  Lemma mapReduce_vector_pair_natural_l:
     forall (fl: A0 -> A) (n: nat) (v: Vector n (A0 * B)),
-      foldMap (T := Vector n) f (map (F := Vector n) (map_fst fl) v) =
-        foldMap (T := Vector n) (f ∘ map_fst fl) v.
+      mapReduce (T := Vector n) f (map (F := Vector n) (map_fst fl) v) =
+        mapReduce (T := Vector n) (f ∘ map_fst fl) v.
   Proof.
     intros.
     compose near v on left.
-    rewrite foldMap_map.
+    rewrite mapReduce_map.
     reflexivity.
   Qed.
 
-  Lemma foldMap_vector_pair_natural_r:
+  Lemma mapReduce_vector_pair_natural_r:
     forall (fr: B0 -> B) (n: nat) (v: Vector n (A * B0)),
-      foldMap (T := Vector n) f (map (F := Vector n) (map_snd fr) v) =
-        foldMap (T := Vector n) (f ∘ map_snd fr) v.
+      mapReduce (T := Vector n) f (map (F := Vector n) (map_snd fr) v) =
+        mapReduce (T := Vector n) (f ∘ map_snd fr) v.
   Proof.
     intros.
     compose near v on left.
-    rewrite foldMap_map.
+    rewrite mapReduce_map.
     reflexivity.
   Qed.
 

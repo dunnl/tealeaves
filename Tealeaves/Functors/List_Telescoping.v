@@ -311,9 +311,9 @@ Proof.
   unfold_ops @ToSubset_ToCtxset.
   unfold_ops @ToCtxset_List_Telescoping.
   unfold_ops @ToCtxset_Mapdt.
-  rewrite foldMapd_morphism.
-  rewrite tosubset_to_foldMap.
-  rewrite foldMap_to_foldMapd.
+  rewrite mapdReduce_morphism.
+  rewrite tosubset_to_mapReduce.
+  rewrite mapReduce_to_mapdReduce.
   rewrite (natural (ϕ := @ret subset _)).
   reflexivity.
 Qed.

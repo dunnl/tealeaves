@@ -197,13 +197,13 @@ Section locally_nameless_operations.
     bind (subst_loc x u).
 
   Definition free: U LN -> list atom :=
-    foldMap free_loc.
+    mapReduce free_loc.
 
   Definition FV: U LN -> AtomSet.t :=
     AtomSet.atoms ○ free.
 
   Definition LCnb (gap: nat): U LN -> bool :=
-    foldMapd (lcb_loc gap).
+    mapdReduce (lcb_loc gap).
 
   Definition LCb: U LN -> bool :=
     LCnb 0.
@@ -215,7 +215,7 @@ Section locally_nameless_operations.
     LCn 0.
 
  Definition level: U LN -> nat :=
-    foldMapd (op := Monoid_op_max) (unit := Monoid_unit_max)
+    mapdReduce (op := Monoid_op_max) (unit := Monoid_unit_max)
       level_loc.
 
   Definition scoped: U LN -> AtomSet.t -> Prop :=
@@ -368,7 +368,7 @@ Section locally_nameless_basic_principles.
     change (n + 1 - w) with
       (level_loc (w, Bd n)).
     unfold level.
-    apply (foldMapd_pompos (R := le)).
+    apply (mapdReduce_pompos (R := le)).
     assumption.
   Qed.
 
@@ -402,16 +402,16 @@ Section locally_nameless_basic_principles.
     introv hyp.
     rewrite LCn_spec in hyp.
     unfold Forall_ctx in hyp.
-    rewrite foldMapd_through_toctxlist in hyp.
+    rewrite mapdReduce_through_toctxlist in hyp.
     unfold level.
-    rewrite foldMapd_through_toctxlist.
+    rewrite mapdReduce_through_toctxlist.
     unfold compose in *.
     induction (toctxlist t).
     - cbv. lia.
     - cbn.
-      rewrite foldMap_eq_foldMap_list in hyp.
-      rewrite foldMap_list_cons in hyp.
-      rewrite <- foldMap_eq_foldMap_list in hyp.
+      rewrite mapReduce_eq_mapReduce_list in hyp.
+      rewrite mapReduce_list_cons in hyp.
+      rewrite <- mapReduce_eq_mapReduce_list in hyp.
       destruct hyp.
       apply PeanoNat.Nat.max_lub.
       + destruct a as [n l].
@@ -929,11 +929,11 @@ Section locally_nameless_free_variables.
       x ∈ free (U := U) t = Fr x ∈ t.
   Proof.
     intros. unfold free.
-    change_left ((element_of x ∘ foldMap free_loc) t).
-    rewrite (foldMap_morphism
+    change_left ((element_of x ∘ mapReduce free_loc) t).
+    rewrite (mapReduce_morphism
                (morphism := Monoid_Morphism_element_list atom x)
                (list atom) Prop (ϕ := element_of x)).
-    rewrite (element_of_to_foldMap LN (Fr x)).
+    rewrite (element_of_to_mapReduce LN (Fr x)).
     fequal. ext l.
     apply in_free_iff_local.
   Qed.
@@ -951,11 +951,11 @@ Section locally_nameless_free_variables.
       x ∈ free (U := T) t = Fr x ∈ t.
   Proof.
     intros. unfold free.
-    change_left ((element_of x ∘ foldMap free_loc) t).
-    rewrite (foldMap_morphism
+    change_left ((element_of x ∘ mapReduce free_loc) t).
+    rewrite (mapReduce_morphism
                (morphism := Monoid_Morphism_element_list atom x)
                (list atom) Prop (ϕ := element_of x)).
-    rewrite (element_of_to_foldMap LN (Fr x)).
+    rewrite (element_of_to_mapReduce LN (Fr x)).
     fequal. ext l.
     apply in_free_iff_local.
   Qed.

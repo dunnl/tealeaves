@@ -19,7 +19,7 @@ Import List.ListNotations.
 (** * Respectfulness Conditions for <<mbindd>> and Derived Operations *)
 (**********************************************************************)
 
-(** ** Identities for <<tolist>> and <<foldMap>> *)
+(** ** Identities for <<tolist>> and <<mapReduce>> *)
 (**********************************************************************)
 Section toBatchM.
 

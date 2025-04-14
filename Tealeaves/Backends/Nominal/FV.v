@@ -18,7 +18,7 @@ Section FV.
     fun '(ctx, x) => if get_binding ctx x then @nil name else [x].
 
   Definition FV: T name -> list name :=
-    foldMapd FV_loc.
+    mapdReduce FV_loc.
 
   Import ContainerFunctor.Notations.
   Import DecoratedContainerFunctor.Notations.
@@ -40,7 +40,7 @@ Section FV.
     unfold FV.
     compose near t.
     rewrite
-      (foldMapd_morphism (M1 := list atom) (M2 := Prop)
+      (mapdReduce_morphism (M1 := list atom) (M2 := Prop)
          (A := atom) (T := T) (E := list atom) (ϕ := @element_of list _ _ a)
          (morphism := Monoid_Morphism_element_list atom a)).
     change (Forany_ctx (T := T) (element_of a ∘ FV_loc) t).

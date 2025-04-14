@@ -220,7 +220,7 @@ Qed.
 
 (** ** [join] is a monoid homomorphism *)
 (** This is a special case of the fact that monoid homomorphisms on
-    free monoids are exact those of of the form <<foldMap f>> *)
+    free monoids are exact those of of the form <<mapReduce f>> *)
 #[export] Instance Monmor_join (A: Type):
   Monoid_Morphism (list (list A)) (list A) (join (A := A)) :=
   {| monmor_unit := @join_list_nil A;
@@ -923,20 +923,20 @@ Proof.
   - cbn. now rewrite IHl.
 Qed.
 
-(** ** The <<foldMap_list>> Operation *)
+(** ** The <<mapReduce_list>> Operation *)
 (**********************************************************************)
-Definition foldMap_list {M: Type} `{op: Monoid_op M}
+Definition mapReduce_list {M: Type} `{op: Monoid_op M}
   `{unit: Monoid_unit M} {A: Type} (f: A -> M):
   list A -> M := crush_list ∘ map f.
 
-(** ** <<foldMap_list>> is a Monoid Homomorphism *)
+(** ** <<mapReduce_list>> is a Monoid Homomorphism *)
 (**********************************************************************)
-(** <<foldMap_list>> is a monoid homomorphism *)
-#[export] Instance Monoid_Morphism_foldMap_list
+(** <<mapReduce_list>> is a monoid homomorphism *)
+#[export] Instance Monoid_Morphism_mapReduce_list
   `{Monoid M} {A: Type}
-  `(f: A -> M): Monoid_Morphism (list A) M (foldMap_list f).
+  `(f: A -> M): Monoid_Morphism (list A) M (mapReduce_list f).
 Proof.
-  unfold foldMap_list.
+  unfold mapReduce_list.
   eapply Monoid_Morphism_compose.
   - typeclasses eauto.
   - typeclasses eauto.
@@ -944,13 +944,13 @@ Proof.
   - typeclasses eauto.
 Qed.
 
-(** ** <<foldMap_list>> Commutes with Monoid Homomorphism *)
+(** ** <<mapReduce_list>> Commutes with Monoid Homomorphism *)
 (**********************************************************************)
-Lemma foldMap_list_morphism `{Monoid_Morphism M1 M2 ϕ}
+Lemma mapReduce_list_morphism `{Monoid_Morphism M1 M2 ϕ}
 : forall `(f: A -> M1),
-    ϕ ∘ foldMap_list f = foldMap_list (ϕ ∘ f).
+    ϕ ∘ mapReduce_list f = mapReduce_list (ϕ ∘ f).
 Proof.
-  intros. unfold foldMap_list.
+  intros. unfold mapReduce_list.
   reassociate <- on left.
   rewrite (crush_list_mon_hom ϕ).
   reassociate -> on left.
@@ -958,52 +958,52 @@ Proof.
   reflexivity.
 Qed.
 
-(** ** Rewriting Laws for <<foldMap_list>> *)
+(** ** Rewriting Laws for <<mapReduce_list>> *)
 (**********************************************************************)
-Section foldMap_list_rw.
+Section mapReduce_list_rw.
 
   Context
     {A M: Type}
     `{Monoid M}
     (f: A -> M).
 
-  Lemma foldMap_list_nil: foldMap_list f (@nil A) = Ƶ.
+  Lemma mapReduce_list_nil: mapReduce_list f (@nil A) = Ƶ.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMap_list_cons: forall (x: A) (xs: list A),
-      foldMap_list f (x :: xs) = f x ● foldMap_list f xs.
+  Lemma mapReduce_list_cons: forall (x: A) (xs: list A),
+      mapReduce_list f (x :: xs) = f x ● mapReduce_list f xs.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMap_list_one (a: A): foldMap_list f [ a ] = f a.
+  Lemma mapReduce_list_one (a: A): mapReduce_list f [ a ] = f a.
   Proof.
     cbv. apply monoid_id_r.
   Qed.
 
-  Lemma foldMap_list_ret: foldMap_list f ∘ ret = f.
+  Lemma mapReduce_list_ret: mapReduce_list f ∘ ret = f.
   Proof.
     ext a; cbn. apply monoid_id_r.
   Qed.
 
-  Lemma foldMap_list_app: forall (l1 l2: list A),
-      foldMap_list f (l1 ++ l2) = foldMap_list f l1 ● foldMap_list f l2.
+  Lemma mapReduce_list_app: forall (l1 l2: list A),
+      mapReduce_list f (l1 ++ l2) = mapReduce_list f l1 ● mapReduce_list f l2.
   Proof.
     intros.
-    unfold foldMap_list.
+    unfold mapReduce_list.
     unfold compose. autorewrite with tea_list.
     rewrite crush_list_app.
     reflexivity.
   Qed.
 
-End foldMap_list_rw.
+End mapReduce_list_rw.
 
-#[export] Hint Rewrite @foldMap_list_nil @foldMap_list_cons
-  @foldMap_list_one @foldMap_list_app: tea_list.
+#[export] Hint Rewrite @mapReduce_list_nil @mapReduce_list_cons
+  @mapReduce_list_one @mapReduce_list_app: tea_list.
 
-Lemma foldMap_list_ret_id: forall A, foldMap_list (@ret list _ A) = id.
+Lemma mapReduce_list_ret_id: forall A, mapReduce_list (@ret list _ A) = id.
 Proof.
   intros.
   ext l.

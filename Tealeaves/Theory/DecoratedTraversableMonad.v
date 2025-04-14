@@ -314,7 +314,7 @@ Section decorated_traversable_monad_theory.
     introv.
     rewrite (binddt_respectful_core).
     unfold Forall_ctx.
-    rewrite (foldMapd_through_runBatch2 A B).
+    rewrite (mapdReduce_through_runBatch2 A B).
     do 2 rewrite binddt_through_runBatch.
     unfold compose.
     rewrite toBatch3_to_toBatch7.
@@ -363,7 +363,7 @@ Section decorated_traversable_monad_theory.
     introv.
     rewrite (bindd_respectful_core A B t f g).
     unfold Forall_ctx.
-    rewrite (foldMapd_through_runBatch2 A B).
+    rewrite (mapdReduce_through_runBatch2 A B).
     do 2 rewrite bindd_through_runBatch.
     unfold compose.
     rewrite toBatch3_to_toBatch7.

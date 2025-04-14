@@ -180,22 +180,22 @@ Section theory.
       reflexivity.
     Qed.
 
-    (** ** <<foldMapd>> Through <<toBatch3>> *)
+    (** ** <<mapdReduce>> Through <<toBatch3>> *)
     (******************************************************************)
-    Lemma foldMapd_through_runBatch1 {A} `{Monoid M}: forall `(f: E * A -> M),
-        foldMapd f = runBatch (G := const M) f (C := T False) ∘ toBatch3 (B := False).
+    Lemma mapdReduce_through_runBatch1 {A} `{Monoid M}: forall `(f: E * A -> M),
+        mapdReduce f = runBatch (G := const M) f (C := T False) ∘ toBatch3 (B := False).
     Proof.
       intros.
-      rewrite foldMapd_to_mapdt1.
+      rewrite mapdReduce_to_mapdt1.
       rewrite (mapdt_through_runBatch (G := const M)).
       reflexivity.
     Qed.
 
-    Lemma foldMapd_through_runBatch2 `{Monoid M}: forall (A fake: Type) `(f: E * A -> M),
-        foldMapd f = runBatch (G := const M) f (C := T fake) ∘ toBatch3 (B := fake).
+    Lemma mapdReduce_through_runBatch2 `{Monoid M}: forall (A fake: Type) `(f: E * A -> M),
+        mapdReduce f = runBatch (G := const M) f (C := T fake) ∘ toBatch3 (B := fake).
     Proof.
       intros.
-      rewrite foldMapd_to_mapdt1.
+      rewrite mapdReduce_to_mapdt1.
       rewrite (mapdt_constant_applicative2 False False fake).
       rewrite mapdt_through_runBatch.
       reflexivity.
@@ -242,8 +242,8 @@ Section theory.
           (H1 := @Pure_const _ Monoid_unit_false)
           {{p}} ∘ toBatch3.
     Proof.
-      rewrite element_ctx_of_to_foldMapd.
-      rewrite foldMapd_through_runBatch1.
+      rewrite element_ctx_of_to_mapdReduce.
+      rewrite mapdReduce_through_runBatch1.
       reflexivity.
     Qed.
 
@@ -371,8 +371,8 @@ Section theory.
       - apply mapd_respectful.
       - introv Heq Hf.
         apply mapd_eq_iff in Heq.
-        rewrite element_ctx_of_to_foldMapd in Hf.
-        rewrite (foldMapd_through_runBatch2 A B) in Hf.
+        rewrite element_ctx_of_to_mapdReduce in Hf.
+        rewrite (mapdReduce_through_runBatch2 A B) in Hf.
         unfold compose in *.
         pose (Batch_ind (E * A) B
                 (fun (C: Type) (b: Batch (E * A) B C) =>
@@ -603,7 +603,7 @@ Section theory.
     Proof.
       intros.
       unfold plength.
-      rewrite (foldMap_through_runBatch2 A B).
+      rewrite (mapReduce_through_runBatch2 A B).
       rewrite toBatch_to_toBatch3.
       unfold compose.
       induction (toBatch3 t).
@@ -647,8 +647,8 @@ Section theory.
           List.rev (toctxlist t).
     Proof.
       intros.
-      rewrite toctxlist_to_foldMapd.
-      rewrite (foldMapd_through_runBatch2 A B).
+      rewrite toctxlist_to_mapdReduce.
+      rewrite (mapdReduce_through_runBatch2 A B).
       unfold compose.
       induction (toBatch3 t).
       - cbn. reflexivity.

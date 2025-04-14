@@ -2075,7 +2075,7 @@ Qed.
   rewrite decorate_prefix_list_rw_cons.
   unfold_ops @ToSubset_LZ.
   unfold_ops @ToSubset_Traverse.
-  unfold foldMap.
+  unfold mapReduce.
   unfold_ops @Traverse_LZ.
   rewrite traverse_list_cons.
   unfold ap at 1 2.

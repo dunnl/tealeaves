@@ -55,7 +55,7 @@ Fixpoint list_in (x: nat) (l: list nat): bool :=
 (**********************************************************************)
 (** Return one greater than the greatest element in a list *)
 Definition Smax (l: list nat): nat :=
-  S (foldMap (op := Monoid_op_max) (unit := Monoid_unit_max) id l).
+  S (mapReduce (op := Monoid_op_max) (unit := Monoid_unit_max) id l).
 
 (** <<Smax l>> is greater than every element *)
 Lemma Smax_gt: forall l,
@@ -66,17 +66,17 @@ Proof.
   - inversion H.
   - rewrite element_of_list_cons in H.
     unfold Smax.
-    rewrite foldMap_eq_foldMap_list.
-    rewrite foldMap_list_cons.
+    rewrite mapReduce_eq_mapReduce_list.
+    rewrite mapReduce_list_cons.
     unfold transparent tcs.
-    rewrite <- foldMap_eq_foldMap_list.
+    rewrite <- mapReduce_eq_mapReduce_list.
     unfold id.
     destruct H as [Case1 | Case2].
     + subst.
       lia.
     + apply IHl in Case2.
       rewrite PeanoNat.Nat.succ_max_distr.
-      change ((S (foldMap (fun x: nat => x) l))) with (Smax l).
+      change ((S (mapReduce (fun x: nat => x) l))) with (Smax l).
       lia.
 Qed.
 

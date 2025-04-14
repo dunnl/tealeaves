@@ -306,13 +306,13 @@ Section traversable_monad_theory.
   Proof.
     constructor.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite tosubset_to_foldMap.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_bind.
-    rewrite (foldMap_morphism (subset A) (subset B)
+    rewrite tosubset_to_mapReduce.
+    rewrite tosubset_to_mapReduce.
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_bind.
+    rewrite (mapReduce_morphism (subset A) (subset B)
                (T := U)
-               (ϕ := bind (foldMap (ret (T := subset)) ∘ f))).
+               (ϕ := bind (mapReduce (ret (T := subset)) ∘ f))).
     rewrite set_bind0.
     reflexivity.
   Qed.

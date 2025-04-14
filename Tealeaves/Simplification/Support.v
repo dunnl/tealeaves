@@ -34,15 +34,15 @@ Section section.
 
   Context {E : Type} {T : Type -> Type} `{Mapdt E T}.
 
-  Lemma Forall_ctx_to_foldMapd :
+  Lemma Forall_ctx_to_mapdReduce :
     forall {A t} (f: E * A -> Prop),
-      Forall_ctx f t = foldMapd f t.
+      Forall_ctx f t = mapdReduce f t.
   Proof.
     reflexivity.
   Qed.
-  Lemma foldMapd_to_Forall_ctx :
+  Lemma mapdReduce_to_Forall_ctx :
     forall {A t} (f: E * A -> Prop),
-      foldMapd f t = Forall_ctx f t.
+      mapdReduce f t = Forall_ctx f t.
   Proof.
     reflexivity.
   Qed.
@@ -50,11 +50,11 @@ Section section.
   Lemma exists_false_false
     `{DecoratedTraversableFunctor E T}:
     forall {A} (t: T A),
-      foldMapd (op := Monoid_op_or) (unit := Monoid_unit_false)
+      mapdReduce (op := Monoid_op_or) (unit := Monoid_unit_false)
         (const False) t = False.
   Proof.
     intros.
-    rewrite foldMapd_through_toctxlist.
+    rewrite mapdReduce_through_toctxlist.
     unfold compose. induction (toctxlist t).
     - reflexivity.
     - cbn. rewrite IHe. do 2 unfold transparent tcs. propext;

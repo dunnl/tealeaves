@@ -168,7 +168,7 @@ Section tolist_respectfulness_characterizations.
 End tolist_respectfulness_characterizations.
 
 (*
-(** ** [fold] and [foldMap] operations *)
+(** ** [fold] and [mapReduce] operations *)
 (**********************************************************************)
 Section fold.
 
@@ -182,7 +182,7 @@ Section fold.
     `{monoid_unit: Monoid_unit M}:
     F M -> M := crush_list ∘ tolist.
 
-  Definition foldMap {A}
+  Definition mapReduce {A}
     `{monoid_op: Monoid_op M}
     `{monoid_unit: Monoid_unit M}
     (f: A -> M): F A -> M :=
@@ -200,17 +200,17 @@ Section fold.
     reflexivity.
   Qed.
 
-  Lemma foldMap_map {A B} `{Monoid M} {f: A -> B} {g: B -> M}:
-    foldMap g ∘ map f = foldMap (g ∘ f).
+  Lemma mapReduce_map {A B} `{Monoid M} {f: A -> B} {g: B -> M}:
+    mapReduce g ∘ map f = mapReduce (g ∘ f).
   Proof.
-    intros. unfold foldMap.
+    intros. unfold mapReduce.
     now rewrite <- (fun_map_map (F := F)).
   Qed.
 
-  Theorem foldMap_hom {A} `{Monoid_Morphism M1 M2 ϕ} {f: A -> M1}:
-    ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
+  Theorem mapReduce_hom {A} `{Monoid_Morphism M1 M2 ϕ} {f: A -> M1}:
+    ϕ ∘ mapReduce f = mapReduce (ϕ ∘ f).
   Proof.
-    intros. unfold foldMap.
+    intros. unfold mapReduce.
     reassociate <- on left.
     rewrite (crush_mon_hom ϕ).
     now rewrite <- (fun_map_map (F := F)).
@@ -225,7 +225,7 @@ End fold.
 Section fold_monoidal_structure.
 
   Theorem fold_I (A: Type) `(Monoid A): forall (a: A),
-      foldMap a = a.
+      mapReduce a = a.
   Proof.
     intros. cbn. now rewrite (monoid_id_r).
   Qed.

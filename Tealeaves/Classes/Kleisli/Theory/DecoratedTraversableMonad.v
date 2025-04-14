@@ -137,34 +137,34 @@ Section composition.
 
   End constant_applicative.
 
-  (** ** Properties of <<foldMapd>> *)
+  (** ** Properties of <<mapdReduce>> *)
   (********************************************************************)
 
   (** *** Composition with monad operations *)
   (********************************************************************)
-  Theorem foldMapd_ret `{Monoid M}: forall `(f: W * A -> M),
-      foldMapd (T := T) f ∘ ret = f ∘ ret.
+  Theorem mapdReduce_ret `{Monoid M}: forall `(f: W * A -> M),
+      mapdReduce (T := T) f ∘ ret = f ∘ ret.
   Proof.
     intros.
-    rewrite foldMapd_to_mapdt1. (* todo get rid of this arg *)
+    rewrite mapdReduce_to_mapdt1. (* todo get rid of this arg *)
     rewrite mapdt_to_binddt.
     rewrite (kdtm_binddt0 (G := const M) (A := A) (B := False)).
     reflexivity.
   Qed.
 
-  Theorem foldMapd_binddt `{Applicative G} `{Monoid M}:
+  Theorem mapdReduce_binddt `{Applicative G} `{Monoid M}:
     forall `(g: W * B -> M) `(f: W * A -> G (T B)),
-      map (foldMapd g) ∘ binddt f =
-        foldMapd (fun '(w, a) => map (foldMapd (g ⦿ w)) (f (w, a))).
+      map (mapdReduce g) ∘ binddt f =
+        mapdReduce (fun '(w, a) => map (mapdReduce (g ⦿ w)) (f (w, a))).
   Proof.
     intros.
-    rewrite foldMapd_to_mapdt1.
+    rewrite mapdReduce_to_mapdt1.
     rewrite mapdt_to_binddt.
     rewrite (kdtm_binddt2 (G2 := const M) (G1 := G)). (* TODO args *)
-    rewrite foldMapd_to_mapdt1.
+    rewrite mapdReduce_to_mapdt1.
     rewrite mapdt_to_binddt.
     rewrite binddt_app_const_r.
-    unfold foldMapd.
+    unfold mapdReduce.
     (* TODO Make mapdt_to_binddt work immediately here *)
     fequal. ext [w a].
     unfold compose. cbn.
@@ -172,57 +172,57 @@ Section composition.
     reflexivity.
   Qed.
 
-  Corollary foldMapd_binddt_I `{Monoid M}:
+  Corollary mapdReduce_binddt_I `{Monoid M}:
     forall `(g: W * B -> M) `(f: W * A -> T B),
-      foldMapd g ∘ binddt (U := U) (G := fun A => A) f =
-        foldMapd (T := U) (fun '(w, a) => foldMapd (g ⦿ w) (f (w, a))).
+      mapdReduce g ∘ binddt (U := U) (G := fun A => A) f =
+        mapdReduce (T := U) (fun '(w, a) => mapdReduce (g ⦿ w) (f (w, a))).
   Proof.
     intros.
-    change (foldMapd g) with
-      (map (F := fun A => A) (foldMapd (T := U) g)).
-    rewrite (foldMapd_binddt (G := fun A => A)).
+    change (mapdReduce g) with
+      (map (F := fun A => A) (mapdReduce (T := U) g)).
+    rewrite (mapdReduce_binddt (G := fun A => A)).
     reflexivity.
   Qed.
 
-  Corollary foldMapd_bindd `{Monoid M}:
+  Corollary mapdReduce_bindd `{Monoid M}:
     forall `(g: W * B -> M) `(f: W * A -> T B),
-      foldMapd g ∘ bindd f =
-        foldMapd (fun '(w, a) => foldMapd (g ⦿ w) (f (w, a))).
+      mapdReduce g ∘ bindd f =
+        mapdReduce (fun '(w, a) => mapdReduce (g ⦿ w) (f (w, a))).
   Proof.
     intros.
     rewrite bindd_to_binddt.
-    rewrite foldMapd_binddt_I.
+    rewrite mapdReduce_binddt_I.
     reflexivity.
   Qed.
 
-  (** ** Properties of <<foldMap>> *)
+  (** ** Properties of <<mapReduce>> *)
   (********************************************************************)
-  Corollary foldMap_binddt `{Applicative G} `{Monoid M}:
+  Corollary mapReduce_binddt `{Applicative G} `{Monoid M}:
     forall `(g: B -> M) `(f: W * A -> G (T B)),
-      map (foldMap g) ∘ binddt f =
-        foldMapd (fun '(w, a) => map (foldMap g) (f (w, a))).
+      map (mapReduce g) ∘ binddt f =
+        mapdReduce (fun '(w, a) => map (mapReduce g) (f (w, a))).
   Proof.
     intros.
-    rewrite foldMap_to_foldMapd.
-    rewrite foldMap_to_foldMapd.
-    rewrite foldMapd_binddt.
+    rewrite mapReduce_to_mapdReduce.
+    rewrite mapReduce_to_mapdReduce.
+    rewrite mapdReduce_binddt.
     fequal; ext [w a].
     rewrite extract_preincr2.
     reflexivity.
   Qed.
 
-  Corollary foldMap_bindd `{Monoid M}:
+  Corollary mapReduce_bindd `{Monoid M}:
     forall `(g: B -> M) `(f: W * A -> T B),
-      foldMap g ∘ bindd f =
-        foldMapd (fun '(w, a) => foldMap g (f (w, a))).
+      mapReduce g ∘ bindd f =
+        mapdReduce (fun '(w, a) => mapReduce g (f (w, a))).
   Proof.
     intros.
     rewrite bindd_to_binddt.
-    rewrite foldMap_to_foldMapd.
-    rewrite foldMapd_binddt_I.
+    rewrite mapReduce_to_mapdReduce.
+    rewrite mapdReduce_binddt_I.
     fequal; ext [w a].
     rewrite extract_preincr2.
-    rewrite foldMap_to_foldMapd.
+    rewrite mapReduce_to_mapdReduce.
     reflexivity.
   Qed.
 
@@ -237,22 +237,22 @@ Section composition.
         [ (Ƶ, a) ].
   Proof.
     intros.
-    rewrite toctxlist_to_foldMapd.
+    rewrite toctxlist_to_mapdReduce.
     compose near a on left.
-    rewrite foldMapd_ret.
+    rewrite mapdReduce_ret.
     reflexivity.
   Qed.
 
   Lemma toctxlist_binddt:
     forall `{Applicative G} `(f: W * A -> G (T B)),
       map (F := G) toctxlist ∘ binddt (G := G) f =
-        foldMapd (T := U)
+        mapdReduce (T := U)
           (fun '(w, a) =>
-             map (foldMapd (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
+             map (mapdReduce (T := T) (ret (T := list) ⦿ w)) (f (w, a))).
   Proof.
     intros.
-    rewrite toctxlist_to_foldMapd.
-    rewrite foldMapd_binddt.
+    rewrite toctxlist_to_mapdReduce.
+    rewrite mapdReduce_binddt.
     reflexivity.
   Qed.
 
@@ -260,12 +260,12 @@ Section composition.
   (********************************************************************)
   Corollary toctxlist_bindd: forall `(f: W * A -> T B),
       toctxlist ∘ bindd f =
-        foldMapd (T := U)
-          (fun '(w, a) => (foldMapd (ret (T := list) ⦿ w)) (f (w, a))).
+        mapdReduce (T := U)
+          (fun '(w, a) => (mapdReduce (ret (T := list) ⦿ w)) (f (w, a))).
   Proof.
     intros.
-    rewrite toctxlist_to_foldMapd.
-    rewrite foldMapd_bindd.
+    rewrite toctxlist_to_mapdReduce.
+    rewrite mapdReduce_bindd.
     reflexivity.
   Qed.
 
@@ -275,11 +275,11 @@ Section composition.
   (** *** Composition with <<binddt>> *)
   (********************************************************************)
   Corollary tolist_binddt: forall `{Applicative G} `(f: W * A -> G (T B)),
-      map tolist ∘ binddt f = foldMapd (T := U) (map tolist ∘ f).
+      map tolist ∘ binddt f = mapdReduce (T := U) (map tolist ∘ f).
   Proof.
     intros.
-    rewrite tolist_to_foldMap.
-    rewrite foldMap_binddt.
+    rewrite tolist_to_mapReduce.
+    rewrite mapReduce_binddt.
     (* todo why isn't reflexivity enough... b.c. destructing the pair? *)
     fequal. ext [w a].
     reflexivity.
@@ -289,11 +289,11 @@ Section composition.
   (********************************************************************)
   Corollary tolist_bindd: forall `(f: W * A -> T B),
       tolist ∘ bindd f =
-        foldMapd (fun '(w, a) => foldMap (ret (T := list)) (f (w, a))).
+        mapdReduce (fun '(w, a) => mapReduce (ret (T := list)) (f (w, a))).
   Proof.
     intros.
-    rewrite tolist_to_foldMap.
-    rewrite foldMap_bindd.
+    rewrite tolist_to_mapReduce.
+    rewrite mapReduce_bindd.
     reflexivity.
   Qed.
 
@@ -313,9 +313,9 @@ Section composition.
       toctxset (ret (T := T) a) = {{ (Ƶ, a) }}.
   Proof.
     intros.
-    rewrite toctxset_to_foldMapd.
+    rewrite toctxset_to_mapdReduce.
     compose near a on left.
-    rewrite foldMapd_ret.
+    rewrite mapdReduce_ret.
     reflexivity.
   Qed.
 
@@ -327,21 +327,21 @@ Section composition.
         bindd (U := ctxset W) (toctxset (F := T) ∘ f) ∘ toctxset (F := U).
   Proof.
     intros.
-    rewrite toctxset_to_foldMapd.
-    rewrite foldMapd_bindd.
-    rewrite toctxset_to_foldMapd.
-    rewrite toctxset_to_foldMapd.
-    rewrite foldMapd_morphism.
+    rewrite toctxset_to_mapdReduce.
+    rewrite mapdReduce_bindd.
+    rewrite toctxset_to_mapdReduce.
+    rewrite toctxset_to_mapdReduce.
+    rewrite mapdReduce_morphism.
     fequal.
     ext [w a].
     change_right
-      (bindd (T := ctxset W) (foldMapd (ret (T := subset)) ∘ f) {{(w, a)}}).
+      (bindd (T := ctxset W) (mapdReduce (ret (T := subset)) ∘ f) {{(w, a)}}).
     rewrite bindd_ctxset_one.
     unfold compose.
     rewrite (DecoratedMonad.shift_spec subset
                (W := W) (op := op) (A := B)).
     compose near (f (w, a)) on right.
-    rewrite foldMapd_morphism.
+    rewrite mapdReduce_morphism.
     rewrite (natural (ϕ := @ret subset _)).
     reflexivity.
   Qed.
@@ -351,8 +351,8 @@ Section composition.
                             (B := False) (ret (T := subset)).
   Proof.
     intros.
-    rewrite toctxset_to_foldMapd.
-    rewrite foldMapd_to_mapdt1.
+    rewrite toctxset_to_mapdReduce.
+    rewrite mapdReduce_to_mapdt1.
     rewrite mapdt_to_binddt.
     reflexivity.
   Qed.
@@ -361,11 +361,11 @@ Section composition.
   (********************************************************************)
   Lemma tosubset_bindd: forall `(f: W * A -> T B),
       tosubset ∘ bindd f =
-        foldMapd (fun '(w, a) => foldMap (ret (T := subset)) (f (w, a))).
+        mapdReduce (fun '(w, a) => mapReduce (ret (T := subset)) (f (w, a))).
   Proof.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_bindd.
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_bindd.
     reflexivity.
   Qed.
 
@@ -374,8 +374,8 @@ Section composition.
                    (B := False) (ret (T := subset) ∘ extract).
   Proof.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_to_traverse1.
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_to_traverse1.
     rewrite traverse_to_binddt.
     reflexivity.
   Qed.
@@ -402,8 +402,8 @@ Section composition.
                         (B := False) (eq (w, a)) t.
     Proof.
       intros.
-      rewrite element_ctx_of_to_foldMapd.
-      rewrite foldMapd_to_mapdt1.
+      rewrite element_ctx_of_to_mapdReduce.
+      rewrite mapdReduce_to_mapdt1.
       rewrite mapdt_to_binddt.
       reflexivity.
     Qed.
@@ -420,8 +420,8 @@ Section composition.
                 (B := False) (eq a ∘ extract) t.
   Proof.
     intros.
-    rewrite element_of_to_foldMap.
-    rewrite foldMap_to_traverse1.
+    rewrite element_of_to_mapReduce.
+    rewrite mapReduce_to_traverse1.
     rewrite traverse_to_binddt.
     reflexivity.
   Qed.

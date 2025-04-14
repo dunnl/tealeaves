@@ -101,7 +101,7 @@ Lemma FV_fvL: forall (t: term name name),
 Proof.
   intros t.
   unfold FV.
-  unfold foldMapd.
+  unfold mapdReduce.
   unfold mapdt.
   unfold Mapdt_Categorical.
   unfold dist.

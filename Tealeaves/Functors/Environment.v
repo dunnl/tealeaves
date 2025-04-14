@@ -25,7 +25,7 @@ Section env_instance.
     unfold ToCtxset_env.
     unfold ToCtxset_Mapdt.
     ext A l.
-    unfold foldMapd.
+    unfold mapdReduce.
     unfold mapdt.
     unfold Mapdt_env.
     induction l.

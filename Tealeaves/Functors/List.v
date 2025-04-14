@@ -30,7 +30,7 @@ Proof.
   unfold_ops @ToSubset_list.
   unfold_ops @ToSubset_Traverse.
   ext A l.
-  rewrite foldMap_eq_foldMap_list.
+  rewrite mapReduce_eq_mapReduce_list.
   induction l.
   - simpl_list.
     reflexivity.
@@ -341,10 +341,10 @@ End listable_shape_lemmas.
 Section quantification.
 
   Definition Forall_List `(P: A -> Prop): list A -> Prop :=
-    foldMap_list (op := Monoid_op_and) (unit := Monoid_unit_true) P.
+    mapReduce_list (op := Monoid_op_and) (unit := Monoid_unit_true) P.
 
   Definition Forany_List `(P: A -> Prop): list A -> Prop :=
-    foldMap_list (op := Monoid_op_or) (unit := Monoid_unit_false) P.
+    mapReduce_list (op := Monoid_op_or) (unit := Monoid_unit_false) P.
 
   Lemma forall_iff `(P: A -> Prop) (l: list A):
     Forall_List P l <-> forall (a: A), a ∈ l -> P a.
@@ -385,10 +385,10 @@ Section quantification.
 
 End quantification.
 
-(** ** <<a ∈ ->> in terms of <<foldMap_list>> *)
+(** ** <<a ∈ ->> in terms of <<mapReduce_list>> *)
 (**********************************************************************)
-Lemma element_to_foldMap_list1: forall (A: Type),
-    tosubset = foldMap_list (ret (T := subset) (A := A)).
+Lemma element_to_mapReduce_list1: forall (A: Type),
+    tosubset = mapReduce_list (ret (T := subset) (A := A)).
 Proof.
   intros. ext l. induction l.
   - reflexivity.
@@ -397,77 +397,77 @@ Proof.
     reflexivity.
 Qed.
 
-Lemma element_to_foldMap_list2: forall (A: Type) (l: list A) (a: A),
-    tosubset l a = foldMap_list (op := or) (unit := False) (eq a) l.
+Lemma element_to_mapReduce_list2: forall (A: Type) (l: list A) (a: A),
+    tosubset l a = mapReduce_list (op := or) (unit := False) (eq a) l.
 Proof.
-  intros. rewrite element_to_foldMap_list1.
+  intros. rewrite element_to_mapReduce_list1.
   (*
-    change_left ((evalAt a ∘ foldMap_list (ret (T := subset))) l).
+    change_left ((evalAt a ∘ mapReduce_list (ret (T := subset))) l).
    *)
   induction l.
   - reflexivity.
-  - rewrite foldMap_list_cons.
-    rewrite foldMap_list_cons.
+  - rewrite mapReduce_list_cons.
+    rewrite mapReduce_list_cons.
     rewrite <- IHl.
     replace (a = a0) with (a0 = a) by (propext; auto).
     reflexivity.
 Qed.
 
-(** ** Rewriting Laws for <<foldMap>> *)
+(** ** Rewriting Laws for <<mapReduce>> *)
 (**********************************************************************)
-Section foldMap_rw.
+Section mapReduce_rw.
 
   Context
     {A M: Type}
     `{Monoid M}
     (f: A -> M).
 
-  Lemma foldMap_nil: foldMap f (@nil A) = Ƶ.
+  Lemma mapReduce_nil: mapReduce f (@nil A) = Ƶ.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMap_cons: forall (x: A) (xs: list A),
-      foldMap f (x :: xs) = f x ● foldMap f xs.
+  Lemma mapReduce_cons: forall (x: A) (xs: list A),
+      mapReduce f (x :: xs) = f x ● mapReduce f xs.
   Proof.
     intros.
-    rewrite foldMap_eq_foldMap_list.
+    rewrite mapReduce_eq_mapReduce_list.
     simpl_list.
     reflexivity.
   Qed.
 
-  Lemma foldMap_one (a: A): foldMap f [ a ] = f a.
+  Lemma mapReduce_one (a: A): mapReduce f [ a ] = f a.
   Proof.
-    rewrite foldMap_eq_foldMap_list.
+    rewrite mapReduce_eq_mapReduce_list.
     simpl_list; auto.
   Qed.
 
-  Lemma foldMap_ret: foldMap f ∘ ret = f.
+  Lemma mapReduce_ret: mapReduce f ∘ ret = f.
   Proof.
-    rewrite foldMap_eq_foldMap_list.
-    rewrite foldMap_list_ret.
+    rewrite mapReduce_eq_mapReduce_list.
+    rewrite mapReduce_list_ret.
     reflexivity.
   Qed.
 
-  Lemma foldMap_app: forall (l1 l2: list A),
-      foldMap f (l1 ++ l2) = foldMap f l1 ● foldMap f l2.
+  Lemma mapReduce_app: forall (l1 l2: list A),
+      mapReduce f (l1 ++ l2) = mapReduce f l1 ● mapReduce f l2.
   Proof.
     intros.
-    rewrite foldMap_eq_foldMap_list.
-    rewrite foldMap_list_app.
+    rewrite mapReduce_eq_mapReduce_list.
+    rewrite mapReduce_list_app.
     reflexivity.
   Qed.
 
-End foldMap_rw.
+End mapReduce_rw.
 
-#[export] Hint Rewrite @foldMap_nil @foldMap_cons
-  @foldMap_one @foldMap_app: tea_list.
+#[export] Hint Rewrite @mapReduce_nil @mapReduce_cons
+  @mapReduce_one @mapReduce_app: tea_list.
 
-Lemma foldMap_ret_id: forall A, foldMap (@ret list _ A) = id.
+Lemma mapReduce_ret_id: forall A, mapReduce (@ret list _ A) = id.
 Proof.
   intros.
-  rewrite foldMap_eq_foldMap_list.
-  apply foldMap_list_ret_id.
+  rewrite mapReduce_eq_mapReduce_list.
+  apply mapReduce_list_ret_id.
 Qed.
 
 (** * Specification of <<Permutation>> *)

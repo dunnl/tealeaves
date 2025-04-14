@@ -30,72 +30,72 @@ Section foldmap.
     `{M_mn_op: Monoid_op M}
     `{M_mn_unit: Monoid_unit M}.
 
-  Definition foldMapmd_gen {A} (fake: Type) (f : K -> (W * A) -> M): U A -> M :=
+  Definition mapReducemd_gen {A} (fake: Type) (f : K -> (W * A) -> M): U A -> M :=
     mmapdt (B := fake) U (const M) f.
 
-  Definition foldMapmd {A} (f : K -> (W * A) -> M): U A -> M :=
-    foldMapmd_gen False f.
+  Definition mapReducemd {A} (f : K -> (W * A) -> M): U A -> M :=
+    mapReducemd_gen False f.
 
-  Definition foldMapm {A} (f : K -> A -> M) : U A -> M :=
-    foldMapmd (f ◻ allK (extract (W := (prod W)))).
+  Definition mapReducem {A} (f : K -> A -> M) : U A -> M :=
+    mapReducemd (f ◻ allK (extract (W := (prod W)))).
 
-  Definition foldMapkd {A} (k: K) (f : W * A -> M): U A -> M :=
-    foldMapmd (tgt_def k f (const Ƶ)).
+  Definition mapReducekd {A} (k: K) (f : W * A -> M): U A -> M :=
+    mapReducemd (tgt_def k f (const Ƶ)).
 
-  Definition foldMapk {A} (k: K) (f : A -> M): U A -> M :=
-    foldMapm (tgt_def k f (const Ƶ)).
+  Definition mapReducek {A} (k: K) (f : A -> M): U A -> M :=
+    mapReducem (tgt_def k f (const Ƶ)).
 
-  Lemma foldMapmd_to_mmapdt {A} (f : K -> (W * A) -> M):
-    foldMapmd f = mmapdt (B := False) U (const M) f.
+  Lemma mapReducemd_to_mmapdt {A} (f : K -> (W * A) -> M):
+    mapReducemd f = mmapdt (B := False) U (const M) f.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMapm_to_foldMapmd {A} (f : K -> A -> M):
-    foldMapm f = foldMapmd (f ◻ allK (extract (W := (prod W)))).
+  Lemma mapReducem_to_mapReducemd {A} (f : K -> A -> M):
+    mapReducem f = mapReducemd (f ◻ allK (extract (W := (prod W)))).
   Proof.
     reflexivity.
   Qed.
 
-  Lemma foldMapmd_fake `{! Monoid M}: forall {A} (fake1 fake2: Type),
-      foldMapmd_gen (A := A) fake1 = foldMapmd_gen fake2.
+  Lemma mapReducemd_fake `{! Monoid M}: forall {A} (fake1 fake2: Type),
+      mapReducemd_gen (A := A) fake1 = mapReducemd_gen fake2.
   Proof.
     intros.
     ext f.
-    unfold foldMapmd_gen.
+    unfold mapReducemd_gen.
     unfold mmapdt.
     rewrite (mbinddt_constant_applicative2 U fake1 fake2).
     reflexivity.
   Qed.
 
-  Lemma foldMapkd_to_kmapdt `{! Monoid M} {A} (f : W * A -> M) {k: K}:
-    foldMapkd k f = kmapdt U k (G := const M) f.
+  Lemma mapReducekd_to_kmapdt `{! Monoid M} {A} (f : W * A -> M) {k: K}:
+    mapReducekd k f = kmapdt U k (G := const M) f.
   Proof.
     unfold kmapdt.
-    unfold foldMapkd, foldMapmd.
-    rewrite (foldMapmd_fake False A).
-    unfold foldMapmd_gen.
+    unfold mapReducekd, mapReducemd.
+    rewrite (mapReducemd_fake False A).
+    unfold mapReducemd_gen.
     fequal.
     ext j [w a].
     unfold tgt_def, tgtdt.
     destruct_eq_args k j.
   Qed.
 
-  Lemma foldMapk_to_kmapt `{! Monoid M} {A} (f : A -> M) {k: K}:
-    foldMapk k f = ktraverse U k (G := const M) f.
+  Lemma mapReducek_to_kmapt `{! Monoid M} {A} (f : A -> M) {k: K}:
+    mapReducek k f = ktraverse U k (G := const M) f.
   Proof.
-    unfold foldMapk, foldMapm, foldMapmd.
-    rewrite (foldMapmd_fake False A).
+    unfold mapReducek, mapReducem, mapReducemd.
+    rewrite (mapReducemd_fake False A).
     reflexivity.
   Qed.
 
-  Lemma foldMapkd_to_foldMapmd `{! Monoid M} {A} (f : W * A -> M) {k: K}:
-    foldMapkd k f = foldMapmd (tgt_def (A := W * A) k f (const Ƶ)).
+  Lemma mapReducekd_to_mapReducemd `{! Monoid M} {A} (f : W * A -> M) {k: K}:
+    mapReducekd k f = mapReducemd (tgt_def (A := W * A) k f (const Ƶ)).
   Proof.
     intros.
-    rewrite foldMapkd_to_kmapdt.
+    rewrite mapReducekd_to_kmapdt.
     rewrite kmapdt_to_mmapdt.
-    rewrite foldMapmd_to_mmapdt.
+    rewrite mapReducemd_to_mmapdt.
     unfold mmapdt.
     rewrite (mbinddt_constant_applicative2 U A False).
     fequal. fequal. ext j [w a].
@@ -103,13 +103,13 @@ Section foldmap.
     destruct_eq_args k j.
   Qed.
 
-  Lemma foldMapk_to_foldMapkd `{! Monoid M} {A} (f : A -> M) {k: K}:
-    foldMapk k f = foldMapkd k (f ∘ extract (W := prod W)).
+  Lemma mapReducek_to_mapReducekd `{! Monoid M} {A} (f : A -> M) {k: K}:
+    mapReducek k f = mapReducekd k (f ∘ extract (W := prod W)).
   Proof.
     intros.
-    rewrite foldMapk_to_kmapt.
+    rewrite mapReducek_to_kmapt.
     unfold ktraverse.
-    rewrite foldMapkd_to_kmapdt.
+    rewrite mapReducekd_to_kmapdt.
     unfold mmapt.
     unfold kmapdt.
     fequal. (ext j [w a]).
@@ -126,14 +126,14 @@ Section tolist_and_tosubset.
     `{MultiDecoratedTraversablePreModule W T U}
     `{! MultiDecoratedTraversableMonad W T}.
 
-  Lemma tolistmd_gen_to_foldMapmd_gen : forall {A} {fake:Type} (t: U A),
-      tolistmd_gen U fake t = foldMapmd_gen U fake tolistmd_gen_loc t.
+  Lemma tolistmd_gen_to_mapReducemd_gen : forall {A} {fake:Type} (t: U A),
+      tolistmd_gen U fake t = mapReducemd_gen U fake tolistmd_gen_loc t.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma tolistmd_to_foldMapmd : forall {A},
-      tolistmd (A := A) (T := T) U = foldMapmd U tolistmd_gen_loc.
+  Lemma tolistmd_to_mapReducemd : forall {A},
+      tolistmd (A := A) (T := T) U = mapReducemd U tolistmd_gen_loc.
   Proof.
     reflexivity.
   Qed.
@@ -141,13 +141,13 @@ Section tolist_and_tosubset.
   Definition tosetmd_gen_loc {A}: K -> W * A -> subset (W * (K * A)) :=
     fun k '(w, a) => {{ (w, (k, a)) }}.
 
-  Lemma tosetmd_to_foldMapmd : forall {A},
-      tosetmd (A := A) (T := T) U = foldMapmd U tosetmd_gen_loc.
+  Lemma tosetmd_to_mapReducemd : forall {A},
+      tosetmd (A := A) (T := T) U = mapReducemd U tosetmd_gen_loc.
   Proof.
     intros.
     unfold tosetmd.
-    rewrite tolistmd_to_foldMapmd.
-    unfold foldMapmd, foldMapmd_gen, mmapdt.
+    rewrite tolistmd_to_mapReducemd.
+    unfold mapReducemd, mapReducemd_gen, mmapdt.
     change (ContainerFunctor.tosubset (A := (W * (K * A))))
       with (const (ContainerFunctor.tosubset (A := (W * (K * A))))
               (list (W * (K * A)))).
@@ -178,30 +178,30 @@ Section tolist_and_tosubset.
     - intros. apply filterk_app.
   Qed.
 
-  Lemma toklistd_to_foldMapkd : forall {A} (k: K),
-      toklistd (T := T) (A := A) U k = foldMapkd U k (fun p => [p]).
+  Lemma toklistd_to_mapReducekd : forall {A} (k: K),
+      toklistd (T := T) (A := A) U k = mapReducekd U k (fun p => [p]).
     Proof.
       intros.
       unfold toklistd.
-      rewrite tolistmd_to_foldMapmd.
-      unfold foldMapmd, foldMapmd_gen, mmapdt.
+      rewrite tolistmd_to_mapReducemd.
+      unfold mapReducemd, mapReducemd_gen, mmapdt.
       rewrite (dtp_mbinddt_morphism W T U
                  (const (list (W * (K * A))))
                  (const (list (W * A)))
                  (H6 := ApplicativeMorphism_filterk k)).
-      unfold foldMapkd, foldMapmd, foldMapmd_gen, mmapdt.
+      unfold mapReducekd, mapReducemd, mapReducemd_gen, mmapdt.
       fequal. ext j (w, a).
       unfold vec_compose, compose, mapMret, vec_apply, tgt_def.
       cbn. destruct_eq_args k j.
     Qed.
 
-  Lemma toksetd_to_foldMapkd : forall {A} (t: U A) (k : K),
-      toksetd U k t = foldMapkd U k (fun p => {{p}}) t.
+  Lemma toksetd_to_mapReducekd : forall {A} (t: U A) (k : K),
+      toksetd U k t = mapReducekd U k (fun p => {{p}}) t.
   Proof.
     intros.
     unfold toksetd.
-    rewrite toklistd_to_foldMapkd.
-    unfold foldMapmd, foldMapmd_gen, mmapdt.
+    rewrite toklistd_to_mapReducekd.
+    unfold mapReducemd, mapReducemd_gen, mmapdt.
     change (ContainerFunctor.tosubset (A := (W * A)))
       with (const (ContainerFunctor.tosubset (A := (W * A)))
               (list (W * A))).
@@ -211,7 +211,7 @@ Section tolist_and_tosubset.
                (const (subset (W * A)))
                (H6 := ApplicativeMorphism_monoid_morphism)).
     Unset Keyed Unification.
-    unfold foldMapkd, foldMapmd, foldMapmd_gen, mmapdt.
+    unfold mapReducekd, mapReducemd, mapReducemd_gen, mmapdt.
     fequal.
     ext j (w, a).
     ext (w', a').
@@ -232,15 +232,15 @@ Section morphisms.
 
   Generalizable Variables ϕ.
 
-  Lemma foldMapmd_morphism:
+  Lemma mapReducemd_morphism:
     forall {A}
       `{Monoid M1} `{Monoid M2}
       `{! Monoid_Morphism M1 M2 ϕ} (f: K -> W * A -> M1),
-      ϕ ∘ foldMapmd U f = foldMapmd U (fun k => ϕ ∘ f k).
+      ϕ ∘ mapReducemd U f = mapReducemd U (fun k => ϕ ∘ f k).
   Proof.
     intros.
     change ϕ with (const ϕ (U False)).
-    unfold foldMapmd, foldMapmd_gen, mmapdt.
+    unfold mapReducemd, mapReducemd_gen, mmapdt.
     rewrite (dtp_mbinddt_morphism W T U
                (A := A)
                (B := False)
@@ -252,11 +252,11 @@ Section morphisms.
     reflexivity.
   Qed.
 
-  Lemma foldMapmd_through_tolist {A} `{Monoid M} (f : K -> (W * A) -> M):
-    foldMapmd U f = foldMap_list (fun '(w, (k, a)) => f k (w, a)) ∘ tolistmd U.
+  Lemma mapReducemd_through_tolist {A} `{Monoid M} (f : K -> (W * A) -> M):
+    mapReducemd U f = mapReduce_list (fun '(w, (k, a)) => f k (w, a)) ∘ tolistmd U.
   Proof.
-    rewrite tolistmd_to_foldMapmd.
-    rewrite foldMapmd_morphism.
+    rewrite tolistmd_to_mapReducemd.
+    rewrite mapReducemd_morphism.
     fequal. ext k [w a]. cbn.
     now simpl_monoid.
   Qed.
@@ -271,24 +271,24 @@ Section forall_and_exists.
     `{! MultiDecoratedTraversableMonad W T}.
 
   Definition Forallmd {A} (P: K -> W * A -> Prop) :=
-    foldMapmd U (T := T)
+    mapReducemd U (T := T)
       (M_mn_op := Monoid_op_and) (M_mn_unit := Monoid_unit_true) P.
 
   Definition Forallkd {A} (k: K) (P: W * A -> Prop) :=
-    foldMapkd U k (T := T)
+    mapReducekd U k (T := T)
       (M_mn_op := Monoid_op_and) (M_mn_unit := Monoid_unit_true) P.
 
-  Lemma Forallmd_to_foldMapmd {A} (P: K -> W * A -> Prop ):
+  Lemma Forallmd_to_mapReducemd {A} (P: K -> W * A -> Prop ):
     Forallmd P =
-    foldMapmd U (T := T)
+    mapReducemd U (T := T)
       (M_mn_op := Monoid_op_and) (M_mn_unit := Monoid_unit_true) P.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma Forallkd_to_foldMapkd {A} (k: K) (P: W * A -> Prop):
+  Lemma Forallkd_to_mapReducekd {A} (k: K) (P: W * A -> Prop):
     Forallkd k P =
-    foldMapkd U k (T := T)
+    mapReducekd U k (T := T)
       (M_mn_op := Monoid_op_and) (M_mn_unit := Monoid_unit_true) P.
   Proof.
     reflexivity.
@@ -299,7 +299,7 @@ Section forall_and_exists.
       Forallmd (tgt_def k P (const True)).
   Proof.
     unfold Forallkd, Forallmd.
-    unfold foldMapkd.
+    unfold mapReducekd.
     reflexivity.
   Qed.
 
@@ -310,7 +310,7 @@ Section forall_and_exists.
     intros.
     unfold Forallmd.
     unfold tosetmd.
-    rewrite (foldMapmd_through_tolist U).
+    rewrite (mapReducemd_through_tolist U).
     unfold compose.
     apply propositional_extensionality.
     induction (tolistmd U t).
@@ -322,7 +322,7 @@ Section forall_and_exists.
         * apply IHl. auto.
       + introv [case1 case2] [Heq | Hin].
         * inversion Heq; subst. cbv in *; tauto.
-        * unfold foldMap_list, compose in IHl.
+        * unfold mapReduce_list, compose in IHl.
           rewrite <- IHl in case2. auto.
   Qed.
 
@@ -332,8 +332,8 @@ Section forall_and_exists.
   Proof.
     intros.
     unfold Forallkd, Forallmd, tosetmd.
-    rewrite (foldMapkd_to_foldMapmd U).
-    rewrite (foldMapmd_through_tolist U).
+    rewrite (mapReducekd_to_mapReducemd U).
+    rewrite (mapReducemd_through_tolist U).
     unfold compose.
     apply propositional_extensionality.
     induction (tolistmd U t).
@@ -347,7 +347,7 @@ Section forall_and_exists.
           * apply IHl. auto.
         + introv [case1 case2] [Heq | Hin].
           * inversion Heq; subst. cbv in *; tauto.
-          * unfold foldMap_list, compose in IHl.
+          * unfold mapReduce_list, compose in IHl.
             rewrite <- IHl in case2. auto. }
       { split.
         + introv hyp. split.
@@ -355,7 +355,7 @@ Section forall_and_exists.
           * apply IHl. auto.
         + introv [case1 case2] [Heq | Hin].
           * inversion Heq; subst. cbv in *; tauto.
-          * unfold foldMap_list, compose in IHl.
+          * unfold mapReduce_list, compose in IHl.
             rewrite <- IHl in case2. auto. }
   Qed.
 

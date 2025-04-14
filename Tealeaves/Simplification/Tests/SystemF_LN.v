@@ -35,15 +35,15 @@ Section local_lemmas_needed.
     reflexivity.
   Qed.
 
-  Lemma free_to_foldMapk : forall (k: K),
-      free U (T := T) k = foldMapk U k free_loc.
+  Lemma free_to_mapReducek : forall (k: K),
+      free U (T := T) k = mapReducek U k free_loc.
   Proof.
     intros.
     unfold free. ext t.
     unfold toklist, compose.
-    unfold foldMapk.
-    rewrite foldMapm_to_foldMapmd.
-    rewrite (foldMapmd_through_tolist U).
+    unfold mapReducek.
+    rewrite mapReducem_to_mapReducemd.
+    rewrite (mapReducemd_through_tolist U).
     unfold toklistd.
     unfold compose.
     induction (tolistmd U t).
@@ -568,10 +568,10 @@ Ltac simplify_free :=
   match goal with
   | |- context[free (T := ?T) (ix := ?ix)
                 ?U ?k ?t] =>
-      rewrite ?(free_to_foldMapk _ (ix := ix));
-      simplify_foldMapk;
+      rewrite ?(free_to_mapReducek _ (ix := ix));
+      simplify_mapReducek;
       simplify_free_pre_refold_hook;
-      rewrite <- ?(free_to_foldMapk _ (ix := ix));
+      rewrite <- ?(free_to_mapReducek _ (ix := ix));
       simplify_free_post_refold_hook;
       try solve [handle_free_at_leaf]
   end.

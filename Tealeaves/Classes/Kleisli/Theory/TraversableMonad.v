@@ -47,14 +47,14 @@ Section traversable_monad_theory.
     `{Monad_inst: ! TraversableMonad T}
     `{Module_inst: ! TraversableRightPreModule T U}.
 
-  (** ** <<foldMap>> on Traversble Monads *)
+  (** ** <<mapReduce>> on Traversble Monads *)
   (********************************************************************)
-  Lemma foldMap_bindt `{Applicative G} `{Monoid M}:
+  Lemma mapReduce_bindt `{Applicative G} `{Monoid M}:
     forall `(g: B -> M) `(f: A -> G (T B)),
-      map (foldMap g) ∘ bindt (U := U) f =
-        foldMap (T := U) (map (foldMap g) ∘ f).
+      map (mapReduce g) ∘ bindt (U := U) f =
+        mapReduce (T := U) (map (mapReduce g) ∘ f).
   Proof.
-    intros. unfold foldMap.
+    intros. unfold mapReduce.
     rewrite (traverse_bindt (G1 := G) (G2 := const M) A B False).
     rewrite 2(traverse_to_bindt).
     reassociate <- on right.
@@ -74,21 +74,21 @@ Section traversable_monad_theory.
       reflexivity.
   Qed.
 
-  Lemma foldMap_bind `{Monoid M}:
+  Lemma mapReduce_bind `{Monoid M}:
     forall `(g: B -> M) `(f: A -> T B),
-      foldMap g ∘ bind (U := U) f = foldMap (foldMap g ∘ f).
+      mapReduce g ∘ bind (U := U) f = mapReduce (mapReduce g ∘ f).
   Proof.
-    intros. unfold foldMap.
+    intros. unfold mapReduce.
     rewrite (traverse_bind (G2 := const M) A B False).
     rewrite traverse_to_bindt.
     rewrite traverse_to_bindt.
     reflexivity.
   Qed.
 
-  Lemma foldMap_ret `{Monoid M}: forall `(f: A -> M),
-      foldMap f ∘ ret T = f.
+  Lemma mapReduce_ret `{Monoid M}: forall `(f: A -> M),
+      mapReduce f ∘ ret T = f.
   Proof.
-    intros. unfold foldMap.
+    intros. unfold mapReduce.
     rewrite traverse_to_bindt.
     rewrite (ktm_bindt0 (G := const M) A False).
     reflexivity.
@@ -101,7 +101,7 @@ Section traversable_monad_theory.
   Proof.
     intros.
     unfold_ops @Tolist_Traverse.
-    now rewrite foldMap_ret.
+    now rewrite mapReduce_ret.
   Qed.
 
   Lemma tolist_bind: forall (A B: Type) (f: A -> T B),
@@ -109,8 +109,8 @@ Section traversable_monad_theory.
   Proof.
     intros.
     unfold_ops @Tolist_Traverse.
-    rewrite (foldMap_bind (ret list) f).
-    rewrite (foldMap_morphism (list A) (list B)).
+    rewrite (mapReduce_bind (ret list) f).
+    rewrite (mapReduce_morphism (list A) (list B)).
     rewrite (kmon_bind0 (T := list)).
     reflexivity.
   Qed.
@@ -121,8 +121,8 @@ Section traversable_monad_theory.
       tosubset ∘ ret T = ret subset (A := A).
   Proof.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_ret.
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_ret.
     reflexivity.
   Qed.
 
@@ -130,12 +130,12 @@ Section traversable_monad_theory.
       tosubset ∘ bind (U := U) f = bind (tosubset ∘ f) ∘ tosubset.
   Proof.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_bind.
-    rewrite (tosubset_to_foldMap (T := U)).
-    rewrite (foldMap_morphism (subset A) (subset B)).
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_bind.
+    rewrite (tosubset_to_mapReduce (T := U)).
+    rewrite (mapReduce_morphism (subset A) (subset B)).
     rewrite (kmon_bind0 (T := subset)).
-    rewrite tosubset_to_foldMap.
+    rewrite tosubset_to_mapReduce.
     reflexivity.
   Qed.
 
@@ -155,13 +155,13 @@ Section traversable_monad_theory.
 
   Lemma element_of_hom2: forall (A B: Type) (f: A -> T B) (b: B),
       element_of b ∘ bind (U := U) f =
-        foldMap (op := Monoid_op_or) (unit := Monoid_unit_false)
-          (foldMap (op := Monoid_op_or) (unit := Monoid_unit_false)
+        mapReduce (op := Monoid_op_or) (unit := Monoid_unit_false)
+          (mapReduce (op := Monoid_op_or) (unit := Monoid_unit_false)
              {{b}} ∘ f).
   Proof.
     intros.
-    rewrite element_of_to_foldMap.
-    rewrite foldMap_bind.
+    rewrite element_of_to_mapReduce.
+    rewrite mapReduce_bind.
     reflexivity.
   Qed.
 

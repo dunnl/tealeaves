@@ -351,16 +351,16 @@ End traversals_by_subset.
 (** * Derived Operation: <<foldmap>> *)
 (**********************************************************************)
 
-(** ** Operation <<foldMap>> *)
+(** ** Operation <<mapReduce>> *)
 (**********************************************************************)
-Definition foldMap
+Definition mapReduce
   {T: Type -> Type}
   `{Traverse T}
   `{op: Monoid_op M} `{unit: Monoid_unit M}
   {A: Type} (f: A -> M): T A -> M :=
   traverse (G := const M) (B := False) f.
 
-Section foldMap.
+Section mapReduce.
 
   (** ** As a Special Case of <<traverse>> *)
   (********************************************************************)
@@ -370,61 +370,61 @@ Section foldMap.
       `{Traverse T}
       `{! TraversableFunctor T}.
 
-    Lemma foldMap_to_traverse1 `{Monoid M}:
+    Lemma mapReduce_to_traverse1 `{Monoid M}:
       forall `(f: A -> M),
-        foldMap (T := T) f =
+        mapReduce (T := T) f =
           traverse (G := const M) (B := False) f.
     Proof.
       reflexivity.
     Qed.
 
-    Lemma foldMap_to_traverse2 `{Monoid M}:
+    Lemma mapReduce_to_traverse2 `{Monoid M}:
       forall (fake: Type) `(f: A -> M),
-        foldMap (T := T) f = traverse (G := const M) (B := fake) f.
+        mapReduce (T := T) f = traverse (G := const M) (B := fake) f.
     Proof.
       intros.
-      rewrite foldMap_to_traverse1.
+      rewrite mapReduce_to_traverse1.
       rewrite (traverse_const1 fake f).
       reflexivity.
     Qed.
 
     (** ** Composition with <<map>> and <<traverse>> *)
     (******************************************************************)
-    Lemma foldMap_traverse
+    Lemma mapReduce_traverse
       `{Monoid M} (G: Type -> Type) {B: Type} `{Applicative G}:
       forall `(g: B -> M) `(f: A -> G B),
-        map (A := T B) (B := M) (foldMap g) ∘ traverse f =
-          foldMap (map g ∘ f).
+        map (A := T B) (B := M) (mapReduce g) ∘ traverse f =
+          mapReduce (map g ∘ f).
     Proof.
       intros.
-      rewrite foldMap_to_traverse1.
+      rewrite mapReduce_to_traverse1.
       rewrite (trf_traverse_traverse (G1 := G) (G2 := const M) A B False).
-      rewrite foldMap_to_traverse1.
+      rewrite mapReduce_to_traverse1.
       rewrite map_compose_const.
       rewrite mult_compose_const.
       reflexivity.
     Qed.
 
-    Corollary foldMap_map `{Map T} `{! Compat_Map_Traverse T}
+    Corollary mapReduce_map `{Map T} `{! Compat_Map_Traverse T}
       `{Monoid M}: forall `(g: B -> M) `(f: A -> B),
-        foldMap (T := T) g ∘ map f = foldMap (g ∘ f).
+        mapReduce (T := T) g ∘ map f = mapReduce (g ∘ f).
     Proof.
       intros.
       rewrite map_to_traverse.
-      change (foldMap g) with
-        (map (F := fun A => A) (A := T B) (B := M) (foldMap g)).
-      now rewrite (foldMap_traverse (fun X => X)).
+      change (mapReduce g) with
+        (map (F := fun A => A) (A := T B) (B := M) (mapReduce g)).
+      now rewrite (mapReduce_traverse (fun X => X)).
     Qed.
 
     (** ** Composition with Homomorphisms *)
     (******************************************************************)
-    Lemma foldMap_morphism (M1 M2: Type)
+    Lemma mapReduce_morphism (M1 M2: Type)
       `{morphism: Monoid_Morphism M1 M2 ϕ}:
-      forall `(f: A -> M1), ϕ ∘ foldMap f = foldMap (ϕ ∘ f).
+      forall `(f: A -> M1), ϕ ∘ mapReduce f = mapReduce (ϕ ∘ f).
     Proof.
       intros.
       inversion morphism.
-      rewrite foldMap_to_traverse1.
+      rewrite mapReduce_to_traverse1.
       change ϕ with (const ϕ (T False)).
       rewrite (trf_traverse_morphism (T := T)
                  (G1 := const M1) (G2 := const M2) A False).
@@ -446,24 +446,24 @@ Section foldMap.
       `{ToBatch T}
       `{! Compat_ToBatch_Traverse T}.
 
-    Lemma foldMap_through_runBatch1
+    Lemma mapReduce_through_runBatch1
       {A: Type} `{Monoid M}: forall `(f: A -> M),
-        foldMap f = runBatch (G := const M) f (B := False) ∘
+        mapReduce f = runBatch (G := const M) f (B := False) ∘
                       toBatch (A := A) (A' := False).
     Proof.
       intros.
-      rewrite foldMap_to_traverse1.
+      rewrite mapReduce_to_traverse1.
       rewrite traverse_through_runBatch.
       reflexivity.
     Qed.
 
-    Lemma foldMap_through_runBatch2
+    Lemma mapReduce_through_runBatch2
       `{Monoid M}: forall (A fake: Type) `(f: A -> M),
-        foldMap f = runBatch (G := const M) f (B := fake) ∘
+        mapReduce f = runBatch (G := const M) f (B := fake) ∘
                       toBatch (A' := fake).
     Proof.
       intros.
-      rewrite foldMap_to_traverse1.
+      rewrite mapReduce_to_traverse1.
       change (fun _: Type => M) with (const (A := Type) M).
       rewrite (traverse_const1 fake).
       rewrite (traverse_through_runBatch (G := const M)).
@@ -472,22 +472,22 @@ Section foldMap.
 
     (** ** Factorizing through <<toBatch>> *)
     (******************************************************************)
-    Lemma foldMap_through_toBatch
+    Lemma mapReduce_through_toBatch
       `{Monoid M}: forall (A fake: Type) `(f: A -> M) (t: T A),
-        foldMap (T := T) f t = foldMap f (toBatch (A' := fake) t).
+        mapReduce (T := T) f t = mapReduce f (toBatch (A' := fake) t).
     Proof.
       intros.
-      rewrite (foldMap_through_runBatch2 A fake).
+      rewrite (mapReduce_through_runBatch2 A fake).
       rewrite runBatch_via_traverse.
       unfold_ops @Map_const.
       unfold compose.
-      rewrite (foldMap_to_traverse2 fake).
+      rewrite (mapReduce_to_traverse2 fake).
       reflexivity.
     Qed.
 
   End runBatch.
 
-End foldMap.
+End mapReduce.
 
 (** * <<foldmap>> Corollary: <<tolist>> *)
 (**********************************************************************)
@@ -495,7 +495,7 @@ End foldMap.
 (** ** Operation <<tolist>> *)
 (**********************************************************************)
 #[export] Instance Tolist_Traverse `{Traverse T}: Tolist T :=
-  fun A => foldMap (ret (T := list)).
+  fun A => mapReduce (ret (T := list)).
 
 Class Compat_Tolist_Traverse
   (T: Type -> Type)
@@ -514,17 +514,17 @@ Lemma tolist_to_traverse
   `{Traverse_T: Traverse T}
   `{! Compat_Tolist_Traverse T}:
   forall (A: Type),
-    tolist = foldMap (ret (T := list) (A := A)).
+    tolist = mapReduce (ret (T := list) (A := A)).
 Proof.
   intros.
   rewrite compat_tolist_traverse.
   reflexivity.
 Qed.
 
-(** ** Relating <<foldMap (T := list)>> to <<foldMap_list>> *)
+(** ** Relating <<mapReduce (T := list)>> to <<mapReduce_list>> *)
 (**********************************************************************)
-Lemma foldMap_eq_foldMap_list `{Monoid M}: forall (A: Type) (f: A -> M),
-    foldMap (T := list) f = foldMap_list f.
+Lemma mapReduce_eq_mapReduce_list `{Monoid M}: forall (A: Type) (f: A -> M),
+    mapReduce (T := list) f = mapReduce_list f.
 Proof.
   intros. ext l. induction l.
   - cbn. reflexivity.
@@ -542,8 +542,8 @@ Lemma Tolist_list_id: forall (A: Type),
 Proof.
   intros.
   unfold_ops @Tolist_Traverse.
-  rewrite foldMap_eq_foldMap_list.
-  rewrite foldMap_list_ret_id.
+  rewrite mapReduce_eq_mapReduce_list.
+  rewrite mapReduce_list_ret_id.
   reflexivity.
 Qed.
 
@@ -562,16 +562,16 @@ Section tolist.
     - apply DerivedInstances.Functor_TraversableFunctor.
     - intros.
       unfold_ops @Tolist_Traverse.
-      rewrite (foldMap_morphism (list A) (list B)).
-      rewrite foldMap_map.
+      rewrite (mapReduce_morphism (list A) (list B)).
+      rewrite mapReduce_map.
       rewrite (natural (ϕ := @ret list _)).
       reflexivity.
   Qed.
 
   (** ** Rewriting <<tolist>> to <<traverse>> *)
   (********************************************************************)
-  Corollary tolist_to_foldMap: forall (A: Type),
-      tolist (F := T) = foldMap (ret (T := list) (A := A)).
+  Corollary tolist_to_mapReduce: forall (A: Type),
+      tolist (F := T) = mapReduce (ret (T := list) (A := A)).
   Proof.
     reflexivity.
   Qed.
@@ -604,8 +604,8 @@ Section tolist.
     {A: Type} (tag: Type) `(t: T A):
     tolist t = tolist (toBatch (A' := tag) t).
   Proof.
-    rewrite (tolist_to_foldMap).
-    rewrite (foldMap_through_toBatch A tag).
+    rewrite (tolist_to_mapReduce).
+    rewrite (mapReduce_through_toBatch A tag).
     reflexivity.
   Qed.
 
@@ -623,17 +623,17 @@ Section tolist.
     reflexivity.
   Qed.
 
-  (** ** Factoring any <<foldMap>> through <<tolist>> *)
+  (** ** Factoring any <<mapReduce>> through <<tolist>> *)
   (********************************************************************)
-  Corollary foldMap_through_tolist
+  Corollary mapReduce_through_tolist
     `{Monoid M}: forall (A: Type) (f: A -> M),
-    foldMap (T := T) f = foldMap (T := list) f ∘ tolist.
+    mapReduce (T := T) f = mapReduce (T := list) f ∘ tolist.
   Proof.
     intros.
-    rewrite tolist_to_foldMap.
-    rewrite foldMap_eq_foldMap_list.
-    rewrite (foldMap_morphism (list A) M).
-    rewrite foldMap_list_ret.
+    rewrite tolist_to_mapReduce.
+    rewrite mapReduce_eq_mapReduce_list.
+    rewrite (mapReduce_morphism (list A) M).
+    rewrite mapReduce_list_ret.
     reflexivity.
   Qed.
 
@@ -646,7 +646,7 @@ End tolist.
 (**********************************************************************)
 #[local] Instance ToSubset_Traverse `{Traverse T}:
   ToSubset T :=
-  fun A => foldMap (ret (T := subset)).
+  fun A => mapReduce (ret (T := subset)).
 
 (** ** Compatibility *)
 (**********************************************************************)
@@ -666,7 +666,7 @@ Lemma tosubset_to_traverse
   `{ToSubset_inst: ToSubset T}
   `{Traverse_inst: Traverse T}
   `{! Compat_ToSubset_Traverse T}:
-  forall (A: Type), tosubset (A := A) = foldMap (ret (T := subset)).
+  forall (A: Type), tosubset (A := A) = mapReduce (ret (T := subset)).
 Proof.
   intros.
   rewrite compat_tosubset_traverse.
@@ -691,18 +691,18 @@ Section elements.
     - apply DerivedInstances.Functor_TraversableFunctor.
     - intros A B f.
       unfold tosubset, ToSubset_Traverse.
-      rewrite (foldMap_morphism (subset A) (subset B)).
-      rewrite foldMap_map.
+      rewrite (mapReduce_morphism (subset A) (subset B)).
+      rewrite mapReduce_map.
       rewrite (natural (ϕ := @ret subset _)).
       reflexivity.
   Qed.
 
-  (** ** Rewriting <<tosubset>> to <<foldMap>> *)
+  (** ** Rewriting <<tosubset>> to <<mapReduce>> *)
   (********************************************************************)
-  Lemma tosubset_to_foldMap `{Compat_ToSubset_Traverse T}:
+  Lemma tosubset_to_mapReduce `{Compat_ToSubset_Traverse T}:
     forall (A: Type),
       @tosubset T _ A =
-        foldMap (ret (T := subset)) (A := A).
+        mapReduce (ret (T := subset)) (A := A).
   Proof.
     rewrite compat_tosubset_traverse.
     reflexivity.
@@ -715,8 +715,8 @@ Section elements.
         tosubset (F := list) ∘ tolist (A := A).
   Proof.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_through_tolist.
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_through_tolist.
     ext t. unfold compose; induction (tolist t).
     - reflexivity.
     - cbn. rewrite IHl.
@@ -724,21 +724,21 @@ Section elements.
       now simpl_subset.
   Qed.
 
-  (** ** Rewriting <<a ∈ t>> to <<foldMap>> *)
+  (** ** Rewriting <<a ∈ t>> to <<mapReduce>> *)
   (********************************************************************)
-  Lemma element_of_to_foldMap:
+  Lemma element_of_to_mapReduce:
     forall (A: Type) (a: A),
       element_of a =
-        foldMap (op := Monoid_op_or)
+        mapReduce (op := Monoid_op_or)
           (unit := Monoid_unit_false) {{a}}.
   Proof.
     intros.
     unfold element_of.
-    rewrite tosubset_to_foldMap.
+    rewrite tosubset_to_mapReduce.
     ext t.
-    change_left (evalAt a (foldMap (ret (T := subset)) t)).
+    change_left (evalAt a (mapReduce (ret (T := subset)) t)).
     compose near t on left.
-    rewrite (foldMap_morphism
+    rewrite (mapReduce_morphism
                (subset A) Prop (ϕ := evalAt a)
                (ret (T := subset))).
     fequal. ext b. cbv. now propext.
@@ -782,8 +782,8 @@ Section elements.
           toBatch (A' := False).
   Proof.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_through_runBatch1.
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_through_runBatch1.
     reflexivity.
   Qed.
 
@@ -797,8 +797,8 @@ Section elements.
           toBatch (A' := tag).
   Proof.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite (foldMap_through_runBatch2 A tag).
+    rewrite tosubset_to_mapReduce.
+    rewrite (mapReduce_through_runBatch2 A tag).
     reflexivity.
   Qed.
 
@@ -815,7 +815,7 @@ Proof.
   unfold_ops @ToSubset_Tolist.
   unfold_ops @Tolist_Traverse.
   ext A.
-  rewrite (foldMap_morphism (list A) (subset A)
+  rewrite (mapReduce_morphism (list A) (subset A)
              (ϕ := @tosubset list ToSubset_list A)).
   rewrite tosubset_list_hom1.
   reflexivity.
@@ -833,10 +833,10 @@ Section quantification.
   (** ** Operations <<Forall>> and <<Forany>> *)
   (********************************************************************)
   Definition Forall `(P: A -> Prop): T A -> Prop :=
-    @foldMap T _ Prop Monoid_op_and Monoid_unit_true A P.
+    @mapReduce T _ Prop Monoid_op_and Monoid_unit_true A P.
 
   Definition Forany `(P: A -> Prop): T A -> Prop :=
-    @foldMap T _ Prop Monoid_op_or Monoid_unit_false A P.
+    @mapReduce T _ Prop Monoid_op_or Monoid_unit_false A P.
 
   (** ** Specification via <<element_of>> *)
   (********************************************************************)
@@ -844,10 +844,10 @@ Section quantification.
     Forall P t <-> forall (a: A), a ∈ t -> P a.
   Proof.
     unfold Forall.
-    rewrite foldMap_through_tolist.
+    rewrite mapReduce_through_tolist.
     unfold compose at 1.
     setoid_rewrite in_iff_in_tolist.
-    rewrite foldMap_eq_foldMap_list.
+    rewrite mapReduce_eq_mapReduce_list.
     induction (tolist t).
     - simpl_list.
       unfold_ops @Monoid_unit_true.
@@ -867,12 +867,12 @@ Section quantification.
     Forany P t <-> exists (a: A), a ∈ t /\ P a.
   Proof.
     unfold Forany.
-    rewrite foldMap_through_tolist.
-    rewrite foldMap_eq_foldMap_list.
+    rewrite mapReduce_through_tolist.
+    rewrite mapReduce_eq_mapReduce_list.
     unfold compose at 1.
     setoid_rewrite in_iff_in_tolist.
     induction (tolist t).
-    - rewrite foldMap_list_nil.
+    - rewrite mapReduce_list_nil.
       unfold_ops @Monoid_unit_false.
       setoid_rewrite element_of_list_nil.
       firstorder.
@@ -898,7 +898,7 @@ End quantification.
 From Tealeaves Require Import Misc.NaturalNumbers.
 
 Definition plength `{Traverse T}: forall {A}, T A -> nat :=
-  fun A => foldMap (fun _ => 1).
+  fun A => mapReduce (fun _ => 1).
 
 (** ** <<plength>> of a <<list>> *)
 (**********************************************************************)
@@ -919,7 +919,7 @@ Lemma plength_through_tolist `{TraversableFunctor T}:
 Proof.
   intros.
   unfold plength.
-  rewrite foldMap_through_tolist.
+  rewrite mapReduce_through_tolist.
   unfold compose at 1.
   rewrite <- list_plength_length.
   reflexivity.
@@ -945,7 +945,7 @@ Section naturality_plength.
     intros.
     compose near t on left.
     unfold plength.
-    rewrite (foldMap_map).
+    rewrite (mapReduce_map).
     reflexivity.
   Qed.
 
@@ -975,77 +975,77 @@ Section naturality_plength.
 
 End naturality_plength.
 
-(** * <<foldMap>> by a Commutative Monoid *)
+(** * <<mapReduce>> by a Commutative Monoid *)
 (**********************************************************************)
-Section foldMap_commutative_monoid.
+Section mapReduce_commutative_monoid.
 
   Import List.ListNotations.
 
-  #[local] Arguments foldMap {T}%function_scope {H} {M}%type_scope
+  #[local] Arguments mapReduce {T}%function_scope {H} {M}%type_scope
     (op) {unit} {A}%type_scope f%function_scope _.
 
-  Lemma foldMap_opposite_list
+  Lemma mapReduce_opposite_list
     `{unit: Monoid_unit M}
     `{op: Monoid_op M}
     `{! Monoid M} {A}: forall (f: A -> M) (l: list A),
-      foldMap op f l = foldMap (Monoid_op_Opposite op) f (List.rev l).
+      mapReduce op f l = mapReduce (Monoid_op_Opposite op) f (List.rev l).
   Proof.
     intros.
-    do 2 rewrite foldMap_eq_foldMap_list.
+    do 2 rewrite mapReduce_eq_mapReduce_list.
     induction l.
     - reflexivity.
-    - rewrite foldMap_list_cons.
+    - rewrite mapReduce_list_cons.
       change (List.rev (a :: l)) with (List.rev l ++ [a]).
-      rewrite foldMap_list_app.
+      rewrite mapReduce_list_app.
       rewrite IHl.
       unfold_ops @Monoid_op_Opposite.
-      rewrite foldMap_list_one.
+      rewrite mapReduce_list_one.
       reflexivity.
   Qed.
 
-  Lemma foldMap_comm_list
+  Lemma mapReduce_comm_list
     `{unit: Monoid_unit M}
     `{op: Monoid_op M}
     `{! Monoid M}
     {A: Type}
     `{comm: ! CommutativeMonoidOp op}
 : forall (f: A -> M) (l: list A),
-      foldMap op f l = foldMap op f (List.rev l).
+      mapReduce op f l = mapReduce op f (List.rev l).
   Proof.
     intros.
     induction l.
     - reflexivity.
-    - rewrite foldMap_eq_foldMap_list.
-      rewrite foldMap_list_cons.
+    - rewrite mapReduce_eq_mapReduce_list.
+      rewrite mapReduce_list_cons.
       rewrite (comm_mon_swap (f a)).
       change (List.rev (a :: l)) with (List.rev l ++ [a]).
-      rewrite foldMap_list_app.
-      rewrite foldMap_list_one.
-      rewrite <- foldMap_eq_foldMap_list.
+      rewrite mapReduce_list_app.
+      rewrite mapReduce_list_one.
+      rewrite <- mapReduce_eq_mapReduce_list.
       rewrite IHl.
       reflexivity.
   Qed.
 
-  Lemma foldMap_comm
+  Lemma mapReduce_comm
     `{unit: Monoid_unit M}
     `{op: Monoid_op M}
     `{! Monoid M}
     `{comm: ! CommutativeMonoidOp op}
     `{TraversableFunctor T} {A: Type}:
     forall (f: A -> M) (t: T A),
-      foldMap op f t =
-        foldMap (Monoid_op_Opposite op) f t.
+      mapReduce op f t =
+        mapReduce (Monoid_op_Opposite op) f t.
   Proof.
     intros.
-    rewrite (foldMap_through_tolist _ f).
-    rewrite (foldMap_through_tolist (op := Monoid_op_Opposite op)).
+    rewrite (mapReduce_through_tolist _ f).
+    rewrite (mapReduce_through_tolist (op := Monoid_op_Opposite op)).
     unfold compose.
-    rewrite foldMap_opposite_list.
-    rewrite <- foldMap_comm_list.
+    rewrite mapReduce_opposite_list.
+    rewrite <- mapReduce_comm_list.
     reflexivity.
   Qed.
 
-End foldMap_commutative_monoid.
+End mapReduce_commutative_monoid.
 
 (** * Notations *)
 (**********************************************************************)

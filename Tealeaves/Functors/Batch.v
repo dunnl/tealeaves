@@ -23,119 +23,119 @@ Import VectorRefinement.Notations.
 #[local] Arguments pure F%function_scope {Pure} {A}%type_scope _.
 #[local] Arguments mult F%function_scope {Mult} {A B}%type_scope _.
 
-(** * <<foldMap>> Rewriting Lemmas *)
+(** * <<mapReduce>> Rewriting Lemmas *)
 (******************************************************************************)
-Section Batch_foldMap_rewriting.
+Section Batch_mapReduce_rewriting.
 
   Context {A B C: Type}.
 
-  Lemma foldMap_Batch_rw2:
+  Lemma mapReduce_Batch_rw2:
     forall `{Monoid M}
       (f: A -> M) (a: A) (rest: Batch A B (B -> C)),
-      foldMap (T := BATCH1 B C) f (rest ⧆ a) =
-        foldMap f rest ● f a.
+      mapReduce (T := BATCH1 B C) f (rest ⧆ a) =
+        mapReduce f rest ● f a.
   Proof.
     intros.
-    unfold foldMap.
+    unfold mapReduce.
     rewrite traverse_Batch_rw2.
     reflexivity.
   Qed.
 
-End Batch_foldMap_rewriting.
+End Batch_mapReduce_rewriting.
 
-(** ** <<foldMap>> Rewriting for << <⋆> >> *)
+(** ** <<mapReduce>> Rewriting for << <⋆> >> *)
 (******************************************************************************)
-Lemma foldMap_Batch_map {A B C C': Type}:
+Lemma mapReduce_Batch_map {A B C C': Type}:
   forall `{Monoid M}
     (f: A -> M)
     (g: C -> C')
     (b: Batch A B C),
-    foldMap (T := BATCH1 B C) f b =
-      foldMap (T := BATCH1 B C') f (map (Batch A B) g b).
+    mapReduce (T := BATCH1 B C) f b =
+      mapReduce (T := BATCH1 B C') f (map (Batch A B) g b).
 Proof.
   intros.
   generalize dependent C'.
   induction b; intros.
   - reflexivity.
-  - rewrite foldMap_Batch_rw2.
+  - rewrite mapReduce_Batch_rw2.
     rewrite map_Batch_rw2.
-    rewrite foldMap_Batch_rw2.
+    rewrite mapReduce_Batch_rw2.
     specialize (IHb _ (compose g)).
     rewrite IHb.
     reflexivity.
 Qed.
 
-Lemma foldMap_Batch_mult_Done {A B C D: Type}
+Lemma mapReduce_Batch_mult_Done {A B C D: Type}
   `{Monoid M}(f: A -> M):
   forall (c: C) (b2: Batch A B D),
-    foldMap (T := BATCH1 B (C * D))
-      f (Done c ⊗ b2) = foldMap f b2.
+    mapReduce (T := BATCH1 B (C * D))
+      f (Done c ⊗ b2) = mapReduce f b2.
 Proof.
   intros.
   induction b2.
   - reflexivity.
-  - rewrite foldMap_Batch_rw2.
+  - rewrite mapReduce_Batch_rw2.
     rewrite <- IHb2.
     cbn.
     unfold_ops @Pure_const.
     rewrite monoid_id_l.
     change (Traverse_Batch1 B (B -> C * C0) (const M) Map_const
               (fun (X : Type) (_ : X) => Ƶ) Mult_const A False f)
-      with (foldMap (T := BATCH1 B (B -> C * C0)) f).
-    rewrite <- foldMap_Batch_map.
+      with (mapReduce (T := BATCH1 B (B -> C * C0)) f).
+    rewrite <- mapReduce_Batch_map.
     reflexivity.
 Qed.
 
-Lemma foldMap_Batch_mult {A B C D: Type}
+Lemma mapReduce_Batch_mult {A B C D: Type}
   `{Monoid M}(f: A -> M):
   forall (b1: Batch A B C) (b2: Batch A B D),
-    foldMap (T := BATCH1 B (C * D))
+    mapReduce (T := BATCH1 B (C * D))
       f (b1 ⊗ b2) =
-      foldMap f b1 ● foldMap f b2.
+      mapReduce f b1 ● mapReduce f b2.
 Proof.
   intros.
   induction b2.
   - cbn.
-    rewrite <- foldMap_Batch_map.
+    rewrite <- mapReduce_Batch_map.
     unfold_ops @Pure_const.
     rewrite monoid_id_r.
     reflexivity.
-  - rewrite foldMap_Batch_rw2.
+  - rewrite mapReduce_Batch_rw2.
     rewrite <- monoid_assoc.
     rewrite <- IHb2; clear IHb2.
     induction b1.
-    + rewrite foldMap_Batch_mult_Done.
-      rewrite foldMap_Batch_mult_Done.
-      rewrite foldMap_Batch_rw2.
+    + rewrite mapReduce_Batch_mult_Done.
+      rewrite mapReduce_Batch_mult_Done.
+      rewrite mapReduce_Batch_rw2.
       reflexivity.
     + cbn.
       unfold_ops @Pure_const.
       rewrite monoid_id_l.
       change (Traverse_Batch1 B (B -> C * C0) (const M) Map_const
                 (fun (X : Type) (_ : X) => Ƶ) Mult_const A False f)
-        with (foldMap (T := BATCH1 B (B -> C * C0)) f).
-      rewrite <- foldMap_Batch_map.
+        with (mapReduce (T := BATCH1 B (B -> C * C0)) f).
+      rewrite <- mapReduce_Batch_map.
       reflexivity.
 Qed.
 
-Lemma foldMap_Batch_ap_rw2 {A B: Type}:
+Lemma mapReduce_Batch_ap_rw2 {A B: Type}:
   forall `{Monoid M}
     (f: A -> M)
     {X Y: Type}
     (lhs: Batch A B (X -> Y))
     (rhs: Batch A B X),
-    foldMap (T := BATCH1 B Y) f (lhs <⋆> rhs) =
-      foldMap (T := BATCH1 B (X -> Y)) f lhs
-        ● foldMap (T := BATCH1 B X) f rhs.
+    mapReduce (T := BATCH1 B Y) f (lhs <⋆> rhs) =
+      mapReduce (T := BATCH1 B (X -> Y)) f lhs
+        ● mapReduce (T := BATCH1 B X) f rhs.
 Proof.
   intros.
   unfold ap.
-  rewrite <- foldMap_Batch_map.
-  rewrite foldMap_Batch_mult.
+  rewrite <- mapReduce_Batch_map.
+  rewrite mapReduce_Batch_mult.
   reflexivity.
 Qed.
 
-Section Batch_foldMap_rewriting_derived.
+Section Batch_mapReduce_rewriting_derived.
 
   Context {A B C: Type}.
 
@@ -160,8 +160,8 @@ Section Batch_foldMap_rewriting_derived.
       tosubset (b ⧆ a) = tosubset b ∪ {{a}}.
   Proof.
     intros.
-    rewrite tosubset_to_foldMap.
-    rewrite foldMap_Batch_rw2.
+    rewrite tosubset_to_mapReduce.
+    rewrite mapReduce_Batch_rw2.
     reflexivity.
   Qed.
 
@@ -173,13 +173,13 @@ Section Batch_foldMap_rewriting_derived.
       a' ∈ (b ⧆ a) = (a' ∈ b \/ a' = a).
   Proof.
     intros.
-    rewrite element_of_to_foldMap.
-    rewrite element_of_to_foldMap.
-    rewrite foldMap_Batch_rw2.
+    rewrite element_of_to_mapReduce.
+    rewrite element_of_to_mapReduce.
+    rewrite mapReduce_Batch_rw2.
     reflexivity.
   Qed.
 
-End Batch_foldMap_rewriting_derived.
+End Batch_mapReduce_rewriting_derived.
 
 (** * Simultaneous Induction on Two <<Batch>>es of the Same Shape *)
 (******************************************************************************)
@@ -650,8 +650,8 @@ Section deconstruction.
       intros.
       unfold Vector_sim.
       rewrite tolist_Batch_contents.
-      rewrite tolist_to_foldMap.
-      rewrite foldMap_Batch_mult.
+      rewrite tolist_to_mapReduce.
+      rewrite mapReduce_Batch_mult.
       unfold_ops @Monoid_op_list.
       rewrite List.rev_app_distr.
       rewrite proj_Vector_append.
@@ -668,9 +668,9 @@ Section deconstruction.
       intros.
       unfold Vector_sim.
       rewrite tolist_Batch_contents.
-      rewrite tolist_to_foldMap.
+      rewrite tolist_to_mapReduce.
       rewrite proj_Vector_append.
-      rewrite foldMap_Batch_ap_rw2.
+      rewrite mapReduce_Batch_ap_rw2.
       unfold_ops @Monoid_op_list.
       rewrite List.rev_app_distr.
       rewrite tolist_Batch_contents.

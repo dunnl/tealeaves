@@ -176,7 +176,7 @@ Section lifting_relations.
     intros.
     unfold Forall.
     unfold same_shape_zip.
-    rewrite foldMap_trav_make.
+    rewrite mapReduce_trav_make.
     rewrite Monoid_op_Opposite_and.
     unfold same_shape_zip_contents.
     unfold Vector_zip.
@@ -189,16 +189,16 @@ Section lifting_relations.
     assumption.
   Qed.
 
-  Lemma foldMap_same_shape_zip `{Monoid M}:
+  Lemma mapReduce_same_shape_zip `{Monoid M}:
     forall (A B: Type) (f: A * B -> M) (t: T A) (u: T B)
       (Hshape: shape (H := H) t = shape u),
-      foldMap (T := T) f (same_shape_zip t u Hshape) =
-        foldMap (op := Monoid_op_Opposite op) (T := Vector (plength t))
+      mapReduce (T := T) f (same_shape_zip t u Hshape) =
+        mapReduce (op := Monoid_op_Opposite op) (T := Vector (plength t))
           f (same_shape_zip_contents t u Hshape).
   Proof.
     intros.
     unfold same_shape_zip.
-    rewrite foldMap_trav_make.
+    rewrite mapReduce_trav_make.
     reflexivity.
   Qed.
 
@@ -228,7 +228,7 @@ Section lifting_relations.
         unfold same_shape_zip_contents in Hzip.
         unfold Vector_zip in Hzip.
         unfold Forall in Hzip.
-        rewrite foldMap_trav_make in Hzip.
+        rewrite mapReduce_trav_make in Hzip.
         rewrite Monoid_op_Opposite_and in Hzip.
         rewrite <- (traverse_zipped_vector
                      (R := R) (plength t) (trav_contents t)
@@ -268,11 +268,11 @@ Section lifting_relations.
   Proof.
     intros.
     unfold Forall.
-    rewrite foldMap_same_shape_zip.
-    rewrite foldMap_same_shape_zip.
+    rewrite mapReduce_same_shape_zip.
+    rewrite mapReduce_same_shape_zip.
     rewrite natural_snd_same_shape_zip_contents_rev.
     compose near (same_shape_zip_contents t u (same_shape_map_rev_r t u f Hshape)).
-    rewrite (foldMap_map).
+    rewrite (mapReduce_map).
     fequal.
     - ext [x y]. reflexivity.
     - apply same_shape_zip_contents_proof_irrelevance.
@@ -332,15 +332,15 @@ Section lifting_relations.
     rewrite traverse_through_runBatch.
     unfold compose.
     unfold element_of in hyp.
-    rewrite tosubset_to_foldMap in hyp.
+    rewrite tosubset_to_mapReduce in hyp.
     change t with (id t) at 2.
     rewrite id_through_runBatch.
     unfold compose.
-    rewrite (foldMap_through_toBatch A A) in hyp.
+    rewrite (mapReduce_through_toBatch A A) in hyp.
     (* induction (@toBatch T ToBatch_inst A A t). *) (* Generates a weird hypothesis *)
     apply (Batch_ind A A
       (fun (C: Type) (b: Batch A A C) =>
-           (forall a: A, foldMap (T := BATCH1 A C) (ret (T := subset)) b a -> R (f a) (g a)) ->
+           (forall a: A, mapReduce (T := BATCH1 A C) (ret (T := subset)) b a -> R (f a) (g a)) ->
            runBatch (G := subset) (fun a: A => precompose g (R (map f a))) b (runBatch id b))).
     - intros C c hyp'.
       reflexivity.
@@ -361,7 +361,7 @@ Section lifting_relations.
       { apply IH.
         intros.
         apply hyp'.
-        rewrite foldMap_Batch_rw2.
+        rewrite mapReduce_Batch_rw2.
         now left.
       }
       { reflexivity. }
@@ -396,7 +396,7 @@ Section relprop.
   Proof.
     introv HF.
     unfold Forall in HF.
-    rewrite (foldMap_to_traverse2 A) in HF.
+    rewrite (mapReduce_to_traverse2 A) in HF.
     unfold lift_relation.
     rewrite traverse_through_runBatch in HF.
     rewrite traverse_through_runBatch.
@@ -436,15 +436,15 @@ Section relprop.
   Proof.
     unfold Forall.
     intros.
-    rewrite foldMap_to_traverse1.
+    rewrite mapReduce_to_traverse1.
     rewrite traverse_repr.
     induction (trav_contents t) using Vector_induction.
     - cbn.
       reflexivity.
     - rewrite traverse_Vector_vcons.
-      rewrite foldMap_to_traverse1.
+      rewrite mapReduce_to_traverse1.
       rewrite traverse_Vector_vcons.
-      rewrite <- foldMap_to_traverse1.
+      rewrite <- mapReduce_to_traverse1.
       cbn.
       rewrite <- IHv.
       cbn.
@@ -472,9 +472,9 @@ Section relprop.
     rewrite Vector_zip_proof_irrelevance2.
     rewrite Vector_zip_diagonal.
     unfold Forall.
-    rewrite foldMap_trav_make.
+    rewrite mapReduce_trav_make.
     compose near (trav_contents t).
-    rewrite foldMap_map.
+    rewrite mapReduce_map.
     unfold compose.
     intro.
     change (Forall (fun a => R a a) t).
@@ -482,11 +482,11 @@ Section relprop.
     unfold uncurry in X2.
     induction (trav_contents t) using Vector_induction.
     - unfold Forall.
-      rewrite foldMap_Vector_vnil.
+      rewrite mapReduce_Vector_vnil.
       easy.
     - unfold Forall.
-      rewrite foldMap_Vector_vcons.
-      rewrite foldMap_Vector_vcons in X2.
+      rewrite mapReduce_Vector_vcons.
+      rewrite mapReduce_Vector_vcons in X2.
       inversion X2.
       split.
       + assumption.

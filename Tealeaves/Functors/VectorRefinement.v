@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Classes.Categorical.Applicative
   Classes.Kleisli.TraversableFunctor
-  Classes.Kleisli.Theory.TraversableFunctor (* foldMap *)
+  Classes.Kleisli.Theory.TraversableFunctor (* mapReduce *)
   Functors.List.
 
 From Coq Require Import
@@ -1246,24 +1246,24 @@ Qed.
 
 (** *** Rewriting rules for foldmap *)
 (******************************************************************************)
-Lemma foldMap_Vector_vnil:
+Lemma mapReduce_Vector_vnil:
   forall (M : Type) `{Monoid_op M} `{Monoid_unit M}
     {A : Type} (f : A -> M) (v: Vector 0 A),
-    foldMap f v = Ƶ.
+    mapReduce f v = Ƶ.
 Proof.
   intros.
   rewrite (Vector_nil_eq v).
   reflexivity.
 Qed.
 
-Lemma foldMap_Vector_vcons:
+Lemma mapReduce_Vector_vcons:
   forall {M: Type} `{op: Monoid_op M} `{unit: Monoid_unit M}
     `{! Monoid M}
     (n : nat) {A : Type} (f : A -> M) (v : Vector n A) (a : A),
-    foldMap f (vcons n a v) = f a ● foldMap f v.
+    mapReduce f (vcons n a v) = f a ● mapReduce f v.
 Proof.
   intros.
-  unfold foldMap.
+  unfold mapReduce.
   rewrite traverse_Vector_vcons.
   unfold_ops @Pure_const.
   unfold_ops @Map_const.
@@ -1280,7 +1280,7 @@ Proof.
   induction v using Vector_induction.
   - reflexivity.
   - unfold plength.
-    rewrite (foldMap_Vector_vcons).
+    rewrite (mapReduce_Vector_vcons).
     auto.
 Qed.
 
@@ -1291,13 +1291,13 @@ Lemma Vector_to_list_tolist {A}: forall (n: nat) (v: Vector n A),
     Vector_to_list _ v = tolist v.
 Proof.
   intros.
-  rewrite tolist_to_foldMap.
+  rewrite tolist_to_mapReduce.
   induction v using Vector_induction.
   - rewrite Vector_to_list_vnil.
-    rewrite foldMap_Vector_vnil.
+    rewrite mapReduce_Vector_vnil.
     reflexivity.
   - rewrite Vector_to_list_vcons.
-    rewrite foldMap_Vector_vcons.
+    rewrite mapReduce_Vector_vcons.
     rewrite IHv.
     reflexivity.
 Qed.
@@ -1663,7 +1663,7 @@ Proof.
   change_left (tosubset v).
   induction v using Vector_induction.
   - reflexivity.
-  - rewrite foldMap_Vector_vcons;
+  - rewrite mapReduce_Vector_vcons;
       try typeclasses eauto.
     rewrite tosubset_Vector_vcons.
     rewrite IHv.
@@ -1969,7 +1969,7 @@ Section traverse_zipped_vector.
     {A B: Type} {R: A -> B -> Prop}:
     forall (n: nat) (v1: Vector n A) (v2: Vector n B),
       traverse R v1 v2 =
-        foldMap (uncurry R)
+        mapReduce (uncurry R)
           (Vector_zip_eq v1 v2).
   Proof.
     intros.
@@ -1978,14 +1978,14 @@ Section traverse_zipped_vector.
       rewrite (Vector_nil_eq v2).
       rewrite Vector_zip_eq_vnil.
       rewrite traverse_Vector_vnil.
-      rewrite foldMap_Vector_vnil.
+      rewrite mapReduce_Vector_vnil.
       unfold_ops @Pure_subset @Monoid_unit_true.
       now propext.
     - rewrite (Vector_surjective_pairing2 (v := v1)).
       rewrite (Vector_surjective_pairing2 (v := v2)).
       rewrite traverse_Vector_vcons.
       rewrite Vector_zip_eq_vcons.
-      rewrite foldMap_Vector_vcons.
+      rewrite mapReduce_Vector_vcons.
       unfold_ops @Monoid_op_and.
       unfold uncurry at 1.
       rewrite subset_ap_spec.
@@ -2018,13 +2018,13 @@ Section traverse_zipped_vector.
   Corollary traverse_zipped_diagonal {A R}:
     forall (n: nat) (v: Vector n A),
       traverse R v v =
-        foldMap (fun a => R a a) v.
+        mapReduce (fun a => R a a) v.
   Proof.
     intros.
     rewrite traverse_zipped_vector.
     rewrite Vector_zip_diagonal.
     compose near v on left.
-    rewrite (foldMap_map).
+    rewrite (mapReduce_map).
     reflexivity.
   Qed.
 
@@ -2179,7 +2179,7 @@ Lemma Forall_zip_spec:
   forall (A B: Type) (n: nat) (R: A -> B -> Prop)
     (v1: Vector n A) (v2: Vector n B),
     traverse (G := subset) (T := Vector n) R v1 v2 =
-      foldMap (M := Prop)
+      mapReduce (M := Prop)
         (op := Monoid_op_and) (unit := Monoid_unit_true)
         (uncurry R) (Vector_zip_eq v1 v2).
 Proof.
@@ -2192,7 +2192,7 @@ Proof.
     rewrite (Vector_surjective_pairing2 (v := v2)).
     rewrite Vector_zip_eq_vcons.
     rewrite traverse_Vector_vcons.
-    rewrite foldMap_Vector_vcons.
+    rewrite mapReduce_Vector_vcons.
     rewrite subset_ap_spec.
     propext.
     + intros [f_vcons [a_hdv2 [hyp1 [hyp2 hyp3]]]].
