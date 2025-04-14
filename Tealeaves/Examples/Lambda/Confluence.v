@@ -23,30 +23,30 @@ Fixpoint binddt_lam (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
   | app t1 t2 => pure (@app v2) <⋆> binddt_lam f t1 <⋆> binddt_lam f t2
   end.
 
-#[export] Instance Return_STLC: Return lam := tvar.
-#[export] Instance Binddt_STLC: Binddt nat lam lam := @binddt_lam.
-#[export] Instance DTM_STLC: DecoratedTraversableMonad nat lam.
+#[export] Instance Return_Lam: Return lam := tvar.
+#[export] Instance Binddt_Lam: Binddt nat lam lam := @binddt_lam.
+#[export] Instance DTM_Lam: DecoratedTraversableMonad nat lam.
 Proof.
   derive_dtm.
 Qed.
 
-#[export] Instance Map_STLC: Map lam
+#[export] Instance Map_Lam: Map lam
   := DerivedOperations.Map_Binddt nat lam lam.
-#[export] Instance Mapd_STLC: Mapd nat lam
+#[export] Instance Mapd_Lam: Mapd nat lam
   := DerivedOperations.Mapd_Binddt nat lam lam.
-#[export] Instance Traverse_STLC: Traverse lam
+#[export] Instance Traverse_Lam: Traverse lam
   := DerivedOperations.Traverse_Binddt nat lam lam.
-#[export] Instance Mapdt_STLC: Mapdt nat lam
+#[export] Instance Mapdt_Lam: Mapdt nat lam
   := DerivedOperations.Mapdt_Binddt nat lam lam.
-#[export] Instance Bind_STLC: Bind lam lam
+#[export] Instance Bind_Lam: Bind lam lam
   := DerivedOperations.Bind_Binddt nat lam lam.
-#[export] Instance Bindd_STLC: Bindd nat lam lam
+#[export] Instance Bindd_Lam: Bindd nat lam lam
   := DerivedOperations.Bindd_Binddt nat lam lam.
-#[export] Instance Bindt_STLC: Bindt lam lam
+#[export] Instance Bindt_Lam: Bindt lam lam
   := DerivedOperations.Bindt_Binddt nat lam lam.
-#[export] Instance ToSubset_STLC: ToSubset lam
+#[export] Instance ToSubset_Lam: ToSubset lam
   := ToSubset_Traverse.
-#[export] Instance ToBatch_STLC: ToBatch lam
+#[export] Instance ToBatch_Lam: ToBatch lam
   := DerivedOperations.ToBatch_Traverse.
 
 Import Notations.
