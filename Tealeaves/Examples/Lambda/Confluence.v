@@ -30,6 +30,91 @@ Proof.
   derive_dtm.
 Qed.
 
+#[export] Instance DTM_Lam_Explicit: DecoratedTraversableMonad nat lam.
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - intros.
+    reflexivity.
+  - constructor.
+    + intros. ext t.
+      induction t as [v | t | t1 IHt1 t2 IHt2 ].
+      * reflexivity.
+      * cbn.
+        unfold id.
+        simplify_applicative_I.
+        rewrite extract_preincr2.
+        rewrite IHt.
+        reflexivity.
+      * cbn.
+        unfold id.
+        simplify_applicative_I.
+        rewrite IHt1.
+        rewrite IHt2.
+        reflexivity.
+    + intros. ext t.
+      unfold compose.
+      generalize dependent f.
+      generalize dependent g.
+      induction t as [v | t | t1 IHt1 t2 IHt2 ]; intros g f.
+      * cbn.
+        change (0: nat) with (Ƶ: nat).
+        rewrite preincr_zero.
+        reflexivity.
+      * cbn.
+        (* LHS *)
+        rewrite map_ap.
+        rewrite app_pure_natural.
+        (* RHS *)
+        unfold_ops @Pure_compose.
+        rewrite (ap_compose2 G2 G1).
+        rewrite app_pure_natural.
+        rewrite <- kc7_preincr.
+        rewrite <- IHt.
+        rewrite <- ap_map.
+        rewrite app_pure_natural.
+        reflexivity.
+      * cbn.
+        (* LHS *)
+        rewrite map_ap.
+        rewrite map_ap.
+        rewrite app_pure_natural.
+        (* RHS *)
+        (* IHt1 *)
+        rewrite <- IHt1.
+        unfold_ops @Pure_compose.
+        rewrite (ap_compose2 G2 G1 _ (map (binddt g) (binddt f t1))).
+        rewrite app_pure_natural.
+        rewrite <- ap_map.
+        rewrite app_pure_natural.
+        (* IHt2 *)
+        rewrite (ap_compose2 G2 G1).
+        rewrite <- IHt2.
+        rewrite map_ap.
+        rewrite app_pure_natural.
+        rewrite <- ap_map.
+        rewrite map_ap.
+        rewrite app_pure_natural.
+        reflexivity.
+    + intros. ext t.
+      unfold compose.
+      generalize dependent f.
+      induction t as [v | t | t1 IHt1 t2 IHt2 ]; intro f.
+      * reflexivity.
+      * cbn.
+        rewrite ap_morphism_1.
+        rewrite appmor_pure.
+        rewrite IHt.
+        reflexivity.
+      * cbn.
+        rewrite ap_morphism_1.
+        rewrite ap_morphism_1.
+        rewrite appmor_pure.
+        rewrite IHt1.
+        rewrite IHt2.
+        reflexivity.
+Qed.
+
 #[export] Instance Map_Lam: Map lam
   := DerivedOperations.Map_Binddt nat lam lam.
 #[export] Instance Mapd_Lam: Mapd nat lam
