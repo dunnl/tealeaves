@@ -28,6 +28,7 @@ Fixpoint binddt_term
   (t : term v1) : G (term v2) :=
   match t with
   | tvar v => f (0, v)
+  | abs body => pure (@abs v2) <⋆> binddt_term (f ⦿ 1) body
   | letin defs body =>
       pure (@letin v2) <⋆>
         ((fix F ls :=
@@ -79,7 +80,14 @@ Section rewriting.
       reflexivity.
     Qed.
 
-    Lemma binddt_term_rw2: forall (l : list (term v1)) (body: term v1),
+    Lemma binddt_term_rw2: forall (t: term v1),
+        binddt f (abs t) =
+          pure (@abs v2) <⋆> binddt (f ⦿ 1) t.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma binddt_term_rw3: forall (l : list (term v1)) (body: term v1),
         binddt f (letin l body) =
           pure (@letin v2) <⋆> traverse (binddt f) l <⋆>
             binddt (f ⦿ length l) body.
@@ -97,7 +105,7 @@ Section rewriting.
         reflexivity.
     Qed.
 
-    Lemma binddt_term_rw3: forall (t1 t2: term v1),
+    Lemma binddt_term_rw4: forall (t1 t2: term v1),
         binddt f (app t1 t2) =
           pure (@app v2) <⋆> binddt f t1 <⋆> binddt f t2.
     Proof.
@@ -123,7 +131,7 @@ Section rewriting.
       intros l.
       ext body.
       unfold precompose, compose.
-      rewrite binddt_term_rw2.
+      rewrite binddt_term_rw3.
       reflexivity.
     Qed.
 
@@ -136,7 +144,7 @@ Section rewriting.
       intros A l.
       ext l' body.
       unfold precompose, compose.
-      rewrite binddt_term_rw2.
+      rewrite binddt_term_rw3.
       do 2 rewrite <- list_plength_length.
       rewrite <- plength_trav_make.
       reflexivity.
@@ -151,10 +159,12 @@ Ltac simplify_binddt_letin :=
   match goal with
   | |- context[binddt ?f (tvar ?y)] =>
       rewrite binddt_term_rw1
-  | |- context[((binddt ?f) (letin ?l ?body))] =>
+  | |- context[((binddt ?f) (abs ?body))] =>
       rewrite binddt_term_rw2
-  | |- context[((binddt ?f) (app ?t1 ?t2))] =>
+  | |- context[((binddt ?f) (letin ?l ?body))] =>
       rewrite binddt_term_rw3
+  | |- context[((binddt ?f) (app ?t1 ?t2))] =>
+      rewrite binddt_term_rw4
   end.
 
 Ltac cbn_binddt ::=
@@ -177,7 +187,6 @@ Theorem dtm2_term : forall A : Type,
     binddt (T := term) (U := term)
       (G := fun A => A) (ret (T := term) ∘ extract (W := (nat ×))) = @id (term A).
 Proof.
-  intros.
   derive_dtm2.
   apply traverse_respectful_id; auto.
 Qed.
@@ -190,7 +199,7 @@ Proof.
   intros.
   derive_dtm3.
   (* TODO investigate how to stop ^^^ from unfold Pure_compose in traverse *)
-  binddt_typeclass_normalize.
+  progress binddt_typeclass_normalize.
   (* ^ Hence necessity to repair the damage so rewrite <- IHdefs' works below *)
   { (* left hand side *)
     rewrite traverse_repr at 1.
@@ -221,7 +230,9 @@ Proof.
 Qed.
 
 Theorem dtm4_term :
-  forall (G1 G2 : Type -> Type) (H1 : Map G1) (H2 : Mult G1) (H3 : Pure G1) (H4 : Map G2) (H5 : Mult G2) (H6 : Pure G2)
+  forall (G1 G2 : Type -> Type)
+    (H1 : Map G1) (H2 : Mult G1) (H3 : Pure G1)
+    (H4 : Map G2) (H5 : Mult G2) (H6 : Pure G2)
     (ϕ : forall A : Type, G1 A -> G2 A),
     ApplicativeMorphism G1 G2 ϕ ->
     forall (A B : Type) (f : nat * A -> G1 (term B)),

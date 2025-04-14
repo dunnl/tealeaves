@@ -374,8 +374,9 @@ Tealeaves/Simplification/Tests/STLC_DB.v
 ##########################################################
 Tealeaves/Examples/VariadicLet/Terms.v
 Tealeaves/Examples/VariadicLet/Instances/Simple.v
-Tealeaves/Examples/VariadicLet/Instances/LetIn.v
+Tealeaves/Examples/VariadicLet/Instances/Tele.v
 Tealeaves/Examples/VariadicLet/Instances/LetRec.v
+Tealeaves/Examples/VariadicLet/Demo.v
 
 ##########################################################
 # EX: SYSTEM F (MULTISORTED)                             #

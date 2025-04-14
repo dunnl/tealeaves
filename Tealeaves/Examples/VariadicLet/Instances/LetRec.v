@@ -27,6 +27,7 @@ Fixpoint binddt_term
   (t : term v1) : G (term v2) :=
   match t with
   | tvar v => f (0, v)
+  | abs body => pure (@abs v2) <⋆> binddt_term (f ⦿ 1) body
   | letin defs body =>
       pure (@letin v2) <⋆>
         ((fix F ls :=
@@ -81,7 +82,14 @@ Section rewriting.
       reflexivity.
     Qed.
 
-    Lemma binddt_term_rw2: forall (l : list (term v1)) (body: term v1),
+    Lemma binddt_term_rw2: forall (t: term v1),
+        binddt f (abs t) =
+          pure (@abs v2) <⋆> binddt (f ⦿ 1) t.
+    Proof.
+      reflexivity.
+    Qed.
+
+    Lemma binddt_term_rw3: forall (l : list (term v1)) (body: term v1),
         binddt f (letin l body) =
           pure (@letin v2) <⋆> subst_in_defs f l <⋆>
             binddt (f ⦿ length l) body.
@@ -124,7 +132,7 @@ Section rewriting.
           lia.
     Qed.
 
-    Lemma binddt_term_rw3: forall (t1 t2: term v1),
+    Lemma binddt_term_rw4: forall (t1 t2: term v1),
           binddt f (app t1 t2) =
             pure (@app v2) <⋆> binddt f t1 <⋆> binddt f t2.
       Proof.
@@ -148,7 +156,7 @@ Section rewriting.
         intros l.
         ext body.
         unfold precompose, compose.
-        rewrite binddt_term_rw2.
+        rewrite binddt_term_rw3.
         reflexivity.
       Qed.
 
@@ -161,7 +169,7 @@ Section rewriting.
         intros A l.
         ext l' body.
         unfold precompose, compose.
-        rewrite binddt_term_rw2.
+        rewrite binddt_term_rw3.
         do 2 rewrite <- list_plength_length.
         unfold mapdt_make.
         rewrite <- plength_trav_make.
@@ -177,12 +185,14 @@ Ltac simplify_binddt_term :=
   | |- context[BD ?f (tvar ?y)] =>
       ltac_trace "step_BD_tvar";
       rewrite binddt_term_rw1
+  | |- context[((binddt ?f) (abs ?body))] =>
+      rewrite binddt_term_rw2
   | |- context[((BD ?f) (letin ?l ?body))] =>
       ltac_trace "step_BD_letin";
-      rewrite binddt_term_rw2
+      rewrite binddt_term_rw3
   | |- context[((BD ?f) (app ?t1 ?t2))] =>
       ltac_trace "step_BD_app";
-      rewrite binddt_term_rw3
+      rewrite binddt_term_rw4
   end.
 
 Ltac cbn_binddt ::=
