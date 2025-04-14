@@ -1138,8 +1138,9 @@ Section with_DTM.
       unfold bdToName.
       assert (H_n_lt: Nat.ltb n (length ctx) = true).
       { rewrite OrdersEx.Nat_as_OT.ltb_lt.
-        unfold LC in HLC.
-        unfold LCn in HLC.
+        (*
+        Fail rewrite (LC_spec (T := T unit)) in HLC.
+
         specialize (HLC (length ctx)).
         specialize (HLC (Bd n)).
         assert (cut: (length ctx, Bd n) ∈d t).
@@ -1155,6 +1156,7 @@ Section with_DTM.
       + reflexivity.
       + rewrite <- OrdersEx.Nat_as_OT.ltb_lt.
         assumption.
+         *)
   Admitted.
 
   Lemma rtFromLN_id: forall (t: T unit LN),

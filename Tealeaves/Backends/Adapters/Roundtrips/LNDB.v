@@ -55,7 +55,7 @@ Section translate.
       bound n e = true.
   Proof.
     introv HLC Hin. cbn.
-    unfold LC, LCn in HLC.
+    rewrite LC_spec in HLC.
     specialize (HLC e (Bd n) Hin).
     unfold lc_loc in HLC.
     replace (e + 0) with e in * by lia.
@@ -210,6 +210,7 @@ Section translate.
       unfold compose.
       unfold toLN_loc.
       now rewrite (lc_bound t depth n Hlc Hin).
+      rewrite LC_spec in Hlc.
       specialize (Hlc depth (Bd n) Hin).
       unfold lc_loc in Hlc.
       lia.

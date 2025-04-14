@@ -162,20 +162,6 @@ End locally_nameless_local_operations.
 (******************************************************************************)
 Section locally_nameless_operations.
 
-  (*
-
-  Context
-    `{Return_T: Return T}
-    `{Map_T: Map T}
-    `{Bind_TT: Bind T T}
-    `{Traverse_T: Traverse T}
-    `{Mapd_T: Mapd nat T}
-    `{Bindt_TT: Bindt T T}
-    `{Bindd_T: Bindd nat T}
-    `{Mapdt_T: Mapdt nat T}
-    `{Binddt_TT: Binddt nat T T}.
-*)
-
   Context
     `{Return_T: Return T}
     `{Map_U: Map U}
@@ -209,7 +195,7 @@ Section locally_nameless_operations.
     LCnb 0.
 
   Definition LCn (gap: nat): U LN -> Prop :=
-    fun t => forall w l, (w, l) ∈d t -> lc_loc gap (w, l).
+    Forall_ctx (lc_loc gap).
 
   Definition LC: U LN -> Prop :=
     LCn 0.
@@ -324,23 +310,25 @@ Section locally_nameless_basic_principles.
   (** ** Local closure spec *)
   (******************************************************************************)
   Lemma LCn_spec: forall gap,
-      LCn (U := U) gap = Forall_ctx (lc_loc gap).
+      LCn (U := U) gap = fun t => forall w l, (w, l) ∈d t -> lc_loc gap (w, l).
   Proof.
     intro. ext t.
     apply propositional_extensionality.
+    unfold LCn.
     rewrite forall_ctx_iff.
     reflexivity.
   Qed.
 
   Definition LC_spec:
-    LC (U := U) = Forall_ctx (lc_loc 0).
+    LC (U := U) = fun t => forall w l, (w, l) ∈d t -> lc_loc 0 (w, l).
   Proof.
     ext t.
-    apply propositional_extensionality.
-    rewrite forall_ctx_iff.
+    unfold LC.
+    rewrite LCn_spec.
     reflexivity.
   Qed.
- Lemma lc_loc_mono: forall gap gap' w l,
+
+  Lemma lc_loc_mono: forall gap gap' w l,
       gap <= gap' ->
       lc_loc gap (w, l) ->
       lc_loc gap' (w, l).
@@ -355,7 +343,8 @@ Section locally_nameless_basic_principles.
       LCn gap t ->
       LCn gap' t.
   Proof.
-    unfold LCn. intros.
+    introv Hineq.
+    do 2 rewrite LCn_spec; intros.
     apply (lc_loc_mono gap); auto.
   Qed.
 
@@ -376,7 +365,7 @@ Section locally_nameless_basic_principles.
       LCn (level t) t.
   Proof.
     intros.
-    unfold LCn.
+    rewrite LCn_spec.
     intros.
     unfold lc_loc.
     destruct l.
@@ -400,7 +389,7 @@ Section locally_nameless_basic_principles.
       level t <= gap.
   Proof.
     introv hyp.
-    rewrite LCn_spec in hyp.
+    unfold LCn in hyp.
     unfold Forall_ctx in hyp.
     rewrite mapdReduce_through_toctxlist in hyp.
     unfold level.
@@ -1315,11 +1304,14 @@ Section locally_nameless_metatheory.
       LC u ->
       LC (subst x u t).
   Proof.
-    unfold LC. introv lct lcu hin.
+    rewrite LC_spec.
+    introv lct lcu hin.
     rewrite ind_subst_iff2 in hin.
     destruct hin as [[? ?] | [n1 [n2 [h1 [h2 h3]]]]].
     - auto.
-    - subst. specialize (lcu n2 l h2).
+    - subst.
+      rewrite LC_spec in lcu.
+      specialize (lcu n2 l h2).
       unfold lc_loc in *.
       destruct l; auto. unfold_monoid. lia.
   Qed.
@@ -1448,7 +1440,8 @@ Section locally_nameless_metatheory.
       LC t ->
       LCn 1 (close x t).
   Proof.
-    unfold LC. introv lct hin.
+    rewrite LC_spec, LCn_spec.
+    introv lct hin.
     rewrite ind_close_iff in hin.
     destruct hin as [l1 [? ?]]. compare l1 to atom x; subst.
     - cbn. compare values x and x. unfold_lia.
@@ -1535,7 +1528,9 @@ Section locally_nameless_metatheory.
       LC t ->
       t '(u) = t.
   Proof.
-    introv lc. apply open_id. introv lin.
+    introv lc.
+    rewrite LC_spec in lc.
+    apply open_id. introv lin.
     specialize (lc _ _ lin).
     destruct l; auto using open_lc_local.
   Qed.
@@ -1554,7 +1549,9 @@ Section locally_nameless_metatheory.
       apply (bindd_respectful_id).
       intros. destruct a.
       + reflexivity.
-      + unfold LC, LCn, lc_loc in lcu2. cbn.
+      + rewrite LC_spec in lcu2.
+        unfold lc_loc in lcu2.
+        cbn.
         compare naturals n and (w ● w0).
         { specialize (lcu2 _ _ ltac:(eauto)). cbn in lcu2. unfold_lia. }
         { specialize (lcu2 _ _ ltac:(eauto)). cbn in lcu2. unfold_lia. }
@@ -1573,7 +1570,6 @@ Section locally_nameless_metatheory.
         rewrite (kdm_bindd0). unfold compose. cbn.
         rewrite monoid_id_r. compare naturals n and w.
   Qed.
-
 
   (* LNgen 10: subst-open *)
   Theorem subst_open:  forall u1 u2 t x,
@@ -1617,8 +1613,7 @@ Section locally_nameless_metatheory.
       destruct (@eq_dec Names.atom _ y a). false.
       easy.
     - cbn. unfold transparent tcs.
-      unfold LC in HLC.
-      unfold LCn in HLC.
+      rewrite LC_spec in HLC.
       specialize (HLC _ _ Hin).
       cbn in HLC.
       compare naturals n and (depth + e)%nat.
@@ -1845,8 +1840,9 @@ Section locally_nameless_metatheory.
       LCn n t ->
       LCn (n - 1) (t '(u)).
   Proof.
-    unfold LCn.
-    introv lcu lct Hin. rewrite ind_open_iff in Hin.
+    introv lcu lct.
+    rewrite LC_spec, LCn_spec in *.
+    introv Hin. rewrite ind_open_iff in Hin.
     destruct Hin as [n1 [n2 [l1 [h1 [h2 h3]]]]].
     destruct l1.
     - cbn in h2. rewrite (ind_ret_iff) in h2.
@@ -1866,8 +1862,9 @@ Section locally_nameless_metatheory.
       LCn (n - 1) (t '(u)) ->
       LCn n t.
   Proof.
-    unfold LCn.
-    introv ngt lcu lct Hin. setoid_rewrite (ind_open_iff) in lct.
+    introv ngt lcu lct.
+    rewrite LC_spec, LCn_spec in *.
+    introv Hin. setoid_rewrite (ind_open_iff) in lct.
     destruct l.
     - cbv. trivial.
     - compare naturals n0 and w.
@@ -1901,6 +1898,7 @@ Section locally_nameless_metatheory.
       LCn (n - 1) (t '(ret (Fr x))).
   Proof.
     intros. apply open_lcn_iff. auto.
+    rewrite LC_spec.
     intros w l hin. rewrite (ind_ret_iff) in hin.
     destruct hin; subst. cbv. trivial.
   Qed.
@@ -1984,7 +1982,7 @@ Section locally_nameless_metatheory.
       eapply ninf_in_neq in Hint2; eauto.
   Qed.
 
-  (* LNgen 17: close-inj *)
+  (* LNgen 18: close-inj *)
   Lemma close_inj: forall (x: atom) (t u: U LN),
       '[x] t = '[x]  u ->
       t = u.

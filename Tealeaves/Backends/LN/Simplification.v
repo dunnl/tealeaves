@@ -16,6 +16,71 @@ Create HintDb tea_ret_coercions.
 (** * Simplifying LCn *)
 (******************************************************************************)
 
+(** ** Extra Rewriting Principles *)
+(******************************************************************************)
+Section locally_nameless_extra_rw.
+
+  Import Notations.
+
+  #[local] Generalizable All Variables.
+
+  Context
+    `{Return_T: Return T}
+    `{Map_T: Map T}
+    `{Bind_TT: Bind T T}
+    `{Traverse_T: Traverse T}
+    `{Mapd_T: Mapd nat T}
+    `{Bindt_TT: Bindt T T}
+    `{Bindd_T: Bindd nat T}
+    `{Mapdt_T: Mapdt nat T}
+    `{Binddt_TT: Binddt nat T T}
+    `{! Compat_Map_Binddt nat T T}
+    `{! Compat_Bind_Binddt nat T T}
+    `{! Compat_Traverse_Binddt nat T T}
+    `{! Compat_Mapd_Binddt nat T T}
+    `{! Compat_Bindt_Binddt nat T T}
+    `{! Compat_Bindd_Binddt nat T T}
+    `{! Compat_Mapdt_Binddt nat T T}.
+
+  Context
+    `{Map_U: Map U}
+    `{Bind_TU: Bind T U}
+    `{Traverse_U: Traverse U}
+    `{Mapd_U: Mapd nat U}
+    `{Bindt_TU: Bindt T U}
+    `{Bindd_TU: Bindd nat T U}
+    `{Mapdt_U: Mapdt nat U}
+    `{Binddt_TU: Binddt nat T U}
+    `{! Compat_Map_Binddt nat T U}
+    `{! Compat_Bind_Binddt nat T U}
+    `{! Compat_Traverse_Binddt nat T U}
+    `{! Compat_Mapd_Binddt nat T U}
+    `{! Compat_Bindt_Binddt nat T U}
+    `{! Compat_Bindd_Binddt nat T U}
+    `{! Compat_Mapdt_Binddt nat T U}.
+
+  Context
+    `{Monad_inst: ! DecoratedTraversableMonad nat T}
+    `{Module_inst: ! DecoratedTraversableRightPreModule nat T U
+                        (unit := Monoid_unit_zero)
+                        (op := Monoid_op_plus)}.
+
+  Implicit Types (l: LN) (n: nat) (t: U LN) (x: atom).
+
+  Lemma LC_rw_Forall: forall (t: U LN),
+      LC t = Forall_ctx (lc_loc 0) t.
+  Proof.
+    reflexivity.
+  Qed.
+
+  Lemma LCn_rw_Forall: forall (t: U LN) (gap: nat),
+      LCn gap t = Forall_ctx (lc_loc gap) t.
+  Proof.
+    reflexivity.
+  Qed.
+
+End locally_nameless_extra_rw.
+
 (** ** Simplifying LCn at the leaves *)
 (******************************************************************************)
 Ltac simplify_arithmetic :=
@@ -58,20 +123,22 @@ Ltac simplify_LC_local :=
 Ltac simplify_LC :=
   ltac_trace "simplify_ln_LC_start";
   repeat change (LC ?t) with (LCn 0 t);
-  rewrite LCn_spec;
+  (* rewrite LCn_spec; *)
+  repeat rewrite LCn_rw_Forall;
   simplify_Forall_ctx;
   (* IF bottomed out *)
   simplify_LC_local;
   (* ELSE IF refolding *)
-  repeat rewrite <- LCn_spec;
+  (* repeat rewrite <- LCn_spec; *)
+  repeat rewrite <- LCn_rw_Forall;
   repeat change (LCn 0 ?t) with (LC t);
   ltac_trace "simplify_ln_LC_end".
 
 Ltac simplify_LC_in H :=
   repeat change (LC ?t) with (LCn 0 t) in H;
-  rewrite LCn_spec in H;
+  (* rewrite LCn_spec in H; *)
   simplify_Forall_ctx_in H;
-  repeat rewrite <- LCn_spec in H;
+  (* repeat rewrite <- LCn_spec in H; *)
   repeat change (LCn 0 ?t) with (LC t) in H.
 
 (** * Simplifying free and FV *)
