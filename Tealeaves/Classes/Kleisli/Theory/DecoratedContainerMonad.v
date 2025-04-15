@@ -62,19 +62,6 @@ Section decorated_container_monad_theory.
     apply kdm_hom_ret.
   Qed.
 
-  Theorem ind_ret_iff: forall {A: Type} (w: W) (a1 a2: A),
-      (w, a1) ∈d ret (T := T) a2 <-> w = Ƶ /\ a1 = a2.
-  Proof.
-    intros.
-    compose near a2 on left.
-    rewrite element_ctx_of_toctxset.
-    reassociate -> on left.
-    rewrite (kdm_hom_ret (ϕ := @toctxset W T _)).
-    unfold evalAt, compose;
-    unfold_ops @Return_ctxset.
-    intuition.
-  Qed.
-
   Lemma dconm_morphism_bind: forall (A B: Type) (f: W * A -> T B),
       toctxset ∘ bindd (U := U) f =
         bindd (U := ctxset W) (toctxset ∘ f) ∘ toctxset (F := U).
@@ -82,73 +69,91 @@ Section decorated_container_monad_theory.
     apply kdmod_parhom_bind.
   Qed.
 
-  Theorem ind_bindd_iff: forall w t f b,
-      (w, b) ∈d bindd (U := U) f t <->
-        exists (wa: W) (a: A), (wa, a) ∈d t /\
+  Section ind_spec.
+
+    Theorem ind_ret_iff: forall {A: Type} (w: W) (a1 a2: A),
+        (w, a1) ∈d ret (T := T) a2 <-> w = Ƶ /\ a1 = a2.
+    Proof.
+      intros.
+      compose near a2 on left.
+      rewrite element_ctx_of_toctxset.
+      reassociate -> on left.
+      rewrite (kdm_hom_ret (ϕ := @toctxset W T _)).
+      unfold evalAt, compose;
+        unfold_ops @Return_ctxset.
+      intuition.
+    Qed.
+
+    Theorem ind_bindd_iff: forall w t f b,
+        (w, b) ∈d bindd (U := U) f t <->
+          exists (wa: W) (a: A), (wa, a) ∈d t /\
                               exists wb: W, (wb, b) ∈d f (wa, a) /\
-                                          w = wa ● wb.
-  Proof.
-    introv.
-    compose near t on left.
-    rewrite element_ctx_of_toctxset.
-    reassociate -> on left.
-    rewrite (kdmod_parhom_bind (ϕ := @toctxset W U _)).
-    reflexivity.
-  Qed.
+                                         w = wa ● wb.
+    Proof.
+      introv.
+      compose near t on left.
+      rewrite element_ctx_of_toctxset.
+      reassociate -> on left.
+      rewrite (kdmod_parhom_bind (ϕ := @toctxset W U _)).
+      reflexivity.
+    Qed.
 
-  Theorem ind_bindd_iff':
-    forall `(f: W * A -> T B) (t: U A) (wtotal: W) (b: B),
-      (wtotal, b) ∈d bindd f t <->
-        exists (w1 w2: W) (a: A),
-          (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
-          /\ wtotal = w1 ● w2.
-  Proof.
-    intros.
-    rewrite ind_bindd_iff.
-    splits; intros ?; preprocess;
-      (repeat eexists); eauto.
-  Qed.
+    Theorem ind_bindd_iff':
+      forall `(f: W * A -> T B) (t: U A) (wtotal: W) (b: B),
+        (wtotal, b) ∈d bindd f t <->
+          exists (w1 w2: W) (a: A),
+            (w1, a) ∈d t /\ (w2, b) ∈d f (w1, a)
+            /\ wtotal = w1 ● w2.
+    Proof.
+      intros.
+      rewrite ind_bindd_iff.
+      splits; intros ?; preprocess;
+        (repeat eexists); eauto.
+    Qed.
 
-  Corollary ind_bind_iff: forall w t f b,
-      (w, b) ∈d bind f t <->
-        exists (wa: W) (a: A), (wa, a) ∈d t /\
-                   exists wb: W, (wb, b) ∈d f a /\
-                               w = wa ● wb.
-  Proof.
-    introv.
-    rewrite bind_to_bindd.
-    rewrite ind_bindd_iff.
-    reflexivity.
-  Qed.
+    Corollary ind_bind_iff: forall w t f b,
+        (w, b) ∈d bind f t <->
+          exists (wa: W) (a: A),
+            (wa, a) ∈d t /\
+              exists wb: W, (wb, b) ∈d f a /\
+                         w = wa ● wb.
+    Proof.
+      introv.
+      rewrite bind_to_bindd.
+      rewrite ind_bindd_iff.
+      reflexivity.
+    Qed.
 
-  Corollary ind_bind_iff': forall w t f b,
-      (w, b) ∈d bind f t <->
-        exists (wa wb: W) (a: A),
-          (wa, a) ∈d t /\
-            (wb, b) ∈d f a /\
-            w = wa ● wb.
-  Proof.
-    introv.
-    rewrite ind_bind_iff.
-    splits; intros ?; preprocess;
-      (repeat eexists); eauto.
-  Qed.
+    Corollary ind_bind_iff': forall w t f b,
+        (w, b) ∈d bind f t <->
+          exists (wa wb: W) (a: A),
+            (wa, a) ∈d t /\
+              (wb, b) ∈d f a /\
+              w = wa ● wb.
+    Proof.
+      introv.
+      rewrite ind_bind_iff.
+      splits; intros ?; preprocess;
+        (repeat eexists); eauto.
+    Qed.
 
-  Corollary in_bindd_iff: forall t f b,
-      b ∈ bindd (U := U) f t <->
-        exists (wa: W) (a: A),
-          (wa, a) ∈d t /\ b ∈ f (wa, a).
-  Proof.
-    introv.
-    rewrite ind_iff_in.
-    setoid_rewrite ind_bindd_iff.
-    setoid_rewrite ind_iff_in.
-    split.
-    - intros [w [wa [a [Hin [wb [Hin' Heq]]]]]].
-      eauto.
-    - intros [wa [a [Hin [w rest]]]].
-      exists (wa ● w) wa a. eauto.
-  Qed.
+    Corollary in_bindd_iff: forall t f b,
+        b ∈ bindd (U := U) f t <->
+          exists (wa: W) (a: A),
+            (wa, a) ∈d t /\ b ∈ f (wa, a).
+    Proof.
+      introv.
+      rewrite ind_iff_in.
+      setoid_rewrite ind_bindd_iff.
+      setoid_rewrite ind_iff_in.
+      split.
+      - intros [w [wa [a [Hin [wb [Hin' Heq]]]]]].
+        eauto.
+      - intros [wa [a [Hin [w rest]]]].
+        exists (wa ● w) wa a. eauto.
+    Qed.
+
+  End ind_spec.
 
   (*******************************************************************)
   Corollary bindd_respectful:
@@ -238,4 +243,5 @@ Proof.
       compose near (f (w, a)).
       rewrite (fun_map_map).
 Abort.
-*)
+
+ *)
