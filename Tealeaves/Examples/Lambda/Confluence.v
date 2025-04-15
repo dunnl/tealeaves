@@ -10,13 +10,13 @@ Import DecoratedTraversableMonad.UsefulInstances.
 
 Import DB.Notations.
 
-Inductive lam (V : Type) :=
-| tvar : V -> lam V
-| abs  : lam V -> lam V
-| app  : lam V -> lam V -> lam V.
+Inductive lam (V: Type) :=
+| tvar: V -> lam V
+| abs: lam V -> lam V
+| app: lam V -> lam V -> lam V.
 
-Fixpoint binddt_lam (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
-    {v1 v2 : Type} (f : nat * v1 -> G (lam v2)) (t : lam v1) : G (lam v2) :=
+Fixpoint binddt_lam (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
+    {v1 v2: Type} (f: nat * v1 -> G (lam v2)) (t: lam v1): G (lam v2) :=
   match t with
   | tvar v    => f (0, v)
   | abs body  => pure (@abs v2) <⋆> binddt_lam (f ⦿ 1) body
@@ -136,8 +136,8 @@ Qed.
 
 Import Notations.
 
-Implicit Types (s t u v : lam nat) (x y : nat)
-  (σ τ : nat -> lam nat) (ρ : nat -> nat).
+Implicit Types (s t u v: lam nat) (x y: nat)
+  (σ τ: nat -> lam nat) (ρ: nat -> nat).
 Generalizable Variables s t u v x y σ τ ρ.
 Create HintDb churchrosser.
 
@@ -163,17 +163,17 @@ End Notations.
 Import Notations.
 
 (* One step of beta reduction *)
-Inductive step : lam nat -> lam nat -> Prop :=
-| step_beta : forall tbody targ, step (app (abs tbody) targ) (subst (targ .: ret) tbody)
-| step_app_l : forall u1 u2 t, step u1 u2 -> step (app u1 t) (app u2 t)
-| step_app_r : forall u t1 t2, step t1 t2 -> step (app u t1) (app u t2)
-| step_lam : forall u1 u2, step u1 u2 -> step (abs u1) (abs u2).
+Inductive step: lam nat -> lam nat -> Prop :=
+| step_beta: forall tbody targ, step (app (abs tbody) targ) (subst (targ .: ret) tbody)
+| step_app_l: forall u1 u2 t, step u1 u2 -> step (app u1 t) (app u2 t)
+| step_app_r: forall u t1 t2, step t1 t2 -> step (app u t1) (app u t2)
+| step_lam: forall u1 u2, step u1 u2 -> step (abs u1) (abs u2).
 
 Notation "s → t" := (step s t) (at level 50).
 
-#[export] Hint Constructors step : churchrosser.
+#[export] Hint Constructors step: churchrosser.
 
-Definition steps : relation (lam nat) := clos_refl_trans _ step.
+Definition steps: relation (lam nat) := clos_refl_trans _ step.
 
 #[export] Instance: Reflexive steps.
 Proof.
@@ -185,11 +185,11 @@ Proof.
   unfold Transitive. apply rt_trans.
 Qed.
 
-#[export] Hint Constructors clos_refl_trans : churchrosser.
+#[export] Hint Constructors clos_refl_trans: churchrosser.
 
 Notation "t1 →* t2" := (steps t1 t2) (at level 50).
 
-Lemma steps_app_l : forall s1 s2 t, steps s1 s2 -> steps (app s1 t) (app s2 t).
+Lemma steps_app_l: forall s1 s2 t, steps s1 s2 -> steps (app s1 t) (app s2 t).
 Proof.
   intros. induction H.
   - apply rt_step. apply step_app_l. assumption.
@@ -197,23 +197,23 @@ Proof.
   - eapply rt_trans; eassumption.
 Qed.
 
-Lemma steps_app_r : forall s t1 t2, steps t1 t2 -> steps (app s t1) (app s t2).
+Lemma steps_app_r: forall s t1 t2, steps t1 t2 -> steps (app s t1) (app s t2).
 Proof.
   induction 1; unfold steps; eauto with churchrosser.
 Qed.
 
-Lemma steps_lam : forall t1 t2, steps t1 t2 -> steps (abs t1) (abs t2).
+Lemma steps_lam: forall t1 t2, steps t1 t2 -> steps (abs t1) (abs t2).
 Proof.
   induction 1; unfold steps; eauto with churchrosser.
 Qed.
 
 #[export] Hint Resolve
-  steps_app_r steps_lam steps_app_l : churchrosser.
+  steps_app_r steps_lam steps_app_l: churchrosser.
 
 Section rel_properties.
 
   Context
-    (R1 R2 : relation (lam nat)).
+    (R1 R2: relation (lam nat)).
 
   Definition GDiamond := forall t t1 t2,
       R1 t t1 ->
@@ -227,14 +227,14 @@ Section rel_properties.
 
 End rel_properties.
 
-Definition local_confluence : Prop := GDiamond step steps.
-Definition confluence : Prop := Diamond steps.
+Definition local_confluence: Prop := GDiamond step steps.
+Definition confluence: Prop := Diamond steps.
 
-#[export] Hint Unfold confluence local_confluence Diamond GDiamond : core.
+#[export] Hint Unfold confluence local_confluence Diamond GDiamond: core.
 
 Reserved Notation "t1 ⇒ t2" (at level 50).
 
-Inductive par : lam nat -> lam nat -> Prop :=
+Inductive par: lam nat -> lam nat -> Prop :=
 | par_refl :
   `(tvar x ⇒ tvar x)
 | par_app :
@@ -255,7 +255,7 @@ Proof.
   intro t. induction t; auto using par.
 Qed.
 
-Definition pars : relation (lam nat) := clos_refl_trans _ par.
+Definition pars: relation (lam nat) := clos_refl_trans _ par.
 
 #[export] Instance: Reflexive pars.
 Proof.
@@ -269,7 +269,7 @@ Qed.
 
 Notation "t1 ⇒* t2" := (pars t1 t2) (at level 50).
 
-#[export] Hint Constructors par : churchrosser.
+#[export] Hint Constructors par: churchrosser.
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -277,7 +277,7 @@ Relating →, →*, ⇒, and ⇒*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |*)
 
-Lemma step_in_par : `(t1 → t2 -> t1 ⇒ t2).
+Lemma step_in_par: `(t1 → t2 -> t1 ⇒ t2).
 Proof.
   intros ? ? Hstep. induction Hstep.
   - apply par_beta.
@@ -293,7 +293,7 @@ Proof.
     assumption.
 Qed.
 
-Lemma par_in_steps : `(t1 ⇒ t2 -> t1 →* t2).
+Lemma par_in_steps: `(t1 ⇒ t2 -> t1 →* t2).
 Proof.
   intros ? ? Hstep. induction Hstep.
   - reflexivity.
@@ -314,13 +314,13 @@ Proof.
       * apply rt_step. apply step_beta.
 Qed.
 
-Lemma pars_in_steps : `(t1 ⇒* t2 -> t1 →* t2).
+Lemma pars_in_steps: `(t1 ⇒* t2 -> t1 →* t2).
 Proof.
   induction 1. now apply par_in_steps.
   reflexivity. etransitivity; eauto.
 Qed.
 
-Lemma steps_in_pars : `(t1 →* t2 -> t1 ⇒* t2).
+Lemma steps_in_pars: `(t1 →* t2 -> t1 ⇒* t2).
 Proof.
   intros ? ? Hstep. induction Hstep.
   - apply rt_step. now apply step_in_par.
@@ -335,7 +335,7 @@ Proof.
   induction 1; now constructor.
 Qed.
 
-#[export] Hint Resolve step_in_par : churchrosser.
+#[export] Hint Resolve step_in_par: churchrosser.
 
 Goal `(t1 ⇒ t2 -> t1 →* t2).
 Proof with (eauto with churchrosser).
@@ -379,7 +379,7 @@ Proof with auto using par.
     asimpl...
 Qed.
 
-Lemma par_strong_rename : `(t1 ⇒ t2 -> rename ρ t1 ⇒ rename ρ t2).
+Lemma par_strong_rename: `(t1 ⇒ t2 -> rename ρ t1 ⇒ rename ρ t2).
 Proof with auto with churchrosser.
   intros.
   rewrite rename_to_subst.
@@ -398,7 +398,7 @@ Proof with auto with churchrosser.
     asimpl...
 Qed.
 
-Lemma par_subst_up : forall σ1 σ2, σ1 ▷ σ2 -> up__sub σ1 ▷ up__sub σ2.
+Lemma par_subst_up: forall σ1 σ2, σ1 ▷ σ2 -> up__sub σ1 ▷ up__sub σ2.
 Proof.
   intros. induction x.
   - reflexivity.
@@ -441,7 +441,7 @@ Normalization for ``par``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |*)
 
-Fixpoint normalize (t : lam nat) : lam nat :=
+Fixpoint normalize (t: lam nat): lam nat :=
   match t with
   | tvar x => tvar x
   | abs s => abs (normalize s)
@@ -449,7 +449,7 @@ Fixpoint normalize (t : lam nat) : lam nat :=
   | app t1 t2 => app (normalize t1) (normalize t2)
   end.
 
-Lemma par_triangle : forall (t1 t2 : lam nat), t1 ⇒ t2 -> t2 ⇒ normalize t1.
+Lemma par_triangle: forall (t1 t2: lam nat), t1 ⇒ t2 -> t2 ⇒ normalize t1.
 Proof.
   intros. generalize dependent t2. induction 1.
   - reflexivity.
@@ -465,13 +465,13 @@ Proof.
     auto. now intros [|?].
 Qed.
 
-Theorem par_diamond : Diamond par.
+Theorem par_diamond: Diamond par.
 Proof.
   unfold Diamond. intros ? ? ? H1 H2.
   exists (normalize t). intuition auto using par_triangle.
 Qed.
 
-Lemma strip_lemma : `(t ⇒ t1 -> t ⇒* t2 -> exists t3, t1 ⇒* t3 /\ t2 ⇒ t3).
+Lemma strip_lemma: `(t ⇒ t1 -> t ⇒* t2 -> exists t3, t1 ⇒* t3 /\ t2 ⇒ t3).
 Proof with auto using rt_step.
   intros ??? H1 Hstar. generalize dependent t1.
   induction Hstar; rename x into t; intros.
@@ -484,7 +484,7 @@ Proof with auto using rt_step.
     exists t4. split; [etransitivity; eauto| assumption].
 Qed.
 
-Theorem pars_diamond : Diamond pars.
+Theorem pars_diamond: Diamond pars.
 Proof.
   unfold Diamond. intros ? ? ? Ht1 Ht2.
   generalize dependent t2. induction Ht1; intros.
@@ -503,7 +503,7 @@ Proving confluence of ``steps``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |*)
 
-Theorem confluence_proof : confluence.
+Theorem confluence_proof: confluence.
 Proof.
   unfold confluence. unfold Diamond. intros.
   assert (t ⇒* t1) by auto using steps_in_pars.
@@ -521,7 +521,7 @@ There are a couple ways to define the notion of :math:`\beta`-equivalence (a/k/a
 
 As with ``steps``, the first thing we do after defining ``beta_equiv`` is prove that it is indeed reflexive, symmetric, and transitive, enabling the use of the correspondingly named tactics. We also give this relation a custom notation and add its constructors to our hint database.
 |*)
-Definition beta_equiv : relation (lam nat) := clos_refl_sym_trans _ step.
+Definition beta_equiv: relation (lam nat) := clos_refl_sym_trans _ step.
 
 #[export] Instance: Reflexive beta_equiv.
 Proof.
@@ -540,29 +540,29 @@ Qed.
 
 Notation "s ∼ t" := (beta_equiv s t) (at level 50).
 
-#[export] Hint Constructors clos_refl_sym_trans : churchrosser.
+#[export] Hint Constructors clos_refl_sym_trans: churchrosser.
 
 (*|
 Beta equivalence is also called a *congruence* relation, meaning an equivalence relation that is respected by a set of operations, in this case the constructors of ``(lam nat)``. By "respected by the constructors of ``(lam nat)``" I mean exactly the following three properties, much like ones we gave earlier for ``steps``.
 |*)
 
-Lemma beta_equiv_app_l : forall s1 s2 t, s1 ∼ s2 -> (app s1 t) ∼ (app s2 t).
+Lemma beta_equiv_app_l: forall s1 s2 t, s1 ∼ s2 -> (app s1 t) ∼ (app s2 t).
 Proof.
   induction 1; unfold beta_equiv; eauto with churchrosser.
 Qed.
 
-Lemma beta_equiv_app_r : `(t1 ∼ t2 -> {|s t1|} ∼ {|s t2|}).
+Lemma beta_equiv_app_r: `(t1 ∼ t2 -> {|s t1|} ∼ {|s t2|}).
 Proof.
   induction 1; unfold beta_equiv; eauto with churchrosser.
 Qed.
 
-Lemma beta_equiv_lam : `(t1 ∼ t2 -> {|\, t1|} ∼ {|\, t2|}).
+Lemma beta_equiv_lam: `(t1 ∼ t2 -> {|\, t1|} ∼ {|\, t2|}).
 Proof.
   induction 1; unfold beta_equiv; eauto with churchrosser.
 Qed.
 
 #[export] Hint Resolve
-  beta_equiv_app_r beta_equiv_lam beta_equiv_app_l : churchrosser.
+  beta_equiv_app_r beta_equiv_lam beta_equiv_app_l: churchrosser.
 
 (*|
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -574,23 +574,23 @@ Instead of defining :math:`\beta`-equivalence as the equivalence closure of ``st
 
 Reserved Notation "s ≃ t" (at level 50).
 
-Inductive beta_equiv_I : lam nat -> lam nat -> Prop :=
-| equ_refl  : `(s ≃ s)
-| equ_sym   : `(s ≃ t ->
+Inductive beta_equiv_I: lam nat -> lam nat -> Prop :=
+| equ_refl: `(s ≃ s)
+| equ_sym : `(s ≃ t ->
                 t ≃ s)
-| equ_trans : `(s ≃ t ->
+| equ_trans: `(s ≃ t ->
                 t ≃ u ->
                 s ≃ u)
-| equ_beta  : `({|(\, s) t|} ≃ s.[t/])
-| equ_app_l : `(s1 ≃ s2 ->
+| equ_beta: `({|(\, s) t|} ≃ s.[t/])
+| equ_app_l: `(s1 ≃ s2 ->
                 {|s1 t|} ≃ {|s2 t|})
-| equ_app_r : `(t1 ≃ t2 ->
+| equ_app_r: `(t1 ≃ t2 ->
                 {|s t1|} ≃ {|s t2|})
-| equ_lam : `(s1 ≃ s2 ->
+| equ_lam: `(s1 ≃ s2 ->
              {|\, s1|} ≃ {|\, s2|})
 where "s ≃ t" := (beta_equiv_I s t).
 
-#[export] Hint Constructors beta_equiv_I : churchrosser.
+#[export] Hint Constructors beta_equiv_I: churchrosser.
 
 (*|
 If you're following along in Barendregt, this definition of :math:`\beta`-congruence matches Barendregt's definition of the equational theory λ (Definition 2.1.4, pg. 23). In some sense this style of definition is simpler to think about (and to generalize to other calculi) because it does not require introducing an auxiliary relation like ``step``. This could be beneficial in situations where we know which terms we want to be *equal*, but it is not clear how to describe this equality in terms of *reduction* steps.
@@ -598,7 +598,7 @@ If you're following along in Barendregt, this definition of :math:`\beta`-congru
 It is easy to show that our two definitions of beta conversion coincide.
 |*)
 
-Lemma beta_equiv_iff_beta_equiv_I : `(s ∼ t <-> s ≃ t).
+Lemma beta_equiv_iff_beta_equiv_I: `(s ∼ t <-> s ≃ t).
 Proof with auto with churchrosser.
   intros. split.
   - induction 1...
@@ -624,13 +624,13 @@ Transitivity of common reduct
 
 |*)
 
-Definition have_common_reduct : lam nat -> lam nat -> Prop :=
+Definition have_common_reduct: lam nat -> lam nat -> Prop :=
   fun s t => exists u, s →* u /\ t →* u.
 
 #[export] Instance: Transitive have_common_reduct.
 Proof.
   unfold Transitive. intros s t v [st [? ?]] [tv [? ?]].
-  enough (cut : have_common_reduct st tv).
+  enough (cut: have_common_reduct st tv).
   - unfold have_common_reduct in *.
     destruct cut as [u [? ?]].
     exists u. split; etransitivity; eassumption.
@@ -648,7 +648,7 @@ The following specification theorem for :math:`\beta`-conversion states that two
 
 |*)
 
-Theorem beta_conversion_spec : `(have_common_reduct s t <-> s ∼ t).
+Theorem beta_conversion_spec: `(have_common_reduct s t <-> s ∼ t).
 Proof with intuition eauto with churchrosser.
   intros. split. destruct 1 as [st [? ?]].
   - transitivity st.
@@ -664,7 +664,7 @@ Proof with intuition eauto with churchrosser.
       exists x. unfold steps...
     + (* symmetry *)
       match goal with
-      | H : have_common_reduct x y |- _ => destruct H as [z [? ?]]
+      | H: have_common_reduct x y |- _ => destruct H as [z [? ?]]
       end. exists z. tauto.
     + (* .unfold *)
       etransitivity; eassumption.
@@ -676,10 +676,10 @@ Uniqueness of normal forms
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 |*)
 
-Definition beta_normal (t : lam nat) : Prop :=
+Definition beta_normal (t: lam nat): Prop :=
   not (exists s, t → s).
 
-Definition has_normal_form (t s : lam nat) : Prop :=
+Definition has_normal_form (t s: lam nat): Prop :=
   t →* s /\ beta_normal s.
 
 Lemma normal_step_eq :
@@ -694,7 +694,7 @@ Proof.
     apply IHHstep2. apply Hnorm.
 Qed.
 
-Theorem unf : forall t s1 s2,
+Theorem unf: forall t s1 s2,
     has_normal_form t s1 ->
     has_normal_form t s2 ->
     s1 = s2.
@@ -708,7 +708,7 @@ Proof.
   congruence.
 Qed.
 
-Lemma step_to_normal_form : forall t s,
+Lemma step_to_normal_form: forall t s,
     t ∼ s ->
     beta_normal s ->
     t →* s.
@@ -721,7 +721,7 @@ Proof.
   assumption.
 Qed.
 
-Theorem normal_form_forward : forall t t' s,
+Theorem normal_form_forward: forall t t' s,
     t →* t' ->
     has_normal_form t  s ->
     has_normal_form t' s.
@@ -740,7 +740,7 @@ Proof.
   - assumption.
 Qed.
 
-Theorem normal_forward_equiv : forall t t',
+Theorem normal_forward_equiv: forall t t',
     t →* t' ->
     t ∼ t'.
 Proof.
@@ -749,7 +749,7 @@ Proof.
   assumption.
 Qed.
 
-Theorem transfer_normal_form : forall t t' s,
+Theorem transfer_normal_form: forall t t' s,
     t ∼ t' ->
     has_normal_form t  s ->
     has_normal_form t' s.
