@@ -1053,7 +1053,7 @@ Section locally_nameless_metatheory.
     (t: U LN) (u: T LN)
     (x: atom).
 
-  (** ** LN analysis: substitution with contexts *)
+  (** ** Occurrence analysis: substitution with contexts *)
   (******************************************************************************)
   Lemma ind_subst_loc_iff: forall l w p (u: T LN) x,
       (w, p) ∈d subst_loc x u l <->
@@ -1080,7 +1080,7 @@ Section locally_nameless_metatheory.
       + exists n1 n2 (Fr x). splits; auto.
   Qed.
 
-  (** ** LN analysis: substitution without contexts *)
+  (** ** Occurrence analysis: substitution without contexts *)
   (******************************************************************************)
   Lemma in_subst_loc_iff: forall l p (u: T LN) x,
       p ∈ subst_loc x u l <->
