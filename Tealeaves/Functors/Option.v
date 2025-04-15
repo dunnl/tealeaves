@@ -57,34 +57,32 @@ Qed.
 
 (** ** Monad Instance *)
 (**********************************************************************)
-(*
-  #[export] Instance Return_option: Return option :=
+#[export] Instance Return_option: Return option :=
   @Some.
 
-  #[export] Instance Join_option: Join option :=
+#[export] Instance Join_option: Monad.Join option :=
   fun A (m: option (option A)) =>
-  match m with
-  | Some m' => m'
-  | None => None
-  end.
+    match m with
+    | Some m' => m'
+    | None => None
+    end.
 
-  #[export] Instance: Natural (@ret option _).
-  Proof.
+#[export] Instance: Natural (@ret option _).
+Proof.
   constructor; try typeclasses eauto.
   reflexivity.
-  Qed.
+Qed.
 
-  #[export] Instance: Natural (@join option _).
-  Proof.
+#[export] Instance: Natural (@Monad.join option _).
+Proof.
   constructor; try typeclasses eauto.
   intros. now ext [[|]|].
-  Qed.
+Qed.
 
-  #[export] Instance Monad_option: Monad option.
-  Proof.
+#[export] Instance Monad_option: Categorical.Monad.Monad option.
+Proof.
   constructor; try typeclasses eauto.
   - intros. now ext [|].
   - intros. now ext [|].
   - intros. now ext [|].
-  Qed.
- *)
+Qed.
