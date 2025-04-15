@@ -16,21 +16,26 @@ Definition b: atom := 4.
 
 Module de_bruijn.
 
-  Example term1: lam nat := app (tvar 0) (tvar 1).
-  Example term2: lam nat := abs (app (tvar 0) (tvar 1)).
-  Example term3: lam nat := app (abs (app (tvar 1) (tvar 0))) (app (tvar 1) (tvar 0)).
-  (* ^ example from paper *)
+  Example term1: lam nat := tvar 0.
+  Example term2: lam nat := app (tvar 0) (tvar 1).
+  Example term3: lam nat := abs (app (tvar 0) (tvar 1)).
+  Example term4: lam nat := app (abs (app (tvar 1) (tvar 0))) (app (tvar 1) (tvar 0)).
+  (* ^ term4 = example from JAR paper *)
 
   Example k: key := [x ; y].
 
-  Compute toLN k term1.
+  Compute toLN [] term1. (* None *)
+  Compute toLN k term1. (* Some (tvar (Fr 0)) *)
   Compute map (toDB k) (toLN k term1).
 
   Compute toLN k term2.
-  Compute map (toDB k) (toLN k term2).
+  Compute map (toDB k) (toLN k term1).
 
   Compute toLN k term3.
   Compute map (toDB k) (toLN k term3).
+
+  Compute toLN k term4.
+  Compute map (toDB k) (toLN k term4).
 
 End de_bruijn.
 
