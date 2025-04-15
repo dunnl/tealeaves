@@ -1914,7 +1914,7 @@ Section locally_nameless_metatheory.
     reflexivity.
   Qed.
 
-  Corollary open_var_lcn_1: forall t x,
+  Corollary lc_open_var: forall t x,
       LCn 1 t <->
       LC (t '(ret (Fr x))).
   Proof.
