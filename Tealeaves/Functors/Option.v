@@ -3,15 +3,9 @@ From Tealeaves Require Export
   Classes.Categorical.Applicative.
 
 (** * The [option] Monad *)
-(**********************************************************************)
-(*
-  Inductive Maybe (A: Type) :=
-  | Just: A -> Maybe A
-  | None: Maybe A.
 
-  Arguments Just {A}%type_scope _.
-  Arguments None {A}%type_scope.
- *)
+(** [option] is defined by the Coq standard library. *)
+(**********************************************************************)
 
 (** ** Functor Instance *)
 (**********************************************************************)
