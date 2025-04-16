@@ -196,6 +196,8 @@ Lemma ap_const_rw:
   forall {M} `{op: Monoid_op M} {A B} (x: const M (A -> B)) (y: const M A),
     ap (const M) x y = (@monoid_op M op x y).
 Proof.
+  Set Printing All.
+  intros.
   reflexivity.
 Qed.
 

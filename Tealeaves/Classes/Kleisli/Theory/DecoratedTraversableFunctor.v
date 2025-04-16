@@ -6,6 +6,8 @@ From Tealeaves Require Export
   Classes.Kleisli.Theory.DecoratedContainerFunctor
   Functors.Early.Environment.
 
+From Coq.Logic Require Import Decidable.
+
 #[local] Generalizable Variable E T M ϕ A B C G.
 
 Import DecoratedContainerFunctor.Notations.
@@ -58,7 +60,7 @@ Section mapdt_constant_applicatives.
 
 End mapdt_constant_applicatives.
 
-(** * Derived Operation <<foldmapd>> *)
+(** * Derived Operation <<mapdReduce>> *)
 (**********************************************************************)
 Definition mapdReduce {T: Type -> Type} `{Mapdt E T}
   `{op: Monoid_op M} `{unit: Monoid_unit M}
@@ -738,7 +740,6 @@ Section quantification.
 
   Context
     `{DecoratedTraversableFunctor E T}
-    `{Traverse T}
     `{ToCtxset E T}
     `{! Compat_ToCtxset_Mapdt E T}.
 
@@ -769,6 +770,13 @@ Section quantification.
       setoid_rewrite pair_equal_spec.
       unfold_all_transparent_tcs.
       intuition (subst; auto).
+  Qed.
+
+  Corollary forall_ctx_iff_eq `(P: E * A -> Prop) (t: T A):
+    Forall_ctx P t = forall (e: E) (a: A), (e, a) ∈d t -> P (e, a).
+  Proof.
+    apply propositional_extensionality.
+    apply forall_ctx_iff.
   Qed.
 
   Lemma forany_ctx_iff `(P: E * A -> Prop) (t: T A):
@@ -808,40 +816,11 @@ Section quantification.
       }
   Qed.
 
-  Definition decidable `(P: A -> Prop) :=
-    forall a, P a \/ ~ P a.
-
-  Lemma decidable_push_not `(P: A -> Prop) (X: decidable P) (a1 a2: A):
-    (~ (P a1 /\ P a2)) = ~ (P a1) \/ ~ P a2.
+  Corollary forany_ctx_iff_eq `(P: E * A -> Prop) (t: T A):
+    Forany_ctx P t = exists (e: E) (a: A), (e, a) ∈d t /\ P (e, a).
   Proof.
     apply propositional_extensionality.
-    destruct (X a1);
-      destruct (X a2); firstorder.
-  Qed.
-
-  Lemma decidable_foldable `(P: A -> Prop) `(Dec: decidable P): forall (l: list A),
-      mapReduce (unit := Monoid_unit_true) (op := Monoid_op_and) P l \/
-        ~ mapReduce P (unit := Monoid_unit_true) (op := Monoid_op_and) l.
-  Proof.
-    intros.
-    rewrite mapReduce_eq_mapReduce_list.
-    induction l.
-    - left. cbv. trivial.
-    - simpl_list.
-      simplify_monoid_conjunction.
-      destruct IHl as [Case1 | Case2].
-      + destruct (Dec a).
-        * now left.
-        * right. tauto.
-      + now right.
-  Qed.
-
-  Lemma decidable_push_not_mapReduce_list `(P: A -> Prop) (X: decidable P) (a: A) (l: list A):
-    (~ (P a /\ mapReduce_list P l)) = ~ P a \/ ~ mapReduce_list P l.
-  Proof.
-    intros.
-    destruct (X a);
-      destruct (decidable_foldable P X l); propext; firstorder.
+    apply forany_ctx_iff.
   Qed.
 
   Lemma element_ctx_of_env_cons {A}: forall e a e' a' (rest: env E A),
@@ -865,49 +844,123 @@ Section quantification.
     - setoid_rewrite pair_equal_spec. firstorder.
   Qed.
 
-  Lemma Forall_ctx_decidable `(P: E * A -> Prop) (Dec: decidable P) (t: T A):
-    Forall_ctx P t \/ ~ Forall_ctx P t.
+  (** ** Decidability of <<Forall_ctx>> and <<Forany_ctx>> *)
+  (**********************************************************************)
+  Lemma decidable_Forall_ctx `(P: E * A -> Prop) `(Dec: decidable_pred P):
+    decidable_pred (Forall_ctx P).
   Proof.
-    intros.
-    unfold Forall_ctx.
+    unfold decidable_pred.
+    intro t.
     unfold Forall_ctx.
     rewrite mapdReduce_through_toctxlist.
-    unfold compose.
-    destruct (decidable_foldable P Dec (toctxlist t)); auto.
+    change (decidable (Forall (T := list) P (toctxlist t))).
+    apply decidable_Forall.
+    assumption.
   Qed.
 
-  Lemma not_forall_ctx_iff `(P: E * A -> Prop) (Dec: decidable P) (t: T A):
+  Lemma decidable_Forany_ctx `(P: E * A -> Prop) (Dec: decidable_pred P):
+    decidable_pred (Forany_ctx P).
+  Proof.
+    unfold decidable_pred.
+    intro t.
+    unfold Forany_ctx.
+    rewrite mapdReduce_through_toctxlist.
+    change (decidable (Forany (T := list) P (toctxlist t))).
+    apply decidable_Forany.
+    assumption.
+  Qed.
+
+  Lemma decidable_Forall_element_ctx
+    `(P: E * A -> Prop) `(Dec: decidable_pred P) (t: T A):
+    decidable (forall (e: E) (a: A), (e, a) ∈d t -> P (e, a)).
+  Proof.
+    rewrite <- forall_ctx_iff_eq.
+    apply decidable_Forall_ctx.
+    assumption.
+  Qed.
+
+  Lemma decidable_Forany_element_ctx
+    `(P: E * A -> Prop) `(Dec: decidable_pred P) (t: T A):
+    decidable (exists (e: E) (a: A), (e, a) ∈d t /\ P (e, a)).
+  Proof.
+    rewrite <- forany_ctx_iff_eq.
+    apply decidable_Forany_ctx.
+    assumption.
+  Qed.
+
+  Lemma not_Forall_ctx_Forany_ctx_lemma1
+    `(P: E * A -> Prop) (Dec: decidable_pred P) (t: T A):
+      ~ (Forall_ctx P t) -> Forany_ctx (not ∘ P) t.
+  Proof.
+    unfold Forall_ctx, Forany_ctx.
+    rewrite mapdReduce_through_toctxlist.
+    rewrite mapdReduce_through_toctxlist.
+    unfold compose.
+    induction (toctxlist t).
+    - cbv. firstorder.
+    - do 2 rewrite mapReduce_eq_mapReduce_list in *.
+      simpl_list.
+      simplify_monoid_conjunction.
+      simplify_monoid_disjunction.
+      firstorder.
+  Qed.
+
+  Lemma not_Forall_ctx_Forany_ctx
+    `(P: E * A -> Prop) (Dec: decidable_pred P) (t: T A):
+      ~ (Forall_ctx P t) <-> Forany_ctx (not ∘ P) t.
+  Proof.
+    unfold not at 2, compose at 1.
+    destruct (decidable_Forall_ctx P Dec t) as [YesAll | NotAll].
+    - split.
+      + contradiction.
+      + rewrite forall_ctx_iff, forany_ctx_iff in *.
+        intros [e [a [Hin HP]]] _.
+        intuition.
+    - split.
+      + apply not_Forall_ctx_Forany_ctx_lemma1.
+        assumption.
+      + easy.
+  Qed.
+
+  Lemma not_forall_ctx_iff `(P: E * A -> Prop) (Dec: decidable_pred P) (t: T A):
     ~ Forall_ctx P t <-> exists (e: E) (a: A), (e, a) ∈d t /\ ~ P (e, a).
   Proof.
+    rewrite not_Forall_ctx_Forany_ctx; auto.
+    rewrite forany_ctx_iff.
+    reflexivity.
+  Qed.
+
+  (** ** Booleans *)
+  (**********************************************************************)
+  Definition Forall_ctx_b `(P: E * A -> bool): T A -> bool :=
+    @mapdReduce T E _ bool Monoid_op_bool_and Monoid_unit_bool_true A P.
+
+  Lemma decidable_Forall_ctx_b `(P: E * A -> Prop) `(Q: E * A -> bool)
+    (Qspec: forall p, Q p = true <-> P p) (t: T A):
+    Forall_ctx P t <-> Forall_ctx_b Q t = true.
+  Proof.
     unfold Forall_ctx.
+    unfold Forall_ctx_b.
     rewrite mapdReduce_through_toctxlist.
-    setoid_rewrite ind_iff_in_toctxlist2.
-    unfold compose at 1.
-    induction (toctxlist t) as [|[e a] rest IHrest].
-    - cbn.
+    rewrite mapdReduce_through_toctxlist.
+    unfold compose.
+    induction (toctxlist t).
+    - cbv. easy.
+    - do 2 rewrite mapReduce_eq_mapReduce_list in *.
+      simpl_list.
       repeat simplify_applicative_const.
       repeat simplify_monoid_conjunction.
-      repeat simplify_monoid_subset.
-      setoid_rewrite subset_in_empty.
-      split; firstorder.
-    - rewrite mapReduce_eq_mapReduce_list.
-      simpl_list.
-      repeat simplify_monoid_conjunction.
-      setoid_rewrite element_ctx_of_env_cons.
-      rewrite decidable_push_not_mapReduce_list; auto.
-      rewrite <- mapReduce_eq_mapReduce_list.
-      setoid_rewrite IHrest; clear IHrest.
+      unfold transparent tcs.
       split.
-      { intros [Case1 | Case2].
-        - exists e. exists a. split; auto.
-        - destruct Case2 as [e' [a' [Hin Hnot]]].
-          exists e'. exists a'. split; auto.
-      }
-      { intros [e' [a' [Hin Hnot]]].
-        destruct Hin as [Case1 | Case2].
-        - inversion Case1; subst; now left.
-        - right. exists e'. exists a'. auto.
-      }
+      + rewrite IHe; clear IHe.
+        rewrite <- Qspec.
+        intros [X Y]; rewrite X; rewrite Y.
+        reflexivity.
+      + intro Hyp.
+        rewrite Bool.andb_true_iff in Hyp.
+        rewrite IHe.
+        rewrite <- Qspec.
+        assumption.
   Qed.
 
 End quantification.

@@ -30,6 +30,8 @@ Import LN.Notations.
 
 Import DecoratedTraversableMonad.UsefulInstances.
 
+From Coq Require Import Logic.Decidable.
+
 #[local] Generalizable Variables W T U.
 #[local] Open Scope nat_scope.
 
@@ -189,9 +191,77 @@ Section theory.
                         (unit := Monoid_unit_zero)
                         (op := Monoid_op_plus)}.
 
+  Definition scoped_key (k: key) (t: U LN) :=
+    forall x: atom, x ∈ free t -> x ∈ k.
+
+  Definition scoped_key_loc (k: key): LN -> Prop :=
+    fun v => match v with
+          | Bd _ => True
+          | Fr x => x ∈ k
+          end.
+
+  Lemma decidable_scoped_key_loc (k: key) (v: LN):
+    decidable (scoped_key_loc k v).
+  Proof.
+    unfold decidable.
+    unfold scoped_key_loc.
+    destruct v as [x | n].
+    - destruct (elt_decidable x k); auto.
+    - now left.
+  Qed.
+
+  Lemma scoped_key_equiv (k: key):
+    scoped_key k = Forall (scoped_key_loc k).
+  Proof.
+    ext t.
+    rewrite (forall_iff_eq (T := U)).
+    unfold scoped_key_loc.
+    unfold scoped_key. propext.
+    - intros Hyp v Hvin.
+      destruct v as [x | n].
+      + setoid_rewrite in_free_iff in Hyp.
+        auto.
+      + trivial.
+    - intros Hyp x Hin.
+      rewrite in_free_iff in Hin.
+      apply (Hyp (Fr x) Hin).
+  Qed.
+
+  Lemma scoped_key_decidable: forall (k: key),
+      decidable_pred (scoped_key k).
+  Proof.
+    intros.
+    rewrite scoped_key_equiv.
+    apply decidable_Forall.
+    intro t.
+    apply decidable_scoped_key_loc.
+  Qed.
+
+  Lemma LCloc_decidable (gap: nat):
+      decidable_pred (lc_loc gap).
+  Proof.
+    unfold lc_loc.
+    unfold decidable_pred.
+    intros [d v].
+    destruct v.
+    - now left.
+    - unfold decidable.
+      compare naturals n and d.
+  Qed.
+
+  Lemma LC_decidable:
+      decidable_pred LC.
+  Proof.
+    unfold LC.
+    unfold LCn.
+    apply decidable_Forall_ctx.
+    apply LCloc_decidable.
+  Qed.
+
   Lemma toDB_None_iff: forall k,
-    forall (t: U LN), toDB k t = None <-> (exists (a: atom), a ∈ free t /\ ~ a ∈ k) \/
-                                              (exists (depth n: nat), (depth, Bd n) ∈d t /\ n >= depth).
+    forall (t: U LN), toDB k t = None <->
+                   (exists (a: atom), a ∈ free t /\ ~ a ∈ k) \/
+                     (exists (depth n: nat), (depth, Bd n) ∈d t /\ n >= depth).
   Proof.
     intros.
     unfold toDB.
@@ -211,6 +281,47 @@ Section theory.
         exists d. exists (Fr e). split; eauto.
       + exists depth (Bd n). split; auto.
         right. exists n. auto.
+  Qed.
+
+  Lemma toDB_None_iff2: forall k,
+    forall (t: U LN),
+      toDB k t = None <->
+        ~ scoped_key k t \/ ~ LC t.
+  Proof.
+    intros.
+    rewrite toDB_None_iff.
+    rewrite scoped_key_equiv.
+    rewrite not_Forall_Forany.
+    2:{ intro v.
+        apply decidable_scoped_key_loc. }
+    unfold LC, LCn.
+    rewrite not_Forall_ctx_Forany_ctx.
+    2:{ apply LCloc_decidable. }
+    rewrite forany_iff_eq.
+    rewrite forany_ctx_iff_eq. split.
+    { intros [[x [Hin Hnin]] | [depth [n [Hin Hgt]]]].
+      - left. exists (Fr x). split.
+        rewrite in_free_iff in Hin. assumption.
+        unfold compose. cbn.
+        assumption.
+      - right.
+        exists depth (Bd n). split.
+        + assumption.
+        + unfold compose.
+          cbn.
+          lia.
+    }
+    { unfold compose, scoped_key_loc.
+      intros [[x [Hin Hnin]] | [depth [n [Hin Hgt]]]].
+      - destruct x as [x | n].
+        + left. exists x. rewrite in_free_iff. auto.
+        + contradiction.
+      - unfold lc_loc in *.
+        destruct n as [x | n].
+        + contradiction.
+        + right. exists depth n. split; auto.
+          lia.
+    }
   Qed.
 
 End theory.

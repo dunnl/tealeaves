@@ -5,7 +5,10 @@ From Tealeaves Require Import
   Functors.List
   Functors.Option
   Classes.Categorical.ContainerFunctor
-  Classes.Kleisli.DecoratedContainerFunctor.
+  Classes.Kleisli.DecoratedContainerFunctor
+  Misc.PartialBijection.
+
+From Coq Require Import Logic.Decidable.
 
 Open Scope nat_scope.
 
@@ -116,8 +119,42 @@ Proof.
   - lia.
 Qed.
 
+Lemma elt_decidable: forall (a: atom) (l: list atom),
+    decidable (a ∈ l).
+Proof.
+  intros.
+  induction l.
+  - right.
+    rewrite element_of_list_nil.
+    easy.
+  - destruct IHl as [Huniq | Hnuniq].
+    + left. simpl_list. tauto.
+    + destruct (a == a0).
+      * subst. left.
+        simpl_list. now left.
+      * right.
+        simpl_list.
+        tauto.
+Qed.
+
+Lemma unique_decidable: forall (l: list atom),
+    decidable (unique l).
+Proof.
+  intros.
+  induction l.
+  - left. cbn. easy.
+  - destruct IHl as [Huniq | Hnuniq].
+    + cbn. destruct (elt_decidable a l).
+      * right. tauto.
+      * left. tauto.
+    + right. cbn.
+      tauto.
+Qed.
+
+(*
 Definition wf_DB `{ToCtxset nat T} (t: T nat) (k: key): Prop :=
   unique k /\ exists (gap: nat), cl_at gap t /\ resolves_gap gap k.
+*)
 
 (** * Misc *)
 (******************************************************************************)
@@ -594,60 +631,4 @@ Lemma key_bijection: forall a k ix,
 Proof.
   intros.
   split; auto using key_bijection1, key_bijection2.
-Qed.
-
-Class PartialBijection {A B: Type}
-  (f: A -> option B)
-  (g: B -> option A) :=
-  { pb_fwd: forall (a: A) (b: B),
-      f a = Some b -> g b = Some a;
-    pb_bwd: forall (b: B) (a: A),
-      g b = Some a -> f a = Some b;
-
-  }.
-
-Lemma pb_iff `{PartialBijection A B f g}:
-  forall (a: A) (b: B),
-    f a = Some b <-> g b = Some a.
-Proof.
-  intros. split.
-  apply pb_fwd.
-  apply pb_bwd.
-Qed.
-
-Lemma pb_fwd_None `{PartialBijection A B f g}:
-  forall (a: A),
-    f a = None -> forall b, g b = Some a -> False.
-Proof.
-  introv H1 H2.
-  apply pb_bwd in H2.
-  congruence.
-Qed.
-
-
-Lemma pb_bwd_None `{PartialBijection A B f g}:
-  forall (b: B),
-    g b = None -> forall a, f a = Some b -> False.
-Proof.
-  introv H1 H2.
-  apply pb_fwd in H2.
-  congruence.
-Qed.
-
-
-Lemma pb_iff_None `{PartialBijection A B f g}:
-  forall (a: A),
-    f a = None <-> forall (b: B), ~ (g b = Some a).
-Proof.
-  intros. remember (f a) as fa.
-  symmetry in Heqfa.
-  destruct fa.
-  - apply pb_fwd in Heqfa.
-    split.
-    inversion 1.
-    intros contra.
-    specialize (contra b Heqfa).
-    contradiction.
-  - specialize (pb_fwd_None a Heqfa).
-    split; auto.
 Qed.

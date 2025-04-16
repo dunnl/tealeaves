@@ -49,7 +49,7 @@ Ltac simplify_monoid_conjunction :=
   ltac_trace "simplify_monoid_conjunction";
   match goal with
   | |- context[monoid_op (Monoid_op := Monoid_op_and) ?P1 ?P2] =>
-      rewrite monoid_conjunction_rw
+      rewrite (monoid_conjunction_rw P1 P2)
   | |- context[monoid_unit Prop (Monoid_unit := Monoid_unit_true)] =>
       rewrite monoid_conjunction_unit_rw
   end.
@@ -74,7 +74,7 @@ Ltac simplify_monoid_disjunction :=
   ltac_trace "simplify_monoid_disjunction";
   match goal with
   | |- context[monoid_op (Monoid_op := Monoid_op_or) ?P1 ?P2] =>
-      rewrite monoid_disjunction_rw
+      rewrite (monoid_disjunction_rw P1 P2)
   | |- context[monoid_unit Prop (Monoid_unit := Monoid_unit_false)] =>
       rewrite monoid_disjunction_unit_rw
   end.

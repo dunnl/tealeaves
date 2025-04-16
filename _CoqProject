@@ -301,6 +301,7 @@ Tealeaves/Backends/DB.v
 ##########################################################
 # TRANSLATING LOCALLY NAMELESS <-> DE DEBRUIJN           #
 ##########################################################
+Tealeaves/Misc/PartialBijection.v
 Tealeaves/Backends/Adapters/Key.v
 Tealeaves/Backends/Adapters/LNtoDB.v
 Tealeaves/Backends/Adapters/DBtoLN.v

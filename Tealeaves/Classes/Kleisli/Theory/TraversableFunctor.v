@@ -17,6 +17,8 @@ From Tealeaves Require
   Classes.Coalgebraic.TraversableFunctor
   Adapters.KleisliToCoalgebraic.TraversableFunctor.
 
+From Coq Require Import Logic.Decidable.
+
 Import Kleisli.TraversableFunctor.Notations.
 Import ContainerFunctor.Notations.
 Import Monoid.Notations.
@@ -348,7 +350,7 @@ Section traversals_by_subset.
 End traversals_by_subset.
 *)
 
-(** * Derived Operation: <<foldmap>> *)
+(** * Derived Operation: <<mapReduce>> *)
 (**********************************************************************)
 
 (** ** Operation <<mapReduce>> *)
@@ -489,7 +491,7 @@ Section mapReduce.
 
 End mapReduce.
 
-(** * <<foldmap>> Corollary: <<tolist>> *)
+(** * <<mapReduce>> Corollary: <<tolist>> *)
 (**********************************************************************)
 
 (** ** Operation <<tolist>> *)
@@ -639,7 +641,7 @@ Section tolist.
 
 End tolist.
 
-(** * <<foldmap>> Corollary: <<tosubset>> *)
+(** * <<mapReduce>> Corollary: <<tosubset>> *)
 (**********************************************************************)
 
 (** ** The <<tosubset>> Operation *)
@@ -821,7 +823,7 @@ Proof.
   reflexivity.
 Qed.
 
-(** * <<foldmap>> Corollary: <<Forall, Forany>> *)
+(** * <<mapReduce>> Corollary: <<Forall, Forany>> *)
 (**********************************************************************)
 Section quantification.
 
@@ -863,6 +865,14 @@ Section quantification.
       firstorder. now subst.
   Qed.
 
+  (* More useful for rewriting *)
+  Lemma forall_iff_eq `(P: A -> Prop) (t: T A):
+    Forall P t = forall (a: A), a ∈ t -> P a.
+  Proof.
+    apply propositional_extensionality.
+    apply forall_iff.
+  Qed.
+
   Lemma forany_iff `(P: A -> Prop) (t: T A):
     Forany P t <-> exists (a: A), a ∈ t /\ P a.
   Proof.
@@ -891,9 +901,120 @@ Section quantification.
         * right. exists a'. auto.
   Qed.
 
+  (* More useful for rewriting *)
+  Lemma forany_iff_eq `(P: A -> Prop) (t: T A):
+    Forany P t = exists (a: A), a ∈ t /\ P a.
+  Proof.
+    apply propositional_extensionality.
+    apply forany_iff.
+  Qed.
+
+  (** ** Decidability of <<Forall>> and <<Forany>> *)
+  (**********************************************************************)
+  Section decidability.
+
+    Definition decidable_pred {A: Type} (P: A -> Prop) :=
+      forall a, decidable (P a).
+
+    Lemma decidable_pred_not_and `(P: A -> Prop) (X: decidable_pred P) (a1 a2: A):
+      (~ (P a1 /\ P a2)) = ~ (P a1) \/ ~ P a2.
+    Proof.
+      apply propositional_extensionality; split.
+      - apply not_and. apply (X a1).
+      - intros [Case1|Case2]; intuition.
+    Qed.
+
+    Lemma decidable_Forall `(P: A -> Prop) `(Dec: decidable_pred P):
+      decidable_pred (Forall P).
+    Proof.
+      intro t.
+      unfold decidable.
+      unfold Forall.
+      rewrite mapReduce_through_tolist.
+      rewrite mapReduce_eq_mapReduce_list.
+      unfold compose. induction (tolist t) as [|a rest IHrest].
+      - now left.
+      - simpl_list.
+        simplify_monoid_conjunction.
+        destruct IHrest as [yes_rest | no_rest];
+          destruct (Dec a) as [yes_a | no_a]; tauto.
+    Qed.
+
+    Lemma decidable_Forany `(P: A -> Prop) `(Dec: decidable_pred P):
+      decidable_pred (Forany P).
+    Proof.
+      intro t.
+      unfold decidable.
+      unfold Forany.
+      rewrite mapReduce_through_tolist.
+      rewrite mapReduce_eq_mapReduce_list.
+      unfold compose. induction (tolist t) as [|a rest IHrest].
+      - now right.
+      - simpl_list.
+        simplify_monoid_disjunction.
+        destruct IHrest as [yes_rest | no_rest];
+          destruct (Dec a) as [yes_a | no_a]; tauto.
+    Qed.
+
+    Lemma decidable_Forall_element
+      `(P: A -> Prop) `(Dec: decidable_pred P) (t: T A):
+      decidable (forall (a: A), a ∈ t -> P a).
+    Proof.
+      rewrite <- forall_iff_eq.
+      apply decidable_Forall.
+      assumption.
+    Qed.
+
+    Lemma decidable_Forany_element
+      `(P: A -> Prop) `(Dec: decidable_pred P) (t: T A):
+      decidable (exists (a: A), a ∈ t /\ P a).
+    Proof.
+      rewrite <- forany_iff_eq.
+      apply decidable_Forany.
+      assumption.
+    Qed.
+
+  End decidability.
+
+  (** ** Corollaries of decidability *)
+  (**********************************************************************)
+  Lemma not_Forall_Forany_lemma1
+    `(P: A -> Prop) (Dec: decidable_pred P) (t: T A):
+      ~ (Forall P t) -> Forany (not ∘ P) t.
+  Proof.
+    unfold Forall, Forany.
+    rewrite mapReduce_through_tolist.
+    rewrite (mapReduce_through_tolist _ (not ∘ P)).
+    unfold compose.
+    induction (tolist t).
+    - cbv. firstorder.
+    - do 2 rewrite mapReduce_eq_mapReduce_list in *.
+      simpl_list.
+      simplify_monoid_conjunction.
+      simplify_monoid_disjunction.
+      firstorder.
+  Qed.
+
+  Lemma not_Forall_Forany
+    `(P: A -> Prop) (Dec: decidable_pred P) (t: T A):
+      ~ (Forall P t) <-> Forany (not ∘ P) t.
+  Proof.
+    unfold not at 2, compose at 1.
+    destruct (decidable_Forall P Dec t) as [YesAll | NotAll].
+    - split.
+      + contradiction.
+      + rewrite forall_iff, forany_iff in *.
+        intros [a [Hin HP]] _.
+        intuition.
+    - split.
+      + apply not_Forall_Forany_lemma1.
+        assumption.
+      + easy.
+  Qed.
+
 End quantification.
 
-(** * <<foldmap>> Corollary: <<plength>> *)
+(** * <<mapReduce>> Corollary: <<plength>> *)
 (**********************************************************************)
 From Tealeaves Require Import Misc.NaturalNumbers.
 

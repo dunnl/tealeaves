@@ -181,15 +181,17 @@ Proof.
 Qed.
 
 (** * Quantification over Elements (<<Forall>>, <<Forany>>) *)
+(* These are not the best combinators to use, it's typically easier to reason
+   when Forall is defined in terms of mapReduce *)
 (**********************************************************************)
 Section quantification.
 
   Context `{ContainerFunctor T}.
 
-  Definition Forall `(P: A -> Prop) (t: T A): Prop :=
+  Definition Forall_elt `(P: A -> Prop) (t: T A): Prop :=
     forall (a: A), a ∈ t -> P a.
 
-  Definition Forany `(P: A -> Prop) (t :T A): Prop :=
+  Definition Forany_elt `(P: A -> Prop) (t :T A): Prop :=
     exists (a: A), a ∈ t /\ P a.
 
 End quantification.

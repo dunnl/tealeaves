@@ -26,7 +26,10 @@ From Tealeaves Require Export
   Backends.Adapters.Key
   Backends.Adapters.LNtoDB
   Backends.Adapters.DBtoLN
-  Functors.Option.
+  Functors.Option
+  Misc.PartialBijection.
+
+From Coq Require Import PeanoNat.
 
 Import LN.Notations.
 
@@ -52,7 +55,7 @@ Section translate.
   Lemma lc_bound: forall t e n,
       LC (U := U) t ->
       (e, Bd n) ∈d t ->
-      bound n e = true.
+      bound n e.
   Proof.
     introv HLC Hin. cbn.
     rewrite LC_spec in HLC.
@@ -60,18 +63,33 @@ Section translate.
     unfold lc_loc in HLC.
     replace (e + 0) with e in * by lia.
     destruct e.
+    lia. unfold bound, bound_within.
     lia.
-    rewrite PeanoNat.Nat.leb_le. lia.
+  Qed.
+
+  Lemma lc_bound_b: forall t e n,
+      LC (U := U) t ->
+      (e, Bd n) ∈d t ->
+      bound_b n e = true.
+  Proof.
+    intros. specialize (lc_bound t _ _ H H0).
+    rewrite bound_spec.
+    unfold bound, bound_within.
+    lia.
   Qed.
 
   Lemma bound_in_plus: forall n depth,
-      bound (n + depth) depth = false.
+      ~ bound (n + depth) depth.
   Proof.
-    intros. destruct depth.
-    - reflexivity.
-    - cbn.
-      rewrite Compare_dec.leb_iff_conv.
-      lia.
+    intros. unfold bound, bound_within. lia.
+  Qed.
+
+  Lemma bound_in_plus_b: forall n depth,
+      bound_b (n + depth) depth = false.
+  Proof.
+    intros.
+    rewrite bound_spec_not.
+    lia.
   Qed.
 
   Lemma toDB_Fr: forall (n: nat) (a: atom) (k: key),
@@ -85,9 +103,6 @@ Section translate.
     eexists. reflexivity.
   Qed.
 
-  Definition scoped_key (t: U LN) (k: key) :=
-    forall x: atom, Fr x ∈ t -> x ∈ k.
-
   (** ** Totality *)
   (********************************************************************)
   (** Given a locally closed locally nameless term and a key with enough atoms,
@@ -95,7 +110,7 @@ Section translate.
   Lemma to_DB_from_key_total:
     forall (t: U LN) (k: key),
       LC t ->
-      scoped_key t k ->
+      scoped_key k t ->
       exists (t': U nat), toDB k t = Some t'.
   Proof.
     introv HLC Hin.
@@ -108,6 +123,7 @@ Section translate.
     rewrite (tosubset_through_runBatch2 _ nat) in Hin.
     (* the proof breaks here because can't rewrite under the binders. *)
     try setoid_rewrite (element_ctx_of_toctxset (E := nat) (T := U)) in HLC.
+    (*
     try rewrite (toctxset_through_runBatch2) in HLC.
     rewrite toBatch_to_toBatch3 in Hin.
     unfold compose in Hin.
@@ -146,6 +162,7 @@ Section translate.
         cbn. right.
         reflexivity.
       + (* Proof missing due to technical difficulties above *)
+     *)
   Abort.
 
   Lemma mapdt_None:
@@ -181,7 +198,7 @@ Section translate.
     rewrite H_key_lookup.
     change (map ?f (Some ?n)) with (Some (f n)).
     unfold compose, toLN_loc.
-    rewrite bound_in_plus.
+    rewrite bound_in_plus_b.
     replace (n + depth - depth) with n by lia.
     rewrite (key_bijection1 x k n H_key_lookup).
     reflexivity.
@@ -189,9 +206,9 @@ Section translate.
 
   (** Starting with a locally closed term and a big enough key,
       the roundtrip is locally the identity function *)
-  Lemma LN_DB_roundtrip_loc: forall t k depth l,
+  Lemma LN_DB_roundtrip_loc: forall (t: U LN) k depth l,
       LC t ->
-      scoped_key t k ->
+      scoped_key k t ->
       (depth, l) ∈d t ->
       (toLN_loc k ⋆3 toDB_loc k) (depth, l) = pure (F := option ∘ option) l.
   Proof.
@@ -203,13 +220,14 @@ Section translate.
       compose near (key_lookup_atom k x).
       rewrite (fun_map_map (F := option)).
       apply ind_implies_in in Hin.
+      rewrite <- in_free_iff in Hin.
       specialize (Hwhole x Hin); clear Hin.
       now apply LN_DB_roundtrip_loc_helper1.
     - rewrite toDB_loc_rw1.
       change (map ?f (Some ?n)) with (Some (f n)).
       unfold compose.
       unfold toLN_loc.
-      now rewrite (lc_bound t depth n Hlc Hin).
+      now rewrite (lc_bound_b t depth n Hlc Hin).
       rewrite LC_spec in Hlc.
       specialize (Hlc depth (Bd n) Hin).
       unfold lc_loc in Hlc.
@@ -220,7 +238,7 @@ Section translate.
       the roundtrip is locally the identity function *)
   Theorem LN_DB_roundtrip:
     forall (t: U LN) (k: key),
-      (forall x: atom, Fr x ∈ t -> x ∈ k) ->
+      scoped_key k t ->
       LC t ->
       map (F := option) (toLN k) (toDB k t) =
         Some (Some t).
@@ -230,11 +248,10 @@ Section translate.
     unfold toDB.
     compose near t on left.
     rewrite mapdt_mapdt.
-    all: try typeclasses eauto.
     change (Some (Some t)) with (pure (F := option ∘ option) t).
     apply (mapdt_respectful_pure _ (G := option ∘ option)).
     intros.
-    now rewrite (LN_DB_roundtrip_loc t).
+    rewrite (LN_DB_roundtrip_loc t); auto.
   Qed.
 
   (** ** Roundtrip from DB *)
@@ -246,7 +263,7 @@ Section translate.
       unique k ->
        n < depth + gap ->
        resolves_gap gap k ->
-      bound n depth = false ->
+      bound_b n depth = false ->
       (depth, n) ∈d t ->
       map (toDB_loc k ∘ pair depth) (map Fr (key_lookup_index k (n - depth))) = Some (Some n).
   Proof.
@@ -290,19 +307,18 @@ Section translate.
     rewrite kc3_spec.
     unfold toLN_loc.
     bound_induction.
-    { specialize (Hclosed depth n Helt).
+    { cbn.
+      rewrite cl_at_spec in Hclosed.
+      specialize (Hclosed depth n Helt).
       unfold cl_at_loc, bound_within in Hclosed.
-      rewrite PeanoNat.Nat.ltb_lt in Hclosed.
-      cbn.
-      assert (gap <> 0).
-      { lia. }
+      assert (gap <> 0) by lia. (* nothing is less than zero. *)
       apply (DB_LN_roundtrip_loc_helper1 t k gap); eauto.
     }
     { cbn.
       destruct depth.
       - false.
       - assert (Hle: n <= depth) by lia.
-        rewrite <- PeanoNat.Nat.leb_le in Hle.
+        rewrite <- Nat.leb_le in Hle.
         rewrite Hle.
         reflexivity.
     }
@@ -329,85 +345,7 @@ Section translate.
     now rewrite (DB_LN_roundtrip_loc t k gap).
   Qed.
 
-  (** ** Partial Bijections *)
-  (********************************************************************)
-  Theorem partial_bijection_spec1:
-    forall (A B: Type) (f: A -> option B) (g: B -> option A),
-      (forall (a: A), f a = None \/ map g (f a) = Some (Some a)) ->
-      (forall (b: B), g b = None \/ map f (g b) = Some (Some b)) ->
-      (forall (a: A) (b: B), f a = Some b <-> g b = Some a).
-  Proof.
-    introv HA HB.
-    intros a b.
-    split.
-    - intros Hf.
-      specialize (HA a).
-      rewrite Hf in HA.
-      cbn in HA.
-      inversion HA.
-      + inversion H.
-      + inversion H.
-        reflexivity.
-    - intros Hg.
-      specialize (HB b).
-      rewrite Hg in HB.
-      cbn in HB.
-      inversion HB.
-      + inversion H.
-      + inversion H.
-        reflexivity.
-  Qed.
-
-  Theorem partial_bijection_spec2:
-    forall (A B: Type) (f: A -> option B) (g: B -> option A),
-      (forall (a: A) (b: B), f a = Some b <-> g b = Some a) ->
-      (forall (a: A), f a = None \/ map g (f a) = Some (Some a)).
-  Proof.
-    introv H. intro a.
-    specialize (H a).
-    destruct (f a) as [b|].
-    - right.
-      destruct (H b) as [H1 _].
-      specialize (H1 ltac:(reflexivity)).
-      cbn. fequal.
-      assumption.
-    - now left.
-  Qed.
-
-  Theorem partial_bijection_spec3:
-    forall (A B: Type) (f: A -> option B) (g: B -> option A),
-      (forall (a: A) (b: B), f a = Some b <-> g b = Some a) ->
-      (forall (b: B), g b = None \/ map f (g b) = Some (Some b)).
-  Proof.
-    introv H. intro b.
-    remember (g b) as gb.
-    destruct gb as [a|].
-    - right.
-      cbn.
-      fequal.
-      apply H.
-      symmetry.
-      assumption.
-    - now left.
-  Qed.
-
-  Theorem partial_bijection_spec:
-    forall (A B: Type) (f: A -> option B) (g: B -> option A),
-      (forall (a: A) (b: B), f a = Some b <-> g b = Some a) <->
-      (forall (b: B), g b = None \/ map f (g b) = Some (Some b)) /\
-        (forall (a: A), f a = None \/ map g (f a) = Some (Some a)).
-  Proof.
-    intros. split.
-    - intros. split.
-      now apply partial_bijection_spec2.
-      now apply partial_bijection_spec3.
-    - intros [H1 H2].
-      apply partial_bijection_spec1.
-      assumption.
-      assumption.
-  Qed.
-
-  Theorem DB_LN_partial_bijection1: forall k,
+  Theorem DB_LN_partial_bijection_iff: forall k,
       unique k ->
       (forall (t: U LN) (u: U nat),
           toDB k t = Some u <-> toLN k u = Some t).
@@ -423,8 +361,51 @@ Section translate.
       + assumption.
       + unfold resolves_gap. lia.
       + now left.
-    - rewrite toDB_None_iff.
-  Abort.
+    - rewrite toDB_None_iff2.
+      destruct (scoped_key_decidable k t).
+      { destruct (LC_decidable t).
+        { right. apply LN_DB_roundtrip; assumption. }
+        { left. now right. }
+      }
+      { left. now left. }
+  Qed.
+
+  Lemma not_scoped_LC_iff: forall (k: key) (t: U LN),
+      ~ (scoped_key k t /\ LC t) <-> ~ scoped_key k t \/ ~ LC t.
+  Proof.
+    intros.
+    split.
+    - intros.
+      apply Decidable.not_and.
+      apply scoped_key_decidable.
+      assumption.
+    - tauto.
+  Qed.
+
+  Theorem DB_LN_partial_bijection:
+    forall (k: key),
+      unique k ->
+      PartialBijectionSpec
+        (U LN) (U nat)
+        (fun t => (forall (x: atom), x ∈ free t -> x ∈ k) /\ LC t)
+        (fun t => level t <= length k)
+        (toDB k) (toLN k).
+  Proof.
+    intros.
+    constructor.
+    - intros.
+      apply DB_LN_partial_bijection_iff.
+      assumption.
+    - intros t.
+      rewrite toDB_None_iff2.
+      rewrite <- (not_scoped_LC_iff k t).
+      unfold scoped_key.
+      reflexivity.
+    - intros t.
+      rewrite toLN_None_iff.
+      rewrite level_iff.
+      reflexivity.
+  Qed.
 
 End translate.
 

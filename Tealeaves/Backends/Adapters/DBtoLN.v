@@ -38,7 +38,7 @@ Operations
 ============================
 |*)
 Definition toLN_loc (k: key) '(depth, ix) : option LN :=
-  if bound ix depth == true
+  if bound_b ix depth == true
   then
     Some (Bd ix)
   else
@@ -103,7 +103,7 @@ Section theory.
   Proof.
     intros.
     unfold toLN_loc.
-    unfold bound, bound_within.
+    unfold bound_b, bound_within_b.
     replace (d + 0) with d by lia.
     remember (Nat.ltb n d) as b.
     symmetry in Heqb.
@@ -130,7 +130,6 @@ Section theory.
     rewrite mapdt_option_None_spec.
     setoid_rewrite toLN_loc_None_iff.
     unfold cl_at_loc, bound_within.
-    setoid_rewrite PeanoNat.Nat.ltb_ge.
     split; intros [e [a [Hin Hspec]]].
     - exists e a; split; auto. lia.
     - exists e a; split; auto. lia.
