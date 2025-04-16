@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Categorical.Comonad</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#"><span class="id" title="library">Classes.Functor</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Identity.html#"><span class="id" title="library">Functors.Identity</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Compose.html#"><span class="id" title="library">Functors.Compose</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Functor.html#Notations"><span class="id" title="module">Functor.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">W</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> <span class="id" title="var">D</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab111"></a><h1 class="section">Comonads</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab112"></a><h2 class="section">Operations <code>cojoin</code> and <code>extract</code></h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="Extract" class="idref" href="#Extract"><span class="id" title="record">Extract</span></a> (<a id="W:1" class="idref" href="#W:1"><span class="id" title="binder">W</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) :=<br/>
+&nbsp;&nbsp;<a id="extract" class="idref" href="#extract"><span class="id" title="projection">extract</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:1"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#278ce2a34b83a8295656f6eff2db54a7"><span class="id" title="notation">⇒</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#278ce2a34b83a8295656f6eff2db54a7"><span class="id" title="notation">(</span></a><span class="id" title="keyword">fun</span> <a id="A:3" class="idref" href="#A:3"><span class="id" title="binder">A</span></a> ⇒ <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#A:3"><span class="id" title="variable">A</span></a><a class="idref" href="Tealeaves.Classes.Functor.html#278ce2a34b83a8295656f6eff2db54a7"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Class</span> <a id="Cojoin" class="idref" href="#Cojoin"><span class="id" title="record">Cojoin</span></a> (<a id="W:5" class="idref" href="#W:5"><span class="id" title="binder">W</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) :=<br/>
+&nbsp;&nbsp;<a id="cojoin" class="idref" href="#cojoin"><span class="id" title="projection">cojoin</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:5"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#278ce2a34b83a8295656f6eff2db54a7"><span class="id" title="notation">⇒</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:5"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:5"><span class="id" title="variable">W</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a> {<span class="id" title="var">W</span>}%<span class="id" title="var">function_scope</span> {<span class="id" title="keyword">Extract</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> {<span class="id" title="var">W</span>}%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Cojoin</span>} {<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab113"></a><h2 class="section">Typeclass</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="Comonad" class="idref" href="#Comonad"><span class="id" title="record">Comonad</span></a> (<a id="W:8" class="idref" href="#W:8"><span class="id" title="binder">W</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;`{<a id="Map_W:9" class="idref" href="#Map_W:9"><span class="id" title="binder">Map_W</span></a>: <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a>}<br/>
+&nbsp;&nbsp;`{<a id="Cojoin_W:10" class="idref" href="#Cojoin_W:10"><span class="id" title="binder">Cojoin_W</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#Cojoin"><span class="id" title="class">Cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a>}<br/>
+&nbsp;&nbsp;`{<a id="Extract_W:11" class="idref" href="#Extract_W:11"><span class="id" title="binder">Extract_W</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#Extract"><span class="id" title="class">Extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a>} :=<br/>
+&nbsp;&nbsp;{ <a id="com_functor" class="idref" href="#com_functor"><span class="id" title="projection">com_functor</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Functor.html#Functor"><span class="id" title="class">Functor</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="com_extract_natural" class="idref" href="#com_extract_natural"><span class="id" title="projection">com_extract_natural</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Functor.html#Natural"><span class="id" title="class">Natural</span></a> (@<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a> <span class="id" title="var">_</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="com_cojoin_natural" class="idref" href="#com_cojoin_natural"><span class="id" title="projection">com_cojoin_natural</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Functor.html#Natural"><span class="id" title="class">Natural</span></a> (@<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a> <span class="id" title="var">_</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="com_extract_cojoin" class="idref" href="#com_extract_cojoin"><span class="id" title="projection">com_extract_cojoin</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a> (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="com_map_extr_cojoin" class="idref" href="#com_map_extr_cojoin"><span class="id" title="projection">com_map_extr_cojoin</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a>) (<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>)) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="com_cojoin_cojoin" class="idref" href="#com_cojoin_cojoin"><span class="id" title="projection">com_cojoin_cojoin</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a> <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#W:8"><span class="id" title="variable">W</span></a>) (<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>)) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>));<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab114"></a><h1 class="section">Notations</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Notations" class="idref" href="#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="71e69e4c55d3d555f304a2a3cd957fec" class="idref" href="#71e69e4c55d3d555f304a2a3cd957fec"><span class="id" title="notation">&quot;</span></a>'coμ'" := <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a>: <span class="id" title="var">tealeaves_scope</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

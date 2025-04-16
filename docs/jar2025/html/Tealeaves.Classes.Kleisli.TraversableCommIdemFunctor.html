@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.ApplicativeCommutativeIdempotent.html#"><span class="id" title="library">Classes.Categorical.ApplicativeCommutativeIdempotent</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#"><span class="id" title="library">Classes.Kleisli.TraversableFunctor</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variable</span> <span class="id" title="var">T</span> <span class="id" title="var">G</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> <span class="id" title="var">ϕ</span> <span class="id" title="var">M</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Notations"><span class="id" title="module">TraversableFunctor.Notations</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab306"></a><h1 class="section">Commutative/Idempotent-Traversable Functors</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab307"></a><h2 class="section">The <code>traverse</code> Operation</h2>
+ The operation is Classes.Kleisli.TraversableFunctor.Traverse 
+<div class="paragraph"> </div>
+
+<a id="lab308"></a><h2 class="section">Kleisli Composition</h2>
+ The operation is Classes.Kleisli.TraversableFunctor.kc2 
+<div class="paragraph"> </div>
+
+<a id="lab309"></a><h2 class="section">Typeclass</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="TraversableCommIdemFunctor" class="idref" href="#TraversableCommIdemFunctor"><span class="id" title="record">TraversableCommIdemFunctor</span></a> (<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) `{<a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">Traverse</span></a> <a id="H:2" class="idref" href="#H:2"><span class="id" title="binder">T</span></a>} :=<br/>
+&nbsp;&nbsp;{ <a id="trfci_traverse_id" class="idref" href="#trfci_traverse_id"><span class="id" title="projection">trfci_traverse_id</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a> (<span class="id" title="var">G</span> := <span class="id" title="keyword">fun</span> <a id="A:5" class="idref" href="#A:5"><span class="id" title="binder">A</span></a> ⇒ <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#A:5"><span class="id" title="variable">A</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#A:4"><span class="id" title="variable">A</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="trfci_traverse_traverse" class="idref" href="#trfci_traverse_traverse"><span class="id" title="projection">trfci_traverse_traverse</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> `{<a id="H0:11" class="idref" href="#H0:11"><span class="id" title="binder">ApplicativeCommutativeIdempotent</span></a> <a id="H0:11" class="idref" href="#H0:11"><span class="id" title="binder">G1</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H1:16" class="idref" href="#H1:16"><span class="id" title="binder">ApplicativeCommutativeIdempotent</span></a> <a id="H1:16" class="idref" href="#H1:16"><span class="id" title="binder">G2</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="A:17" class="idref" href="#A:17"><span class="id" title="binder">A</span></a> <a id="B:18" class="idref" href="#B:18"><span class="id" title="binder">B</span></a> <a id="C:19" class="idref" href="#C:19"><span class="id" title="binder">C</span></a>: <span class="id" title="keyword">Type</span>) (<a id="g:20" class="idref" href="#g:20"><span class="id" title="binder">g</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#B:18"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#G2:12"><span class="id" title="variable">G2</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#C:19"><span class="id" title="variable">C</span></a>) (<a id="f:21" class="idref" href="#f:21"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#A:17"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#G1:7"><span class="id" title="variable">G1</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#B:18"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#g:20"><span class="id" title="variable">g</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#f:21"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#T:1"><span class="id" title="variable">T</span></a>) (<span class="id" title="var">G</span> := <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#G1:7"><span class="id" title="variable">G1</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#G2:12"><span class="id" title="variable">G2</span></a>) (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#g:20"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#1c88ff5532c3a847b1beb4908cee4f91"><span class="id" title="notation">⋆2</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#f:21"><span class="id" title="variable">f</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="trfci_traverse_morphism" class="idref" href="#trfci_traverse_morphism"><span class="id" title="projection">trfci_traverse_morphism</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> `{<a id="morphism:32" class="idref" href="#morphism:32"><span class="id" title="binder">morphism</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#ApplicativeMorphism"><span class="id" title="class">ApplicativeMorphism</span></a> <a id="G1:23" class="idref" href="#G1:23"><span class="id" title="binder">G1</span></a> <a id="G2:24" class="idref" href="#G2:24"><span class="id" title="binder">G2</span></a> <a id="6f9e85a9c19809092e25a5815c4a6285" class="idref" href="#6f9e85a9c19809092e25a5815c4a6285"><span class="id" title="binder">ϕ</span></a>} (<a id="A:33" class="idref" href="#A:33"><span class="id" title="binder">A</span></a> <a id="B:34" class="idref" href="#B:34"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>) (<a id="f:35" class="idref" href="#f:35"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#A:33"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#G1:23"><span class="id" title="variable">G1</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#B:34"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#6f9e85a9c19809092e25a5815c4a6285"><span class="id" title="variable">ϕ</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#B:34"><span class="id" title="variable">B</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#f:35"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#traverse"><span class="id" title="definition">traverse</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#6f9e85a9c19809092e25a5815c4a6285"><span class="id" title="variable">ϕ</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#B:34"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableCommIdemFunctor.html#f:35"><span class="id" title="variable">f</span></a>);<br/>
+&nbsp;&nbsp;}.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

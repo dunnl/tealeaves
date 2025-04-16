@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Functors.Writer</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Early.Writer.html#"><span class="id" title="library">Functors.Early.Writer</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Reader.html#"><span class="id" title="library">Functors.Reader</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.Product.html#"><span class="id" title="library">Misc.Product</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Monoid.html#"><span class="id" title="library">Classes.Monoid</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">W</span> <span class="id" title="var">T</span> <span class="id" title="var">F</span> <span class="id" title="var">A</span> <span class="id" title="var">M</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Bimonad.html#"><span class="id" title="library">Classes.Categorical.Bimonad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.RightModule.html#"><span class="id" title="library">Classes.Categorical.RightModule</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Strength.html#Notations"><span class="id" title="module">Strength.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Notations"><span class="id" title="module">Monad.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#Notations"><span class="id" title="module">Monoid.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Product.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span>)%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Return</span>}<br/>
+&nbsp;&nbsp;(<span class="id" title="var">A</span>)%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">F</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Map</span>}<br/>
+&nbsp;&nbsp;{<span class="id" title="var">A</span> <span class="id" title="var">B</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">f</span>%<span class="id" title="var">function_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a> (<span class="id" title="var">W</span>)%<span class="id" title="var">function_scope</span> {<span class="id" title="keyword">Extract</span>}<br/>
+&nbsp;&nbsp;(<span class="id" title="var">A</span>)%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#cojoin"><span class="id" title="definition">cojoin</span></a> <span class="id" title="var">W</span>%<span class="id" title="var">function_scope</span> {<span class="id" title="var">Cojoin</span>}<br/>
+&nbsp;&nbsp;{<span class="id" title="var">A</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab919"></a><h1 class="section"><code>T ∘ (W ×)</code> is a monad</h1>
+
+</div>
+<div class="code">
+<span class="comment">(*&nbsp;TODO:&nbsp;This&nbsp;can&nbsp;get&nbsp;moved&nbsp;to&nbsp;Categories/DecoratedFunctor.v&nbsp;*)</span><br/>
+<span class="comment">(**********************************************************************)</span><br/>
+<span class="id" title="keyword">Section</span> <a id="strength_as_writer_distributive_law" class="idref" href="#strength_as_writer_distributive_law"><span class="id" title="section">strength_as_writer_distributive_law</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:4" class="idref" href="#H:4"><span class="id" title="binder">Monoid</span></a> <a id="H:4" class="idref" href="#H:4"><span class="id" title="binder">W</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="strength_ret_l" class="idref" href="#strength_ret_l"><span class="id" title="lemma">strength_ret_l</span></a> `{<a id="H0:7" class="idref" href="#H0:7"><span class="id" title="binder">Functor</span></a> <a id="H0:7" class="idref" href="#H0:7"><span class="id" title="binder">F</span></a>}: <span class="id" title="keyword">∀</span> <a id="A:8" class="idref" href="#A:8"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.Strength.html#8319486a697349ec48617741566c6caf"><span class="id" title="notation">σ</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a> (<a class="idref" href="Tealeaves.Functors.Writer.html#F:5"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#A:8"><span class="id" title="variable">A</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#F:5"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#A:8"><span class="id" title="variable">A</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="strength_join_l" class="idref" href="#strength_join_l"><span class="id" title="lemma">strength_join_l</span></a> `{<a id="H0:11" class="idref" href="#H0:11"><span class="id" title="binder">Functor</span></a> <a id="H0:11" class="idref" href="#H0:11"><span class="id" title="binder">F</span></a>}: <span class="id" title="keyword">∀</span> <a id="A:12" class="idref" href="#A:12"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.Strength.html#8319486a697349ec48617741566c6caf"><span class="id" title="notation">σ</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a>) (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Functors.Writer.html#F:9"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#A:12"><span class="id" title="variable">A</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#F:9"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a>) (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Functors.Writer.html#A:12"><span class="id" title="variable">A</span></a>)) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Misc.Strength.html#8319486a697349ec48617741566c6caf"><span class="id" title="notation">σ</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a> <a class="idref" href="Tealeaves.Misc.Strength.html#8319486a697349ec48617741566c6caf"><span class="id" title="notation">σ</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">ext</span> [<span class="id" title="var">w1</span> [<span class="id" title="var">w2</span> <span class="id" title="var">t</span>]]. <span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">t</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">t</span> <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H3:17" class="idref" href="#H3:17"><span class="id" title="binder">Monad</span></a> <a id="H3:17" class="idref" href="#H3:17"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>, <span class="id" title="var">program</span>] <span class="id" title="keyword">Instance</span> <a id="BeckDistributiveLaw_strength" class="idref" href="#BeckDistributiveLaw_strength"><span class="id" title="instance">BeckDistributiveLaw_strength</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#BeckDistributiveLaw"><span class="id" title="class">BeckDistributiveLaw</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.T"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#bdist_join_r"><span class="id" title="method">bdist_join_r</span></a> := <a class="idref" href="Tealeaves.Functors.Early.Reader.html#strength_join"><span class="id" title="lemma">strength_join</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#bdist_unit_r"><span class="id" title="method">bdist_unit_r</span></a> := <a class="idref" href="Tealeaves.Functors.Early.Reader.html#strength_ret"><span class="id" title="lemma">strength_ret</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#bdist_join_l"><span class="id" title="method">bdist_join_l</span></a> := <a class="idref" href="Tealeaves.Functors.Writer.html#strength_join_l"><span class="id" title="lemma">strength_join_l</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#bdist_unit_l"><span class="id" title="method">bdist_unit_l</span></a> := <a class="idref" href="Tealeaves.Functors.Writer.html#strength_ret_l"><span class="id" title="lemma">strength_ret_l</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span>: <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Monad"><span class="id" title="class">Monad</span></a> (<a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law.W"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a>) := <a class="idref" href="Tealeaves.Classes.Categorical.BeckDistributiveLaw.html#Monad_Beck"><span class="id" title="instance">Monad_Beck</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Functors.Writer.html#strength_as_writer_distributive_law"><span class="id" title="section">strength_as_writer_distributive_law</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab920"></a><h1 class="section">Miscellaneous Properties</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="Writer_miscellaneous" class="idref" href="#Writer_miscellaneous"><span class="id" title="section">Writer_miscellaneous</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:21" class="idref" href="#H:21"><span class="id" title="binder">Monoid</span></a> <a id="H:21" class="idref" href="#H:21"><span class="id" title="binder">W</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Notations"><span class="id" title="module">Categorical.Monad.Notations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;This&nbsp;rewrite&nbsp;is&nbsp;useful&nbsp;when&nbsp;proving&nbsp;decoration-traversal<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;compatibility&nbsp;in&nbsp;the&nbsp;binder&nbsp;case.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Theorem</span> <a id="strength_shift1" class="idref" href="#strength_shift1"><span class="id" title="lemma">strength_shift1</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="F:22" class="idref" href="#F:22"><span class="id" title="binder">F</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) `{<a id="H0:24" class="idref" href="#H0:24"><span class="id" title="binder">Functor</span></a> <a id="H0:24" class="idref" href="#H0:24"><span class="id" title="binder">F</span></a>} (<a id="w:25" class="idref" href="#w:25"><span class="id" title="binder">w</span></a>: <a class="idref" href="Tealeaves.Functors.Writer.html#Writer_miscellaneous.W"><span class="id" title="variable">W</span></a>) (<a id="A:26" class="idref" href="#A:26"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Misc.Strength.html#8319486a697349ec48617741566c6caf"><span class="id" title="notation">σ</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">μ</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">T</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">:=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">×))</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#pair"><span class="id" title="constructor">pair</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#w:25"><span class="id" title="variable">w</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#F:22"><span class="id" title="variable">F</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">μ</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">T</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">:=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#db31158fa186691c4697d7f5420ed411"><span class="id" title="notation">×))</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#pair"><span class="id" title="constructor">pair</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#w:25"><span class="id" title="variable">w</span></a>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Misc.Strength.html#strength"><span class="id" title="definition">strength</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Functors.Writer.html#F:22"><span class="id" title="variable">F</span></a>) (<span class="id" title="var">B</span> := <a class="idref" href="Tealeaves.Functors.Writer.html#A:26"><span class="id" title="variable">A</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">ext</span> [<span class="id" title="var">w'</span> <span class="id" title="var">x</span>]. <span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a>; <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">compose</span> <span class="id" title="var">near</span> <span class="id" title="var">x</span>. <span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="pair_incr_zero" class="idref" href="#pair_incr_zero"><span class="id" title="lemma">pair_incr_zero</span></a>: <span class="id" title="keyword">∀</span> (<a id="w:27" class="idref" href="#w:27"><span class="id" title="binder">w</span></a>: <a class="idref" href="Tealeaves.Functors.Writer.html#Writer_miscellaneous.W"><span class="id" title="variable">W</span></a>) (<a id="A:28" class="idref" href="#A:28"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Monoid.html#incr"><span class="id" title="definition">incr</span></a> (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Functors.Writer.html#A:28"><span class="id" title="variable">A</span></a>) <a class="idref" href="Tealeaves.Functors.Writer.html#w:27"><span class="id" title="variable">w</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#pair"><span class="id" title="constructor">pair</span></a> <a class="idref" href="Tealeaves.Classes.Monoid.html#118a0ae73788a324a953caf13a2d25ca"><span class="id" title="notation">Ƶ</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#pair"><span class="id" title="constructor">pair</span></a> <a class="idref" href="Tealeaves.Functors.Writer.html#w:27"><span class="id" title="variable">w</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">p</span>. <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#monoid_id_r"><span class="id" title="method">monoid_id_r</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Functors.Writer.html#Writer_miscellaneous"><span class="id" title="section">Writer_miscellaneous</span></a>.<br/>
+
+<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

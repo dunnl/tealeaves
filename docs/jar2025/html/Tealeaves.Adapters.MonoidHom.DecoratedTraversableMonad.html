@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#"><span class="id" title="library">Classes.Kleisli.DecoratedTraversableMonad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Monoid.html#"><span class="id" title="library">Classes.Monoid</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Writer.html#"><span class="id" title="library">Functors.Writer</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Applicative.html#Notations"><span class="id" title="module">Applicative.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#Notations"><span class="id" title="module">Monoid.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Product.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">ϕ</span> <span class="id" title="var">T</span> <span class="id" title="var">W</span> <span class="id" title="var">G</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> <span class="id" title="var">D</span> <span class="id" title="var">F</span> <span class="id" title="var">M</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="dtm_to_dtm" class="idref" href="#dtm_to_dtm"><span class="id" title="section">dtm_to_dtm</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">DecoratedTraversableMonad</span></a> <a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">W1</span></a> <a id="H:7" class="idref" href="#H:7"><span class="id" title="binder">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:11" class="idref" href="#H0:11"><span class="id" title="binder">Monoid</span></a> <a id="H0:11" class="idref" href="#H0:11"><span class="id" title="binder">W2</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="a1f385ccf5eb576e34b4284ac145ec86" class="idref" href="#a1f385ccf5eb576e34b4284ac145ec86"><span class="id" title="binder">ϕ</span></a>: <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#W1:2"><span class="id" title="variable">W1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#W2:8"><span class="id" title="variable">W2</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Monoid_Morphism0:13" class="idref" href="#Monoid_Morphism0:13"><span class="id" title="binder">!</span></a> <a id="Monoid_Morphism0:13" class="idref" href="#Monoid_Morphism0:13"><span class="id" title="binder">Monoid_Morphism</span></a> <a id="Monoid_Morphism0:13" class="idref" href="#Monoid_Morphism0:13"><span class="id" title="binder">W1</span></a> <a id="Monoid_Morphism0:13" class="idref" href="#Monoid_Morphism0:13"><span class="id" title="binder">W2</span></a> <a id="Monoid_Morphism0:13" class="idref" href="#Monoid_Morphism0:13"><span class="id" title="binder">ϕ</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Binddt_Morphism" class="idref" href="#Binddt_Morphism"><span class="id" title="instance">Binddt_Morphism</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#Binddt"><span class="id" title="class">Binddt</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#dtm_to_dtm.W2"><span class="id" title="variable">W2</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#dtm_to_dtm.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#dtm_to_dtm.T"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="G:14" class="idref" href="#G:14"><span class="id" title="binder">G</span></a> <a id="Gmap:15" class="idref" href="#Gmap:15"><span class="id" title="binder">Gmap</span></a> <a id="Gpure:16" class="idref" href="#Gpure:16"><span class="id" title="binder">Gpure</span></a> <a id="Gmult:17" class="idref" href="#Gmult:17"><span class="id" title="binder">Gmult</span></a> <a id="V1:18" class="idref" href="#V1:18"><span class="id" title="binder">V1</span></a> <a id="V2:19" class="idref" href="#V2:19"><span class="id" title="binder">V2</span></a> <a id="73037d305ae1b6028b521cda53a3cc2f" class="idref" href="#73037d305ae1b6028b521cda53a3cc2f"><span class="id" title="binder">σ</span></a> ⇒<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">G</span> := <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#G:14"><span class="id" title="variable">G</span></a>) (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#dtm_to_dtm.T"><span class="id" title="variable">T</span></a>) (<a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#73037d305ae1b6028b521cda53a3cc2f"><span class="id" title="variable">σ</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#map_fst"><span class="id" title="definition">map_fst</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#cbfdced942c706dd1f73030dcbfbaf88"><span class="id" title="variable">ϕ</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="DTM_of_DTM" class="idref" href="#DTM_of_DTM"><span class="id" title="instance">DTM_of_DTM</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#DecoratedTraversableMonad"><span class="id" title="class">DecoratedTraversableMonad</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#dtm_to_dtm.W2"><span class="id" title="variable">W2</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#dtm_to_dtm.T"><span class="id" title="variable">T</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#Binddt_Morphism"><span class="id" title="instance">Binddt_Morphism</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#kdtm_binddt0"><span class="id" title="method">kdtm_binddt0</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> → <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Functors.Early.Writer.html#Return_Writer"><span class="id" title="instance">Return_Writer</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Misc.Product.html#map_fst"><span class="id" title="definition">map_fst</span></a>, <a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> <span class="id" title="var">a</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#monmor_unit"><span class="id" title="method">monmor_unit</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#Binddt_Morphism"><span class="id" title="instance">Binddt_Morphism</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> → <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="var">Heq</span>: <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a> (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#map_fst"><span class="id" title="definition">map_fst</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#cbfdced942c706dd1f73030dcbfbaf88"><span class="id" title="variable">ϕ</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a> (<span class="id" title="var">W</span> := <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#prod"><span class="id" title="inductive">prod</span></a> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#dtm_to_dtm.W1"><span class="id" title="variable">W1</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="var">ext</span> [<span class="id" title="var">w</span> <span class="id" title="var">a</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">Heq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#kdtm_binddt1"><span class="id" title="method">kdtm_binddt1</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#Binddt_Morphism"><span class="id" title="instance">Binddt_Morphism</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#kdtm_binddt2"><span class="id" title="method">kdtm_binddt2</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#kc7"><span class="id" title="definition">kc7</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> [<span class="id" title="var">w</span> <span class="id" title="var">a</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a>. <span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> <span class="id" title="tactic">at</span> 2.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#preincr"><span class="id" title="definition">preincr</span></a>, <a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a>, <a class="idref" href="Tealeaves.Classes.Monoid.html#incr"><span class="id" title="definition">incr</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ext</span> [<span class="id" title="var">w2</span> <span class="id" title="var">b</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cbn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">fequal</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Classes.Monoid.html#monmor_op"><span class="id" title="method">monmor_op</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#Binddt_Morphism"><span class="id" title="instance">Binddt_Morphism</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#kdtm_morph"><span class="id" title="method">kdtm_morph</span></a>; <span class="id" title="tactic">auto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.MonoidHom.DecoratedTraversableMonad.html#dtm_to_dtm"><span class="id" title="section">dtm_to_dtm</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

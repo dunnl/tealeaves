@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
+<title>TranslateDemo.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves.Examples <span class="kn">Require Import</span> Lambda.Confluence.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves.Backends <span class="kn">Require Import</span> LN DB.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves.Backends.Adapters <span class="kn">Require Import</span> LNtoDB DBtoLN Roundtrips.LNDB.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> List.ListNotations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk0"><span class="kn">Check</span> LNtokey: lam LN -&gt; key.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">LNtokey : lam LN -&gt; key
+     : lam LN -&gt; key</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk1"><span class="kn">Check</span> toLN: key -&gt; lam nat -&gt; option (lam LN).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">toLN : key -&gt; lam nat -&gt; option (lam LN)
+     : key -&gt; lam nat -&gt; option (lam LN)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk2"><span class="kn">Check</span> toDB: key -&gt; lam LN  -&gt; option (lam nat).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">toDB : key -&gt; lam LN -&gt; option (lam nat)
+     : key -&gt; lam LN -&gt; option (lam nat)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">x</span>: atom := <span class="mi">0</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">y</span>: atom := <span class="mi">1</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">z</span>: atom := <span class="mi">2</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">a</span>: atom := <span class="mi">3</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">b</span>: atom := <span class="mi">4</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">de_bruijn</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">term1</span>: lam nat := tvar <span class="mi">0</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">term2</span>: lam nat := app (tvar <span class="mi">0</span>) (tvar <span class="mi">1</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">term3</span>: lam nat := abs (app (tvar <span class="mi">0</span>) (tvar <span class="mi">1</span>)).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">term4</span>: lam nat := app (abs (app (tvar <span class="mi">1</span>) (tvar <span class="mi">0</span>))) (app (tvar <span class="mi">1</span>) (tvar <span class="mi">0</span>)).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  <span class="c">(* ^ term4 = example from JAR paper *)</span>
+
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">k</span>: key := [x ; y].</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk3"><span class="kn">Compute</span> toLN [] term1. <span class="c">(* None *)</span></label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= None
+: option (lam LN)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk4"><span class="kn">Compute</span> toLN k term1. <span class="c">(* Some (tvar (Fr 0)) *)</span></label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some (tvar (Fr <span class="mi">0</span>))
+: option (lam LN)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk5"><span class="kn">Compute</span> map (toDB k) (toLN k term1).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some (Some (tvar <span class="mi">0</span>))
+: option (option (lam nat))</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk6"><span class="kn">Compute</span> toLN k term2.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some (app (tvar (Fr <span class="mi">0</span>)) (tvar (Fr <span class="mi">1</span>)))
+: option (lam LN)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk7"><span class="kn">Compute</span> map (toDB k) (toLN k term1).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some (Some (tvar <span class="mi">0</span>))
+: option (option (lam nat))</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk8"><span class="kn">Compute</span> toLN k term3.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some (abs (app (tvar (Bd <span class="mi">0</span>)) (tvar (Fr <span class="mi">0</span>))))
+: option (lam LN)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk9"><span class="kn">Compute</span> map (toDB k) (toLN k term3).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some (Some (abs (app (tvar <span class="mi">0</span>) (tvar <span class="mi">1</span>))))
+: option (option (lam nat))</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chka"><span class="kn">Compute</span> toLN k term4.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some
+    (app (abs (app (tvar (Fr <span class="mi">0</span>)) (tvar (Bd <span class="mi">0</span>))))
+       (app (tvar (Fr <span class="mi">1</span>)) (tvar (Fr <span class="mi">0</span>))))
+: option (lam LN)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chkb"><span class="kn">Compute</span> map (toDB k) (toLN k term4).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some
+    (Some
+       (app (abs (app (tvar <span class="mi">1</span>) (tvar <span class="mi">0</span>)))
+          (app (tvar <span class="mi">1</span>) (tvar <span class="mi">0</span>))))
+: option (option (lam nat))</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">de_bruijn</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">locally_nameless</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">term1</span>: lam LN := app (tvar (Bd <span class="mi">0</span>)) (tvar (Fr x)).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">term2</span>: lam LN := abs (app (tvar (Bd <span class="mi">0</span>)) (tvar (Fr x))).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">term3</span>: lam LN := abs (app (tvar (Fr z)) (tvar (Fr x))).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">term4</span>: lam LN :=
+    abs (app
+           (abs (abs (app
+                        (tvar (Fr z))
+                        (tvar (Fr x)))))
+           (app
+              (tvar (Fr y))
+              (tvar (Fr a)))).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> List.ListNotations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Example</span> <span class="nf">k</span>: key := [b; z; a; y; x].</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chkc" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chkc"><span class="kn">Compute</span> toDB k term1.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= None
+: option (lam nat)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chkd" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chkd"><span class="kn">Compute</span> map (toLN k) (toDB k term1).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= None
+: option (option (lam LN))</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chke" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chke"><span class="kn">Compute</span> toDB k term2.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some (abs (app (tvar <span class="mi">0</span>) (tvar <span class="mi">5</span>)))
+: option (lam nat)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chkf" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chkf"><span class="kn">Compute</span> map (toLN k) (toDB k term2).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some
+    (Some (abs (app (tvar (Bd <span class="mi">0</span>)) (tvar (Fr <span class="mi">0</span>)))))
+: option (option (lam LN))</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk10"><span class="kn">Compute</span> toDB k term3.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some (abs (app (tvar <span class="mi">2</span>) (tvar <span class="mi">5</span>)))
+: option (lam nat)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk11"><span class="kn">Compute</span> map (toLN k) (toDB k term3).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some
+    (Some (abs (app (tvar (Fr <span class="mi">2</span>)) (tvar (Fr <span class="mi">0</span>)))))
+: option (option (lam LN))</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk12" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk12"><span class="kn">Compute</span> toDB k term4.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some
+    (abs
+       (app (abs (abs (app (tvar <span class="mi">4</span>) (tvar <span class="mi">7</span>))))
+          (app (tvar <span class="mi">4</span>) (tvar <span class="mi">3</span>))))
+: option (lam nat)</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk13" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk13"><span class="kn">Compute</span> map (toLN k) (toDB k term4).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">= Some
+    (Some
+       (abs
+          (app
+             (abs
+                (abs
+                   (app (tvar (Fr <span class="mi">2</span>))
+                      (tvar (Fr <span class="mi">0</span>)))))
+             (app (tvar (Fr <span class="mi">1</span>)) (tvar (Fr <span class="mi">3</span>))))))
+: option (option (lam LN))</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="translatedemo-v-chk14" style="display: none" type="checkbox"><label class="alectryon-input" for="translatedemo-v-chk14"><span class="kn">Goal</span> map (toLN k) (toDB k term4) = Some (Some term4).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">map (toLN k) (toDB k term4) = Some (Some term4)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">locally_nameless</span>.</span></span></pre>
+</div>
+</div></body>
+</html>

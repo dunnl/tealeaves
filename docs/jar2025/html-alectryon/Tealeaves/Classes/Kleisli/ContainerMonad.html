@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
+<title>ContainerMonad.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Classes.Functor
+  Classes.Categorical.ContainerFunctor
+  Classes.Kleisli.Monad
+  Functors.Early.Subset.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Subset.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> ContainerFunctor.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+
+<span class="sd">(** * Typeclasses *)</span>
+<span class="sd">(********************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">ContainerMonad</span>
+  (<span class="nv">T</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+  `{Bind T T} `{Return T} `{ToSubset T} :=
+  { contm_monad :&gt; Monad T;
+    contm_hom :&gt; MonadHom T subset (@tosubset T _);
+    contm_pointwise : <span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">t</span> : T A) (<span class="nv">f</span> <span class="nv">g</span> : A -&gt; T B),
+      (<span class="kr">forall</span> <span class="nv">a</span>, a ∈ t -&gt; f a = g a) -&gt; bind f t = bind g t;
+  }.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">ContainerRightModule</span>
+  (<span class="nv">T</span> <span class="nv">U</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+  `{Bind T T}
+  `{Bind T U}
+  `{Return T}
+  `{ToSubset T}
+  `{ToSubset U} :=
+  { contmod_module :&gt; RightModule T U;
+    contmod_hom :&gt; ParallelRightModuleHom T subset U subset
+      (@tosubset T _)
+      (@tosubset U _);
+    contmod_pointwise : <span class="kr">forall</span> (<span class="nv">A</span> <span class="nv">B</span> : <span class="kt">Type</span>) (<span class="nv">t</span> : U A) (<span class="nv">f</span> <span class="nv">g</span> : A -&gt; T B),
+      (<span class="kr">forall</span> <span class="nv">a</span>, a ∈ t -&gt; f a = g a) -&gt; bind f t = bind g t;
+  }.</span></span></pre>
+</div>
+</div></body>
+</html>

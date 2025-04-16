@@ -1,0 +1,282 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Classes.Kleisli.DecoratedFunctor</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Functors.Early.Reader.html#"><span class="id" title="library">Functors.Early.Reader</span></a>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#"><span class="id" title="library">Classes.Kleisli.Comonad</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#Notations"><span class="id" title="module">Kleisli.Comonad.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">E</span> <span class="id" title="var">T</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab199"></a><h1 class="section">Decorated Functors</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab200"></a><h2 class="section"><code>mapd</code> Operation</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="Mapd" class="idref" href="#Mapd"><span class="id" title="record">Mapd</span></a> (<a id="E:1" class="idref" href="#E:1"><span class="id" title="binder">E</span></a>: <span class="id" title="keyword">Type</span>) (<a id="T:2" class="idref" href="#T:2"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) :=<br/>
+&nbsp;&nbsp;<a id="mapd" class="idref" href="#mapd"><span class="id" title="projection">mapd</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a> <a id="B:5" class="idref" href="#B:5"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>), <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:1"><span class="id" title="variable">E</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:5"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:2"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:2"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:5"><span class="id" title="variable">B</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> {<span class="id" title="var">E</span>}%<span class="id" title="var">type_scope</span> {<span class="id" title="var">T</span>}%<span class="id" title="var">function_scope</span><br/>
+&nbsp;&nbsp;{<span class="id" title="var">Mapd</span>} {<span class="id" title="var">A</span> <span class="id" title="var">B</span>}%<span class="id" title="var">type_scope</span> <span class="id" title="var">_</span>%<span class="id" title="var">function_scope</span> <span class="id" title="var">_</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab201"></a><h2 class="section">Kleisli Composition</h2>
+ Kleisli composition is <span class="inlinecode"><a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#kc1"><span class="id" title="definition">kc1</span></a></span> 
+<div class="paragraph"> </div>
+
+<a id="lab202"></a><h2 class="section">Typeclasses</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="DecoratedFunctor" class="idref" href="#DecoratedFunctor"><span class="id" title="record">DecoratedFunctor</span></a> (<a id="E:7" class="idref" href="#E:7"><span class="id" title="binder">E</span></a>: <span class="id" title="keyword">Type</span>) (<a id="T:8" class="idref" href="#T:8"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>) `{<a id="H:9" class="idref" href="#H:9"><span class="id" title="binder">Mapd</span></a> <a id="H:9" class="idref" href="#H:9"><span class="id" title="binder">E</span></a> <a id="H:9" class="idref" href="#H:9"><span class="id" title="binder">T</span></a>} :=<br/>
+&nbsp;&nbsp;{ <a id="kdf_mapd1" class="idref" href="#kdf_mapd1"><span class="id" title="projection">kdf_mapd1</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:11" class="idref" href="#A:11"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a> (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:11"><span class="id" title="variable">A</span></a>)) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:8"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:11"><span class="id" title="variable">A</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="kdf_mapd2" class="idref" href="#kdf_mapd2"><span class="id" title="projection">kdf_mapd2</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:13" class="idref" href="#A:13"><span class="id" title="binder">A</span></a> <a id="B:14" class="idref" href="#B:14"><span class="id" title="binder">B</span></a> <a id="C:15" class="idref" href="#C:15"><span class="id" title="binder">C</span></a>: <span class="id" title="keyword">Type</span>) (<a id="g:16" class="idref" href="#g:16"><span class="id" title="binder">g</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:7"><span class="id" title="variable">E</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:14"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#C:15"><span class="id" title="variable">C</span></a>) (<a id="f:17" class="idref" href="#f:17"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:7"><span class="id" title="variable">E</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:13"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:14"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#g:16"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:17"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#g:16"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#f448c496accf6f100b5bcdf52844b6e6"><span class="id" title="notation">⋆1</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:17"><span class="id" title="variable">f</span></a>);<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab203"></a><h2 class="section">Homomorphisms between Decorated Functors</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="DecoratedHom" class="idref" href="#DecoratedHom"><span class="id" title="record">DecoratedHom</span></a><br/>
+&nbsp;&nbsp;(<a id="E:19" class="idref" href="#E:19"><span class="id" title="binder">E</span></a>: <span class="id" title="keyword">Type</span>) (<a id="T1:20" class="idref" href="#T1:20"><span class="id" title="binder">T1</span></a> <a id="T2:21" class="idref" href="#T2:21"><span class="id" title="binder">T2</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;(<a id="d6512886ebafe0aefa5d44eb1f64d285" class="idref" href="#d6512886ebafe0aefa5d44eb1f64d285"><span class="id" title="binder">ϕ</span></a>: <span class="id" title="keyword">∀</span> <a id="A:22" class="idref" href="#A:22"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>, <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T1:20"><span class="id" title="variable">T1</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:22"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T2:21"><span class="id" title="variable">T2</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:22"><span class="id" title="variable">A</span></a>)<br/>
+&nbsp;&nbsp;`{<a id="H:24" class="idref" href="#H:24"><span class="id" title="binder">Mapd</span></a> <a id="H:24" class="idref" href="#H:24"><span class="id" title="binder">E</span></a> <a id="H:24" class="idref" href="#H:24"><span class="id" title="binder">T1</span></a>} `{<a id="H0:25" class="idref" href="#H0:25"><span class="id" title="binder">Mapd</span></a> <a id="H0:25" class="idref" href="#H0:25"><span class="id" title="binder">E</span></a> <a id="H0:25" class="idref" href="#H0:25"><span class="id" title="binder">T2</span></a>} :=<br/>
+&nbsp;&nbsp;{ <a id="dhom_natural" class="idref" href="#dhom_natural"><span class="id" title="projection">dhom_natural</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="A:27" class="idref" href="#A:27"><span class="id" title="binder">A</span></a> <a id="B:28" class="idref" href="#B:28"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>) (<a id="f:29" class="idref" href="#f:29"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:19"><span class="id" title="variable">E</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:27"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:28"><span class="id" title="variable">B</span></a>), <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:29"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#d6512886ebafe0aefa5d44eb1f64d285"><span class="id" title="variable">ϕ</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:27"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#d6512886ebafe0aefa5d44eb1f64d285"><span class="id" title="variable">ϕ</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:28"><span class="id" title="variable">B</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:29"><span class="id" title="variable">f</span></a>;<br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab204"></a><h1 class="section">Derived Structures</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab205"></a><h2 class="section">Derived Operations</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="DerivedOperations" class="idref" href="#DerivedOperations"><span class="id" title="module">DerivedOperations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="DerivedOperations.Map_Mapd" class="idref" href="#DerivedOperations.Map_Mapd"><span class="id" title="instance">Map_Mapd</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="E:31" class="idref" href="#E:31"><span class="id" title="binder">E</span></a>: <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="T:32" class="idref" href="#T:32"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Mapd_ET:33" class="idref" href="#Mapd_ET:33"><span class="id" title="binder">Mapd_ET</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Mapd"><span class="id" title="class">Mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:31"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:32"><span class="id" title="variable">T</span></a>}: <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:32"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> (<a id="A:34" class="idref" href="#A:34"><span class="id" title="binder">A</span></a> <a id="B:35" class="idref" href="#B:35"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>) (<a id="f:36" class="idref" href="#f:36"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:34"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:35"><span class="id" title="variable">B</span></a>) ⇒ <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:36"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#DerivedOperations"><span class="id" title="module">DerivedOperations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="Compat_Map_Mapd" class="idref" href="#Compat_Map_Mapd"><span class="id" title="record">Compat_Map_Mapd</span></a> (<a id="E:37" class="idref" href="#E:37"><span class="id" title="binder">E</span></a>: <span class="id" title="keyword">Type</span>) (<a id="T:38" class="idref" href="#T:38"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;`{<a id="Map_T:39" class="idref" href="#Map_T:39"><span class="id" title="binder">Map_T</span></a>: <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:38"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;`{<a id="Mapd_ET:40" class="idref" href="#Mapd_ET:40"><span class="id" title="binder">Mapd_ET</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Mapd"><span class="id" title="class">Mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:37"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:38"><span class="id" title="variable">T</span></a>}: <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<a id="compat_map_mapd" class="idref" href="#compat_map_mapd"><span class="id" title="projection">compat_map_mapd</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Map_T:39"><span class="id" title="variable">Map_T</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Map_Mapd"><span class="id" title="instance">DerivedOperations.Map_Mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:37"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:38"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Mapd_ET:40"><span class="id" title="variable">Mapd_ET</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Compat_Map_Mapd_Self" class="idref" href="#Compat_Map_Mapd_Self"><span class="id" title="instance">Compat_Map_Mapd_Self</span></a><br/>
+&nbsp;&nbsp;`{<a id="Mapd_ET:45" class="idref" href="#Mapd_ET:45"><span class="id" title="binder">Mapd_ET</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Mapd"><span class="id" title="class">Mapd</span></a> <a id="E:43" class="idref" href="#E:43"><span class="id" title="binder">E</span></a> <a id="T:44" class="idref" href="#T:44"><span class="id" title="binder">T</span></a>}:<br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Compat_Map_Mapd"><span class="id" title="class">Compat_Map_Mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:43"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:44"><span class="id" title="variable">T</span></a> (<span class="id" title="var">Map_T</span> := <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Map_Mapd"><span class="id" title="instance">DerivedOperations.Map_Mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:43"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:44"><span class="id" title="variable">T</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Corollary</span> <a id="map_to_mapd" class="idref" href="#map_to_mapd"><span class="id" title="lemma">map_to_mapd</span></a><br/>
+&nbsp;&nbsp;`{<a id="H:50" class="idref" href="#H:50"><span class="id" title="binder">Compat_Map_Mapd</span></a> <a id="H:50" class="idref" href="#H:50"><span class="id" title="binder">E</span></a> <a id="H:50" class="idref" href="#H:50"><span class="id" title="binder">T</span></a>}: <span class="id" title="keyword">∀</span> (<a id="A:51" class="idref" href="#A:51"><span class="id" title="binder">A</span></a> <a id="B:52" class="idref" href="#B:52"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>) (<a id="f:53" class="idref" href="#f:53"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:51"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:52"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:53"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:53"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#compat_map_mapd"><span class="id" title="definition">compat_map_mapd</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab206"></a><h2 class="section">Derived Composition Laws</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="derived_instances" class="idref" href="#derived_instances"><span class="id" title="section">derived_instances</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H0:57" class="idref" href="#H0:57"><span class="id" title="binder">DecoratedFunctor</span></a> <a id="H0:57" class="idref" href="#H0:57"><span class="id" title="binder">E</span></a> <a id="H0:57" class="idref" href="#H0:57"><span class="id" title="binder">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Map_T:58" class="idref" href="#Map_T:58"><span class="id" title="binder">Map_T</span></a>: <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:55"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Compat_Map_Mapd0:59" class="idref" href="#Compat_Map_Mapd0:59"><span class="id" title="binder">!</span></a> <a id="Compat_Map_Mapd0:59" class="idref" href="#Compat_Map_Mapd0:59"><span class="id" title="binder">Compat_Map_Mapd</span></a> <a id="Compat_Map_Mapd0:59" class="idref" href="#Compat_Map_Mapd0:59"><span class="id" title="binder">E</span></a> <a id="Compat_Map_Mapd0:59" class="idref" href="#Compat_Map_Mapd0:59"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="map_mapd" class="idref" href="#map_mapd"><span class="id" title="lemma">map_mapd</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="A:60" class="idref" href="#A:60"><span class="id" title="binder">A</span></a> <a id="B:61" class="idref" href="#B:61"><span class="id" title="binder">B</span></a> <a id="C:62" class="idref" href="#C:62"><span class="id" title="binder">C</span></a>: <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="g:63" class="idref" href="#g:63"><span class="id" title="binder">g</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:61"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#C:62"><span class="id" title="variable">C</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="f:64" class="idref" href="#f:64"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#derived_instances.E"><span class="id" title="variable">E</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:60"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:61"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#g:63"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:64"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#g:63"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:64"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#map_to_mapd"><span class="id" title="lemma">map_to_mapd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#kdf_mapd2"><span class="id" title="method">kdf_mapd2</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#kc1_01"><span class="id" title="lemma">kc1_01</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="mapd_map" class="idref" href="#mapd_map"><span class="id" title="lemma">mapd_map</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="A:65" class="idref" href="#A:65"><span class="id" title="binder">A</span></a> <a id="B:66" class="idref" href="#B:66"><span class="id" title="binder">B</span></a> <a id="C:67" class="idref" href="#C:67"><span class="id" title="binder">C</span></a>: <span class="id" title="keyword">Type</span>) (<a id="g:68" class="idref" href="#g:68"><span class="id" title="binder">g</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#derived_instances.E"><span class="id" title="variable">E</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">×</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:66"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#C:67"><span class="id" title="variable">C</span></a>) (<a id="f:69" class="idref" href="#f:69"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:65"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:66"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#g:68"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:69"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#mapd"><span class="id" title="definition">mapd</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#g:68"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:69"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#map_to_mapd"><span class="id" title="lemma">map_to_mapd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#kdf_mapd2"><span class="id" title="method">kdf_mapd2</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#kc1_10"><span class="id" title="lemma">kc1_10</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="map_map" class="idref" href="#map_map"><span class="id" title="lemma">map_map</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:70" class="idref" href="#A:70"><span class="id" title="binder">A</span></a> <a id="B:71" class="idref" href="#B:71"><span class="id" title="binder">B</span></a> <a id="C:72" class="idref" href="#C:72"><span class="id" title="binder">C</span></a>: <span class="id" title="keyword">Type</span>) (<a id="f:73" class="idref" href="#f:73"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:70"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:71"><span class="id" title="variable">B</span></a>) (<a id="g:74" class="idref" href="#g:74"><span class="id" title="binder">g</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#B:71"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#C:72"><span class="id" title="variable">C</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#g:74"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:73"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#derived_instances.T"><span class="id" title="variable">T</span></a>) (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#g:74"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#f:73"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#map_to_mapd"><span class="id" title="lemma">map_to_mapd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#map_to_mapd"><span class="id" title="lemma">map_to_mapd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#kdf_mapd2"><span class="id" title="method">kdf_mapd2</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#kc1_00"><span class="id" title="lemma">kc1_00</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#map_to_mapd"><span class="id" title="lemma">map_to_mapd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="map_id" class="idref" href="#map_id"><span class="id" title="lemma">map_id</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:75" class="idref" href="#A:75"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (@<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:75"><span class="id" title="variable">A</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#derived_instances.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#A:75"><span class="id" title="variable">A</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#map_to_mapd"><span class="id" title="lemma">map_to_mapd</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">f</span>) <span class="id" title="keyword">with</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#kdf_mapd1"><span class="id" title="method">kdf_mapd1</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#derived_instances"><span class="id" title="section">derived_instances</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab207"></a><h2 class="section">Derived Typeclass Instances</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="DerivedInstances" class="idref" href="#DerivedInstances"><span class="id" title="module">DerivedInstances</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="DerivedInstances.Functor_DecoratedFunctor" class="idref" href="#DerivedInstances.Functor_DecoratedFunctor"><span class="id" title="instance">Functor_DecoratedFunctor</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="E:76" class="idref" href="#E:76"><span class="id" title="binder">E</span></a>: <span class="id" title="keyword">Type</span>) (<a id="T:77" class="idref" href="#T:77"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="DecoratedFunctor_ET:79" class="idref" href="#DecoratedFunctor_ET:79"><span class="id" title="binder">DecoratedFunctor_ET</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#DecoratedFunctor"><span class="id" title="class">DecoratedFunctor</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#E:76"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:77"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Map_T:80" class="idref" href="#Map_T:80"><span class="id" title="binder">Map_T</span></a>: <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:77"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Compat_Map_Mapd0:81" class="idref" href="#Compat_Map_Mapd0:81"><span class="id" title="binder">!</span></a> <a id="Compat_Map_Mapd0:81" class="idref" href="#Compat_Map_Mapd0:81"><span class="id" title="binder">Compat_Map_Mapd</span></a> <a id="Compat_Map_Mapd0:81" class="idref" href="#Compat_Map_Mapd0:81"><span class="id" title="binder">E</span></a> <a id="Compat_Map_Mapd0:81" class="idref" href="#Compat_Map_Mapd0:81"><span class="id" title="binder">T</span></a>}:<br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#Functor"><span class="id" title="class">Classes.Functor.Functor</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#T:77"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">fun_map_id</span></a> := <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#map_id"><span class="id" title="lemma">map_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a> := <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#map_map"><span class="id" title="lemma">map_map</span></a>;<br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#DerivedOperations"><span class="id" title="module">DerivedOperations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#DerivedInstances"><span class="id" title="module">DerivedInstances</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab208"></a><h1 class="section">Instance for Reader</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Product.Notations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="decorated_functor_reader" class="idref" href="#decorated_functor_reader"><span class="id" title="section">decorated_functor_reader</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="E:82" class="idref" href="#E:82"><span class="id" title="binder">E</span></a>: <span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Mapd_Reader" class="idref" href="#Mapd_Reader"><span class="id" title="instance">Mapd_Reader</span></a>: <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Mapd"><span class="id" title="class">Mapd</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#decorated_functor_reader.E"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#decorated_functor_reader.E"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#cobind"><span class="id" title="definition">cobind</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#decorated_functor_reader.E"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a> (<a class="idref" href="Tealeaves.Functors.Early.Reader.html#Cobind_reader"><span class="id" title="instance">Cobind_reader</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#decorated_functor_reader.E"><span class="id" title="variable">E</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="DecoratedFunctor_Reader" class="idref" href="#DecoratedFunctor_Reader"><span class="id" title="instance">DecoratedFunctor_Reader</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#DecoratedFunctor"><span class="id" title="class">DecoratedFunctor</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#decorated_functor_reader.E"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#decorated_functor_reader.E"><span class="id" title="variable">E</span></a> <a class="idref" href="Tealeaves.Misc.Product.html#21562a6533fad1c21b28f27873d97b33"><span class="id" title="notation">×)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Mapd_Reader"><span class="id" title="instance">Mapd_Reader</span></a>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#kcom_cobind1"><span class="id" title="method">kcom_cobind1</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#kcom_cobind2"><span class="id" title="method">kcom_cobind2</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#decorated_functor_reader"><span class="id" title="section">decorated_functor_reader</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

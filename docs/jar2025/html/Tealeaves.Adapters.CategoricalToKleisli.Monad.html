@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Tealeaves.Adapters.CategoricalToKleisli.Monad</h1>
+
+<div class="code">
+<span class="id" title="keyword">From</span> <span class="id" title="var">Tealeaves</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#"><span class="id" title="library">Classes.Categorical.Monad</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.RightModule.html#"><span class="id" title="library">Classes.Categorical.RightModule</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#"><span class="id" title="library">Classes.Kleisli.Monad</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Notations"><span class="id" title="module">Kleisli.Monad.Notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">T</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab167"></a><h1 class="section">Categorical Monad to Kleisli Monad</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab168"></a><h2 class="section">Derived <code>bind</code> Operation</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="DerivedOperations" class="idref" href="#DerivedOperations"><span class="id" title="module">DerivedOperations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="DerivedOperations.Bind_Categorical" class="idref" href="#DerivedOperations.Bind_Categorical"><span class="id" title="instance">Bind_Categorical</span></a> (<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="map_T:2" class="idref" href="#map_T:2"><span class="id" title="binder">map_T</span></a>: <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="join_T:3" class="idref" href="#join_T:3"><span class="id" title="binder">join_T</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Join"><span class="id" title="class">Join</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:1"><span class="id" title="variable">T</span></a>}: <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Bind"><span class="id" title="class">Bind</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:1"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> {<a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a> <a id="B:5" class="idref" href="#B:5"><span class="id" title="binder">B</span></a>} (<a id="f:6" class="idref" href="#f:6"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="var">T</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#B:5"><span class="id" title="variable">B</span></a>) ⇒ <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <span class="id" title="var">T</span>) <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:6"><span class="id" title="variable">f</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedOperations"><span class="id" title="module">DerivedOperations</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab169"></a><h2 class="section">Derived <code>bind</code> is Compatible with Original &lt;map&gt;&gt;</h2>
+
+</div>
+<div class="code">
+#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="Compat_Map_Bind_Derived" class="idref" href="#Compat_Map_Bind_Derived"><span class="id" title="instance">Compat_Map_Bind_Derived</span></a><br/>
+&nbsp;&nbsp;`{<a id="H2:11" class="idref" href="#H2:11"><span class="id" title="binder">Categorical.Monad.Monad</span></a> <a id="H2:11" class="idref" href="#H2:11"><span class="id" title="binder">T</span></a>}:<br/>
+&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Compat_Map_Bind"><span class="id" title="class">Compat_Map_Bind</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:7"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:7"><span class="id" title="variable">T</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Bind_TU</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#Bind_Categorical"><span class="id" title="instance">DerivedOperations.Bind_Categorical</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:7"><span class="id" title="variable">T</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">hnf</span>. <span class="id" title="var">ext</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">f</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">change_left</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">f</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#DerivedOperations.Map_Bind"><span class="id" title="instance">DerivedOperations.Map_Bind</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a>, <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#Bind_Categorical"><span class="id" title="instance">DerivedOperations.Bind_Categorical</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_map_ret"><span class="id" title="method">mon_join_map_ret</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="DerivedInstances" class="idref" href="#DerivedInstances"><span class="id" title="module">DerivedInstances</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Alectryon&nbsp;doesn't&nbsp;like&nbsp;this<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Import&nbsp;CategoricalToKleisli.Monad.DerivedOperations.<br/>
+&nbsp;&nbsp;&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedOperations"><span class="id" title="module">DerivedOperations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="DerivedInstances.with_monad" class="idref" href="#DerivedInstances.with_monad"><span class="id" title="section">with_monad</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H2:16" class="idref" href="#H2:16"><span class="id" title="binder">Categorical.Monad.Monad</span></a> <a id="H2:16" class="idref" href="#H2:16"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab170"></a><h2 class="section"><code>join</code> as <code>id ⋆ id</code></h2>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="DerivedInstances.join_to_kc" class="idref" href="#DerivedInstances.join_to_kc"><span class="id" title="lemma">join_to_kc</span></a> `{<a id="H6:20" class="idref" href="#H6:20"><span class="id" title="binder">Categorical.Monad.Monad</span></a> <a id="H6:20" class="idref" href="#H6:20"><span class="id" title="binder">T</span></a>}: <span class="id" title="keyword">∀</span> (<a id="A:21" class="idref" href="#A:21"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>) (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:21"><span class="id" title="variable">A</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#1126f41fa6f670fb25d3c94ada7ffb9f"><span class="id" title="notation">⋆</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#kc"><span class="id" title="definition">kc</span></a>, <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a>, <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedOperations.Bind_Categorical"><span class="id" title="instance">Bind_Categorical</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_id"><span class="id" title="method">fun_map_id</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab171"></a><h2 class="section">Derived Kleisli Monad Laws</h2>
+
+<div class="paragraph"> </div>
+
+<a id="lab172"></a><h3 class="section">Identity law</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="DerivedInstances.mon_bind_id" class="idref" href="#DerivedInstances.mon_bind_id"><span class="id" title="lemma">mon_bind_id</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="A:22" class="idref" href="#A:22"><span class="id" title="binder">A</span></a>: <span class="id" title="keyword">Type</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>) (<span class="id" title="var">A</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:22"><span class="id" title="variable">A</span></a>)) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:22"><span class="id" title="variable">A</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedOperations.Bind_Categorical"><span class="id" title="instance">Bind_Categorical</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_map_ret"><span class="id" title="method">mon_join_map_ret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab173"></a><h3 class="section">Composition law</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="DerivedInstances.mon_bind_bind" class="idref" href="#DerivedInstances.mon_bind_bind"><span class="id" title="lemma">mon_bind_bind</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">∀</span> (<a id="A:23" class="idref" href="#A:23"><span class="id" title="binder">A</span></a> <a id="B:24" class="idref" href="#B:24"><span class="id" title="binder">B</span></a> <a id="C:25" class="idref" href="#C:25"><span class="id" title="binder">C</span></a>: <span class="id" title="keyword">Type</span>) (<a id="g:26" class="idref" href="#g:26"><span class="id" title="binder">g</span></a>: <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#B:24"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#C:25"><span class="id" title="variable">C</span></a>) (<a id="f:27" class="idref" href="#f:27"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:23"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#B:24"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#g:26"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:27"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> (<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#g:26"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#1126f41fa6f670fb25d3c94ada7ffb9f"><span class="id" title="notation">⋆</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:27"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">introv</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#kc"><span class="id" title="definition">kc</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedOperations.Bind_Categorical"><span class="id" title="instance">Bind_Categorical</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- 2(<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_compose_in_compose</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_join"><span class="id" title="method">mon_join_join</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>) (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">g</span>)) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>) <span class="id" title="var">g</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> → <span class="id" title="var">near</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>) <span class="id" title="var">g</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a> (<span class="id" title="var">ϕ</span> := @<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#join"><span class="id" title="definition">join</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">_</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab174"></a><h3 class="section">Unit law</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="DerivedInstances.mon_bind_comp_ret" class="idref" href="#DerivedInstances.mon_bind_comp_ret"><span class="id" title="lemma">mon_bind_comp_ret</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:28" class="idref" href="#A:28"><span class="id" title="binder">A</span></a> <a id="B:29" class="idref" href="#B:29"><span class="id" title="binder">B</span></a>: <span class="id" title="keyword">Type</span>) (<a id="f:30" class="idref" href="#f:30"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:28"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#B:29"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:30"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:30"><span class="id" title="variable">f</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedOperations.Bind_Categorical"><span class="id" title="instance">Bind_Categorical</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> → <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_compose_in_compose</span>; <span class="comment">(*&nbsp;these&nbsp;rewrites&nbsp;are&nbsp;not&nbsp;visible&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (@<a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a> <span class="id" title="var">A</span>) <span class="id" title="keyword">with</span> (@<a class="idref" href="Tealeaves.Tactics.Prelude.html#compose"><span class="id" title="definition">compose</span></a> ((<span class="id" title="keyword">fun</span> <a id="A:33" class="idref" href="#A:33"><span class="id" title="binder">A</span></a> ⇒ <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:31"><span class="id" title="variable">A</span></a>) <span class="id" title="var">A</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_ret"><span class="id" title="method">mon_join_ret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="DerivedInstances.KleisliPreModule_CategoricalPreModule" class="idref" href="#DerivedInstances.KleisliPreModule_CategoricalPreModule"><span class="id" title="instance">KleisliPreModule_CategoricalPreModule</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#RightPreModule"><span class="id" title="class">Kleisli.Monad.RightPreModule</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#kmod_bind1"><span class="id" title="method">kmod_bind1</span></a> := @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.mon_bind_id"><span class="id" title="lemma">mon_bind_id</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#kmod_bind2"><span class="id" title="method">kmod_bind2</span></a> := @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.mon_bind_bind"><span class="id" title="lemma">mon_bind_bind</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="DerivedInstances.KleisliMonad_CategoricalMonad" class="idref" href="#DerivedInstances.KleisliMonad_CategoricalMonad"><span class="id" title="instance">KleisliMonad_CategoricalMonad</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Monad"><span class="id" title="class">Kleisli.Monad.Monad</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad.T"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#kmon_bind0"><span class="id" title="method">kmon_bind0</span></a> := @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.mon_bind_comp_ret"><span class="id" title="lemma">mon_bind_comp_ret</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances.with_monad"><span class="id" title="section">with_monad</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances"><span class="id" title="module">DerivedInstances</span></a>.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+&nbsp;&nbsp;<span class="comment">(**&nbsp;**&nbsp;Derived&nbsp;laws&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="comment">(********************************************************************)</span><br/>
+&nbsp;&nbsp;Section&nbsp;ToKleisli_laws.<br/>
+<br/>
+&nbsp;&nbsp;Context<br/>
+&nbsp;&nbsp;(T:&nbsp;Type&nbsp;-&gt;&nbsp;Type)<br/>
+&nbsp;&nbsp;`{Categorical.Monad.Monad&nbsp;T}.<br/>
+<br/>
+&nbsp;&nbsp;Generalizable&nbsp;All&nbsp;Variables.<br/>
+&nbsp;&nbsp;Import&nbsp;Kleisli.Monad.Notations.<br/>
+&nbsp;&nbsp;Import&nbsp;ToKleisli.<br/>
+<br/>
+&nbsp;&nbsp;Lemma&nbsp;map_to_bind:&nbsp;forall&nbsp;`(f:&nbsp;A&nbsp;-&gt;&nbsp;B),<br/>
+&nbsp;&nbsp;map&nbsp;T&nbsp;f&nbsp;=&nbsp;bind&nbsp;(ret&nbsp;T&nbsp;B&nbsp;∘&nbsp;f).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;intros.&nbsp;unfold_ops&nbsp;@Bind_Categorical.<br/>
+&nbsp;&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;(F&nbsp;:=&nbsp;T)).<br/>
+&nbsp;&nbsp;reassociate&nbsp;&lt;-.<br/>
+&nbsp;&nbsp;rewrite&nbsp;(mon_join_map_ret&nbsp;(T&nbsp;:=&nbsp;T)).<br/>
+&nbsp;&nbsp;reflexivity.<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Corollary&nbsp;bind_map:&nbsp;forall&nbsp;`(g:&nbsp;B&nbsp;-&gt;&nbsp;T&nbsp;C)&nbsp;`(f:&nbsp;A&nbsp;-&gt;&nbsp;B),<br/>
+&nbsp;&nbsp;bind&nbsp;g&nbsp;∘&nbsp;map&nbsp;T&nbsp;f&nbsp;=&nbsp;bind&nbsp;(g&nbsp;∘&nbsp;f).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;transparent&nbsp;tcs.<br/>
+&nbsp;&nbsp;now&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;(F&nbsp;:=&nbsp;T)).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;Corollary&nbsp;map_bind:&nbsp;forall&nbsp;`(g:&nbsp;B&nbsp;-&gt;&nbsp;C)&nbsp;`(f:&nbsp;A&nbsp;-&gt;&nbsp;T&nbsp;B),<br/>
+&nbsp;&nbsp;map&nbsp;T&nbsp;g&nbsp;∘&nbsp;bind&nbsp;f&nbsp;=&nbsp;bind&nbsp;(map&nbsp;T&nbsp;g&nbsp;∘&nbsp;f).<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;transparent&nbsp;tcs.<br/>
+&nbsp;&nbsp;reassociate&nbsp;&lt;-&nbsp;on&nbsp;left.<br/>
+&nbsp;&nbsp;rewrite&nbsp;(natural).&nbsp;unfold_ops&nbsp;@Map_compose.<br/>
+&nbsp;&nbsp;now&nbsp;rewrite&nbsp;&lt;-&nbsp;(fun_map_map&nbsp;(F&nbsp;:=&nbsp;T)).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(**&nbsp;**&nbsp;Left&nbsp;identity&nbsp;law&nbsp;*)</span><br/>
+&nbsp;&nbsp;Theorem&nbsp;kleisli_id_l:&nbsp;forall&nbsp;`(f:&nbsp;A&nbsp;-&gt;&nbsp;T&nbsp;B),<br/>
+&nbsp;&nbsp;(@ret&nbsp;T&nbsp;_&nbsp;B)&nbsp;⋆1&nbsp;f&nbsp;=&nbsp;f.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;kc1.&nbsp;now&nbsp;rewrite&nbsp;(kmon_bind1&nbsp;(T&nbsp;:=&nbsp;T)).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(**&nbsp;**&nbsp;Right&nbsp;identity&nbsp;law&nbsp;*)</span><br/>
+&nbsp;&nbsp;Theorem&nbsp;kleisli_id_r:&nbsp;forall&nbsp;`(g:&nbsp;B&nbsp;-&gt;&nbsp;T&nbsp;C),<br/>
+&nbsp;&nbsp;g&nbsp;⋆1&nbsp;(@ret&nbsp;T&nbsp;_&nbsp;B)&nbsp;=&nbsp;g.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;kc1.&nbsp;now&nbsp;rewrite&nbsp;(kmon_bind0&nbsp;(T&nbsp;:=&nbsp;T)).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(**&nbsp;**&nbsp;Associativity&nbsp;law&nbsp;*)</span><br/>
+&nbsp;&nbsp;Theorem&nbsp;kleisli_assoc:<br/>
+&nbsp;&nbsp;forall&nbsp;`(h:&nbsp;C&nbsp;-&gt;&nbsp;T&nbsp;D)&nbsp;`(g:&nbsp;B&nbsp;-&gt;&nbsp;T&nbsp;C)&nbsp;`(f:&nbsp;A&nbsp;-&gt;&nbsp;T&nbsp;B),<br/>
+&nbsp;&nbsp;h&nbsp;⋆1&nbsp;(g&nbsp;⋆1&nbsp;f)&nbsp;=&nbsp;(h&nbsp;⋆1&nbsp;g)&nbsp;⋆1&nbsp;f.<br/>
+&nbsp;&nbsp;Proof.<br/>
+&nbsp;&nbsp;intros.&nbsp;unfold&nbsp;kc1&nbsp;at&nbsp;3.&nbsp;now&nbsp;rewrite&nbsp;&lt;-&nbsp;(kmon_bind2&nbsp;(T&nbsp;:=&nbsp;T)).<br/>
+&nbsp;&nbsp;Qed.<br/>
+<br/>
+&nbsp;&nbsp;End&nbsp;ToKleisli_laws.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab175"></a><h1 class="section">Right modules</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="ToKleisliRightModule" class="idref" href="#ToKleisliRightModule"><span class="id" title="module">ToKleisliRightModule</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedOperations"><span class="id" title="module">DerivedOperations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedInstances"><span class="id" title="module">DerivedInstances</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">export</span>] <span class="id" title="keyword">Instance</span> <a id="ToKleisliRightModule.Bind_RightAction" class="idref" href="#ToKleisliRightModule.Bind_RightAction"><span class="id" title="instance">Bind_RightAction</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="T:34" class="idref" href="#T:34"><span class="id" title="binder">T</span></a> <a id="U:35" class="idref" href="#U:35"><span class="id" title="binder">U</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Map_T:36" class="idref" href="#Map_T:36"><span class="id" title="binder">Map_T</span></a>: <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#U:35"><span class="id" title="variable">U</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="RightAction_TU:37" class="idref" href="#RightAction_TU:37"><span class="id" title="binder">RightAction_TU</span></a>: <a class="idref" href="Tealeaves.Classes.Categorical.RightModule.html#RightAction"><span class="id" title="class">RightAction</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#U:35"><span class="id" title="variable">U</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:34"><span class="id" title="variable">T</span></a>}:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Bind"><span class="id" title="class">Bind</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:34"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#U:35"><span class="id" title="variable">U</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <a id="A:38" class="idref" href="#A:38"><span class="id" title="binder">A</span></a> <a id="B:39" class="idref" href="#B:39"><span class="id" title="binder">B</span></a> (<a id="f:40" class="idref" href="#f:40"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:38"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="var">T</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#B:39"><span class="id" title="variable">B</span></a>) ⇒ <a class="idref" href="Tealeaves.Classes.Categorical.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <span class="id" title="var">U</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <span class="id" title="var">U</span>) <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:40"><span class="id" title="variable">f</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="ToKleisliRightModule.Monad_kleisli_laws" class="idref" href="#ToKleisliRightModule.Monad_kleisli_laws"><span class="id" title="section">Monad_kleisli_laws</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="T:41" class="idref" href="#T:41"><span class="id" title="binder">T</span></a> <a id="F:42" class="idref" href="#F:42"><span class="id" title="binder">F</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H4:48" class="idref" href="#H4:48"><span class="id" title="binder">Categorical.RightModule.RightModule</span></a> <a id="H4:48" class="idref" href="#H4:48"><span class="id" title="binder">F</span></a> <a id="H4:48" class="idref" href="#H4:48"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab176"></a><h3 class="section">Identity law</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="ToKleisliRightModule.bind_id" class="idref" href="#ToKleisliRightModule.bind_id"><span class="id" title="lemma">bind_id</span></a>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`(<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.T"><span class="id" title="variable">T</span></a>) (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>)) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> @<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a> (<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.F"><span class="id" title="variable">F</span></a> <span class="id" title="var">A</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.RightModule.html#mod_action_map_ret"><span class="id" title="method">mod_action_map_ret</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab177"></a><h3 class="section">Composition law</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="ToKleisliRightModule.bind_bind" class="idref" href="#ToKleisliRightModule.bind_bind"><span class="id" title="lemma">bind_bind</span></a>: <span class="id" title="keyword">∀</span> (<a id="A:50" class="idref" href="#A:50"><span class="id" title="binder">A</span></a> <a id="B:51" class="idref" href="#B:51"><span class="id" title="binder">B</span></a> <a id="C:52" class="idref" href="#C:52"><span class="id" title="binder">C</span></a>: <span class="id" title="keyword">Type</span>) (<a id="g:53" class="idref" href="#g:53"><span class="id" title="binder">g</span></a>: <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#B:51"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#C:52"><span class="id" title="variable">C</span></a>) (<a id="f:54" class="idref" href="#f:54"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:50"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.T"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#B:51"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#g:53"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:54"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> (<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#g:53"><span class="id" title="variable">g</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#1126f41fa6f670fb25d3c94ada7ffb9f"><span class="id" title="notation">⋆</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:54"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">introv</span>. <span class="id" title="tactic">unfold</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#kc"><span class="id" title="definition">kc</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#DerivedOperations.Bind_Categorical"><span class="id" title="instance">Bind_Categorical</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unfold_ops</span> @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Bind_RightAction"><span class="id" title="instance">Bind_RightAction</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- 2(<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.F"><span class="id" title="variable">F</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.F"><span class="id" title="variable">F</span></a>) (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.T"><span class="id" title="variable">T</span></a>) <span class="id" title="var">g</span>)) <span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.T"><span class="id" title="variable">T</span></a>) <span class="id" title="var">g</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Categorical.RightModule.html#mod_action_action"><span class="id" title="method">mod_action_action</span></a> (<span class="id" title="var">U</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.T"><span class="id" title="variable">T</span></a>) (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.F"><span class="id" title="variable">F</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> → <span class="id" title="var">near</span> (<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.T"><span class="id" title="variable">T</span></a>) <span class="id" title="var">g</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#natural"><span class="id" title="method">natural</span></a> (<span class="id" title="var">ϕ</span> := @<a class="idref" href="Tealeaves.Classes.Categorical.RightModule.html#right_action"><span class="id" title="definition">right_action</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.F"><span class="id" title="variable">F</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">_</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_kleisli_laws"><span class="id" title="section">Monad_kleisli_laws</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="ToKleisliRightModule.Kleisli_RightModule" class="idref" href="#ToKleisliRightModule.Kleisli_RightModule"><span class="id" title="instance">Kleisli_RightModule</span></a> {<a id="F:55" class="idref" href="#F:55"><span class="id" title="binder">F</span></a> <a id="T:56" class="idref" href="#T:56"><span class="id" title="binder">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H4:62" class="idref" href="#H4:62"><span class="id" title="binder">Categorical.RightModule.RightModule</span></a> <a id="H4:62" class="idref" href="#H4:62"><span class="id" title="binder">F</span></a> <a id="H4:62" class="idref" href="#H4:62"><span class="id" title="binder">T</span></a>}<br/>
+: <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#RightPreModule"><span class="id" title="class">Kleisli.Monad.RightPreModule</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#T:56"><span class="id" title="variable">T</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#F:55"><span class="id" title="variable">F</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{| <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#kmod_bind1"><span class="id" title="method">kmod_bind1</span></a> := @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.bind_id"><span class="id" title="lemma">bind_id</span></a> <span class="id" title="var">T</span> <span class="id" title="var">F</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#kmod_bind2"><span class="id" title="method">kmod_bind2</span></a> := @<a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.bind_bind"><span class="id" title="lemma">bind_bind</span></a> <span class="id" title="var">T</span> <span class="id" title="var">F</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;|}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab178"></a><h2 class="section">Specification for <code>map</code></h2>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="ToKleisliRightModule.Monad_suboperations" class="idref" href="#ToKleisliRightModule.Monad_suboperations"><span class="id" title="section">Monad_suboperations</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="T:63" class="idref" href="#T:63"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="H2:67" class="idref" href="#H2:67"><span class="id" title="binder">Categorical.Monad.Monad</span></a> <a id="H2:67" class="idref" href="#H2:67"><span class="id" title="binder">T</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab179"></a><h3 class="section"><span class="inlinecode"><a class="idref" href="Tealeaves.Simplification.Tests.STLC_Binddt.html#test.map"><span class="id" title="section">map</span></a></span> as a special case of <span class="inlinecode"><a class="idref" href="Tealeaves.Simplification.Tests.STLC_Binddt.html#test.bind"><span class="id" title="section">bind</span></a></span>.</h3>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="ToKleisliRightModule.map_to_bind" class="idref" href="#ToKleisliRightModule.map_to_bind"><span class="id" title="lemma">map_to_bind</span></a> {<a id="A:68" class="idref" href="#A:68"><span class="id" title="binder">A</span></a> <a id="B:69" class="idref" href="#B:69"><span class="id" title="binder">B</span></a>}: <span class="id" title="keyword">∀</span> `(<a id="f:70" class="idref" href="#f:70"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#A:68"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#B:69"><span class="id" title="variable">B</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:70"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#bind"><span class="id" title="definition">bind</span></a> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#f:70"><span class="id" title="variable">f</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">transparent</span> <span class="id" title="var">tcs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- (<a class="idref" href="Tealeaves.Classes.Functor.html#fun_map_map"><span class="id" title="method">fun_map_map</span></a> (<span class="id" title="var">F</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_suboperations.T"><span class="id" title="variable">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">reassociate</span> &lt;- <span class="id" title="var">on</span> <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#mon_join_map_ret"><span class="id" title="method">mon_join_map_ret</span></a> (<span class="id" title="var">T</span> := <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_suboperations.T"><span class="id" title="variable">T</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule.Monad_suboperations"><span class="id" title="section">Monad_suboperations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Tealeaves.Adapters.CategoricalToKleisli.Monad.html#ToKleisliRightModule"><span class="id" title="module">ToKleisliRightModule</span></a>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

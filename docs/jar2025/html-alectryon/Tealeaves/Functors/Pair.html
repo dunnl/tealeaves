@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
+<title>Pair.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require Import</span>
+  Classes.Categorical.Applicative.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Applicative.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Cartesian Product Bifunctor *)</span>
+<span class="sd">(**********************************************************************)</span>
+
+<span class="sd">(** ** Bi-map Operation *)</span>
+<span class="sd">(**********************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">map_pair</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">map_pair</span>
+    {<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span>: <span class="kt">Type</span>}
+    (<span class="nv">f</span>: A -&gt; B)
+    (<span class="nv">g</span>: C -&gt; D):
+    A * C -&gt; B * D :=
+    map_snd g ∘ map_fst f.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+  <span class="sd">(** *** Rewriting Laws *)</span>
+  <span class="sd">(**********************************************************************)</span>
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk0"><span class="kn">Lemma</span> <span class="nf">map_pair_rw</span>
+    {<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span>: <span class="kt">Type</span>}
+    {<span class="nv">f</span>: A -&gt; B}
+    {<span class="nv">g</span>: C -&gt; D}:
+    <span class="kr">forall</span> (<span class="nv">a</span>: A) (<span class="nv">c</span>: C),
+      map_pair f g (a, c) = (f a, g c).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, B, C, D</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>C -&gt; D</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">a</span> : A) (<span class="nv">c</span> : C),
+map_pair f g (a, c) = (f a, g c)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk1"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, B, C, D</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>C -&gt; D</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">a</span> : A) (<span class="nv">c</span> : C),
+map_pair f g (a, c) = (f a, g c)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+  <span class="sd">(** *** Lifting &lt;&lt;map&gt;&gt; to &lt;&lt;map_pair&gt;&gt; *)</span>
+  <span class="sd">(**********************************************************************)</span>
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk2"><span class="kn">Lemma</span> <span class="nf">map_fst_to_pair</span>
+    {<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span>: <span class="kt">Type</span>} {<span class="nv">f</span>: A -&gt; B}:
+    map_fst (Y := C) f = map_pair f id.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map_fst f = map_pair f id</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk3"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map_fst f = map_pair f id</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk4"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map_fst f = map_pair f id</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk5">ext [a c].</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, B, C</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; B</span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br><span><var>c</var><span class="hyp-type"><b>: </b><span>C</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map_fst f (a, c) = map_pair f id (a, c)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk6"><span class="kn">Lemma</span> <span class="nf">map_snd_to_pair</span>
+    {<span class="nv">A</span> <span class="nv">C</span> <span class="nv">D</span>: <span class="kt">Type</span>} {<span class="nv">g</span>: C -&gt; D}:
+    map_snd (X := A) g = map_pair id g.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, C, D</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>C -&gt; D</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map_snd g = map_pair id g</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk7"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, C, D</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>C -&gt; D</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map_snd g = map_pair id g</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk8"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, C, D</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>C -&gt; D</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map_snd g = map_pair id g</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chk9">ext [a c].</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A, C, D</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>C -&gt; D</span></span></span><br><span><var>a</var><span class="hyp-type"><b>: </b><span>A</span></span></span><br><span><var>c</var><span class="hyp-type"><b>: </b><span>C</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">map_snd g (a, c) = map_pair id g (a, c)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">map_pair</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Bi-traverse Operation *)</span>
+<span class="sd">(**********************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">traverse_pair</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    {<span class="nv">G</span>: <span class="kt">Type</span> -&gt; <span class="kt">Type</span>}
+    `{Map G} `{Mult G} `{Pure G}.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span>
+    {<span class="nv">A</span> <span class="nv">B</span> <span class="nv">C</span> <span class="nv">D</span>: <span class="kt">Type</span>}
+
+    (<span class="nv">f</span>: A -&gt; G B) (<span class="nv">g</span>: C -&gt; G D).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">traverse_pair</span>: A * C -&gt; G (B * D) :=
+    <span class="kr">fun</span> &#39;(a, c) =&gt; pure pair &lt;⋆&gt; f a &lt;⋆&gt; g c.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chka"><span class="kn">Lemma</span> <span class="nf">traverse_pair_rw</span>:
+    <span class="kr">forall</span> (<span class="nv">a</span>: A) (<span class="nv">c</span>: C),
+      traverse_pair (a, c) =
+        pure pair &lt;⋆&gt; f a &lt;⋆&gt; g c.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>G</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Map G</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Mult G</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Pure G</span></span></span><br><span><var>A, B, C, D</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; G B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>C -&gt; G D</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">a</span> : A) (<span class="nv">c</span> : C),
+traverse_pair (a, c) = pure pair &lt;⋆&gt; f a &lt;⋆&gt; g c</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="pair-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="pair-v-chkb"><span class="kn">Proof</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>G</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span> -&gt; <span class="kt">Type</span></span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>Map G</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>Mult G</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>Pure G</span></span></span><br><span><var>A, B, C, D</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A -&gt; G B</span></span></span><br><span><var>g</var><span class="hyp-type"><b>: </b><span>C -&gt; G D</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">a</span> : A) (<span class="nv">c</span> : C),
+traverse_pair (a, c) = pure pair &lt;⋆&gt; f a &lt;⋆&gt; g c</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="bp">reflexivity</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">traverse_pair</span>.</span></span></pre>
+</div>
+</div></body>
+</html>
