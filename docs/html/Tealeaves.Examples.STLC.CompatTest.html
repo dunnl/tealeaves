@@ -12,6 +12,8 @@
 <body onload="document.getElementById('content').focus()">
   <div id="header">
     <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
       <span class="modulename"> <script> document.write(document.title) </script> </span>
     </span>
 
@@ -20,6 +22,7 @@
     <span class="right">
       <a href="./indexpage.html"> Index </a>
       <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
     </span>
 </div>
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
@@ -42,12 +45,12 @@
 </div>
 
 <div class="doc">
-<a id="lab1111"></a><h1 class="section">Language definition</h1>
+<a id="lab1497"></a><h1 class="section">Language definition</h1>
 
 </div>
 <div class="code">
 <span class="id" title="keyword">Inductive</span> <a id="term" class="idref" href="#term"><span class="id" title="inductive">term</span></a> :=<br/>
-| <a id="atm" class="idref" href="#atm"><span class="id" title="constructor">atm</span></a> : <a class="idref" href="Tealeaves.Backends.LN.Atom.html#atom"><span class="id" title="abbreviation">atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a><br/>
+| <a id="atm" class="idref" href="#atm"><span class="id" title="constructor">atm</span></a> : <a class="idref" href="Tealeaves.Backends.Common.Names.html#atom"><span class="id" title="abbreviation">atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a><br/>
 | <a id="ix" class="idref" href="#ix"><span class="id" title="constructor">ix</span></a>  : <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a><br/>
 | <a id="lam" class="idref" href="#lam"><span class="id" title="constructor">lam</span></a> : <a class="idref" href="Tealeaves.Examples.STLC.Syntax.html#typ"><span class="id" title="inductive">typ</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a><br/>
 | <a id="app" class="idref" href="#app"><span class="id" title="constructor">app</span></a> : <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#term:1"><span class="id" title="inductive">term</span></a>.<br/>
@@ -56,7 +59,7 @@
 </div>
 
 <div class="doc">
-<a id="lab1112"></a><h2 class="section">Instantiate Tealeaves</h2>
+<a id="lab1498"></a><h2 class="section">Instantiate Tealeaves</h2>
 
 </div>
 <div class="code">
@@ -120,10 +123,10 @@
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.from_atom_Ret" class="idref" href="#STLC_SIG.from_atom_Ret"><span class="id" title="definition">from_atom_Ret</span></a>:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.from_atom"><span class="id" title="definition">from_atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.to_T_inv"><span class="id" title="definition">to_T_inv</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> @<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.T"><span class="id" title="definition">T</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.ret_inst"><span class="id" title="definition">ret_inst</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Fr"><span class="id" title="constructor">Fr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.from_atom"><span class="id" title="definition">from_atom</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.to_T_inv"><span class="id" title="definition">to_T_inv</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> @<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.T"><span class="id" title="definition">T</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.ret_inst"><span class="id" title="definition">ret_inst</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Fr"><span class="id" title="constructor">Fr</span></a> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">ltac</span>:(<span class="id" title="tactic">reflexivity</span>).<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="STLC_SIG.from_ix_Ret" class="idref" href="#STLC_SIG.from_ix_Ret"><span class="id" title="definition">from_ix_Ret</span></a>:<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.from_ix"><span class="id" title="definition">from_ix</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.to_T_inv"><span class="id" title="definition">to_T_inv</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> @<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.T"><span class="id" title="definition">T</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.ret_inst"><span class="id" title="definition">ret_inst</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.from_ix"><span class="id" title="definition">from_ix</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.to_T_inv"><span class="id" title="definition">to_T_inv</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> @<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.T"><span class="id" title="definition">T</span></a> <a class="idref" href="Tealeaves.Examples.STLC.CompatTest.html#STLC_SIG.ret_inst"><span class="id" title="definition">ret_inst</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#LN"><span class="id" title="inductive">LN</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#fa652b8c8091f60ed5a3b127754ad981"><span class="id" title="notation">○</span></a> <a class="idref" href="Tealeaves.Backends.LN.LN.html#Bd"><span class="id" title="constructor">Bd</span></a> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">ltac</span>:(<span class="id" title="tactic">reflexivity</span>).<br/>
 
 <br/>

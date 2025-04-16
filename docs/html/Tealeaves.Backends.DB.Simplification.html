@@ -12,6 +12,8 @@
 <body onload="document.getElementById('content').focus()">
   <div id="header">
     <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
       <span class="modulename"> <script> document.write(document.title) </script> </span>
     </span>
 
@@ -20,6 +22,7 @@
     <span class="right">
       <a href="./indexpage.html"> Index </a>
       <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
     </span>
 </div>
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
@@ -40,10 +43,14 @@
 <span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Backends.DB.DB.html#Notations"><span class="id" title="module">DB.Notations</span></a>.<br/>
 
 <br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Theory.DecoratedTraversableMonad.html#UsefulInstances"><span class="id" title="module">DecoratedTraversableMonad.UsefulInstances</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Theory.DecoratedTraversableMonad.html#"><span class="id" title="module">Classes.Kleisli.Theory.DecoratedTraversableMonad</span></a>.<br/>
+
+<br/>
 </div>
 
 <div class="doc">
-<a id="lab900"></a><h1 class="section">Extra lemmas</h1>
+<a id="lab1430"></a><h1 class="section">Extra lemmas</h1>
 
 </div>
 <div class="code">
@@ -51,7 +58,7 @@
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Context</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="ret_inst:2" class="idref" href="#ret_inst:2"><span class="id" title="binder">ret_inst</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Return"><span class="id" title="class">Return</span></a> <a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="ret_inst:2" class="idref" href="#ret_inst:2"><span class="id" title="binder">ret_inst</span></a> : <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Return"><span class="id" title="class">Return</span></a> <a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>}<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Map_T_inst:3" class="idref" href="#Map_T_inst:3"><span class="id" title="binder">Map_T_inst</span></a> : <a class="idref" href="Tealeaves.Classes.Functor.html#Map"><span class="id" title="class">Map</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Mapd_T_inst:4" class="idref" href="#Mapd_T_inst:4"><span class="id" title="binder">Mapd_T_inst</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedFunctor.html#Mapd"><span class="id" title="class">Mapd</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`{<a id="Traverse_T_inst:5" class="idref" href="#Traverse_T_inst:5"><span class="id" title="binder">Traverse_T_inst</span></a> : <a class="idref" href="Tealeaves.Classes.Kleisli.TraversableFunctor.html#Traverse"><span class="id" title="class">Traverse</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#T:1"><span class="id" title="variable">T</span></a>}<br/>
@@ -92,7 +99,7 @@
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="subst_id_Applied" class="idref" href="#subst_id_Applied"><span class="id" title="lemma">subst_id_Applied</span></a>: <span class="id" title="keyword">∀</span> <a id="t:36" class="idref" href="#t:36"><span class="id" title="binder">t</span></a>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.DB.DB.html#subst"><span class="id" title="definition">subst</span></a> (@<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#db_simplification_lemmas.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#t:36"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#t:36"><span class="id" title="variable">t</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Backends.DB.DB.html#subst"><span class="id" title="definition">subst</span></a> (@<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#db_simplification_lemmas.T"><span class="id" title="variable">T</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#t:36"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#t:36"><span class="id" title="variable">t</span></a>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.DB.DB.html#subst_id"><span class="id" title="lemma">subst_id</span></a>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
@@ -100,10 +107,10 @@
 <br/>
 &nbsp;&nbsp;<span class="comment">(*&nbsp;used&nbsp;for&nbsp;simpl_db&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="subst_compose_ret_assoc" class="idref" href="#subst_compose_ret_assoc"><span class="id" title="lemma">subst_compose_ret_assoc</span></a> {<a id="X:37" class="idref" href="#X:37"><span class="id" title="binder">X</span></a>: <span class="id" title="keyword">Type</span>}: <span class="id" title="keyword">∀</span> (<a id="f:38" class="idref" href="#f:38"><span class="id" title="binder">f</span></a>: <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#db_simplification_lemmas.T"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#X:37"><span class="id" title="variable">X</span></a>) <a id="280fe6e9a98af7df6c57e9f4080a26e0" class="idref" href="#280fe6e9a98af7df6c57e9f4080a26e0"><span class="id" title="binder">σ</span></a>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Backends.DB.Simplification.html#f:38"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Backends.DB.DB.html#subst"><span class="id" title="definition">subst</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#280fe6e9a98af7df6c57e9f4080a26e0"><span class="id" title="variable">σ</span></a><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#f:38"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#280fe6e9a98af7df6c57e9f4080a26e0"><span class="id" title="variable">σ</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Backends.DB.Simplification.html#f:38"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Backends.DB.DB.html#subst"><span class="id" title="definition">subst</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#280fe6e9a98af7df6c57e9f4080a26e0"><span class="id" title="variable">σ</span></a><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#f:38"><span class="id" title="variable">f</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Backends.DB.Simplification.html#280fe6e9a98af7df6c57e9f4080a26e0"><span class="id" title="variable">σ</span></a>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">change_left</span> (<span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Backends.DB.DB.html#subst"><span class="id" title="definition">subst</span></a> σ <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">change_left</span> (<span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Backends.DB.DB.html#subst"><span class="id" title="definition">subst</span></a> σ <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a>).<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="Tealeaves.Backends.DB.DB.html#subst_compose_ret"><span class="id" title="lemma">subst_compose_ret</span></a>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
@@ -137,7 +144,7 @@
 </div>
 
 <div class="doc">
-<a id="lab901"></a><h1 class="section">Unfolding up</h1>
+<a id="lab1431"></a><h1 class="section">Unfolding up</h1>
 
 </div>
 <div class="code">
@@ -152,7 +159,7 @@
 </div>
 
 <div class="doc">
-<a id="lab902"></a><h1 class="section">Simplifying renaming via unfolding</h1>
+<a id="lab1432"></a><h1 class="section">Simplifying renaming via unfolding</h1>
 
 </div>
 <div class="code">
@@ -201,7 +208,7 @@
 </div>
 
 <div class="doc">
-<a id="lab903"></a><h1 class="section">Simplifying substitution via unfolding</h1>
+<a id="lab1433"></a><h1 class="section">Simplifying substitution via unfolding</h1>
 
 </div>
 <div class="code">
@@ -228,7 +235,7 @@
 </div>
 
 <div class="doc">
-<a id="lab904"></a><h1 class="section">Simplifying substitution a la Autosubst</h1>
+<a id="lab1434"></a><h1 class="section">Simplifying substitution a la Autosubst</h1>
 
 </div>
 <div class="code">
@@ -328,9 +335,9 @@
 <br/>
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">factor_out_ret</span> :=<br/>
 &nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[(<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">A</span> := ?<span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">f</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">g</span>)]=&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <span class="id" title="var">f</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <span class="id" title="var">g</span>)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <span class="id" title="var">g</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[(<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">A</span> := ?<span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">f</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> ?<span class="id" title="var">g</span>)]=&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">change</span> (<a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <span class="id" title="var">f</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <span class="id" title="var">g</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">with</span> (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> (<span class="id" title="var">T</span> := <span class="id" title="var">T</span>) (<span class="id" title="var">A</span> := <span class="id" title="var">A</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">(</span></a><span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <span class="id" title="var">g</span><a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">)</span></a>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>;<br/>
 &nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> &lt;- ?<a class="idref" href="Tealeaves.Backends.DB.DB.html#cons_compose"><span class="id" title="lemma">cons_compose</span></a>.<br/>
 

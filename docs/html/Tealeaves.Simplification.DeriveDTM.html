@@ -12,6 +12,8 @@
 <body onload="document.getElementById('content').focus()">
   <div id="header">
     <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
       <span class="modulename"> <script> document.write(document.title) </script> </span>
     </span>
 
@@ -20,6 +22,7 @@
     <span class="right">
       <a href="./indexpage.html"> Index </a>
       <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
     </span>
 </div>
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
@@ -33,24 +36,28 @@
 &nbsp;&nbsp;<a class="idref" href="Tealeaves.Simplification.Binddt.html#"><span class="id" title="library">Simplification.Binddt</span></a>.<br/>
 
 <br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Theory.DecoratedTraversableMonad.html#UsefulInstances"><span class="id" title="module">DecoratedTraversableMonad.UsefulInstances</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Theory.DecoratedTraversableMonad.html#"><span class="id" title="module">Classes.Kleisli.Theory.DecoratedTraversableMonad</span></a>.<br/>
+
+<br/>
 <span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#Notations"><span class="id" title="module">DecoratedTraversableMonad.Notations</span></a>.<br/>
 
 <br/>
 </div>
 
 <div class="doc">
-<a id="lab765"></a><h1 class="section">Deriving DTM laws expressions</h1>
+<a id="lab1271"></a><h1 class="section">Deriving DTM laws expressions</h1>
 
 </div>
 <div class="code">
-<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm_custom_IH</span> := <span class="id" title="keyword">constr</span>:(<a class="idref" href="Tealeaves.Axioms.html#tt"><span class="id" title="constructor">tt</span></a>).<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_dtm_custom_IH</span> := <span class="id" title="keyword">constr</span>:(<a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a>).<br/>
 
 <br/>
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">induction_term</span> <span class="id" title="var">t</span> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">custIH</span> := <span class="id" title="var">derive_dtm_custom_IH</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">T</span> := <span class="id" title="keyword">type</span> <span class="id" title="keyword">of</span> <span class="id" title="var">custIH</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">T</span> <span class="id" title="keyword">with</span><br/>
-&nbsp;&nbsp;| <a class="idref" href="Tealeaves.Axioms.html#unit"><span class="id" title="inductive">unit</span></a> ⇒<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> ⇒<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "derive_dtm|Using standard induction";<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">t</span><br/>
 &nbsp;&nbsp;| <span class="id" title="var">_</span> ⇒<br/>
@@ -66,7 +73,7 @@
 </div>
 
 <div class="doc">
-<a id="lab766"></a><h2 class="section">Proving the first law</h2>
+<a id="lab1272"></a><h2 class="section">Proving the first law</h2>
 
 </div>
 <div class="code">
@@ -79,7 +86,7 @@
 </div>
 
 <div class="doc">
-<a id="lab767"></a><h2 class="section">Proving the second law</h2>
+<a id="lab1273"></a><h2 class="section">Proving the second law</h2>
 
 </div>
 <div class="code">
@@ -102,7 +109,7 @@
 <br/>
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">assert_match_dtm2</span> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
-&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>] ⇒<br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>] ⇒<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac_trace</span> "assert_match_dtm2|match"<br/>
 &nbsp;&nbsp;| |- <span class="id" title="var">_</span> ⇒ <span class="id" title="tactic">fail</span> "assert_match_setup|no match"<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
@@ -127,7 +134,7 @@
 </div>
 
 <div class="doc">
-<a id="lab768"></a><h2 class="section">Proving the third law</h2>
+<a id="lab1274"></a><h2 class="section">Proving the third law</h2>
 
 </div>
 <div class="code">
@@ -254,7 +261,7 @@
 </div>
 
 <div class="doc">
-<a id="lab769"></a><h2 class="section">Proving the fourt law</h2>
+<a id="lab1275"></a><h2 class="section">Proving the fourt law</h2>
 
 </div>
 <div class="code">
@@ -304,15 +311,15 @@
 </div>
 
 <div class="doc">
-<a id="lab770"></a><h2 class="section">Putting it together</h2>
+<a id="lab1276"></a><h2 class="section">Putting it together</h2>
 
 </div>
 <div class="code">
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">setup_dtm_proof</span> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
-&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[(<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a>)] ⇒<br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[(<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">f</span> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a>)] ⇒<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm1</span><br/>
-&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) (<a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#extract"><span class="id" title="definition">extract</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>] ⇒<br/>
+&nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) (<a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#ret"><span class="id" title="definition">ret</span></a> <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#extract"><span class="id" title="definition">extract</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Datatypes.html#id"><span class="id" title="definition">id</span></a>] ⇒<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive_dtm2</span><br/>
 &nbsp;&nbsp;| |- <span class="id" title="keyword">context</span>[<a class="idref" href="Tealeaves.Classes.Functor.html#map"><span class="id" title="definition">map</span></a> (<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">g</span>) <a class="idref" href="Tealeaves.Tactics.Prelude.html#c90061783c20674b3a3a6b46d343da03"><span class="id" title="notation">∘</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Tealeaves.Classes.Kleisli.DecoratedTraversableMonad.html#binddt"><span class="id" title="definition">binddt</span></a> (<span class="id" title="var">T</span> := ?<span class="id" title="var">T</span>) (<span class="id" title="var">U</span> := ?<span class="id" title="var">U</span>) ?<span class="id" title="var">f</span>] ⇒<br/>

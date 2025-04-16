@@ -12,6 +12,8 @@
 <body onload="document.getElementById('content').focus()">
   <div id="header">
     <span class="left">
+      <span> <img class="logo" src="./logo_96.png"> </span>
+      <span class="projectname"> Tealeaves </span>
       <span class="modulename"> <script> document.write(document.title) </script> </span>
     </span>
 
@@ -20,6 +22,7 @@
     <span class="right">
       <a href="./indexpage.html"> Index </a>
       <a href="./toc.html"> Table of Contents </a>
+      <a href="../html-alectryon/toc.html"> Switch to Alectryon Docs </a>
     </span>
 </div>
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
@@ -34,8 +37,8 @@
 
 <br/>
 <span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Misc.Product.html#Notations"><span class="id" title="module">Product.Notations</span></a>.<br/>
-<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Monad.html#Notations"><span class="id" title="module">Monad.Notations</span></a>.<br/>
-<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Categorical.Comonad.html#Notations"><span class="id" title="module">Comonad.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Monad.html#Notations"><span class="id" title="module">Monad.Notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Tealeaves.Classes.Kleisli.Comonad.html#Notations"><span class="id" title="module">Comonad.Notations</span></a>.<br/>
 
 <br/>
 #[<span class="id" title="var">local</span>] <span class="id" title="keyword">Generalizable</span> <span class="id" title="keyword">Variables</span> <span class="id" title="var">T</span> <span class="id" title="var">F</span> <span class="id" title="var">G</span> <span class="id" title="var">W</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span>.<br/>
@@ -44,15 +47,15 @@
 </div>
 
 <div class="doc">
-<a id="lab336"></a><h1 class="section">Decorated-traversable monads</h1>
+<a id="lab534"></a><h1 class="section">Decorated-traversable monads</h1>
 
 </div>
 <div class="code">
 <span class="id" title="keyword">Class</span> <a id="DecoratedTraversableMonad" class="idref" href="#DecoratedTraversableMonad"><span class="id" title="record">DecoratedTraversableMonad</span></a><br/>
-&nbsp;&nbsp;(<a id="W:1" class="idref" href="#W:1"><span class="id" title="binder">W</span></a> : <span class="id" title="keyword">Type</span>)<br/>
-&nbsp;&nbsp;(<a id="T:2" class="idref" href="#T:2"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
-&nbsp;&nbsp;`{<a id="op:3" class="idref" href="#op:3"><span class="id" title="binder">op</span></a> : <a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid_op"><span class="id" title="class">Monoid_op</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableMonad.html#W:1"><span class="id" title="variable">W</span></a>}<br/>
-&nbsp;&nbsp;`{<a id="unit:4" class="idref" href="#unit:4"><span class="id" title="binder">unit</span></a> : <a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid_unit"><span class="id" title="class">Monoid_unit</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableMonad.html#W:1"><span class="id" title="variable">W</span></a>}<br/>
+&nbsp;&nbsp;(<a id="W:1" class="idref" href="#W:1"><span class="id" title="binder">W</span></a>: <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;(<a id="T:2" class="idref" href="#T:2"><span class="id" title="binder">T</span></a>: <span class="id" title="keyword">Type</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.16.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">→</span></a> <span class="id" title="keyword">Type</span>)<br/>
+&nbsp;&nbsp;`{<a id="op:3" class="idref" href="#op:3"><span class="id" title="binder">op</span></a>: <a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid_op"><span class="id" title="class">Monoid_op</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableMonad.html#W:1"><span class="id" title="variable">W</span></a>}<br/>
+&nbsp;&nbsp;`{<a id="unit:4" class="idref" href="#unit:4"><span class="id" title="binder">unit</span></a>: <a class="idref" href="Tealeaves.Classes.Monoid.html#Monoid_unit"><span class="id" title="class">Monoid_unit</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableMonad.html#W:1"><span class="id" title="variable">W</span></a>}<br/>
 &nbsp;&nbsp;`{<a id="H:5" class="idref" href="#H:5"><span class="id" title="binder">Map</span></a> <a id="H:5" class="idref" href="#H:5"><span class="id" title="binder">T</span></a>} `{<a id="H0:6" class="idref" href="#H0:6"><span class="id" title="binder">Return</span></a> <a id="H0:6" class="idref" href="#H0:6"><span class="id" title="binder">T</span></a>} `{<a id="H1:7" class="idref" href="#H1:7"><span class="id" title="binder">Join</span></a> <a id="H1:7" class="idref" href="#H1:7"><span class="id" title="binder">T</span></a>}<br/>
 &nbsp;&nbsp;`{<a id="H2:8" class="idref" href="#H2:8"><span class="id" title="binder">Decorate</span></a> <a id="H2:8" class="idref" href="#H2:8"><span class="id" title="binder">W</span></a> <a id="H2:8" class="idref" href="#H2:8"><span class="id" title="binder">T</span></a>} `{<a id="H3:9" class="idref" href="#H3:9"><span class="id" title="binder">ApplicativeDist</span></a> <a id="H3:9" class="idref" href="#H3:9"><span class="id" title="binder">T</span></a>} :=<br/>
 &nbsp;&nbsp;{ <a id="dtmon_decorated" class="idref" href="#dtmon_decorated"><span class="id" title="projection">dtmon_decorated</span></a> :&gt; <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedMonad.html#DecoratedMonad"><span class="id" title="class">DecoratedMonad</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableMonad.html#W:1"><span class="id" title="variable">W</span></a> <a class="idref" href="Tealeaves.Classes.Categorical.DecoratedTraversableMonad.html#T:2"><span class="id" title="variable">T</span></a>;<br/>
@@ -61,12 +64,8 @@
 &nbsp;&nbsp;}.<br/>
 
 <br/>
-</div>
-
-<div class="doc">
-Now we verify that the sub-classes can be inferred as well. 
-</div>
-<div class="code">
+<span class="comment">(*&nbsp;Verify&nbsp;that&nbsp;the&nbsp;derived&nbsp;classes&nbsp;can&nbsp;be&nbsp;inferred&nbsp;as&nbsp;well.&nbsp;*)</span><br/>
+<span class="comment">(**********************************************************************)</span><br/>
 <span class="id" title="keyword">Section</span> <a id="test_typeclasses" class="idref" href="#test_typeclasses"><span class="id" title="section">test_typeclasses</span></a>.<br/>
 
 <br/>
