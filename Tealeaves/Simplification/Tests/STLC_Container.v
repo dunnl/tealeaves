@@ -71,6 +71,9 @@ Section term_ind_rewrite.
   Proof.
     intros.
     simplify_LN.
+    (* TODO Investigate why const wasn't unfolded. *)
+    unfold const.
+    simplify_monoid_disjunction.
     conclude.
   Qed.
 
