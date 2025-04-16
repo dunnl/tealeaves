@@ -50,7 +50,10 @@ clean: $(COQ_MAKEFILE)
 clean-html:
 	rm -fr html
 
-clean-all: clean clean-html
+clean-alectryon:
+	rm -fr html-alectryon
+
+clean-all: clean clean-html clean-alectryon
 
 # Warning: this interactively destroys all files not under version
 # control
