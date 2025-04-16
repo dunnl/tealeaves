@@ -42,7 +42,7 @@ Definition toLN_loc (k: key) '(depth, ix) : option LN :=
   then
     Some (Bd ix)
   else
-    map (F := option) Fr (key_lookup_index k (ix - depth)).
+    map (F := option) Fr (getName k (ix - depth)).
 
 Definition toLN
   `{Mapdt_inst: Mapdt nat T} (k: key): T nat -> option (T LN) :=

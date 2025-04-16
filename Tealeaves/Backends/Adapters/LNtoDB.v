@@ -43,7 +43,7 @@ Translation operations
 Definition toDB_loc (k: key) '(depth, l) : option nat :=
   match l with
   | Bd n => if Nat.ltb n depth then Some n else None
-  | Fr x => map (fun ix => ix + depth) (key_lookup_atom k x)
+  | Fr x => map (fun ix => ix + depth) (getIndex k x)
   end.
 
 Fixpoint LNtokey_list (l: list LN): key :=
@@ -61,7 +61,7 @@ Proof.
   unfold toDB_loc.
   destruct l as [x | n].
   - rewrite map_None_eq_iff.
-    setoid_rewrite key_lookup_atom_not_in_iff.
+    setoid_rewrite getIndex_not_in_iff.
     firstorder.
     now inversion H.
     now inversion H.
@@ -97,7 +97,7 @@ Qed.
 
 Lemma toDB_loc_rw2 (k: key) (depth: nat) (x: atom):
   toDB_loc k (depth, Fr x) =
-    map (fun ix => ix + depth) (key_lookup_atom k x).
+    map (fun ix => ix + depth) (getIndex k x).
 Proof.
   reflexivity.
 Qed.
@@ -117,8 +117,8 @@ Proof.
 Qed.
 
 Lemma LNtokey_bijection: forall l ix a,
-    key_lookup_index (LNtokey_list l) ix = Some a <->
-      key_lookup_atom (LNtokey_list l) a = Some ix.
+    getName (LNtokey_list l) ix = Some a <->
+      getIndex (LNtokey_list l) a = Some ix.
 Proof.
   intros.
   apply key_bijection.

@@ -191,7 +191,7 @@ Section translate.
       x ∈ k ->
       map (F := option)
         (toLN_loc k ∘ pair depth ∘ (fun ix: nat => ix + depth))
-        (key_lookup_atom k x) = Some (Some (Fr x)).
+        (getIndex k x) = Some (Some (Fr x)).
   Proof.
     intros.
     lookup atom x in key k.
@@ -217,7 +217,7 @@ Section translate.
     unfold scoped_key in Hwhole.
     destruct l as [x|n].
     - rewrite toDB_loc_rw2.
-      compose near (key_lookup_atom k x).
+      compose near (getIndex k x).
       rewrite (fun_map_map (F := option)).
       apply ind_implies_in in Hin.
       rewrite <- in_free_iff in Hin.
@@ -265,7 +265,7 @@ Section translate.
        resolves_gap gap k ->
       bound_b n depth = false ->
       (depth, n) ∈d t ->
-      map (toDB_loc k ∘ pair depth) (map Fr (key_lookup_index k (n - depth))) = Some (Some n).
+      map (toDB_loc k ∘ pair depth) (map Fr (getName k (n - depth))) = Some (Some n).
   Proof.
     introv Hnz Huniq Hclosed Hcont Hbound Helt.
     unfold toLN_loc.
@@ -276,7 +276,7 @@ Section translate.
       lia.
     }
     destruct Hcont as [Okay | GapZero].
-    { remember (key_lookup_index k (n - depth)).
+    { remember (getName k (n - depth)).
       symmetry in Heqo.
       destruct o.
       { cbn.

@@ -64,31 +64,31 @@ Fixpoint key_insert_atom (k: key) (a: atom): key :=
         x :: key_insert_atom rest a
   end.
 
-Fixpoint key_lookup_atom (k: key) (a: atom): option nat :=
+Fixpoint getIndex (k: key) (a: atom): option nat :=
   match k with
   | [] => None
   | x :: rest =>
       if a == x
       then Some 0
-      else map S (key_lookup_atom rest a)
+      else map S (getIndex rest a)
   end.
 
-Fixpoint key_lookup_index (k: key) (ix: nat): option atom :=
+Fixpoint getName (k: key) (ix: nat): option atom :=
   match k, ix with
   | nil, _ => None
   | cons a rest, 0 => Some a
-  | cons a rest, S ix => key_lookup_index rest ix
+  | cons a rest, S ix => getName rest ix
   end.
 
-Fixpoint key_lookup_atom_rec (k: key) (acc: nat) (a: atom): option nat :=
+Fixpoint getIndex_rec (k: key) (acc: nat) (a: atom): option nat :=
   match k with
   | nil => None
   | cons x rest =>
-      if a == x then Some acc else key_lookup_atom_rec rest (S acc) a
+      if a == x then Some acc else getIndex_rec rest (S acc) a
   end.
 
-Definition key_lookup_atom_alt: key -> atom -> option nat :=
-  fun k => key_lookup_atom_rec k 0.
+Definition getIndex_alt: key -> atom -> option nat :=
+  fun k => getIndex_rec k 0.
 
 (** ** Well-formedness predicates *)
 (******************************************************************************)
@@ -206,8 +206,8 @@ Qed.
 
 (** ** Alternative spec *)
 (******************************************************************************)
-Lemma key_lookup_atom_rec_spec (k: key) (a: atom) (n: nat):
-  key_lookup_atom_rec k n a = map (fun m => m + n) (key_lookup_atom k a).
+Lemma getIndex_rec_spec (k: key) (a: atom) (n: nat):
+  getIndex_rec k n a = map (fun m => m + n) (getIndex k a).
 Proof.
   generalize dependent n.
   induction k; intro n.
@@ -215,16 +215,16 @@ Proof.
   - cbn. destruct (a == a0).
     + reflexivity.
     + rewrite (IHk (S n)).
-      compose near (key_lookup_atom k a) on right.
+      compose near (getIndex k a) on right.
       rewrite (fun_map_map).
       fequal. ext m. cbn. lia.
 Qed.
 
-Corollary key_lookup_atom_spec (k: key) (a: atom):
-  key_lookup_atom_alt k a = key_lookup_atom k a.
+Corollary getIndex_spec (k: key) (a: atom):
+  getIndex_alt k a = getIndex k a.
 Proof.
-  unfold key_lookup_atom_alt.
-  rewrite key_lookup_atom_rec_spec.
+  unfold getIndex_alt.
+  rewrite getIndex_rec_spec.
   replace (fun m => m + 0) with (@id nat).
   now rewrite fun_map_id.
   ext m. unfold id. lia.
@@ -265,11 +265,11 @@ Proof.
     apply key_nin_insert; auto.
 Qed.
 
-(** ** Insertion and <<key_lookup_atom>> *)
+(** ** Insertion and <<getIndex>> *)
 (******************************************************************************)
-Lemma key_lookup_atom_not_in1:
+Lemma getIndex_not_in1:
   forall (k:  key) (a: atom),
-    ~ a ∈ k -> key_lookup_atom k a = None.
+    ~ a ∈ k -> getIndex k a = None.
 Proof.
   intros. induction k.
   - reflexivity.
@@ -281,9 +281,9 @@ Proof.
     + intuition.
 Qed.
 
-Lemma key_lookup_atom_not_in2:
+Lemma getIndex_not_in2:
   forall (k:  key) (a: atom),
-    key_lookup_atom k a = None -> ~ a ∈ k.
+    getIndex k a = None -> ~ a ∈ k.
 Proof.
   intros k a hyp.
   induction k.
@@ -294,23 +294,23 @@ Proof.
     split.
     + assumption.
     + apply IHk.
-      destruct (key_lookup_atom k a).
+      destruct (getIndex k a).
       * inversion hyp.
       * reflexivity.
 Qed.
 
-Theorem key_lookup_atom_not_in_iff:
+Theorem getIndex_not_in_iff:
   forall (k:  key) (a: atom),
-    ~ a ∈ k <-> key_lookup_atom k a = None.
+    ~ a ∈ k <-> getIndex k a = None.
 Proof.
   intros. split.
-  - apply key_lookup_atom_not_in1.
-  - apply key_lookup_atom_not_in2.
+  - apply getIndex_not_in1.
+  - apply getIndex_not_in2.
 Qed.
 
-Lemma key_lookup_atom_in1:
+Lemma getIndex_in1:
   forall (k:  key) (a: atom),
-    a ∈ k -> {n: nat | key_lookup_atom k a = Some n}.
+    a ∈ k -> {n: nat | getIndex k a = Some n}.
 Proof.
   introv Hin. induction k.
   - inversion Hin.
@@ -323,9 +323,9 @@ Proof.
       now (exists (S m)).
 Qed.
 
-Lemma key_lookup_atom_in2:
+Lemma getIndex_in2:
   forall (k:  key) (a: atom) (n: nat),
-    key_lookup_atom k a = Some n -> a ∈ k.
+    getIndex k a = Some n -> a ∈ k.
 Proof.
   intros k a.
   induction k; intros n Heq.
@@ -335,40 +335,40 @@ Proof.
     compare atoms.
     + now left.
     + right.
-      destruct (key_lookup_atom k a);
+      destruct (getIndex k a);
         inversion Heq.
       now eapply IHk.
 Qed.
 
 Theorem key_lookup_in_atom_iff: forall k a,
-    (exists n, key_lookup_atom k a = Some n) <-> a ∈ k.
+    (exists n, getIndex k a = Some n) <-> a ∈ k.
 Proof.
   intros. split.
-  - intros [n H]. eauto using key_lookup_atom_in2.
-  - intro Hin. apply key_lookup_atom_in1 in Hin.
+  - intros [n H]. eauto using getIndex_in2.
+  - intro Hin. apply getIndex_in1 in Hin.
     firstorder.
 Qed.
 
-Theorem key_lookup_atom_decide:
+Theorem getIndex_decide:
   forall (k: key) (a: atom),
-    ((a ∈ k) * {n: nat | key_lookup_atom k a = Some n}) +
-      {~ a ∈ k /\ key_lookup_atom k a = None}.
+    ((a ∈ k) * {n: nat | getIndex k a = Some n}) +
+      {~ a ∈ k /\ getIndex k a = None}.
 Proof.
   intros.
   destruct (key_is_atom_in k a); [left|right].
   - split.
     + assumption.
-    + auto using key_lookup_atom_in1.
+    + auto using getIndex_in1.
   - split.
     + assumption.
-    + auto using key_lookup_atom_not_in1.
+    + auto using getIndex_not_in1.
 Defined.
 
 Ltac lookup_atom_in_key k a :=
   let n := fresh "n" in
   let Hin := fresh "H_in" in
   let Hnin := fresh "H_not_in" in
-  destruct (key_lookup_atom_decide k a) as
+  destruct (getIndex_decide k a) as
     [[Hin [n H_key_lookup]] | [Hnin H_key_lookup]];
   try contradiction.
 
@@ -383,8 +383,8 @@ Proof.
   - now right.
 Qed.
 
-Lemma key_lookup_atom_cons_0: forall a a' k,
-    key_lookup_atom (a :: k) a' = Some 0 ->
+Lemma getIndex_cons_0: forall a a' k,
+    getIndex (a :: k) a' = Some 0 ->
     a = a'.
 Proof.
   introv Hlookup; cbn in *.
@@ -394,9 +394,9 @@ Proof.
     now inversion Hlookup.
 Qed.
 
-Lemma key_lookup_atom_cons_S: forall a x k ix,
-    key_lookup_atom (x :: k) a = Some (S ix) ->
-    a <> x /\ key_lookup_atom k a = Some ix.
+Lemma getIndex_cons_S: forall a x k ix,
+    getIndex (x :: k) a = Some (S ix) ->
+    a <> x /\ getIndex k a = Some ix.
 Proof.
   introv HH.
   cbn in HH.
@@ -405,15 +405,15 @@ Proof.
   eauto using (map_Some_inv S).
 Qed.
 
-Theorem key_lookup_atom_cons: forall a k a' ix,
-    key_lookup_atom (a :: k) a' = Some ix ->
+Theorem getIndex_cons: forall a k a' ix,
+    getIndex (a :: k) a' = Some ix ->
     (a' = a /\ ix = 0) \/
-      (a' <> a /\ exists ix', ix = S ix' /\ key_lookup_atom k a' = Some ix').
+      (a' <> a /\ exists ix', ix = S ix' /\ getIndex k a' = Some ix').
 Proof.
   introv Hyp. destruct ix; [left|right].
-  - apply key_lookup_atom_cons_0 in Hyp.
+  - apply getIndex_cons_0 in Hyp.
     intuition.
-  - apply key_lookup_atom_cons_S in Hyp.
+  - apply getIndex_cons_S in Hyp.
     intuition eauto.
 Qed.
 
@@ -421,7 +421,7 @@ Qed.
 (******************************************************************************)
 Lemma key_lookup_ix_in:
   forall (k:  key) (ix: nat) (a: atom),
-    key_lookup_index k ix = Some a -> a ∈ k.
+    getName k ix = Some a -> a ∈ k.
 Proof.
   introv Hin.
   generalize dependent ix.
@@ -436,7 +436,7 @@ Qed.
 
 Lemma key_lookup_ix_Some1:
   forall (k:  key) (ix: nat) (a: atom),
-    key_lookup_index k ix = Some a -> contains_ix_upto ix k.
+    getName k ix = Some a -> contains_ix_upto ix k.
 Proof.
   introv Hin.
   unfold contains_ix_upto.
@@ -453,7 +453,7 @@ Qed.
 Lemma key_lookup_ix_Some2:
   forall (k:  key) (ix: nat),
     contains_ix_upto ix k ->
-    {a:atom | key_lookup_index k ix = Some a}.
+    {a:atom | getName k ix = Some a}.
 Proof.
   unfold contains_ix_upto.
   intros.
@@ -473,7 +473,7 @@ Qed.
 Lemma key_lookup_ix_Some_iff:
   forall (k:  key) (ix: nat),
     contains_ix_upto ix k <->
-      exists a, key_lookup_index k ix = Some a.
+      exists a, getName k ix = Some a.
 Proof.
   intros. split.
   - intro H; apply key_lookup_ix_Some2 in H. firstorder.
@@ -482,7 +482,7 @@ Qed.
 
 Lemma key_lookup_ix_None1:
   forall (k:  key) (ix: nat),
-    key_lookup_index k ix = None -> ~ (contains_ix_upto ix k).
+    getName k ix = None -> ~ (contains_ix_upto ix k).
 Proof.
   introv Hin.
   unfold contains_ix_upto.
@@ -500,7 +500,7 @@ Qed.
 Lemma key_lookup_ix_None2:
   forall (k:  key) (ix: nat),
     ~ (contains_ix_upto ix k) ->
-    key_lookup_index k ix = None.
+    getName k ix = None.
 Proof.
   introv Hin.
   unfold contains_ix_upto in *.
@@ -516,7 +516,7 @@ Qed.
 Lemma key_lookup_ix_None_iff:
   forall (k:  key) (ix: nat),
     ~ (contains_ix_upto ix k) <->
-    key_lookup_index k ix = None.
+    getName k ix = None.
 Proof.
   intros; split;
     auto using key_lookup_ix_None1, key_lookup_ix_None2.
@@ -524,8 +524,8 @@ Qed.
 
 Theorem key_lookup_ix_decide:
   forall (k: key) (n: nat),
-    ((contains_ix_upto n k) * {a: atom | key_lookup_index k n = Some a}) +
-      {~ contains_ix_upto n k /\ key_lookup_index k n = None}.
+    ((contains_ix_upto n k) * {a: atom | getName k n = Some a}) +
+      {~ contains_ix_upto n k /\ getName k n = None}.
 Proof.
   intros.
   destruct (key_is_ix_in k n); [left|right].
@@ -556,28 +556,28 @@ Proof.
   - now right.
 Qed.
 
-(** ** Properties of <<key_lookup_index>> *)
+(** ** Properties of <<getName>> *)
 (******************************************************************************)
 Lemma key_lookup_zero: forall a k ix,
     ix = 0 ->
-    key_lookup_index (a :: k) ix = Some a.
+    getName (a :: k) ix = Some a.
 Proof.
   intros. subst.
   reflexivity.
 Qed.
 
-Lemma key_lookup_index_S: forall k ix a,
-    key_lookup_index k ix = Some a ->
-    forall a', key_lookup_index (a' :: k) (S ix) = Some a.
+Lemma getName_S: forall k ix a,
+    getName k ix = Some a ->
+    forall a', getName (a' :: k) (S ix) = Some a.
 Proof.
   intros.
   assumption.
 Qed.
 
-Lemma key_lookup_index_cons: forall a' a k ix,
-    key_lookup_index (a' :: k) ix = Some a ->
+Lemma getName_cons: forall a' a k ix,
+    getName (a' :: k) ix = Some a ->
     ix = 0 /\ a = a' \/
-      exists ix', ix = S ix' /\ key_lookup_index k ix' = Some a.
+      exists ix', ix = S ix' /\ getName k ix' = Some a.
 Proof.
   introv Hin. destruct ix.
   - cbn in Hin. inversion Hin.
@@ -587,14 +587,14 @@ Proof.
 Qed.
 
 Lemma key_bijection1: forall a k ix,
-    key_lookup_atom k a = Some ix ->
-    key_lookup_index k ix = Some a.
+    getIndex k a = Some ix ->
+    getName k ix = Some a.
 Proof.
   intros.
   generalize dependent ix.
   induction k; intros ix Hix.
   - cbn in *. inversion Hix.
-  - apply key_lookup_atom_cons in Hix.
+  - apply getIndex_cons in Hix.
     destruct Hix as
       [ [Heq Hix0] | [Hneq [Hix [Heq Hlookup]]] ]; subst.
     + reflexivity.
@@ -603,15 +603,15 @@ Qed.
 
 Lemma key_bijection2: forall a k ix,
     unique k ->
-    key_lookup_index k ix = Some a ->
-    key_lookup_atom k a = Some ix.
+    getName k ix = Some a ->
+    getIndex k a = Some ix.
 Proof.
   introv Huniq Hix.
   generalize dependent ix.
   induction k; intros ix Hix.
   - cbn in Hix. inversion Hix.
   - cbn.
-    apply key_lookup_index_cons in Hix.
+    apply getName_cons in Hix.
     destruct Hix as [[Hix_zero Heq] | [ix' [Heq Hrest]]].
     + subst. compare atoms.
     + destruct Huniq as [Hnin Huniq].
@@ -626,8 +626,8 @@ Qed.
 
 Lemma key_bijection: forall a k ix,
     unique k ->
-    key_lookup_index k ix = Some a <->
-      key_lookup_atom k a = Some ix.
+    getName k ix = Some a <->
+      getIndex k a = Some ix.
 Proof.
   intros.
   split; auto using key_bijection1, key_bijection2.

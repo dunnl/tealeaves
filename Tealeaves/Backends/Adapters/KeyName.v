@@ -53,11 +53,11 @@ Fixpoint key_lookup_name (k: key) (a: name): option nat :=
       else map S (key_lookup_name rest a)
   end.
 
-Fixpoint key_lookup_index (k: key) (ix: nat): option name :=
+Fixpoint getName (k: key) (ix: nat): option name :=
   match k, ix with
   | nil, _ => None
   | cons a rest, 0 => Some a
-  | cons a rest, S ix => key_lookup_index rest ix
+  | cons a rest, S ix => getName rest ix
   end.
 
 Fixpoint key_lookup_name_rec (k: key) (acc: nat) (a: name): option nat :=
@@ -357,7 +357,7 @@ Qed.
 (******************************************************************************)
 Lemma key_lookup_ix_in:
   forall (k:  key) (ix: nat) (a: name),
-    key_lookup_index k ix = Some a -> a ∈ k.
+    getName k ix = Some a -> a ∈ k.
 Proof.
   introv Hin.
   generalize dependent ix.
@@ -372,7 +372,7 @@ Qed.
 
 Lemma key_lookup_ix_Some1:
   forall (k:  key) (ix: nat) (a: name),
-    key_lookup_index k ix = Some a -> contains_ix_upto ix k.
+    getName k ix = Some a -> contains_ix_upto ix k.
 Proof.
   introv Hin.
   unfold contains_ix_upto.
@@ -389,7 +389,7 @@ Qed.
 Lemma key_lookup_ix_Some2:
   forall (k:  key) (ix: nat),
     contains_ix_upto ix k ->
-    {a:name | key_lookup_index k ix = Some a}.
+    {a:name | getName k ix = Some a}.
 Proof.
   unfold contains_ix_upto.
   intros.
@@ -409,7 +409,7 @@ Qed.
 Lemma key_lookup_ix_Some_iff:
   forall (k:  key) (ix: nat),
     contains_ix_upto ix k <->
-      exists a, key_lookup_index k ix = Some a.
+      exists a, getName k ix = Some a.
 Proof.
   intros. split.
   - intro H; apply key_lookup_ix_Some2 in H. firstorder.
@@ -418,7 +418,7 @@ Qed.
 
 Lemma key_lookup_ix_None1:
   forall (k:  key) (ix: nat),
-    key_lookup_index k ix = None -> ~ (contains_ix_upto ix k).
+    getName k ix = None -> ~ (contains_ix_upto ix k).
 Proof.
   introv Hin.
   unfold contains_ix_upto.
@@ -436,7 +436,7 @@ Qed.
 Lemma key_lookup_ix_None2:
   forall (k:  key) (ix: nat),
     ~ (contains_ix_upto ix k) ->
-    key_lookup_index k ix = None.
+    getName k ix = None.
 Proof.
   introv Hin.
   unfold contains_ix_upto in *.
@@ -451,8 +451,8 @@ Qed.
 
 Theorem key_lookup_ix_decide:
   forall (k: key) (n: nat),
-    ((contains_ix_upto n k) * {a: name | key_lookup_index k n = Some a}) +
-      {~ contains_ix_upto n k /\ key_lookup_index k n = None}.
+    ((contains_ix_upto n k) * {a: name | getName k n = Some a}) +
+      {~ contains_ix_upto n k /\ getName k n = None}.
 Proof.
   intros.
   destruct (key_is_ix_in k n); [left|right].
@@ -483,28 +483,28 @@ Proof.
   - now right.
 Qed.
 
-(** ** Properties of <<key_lookup_index>> *)
+(** ** Properties of <<getName>> *)
 (******************************************************************************)
 Lemma key_lookup_zero: forall a k ix,
     ix = 0 ->
-    key_lookup_index (a :: k) ix = Some a.
+    getName (a :: k) ix = Some a.
 Proof.
   intros. subst.
   reflexivity.
 Qed.
 
-Lemma key_lookup_index_S: forall k ix a,
-    key_lookup_index k ix = Some a ->
-    forall a', key_lookup_index (a' :: k) (S ix) = Some a.
+Lemma getName_S: forall k ix a,
+    getName k ix = Some a ->
+    forall a', getName (a' :: k) (S ix) = Some a.
 Proof.
   intros.
   assumption.
 Qed.
 
-Lemma key_lookup_index_cons: forall a' a k ix,
-    key_lookup_index (a' :: k) ix = Some a ->
+Lemma getName_cons: forall a' a k ix,
+    getName (a' :: k) ix = Some a ->
     ix = 0 /\ a = a' \/
-      exists ix', ix = S ix' /\ key_lookup_index k ix' = Some a.
+      exists ix', ix = S ix' /\ getName k ix' = Some a.
 Proof.
   introv Hin. destruct ix.
   - cbn in Hin. inversion Hin.
@@ -515,7 +515,7 @@ Qed.
 
 Lemma key_bijection1: forall a k ix,
     key_lookup_name k a = Some ix ->
-    key_lookup_index k ix = Some a.
+    getName k ix = Some a.
 Proof.
   intros.
   generalize dependent ix.
@@ -530,7 +530,7 @@ Qed.
 
 Lemma key_bijection2: forall a k ix,
     unique k ->
-    key_lookup_index k ix = Some a ->
+    getName k ix = Some a ->
     key_lookup_name k a = Some ix.
 Proof.
   introv Huniq Hix.
@@ -538,7 +538,7 @@ Proof.
   induction k; intros ix Hix.
   - cbn in Hix. inversion Hix.
   - cbn.
-    apply key_lookup_index_cons in Hix.
+    apply getName_cons in Hix.
     destruct Hix as [[Hix_zero Heq] | [ix' [Heq Hrest]]].
     + subst. compare names.
     + destruct Huniq as [Hnin Huniq].
@@ -553,7 +553,7 @@ Qed.
 
 Lemma key_bijection: forall a k ix,
     unique k ->
-    key_lookup_index k ix = Some a <->
+    getName k ix = Some a <->
       key_lookup_name k a = Some ix.
 Proof.
   intros.
