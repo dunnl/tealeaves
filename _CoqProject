@@ -238,6 +238,7 @@ Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
 Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctorPoly.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedMonadPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctorPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonadPoly.v
 Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
