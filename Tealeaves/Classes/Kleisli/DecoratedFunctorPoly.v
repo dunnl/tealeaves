@@ -1,7 +1,7 @@
 From Tealeaves Require Export
   Functors.List_Telescoping_General
   Classes.Kleisli.DecoratedTraversableCommIdemFunctor
-  Functors.Z2
+  Functors.L
   Functors.List_Telescoping_General
   Functors.Writer.
 
@@ -137,7 +137,7 @@ Definition kc_dfunp {T}
   (ρ1: list B1 * B1 -> B2) (* first op to rename binders *)
   (σ1: list B1 * A1 -> A2) (* first op to rename variables *)
   : list B1 * A1 -> A3 :=
-  σ2 ∘ cobind_Z2 ρ1 σ1.
+  σ2 ∘ cobind_L ρ1 σ1.
 
 (** ** Typeclass *)
 (**********************************************************************)

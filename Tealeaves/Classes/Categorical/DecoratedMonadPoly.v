@@ -19,7 +19,7 @@ Class DecoratedMonadPoly
     dmp_monad :> Monad2 T;
     dmp_dec_ret: forall B V,
       decp ∘ ret (T := T B) (A := V) =
-        ret (T := T (Z B)) (A := Z2 B V) ∘ ret (T := prod (list B));
+        ret (T := T (Z B)) (A := L B V) ∘ ret (T := prod (list B));
     dmp_dec_join:
     forall (B V: Type),
       decp ∘ join (T := T B) (A := V) =

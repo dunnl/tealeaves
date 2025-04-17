@@ -5,7 +5,7 @@ From Tealeaves Require Export
   Classes.Kleisli.Theory.TraversableFunctor
   Functors.List
   Functors.List_Telescoping_General
-  Functors.Z2.
+  Functors.L.
 
 Import Applicative.Notations.
 Import Product.Notations.

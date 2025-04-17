@@ -19,7 +19,7 @@ From Tealeaves.Classes Require Export
    *)
 
 From Tealeaves.Functors Require Export
-  List Z2 Pair.
+  List L Pair.
 
 From Tealeaves.Backends Require Export
   Common.Names.

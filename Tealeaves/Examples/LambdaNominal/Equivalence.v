@@ -112,7 +112,7 @@ Proof.
   unfold dec.
   unfold Decorate_PolyVar.
   reassociate <- on left.
-  reassociate -> near (@map2 term Map2_term (Z atom) (Z2 atom atom) atom (Z2 atom atom) (@extract Z Extract_Z atom) (@id (Z2 atom atom))).
+  reassociate -> near (@map2 term Map2_term (Z atom) (L atom atom) atom (L atom atom) (@extract Z Extract_Z atom) (@id (L atom atom))).
   rewrite fun2_map_map.
   change (?f ∘ id) with f.
 Admitted.

@@ -342,7 +342,7 @@ Counit Law
 |*)
 
 Lemma dec2_rec_extract_term: forall (B V: Type) (ctx: list B),
-    map2 (extract_Z2) (extract_Z2) ∘ dec2_term_rec ctx = @id (term B V).
+    map2 (extract_L) (extract_L) ∘ dec2_term_rec ctx = @id (term B V).
 Proof.
   intros. ext t. unfold compose.
   generalize dependent ctx. induction t; intro ctx.
@@ -352,7 +352,7 @@ Proof.
 Qed.
 
 Lemma dec_extract_term: forall (B V: Type),
-    map2 (extract_Z2) (extract_Z2) ∘ dec2_term = @id (term B V).
+    map2 (extract_L) (extract_L) ∘ dec2_term = @id (term B V).
 Proof.
   intros. unfold dec2_term. apply dec2_rec_extract_term.
 Qed.
@@ -364,7 +364,7 @@ Cojoin Law
 
 Lemma dec2_rec_dec2_rec_term: forall (B V: Type) (ctx: list B),
     dec2_term_rec (decorate_prefix_list ctx) ∘ dec2_term_rec ctx =
-      map2 (cojoin_Z2) (cojoin_Z2) ∘ dec2_term_rec ctx (B := B) (V := V).
+      map2 (cojoin_L) (cojoin_L) ∘ dec2_term_rec ctx (B := B) (V := V).
 Proof.
   intros. ext t. unfold compose.
   generalize dependent ctx.
@@ -381,7 +381,7 @@ Qed.
 
 Lemma dec_dec2_term: forall (B V: Type),
     dec2_term ∘ dec2_term (B := B) (V := V) =
-      map2 (cojoin_Z2) (cojoin_Z2) ∘ dec2_term.
+      map2 (cojoin_L) (cojoin_L) ∘ dec2_term.
 Proof.
   intros. unfold dec2_term.
   change (@nil (list B * B)) with (decorate_prefix_list (@nil B)).
@@ -788,7 +788,7 @@ Lemma dist_dec2_rec_commute:
     `{ApplicativeCommutativeIdempotent G}
     (ctx: list (G B))
     (t: term (G B) (G V)),
-    dist2 (T := term) (G := G) (map2 dist_Z dist2_Z2 (dec2_term_rec ctx t)) =
+    dist2 (T := term) (G := G) (map2 dist_Z dist2_L (dec2_term_rec ctx t)) =
       pure (dec2_term_rec (B := B) (V := V)) <⋆> (dist list G ctx)
         <⋆> (dist2 (T := term) (G := G) t).
 Proof.
@@ -912,7 +912,7 @@ Lemma dist_dec_commute:
   forall (B V: Type)
     `{ApplicativeCommutativeIdempotent G}
     (t: term (G B) (G V)),
-    dist2 (T := term) (G := G) (map2 dist_Z dist2_Z2 (dec2_term t)) =
+    dist2 (T := term) (G := G) (map2 dist_Z dist2_L (dec2_term t)) =
       pure (dec2_term (B := B) (V := V)) <⋆> (dist2 (T := term) (G := G) t).
 Proof.
   intros.
@@ -926,7 +926,7 @@ Qed.
 Lemma dist_dec_commute2:
   forall (B V: Type)
     `{ApplicativeCommutativeIdempotent G},
-    dist2 (T := term) (G := G) ∘ map2 (dist_Z (G := G)) (dist2_Z2 (G := G)) ∘ dec2_term =
+    dist2 (T := term) (G := G) ∘ map2 (dist_Z (G := G)) (dist2_L (G := G)) ∘ dec2_term =
       map (dec2_term (B := B) (V := V)) ∘
         (dist2 (T := term) (G := G) (B := B) (A := V)).
 Proof.

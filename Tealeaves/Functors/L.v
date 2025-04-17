@@ -7,36 +7,36 @@ From Tealeaves Require Import
 
 (** * <<Z>> Comonad of Two Arguments *)
 (**********************************************************************)
-Definition Z2: Type -> Type -> Type :=
+Definition L: Type -> Type -> Type :=
   fun B A => list B * A.
 
-Definition cojoin_Z2 {B A: Type}:
-    Z2 B A -> Z2 (Z2 B B) (Z2 B A) :=
+Definition cojoin_L {B A: Type}:
+    L B A -> L (L B B) (L B A) :=
   fun '(ctx, a) => (decorate_prefix_list ctx, (ctx, a)).
 
-Definition extract_Z2 {B A: Type}:
-    Z2 B A -> A :=
+Definition extract_L {B A: Type}:
+    L B A -> A :=
   fun '(ctx, a) => a.
 
-Definition map_Z2  {B1 A1 B2 A2: Type} (g: B1 -> B2) (f: A1 -> A2):
-    Z2 B1 A1 -> Z2 B2 A2 :=
+Definition map_L  {B1 A1 B2 A2: Type} (g: B1 -> B2) (f: A1 -> A2):
+    L B1 A1 -> L B2 A2 :=
   fun '(ctx, a) => (map g ctx, f a).
 
-Definition cobind_Z2 {B1 B2 A1 A2: Type}
+Definition cobind_L {B1 B2 A1 A2: Type}
   (ρ: Z B1 -> B2)
-  (σ: Z2 B1 A1 -> A2):  Z2 B1 A1 -> Z2 B2 A2 :=
-  map_Z2 ρ σ ∘ cojoin_Z2.
+  (σ: L B1 A1 -> A2):  L B1 A1 -> L B2 A2 :=
+  map_L ρ σ ∘ cojoin_L.
 
-#[global] Arguments extract_Z2 {B A}%type_scope _.
-#[global] Arguments cojoin_Z2 {B A}%type_scope _.
-#[global] Arguments map_Z2 {B1 A1 B2 A2}%type_scope g f.
+#[global] Arguments extract_L {B A}%type_scope _.
+#[global] Arguments cojoin_L {B A}%type_scope _.
+#[global] Arguments map_L {B1 A1 B2 A2}%type_scope g f.
 
-#[export] Instance Extract_Z2: forall B, Extract (Z2 B) :=
+#[export] Instance Extract_L: forall B, Extract (L B) :=
   fun B V => extract (W := prod (list B)).
 
-#[export] Instance Map2_Z2: Map2 Z2 := @map_Z2.
+#[export] Instance Map2_L: Map2 L := @map_L.
 
-#[export] Instance Functor2_Z2: Functor2 Z2.
+#[export] Instance Functor2_L: Functor2 L.
 Proof.
   constructor; intros; ext t.
   - induction t; try auto.
@@ -48,22 +48,22 @@ Proof.
     reflexivity.
 Qed.
 
-(** * <<Dist>> instance on <<Z2>> *)
+(** * <<Dist>> instance on <<L>> *)
 (**********************************************************************)
 From Tealeaves Require Import
   Classes.Categorical.TraversableFunctor2.
 
 Import Applicative.Notations.
 
-Definition dist2_Z2
+Definition dist2_L
   {B V: Type} {G}
   `{Map G} `{Mult G} `{Pure G}:
-  Z2 (G B) (G V) -> G (Z2 B V) :=
+  L (G B) (G V) -> G (L B V) :=
   fun '(x, y) => pure (@pair (list B) V) <⋆> dist list G x <⋆> y.
 
-#[export] Instance Dist2_Z2: ApplicativeDist2 Z2.
+#[export] Instance Dist2_L: ApplicativeDist2 L.
 Proof.
   intro G. intros.
-  exact (dist2_Z2 X).
+  exact (dist2_L X).
 Defined.
 

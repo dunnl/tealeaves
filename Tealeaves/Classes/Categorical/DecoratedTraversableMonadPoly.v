@@ -23,7 +23,7 @@ Section laws.
   Definition decpoly_ret: Prop :=
     forall (B V: Type),
       decp ∘ ret (T := T B) (A := V) =
-        ret (T := T (Z B)) (A := Z2 B V) ∘ ret (T := prod (list B)).
+        ret (T := T (Z B)) (A := L B V) ∘ ret (T := prod (list B)).
 
   Definition decpoly_join: Prop :=
     forall (B V: Type),
@@ -47,7 +47,7 @@ Section laws.
   Definition dist2_decpoly_ci
      `{ApplicativeCommutativeIdempotent G}: Prop :=
     forall (B V: Type),
-      dist2 (G := G) ∘ map2 (dist Z G) (dist2 (T := Z2)) ∘ (decp (B := G B) (V := G V)) =
+      dist2 (G := G) ∘ map2 (dist Z G) (dist2 (T := L)) ∘ (decp (B := G B) (V := G V)) =
         map (F := G) (decp (B := B) (V := V)) ∘ dist2 (T := T) (G := G).
 
 End laws.

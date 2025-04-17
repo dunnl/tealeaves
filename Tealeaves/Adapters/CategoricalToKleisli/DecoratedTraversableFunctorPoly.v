@@ -69,27 +69,27 @@ Module DerivedInstances.
         (@map G1 Map_G (T (G2 B3) (G2 A3)) ((G2 ∘ T B3) A3) (@dist2 T H1 G2 Map_G0 Pure_G0 Mult_G0 B3 A3)
   ∘ @dist2 T H1 G1 Map_G Pure_G Mult_G (G2 B3) (G2 A3)
   ∘ (@map2 (T ○21 G1) (@Map21_compose G1 Map_G T H) (list B2 * B2) (list B2 * A2) (G2 B3) (G2 A3) ρ2 σ2
-  ∘ @map2 T H (Z (list B1 * B1)) (Z2 (list B1 * B1) (list B1 * A1)) (G1 (Z B2)) ((G1 ∘ Z2 B2) A2)
+  ∘ @map2 T H (Z (list B1 * B1)) (L (list B1 * B1) (list B1 * A1)) (G1 (Z B2)) ((G1 ∘ L B2) A2)
       (@dist Z Dist_Z G1 Map_G Pure_G Mult_G B2 ∘ @map Z Map_Z (list B1 * B1) (G1 B2) ρ1)
-      (@dist2 Z2 Dist2_Z2 G1 Map_G Pure_G Mult_G B2 A2
-         ∘ @map2 Z2 Map2_Z2 (list B1 * B1) (list B1 * A1) (G1 B2) (G1 A2) ρ1 σ1)) ∘ @decp T H0 (list B1 * B1) (list B1 * A1) ∘ @decp T H0 B1 A1).
+      (@dist2 L Dist2_L G1 Map_G Pure_G Mult_G B2 A2
+         ∘ @map2 L Map2_L (list B1 * B1) (list B1 * A1) (G1 B2) (G1 A2) ρ1 σ1)) ∘ @decp T H0 (list B1 * B1) (list B1 * A1) ∘ @decp T H0 B1 A1).
       unfold_ops @Map21_compose.
       rewrite fun2_map_map.
       unfold kc_dtfp.
       change_left
         (@map G1 Map_G (T (G2 B3) (G2 A3)) ((G2 ∘ T B3) A3) (@dist2 T H1 G2 Map_G0 Pure_G0 Mult_G0 B3 A3)
             ∘ @dist2 T H1 G1 Map_G Pure_G Mult_G (G2 B3) (G2 A3)
-            ∘ (@map2 T H (Z (list B1 * B1)) (Z2 (list B1 * B1) (list B1 * A1)) (G1 (G2 B3)) (G1 (G2 A3))
+            ∘ (@map2 T H (Z (list B1 * B1)) (L (list B1 * B1) (list B1 * A1)) (G1 (G2 B3)) (G1 (G2 A3))
             (@map G1 Map_G (list B2 * B2) (G2 B3) ρ2
                ∘ (@dist Z Dist_Z G1 Map_G Pure_G Mult_G B2 ∘ @map Z Map_Z (list B1 * B1) (G1 B2) ρ1))
             (@map G1 Map_G (list B2 * A2) (G2 A3) σ2
-               ∘ (@dist2 Z2 Dist2_Z2 G1 Map_G Pure_G Mult_G B2 A2
-                    ∘ @map2 Z2 Map2_Z2 (list B1 * B1) (list B1 * A1) (G1 B2) (G1 A2) ρ1 σ1))
+               ∘ (@dist2 L Dist2_L G1 Map_G Pure_G Mult_G B2 A2
+                    ∘ @map2 L Map2_L (list B1 * B1) (list B1 * A1) (G1 B2) (G1 A2) ρ1 σ1))
             ∘ @decp T H0 (list B1 * B1) (list B1 * A1)) ∘ @decp T H0 B1 A1).
       repeat reassociate -> on left.
       rewrite dfunp_dec_dec.
       repeat reassociate <- on left.
-      reassociate -> near (map2 cojoin cojoin_Z2).
+      reassociate -> near (map2 cojoin cojoin_L).
       rewrite fun2_map_map.
       fequal.
       fequal.

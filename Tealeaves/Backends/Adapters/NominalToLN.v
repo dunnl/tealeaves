@@ -59,8 +59,8 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma cobind_Z2_const: forall (A A' B: Type) (f: Z2 B A -> A'),
-    cobind_Z2 (B1 := B) (A1 := A) (const tt) f =
+Lemma cobind_L_const: forall (A A' B: Type) (f: L B A -> A'),
+    cobind_L (B1 := B) (A1 := A) (const tt) f =
       fun '(w, a) => (map (F := list) (const tt) w, f (w, a)).
 Proof.
   introv.
@@ -366,7 +366,7 @@ Section with_DTM.
 
     (* Given a variable occurrence (pre, v) in a nominal term t,
      return the new name of v after a Nominal~>LN~>Nominal roundtrip *)
-    Definition roundtrip_Var_loc: Z2 atom atom -> atom :=
+    Definition roundtrip_Var_loc: L atom atom -> atom :=
       kc_dfunp (lnToName Γ) (const tt) name_to_ln.
 
     Lemma roundtrip_Binder_loc_spec:
@@ -440,9 +440,9 @@ Section with_DTM.
     ext [ctx nm].
     unfold kc_dfunp.
     unfold compose.
-    unfold cobind_Z2.
+    unfold cobind_L.
     unfold compose.
-    unfold map_Z2.
+    unfold map_L.
     cbn.
     compose near ctx.
     unfold_Z.
@@ -648,7 +648,7 @@ Section with_DTM.
     unfold historyToName.
     unfold roundtrip_Var_loc.
     unfold kc_dfunp.
-    rewrite cobind_Z2_const.
+    rewrite cobind_L_const.
     unfold compose at 1.
     unfold name_to_ln.
     rewrite Haeq in *; clear Haeq.
@@ -1171,8 +1171,8 @@ Section with_DTM.
     intros ctx v Hin.
     unfold kc_dfunp.
     unfold compose at 1.
-    unfold cobind_Z2, cojoin_Z2, compose at 1.
-    unfold map_Z2.
+    unfold cobind_L, cojoin_L, compose at 1.
+    unfold map_L.
     compose near ctx on left.
     unfold_Z.
     rewrite <- mapd_list_prefix_spec.

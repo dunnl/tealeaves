@@ -213,7 +213,7 @@ Tealeaves/Classes/Functor2.v
 Tealeaves/Functors/Batch2.v
 Tealeaves/Classes/Categorical/Monad2.v
 Tealeaves/Classes/Categorical/TraversableFunctor2.v
-Tealeaves/Functors/Z2.v
+Tealeaves/Functors/L.v
 Tealeaves/Classes/Categorical/TraversableMonad2.v
 Tealeaves/Classes/Categorical/DecoratedFunctorPoly.v
 Tealeaves/Classes/Categorical/DecoratedMonadPoly.v

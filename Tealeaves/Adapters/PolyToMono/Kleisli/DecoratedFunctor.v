@@ -47,7 +47,7 @@ Module ToMono1.
           unfold compose.
           fequal.
           unfold_ops @Cobind_reader.
-          unfold cobind_Z2.
+          unfold cobind_L.
           unfold compose.
           cbn.
           compose near w on left.

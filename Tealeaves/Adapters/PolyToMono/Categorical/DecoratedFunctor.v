@@ -35,8 +35,8 @@ Module ToMono1.
         rewrite fun_map_id.
 
         change (?f ∘ id) with f.
-        unfold_ops @Map2_Z2.
-        unfold map_Z2.
+        unfold_ops @Map2_L.
+        unfold map_L.
         rewrite fun_map_id.
         reflexivity.
     Qed.
@@ -52,9 +52,9 @@ Module ToMono1.
       change (id ∘ ?f) with f.
       change (?f ∘ id) with f.
       change_left
-        ( @map2 F H (Z B) (Z2 B (list B * A)) B (Z2 B (list B * A)) (@extract Z Extract_Z B) (@id (Z2 B (list B * A)))
-            ∘ (@decp F H0 B (list B * A) ∘ @map2 F H (Z B) (Z2 B A) B (Z2 B A)
-                 (@extract Z Extract_Z B) (@id (Z2 B A))) ∘
+        ( @map2 F H (Z B) (L B (list B * A)) B (L B (list B * A)) (@extract Z Extract_Z B) (@id (L B (list B * A)))
+            ∘ (@decp F H0 B (list B * A) ∘ @map2 F H (Z B) (L B A) B (L B A)
+                 (@extract Z Extract_Z B) (@id (L B A))) ∘
             @decp F H0 B A).
       rewrite (polydecnat (F := F)).
       reassociate <- on left.

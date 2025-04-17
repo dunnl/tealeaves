@@ -8,7 +8,7 @@ From Tealeaves Require Export
   Functors.Environment
   Functors.Batch2
   Functors.List_Telescoping_General
-  Functors.Z2
+  Functors.L
   Classes.Kleisli.Theory.DecoratedTraversableFunctor
   Theory.TraversableFunctor.
 

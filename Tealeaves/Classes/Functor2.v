@@ -42,7 +42,7 @@ Class Natural2 `{Map2 F} `{Map2 G} (ϕ: F ⇒2 G) :=
 
 (** ** Single-Argument Functor Instances *)
 (**********************************************************************)
-Section composition_with_functor.
+Section single_functor_instances.
 
   Context
     `{Functor2 F}.
@@ -150,7 +150,7 @@ Section composition_with_functor.
 
   Definition bmap {V B1 B2:Type} `(f: B1 -> B2) := map (F := fun B => F B V) (Map := Map2_2) f.
 
-End composition_with_functor.
+End single_functor_instances.
 
 Section naturality_bmap_vmap.
 

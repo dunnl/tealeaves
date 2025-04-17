@@ -28,7 +28,6 @@ Section rec_version.
     match l with
     | nil => nil
     | x :: xs =>
-        (* (ctx, x) :: decorate_prefix_list_rec (x :: ctx) xs *)
         (ctx, x) :: decorate_prefix_list_rec (ctx ++ [x]) xs
     end.
 
@@ -416,30 +415,34 @@ Qed.
 
 (** ** [decorate_prefix_list] as a Right Coaction *)
 (**********************************************************************)
-Lemma decorate_prefix_list_extract: forall (A: Type),
-    map extract ∘ decorate_prefix_list = @id (list A).
-Proof.
-  intros. ext l. unfold compose.
-  induction l.
-  - reflexivity.
-  - rewrite decorate_prefix_list_rw_cons.
-    rewrite map_list_cons.
-    change (extract ([], a)) with a.
-    compose near (decorate_prefix_list l).
-    rewrite (fun_map_map).
-    rewrite extract_Z_incr.
-    fold_Z_all.
-    rewrite IHl.
-    reflexivity.
-Qed.
+Section Z_coaction_on_list.
 
-Lemma decorate_prefix_list_cojoin: forall (A: Type),
-    map cojoin ∘ decorate_prefix_list =
-      decorate_prefix_list ∘ decorate_prefix_list (A := A).
-Proof.
-  intros. ext l. unfold compose.
-  now rewrite cojoin_assoc_lemma.
-Qed.
+  Lemma decorate_prefix_list_extract: forall (A: Type),
+      map extract ∘ decorate_prefix_list = @id (list A).
+  Proof.
+    intros. ext l. unfold compose.
+    induction l.
+    - reflexivity.
+    - rewrite decorate_prefix_list_rw_cons.
+      rewrite map_list_cons.
+      change (extract ([], a)) with a.
+      compose near (decorate_prefix_list l).
+      rewrite (fun_map_map).
+      rewrite extract_Z_incr.
+      fold_Z_all.
+      rewrite IHl.
+      reflexivity.
+  Qed.
+
+  Lemma decorate_prefix_list_cojoin: forall (A: Type),
+      map cojoin ∘ decorate_prefix_list =
+        decorate_prefix_list ∘ decorate_prefix_list (A := A).
+  Proof.
+    intros. ext l. unfold compose.
+    now rewrite cojoin_assoc_lemma.
+  Qed.
+
+End Z_coaction_on_list.
 
 (** * Traversable Functor Instance (Kleisli) *)
 (**********************************************************************)

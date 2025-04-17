@@ -19,7 +19,7 @@ Class DecoratedTraversableFunctorPoly
     dtfp_traversable :> TraversableFunctor2 T;
     dtfp_dist2_decpoly:
     forall (B V: Type) `{ApplicativeCommutativeIdempotent G},
-      dist2 (G := G) ∘ map2 (dist Z G) (dist2 (T := Z2)) ∘ (decp (B := G B) (V := G V)) =
+      dist2 (G := G) ∘ map2 (dist Z G) (dist2 (T := L)) ∘ (decp (B := G B) (V := G V)) =
         map (F := G) (decp (B := B) (V := V)) ∘ dist2 (T := T) (G := G);
   }.
 

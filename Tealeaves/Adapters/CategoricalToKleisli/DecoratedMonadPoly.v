@@ -75,7 +75,7 @@ Module DerivedInstances.
       (ρ2: list B2 * B2 -> B3)
       (σ1: list B1 * V1 -> T B2 V2)
       (σ2: list B2 * V2 -> T B3 V3),
-      map2 (ρ2 ∘ map ρ1 ∘ cojoin (W := Z)) (join ∘ (map2 ρ2 σ2 ∘ (shift2 ∘ map_snd decp) ∘ map2 ρ1 σ1 ∘ cojoin_Z2)) =
+      map2 (ρ2 ∘ map ρ1 ∘ cojoin (W := Z)) (join ∘ (map2 ρ2 σ2 ∘ (shift2 ∘ map_snd decp) ∘ map2 ρ1 σ1 ∘ cojoin_L)) =
         map2 (ρ2 ∘ cobind (W := Z) ρ1) (kc_dmp ρ1 σ1 ρ2 σ2).
   Proof.
     intros.
@@ -123,10 +123,10 @@ Module DerivedInstances.
       reassociate -> near (map2 (map ρ1) (map2 ρ1 σ1)).
       rewrite fun2_map_map.
       reassociate <- on left.
-      reassociate -> near (map2 cojoin cojoin_Z2).
+      reassociate -> near (map2 cojoin cojoin_L).
       rewrite fun2_map_map.
       reassociate -> near (map2 (ρ2 ∘ id ∘ map ρ1 ∘ cojoin (W := Z))
-                            (map2 ρ2 σ2 ∘ (shift2 ∘ map_snd decp) ∘ map2 ρ1 σ1 ∘ cojoin_Z2)).
+                            (map2 ρ2 σ2 ∘ (shift2 ∘ map_snd decp) ∘ map2 ρ1 σ1 ∘ cojoin_L)).
       rewrite fun2_map21_map2.
 
       reassociate -> on right.

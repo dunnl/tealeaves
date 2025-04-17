@@ -3,7 +3,7 @@ From Tealeaves Require Export
   Functors.List_Telescoping_General
   Classes.Functor2
   Classes.Monoid
-  Functors.Z2.
+  Functors.L.
 
 Import Monoid.Notations.
 
@@ -41,7 +41,7 @@ Qed.
 (**********************************************************************)
 Class DecoratePoly
   (F: Type -> Type -> Type) :=
-  decp: forall (B V: Type), F B V -> F (Z B) (Z2 B V).
+  decp: forall (B V: Type), F B V -> F (Z B) (L B V).
 
 #[global] Arguments decp {F}%function_scope {DecoratePoly}
   {B V}%type_scope _.
@@ -52,7 +52,7 @@ Class DecoratePoly
 Class PolyDecorateNatural F `{Map2 F} `{DecoratePoly F}: Type :=
   polydecnat: forall (B V B' V': Type) (g: B -> B') (f: V -> V'),
     decp (B := B') (V := V') ∘ map2 g f =
-      map2 (map (F := Z) g) (map2 (F := Z2) g f) ∘ decp (B := B) (V := V).
+      map2 (map (F := Z) g) (map2 (F := L) g f) ∘ decp (B := B) (V := V).
 
 (** ** Typeclass *)
 (**********************************************************************)
@@ -63,7 +63,7 @@ Class DecoratedFunctorPoly
   { dfunp_functor :> Functor2 F;
     dfunp_natural :> PolyDecorateNatural F;
     dfunp_dec_dec: forall (B V: Type),
-      decp ∘ decp (B := B) (V := V) = map2 (cojoin (W := Z)) cojoin_Z2 ∘ decp;
+      decp ∘ decp (B := B) (V := V) = map2 (cojoin (W := Z)) cojoin_L ∘ decp;
     dfunp_dec_extract: forall (B V: Type),
       map2 (extract) (extract) ∘ decp (B := B) (V := V) = @id (F B V);
   }.
