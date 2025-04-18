@@ -399,8 +399,10 @@ Tealeaves/Simplification/Tests/SystemF_LN.v
 ##########################################################
 Tealeaves/Examples/LambdaNominal/Syntax.v
 Tealeaves/Examples/LambdaNominal/Categorical.v
+Tealeaves/Examples/LambdaNominal/Demo.v
 #Tealeaves/Examples/LambdaNominal/Kleisli.v
-Tealeaves/Examples/LambdaNominal/Raw.v
+#Tealeaves/Examples/LambdaNominal/Raw.v
+Tealeaves/Examples/LambdaNominal/RawUnguarded.v
 #Tealeaves/Examples/LambdaNominal/Equivalence.v
 
 ##########################################################

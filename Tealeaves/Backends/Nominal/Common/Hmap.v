@@ -234,9 +234,8 @@ End relate_history_prefix.
 
 (** ** Rewriting Rules *)
 (**********************************************************************)
-Lemma hadapt_spec {A B: Type} (f: list B * A -> B):
-  mapd_list_prefix (hadapt f) =
-    hmap f.
+Lemma hmap_spec {A B: Type} (f: list B * A -> B):
+  mapd_list_prefix (hadapt f) = hmap f.
 Proof.
   ext l.
   generalize dependent f.

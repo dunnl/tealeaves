@@ -10,76 +10,83 @@ Import ContainerFunctor.Notations.
 
 (** * Freshen an Entire List *)
 (********************************************************************)
-Section renblist.
+(* First list is an avoid set. Second argument is a history/name pair. *)
+Definition renb: list name -> list name * name -> name :=
+  fun Γ '(history, a) =>
+    freshen (Γ ++ history) a.
 
-  (* First list is an avoid set. Second argument is a history/name pair. *)
-  Definition renb: list name -> list name * name -> name :=
-    fun Γ '(history, a) =>
-      freshen (Γ ++ history) a.
+(* First list is an avoid set. Second argument is a context/name pair. *)
+Definition renb_ctx: list name -> list name * name -> name :=
+  fun Γ => hadapt (renb Γ).
 
-  (* First list is an avoid set. Second argument is a context/name pair. *)
-  Definition renb_ctx: list name -> list name * name -> name :=
-    fun Γ => hadapt (renb Γ).
+(* First list is an avoid set. Second argument is a list to be freshened. *)
+Definition renbList: list name -> list name -> list name :=
+  fun Γ l => hmap (renb Γ) l.
 
-  (* First list is an avoid set. Second argument is a list to be freshened. *)
-  Definition renbList: list name -> list name -> list name :=
-    fun Γ l => hmap (renb Γ) l.
+Lemma renbList_spec: forall Γ,
+    renbList Γ = mapd_list_prefix (renb_ctx Γ).
+Proof.
+  intros.
+  unfold renb_ctx.
+  rewrite hmap_spec.
+  reflexivity.
+Qed.
 
-  Lemma renbList_spec: forall Γ,
-      renbList Γ = mapd_list_prefix (renb_ctx Γ).
-  Proof.
-    intros.
-    unfold renb_ctx.
-    rewrite hadapt_spec.
-    reflexivity.
-  Qed.
+Goal forall Γ, renbList Γ [1; 2; 3] =
+            [freshen (Γ ++ []) 1;
+             freshen (Γ ++ [freshen Γ 1]) 2;
+             freshen (Γ ++ [freshen Γ 1; freshen (Γ ++ [freshen Γ 1]) 2]) 3].
+Proof.
+  cbn.
+  intros.
+  rewrite List.app_nil_r.
+  reflexivity.
+Qed.
 
-  Goal forall Γ, renbList Γ [1; 2; 3] =
-              [freshen (Γ ++ []) 1;
-               freshen (Γ ++ [freshen Γ 1]) 2;
-               freshen (Γ ++ [freshen Γ 1; freshen (Γ ++ [freshen Γ 1]) 2]) 3].
-  Proof.
-    cbn.
-    intros.
-    rewrite List.app_nil_r.
-    reflexivity.
-  Qed.
+Lemma renb_preincr (Γ: list atom) (history: list atom):
+  renb Γ ⦿ history =
+    renb (Γ ++ history).
+Proof.
+  ext [w l].
+  unfold preincr, incr, compose.
+  cbn.
+  unfold_ops @Monoid_op_list.
+  rewrite <- List.app_assoc.
+  reflexivity.
+Qed.
 
-  Lemma renb_preincr (Γ: list atom) (history: list atom):
-    renb Γ ⦿ history =
-      renb (Γ ++ history).
-  Proof.
-    ext [w l].
-    unfold preincr, incr, compose.
-    cbn.
-    unfold_ops @Monoid_op_list.
-    rewrite <- List.app_assoc.
-    reflexivity.
-  Qed.
+Lemma renbList_decomposition: forall Γ l1 x l2,
+    renbList Γ (l1 ++ [x] ++ l2) =
+      renbList Γ l1 ++
+        [freshen (Γ ++ renbList Γ l1) x] ++
+        renbList (Γ ++ renbList Γ l1 ++ [freshen (Γ ++ renbList Γ l1) x]) l2.
+Proof.
+  intros.
+  unfold renbList.
+  rewrite hmap_decompose.
+  rewrite renb_preincr.
+  reflexivity.
+Qed.
 
-  Lemma renbList_decomposition: forall Γ l1 x l2,
-      renbList Γ (l1 ++ [x] ++ l2) =
-        renbList Γ l1 ++
-          [freshen (Γ ++ renbList Γ l1) x] ++
-          renbList (Γ ++ renbList Γ l1 ++ [freshen (Γ ++ renbList Γ l1) x]) l2.
-  Proof.
-    intros.
-    unfold renbList.
-    rewrite hmap_decompose.
-    rewrite renb_preincr.
-    reflexivity.
-  Qed.
-
-  (** ** Examples *)
-  (********************************************************************)
-  Compute renbList [] [1; 2; 3; 5].
-  Compute renbList [5] [1; 2; 3; 5].
-  Compute renbList [5] [1; 2; 3; 5; 5].
-  Compute renbList [5] [5; 5; 5; 5; 5].
-  Compute renbList [3; 4; 8] [0; 1; 8; 2; 5].
-  Compute renbList [] [5; 5; 5; 5; 5].
-
-End renblist.
+(** ** Examples *)
+(********************************************************************)
+Example renblist_demo:
+  forall Γ, renbList Γ [1; 2; 3] =
+         [freshen Γ 1;
+          freshen (Γ ++ [freshen Γ 1]) 2;
+          freshen (Γ ++ [freshen Γ 1] ++ [freshen (Γ ++ [freshen Γ 1]) 2]) 3
+         ].
+Proof.
+  intros. cbn.
+  rewrite List.app_nil_r.
+  reflexivity.
+Qed.
+Compute renbList [] [1; 2; 3; 5].
+Compute renbList [5] [1; 2; 3; 5].
+Compute renbList [5] [1; 2; 3; 5; 5].
+Compute renbList [5] [5; 5; 5; 5; 5].
+Compute renbList [3; 4; 8] [0; 1; 8; 2; 5].
+Compute renbList [] [5; 5; 5; 5; 5].
 
 (** * Local Definition of Assigning Unique Names to a [list] *)
 (********************************************************************)
@@ -191,7 +198,7 @@ Section listToName.
     intros.
     unfold assignNames.
     unfold assignNames_loc.
-    rewrite hadapt_spec.
+    rewrite hmap_spec.
     reflexivity.
   Qed.
 

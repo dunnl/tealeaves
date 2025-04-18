@@ -449,7 +449,7 @@ Proof.
   - intros.
     cbn.
     lia.
-Qed.
+Defined.
 
 Section rw.
 
@@ -487,3 +487,36 @@ End rw.
 
 Definition subst (x : name) (u : term name name) (t : term name name) :=
   substF ([x] ++ fvL t ++ fvL u) x u t.
+
+
+Section freshening_demo.
+
+  Notation "'x'" := 0.
+  Notation "'y'" := 1.
+  Notation "'z'" := 2.
+  Notation "'v'" := 3.
+
+  Example idfn := (λ v, `v).
+  Example input := (λ x, λ x, `z · `x).
+  Example output := subst y idfn input.
+  Example expected_output := (λ x, λ y, `z · `y).
+
+  (* Compute subst y idfn input. *)
+
+  Goal output = expected_output.
+    unfold output.
+    unfold subst.
+    cbn.
+    unfold idfn, input.
+    unfold substF.
+    cbv.
+              (@tap Name.name Name.name (@tvar Name.name Name.name (S (S O))) (@tvar Name.name Name.name O))))).
+    cbn.
+    destruct (substF_terminate [1; 2] 1 (λ 3, `3) (λ 0, λ 0, `2·`0)).
+    cbn.
+    cbv.
+    reflexivity.
+  Qed.
+
+End freshening_demo.
+

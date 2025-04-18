@@ -1,8 +1,8 @@
 From Tealeaves Require Export
   Examples.LambdaNominal.Categorical
-  Backends.Named.FV
-  Backends.Named.Barendregt
-  Backends.Adapters.NamedToLN.
+  Backends.Nominal.FV
+  Backends.Nominal.Barendregt
+  Backends.Adapters.NominalToLN.
 
 Import LambdaNominal.Syntax.Notations.
 
@@ -30,21 +30,18 @@ Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
 Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
 Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.
 
-Import DecoratedFunctorPoly.ToMono.
-Import TraversableFunctor2.ToMono.
+Import PolyToMono.Categorical.DecoratedFunctor.ToMono1.
+Import PolyToMono.Categorical.TraversableFunctor.ToMono.
+Import PolyToMono.Categorical.DecoratedFunctor.ToMono1.
 Import PolyToMono.Kleisli.DecoratedFunctor.ToMono1.
 
 Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
 Import CategoricalToKleisli.TraversableFunctor.DerivedInstances.
-
 Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
 Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.
 
-Existing Instance Theory.DecoratedTraversableFunctor.ToCtxset_Mapdt.
-Existing Instance Theory.TraversableFunctor.ToSubset_Traverse.
-
-
-
+#[local] Existing Instance Theory.DecoratedTraversableFunctor.ToCtxset_Mapdt.
+#[local] Existing Instance Theory.TraversableFunctor.ToSubset_Traverse.
 
 Example term0 := (λ 0, `0).
 Example term1 := (λ 1, `1 · `2).
@@ -76,3 +73,23 @@ Compute subst 0 term5 term1.
 Compute term_nominal_to_ln term term0.
 Compute term_nominal_to_ln term term1.
 Compute term_nominal_to_ln term term5.
+
+Section freshening_demo.
+
+  Notation "'x'" := 0.
+  Notation "'y'" := 1.
+  Notation "'z'" := 2.
+  Notation "'v'" := 3.
+
+  Example idfn := (λ v, `v).
+  Example input := (λ x, λ x, `z · `x).
+  Example output := subst y idfn input.
+  Example expected_output := (λ x, λ y, `z · `y).
+
+  Compute subst y idfn input.
+
+  Goal output = expected_output.
+    reflexivity.
+  Qed.
+
+End freshening_demo.
