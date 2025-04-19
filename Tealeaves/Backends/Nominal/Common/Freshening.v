@@ -89,6 +89,7 @@ Compute renbList [3; 4; 8] [0; 1; 8; 2; 5].
 Compute renbList [] [5; 5; 5; 5; 5].
 
 (** * Local Definition of Assigning Unique Names to a [list] *)
+(** The operations below are used not to freshen names, but to generate completely new names. This is used in the translation between the nominal and locally nameless presentations.  *)
 (********************************************************************)
 Section historyToName.
 
