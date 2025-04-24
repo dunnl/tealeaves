@@ -168,35 +168,35 @@ Section tolist_respectfulness_characterizations.
 End tolist_respectfulness_characterizations.
 
 (*
-(** ** [fold] and [mapReduce] operations *)
+(** ** [mconcat] and [mapReduce] operations *)
 (**********************************************************************)
-Section fold.
+Section mconcat.
 
   Generalizable Variable M ϕ.
 
   Context
     `{ShapelyFunctor F}.
 
-  Definition crush
+  Definition mconcat
     `{monoid_op: Monoid_op M}
     `{monoid_unit: Monoid_unit M}:
-    F M -> M := crush_list ∘ tolist.
+    F M -> M := mconcat ∘ tolist.
 
   Definition mapReduce {A}
     `{monoid_op: Monoid_op M}
     `{monoid_unit: Monoid_unit M}
     (f: A -> M): F A -> M :=
-    crush ∘ map f.
+    mconcat ∘ map f.
 
-  Lemma crush_mon_hom:
+  Lemma mconcat_mon_hom:
   forall `(ϕ: M1 -> M2) `{Hϕ: Monoid_Morphism M1 M2 ϕ},
-      ϕ ∘ crush = crush ∘ map ϕ.
+      ϕ ∘ mconcat = mconcat ∘ map ϕ.
   Proof.
     intros ? ? ϕ; intros.
-    change left (ϕ ∘ crush_list ∘ tolist).
-    change right (crush_list ∘ (tolist ∘ map ϕ)).
+    change left (ϕ ∘ mconcat ∘ tolist).
+    change right (mconcat ∘ (tolist ∘ map ϕ)).
     rewrite <- natural.
-    rewrite (crush_list_mon_hom ϕ).
+    rewrite (mconcat_mon_hom ϕ).
     reflexivity.
   Qed.
 
@@ -212,11 +212,11 @@ Section fold.
   Proof.
     intros. unfold mapReduce.
     reassociate <- on left.
-    rewrite (crush_mon_hom ϕ).
+    rewrite (mconcat_mon_hom ϕ).
     now rewrite <- (fun_map_map (F := F)).
   Qed.
 
-End fold.
+End mconcat.
 *)
 
 (*

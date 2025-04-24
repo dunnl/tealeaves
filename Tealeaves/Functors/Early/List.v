@@ -841,7 +841,8 @@ End dist_list_properties.
 
 (** ** Typeclass Instance *)
 (**********************************************************************)
-#[export] Instance Traversable_Categorical_list: Categorical.TraversableFunctor.TraversableFunctor list :=
+#[export] Instance Traversable_Categorical_list:
+  Categorical.TraversableFunctor.TraversableFunctor list :=
   {| dist_natural := @dist_natural_list_;
      dist_morph := @dist_morph_list;
      dist_unit := @dist_unit_list;
@@ -850,63 +851,63 @@ End dist_list_properties.
 
 (** * Folding over lists *)
 (**********************************************************************)
-Fixpoint crush_list
+Fixpoint mconcat
   `{op: Monoid_op M}
   `{unit: Monoid_unit M} (l: list M): M :=
   match l with
   | nil => Ƶ
-  | cons x l' => x ● crush_list l'
+  | cons x l' => x ● mconcat l'
   end.
 
-(** ** Rewriting Laws for [crush_list] *)
+(** ** Rewriting Laws for [mconcat] *)
 (**********************************************************************)
-Section crush_list_rewriting_lemmas.
+Section mconcat_rewriting_lemmas.
 
   Context
     `{Monoid M}.
 
-  Lemma crush_list_nil: crush_list (@nil M) = Ƶ.
+  Lemma mconcat_nil: mconcat (@nil M) = Ƶ.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma crush_list_cons: forall (m: M) (l: list M),
-      crush_list (m :: l) = m ● crush_list l.
+  Lemma mconcat_cons: forall (m: M) (l: list M),
+      mconcat (m :: l) = m ● mconcat l.
   Proof.
     reflexivity.
   Qed.
 
-  Lemma crush_list_one: forall (m: M), crush_list [ m ] = m.
+  Lemma mconcat_one: forall (m: M), mconcat [ m ] = m.
   Proof.
     intro. cbn. now simpl_monoid.
   Qed.
 
-  Lemma crush_list_app: forall (l1 l2: list M),
-      crush_list (l1 ++ l2) = crush_list l1 ● crush_list l2.
+  Lemma mconcat_app: forall (l1 l2: list M),
+      mconcat (l1 ++ l2) = mconcat l1 ● mconcat l2.
   Proof.
     intros l1 ?. induction l1 as [| ? ? IHl].
     - cbn. now simpl_monoid.
     - cbn. rewrite IHl. now simpl_monoid.
   Qed.
 
-End crush_list_rewriting_lemmas.
+End mconcat_rewriting_lemmas.
 
-(** ** <<crush_list>> is a Monoid Morphism *)
-(** <<crush_list: list M -> M>> is homomorphism of monoids. *)
+(** ** <<mconcat>> is a Monoid Morphism *)
+(** <<mconcat: list M -> M>> is homomorphism of monoids. *)
 (**********************************************************************)
-#[export] Instance Monmor_crush_list (M: Type) `{Monoid M}:
-  Monoid_Morphism (list M) M crush_list :=
-  {| monmor_unit := crush_list_nil;
-     monmor_op := crush_list_app;
+#[export] Instance Monmor_mconcat (M: Type) `{Monoid M}:
+  Monoid_Morphism (list M) M mconcat :=
+  {| monmor_unit := mconcat_nil;
+     monmor_op := mconcat_app;
   |}.
 
 (** ** Miscellaneous properties *)
 (**********************************************************************)
 
-(** *** <<crush_list>> commutes with monoid homomorphisms *)
-Lemma crush_list_mon_hom:
+(** *** <<mconcat>> commutes with monoid homomorphisms *)
+Lemma mconcat_mon_hom:
   forall `(ϕ: M1 -> M2) `{Monoid_Morphism M1 M2 ϕ},
-    ϕ ∘ crush_list = crush_list ∘ map ϕ.
+    ϕ ∘ mconcat = mconcat ∘ map ϕ.
 Proof.
   intros ? ? ϕ ? ? ? ? ?. unfold compose. ext l.
   induction l as [| ? ? IHl].
@@ -914,9 +915,9 @@ Proof.
   - cbn. now rewrite (monmor_op (ϕ := ϕ)), IHl.
 Qed.
 
-(** *** <<crush_list>> for the list monoid is <<join>> *)
-Lemma crush_list_equal_join: forall {A},
-    crush_list (M := list A) = join (T := list) (A:=A).
+(** *** <<mconcat>> for the list monoid is <<join>> *)
+Lemma mconcat_equal_join: forall {A},
+    mconcat (M := list A) = join (T := list) (A:=A).
 Proof.
   intros. ext l. induction l as [| ? ? IHl].
   - reflexivity.
@@ -927,7 +928,7 @@ Qed.
 (**********************************************************************)
 Definition mapReduce_list {M: Type} `{op: Monoid_op M}
   `{unit: Monoid_unit M} {A: Type} (f: A -> M):
-  list A -> M := crush_list ∘ map f.
+  list A -> M := mconcat ∘ map f.
 
 (** ** <<mapReduce_list>> is a Monoid Homomorphism *)
 (**********************************************************************)
@@ -952,7 +953,7 @@ Lemma mapReduce_list_morphism `{Monoid_Morphism M1 M2 ϕ}
 Proof.
   intros. unfold mapReduce_list.
   reassociate <- on left.
-  rewrite (crush_list_mon_hom ϕ).
+  rewrite (mconcat_mon_hom ϕ).
   reassociate -> on left.
   rewrite fun_map_map.
   reflexivity.
@@ -994,7 +995,7 @@ Section mapReduce_list_rw.
     intros.
     unfold mapReduce_list.
     unfold compose. autorewrite with tea_list.
-    rewrite crush_list_app.
+    rewrite mconcat_app.
     reflexivity.
   Qed.
 
@@ -1021,22 +1022,22 @@ Section foldable_list.
   Context
     `{Monoid M}.
 
-  Lemma crush_list_ret: forall (x: M),
-      crush_list (ret x: list M) = x.
+  Lemma mconcat_ret: forall (x: M),
+      mconcat (ret x: list M) = x.
   Proof.
     apply monoid_id_r.
   Qed.
 
-  Lemma crush_list_join: forall (l: list (list M)),
-      crush_list (join l) = crush_list (map crush_list l).
+  Lemma mconcat_join: forall (l: list (list M)),
+      mconcat (join l) = mconcat (map mconcat l).
   Proof.
-    intro l. rewrite <- crush_list_equal_join.
+    intro l. rewrite <- mconcat_equal_join.
     compose near l on left.
-    now rewrite (crush_list_mon_hom crush_list).
+    now rewrite (mconcat_mon_hom mconcat).
   Qed.
 
-  Lemma crush_list_constant_unit: forall (l: list M),
-      crush_list (map (fun _ => Ƶ) l) = Ƶ.
+  Lemma mconcat_constant_unit: forall (l: list M),
+      mconcat (map (fun _ => Ƶ) l) = Ƶ.
   Proof.
     intro l. induction l.
     - reflexivity.
