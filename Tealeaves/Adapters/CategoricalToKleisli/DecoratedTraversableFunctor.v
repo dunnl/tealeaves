@@ -17,9 +17,9 @@ Module DerivedOperations.
   #[export] Instance Mapdt_Categorical
     (E: Type)
     (T: Type -> Type)
-    `{Map T}
-    `{Decorate E T}
-    `{ApplicativeDist T}:
+    `{Map_T: Map T}
+    `{Decorate_T: Decorate E T}
+    `{Dist_T: ApplicativeDist T}:
   Mapdt E T :=
   fun (G: Type -> Type) `{Map G} `{Pure G} `{Mult G}
       (A B: Type) (f: E * A -> G B) =>

@@ -164,7 +164,7 @@ Section relating.
     unfold DerivedOperations.Mapd_Categorical.
     unfold_ops @Map2_1.
     unfold dec.
-    unfold_ops @Decorate_PolyVar.
+    unfold_ops @VDec.
     rewrite mapdp_to_categorical.
     reassociate <- on right.
     rewrite fun2_map_map.

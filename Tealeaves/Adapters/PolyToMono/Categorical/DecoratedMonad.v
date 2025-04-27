@@ -46,14 +46,14 @@ Module ToMono1.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros.
-        unfold_ops @Decorate_PolyVar.
+        unfold_ops @VDec.
         reassociate -> on left.
         rewrite dmp_dec_ret.
         reassociate <- on left.
         rewrite dmp_map_ret.
         reflexivity.
       - intros.
-        unfold_ops @Decorate_PolyVar.
+        unfold_ops @VDec.
         reassociate -> on left.
         rewrite dmp_dec_join.
         reassociate <- on left.

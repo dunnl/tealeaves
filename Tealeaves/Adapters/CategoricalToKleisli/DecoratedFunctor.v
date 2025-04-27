@@ -36,6 +36,17 @@ Class Compat_Mapd_Categorical
   compat_mapd_categorical:
     Mapd_F = @DerivedOperations.Mapd_Categorical E F Map_F Decorate_EF.
 
+#[export] Instance Compat_Mapd_Categorical_Self
+  (E: Type)
+  (F: Type -> Type)
+  `{Map_F: Map F}
+  `{Decorate_EF: Decorate E F}
+  `{Mapd_F: Mapd E F}:
+  @Compat_Mapd_Categorical E F Map_F Decorate_EF (@DerivedOperations.Mapd_Categorical E F Map_F Decorate_EF).
+Proof.
+  reflexivity.
+Qed.
+
 Lemma mapd_to_categorical {E F}
     `{Map_F: Map F}
     `{Decorate_EF: Decorate E F}

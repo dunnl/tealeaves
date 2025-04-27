@@ -99,6 +99,27 @@ Module ToMono.
     Qed.
 
 
+    #[export] Instance TraversableFunctor_Dist2_2 {V}:
+      TraversableFunctor (fun B => T B V)
+        (H := Map2_2) (H0 := Dist2_2).
+    Proof.
+      constructor; intros; unfold_ops @Dist2_2.
+      - typeclasses eauto.
+      - constructor.
+        + apply Functor_compose; typeclasses eauto.
+        + apply Functor_compose; typeclasses eauto.
+        + (* dist_natural *)
+          intros.
+          unfold_ops @Map_compose.
+          reassociate -> on right.
+          unfold_compose_in_compose.
+          rewrite (fun2_map2_map22 (F := T)).
+          change (id ∘ ?f) with f.
+          change (pure G (A := ?A)) with (id ∘ pure G (A := A)) at 2.
+          rewrite <- (fun2_map2_map21 (F := T)).
+          reassociate <- on right.
+    Admitted.
+
     Section commute.
 
       Context

@@ -2,7 +2,7 @@ From Tealeaves Require Import
   Backends.Nominal.Common.Freshening
   Backends.Nominal.Common.Binding
   Backends.Nominal.FV
-  Kleisli.DecoratedTraversableMonadPoly.
+  Kleisli.DecoratedMonadPoly.
 
 Section ops.
 
@@ -10,7 +10,7 @@ Section ops.
     {T: Type -> Type -> Type}
     `{forall W, Return (T W)}
     `{Mapdt (list name) (T name)}
-    `{Substitute T T}.
+    `{BinddP T}.
 
   Section rename_local.
 
@@ -37,9 +37,9 @@ Section ops.
     (Γ: list name)
     (x: name) (u: T name name)
     (t: T name name): T name name :=
-   substitute (G := fun A => A) (U := T)
-     (renb_ctx Γ)
-     (subst_loc Γ x u) t.
+    binddp (T := T)
+      (renb_ctx Γ)
+      (subst_loc Γ x u) t.
 
   Definition subst
     (x: name) (u: T name name)

@@ -2,7 +2,7 @@ From Tealeaves Require Export
   Examples.LambdaNominal.Categorical
   Backends.Nominal.FV
   Backends.Nominal.Barendregt
-  Backends.Adapters.NominalToLN.
+  Backends.Adapters.NominaltoLN.
 
 Import LambdaNominal.Syntax.Notations.
 
@@ -10,18 +10,22 @@ From Tealeaves Require Export
   Classes.Categorical.DecoratedTraversableFunctorPoly
   Classes.Kleisli.DecoratedTraversableMonadPoly.
 
+(*
+From Tealeaves Require
+  Adapters.PolyToMono.Kleisli.DecoratedFunctor
+  Adapters.PolyToMono.Kleisli.DecoratedTraversableFunctor
+  Adapters.PolyToMono.Kleisli.DecoratedTraversableMonad.
+*)
 
 From Tealeaves Require
   Adapters.MonoidHom.DecoratedTraversableMonad
-  Adapters.PolyToMono.Kleisli.DecoratedFunctor
-  Adapters.PolyToMono.Kleisli.DecoratedTraversableFunctor
-  Adapters.PolyToMono.Kleisli.DecoratedTraversableMonad
-  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
-  Adapters.CategoricalToKleisli.TraversableFunctor
-  Adapters.CategoricalToKleisli.DecoratedTraversableFunctor.
+  Adapters.PolyToMono.PDTM.
 
+Import PDTM.CategoricalToKleisliAll.
 
+(*
 Import Kleisli.DecoratedFunctorPoly.
+
 Import CategoricalToKleisli.DecoratedFunctorPoly.
 Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
 Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
@@ -33,12 +37,12 @@ Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.
 Import PolyToMono.Categorical.DecoratedFunctor.ToMono1.
 Import PolyToMono.Categorical.TraversableFunctor.ToMono.
 Import PolyToMono.Categorical.DecoratedFunctor.ToMono1.
-Import PolyToMono.Kleisli.DecoratedFunctor.ToMono1.
 
 Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
 Import CategoricalToKleisli.TraversableFunctor.DerivedInstances.
 Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
 Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.
+*)
 
 #[local] Existing Instance Theory.DecoratedTraversableFunctor.ToCtxset_Mapdt.
 #[local] Existing Instance Theory.TraversableFunctor.ToSubset_Traverse.
@@ -70,9 +74,9 @@ Compute subst 0 term2 term1.
 Compute subst 0 term4 term1.
 Compute subst 0 term5 term1.
 
-Compute term_nominal_to_ln term term0.
-Compute term_nominal_to_ln term term1.
-Compute term_nominal_to_ln term term5.
+Compute nomToLN term0.
+Compute nomToLN term1.
+Compute nomToLN term5.
 
 Section freshening_demo.
 

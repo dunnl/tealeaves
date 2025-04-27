@@ -5,6 +5,8 @@ From Tealeaves Require Export
   Classes.Categorical.DecoratedFunctorPoly
   Functors.List.
 
+(** * Parameterized Decorated Functor to Decorated in Variables *)
+(**********************************************************************)
 Module ToMono1.
 
   Section ctx.
@@ -13,18 +15,18 @@ Module ToMono1.
       {F: Type -> Type -> Type}
       `{DecoratedFunctorPoly F}.
 
-    #[export] Instance Decorate_PolyVar {B}:
+    #[export] Instance VDec {B}:
       Decorate (list B) (F B) :=
       fun A => (map2 extract id ∘ decp).
 
-    Instance Natural_dec {B}: Natural (@dec (list B) (F B) Decorate_PolyVar).
+    Instance Natural_dec {B}: Natural (@dec (list B) (F B) VDec).
     Proof.
       constructor.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros.
         unfold_ops @Map_compose.
-        unfold_ops @Decorate_PolyVar.
+        unfold_ops @VDec.
         unfold_ops @Map2_1.
         reassociate <-.
         rewrite (fun2_map_map).
@@ -42,10 +44,12 @@ Module ToMono1.
     Qed.
 
     Lemma dec_dec {B}:
-      forall A : Type, dec (F B) ∘ dec (F B) = map (F := F B) (cojoin (W := prod (list B))) ∘ dec (F B) (A := A).
+      forall (A: Type),
+        dec (F B) ∘ dec (F B) =
+          map (F := F B) (cojoin (W := prod (list B))) ∘ dec (F B) (A := A).
     Proof.
       intros.
-      unfold_ops @Decorate_PolyVar.
+      unfold_ops @VDec.
       unfold_ops @Map2_1.
       repeat reassociate <-.
       rewrite (fun2_map_map).
@@ -76,7 +80,7 @@ Module ToMono1.
       }
     Qed.
 
-    #[export] Instance DecoratedFunctor_PolyVar {B}:
+    #[export] Instance DecoratedFunctor_V {B}:
       DecoratedFunctor (list B) (F B).
     Proof.
       constructor.
@@ -84,7 +88,7 @@ Module ToMono1.
       - typeclasses eauto.
       - apply dec_dec.
       - intros.
-        unfold_ops @Decorate_PolyVar.
+        unfold_ops @VDec.
         unfold_ops @Map2_1.
         reassociate <- on left.
         rewrite fun2_map_map.
@@ -105,7 +109,7 @@ Module ToMono1.
         unfold bmap.
         rewrite (fun2_map22_map21).
         unfold dec.
-        unfold Decorate_PolyVar.
+        unfold VDec.
         reassociate <- on left.
         rewrite fun2_map_map.
         reassociate -> on right.
@@ -124,6 +128,8 @@ Module ToMono1.
 
 End ToMono1.
 
+(** * Parameterized Decorated Functor to Decorated in Binders *)
+(**********************************************************************)
 Module ToMono2.
 
   Section ctx.
@@ -132,18 +138,18 @@ Module ToMono2.
       {F: Type -> Type -> Type}
       `{DecoratedFunctorPoly F}.
 
-    #[export] Instance Decorate_PolyVar2 {V}:
+    #[export] Instance BDec {V}:
       RightCoaction (fun B => F B V) Z :=
       fun A => (map2 id extract ∘ decp).
 
-    #[export] Instance Natural_Decorate_PolyVar2 {V}:
-      Natural (@right_coaction (fun B : Type => F B V) Z Decorate_PolyVar2).
+    #[export] Instance Natural_BDec {V}:
+      Natural (@right_coaction (fun B: Type => F B V) Z BDec).
     Proof.
       constructor.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros.
-        unfold_ops @Decorate_PolyVar2.
+        unfold_ops @BDec.
         unfold_ops @Map_compose.
         unfold_ops @Map2_2.
         reassociate <- on left.
@@ -159,7 +165,7 @@ Module ToMono2.
         reflexivity.
     Qed.
 
-    #[export] Instance DecoratedFunctor_PolyVar2 {V}:
+    #[export] Instance DecoratedFunctor_B {V}:
       RightComodule (fun B => F B V) Z.
     Proof.
       constructor.
@@ -167,13 +173,13 @@ Module ToMono2.
       - typeclasses eauto.
       - typeclasses eauto.
       - intros.
-        unfold_ops @Decorate_PolyVar2.
+        unfold_ops @BDec.
         reassociate <- on left.
         rewrite fun2_map22_map2.
         change (?f ∘ id) with f.
         apply dfunp_dec_extract.
       - intros.
-        unfold_ops @Decorate_PolyVar2.
+        unfold_ops @BDec.
         reassociate <- on right.
         rewrite fun2_map22_map2.
         change (?f ∘ id) with f.

@@ -9,13 +9,7 @@ From Tealeaves Require Export
   Classes.Categorical.DecoratedMonad (shift).
 
 From Tealeaves Require
-  Classes.Categorical.DecoratedTraversableMonadPoly
-  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
-  Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly
-  Adapters.CategoricalToKleisli.DecoratedTraversableMonad
-  Adapters.PolyToMono.Kleisli.DecoratedTraversableMonad
-  Adapters.PolyToMono.Kleisli.DecoratedTraversableFunctor
-  Adapters.PolyToMono.Kleisli.DecoratedFunctor.
+  Classes.Categorical.DecoratedTraversableMonadPoly.
 
 Import List.ListNotations.
 
@@ -938,6 +932,32 @@ Proof.
   reflexivity.
 Qed.
 
+Import Adapters.PolyToMono.Categorical.DecoratedFunctor.ToMono1.
+Import Adapters.PolyToMono.Categorical.TraversableFunctor.ToMono.
+
+#[export] Instance Single_DTF: forall (B: Type), DecoratedTraversableFunctor (list B) (term B).
+Proof.
+  intros.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - intros. unfold compose. ext t. induction t.
+    + cbn. unfold id.
+      compose near v.
+      rewrite (fun_map_map).
+      rewrite (fun_map_map).
+      reflexivity.
+    + cbn in *.
+      compose near t.
+      rewrite map_dec2_rec_spec.
+      setoid_rewrite extract_preincr.
+      unfold compose.
+      compose near (dec2_term t).
+      rewrite fun2_map21_map2.
+      compose near (dec2_term t).
+      rewrite fun2_map_map.
+Admitted.
+
 Lemma dist_dec2_rec_commute_map:
   forall (B1 V1 B2 V2: Type)
     `{Applicative G}
@@ -1133,14 +1153,19 @@ Testing Typeclass Machinery
 |*)
 
 From Tealeaves Require
-  Classes.Categorical.DecoratedTraversableMonadPoly
-  Classes.Categorical.TraversableFunctor
   Adapters.CategoricalToKleisli.Monad
   Adapters.CategoricalToKleisli.DecoratedFunctor
   Adapters.CategoricalToKleisli.TraversableFunctor
   Adapters.CategoricalToKleisli.DecoratedTraversableFunctor
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonad.
+
+From Tealeaves Require
   Adapters.PolyToMono.Categorical.DecoratedFunctor
   Adapters.PolyToMono.Categorical.TraversableFunctor.
+
+From Tealeaves Require
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
+  Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.
 
 Module CategoricalPDTMUsefulInstances.
 
@@ -1157,10 +1182,12 @@ Module CategoricalPDTMUsefulInstances.
     Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations
     Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
 
+  (*
   Export
     Adapters.CategoricalToKleisli.DecoratedFunctorPoly
     Adapters.CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations
     Adapters.CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
+   *)
 
   Export
     Adapters.CategoricalToKleisli.DecoratedTraversableMonad
@@ -1213,8 +1240,8 @@ Module CategoricalPDTMUsefulInstances.
   Qed.
 
   Goal Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list B) (term B).
-    Fail typeclasses eauto.
-  Abort.
+    typeclasses eauto.
+  Qed.
 
   Goal Kleisli.Monad.Monad (term B).
     typeclasses eauto.
@@ -1229,12 +1256,14 @@ Module CategoricalPDTMUsefulInstances.
   Qed.
 
   Goal Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list B) (term B).
-    Fail typeclasses eauto.
-  Abort.
+    typeclasses eauto.
+  Qed.
 
+  (*
   Goal Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly term.
     typeclasses eauto.
   Qed.
+   *)
 
   Goal Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly term.
     typeclasses eauto.

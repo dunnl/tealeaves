@@ -217,8 +217,8 @@ Tealeaves/Functors/L.v
 Tealeaves/Classes/Categorical/TraversableMonad2.v
 Tealeaves/Classes/Categorical/DecoratedFunctorPoly.v
 Tealeaves/Classes/Categorical/DecoratedMonadPoly.v
-Tealeaves/Classes/Categorical/DecoratedTraversableFunctorPoly.v
-Tealeaves/Classes/Categorical/DecoratedTraversableMonadPoly.v
+#Tealeaves/Classes/Categorical/DecoratedTraversableFunctorPoly.v #Must be compiled after PolyToMono modules
+#Tealeaves/Classes/Categorical/DecoratedTraversableMonadPoly.v #Must be compiled after PolyToMono modules
 Tealeaves/Classes/Kleisli/TraversableFunctor2.v
 
 ##########################################################
@@ -235,14 +235,14 @@ Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 ##########################################################
 #Tealeaves/Classes/Kleisli/Theory/DecoratedFunctorPoly.v
 #Tealeaves/Classes/Kleisli/Theory/TraversableFunctorPoly.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
-Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
+#Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
+#Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctorPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedMonadPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctorPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableMonadPoly.v
-Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
-Tealeaves/Theory/DecoratedTraversableMonadPoly.v
+#Tealeaves/Theory/DecoratedTraversableFunctorPoly.v
+#Tealeaves/Theory/DecoratedTraversableMonadPoly.v
 
 ##########################################################
 # MULTISORTED TYPECLASSES                                #
@@ -317,15 +317,25 @@ Tealeaves/Backends/Common/AtomSet.v
 Tealeaves/Backends/Common/AssocList.v
 
 ##########################################################
-# POLY TO MONO ADAPTERS                                  #
+# MONOID HOMOMORPHISM ADAPTERS                           #
 ##########################################################
 Tealeaves/Adapters/MonoidHom/DecoratedTraversableMonad.v
+Tealeaves/Adapters/MonoidHom/Categorical.v
+
+##########################################################
+# POLY TO MONO ADAPTERS                                  #
+##########################################################
 Tealeaves/Adapters/PolyToMono/Categorical/DecoratedFunctor.v
 Tealeaves/Adapters/PolyToMono/Categorical/TraversableFunctor.v
 Tealeaves/Adapters/PolyToMono/Categorical/DecoratedMonad.v
-Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedFunctor.v
-Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableFunctor.v
-Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v
+Tealeaves/Adapters/PolyToMono/Categorical/TraversableMonad.v
+Tealeaves/Adapters/PolyToMono/Categorical/DecoratedTraversableMonad.v
+Tealeaves/Classes/Categorical/DecoratedTraversableFunctorPoly.v #Must be compiled after PolyToMono modules
+Tealeaves/Classes/Categorical/DecoratedTraversableMonadPoly.v #Must be compiled after PolyToMono modules
+Tealeaves/Adapters/PolyToMono/PDTM.v
+#Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedFunctor.v
+#Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableFunctor.v
+#Tealeaves/Adapters/PolyToMono/Kleisli/DecoratedTraversableMonad.v
 
 ##########################################################
 # FULLY NOMINAL BACKEND                                  #
@@ -337,7 +347,13 @@ Tealeaves/Backends/Nominal/FV.v
 Tealeaves/Backends/Nominal/Barendregt.v
 Tealeaves/Backends/Nominal/Alpha.v
 #Tealeaves/Backends/Adapters/KeyName.v
-Tealeaves/Backends/Adapters/NominalToLN.v
+
+##########################################################
+# Nominal/LN Translation                                 #
+##########################################################
+Tealeaves/Backends/Adapters/NominaltoLN.v
+Tealeaves/Backends/Adapters/LNtoNominal.v
+#Tealeaves/Backends/Adapters/Roundtrips/NominalLN.v
 
 ##########################################################
 # EX: CONFLUENCE OF LAMBDA CALCULUS                      #
