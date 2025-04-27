@@ -1062,6 +1062,31 @@ Section roundtrips.
     reflexivity.
   Qed.
 
+  Lemma ind_conversion:
+    forall (t: T unit LN) (ctx: list unit) (n: nat),
+      (ctx, Bd n) ∈d t <-> (length ctx, Bd n) ∈d t.
+  Proof.
+    intros.
+    change_left ((ctx, Bd n) ∈ (dec (T unit) t)).
+    change_right ((length ctx, Bd n) ∈ (dec (T unit) t)).
+    unfold dec at 2.
+    unfold Decorate_list_unit_nat.
+    unfold Categorical.Decorate_Monoid_Morphism.
+    rewrite (in_map_iff (T unit)). split.
+    - intro Hin.
+      exists (ctx, Bd n). split; auto.
+    - intros [[ctx' Bdn] [Hin Heq]].
+      cbn in Heq. unfold id in Heq.
+      assert (Hbdeq: Bdn = Bd n) by now inversion Heq.
+      assert (Hleneq: length ctx' = length ctx) by now inversion Heq.
+      assert (ctx' = ctx).
+      { rewrite length_list_unit_iso.
+        rewrite <- Hleneq.
+        rewrite <- length_list_unit_iso.
+        reflexivity. }
+      subst. assumption.
+  Qed.
+
   Lemma rtFromLN_id_local:
     forall (t : T unit LN) (HLC: LC t)
       (FVt: list atom) (HeqFVt: FVt = free t)
@@ -1098,37 +1123,8 @@ Section roundtrips.
         specialize (HLC (length ctx) (Bd n)).
         cbn in HLC.
         assert (Hin': (length ctx, Bd n) ∈d t).
-        { unfold element_ctx_of in *.
-          unfold toctxset in *.
-          unfold ToCtxset_Mapdt in *.
-          unfold mapdReduce in *.
-          unfold mapdt in *.
-          unfold Mapdt_Categorical in *.
-          unfold dec.
-          unfold Decorate_list_unit_nat.
-          unfold Categorical.Decorate_Monoid_Morphism.
-          rewrite <- compose_assoc.
-          change (?x ○ ?y) with (x ∘ y).
-          rewrite compose_assoc.
-          rewrite compose_assoc.
-          change ((@dist (T unit) (@Dist2_1 T H H1 unit)
-                     (@const Type Type (nat * LN -> Prop)) (@Map_const (nat * LN -> Prop))
-                     (@Pure_const (nat * LN -> Prop) (@Monoid_unit_subset (nat * LN)))
-                     (@Mult_const (nat * LN -> Prop) (@Monoid_op_subset (nat * LN))) False
-                     ∘ (@map (T unit) (@Map2_1 T H unit) (nat * LN) (@const Type Type (nat * LN -> Prop) False)
-                          (@ret subset Return_subset (nat * LN))
-                          ∘ @map (T unit) (@Map2_1 T H unit) (list unit * LN) (nat * LN)
-                          (map (F := fun A => A) (@map_fst LN (list unit) nat (@length unit))))
-                     ∘ @dec (list unit) (T unit) (@VDec T H H0 unit) LN) t (@length unit ctx, Bd n)).
-          rewrite fun_map_map.
-          setoid_rewrite <- (natural (ϕ := @ret (subset) _)).
-          rewrite <- fun_map_map.
-          change (map (F := T unit) (map (F := subset) (@map_fst LN (list unit) nat (@length unit))))
-            with (map (F := T unit ∘ subset) (@map_fst LN (list unit) nat (@length unit))).
-          reassociate <-.
-          try rewrite <- (natural (ϕ := @dist (T unit) _ (@const Type Type (nat * LN -> Prop)) _ _ _ )).
-        admit.
-        }
+        { apply ind_conversion.
+          assumption. }
         specialize (HLC Hin').
         lia.
       }
@@ -1137,7 +1133,7 @@ Section roundtrips.
       + reflexivity.
       + rewrite <- OrdersEx.Nat_as_OT.ltb_lt.
         assumption.
-  Admitted.
+  Qed.
 
   Lemma rtFromLN_id: forall (t: T unit LN),
       LC t ->
