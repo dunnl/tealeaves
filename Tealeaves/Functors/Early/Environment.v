@@ -177,7 +177,6 @@ Qed.
   Compat_Traverse_Mapdt E (env E).
 Proof.
   hnf. intros.
-  ext G MapG PureG MultG.
   ext A B f l.
   unfold Traverse_env.
   change_left (traverse f l).

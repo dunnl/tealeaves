@@ -7,6 +7,7 @@ From Tealeaves Require Import
 
 From Tealeaves Require Import
   Classes.Kleisli.DecoratedFunctor
+  Classes.Kleisli.DecoratedFunctorZ
   Classes.Kleisli.DecoratedTraversableFunctor.
 
 From Tealeaves Require Import
@@ -20,6 +21,7 @@ From Tealeaves Require Import
   CategoricalToKleisli.DecoratedTraversableMonad.
 
 From Tealeaves Require Import
+  CategoricalToKleisli.DecoratedFunctorZ
   CategoricalToKleisli.DecoratedFunctorPoly
   CategoricalToKleisli.DecoratedMonadPoly
   CategoricalToKleisli.DecoratedTraversableFunctorPoly
@@ -32,12 +34,85 @@ From Tealeaves Require Import
   Adapters.PolyToMono.Categorical.DecoratedMonad
   Adapters.PolyToMono.Categorical.DecoratedTraversableMonad.
 
-From Tealeaves Require Import
+From Tealeaves Require
   Adapters.MonoidHom.Categorical.
+
+Module ListUnitToNat.
+
+  Import Adapters.MonoidHom.Categorical.
+
+  #[export] Instance Monoid_Morphism_length:
+    Monoid_Morphism (list unit) nat (length (A:=unit)).
+  Proof.
+    constructor.
+    - typeclasses eauto.
+    - typeclasses eauto.
+    - reflexivity.
+    - intros.
+      apply List.app_length.
+  Qed.
+
+  Section with_DTM.
+
+    Context
+      {T: Type -> Type}
+    `{Dec_orig: Decorate (list unit) T}.
+
+  Context
+    `{Map_T: Map T}
+    `{Dist_T: ApplicativeDist T}
+    `{Join_T: Join T}
+    `{Return_T: Return T}.
+
+  #[export] Instance Decorate_list_unit_nat: Decorate nat T.
+  Proof.
+    apply (Decorate_Monoid_Morphism (@length unit)).
+  Defined.
+
+  #[export] Instance Natural_Decorate_list_unit
+    `{! DecoratedFunctor (list unit) T}:
+    Natural (@dec nat T Decorate_list_unit_nat).
+  Proof.
+    typeclasses eauto.
+  Qed.
+
+  #[export] Instance DecoratedFunctor_list_unit
+    `{! DecoratedFunctor (list unit) T}:
+    DecoratedFunctor nat T.
+  Proof.
+    apply DecoratedFunctor_Monoid_Morphism; typeclasses eauto.
+  Qed.
+
+
+  #[export] Instance DecoratedMonad_list_unit
+    `{! DecoratedMonad (list unit) T}:
+    DecoratedMonad nat T.
+  Proof.
+    apply DecoratedMonad_Monoid_Morphism; typeclasses eauto.
+  Qed.
+
+
+  #[export] Instance DecoratedTraversableFunctor_list_unit
+    `{! DecoratedTraversableFunctor (list unit) T}:
+    DecoratedTraversableFunctor nat T.
+  Proof.
+    apply DecoratedTraversableFunctor_Monoid_Morphism; typeclasses eauto.
+  Qed.
+
+  #[export] Instance DecoratedTraversableMonad_list_unit
+    `{! DecoratedTraversableMonad (list unit) T}:
+    DecoratedTraversableMonad nat T.
+  Proof.
+    apply DecoratedTraversableMonad_Monoid_Morphism; typeclasses eauto.
+  Qed.
+
+  End with_DTM.
+End ListUnitToNat.
 
 Module CategoricalToKleisliAll.
   Export Adapters.PolyToMono.Categorical.DecoratedFunctor.
   Export Adapters.PolyToMono.Categorical.DecoratedFunctor.ToMono1.
+  Export Adapters.PolyToMono.Categorical.DecoratedFunctor.ToMono2.
 
   Export Adapters.PolyToMono.Categorical.TraversableFunctor.
   Export Adapters.PolyToMono.Categorical.TraversableFunctor.ToMono.
@@ -79,6 +154,10 @@ Module CategoricalToKleisliAll.
   Export CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
   Export CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
 
+  Export CategoricalToKleisli.DecoratedFunctorZ.
+  Export CategoricalToKleisli.DecoratedFunctorZ.DerivedOperations.
+  Export CategoricalToKleisli.DecoratedFunctorZ.DerivedInstances.
+
   Export CategoricalToKleisli.DecoratedMonadPoly.
   Export CategoricalToKleisli.DecoratedMonadPoly.DerivedOperations.
   Export CategoricalToKleisli.DecoratedMonadPoly.DerivedInstances.
@@ -90,9 +169,79 @@ Module CategoricalToKleisliAll.
   Export CategoricalToKleisli.DecoratedTraversableMonadPoly.
   Export CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
   Export CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.
-
 End CategoricalToKleisliAll.
 
+
+Module KleisliClassesAll.
+
+  Export Classes.Kleisli.DecoratedFunctorPoly.
+  Export Classes.Kleisli.DecoratedMonadPoly.
+  Export Classes.Kleisli.TraversableFunctor2.
+  Export Classes.Kleisli.DecoratedTraversableFunctorPoly.
+  Export Classes.Kleisli.DecoratedTraversableMonadPoly.
+
+End KleisliClassesAll.
+
+Section mapdp_decomposed.
+
+  Context
+    (T: Type -> Type -> Type)
+    `{DecoratedFunctorPoly T}.
+
+  Import CategoricalToKleisliAll.
+
+  Lemma mapdp_decompose {B1 V1 B2 V2: Type}:
+    forall (g: list B1 * B1 -> B2)
+      (f: list B1 * V1 -> V2),
+      mapdp (T := T) g f =
+        mapdz (T := fun B => T B V2) g ∘ mapd (T := T B1) f.
+  Proof.
+    intros.
+    unfold_ops @Mapdp_Categorical.
+    unfold mapdz.
+    unfold mapd.
+    unfold_ops @Mapd_Categorical.
+    unfold_ops @Mapdz_Categorical.
+    unfold_ops @Map2_1.
+    unfold_ops @Map2_2.
+    unfold right_coaction.
+    unfold_ops @BDec.
+    reassociate <- on right.
+    reassociate <- on right.
+    reassociate -> near (map2 id f).
+    rewrite polydecnat.
+    reassociate <- on right.
+    rewrite fun2_map_map.
+    rewrite fun2_map_map.
+    unfold dec.
+    unfold VDec.
+    reassociate <- on right.
+    reassociate -> near (map2 (@extract Z Extract_Z B1) (@id (L B1 V1))).
+    rewrite polydecnat.
+    reassociate -> on right.
+    reassociate -> on right.
+    reassociate -> on right.
+    reassociate -> on right.
+    rewrite dfunp_dec_dec.
+    reassociate <- on right.
+    reassociate <- on right.
+    reassociate <- on right.
+    reassociate <- on right.
+    rewrite fun2_map_map.
+    rewrite fun2_map_map.
+    repeat rewrite fun_map_id.
+    repeat change (id ∘ ?f) with f.
+    repeat change (?f ∘ id) with f.
+    reassociate -> on right.
+    setoid_rewrite com_map_extr_cojoin.
+    repeat change (?f ∘ id) with f.
+    fequal.
+    fequal.
+    ext [l v1].
+    reflexivity.
+  Qed.
+
+End mapdp_decomposed.
 
 (** * Convenient Interface to categorically-defined PDTMs *)
 (********************************************************************)

@@ -268,7 +268,7 @@ Qed.
   @Compat_Traverse_Mapdt nat list Traverse_list Mapdt_Telescoping_List.
 Proof.
   hnf.
-  ext G MapG PureG MultG.
+  intros.
   ext A B f l.
   change_left (traverse f l).
   unfold DerivedOperations.Traverse_Mapdt.

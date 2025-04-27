@@ -204,10 +204,10 @@ Section composition.
   Proof.
     intros.
     rewrite mapReduce_to_mapdReduce.
-    rewrite mapReduce_to_mapdReduce.
     rewrite mapdReduce_binddt.
     fequal; ext [w a].
     rewrite extract_preincr2.
+    rewrite mapReduce_to_mapdReduce.
     reflexivity.
   Qed.
 

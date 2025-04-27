@@ -101,17 +101,17 @@ Section compat.
 
   Class Compat_Traverse_Mapdt: Prop :=
     compat_traverse_mapdt:
+      forall {G: Type -> Type}
+        `{Map_G: Map G}
+        `{Mult_G: Mult G}
+        `{Pure_G: Pure G}
+        `{! Applicative G},
+        @Traverse_T G Map_G Pure_G Mult_G =
+          @DerivedOperations.Traverse_Mapdt E T Mapdt_ET G Map_G Pure_G Mult_G.
+      (*
       @Traverse_T =
         @DerivedOperations.Traverse_Mapdt E T Mapdt_ET.
-(*
-  forall {G: Type -> Type}
-  `{Map_G: Map G}
-  `{Mult_G: Mult G}
-  `{Pure_G: Pure G}
-  `{! Applicative G},
-  @Traverse_T G Map_G Pure_G Mult_G =
-  @DerivedOperations.Traverse_Mapdt E T Mapdt_ET G Map_G Pure_G Mult_G.
- *)
+*)
 
 End compat.
 
@@ -201,7 +201,9 @@ Qed.
 Proof.
   hnf.
   rewrite (compat_map_mapdt E T).
-  rewrite (compat_traverse_mapdt E T).
+  cbv.
+  ext A B f.
+  rewrite (compat_traverse_mapdt (G := fun A => A) (Applicative0 := Applicative_I) E T).
   reflexivity.
 Qed.
 

@@ -307,8 +307,9 @@ Section decorated_traversable_monad_compat.
 
   Class Compat_Traverse_Binddt: Prop :=
     compat_traverse_binddt:
-      Traverse_inst =
-        @DerivedOperations.Traverse_Binddt W T U Return_T Binddt_inst.
+      forall `{Applicative G},
+      @Traverse_inst G _ _ _  =
+        @DerivedOperations.Traverse_Binddt W T U Return_T Binddt_inst _ _ _ _.
 
   Class Compat_Bind_Binddt: Prop :=
     compat_bind_binddt:
@@ -327,8 +328,9 @@ Section decorated_traversable_monad_compat.
 
   Class Compat_Mapdt_Binddt: Prop :=
     compat_mapdt_binddt:
-      Mapdt_inst =
-        @DerivedOperations.Mapdt_Binddt W T U Return_T Binddt_inst.
+      forall `{Applicative G},
+      Mapdt_inst G _ _ _ =
+        @DerivedOperations.Mapdt_Binddt W T U Return_T Binddt_inst _ _ _ _.
 
   Class Compat_Full_Binddt: Prop :=
     { compat_map_binddt_full :> Compat_Map_Binddt;
@@ -369,6 +371,7 @@ Section decorated_traversable_monad_compat_self.
     Compat_Traverse_Binddt W T U
       (Traverse_inst := DerivedOperations.Traverse_Binddt W T U).
   Proof.
+    cbv. intros.
     reflexivity.
   Qed.
 
@@ -397,6 +400,8 @@ Section decorated_traversable_monad_compat_self.
     Compat_Mapdt_Binddt W T U
       (Mapdt_inst := DerivedOperations.Mapdt_Binddt W T U).
   Proof.
+    cbv.
+    intros.
     reflexivity.
   Qed.
 
@@ -411,6 +416,7 @@ Section decorated_traversable_monad_compat_self.
 
   Ltac solve_compat :=
     hnf;
+    intros;
     normalize_binddt;
     unfold_ops @DerivedOperations.Map_Bind;
     unfold_ops @DerivedOperations.Map_Traverse;
@@ -540,6 +546,7 @@ Section rewriting.
     forall `{Applicative G} `(f: W * A -> G B),
       mapdt (G := G) f = binddt (map (ret (T := T)) ∘ f).
   Proof.
+    intros.
     rewrite (compat_mapdt_binddt W T U).
     reflexivity.
   Qed.

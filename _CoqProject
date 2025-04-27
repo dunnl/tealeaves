@@ -224,6 +224,7 @@ Tealeaves/Classes/Kleisli/TraversableFunctor2.v
 ##########################################################
 # POLYMORPHICALLY DECORATED DTFs AND DTMs                #
 ##########################################################
+Tealeaves/Classes/Kleisli/DecoratedFunctorZ.v
 Tealeaves/Classes/Kleisli/DecoratedFunctorPoly.v
 Tealeaves/Classes/Kleisli/DecoratedMonadPoly.v
 Tealeaves/Classes/Kleisli/DecoratedTraversableFunctorPoly.v
@@ -237,6 +238,7 @@ Tealeaves/Classes/Kleisli/DecoratedTraversableMonadPoly.v
 #Tealeaves/Classes/Kleisli/Theory/TraversableFunctorPoly.v
 #Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableFunctorPoly.v
 #Tealeaves/Classes/Kleisli/Theory/DecoratedTraversableMonadPoly.v
+Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctorZ.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedFunctorPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedMonadPoly.v
 Tealeaves/Adapters/CategoricalToKleisli/DecoratedTraversableFunctorPoly.v

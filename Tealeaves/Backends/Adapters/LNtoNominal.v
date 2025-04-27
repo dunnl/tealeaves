@@ -63,6 +63,17 @@ Proof.
     reflexivity.
 Qed.
 
+#[export] Instance Monoid_Morphism_length:
+  Monoid_Morphism (list unit) nat (length (A:=unit)).
+Proof.
+  constructor.
+  - typeclasses eauto.
+  - typeclasses eauto.
+  - reflexivity.
+  - intros.
+    apply List.app_length.
+Qed.
+
 (** * Locally Nameless to Nominal *)
 (**********************************************************************)
 

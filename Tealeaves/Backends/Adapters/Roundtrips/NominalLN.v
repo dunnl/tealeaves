@@ -10,29 +10,22 @@ From Tealeaves Require Import
   Backends.Adapters.NominaltoLN.
 
 From Tealeaves Require Import
-  Categorical.DecoratedTraversableMonadPoly.
+  Categorical.DecoratedTraversableMonadPoly
+  Kleisli.DecoratedFunctorZ.
 
 From Tealeaves Require Import
   Adapters.PolyToMono.PDTM
   Adapters.PolyToMono.Categorical.DecoratedTraversableMonad.
 
 From Tealeaves Require Import
-  Classes.Kleisli.DecoratedFunctorPoly.
-
-From Tealeaves Require Import
-  CategoricalToKleisli.DecoratedFunctorPoly
-  CategoricalToKleisli.DecoratedTraversableFunctorPoly.
-
-From Tealeaves Require Import
   Theory.TraversableFunctor
   Theory.LiftRel.TraversableFunctor
   Classes.Kleisli.Theory.TraversableFunctor.
 
-Print Instances ToSubset.
-
-From Tealeaves Require
-  Adapters.MonoidHom.DecoratedTraversableMonad
-  Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.
+Import PDTM.KleisliClassesAll.
+Import PDTM.CategoricalToKleisliAll.
+Import PDTM.ListUnitToNat.
+#[export] Remove Hints Monoid_Morphism_compose: typeclass_instances.
 
 Import Subset.Notations.
 Import Classes.Categorical.DecoratedFunctorPoly.
@@ -104,9 +97,6 @@ Section constant_applicatives.
   Context
     `{Categorical.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly T}.
 
-  Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations.
-  Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
-
   Context
     {M} `{Monoid M}.
 
@@ -156,46 +146,18 @@ Section roundtrips.
 
   (* Misc lemmas *)
   Import Adapters.PolyToMono.Categorical.TraversableFunctor.ToMono (Dist2_1_natural2).
-  (* Derive mapdtp/mapdp *)
-  Import Adapters.CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
-  Import Adapters.CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
-  Import Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations.
-  Import Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
-
 
   (* Test single-sorted DTM instance for B = 1 *)
-
   Print Instances Monoid_Morphism.
   Import Classes.Kleisli.DecoratedTraversableMonad.
   Print Instances DecoratedTraversableMonad.
-  Import Adapters.PolyToMono.Categorical.DecoratedTraversableMonad.ToMono.
-  Import Adapters.CategoricalToKleisli.DecoratedTraversableMonad.
-  Import Adapters.CategoricalToKleisli.DecoratedTraversableMonad.DerivedOperations.
-  Import Adapters.CategoricalToKleisli.DecoratedTraversableMonad.DerivedInstances.
+
   Goal Categorical.DecoratedTraversableMonad.DecoratedTraversableMonad (list unit) (T unit).
     typeclasses eauto.
   Qed.
-  Print Instances Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad.
-  About DecoratedTraversableMonad_instance_0.
+
   Goal Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad (list unit) (T unit).
     typeclasses eauto.
-  Qed.
-
-  #[export] Instance Binddt_length: Binddt nat (T unit) (T unit).
-  Proof.
-    apply Adapters.MonoidHom.DecoratedTraversableMonad.Binddt_Morphism.
-    apply length.
-  Defined.
-
-  #[export] Instance Monoid_Morphism_length: Monoid_Morphism (list unit) nat (@length unit).
-  Proof.
-  Admitted.
-
-  #[export] Instance: Kleisli.DecoratedTraversableMonad.DecoratedTraversableMonad nat (T unit).
-  Proof.
-    pose (Adapters.MonoidHom.DecoratedTraversableMonad.DTM_of_DTM (T := T unit) (@length unit)).
-    unfold Binddt_length.
-    assumption.
   Qed.
 
   (** ** Roundtrip from Nominal *)
@@ -275,13 +237,13 @@ Section roundtrips.
       forall (t: T name name),
         rtFromNominal t =
           let Γ := LN.free (nomToLN t)
-          in bmapd (roundtrip_Binder_loc Γ)
-               (vmapd (roundtrip_Var_loc Γ) t).
+          in mapdz (T := fun B => T B name) (roundtrip_Binder_loc Γ)
+               (mapd (T := T name) (roundtrip_Var_loc Γ) t).
     Proof.
       intros.
       rewrite rtFromNominal_spec.
       cbn zeta.
-      rewrite mapdp_decompose.
+      rewrite (mapdp_decompose T).
       unfold kc_dz.
       rewrite cobind_Z_const.
       reflexivity.
@@ -345,24 +307,26 @@ Section roundtrips.
   (********************************************************************)
   Lemma decorate_rename_binders {B1 B2 V}:
     forall (ρ: list B1 * B1 -> B2) (t: T B1 V),
-      delete_binders (vdec (bmapd ρ t)) =
-        delete_binders (map (F := T B1) (map_fst (mapdz (T := list) ρ)) (vdec t)).
+      delete_binders (dec (T B2) (mapdz ρ t)) =
+        delete_binders (map (F := T B1) (map_fst (mapdz (T := list) ρ)) (dec (T B1) t)).
   Proof.
     intros.
     unfold delete_binders.
     unfold bmap.
     unfold_ops @Map2_1.
-    unfold_ops @Map2_2.
-    unfold vdec.
-    unfold_ops @DecoratedFunctor.ToMono1.VDec.
+    unfold Map2_2 at 1.
+    unfold map at 1.
+    unfold_ops @VDec.
     unfold compose.
-    compose near (decp (bmapd ρ t)).
+    compose near (decp (F := T) (mapdz ρ t)).
     rewrite fun2_map_map.
     change (id ∘ ?x) with x.
     compose near (decp t).
     rewrite (fun2_map_map).
     change (id ∘ ?x) with x.
     compose near (decp t).
+    unfold map at 1.
+    unfold Map2_2.
     rewrite (fun2_map_map).
     change (id ∘ ?x) with x.
     change (?x ∘ id) with x.
@@ -370,11 +334,12 @@ Section roundtrips.
       (@const (Z B2) unit tt).
     change ((@const B1 unit tt ∘ @extract Z Extract_Z B1)) with
       (@const (Z B1) unit tt).
-    unfold bmapd.
-    unfold bdec.
+    unfold mapdz at 1.
+    unfold_ops @Mapdz_Categorical.
+    unfold right_coaction.
+    unfold BDec.
     unfold_ops @DecoratedFunctor.ToMono2.BDec.
-    unfold bmap.
-    unfold_ops @Map2_2.
+    unfold map at 1.
     unfold compose.
     compose near (decp t) on left.
     rewrite fun2_map_map.
@@ -401,14 +366,14 @@ Section roundtrips.
 
   Lemma decorate_rename_binders2 {B1 B2 V}:
     forall (ρ: list B1 * B1 -> B2) (t: T B1 V),
-      delete_binders (vdec (bmapd ρ t)) =
+      delete_binders (dec (T B2) (mapdz ρ t)) =
         map (F := T unit)
           (map_fst (mapdz (T := list) ρ))
-          (delete_binders (vdec t)).
+          (delete_binders (dec (T B1) t)).
   Proof.
     intros.
     rewrite decorate_rename_binders.
-    compose near (vdec t).
+    compose near (dec (T B1) t).
     unfold delete_binders.
     unfold bmap.
     rewrite fun2_map22_map21_commute.
@@ -428,8 +393,7 @@ Section roundtrips.
     rewrite tosubset_to_mapReduce.
     rewrite mapReduce_to_traverse1.
     rewrite mapReduce_to_traverse1.
-    unfold_ops @vtraverse.
-    unfold TraversableFunctor.DerivedOperations.Traverse_Categorical.
+    unfold_ops @Traverse_Categorical.
     unfold compose.
     compose near t.
     rewrite <- fun2_map22_map21_commute.
@@ -447,13 +411,13 @@ Section roundtrips.
     intros.
     rewrite mapdReduce_to_mapdt1.
     unfold mapdt.
-    unfold vmapdt.
+    unfold mapdt.
     unfold DecoratedTraversableFunctor.DerivedOperations.Mapdt_Categorical.
-    unfold_ops @vdist.
+    unfold_ops @dist.
+    unfold Dist2_1.
     unfold_ops @TraversableFunctor.ToMono.Dist2_1.
     unfold DecoratedFunctor.dec.
-    unfold_ops @vdec.
-    unfold DecoratedFunctor.ToMono1.VDec.
+    unfold_ops @VDec.
     change_left ((dist2 (B := atom) (A := False) ∘ (map2 pure id ∘ map f ∘ map2 extract id) ∘ decp) t).
     rewrite fun2_map2_map21.
     rewrite fun2_map_map.
@@ -478,9 +442,9 @@ Section roundtrips.
     unfold nomToLN.
     unfold free.
     rewrite mapReduce_to_traverse1.
-    unfold_ops @vtraverse.
+    unfold_ops @traverse.
     unfold_ops @TraversableFunctor.DerivedOperations.Traverse_Categorical.
-    unfold_ops @vdist.
+    unfold_ops @dist.
     unfold_ops @TraversableFunctor.ToMono.Dist2_1.
     unfold_ops @Map2_1.
     reassociate -> on right.
@@ -684,7 +648,7 @@ Section roundtrips.
     forall (t: T name name) (Γ: list name)
       (HΓinit: forall (a: name), (a ∈ FV t -> a ∈ Γ)),
     forall (ctx: list name) (a: name),
-      (ctx, a) ∈ (vdec (T := T) (B := atom) t) ->
+      (ctx, a) ∈ (dec (T atom) t) ->
       alpha_equiv_local (ctx, a) (rtFromNominal_occ Γ (ctx, a)).
   Proof.
     introv HFV.
@@ -717,7 +681,7 @@ Section roundtrips.
         (fun a: list atom * atom =>
            (precompose (cobind (W := prod (list atom)) (roundtrip_Var_loc (free (nomToLN t))))
               ∘ (precompose (map_fst (mapdz (roundtrip_Binder_loc (free (nomToLN t))))) ∘ alpha_equiv_local)) a a)
-        (delete_binders (vdec (T := T) (B := atom) t)).
+        (delete_binders (dec (T atom) t)).
   Proof.
     intros t.
     rewrite TraversableFunctor.forall_iff.
@@ -743,7 +707,7 @@ Section roundtrips.
     unfold lift_relation_ctx2.
     setoid_rewrite (decorate_rename_binders2).
     rewrite TraversableFunctor.relation_natural2.
-    change (vdec (vmapd (roundtrip_Var_loc (free (nomToLN t))) t))
+    change (dec (mapd (roundtrip_Var_loc (free (nomToLN t))) t))
       with (DecoratedFunctor.dec (T atom) (mapd (roundtrip_Var_loc (free (nomToLN t))) t)).
     rewrite (CategoricalToKleisli.DecoratedFunctor.dec_mapd2 (list atom) (F := T atom)).
     change (map (F := ?F) (A := ?A) (B := ?B)) with (vmap (B := atom) (V1 := A) (V2 := A)).
@@ -789,7 +753,7 @@ Section roundtrips.
     forall (t: T unit LN),
       rtFromLN t =
         let Γ := free t
-        in (bmapd (const tt)
+        in (mapdz (T := fun B => T B LN) (const tt)
            (mapd (T := T unit) (kc_dfunp (T := T)
                                   nomToLN_loc
                                   (assignNames_loc Γ)
@@ -800,7 +764,7 @@ Section roundtrips.
     unfold kc_dz.
     change (const tt ∘ cobind (assignNames_loc (free t)))
       with (const (A := list unit * unit) tt).
-    rewrite mapdp_decompose.
+    rewrite (mapdp_decompose T).
     reflexivity.
   Qed.
 
@@ -816,19 +780,21 @@ Section roundtrips.
   Proof.
     intros.
     rewrite rtFromLN_spec_decomposed.
-    assert (Hren: bmapd (V := LN) (T := T) (const tt (A := list unit * unit)) = id).
-    { unfold bmapd.
+    assert (Hren: mapdz (T := fun B => T B LN) (const tt (A := list unit * unit)) = id).
+    { unfold mapdz.
+      unfold Mapdz_Categorical.
       assert (Hconst: const tt (A := list unit * unit) = extract (W := Z)).
       { ext [? u]. cbv.
         destruct u. reflexivity. }
       rewrite Hconst.
-      unfold bmap, bdec.
-      unfold map, Map2_2.
-      unfold DecoratedFunctor.ToMono2.BDec.
+      unfold map, right_coaction.
+      unfold Map2_2.
+      unfold BDec.
       reassociate <- on left.
       rewrite fun2_map_map.
       apply dfunp_dec_extract.
     }
+    unfold_Z.
     rewrite Hren.
     reflexivity.
   Qed.
@@ -1020,10 +986,86 @@ Section roundtrips.
 
   End support.
 
+  #[export] Instance: forall B, Compat_Traverse_Mapdt (list B) (T B).
+  Proof.
+    intros.
+    unfold Compat_Traverse_Mapdt.
+    unfold Traverse_Categorical.
+    unfold DerivedOperations.Traverse_Mapdt.
+    intros.
+    ext A' B' f'.
+    unfold mapdt, Mapdt_Categorical.
+    rewrite <- fun_map_map.
+    reassociate -> on right.
+    reassociate -> on right.
+    rewrite dfun_dec_extract.
+    reflexivity.
+  Qed.
+
+  #[export] Instance: Compat_Traverse_Binddt nat (T unit) (T unit).
+  Proof.
+    intros.
+    unfold Compat_Traverse_Binddt.
+    unfold Traverse_Categorical.
+    unfold DerivedOperations.Traverse_Binddt.
+    intros.
+    ext A' B' f'.
+    unfold binddt, Binddt_Categorical.
+    rewrite <- fun_map_map.
+    reassociate -> on right.
+    reassociate -> on right.
+    reassociate -> on right.
+    rewrite dfun_dec_extract.
+    reassociate <- on right.
+    rewrite <- fun_map_map.
+    change_right (map (F := G) join ∘ (dist (T unit) G ∘ map (F := T unit ∘ G) ret) ∘ map (F := T unit) f').
+    Set Keyed Unification.
+    rewrite <- (natural (Natural := dist_natural) (ϕ := @dist (T unit) _ G _ _ _)).
+    Unset Keyed Unification.
+    reassociate <- on right.
+    unfold_ops @Map_compose.
+    rewrite fun_map_map.
+    rewrite (mon_join_map_ret (T := T unit)).
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
+  #[export] Instance: Compat_Mapdt_Binddt nat (T unit) (T unit).
+  Proof.
+    intros.
+    unfold Compat_Traverse_Binddt.
+    unfold Traverse_Categorical.
+    unfold DerivedOperations.Traverse_Binddt.
+    intros.
+    unfold Compat_Mapdt_Binddt.
+    intros.
+    ext A' B' f'.
+    unfold Mapdt_Categorical.
+    unfold DerivedOperations.Mapdt_Binddt.
+    unfold binddt, Binddt_Categorical.
+    rewrite <- fun_map_map.
+    reassociate -> on right.
+    reassociate -> on right.
+    reassociate -> on right.
+    reassociate <- on right.
+    reassociate <- on right.
+    change_right (map (F := G) join ∘ (dist (T unit) G ∘ map (F := T unit ∘ G) ret) ∘
+                    map (F := T unit) f' ∘ dec (T unit) (A := A')).
+    Set Keyed Unification.
+    rewrite <- (natural (Natural := dist_natural) (ϕ := @dist (T unit) _ G _ _ _)).
+    Unset Keyed Unification.
+    reassociate <- on right.
+    unfold_ops @Map_compose.
+    rewrite fun_map_map.
+    rewrite (mon_join_map_ret (T := T unit)).
+    rewrite fun_map_id.
+    reflexivity.
+  Qed.
+
   Lemma rtFromLN_id_local:
-    forall (t : T unit LN) (HLC: LC t), True.
+    forall (t : T unit LN) (HLC: LC t)
       (FVt: list atom) (HeqFVt: FVt = free t)
-      (ctx: list unit) (v: LN), True. (Hin: (ctx, v) ∈d t), True.
+      (ctx: list unit) (v: LN) (Hin: (ctx, v) ∈d t),
       binding_to_ln (get_binding (assignNames FVt ctx) (lnToNom_loc FVt (ctx, v))) = v.
   Proof.
     intros.
@@ -1032,7 +1074,12 @@ Section roundtrips.
       assert (H_a_not_assigned: ~ a ∈ assignNames FVt ctx).
       { apply assignNames_fresh.
         subst.
-        admit. }
+        assert (Compat_ToSubset_ToCtxset (list unit) (T unit)).
+        typeclasses eauto.
+        apply ind_implies_in in Hin.
+        rewrite <- in_free_iff in Hin.
+        assumption.
+      }
       assert (H_get_binding_Unbound:
                get_binding (assignNames FVt ctx) a = Unbound (assignNames FVt ctx) a).
       { destruct (get_binding_spec_proof (assignNames FVt ctx) a)
@@ -1047,17 +1094,42 @@ Section roundtrips.
       unfold bdToName.
       assert (H_n_lt: Nat.ltb n (length ctx) = true).
       { rewrite OrdersEx.Nat_as_OT.ltb_lt.
-        (*
-        Fail rewrite (LC_spec (T := T unit)) in HLC.
-
-        specialize (HLC (length ctx)).
-        specialize (HLC (Bd n)).
-        assert (cut: (length ctx, Bd n) ∈d t).
-        Unset Printing Notations.
-        Set Printing Implicit.
-        { admit. }
-        apply HLC in cut.
-        unfold lc_loc in cut.
+        rewrite (LC_spec (T := T unit) (U := T unit)) in HLC.
+        specialize (HLC (length ctx) (Bd n)).
+        cbn in HLC.
+        assert (Hin': (length ctx, Bd n) ∈d t).
+        { unfold element_ctx_of in *.
+          unfold toctxset in *.
+          unfold ToCtxset_Mapdt in *.
+          unfold mapdReduce in *.
+          unfold mapdt in *.
+          unfold Mapdt_Categorical in *.
+          unfold dec.
+          unfold Decorate_list_unit_nat.
+          unfold Categorical.Decorate_Monoid_Morphism.
+          rewrite <- compose_assoc.
+          change (?x ○ ?y) with (x ∘ y).
+          rewrite compose_assoc.
+          rewrite compose_assoc.
+          change ((@dist (T unit) (@Dist2_1 T H H1 unit)
+                     (@const Type Type (nat * LN -> Prop)) (@Map_const (nat * LN -> Prop))
+                     (@Pure_const (nat * LN -> Prop) (@Monoid_unit_subset (nat * LN)))
+                     (@Mult_const (nat * LN -> Prop) (@Monoid_op_subset (nat * LN))) False
+                     ∘ (@map (T unit) (@Map2_1 T H unit) (nat * LN) (@const Type Type (nat * LN -> Prop) False)
+                          (@ret subset Return_subset (nat * LN))
+                          ∘ @map (T unit) (@Map2_1 T H unit) (list unit * LN) (nat * LN)
+                          (map (F := fun A => A) (@map_fst LN (list unit) nat (@length unit))))
+                     ∘ @dec (list unit) (T unit) (@VDec T H H0 unit) LN) t (@length unit ctx, Bd n)).
+          rewrite fun_map_map.
+          setoid_rewrite <- (natural (ϕ := @ret (subset) _)).
+          rewrite <- fun_map_map.
+          change (map (F := T unit) (map (F := subset) (@map_fst LN (list unit) nat (@length unit))))
+            with (map (F := T unit ∘ subset) (@map_fst LN (list unit) nat (@length unit))).
+          reassociate <-.
+          try rewrite <- (natural (ϕ := @dist (T unit) _ (@const Type Type (nat * LN -> Prop)) _ _ _ )).
+        admit.
+        }
+        specialize (HLC Hin').
         lia.
       }
       rewrite H_n_lt.
@@ -1065,7 +1137,6 @@ Section roundtrips.
       + reflexivity.
       + rewrite <- OrdersEx.Nat_as_OT.ltb_lt.
         assumption.
-         *)
   Admitted.
 
   Lemma rtFromLN_id: forall (t: T unit LN),
@@ -1101,9 +1172,5 @@ Section roundtrips.
     apply rtFromLN_id.
     assumption.
   Qed.
-   *)
 
 End roundtrips.
-
-End bob.
-
