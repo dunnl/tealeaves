@@ -83,7 +83,7 @@ Module DerivedInstances.
       reassociate -> near (map2 ρ σ).
       rewrite fun2_map_map.
       reflexivity.
-  Admitted.
+  Abort.
 
   End section.
 

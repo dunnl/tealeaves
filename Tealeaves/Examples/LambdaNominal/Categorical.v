@@ -1266,11 +1266,11 @@ Module CategoricalPDTMUsefulInstances.
    *)
 
   Goal Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly term.
-    typeclasses eauto.
-  Qed.
+    Fail typeclasses eauto.
+  Abort.
 
   Goal Kleisli.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly term.
-    typeclasses eauto.
-  Qed.
+    Fail typeclasses eauto.
+  Abort.
 
 End CategoricalPDTMUsefulInstances.

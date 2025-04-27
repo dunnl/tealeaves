@@ -119,7 +119,7 @@ Module DerivedInstances.
       reassociate -> on left.
       rewrite fun2_map_map.
       reflexivity.
-  Admitted.
+  Abort.
 
   End context.
 
