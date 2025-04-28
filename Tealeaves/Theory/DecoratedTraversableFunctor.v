@@ -894,9 +894,9 @@ Section theory.
   Proof.
     intros; induction l.
     - cbn. split; intro Hyp.
-      + false.
+      + inversion Hyp.
       + destruct Hyp as [a [contra _]].
-        false.
+        inversion contra.
     - rewrite traverse_list_cons.
       remember (f a) as Fa.
       destruct Fa.
@@ -910,7 +910,9 @@ Section theory.
           rewrite IHl.
           destruct Hyp as [a' [Hain Hfa]].
           destruct Hain as [Case1 | Case2].
-          - false.
+          - subst. exfalso.
+            rewrite Hfa in HeqFa.
+            inversion HeqFa.
           - exists a'; auto.
         }
       + split; intro Hyp.
@@ -926,7 +928,7 @@ Section theory.
     introv HeqNone.
     destruct e.
     induction l.
-    - cbn in HeqNone. false.
+    - cbn in HeqNone. inversion HeqNone.
     - assert (cut: f a = None \/ forwards (traverse_Vector_core (mkBackwards ∘ f) l eq_refl) = None).
       { cbn in HeqNone.
         rewrite map_None_eq_iff in HeqNone.
@@ -980,7 +982,7 @@ Section theory.
                               end vlen
                         end) l (@length (prod E A) l) (@eq_refl nat (@length (prod E A) l)))) as X.
         destruct X.
-        + false.
+        + inversion HeqNone.
         + symmetry in HeqX.
           exact HeqX.
         + now left.
@@ -1002,7 +1004,8 @@ Section theory.
     introv HeqNone.
     destruct e.
     induction l.
-    - cbn in HeqNone. false.
+    - cbn in HeqNone.
+      inversion HeqNone.
     - assert (cut: f a = None \/
                      (exists b, f a = Some b /\ forwards (traverse_Vector_core (mkBackwards ∘ f) l eq_refl) = None)).
       { cbn in HeqNone.
@@ -1010,7 +1013,8 @@ Section theory.
         right.
         cbn in HeqNone.
         destruct (traverse f l).
-        + cbn in HeqNone. false.
+        + cbn in HeqNone.
+          inversion HeqNone.
         + rewrite ap_None_eq_None2 in HeqNone.
           specialize (IHl HeqNone).
           exists b; split; auto.
@@ -1127,6 +1131,3 @@ Section theory.
   Qed.
 
 End theory.
-
-
-

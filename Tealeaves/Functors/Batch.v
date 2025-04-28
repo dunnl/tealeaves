@@ -211,9 +211,9 @@ Section shape_induction.
     induction b1 as [C c | C rest IHrest a].
     - destruct b2.
       + now inversion Hshape.
-      + false.
+      + inversion Hshape.
     - destruct b2 as [c' | rest' a'].
-      + false.
+      + inversion Hshape.
       + apply IHstep.
         * apply IHrest.
           auto.
@@ -448,9 +448,9 @@ Section length.
     induction b1.
     - destruct b2.
       + now inversion Hshape.
-      + false.
+      + inversion Hshape.
     - destruct b2.
-      + false.
+      + inversion Hshape.
       + cbn. fequal.
         apply IHb1.
         now inversion Hshape.
@@ -717,9 +717,9 @@ Section deconstruction.
         * cbn in *.
           specialize (Hsim vnil vnil ltac:(reflexivity)).
           now inversion Hsim.
-        * false.
+        * inversion Hlen.
       - destruct b2.
-        + false.
+        + inversion Hlen.
         + cbn. fequal. apply IHb1.
           * now inversion Hlen.
           * intros v1 v2 Vsim.

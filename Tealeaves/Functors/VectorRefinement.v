@@ -1356,7 +1356,8 @@ Qed.
    induction vlist; intros n vlen.
    - cbn. rewrite app_pure_natural. reflexivity.
    - cbn. destruct n.
-     + false.
+     + exfalso.
+       inversion vlen.
      + cbn in IHvlist.
        rewrite <- (IHvlist n (S_uncons vlen)).
        rewrite map_ap.

@@ -107,7 +107,7 @@ Section decorated_container_monad_theory.
     Proof.
       intros.
       rewrite ind_bindd_iff.
-      splits; intros ?; preprocess;
+      split; intros ?; preprocess;
         (repeat eexists); eauto.
     Qed.
 
@@ -133,7 +133,7 @@ Section decorated_container_monad_theory.
     Proof.
       introv.
       rewrite ind_bind_iff.
-      splits; intros ?; preprocess;
+      split; intros ?; preprocess;
         (repeat eexists); eauto.
     Qed.
 
@@ -150,7 +150,7 @@ Section decorated_container_monad_theory.
       - intros [w [wa [a [Hin [wb [Hin' Heq]]]]]].
         eauto.
       - intros [wa [a [Hin [w rest]]]].
-        exists (wa ● w) wa a. eauto.
+        exists (wa ● w). exists wa. exists a. eauto.
     Qed.
 
   End ind_spec.

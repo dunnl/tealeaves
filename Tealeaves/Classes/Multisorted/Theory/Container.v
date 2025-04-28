@@ -340,16 +340,16 @@ Section DTM_tolist.
     - destruct a0 as [w' [j a']]. cbn. compare values k and j.
       + cbn. rewrite IHl. clear. split.
         { intros [hyp1 | hyp2].
-          - inverts hyp1. now left.
+          - inversion hyp1. now left.
           - now right.
         }
         { intros [hyp1 | hyp2].
-          - inverts hyp1. now left.
+          - inversion hyp1. now left.
           - now right. }
       + rewrite <- IHl. split.
         { intro hyp. now right. }
         { intros [hyp1 | hyp2].
-          - inverts hyp1. contradiction.
+          - inversion hyp1. contradiction.
           - auto. }
   Qed.
 
@@ -564,8 +564,9 @@ Section DTM_membership.
       rewrite tosubset_list_app in hyp. destruct hyp as [hyp1 | hyp2].
       + rewrite tosubset_map_iff in hyp1.
         destruct hyp1 as [[w2 [k2' b']] [hyp1 hyp2]].
-        inversion hyp2; subst. exists k w w2 a. splits.
+        inversion hyp2; subst. exists k. exists w. exists w2. exists a. split.
         { rewrite tosubset_list_cons. now left. }
+        split.
         { auto. }
         { easy. }
       + apply IHl in hyp2. clear IHl.
@@ -589,8 +590,8 @@ Section DTM_membership.
     - destruct a0 as [w [k' a']]. rewrite mbinddt_list_cons.
       simpl_list. rewrite tosubset_list_cons in hyp1.
       destruct hyp1 as [hyp1 | hyp1].
-      + inverts hyp1. left. rewrite (tosubset_map_iff).
-        exists (w2, (k2, b)). now splits.
+      + inversion hyp1. left. rewrite (tosubset_map_iff).
+        exists (w2, (k2, b)). now split.
       + right. now apply IHl in hyp1.
   Qed.
 
@@ -654,11 +655,12 @@ Section DTM_membership.
     intros.
     rewrite inmd_iff_in. setoid_rewrite inmd_mbindd_iff. split.
     - intros [wtotal [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]].
-      exists k1 w1 a. split; [auto|].
+      exists k1. exists w1. exists a. split; [auto|].
       apply (inmd_implies_in) in hyp2. auto.
     - intros [k1 [w1 [a [hyp1 hyp2]]]].
       rewrite inmd_iff_in in hyp2. destruct hyp2 as [w2 rest].
-      exists (w1 ● w2) k1 w1 w2 a. intuition.
+      exists (w1 ● w2). exists k1. exists w1. exists w2. exists a.
+      intuition.
   Qed.
 
   (** *** Corollaries for other operations *)

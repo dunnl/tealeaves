@@ -106,9 +106,9 @@ Proof.
     intros_cof IH. simpl_alist in *.
     assert (x <> e) by fsetdec.
     rewrite (subst_open_eq term) in IH.
-    2:{ now inverts Hok. }
+    2:{ now inversion Hok. }
     rewrite (subst_open_eq typ) in IH.
-    2:{ now inverts Hok. }
+    2:{ now inversion Hok. }
     rewrite rw_subst_type_var_neq in IH; auto.
     apply IH.
     + change_alist ((Δ1 ++ Δ2) ++ e ~ tt).
@@ -237,7 +237,7 @@ Proof.
     apply H0; auto.
     + auto using ok_type_ctx_weak_r.
     + rewrite ok_kind_ctx_app. autorewrite with tea_rw_disj.
-      splits; intuition (auto using ok_kind_ctx_one; fsetdec).
+      split; intuition (auto using ok_kind_ctx_one; fsetdec).
   - apply j_inst.
     + auto.
     + apply IHj; auto.
@@ -563,7 +563,7 @@ Proof.
   - inversion 1; subst.
     + eauto using Judgment.
     + eauto using Judgment.
-    + inverts j1. rename H4 into hyp.
+    + inversion j1. rename H4 into hyp.
       pick fresh e for (L ∪ FV term ktrm t0).
       rewrite (open_spec_eq term) with (x := e); [| fsetdec].
       eapply j_type_ctx_subst1; eauto.
@@ -571,7 +571,7 @@ Proof.
   - inversion 1.
   - inversion 1; subst.
     + eauto using Judgment.
-    + inverts j.
+    + inversion j.
       pick fresh e for (L ∪ FV term ktyp t0 ∪ FV typ ktyp τ2).
       rewrite (open_spec_eq term) with (x := e); [|fsetdec].
       rewrite (open_spec_eq typ) with (x := e); [|fsetdec].
@@ -592,13 +592,13 @@ Proof.
   - right. specialize (IHj1 ltac:(trivial) ltac:(trivial)).
     specialize (IHj2 ltac:(trivial) ltac:(trivial)).
     intuition.
-    + inverts H.
+    + inversion H.
       { eauto using red. }
-      { false. inverts j1. }
-    + inverts H.
+      { exfalso. inversion j1; subst; easy. }
+    + inversion H.
       { destruct_all_existentials.
         eauto using red, value. }
-      { inverts j1. }
+      { inversion j1; now subst. }
     + destruct_all_existentials.
       eauto using red.
     + destruct_all_existentials.
@@ -606,8 +606,8 @@ Proof.
   - left; auto using value.
   - right. specialize (IHj ltac:(trivial) ltac:(trivial)).
     intuition.
-    + inverts H0.
-      { inverts j. }
+    + inversion H0.
+      { inversion j; now subst. }
       { eauto using red. }
     + destruct_all_existentials.
       eauto using red.

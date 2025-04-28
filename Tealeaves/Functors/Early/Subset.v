@@ -249,7 +249,7 @@ Proof.
   ext P b. propext.
   + intros [a [[Q [PQ Qa]] Heq]].
     subst.
-    exists (map f Q).
+    exists (map (F := subset) f Q).
     unfold_ops @Map_subset.
     split.
     * exists Q. split.
@@ -324,7 +324,7 @@ Proof.
     unfold_ops @Map_subset.
     unfold Monad.join at 1.
     unfold Join_subset at 1.
-    exists (Monad.join R); split; auto.
+    exists (Monad.join (T := subset) R); split; auto.
     exists R; auto. exists Q; auto.
   - intros [R [[Q [PQ Rspec]] Ra]].
     subst.
@@ -491,7 +491,7 @@ Section subset_applicative_instance.
     unfold_ops @Mult_subset.
     propext.
     - intros [[f a] [[hyp1 hyp2] hyp3]].
-      exists f a. auto.
+      exists f. exists a. auto.
     - intros [f [a [hyp1 [hyp2 hyp3]]]].
       subst. exists (f, a). tauto.
   Qed.

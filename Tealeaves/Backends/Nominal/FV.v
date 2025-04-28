@@ -55,7 +55,7 @@ Section FV.
         reflexivity.
       }
       { rewrite H_is_Bound.
-        false.
+        exfalso.
         assert (a ∈ ctx).
         { subst.
           autorewrite with tea_list.

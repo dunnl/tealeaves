@@ -140,7 +140,8 @@ Proof.
     simpl_alist.
     apply IHbody.
     { autorewrite with tea_rw_disj in *.
-      splits; try easy. fsetdec. }
+      split; try easy; try split; try easy.
+      fsetdec. }
     { reflexivity. }
   - eauto using j_app.
 Qed.

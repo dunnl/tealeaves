@@ -111,8 +111,8 @@ Section theory.
     - cbn.
       rewrite PeanoNat.Nat.ltb_lt in Heqb.
       split; intro contra.
-      + false.
-      + false. lia.
+      + exfalso. inversion contra.
+      + exfalso. lia.
     - cbn.
       rewrite PeanoNat.Nat.ltb_ge in Heqb.
       rewrite map_None_eq_iff.
@@ -131,8 +131,8 @@ Section theory.
     setoid_rewrite toLN_loc_None_iff.
     unfold cl_at_loc, bound_within.
     split; intros [e [a [Hin Hspec]]].
-    - exists e a; split; auto. lia.
-    - exists e a; split; auto. lia.
+    - exists e. exists a; split; auto. lia.
+    - exists e. exists a; split; auto. lia.
   Qed.
 
 End theory.

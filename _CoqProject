@@ -2,7 +2,8 @@
 
 Tealeaves/Axioms.v
 Tealeaves/Tactics/Debug.v
-Tealeaves/Tactics/LibTactics.v
+#Tealeaves/Tactics/LibTactics.v
+Tealeaves/Tactics/CoreTactics.v
 Tealeaves/Tactics/Prelude.v
 Tealeaves/Misc/Product.v #Required by comonoid.v
 Tealeaves/Classes/EqDec_eq.v
@@ -285,6 +286,7 @@ Tealeaves/Simplification/Tests/Support.v
 Tealeaves/Backends/LN/LN.v
 Tealeaves/Backends/LN/Simplification.v
 Tealeaves/Backends/LN/Parallel.v
+Tealeaves/Backends/Common/AssocList.v
 Tealeaves/Backends/LN.v
 
 ##########################################################
@@ -316,7 +318,6 @@ Tealeaves/Backends/Adapters/Roundtrips/LNDB.v
 Tealeaves/Backends/Common/Names.v
 #Tealeaves/Backends/Common/Atom.v
 Tealeaves/Backends/Common/AtomSet.v
-Tealeaves/Backends/Common/AssocList.v
 
 ##########################################################
 # MONOID HOMOMORPHISM ADAPTERS                           #

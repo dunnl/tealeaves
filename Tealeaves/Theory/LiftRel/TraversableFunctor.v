@@ -352,12 +352,13 @@ Section lifting_relations.
       unfold ap.
       unfold_ops @Map_I.
       unfold_ops @Mult_I.
-      exists (runBatch id b) a.
-      splits.
+      exists (runBatch id b). exists a.
+      split.
       { unfold precompose, compose.
         unfold_ops @Map_I.
         apply hyp'.
         now right. }
+      split.
       { apply IH.
         intros.
         apply hyp'.

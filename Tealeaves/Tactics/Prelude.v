@@ -1,6 +1,6 @@
 From Tealeaves Require Export
   Axioms
-  Tactics.LibTactics.
+  Tactics.CoreTactics.
 
 (*|
 Declare a scope for Tealeaves' notations.

@@ -169,7 +169,7 @@ Proof.
   generalize dependent pre'.
   generalize dependent post'.
   induction l; intros.
-  - exists pre' post'. cbn; auto.
+  - exists pre'. exists post'. cbn; auto.
   - destruct (looking_for == a).
     { rewrite get_binding_rec_bound_cons_eq; auto. }
     { rewrite get_binding_rec_bound_cons_neq; auto.
@@ -197,22 +197,24 @@ Proof.
   generalize dependent pre'.
   generalize dependent post'.
   induction l; intros.
-  - exists (pre': list name) (post':list name).
-    cbn. splits.
+  - exists (pre': list name). exists (post':list name).
+    cbn. split.
     + auto.
-    + rewrite List.app_nil_r.
-      reflexivity.
-    + assumption.
+    + split.
+      * rewrite List.app_nil_r.
+        reflexivity.
+      * assumption.
   - destruct_eq_args looking_for a.
     + rewrite (get_binding_rec_bound_cons_eq a); auto.
       specialize (IHl [] ltac:(firstorder) (pre' ++ [a] ++ post')).
       destruct IHl as [pre [post [rest1 [rest2 rest3]]]].
-      exists pre post. splits.
+      exists pre. exists post. split.
       * tauto.
-      * rewrite rest2. rewrite List.app_nil_l.
-        repeat rewrite <- List.app_assoc.
-        reflexivity.
-      * assumption.
+      * split.
+        { rewrite rest2. rewrite List.app_nil_l.
+          repeat rewrite <- List.app_assoc.
+          reflexivity. }
+        { assumption. }
     + rewrite (get_binding_rec_bound_cons_neq); auto.
       specialize (IHl (post' ++ [a])).
       assert (Hnlf: ~ looking_for ∈ (post' ++ [a])).
@@ -223,8 +225,8 @@ Proof.
       specialize (IHl Hnlf).
       specialize (IHl pre').
       destruct IHl as [pre [post [rest1 [rest2 rest3]]]].
-      exists pre post.
-      splits.
+      exists pre. exists post.
+      split; try split.
       * assumption.
       * rewrite rest2.
         repeat rewrite <- List.app_assoc.
@@ -253,7 +255,7 @@ Proof.
       rewrite get_binding_rec_unbound_cons_eq; auto.
       specialize (get_binding_bound_general a pre' [] l ltac:(firstorder)).
       intros [pre [post [rest1 [rest2 rest3]]]].
-      exists pre post.
+      exists pre. exists post.
       repeat rewrite List.app_nil_l in rest2.
       easy.
     + rewrite get_binding_rec_unbound_cons_neq; auto.
@@ -265,7 +267,7 @@ Proof.
         assumption.
       * right.
         destruct e as [pre [post [rest1 [rest2 rest3]]]].
-        exists pre post. splits; auto.
+        exists pre. exists post. split; auto.
 Qed.
 
 Lemma get_binding_spec_proof: get_binding_spec.
@@ -464,7 +466,7 @@ Proof.
   introv HVeq Heq Hnin.
   destruct (get_binding_spec_proof (prefix ++ [v2] ++ postfix) v2)
     as [[Case1 rest] | [prefix' [postfix' [Case2 [ctxspec Hnin']]]]].
-  - false. apply rest.
+  - exfalso. apply rest.
     rewrite element_of_list_app.
     rewrite element_of_list_app.
     rewrite element_of_list_one.

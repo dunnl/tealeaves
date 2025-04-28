@@ -71,7 +71,7 @@ Proof.
       apply PeanoNat.Nat.ltb_ge in H.
       right. exists n. auto.
     + destruct contra as [[x [contra rest]] | [n' [Heq contra]]].
-      * false.
+      * exfalso. inversion contra.
       * inversion Heq; subst.
         apply PeanoNat.Nat.ltb_ge in contra.
         rewrite contra.
@@ -88,7 +88,7 @@ Lemma toDB_loc_rw1 (k: key) (depth: nat) (n: nat):
 Proof.
   intros. cbn.
   destruct depth.
-  - false. lia.
+  - exfalso. lia.
   - apply PeanoNat.Nat.leb_le in H.
     cbn in H.
     rewrite H.
@@ -274,12 +274,12 @@ Section theory.
       + left. exists x. subst. split; auto.
         apply ind_implies_in in Hint.
         assumption.
-      + right. exists e n. now subst.
+      + right. exists e. exists n. now subst.
     - intros [ [e [Hin Hnotin]] | [depth [n [Hin Heq]]]].
       + apply ind_iff_in in Hin.
         destruct Hin as [d Hind].
         exists d. exists (Fr e). split; eauto.
-      + exists depth (Bd n). split; auto.
+      + exists depth. exists (Bd n). split; auto.
         right. exists n. auto.
   Qed.
 
@@ -305,7 +305,7 @@ Section theory.
         unfold compose. cbn.
         assumption.
       - right.
-        exists depth (Bd n). split.
+        exists depth. exists (Bd n). split.
         + assumption.
         + unfold compose.
           cbn.
@@ -319,7 +319,7 @@ Section theory.
       - unfold lc_loc in *.
         destruct n as [x | n].
         + contradiction.
-        + right. exists depth n. split; auto.
+        + right. exists depth. exists n. split; auto.
           lia.
     }
   Qed.

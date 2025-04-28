@@ -186,7 +186,7 @@ Section ctxset.
       + exists (w', b). easy.
     - intros [[wa a] [Hin [[wb b'] [Hin' Heq]]]].
       inversion Heq. subst.
-      exists wa a. split.
+      exists wa. exists a. split.
       + assumption.
       + exists wb. easy.
   Qed.
@@ -213,7 +213,7 @@ Section ctxset.
     unfold_ops @Map_subset; unfold uncurry.
     propext.
     - inversion 1. subst.
-      exists (w', (Ƶ, f (w', a))). splits.
+      exists (w', (Ƶ, f (w', a))). split.
       + eauto.
       + cbn. now simpl_monoid.
     - intros. preprocess. now simpl_monoid.

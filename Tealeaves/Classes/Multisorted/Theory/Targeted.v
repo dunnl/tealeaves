@@ -607,13 +607,16 @@ Section DTM_membership_targetted.
     apply (inmd_mbindd_iff1 U) in hyp.
     destruct hyp as [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]. subst.
     compare values j and k1.
-    + exists w1 w2 a. splits.
+    + exists w1. exists w2. exists a.
+      split.
       { auto. }
+      split.
       { rewrite btgd_eq in hyp2. auto. }
       { reflexivity. }
     + rewrite btgd_neq in hyp2; auto.
       unfold compose in hyp2; cbn in hyp2.
-      rewrite inmd_mret_iff in hyp2. destructs hyp2.
+      rewrite inmd_mret_iff in hyp2.
+      destruct hyp2 as [hyp21 [hyp22 hyp23]].
       subst. contradiction.
   Qed.
 
@@ -624,9 +627,11 @@ Section DTM_membership_targetted.
           /\ wtotal = w1 ● w2) ->
       (wtotal, (j, a2)) ∈md kbindd U j f t.
   Proof.
-    introv [w1 [w2 [a1 hyp]]]. destructs hyp. unfold kbindd.
+    introv [w1 [w2 [a1 hyp]]]. destruct hyp.
+    unfold kbindd.
     apply (inmd_mbindd_iff2 U).
-    exists j w1 w2 a1. rewrite btgd_eq. auto.
+    exists j. exists w1. exists w2. exists a1.
+    rewrite btgd_eq. auto.
   Qed.
 
   Theorem inmd_kbindd_eq_iff:
@@ -653,10 +658,12 @@ Section DTM_membership_targetted.
     apply (inmd_mbindd_iff1 U) in hyp.
     destruct hyp as [k1 [w1 [w2 [a [hyp1 [hyp2 hyp3]]]]]]. subst.
     compare values j and k1.
-    + right. exists w1 w2 a. rewrite btgd_eq in hyp2. splits; auto.
+    + right. exists w1. exists w2. exists a.
+      rewrite btgd_eq in hyp2. split; auto.
     + left. rewrite btgd_neq in hyp2; auto.
       unfold compose in hyp2. cbn in hyp2.
-      rewrite inmd_mret_iff in hyp2. destructs hyp2; subst.
+      rewrite inmd_mret_iff in hyp2.
+      destruct hyp2 as [hyp21 [hyp22 hyp23]]; subst.
       simpl_monoid. auto.
   Qed.
 
@@ -671,15 +678,18 @@ Section DTM_membership_targetted.
       (wtotal, (i, a2)) ∈md kbindd U j f t.
   Proof.
     introv ? hyp. destruct hyp as [hyp | hyp].
-    - apply (inmd_mbindd_iff2 U). exists i wtotal Ƶ a2.
-      splits.
+    - apply (inmd_mbindd_iff2 U).
+      exists i. exists wtotal. exists Ƶ. exists a2.
+      split.
       { auto. }
+      split.
       { rewrite btgd_neq; auto. unfold compose; cbn.
         rewrite inmd_mret_iff; auto. }
       { now simpl_monoid. }
     - destruct hyp as [w1 [w2 [a1 [hyp1 [hyp2 hyp3]]]]]. subst.
       apply (inmd_mbindd_iff2 U).
-      exists j w1 w2 a1. rewrite btgd_eq. auto.
+      exists j. exists w1. exists w2. exists a1.
+      rewrite btgd_eq. auto.
   Qed.
 
   Theorem inmd_kbindd_neq_iff:
@@ -828,7 +838,7 @@ Section DTM_membership_targetted.
       + right.
         destruct hyp as [a1 [hyp1 hyp2]].
         rewrite inmd_iff_in in hyp1. destruct hyp1 as [w1 hyp1].
-        exists w1 a1. auto.
+        exists w1. exists a1. auto.
   Qed.
 
   Corollary in_kmapd_eq_iff:

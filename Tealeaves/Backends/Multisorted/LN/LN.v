@@ -827,21 +827,22 @@ Section subst_metatheory.
         split.
         + intros [l' [n1 [n2 conditions]]].
           right. destruct conditions as [c1 [[c2|c2] c3]].
-          { subst. left. destructs c2; subst.
+          { subst. left. destruct c2 as [c21 [c22 c23]]; subst.
             rewrite monoid_id_r. auto. }
-          { subst. right. destructs c2; subst. eauto. }
+          { subst. right. destruct c2 as [c21 c22]; subst. eauto. }
         + intros [[contra ?] | [ [? [in_t neq]] | hyp ] ].
           { contradiction. }
-          { exists w (Ƶ : list K) l. rewrite monoid_id_r. split... }
-          { destruct hyp as [w1 [w2 ?]]. exists w1 w2 (Fr x). intuition. }
+          { exists w. exists (Ƶ : list K). exists l.
+            rewrite monoid_id_r. split... }
+          { destruct hyp as [w1 [w2 ?]]. exists w1. exists w2. exists (Fr x). intuition. }
       - rewrite (inmd_subst_neq_iff U)... split.
         + intros [? | [n1 [n2 [p [in_t in_local]]]]]...
           rewrite (inmd_subst_loc_iff_neq k) in in_local...
-          right. right. exists n1 n2. destruct in_local as [[? ?] ?]; subst...
+          right. right. exists n1. exists n2. destruct in_local as [[? ?] ?]; subst...
         + intros [[? ?] | [[? ?] | [w1 [w2 rest]]]].
           { auto. }
           { contradiction. }
-          { right. exists w1 w2 (Fr x). simpl_local... }
+          { right. exists w1. exists w2. exists (Fr x). simpl_local... }
     Qed.
 
     Corollary inmd_subst_iff_eq' : forall k w t u l x,
@@ -980,7 +981,7 @@ Section subst_metatheory.
       introv hin. rewrite in_subst_iff in hin.
       destruct hin as [[hyp1 hyp2] | [hyp | hyp] ].
       - left. split; [assumption |]. injection...
-      - destructs hyp. subst. left.
+      - destruct hyp as [hyp1 [hyp2 hyp3]]. subst. left.
         split; [assumption |]. injection...
       - intuition.
     Qed.
@@ -1011,7 +1012,7 @@ Section subst_metatheory.
       apply in_subst_upper in hyp.
       destruct hyp as [hyp | hyp].
       - destruct hyp. compare values j and k.
-        + right. left. splits; auto.
+        + right. left. split; auto; split; auto.
           intro contra; subst; contradiction.
         + auto.
       - eauto using in_subst_upper.
@@ -1418,7 +1419,8 @@ Section close_metatheory.
   Proof.
     introv lin heq. destruct l as [la | ln].
     - cbn in heq. destruct_eq_args x la.
-      inverts heq. now apply (inmd_implies_in U) in lin.
+      inversion heq.
+      now apply (inmd_implies_in U) in lin.
     - cbn in heq. compare_nats_args ln (countk k w); discriminate.
   Qed.
 
@@ -1521,7 +1523,9 @@ Section open_metatheory.
   Proof with auto.
     introv lin xin. rewrite in_free_iff in xin.
     rewrite 2(in_free_iff). destruct l as [y | n].
-    - left. autorewrite with tea_local in xin. inverts xin...
+    - left. autorewrite with tea_local in xin.
+      destruct xin; subst.
+      tauto.
     - right. cbn in xin. compare naturals n and (countk k w).
       { contradict xin. simpl_local. intuition. }
       { assumption. }
@@ -1597,7 +1601,8 @@ Section open_metatheory.
       destruct xin as [w xin].
       rewrite (free_open_eq_iff U).
       setoid_rewrite (in_free_iff).
-      exists w (Fr x). now autorewrite with tea_local.
+      exists w. exists (Fr x).
+      now autorewrite with tea_local.
     - rewrite (free_open_neq_iff U); auto.
   Qed.
 
@@ -1973,14 +1978,14 @@ Section open_metatheory.
       + specialize (lct w (Bd n0)).
         lapply lct.
         { cbn; unfold_monoid; lia. }
-        { exists w (Ƶ : list K) (Bd n0).
+        { exists w. exists (Ƶ : list K). exists (Bd n0).
           split; auto. cbn. compare naturals n0 and (countk k w).
           rewrite inmd_mret_eq_iff. now simpl_monoid. }
       + cbn. unfold_monoid; lia.
       + cbn. specialize (lct w (Bd (n0 - 1))).
         lapply lct.
         { cbn; unfold_monoid; lia. }
-        { exists w (Ƶ : list K) (Bd n0).
+        { exists w. exists (Ƶ : list K). exists (Bd n0).
           split; auto. cbn. compare naturals n0 and (countk k w).
           rewrite inmd_mret_eq_iff. now simpl_monoid. }
   Qed.
@@ -2039,16 +2044,16 @@ Section open_metatheory.
     - destruct Hin as [w1 [w2 [l1 [in_t [in_open ?]]]]].
       subst. destruct l1.
       + cbn in in_open. rewrite inmd_mret_iff in in_open.
-        false. intuition.
+        exfalso. intuition.
       + destruct l.
         { cbn. trivial. }
         { cbn. cbn in in_open.
           compare naturals n0 and (countk j w1).
-          - rewrite inmd_mret_iff in in_open. false; intuition.
+          - rewrite inmd_mret_iff in in_open. exfalso; intuition.
           - specialize (lcu _ _ in_open).
             unfold lc_loc in lcu. unfold_monoid.
             rewrite countk_app. lia.
-          - rewrite inmd_mret_iff in in_open. false; intuition.
+          - rewrite inmd_mret_iff in in_open. exfalso; intuition.
         }
   Qed.
 

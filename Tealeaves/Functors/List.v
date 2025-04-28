@@ -137,7 +137,7 @@ Section list_shape_rewrite.
       shape l = @nil unit <-> l = [].
   Proof.
     induction l. intuition.
-    split; intro contra; now inverts contra.
+    split; intro contra; now inversion contra.
   Qed.
 
 End list_shape_rewrite.
@@ -190,7 +190,7 @@ Section list_shape_lemmas.
         shape l1 = shape l2.
   Proof.
     intros. rewrite 2(shape_cons).
-    split; intros hyp. now inverts hyp.
+    split; intros hyp. now inversion hyp.
     now rewrite hyp.
   Qed.
 
@@ -202,12 +202,12 @@ Section list_shape_lemmas.
     intros A. induction l1 as [| ? ? IHl1 ];
       induction l2 as [| ? ? IHl2 ].
     - reflexivity.
-    - introv shape_eq. now inverts shape_eq.
-    - introv shape_eq. now inverts shape_eq.
+    - introv shape_eq. now inversion shape_eq.
+    - introv shape_eq. now inversion shape_eq.
     - introv shape_eq heq.
       rewrite shape_eq_cons_iff in shape_eq.
       rewrite <- 2(List.app_comm_cons) in heq.
-      inverts heq. fequal. eauto.
+      inversion heq. fequal. eauto.
   Qed.
 
   Theorem inv_app_eq_rl: forall (A: Type) (l1 l2 r1 r2: list A),
@@ -226,7 +226,7 @@ Section list_shape_lemmas.
       + assumption.
     - introv shape_eq heq.
       rewrite <- 2(List.app_comm_cons) in heq.
-      inverts heq. fequal. eauto.
+      inversion heq. fequal. eauto.
   Qed.
 
   Theorem inv_app_eq_lr: forall (A: Type) (l1 l2 r1 r2: list A),
@@ -634,7 +634,7 @@ Proof.
   intros.
   destruct v.
   - inversion vlen.
-  - exists a v. reflexivity.
+  - exists a. exists v. reflexivity.
 Qed.
 
 Definition list_uncons {n A} (l: list A) (vlen: length l = S n):

@@ -116,17 +116,20 @@ Fixpoint binddt_Lam (G : Type -> Type) `{Map G} `{Pure G} `{Mult G}
 
 #[export] Instance Return_STLC: Return Lam := tvar.
 #[export] Instance Binddt_STLC: Binddt nat Lam Lam := @binddt_Lam.
+
+(* We duplicate the goal just for the purpose of debugging the tactics *)
 #[export] Instance DTM_STLC: DecoratedTraversableMonad nat Lam.
 Proof.
-  (* We duplicate the goal just for the purpose of debugging the tactics *)
-  dup. {
-    constructor.
-    typeclasses eauto.
-    - derive_dtm1.
-    - constructor.
-      + derive_dtm2.
-      + derive_dtm3.
-      + derive_dtm4. }
+  constructor.
+  typeclasses eauto.
+  - derive_dtm1.
+  - constructor.
+    + derive_dtm2.
+    + derive_dtm3.
+    + derive_dtm4.
+Abort.
+#[export] Instance DTM_STLC: DecoratedTraversableMonad nat Lam.
+Proof.
   derive_dtm.
 Qed.
 

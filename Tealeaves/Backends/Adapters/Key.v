@@ -442,7 +442,7 @@ Proof.
   unfold contains_ix_upto.
   generalize dependent ix.
   induction k; intros ix Hin.
-  - false.
+  - exfalso. inversion Hin.
   - destruct ix.
     + cbn. lia.
     + cbn. cbn in Hin.
@@ -463,7 +463,7 @@ Proof.
     + cbn in Hlt. lia.
     + cbn. eauto.
   - destruct k.
-    + false. cbn in Hlt. lia.
+    + exfalso. cbn in Hlt. lia.
     + cbn in Hlt.
       cbn.
       specialize (IHix k ltac:(lia)).
@@ -490,7 +490,8 @@ Proof.
   induction k; intros ix Hin.
   - cbn. lia.
   - destruct ix.
-    + false.
+    + exfalso.
+      inversion Hin.
     + cbn. cbn in Hin.
       specialize (IHk ix Hin).
       apply PeanoNat.Nat.le_ngt.
@@ -617,7 +618,7 @@ Proof.
     + destruct Huniq as [Hnin Huniq].
       specialize (IHk Huniq).
       compare atoms.
-      * false.
+      * exfalso.
         apply key_lookup_ix_in in Hrest.
         contradiction.
       * rewrite (IHk ix' Hrest).

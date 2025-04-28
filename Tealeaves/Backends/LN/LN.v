@@ -1073,11 +1073,14 @@ Section locally_nameless_metatheory.
     setoid_rewrite ind_subst_loc_iff. split.
     - intros [l' [n1 [n2 conditions]]].
       destruct conditions as [c1 [[c2|c2] c3]]; subst.
-      + left. destructs c2; subst. now rewrite monoid_id_r.
-      + right. destructs c2; subst. eauto.
+      + left. destruct c2 as [c21 [c22 c23]]; subst.
+        now rewrite monoid_id_r.
+      + right. destruct c2 as [c21 c22]; subst. eauto.
     - intros [[? ?] | [n1 [n2 [? [? ?]]]]].
-      + exists w (Ƶ: nat) l. rewrite monoid_id_r. splits; auto.
-      + exists n1 n2 (Fr x). splits; auto.
+      + exists w. exists (Ƶ: nat). exists l.
+        rewrite monoid_id_r. split; auto.
+      + exists n1. exists n2. exists (Fr x).
+       split; auto.
   Qed.
 
   (** ** Occurrence analysis: substitution without contexts *)
@@ -1381,8 +1384,10 @@ Section locally_nameless_metatheory.
   Proof.
     introv lin heq. destruct l as [la | ln].
     - cbn in heq. destruct_eq_args x la.
-      inverts heq.
+      inversion heq.
       apply ind_implies_in in lin.
+      inversion heq.
+      subst.
       tauto.
     - cbn in heq. compare_nats_args ln w; discriminate.
   Qed.
@@ -1447,8 +1452,7 @@ Section locally_nameless_metatheory.
     - cbn. compare values x and x. unfold_lia.
     - cbn. compare values x and a.
     - cbn. compare naturals n and w.
-      + false.
-        specialize (lct w (Bd w) ltac:(assumption)).
+      + specialize (lct w (Bd w) ltac:(assumption)).
         cbn in lct. lia.
       + specialize (lct w (Bd n) ltac:(assumption)).
         cbn in lct. lia.
@@ -1464,7 +1468,7 @@ Section locally_nameless_metatheory.
   Proof with auto.
     introv lin xin. rewrite in_free_iff in xin.
     rewrite 2(in_free_iff). destruct l as [y | n].
-    - left. autorewrite with tea_local in xin. inverts xin...
+    - left. autorewrite with tea_local in xin. inversion xin...
     - right. cbn in xin. compare naturals n and w.
       { contradict xin. simpl_local. easy. }
       { assumption. }
@@ -1502,7 +1506,8 @@ Section locally_nameless_metatheory.
     destruct xin as [w xin].
     rewrite (free_open_iff).
     setoid_rewrite (in_free_iff).
-    exists w (Fr x). now autorewrite with tea_local.
+    exists w. exists (Fr x).
+    now autorewrite with tea_local.
   Qed.
 
   (* LNgen 2: fv-open-lower *)
@@ -1603,15 +1608,16 @@ Section locally_nameless_metatheory.
     apply mapd_respectful.
     introv Hin.
     compare a to atom y.
-    - false.
-      apply ind_implies_in in Hin.
+    - apply ind_implies_in in Hin.
       rewrite <- free_iff_FV in Hnin.
       rewrite in_free_iff in Hnin.
       easy.
     - cbn.
       compare values y and a.
-      destruct (@eq_dec Names.atom _ y a). false.
+      destruct (@eq_dec Names.atom _ y a).
+      exfalso.
       easy.
+      reflexivity.
     - cbn. unfold transparent tcs.
       rewrite LC_spec in HLC.
       specialize (HLC _ _ Hin).
@@ -1871,14 +1877,14 @@ Section locally_nameless_metatheory.
       + specialize (lct w (Bd n0)).
         lapply lct.
         { cbn; unfold_lia. }
-        { exists w (Ƶ: nat) (Bd n0).
+        { exists w. exists (Ƶ: nat). exists (Bd n0).
           split; auto. cbn. compare naturals n0 and w.
           rewrite (ind_ret_iff). now simpl_monoid. }
       + cbn. unfold_lia.
       + cbn. specialize (lct w (Bd (n0 - 1))).
         lapply lct.
         { cbn; unfold_lia. }
-        { exists w (Ƶ: nat) (Bd n0).
+        { exists w. exists (Ƶ: nat). exists (Bd n0).
           split; auto. cbn. compare naturals n0 and w.
           rewrite (ind_ret_iff). now simpl_monoid. }
   Qed.
@@ -1948,25 +1954,30 @@ Section locally_nameless_metatheory.
       destruct a1.
       { destruct a2.
         { assumption. }
-        { false.
+        { exfalso.
           destruct (compare n0 e); easy.
         }
       }
       { destruct a2.
-        { compare naturals n and e; false. }
+        { compare naturals n and e.
+          inversion Heq_loc.
+          inversion Heq_loc.
+          subst. contradiction.
+          inversion Heq_loc.
+        }
         { compare naturals n and e.
           { compare naturals n0 and e.
             - now inversion Heq_loc.
-            - false.
+            - inversion Heq_loc.
             - inversion Heq_loc. lia.
           }
           { compare naturals n0 and e.
             - now inversion Heq_loc.
-            - false.
+            - inversion Heq_loc.
           }
           { compare naturals n0 and e.
             - inversion Heq_loc. lia.
-            - false.
+            - inversion Heq_loc.
             - inversion Heq_loc. lia. }
         }
       }
@@ -2002,10 +2013,7 @@ Section locally_nameless_metatheory.
       compare a2 to atom x.
       compare values x and x.
       compare values x and a0.
-      compare naturals n and e.
-      { false. }
-      { false. }
-      { false. }
+      compare naturals n and e; inversion Heq_loc.
     - compare a2 to atom x.
       { compare naturals n and e;
           compare values x and x;

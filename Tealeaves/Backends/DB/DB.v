@@ -242,7 +242,7 @@ Qed.
 Lemma bound_1: forall ix,
     bound_b ix 1 = true <-> ix = 0.
 Proof.
-  destruct ix; intuition.
+  destruct ix; cbv; intuition.
 Qed.
 
 Ltac bound_induction :=
@@ -639,7 +639,7 @@ Section renaming_theory.
     unfold lift__ren, up__ren.
     bound_induction.
     - cbn. destruct ix.
-      + false.
+      + exfalso. lia.
       + cbn. unfold compose.
         rewrite Nat.add_1_r.
         do 2 fequal. lia.
@@ -1072,7 +1072,7 @@ Section theory.
     unfold up__sub, lift__sub.
     bound_induction.
     - destruct ix.
-      + false.
+      + exfalso. lia.
       + replace (S ix - 1) with ix by lia.
         reflexivity.
     - apply bound_1 in Hbound.
@@ -1175,13 +1175,14 @@ Section theory.
       unfold local__sub, lift__sub in H2.
       bound_induction_in H2.
       + right.
-        exists n1 n2 a. auto.
+        exists n1. exists n2. exists a. auto.
       + rewrite ind_ret_iff in H2.
         inversion H2; subst.
         simpl_monoid. now left.
     - intros. destruct H.
-      + exists n 0 l. splits.
+      + exists n. exists 0. exists l. split.
         { tauto. }
+        split.
         { unfold local__sub, lift__sub.
           bound_induction. now rewrite ind_ret_iff. }
         { easy. }

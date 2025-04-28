@@ -285,12 +285,12 @@ Section translate.
         cbn.
         fequal. fequal. lia.
       }
-      { cbn. false.
+      { cbn. exfalso.
         apply key_lookup_ix_None1 in Heqo.
         unfold contains_ix_upto in *. lia.
       }
     }
-    { subst. false. }
+    { subst. exfalso. lia. }
   Qed.
 
   (** A helper lemma used below *)
@@ -316,7 +316,7 @@ Section translate.
     }
     { cbn.
       destruct depth.
-      - false.
+      - exfalso. inversion Hbound.
       - assert (Hle: n <= depth) by lia.
         rewrite <- Nat.leb_le in Hle.
         rewrite Hle.

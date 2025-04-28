@@ -458,8 +458,7 @@ Lemma ok_type_ctx_cons : forall Δ Γ x τ,
     ok_type_ctx Δ (x ~ τ ++ Γ).
 Proof.
   intros. unfold ok_type_ctx in *. bursts.
-  splits.
-  - intuition.
+  split; try now split.
   - intros ? [?|?].
     + subst. auto.
     + firstorder.

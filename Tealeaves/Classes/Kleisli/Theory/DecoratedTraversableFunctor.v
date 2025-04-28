@@ -802,17 +802,17 @@ Section quantification.
       unfold_all_transparent_tcs.
       split.
       { intros [hyp | hyp].
-        - exists e a. split.
+        - exists e. exists a. split.
           now left. assumption.
         - destruct hyp as [e' [a' [Hin HP]]].
-          exists e' a'. split.
+          exists e'. exists a'. split.
           now right. assumption.
       }
       { intros [e' [a' [hyp1 hyp2]]].
         destruct hyp1 as [hyp1 | hyp1].
         - left. inversion hyp1; subst.
           assumption.
-        - right. exists e' a'. easy.
+        - right. exists e'. exists a'. easy.
       }
   Qed.
 

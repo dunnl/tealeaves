@@ -597,20 +597,20 @@ Section in_operations_lemmas.
     {A : Type}
     (Γ : alist A).
 
-  Ltac auto_star ::= intro; preprocess; eauto.
+  Ltac auto_star := intro; preprocess; eauto.
 
   Lemma in_dom_iff : forall (x : atom),
     x ∈ dom Γ <-> exists a : A, (x, a) ∈ (Γ : list (atom * A)).
   Proof.
     intros. unfold dom. rewrite (in_map_iff list).
-    splits*.
+    split; auto_star.
   Qed.
 
   Lemma in_range_iff : forall a,
       a ∈ range Γ <-> exists x : atom, (x, a) ∈ (Γ : list (atom * A)).
   Proof.
     intros. unfold range. rewrite (in_map_iff list).
-    splits*.
+    split; auto_star.
   Qed.
 
   Lemma in_domset_iff : forall x,
@@ -1065,7 +1065,7 @@ Section uniq_auto_lemmas.
   Proof.
     introv Hu. alist induction Γ1.
     - constructor.
-    - simpl_alist in Hu. inverts Hu.
+    - simpl_alist in Hu. inversion Hu.
       autorewrite with tea_rw_dom in *.
       constructor; tauto.
   Qed.
@@ -1076,7 +1076,7 @@ Section uniq_auto_lemmas.
   Proof.
     introv Hu. alist induction Γ1.
     - trivial.
-    - inverts Hu. auto.
+    - inversion Hu. auto.
   Qed.
 
   Lemma uniq_app_3 :
@@ -1085,7 +1085,7 @@ Section uniq_auto_lemmas.
   Proof.
     introv Hu. unfold disjoint. alist induction Γ1 as [| ? ? ? IH].
     - fsetdec.
-    - inverts Hu. autorewrite with tea_rw_dom in *.
+    - inversion Hu. autorewrite with tea_rw_dom in *.
       lapply IH.
       + fsetdec.
       + auto.
@@ -1100,7 +1100,7 @@ Section uniq_auto_lemmas.
     intros. alist induction Γx as [| ? ? Γz ?].
     - cbn. assumption.
     - change_alist (x ~ a ++ (Γz ++ Γy)).
-      inverts H. autorewrite with tea_rw_disj in *. constructor.
+      inversion H. autorewrite with tea_rw_disj in *. constructor.
       + tauto.
       + now autorewrite with tea_rw_dom.
   Qed.
@@ -1129,7 +1129,8 @@ Section uniq_auto_lemmas.
   Proof.
     introv Hu. alist induction Γ1.
     - constructor.
-    - autorewrite with tea_rw_envmap in *. inverts Hu.
+    - autorewrite with tea_rw_envmap in *.
+      inversion Hu.
       constructor.
       + auto.
       + now autorewrite with tea_rw_dom in *.
@@ -1141,7 +1142,7 @@ Section uniq_auto_lemmas.
   Proof.
     introv Hu. alist induction Γ1.
     - constructor.
-    - autorewrite with tea_rw_envmap. inverts Hu.
+    - autorewrite with tea_rw_envmap. inversion Hu.
       constructor.
       + auto.
       + now autorewrite with tea_rw_dom in *.
@@ -1311,7 +1312,7 @@ Section in_theorems_uniq.
       ((x, a) ∈ Γ2 /\ ~ x `in` domset Γ1).
   Proof.
     introv H. autorewrite with tea_rw_uniq tea_rw_in in *.
-    destructs H. split.
+    destruct H as [H1 [H2 H3]]. split.
     - intros [inΓ1|inΓ2].
       + left. split.
         * auto.
@@ -1429,12 +1430,17 @@ Section binds_theorems.
     - inversion hyp1.
     - simpl_list in *. destruct hyp1 as [hyp1|hyp1];
                          destruct hyp2 as [hyp2|hyp2].
-      + inverts hyp1. now inverts hyp2.
-      + inverts hyp1. inverts Hu.
+      + inversion hyp1.
+        now inversion hyp2.
+      + inversion hyp1.
+        inversion Hu.
+        subst.
         now (apply in_in_domset in hyp2).
-      + inverts hyp2. inverts Hu.
+      + inversion hyp2.
+        inversion Hu.
+        subst.
         now (apply in_in_domset in hyp1).
-      + inverts Hu. auto.
+      + inversion Hu. auto.
   Qed.
 
   Lemma fresh_app_l : forall x a Γ1 Γ2,
@@ -1467,9 +1473,11 @@ Section binds_theorems.
     - now simpl_list in *.
     - destruct a0 as [z a']. simpl_list in *.
       destruct Hin as [Hin|Hin].
-      + inverts Hin. exists (@nil (atom * A)) Γ. reflexivity.
+      + inversion Hin.
+        exists (@nil (atom * A)). exists Γ.
+        reflexivity.
       + specialize (IHΓ Hin). destruct IHΓ as [Γ1 [Γ2 rest]].
-        subst. exists ((z, a') :: Γ1) Γ2. reflexivity.
+        subst. exists ((z, a') :: Γ1). exists Γ2. reflexivity.
   Qed.
 
 End binds_theorems.

@@ -56,9 +56,9 @@ Section shape_induction.
       intros D0 b2 Hshape ?.
     - destruct b2.
       + now inversion Hshape.
-      + false.
+      + inversion Hshape.
     - destruct b2 as [c' | rest' a'].
-      + false.
+      + inversion Hshape.
       + apply IHstep.
         * specialize (IHrest rest).
           inversion Hshape.
