@@ -935,28 +935,73 @@ Qed.
 Import Adapters.PolyToMono.Categorical.DecoratedFunctor.ToMono1.
 Import Adapters.PolyToMono.Categorical.TraversableFunctor.ToMono.
 
+Lemma fun2_map_map_pw:
+  forall (B1 A1 B2 A2 B3 A3: Type)
+    (g2: B2 -> B3) (f2: A2 -> A3)
+    (g1: B1 -> B2) (f1: A1 -> A2) (t: term B1 A1),
+    map2 g2 f2 (map2 g1 f1 t) = map2 (g2 ∘ g1) (f2 ∘ f1) t.
+Proof.
+  intros. compose near t on left.
+  now rewrite fun2_map_map.
+Qed.
+
+Ltac simplify_id :=
+  repeat (change (?f ∘ id) with f || change (id ∘ ?f) with f).
+
+
+
 #[export] Instance Single_DTF: forall (B: Type), DecoratedTraversableFunctor (list B) (term B).
 Proof.
   intros.
   constructor.
   - typeclasses eauto.
   - typeclasses eauto.
-  - intros. unfold compose. ext t. induction t.
+  - intros. unfold compose. ext t.
+    unfold_ops @Map2_1.
+    unfold_ops @Dist2_1.
+    unfold compose at 1.
+    unfold compose at 1.
+    rewrite fun2_map_map_pw.
+    simplify_id.
+    unfold dec, VDec.
+    unfold compose at 1.
+    rewrite fun2_map_map_pw.
+    simplify_id.
+    unfold decp.
+    unfold DecoratePoly_term.
+    unfold dec2_term.
+    generalize (@nil B).
+    induction t; intro ctx.
     + cbn. unfold id.
       compose near v.
       rewrite (fun_map_map).
       rewrite (fun_map_map).
       reflexivity.
     + cbn in *.
-      compose near t.
-      rewrite map_dec2_rec_spec.
-      setoid_rewrite extract_preincr.
-      unfold compose.
-      compose near (dec2_term t).
-      rewrite fun2_map21_map2.
-      compose near (dec2_term t).
-      rewrite fun2_map_map.
-Admitted.
+      rewrite IHt.
+      unfold compose at 1.
+      rewrite ap2.
+      rewrite <- ap_map.
+      rewrite app_pure_natural.
+      (* RHS *)
+      rewrite ap2.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      reflexivity.
+    + cbn in *.
+      rewrite IHt1.
+      rewrite <- ap_map.
+      rewrite app_pure_natural.
+      rewrite IHt2.
+      rewrite <- ap_map.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      (* RHS *)
+      rewrite map_ap.
+      rewrite map_ap.
+      rewrite app_pure_natural.
+      reflexivity.
+Qed.
 
 Lemma dist_dec2_rec_commute_map:
   forall (B1 V1 B2 V2: Type)
