@@ -118,7 +118,57 @@ Module ToMono.
           change (pure G (A := ?A)) with (id ∘ pure G (A := A)) at 2.
           rewrite <- (fun2_map2_map21 (F := T)).
           reassociate <- on right.
-    Admitted.
+          reassociate <- on left.
+          unfold map at 2.
+          unfold Map2_2.
+          change (@map G Map_G (T A V) (T B V) (@map2 T Map2_F A V B V f (@id V)))
+            with (map2 (G ○12 T) f (@id V)).
+          setoid_rewrite (natural2 (G := G ○12 T) (ϕ := @dist2 T dist2_F G _ _ _)).
+          reassociate -> on left.
+          unfold_ops @Map21_compose.
+          rewrite fun2_map_map.
+          reassociate -> on right.
+          rewrite fun2_map2_map21.
+          rewrite fun_map_id.
+          reflexivity.
+      - (* dist_morph *)
+        rename H7 into AppMor.
+        reassociate -> on left.
+        rewrite (fun2_map2_map22 (F := T)).
+        change (id ∘ ?f) with f.
+        change (pure G2 (A := ?A)) with (id ∘ pure G2 (A := A)) at 1.
+        change (id ∘ ?f) with f.
+        inversion AppMor.
+        assert (cut: forall (A : Type), ϕ A ∘ pure G1 = pure G2).
+        { intros. ext a. unfold compose. apply appmor_pure. }
+        rewrite <- cut.
+        rewrite <- fun2_map2_map21.
+        reassociate <- on left.
+        rewrite (dist2_morph (ϕ := ϕ) (T := T)).
+        reflexivity.
+      - (* dist unit *)
+        rewrite dist2_unit.
+        unfold_ops @Pure_I.
+        rewrite fun2_map_id.
+        reflexivity.
+      - (* dist linear *)
+        rewrite dist2_linear.
+        reassociate <- on right.
+        unfold_ops @Pure_compose.
+        change (?f ○ ?g) with (f ∘ g).
+        rewrite <- (fun_map_map (F := G1)).
+        reassociate -> near (dist2 (G := G1)).
+        change (map (map2 T ?f ?g)) with (map2 (G1 ○12 T) f g).
+        setoid_rewrite (natural2 (Natural2 := dist2_natural) (G := G1 ○12 T)).
+        reassociate -> on left.
+        unfold_ops @Map21_compose.
+        reassociate -> on right.
+        reassociate -> on right.
+        rewrite (fun2_map_map (F := T)).
+        rewrite fun_map_id.
+        rewrite (natural (ϕ := @pure G1 _)).
+        reflexivity.
+    Qed.
 
     Section commute.
 
