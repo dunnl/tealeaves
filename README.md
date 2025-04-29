@@ -18,6 +18,6 @@ Compilation instructions:
 
 ## Documentation
 
-Coqdocs are found under [/html/toc.html](/html/toc.html)
+Coqdocs are found under [/docs/html/toc.html](/docs/html/toc.html)
 
-Alectryon files are found under [/html-alectryon/](/html-alectryon/)
+Alectryon files are found under [/docs/html-alectryon/](/docs/html-alectryon/)
