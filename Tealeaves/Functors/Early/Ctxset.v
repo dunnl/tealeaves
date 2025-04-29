@@ -251,7 +251,7 @@ Section ctxset.
     Compat_Map_Bindd W (ctxset W) (ctxset W).
   Proof.
     hnf. ext A B f.
-    change_left (map f).
+    change_left (map (F := ctxset W) f).
     rewrite ctxset_map_to_bindd.
     reflexivity.
   Qed.

@@ -1720,13 +1720,13 @@ Section open_metatheory.
           destruct_eq_args j k2.
           * rewrite btg_eq, btgd_eq.
             reassociate ->.
-            replace (extract ∘ incr w) with (extract (A := LN)).
+            replace (extract ∘ incr w) with (extract (W := prod (list K)) (A := LN)).
             reflexivity.
             symmetry; apply (extract_incr (A := LN) w).
           * rewrite btgd_neq; auto.
             rewrite btg_neq; auto.
             reassociate ->.
-            replace (extract ∘ incr w) with (extract (A := LN)).
+            replace (extract ∘ incr w) with (extract (W := prod (list K)) (A := LN)).
             reflexivity.
             symmetry; apply (extract_incr (A := LN) w).
         + compose near (Bd (n - 1)) on left.
