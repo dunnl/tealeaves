@@ -10,39 +10,12 @@ From Tealeaves Require Export
   Classes.Categorical.DecoratedTraversableFunctorPoly
   Classes.Kleisli.DecoratedTraversableMonadPoly.
 
-(*
-From Tealeaves Require
-  Adapters.PolyToMono.Kleisli.DecoratedFunctor
-  Adapters.PolyToMono.Kleisli.DecoratedTraversableFunctor
-  Adapters.PolyToMono.Kleisli.DecoratedTraversableMonad.
-*)
-
 From Tealeaves Require
   Adapters.MonoidHom.DecoratedTraversableMonad
   Adapters.PolyToMono.PDTM.
 
 Import PDTM.CategoricalToKleisliAll.
 
-(*
-Import Kleisli.DecoratedFunctorPoly.
-
-Import CategoricalToKleisli.DecoratedFunctorPoly.
-Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations.
-Import CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.
-Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations.
-Import CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.
-Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations.
-Import CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.
-
-Import PolyToMono.Categorical.DecoratedFunctor.ToMono1.
-Import PolyToMono.Categorical.TraversableFunctor.ToMono.
-Import PolyToMono.Categorical.DecoratedFunctor.ToMono1.
-
-Import CategoricalToKleisli.TraversableFunctor.DerivedOperations.
-Import CategoricalToKleisli.TraversableFunctor.DerivedInstances.
-Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.
-Import CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.
-*)
 
 #[local] Existing Instance Theory.DecoratedTraversableFunctor.ToCtxset_Mapdt.
 #[local] Existing Instance Theory.TraversableFunctor.ToSubset_Traverse.
