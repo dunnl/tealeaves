@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
+<title>CoreTactics.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.16.0+0.16.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-wsp"><span class="c">(* ================================================================= *)</span>
+<span class="sd">(** ** Introduction *)</span>
+
+<span class="sd">(** [introv] is used to name only non-dependent hypothesis.</span>
+<span class="sd"> - If [introv] is called on a goal of the form [forall x, H],</span>
+<span class="sd">   it should introduce all the variables quantified with a</span>
+<span class="sd">   [forall] at the head of the goal, but it does not introduce</span>
+<span class="sd">   hypotheses that preceed an arrow constructor, like in [P -&gt; Q].</span>
+<span class="sd"> - If [introv] is called on a goal that is not of the form</span>
+<span class="sd">   [forall x, H] nor [P -&gt; Q], the tactic unfolds definitions</span>
+<span class="sd">   until the goal takes the form [forall x, H] or [P -&gt; Q].</span>
+<span class="sd">   If unfolding definitions does not produces a goal of this form,</span>
+<span class="sd">   then the tactic [introv] does nothing at all. *)</span>
+
+<span class="c">(* [introv_rec] introduces all visible variables.</span>
+<span class="c">   It does not try to unfold any definition. *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">introv_rec</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="nl">?P</span> -&gt; <span class="nl">?Q</span> =&gt; <span class="kp">idtac</span>
+  | |- <span class="kr">forall</span> <span class="nv">_</span>, _ =&gt; <span class="nb">intro</span>; introv_rec
+  | |- _ =&gt; <span class="kp">idtac</span>
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* [introv_noarg] forces the goal to be a [forall] or an [-&gt;],</span>
+<span class="c">   and then calls [introv_rec] to introduces variables</span>
+<span class="c">   (possibly none, in which case [introv] is the same as [hnf]).</span>
+<span class="c">   If the goal is not a product, then it does not do anything. *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">introv_noarg</span> :=
+  <span class="kr">match goal with</span>
+  | |- <span class="nl">?P</span> -&gt; <span class="nl">?Q</span> =&gt; <span class="kp">idtac</span>
+  | |- <span class="kr">forall</span> <span class="nv">_</span>, _ =&gt; introv_rec
+  | |- <span class="nl">?G</span> =&gt; <span class="nb">hnf</span>;
+     <span class="kr">match goal with</span>
+     | |- <span class="nl">?P</span> -&gt; <span class="nl">?Q</span> =&gt; <span class="kp">idtac</span>
+     | |- <span class="kr">forall</span> <span class="nv">_</span>, _ =&gt; introv_rec
+     <span class="kr">end</span>
+  | |- _ =&gt; <span class="kp">idtac</span>
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+  <span class="c">(* simpler yet perhaps less efficient imlementation *)</span>
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">introv_noarg_not_optimized</span> :=
+    <span class="nb">intro</span>; <span class="kr">match goal with</span> H:_|-_ =&gt; <span class="nb">revert</span> H <span class="kr">end</span>; introv_rec.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* [introv_arg H] introduces one non-dependent hypothesis</span>
+<span class="c">   under the name [H], after introducing the variables</span>
+<span class="c">   quantified with a [forall] that preceeds this hypothesis.</span>
+<span class="c">   This tactic fails if there does not exist a hypothesis</span>
+<span class="c">   to be introduced. *)</span>
+<span class="c">(* Note: __ in introv means &quot;intros&quot; *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">introv_arg</span> H :=
+  <span class="nb">hnf</span>; <span class="kr">match goal with</span>
+  | |- <span class="nl">?P</span> -&gt; <span class="nl">?Q</span> =&gt; <span class="nb">intros</span> H
+  | |- <span class="kr">forall</span> <span class="nv">_</span>, _ =&gt; <span class="nb">intro</span>; introv_arg H
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* [introv I1 .. IN] iterates [introv Ik] *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> :=
+  introv_noarg.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) :=
+  introv_arg I1.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2) :=
+  introv I1; introv I2.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2)
+ simple_intropattern(I3) :=
+  introv I1; introv I2 I3.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2)
+ simple_intropattern(I3) simple_intropattern(I4) :=
+  introv I1; introv I2 I3 I4.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2)
+ simple_intropattern(I3) simple_intropattern(I4) simple_intropattern(I5) :=
+  introv I1; introv I2 I3 I4 I5.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2)
+ simple_intropattern(I3) simple_intropattern(I4) simple_intropattern(I5)
+ simple_intropattern(I6) :=
+  introv I1; introv I2 I3 I4 I5 I6.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2)
+ simple_intropattern(I3) simple_intropattern(I4) simple_intropattern(I5)
+ simple_intropattern(I6) simple_intropattern(I7) :=
+  introv I1; introv I2 I3 I4 I5 I6 I7.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2)
+ simple_intropattern(I3) simple_intropattern(I4) simple_intropattern(I5)
+ simple_intropattern(I6) simple_intropattern(I7) simple_intropattern(I8) :=
+  introv I1; introv I2 I3 I4 I5 I6 I7 I8.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2)
+ simple_intropattern(I3) simple_intropattern(I4) simple_intropattern(I5)
+ simple_intropattern(I6) simple_intropattern(I7) simple_intropattern(I8)
+ simple_intropattern(I9) :=
+  introv I1; introv I2 I3 I4 I5 I6 I7 I8 I9.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;introv&quot;</span> simple_intropattern(I1) simple_intropattern(I2)
+ simple_intropattern(I3) simple_intropattern(I4) simple_intropattern(I5)
+ simple_intropattern(I6) simple_intropattern(I7) simple_intropattern(I8)
+ simple_intropattern(I9) simple_intropattern(I10) :=
+  introv I1; introv I2 I3 I4 I5 I6 I7 I8 I9 I10.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** [intros_all] repeats [intro] as long as possible. Contrary to [intros],</span>
+<span class="sd">    it unfolds any definition on the way. Remark that it also unfolds the</span>
+<span class="sd">    definition of negation, so applying [intros_all] to a goal of the form</span>
+<span class="sd">    [forall x, P x -&gt; ~Q] will introduce [x] and [P x] and [Q], and will</span>
+<span class="sd">    leave [False] in the goal. *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;intros_all&quot;</span> :=
+  <span class="kp">repeat</span> <span class="nb">intro</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** [intros_hnf] introduces an hypothesis and sets in head normal form *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;intro_hnf&quot;</span> :=
+  <span class="nb">intro</span>; <span class="kr">match goal with</span> H: _ |- _ =&gt; <span class="nb">hnf</span> <span class="kr">in</span> H <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* ================================================================= *)</span>
+<span class="sd">(** ** Proving Equalities *)</span>
+
+<span class="sd">(** The tactic [fequal] enhances Coq&#39;s tactic [f_equal], which does not</span>
+<span class="sd">    simplify equalities between tuples, nor between dependent pairs of</span>
+<span class="sd">    the form [exist _ _] or [existT _ _]. For support of dependent pairs,</span>
+<span class="sd">    the file [LibEqual] must be imported.</span>
+
+<span class="sd">    Subgoals solvable by [reflexivity] are automatically discharged.</span>
+<span class="sd">    See also the the variant [fequals], which discharges more subgoals. *)</span>
+
+<span class="sd">(** Note: only [args_eq_2] is actually useful for the implementation of</span>
+<span class="sd">    [fequal], if we rely on Coq&#39;s [f_equal] tactic for other arities.</span>
+<span class="sd">    We provide these lemmas to show the pattern of lemmas to exploit</span>
+<span class="sd">    for implementing [fequal] independently of [f_equal]. *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Section</span> <span class="nf">FuncEq</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Variables</span> (<span class="nv">A1</span> <span class="nv">A2</span> <span class="nv">A3</span> <span class="nv">A4</span> <span class="nv">A5</span> <span class="nv">A6</span> <span class="nv">A7</span> <span class="nv">B</span> : <span class="kt">Type</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk0"><span class="kn">Lemma</span> <span class="nf">args_eq_1</span> : <span class="kr">forall</span> (<span class="nv">f</span>:A1-&gt;B) <span class="nv">x1</span> <span class="nv">y1</span>,
+  x1 = y1 -&gt;
+  f x1 = f y1.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; B) (<span class="nv">x1</span> <span class="nv">y1</span> : A1),
+x1 = y1 -&gt; f x1 = f y1</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk1"><span class="kn">Proof using</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; B) (<span class="nv">x1</span> <span class="nv">y1</span> : A1),
+x1 = y1 -&gt; f x1 = f y1</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk2"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; B</span></span></span><br><span><var>x1, y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>x1 = y1</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f x1 = f y1</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk3"><span class="nb">subst</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; B</span></span></span><br><span><var>y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f y1 = f y1</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">auto</span>.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk4"><span class="kn">Lemma</span> <span class="nf">args_eq_2</span> : <span class="kr">forall</span> (<span class="nv">f</span>:A1-&gt;A2-&gt;B) <span class="nv">x1</span> <span class="nv">y1</span> <span class="nv">x2</span> <span class="nv">y2</span>,
+  x1 = y1 -&gt; x2 = y2 -&gt;
+  f x1 x2 = f y1 y2.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; B) (<span class="nv">x1</span> <span class="nv">y1</span> : A1) (<span class="nv">x2</span> <span class="nv">y2</span> : A2),
+x1 = y1 -&gt; x2 = y2 -&gt; f x1 x2 = f y1 y2</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk5"><span class="kn">Proof using</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; B) (<span class="nv">x1</span> <span class="nv">y1</span> : A1) (<span class="nv">x2</span> <span class="nv">y2</span> : A2),
+x1 = y1 -&gt; x2 = y2 -&gt; f x1 x2 = f y1 y2</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk6"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; B</span></span></span><br><span><var>x1, y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>x2, y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>x1 = y1</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>x2 = y2</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f x1 x2 = f y1 y2</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk7"><span class="nb">subst</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; B</span></span></span><br><span><var>y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f y1 y2 = f y1 y2</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">auto</span>.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk8"><span class="kn">Lemma</span> <span class="nf">args_eq_3</span> : <span class="kr">forall</span> (<span class="nv">f</span>:A1-&gt;A2-&gt;A3-&gt;B) <span class="nv">x1</span> <span class="nv">y1</span> <span class="nv">x2</span> <span class="nv">y2</span> <span class="nv">x3</span> <span class="nv">y3</span>,
+  x1 = y1 -&gt; x2 = y2 -&gt; x3 = y3 -&gt;
+  f x1 x2 x3 = f y1 y2 y3.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; B) (<span class="nv">x1</span> <span class="nv">y1</span> : A1)
+  (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3),
+x1 = y1 -&gt;
+x2 = y2 -&gt; x3 = y3 -&gt; f x1 x2 x3 = f y1 y2 y3</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk9"><span class="kn">Proof using</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; B) (<span class="nv">x1</span> <span class="nv">y1</span> : A1)
+  (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3),
+x1 = y1 -&gt;
+x2 = y2 -&gt; x3 = y3 -&gt; f x1 x2 x3 = f y1 y2 y3</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chka"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; B</span></span></span><br><span><var>x1, y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>x2, y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>x3, y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>x1 = y1</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>x2 = y2</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>x3 = y3</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f x1 x2 x3 = f y1 y2 y3</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chkb"><span class="nb">subst</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; B</span></span></span><br><span><var>y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f y1 y2 y3 = f y1 y2 y3</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">auto</span>.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chkc" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chkc"><span class="kn">Lemma</span> <span class="nf">args_eq_4</span> : <span class="kr">forall</span> (<span class="nv">f</span>:A1-&gt;A2-&gt;A3-&gt;A4-&gt;B) <span class="nv">x1</span> <span class="nv">y1</span> <span class="nv">x2</span> <span class="nv">y2</span> <span class="nv">x3</span> <span class="nv">y3</span> <span class="nv">x4</span> <span class="nv">y4</span>,
+  x1 = y1 -&gt; x2 = y2 -&gt; x3 = y3 -&gt; x4 = y4 -&gt;
+  f x1 x2 x3 x4 = f y1 y2 y3 y4.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; B) (<span class="nv">x1</span> <span class="nv">y1</span> : A1)
+  (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3) (<span class="nv">x4</span> <span class="nv">y4</span> : A4),
+x1 = y1 -&gt;
+x2 = y2 -&gt;
+x3 = y3 -&gt; x4 = y4 -&gt; f x1 x2 x3 x4 = f y1 y2 y3 y4</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chkd" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chkd"><span class="kn">Proof using</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; B) (<span class="nv">x1</span> <span class="nv">y1</span> : A1)
+  (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3) (<span class="nv">x4</span> <span class="nv">y4</span> : A4),
+x1 = y1 -&gt;
+x2 = y2 -&gt;
+x3 = y3 -&gt; x4 = y4 -&gt; f x1 x2 x3 x4 = f y1 y2 y3 y4</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chke" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chke"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; B</span></span></span><br><span><var>x1, y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>x2, y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>x3, y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>x4, y4</var><span class="hyp-type"><b>: </b><span>A4</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>x1 = y1</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>x2 = y2</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>x3 = y3</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>x4 = y4</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f x1 x2 x3 x4 = f y1 y2 y3 y4</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chkf" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chkf"><span class="nb">subst</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; B</span></span></span><br><span><var>y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>y4</var><span class="hyp-type"><b>: </b><span>A4</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f y1 y2 y3 y4 = f y1 y2 y3 y4</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">auto</span>.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk10" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk10"><span class="kn">Lemma</span> <span class="nf">args_eq_5</span> : <span class="kr">forall</span> (<span class="nv">f</span>:A1-&gt;A2-&gt;A3-&gt;A4-&gt;A5-&gt;B) <span class="nv">x1</span> <span class="nv">y1</span> <span class="nv">x2</span> <span class="nv">y2</span> <span class="nv">x3</span> <span class="nv">y3</span> <span class="nv">x4</span> <span class="nv">y4</span> <span class="nv">x5</span> <span class="nv">y5</span>,
+  x1 = y1 -&gt; x2 = y2 -&gt; x3 = y3 -&gt; x4 = y4 -&gt; x5 = y5 -&gt;
+  f x1 x2 x3 x4 x5 = f y1 y2 y3 y4 y5.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; B)
+  (<span class="nv">x1</span> <span class="nv">y1</span> : A1) (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3) (<span class="nv">x4</span> <span class="nv">y4</span> : A4)
+  (<span class="nv">x5</span> <span class="nv">y5</span> : A5),
+x1 = y1 -&gt;
+x2 = y2 -&gt;
+x3 = y3 -&gt;
+x4 = y4 -&gt;
+x5 = y5 -&gt; f x1 x2 x3 x4 x5 = f y1 y2 y3 y4 y5</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk11" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk11"><span class="kn">Proof using</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; B)
+  (<span class="nv">x1</span> <span class="nv">y1</span> : A1) (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3) (<span class="nv">x4</span> <span class="nv">y4</span> : A4)
+  (<span class="nv">x5</span> <span class="nv">y5</span> : A5),
+x1 = y1 -&gt;
+x2 = y2 -&gt;
+x3 = y3 -&gt;
+x4 = y4 -&gt;
+x5 = y5 -&gt; f x1 x2 x3 x4 x5 = f y1 y2 y3 y4 y5</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk12" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk12"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; B</span></span></span><br><span><var>x1, y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>x2, y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>x3, y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>x4, y4</var><span class="hyp-type"><b>: </b><span>A4</span></span></span><br><span><var>x5, y5</var><span class="hyp-type"><b>: </b><span>A5</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>x1 = y1</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>x2 = y2</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>x3 = y3</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>x4 = y4</span></span></span><br><span><var>H3</var><span class="hyp-type"><b>: </b><span>x5 = y5</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f x1 x2 x3 x4 x5 = f y1 y2 y3 y4 y5</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk13" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk13"><span class="nb">subst</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; B</span></span></span><br><span><var>y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>y4</var><span class="hyp-type"><b>: </b><span>A4</span></span></span><br><span><var>y5</var><span class="hyp-type"><b>: </b><span>A5</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f y1 y2 y3 y4 y5 = f y1 y2 y3 y4 y5</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">auto</span>.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk14" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk14"><span class="kn">Lemma</span> <span class="nf">args_eq_6</span> : <span class="kr">forall</span> (<span class="nv">f</span>:A1-&gt;A2-&gt;A3-&gt;A4-&gt;A5-&gt;A6-&gt;B) <span class="nv">x1</span> <span class="nv">y1</span> <span class="nv">x2</span> <span class="nv">y2</span> <span class="nv">x3</span> <span class="nv">y3</span> <span class="nv">x4</span> <span class="nv">y4</span> <span class="nv">x5</span> <span class="nv">y5</span> <span class="nv">x6</span> <span class="nv">y6</span>,
+  x1 = y1 -&gt; x2 = y2 -&gt; x3 = y3 -&gt; x4 = y4 -&gt; x5 = y5 -&gt; x6 = y6 -&gt;
+  f x1 x2 x3 x4 x5 x6 = f y1 y2 y3 y4 y5 y6.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; A6 -&gt; B)
+  (<span class="nv">x1</span> <span class="nv">y1</span> : A1) (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3) (<span class="nv">x4</span> <span class="nv">y4</span> : A4)
+  (<span class="nv">x5</span> <span class="nv">y5</span> : A5) (<span class="nv">x6</span> <span class="nv">y6</span> : A6),
+x1 = y1 -&gt;
+x2 = y2 -&gt;
+x3 = y3 -&gt;
+x4 = y4 -&gt;
+x5 = y5 -&gt;
+x6 = y6 -&gt; f x1 x2 x3 x4 x5 x6 = f y1 y2 y3 y4 y5 y6</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk15" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk15"><span class="kn">Proof using</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span> (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; A6 -&gt; B)
+  (<span class="nv">x1</span> <span class="nv">y1</span> : A1) (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3) (<span class="nv">x4</span> <span class="nv">y4</span> : A4)
+  (<span class="nv">x5</span> <span class="nv">y5</span> : A5) (<span class="nv">x6</span> <span class="nv">y6</span> : A6),
+x1 = y1 -&gt;
+x2 = y2 -&gt;
+x3 = y3 -&gt;
+x4 = y4 -&gt;
+x5 = y5 -&gt;
+x6 = y6 -&gt; f x1 x2 x3 x4 x5 x6 = f y1 y2 y3 y4 y5 y6</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk16" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk16"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; A6 -&gt; B</span></span></span><br><span><var>x1, y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>x2, y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>x3, y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>x4, y4</var><span class="hyp-type"><b>: </b><span>A4</span></span></span><br><span><var>x5, y5</var><span class="hyp-type"><b>: </b><span>A5</span></span></span><br><span><var>x6, y6</var><span class="hyp-type"><b>: </b><span>A6</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>x1 = y1</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>x2 = y2</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>x3 = y3</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>x4 = y4</span></span></span><br><span><var>H3</var><span class="hyp-type"><b>: </b><span>x5 = y5</span></span></span><br><span><var>H4</var><span class="hyp-type"><b>: </b><span>x6 = y6</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f x1 x2 x3 x4 x5 x6 = f y1 y2 y3 y4 y5 y6</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk17" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk17"><span class="nb">subst</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; A6 -&gt; B</span></span></span><br><span><var>y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>y4</var><span class="hyp-type"><b>: </b><span>A4</span></span></span><br><span><var>y5</var><span class="hyp-type"><b>: </b><span>A5</span></span></span><br><span><var>y6</var><span class="hyp-type"><b>: </b><span>A6</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f y1 y2 y3 y4 y5 y6 = f y1 y2 y3 y4 y5 y6</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">auto</span>.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk18" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk18"><span class="kn">Lemma</span> <span class="nf">args_eq_7</span> : <span class="kr">forall</span> (<span class="nv">f</span>:A1-&gt;A2-&gt;A3-&gt;A4-&gt;A5-&gt;A6-&gt;A7-&gt;B) <span class="nv">x1</span> <span class="nv">y1</span> <span class="nv">x2</span> <span class="nv">y2</span> <span class="nv">x3</span> <span class="nv">y3</span> <span class="nv">x4</span> <span class="nv">y4</span> <span class="nv">x5</span> <span class="nv">y5</span> <span class="nv">x6</span> <span class="nv">y6</span> <span class="nv">x7</span> <span class="nv">y7</span>,
+  x1 = y1 -&gt; x2 = y2 -&gt; x3 = y3 -&gt; x4 = y4 -&gt; x5 = y5 -&gt; x6 = y6 -&gt; x7 = y7 -&gt;
+  f x1 x2 x3 x4 x5 x6 x7 = f y1 y2 y3 y4 y5 y6 y7.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span>
+  (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; A6 -&gt; A7 -&gt; B)
+  (<span class="nv">x1</span> <span class="nv">y1</span> : A1) (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3) (<span class="nv">x4</span> <span class="nv">y4</span> : A4)
+  (<span class="nv">x5</span> <span class="nv">y5</span> : A5) (<span class="nv">x6</span> <span class="nv">y6</span> : A6) (<span class="nv">x7</span> <span class="nv">y7</span> : A7),
+x1 = y1 -&gt;
+x2 = y2 -&gt;
+x3 = y3 -&gt;
+x4 = y4 -&gt;
+x5 = y5 -&gt;
+x6 = y6 -&gt;
+x7 = y7 -&gt;
+f x1 x2 x3 x4 x5 x6 x7 = f y1 y2 y3 y4 y5 y6 y7</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk19" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk19"><span class="kn">Proof using</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion"><span class="kr">forall</span>
+  (<span class="nv">f</span> : A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; A6 -&gt; A7 -&gt; B)
+  (<span class="nv">x1</span> <span class="nv">y1</span> : A1) (<span class="nv">x2</span> <span class="nv">y2</span> : A2) (<span class="nv">x3</span> <span class="nv">y3</span> : A3) (<span class="nv">x4</span> <span class="nv">y4</span> : A4)
+  (<span class="nv">x5</span> <span class="nv">y5</span> : A5) (<span class="nv">x6</span> <span class="nv">y6</span> : A6) (<span class="nv">x7</span> <span class="nv">y7</span> : A7),
+x1 = y1 -&gt;
+x2 = y2 -&gt;
+x3 = y3 -&gt;
+x4 = y4 -&gt;
+x5 = y5 -&gt;
+x6 = y6 -&gt;
+x7 = y7 -&gt;
+f x1 x2 x3 x4 x5 x6 x7 = f y1 y2 y3 y4 y5 y6 y7</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk1a" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk1a"><span class="nb">intros</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; A6 -&gt; A7 -&gt; B</span></span></span><br><span><var>x1, y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>x2, y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>x3, y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>x4, y4</var><span class="hyp-type"><b>: </b><span>A4</span></span></span><br><span><var>x5, y5</var><span class="hyp-type"><b>: </b><span>A5</span></span></span><br><span><var>x6, y6</var><span class="hyp-type"><b>: </b><span>A6</span></span></span><br><span><var>x7, y7</var><span class="hyp-type"><b>: </b><span>A7</span></span></span><br><span><var>H</var><span class="hyp-type"><b>: </b><span>x1 = y1</span></span></span><br><span><var>H0</var><span class="hyp-type"><b>: </b><span>x2 = y2</span></span></span><br><span><var>H1</var><span class="hyp-type"><b>: </b><span>x3 = y3</span></span></span><br><span><var>H2</var><span class="hyp-type"><b>: </b><span>x4 = y4</span></span></span><br><span><var>H3</var><span class="hyp-type"><b>: </b><span>x5 = y5</span></span></span><br><span><var>H4</var><span class="hyp-type"><b>: </b><span>x6 = y6</span></span></span><br><span><var>H5</var><span class="hyp-type"><b>: </b><span>x7 = y7</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f x1 x2 x3 x4 x5 x6 x7 = f y1 y2 y3 y4 y5 y6 y7</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><input class="alectryon-toggle" id="coretactics-v-chk1b" style="display: none" type="checkbox"><label class="alectryon-input" for="coretactics-v-chk1b"><span class="nb">subst</span>.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><div class="goal-hyps"><span><var>A1, A2, A3, A4, A5, A6, A7, B</var><span class="hyp-type"><b>: </b><span><span class="kt">Type</span></span></span></span><br><span><var>f</var><span class="hyp-type"><b>: </b><span>A1 -&gt; A2 -&gt; A3 -&gt; A4 -&gt; A5 -&gt; A6 -&gt; A7 -&gt; B</span></span></span><br><span><var>y1</var><span class="hyp-type"><b>: </b><span>A1</span></span></span><br><span><var>y2</var><span class="hyp-type"><b>: </b><span>A2</span></span></span><br><span><var>y3</var><span class="hyp-type"><b>: </b><span>A3</span></span></span><br><span><var>y4</var><span class="hyp-type"><b>: </b><span>A4</span></span></span><br><span><var>y5</var><span class="hyp-type"><b>: </b><span>A5</span></span></span><br><span><var>y6</var><span class="hyp-type"><b>: </b><span>A6</span></span></span><br><span><var>y7</var><span class="hyp-type"><b>: </b><span>A7</span></span></span><br></div><span class="goal-separator"><hr></span><div class="goal-conclusion">f y1 y2 y3 y4 y5 y6 y7 = f y1 y2 y3 y4 y5 y6 y7</div></blockquote></div></div></small><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">auto</span>.</span><span class="alectryon-wsp"> </span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">FuncEq</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">fequal_post</span> :=
+  <span class="kp">try</span> <span class="kp">solve</span> [ <span class="bp">reflexivity</span> ].</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** [fequal_support_for_exist], implemented in [LibEqual], is meant</span>
+<span class="sd">   to simplify goals of the form [exist _ _ = exist _ _ ] and</span>
+<span class="sd">   [existT _ _ = existT _ _], by exploiting proof irrelevance. *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">fequal_support_for_exist</span> tt :=
+  <span class="kp">fail</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** For a n-ary tuple, [fequal], unlike [f_equal] enforces a recursive call</span>
+<span class="sd">    on the (n-1)-ary tuple associated with the right component. *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">fequal_base</span> :=
+  <span class="kr">match goal with</span>
+  | |- (_,_,_) = (_,_,_) =&gt;  <span class="nb">apply</span> args_eq_2; [ fequal_base | ]
+  | |- _ =&gt; <span class="kp">first</span>
+            [ fequal_support_for_exist tt
+            | <span class="nb">apply</span> args_eq_1
+            | <span class="nb">apply</span> args_eq_2
+            | <span class="nb">apply</span> args_eq_3
+            | <span class="nb">apply</span> args_eq_4
+            | <span class="nb">apply</span> args_eq_5
+            | <span class="nb">apply</span> args_eq_6
+            | <span class="nb">apply</span> args_eq_7
+            | <span class="nb">f_equal</span> <span class="c">(* fallback to Coq [f_equal] *)</span> ]
+  <span class="kr">end</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;fequal&quot;</span> :=
+  fequal_base; fequal_post.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** [fequals] is the same as [fequal] except that it tries and solve</span>
+<span class="sd">    all trivial subgoals, using [reflexivity] and [congruence]</span>
+<span class="sd">    (as well as the proof-irrelevance principle).</span>
+<span class="sd">    [fequals] applies to goals of the form [f x1 .. xN = f y1 .. yN]</span>
+<span class="sd">    and produces some subgoals of the form [xi = yi]). *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">fequals_post</span> :=
+  <span class="kp">try</span> <span class="kp">solve</span> [ <span class="bp">reflexivity</span> | <span class="bp">congruence</span>].</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;fequals&quot;</span> :=
+  fequal; fequals_post.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** [fequals_rec] calls [fequals] recursively.</span>
+<span class="sd">    It is equivalent to [repeat (progress fequals)]. *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Tactic Notation</span> <span class="s2">&quot;fequals_rec&quot;</span> :=
+  <span class="kp">repeat</span> (<span class="kp">progress</span> fequals).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Ltac</span> <span class="nf">get_head</span> E :=
+  <span class="kr">match</span> E <span class="kr">with</span>
+  | <span class="nl">?E&#39;</span> <span class="nl">?x</span> =&gt; get_head E&#39;
+  | _ =&gt; <span class="kp">constr</span>:(E)
+  <span class="kr">end</span>.</span></span></pre>
+</div>
+</div></body>
+</html>

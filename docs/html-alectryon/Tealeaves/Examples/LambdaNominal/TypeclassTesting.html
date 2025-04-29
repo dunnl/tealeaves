@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
+<title>Testing Typeclass Machinery</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.19.0+0.19.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document" id="testing-typeclass-machinery">
+<h1 class="title">Testing Typeclass Machinery</h1>
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk0"><span class="kn">From</span> Tealeaves <span class="kn">Require Import</span>
+  Examples.LambdaNominal.Categorical.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">[Loading ML file ring_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file zify_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file micromega_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file btauto_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file extraction_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote></div></div></small></span></pre><pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require</span>
+  Adapters.CategoricalToKleisli.Monad
+  Adapters.CategoricalToKleisli.DecoratedFunctor
+  Adapters.CategoricalToKleisli.TraversableFunctor
+  Adapters.CategoricalToKleisli.DecoratedTraversableFunctor
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonad.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require</span>
+  Adapters.PolyToMono.Categorical.DecoratedFunctor
+  Adapters.PolyToMono.Categorical.TraversableFunctor.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves <span class="kn">Require</span>
+  Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
+  Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">CategoricalPDTMUsefulInstances</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span>
+    Classes.Categorical.DecoratedTraversableMonadPoly.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span>
+    Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly
+    Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedOperations
+    Adapters.CategoricalToKleisli.DecoratedTraversableMonadPoly.DerivedInstances.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span>
+    Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly
+    Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedOperations
+    Adapters.CategoricalToKleisli.DecoratedTraversableFunctorPoly.DerivedInstances.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+  <span class="c">(*</span>
+<span class="c">  Export</span>
+<span class="c">    Adapters.CategoricalToKleisli.DecoratedFunctorPoly</span>
+<span class="c">    Adapters.CategoricalToKleisli.DecoratedFunctorPoly.DerivedOperations</span>
+<span class="c">    Adapters.CategoricalToKleisli.DecoratedFunctorPoly.DerivedInstances.</span>
+<span class="c">   *)</span>
+
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span>
+    Adapters.CategoricalToKleisli.DecoratedTraversableMonad
+    Adapters.CategoricalToKleisli.Monad.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span>
+    Adapters.PolyToMono.Categorical.DecoratedFunctor
+    Adapters.PolyToMono.Categorical.TraversableFunctor.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> Adapters.CategoricalToKleisli.Monad.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.Monad.DerivedOperations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.Monad.DerivedInstances.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> Adapters.CategoricalToKleisli.DecoratedFunctor.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.DecoratedFunctor.DerivedOperations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.DecoratedFunctor.DerivedInstances.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> Adapters.CategoricalToKleisli.TraversableFunctor.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.TraversableFunctor.DerivedOperations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.TraversableFunctor.DerivedInstances.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> Adapters.CategoricalToKleisli.DecoratedTraversableFunctor.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.DecoratedTraversableFunctor.DerivedOperations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.DecoratedTraversableFunctor.DerivedInstances.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> Adapters.CategoricalToKleisli.DecoratedTraversableMonad.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.DecoratedTraversableMonad.DerivedOperations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> CategoricalToKleisli.DecoratedTraversableMonad.DerivedInstances.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> PolyToMono.Categorical.DecoratedFunctor.ToMono1.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> PolyToMono.Categorical.TraversableFunctor.ToMono.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Context</span> (<span class="nv">B</span>: <span class="kt">Set</span>) (<span class="nv">V</span>: <span class="kt">Set</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk1"><span class="kn">Goal</span> Functor (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">Functor (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk2"><span class="kn">Goal</span> Categorical.Monad.Monad (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">Monad (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk3"><span class="kn">Goal</span> Categorical.DecoratedFunctor.DecoratedFunctor (list B) (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedFunctor.DecoratedFunctor (list B) (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk4"><span class="kn">Goal</span> Categorical.TraversableFunctor.TraversableFunctor (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">TraversableFunctor (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk5" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk5"><span class="kn">Goal</span> Categorical.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list B) (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableFunctor (list B) (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk6" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk6"><span class="kn">Goal</span> Kleisli.Monad.Monad (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">Monad.Monad (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk7" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk7"><span class="kn">Goal</span> Kleisli.DecoratedFunctor.DecoratedFunctor (list B) (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">Kleisli.DecoratedFunctor.DecoratedFunctor (list B)
+  (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk8" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk8"><span class="kn">Goal</span> Kleisli.TraversableFunctor.TraversableFunctor (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">Kleisli.TraversableFunctor.TraversableFunctor (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chk9" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chk9"><span class="kn">Goal</span> Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor (list B) (term B).</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">Kleisli.DecoratedTraversableFunctor.DecoratedTraversableFunctor
+  (list B) (term B)</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="nb">typeclasses eauto</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Qed</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+  <span class="c">(*</span>
+<span class="c">  Goal Kleisli.DecoratedFunctorPoly.DecoratedFunctorPoly term.</span>
+<span class="c">    typeclasses eauto.</span>
+<span class="c">  Qed.</span>
+<span class="c">   *)</span>
+
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chka" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chka"><span class="kn">Goal</span> Kleisli.DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly term.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly
+  term</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chkb" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chkb"><span class="kn">Fail</span> <span class="nb">typeclasses eauto</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
+Tactic failure: <span class="kn">Proof</span> search failed.</blockquote></div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableMonadPoly.DecoratedTraversableMonadPoly
+  term</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Abort</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chkc" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chkc"><span class="kn">Goal</span> Kleisli.DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly term.</label><small class="alectryon-output"><div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly
+  term</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">    </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="typeclasstesting-v-chkd" style="display: none" type="checkbox"><label class="alectryon-input" for="typeclasstesting-v-chkd"><span class="kn">Fail</span> <span class="nb">typeclasses eauto</span>.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The command has indeed failed <span class="kr">with</span> message:
+Tactic failure: <span class="kn">Proof</span> search failed.</blockquote></div><div class="alectryon-goals"><blockquote class="alectryon-goal"><span class="goal-separator"><hr></span><div class="goal-conclusion">DecoratedTraversableFunctorPoly.DecoratedTraversableFunctorPoly
+  term</div></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Abort</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">CategoricalPDTMUsefulInstances</span>.</span></span></pre>
+</div>
+</div></body>
+</html>

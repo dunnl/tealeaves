@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
+<title>Formalizing STLC with Named Variables</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.19.0+0.19.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document" id="formalizing-stlc-with-named-variables">
+<h1 class="title">Formalizing STLC with Named Variables</h1>
+<h2 class="subtitle" id="exports-and-setup">Exports and setup</h2>
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk0"><span class="kn">From</span> Tealeaves.Classes <span class="kn">Require Export</span>
+  Functor2
+  Categorical.ApplicativeCommutativeIdempotent
+  Categorical.TraversableFunctor2
+  Categorical.DecoratedFunctorPoly
+  Categorical.DecoratedTraversableMonadPoly.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">[Loading ML file ring_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file zify_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file micromega_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file btauto_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  <span class="c">(* Kleisli.DecoratedTraversableCommIdemFunctor</span>
+<span class="c">     Kleisli.DecoratedTraversableMonadPoly.</span>
+<span class="c">   *)</span>
+
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">From</span> Tealeaves.Functors <span class="kn">Require Export</span>
+  List L Pair.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk1"><span class="kn">From</span> Tealeaves.Backends <span class="kn">Require Export</span>
+  Common.Names.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">[Loading ML file extraction_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> Product.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> Monoid.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> List.ListNotations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> DecoratedTraversableCommIdemFunctor.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Generalizable Variables</span> <span class="nf">G</span> ϕ.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Set Implicit Arguments</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Export</span> Applicative.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Language definition *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Inductive</span> <span class="nf">term</span> (<span class="nv">B</span> <span class="nv">V</span>: <span class="kt">Type</span>) :=
+| tvar: V -&gt; term B V
+| lam: B -&gt; term B V -&gt; term B V
+| tap: term B V -&gt; term B V -&gt; term B V.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk2" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk2">#[<span class="kn">global</span>] <span class="kn">Arguments</span> tvar {B}%type_scope {V}%type_scope _.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The &#39;%&#39; scope delimiter <span class="kr">in</span> &#39;Arguments&#39; commands <span class="kr">is</span>
+deprecated, use &#39;%_&#39; instead (available since <span class="mi">8</span>.<span class="mi">19</span>).
+The &#39;%&#39; syntax will be reused <span class="kr">in</span> a future version <span class="kr">with</span>
+the same semantics <span class="kr">as</span> <span class="kr">in</span> terms, that <span class="kr">is</span> adding scope
+to the stack <span class="kr">for</span> <span class="kp">all</span> subterms. Code can be adapted
+<span class="kr">with</span> a script like: <span class="kr">for</span> f <span class="kr">in</span> $(find . -name &#39;*.v&#39;); <span class="kp">do</span>
+sed &#39;/<span class="kn">Arguments</span>/ s/%/%_/g&#39; -i $f ; <span class="bp">done</span>
+[argument-scope-delimiter,deprecated-since-<span class="mi">8</span>.<span class="mi">19</span>,deprecated,default]</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[export] <span class="kn">Instance</span> <span class="nf">Return_lambda_term</span>: <span class="kr">forall</span> <span class="nv">B</span>, Return (term B) :=
+  @tvar.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Notations and automation *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Module</span> <span class="nf">Notations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk3" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk3"><span class="kn">Notation</span> <span class="s2">&quot;&#39;λ&#39;&quot;</span> := (lam) (<span class="kn">at level</span> <span class="mi">45</span>).</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">Identifier &#39;<span class="kr">λ</span><span class="nv">&#39; now</span> <span class="nv">a</span> <span class="nv">keyword</span></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">  </span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;⟨ t ⟩ ( u )&quot;</span> := (tap t u) (<span class="kn">at level</span> <span class="mi">80</span>, t <span class="kn">at level</span> <span class="mi">40</span>, u <span class="kn">at level</span> <span class="mi">40</span>).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">End</span> <span class="nf">Notations</span>.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Declare Scope</span> lambda_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Delimit Scope</span> lambda_scope <span class="kr">with</span> lam.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* Notation for variables *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;&#39;`&#39; x&quot;</span> := (@tvar atom atom x) (<span class="kn">at level</span> <span class="mi">1</span>, <span class="kn">format</span> <span class="s2">&quot;&#39;`&#39; x&quot;</span>) : lambda_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* Notation for lambda abstraction *)</span>
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="syntax-v-chk4" style="display: none" type="checkbox"><label class="alectryon-input" for="syntax-v-chk4"><span class="kn">Notation</span> <span class="s2">&quot;&#39;λ&#39; x , t&quot;</span> := (@lam atom atom x t)
+  (<span class="kn">at level</span> <span class="mi">100</span>, <span class="kn">right associativity</span>, <span class="kn">format</span> <span class="s2">&quot;&#39;λ&#39; x ,  t&quot;</span>) : lambda_scope.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">Identifier &#39;<span class="kr">λ</span><span class="nv">&#39; now</span> <span class="nv">a</span> <span class="nv">keyword</span></blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(* Notation for application *)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Notation</span> <span class="s2">&quot;t1 · t2&quot;</span> := (@tap atom atom t1 t2)
+  (<span class="kn">at level</span> <span class="mi">50</span>, <span class="kn">left associativity</span>, <span class="kn">format</span> <span class="s2">&quot;t1 · t2&quot;</span>) : lambda_scope.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Open Scope</span> lambda_scope.</span></span></pre>
+</div>
+</div></body>
+</html>

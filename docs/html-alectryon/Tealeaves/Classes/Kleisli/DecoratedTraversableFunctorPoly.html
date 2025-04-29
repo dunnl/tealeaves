@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
+<title>DecoratedTraversableFunctorPoly.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.19.0+0.19.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="decoratedtraversablefunctorpoly-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="decoratedtraversablefunctorpoly-v-chk0"><span class="kn">From</span> Tealeaves <span class="kn">Require Export</span>
+  Classes.Categorical.Applicative
+  Classes.Kleisli.DecoratedTraversableCommIdemFunctor
+  Functors.List_Telescoping_General
+  Functors.Writer.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">[Loading ML file ring_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file zify_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file micromega_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file btauto_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Applicative.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Product.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Monad.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> Comonad.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Import</span> DecoratedTraversableCommIdemFunctor.Notations.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><span class="alectryon-input">#[local] <span class="kn">Generalizable Variables</span> <span class="nf">ϕ</span> G T.</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** * Polymorphically Decorated Traversable Functors *)</span>
+<span class="sd">(******************************************************************************)</span>
+
+<span class="sd">(** ** Operation &lt;&lt;mapdtp&gt;&gt; *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">MapdtPoly</span> (<span class="nv">T</span>: <span class="kt">Type</span> -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) :=
+    mapdtp:
+      <span class="kr">forall</span> (<span class="nv">B1</span> <span class="nv">B2</span> <span class="nv">A1</span> <span class="nv">A2</span>: <span class="kt">Type</span>)
+        (<span class="nv">G</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+        `{Gmap: Map G} `{Gpure: Pure G} `{Gmult: Mult G},
+        (list B1 * B1 -&gt; G B2) -&gt;
+        (list B1 * A1 -&gt; G A2) -&gt;
+        T B1 A1 -&gt;
+        G (T B2 A2).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="decoratedtraversablefunctorpoly-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="decoratedtraversablefunctorpoly-v-chk1"><span class="kn">Arguments</span> mapdtp {T}%function_scope {MapdtPoly} {B1 B2 A1 A2}%type_scope
+  {G}%function_scope {Gmap Gpure Gmult} (_ _)%function_scope _.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The &#39;%&#39; scope delimiter <span class="kr">in</span> &#39;Arguments&#39; commands <span class="kr">is</span>
+deprecated, use &#39;%_&#39; instead (available since <span class="mi">8</span>.<span class="mi">19</span>).
+The &#39;%&#39; syntax will be reused <span class="kr">in</span> a future version <span class="kr">with</span>
+the same semantics <span class="kr">as</span> <span class="kr">in</span> terms, that <span class="kr">is</span> adding scope
+to the stack <span class="kr">for</span> <span class="kp">all</span> subterms. Code can be adapted
+<span class="kr">with</span> a script like: <span class="kr">for</span> f <span class="kr">in</span> $(find . -name &#39;*.v&#39;); <span class="kp">do</span>
+sed &#39;/<span class="kn">Arguments</span>/ s/%/%_/g&#39; -i $f ; <span class="bp">done</span>
+[argument-scope-delimiter,deprecated-since-<span class="mi">8</span>.<span class="mi">19</span>,deprecated,default]</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Kleisli Composition *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Definition</span> <span class="nf">kc_dtfp</span> {<span class="nv">T</span>}
+  `{MapdtPoly T}
+  {G1 : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>}
+  `{map_G1: Map G1} `{pure_G1: Pure G1} `{mult_G1: Mult G1}
+  {G2 : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>}
+  `{map_G2: Map G2} `{pure_G2: Pure G2} `{mult_G2: Mult G2}
+  {B1 A1 B2 A2 A3: <span class="kt">Type</span>}
+  (σ2: list B2 * A2 -&gt; G2 A3) <span class="c">(* second op to rename variables *)</span>
+  (ρ1: list B1 * B1 -&gt; G1 B2) <span class="c">(* first op to rename binders *)</span>
+  (σ1: list B1 * A1 -&gt; G1 A2) <span class="c">(* first op to rename variables *)</span>
+  : list B1 * A1 -&gt; (G1 ∘ G2) A3 :=
+  <span class="kr">fun</span> &#39;(ctx, a) =&gt;
+    map (F := G1) σ2 (pure pair
+                        &lt;⋆&gt; mapdt_ci (W := Z) ρ1 ctx
+                        &lt;⋆&gt; σ1 (ctx, a)).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Typeclass *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">DecoratedTraversableFunctorPoly</span>
+    (<span class="nv">T</span>: <span class="kt">Type</span> -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+    `{MapdtPoly T} :=
+  { kdtfp_mapdtp1:
+    <span class="kr">forall</span> (<span class="nv">B</span> <span class="nv">A</span>: <span class="kt">Type</span>),
+      mapdtp (G := <span class="kr">fun</span> <span class="nv">A</span> =&gt; A)
+        (extract (W := (list B ×)))
+        (extract (W := (list B ×)))
+      = @id (T B A);
+    kdtfp_mapdtp2:
+    <span class="kr">forall</span> {<span class="nv">B1</span> <span class="nv">B2</span> <span class="nv">B3</span>: <span class="kt">Type</span>}
+      {<span class="nv">A1</span> <span class="nv">A2</span> <span class="nv">A3</span>: <span class="kt">Type</span>}
+      `{Applicative G1}
+      `{Applicative G2}
+      (ρ1: list B1 * B1 -&gt; G1 B2)
+      (ρ2: list B2 * B2 -&gt; G2 B3)
+      (σ1: list B1 * A1 -&gt; G1 A2)
+      (σ2: list B2 * A2 -&gt; G2 A3),
+      (<span class="kr">forall</span> <span class="nv">p</span>: list B1 * B1, IdempotentCenter G1 B2 (ρ1 p)) -&gt;
+      map (F := G1) (mapdtp (G := G2) ρ2 σ2) ∘
+        mapdtp (G := G1) (T := T) ρ1 σ1 =
+        mapdtp (T := T) (G := G1 ∘ G2)
+          (ρ2 ⋆<span class="mi">3_</span>ci ρ1) (kc_dtfp σ2 ρ1 σ1);
+    kdtfp_morphism:
+    <span class="kr">forall</span> {<span class="nv">B1</span> <span class="nv">A1</span> <span class="nv">B2</span> <span class="nv">A2</span>: <span class="kt">Type</span>} {<span class="nv">G1</span> <span class="nv">G2</span>: <span class="kt">Type</span> -&gt; <span class="kt">Type</span>}
+      `{morph: ApplicativeMorphism G1 G2 ϕ}
+      (ρ: list B1 * B1 -&gt; G1 B2)
+      (σ: list B1 * A1 -&gt; G1 A2),
+      ϕ (T B2 A2) ∘ mapdtp ρ σ =
+        mapdtp (ϕ B2 ∘ ρ) (ϕ A2 ∘ σ);
+  }.</span></span></pre>
+</div>
+</div></body>
+</html>

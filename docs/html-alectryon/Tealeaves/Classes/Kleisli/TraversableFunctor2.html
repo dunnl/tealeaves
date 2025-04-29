@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" class="alectryon-standalone" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.20.1: https://docutils.sourceforge.io/" />
+<title>TraversableFunctor2.v</title>
+<link rel="stylesheet" href="alectryon.css" type="text/css" />
+<link rel="stylesheet" href="docutils_basic.css" type="text/css" />
+<link rel="stylesheet" href="pygments.css" type="text/css" />
+<script type="text/javascript" src="alectryon.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/IBM-type/0.5.4/css/ibm-type.min.css" integrity="sha512-sky5cf9Ts6FY1kstGOBHSybfKqdHR41M0Ldb0BjNiv3ifltoQIsg0zIaQ+wwdwgQ0w9vKFW7Js50lxH9vqNSSw==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/firacode/5.2.0/fira_code.min.css" integrity="sha512-MbysAYimH1hH2xYzkkMHB6MqxBqfP0megxsCLknbYqHVwXTCg9IqHbk+ZP/vnhO8UEW6PaXAkKe2vQ+SWACxxA==" crossorigin="anonymous" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<div class="alectryon-root alectryon-centered"><div class="alectryon-banner">Built with <a href="https://github.com/cpitclaudel/alectryon/">Alectryon</a>, running Coq+SerAPI v8.19.0+0.19.3. Bubbles (<span class="alectryon-bubble"></span>) indicate interactive fragments: hover for details, tap to reveal contents. Use <kbd>Ctrl+↑</kbd> <kbd>Ctrl+↓</kbd> to navigate, <kbd>Ctrl+🖱️</kbd> to focus. On Mac, use <kbd>⌘</kbd> instead of <kbd>Ctrl</kbd>.</div><div class="document">
+
+
+<pre class="alectryon-io highlight"><!-- Generator: Alectryon --><span class="alectryon-sentence"><input class="alectryon-toggle" id="traversablefunctor2-v-chk0" style="display: none" type="checkbox"><label class="alectryon-input" for="traversablefunctor2-v-chk0"><span class="kn">From</span> Tealeaves <span class="kn">Require Import</span>
+  Classes.Categorical.Applicative.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">[Loading ML file ring_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file zify_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file micromega_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote><blockquote class="alectryon-message">[Loading ML file btauto_plugin.cmxs (<span class="nb">using</span> legacy method) ... <span class="bp">done</span>]</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="sd">(** ** Traverse Poly operation *)</span>
+<span class="sd">(******************************************************************************)</span>
+</span><span class="alectryon-sentence"><span class="alectryon-input"><span class="kn">Class</span> <span class="nf">TraversePoly</span> (<span class="nv">T</span>: <span class="kt">Type</span> -&gt; <span class="kt">Type</span> -&gt; <span class="kt">Type</span>) :=
+  traversep:
+      <span class="kr">forall</span> (<span class="nv">A1</span> <span class="nv">A2</span> <span class="nv">B1</span> <span class="nv">B2</span>: <span class="kt">Type</span>)
+        (<span class="nv">G</span> : <span class="kt">Type</span> -&gt; <span class="kt">Type</span>)
+        `{Gmap: Map G} `{Gpure: Pure G} `{Gmult: Mult G},
+        (B1 -&gt; G B2) -&gt;
+        (A1 -&gt; G A2) -&gt;
+        T B1 A1 -&gt;
+        G (T B2 A2).</span><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+</span><span class="alectryon-sentence"><input class="alectryon-toggle" id="traversablefunctor2-v-chk1" style="display: none" type="checkbox"><label class="alectryon-input" for="traversablefunctor2-v-chk1"><span class="kn">Arguments</span> traversep {T}%function_scope {TraversePoly} {A1 A2 B1 B2}%type_scope
+  {G}%function_scope {Gmap Gpure Gmult} (_ _)%function_scope _.</label><small class="alectryon-output"><div><div class="alectryon-messages"><blockquote class="alectryon-message">The &#39;%&#39; scope delimiter <span class="kr">in</span> &#39;Arguments&#39; commands <span class="kr">is</span>
+deprecated, use &#39;%_&#39; instead (available since <span class="mi">8</span>.<span class="mi">19</span>).
+The &#39;%&#39; syntax will be reused <span class="kr">in</span> a future version <span class="kr">with</span>
+the same semantics <span class="kr">as</span> <span class="kr">in</span> terms, that <span class="kr">is</span> adding scope
+to the stack <span class="kr">for</span> <span class="kp">all</span> subterms. Code can be adapted
+<span class="kr">with</span> a script like: <span class="kr">for</span> f <span class="kr">in</span> $(find . -name &#39;*.v&#39;); <span class="kp">do</span>
+sed &#39;/<span class="kn">Arguments</span>/ s/%/%_/g&#39; -i $f ; <span class="bp">done</span>
+[argument-scope-delimiter,deprecated-since-<span class="mi">8</span>.<span class="mi">19</span>,deprecated,default]</blockquote></div></div></small><span class="alectryon-wsp">
+</span></span><span class="alectryon-wsp">
+<span class="c">(*</span>
+<span class="c">#[export] Instance TraversePoly_MapdtPoly {T} `{MapdtPoly T}: TraversePoly T :=</span>
+<span class="c">  fun A1 A2 B1 B2 G Gmap Gpure Gmult ρ σ =&gt;</span>
+<span class="c">    mapdtp</span>
+<span class="c">      (ρ ∘ extract (W := prod (list B1)))</span>
+<span class="c">      (σ ∘ extract (W := prod (list B1))).</span>
+<span class="c">*)</span></span></pre>
+</div>
+</div></body>
+</html>
