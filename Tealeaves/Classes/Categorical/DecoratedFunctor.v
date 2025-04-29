@@ -35,8 +35,8 @@ Class DecoratedFunctor
   (F: Type -> Type)
   `{Map F}
   `{Decorate E F} :=
-  { dfun_functor :> Functor F;
-    dfun_dec_natural :> Natural (@dec E F _);
+  { dfun_functor :: Functor F;
+    dfun_dec_natural :: Natural (@dec E F _);
     dfun_dec_dec: forall (A: Type),
       dec F (E * A) ∘ dec F A = map F (cojoin (prod E)) ∘ dec F A;
     dfun_dec_extract: forall (A: Type),

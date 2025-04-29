@@ -60,8 +60,8 @@ Class DecoratedFunctorPoly
   (F: Type -> Type -> Type)
   `{Map2 F}
   `{DecoratePoly F} :=
-  { dfunp_functor :> Functor2 F;
-    dfunp_natural :> PolyDecorateNatural F;
+  { dfunp_functor :: Functor2 F;
+    dfunp_natural :: PolyDecorateNatural F;
     dfunp_dec_dec: forall (B V: Type),
       decp ∘ decp (B := B) (V := V) = map2 (cojoin (W := Z)) cojoin_L ∘ decp;
     dfunp_dec_extract: forall (B V: Type),

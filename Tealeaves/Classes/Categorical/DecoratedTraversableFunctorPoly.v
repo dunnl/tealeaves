@@ -22,10 +22,10 @@ Class DecoratedTraversableFunctorPoly
   (T: Type -> Type -> Type)
   `{Map2 T} `{DecoratePoly T} `{ApplicativeDist2 T} :=
   {
-    dtfp_functor :> Functor2 T;
-    dtfp_decorated :> DecoratedFunctorPoly T;
-    dtfp_traversable :> TraversableFunctor2 T;
-    dtfp_vdist_dec :> forall (B: Type), DecoratedTraversableFunctor (list B) (T B);
+    dtfp_functor :: Functor2 T;
+    dtfp_decorated :: DecoratedFunctorPoly T;
+    dtfp_traversable :: TraversableFunctor2 T;
+    dtfp_vdist_dec :: forall (B: Type), DecoratedTraversableFunctor (list B) (T B);
     dtfp_dist2_decpoly:
     forall (B V: Type) `{ApplicativeCommutativeIdempotent G},
       dist2 (G := G) ∘ map2 (dist Z G) (dist2 (T := L)) ∘ (decp (B := G B) (V := G V)) =

@@ -24,7 +24,7 @@ Module DerivedOperations.
 End DerivedOperations.
 
 Module DerivedInstances.
-
+Section instance.
   Import DerivedOperations.
 
   Context
@@ -112,5 +112,5 @@ Module DerivedInstances.
        trf_traverse_traverse := @traverse_traverse;
        trf_traverse_morphism := @traverse_morphism;
     |}.
-
+End instance.
 End DerivedInstances.

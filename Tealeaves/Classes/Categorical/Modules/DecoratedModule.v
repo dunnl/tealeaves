@@ -51,9 +51,9 @@ Section DecoratedModule_class.
     `{Monoid_op W} `{Monoid_unit W}.
 
   Class DecoratedModule :=
-    { drmod_monad :> DecoratedMonad W T;
-      drmod_functor :> DecoratedFunctor W F;
-      drmod_module :> RightModule F T;
+    { drmod_monad :: DecoratedMonad W T;
+      drmod_functor :: DecoratedFunctor W F;
+      drmod_module :: RightModule F T;
       drmod_action :
         `(dec F ∘ right_action F (A:=A) =
           right_action F ∘ map F (shift T) ∘ dec F ∘ map F (dec T));

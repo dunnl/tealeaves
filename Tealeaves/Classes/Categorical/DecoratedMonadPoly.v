@@ -14,9 +14,9 @@ Class DecoratedMonadPoly
   `{forall B, Return (T B)}
   `{forall B, Join (T B)} :=
   {
-    dmp_functor :> Functor2 T;
-    dmp_decorated :> DecoratedFunctorPoly T;
-    dmp_monad :> Monad2 T;
+    dmp_functor :: Functor2 T;
+    dmp_decorated :: DecoratedFunctorPoly T;
+    dmp_monad :: Monad2 T;
     dmp_dec_ret: forall B V,
       decp ∘ ret (T := T B) (A := V) =
         ret (T := T (Z B)) (A := L B V) ∘ ret (T := prod (list B));

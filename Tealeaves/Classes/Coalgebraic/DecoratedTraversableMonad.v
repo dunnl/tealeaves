@@ -156,7 +156,7 @@ End section.
 (**********************************************************************)
 Class DecoratedTraversableMonad (W: Type) (T: Type -> Type)
   `{Monoid_op W} `{Monoid_unit W} `{Return T} `{ToBatch7 W T T} :=
-  { dtm_monoid :> Monoid W;
+  { dtm_monoid :: Monoid W;
     dtm_ret: forall (A B: Type),
       toBatch7 ∘ ret (T := T) (A := A) =
         Step (Done (@id (T B))) ∘ ret (T := (W ×));

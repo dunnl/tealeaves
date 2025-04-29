@@ -12,9 +12,9 @@ Class TraversableMonad2
   `{forall B, Return (T B)}
   `{forall B, Join (T B)} :=
   {
-    xxx_functor :> Functor2 T;
-    xxx_traversable :> TraversableFunctor2 T;
-    xxx_decoratedmonad :> Monad2 T;
+    xxx_functor :: Functor2 T;
+    xxx_traversable :: TraversableFunctor2 T;
+    xxx_decoratedmonad :: Monad2 T;
     xxx_dist2_ret:
     forall (B V: Type) `{Applicative G},
       dist2 ∘ ret (T := T (G B)) (A := G V) =

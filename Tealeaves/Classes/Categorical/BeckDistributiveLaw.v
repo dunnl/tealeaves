@@ -35,7 +35,7 @@ Section BeckDistributiveLaw.
   Class BeckDistributiveLaw :=
     { bdist_monad_l: Monad T;
       bdist_monad_r: Monad U;
-      bdist_natural :> Natural (@bdist U T _);
+      bdist_natural :: Natural (@bdist U T _);
       bdist_join_l:
       `(bdist U T ∘ join U =
           map T (join U) ∘ bdist U T ∘ map U (bdist U T (A := A)));

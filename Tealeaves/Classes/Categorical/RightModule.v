@@ -31,9 +31,9 @@ Class RightModule
   (T U: Type -> Type)
   `{Map U} `{Return U} `{Join U}
   `{Map T} `{RightAction T U} :=
-  { mod_object :> Functor T;
-    mon_monoid :> Monad U;
-    mod_natural :> Natural (right_action T U);
+  { mod_object :: Functor T;
+    mon_monoid :: Monad U;
+    mod_natural :: Natural (right_action T U);
     mod_action_map_ret:
     `(right_action T U A ∘ map T (ret U A) = @id (T A));
     mod_action_action:

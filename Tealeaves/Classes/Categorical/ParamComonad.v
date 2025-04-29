@@ -29,7 +29,7 @@ Section ParameterizedComonad_typeclass.
     `{PExtract W}.
 
   Class ParameterizedComonad :=
-    { pcom_functor :> forall A B, Functor (W A B);
+    { pcom_functor :: forall A B, Functor (W A B);
       pcom_extract_cojoin:
       `((pextract W A _) ∘ pcojoin W A A B X = @id (W A B X));
       pcom_map_extract_cojoin:

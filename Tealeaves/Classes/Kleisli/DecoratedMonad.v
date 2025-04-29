@@ -60,8 +60,8 @@ Class DecoratedMonad
   `{Monoid_op_W: Monoid_op W}
   `{Return_T: Return T}
   `{Bindd_WTT: Bindd W T T} :=
-  { kdm_monoid :> Monoid W;
-    kdm_premod :> DecoratedRightPreModule W T T;
+  { kdm_monoid :: Monoid W;
+    kdm_premod :: DecoratedRightPreModule W T T;
     kdm_bindd0: forall (A B: Type) (f: W * A -> T B),
       bindd f ∘ ret = f ∘ ret;
   }.
@@ -76,8 +76,8 @@ Class DecoratedRightModule
   `{Bindd_WTT: Bindd W T T}
   `{Bindd_WTU: Bindd W T U}
   :=
-  { kdmod_monad :> DecoratedMonad W T;
-    kdmod_premod :> DecoratedRightPreModule W T U;
+  { kdmod_monad :: DecoratedMonad W T;
+    kdmod_premod :: DecoratedRightPreModule W T U;
   }.
 
 #[local] Instance DecoratedRightModule_DecoratedMonad

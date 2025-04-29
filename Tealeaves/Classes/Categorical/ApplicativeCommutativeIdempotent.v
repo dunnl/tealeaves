@@ -33,8 +33,8 @@ Class Idempotent (G: Type -> Type)
 Class IdempotentCenter (G: Type -> Type)
   `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G}
   (A: Type) (a: G A): Prop :=
-  { appic_idem :> Idempotent G A a;
-    appic_center :> Center G A a;
+  { appic_idem :: Idempotent G A a;
+    appic_center :: Center G A a;
   }.
 
 #[global] Arguments appcenter_left {G}%function_scope {mapG pureG multG}
@@ -402,14 +402,14 @@ End rewriting_commutative_idempotent_element.
 (**********************************************************************)
 Class ApplicativeCommutativeIdempotent (G: Type -> Type)
   `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G} :=
-  { appci_applicative :> Applicative G;
-    appci_appic :> forall (A: Type) (a: G A),
+  { appci_applicative :: Applicative G;
+    appci_appic :: forall (A: Type) (a: G A),
         IdempotentCenter G A a;
   }.
 Class ApplicativeCommutative (G: Type -> Type)
   `{mapG: Map G} `{pureG: Pure G} `{multG: Mult G} :=
-  { appc_applicative :> Applicative G;
-    appc_appc :> forall (A: Type) (a: G A),
+  { appc_applicative :: Applicative G;
+    appc_appc :: forall (A: Type) (a: G A),
         Center G A a;
   }.
 

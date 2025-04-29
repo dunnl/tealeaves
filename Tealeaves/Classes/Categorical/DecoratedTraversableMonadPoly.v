@@ -60,11 +60,11 @@ Class DecoratedTraversableMonadPoly
   `{forall B, Return (T B)}
   `{forall B, Join (T B)} :=
   {
-    xxx_functor :> Functor2 T;
-    xxx_decorated :> DecoratedFunctorPoly T;
-    xxx_traversable :> TraversableFunctor2 T;
-    xxx_decoratedtraversable :> DecoratedTraversableFunctorPoly T;
-    xxx_decoratedmonad :> DecoratedMonadPoly T;
-    xxx_traversablemonad :> TraversableMonad2 T;
+    xxx_functor :: Functor2 T;
+    xxx_decorated :: DecoratedFunctorPoly T;
+    xxx_traversable :: TraversableFunctor2 T;
+    xxx_decoratedtraversable :: DecoratedTraversableFunctorPoly T;
+    xxx_decoratedmonad :: DecoratedMonadPoly T;
+    xxx_traversablemonad :: TraversableMonad2 T;
   }.
 

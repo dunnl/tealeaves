@@ -7,7 +7,7 @@ From Tealeaves Require Export
 (** * Categorical ~> Kleisli ~> Categorical *)
 (**********************************************************************)
 Module traversable_functor_categorical_kleisli_categorical.
-
+Section travfun.
   Context
     (T: Type -> Type)
     `{mapT: Map T}
@@ -46,11 +46,13 @@ Module traversable_functor_categorical_kleisli_categorical.
     reflexivity.
   Qed.
 
+End travfun.
 End traversable_functor_categorical_kleisli_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (**********************************************************************)
 Module traversable_functor_kleisli_categorical_kleisli.
+Section travfun.
 
   Context
     (T: Type -> Type)
@@ -86,6 +88,7 @@ Module traversable_functor_kleisli_categorical_kleisli.
     reflexivity.
   Qed.
 
+End travfun.
 End traversable_functor_kleisli_categorical_kleisli.
 
 (** * Coalgebraic ~> Kleisli ~> Coalgebraic (TODO) *)

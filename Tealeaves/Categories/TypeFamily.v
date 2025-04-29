@@ -21,7 +21,7 @@ Delimit Scope tealeaves_multi_scope with tea_multi.
 (**********************************************************************)
 Class Index: Type :=
   { K: Type;
-    ix_dec_eq :> EqDec_eq K
+    ix_dec_eq :: EqDec_eq K
   }.
 
 (** ** Operations on Families of Functions *)

@@ -18,10 +18,10 @@ Class DecoratedMonadFull
   `{Map_inst: Map T}
   `{op: Monoid_op W} `{unit: Monoid_unit W}
   :=
-  { kmondf_kmond :> DecoratedMonad W T;
-    kmondf_map_compat :> Compat_Map_Bindd W T T;
-    kmondf_mapd_compat :> Compat_Mapd_Bindd W T T;
-    kmondf_bind_compat :> Compat_Bind_Bindd W T T;
+  { kmondf_kmond :: DecoratedMonad W T;
+    kmondf_map_compat :: Compat_Map_Bindd W T T;
+    kmondf_mapd_compat :: Compat_Mapd_Bindd W T T;
+    kmondf_bind_compat :: Compat_Bind_Bindd W T T;
   }.
 
 Class DecoratedRightModuleFull
@@ -40,11 +40,11 @@ Class DecoratedRightModuleFull
   `{op: Monoid_op W}
   `{unit: Monoid_unit W}
   :=
-  { kmoddf_kmond :> DecoratedMonadFull W T;
-    kmoddf_mod :> DecoratedRightModule W T U;
-    kmoddf_map_compat :> Compat_Map_Bindd W T U;
-    kmoddf_mapd_compat :> Compat_Mapd_Bindd W T U;
-    kmoddf_bind_compat :> Compat_Bind_Bindd W T U;
+  { kmoddf_kmond :: DecoratedMonadFull W T;
+    kmoddf_mod :: DecoratedRightModule W T U;
+    kmoddf_map_compat :: Compat_Map_Bindd W T U;
+    kmoddf_mapd_compat :: Compat_Mapd_Bindd W T U;
+    kmoddf_bind_compat :: Compat_Bind_Bindd W T U;
   }.
 
 Section MonadFull.

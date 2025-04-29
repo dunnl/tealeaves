@@ -10,8 +10,8 @@ Class MonadFull (T: Type -> Type)
   `{Return_T: Return T}
   `{Map_T: Map T}
   `{Bind_T: Bind T T} :=
-  { kmonf_kmon:> Monad T;
-    kmonf_map_to_bind:> Compat_Map_Bind T T;
+  { kmonf_kmon:: Monad T;
+    kmonf_map_to_bind:: Compat_Map_Bind T T;
   }.
 
 Class RightModuleFull (T: Type -> Type) (U: Type -> Type)
@@ -21,9 +21,9 @@ Class RightModuleFull (T: Type -> Type) (U: Type -> Type)
   `{Map_T: Map T}
   `{Map_U: Map U}
   :=
-  { kmodf_mod :> RightModule T U;
-    kmodf_compat :> Compat_Map_Bind T U;
-    kmodf_monad :> MonadFull T;
+  { kmodf_mod :: RightModule T U;
+    kmodf_compat :: Compat_Map_Bind T U;
+    kmodf_monad :: MonadFull T;
   }.
 
 Module FullInstances.
@@ -87,7 +87,7 @@ Class Monad (T : Type -> Type)
   `{Join_inst: Join T}
   `{Map_inst: Map T}
   :=
-  { fmon_cat :> Categorical.Monad.Monad T;
-    fmon_kleisli :> Kleisli.Monad.Monad T;
-    fmon_compat :> Compat_Join_Bind T;
+  { fmon_cat :: Categorical.Monad.Monad T;
+    fmon_kleisli :: Kleisli.Monad.Monad T;
+    fmon_compat :: Compat_Join_Bind T;
   }.

@@ -41,8 +41,8 @@ Qed.
 Class ContainerFunctor
   (F: Type -> Type)
   `{Map F} `{ToSubset F} :=
-  { cont_natural :> Natural (@tosubset F _);
-    cont_functor :> Functor F;
+  { cont_natural :: Natural (@tosubset F _);
+    cont_functor :: Functor F;
     cont_pointwise: forall (A B: Type) (t: F A) (f g: A -> B),
       (forall a, a ∈ t -> f a = g a) -> map F f t = map F g t;
   }.

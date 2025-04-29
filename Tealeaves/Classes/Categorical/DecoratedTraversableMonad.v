@@ -18,9 +18,9 @@ Class DecoratedTraversableMonad
   `{unit: Monoid_unit W}
   `{Map T} `{Return T} `{Join T}
   `{Decorate W T} `{ApplicativeDist T} :=
-  { dtmon_decorated :> DecoratedMonad W T;
-    dtmon_traversable :> TraversableMonad T;
-    dtmon_functor :> DecoratedTraversableFunctor W T;
+  { dtmon_decorated :: DecoratedMonad W T;
+    dtmon_traversable :: TraversableMonad T;
+    dtmon_functor :: DecoratedTraversableFunctor W T;
   }.
 
 (* Verify that the derived classes can be inferred as well. *)

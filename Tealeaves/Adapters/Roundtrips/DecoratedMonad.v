@@ -14,7 +14,7 @@ Import Kleisli.DecoratedMonad.Notations.
 (** * Categorical ~> Kleisli ~> Categorical *)
 (**********************************************************************)
 Module decorated_monad_categorical_kleisli_categorical.
-
+Section decmon.
   Context
     `{mapT: Map T}
     `{decT: Decorate W T}
@@ -76,12 +76,13 @@ Module decorated_monad_categorical_kleisli_categorical.
     reflexivity.
   Qed.
 
+End decmon.
 End decorated_monad_categorical_kleisli_categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (**********************************************************************)
 Module decorated_monad_kleisli_categorical_kleisli.
-
+Section decmon.
   Context
     `{binddT: Bindd W T T}
     `{retT: Return T}
@@ -121,4 +122,5 @@ Module decorated_monad_kleisli_categorical_kleisli.
     reflexivity.
   Qed.
 
+End decmon.
 End decorated_monad_kleisli_categorical_kleisli.

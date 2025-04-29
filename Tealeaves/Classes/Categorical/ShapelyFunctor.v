@@ -65,8 +65,8 @@ Definition shapeliness (F: Type -> Type)
 (**********************************************************************)
 Class ShapelyFunctor
   (F: Type -> Type) `{Map F} `{Tolist F} :=
-  { shp_natural :> Natural (@tolist F _);
-    shp_functor :> Functor F;
+  { shp_natural :: Natural (@tolist F _);
+    shp_functor :: Functor F;
     shp_shapeliness: shapeliness F;
   }.
 

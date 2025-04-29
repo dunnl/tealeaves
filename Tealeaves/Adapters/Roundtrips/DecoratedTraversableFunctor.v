@@ -13,6 +13,7 @@ Import Kleisli.DecoratedTraversableFunctor.Notations.
 (** * Categorical ~> Kleisli ~> Categorical *)
 (**********************************************************************)
 Module Roundtrip1.
+Section dectravfun.
 
   Context
     (E: Type)
@@ -74,11 +75,13 @@ Module Roundtrip1.
     reflexivity.
   Qed.
 
+End dectravfun.
 End Roundtrip1.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (**********************************************************************)
 Module Roundtrip2.
+Section dectravfun.
 
   Context
     (E: Type)
@@ -124,4 +127,5 @@ Module Roundtrip2.
     reflexivity.
   Qed.
 
+End dectravfun.
 End Roundtrip2.

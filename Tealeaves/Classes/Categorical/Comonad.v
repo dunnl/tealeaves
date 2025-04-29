@@ -26,9 +26,9 @@ Class Comonad (W: Type -> Type)
   `{Map_W: Map W}
   `{Cojoin_W: Cojoin W}
   `{Extract_W: Extract W} :=
-  { com_functor :> Functor W;
-    com_extract_natural :> Natural (@extract W _);
-    com_cojoin_natural :> Natural (@cojoin W _);
+  { com_functor :: Functor W;
+    com_extract_natural :: Natural (@extract W _);
+    com_cojoin_natural :: Natural (@cojoin W _);
     com_extract_cojoin:
     `(extract (A := W A) ∘ cojoin (A := A) = @id (W A));
     com_map_extr_cojoin:

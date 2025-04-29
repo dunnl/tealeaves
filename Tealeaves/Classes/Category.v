@@ -208,9 +208,9 @@ Section monad.
     `{! Return T} `{! Join T}.
 
   Class Monad :=
-    { mon_functor :> Functor T _;
-      mon_ret_natural :> Natural (ret T);
-      mon_join_natural :> Natural (join T);
+    { mon_functor :: Functor T _;
+      mon_ret_natural :: Natural (ret T);
+      mon_join_natural :: Natural (join T);
       mon_join_fmap_ret:
       `(join T a ⊙ (fmap T (ret T a)) = catid (T a));
       mon_join_ret:
@@ -263,8 +263,8 @@ Section RightModule.
   Class RightAction := right_action: F ∘ T ⇒ F.
 
   Class RightModule `{RightAction} :=
-    { rmod_monad :> Monad T;
-      rmod_object :> Functor F _;
+    { rmod_monad :: Monad T;
+      rmod_object :: Functor F _;
       rmod_natural: Natural (right_action);
       rmod_ret:
       `(right_action a ⊙ fmap F (ret T a) = catid (F a));

@@ -30,9 +30,9 @@ Class Join (T: Type -> Type) :=
 Class Monad
   (T: Type -> Type)
   `{Map T} `{Return T} `{Join T} :=
-  { mon_functor :> Functor T;
-    mon_ret_natural :> Natural (@ret T _);
-    mon_join_natural :> Natural (join);
+  { mon_functor :: Functor T;
+    mon_ret_natural :: Natural (@ret T _);
+    mon_join_natural :: Natural (join);
     mon_join_ret: (* left unit law *)
     `(join A ∘ ret (T A) = @id (T A));
     mon_join_map_ret: (* right unit law *)

@@ -164,12 +164,12 @@ Class TraversableMonad
   (T: Type -> Type) `{Return T} `{ToBatch6 T T} :=
   { trfm_ret: forall (A B: Type),
       toBatch6 ∘ ret = batch A (T B);
-    trfm_premod :> TraversableRightPreModule T T;
+    trfm_premod :: TraversableRightPreModule T T;
   }.
 
 Class TraversableRightModule
   (T U: Type -> Type) `{Return T}
   `{ToBatch6 T T} `{ToBatch6 T U} :=
-  { trfmod_monad :> TraversableMonad T;
-    trfmod_premod :> TraversableRightPreModule T U;
+  { trfmod_monad :: TraversableMonad T;
+    trfmod_premod :: TraversableRightPreModule T U;
   }.

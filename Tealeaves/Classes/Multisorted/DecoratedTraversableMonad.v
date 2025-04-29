@@ -76,7 +76,7 @@ Section MultisortedDTM_typeclasses.
       {mn_unit: Monoid_unit W}.
 
     Class MultiDecoratedTraversablePreModule :=
-      { dtp_monoid :> Monoid W;
+      { dtp_monoid :: Monoid W;
         dtp_mbinddt_mret: forall A,
           mbinddt W T U (fun a => a) (mret T A ◻ allK extract) = @id (U A);
         dtp_mbinddt_mbinddt: forall
@@ -112,7 +112,7 @@ Section MultisortedDTM_typeclasses.
       {mn_unit: Monoid_unit W}.
 
     Class MultiDecoratedTraversableMonad :=
-      { dtm_pre :> forall k, MultiDecoratedTraversablePreModule W T (T k);
+      { dtm_pre :: forall k, MultiDecoratedTraversablePreModule W T (T k);
         dtm_mbinddt_comp_mret:
         forall k F `{Applicative F}
           `(f: forall k, W * A -> F (T k B)),

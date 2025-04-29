@@ -89,10 +89,10 @@ Class DecoratedTraversableMonad
   `{unit: Monoid_unit W}
   `{Return_inst: Return T}
   `{Bindd_T_inst: Binddt W T T} :=
-  { kdtm_monoid :> Monoid W;
+  { kdtm_monoid :: Monoid W;
     kdtm_binddt0: forall `{Applicative G} `(f: W * A -> G (T B)),
       binddt f ∘ ret = f ∘ ret (T := (W ×));
-    kdtm_premod :> DecoratedTraversableRightPreModule W T T;
+    kdtm_premod :: DecoratedTraversableRightPreModule W T T;
   }.
 
 Class DecoratedTraversableRightModule
@@ -104,8 +104,8 @@ Class DecoratedTraversableRightModule
   `{Bindd_T_inst: Binddt W T T}
   `{Bindd_U_inst: Binddt W T U}
   :=
-  { kdtmod_monad :> DecoratedTraversableMonad W T;
-    kdtmod_premod :> DecoratedTraversableRightPreModule W T U;
+  { kdtmod_monad :: DecoratedTraversableMonad W T;
+    kdtmod_premod :: DecoratedTraversableRightPreModule W T U;
   }.
 
 (** ** Homomorphisms *)
@@ -333,13 +333,13 @@ Section decorated_traversable_monad_compat.
         @DerivedOperations.Mapdt_Binddt W T U Return_T Binddt_inst _ _ _ _.
 
   Class Compat_Full_Binddt: Prop :=
-    { compat_map_binddt_full :> Compat_Map_Binddt;
-      compat_mapd_binddt_full :> Compat_Mapd_Binddt;
-      compat_traverse_binddt_full :> Compat_Traverse_Binddt;
-      compat_bind_binddt_full :> Compat_Bind_Binddt;
-      compat_bindd_binddt_full :> Compat_Bindd_Binddt;
-      compat_bindt_binddt_full :> Compat_Bindt_Binddt;
-      compat_mapdt_binddt_full :> Compat_Mapdt_Binddt;
+    { compat_map_binddt_full :: Compat_Map_Binddt;
+      compat_mapd_binddt_full :: Compat_Mapd_Binddt;
+      compat_traverse_binddt_full :: Compat_Traverse_Binddt;
+      compat_bind_binddt_full :: Compat_Bind_Binddt;
+      compat_bindd_binddt_full :: Compat_Bindd_Binddt;
+      compat_bindt_binddt_full :: Compat_Bindt_Binddt;
+      compat_mapdt_binddt_full :: Compat_Mapdt_Binddt;
     }.
 
 End decorated_traversable_monad_compat.

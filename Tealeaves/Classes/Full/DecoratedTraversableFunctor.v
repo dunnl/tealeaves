@@ -7,10 +7,10 @@ Class DecoratedTraversableFunctorFull
   `{Mapd_inst: Mapd E T}
   `{Traverse_inst: Traverse T}
   `{Mapdt_inst: Mapdt E T} :=
-  { kdtfunf_dtf :> DecoratedTraversableFunctor E T;
-    kdtfunf_map_compat :> Compat_Map_Mapdt;
-    kdtfunf_mapd_compat :> Compat_Mapd_Mapdt;
-    kdtfunf_traverse_compat :> Compat_Traverse_Mapdt;
+  { kdtfunf_dtf :: DecoratedTraversableFunctor E T;
+    kdtfunf_map_compat :: Compat_Map_Mapdt;
+    kdtfunf_mapd_compat :: Compat_Mapd_Mapdt;
+    kdtfunf_traverse_compat :: Compat_Traverse_Mapdt;
   }.
 
 

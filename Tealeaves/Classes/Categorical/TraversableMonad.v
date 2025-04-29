@@ -24,8 +24,8 @@ Import Applicative.Notations.
 Class TraversableMonad
   (T: Type -> Type)
   `{Map T} `{Return T} `{Join T} `{ApplicativeDist T} :=
-  { trvmon_monad :> Monad T;
-    trvmon_functor :> TraversableFunctor T;
+  { trvmon_monad :: Monad T;
+    trvmon_functor :: TraversableFunctor T;
     trvmon_ret: forall `{Applicative G},
       `(dist T G ∘ ret T (G A) = map G (ret T A));
     trvmon_join: forall `{Applicative G},

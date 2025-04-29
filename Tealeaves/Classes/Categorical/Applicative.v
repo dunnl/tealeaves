@@ -22,7 +22,7 @@ Class Mult (F: Type -> Type) :=
 
 Class Applicative (G: Type -> Type)
   `{Map_G: Map G} `{Pure_G: Pure G} `{Mult_G: Mult G} :=
-  { app_functor :> Functor G;
+  { app_functor :: Functor G;
     app_pure_natural: forall (A B: Type) (f: A -> B) (x: A),
       map f (pure x) = pure (f x);
     app_mult_natural:

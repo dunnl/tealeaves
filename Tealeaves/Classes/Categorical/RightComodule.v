@@ -28,9 +28,9 @@ Class RightComodule
   (F W: Type -> Type)
   `{Map W} `{Cojoin W} `{Extract W}
   `{Map F} `{RightCoaction F W} :=
-  { rcom_comonad :> Comonad W;
-    rcom_functor :> Functor F;
-    rcom_coaction_natural :> Natural (@right_coaction F W _);
+  { rcom_comonad :: Comonad W;
+    rcom_functor :: Functor F;
+    rcom_coaction_natural :: Natural (@right_coaction F W _);
     rcom_map_extr_coaction:
     `(map F (extract W A) ∘ right_coaction F W A = @id (F A));
     rcom_coaction_coaction:

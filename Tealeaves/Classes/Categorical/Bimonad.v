@@ -52,9 +52,9 @@ Section Bimonad.
     `{BeckDistributiveLaw W W}.
 
   Class Bimonad :=
-    { bimonad_monad :> Monad W;
-      bimonad_comonad :> Comonad W;
-      bimonad_distributive_law :> BeckDistributiveLaw W W;
+    { bimonad_monad :: Monad W;
+      bimonad_comonad :: Comonad W;
+      bimonad_distributive_law :: BeckDistributiveLaw W W;
       bimonad_dist_counit_r:
       `(map W (extract W A) ∘ bdist W W = extract W (W A));
       bimonad_dist_counit_l:

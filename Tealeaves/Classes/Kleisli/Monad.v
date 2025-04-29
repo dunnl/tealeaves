@@ -42,15 +42,15 @@ Class Monad (T: Type -> Type)
   `{Bind_TT: Bind T T} :=
   { kmon_bind0: forall (A B: Type) (f: A -> T B),
       bind f ∘ ret = f;
-    kmon_premod :> RightPreModule T T;
+    kmon_premod :: RightPreModule T T;
   }.
 
 Class RightModule (T: Type -> Type) (U: Type -> Type)
   `{Return_T: Return T}
   `{Bind_TT: Bind T T}
   `{Bind_TU: Bind T U} :=
-  { kmod_monad :> Monad T;
-    kmod_premod :> RightPreModule T U;
+  { kmod_monad :: Monad T;
+    kmod_premod :: RightPreModule T U;
   }.
 
 #[local] Instance RightModule_Monad

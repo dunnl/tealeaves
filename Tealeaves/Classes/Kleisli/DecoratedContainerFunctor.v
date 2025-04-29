@@ -67,8 +67,8 @@ Qed.
 Class DecoratedContainerFunctor
   (E: Type) (F: Type -> Type)
   `{Mapd E F} `{ToCtxset E F} :=
-  { dcont_functor :> DecoratedFunctor E F;
-    dcont_natural :> DecoratedHom E F (ctxset E) (@toctxset E _ _);
+  { dcont_functor :: DecoratedFunctor E F;
+    dcont_natural :: DecoratedHom E F (ctxset E) (@toctxset E _ _);
     dcont_pointwise:
     forall (A B: Type) (t: F A) (f g: E * A -> B),
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) ->

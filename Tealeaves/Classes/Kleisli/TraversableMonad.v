@@ -58,15 +58,15 @@ Class TraversableMonad (T: Type -> Type)
   { ktm_bindt0:
     forall `{Applicative G} (A B: Type) (f: A -> G (T B)),
       bindt f ∘ ret = f;
-    ktm_premod :> TraversableRightPreModule T T;
+    ktm_premod :: TraversableRightPreModule T T;
   }.
 
 Class TraversableRightModule (T U: Type -> Type)
   `{Return_T: Return T}
   `{Bindt_TT: Bindt T T}
   `{Bindt_TU: Bindt T U} :=
-  { ktmod_monad :> TraversableMonad T;
-    ktmod_premod :> TraversableRightPreModule T U;
+  { ktmod_monad :: TraversableMonad T;
+    ktmod_premod :: TraversableRightPreModule T U;
   }.
 
 #[local] Instance TraversableRightModule_TraversableMonad

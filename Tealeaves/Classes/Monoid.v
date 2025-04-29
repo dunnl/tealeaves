@@ -252,14 +252,14 @@ Class PreOrderedMonoidLaws
 
 Class PreOrderedMonoid (M: Type) (R: relation M)
   {op: Monoid_op M} {unit: Monoid_unit M} :=
-  { pom_monoid :> Monoid M;
-    pom_order :> PreOrder R;
-    pom_laws :> PreOrderedMonoidLaws M R op unit;
+  { pom_monoid :: Monoid M;
+    pom_order :: PreOrder R;
+    pom_laws :: PreOrderedMonoidLaws M R op unit;
   }.
 
 Class PreOrderedMonoidPos (M: Type) (R: relation M)
   {op: Monoid_op M} {unit: Monoid_unit M} :=
-  { pompos_pom :> PreOrderedMonoid M R;
+  { pompos_pom :: PreOrderedMonoid M R;
     pompos_pos: forall m, R Ƶ m;
   }.
 

@@ -33,8 +33,8 @@ Class TraversableFunctor2
   (T: Type -> Type -> Type)
   `{Map2_F: Map2 T}
   `{dist2_F: ApplicativeDist2 T} :=
-  { trav2_functor :> Functor2 T;
-    dist2_natural :> forall `{Applicative G},
+  { trav2_functor :: Functor2 T;
+    dist2_natural :: forall `{Applicative G},
         @Natural2 (T ○21 G) _ (G ○12 T) _ (@dist2 T dist2_F G _ _ _);
     dist2_morph: forall `{ApplicativeMorphism G1 G2 ϕ},
       `(dist2 T G2 ∘ map2 (ϕ B) (ϕ A) = ϕ (T B A) ∘ dist2 T G1);

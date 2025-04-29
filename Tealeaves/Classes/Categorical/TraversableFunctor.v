@@ -28,8 +28,8 @@ Class ApplicativeDist (F: Type -> Type) :=
 Class TraversableFunctor
   (F: Type -> Type)
   `{Map F} `{ApplicativeDist F} :=
-  { trav_functor :> Functor F;
-    dist_natural :> forall `{Applicative G},
+  { trav_functor :: Functor F;
+    dist_natural :: forall `{Applicative G},
         @Natural (F ∘ G) _ (G ∘ F) _ (@dist F _ G _ _ _);
     dist_morph: forall `{ApplicativeMorphism G1 G2 ϕ},
       `(dist F G2 ∘ map F (ϕ A) = ϕ (F A) ∘ dist F G1);
@@ -47,7 +47,7 @@ Class TraversableMorphism
   `{ApplicativeDist U} (ϕ: T ⇒ U) :=
   { trvmor_trv_F: TraversableFunctor T;
     trvmor_trv_G: TraversableFunctor U;
-    trvmor_nat :> Natural ϕ;
+    trvmor_nat :: Natural ϕ;
     trvmor_hom: forall `{Applicative G},
       `(map G (ϕ A) ∘ dist T G = dist U G ∘ ϕ (G A));
   }.

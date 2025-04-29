@@ -137,9 +137,9 @@ Class DecoratedMonad
   (T: Type -> Type)
   `{Map T} `{Return T} `{Join T} `{Decorate W T}
   `{Monoid_op W} `{Monoid_unit W} :=
-  { dmon_functor :> DecoratedFunctor W T;
-    dmon_monad :> Monad T;
-    dmon_monoid :> Monoid W;
+  { dmon_functor :: DecoratedFunctor W T;
+    dmon_monad :: Monad T;
+    dmon_monoid :: Monoid W;
     dmon_ret: forall (A: Type),
       dec T ∘ ret T A = ret T (W * A) ∘ pair Ƶ;
     dmon_join: forall (A: Type),
@@ -159,9 +159,9 @@ Section DecoratedModule.
     `{Monoid_op W} `{Monoid_unit W}.
 
   Class DecoratedRightModule :=
-    { dmod_monad :> DecoratedMonad W T;
-      dmod_functor :> DecoratedFunctor W T;
-      dmon_module :> Categorical.RightModule.RightModule F T;
+    { dmod_monad :: DecoratedMonad W T;
+      dmod_functor :: DecoratedFunctor W T;
+      dmon_module :: Categorical.RightModule.RightModule F T;
       dmod_action: forall (A: Type),
         dec F ∘ right_action F (A := A) =
           right_action F ∘ map F (shift T) ∘ dec F ∘ map F (dec T);

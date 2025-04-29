@@ -16,8 +16,8 @@ Class DecoratedContainerMonad
   `{Monoid_op W} `{Monoid_unit W}
   `{Bindd W T T} `{Return T}
   `{ToCtxset W T} :=
-  { dconm_functor :> DecoratedMonad W T;
-    decom_hom :> DecoratedMonadHom W T (ctxset W) (@toctxset W T _);
+  { dconm_functor :: DecoratedMonad W T;
+    decom_hom :: DecoratedMonadHom W T (ctxset W) (@toctxset W T _);
     dconm_pointwise:
     forall (A B: Type) (t: T A) (f g: W * A -> T B),
       (forall e a, (e, a) ∈d t -> f (e, a) = g (e, a)) ->
@@ -31,8 +31,8 @@ Class DecoratedContainerRightModule
   `{Bindd W T U}
   `{ToCtxset W T}
   `{ToCtxset W U} :=
-  { dconmod_module :> DecoratedRightModule W T U;
-    dconmod_hom :>
+  { dconmod_module :: DecoratedRightModule W T U;
+    dconmod_hom ::
       ParallelDecoratedRightModuleHom
       T (ctxset W) U (ctxset W)
       (@toctxset W T _)

@@ -3,8 +3,8 @@
 Class TraversableFunctorFull (T : Type -> Type)
   `{Traverse_inst : Traverse T}
   `{Map_inst : Map T} :=
-  { trff_trf :> TraversableFunctor T;
-    trff_map_compat :> Compat_Map_Traverse T;
+  { trff_trf :: TraversableFunctor T;
+    trff_map_compat :: Compat_Map_Traverse T;
   }.
 
 (*

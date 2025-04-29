@@ -15,6 +15,7 @@ Import Functors.Early.Batch.
 (** * Categorical ~> Kleisli ~> Categorical *)
 (**********************************************************************)
 Module Categorical_Kleisli_Categorical.
+  Section travmon.
 
   Context
     `{mapT: Map T}
@@ -91,11 +92,13 @@ Module Categorical_Kleisli_Categorical.
     reflexivity.
   Qed.
 
+End travmon.
 End Categorical_Kleisli_Categorical.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)
 (**********************************************************************)
 Module Kleisli_Categorical_Kleisli.
+Section travmon.
 
   Context
     `{bindtT: Bindt T T}
@@ -152,12 +155,14 @@ Module Kleisli_Categorical_Kleisli.
     reflexivity.
   Qed.
 
+End travmon.
 End Kleisli_Categorical_Kleisli.
 
 
 (** * Coalgebraic ~> Kleisli ~> Coalgebraic *)
 (**********************************************************************)
 Module Coalgebraic_Kleisli_Coalgebraic.
+  Section travmon.
 
   Context
     `{toBatch6_T: ToBatch6 T T}
@@ -182,12 +187,14 @@ Module Coalgebraic_Kleisli_Coalgebraic.
     reflexivity.
   Qed.
 
+End travmon.
 End Coalgebraic_Kleisli_Coalgebraic.
 
 
 (** * Kleisli ~> Coalgebraic ~> Kleisli *)
 (**********************************************************************)
 Module Kleisli_Coalgebraic_Kleisli.
+  Section travmon.
 
   Context
     `{bindtT: Bindt T T}
@@ -217,4 +224,5 @@ Module Kleisli_Coalgebraic_Kleisli.
     reflexivity.
   Qed.
 
+End travmon.
 End Kleisli_Coalgebraic_Kleisli.

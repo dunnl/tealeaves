@@ -12,6 +12,7 @@ Import Kleisli.Monad.Notations.
 (** * Categorical ~> Kleisli ~> Categorical *)
 (**********************************************************************)
 Module Roundtrip1.
+Section dectravmon.
 
   Context
     `{Monoid W}
@@ -101,6 +102,7 @@ Module Roundtrip1.
     reflexivity.
   Qed.
 
+End dectravmon.
 End Roundtrip1.
 
 (** * Kleisli ~> Categorical ~> Kleisli *)

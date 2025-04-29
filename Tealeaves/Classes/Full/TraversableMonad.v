@@ -6,10 +6,10 @@ Class TraversableMonadFull
   `{Traverse_inst : Traverse T}
   `{Bind_inst : Bind T T}
   `{Bindt_inst : Bindt T T} :=
-  { ktmf_ktm :> TraversableMonad T;
-    ktmf_map_compat :> Compat_Map_Bindt T T;
-    ktmf_bind_compat :> Compat_Bind_Bindt T T;
-    ktmf_traverse_compat :> Compat_Traverse_Bindt T T;
+  { ktmf_ktm :: TraversableMonad T;
+    ktmf_map_compat :: Compat_Map_Bindt T T;
+    ktmf_bind_compat :: Compat_Bind_Bindt T T;
+    ktmf_traverse_compat :: Compat_Traverse_Bindt T T;
   }.
 
 Class TraversableRightModuleFull
@@ -24,11 +24,11 @@ Class TraversableRightModuleFull
   `{Traverse_U_inst : Traverse U}
   `{Bind_U_inst : Bind T U}
   `{Bindt_U_inst : Bindt T U} :=
-  { ktmodf_kmond :> TraversableMonadFull T;
-    ktmodf_mod :> TraversableRightModule T U;
-    ktmodf_map_compat :> Compat_Map_Bindt T U;
-    ktmodf_traverse_compat :> Compat_Traverse_Bindt T U;
-    ktmodf_bind_compat :> Compat_Bind_Bindt T U;
+  { ktmodf_kmond :: TraversableMonadFull T;
+    ktmodf_mod :: TraversableRightModule T U;
+    ktmodf_map_compat :: Compat_Map_Bindt T U;
+    ktmodf_traverse_compat :: Compat_Traverse_Bindt T U;
+    ktmodf_bind_compat :: Compat_Bind_Bindt T U;
   }.
 
 Section instances.
